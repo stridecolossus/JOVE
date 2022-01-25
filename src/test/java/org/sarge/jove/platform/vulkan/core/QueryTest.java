@@ -36,7 +36,7 @@ public class QueryTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		pool = new Pool(new Pointer(1), dev, 2);
+		pool = new Pool(new Pointer(1), dev, VkQueryType.OCCLUSION, 2);
 		query = pool.query(0);
 		cmd = mock(Command.Buffer.class);
 	}
@@ -72,10 +72,17 @@ public class QueryTest extends AbstractVulkanTest {
 
 	@Test
 	void timestamp() {
+		pool = new Pool(new Pointer(1), dev, VkQueryType.TIMESTAMP, 2);
+		query = pool.query(0);
 		final Command timestamp = query.timestamp(VkPipelineStage.VERTEX_SHADER);
 		assertNotNull(timestamp);
 		timestamp.execute(lib, cmd);
 		verify(lib).vkCmdWriteTimestamp(cmd, VkPipelineStage.VERTEX_SHADER, pool, 0);
+	}
+
+	@Test
+	void invalidQueryCommand() {
+		assertThrows(IllegalStateException.class, () -> query.timestamp(VkPipelineStage.VERTEX_SHADER));
 	}
 
 	@Nested

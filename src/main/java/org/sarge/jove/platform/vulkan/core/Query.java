@@ -81,6 +81,13 @@ public class Query {
 	}
 
 	/**
+	 * @return Pool for this query
+	 */
+	public Pool pool() {
+		return pool;
+	}
+
+	/**
 	 * Convenience factory method to create a command to reset this query.
 	 * @return Reset query command
 	 * @see Pool#reset(int, int)
@@ -95,6 +102,7 @@ public class Query {
 	 * @return Begin query command
 	 */
 	public Command begin(VkQueryControlFlag... flags) {
+		validate(false);
 		final int mask = IntegerEnumeration.mask(flags);
 		return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, pool, slot, mask);
 	}
@@ -104,6 +112,7 @@ public class Query {
 	 * @return End query command
 	 */
 	public Command end() {
+		validate(false);
 		return (lib, buffer) -> lib.vkCmdEndQuery(buffer, pool, slot);
 	}
 
@@ -114,7 +123,17 @@ public class Query {
 	 */
 	public Command timestamp(VkPipelineStage stage) {
 		Check.notNull(stage);
+		validate(true);
 		return (lib, buffer) -> lib.vkCmdWriteTimestamp(buffer, stage, pool, slot);
+	}
+
+	/**
+	 * @throws IllegalStateException if this query is invalid as a timestamp
+	 */
+	private void validate(boolean timestamp) {
+		if(timestamp != (pool.type == VkQueryType.TIMESTAMP)) {
+			throw new IllegalStateException("Invalid query command: " + this);
+		}
 	}
 
 	@Override
@@ -129,16 +148,19 @@ public class Query {
 	 * A <i>query pool</i> is comprised of a number of <i>slots</i> used to execute queries.
 	 */
 	public static class Pool extends AbstractVulkanObject {
+		private final VkQueryType type;
 		private final int slots;
 
 		/**
 		 * Constructor.
 		 * @param handle		Handle
 		 * @param dev			Logical device
+		 * @param type			Query type
 		 * @param slots			Number of query slots
 		 */
-		Pool(Pointer handle, DeviceContext dev, int slots) {
+		Pool(Pointer handle, DeviceContext dev, VkQueryType type, int slots) {
 			super(handle, dev);
+			this.type = notNull(type);
 			this.slots = oneOrMore(slots);
 		}
 
@@ -201,6 +223,7 @@ public class Query {
 		public String toString() {
 			return new ToStringBuilder(this)
 					.appendSuper(super.toString())
+					.append(type)
 					.append("slots", slots)
 					.build();
 		}
@@ -269,7 +292,7 @@ public class Query {
 				check(lib.vkCreateQueryPool(dev, info, null, ref));
 
 				// Create pool
-				return new Pool(ref.getValue(), dev, slots);
+				return new Pool(ref.getValue(), dev, type, slots);
 			}
 		}
 	}

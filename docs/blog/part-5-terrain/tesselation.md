@@ -9,6 +9,7 @@ title: Terrain Tesselation
 - [Overview](#overview)
 - [Terrain Grid](#terrain-grid)
 - [Tesselation](#tesselation)
+- [Integration](#integration)
 
 ---
 
@@ -533,7 +534,7 @@ Notes:
 
 * The `layout(vertices=4) out` declaration specifies the number of control points to be processed by the shader (a quad in this case).
 
-* Note that this shader is executed for each vertex but the tesselation levels are generally only calculated once per primitive.  It is common practice to the wrap the calculation of the tesselation levels in the conditional statement using the built-in GLSL `gl_InvocationID` variable.
+* Note that this shader is executed for each patch but the tesselation levels are generally only calculated once per control point.  It is common practice to the wrap the calculation of the tesselation levels in the conditional statement using the built-in GLSL `gl_InvocationID` variable.
 
 Configuration of the tesselation stage in the pipeline is very trivial:
 
@@ -683,7 +684,11 @@ void main() {
 }
 ```
 
-### Integration
+---
+
+## Integration
+
+### Pipeline Configuration
 
 The pipeline configuration is modified to include the two new shaders and the tesselation stage:
 

@@ -6,7 +6,9 @@ title: Pipeline Improvements
 
 ## Contents
 
-- [Overview](#overview)
+This chapter introduces various improvements to the pipeline and shader code used in the terrain tesselation demo.
+
+- [Buffer Helper](#buffer-helper)
 - [Push Constants](#push-constants)
 - [Pipeline Derivation](#pipeline-derivation)
 - [Pipeline Cache](#pipeline-cache)
@@ -15,19 +17,108 @@ title: Pipeline Improvements
 
 ---
 
-## Overview
+## Buffer Helper
 
-This chapter introduces various improvements to the pipeline and shader code used in the terrain tesselation demo:
+Most of the following improvements are dependant on a new utility class for NIO buffers which is introduced first.
 
-* The addition of _push constants_ as an alternative and more efficient means of updating the view matrices.
+Most Vulkan functionality that is dependant on a data buffer assumes a __direct__ NIO buffer, which is wrapped into the following convenience factory method:
 
-* Enhancements to the pipeline builder to support _pipeline derivation_ for similar rendering use-cases.
+```java
+public final class BufferHelper {
+    /**
+     * Native byte order for a bufferable object.
+     */
+    public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
 
-* A _pipeline cache_ to improve the time taken to create pipelines.
+    private BufferHelper() {
+    }
 
-* A builder for _specialisation constants_ to parameterise shader configuration.
+    public static ByteBuffer allocate(int len) {
+        return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
+    }
+}
+```
 
-* Support for _occlusion queries_ .
+The utility class also supports conversion of an NIO buffer to a byte array:
+
+```java
+public static byte[] array(ByteBuffer bb) {
+    if(bb.isDirect()) {
+        bb.rewind();
+        int len = bb.limit();
+        byte[] bytes = new byte[len];
+        for(int n = 0; n < len; ++n) {
+            bytes[n] = bb.get();
+        }
+        return bytes;
+    }
+    else {
+        return bb.array();
+    }
+}
+```
+
+And the reverse operation to wrap an array with a buffer:
+
+```java
+public static ByteBuffer buffer(byte[] array) {
+    ByteBuffer bb = allocate(array.length);
+    write(array, bb);
+    return bb;
+}
+```
+
+Where `write` is a further utility method:
+
+```java
+public static void write(byte[] array, ByteBuffer bb) {
+    if(bb.isDirect()) {
+        for(byte b : array) {
+            bb.put(b);
+        }
+    }
+    else {
+        bb.put(array);
+    }
+}
+```
+
+Note that direct NIO buffers generally do not support the optional bulk methods, hence the `isDirect` test in the `write` method.
+
+Existing code that transforms to/from byte buffers is refactored using the new utility methods, e.g. shader SPIV code.
+
+As a further convenience for applying updates to uniform buffers the following method can be used to insert a data element:
+
+```java
+public static void insert(int index, Bufferable data, ByteBuffer bb) {
+    int pos = index * data.length();
+    bb.position(pos);
+    data.buffer(bb);
+}
+```
+
+This is useful for buffers that are essentially an 'array' of some type of bufferable object (which we use below).
+
+Finally in the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
+
+```java
+static Bufferable of(Structure struct) {
+    return new Bufferable() {
+        @Override
+        public int length() {
+            return struct.size();
+        }
+
+        @Override
+        public void buffer(ByteBuffer bb) {
+            byte[] array = struct.getPointer().getByteArray(0, struct.size());
+            BufferHelper.write(array, bb);
+        }
+    };
+}
+```
+
+This allows arbitrary JNA structures to be used to populate buffers which will become useful in later chapters.
 
 ---
 
@@ -35,11 +126,11 @@ This chapter introduces various improvements to the pipeline and shader code use
 
 ### Push Constant Range
 
-Push constants are used to send data to shaders with some constraints:
+Push constants are an alternative and more efficient mechanism for transferring arbitrary data to shaders with some constraints:
 
 * The maximum amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
 
-* Push constants are updated and stored within the command buffer itself.
+* Push constants are updated and stored within as part of the command buffer.
 
 * Push constants have alignment restrictions, see [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
 
@@ -110,9 +201,6 @@ int max = ranges
     .max()
     .orElse(0);
 
-// Check that overall size is supported by the hardware
-if(max > dev.limits().maxPushConstantsSize) throw new IllegalArgumentException(...);
-
 // Enumerate pipeline stages
 Set<VkShaderStage> stages = ranges
     .stream()
@@ -124,14 +212,11 @@ Set<VkShaderStage> stages = ranges
 return new PipelineLayout(layout.getValue(), dev, max, stages);
 ```
 
-Note that the size of the data buffer is validated against the hardware limit which is often quite small (256 bytes on the development environment).
-
-These new properties are also used to validate the push constant update command which is addressed next.
+Note that the size of the data buffer is validated (not shown) against the hardware limit which is often quite small (256 bytes on the development environment).
 
 ### Update Command
 
-
-Push constants are backed by a data buffer updated using a new command:
+Push constants are backed by a data buffer which is updated using a new command:
 
 ```java
 public class PushConstantUpdateCommand implements Command {
@@ -906,11 +991,11 @@ Retrieval of the results of one-or-more queries is slightly complicated:
 
 * There are two supported mechanisms: on-demand or asynchronous copy to a buffer.
 
-* Multiple results can be retrieved by specifying a _range_ of query slots, i.e. essentially an array of results.
+* Multiple results can be retrieved in one operation by specifying a _range_ of query slots, i.e. essentially an array of results.
 
 * Results can be integer or long data types.
 
-Therefore we implement retrieval of the results as a builder that is instantiated from the pool:
+Therefore configuration of the results is also specified by a builder that is instantiated from the query pool:
 
 ```java
 public class Pool ... {
@@ -920,7 +1005,7 @@ public class Pool ... {
 }
 ```
 
-The builder for the results specifies the data type and the range of slots to be populated:
+The builder specifies the data type and the range of slots to be populated:
 
 ```java
 public static class ResultBuilder {
@@ -932,7 +1017,7 @@ public static class ResultBuilder {
 }
 ```
 
-The builder also provides a convenience method to initialise the results to a long data type (which requires a specific query flag as well as the `stride` field):
+We also provide a convenience method to initialise the results to a long data type, which requires a specific query flag as well as setting the `stride` field appropriately:
 
 ```java
 public ResultBuilder longs() {
@@ -942,7 +1027,7 @@ public ResultBuilder longs() {
 }
 ```
 
-Since query results can be retrieved using two different mechanism the builder provides __two__ build methods, 
+Since query results can be retrieved using two different mechanisms the builder provides __two__ build methods, 
 for the case where the results are retrieved on-demand the application provides an NIO buffer:
 
 ```java
@@ -957,7 +1042,7 @@ public Consumer<ByteBuffer> build() {
 }
 ```
 
-The `validate` method (not shown) checks that the `stride` is a multiple of the specified data type and builds the flags bit-mask.
+The `validate` method (not shown) checks that `stride` is a multiple of the specified data type and builds the flags bit-mask.
 
 The second variant generates a command that is injected into the render sequence to asynchronously copy the results to a given Vulkan buffer:
 
@@ -984,9 +1069,61 @@ Note that the slots __must__ be reset before the query begins and this command _
 
 ### Integration
 
-TODO
+The query framework is used in the terrain demo to further verify the tesselation process using a pipeline statistics query.
 
+First we create a query pool that counts the number of vertices generated by the tesselator:
 
+```java
+@Bean
+public Query.Pool queryPool(LogicalDevice dev) {
+    return new Pool.Builder()
+        .type(VkQueryType.PIPELINE_STATISTICS)
+        .statistic(VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS)
+        .slots(1)
+        .build(dev);
+}
+```
+
+And a query instance allocated from the pool:
+
+```java
+@Bean
+public Query query(Query.Pool pool) {
+    return pool.query(1);
+}
+```
+
+The query wraps the render pass in the command sequence:
+
+```java
+buffer
+    .add(query.pool().reset(0, 1))
+    .add(frame.begin())
+        .add(query.begin())
+            ...
+        .add(query.end())
+    .add(FrameBuffer.END)
+```
+
+Again note that the reset command is invoked before the start of the render pass.
+
+Finally we configure retrieval of the query results as a frame listener task that dumps the vertex count to the console:
+
+```java
+@Bean
+public Task queryResults() {
+    ByteBuffer results = BufferHelper.allocate(Integer.BYTES);
+    Consumer<ByteBuffer> consumer = pool.result().build();
+    return () -> {
+        consumer.accept(results);
+        System.out.println(results.getInt());
+    };
+}
+```
+
+The terrain demo application should now output the number of the vertices generated on each frame.  Obviously this is a very crude implementation to illustrate the query framework.
+
+Note that frame listener tasks are invoked _before_ the render sequence so the query results will likely fail on the first invocation with a `VK_NOT_READY` result code.
 
 ---
 
