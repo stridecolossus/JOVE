@@ -474,7 +474,7 @@ To implement all the above we require the following components:
 
 * A `Message` record that aggregates the diagnostics report.
 
-Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors sooner rather than later.  We will decide on a case-by-case basis whether 'double-checking' the validation layer is worth the effort, in particular taking account how 'far' away data is initialised from the corresponding API call.
+Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors at source.  Although this means we are essentially replicating the validation layer, the development overhead is usually worth the effort on the assumption it will be considerably easier for the developer to diagnose an exception stack-trace as opposed to an error message with limited context.
 
 ### Handler Manager
 

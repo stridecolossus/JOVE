@@ -5,13 +5,12 @@ import java.util.Collection;
 import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.FromNativeContext;
-import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
 
 /**
- * A <i>native object</i> is a resource created by the native layer referenced by a JNA pointer.
+ * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
  * @author Sarge
  */
 public interface NativeObject {
@@ -21,11 +20,11 @@ public interface NativeObject {
 	Handle handle();
 
 	/**
-	 * Helper - Converts the given objects to an array of handles.
+	 * Helper - Converts the given objects to an array of pointers.
 	 * @param objects Native objects
-	 * @return Handle array
+	 * @return Pointer array
 	 */
-	static Memory array(Collection<? extends NativeObject> objects) {
+	static PointerArray array(Collection<? extends NativeObject> objects) {
 		// Check for empty data
 		if(objects.isEmpty()) {
 			return null;

@@ -33,15 +33,15 @@ public record Plane(Vector normal, float distance) {
 		 * @return Half-space
 		 */
 		public static HalfSpace of(float d) {
-			if(MathsUtil.isZero(d)) {
-				return INTERSECT;
-			}
-			else
 			if(d < 0) {
 				return NEGATIVE;
 			}
-			else {
+			else
+			if(d > 0) {
 				return POSITIVE;
+			}
+			else {
+				return INTERSECT;
 			}
 		}
 	}

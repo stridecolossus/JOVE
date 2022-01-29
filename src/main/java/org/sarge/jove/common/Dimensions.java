@@ -6,7 +6,7 @@ import org.sarge.lib.util.Check;
  * General 2D dimensions.
  * @author Sarge
  */
-public record Dimensions(int width, int height) {
+public record Dimensions(int width, int height) implements Comparable<Dimensions> {
 	/**
 	 * Constructor.
 	 * @param width 	Width
@@ -25,7 +25,7 @@ public record Dimensions(int width, int height) {
 	}
 
 	/**
-	 * @return Ratio
+	 * @return Aspect ratio
 	 */
 	public float ratio() {
 		return width / (float) height;
@@ -38,13 +38,18 @@ public record Dimensions(int width, int height) {
 		return width == height;
 	}
 
-	/**
-	 * Tests whether these dimensions are larger than the given dimensions.
-	 * @param dim Dimensions
-	 * @return Whether larger than the given dimensions
-	 */
-	public boolean isLargerThan(Dimensions dim) {
-		return (width > dim.width) || (height > dim.height);
+	@Override
+	public int compareTo(Dimensions that) {
+		if((this.width < that.width) || (this.height < that.height)) {
+			return -1;
+		}
+		else
+		if((this.width > that.width) || (this.height > that.height)) {
+			return +1;
+		}
+		else {
+			return 0;
+		}
 	}
 
 	@Override

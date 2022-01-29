@@ -25,7 +25,7 @@ sphere builder
 - extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
 
 other possible features
-- texture fonts?
+- texture fonts, atlas based, or TT font -> builder, 3D, etc
 - OpenAL audio
 - shader storage buffer (SSBO)
 

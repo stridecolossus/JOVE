@@ -36,9 +36,10 @@ class DimensionsTest {
 	}
 
 	@Test
-	void isLargerThan() {
-		assertEquals(false, dim.isLargerThan(dim));
-		assertEquals(true, dim.isLargerThan(new Dimensions(0, 0)));
-		assertEquals(false, dim.isLargerThan(new Dimensions(999, 999)));
+	void compareTo() {
+		assertEquals(0, dim.compareTo(dim));
+		assertEquals(1, dim.compareTo(new Dimensions(0, 0)));
+		assertEquals(1, dim.compareTo(new Dimensions(640, 0)));
+		assertEquals(-1, dim.compareTo(new Dimensions(999, 999)));
 	}
 }

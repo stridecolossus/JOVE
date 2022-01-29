@@ -11,12 +11,14 @@ import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.ClearValue;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.render.FrameBuffer;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * An <i>image view</i> is a reference to an {@link Image}.
+ * An <i>image view</i> is a reference to an {@link Image} used as a frame buffer <i>attachment</i>.
+ * @see FrameBuffer
  * @author Sarge
  */
 public class View extends AbstractVulkanObject {

@@ -339,11 +339,11 @@ public class Swapchain extends AbstractVulkanObject {
 		public Builder extent(Dimensions extent) {
 			// Check minimum extent
 			final Dimensions min = new Dimensions(caps.minImageExtent.width, caps.minImageExtent.height);
-			if(min.isLargerThan(extent)) throw new IllegalArgumentException("Extent is smaller than the supported minimum");
+			if(min.compareTo(extent) < 0) throw new IllegalArgumentException("Extent is smaller than the supported minimum");
 
 			// Check maximum extent
 			final Dimensions max = new Dimensions(caps.maxImageExtent.width, caps.maxImageExtent.height);
-			if(extent.isLargerThan(max)) throw new IllegalArgumentException("Extent is larger than the supported maximum");
+			if(extent.compareTo(max) > 0) throw new IllegalArgumentException("Extent is larger than the supported maximum");
 
 			// Populate extents
 			extent(extent.width(), extent.height());

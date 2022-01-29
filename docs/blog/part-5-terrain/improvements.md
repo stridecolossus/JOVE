@@ -583,7 +583,7 @@ Since the render sequence is recorded per frame we can now switch the pipeline a
 
 A _pipeline cache_ stores the results of pipeline construction and can be reused between pipelines and between runs of an application, allowing the hardware to possibly optimise pipeline construction.  
 
-The domain object is relatively trivial:
+A pipeline cache is a trivial opaque domain class:
 
 ```java
 public class PipelineCache extends AbstractVulkanObject {

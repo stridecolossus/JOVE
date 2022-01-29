@@ -23,7 +23,7 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 
 	/**
 	 * Constructor.
-	 * @param handle Handle
+	 * @param handle JNA pointer handle
 	 */
 	protected AbstractTransientNativeObject(Pointer handle) {
 		this(new Handle(handle));

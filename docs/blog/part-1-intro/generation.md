@@ -7,12 +7,16 @@ title: Code Generating the Vulkan API
 ## Contents
 
 - [Overview](#overview)
-- [Technology](#technology)
 - [Code Generation](#generation-game)
+- [Enumerations](#enumerations)
+- [Structures](#structures)
+- [Conclusion](#conclusion)
 
 ---
 
 ## Overview
+
+### Background
 
 For many years we had been developing a personal project for an OpenGL based library and a suite of example applications.  This software was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).  We intended to retire the OpenGL project and start afresh with a Vulkan based 3D engine.  LWJGL had recently implemented a Vulkan port and we expected to be able to use the new bindings to get to grips with the Vulkan API.
 
@@ -34,25 +38,19 @@ In summary we could have blindly copied some of the example code, but we wouldn'
 
 This is not intended to be a negative review of LWJGL, it was used with great results in the previous OpenGL implementation.  Unfortunately our experience in the new project was frankly irritating, we had no idea how we were supposed to use the bindings, had barely scratched the surface of the Vulkan API, and eventually we just gave up.
 
-Sometime later we were encouraged by a friend to make a second attempt - our first design decision was that unless LWJGL had materially changed we would look for an alternative.
-
----
-
-## Technology
+Sometime later we were encouraged by a friend to make a second attempt.  Our first design decision was that unless LWJGL had materially changed we would look for alternative bindings.
 
 ### Alternatives
 
+Unfortunately there was no alternative to LWJGL (that we could find) so our focus shifted to implementing custom bindings to the native Vulkan library.
+
 Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.
 
-There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)) and although it appeared to do exactly what we wanted there were some misgivings:
+There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)) and although it appeared to do exactly what we wanted there were some misgivings.  At the time of writing Panama was still in a fluid state and many components were not yet part of the released JDK.  Additionally the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer.
 
-* At the time of writing Panama was still in a fluid state and none of the components were part of the released JDK (UPDATE: most components are now available as preview features).
+Next we considered SWIG which is the code-generation technology used by LWJGL, but again we were not encouraged.  SWIG requires proprietary descriptors to define the bindings to the native layer and we have already covered our issues with the resultant code.
 
-* The API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer.
-
-Next we considered SWIG which is the code-generation technology used by LWJGL, but again we were not encouraged.  SWIG requires additional descriptors to define the bindings to the native layer and we have already covered our issues with the resultant code.
-
-Finally we came across JNA - having never had to deal with a native library directly (professionally or personally) it was new to us, but initial impressions were promising:
+Finally we came across JNA (which was new to the author) but initial impressions were promising:
 
 * The premise of auto-magically mapping Java interfaces to the native API seemed ideal (no additional descriptors required).
 
@@ -302,7 +300,7 @@ Here we replace the leading numeric to ensure the name is valid:
 private static final String[] DIGITS = {"ONE", "TWO", "THREE"};
 ```
 
-### Enumeration Template
+### Enumerations
 
 To generate the Java enumerations we use [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for what we were doing, in particular providing support for collections.
 
@@ -655,7 +653,6 @@ private static String map(String type, int count) {
 
             // Strings
             case "char" -> switch(count) {
-                case 0 -> type;
                 case 1 -> "String";
                 default -> POINTER;
             };

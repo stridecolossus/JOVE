@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.sarge.jove.util.MathsUtil.HALF;
 
@@ -37,9 +38,9 @@ public class MutableRotationTest {
 
 	@Test
 	void equals() {
-		assertEquals(true, rot.equals(rot));
-		assertEquals(true, rot.equals(new MutableRotation(Vector.Y)));
-		assertEquals(false, rot.equals(null));
-		assertEquals(false, rot.equals(new MutableRotation(Vector.Z)));
+		assertEquals(rot, rot);
+		assertEquals(rot, new MutableRotation(Vector.Y));
+		assertNotEquals(rot, null);
+		assertNotEquals(rot, new MutableRotation(Vector.Z));
 	}
 }

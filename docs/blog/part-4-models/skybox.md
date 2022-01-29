@@ -920,7 +920,7 @@ static DeviceFeatures of(Collection<String> required) {
 
 A Vulkan descriptor for the device features can be constructed from the names as follows:
 
-```
+```java
 public VkPhysicalDeviceFeatures descriptor() {
     // Skip if empty
     if(required.isEmpty()) {

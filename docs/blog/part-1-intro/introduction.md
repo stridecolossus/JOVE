@@ -86,19 +86,27 @@ To attempt to achieve these goals our approach and principles are as follows:
 
 * Third-party libraries and technologies must be well-documented and widely supported.
 
-Some of these might seem high-flown or even pointless for a personal project.  However one advantage of being of a certain age is that experience teaches us that following sound development principles from the start avoids pain and bugs in the future (especially for a large project perhaps developed over several years).
+Some of these might seem high-flown or even pointless for a personal project, however experience has taught us that following sound development principles avoids pain and bugs in the future (especially for a large project perhaps developed over several years).
 
 On the other hand this _is_ a personal project and we allow ourselves some freedom in our decisions that might not be possible under the constraints of a real-world project - we can reinvent as many wheels as we choose if there is sufficient reason (or challenge) in doing so.
 
-Finally we collect some design decisions for common use-cases throughout the JOVE library:
+---
 
-* Most of the Vulkan domain classes are instantiated via the API and are often highly configurable.  Therefore the _builder_ pattern and/or static factory methods are used extensively to create Vulkan components.  However constructors are often package-private for testability.
+## Design
 
-* Generally all classes are _immutable_ by default unless there is a compelling reason to provide setters and mutator methods.  This usually simplifies the design and also has the benefit of mitigating risk for multi-threaded code (Vulkan is designed to support multi-threaded applications from the outset).  In any case the Vulkan API is extremely well-designed (considering the limitations of defining abstract data types in C) and the majority of the components are immutable by design, e.g. pipelines, semaphores, etc.
+The general approach for the JOVE project is to design a toolkit of Vulkan functionality that can then be built upon to create higher level features.
+
+The Vulkan API is (in our opinion) extremely well designed, especially considering the limitations of defining abstract data types in C.  The components of the JOVE library will correspond closely to the underlying API and will follow the same naming conventions.
+
+Generally a Vulkan component is configured via a _descriptor_ which is passed to an API method to instantiate the native object.  Therefore JOVE will make extensive use of the _builder_ pattern and/or static factory methods to create domain objects (however constructors are often package-private for testability).
+
+Obviously there is usually some _thrashing_ at the start of a new project employing new technologies, in particular there will be a major change of direction when binding to the native library, as we shall see in the next chapter.
+
+Finally we collect some general design decisions:
+
+* All classes are _immutable_ by default unless there is a compelling reason to provide mutator methods.  In any case the majority of the native Vulkan components are immutable by design, e.g. pipelines, semaphores, etc.  This also has the side benefits of simplifying the design and mitigating risk for multi-threaded code (and Vulkan is designed to support multi-threaded applications from the ground up).
 
 * Unless explicitly stated otherwise __all__ mutable components are considered __not__ thread safe.
-
-* JOVE components will follow the Vulkan naming convention.
 
 * Data transfer operations are implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
 

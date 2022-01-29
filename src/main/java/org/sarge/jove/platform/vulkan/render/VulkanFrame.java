@@ -108,6 +108,7 @@ public class VulkanFrame implements RenderTask.Frame {
 		final int index = swapchain.acquire(available, null);
 
 		// Wait for previous frame to complete
+		// TODO - this still sucks? active[] is property of swapchain but never used by it, also requires null check in waitReady(), should be handled here?
 		swapchain.waitReady(index, fence);
 		fence.reset();
 

@@ -18,7 +18,6 @@ import org.sarge.lib.util.Percentile;
  * @see VkPipelineViewportStateCreateInfo
  * @author Sarge
  */
-//@DeviceLimit(feature="multiViewport", value="viewports")
 public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
 	/**
 	 * Transient viewport descriptor.
@@ -34,12 +33,6 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	private final List<Viewport> viewports = new ArrayList<>();
 	private final List<Rectangle> scissors = new ArrayList<>();
 	private boolean flip;
-
-// TODO - limits
-//	public int maxViewports;
-//	public int[] maxViewportDimensions = new int[2];
-//	public float[] viewportBoundsRange = new float[2];
-//	public int viewportSubPixelBits;
 
 	void copy(ViewportPipelineStageBuilder builder) {
 		flip = builder.flip;
@@ -132,15 +125,26 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		out.extent.height = in.height();
 	}
 
+	// TODO - limits
+//		public int maxViewports;
+//		public int[] maxViewportDimensions = new int[2];
+//		public float[] viewportBoundsRange = new float[2];
+//		public int viewportSubPixelBits;
+
 	@Override
 	VkPipelineViewportStateCreateInfo get() {
 		// Validate
 		final int count = viewports.size();
-		if(count == 0) throw new IllegalArgumentException("No viewports specified");
-		if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+		if(count == 0) {
+			throw new IllegalArgumentException("No viewports specified");
+		}
+		else
 		if(count > 1) {
 			// TODO - count < limits.maxViewports
 			// TODO - multiViewport
+		}
+		if(scissors.size() != count) {
+			throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
 		}
 
 		// Add viewports

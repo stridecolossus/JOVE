@@ -414,7 +414,8 @@ layout(location=0) in vec2 inCoord;
 layout(location=0) out vec4 outColour;
 
 void main() {
-    outColour = texture(heightMap, inCoord).r;
+    float h = texture(heightMap, inCoord).r;
+    outColour = vec4(h, 0, 0, 1);
 }
 ```
 
