@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Dimensions;
@@ -129,19 +130,19 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 	 */
 	private static List<Level> loadIndex(DataInput in, int count) throws IOException {
 		// Load MIP level index
-		final Level[] index = new Level[count];
+		final int[] offset = new int[count];
+		final int[] length = new int[count];
 		for(int n = 0; n < count; ++n) {
-			final int offset = (int) in.readLong();
-			final int len = (int) in.readLong();
+			offset[n] = (int) in.readLong();
+			length[n] = (int) in.readLong();
 			in.readLong();
-			index[n] = new Level(offset, len);
 		}
 
-		// Truncate MIP level offsets relative to start of image array
-		final int offset = index[index.length - 1].offset();
-		return Arrays
-				.stream(index)
-				.map(level -> new Level(level.offset() - offset, level.length()))
+		// Truncate offsets relative to start of image and convert to MIP index
+		final int start = offset[count - 1];
+		return IntStream
+				.range(0, count)
+				.mapToObj(n -> new Level(offset[n] - start, length[n]))
 				.collect(toList());
 	}
 

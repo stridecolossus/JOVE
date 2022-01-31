@@ -31,7 +31,7 @@ class GridBuilderTest {
 	@DisplayName("Create an unindexed grid with duplicate vertices (delegates to the index factory of the primitive")
 	@Test
 	void build() {
-		final Model model = builder.build();
+		final Model model = builder.tile(0.25f).build();
 		assertNotNull(model);
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals((3 * 3) * (2 * 3), model.count());
@@ -42,8 +42,6 @@ class GridBuilderTest {
 	@Test
 	void buildNotIndexed() {
 		final MutableModel model = builder
-				.tile(new Dimensions(1, 2))
-				.scale(3)
 				.primitive(Primitive.POINTS)
 				.index(null)
 				.build();

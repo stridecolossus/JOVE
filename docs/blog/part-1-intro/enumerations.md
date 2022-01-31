@@ -83,7 +83,7 @@ public TreeSet<E> enumerate(int mask) {
     return IntStream
         .range(0, Integer.highestOneBit(mask))
         .map(bit -> 1 << bit)
-        .filter(value -> MathsUtil.isMask(value, mask))
+        .filter(value -> (value & mask) == value)
         .mapToObj(this::map)
         .collect(Collectors.toCollection(TreeSet::new));
 }

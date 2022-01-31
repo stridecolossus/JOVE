@@ -87,8 +87,7 @@ public class GridBuilder {
 	}
 
 	private Dimensions size = new Dimensions(4, 4);
-	private Dimensions tile = new Dimensions(1, 1);
-	private float scale = 1;
+	private float tile = 1;
 	private HeightFunction height = HeightFunction.literal(0);
 	private Primitive primitive = Primitive.TRIANGLES;
 	private IndexFactory index;
@@ -111,17 +110,8 @@ public class GridBuilder {
 	 * Sets the grid tile size.
 	 * @param tile Tile size
 	 */
-	public GridBuilder tile(Dimensions tile) {
-		this.tile = notNull(tile);
-		return this;
-	}
-
-	/**
-	 * Sets the grid tile size scale.
-	 * @param scale Tile size scalar
-	 */
-	public GridBuilder scale(float scale) {
-		this.scale = scale;
+	public GridBuilder tile(float tile) {
+		this.tile = tile;
 		return this;
 	}
 
@@ -166,16 +156,16 @@ public class GridBuilder {
 		// Calculate half distance in both directions
 		final int w = size.width();
 		final int h = size.height();
-		final float dx = tile.width() * scale * (w - 1) / 2;
-		final float dz = tile.height() * scale * (h - 1) / 2;
+		final float halfWidth = tile * (w - 1) / 2;
+		final float halfHeight = tile * (h - 1) / 2;
 
 		// Build grid vertices (column major)
 		final List<Vertex> vertices = new ArrayList<>();
 		for(int row = 0; row < h; ++row) {
 			for(int col = 0; col < w; ++col) {
 				// Determine grid position and height
-				final float x = col * tile.width() * scale - dx;
-				final float z = row * tile.height() * scale - dz;
+				final float x = col * tile - halfWidth;
+				final float z = row * tile - halfHeight;
 				final float y = height.height(row, col);
 				final Point pos = new Point(x, y, z);
 

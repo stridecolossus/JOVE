@@ -8,47 +8,25 @@ import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.VkSampleCount;
-import org.sarge.jove.platform.vulkan.render.Attachment.Operations;
 import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.lib.util.Check;
 
 /**
  * An <i>attachment</i> defines a target for a render pass such as a colour or depth-stencil image.
+ * @see VkAttachmentDescription
  * @author Sarge
  */
-@SuppressWarnings("unused")
-public record Attachment(VkFormat format, VkSampleCount samples, Operations colour, Operations stencil, VkImageLayout initial, VkImageLayout layout) {
-	/**
-	 * Attachment operations.
-	 */
-	public static record Operations(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
-		/**
-		 * Constructor.
-		 * @param load			Load operation
-		 * @param store			Store operation
-		 */
-		public Operations {
-			Check.notNull(load);
-			Check.notNull(store);
-		}
+public class Attachment {
+	private final VkAttachmentDescription descriptor;
+
+	private Attachment(VkAttachmentDescription attachment) {
+		this.descriptor = notNull(attachment);
 	}
 
 	/**
-	 * Constructor.
-	 * @param format		Attachment format
-	 * @param samples		Number of samples
-	 * @param colour		Colour attachment operations
-	 * @param stencil		Depth-stencil operations
-	 * @param initial		Initial layout
-	 * @param layout		New layout
+	 * @return Attachment image format
 	 */
-	public Attachment {
-		Check.notNull(format);
-		Check.notNull(samples);
-		Check.notNull(colour);
-		Check.notNull(stencil);
-		Check.notNull(initial);
-		Check.notNull(layout);
+	public VkFormat format() {
+		return descriptor.format;
 	}
 
 	/**
@@ -56,28 +34,56 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 	 * @param desc Attachment descriptor
 	 */
 	void populate(VkAttachmentDescription attachment) {
-		attachment.format = format;
-		attachment.samples = samples;
-		attachment.loadOp = colour.load;
-		attachment.storeOp = colour.store;
-		attachment.stencilLoadOp = stencil.load;
-		attachment.stencilStoreOp = stencil.store;
-		attachment.initialLayout = initial;
-		attachment.finalLayout = layout;
+		// TODO - copy structure memory directly?
+		attachment.format = descriptor.format;
+		attachment.samples = descriptor.samples;
+		attachment.loadOp = descriptor.loadOp;
+		attachment.storeOp = descriptor.storeOp;
+		attachment.stencilLoadOp = descriptor.stencilLoadOp;
+		attachment.stencilStoreOp = descriptor.stencilStoreOp;
+		attachment.initialLayout = descriptor.initialLayout;
+		attachment.finalLayout = descriptor.finalLayout;
+	}
+
+	@Override
+	public int hashCode() {
+		return descriptor.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Attachment that) &&
+				(descriptor.format == that.descriptor.format) &&
+				(descriptor.samples == that.descriptor.samples) &&
+				(descriptor.loadOp == that.descriptor.loadOp) &&
+				(descriptor.storeOp == that.descriptor.storeOp) &&
+				(descriptor.stencilLoadOp == that.descriptor.stencilLoadOp) &&
+				(descriptor.stencilStoreOp == that.descriptor.stencilStoreOp) &&
+				(descriptor.initialLayout == that.descriptor.initialLayout) &&
+				(descriptor.finalLayout == that.descriptor.finalLayout);
+	}
+
+	@Override
+	public String toString() {
+		return descriptor.toString();
 	}
 
 	/**
 	 * Builder for a render pass attachment.
 	 */
 	public static class Builder {
-		private VkFormat format;
-		private VkSampleCount samples = VkSampleCount.COUNT_1;
-		private VkAttachmentLoadOp load = VkAttachmentLoadOp.DONT_CARE;
-		private VkAttachmentStoreOp store = VkAttachmentStoreOp.DONT_CARE;
-		private VkAttachmentLoadOp stencilLoad = VkAttachmentLoadOp.DONT_CARE;
-		private VkAttachmentStoreOp stencilStore = VkAttachmentStoreOp.DONT_CARE;
-		private VkImageLayout initial = VkImageLayout.UNDEFINED;
-		private VkImageLayout layout;
+		private final VkAttachmentDescription attachment = new VkAttachmentDescription();
+
+		public Builder() {
+			attachment.samples = VkSampleCount.COUNT_1;
+			attachment.loadOp = VkAttachmentLoadOp.DONT_CARE;
+			attachment.storeOp = VkAttachmentStoreOp.DONT_CARE;
+			attachment.stencilLoadOp = VkAttachmentLoadOp.DONT_CARE;
+			attachment.stencilStoreOp = VkAttachmentStoreOp.DONT_CARE;
+			attachment.initialLayout = VkImageLayout.UNDEFINED;
+		}
 
 		/**
 		 * Sets the attachment format (usually the same as the swap-chain).
@@ -85,7 +91,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 */
 		public Builder format(VkFormat format) {
 			// TODO - check undefined? or is that valid?
-			this.format = notNull(format);
+			attachment.format = notNull(format);
 			return this;
 		}
 
@@ -94,7 +100,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 * @param samples Number of samples
 		 */
 		public Builder samples(VkSampleCount samples) {
-			this.samples = notNull(samples);
+			attachment.samples = notNull(samples);
 			return this;
 		}
 
@@ -105,7 +111,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 * @see #samples(VkSampleCount)
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntegerEnumeration.mapping(VkSampleCount.class).map(samples);
+			attachment.samples = IntegerEnumeration.mapping(VkSampleCount.class).map(samples);
 			return this;
 		}
 
@@ -114,7 +120,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 * @param op Load operation
 		 */
 		public Builder load(VkAttachmentLoadOp op) {
-			this.load = notNull(op);
+			attachment.loadOp = notNull(op);
 			return this;
 		}
 
@@ -123,7 +129,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 * @param op Store operation
 		 */
 		public Builder store(VkAttachmentStoreOp op) {
-			this.store = notNull(op);
+			attachment.storeOp = notNull(op);
 			return this;
 		}
 
@@ -132,7 +138,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 * @param op Stencil load operation
 		 */
 		public Builder stencilLoad(VkAttachmentLoadOp op) {
-			this.stencilLoad = notNull(op);
+			attachment.stencilLoadOp = notNull(op);
 			return this;
 		}
 
@@ -141,7 +147,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 * @param op Stencil store operation
 		 */
 		public Builder stencilStore(VkAttachmentStoreOp op) {
-			this.stencilStore = notNull(op);
+			attachment.stencilStoreOp = notNull(op);
 			return this;
 		}
 
@@ -150,7 +156,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 * @param layout Initial image layout
 		 */
 		public Builder initialLayout(VkImageLayout layout) {
-			this.initial = notNull(layout);
+			attachment.initialLayout = notNull(layout);
 			return this;
 		}
 
@@ -162,7 +168,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 			if((layout == VkImageLayout.UNDEFINED) || (layout == VkImageLayout.PREINITIALIZED)) {
 				throw new IllegalArgumentException("Invalid final layout: " + layout);
 			}
-			this.layout = notNull(layout);
+			attachment.finalLayout = notNull(layout);
 			return this;
 		}
 
@@ -173,13 +179,11 @@ public record Attachment(VkFormat format, VkSampleCount samples, Operations colo
 		 */
 		public Attachment build() {
 			// Validate
-			if(format == null) throw new IllegalArgumentException("No format specified for attachment");
-			if(layout == null) throw new IllegalArgumentException("No final layout specified");
+			if(attachment.format == null) throw new IllegalArgumentException("No format specified for attachment");
+			if(attachment.finalLayout == null) throw new IllegalArgumentException("No final layout specified");
 
 			// Create attachment
-			final Operations colour = new Operations(load, store);
-			final Operations stencil = new Operations(stencilLoad, stencilStore);
-			return new Attachment(format, samples, colour, stencil, initial, layout);
+			return new Attachment(attachment);
 		}
 	}
 }

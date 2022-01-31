@@ -92,6 +92,72 @@ public class Shader extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Transient specialisation constant record.
+	 */
+	private static class Constant {
+		private final int id;
+		private final Object value;
+		private final int size;
+		private int offset;
+
+		Constant(Entry<Integer, Object> entry) {
+			this.id = entry.getKey();
+			this.value = entry.getValue();
+			this.size = size();
+		}
+
+		/**
+		 * Populates the descriptor for this constant.
+		 */
+		void populate(VkSpecializationMapEntry entry) {
+			entry.constantID = id;
+			entry.offset = offset;
+			entry.size = size;
+		}
+
+		/**
+		 * @return Size of this constant (bytes)
+		 */
+		private int size() {
+			if(value instanceof Integer) {
+				return Integer.BYTES;
+			}
+			else
+			if(value instanceof Float) {
+				return Float.BYTES;
+			}
+			else
+			if(value instanceof Boolean) {
+				return Integer.BYTES;
+			}
+			else {
+				throw new UnsupportedOperationException("Unsupported constant type: " + value.getClass());
+			}
+		}
+
+		/**
+		 * Adds this constant to the data buffer.
+		 */
+		void append(ByteBuffer buffer) {
+			if(value instanceof Integer n) {
+				buffer.putInt(n);
+			}
+			else
+			if(value instanceof Float f) {
+				buffer.putFloat(f);
+			}
+			else
+			if(value instanceof Boolean b) {
+				final VulkanBoolean bool = VulkanBoolean.of(b);
+				buffer.putInt(bool.toInteger());
+			}
+			else {
+				assert false;
+			}
+		}
+	}
+
+	/**
 	 * Constructs the descriptor for the given specialisation constants.
 	 * @param constants Specialisation constants indexed by ID
 	 * @return Specialisation constants descriptor or {@code null} if empty
@@ -102,72 +168,12 @@ public class Shader extends AbstractVulkanObject {
 			return null;
 		}
 
-		// Table entry
-		class Constant {
-			private final int id;
-			private final Object value;
-			private final int size;
-			private int offset;
-
-			private Constant(Entry<Integer, Object> entry) {
-				this.id = entry.getKey();
-				this.value = entry.getValue();
-				this.size = size();
-			}
-
-			/**
-			 * Populates the descriptor for this constant.
-			 */
-			private void populate(VkSpecializationMapEntry entry) {
-				entry.constantID = id;
-				entry.offset = offset;
-				entry.size = size;
-			}
-
-			/**
-			 * @return Size of this constant (bytes)
-			 */
-			private int size() {
-				if(value instanceof Integer) {
-					return Integer.BYTES;
-				}
-				else
-				if(value instanceof Float) {
-					return Float.BYTES;
-				}
-				else
-				if(value instanceof Boolean) {
-					return Integer.BYTES;
-				}
-				else {
-					throw new IllegalArgumentException("Invalid constant type: " + value.getClass());
-				}
-			}
-
-			/**
-			 * Adds this constant to the data buffer.
-			 */
-			private void append(ByteBuffer buffer) {
-				if(value instanceof Integer n) {
-					buffer.putInt(n);
-				}
-				else
-				if(value instanceof Float f) {
-					buffer.putFloat(f);
-				}
-				else
-				if(value instanceof Boolean b) {
-					final VulkanBoolean bool = VulkanBoolean.of(b);
-					buffer.putInt(bool.toInteger());
-				}
-				else {
-					assert false;
-				}
-			}
-		}
-
 		// Convert to table of constants
-		final List<Constant> table = constants.entrySet().stream().map(Constant::new).collect(toList());
+		final List<Constant> table = constants
+				.entrySet()
+				.stream()
+				.map(Constant::new)
+				.collect(toList());
 
 		// Patch offsets and calculate total size
 		int size = 0;
@@ -178,14 +184,14 @@ public class Shader extends AbstractVulkanObject {
 
 		// Populate map entries
 		final var info = new VkSpecializationInfo();
-		info.mapEntryCount = constants.size();
+		info.mapEntryCount = table.size();
 		info.pMapEntries = StructureHelper.pointer(table, VkSpecializationMapEntry::new, Constant::populate);
 
 		// Populate constant data
 		info.dataSize = size;
 		info.pData = BufferHelper.allocate(size);
-		for(Constant entry : table) {
-			entry.append(info.pData);
+		for(Constant c : table) {
+			c.append(info.pData);
 		}
 
 		return info;

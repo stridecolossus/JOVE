@@ -870,7 +870,7 @@ The features supported by the hardware are specified by the `VkPhysicalDeviceFea
 
 Therefore we introduce a new abstraction to specify the features _supported_ by the hardware (wrapping the structure) and the features _required_ for a given application (feature names).
 
-### Helper Class
+### Framework
 
 First the following interface (and skeleton implementation) define a set of device features for both cases:
 
@@ -980,7 +980,7 @@ public Set<String> features() {
 }
 ```
 
-### Configuration
+### Integration
 
 The new wrapper implementation is used to retrieve the _supported_ features for a physical device:
 
@@ -1008,39 +1008,16 @@ public static Predicate<PhysicalDevice> predicate(DeviceFeatures features) {
 }
 ```
 
-In the builder for the logical device the relevant field is populated in the create descriptor:
+And finally in the builder for the logical device the relevant field is populated in the create descriptor:
 
 ```java
 public LogicalDevice build() {
-    VkDeviceCreateInfo info = new VkDeviceCreateInfo();
-    info.pEnabledFeatures = DeviceFeatures.populate(required);
+    info.pEnabledFeatures = required.descriptor();
     ...
 }
 ```
 
-Which uses the following helper to transform the set of required features to the Vulkan structure:
-
-```java
-static VkPhysicalDeviceFeatures populate(DeviceFeatures required) {
-    // Ignore if not specified
-    if(required == null) {
-        return null;
-    }
-
-    // Enumerate required features
-    var struct = new VkPhysicalDeviceFeatures();
-    required
-        .features()
-        .stream()
-        .forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
-
-    return struct;
-}
-```
-
 This framework should allow an application to query the features _supported_ by the hardware and to specify the _required_ feature set.  Well behaved applications could adapt their functionality to the supported features.  For example the demo could avoid using sampler anisotropy if that feature is not supported (not likely, but illustrates the point).
-
-### Integration
 
 In the device configuration class we first specify the _required_ features for the demo:
 

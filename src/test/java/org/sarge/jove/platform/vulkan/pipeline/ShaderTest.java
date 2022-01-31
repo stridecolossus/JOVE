@@ -89,7 +89,7 @@ public class ShaderTest extends AbstractVulkanTest {
 
 		@Test
 		void invalid() {
-			assertThrows(IllegalArgumentException.class, () -> Shader.constants(Map.of(0, "doh")));
+			assertThrows(UnsupportedOperationException.class, () -> Shader.constants(Map.of(0, "doh")));
 		}
 
 		@Test

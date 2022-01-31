@@ -39,7 +39,6 @@ public class AttachmentTest {
 
 	@Test
 	void equals() {
-//		attachment.descriptor().write();
 		assertEquals(true, attachment.equals(attachment));
 		assertEquals(false, attachment.equals(null));
 	}

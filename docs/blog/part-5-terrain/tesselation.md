@@ -46,8 +46,7 @@ We start with a new model builder that constructs a _grid_ of _quads_ in the X-Z
 ```java
 public class GridBuilder {
     private Dimensions size = new Dimensions(4, 4);
-    private Dimensions tile = new Dimensions(1, 1);
-    private float scale = 1;
+    private float tile = 1;
     private HeightFunction height = HeightFunction.literal(0);
     private Primitive primitive = Primitive.TRIANGLES;
     private IndexFactory index;
@@ -62,7 +61,7 @@ Where:
 
 * _size_ is the dimensions of the grid, i.e. the number of vertices in each direction.
 
-* _tile_ is the dimensions of each quad comprising the grid scaled by the _scale_ parameter.
+* _tile_ is the dimensions of each quad comprising the grid.
 
 * And _height_ generates the height (Y coordinate) of each vertex.
 
@@ -99,8 +98,8 @@ The grid is centred on the origin of the model so we first calculate the _half d
 public MutableModel build() {
     int w = size.width();
     int h = size.height();
-    float dx = tile.width() * scale * (w - 1) / 2;
-    float dz = tile.height() * scale * (h - 1) / 2;
+    float dx = tile * (w - 1) / 2;
+    float dz = tile * (h - 1) / 2;
 
     ...
 
@@ -122,8 +121,8 @@ for(int row = 0; row < h; ++row) {
 The position and height of each vertex is determined as follows:
 
 ```java
-float x = col * tile.width() * scale - dx;
-float z = row * tile.height() * scale - dz;
+float x = col * tile - dx;
+float z = row * tile - dz;
 float y = height.height(col, row);
 Point pos = new Point(x, y, z);
 ```
@@ -642,8 +641,6 @@ And finally the shader applies perspective projection and outputs the resultant 
 
 ```glsl
 gl_Position = projection * view * model * pos;
-outPosition = pos.xyz;
-outCoord = coord;
 ```
 
 The complete evaluation shader is as follows:
@@ -681,7 +678,6 @@ void main() {
 
     // Output vertex
     gl_Position = projection * view * model * pos;
-    outCoord = coord;
 }
 ```
 

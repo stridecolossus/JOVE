@@ -130,7 +130,7 @@ Push constants are an alternative and more efficient mechanism for transferring 
 
 * The maximum amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
 
-* Push constants are updated and stored within as part of the command buffer.
+* Push constants are updated and stored within the command buffer.
 
 * Push constants have alignment restrictions, see [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
 
