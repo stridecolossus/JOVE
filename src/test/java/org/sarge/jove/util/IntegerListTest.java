@@ -117,14 +117,6 @@ public class IntegerListTest {
 	@Test
 	void bufferShort() {
 		final ShortBuffer buffer = mock(ShortBuffer.class);
-		list.add(3);
-		list.buffer(buffer);
-		verify(buffer).put(new short[]{3}, 0, 1);
-	}
-
-	@Test
-	void bufferShortDirect() {
-		final ShortBuffer buffer = mock(ShortBuffer.class);
 		when(buffer.isDirect()).thenReturn(true);
 		list.add(3);
 		list.buffer(buffer);

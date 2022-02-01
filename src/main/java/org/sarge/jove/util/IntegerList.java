@@ -25,6 +25,11 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class IntegerList {
+	/**
+	 * Maximum length of a {@code short} buffer.
+	 */
+	public static final long SHORT = MathsUtil.unsignedMaximum(Short.SIZE);
+
 	private int[] array;
 	private int size;
 	private final float growth;
@@ -107,6 +112,7 @@ public class IntegerList {
 	/**
 	 * Copies this list of integers to the given NIO buffer.
 	 * @param buffer Buffer
+	 * @see #SHORT
 	 */
 	public void buffer(IntBuffer buffer) {
 		if(buffer.isDirect()) {
@@ -123,19 +129,11 @@ public class IntegerList {
 	 * Copies this list to the given NIO buffer as <b>short</i> integer values.
 	 * Note that values are silently truncated to {@code short} integers.
 	 * @param buffer Buffer
+	 * @see #SHORT
 	 */
 	public void buffer(ShortBuffer buffer) {
-		if(buffer.isDirect()) {
-			for(int n = 0; n < size; ++n) {
-				buffer.put((short) array[n]);
-			}
-		}
-		else {
-			final short[] shorts = new short[size];
-			for(int n = 0; n < size; ++n) {
-				shorts[n] = (short) array[n];
-			}
-			buffer.put(shorts, 0, size);
+		for(int n = 0; n < size; ++n) {
+			buffer.put((short) array[n]);
 		}
 	}
 

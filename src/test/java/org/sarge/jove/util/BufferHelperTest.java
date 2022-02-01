@@ -18,14 +18,6 @@ class BufferHelperTest {
 	private static final byte[] BYTES = {1, 2, 3};
 
 	@Test
-	void isShortIndex() {
-		final int max = 65535;
-		assertEquals(true, BufferHelper.isShortIndex(0));
-		assertEquals(true, BufferHelper.isShortIndex(max - 1));
-		assertEquals(false, BufferHelper.isShortIndex(max));
-	}
-
-	@Test
 	void allocate() {
 		final ByteBuffer bb = BufferHelper.allocate(3);
 		assertNotNull(bb);

@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.util.BufferHelper;
 import org.sarge.jove.util.IntegerList;
 
 /**
@@ -210,7 +209,7 @@ public class MutableModel extends AbstractModel {
 
 	@Override
 	public Bufferable indexBuffer() {
-		final boolean small = BufferHelper.isShortIndex(index.size());
+		final boolean small = index.size() < IntegerList.SHORT;
 
 		return new Bufferable() {
 			@Override

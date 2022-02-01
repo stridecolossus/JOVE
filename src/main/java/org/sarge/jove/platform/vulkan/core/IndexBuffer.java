@@ -7,6 +7,7 @@ import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.jove.util.BufferHelper;
+import org.sarge.jove.util.IntegerList;
 
 /**
  * An <i>index buffer</i> binds an index to the pipeline.
@@ -63,7 +64,7 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @return Index data type
 	 */
 	private static VkIndexType type(VulkanBuffer buffer) {
-		return BufferHelper.isShortIndex(buffer.length() / Short.BYTES) ? VkIndexType.UINT16 : VkIndexType.UINT32;
+		return (buffer.length() / Short.BYTES) < IntegerList.SHORT ? VkIndexType.UINT16 : VkIndexType.UINT32;
 	}
 
 	/**
