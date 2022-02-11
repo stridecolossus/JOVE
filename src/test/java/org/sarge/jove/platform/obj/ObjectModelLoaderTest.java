@@ -2,6 +2,7 @@ package org.sarge.jove.platform.obj;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -63,13 +64,13 @@ public class ObjectModelLoaderTest {
 		assertEquals(3, model.count());
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Vertex.NORMALS, Coordinate2D.LAYOUT), model.layout());
-		assertEquals(true, model.isIndexed());
+		assertTrue(model.indexBuffer().isPresent());
 
 		// Check vertex buffer
 		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertexBuffer().length());
 
 		// Check index buffer
-		assertEquals(3 * Short.BYTES, model.indexBuffer().length());
+		assertEquals(3 * Short.BYTES, model.indexBuffer().get().length());
 	}
 
 	@Test

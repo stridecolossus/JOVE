@@ -3,11 +3,11 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.IntegerList;
 
 /**
  * An <i>index buffer</i> binds an index to the pipeline.
@@ -39,16 +39,6 @@ public class IndexBuffer extends VulkanBuffer {
 		validate();
 	}
 
-	private void validate() {
-		if(type == VkIndexType.NONE_NV) {
-			throw new UnsupportedOperationException("Invalid index type: " + type);
-		}
-
-		if((type == VkIndexType.UINT16) && (type(this) == VkIndexType.UINT32)) {
-			throw new IllegalArgumentException("Index is too large for short data type: " + this);
-		}
-	}
-
 	/**
 	 * Constructor.
 	 * @param buffer Buffer
@@ -59,12 +49,26 @@ public class IndexBuffer extends VulkanBuffer {
 	}
 
 	/**
-	 * Determines the index data type depending on the length of the given buffer.
+	 * Determines the Vulkan index data type depending on the length of the given buffer.
 	 * @param buffer Buffer
 	 * @return Index data type
+	 * @see Model#isIntegerIndex(long)
 	 */
 	private static VkIndexType type(VulkanBuffer buffer) {
-		return (buffer.length() / Short.BYTES) < IntegerList.SHORT ? VkIndexType.UINT16 : VkIndexType.UINT32;
+		return Model.isIntegerIndex(buffer.length()) ? VkIndexType.UINT32 : VkIndexType.UINT16;
+	}
+
+	/**
+	 * Validates the type of this index.
+	 */
+	private void validate() {
+		if(type == VkIndexType.NONE_NV) {
+			throw new UnsupportedOperationException("Invalid index type: " + type);
+		}
+
+		if((type == VkIndexType.UINT16) && (type(this) == VkIndexType.UINT32)) {
+			throw new IllegalArgumentException("Index is too large for short data type: " + this);
+		}
 	}
 
 	/**

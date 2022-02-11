@@ -10,12 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 
-class BindingTests {
-	private Binding binding;
+class ResourceBindingTest {
+	private ResourceBinding binding;
 
 	@BeforeEach
 	void before() {
-		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
+		binding = new ResourceBinding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
 	}
 
 	@Test
@@ -26,14 +26,15 @@ class BindingTests {
 		assertEquals(Set.of(VkShaderStage.FRAGMENT), binding.stages());
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void constructorEmptyStages() {
-		assertThrows(IllegalArgumentException.class, () -> new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of()));
+		assertThrows(IllegalArgumentException.class, () -> new ResourceBinding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of()));
 	}
 
 	@Test
 	void build() {
-		final Binding result = new Binding.Builder()
+		final ResourceBinding result = new ResourceBinding.Builder()
 				.binding(1)
 				.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
 				.count(2)

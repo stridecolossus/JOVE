@@ -3,6 +3,7 @@ package org.sarge.jove.platform.obj;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -90,7 +91,7 @@ public class ObjectModelTest {
 			triangle();
 
 			// Build models
-			final List<Model> models = model.build();
+			final List<Model> models = model.models();
 			assertEquals(1, models.size());
 
 			// Check model
@@ -101,11 +102,11 @@ public class ObjectModelTest {
 			assertEquals(Primitive.TRIANGLES, result.primitive());
 			assertEquals(List.of(Point.LAYOUT, Vertex.NORMALS, Coordinate2D.LAYOUT), result.layout());
 			assertEquals(3, result.count());
-			assertEquals(true, result.isIndexed());
+			assertTrue(result.indexBuffer().isPresent());
 
 			// Check model data
 			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertexBuffer().length());
-			assertEquals(3 * Short.BYTES, result.indexBuffer().length());
+			assertEquals(3 * Short.BYTES, result.indexBuffer().get().length());
 		}
 
 		@Test
@@ -113,7 +114,7 @@ public class ObjectModelTest {
 			triangle();
 			model.start();
 			triangle();
-			assertEquals(2, model.build().size());
+			assertEquals(2, model.models().size());
 		}
 	}
 }

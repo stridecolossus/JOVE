@@ -152,7 +152,7 @@ public class GridBuilder {
 	 * @param layout Grid vertex layout
 	 * @return New grid
 	 */
-	public MutableModel build() {
+	public DefaultModel build() {
 		// Calculate half distance in both directions
 		final int w = size.width();
 		final int h = size.height();
@@ -175,13 +175,17 @@ public class GridBuilder {
 				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
-				final Vertex vertex = new Vertex(pos, coord);
+				final Vertex vertex = new Vertex().position(pos).coordinate(coord);
 				vertices.add(vertex);
 			}
 		}
 
 		// Build model
-		final MutableModel model = new MutableModel(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final ModelBuilder model = new ModelBuilder()
+				.primitive(primitive)
+				.layout(Point.LAYOUT)
+				.layout(Coordinate2D.LAYOUT);
+
 		if(index == null) {
 			final Optional<IndexFactory> factory = primitive.index();
 			if(factory.isPresent()) {
@@ -199,7 +203,8 @@ public class GridBuilder {
 			build(index).forEach(model::add);
 		}
 
-		return model;
+		// Construct grid
+		return model.build();
 	}
 
 	/**

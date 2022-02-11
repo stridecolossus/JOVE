@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.mock;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.util.MathsUtil;
 
 class AbstractModelTest {
 	private AbstractModel model;
@@ -30,12 +30,7 @@ class AbstractModelTest {
 			}
 
 			@Override
-			public boolean isIndexed() {
-				return false;
-			}
-
-			@Override
-			public Bufferable indexBuffer() {
+			public Optional<Bufferable> indexBuffer() {
 				return null;
 			}
 		};
@@ -48,13 +43,6 @@ class AbstractModelTest {
 	}
 
 	@Test
-	void layout() {
-		final List<Layout> layout = List.of(Coordinate2D.LAYOUT);
-		model.layout(layout);
-		assertEquals(layout, model.layout());
-	}
-
-	@Test
 	void validate() {
 		model.validate();
 	}
@@ -64,5 +52,15 @@ class AbstractModelTest {
 		assertEquals(model, model);
 		assertNotEquals(model, null);
 		assertNotEquals(model, mock(Model.class));
+	}
+
+	@SuppressWarnings("static-method")
+	@Test
+	void isIntegerIndex() {
+		final long max = MathsUtil.unsignedMaximum(Short.SIZE);
+		assertEquals(false, Model.isIntegerIndex(0));
+		assertEquals(false, Model.isIntegerIndex(max - 1));
+		assertEquals(true, Model.isIntegerIndex(max));
+		assertEquals(true, Model.isIntegerIndex(MathsUtil.unsignedMaximum(Integer.SIZE)));
 	}
 }

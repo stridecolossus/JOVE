@@ -74,9 +74,11 @@ public class CubeBuilder {
 	 * Constructs this cube.
 	 * @return New cube
 	 */
-	public MutableModel build() {
+	public DefaultModel build() {
 		// Init model
-		final MutableModel model = new MutableModel(Primitive.TRIANGLES, Vertex.LAYOUT);
+		final ModelBuilder model = new ModelBuilder()
+				.primitive(Primitive.TRIANGLES)
+				.layout(Vertex.LAYOUT);
 
 		// Build cube
 		for(int face = 0; face < FACES.length; ++face) {
@@ -90,12 +92,19 @@ public class CubeBuilder {
 				final Coordinate coord = Quad.COORDINATES.get(corner);
 				final Colour col = COLOURS[face];
 
-				// Add vertex
-				final Vertex vertex = new Vertex(pos, normal, coord, col);
+				// Build vertex
+				final Vertex vertex = new Vertex()
+						.position(pos)
+						.normal(normal)
+						.coordinate(coord)
+						.colour(col);
+
+				// Add vertex to cube
 				model.add(vertex);
 			}
 		}
 
-		return model;
+		// Construct cube
+		return model.build();
 	}
 }

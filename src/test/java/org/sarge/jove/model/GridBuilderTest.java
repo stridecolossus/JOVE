@@ -3,10 +3,12 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,31 +37,31 @@ class GridBuilderTest {
 		assertNotNull(model);
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals((3 * 3) * (2 * 3), model.count());
-		assertEquals(false, model.isIndexed());
+		assertEquals(Optional.empty(), model.indexBuffer());
 	}
 
 	@DisplayName("Create a simple grid with no index factory applied (points)")
 	@Test
 	void buildNotIndexed() {
-		final MutableModel model = builder
+		final Model model = builder
 				.primitive(Primitive.POINTS)
 				.index(null)
 				.build();
 
 		assertNotNull(model);
 		assertEquals(4 * 4, model.count());
-		assertEquals(false, model.isIndexed());
+		assertEquals(Optional.empty(), model.indexBuffer());
 	}
 
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
 	@Test
 	void buildQuadStrip() {
-		final MutableModel model = builder.primitive(Primitive.PATCH).index(Quad.STRIP).build();
+		final Model model = builder.primitive(Primitive.PATCH).index(Quad.STRIP).build();
 		assertNotNull(model);
 		assertEquals((3 * 3) * 4, model.count());
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
-		assertEquals(true, model.isIndexed());
+		assertTrue(model.indexBuffer().isPresent());
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")

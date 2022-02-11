@@ -32,11 +32,11 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 * @throws IllegalArgumentException for if the bindings are empty
 	 * @throws IllegalStateException for a duplicate binding index
 	 */
-	public static DescriptorLayout create(DeviceContext dev, List<Binding> bindings) {
+	public static DescriptorLayout create(DeviceContext dev, List<ResourceBinding> bindings) {
 		// Init layout descriptor
 		final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
 		info.bindingCount = bindings.size();
-		info.pBindings = StructureHelper.pointer(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
+		info.pBindings = StructureHelper.pointer(bindings, VkDescriptorSetLayoutBinding::new, ResourceBinding::populate);
 
 		// Allocate layout
 		final VulkanLibrary lib = dev.library();
@@ -47,7 +47,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 		return new DescriptorLayout(handle.getValue(), dev, bindings);
 	}
 
-	private final Map<Integer, Binding> bindings;
+	private final Map<Integer, ResourceBinding> bindings;
 
 	/**
 	 * Constructor.
@@ -56,16 +56,16 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 * @param bindings		Bindings
 	 * @throws IllegalStateException for a duplicate binding index
 	 */
-	DescriptorLayout(Pointer handle, DeviceContext dev, List<Binding> bindings) {
+	DescriptorLayout(Pointer handle, DeviceContext dev, List<ResourceBinding> bindings) {
 		super(handle, dev);
 		Check.notEmpty(bindings);
-		this.bindings = bindings.stream().collect(toMap(Binding::index, Function.identity()));
+		this.bindings = bindings.stream().collect(toMap(ResourceBinding::index, Function.identity()));
 	}
 
 	/**
 	 * @return Bindings
 	 */
-	public Map<Integer, Binding> bindings() {
+	public Map<Integer, ResourceBinding> bindings() {
 		return bindings;
 	}
 
@@ -74,7 +74,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 * @param index Binding index
 	 * @return Binding
 	 */
-	public Binding binding(int index) {
+	public ResourceBinding binding(int index) {
 		return bindings.get(index);
 	}
 

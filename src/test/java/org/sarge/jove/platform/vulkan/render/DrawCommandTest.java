@@ -6,10 +6,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
@@ -50,9 +53,9 @@ class DrawCommandTest extends AbstractVulkanTest {
 	void model() {
 		// Create an indexed model
 		final Model model = mock(Model.class);
-		when(model.isIndexed()).thenReturn(true);
 		when(model.count()).thenReturn(2);
 		when(model.primitive()).thenReturn(Primitive.TRIANGLES);
+		when(model.indexBuffer()).thenReturn(Optional.of(mock(Bufferable.class)));
 
 		// Check indexed draw command
 		final DrawCommand draw = DrawCommand.of(model);

@@ -1,9 +1,11 @@
 package org.sarge.jove.model;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>model</i> is comprised of a vertex buffer with a specified layout and an optional index buffer.
@@ -31,14 +33,21 @@ public interface Model {
 	Bufferable vertexBuffer();
 
 	/**
-	 * @return Whether this is an indexed model
-	 * @see #indexBuffer()
+	 * @return Index buffer
 	 */
-	boolean isIndexed();
+	Optional<Bufferable> indexBuffer();
 
 	/**
-	 * @return Index buffer
-	 * @see #isIndexed()
+	 * Maximum length of a {@code short} index buffer.
 	 */
-	Bufferable indexBuffer();
+	long SHORT = MathsUtil.unsignedMaximum(Short.SIZE);
+
+	/**
+	 * Determines whether the appropriate data type for the given index buffer length.
+	 * @param len Index length
+	 * @return Whether the given index length is represented as {@code int} or {@code short} indices
+	 */
+	static boolean isIntegerIndex(long len) {
+		return len >= SHORT;
+	}
 }

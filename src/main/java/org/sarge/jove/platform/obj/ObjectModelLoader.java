@@ -84,7 +84,7 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	@Override
 	public List<Model> load(Reader reader) throws IOException {
 		super.load(reader, this::parse);
-		return model.build();
+		return model.models();
 	}
 
 	/**

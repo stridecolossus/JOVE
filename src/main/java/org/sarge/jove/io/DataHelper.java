@@ -76,7 +76,7 @@ public class DataHelper {
 	/**
 	 * Loads a bufferable object.
 	 * @param in Input stream
-	 * @return New buffer or {@code null} if empty
+	 * @return New buffer
 	 * @throws IOException if the buffer cannot be loaded
 	 */
 	public Bufferable buffer(DataInput in) throws IOException {

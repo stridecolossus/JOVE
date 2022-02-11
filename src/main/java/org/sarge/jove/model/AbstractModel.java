@@ -14,7 +14,7 @@ import org.sarge.jove.common.Layout;
  */
 public abstract class AbstractModel implements Model {
 	private final Primitive primitive;
-	private List<Layout> layout;
+	private final List<Layout> layout;
 
 	/**
 	 * Constructor.
@@ -23,7 +23,7 @@ public abstract class AbstractModel implements Model {
 	 */
 	protected AbstractModel(Primitive primitive, List<Layout> layout) {
 		this.primitive = notNull(primitive);
-		layout(layout);
+		this.layout = List.copyOf(layout);
 	}
 
 	@Override
@@ -34,14 +34,6 @@ public abstract class AbstractModel implements Model {
 	@Override
 	public final List<Layout> layout() {
 		return layout;
-	}
-
-	/**
-	 * Sets the layout for this model.
-	 * @param layout New layout
-	 */
-	protected void layout(List<Layout> layout) {
-		this.layout = List.copyOf(layout);
 	}
 
 	// TODO - when?
@@ -58,14 +50,14 @@ public abstract class AbstractModel implements Model {
 			throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count(), primitive));
 		}
 
-		if(layout.contains(Vertex.NORMALS) && !primitive.isNormalSupported()) {
-			throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
-		}
+//		if(layout.contains(Vertex.NORMALS) && !primitive.isNormalSupported()) {
+//			throw new IllegalArgumentException("Normals not supported for primitive: " + primitive);
+//		}
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(layout(), primitive, count());
+		return Objects.hash(layout, primitive, count());
 	}
 
 	@Override
@@ -73,11 +65,9 @@ public abstract class AbstractModel implements Model {
 		return
 				(obj == this) ||
 				(obj instanceof Model that) &&
-				this.layout().equals(that.layout()) &&
 				primitive.equals(that.primitive()) &&
-				(this.count() == that.count()) &&
-				this.vertexBuffer().equals(that.vertexBuffer()) &&
-				Objects.equals(this.indexBuffer(), that.indexBuffer());
+				layout.equals(that.layout()) &&
+				(this.count() == that.count());
 	}
 
 	@Override
@@ -86,7 +76,6 @@ public abstract class AbstractModel implements Model {
 				.append(primitive)
 				.append(layout)
 				.append("count", count())
-				.append("indexed", isIndexed())
 				.build();
 	}
 }

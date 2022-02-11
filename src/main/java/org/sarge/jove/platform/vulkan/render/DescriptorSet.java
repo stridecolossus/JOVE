@@ -77,7 +77,7 @@ public class DescriptorSet implements NativeObject {
 	 * An <i>entry</i> records the resource for each binding in this descriptor set.
 	 */
 	private class Entry {
-		private final Binding binding;
+		private final ResourceBinding binding;
 		private boolean dirty = true;
 		private DescriptorResource res;
 
@@ -85,7 +85,7 @@ public class DescriptorSet implements NativeObject {
 		 * Constructor.
 		 * @param binding Binding descriptor
 		 */
-		private Entry(Binding binding) {
+		private Entry(ResourceBinding binding) {
 			this.binding = notNull(binding);
 		}
 
@@ -139,7 +139,7 @@ public class DescriptorSet implements NativeObject {
 
 	private final Handle handle;
 	private final DescriptorLayout layout;
-	private final Map<Binding, Entry> entries;
+	private final Map<ResourceBinding, Entry> entries;
 
 	/**
 	 * Constructor.
@@ -168,7 +168,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param binding Binding descriptor
 	 * @return Entry for this given binding
 	 */
-	private Entry entry(Binding binding) {
+	private Entry entry(ResourceBinding binding) {
 		final Entry entry = entries.get(binding);
 		if(entry == null) throw new IllegalArgumentException(String.format("Invalid binding for this descriptor set: binding=%s set=%s", binding, this));
 		return entry;
@@ -189,9 +189,9 @@ public class DescriptorSet implements NativeObject {
 	 * @param binding Binding
 	 * @return Resource or {@code null} if not populated
 	 * @throws IllegalArgumentException if the binding does not belong to the layout of this descriptor set
-	 * @see #set(Binding, DescriptorResource)
+	 * @see #set(ResourceBinding, DescriptorResource)
 	 */
-	public DescriptorResource resource(Binding binding) {
+	public DescriptorResource resource(ResourceBinding binding) {
 		final Entry entry = entry(binding);
 		return entry.res;
 	}
@@ -201,9 +201,9 @@ public class DescriptorSet implements NativeObject {
 	 * @param binding 	Binding
 	 * @param res		Resource
 	 * @throws IllegalArgumentException if the binding does not belong to the layout of this descriptor set
-	 * @see #set(Collection, Binding, DescriptorResource)
+	 * @see #set(Collection, ResourceBinding, DescriptorResource)
 	 */
-	public void set(Binding binding, DescriptorResource res) {
+	public void set(ResourceBinding binding, DescriptorResource res) {
 		final Entry entry = entry(binding);
 		if(binding.type() != res.type()) {
 			throw new IllegalArgumentException(String.format("Invalid resource for this binding: expected=%s actual=%s", binding.type(), res.type()));
@@ -213,13 +213,13 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * Helper - Bulk implementation of the {@link #set(Binding, DescriptorResource)} method.
+	 * Helper - Bulk implementation of the {@link #set(ResourceBinding, DescriptorResource)} method.
 	 * @param sets			Descriptor sets
 	 * @param binding		Binding
 	 * @param res			Resource
 	 * @throws IllegalArgumentException if the binding does not belong to the layout of all descriptor sets
 	 */
-	public static void set(Collection<DescriptorSet> sets, Binding binding, DescriptorResource res) {
+	public static void set(Collection<DescriptorSet> sets, ResourceBinding binding, DescriptorResource res) {
 		for(DescriptorSet ds : sets) {
 			ds.set(binding, res);
 		}

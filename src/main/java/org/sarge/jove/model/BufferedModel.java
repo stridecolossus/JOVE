@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
@@ -32,22 +33,9 @@ public class BufferedModel extends AbstractModel {
 		this.index = notNull(index);
 	}
 
-	/**
-	 * Copy constructor.
-	 * @param model Model to copy
-	 */
-	public BufferedModel(Model model) {
-		this(model.primitive(), model.layout(), model.count(), model.vertexBuffer(), model.indexBuffer());
-	}
-
 	@Override
 	public int count() {
 		return count;
-	}
-
-	@Override
-	public boolean isIndexed() {
-		return index.length() > 0;
 	}
 
 	@Override
@@ -56,7 +44,12 @@ public class BufferedModel extends AbstractModel {
 	}
 
 	@Override
-	public Bufferable indexBuffer() {
-		return index;
+	public Optional<Bufferable> indexBuffer() {
+		if(index.length() == 0) {
+			return Optional.empty();
+		}
+		else {
+			return Optional.of(index);
+		}
 	}
 }

@@ -31,7 +31,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 
 public class DescriptorSetTest extends AbstractVulkanTest {
-	private Binding binding;
+	private ResourceBinding binding;
 	private DescriptorLayout layout;
 	private DescriptorSet descriptor;
 	private DescriptorResource res;
@@ -40,7 +40,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create layout with a sampler binding
-		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+		binding = new ResourceBinding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
 		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
 
 		// Create sampler resource
@@ -66,7 +66,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 	@Test
 	void invalid() {
-		final Binding other = new Binding(2, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+		final ResourceBinding other = new ResourceBinding(2, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
 		assertThrows(IllegalArgumentException.class, () -> descriptor.resource(other));
 		assertThrows(IllegalArgumentException.class, () -> descriptor.set(other, res));
 	}

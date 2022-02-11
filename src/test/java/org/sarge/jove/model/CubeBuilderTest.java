@@ -16,14 +16,12 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final MutableModel cube = builder.size(2).build();
+		final DefaultModel cube = builder.size(2).build();
 		final int count = 6 * 2 * 3;
 		assertNotNull(cube);
-		assertEquals(false, cube.isIndexed());
 		assertEquals(Primitive.TRIANGLES, cube.primitive());
 		assertEquals(4, cube.layout().size());
 		assertEquals(count, cube.count());
-		assertEquals(false, cube.isIndexed());
 		assertEquals(count, cube.vertices().count());
 	}
 }

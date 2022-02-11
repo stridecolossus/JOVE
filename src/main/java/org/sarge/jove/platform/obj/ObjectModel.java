@@ -3,14 +3,12 @@ package org.sarge.jove.platform.obj;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Coordinate;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.MutableModel;
+import org.sarge.jove.model.ModelBuilder;
 import org.sarge.jove.model.Vertex;
 
 /**
@@ -22,48 +20,47 @@ class ObjectModel {
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
-	private MutableModel current = new DuplicateVertexModel();
-
-	// TODO - extends MutableModel + above + linked list to previous model(s)?
+	private ModelBuilder builder = new DuplicateModelBuilder();
+	private boolean empty = true;
 
 	/**
 	 * Starts a new object group.
 	 */
 	public void start() {
 		// Ignore if current group is empty
-		if(current.isEmpty()) {
+		if(empty) {
 			return;
 		}
 
 		// Build current model group
-		buildCurrentGroup();
+		build();
 
 		// Reset transient model
 		positions.clear();
 		normals.clear();
 		coords.clear();
+		empty = true;
 	}
 
 	/**
 	 * Constructs the current object.
 	 */
-	private void buildCurrentGroup() {
+	private void build() {
 		// Init model layout
-		final List<Layout> layout = new ArrayList<>();
-		layout.add(Point.LAYOUT);
+		builder.layout(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			layout.add(Vertex.NORMALS);
+			builder.layout(Vertex.NORMALS);
 		}
 		if(!coords.isEmpty()) {
-			layout.add(Coordinate2D.LAYOUT);
+			builder.layout(Coordinate2D.LAYOUT);
 		}
 		// TODO - transform vertices
 
 		// Add model
-		models.add(current);
+		models.add(builder.build());
 
 		// Start new model
-		current = new DuplicateVertexModel();
+		builder = new DuplicateModelBuilder();
 	}
 
 	/**
@@ -94,7 +91,7 @@ class ObjectModel {
 	 * Adds a vertex to the current model.
 	 * <ul>
 	 * <li>the vertex position is mandatory</li>
-	 * <li>texture coordinate and normal are optional, i.e. can be {code null}</li>
+	 * <li>texture coordinates and normals are optional, i.e. can be {@code null}</li>
 	 * <li>indices start at <b>one</b> and can be negative</li>
 	 * </ul>
 	 * @param v			Vertex index
@@ -104,30 +101,30 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final List<Bufferable> components = new ArrayList<>();
-		components.add(positions.get(v));
+		final Vertex vertex = new Vertex();
+		vertex.position(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			components.add(normals.get(vn));
+			vertex.normal(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			components.add(coords.get(vt));
+			vertex.coordinate(coords.get(vt));
 		}
 
-		// Construct vertex
-		final Vertex vertex = new Vertex(components.toArray(Bufferable[]::new));
-		current.add(vertex);
+		// Add vertex to model
+		builder.add(vertex);
+		empty = false;
 	}
 
 	/**
 	 * Constructs the model(s).
 	 * @return Model(s)
 	 */
-	public List<Model> build() {
-		buildCurrentGroup();
+	public List<Model> models() {
+		build();
 		return new ArrayList<>(models);
 	}
 	// TODO - check all groups have same layout

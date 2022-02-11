@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
@@ -68,12 +69,13 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 			helper.write(c, out);
 		}
 
-		// Write VBO
+		// Write vertices
 		helper.write(model.vertexBuffer(), out);
 
 		// Write index
-		if(model.isIndexed()) {
-			helper.write(model.indexBuffer(), out);
+		final Optional<Bufferable> index = model.indexBuffer();
+		if(index.isPresent()) {
+			helper.write(index.get(), out);
 		}
 		else {
 			out.writeInt(0);

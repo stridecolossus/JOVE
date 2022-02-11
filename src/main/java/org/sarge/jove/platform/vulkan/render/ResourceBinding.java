@@ -17,7 +17,7 @@ import org.sarge.lib.util.Check;
  * A <i>descriptor set binding</i> defines the resource properties for a binding in a descriptor set.
  * @author Sarge
  */
-public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
+public record ResourceBinding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
 	/**
 	 * Constructor.
 	 * @param index			Binding index
@@ -26,7 +26,7 @@ public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderS
 	 * @param stages		Pipeline stage flags
 	 * @throws IllegalArgumentException if the pipeline {@link #stages} is empty
 	 */
-	public Binding {
+	public ResourceBinding {
 		if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");
 		Check.zeroOrMore(index);
 		Check.notNull(type);
@@ -93,8 +93,8 @@ public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderS
 		 * Constructs this binding.
 		 * @return New layout binding
 		 */
-		public Binding build() {
-			return new Binding(binding, type, count, stages);
+		public ResourceBinding build() {
+			return new ResourceBinding(binding, type, count, stages);
 		}
 	}
 }
