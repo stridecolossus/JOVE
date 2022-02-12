@@ -9,6 +9,7 @@ title: Introduction
 - [Overview](#overview)
 - [Background](#background)
 - [Approach](#approach)
+- [Design](#design)
 - [Code Presentation](#code-presentation)
 - [Technology Choices](#technology-choices)
 
@@ -119,6 +120,8 @@ Source code is presented as fragments interspersed with commentary, rather than 
 We also follow these additional coding guidelines:
 
 * Method arguments can be assumed to be non-null by default unless explicitly specified (and documented) as optional.  Additionally null pointer exceptions are not declared in the method documentation.
+
+* Similarly method return values can be assumed to be non-null with potentially empty results modelled by the `Optional` wrapper type.
 
 * The `var` keyword is used to avoid duplication where the type is complex or long-winded (but is also present in the statement).
 

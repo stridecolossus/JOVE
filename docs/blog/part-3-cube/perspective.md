@@ -7,12 +7,19 @@ title: Perspective Projection
 ## Contents
 
 - [Overview](#overview)
+- [View Transform](#view-transform)
 - [Perspective Projection](#perspective-projection)
 - [Cube Model](#cube-model)
 
 ---
 
 ## Overview
+
+
+Next we apply a _view transform_ to the demo representing the viewers position and orientation (i.e. the camera).
+
+
+
 
 In the final chapter in this section we will introduce _perspective projection_ so that fragments that are more distant in the scene appear correctly foreshortened.
 
@@ -38,9 +45,20 @@ We will then build a _model_ for a textured cube and apply a rotation animation 
 
 ---
 
-## Perspective Projection
+## View Transformation
 
 ### Enter The Matrix
+
+The view transform and perspective projection are both implemented as a 4-by-4 matrix structured as follows:
+
+| Rx | Ry | Rz | Tx |
+| Yx | Yy | Yz | Ty |
+| Dx | Dy | Dz | Tz |
+|  0 |  0 |  0 |  1 |
+
+Where the top-left 3-by-3 segment of the matrix is the rotation component and the right-hand column _T_ is the translation.
+
+In camera terms _R_ is the _right_ axis, _Y_ is _up_ and _D_ is the _direction_ of the view.
 
 We first establish some constraints on our design for the matrix class:
 
@@ -70,7 +88,7 @@ public final class Matrix implements Bufferable {
 }
 ```
 
-The matrix data is implemented as a 2D floating-point array.  This is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.  We anticipate this implementation will only be used in cases where we are constructing a matrix and are not concerned about efficiency (such as perspective projection).
+The matrix data is implemented as a 2D floating-point array, this is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.
 
 A matrix is a bufferable object:
 
@@ -91,7 +109,7 @@ public void buffer(ByteBuffer buffer) {
 
 Note that the row-column indices are transposed to output the matrix in _column major_ order which is the default expected by Vulkan.
 
-To construct a matrix we provide a builder:
+A matrix is constructed by a companion builder:
 
 ```java
 public static class Builder {
@@ -112,7 +130,7 @@ public static class Builder {
 }
 ```
 
-The builder is used to set a matrix element:
+A matrix element is populated using the following builder method:
 
 ```java
 public Builder set(int row, int col, float value) {
@@ -121,7 +139,7 @@ public Builder set(int row, int col, float value) {
 }
 ```
 
-The matrix can also be initialised to identity:
+Which is also used to initialise an _identity_ matrix:
 
 ```java
 public Builder identity() {
@@ -133,67 +151,17 @@ public Builder identity() {
 }
 ```
 
-We will add further matrix functionality as we progress through this chapter.
+Further matrix functionality will be added as the chapter progresses.
 
 For further background reading see [OpenGL matrices tutorial](http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/)
 
-### Perspective Projection
-
-We can now use the new class to construct a projection matrix defined as follows:
-
-```java
-public interface Projection {
-    /**
-     * Builds the matrix for this projection.
-     * @param near      Near plane
-     * @param far       Far plane
-     * @param dim       Viewport dimensions
-     * @return Projection matrix
-     */
-    Matrix matrix(float near, float far, Dimensions dim);
-}
-```
-
-A perspective projection is based on the field-of-view (FOV) which is analogous to the focus of a camera.
-
-We add a factory method to create a perspective projection for a given FOV:
-
-```java
-static Projection perspective(float fov) {
-    return new Projection() {
-        private final float scale = 1 / MathsUtil.tan(fov * MathsUtil.HALF);
-
-        @Override
-        public Matrix matrix(float near, float far, Dimensions dim) {
-            return new Matrix.Builder()
-                .set(0, 0, scale / dim.ratio())
-                .set(1, 1, -scale)
-                .set(2, 2, far / (near - far))
-                .set(2, 3, (near * far) / (near - far))
-                .set(3, 2, -1)
-                .build();
-        }
-    };
-}
-```
-
-Notes:
-
-* This code is based on the example from the Vulkan Cookbook.
-
-* The matrix assumes the Y axis points __down__ the viewport.
-
-We also add a convenience constant for a perspective projection with a default 60 degree field-of-view:
-
-```java
-Projection DEFAULT = perspective(MathsUtil.toRadians(60));
-```
+> Obviously we could have simply employed a third-party matrices library but one of our project goals is to learn from first principles.
 
 ### Uniform Buffers
 
-To pass the matrix to the shader we next implement a _uniform buffer_ which is a descriptor set resource implemented as a general Vulkan buffer.
+Matrices are passed to a shader via a _uniform buffer_ which is a descriptor set resource implemented as a general Vulkan buffer.
 
-We add a new factory method to the `VulkanBuffer` class to create a uniform buffer:
+A uniform buffer is created using the following new factory method on the `VulkanBuffer` class:
 
 ```java
 public Resource uniform() {
@@ -217,23 +185,7 @@ public Resource uniform() {
 }
 ```
 
-To make the process of loading the matrix into the buffer slightly more convenient we add the following helper:
-
-```java
-class VulkanBuffer {
-    public void load(Bufferable data) {
-        Region region = mem.region().orElseGet(mem::map);
-        ByteBuffer bb = region.buffer();
-        data.buffer(bb);
-    }
-}
-```
-
-### Integration #1
-
-As a first step we will apply an identity matrix to the quad vertices in the demo to test the uniform buffer.
-
-We create a new configuration class for the projection matrix:
+As a first step we will apply the identity matrix to the quad vertices in the demo to test the uniform buffer:
 
 ```java
 @Configuration
@@ -263,9 +215,19 @@ public static VulkanBuffer uniform(LogicalDevice dev, AllocationService allocato
 }
 ```
 
-Note that we are using a buffer that is visible to the host (i.e. the application) which is less efficient than device-local memory.  However we will eventually be updating the matrix every frame to apply a rotation animation, this approach is more logical than continually copying via a staging buffer.
+Where `load` is a new helper method to make the process of loading data into the buffer slightly more convenient:
 
-We add a second binding to the descriptor set layout for the uniform buffer:
+```java
+public void load(Bufferable data) {
+    Region region = mem.region().orElseGet(mem::map);
+    ByteBuffer bb = region.buffer();
+    data.buffer(bb);
+}
+```
+
+Note that the uniform buffer is visible to the host (i.e. the application), this is less performant than device-local memory but allows the application to update the matrix as required.
+
+A second binding is required in the descriptor set layout for the uniform buffer:
 
 ```java
 private final Binding samplerBinding = ...
@@ -290,18 +252,18 @@ public Pool pool() {
 }
 ```
 
-And finally we initialise the uniform buffer resource in the `descriptors` bean:
+And finally the uniform buffer resource is initialised in the `descriptors` bean:
 
 ```java
 DescriptorSet.set(descriptors, uniformBinding, uniform.uniform());
 ```
 
-Note that for the moment we are using the same uniform buffer for all descriptor sets since our render loop is essentially single threaded.
+Note that for the moment the same uniform buffer for all descriptor sets since the render loop is essentially single threaded.
 
-To use the uniform buffer we add the following layout declaration to the vertex shader:
+To use the uniform buffer in the shader we add the following layout declaration:
 
 ```glsl
-layout(binding = 1) uniform ubo {
+layout(binding=1) uniform ubo {
     mat4 matrix;
 };
 ```
@@ -319,14 +281,14 @@ The vertex shader should now look like this:
 ```glsl
 #version 450
 
-layout(binding = 1) uniform ubo {
+layout(binding=1) uniform ubo {
     mat4 matrix;
 };
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec2 inTexCoord;
+layout(location=0) in vec3 inPosition;
+layout(location=1) in vec2 inTexCoord;
 
-layout(location = 0) out vec2 outTexCoord;
+layout(location=0) out vec2 outTexCoord;
 
 void main() {
     gl_Position = matrix * vec4(inPosition, 1.0);
@@ -334,23 +296,27 @@ void main() {
 }
 ```
 
-If all goes well we should still see the flat textured quad since the identity matrix essentially changes nothing.
+If all goes well the demo should still render the same flat textured quad since the identity matrix essentially changes nothing.
 
 ### View Transform
 
-We can now replace the identity matrix with a perspective projection:
+To construct the view transform we first introduce the _vector_ domain object which is the second `Tuple` implementation:
 
 ```java
-@Bean
-public static Matrix matrix(Swapchain swapchain) {
-    Matrix projection = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
+public final class Vector extends Tuple {
+    public static final Vector X = new Vector(1, 0, 0);
+    public static final Vector Y = new Vector(0, 1, 0);
+    public static final Vector Z = new Vector(0, 0, 1);
+
     ...
+    
+    public Vector invert() {
+        return new Vector(-x, -y, -z);
+    }
 }
 ```
 
-Next we apply a _view transform_ to the demo representing the viewers position and orientation (i.e. the camera).
-
-First we add the following methods to the matrix builder to populate a row or column of the matrix:
+The following methods are added to the matrix builder to populate a row or column of the matrix:
 
 ```java
 public Builder row(int row, Vector vec) {
@@ -368,61 +334,7 @@ public Builder column(int col, Vector vec) {
 }
 ```
 
-Next we introduce the _vector_ domain object:
-
-```java
-public final class Vector extends Tuple {
-    public static final Vector X = new Vector(1, 0, 0);
-    public static final Vector Y = new Vector(0, 1, 0);
-    public static final Vector Z = new Vector(0, 0, 1);
-
-    ...
-    
-    public Vector invert() {
-        return new Vector(-x, -y, -z);
-    }
-}
-```
-
-The view transform matrix consists of translation and rotation components.  The translation moves the eye position (or camera) one unit out of the screen (or moves the scene one unit into the screen, whichever way you look at it):
-
-```java
-Matrix trans = new Matrix.Builder()
-    .identity()
-    .column(3, new Point(0, 0, -1))
-    .build();
-```
-
-The rotation component of the matrix is initialised to the three camera axes:
-
-```java
-Matrix rot = new Matrix.Builder()
-    .row(0, Vector.X)
-    .row(1, Vector.Y.invert())
-    .row(2, Vector.Z)
-    .build();
-```
-
-Finally we compose these two view matrices to create the view transform which is then multiplied (see below) with the perspective projection:
-
-```java
-Matrix view = rot.multiply(trans);
-return projection.multiply(view);
-```
-
-Notes:
-
-* The Y axis is inverted for Vulkan (points _down_ the screen).
-
-* The Z axis points _out_ from the screen.
-
-* The order of the operations is important since matrix multiplication is non-commutative.
-
-* Later we will wrap the above into a camera class.
-
-### Matrix Multiplication
-
-Matrix multiplication is implemented as follows:
+The view transform matrix is comprised of translation and rotation components which are multiplied together:
 
 ```java
 public Matrix multiply(Matrix m) {
@@ -446,7 +358,7 @@ public Matrix multiply(Matrix m) {
 }
 ```
 
-Each element of the resultant matrix is the _sum_ of a _row_ multiplied by the corresponding _column_ in the right-hand matrix.
+The elements of the resultant matrix are the _sum_ of each _row_ multiplied by the corresponding _column_ in the right-hand matrix.
 
 For example, given the following matrices:
 
@@ -455,11 +367,115 @@ For example, given the following matrices:
 [. .]   [d .]
 ```
 
-The result for element [0, 0] is `a * c + b * d` (and similarly for the rest of the matrix).
+The result for element [0, 0] is `ac + bd` (and similarly for the rest of the matrix).
 
-### Integration #2
+To test the view transform matrix, in the `matrix` bean we first move the eye position (or camera) one unit to the right (or move the scene one unit to the left, whichever way you look at it):
 
-To test the perspective projection we modify the vertex data to move one edge of the quad into the screen by fiddling the Z coordinate of the right-hand vertex positions:
+```java
+Matrix trans = new Matrix.Builder()
+    .identity()
+    .column(3, new Point(1, 0, 0))
+    .build();
+```
+
+The rotation component of the matrix is initialised to the three camera axes:
+
+```java
+Matrix rot = new Matrix.Builder()
+    .row(0, Vector.X)
+    .row(1, Vector.Y.invert())
+    .row(2, Vector.Z)
+    .build();
+```
+
+Finally the two components are multiplied together to compose the view transform matrix:
+
+```java
+return rot.multiply(trans);
+```
+
+Notes:
+
+* The Y axis is inverted for Vulkan (points _down_ the screen).
+
+* The Z axis points _out_ from the screen.
+
+* The order of the operations is important since matrix multiplication is non-commutative.
+
+* Later we will wrap the above into a camera class.
+
+When running the demo the triangle should now be rendered to the right of the screen.
+
+### Perspective Projection
+
+A _projection_ matrix is used to apply perspective or orthographic projection to the scene:
+
+```java
+public interface Projection {
+    /**
+     * Builds the matrix for this projection.
+     * @param near      Near plane
+     * @param far       Far plane
+     * @param dim       Viewport dimensions
+     * @return Projection matrix
+     */
+    Matrix matrix(float near, float far, Dimensions dim);
+}
+```
+
+A _perspective projection_ is based on the field-of-view (FOV) which is analogous to the focus of a camera:
+
+```java
+static Projection perspective(float fov) {
+    return new Projection() {
+        private final float scale = 1 / MathsUtil.tan(fov * MathsUtil.HALF);
+
+        @Override
+        public Matrix matrix(float near, float far, Dimensions dim) {
+            return new Matrix.Builder()
+                .set(0, 0, scale / dim.ratio())
+                .set(1, 1, -scale)
+                .set(2, 2, far / (near - far))
+                .set(2, 3, (near * far) / (near - far))
+                .set(3, 2, -1)
+                .build();
+        }
+    };
+}
+```
+
+Notes:
+
+* This code is based on the example from the Vulkan Cookbook.
+
+* The matrix assumes the Y axis points __down__ the viewport.
+
+We also add a convenience constant for a perspective projection with a default field-of-view:
+
+```java
+Projection DEFAULT = perspective(MathsUtil.toRadians(60));
+```
+
+The perspective projection is composed with the view transform to build the final matrix:
+
+```java
+@Configuration
+public class CameraConfiguration {
+    private Matrix projection;
+
+    public CameraConfiguration(Swapchain swapchain) {
+        projection = Projection.DEFAULT.matrix(0.1f, 100, swapchain.extents());
+    }
+
+    @Bean
+    public Matrix matrix() {
+        ...
+        return projection.multiply(rot).multiply(trans);
+    }
+}
+```
+
+To exercise the perspective projection we modify the vertex data to move one edge of the quad into the screen by fiddling the Z coordinate of the right-hand vertex positions:
 
 ```java
 new Point(-0.5f, -0.5f, 0)
@@ -471,6 +487,8 @@ new Point(+0.5f, +0.5f, -0.5f)
 If the transformation code is correct we should now see the quad in 3D with the right-hand edge sloping away from the viewer like an open door:
 
 ![Perspective Quad](perspective.png)
+
+Note that the translation component of the view transform was reverted back to the centre of the screen.
 
 ---
 
@@ -736,7 +754,7 @@ for(Vertex v : vertices) {
 
 The model layout also becomes mutable to support transformations.
 
-### Integration #3
+### Integration
 
 In the demo we replace the hard-coded quad vertices with a cube model:
 
