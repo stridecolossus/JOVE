@@ -8,6 +8,7 @@ title: The Render Loop and Synchronisation
 
 - [Overview](#overview)
 - [Refactoring](#refactoring)
+- [Animation](#animation)
 - [synchronisation](#synchronisation)
 
 ---
@@ -33,9 +34,11 @@ In this chapter we will address these issues by implementing the following:
 
 * New reusable components to separate the rendering process and the application logic.
 
-* Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
-
 * A GLFW keyboard handler to gracefully exit the application.
+
+* New framework code to encapsulate the rotation animation.
+
+* Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
 ---
 
@@ -99,8 +102,6 @@ public static Task render(...) {
     return new RenderTask(swapchain, buffers::get, presentation.queue());
 }
 ```
-
-Note that the render task is still tightly coupled to the command buffer, in a later chapter we will factor out the management of the rendering sequence.
 
 Finally we factor out the rotation logic into another task and delete the original code:
 
@@ -324,6 +325,371 @@ Notes:
 * We also add a `waitIdle` call after the loop has finished to correctly cleanup Vulkan resources.
 
 When we now run the demo we should finally be able to move the window and close the application gracefully.
+
+---
+
+## Animation
+
+### Playable Media
+
+To apply a rotation animation to the cube demo we will implement new supporting framework classes that build on the matrix and frame listener functionality.
+
+First the following new base-class controller is introduced for managing objects or media that can be played:
+
+```java
+public class Player implements Playable {
+    /**
+     * Playable states.
+     */
+    enum State {
+        PLAY,
+        PAUSE,
+        STOP
+    }
+
+    private final Collection<Listener> listeners = new HashSet<>();
+    private State state = State.STOP;
+    private boolean repeat;
+}
+```
+
+The player implements the _observer_ pattern to notify state change transitions:
+
+```java
+@FunctionalInterface
+public interface Listener {
+    /**
+     * Notifies a player state change.
+     * @param state New state
+     */
+    void update(State state);
+}
+```
+
+The player is a simple state-machine that validates transitions and notifies the attached listeners:
+
+```java
+public void state(State state) {
+    // Update state
+    state.validate(this.state);
+    this.state = notNull(state);
+
+    // Notify listeners
+    for(Listener listener : listeners) {
+        listener.update(state);
+    }
+}
+```
+
+Next we introduce the following abstraction for playable media such as audio files:
+
+```java
+public interface Playable {
+    /**
+     * Sets the state of this playable.
+     * @param state New state
+     */
+    void state(State state);
+
+    /**
+     * @return Whether this playable is playing
+     */
+    boolean isPlaying();
+
+    /**
+     * Sets whether this playable should repeat.
+     * @param repeat Whether repeating
+     */
+    void repeat(boolean repeat);
+}
+```
+
+A more specialised player implementation is provided for playable media such as audio files:
+
+```java
+public class MediaPlayer extends Player {
+    private final Playable playable;
+
+    private void update() {
+        if(isPlaying() && !playable.isPlaying()) {
+            super.state(State.STOP);
+        }
+    }
+}
+```
+
+Some playable objects may stop playing in the background (e.g. an OpenAL audio file running on a separate thread), the local `update` method checks whether the media has stopped since the last invocation, this check is applied in the various public methods of the player.
+
+### Animation
+
+An _animator_ is a second player specialisation for an _animation_ that is updated per frame:
+
+```java
+public class Animator extends Player implements FrameTracker.Listener {
+    /**
+     * An <i>animation</i> is updated by this animator.
+     */
+    @FunctionalInterface
+    public interface Animation {
+        /**
+         * Updates this animation.
+         * @param animator Animator
+         */
+        void update(Animator animator);
+    }
+
+    private final long duration;
+    private final Animation animation;
+
+    private long time;
+    private float speed = 1;
+}
+```
+
+The `update` method of the animator first checks whether the animation is currently playing:
+
+```java
+@Override
+public void update(FrameTracker tracker) {
+    if(!isPlaying()) {
+        return;
+    }
+    ...
+}
+```
+
+Next the _time_ position within the duration of the animation is calculated from the frame update:
+
+```java
+time += speed * TimeUnit.NANOSECONDS.toMillis(tracker.elapsed());
+```
+
+At the end of the animation the position is clamped to the duration or stops if the player is not configured to repeat:
+
+```java
+if(time > duration) {
+    if(isRepeating()) {
+        time = time % duration;
+    }
+    else {
+        time = duration;
+        state(Player.State.STOP);
+    }
+}
+```
+
+Finally the animation is updated to the new position:
+
+```java
+animation.update(this);
+```
+
+### Rotation Animation
+
+The second new abstraction defines an arbitrary view _transform_ that is implemented as a matrix:
+
+```java
+@FunctionalInterface
+public interface Transform {
+    /**
+     * @return Transformation matrix
+     */
+    Matrix matrix();
+
+    /**
+     * @return Whether this transform has changed (default is {@code false})
+     */
+    default boolean isDirty() {
+        return false;
+    }
+}
+```
+
+A _rotation_ is a transform comprised of an axis-angle:
+
+```java
+public interface Rotation extends Transform {
+    /**
+     * @return Rotation axis
+     */
+    Vector axis();
+
+    /**
+     * @return Counter-clockwise rotation angle (radians)
+     */
+    float angle();
+
+    /**
+     * Creates a matrix for the given rotation.
+     * @param rot Rotation
+     * @return New rotation matrix
+     * @throws UnsupportedOperationException for an <i>arbitrary</i> axis
+     * @see Quaternion#of(Rotation)
+     */
+    static Matrix matrix(Vector axis, float angle) {
+        ...
+    }
+}
+```
+
+Note that the rotation `matrix` factory method is moved here since it more logically sits in the new class.
+
+Simple fixed rotations are represented by the following default implementation:
+
+```java
+class DefaultRotation extends AbstractRotation {
+    private final Matrix matrix;
+
+    public DefaultRotation(Vector axis, float angle) {
+        super(axis, angle);
+        this.matrix = Rotation.matrix(axis, angle);
+    }
+
+    @Override
+    public Matrix matrix() {
+        return matrix;
+    }
+}
+```
+
+A second implementation is added for a mutable axis-angle rotation:
+
+```java
+public class MutableRotation extends AbstractRotation {
+    private boolean dirty = true;
+
+    public MutableRotation(Vector axis) {
+        super(axis, 0);
+    }
+
+    /**
+     * Sets the rotation angle.
+     * @param angle Rotation angle (radians)
+     */
+    public void angle(float angle) {
+        this.angle = angle;
+        dirty = true;
+    }
+
+    @Override
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    @Override
+    public Matrix matrix() {
+        dirty = false;
+        return Quaternion.of(this).matrix();
+    }
+}
+```
+
+Note that here the matrix is calculated used a _quaternion_ (detailed below) which supports arbitrary rotation axes.
+
+Finally the following adapter composes the new mutable implementation and animates the rotation angle about the unit-circle:
+
+```java
+public class RotationAnimation implements Animation {
+    private final MutableRotation rot;
+
+    @Override
+    public void update(Animator animator) {
+        float angle = animator.position() * MathsUtil.TWO_PI;
+        rot.angle(angle);
+    }
+}
+```
+
+### Quaternions
+
+A _quaternion_ is more compact and efficient representation of a rotation but is less intuitive to use and comprehend.
+
+See [Wikipedia](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation).
+
+Generally we use quaternions to represents a rotation about an _arbitrary_ axis or where multiple rotations are frequently composed (e.g. for skeletal animation).
+
+```java
+public final class Quaternion implements Transform {
+    public final float w, x, y, z;
+
+    /**
+     * @return Magnitude <b>squared</b> of this quaternion
+     */
+    public float magnitude() {
+        return w * w + x * x + y * y + z * z;
+    }
+}
+```
+
+A quaternion can be constructed from an axis-angle rotation using the following factory:
+
+```java
+public static Quaternion of(Rotation rot) {
+    float half = rot.angle() * MathsUtil.HALF;
+    Vector vec = rot.axis().multiply(MathsUtil.sin(half));
+    return new Quaternion(MathsUtil.cos(half), vec.x, vec.y, vec.z);
+}
+```
+
+And converted back to a rotation in the inverse operation:
+
+```java
+public Rotation rotation() {
+    float scale = MathsUtil.inverseRoot(1 - w * w);
+    float angle = 2 * MathsUtil.acos(w);
+    Vector axis = new Vector(x, y, z).multiply(scale);
+    return new DefaultRotation(axis, angle);
+}
+```
+
+Finally a matrix can be constructed from the quaternion as follows:
+
+```java
+public Matrix matrix() {
+    float xx = x * x;
+    float xy = x * y;
+    float xz = x * z;
+    float xw = x * w;
+    float yy = y * y;
+    float yz = y * z;
+    float yw = y * w;
+    float zz = z * z;
+    float zw = z * w;
+
+    return new Matrix.Builder()
+        .identity()
+        .set(0, 0, 1 - 2 * (yy + zz))
+        .set(1, 0, 2 * (xy + zw))
+        .set(2, 0, 2 * (xz - yw))
+        .set(0, 1, 2 * (xy - zw))
+        .set(1, 1, 1 - 2 * (xx + zz))
+        .set(2, 1, 2 * (yz + xw))
+        .set(0, 2, 2 * (xz + yw))
+        .set(1, 2, 2 * (yz - xw))
+        .set(2, 2, 1 - 2 * (xx + yy))
+        .build();
+}
+```
+
+### Integration
+
+We can now re-implement the crude rotation code in the demo with the following components:
+
+```java
+@Bean
+MutableRotation rotation() {
+    return new MutableRotation(new Vector(...));
+}
+
+@Bean
+Animator animator(MutableRotation rot) {
+    return new Animator(5000, new AnimationRotation(rot));
+}
+```
+
+Note that Spring will be auto-magically register the animator with the frame listener.
+
+TODO - compose static rotation with animation & inject bean
 
 ---
 

@@ -32,7 +32,7 @@ public class Desktop {
 	 * Creates the desktop service.
 	 * @return New desktop service
 	 * @throws RuntimeException if GLFW cannot be initialised
-	 * @throws UnsupportedOperationException if the GLFW cannot be found
+	 * @throws UnsupportedOperationException if the GLFW library cannot be found
 	 * @throws UnsatisfiedLinkError if the native library cannot be instantiated
 	 */
 	public static Desktop create() {

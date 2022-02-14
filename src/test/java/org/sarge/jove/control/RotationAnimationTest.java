@@ -11,7 +11,7 @@ import org.sarge.jove.geometry.MutableRotation;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
-public class RotationAnimationTest {
+class RotationAnimationTest {
 	private RotationAnimation animation;
 
 	@BeforeEach

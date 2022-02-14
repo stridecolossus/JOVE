@@ -8,48 +8,26 @@ import java.util.HashSet;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>player</i> is a model for animations, audio, etc. that can be played and paused.
+ * A <i>player</i> is a controller for media and animations.
  * @author Sarge
  */
-public class Player {
+public class Player implements Playable {
 	/**
-	 * Player states.
+	 * Playable states.
 	 */
-	public enum State {
+	enum State {
 		PLAY,
 		PAUSE,
 		STOP;
 
-		private void validate(State next) {
-			if(this == next) {
+		private void validate(State prev) {
+			if(this == prev) {
 				throw new IllegalStateException("Duplicate player state: " + this);
 			}
-			if((next == PAUSE) && (this != PLAY)) {
-				throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", this, next));
+			if((this == PAUSE) && (prev != PLAY)) {
+				throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", prev, this));
 			}
 		}
-	}
-
-	/**
-	 * A <i>playable</i> is a resource that can be played, paused or stopped.
-	 */
-	public interface Playable {
-		/**
-		 * Sets the state of this playable.
-		 * @param state New state
-		 */
-		void apply(State state);
-
-		/**
-		 * @return Whether this playable is playing
-		 */
-		boolean isPlaying();
-
-		/**
-		 * Sets whether this playable should repeat.
-		 * @param repeat Whether repeating
-		 */
-		void setRepeating(boolean repeat);
 	}
 
 	/**
@@ -65,54 +43,26 @@ public class Player {
 	}
 
 	private final Collection<Listener> listeners = new HashSet<>();
-	private final Playable playable;
-
 	private State state = State.STOP;
-	private boolean repeating;
+	private boolean repeat;
 
-	/**
-	 * Constructor.
-	 * @param playable Playable object
-	 */
-	public Player(Playable playable) {
-		this.playable = notNull(playable);
-	}
-
-	/**
-	 * Checks that the playable resource is still playing.
-	 */
-	private void update() {
-		if((state == State.PLAY) && !playable.isPlaying()) {
-			state = State.STOP;
-		}
-	}
-
-	/**
-	 * @return Player state
-	 */
-	public State state() {
-		update();
-		return state;
-	}
-
-	/**
-	 * @return Whether currently playing
-	 */
+	@Override
 	public boolean isPlaying() {
-		update();
 		return state == State.PLAY;
 	}
 
 	/**
-	 * Sets the state of this player.
-	 * @param state New state
-	 * @throws IllegalStateException for an invalid state transition
+	 * @return Current state of this player
 	 */
-	public void set(State state) {
+	public State state() {
+		return state;
+	}
+
+	@Override
+	public void state(State state) {
 		// Update state
-		update();
-		this.state.validate(state);
-		this.state = state;
+		state.validate(this.state);
+		this.state = notNull(state);
 
 		// Notify listeners
 		for(Listener listener : listeners) {
@@ -124,21 +74,17 @@ public class Player {
 	 * @return Whether this player is repeating
 	 */
 	public boolean isRepeating() {
-		return repeating;
+		return repeat;
+	}
+
+	@Override
+	public void repeat(boolean repeat) {
+		this.repeat = repeat;
 	}
 
 	/**
-	 * Sets whether this player is repeating.
-	 * @param repeating Whether repeating
-	 */
-	public void setRepeating(boolean repeating) {
-		this.repeating = repeating;
-		playable.setRepeating(repeating);
-	}
-
-	/**
-	 * Adds a player state-change listener.
-	 * @param listener State-change listener
+	 * Adds a player state change listener.
+	 * @param listener State change listener
 	 */
 	public void add(Listener listener) {
 		listeners.add(notNull(listener));
@@ -156,8 +102,7 @@ public class Player {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("state", state)
-				.append("repeat", repeating)
-				.append("playable", playable)
+				.append("repeating", repeat)
 				.append("listeners", listeners.size())
 				.build();
 	}

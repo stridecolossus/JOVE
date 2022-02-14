@@ -7,27 +7,20 @@ title: Perspective Projection
 ## Contents
 
 - [Overview](#overview)
-- [View Transform](#view-transform)
-- [Perspective Projection](#perspective-projection)
+- [View Transformation](#view-transformation)
 - [Cube Model](#cube-model)
 
 ---
 
 ## Overview
 
+In this final chapter of this section we will introduce the following:
 
-Next we apply a _view transform_ to the demo representing the viewers position and orientation (i.e. the camera).
+* A _view transform_ representing the viewers position and orientation.
 
+* _perspective projection_ so that fragments that the scene appears correctly foreshortened.
 
-
-
-In the final chapter in this section we will introduce _perspective projection_ so that fragments that are more distant in the scene appear correctly foreshortened.
-
-We will implement the _matrix_ class which is a central component of 3D graphics.
-
-> Of course we could utilise a third-party matrices library but one of the aims of this project is to build (and learn) from first principles.
-
-We will require the following new components:
+This will require the following new components:
 
 * The _matrix_ class.
 
@@ -35,11 +28,11 @@ We will require the following new components:
 
 * A _uniform buffer_ to pass the matrix to the shader.
 
-We will then build a _model_ for a textured cube and apply a rotation animation requiring:
+We will then construct a _model_ for a textured cube and apply a rotation which will also require:
 
 * A builder for a general model.
 
-* A specific model builder for a cube.
+* A specific builder for a cube.
 
 * A rotation matrix.
 
@@ -51,10 +44,12 @@ We will then build a _model_ for a textured cube and apply a rotation animation 
 
 The view transform and perspective projection are both implemented as a 4-by-4 matrix structured as follows:
 
-| Rx | Ry | Rz | Tx |
-| Yx | Yy | Yz | Ty |
-| Dx | Dy | Dz | Tz |
-|  0 |  0 |  0 |  1 |
+```
+Rx Ry Rz Tx
+Yx Yy Yz Ty
+Dx Dy Dz Tz
+0  0  0  1
+```
 
 Where the top-left 3-by-3 segment of the matrix is the rotation component and the right-hand column _T_ is the translation.
 
@@ -225,7 +220,8 @@ public void load(Bufferable data) {
 }
 ```
 
-Note that the uniform buffer is visible to the host (i.e. the application), this is less performant than device-local memory but allows the application to update the matrix as required.
+Note that in this case the uniform buffer is visible to the host (i.e. the application) which is less performant than device-local memory.
+However this allows the application to update the matrix as required without the overhead of copying via an intermediate staging buffer.
 
 A second binding is required in the descriptor set layout for the uniform buffer:
 

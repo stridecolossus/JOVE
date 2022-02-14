@@ -22,10 +22,10 @@ import org.sarge.jove.control.ModifiedButton.Modifier;
 import org.sarge.jove.control.PositionEvent;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseListener;
 import org.sarge.jove.util.IntegerEnumeration;
 
+@SuppressWarnings("unchecked")
 public class MouseDeviceTest {
 	private MouseDevice mouse;
 	private Window window;
@@ -52,11 +52,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MousePointerTests {
-		private DesktopSource<MousePositionListener, PositionEvent> ptr;
+		private DesktopSource<MouseListener, PositionEvent> ptr;
 
 		@BeforeEach
 		void before() {
-			ptr = (DesktopSource<MousePositionListener, PositionEvent>) mouse.pointer();
+			ptr = (DesktopSource<MouseListener, PositionEvent>) mouse.pointer();
 		}
 
 		@Test
@@ -66,16 +66,16 @@ public class MouseDeviceTest {
 
 		@Test
 		void listener() {
-			final MousePositionListener listener = ptr.listener(handler);
+			final MouseListener listener = ptr.listener(handler);
 			assertNotNull(listener);
-			listener.move(null, 1, 2);
+			listener.event(null, 1, 2);
 			verify(handler).accept(new PositionEvent(ptr, 1, 2));
 		}
 
 		@Test
 		void method() {
-			final MousePositionListener listener = mock(MousePositionListener.class);
-			final BiConsumer<Window, MousePositionListener> method = ptr.method(lib);
+			final MouseListener listener = mock(MouseListener.class);
+			final BiConsumer<Window, MouseListener> method = ptr.method(lib);
 			assertNotNull(method);
 			method.accept(window, listener);
 			verify(lib).glfwSetCursorPosCallback(window, listener);
@@ -118,11 +118,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MouseWheelTests {
-		private DesktopSource<MouseScrollListener, AxisEvent> wheel;
+		private DesktopSource<MouseListener, AxisEvent> wheel;
 
 		@BeforeEach
 		void before() {
-			wheel = (DesktopSource<MouseScrollListener, AxisEvent>) mouse.wheel();
+			wheel = (DesktopSource<MouseListener, AxisEvent>) mouse.wheel();
 		}
 
 		@Test
@@ -132,16 +132,16 @@ public class MouseDeviceTest {
 
 		@Test
 		void listener() {
-			final MouseScrollListener listener = wheel.listener(handler);
+			final MouseListener listener = wheel.listener(handler);
 			assertNotNull(listener);
-			listener.scroll(null, 1, 2);
+			listener.event(null, 1, 2);
 			verify(handler).accept(new AxisEvent((Axis) wheel, 2));
 		}
 
 		@Test
 		void method() {
-			final MouseScrollListener listener = mock(MouseScrollListener.class);
-			final BiConsumer<Window, MouseScrollListener> method = wheel.method(lib);
+			final MouseListener listener = mock(MouseListener.class);
+			final BiConsumer<Window, MouseListener> method = wheel.method(lib);
 			assertNotNull(method);
 			method.accept(window, listener);
 			verify(lib).glfwSetScrollCallback(window, listener);

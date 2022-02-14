@@ -11,7 +11,7 @@ import org.sarge.jove.util.IntegerEnumeration;
  * @author Sarge
  */
 public class VulkanException extends RuntimeException {
-	public final int result;
+	private final int result;
 
 	/**
 	 * Constructor.
@@ -20,6 +20,13 @@ public class VulkanException extends RuntimeException {
 	public VulkanException(int result) {
 		super(String.format("%s[%d]", reason(result), result));
 		this.result = result;
+	}
+
+	/**
+	 * @return Vulkan error code
+	 */
+	public int result() {
+		return result;
 	}
 
 	/**

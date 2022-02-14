@@ -413,8 +413,7 @@ layout(location=0) in vec2 inCoord;
 layout(location=0) out vec4 outColour;
 
 void main() {
-    float h = texture(heightMap, inCoord).r;
-    outColour = vec4(h, 0, 0, 1);
+    outColour = texture(heightMap, inCoord);
 }
 ```
 
@@ -634,7 +633,7 @@ The vertex position is interpolated similarly but in this case using the built-i
 The height of each vertex is then sampled from the red channel of the height-map (as we did previously):
 
 ```glsl
-pos.y +=texture(heightMap, coord).r * 2.5;
+pos.y += texture(heightMap, coord).r * 2.5;
 ```
 
 And finally the shader applies perspective projection and outputs the resultant vertex:

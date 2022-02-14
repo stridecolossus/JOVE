@@ -17,8 +17,7 @@ import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.control.ModifiedButton;
 import org.sarge.jove.control.PositionEvent;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MousePositionListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseScrollListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseListener;
 
 /**
  * The <i>mouse device</i> exposes event sources for the mouse pointer, buttons and scroll-wheel.
@@ -73,9 +72,9 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse pointer event source.
 	 */
-	private class MousePointer extends DesktopSource<MousePositionListener, PositionEvent> {
+	private class MousePointer extends DesktopSource<MouseListener, PositionEvent> {
 		@Override
-		protected MousePositionListener listener(Consumer<Event> handler) {
+		protected MouseListener listener(Consumer<Event> handler) {
 			return (ptr, x, y) -> {
 				final PositionEvent pos = new PositionEvent(this, (float) x, (float) y);
 				handler.accept(pos);
@@ -83,7 +82,7 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected BiConsumer<Window, MousePositionListener> method(DesktopLibrary lib) {
+		protected BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
 			return lib::glfwSetCursorPosCallback;
 		}
 
@@ -122,7 +121,7 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse scroll-wheel source.
 	 */
-	private class MouseWheel extends DesktopSource<MouseScrollListener, AxisEvent> implements Axis {
+	private class MouseWheel extends DesktopSource<MouseListener, AxisEvent> implements Axis {
 		private float value;
 
 		@Override
@@ -131,7 +130,7 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected MouseScrollListener listener(Consumer<Event> handler) {
+		protected MouseListener listener(Consumer<Event> handler) {
 			return (ptr, x, y) -> {
 				value = (float) y;
 				final AxisEvent e = new AxisEvent(this, value);
@@ -140,7 +139,7 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected BiConsumer<Window, MouseScrollListener> method(DesktopLibrary lib) {
+		protected BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
 			return lib::glfwSetScrollCallback;
 		}
 	}

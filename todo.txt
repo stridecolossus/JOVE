@@ -48,6 +48,7 @@ todo
 - degenerate triangles for strip? and/or primitive restart?
 - re-build swapchain and pipeline after window viewport/focus change
 - check for depth attachment in frame-buffer::create
+- combine OBJ vertex component custom list implementation and parser? no need then for bi-consumer indirection? 
 
 features/limits
 pipeline stages:

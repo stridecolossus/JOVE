@@ -16,7 +16,7 @@ import com.sun.jna.ToNativeContext;
 import com.sun.jna.TypeConverter;
 
 /**
- * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
+ * An <i>integer enumeration</i> is the base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
  * <p>
  * An integer enumeration has a {@link ReverseMapping} that used to map integer literals to the corresponding enumeration constants.
  * <p>

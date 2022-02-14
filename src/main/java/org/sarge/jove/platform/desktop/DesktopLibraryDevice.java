@@ -44,16 +44,16 @@ interface DesktopLibraryDevice {
 	void glfwSetKeyCallback(Window window, KeyListener listener);
 
 	/**
-	 * Listener for mouse move events.
+	 * Listener for mouse pointer and scroll wheel events.
 	 */
-	interface MousePositionListener extends Callback {
+	interface MouseListener extends Callback {
 		/**
-		 * Notifies a mouse movement event.
+		 * Notifies a mouse event.
 		 * @param window	Window
 		 * @param x			X coordinate
 		 * @param y			Y coordinate
 		 */
-		void move(Pointer window, double x, double y);
+		void event(Pointer window, double x, double y);
 	}
 
 	/**
@@ -61,7 +61,14 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse movement listener
 	 */
-	void glfwSetCursorPosCallback(Window window, MousePositionListener listener);
+	void glfwSetCursorPosCallback(Window window, MouseListener listener);
+
+	/**
+	 * Registers a mouse scroll listener.
+	 * @param window		Window
+	 * @param listener		Mouse scroll listener
+	 */
+	void glfwSetScrollCallback(Window window, MouseListener listener);
 
 	/**
 	 * Listener for mouse button events.
@@ -83,24 +90,4 @@ interface DesktopLibraryDevice {
 	 * @param listener		Mouse button listener
 	 */
 	void glfwSetMouseButtonCallback(Window window, MouseButtonListener listener);
-
-	/**
-	 * Listener for mouse scroll events.
-	 */
-	interface MouseScrollListener extends Callback {
-		/**
-		 * Notifies a mouse scroll event.
-		 * @param window	Window
-		 * @param x			X offset
-		 * @param y			Y offset
-		 */
-		void scroll(Pointer window, double x, double y);
-	}
-
-	/**
-	 * Registers a mouse scroll listener.
-	 * @param window		Window
-	 * @param listener		Mouse scroll listener
-	 */
-	void glfwSetScrollCallback(Window window, MouseScrollListener listener);
 }

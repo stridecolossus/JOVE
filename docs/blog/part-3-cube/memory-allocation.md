@@ -248,7 +248,9 @@ The Vulkan documentation outlines the suggested approach for selecting the appro
 
 2. Filter by _index_ using the _filter_ bit-mask from the `VkMemoryRequirements` of the object in question.
 
-3. Filter by matching the supported memory properties against the _optimal_ properties of the request or fall back to the _required_ properties.
+3. Filter by matching the supported memory properties against the _optimal_ properties of the request.
+
+4. Or fall back to the _required_ properties.
 
 The allocation algorithm is encapsulated in a new component:
 

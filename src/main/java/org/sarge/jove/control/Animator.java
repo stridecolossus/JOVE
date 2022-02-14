@@ -1,18 +1,17 @@
 package org.sarge.jove.control;
 
 import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
-import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.Player.Playable;
-import org.sarge.jove.control.Player.State;
 
 /**
- * An <i>animator</i> cycles a value over a given period.
+ * An <i>animator</i> is a specialised player for an {@link Animation}.
  * @author Sarge
  */
-public class Animator implements Playable, FrameTracker.Listener {
+public class Animator extends Player implements FrameTracker.Listener {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */
@@ -29,17 +28,15 @@ public class Animator implements Playable, FrameTracker.Listener {
 	private final Animation animation;
 
 	private long time;
-	private State state = State.STOP;
 	private float speed = 1;
-	private boolean repeat;
 
 	/**
 	 * Constructor.
-	 * @param duration		Duration
+	 * @param duration		Duration (ms)
 	 * @param animation		Animation
 	 */
-	public Animator(Duration duration, Animation animation) {
-		this.duration = duration.toNanos();
+	public Animator(long duration, Animation animation) {
+		this.duration = oneOrMore(duration);
 		this.animation = notNull(animation);
 	}
 
@@ -51,14 +48,14 @@ public class Animator implements Playable, FrameTracker.Listener {
 	}
 
 	/**
-	 * @return Current time position within the animation duration
+	 * @return Current time position within the animation duration (ms)
 	 */
 	public long time() {
 		return time;
 	}
 
 	/**
-	 * Calculates the animation <i>position</i> as a floating-point value in the range zero to one.
+	 * Helper - Calculates the animation <i>position</i> as a floating-point value in the range zero to one.
 	 * @return Animation position
 	 */
 	public float position() {
@@ -83,21 +80,6 @@ public class Animator implements Playable, FrameTracker.Listener {
 	}
 
 	@Override
-	public void apply(State state) {
-		this.state = state;
-	}
-
-	@Override
-	public boolean isPlaying() {
-		return state == State.PLAY;
-	}
-
-	@Override
-	public void setRepeating(boolean repeat) {
-		this.repeat = repeat;
-	}
-
-	@Override
 	public void update(FrameTracker tracker) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
@@ -105,16 +87,16 @@ public class Animator implements Playable, FrameTracker.Listener {
 		}
 
 		// Update time position
-		time += tracker.elapsed() * speed;
+		time += speed * TimeUnit.NANOSECONDS.toMillis(tracker.elapsed());
 
 		// Check for completed animation
 		if(time > duration) {
-			if(repeat) {
+			if(isRepeating()) {
 				time = time % duration;
 			}
 			else {
 				time = duration;
-				state = Player.State.STOP;
+				state(Player.State.STOP);
 			}
 		}
 
@@ -125,8 +107,9 @@ public class Animator implements Playable, FrameTracker.Listener {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append(state)
+				.appendSuper(super.toString())
 				.append(String.format("%d/%d", time, duration))
+				.append(animation)
 				.build();
 	}
 }

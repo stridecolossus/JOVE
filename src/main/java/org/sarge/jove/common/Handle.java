@@ -43,7 +43,7 @@ public final class Handle {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj == this) || ((obj instanceof Handle that) && this.ptr.equals(that.ptr));
+		return (obj == this) || (obj instanceof Handle that) && this.ptr.equals(that.ptr);
 	}
 
 	@Override
