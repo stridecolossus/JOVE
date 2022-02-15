@@ -54,7 +54,6 @@ class ObjectModel {
 		if(!coords.isEmpty()) {
 			builder.layout(Coordinate2D.LAYOUT);
 		}
-		// TODO - transform vertices
 
 		// Add model
 		models.add(builder.build());

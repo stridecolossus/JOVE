@@ -3,6 +3,7 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -97,5 +98,18 @@ class ModelBuilderTest {
 		assertEquals(0, model.count());
 		assertNotNull(model.vertices());
 		assertNotNull(model.index());
+	}
+
+	@Test
+	void addInvalidIndex() {
+		assertThrows(IllegalArgumentException.class, () -> builder.add(0));
+	}
+
+	@Test
+	void restart() {
+		final DefaultModel model = builder.restart().build();
+		assertNotNull(model);
+		assertNotNull(model.index());
+		assertArrayEquals(new int[]{-1}, model.index().toArray());
 	}
 }

@@ -1,5 +1,6 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,6 +84,14 @@ public class DefaultModelTest {
 
 	@Test
 	void largeIndex() {
-		// TODO
+		// Create model with an integer index
+		final List<Vertex> vertices = IntStream.range(0, (int) Model.SHORT).mapToObj(n -> vertex).collect(toList());
+		model = new DefaultModel(Primitive.POINTS, List.of(Point.LAYOUT), vertices, List.of(0));
+
+		// Check index buffer
+		final Optional<Bufferable> index = model.indexBuffer();
+		assertNotNull(index);
+		assertTrue(index.isPresent());
+		assertEquals(Integer.BYTES, index.get().length());
 	}
 }

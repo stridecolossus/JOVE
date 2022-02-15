@@ -33,7 +33,11 @@ class GridBuilderTest {
 	@DisplayName("Create an unindexed grid with duplicate vertices (delegates to the index factory of the primitive")
 	@Test
 	void build() {
-		final Model model = builder.tile(0.25f).build();
+		final Model model = builder
+				.size(new Dimensions(4, 4))
+				.tile(0.25f)
+				.build();
+
 		assertNotNull(model);
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals((3 * 3) * (2 * 3), model.count());
