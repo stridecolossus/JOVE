@@ -36,7 +36,7 @@ In this chapter we will address these issues by implementing the following:
 
 * A GLFW keyboard handler to gracefully exit the application.
 
-* New framework code to encapsulate the rotation animation.
+* New reusable framework code for the rotation animation.
 
 * Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
@@ -673,12 +673,12 @@ public Matrix matrix() {
 
 ### Integration
 
-We can now re-implement the crude rotation code in the demo with the following components:
+In the demo we add two new components for the rotation animation:
 
 ```java
 @Bean
 MutableRotation rotation() {
-    return new MutableRotation(new Vector(...));
+    return new MutableRotation(Vector.Y);
 }
 
 @Bean
@@ -687,9 +687,11 @@ Animator animator(MutableRotation rot) {
 }
 ```
 
-Note that Spring will be auto-magically register the animator with the frame listener.
+Note that Spring auto-magically registers the animator with the frame listener.
 
-TODO - compose static rotation with animation & inject bean
+Finally the mutable rotation is injected into the `update` bean to update the modelview matrix and the crude hand-crafted animation code can now be removed.
+
+A lot of work but now we have a decent animation framework for future demos.
 
 ---
 
@@ -1225,6 +1227,9 @@ In this chapter we:
 
 - Factored out the application loop.
 
+- Integrated the GLFW window event queue and implemented a means of gracefully terminating the demo.
+
+- Implemented new framework support for playable media and animations.
+
 - Implemented synchronisation to ensure that the frame rendering is correctly synchronised within the pipeline and across the work queues.
 
-- Integrated the GLFW window event queue and implemented a means of gracefully terminating the demo.

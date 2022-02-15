@@ -137,7 +137,7 @@ public interface Command {
 			validate(State.INITIAL);
 
 			// Init descriptor
-			final VkCommandBufferBeginInfo info = new VkCommandBufferBeginInfo();
+			final var info = new VkCommandBufferBeginInfo();
 			info.flags = IntegerEnumeration.mask(flags);
 			info.pInheritanceInfo = null;
 
@@ -156,8 +156,9 @@ public interface Command {
 		 * @throws IllegalStateException if this buffer is not recording
 		 */
 		public Buffer add(Command cmd) {
+			final VulkanLibrary lib = pool.device().library();
 			validate(State.RECORDING);
-			cmd.execute(pool.device().library(), this);
+			cmd.execute(lib, this);
 			return this;
 		}
 

@@ -108,6 +108,7 @@ public final class MathsUtil {
 	public static boolean isMask(int value, int mask) {
 		return (value & mask) == value;
 	}
+	// TODO - use Apache BitField?
 
 	/**
 	 * @param mask		Mask
@@ -117,6 +118,7 @@ public final class MathsUtil {
 	public static boolean isBit(int mask, int bit) {
 		return isMask(1 << bit, mask);
 	}
+	// TODO - use Apache BitField?
 
 	/**
 	 * @param num Number

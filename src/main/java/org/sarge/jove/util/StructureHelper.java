@@ -19,17 +19,13 @@ import com.sun.jna.Structure.ByReference;
  * <p>
  * JNA auto-magically marshals structure arrays to/from the native layer.
  * However the array elements <b>must</b> be comprised of a contiguous block of memory allocated via one of the {@link Structure#toArray(int)} methods.
- * <p>
- * This imposes the following restrictions on how the application makes use of structure arrays:
- * <ul>
- * <li>the array can obviously only be allocated once the size of the resultant data is known</li>
- * <li>the elements of the array must be <i>populated</i> (or filled) rather than mapped individually as is the case for a Java stream</li>
- * </ul>
- * <p>
  * In addition the native layer often requires a pointer-to-array type, i.e. the <i>first</i> element of an array.
  * <p>
- * This helper provides methods to transform a collection to a contiguous structure array (or the first element of that array)
- * and the convenience {@link #collector(Supplier, BiConsumer, Characteristics...)} where a stream is more appropriate.
+ * This imposes the following restrictions on how the application makes use of structure arrays:
+ * <ol>
+ * <li>the array can obviously only be allocated once the size of the resultant data is known</li>
+ * <li>the elements of the array must be <i>populated</i> (or filled) rather than mapped individually as is the case for a Java stream</li>
+ * </ol>
  * <p>
  * Note that the various transform methods return {@code null} for an empty collection as this is generally the value expected by the native layer for the empty case.
  * <p>
@@ -42,11 +38,8 @@ import com.sun.jna.Structure.ByReference;
  *  List&lt;SomeData&gt; data = ...
  *  SomeStructure[] array = StructureHelper.array(list, SomeStructure::new, populate);
  *
- *  // Transform to the first element of the array
- *  SomeStructure first = StructureHelper.first(list, SomeStructure::new, populate);
- *
- *  // Collect stream to an array
- *  list.stream().collect(StructureHelper.collector(SomeStructure::new, populate));
+ *  // Transform to a pointer-to-array
+ *  SomeStructure first = StructureHelper.pointer(list, SomeStructure::new, populate);
  * </pre>
  * <p>
  * @author Sarge

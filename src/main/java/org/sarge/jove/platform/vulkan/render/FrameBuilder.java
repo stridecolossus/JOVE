@@ -42,6 +42,8 @@ public class FrameBuilder {
 			};
 		}
 	}
+	// TODO - this sucks
+	// TODO - introduce wrap() for command sequence => queries, render pass
 
 	private final Supplier<Buffer> factory;
 	private final Recorder recorder;
