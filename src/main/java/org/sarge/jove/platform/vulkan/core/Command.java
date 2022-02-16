@@ -173,6 +173,7 @@ public interface Command {
 			lib.vkCmdExecuteCommands(this, secondary.size(), array);
 			return this;
 		}
+		// TODO - some sort of wrap() for secondary buffers, queries, frame buffer / render pass? or actually introduce a sequence/builder?
 
 		/**
 		 * Ends recording.

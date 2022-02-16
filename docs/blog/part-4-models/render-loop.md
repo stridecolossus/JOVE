@@ -40,6 +40,17 @@ In this chapter we will address these issues by implementing the following:
 
 * Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
+
+
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+```
+
+
 ---
 
 ## Refactoring
@@ -683,7 +694,9 @@ MutableRotation rotation() {
 
 @Bean
 Animator animator(MutableRotation rot) {
-    return new Animator(5000, new AnimationRotation(rot));
+    Animator animator = new Animator(5000, new AnimationRotation(rot));
+    animator.state(Animator.State.PLAY);
+    return animator;
 }
 ```
 

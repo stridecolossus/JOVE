@@ -402,7 +402,11 @@ public static Desktop create() {
 }
 ```
 
-Note that the new package is called `desktop` rather than the GLFW acronym.
+Notes:
+
+* The new package is called `desktop` rather than using an ugly GLFW acronym.
+
+* In reality the new GLFW framework was already in place before this stage of the tutorial, but we will continue to introduce the functionality as though it was developed at the time, as it becomes relevant.
 
 ### Integration
 
