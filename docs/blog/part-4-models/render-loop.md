@@ -337,8 +337,7 @@ When we now run the demo we should finally be able to move the window and close 
 classDiagram
 
 class State
-<<enumeration>> State
-State : PLAY
+State : +PLAY
 State : +PAUSE
 State : +STOP
 
