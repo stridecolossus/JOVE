@@ -342,7 +342,6 @@ State : +PAUSE
 State : +STOP
 
 class Playable {
-    <<interface>>
     +state(State)
     +isPlaying()
     +repeat(boolean)
