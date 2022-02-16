@@ -332,6 +332,7 @@ When we now run the demo we should finally be able to move the window and close 
 
 ### Playable Media
 
+To apply a rotation animation to the cube demo we will implement new functionality that builds on the matrix and frame listener functionality, starting with the following supporting framework components for playable media:
 
 ```mermaid
 classDiagram
@@ -348,31 +349,8 @@ class Playable {
     +repeat(boolean)
 }
 
-Playable <|.. Player
-Player : -boolean repeat
-Player --> State
-
-```
-
-
-
-To apply a rotation animation to the cube demo we will implement the following new supporting framework classes that build on the matrix and frame listener functionality:
-
-```
-classDiagram
-
-class State {
-    <<enumeration>>
-    PLAY
-    PAUSE
-    STOP
-}
-
-class Playable {
-    <<interface>>
-    +state(State)
-    +isPlaying()
-    +repeat(boolean)
+class Listener {
+    +update(State)
 }
 
 Playable <|.. Player
@@ -380,16 +358,11 @@ Player : -boolean repeat
 Player --> State
 Player *--> "*" Listener 
 
-class Listener {
-    <<interface>>
-    +update(State)
-}
-
 Player <|-- MediaPlayer
 MediaPlayer --> Playable
 ```
 
-First the following new base-class controller is introduced for managing objects or media that can be played:
+The new _player_ base-class is a controller for managing objects or media that can be played:
 
 ```java
 public class Player implements Playable {
@@ -657,7 +630,7 @@ public class RotationAnimation implements Animation {
 
 The animation framework is illustrated in the following class diagram:
 
-```
+```mermaid
 classDiagram
 
 class Animator {
@@ -668,7 +641,6 @@ class Animator {
 Player <|-- Animator
 
 class Animation {
-    <<interface>>
     +update(Animator)
 }
 Animator --> Animation
@@ -676,15 +648,10 @@ Animator --> Animation
 Animation <|.. RotationAnimation
 
 class Transform {
-    <<interface>>
     +matrix() Matrix
 }
 
-class Rotation {
-    <<interface>>
-}
 Transform <|-- Rotation
-
 Rotation <|.. MutableRotation
 MutableRotation <-- RotationAnimation
 ```
