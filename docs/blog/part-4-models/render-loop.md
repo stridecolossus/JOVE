@@ -635,25 +635,31 @@ classDiagram
 
 class Animator {
     -long duration
-    -long time
-    -float speed
+    +speed(float)
 }
 Player <|-- Animator
 
 class Animation {
     +update(Animator)
 }
-Animator --> Animation
-
 Animation <|.. RotationAnimation
+Animator --> Animation
 
 class Transform {
     +matrix() Matrix
 }
-
 Transform <|-- Rotation
-Rotation <|.. MutableRotation
-MutableRotation <-- RotationAnimation
+
+class AbstractRotation {
+    +axis() Vector
+    +angle() float
+}
+Rotation <|.. AbstractRotation
+
+class DefaultRotation <!-- AbstractRotation
+DefaultRotation : -matrix Matrix
+
+MutableRotation <-- AbstractRotation
 ```
 
 ### Quaternions

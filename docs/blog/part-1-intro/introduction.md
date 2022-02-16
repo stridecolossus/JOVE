@@ -182,3 +182,5 @@ Where _scope_ indicates whether the library is used to support JOVE, unit-testin
 
 It can be assumed that all libraries use the latest stable release versions.
 
+Finally the blog is authored using _Markdown_ and hosted on [GitHub Pages](https://pages.github.com/) using [Jekyll](https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/creating-a-github-pages-site-with-jekyll) for rendering.  Where appropriate UML diagrams are used to illustrate how the various components collaborate, these diagrams are generated using [Mermaid](https://github.com/mermaid-js/mermaid).  However support for this extension is patchy at best and a browser extension may be required to properly render the diagrams.
+
