@@ -335,7 +335,13 @@ When we now run the demo we should finally be able to move the window and close 
 
 ```mermaid
 classDiagram
-Player --> Listener
+
+class State {
+    <<enumeration>>
+    PLAY
+    PAUSE
+    STOP
+}
 ```
 
 
