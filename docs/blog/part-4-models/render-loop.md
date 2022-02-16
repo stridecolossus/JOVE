@@ -9,7 +9,7 @@ title: The Render Loop and Synchronisation
 - [Overview](#overview)
 - [Refactoring](#refactoring)
 - [Animation](#animation)
-- [synchronisation](#synchronisation)
+- [Synchronisation](#synchronisation)
 
 ---
 
@@ -343,7 +343,38 @@ When we now run the demo we should finally be able to move the window and close 
 
 ### Playable Media
 
-To apply a rotation animation to the cube demo we will implement new supporting framework classes that build on the matrix and frame listener functionality.
+To apply a rotation animation to the cube demo we will implement the following new supporting framework classes that build on the matrix and frame listener functionality:
+
+```mermaid
+classDiagram
+
+class State {
+    <<enum>>
+    PLAY
+    PAUSE
+    STOP
+}
+
+class Playable {
+    <<interface>>
+    +state(State)
+    +isPlaying()
+    +repeat(boolean)
+}
+
+Playable <|.. Player
+Player : -boolean repeat
+Player --> State
+Player *--> "*" Listener 
+
+class Listener {
+    <<interface>>
+    +update(State)
+}
+
+Player <|-- MediaPlayer
+MediaPlayer --> Playable
+```
 
 First the following new base-class controller is introduced for managing objects or media that can be played:
 
@@ -609,6 +640,40 @@ public class RotationAnimation implements Animation {
         rot.angle(angle);
     }
 }
+```
+
+The animation framework is illustrated in the following class diagram:
+
+```mermaid
+classDiagram
+
+class Animator {
+    -long duration
+    -long time
+    -float speed
+}
+Player <|-- Animator
+
+class Animation {
+    <<interface>>
+    +update(Animator)
+}
+Animator --> Animation
+
+Animation <|.. RotationAnimation
+
+class Transform {
+    <<interface>>
+    +matrix() Matrix
+}
+
+class Rotation {
+    <<interface>>
+}
+Transform <|-- Rotation
+
+Rotation <|.. MutableRotation
+MutableRotation <-- RotationAnimation
 ```
 
 ### Quaternions
