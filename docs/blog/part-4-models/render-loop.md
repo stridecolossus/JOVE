@@ -336,16 +336,21 @@ When we now run the demo we should finally be able to move the window and close 
 ```mermaid
 classDiagram
 
-class State
-State : +PLAY
-State : +PAUSE
-State : +STOP
+class State {
+    PLAY
+    PAUSE
+    STOP
+}
 
 class Playable {
     +state(State)
     +isPlaying()
     +repeat(boolean)
 }
+
+Playable <|.. Player
+Player : -boolean repeat
+Player --> State
 
 ```
 
