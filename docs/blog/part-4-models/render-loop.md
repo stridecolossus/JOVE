@@ -336,12 +336,10 @@ When we now run the demo we should finally be able to move the window and close 
 ```mermaid
 classDiagram
 
-class State {
-    <<enumeration>>
-    PLAY
-    PAUSE
-    STOP
-}
+class State
+State : +PLAY
+State : +PAUSE
+State : +STOP
 ```
 
 
