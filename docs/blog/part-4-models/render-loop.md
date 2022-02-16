@@ -40,17 +40,6 @@ In this chapter we will address these issues by implementing the following:
 
 * Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
-
-
-```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
-```
-
-
 ---
 
 ## Refactoring
@@ -343,13 +332,21 @@ When we now run the demo we should finally be able to move the window and close 
 
 ### Playable Media
 
-To apply a rotation animation to the cube demo we will implement the following new supporting framework classes that build on the matrix and frame listener functionality:
 
 ```mermaid
 classDiagram
+Player --> Listener
+```
+
+
+
+To apply a rotation animation to the cube demo we will implement the following new supporting framework classes that build on the matrix and frame listener functionality:
+
+```
+classDiagram
 
 class State {
-    <<enum>>
+    <<enumeration>>
     PLAY
     PAUSE
     STOP
@@ -644,7 +641,7 @@ public class RotationAnimation implements Animation {
 
 The animation framework is illustrated in the following class diagram:
 
-```mermaid
+```
 classDiagram
 
 class Animator {
