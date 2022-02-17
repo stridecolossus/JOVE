@@ -304,6 +304,10 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			return new LogicalDevice(handle.getValue(), parent, required, map);
 		}
 
+//		TODO - implement local by-ref classes?
+//		private static class VkDeviceQueueCreateInfo2 extends VkDeviceQueueCreateInfo implements ByReference {
+//		}
+
 		/**
 		 * Retrieves the work queues.
 		 * @param dev			Logical device handle

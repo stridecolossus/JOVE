@@ -440,8 +440,6 @@ public static Selector of(VkQueueFlag... flags) {
 
 An application may also be required to select the device based on its properties or available features but we defer these cases until later.
 
-### Integration
-
 We can now enumerate the available physical devices and use selectors to find one that supports the requirements of the demo:
 
 ```java
@@ -682,8 +680,6 @@ interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, Logica
 ```
 
 From now on we will take this approach of aggregated API libraries which are implemented as inner classes of the companion domain objects.  This centralises each API with the class using its methods and reduces the number of super-interfaces for the root Vulkan library.
-
-### Integration
 
 In the demo we can now create the logical device and retrieve the work queues:
 
@@ -928,3 +924,33 @@ In this chapter we:
 - Created the logical device and work queues used in subsequent chapters
 
 - Added supporting functionality for _two stage invocation_ and population of structure arrays.
+
+The new device domain classes are illustrated in the following diagram:
+
+```mermaid
+classDiagram
+
+class PhysicalDevice {
+    -handle
+    +devices(Instance)
+}
+PhysicalDevice --> Instance
+PhysicalDevice --> Properties
+
+class Family {
+    -index
+    -count
+    -flags
+}
+PhysicalDevice --> "*" Family
+
+Family <-- Queue
+Queue : -handle
+
+class LogicalDevice {
+    -handle
+}
+LogicalDevice --> PhysicalDevice
+LogicalDevice --> "*" Queue
+```
+

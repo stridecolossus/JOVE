@@ -140,6 +140,14 @@ The listener is a GLFW callback defined as follows:
 
 ```java
 interface DesktopLibraryDevice {
+    /**
+     * Processes pending events.
+     */
+    void glfwPollEvents();
+
+    /**
+     * Listener for key events.
+     */
     interface KeyListener extends Callback {
         /**
          * Notifies a key event.
@@ -184,7 +192,7 @@ class DesktopConfiguration {
 }
 ```
 
-Note that GLFW does not return any errors or exceptions if a thread-safe method is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
+Note that GLFW silently ignores a thread-safe method that is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
 
 ### Frame Tracker
 
@@ -407,6 +415,17 @@ public void state(State state) {
         listener.update(state);
     }
 }
+```
+
+The player states are illustrated in the following diagram:
+
+```mermaid
+stateDiagram-v2
+    [*] --> STOP
+    STOP --> PLAY
+    PLAY --> PAUSE
+    PAUSE --> PLAY
+    PLAY --> STOP
 ```
 
 Next we introduce the following abstraction for playable media such as audio files:

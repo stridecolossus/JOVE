@@ -249,9 +249,9 @@ public class MouseDevice extends DesktopDevice {
 The mouse wheel is a GLFW axis event source:
 
 ```java
-private class MouseWheel extends DesktopSource<MouseScrollListener> implements Axis {
+private class MouseWheel extends DesktopSource<MouseListener> implements Axis {
     @Override
-    protected MouseScrollListener listener(Consumer<Event> handler) {
+    protected MouseListener listener(Consumer<Event> handler) {
         return (ptr, x, y) -> {
             AxisEvent e = new AxisEvent(this, (float) y);
             handler.accept(e);
@@ -259,17 +259,52 @@ private class MouseWheel extends DesktopSource<MouseScrollListener> implements A
     }
 
     @Override
-    protected BiConsumer<Window, MouseScrollListener> method(DesktopLibrary lib) {
+    protected BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
         return lib::glfwSetScrollCallback;
     }
 }
 ```
 
+Note that the `MouseListener` callback has X and Y arguments however both have the same value (we arbitrarily use one).
+
+The API methods and callback signatures are defined in the GLFW library:
+
+```java
+interface DesktopLibraryDevice {
+    /**
+     * Listener for mouse pointer and scroll wheel events.
+     */
+    interface MouseListener extends Callback {
+        /**
+         * Notifies a mouse event.
+         * @param window    Window
+         * @param x         X coordinate
+         * @param y         Y coordinate
+         */
+        void event(Pointer window, double x, double y);
+    }
+
+    /**
+     * Registers a mouse movement listener.
+     * @param window        Window
+     * @param listener      Mouse movement listener
+     */
+    void glfwSetCursorPosCallback(Window window, MouseListener listener);
+
+    /**
+     * Registers a mouse scroll listener.
+     * @param window        Window
+     * @param listener      Mouse scroll listener
+     */
+    void glfwSetScrollCallback(Window window, MouseListener listener);
+}
+```
+
 Notes:
 
-* The GLFW listener for the mouse-wheel has X and Y arguments (with the same values) but we only use one.
+* The `MouseListener` callback is used for both the scroll wheel and mouse movement events since the signature is the same.
 
-* We also expose the mouse-wheel axis for convenience.
+* The mouse-wheel axis source is exposed for convenience.
 
 Finally we add the mouse device as a lazily instantiated member of the window:
 
@@ -296,12 +331,12 @@ public record PositionEvent(Source source, float x, float y) implements Event {
 }
 ```
 
-We use the same framework to implement a position event source for the mouse pointer:
+The same framework as above is used to implement a position event source for the mouse pointer:
 
 ```java
-private class MousePointer extends DesktopSource<MousePositionListener> {
+private class MousePointer extends DesktopSource<MouseListener> {
     @Override
-    protected MousePositionListener listener(Consumer<Event> handler) {
+    protected MouseListener listener(Consumer<Event> handler) {
         return (ptr, x, y) -> {
             PositionEvent pos = new PositionEvent(this, (float) x, (float) y);
             handler.accept(pos);
@@ -309,7 +344,7 @@ private class MousePointer extends DesktopSource<MousePositionListener> {
     }
 
     @Override
-    protected BiConsumer<Window, MousePositionListener> method(DesktopLibrary lib) {
+    protected BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
         return lib::glfwSetCursorPosCallback;
     }
 }
@@ -332,6 +367,8 @@ public class MouseDevice extends DesktopDevice {
     }
 }
 ```
+
+Note that the scroll wheel mouse pointer both use the same GLFW callback signature.
 
 ### Buttons
 
@@ -553,6 +590,28 @@ private class MouseButton extends DesktopSource<MouseButtonListener> {
 }
 ```
 
+The GLFW library is extended accordingly:
+
+```java
+interface MouseButtonListener extends Callback {
+    /**
+     * Notifies a mouse button event.
+     * @param window    window
+     * @param button    Button index 0..n
+     * @param action    Button action
+     * @param mods      Modifiers
+     */
+    void button(Pointer window, int button, int action, int mods);
+}
+
+/**
+ * Registers a mouse button listener.
+ * @param window        Window
+ * @param listener      Mouse button listener
+ */
+void glfwSetMouseButtonCallback(Window window, MouseButtonListener listener);
+```
+
 ### Keyboard
 
 The final device we will implement in this chapter is the GLFW keyboard:
@@ -611,6 +670,29 @@ Notes:
 * The key table is hidden but we provide a factory method to lookup keys by name.
 
 * We add the lazily-instantiated keyboard device to the GLFW window.
+
+Finally the GLFW library is extended to support the keyboard source:
+
+```java
+interface KeyListener extends Callback {
+    /**
+     * Notifies a key event.
+     * @param window            Window
+     * @param key               Key index
+     * @param scancode          Key scan code
+     * @param action            Key action
+     * @param mods              Modifiers
+     */
+    void key(Pointer window, int key, int scancode, int action, int mods);
+}
+
+/**
+ * Registers a key listener.
+ * @param window        Window
+ * @param listener      Key listener
+ */
+void glfwSetKeyCallback(Window window, KeyListener listener);
+```
 
 ---
 
