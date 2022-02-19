@@ -16,7 +16,7 @@ title: The Render Pass
 
 In this chapter we will develop the remaining components required to complete the presentation functionality started in the previous chapter.
 
-We will also introduce a _dependency injection_ framework to simplify development of a Vulkan application.
+We will also introduce a new framework to address the convoluted structure of the demo application.
 
 ---
 

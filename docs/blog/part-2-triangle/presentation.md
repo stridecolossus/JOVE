@@ -782,6 +782,35 @@ public class Swapchain extends AbstractVulkanObject {
 }
 ```
 
+The new framework component hierarchy is illustrated in the following class diagram:
+
+```mermaid
+classDiagram
+
+class NativeObject {
+    +CONVERTER
+    +array()
+}
+
+class Handle {
+    -ptr
+    +CONVERTER
+}
+NativeObject --> Handle
+
+NativeObject <|-- TransientNativeObject
+
+class AbstractTransientNativeObject {
+    -destroyed
+    +destroy()
+}
+TransientNativeObject <!.. AbstractTransientNativeObject
+
+AbstractTransientNativeObject <!-- AbstractVulkanObject
+AbstractTransientNativeObject --> LogicalDevice
+AbstractTransientNativeObject --> Destructor
+```
+
 ### Vulkan Booleans
 
 Development of the swapchain was the first time we came across JNA code using boolean values and we encountered a curious problem that stumped us for some time.

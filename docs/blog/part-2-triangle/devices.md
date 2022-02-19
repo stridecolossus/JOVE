@@ -934,7 +934,12 @@ class PhysicalDevice {
     -handle
     +devices(Instance)
 }
-PhysicalDevice --> Instance
+Instance <-- PhysicalDevice
+
+class Properties {
+    +name() String
+    +type()
+}
 PhysicalDevice --> Properties
 
 class Family {
@@ -950,7 +955,7 @@ Queue : -handle
 class LogicalDevice {
     -handle
 }
-LogicalDevice --> PhysicalDevice
+PhysicalDevice <-- LogicalDevice
 LogicalDevice --> "*" Queue
 ```
 
