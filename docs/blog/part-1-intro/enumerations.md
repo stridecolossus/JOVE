@@ -45,7 +45,28 @@ public interface IntegerEnumeration {
 }
 ```
 
-The following static helper can now be implemented to build a bit-field mask from an arbitrary collection of enumeration constants:
+The interface is implemented in the template for the code-generated enumerations as illustrated in the following example:
+
+```java
+public enum VkImageUsageFlag implements IntegerEnumeration {
+    TRANSFER_SRC(1),
+    TRANSFER_DST(2),
+    ...
+
+    private final int value;
+    
+    private VkImageUsageFlag(int value) {
+        this.value = value;
+    }
+
+    @Override
+    public int value() {
+        return value;
+    }
+}
+```
+
+A static helper can now be implemented to build a bit-field mask from an arbitrary collection of enumeration constants:
 
 ```java
 static <E extends IntegerEnumeration> int mask(Collection<E> values) {
@@ -83,7 +104,7 @@ public E map(int value) {
 }
 ```
 
-Transforming a bit-field mask to the corresponding enumeration constants is slightly more involved:
+Transforming a bit-field mask to the corresponding enumeration constants is slightly more involved, the following helper walks the bits of the mask and maps each to the corresponding enumeration constant:
 
 ```java
 public TreeSet<E> enumerate(int mask) {

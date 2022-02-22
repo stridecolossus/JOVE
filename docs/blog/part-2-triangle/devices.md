@@ -703,15 +703,15 @@ Queue presentationQueue = dev.queue(presentation.family());
 
 ### Two-Stage Invocation
 
-When enumerating the physical devices we first came across API methods that are invoked __twice__ to retrieve an array from Vulkan.
+When enumerating the physical devices we first came across API methods that are invoked __twice__ to retrieve data from Vulkan (usually an array of structures or pointer handles).
 
 The process is generally:
 
-1. Invoke an API method with an integer-by-reference value to determine the length of the array (the array argument is `null`).
+1. Invoke an API method with an integer-by-reference _count_ to determine the size of the results (the data argument is `null`).
 
-2. Allocate the array accordingly.
+2. Allocate the data or array accordingly.
 
-3. Invoke again to populate the empty array.
+3. Invoke again passing both the count and the allocated object to populate the returned results.
 
 This is a common pattern across the Vulkan API which we refer to as _two-stage invocation_.
 
