@@ -8,8 +8,8 @@ title: Introduction
 
 - [Overview](#overview)
 - [Background](#background)
-- [Approach](#approach)
 - [Design](#design)
+- [Approach](#approach)
 - [Code Presentation](#code-presentation)
 - [Technology Choices](#technology-choices)
 
@@ -29,7 +29,9 @@ In this first section we set the scene for the project:
 
 * How do we bind to the native Vulkan libraries?
 
-If the reader has no interest in the _why_ and wants to get straight to the nitty-gritty of the _how_ then this chapter can easily be skipped.
+If the reader has no interest in the _why_ and wants to get straight to the _how_ then this chapter can easily be skipped.
+
+The remainder of this section is concerned with the implementation of the Java bindings to the Vulkan native library, again the reader can skip to the [start](blog/part-2-triangle/instance) of the blog proper.
 
 ---
 
@@ -58,6 +60,46 @@ Each chapter generally consists of:
 * One or more _integration_ steps where we use the new functionality to extend the demo applications.
 
 * A retrospective of any identified improvements and enhancements that lead to refactoring of existing code.
+
+---
+
+## Design
+
+The general idea for the JOVE project is to provide a toolkit of Vulkan functionality, consisting of a set of reusable components that collaborate to implement higher level features and demo applications.  This library of components should satisfy the following requirements:
+
+* Avoid cut-and-paste code in demo applications.
+
+* Encapsulate the inherent complexity of a Vulkan application.
+
+* Cohesive components that can be unit-tested in relative isolation.
+
+Having read through the [Vulkan tutorial](https://vulkan-tutorial.com/) we make the following observations that direct the detailed design:
+
+1. The Vulkan API is (in our opinion) extremely well designed, especially considering the limitations of defining abstract data types in C.
+
+2. Generally Vulkan is a _declarative_ API whereas OpenGL largely followed an _imperative_ approach.
+
+3. Vulkan components are often highly configurable, functionality is declared via a C structure (referred to as a _descriptor_) which is passed to an API method to instantiate the native object.
+
+4. However this configuration often largely consists of 'empty' or default information for even the simplest use case.  For example, the most basic rendering demo requires a pipeline configuration consisting of around a dozen descriptors, with much of that configuration being default settings.
+
+5. Vulkan is designed to support multi-threaded applications from the ground up.
+
+Given the above we can make the following design decisions:
+
+* JOVE components will correspond closely to the underlying API and will follow the same naming conventions.
+
+* We will make extensive use of the _builder_ pattern and/or static factory methods to create and configure domain objects (however constructors are often package-private for testability).
+
+* Builders and constructors will attempt to offer sensible defaults to reduce boiler-plate code and simplify common use cases.
+
+* All classes are _immutable_ by default unless there is a compelling reason to provide mutator methods.  In any case the majority of the Vulkan components are immutable by design, e.g. pipelines, semaphores, etc.  This also has the side benefit of simplifying the design and mitigating risk for multi-threaded applications.
+
+* Unless explicitly stated otherwise __all__ mutable components can be considered __non__ thread safe.
+
+* Data transfer operations are implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
+
+Inevitably there will usually be some _thrashing_ at the start of a new project, especially one employing new and relatively unknown technologies, in particular there will be a major change of direction when binding to the native library as we shall see in the next chapter.
 
 ---
 
@@ -90,26 +132,6 @@ To attempt to achieve these goals our approach and principles are as follows:
 Some of these might seem high-flown or even pointless for a personal project, however experience has taught us that following sound development principles avoids pain and bugs in the future (especially for a large project perhaps developed over several years).
 
 On the other hand this _is_ a personal project and we allow ourselves some freedom in our decisions that might not be possible under the constraints of a real-world project - we can reinvent as many wheels as we choose if there is sufficient reason (or challenge) in doing so.
-
----
-
-## Design
-
-The general approach for the JOVE project is to design a toolkit of Vulkan functionality that can then be built upon to create higher level features.
-
-The Vulkan API is (in our opinion) extremely well designed, especially considering the limitations of defining abstract data types in C.  The components of the JOVE library will therefore correspond closely to the underlying API and will follow the same naming conventions.
-
-Generally a Vulkan application is _declarative_ whereby components are configured via a _descriptor_ which is passed to an API method to instantiate the native object (whereas OpenGl was largely an _imperative_ API).  Therefore JOVE will make extensive use of the _builder_ pattern and/or static factory methods to create domain objects, however constructors are often package-private for testability.
-
-Inevitably there will usually be some _thrashing_ at the start of a new project, especially one employing new and relatively unknown technologies, in particular there will be a major change of direction when binding to the native library as we shall see in the next chapter.
-
-Finally we collect some general design decisions:
-
-* All classes are _immutable_ by default unless there is a compelling reason to provide mutator methods.  In any case the majority of the native Vulkan components are immutable by design, e.g. pipelines, semaphores, etc.  This also has the side benefits of simplifying the design and mitigating risk for multi-threaded code (and Vulkan is designed to support multi-threaded applications from the ground up).
-
-* Unless explicitly stated otherwise __all__ mutable components can be considered __not__ thread safe.
-
-* Data transfer operations are implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
 
 ---
 
