@@ -25,10 +25,10 @@ public class FrameTracker implements RenderLoop.Task {
 	}
 
 	/**
-	 * @return Current time (nanoseconds)
+	 * @return Current time (ms)
 	 */
 	private static long now() {
-		return System.nanoTime();
+		return System.currentTimeMillis();
 	}
 
 	private final Set<Listener> listeners = new HashSet<>();
@@ -44,7 +44,7 @@ public class FrameTracker implements RenderLoop.Task {
 	}
 
 	/**
-	 * @return Elapsed time since previous frame (nanoseconds)
+	 * @return Elapsed time since previous frame (ms)
 	 */
 	public long elapsed() {
 		return elapsed;

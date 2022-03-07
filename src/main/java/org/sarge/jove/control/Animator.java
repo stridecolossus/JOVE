@@ -3,8 +3,6 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -87,7 +85,7 @@ public class Animator extends Player implements FrameTracker.Listener {
 		}
 
 		// Update time position
-		time += speed * TimeUnit.NANOSECONDS.toMillis(tracker.elapsed());
+		time += speed * tracker.elapsed();
 
 		// Check for completed animation
 		if(time > duration) {

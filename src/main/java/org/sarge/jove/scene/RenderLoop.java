@@ -75,7 +75,9 @@ public class RenderLoop {
 	public void run() {
 		running = true;
 		while(running) {
-			tasks.forEach(Task::execute);
+			for(Task task : tasks) {
+				task.execute();
+			}
 		}
 	}
 

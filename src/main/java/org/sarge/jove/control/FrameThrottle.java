@@ -1,7 +1,6 @@
 package org.sarge.jove.control;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  * The <i>frame throttle</i> sleeps the rendering thread for a specified duration between each frame.
@@ -22,23 +21,19 @@ public class FrameThrottle implements FrameTracker.Listener {
 	 * @param fps Target frames-per-second (default is 50)
 	 */
 	public void throttle(int fps) {
-		this.duration = TimeUnit.SECONDS.toNanos(1) / fps;
+		this.duration = TimeUnit.SECONDS.toMillis(1) / fps;
 	}
 
 	@Override
 	public void update(FrameTracker tracker) {
 		final long sleep = duration - tracker.elapsed();
 		if(sleep > 0) {
-			sleep(sleep);
+			try {
+				Thread.sleep(sleep);
+			}
+			catch(InterruptedException e) {
+				// Ignored
+			}
 		}
-	}
-
-	/**
-	 * Sleeps the current thread for the given duration.
-	 * @param duration Sleep duration (nanoseconds)
-	 */
-	@SuppressWarnings("static-method")
-	protected void sleep(long duration) {
-		LockSupport.parkNanos(duration);
 	}
 }

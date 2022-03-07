@@ -9,7 +9,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author Sarge
  */
 public class FrameCounter implements FrameTracker.Listener {
-	private static final long SECOND = TimeUnit.SECONDS.toNanos(1);
+	private static final long SECOND = TimeUnit.SECONDS.toMillis(1);
 
 	private long time;
 	private int count;
@@ -30,17 +30,10 @@ public class FrameCounter implements FrameTracker.Listener {
 
 		// Reset after each second
 		if(time >= SECOND) {
-			reset();
+			count = current;
+			current = 0;
+			time = 0;
 		}
-	}
-
-	/**
-	 * Resets this counter after each elapsed second.
-	 */
-	protected void reset() {
-		count = current;
-		current = 0;
-		time = time % SECOND;
 	}
 
 	@Override
