@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 
 /**
  * The <i>memory selector</i> implements the recommended algorithm for selecting a {@link MemoryType} for a given allocation request.
@@ -61,9 +61,10 @@ public class MemorySelector {
 	 */
 	public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
 		// Filter available memory types
+		final Mask mask = new Mask(reqs.memoryTypeBits);
 		final List<MemoryType> candidates = IntStream
 				.range(0, types.length)
-				.filter(n -> MathsUtil.isBit(reqs.memoryTypeBits, n))
+				.filter(mask::bit)
 				.mapToObj(n -> types[n])
 				.collect(toList());
 
@@ -73,7 +74,6 @@ public class MemorySelector {
 				.or(() -> find(candidates, props.required()))
 				.orElseThrow(() -> new AllocationException(String.format("No available memory type: requirements=%s properties=%s", reqs, props)));
 	}
-	// TODO - cache candidates for reqs.memoryTypeBits?
 
 	/**
 	 * Finds a memory type matching the given properties.

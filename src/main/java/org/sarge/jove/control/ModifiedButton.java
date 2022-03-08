@@ -3,7 +3,7 @@ package org.sarge.jove.control;
 import java.util.Set;
 
 import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 
 /**
  * A <i>modified button</i> represents keyboard keys and mouse buttons with an additional keyboard modifier mask.
@@ -84,7 +84,7 @@ public class ModifiedButton extends DefaultButton {
 		return
 				super.matches(button) &&
 				(button instanceof ModifiedButton that) &&
-				MathsUtil.isMask(that.mods, this.mods);
+				new Mask(this.mods).contains(that.mods);
 	}
 
 	@Override

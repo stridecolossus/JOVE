@@ -101,40 +101,11 @@ public final class MathsUtil {
 	}
 
 	/**
-	 * @param value		Value
-	 * @param mask		Bit-wise mask
-	 * @return Whether the given value matches the specified bit-wise mask
-	 */
-	public static boolean isMask(int value, int mask) {
-		return (value & mask) == value;
-	}
-	// TODO - use Apache BitField?
-
-	/**
-	 * @param mask		Mask
-	 * @param bit		Bit index
-	 * @return Whether the specified bit is set in the given integer mask
-	 */
-	public static boolean isBit(int mask, int bit) {
-		return isMask(1 << bit, mask);
-	}
-	// TODO - use Apache BitField?
-
-	/**
 	 * @param num Number
 	 * @return Whether the given integer is a power-of-two
 	 */
 	public static boolean isPowerOfTwo(int num) {
 		return (num > 0) && (num & (num - 1)) == 0;
-	}
-
-	/**
-	 * Calculates the maximum unsigned integer value for the given number of bits.
-	 * @param bits Number of bits
-	 * @return Maximum unsigned value
-	 */
-	public static long unsignedMaximum(int bits) {
-		return (1L << bits) - 1;
 	}
 
 	/**

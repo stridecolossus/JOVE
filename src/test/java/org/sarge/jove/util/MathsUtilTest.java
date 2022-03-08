@@ -48,23 +48,6 @@ class MathsUtilTest {
 	}
 
 	@Test
-	void isMask() {
-		assertEquals(true,  MathsUtil.isMask(0b101, 0b101));
-		assertEquals(true,  MathsUtil.isMask(0b100, 0b101));
-		assertEquals(true,  MathsUtil.isMask(0b001, 0b101));
-		assertEquals(false, MathsUtil.isMask(0b111, 0b101));
-		assertEquals(false, MathsUtil.isMask(0b010, 0b101));
-	}
-
-	@Test
-	void isBit() {
-		assertEquals(true,  MathsUtil.isBit(0b101, 0));
-		assertEquals(false, MathsUtil.isBit(0b101, 1));
-		assertEquals(true,  MathsUtil.isBit(0b101, 2));
-		assertEquals(false, MathsUtil.isBit(0b101, 3));
-	}
-
-	@Test
 	void isPowerOfTwo() {
 		assertEquals(false, MathsUtil.isPowerOfTwo(0));
 		assertEquals(true,  MathsUtil.isPowerOfTwo(1));
@@ -72,13 +55,6 @@ class MathsUtilTest {
 		assertEquals(false, MathsUtil.isPowerOfTwo(3));
 		assertEquals(true,  MathsUtil.isPowerOfTwo(4));
 		assertEquals(true,  MathsUtil.isPowerOfTwo(8));
-	}
-
-	@Test
-	void max() {
-		assertEquals(255, MathsUtil.unsignedMaximum(8));
-		assertEquals(65535, MathsUtil.unsignedMaximum(16));
-		assertEquals(4_294_967_295L, MathsUtil.unsignedMaximum(32));
 	}
 
 	@Test

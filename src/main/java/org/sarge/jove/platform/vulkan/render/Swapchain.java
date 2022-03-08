@@ -34,7 +34,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.IntegerArray;
 import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Check;
 
@@ -289,8 +289,9 @@ public class Swapchain extends AbstractVulkanObject {
 			clipped(true);
 		}
 
-		private static void validate(int mask, IntegerEnumeration e) {
-			if(!MathsUtil.isMask(e.value(), mask)) throw new IllegalArgumentException("Unsupported property: " + e);
+		private static void validate(int bits, IntegerEnumeration e) {
+			final Mask mask = new Mask(bits);
+			if(!mask.contains(e.value())) throw new IllegalArgumentException("Unsupported property: " + e);
 		}
 
 		/**

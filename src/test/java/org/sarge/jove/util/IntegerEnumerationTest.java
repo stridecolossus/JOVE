@@ -71,6 +71,7 @@ public class IntegerEnumerationTest {
 		assertEquals(Set.of(MockEnum.A, MockEnum.B, MockEnum.C), mapping.enumerate(0b111));
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	public void mask() {
 		assertEquals(0, IntegerEnumeration.mask(Set.of()));
@@ -85,6 +86,7 @@ public class IntegerEnumerationTest {
 	class ConverterTests {
 		private FromNativeContext context;
 
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@BeforeEach
 		void before() {
 			final Class clazz = MockEnum.class;					// Has to be explicit field and non-generic
@@ -119,6 +121,7 @@ public class IntegerEnumerationTest {
 			assertEquals(MockEnum.A, IntegerEnumeration.CONVERTER.fromNative(0, context));
 		}
 
+		@SuppressWarnings({"rawtypes", "unchecked"})
 		@Test
 		public void fromNativeInvalidClass() {
 			final Class clazz = String.class;				// Has to be explicit field and non-generic

@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 
 /**
  * A <i>model</i> is comprised of a vertex buffer with a specified layout and an optional index buffer.
@@ -40,7 +40,7 @@ public interface Model {
 	/**
 	 * Maximum length of a {@code short} index buffer.
 	 */
-	long SHORT = MathsUtil.unsignedMaximum(Short.SIZE);
+	long SHORT = Mask.unsignedMaximum(Short.SIZE);
 
 	/**
 	 * Determines whether the appropriate data type for the given index buffer length.

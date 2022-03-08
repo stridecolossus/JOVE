@@ -9,7 +9,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.ToNativeContext;
@@ -173,16 +172,14 @@ public interface IntegerEnumeration {
 		}
 
 		/**
-		 * Converts an integer mask to an ordered set of enumeration constants.
+		 * Converts a bit-field to an ordered set of enumeration constants.
 		 * @param clazz		Enumeration class
-		 * @param mask		Mask
+		 * @param bits		Bit field
 		 * @return Enumeration constants (in ascending order of value)
 		 */
-		public TreeSet<E> enumerate(int mask) {
-			return IntStream
-					.range(0, Integer.highestOneBit(mask))
-					.map(bit -> 1 << bit)
-					.filter(value -> MathsUtil.isMask(value, mask))
+		public TreeSet<E> enumerate(int bits) {
+			return new Mask(bits)
+					.stream()
 					.mapToObj(this::map)
 					.collect(Collectors.toCollection(TreeSet::new));
 		}

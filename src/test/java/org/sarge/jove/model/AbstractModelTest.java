@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 
 class AbstractModelTest {
 	private AbstractModel model;
@@ -57,10 +57,10 @@ class AbstractModelTest {
 	@SuppressWarnings("static-method")
 	@Test
 	void isIntegerIndex() {
-		final long max = MathsUtil.unsignedMaximum(Short.SIZE);
+		final long max = Mask.unsignedMaximum(Short.SIZE);
 		assertEquals(false, Model.isIntegerIndex(0));
 		assertEquals(false, Model.isIntegerIndex(max - 1));
 		assertEquals(true, Model.isIntegerIndex(max));
-		assertEquals(true, Model.isIntegerIndex(MathsUtil.unsignedMaximum(Integer.SIZE)));
+		assertEquals(true, Model.isIntegerIndex(Mask.unsignedMaximum(Integer.SIZE)));
 	}
 }

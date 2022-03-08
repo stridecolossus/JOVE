@@ -161,12 +161,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 		verify(view).destroy();
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void format() {
 		assertEquals(VkFormat.B8G8R8A8_UNORM, Swapchain.DEFAULT_FORMAT);
 		// TODO - should be VkFormat.B8G8R8A8_SRGB; i.e. is it SRBG or UNORM?
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void mode() {
 		// Check default mode

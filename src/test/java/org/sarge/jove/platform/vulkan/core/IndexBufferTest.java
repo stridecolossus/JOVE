@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 
 public class IndexBufferTest extends AbstractVulkanTest {
 	private static final long SIZE = 4;
@@ -52,7 +52,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void constructorShortIndexTooLarge() {
-		final long len = 2 * MathsUtil.unsignedMaximum(Short.SIZE);
+		final long len = 2 * Mask.unsignedMaximum(Short.SIZE);
 		buffer = new VulkanBuffer(new Handle(1), dev, Set.of(VkBufferUsageFlag.INDEX_BUFFER), mem, len);
 		assertThrows(IllegalArgumentException.class, () -> new IndexBuffer(buffer, VkIndexType.UINT16));
 	}

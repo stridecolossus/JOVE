@@ -12,7 +12,7 @@ import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
 /**
@@ -75,7 +75,7 @@ public class GridBuilder {
 			final float h = dim.height() / size.height();
 
 			// Calculate height normalisation scalar
-			final float normalise = scale / MathsUtil.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+			final float normalise = scale / Mask.unsignedMaximum(Byte.SIZE * image.layout().bytes());
 
 			// Create function
 			return (row, col) -> {

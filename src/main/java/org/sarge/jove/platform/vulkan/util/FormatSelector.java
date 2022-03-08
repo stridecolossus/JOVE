@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.VkFormatFeature;
 import org.sarge.jove.platform.vulkan.VkFormatProperties;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
 /**
@@ -46,7 +46,7 @@ public class FormatSelector {
 		final int mask = IntegerEnumeration.mask(features);
 		return props -> {
 			final int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-			return MathsUtil.isMask(mask, actual);
+			return new Mask(actual).contains(mask);
 		};
 	}
 
