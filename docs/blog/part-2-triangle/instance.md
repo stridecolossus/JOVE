@@ -487,7 +487,7 @@ We start with a new component that is responsible for managing diagnostics handl
 ```java
 public class HandlerManager {
     private final Instance instance;
-    private final Supplier<Function> create, destroy;
+    private final Function create, destroy;
     private final Collection<Handler> handlers = new ArrayList<>();
 }
 ```
@@ -497,20 +497,12 @@ In the constructor we instantiate the JNA function pointers to create and destro
 ```java
 HandlerManager(Instance instance) {
     this.instance = notNull(instance);
-    this.create = function("vkCreateDebugUtilsMessengerEXT");
-    this.destroy = function("vkDestroyDebugUtilsMessengerEXT");
+    this.create = instance.function("vkCreateDebugUtilsMessengerEXT");
+    this.destroy = instance.function("vkDestroyDebugUtilsMessengerEXT");
 }
 ```
 
-Which both delegate to a local helper:
-
-```java
-private Supplier<Function> function(String name) {
-    return new LazySupplier<>(() -> instance.function(name));
-}
-```
-
-A function pointer is looked up by the following new method on the instance class:
+The function pointers are looked up by the following new method on the instance class:
 
 ```java
 public Function function(String name) {
@@ -520,7 +512,7 @@ public Function function(String name) {
 }
 ```
 
-The API method is added to the library:
+And the API method is added to the library:
 
 ```java
 interface VulkanLibrary {
@@ -533,45 +525,6 @@ interface VulkanLibrary {
     Pointer vkGetInstanceProcAddr(Pointer instance, String name);
 }
 ```
-
-Here we introduce the `LazySupplier` which uses _lazy initialisation_ to defer creation of some object:
-
-```java
-public class LazySupplier<T> implements Supplier<T> {
-    private final Supplier<T> supplier;
-
-    private volatile T value;
-
-    public LazySupplier(Supplier<T> supplier) {
-        this.supplier = notNull(supplier);
-    }
-
-    @Override
-    public T get() {
-        // Perform one read of the value to minimise locking
-        final T result = value;
-
-        // Retrieve or initialise the value
-        if(result == null) {
-            synchronized(this) {
-                if(value == null) {
-                    value = notNull(supplier.get());
-                }
-                return value;
-            }
-        }
-        else {
-            return result;
-        }
-    }
-}
-```
-
-Notes:
-
-* Although not relevant in this case, the lazy supplier provides a relatively cheap, thread-safe implementation.
-
-* The lazily initialised object is only created __once__ as a singleton.
 
 ### Handler Builder
 
@@ -606,7 +559,7 @@ Next the the function to create the handler is invoked with the appropriate argu
 Pointer parent = instance.handle();
 PointerByReference ref = instance.factory().pointer();
 Object[] args = {parent, info, null, ref};
-check(create.get().invokeInt(args));
+check(create.invokeInt(args));
 ```
 
 Finally we create the handler domain object and register it with the manager:
@@ -638,7 +591,7 @@ public class Handler {
         // Destroy handler
         Pointer parent = instance.handle();
         Object[] args = {parent, this.handle, null};
-        destroy.get().invoke(args);
+        destroy.invoke(args);
 
         // Remove handler
         assert handlers.contains(this);
@@ -646,8 +599,6 @@ public class Handler {
     }
 }
 ```
-
-Note that in `destroy` we use `invoke` since the API method has a `void` return type.
 
 Finally attached handlers are released in the manager when the instance is destroyed:
 
@@ -773,8 +724,6 @@ instance
     .type(VkDebugUtilsMessageType.VALIDATION)
     .build();
 ```
-
-Note that the manager is a property of the instance.
 
 From now on when we screw things up we should receive error messages on the console.
 

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -22,7 +21,6 @@ import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackData;
 import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
-import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Function;
@@ -44,7 +42,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class HandlerManager {
 	private final Instance instance;
-	private final Supplier<Function> create, destroy;
+	private final Function create, destroy;
 	private final Collection<Handler> handlers = new ArrayList<>();
 
 	/**
@@ -53,15 +51,8 @@ public class HandlerManager {
 	 */
 	HandlerManager(Instance instance) {
 		this.instance = notNull(instance);
-		this.create = function("vkCreateDebugUtilsMessengerEXT");
-		this.destroy = function("vkDestroyDebugUtilsMessengerEXT");
-	}
-
-	/**
-	 * Helper - Creates a lazy supplier for a handler API method.
-	 */
-	private Supplier<Function> function(String name) {
-		return new LazySupplier<>(() -> instance.function(name));
+		this.create = instance.function("vkCreateDebugUtilsMessengerEXT");
+		this.destroy = instance.function("vkDestroyDebugUtilsMessengerEXT");
 	}
 
 	/**
@@ -195,7 +186,7 @@ public class HandlerManager {
 			// Destroy handler
 			final Pointer parent = instance.handle().toPointer();
 			final Object[] args = {parent, handle.toPointer(), null};
-			destroy.get().invoke(args);
+			destroy.invoke(args);
 
 			// Remove handler
 			assert handlers.contains(this);
@@ -295,7 +286,7 @@ public class HandlerManager {
 			final Pointer parent = instance.handle().toPointer();
 			final PointerByReference ref = instance.factory().pointer();
 			final Object[] args = {parent, info, null, ref};
-			check(create.get().invokeInt(args));
+			check(create.invokeInt(args));
 
 			// Create handler
 			final Handler handler = new Handler(ref.getValue());

@@ -170,7 +170,46 @@ public class Properties {
 }
 ```
 
-Finally we add a new interface to the Vulkan library for the various API methods used above:
+Here we introduce the `LazySupplier` which uses _lazy initialisation_ to defer creation of some object:
+
+```java
+public class LazySupplier<T> implements Supplier<T> {
+    private final Supplier<T> supplier;
+
+    private volatile T value;
+
+    public LazySupplier(Supplier<T> supplier) {
+        this.supplier = notNull(supplier);
+    }
+
+    @Override
+    public T get() {
+        // Perform one read of the value to minimise locking
+        final T result = value;
+
+        // Retrieve or initialise the value
+        if(result == null) {
+            synchronized(this) {
+                if(value == null) {
+                    value = notNull(supplier.get());
+                }
+                return value;
+            }
+        }
+        else {
+            return result;
+        }
+    }
+}
+```
+
+Notes:
+
+* Although not particularly relevant in this case, the lazy supplier provides a relatively cheap, thread-safe implementation.
+
+* The lazily initialised object is only created __once__ as a singleton.
+
+Finally a new JNA library is added for the API methods used above:
 
 ```java
 interface VulkanLibraryPhysicalDevice {

@@ -6,8 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.control.Animator.Animation;
@@ -26,7 +24,7 @@ class AnimatorTest {
 
 		// Init frame listener
 		frame = mock(FrameTracker.class);
-		when(frame.elapsed()).thenReturn(TimeUnit.SECONDS.toNanos(1));
+		when(frame.elapsed()).thenReturn(1000L);
 	}
 
 	@Test
@@ -68,7 +66,7 @@ class AnimatorTest {
 
 	@Test
 	void updateFinished() {
-		when(frame.elapsed()).thenReturn(TimeUnit.SECONDS.toNanos(6));
+		when(frame.elapsed()).thenReturn(6000L);
 		animator.state(State.PLAY);
 		animator.update(frame);
 		verify(animation).update(animator);
@@ -78,7 +76,7 @@ class AnimatorTest {
 
 	@Test
 	void updateRepeating() {
-		when(frame.elapsed()).thenReturn(TimeUnit.SECONDS.toNanos(6));
+		when(frame.elapsed()).thenReturn(6000L);
 		animator.state(State.PLAY);
 		animator.repeat(true);
 		animator.update(frame);

@@ -33,7 +33,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
 	private final ReferenceFactory factory;
-	private final HandlerManager manager = new HandlerManager(this);
+	private HandlerManager manager;
 
 	/**
 	 * Constructor.
@@ -83,13 +83,18 @@ public class Instance extends AbstractTransientNativeObject {
 	/**
 	 * @return Manager for diagnostic handlers
 	 */
-	public HandlerManager manager() {
+	public synchronized HandlerManager manager() {
+		if(manager == null) {
+			manager = new HandlerManager(this);
+		}
 		return manager;
 	}
 
 	@Override
 	protected void release() {
-		manager.close();
+		if(manager != null) {
+			manager.close();
+		}
 		lib.vkDestroyInstance(handle, null);
 	}
 
@@ -97,7 +102,7 @@ public class Instance extends AbstractTransientNativeObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append(manager)
+				.append("manager", manager)
 				.build();
 	}
 
