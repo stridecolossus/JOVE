@@ -141,7 +141,9 @@ final class ReverseMapping<E extends IntegerEnumeration> {
 
 ## Type Conversion
 
-To use integer enumerations in API methods and structures a JNA _type converter_ is implemented which maps a Java type to/from the JNA equivalent:
+JNA uses _type converters_ to marshal Java types to/from their native equivalents and includes built-in converters for standard types (integer, string, pointer, etc).
+
+To use the integer enumerations in a type-safe manner in API methods and structures we implement the following converter:
 
 ```java
 TypeConverter CONVERTER = new TypeConverter() {

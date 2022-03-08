@@ -128,11 +128,13 @@ This allows arbitrary JNA structures to be used to populate buffers which will b
 
 Push constants are an alternative and more efficient mechanism for transferring arbitrary data to shaders with some constraints:
 
-* The maximum amount of data is usually relatively small (specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure).
+* The maximum amount of data is usually relatively small.
 
 * Push constants are updated and stored within the command buffer.
 
-* Push constants have alignment restrictions, see [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
+* Push constants have alignment restrictions.
+
+See [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
 
 We start with a _push constant range_ which specifies a portion of the push constants and the shader stages where that data can be used:
 
@@ -191,28 +193,29 @@ public PipelineLayout build(DeviceContext dev) {
 
 Note that multiple ranges can be specified which allows the application to update some or all of the push constants at different shader stages and also enables the hardware to perform optimisations.
 
-In the `build` method we also determine the overall size of the push constants and associated shaders stages (which are added to the pipeline layout constructor):
+In the `build` method for the pipeline layout we determine the _maximum_ length of the push ranges:
 
 ```java
-// Determine overall size of the push constants data
 int max = ranges
     .stream()
     .mapToInt(PushConstantRange::length)
     .max()
     .orElse(0);
+```
 
-// Enumerate pipeline stages
+This is validated (not shown) against the hardware limit specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure, this value is usually quite small (256 bytes on our development environment).
+
+Finally the set of shader stages for the command is aggregated from the push constant ranges and added to the pipeline layout:
+
+```java
 Set<VkShaderStage> stages = ranges
     .stream()
     .map(PushConstantRange::stages)
     .flatMap(Set::stream)
     .collect(toSet());
 
-// Create layout
 return new PipelineLayout(layout.getValue(), dev, max, stages);
 ```
-
-Note that the size of the data buffer is validated (not shown) against the hardware limit which is often quite small (256 bytes on the development environment).
 
 ### Update Command
 

@@ -29,15 +29,15 @@ In this first section we set the scene for the project:
 
 * How do we bind to the native Vulkan libraries?
 
-If the reader has no interest in the _why_ and wants to get straight to the _how_ then this chapter can easily be skipped.
+If the reader has no interest in the _why_ and wants to get straight to the _how_ then this introductory section can easily be skipped.
 
-The remainder of this section is concerned with the implementation of the Java bindings to the Vulkan native library, again the reader can skip to the [start](blog/part-2-triangle/instance) of the blog proper.
+The remaining chapters in this section are concerned with binding to the Vulkan native library, again the reader can skip to the [start](blog/part-2-triangle/instance) of the blog proper with the bindings assumed to be in place.
 
 ---
 
 ## Background
 
-For several years as a personal project we had developed a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive this project and start afresh with a Vulkan implementation named __JOVE__.
+For several years as a personal project we had developed a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive the previous project and start afresh with a Vulkan implementation named __JOVE__.
 
 This is obviously not a small amount of effort, our rationale for such an undertaking is:
 
@@ -49,7 +49,7 @@ This is obviously not a small amount of effort, our rationale for such an undert
 
 * A test-bed for learning new development approaches, technologies and Java features.
 
-We have attempted to structure this blog so that each chapter builds on the preceding sections to incrementally deliver the functionality of the JOVE library, roughly following the [Vulkan tutorial](https://vulkan-tutorial.com/).
+It was suggested by a peer that the start of a new project was a good opportunity to try our hand at a blog documenting our approach, design and technical decisions that were made, issues and problems faced, etc.  We have attempted to structure the blog so that each chapter builds on the preceding sections to incrementally deliver the functionality of the JOVE library, roughly following the [Vulkan tutorial](https://vulkan-tutorial.com/).
 
 Each chapter generally consists of:
 

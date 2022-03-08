@@ -126,7 +126,7 @@ public class RenderPass extends AbstractVulkanObject {
 		 */
 		private VkRenderPassCreateInfo populate() {
 			// Create render pass descriptor
-			final VkRenderPassCreateInfo info = new VkRenderPassCreateInfo();
+			final var info = new VkRenderPassCreateInfo();
 
 			// Add attachments
 			info.attachmentCount = attachments.size();
