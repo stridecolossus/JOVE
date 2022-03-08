@@ -18,7 +18,9 @@ title: Code Generating the Vulkan API
 
 ### Background
 
-The previous based project was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).  LWJGL had recently implemented a Vulkan port and we expected to be able to use the new bindings to get to grips with the Vulkan API.  However things did not work out as we had hoped.  Not at all.
+The previous based project was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).  LWJGL had recently implemented a Vulkan port and we expected to be able to use the new bindings to get to grips with the Vulkan API.
+
+However things did not work out as we had hoped.  Not at all.
 
 Working through the [tutorial](https://vulkan-tutorial.com/) we found we were spending more time trying to understand LWJGL rather than learning how to use Vulkan, with each step forward leading to another road-block or mystifying code.  There were several reasons for this:
 
@@ -207,7 +209,7 @@ Notes:
 
 * The map of enumeration values is linked to retain the order of the entries.
 
-* Enumeration values are represented here as a `long` value which might seem surprising since C/C++ enumerations are sized to a native `int` (or shorter).  This reason for this will become clear shortly.
+* Enumeration values are represented here as a `long` value, which might seem surprising since C/C++ enumerations are sized to a native `int` (or shorter).  This reason for this will become clear shortly.
 
 Finally the parser delegates to a generator:
 
@@ -397,8 +399,7 @@ Notes:
 
 * We explain the purpose of the `IntegerEnumeration` in the next chapter.
 
-The line that actually generates a enumeration constant might be slightly confusing at first glance due to white-space constraints.  
-The following fragment expands the `if..else..end` directive to illustrate the logic, which adds a comma between each constant and a semi-colon after the final value:
+The line that actually generates a enumeration constant might be slightly confusing at first glance due to white-space constraints.  The following fragment expands the `if..else..end` directive to illustrate the logic, which adds a comma between each constant and a semi-colon after the final value:
 
 ```java
 #if($foreach.hasNext)
@@ -751,7 +752,7 @@ Notes:
 Each generated source file is dumped out to a target folder:
 
 ```java
-Path path = dir.resolve(name + ".java");
+Path path = root.resolve(name + ".java");
 Files.writeString(path, source);
 ```
 

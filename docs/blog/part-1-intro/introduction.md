@@ -31,7 +31,7 @@ In this first section we set the scene for the project:
 
 If the reader has no interest in the _why_ and wants to get straight to the _how_ then this introductory section can easily be skipped.
 
-The remaining chapters in this section are concerned with binding to the Vulkan native library, again the reader can skip to the [start](blog/part-2-triangle/instance) of the blog proper with the bindings assumed to be in place.
+The remaining chapters in this section are concerned with binding to the Vulkan native library, again the reader can skip to the [start](/JOVE/blog/part-2-triangle/instance) of the blog proper with the bindings assumed to be in place.
 
 ---
 
@@ -49,7 +49,9 @@ This is obviously not a small amount of effort, our rationale for such an undert
 
 * A test-bed for learning new development approaches, technologies and Java features.
 
-It was suggested by a peer that the start of a new project was a good opportunity to try our hand at a blog documenting our approach, design and technical decisions that were made, issues and problems faced, etc.  We have attempted to structure the blog so that each chapter builds on the preceding sections to incrementally deliver the functionality of the JOVE library, roughly following the [Vulkan tutorial](https://vulkan-tutorial.com/).
+It was suggested by a peer that the start of a new project was a good opportunity to try our hand at a blog documenting the approach, design and technical decisions that were made, issues and problems faced, etc.
+
+We have attempted to structure the blog so that each chapter builds on the preceding sections to incrementally deliver the functionality of the JOVE library, roughly following the [Vulkan tutorial](https://vulkan-tutorial.com/).
 
 Each chapter generally consists of:
 
@@ -115,9 +117,9 @@ In general our goals are:
 
 * Testability - All code is developed with testing in mind from the outset.
 
-To attempt to achieve these goals our approach and principles are as follows:
+To attempt to achieve these goals our approach is:
 
-* Implement the minimal functionality required to deliver each feature.
+* Follow the _right first time_ principle.
 
 * Aggressive refactoring of existing components to avoid code duplication and complexity, or where better understanding of Vulkan invalidates previous design decisions or assumptions.
 
@@ -125,11 +127,11 @@ To attempt to achieve these goals our approach and principles are as follows:
 
 * High test coverage with unit-tests developed _test-first_ or _test-in-parallel_ with the source code.
 
-* Detailed documentation throughout.
+* Detailed documentation throughout (with a focus on examples and illustration of use-cases).
 
 * Third-party libraries and technologies must be well-documented and widely supported.
 
-Some of these might seem high-flown or even pointless for a personal project, however experience has taught us that following sound development principles avoids pain and bugs in the future (especially for a large project perhaps developed over several years).
+Some of these might seem high-flown or even pointless for a personal project, however experience teaches us that sound principles avoids pain and bugs in the future, especially for a large project perhaps developed over several years.
 
 On the other hand this _is_ a personal project and we allow ourselves some freedom in our decisions that might not be possible under the constraints of a real-world project - we can reinvent as many wheels as we choose if there is sufficient reason (or challenge) in doing so.
 

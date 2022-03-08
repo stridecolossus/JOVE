@@ -30,7 +30,7 @@ For a library with a handful of enumerations this would be a minor issue that co
 
 ## Solution
 
-What is really required is some sort of base-class for the enumerations but of course Java enumerations cannot be sub-classed.  However - although it is not common practice - an enumeration __can__ implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).
+What we really required was some sort of base-class but of course Java enumerations cannot be sub-classed.  However - although it is not common practice - an enumeration _can_ implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).
 
 This technique is leveraged to define a common abstraction for the code-generated enumerations to support the above requirements.
 
@@ -143,7 +143,7 @@ final class ReverseMapping<E extends IntegerEnumeration> {
 
 JNA uses _type converters_ to marshal Java types to/from their native equivalents and includes built-in converters for standard types (integer, string, pointer, etc).
 
-To use the integer enumerations in a type-safe manner in API methods and structures we implement the following converter:
+To use the integer enumerations in a type-safe manner in API methods and structures we implement the following custom converter:
 
 ```java
 TypeConverter CONVERTER = new TypeConverter() {
