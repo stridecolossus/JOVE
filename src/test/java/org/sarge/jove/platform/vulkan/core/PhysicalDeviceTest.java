@@ -16,7 +16,6 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -133,46 +132,16 @@ public class PhysicalDeviceTest {
 
 	@Nested
 	class SelectorTest {
-		private Predicate<Family> predicate;
-
-		@SuppressWarnings("unchecked")
-		@BeforeEach
-		void before() {
-			predicate = mock(Predicate.class);
-		}
-
 		@Test
-		void selector() {
-			// Create selector
-			final Selector selector = new Selector() {
-				@Override
-				protected Predicate<Family> predicate(PhysicalDevice dev) {
-					return predicate;
-				}
-			};
-			assertNotNull(selector);
-			when(predicate.test(family)).thenReturn(true);
-
-			// Check selector
-			assertEquals(true, selector.test(dev));
-			assertEquals(family, selector.family());
-		}
-
-		@Test
-		void empty() {
-			final Selector selector = new Selector() {
-				@Override
-				protected Predicate<Family> predicate(PhysicalDevice dev) {
-					return predicate;
-				}
-			};
+		void failed() {
+			final Selector selector = new Selector((dev, family) -> false);
 			assertEquals(false, selector.test(dev));
 			assertThrows(NoSuchElementException.class, () -> selector.family());
 		}
 
 		@Test
 		void flags() {
-			final Selector selector = Selector.of(VkQueueFlag.GRAPHICS);
+			final Selector selector = Selector.of(Set.of(VkQueueFlag.GRAPHICS));
 			assertNotNull(selector);
 			assertEquals(true, selector.test(dev));
 			assertEquals(family, selector.family());

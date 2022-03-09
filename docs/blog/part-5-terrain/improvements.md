@@ -205,7 +205,7 @@ int max = ranges
 
 This is validated (not shown) against the hardware limit specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure, this value is usually quite small (256 bytes on our development environment).
 
-Finally the set of shader stages for the command is aggregated from the push constant ranges and added to the pipeline layout:
+Finally the set of shader stages is aggregated and added to the pipeline layout:
 
 ```java
 Set<VkShaderStage> stages = ranges

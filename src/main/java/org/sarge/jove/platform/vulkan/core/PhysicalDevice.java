@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -133,6 +134,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @param surface		Rendering surface
 	 * @param family		Queue family
 	 * @return Whether presentation is supported by the given family
+	 * @see Selector#of(Surface)
 	 */
 	public boolean isPresentationSupported(Surface surface, Family family) {
 		final VulkanLibrary lib = instance.library();
@@ -142,7 +144,7 @@ public class PhysicalDevice implements NativeObject {
 	}
 
 	/**
-	 * A <i>selector</i> is used to select a physical device that supports some required queue capability (such as presentation or rendering).
+	 * A <i>selector</i> is used to select a physical device that supports some required capability (such as presentation or rendering).
 	 * <p>
 	 * Selectors are used in the following steps during initialisation of the devices:
 	 * <ol>
@@ -150,62 +152,68 @@ public class PhysicalDevice implements NativeObject {
 	 * <li>to retrieve the relevant queue from the logical device</li>
 	 * </ol>
 	 * <p>
-	 * Note that the selected queue {@link #family()} is determined as a side-effect of using the selector as a predicate when choosing the physical device.
+	 * Notes:
+	 * <ul>
+	 * <li>The selected queue {@link #family()} is determined as a side-effect when choosing the physical device</li>
+	 * <li>The same queue may be returned by different selectors depending on the hardware</li>
+	 * </ul>
 	 * <p>
-	 * Example to select the presentation queue:
+	 * Example to select a device that supports rendering:
 	 * <pre>
-	 * 	// Create selector
-	 * 	Handle surface = ...
-	 * 	Selector selector = Selector.of(surface);
+	 * // Create selector for a device that supports presentation
+	 * Surface surface = ...
+	 * Selector presentation = Selector.of(surface);
 	 *
-	 * 	// Select device that supports presentation
-	 * 	PhysicalDevice physical = devices.stream().filter(selector).findAny().orElseThrow();
+	 * // Create selector for a device with a graphics work queue
+	 * Selector graphics = Selector.of(Set.of(VkQueueFlag.GRAPHICS));
 	 *
-	 * 	// Retrieve presentation queue
-	 * 	LogicalDevice dev = ...
-	 * 	Queue presentation = dev.queue(selector.family());
-	 * </pre>
-	 * <p>
-	 * The selector is a template implementation, sub-classes must implement {@link #predicate(PhysicalDevice)} to generate a queue family predicate for a given device:
-	 * <pre>
-	 * 	Selector selector = new Selector() {
-	 * 		protected Predicate<Family> predicate(PhysicalDevice dev) {
-	 * 			return family -> ...
-	 * 		}
-	 * 	};
+	 * // Select device
+	 * PhysicalDevice physical = devices
+	 *     .stream()
+	 *     .filter(graphics)
+	 *     .filter(presentation)
+	 *     .findAny()
+	 *     .orElseThrow();
+	 *
+	 * // Retrieve queues
+	 * LogicalDevice dev = ...
+	 * Queue presentationQueue = dev.queue(presentation.family());
+	 * Queue graphicsQueue = dev.queue(graphics.family());
 	 * </pre>
 	 */
-	public static abstract class Selector implements Predicate<PhysicalDevice> {
+	public static class Selector implements Predicate<PhysicalDevice> {
 		/**
-		 * Creates a selector for the queue that supports presentation to the given surface.
+		 * Creates a selector for a device that supports presentation to the given surface.
 		 * @param surface Rendering surface
-		 * @return Presentation queue selector
+		 * @return Presentation selector
+		 * @see PhysicalDevice#isPresentationSupported(Surface, Family)
 		 */
 		public static Selector of(Surface surface) {
-			return new Selector() {
-				@Override
-				protected Predicate<Family> predicate(PhysicalDevice dev) {
-					return family -> dev.isPresentationSupported(surface, family);
-				}
-			};
+			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
+			return new Selector(predicate);
 		}
 
 		/**
-		 * Creates a selector for the queue that supports the given capabilities.
-		 * @param flags Required queue capabilities
+		 * Creates a selector for a device that provides a work queue supporting the given flags.
+		 * @param flags Required queue flags
 		 * @return Queue selector
 		 */
-		public static Selector of(VkQueueFlag... flags) {
-			final var list = Arrays.asList(flags);
-			return new Selector() {
-				@Override
-				protected Predicate<Family> predicate(PhysicalDevice dev) {
-					return family -> family.flags().containsAll(list);
-				}
-			};
+		public static Selector of(Set<VkQueueFlag> flags) {
+			final var copy = Set.copyOf(flags);
+			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> family.flags().containsAll(copy);
+			return new Selector(predicate);
 		}
 
+		private final BiPredicate<PhysicalDevice, Family> predicate;
 		private Optional<Family> family = Optional.empty();
+
+		/**
+		 * Constructor.
+		 * @param predicate
+		 */
+		public Selector(BiPredicate<PhysicalDevice, Family> predicate) {
+			this.predicate = notNull(predicate);
+		}
 
 		/**
 		 * @return Selected queue family
@@ -215,22 +223,9 @@ public class PhysicalDevice implements NativeObject {
 			return family.orElseThrow();
 		}
 
-		/**
-		 * Constructs the queue family filter for the given physical device.
-		 * @param dev Physical device
-		 * @return Queue family predicate
-		 */
-		protected abstract Predicate<Family> predicate(PhysicalDevice dev);
-
 		@Override
 		public boolean test(PhysicalDevice dev) {
-			// Build filter for this device
-			final Predicate<Family> predicate = predicate(dev);
-
-			// Retrieve matching queue family
-			family = dev.families.stream().filter(predicate).findAny();
-
-			// Selector passes if the queue is found
+			family = dev.families.stream().filter(f -> predicate.test(dev, f)).findAny();
 			return family.isPresent();
 		}
 	}

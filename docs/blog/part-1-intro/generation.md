@@ -18,7 +18,7 @@ title: Code Generating the Vulkan API
 
 ### Background
 
-The previous based project was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).  LWJGL had recently implemented a Vulkan port and we expected to be able to use the new bindings to get to grips with the Vulkan API.
+The previous project was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).  LWJGL had recently implemented a Vulkan port and we expected to be able to use the new bindings to get to grips with the Vulkan API.
 
 However things did not work out as we had hoped.  Not at all.
 
