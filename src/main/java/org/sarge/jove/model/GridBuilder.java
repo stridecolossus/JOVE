@@ -143,16 +143,15 @@ public class GridBuilder {
 		return this;
 	}
 
-	// triangles, quads or isolines
+	// TODO - triangles, quads or isolines
 	// SpacingEqual, SpacingFractionalEven, and SpacingFractionalOdd
 	// https://satellitnorden.wordpress.com/2018/02/12/vulkan-adventures-part-3-return-of-the-triangles-tessellation-tutorial/
 
 	/**
 	 * Constructs this grid.
-	 * @param layout Grid vertex layout
-	 * @return New grid
+	 * @return New grid model
 	 */
-	public DefaultModel build() {
+	public MutableModel build() {
 		// Calculate half distance in both directions
 		final int w = size.width();
 		final int h = size.height();
@@ -181,7 +180,7 @@ public class GridBuilder {
 		}
 
 		// Build model
-		final ModelBuilder model = new ModelBuilder()
+		final MutableModel model = new MutableModel()
 				.primitive(primitive)
 				.layout(Point.LAYOUT)
 				.layout(Coordinate2D.LAYOUT);
@@ -203,8 +202,7 @@ public class GridBuilder {
 			build(index).forEach(model::add);
 		}
 
-		// Construct grid
-		return model.build();
+		return model;
 	}
 
 	/**

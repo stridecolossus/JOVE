@@ -543,15 +543,13 @@ public enum Primitive {
 }
 ```
 
-The model is constructed by the following mutable implementation which (for the moment) is essentially just a wrapper for the list of vertex data:
+The model is constructed by the following mutable implementation:
 
 ```java
-public class MutableModel extends AbstractModel {
-    protected final List<Vertex> vertices = new ArrayList<>();
-
-    public MutableModel(Primitive primitive, List<Layout> layout) {
-        super(primitive, layout);
-    }
+public class MutableModel implements Model {
+    private Primitive primitive = Primitive.TRIANGLE_STRIP;
+    private final List<Layout> layout = new ArrayList<>();
+    private final List<Vertex> vertices = new ArrayList<>();
 
     @Override
     public int count() {
@@ -565,7 +563,7 @@ public class MutableModel extends AbstractModel {
 }
 ```
 
-The interleaved vertex buffer is generated from the model in the same manner as we did for the hard-coded quad:
+The interleaved vertex buffer is generated from the mutable model in the same manner as we did for the hard-coded quad:
 
 ```java
 public Bufferable vertices() {
@@ -596,8 +594,13 @@ public class CubeBuilder {
     private float size = MathsUtil.HALF;
     
     public MutableModel build() {
-        MutableModel model = new MutableModel(Primitive.TRIANGLES, Vertex.LAYOUT);
+        MutableModel model = new MutableModel()
+            .primitive(Primitive.TRIANGLES)
+            .layout(Point.LAYOUT)
+            .layout(Coordinate2D.LAYOUT);
+
         ...
+
         return model;
     }
 }
@@ -663,9 +666,7 @@ for(int face = 0; face < FACES.length; ++face) {
     for(int corner : TRIANGLES) {
         int index = FACES[face][corner];
         Point pos = VERTICES[index].scale(size);
-        Vector normal = NORMALS[face];
         Coordinate coord = Quad.COORDINATES.get(corner);
-        Colour col = COLOURS[face];
         ...
     }
 }
@@ -674,88 +675,9 @@ for(int face = 0; face < FACES.length; ++face) {
 Finally each vertex is added to the cube model:
 
 ```java
-// Build vertex
-Vertex vertex = new Vertex()
-    .position(pos)
-    .normal(normal)
-    .coordinate(coord)
-    .colour(col);
-
-// Add vertex to cube
+Vertex vertex = Vertex.of(pos, coord);
 model.add(vertex);
 ```
-
-### Vertex Transformation
-
-The observant reader will have noticed that the cube builder creates vertices containing __all__ components (position, normal, etc) and the model was initialised with the default vertex layout:
-
-```java
-public class Vertex implements Bufferable {
-    /**
-     * Vertex normals component.
-     */
-    public static final Layout NORMALS = Layout.floats(Vector.SIZE);
-
-    /**
-     * Default vertex layout.
-     */
-    public static final List<Layout> LAYOUT = List.of(Point.LAYOUT, NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
-}
-```
-
-However for the demo application we only require the vertex position and texture coordinates.  Additionally applications may require vertex components to be swizzled or stripped if (for example) the shader cannot be modified to suit a given model.
-
-Therefore we implement a _transform_ mutator method on the model class to 'select' vertex components according to a given layout.  This may seem slightly backward but is simpler to comprehend (and test) than mixing the logic to construct the model and manage the layout of the components.
-
-First the following mutator is added to the vertex class to transform the array of components given an indices mapping:
-
-```java
-public void transform(int[] transform) {
-    Bufferable[] prev = components;
-    components = new Bufferable[transform.length];
-    Arrays.setAll(components, n -> prev[transform[n]]);
-}
-```
-
-In the new _transform_ method we first define an index mapping from the existing layout to the target layout:
-
-```java
-public MutableModel transform(List<Layout> target) {
-    // Init mapping from previous layout to this model (comparing by identity)
-    Layout[] array = layout.toArray(Layout[]::new);
-    ToIntFunction<Layout> mapper = e -> {
-        for(int n = 0; n < array.length; ++n) {
-            if(e == array[n]) {
-                return n;
-            }
-        }
-        throw new IllegalArgumentException(...);
-    };
-
-    ...
-
-    return this;
-}
-```
-
-Note that layout instances are compared by _identity_ to prevent vertex components with equivalent layouts being considered the same (for example points and normals).
-
-Next this mapping is used to generate the vertex transform indices which are then applied to the vertex data:
-
-```java
-// Build transform indices
-int[] transform = target
-    .stream()
-    .mapToInt(mapper)
-    .toArray();
-
-// Apply transform to vertex data
-for(Vertex v : vertices) {
-    v.transform(transform);
-}
-```
-
-The model layout also becomes mutable to support transformations.
 
 ### Integration
 
@@ -765,9 +687,7 @@ In the demo we replace the hard-coded quad vertices with a cube model:
 public class VertexBufferConfiguration {
     @Bean
     public static Model cube() {
-        return new CubeBuilder()
-            .transform(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
-            .build();
+        return new CubeBuilder().build();
     }
 }
 ```

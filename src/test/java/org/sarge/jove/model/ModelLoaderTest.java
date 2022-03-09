@@ -28,14 +28,13 @@ class ModelLoaderTest {
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		model = new ModelBuilder()
+		model = new MutableModel()
 				.primitive(Primitive.TRIANGLES)
 				.layout(Point.LAYOUT)
 				.add(Vertex.of(Point.ORIGIN))
 				.add(0)
 				.add(0)
-				.add(0)
-				.build();
+				.add(0);
 
 		// Init persistence store
 		out = new ByteArrayOutputStream();

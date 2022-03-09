@@ -7,15 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.DefaultModel;
 import org.sarge.jove.model.Vertex;
 
-class DuplicateModelBuilderTest {
-	private DuplicateModelBuilder builder;
+class DuplicateModelTest {
+	private DuplicateModel model;
 
 	@BeforeEach
 	void before() {
-		builder = new DuplicateModelBuilder();
+		model = new DuplicateModel();
 	}
 
 	@Test
@@ -25,11 +24,9 @@ class DuplicateModelBuilderTest {
 		final Vertex other = Vertex.of(new Point(1, 2, 3));
 
 		// Build an indexed model that re-uses some vertices
-		final DefaultModel model = builder
-				.add(vertex)
-				.add(other)
-				.add(vertex)
-				.build();
+		model.add(vertex);
+		model.add(other);
+		model.add(vertex);
 
 		// Verify the de-duplicated model
 		assertNotNull(model);

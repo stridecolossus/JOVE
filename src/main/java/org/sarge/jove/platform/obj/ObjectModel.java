@@ -8,7 +8,7 @@ import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.model.ModelBuilder;
+import org.sarge.jove.model.MutableModel;
 import org.sarge.jove.model.Vertex;
 
 /**
@@ -20,7 +20,7 @@ class ObjectModel {
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
-	private ModelBuilder builder = new DuplicateModelBuilder();
+	private MutableModel current = new DuplicateModel();
 	private boolean empty = true;
 
 	/**
@@ -47,19 +47,19 @@ class ObjectModel {
 	 */
 	private void build() {
 		// Init model layout
-		builder.layout(Point.LAYOUT);
+		current.layout(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			builder.layout(Vertex.NORMALS);
+			current.layout(Vertex.NORMALS);
 		}
 		if(!coords.isEmpty()) {
-			builder.layout(Coordinate2D.LAYOUT);
+			current.layout(Coordinate2D.LAYOUT);
 		}
 
 		// Add model
-		models.add(builder.build());
+		models.add(current);
 
 		// Start new model
-		builder = new DuplicateModelBuilder();
+		current = new DuplicateModel();
 	}
 
 	/**
@@ -114,7 +114,7 @@ class ObjectModel {
 		}
 
 		// Add vertex to model
-		builder.add(vertex);
+		current.add(vertex);
 		empty = false;
 	}
 

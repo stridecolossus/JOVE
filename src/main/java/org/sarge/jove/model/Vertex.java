@@ -3,14 +3,12 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -26,17 +24,22 @@ public class Vertex {
 	public static final Layout NORMALS = Layout.floats(Vector.SIZE);
 
 	/**
-	 * Default vertex layout.
-	 */
-	public static final List<Layout> LAYOUT = List.of(Point.LAYOUT, NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
-
-	/**
 	 * Creates a simple vertex.
 	 * @param pos Vertex position
 	 * @return New simple vertex
 	 */
 	public static Vertex of(Point pos) {
 		return new Vertex().position(pos);
+	}
+
+	/**
+	 * Creates a default vertex comprising a position and texture coordinate.
+	 * @param pos			Vertex position
+	 * @param coord			Texture coordinate
+	 * @return New default vertex
+	 */
+	public static Vertex of(Point pos, Coordinate coord) {
+		return new Vertex().position(pos).coordinate(coord);
 	}
 
 	private Point pos;
@@ -124,6 +127,13 @@ public class Vertex {
 			obj.buffer(bb);
 		}
 	}
+
+
+
+
+
+
+
 
 	@Override
 	public int hashCode() {

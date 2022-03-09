@@ -3,7 +3,7 @@ package org.sarge.jove.platform.obj;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sarge.jove.model.ModelBuilder;
+import org.sarge.jove.model.MutableModel;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.model.Vertex;
 
@@ -11,15 +11,15 @@ import org.sarge.jove.model.Vertex;
  * Adapter for an OBJ model builder that performs vertex de-duplication.
  * @author Sarge
  */
-class DuplicateModelBuilder extends ModelBuilder {
+class DuplicateModel extends MutableModel {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
-	public DuplicateModelBuilder() {
+	public DuplicateModel() {
 		primitive(Primitive.TRIANGLES);
 	}
 
 	@Override
-	public DuplicateModelBuilder add(Vertex v) {
+	public DuplicateModel add(Vertex v) {
 		final Integer prev = map.get(v);
 		if(prev == null) {
 			// Register new vertex

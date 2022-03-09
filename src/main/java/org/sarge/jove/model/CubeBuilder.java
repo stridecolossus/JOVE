@@ -2,6 +2,7 @@ package org.sarge.jove.model;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
@@ -37,6 +38,7 @@ public class CubeBuilder {
 	};
 
 	// Face normals
+	// TODO
 	private static final Vector[] NORMALS = {
 			Vector.Z,
 			Vector.Z.invert(),
@@ -47,6 +49,7 @@ public class CubeBuilder {
 	};
 
 	// Face colours
+	// TODO
 	private static final Colour[] COLOURS = {
 		new Colour(1, 0, 0),
 		new Colour(0, 1, 0),
@@ -72,13 +75,14 @@ public class CubeBuilder {
 
 	/**
 	 * Constructs this cube.
-	 * @return New cube
+	 * @return New cube model
 	 */
-	public DefaultModel build() {
+	public MutableModel build() {
 		// Init model
-		final ModelBuilder model = new ModelBuilder()
+		final MutableModel model = new MutableModel()
 				.primitive(Primitive.TRIANGLES)
-				.layout(Vertex.LAYOUT);
+				.layout(Point.LAYOUT)
+				.layout(Coordinate2D.LAYOUT);
 
 		// Build cube
 		for(int face = 0; face < FACES.length; ++face) {
@@ -88,23 +92,16 @@ public class CubeBuilder {
 
 				// Lookup vertex components
 				final Point pos = VERTICES[index].scale(size);
-				final Vector normal = NORMALS[face];
+//				final Vector normal = NORMALS[face];
 				final Coordinate coord = Quad.COORDINATES.get(corner);
-				final Colour col = COLOURS[face];
-
-				// Build vertex
-				final Vertex vertex = new Vertex()
-						.position(pos)
-						.normal(normal)
-						.coordinate(coord)
-						.colour(col);
+//				final Colour col = COLOURS[face];
 
 				// Add vertex to cube
+				final Vertex vertex = Vertex.of(pos, coord);
 				model.add(vertex);
 			}
 		}
 
-		// Construct cube
-		return model.build();
+		return model;
 	}
 }
