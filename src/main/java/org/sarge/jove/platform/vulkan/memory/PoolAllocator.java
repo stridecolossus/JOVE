@@ -7,10 +7,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.lib.util.Check;
 
 /**
@@ -22,40 +18,6 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class PoolAllocator implements Allocator {
-	/**
-	 * Helper - Creates a pool allocator configured by the properties of the given device.
-	 * <p>
-	 * The pool is configured as follows:
-	 * <ul>
-	 * <li>{@link VkPhysicalDeviceLimits#bufferImageGranularity} specifies the <i>page size</i> used to create a {@link PageAllocationPolicy} for the allocator</li>
-	 * <li>{@link VkPhysicalDeviceLimits#maxMemoryAllocationCount} configures the maximum number of allowed allocations</li>
-	 * <li>if {@link #allocator} is {@code null} a default allocator is created using {@link Allocator#allocator(DeviceContext)}</li>
-	 * </ul>
-	 * <p>
-	 * @param dev			Logical device
-	 * @param allocator		Optional delegate allocator
-	 * @param expand		Growth scalar
-	 * @return New pool allocator
-	 * @see PhysicalDevice.Properties#limits()
-	 */
-	public static PoolAllocator create(DeviceContext dev, Allocator allocator, float expand) {
-		// Init allocator if not specified
-		final Allocator delegate = allocator == null ? new DefaultAllocator(dev) : allocator;
-
-		// Lookup configuration properties
-		final VulkanProperty.Provider provider = dev.provider();
-		final long granularity = provider.property("bufferImageGranularity").get();
-		final int max = provider.property("maxMemoryAllocationCount").get();
-
-		// Create paged allocation policy
-		final AllocationPolicy paged = new PageAllocationPolicy(granularity);
-		final AllocationPolicy grow = AllocationPolicy.expand(expand);
-		final AllocationPolicy policy = grow.then(paged);
-
-		// Create pool allocator
-		return new PoolAllocator(delegate, max, policy);
-	}
-
 	private final Allocator allocator;
 	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
 	private final AllocationPolicy policy;

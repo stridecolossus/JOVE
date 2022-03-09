@@ -3,12 +3,28 @@ package org.sarge.jove.platform.vulkan.memory;
 import static org.sarge.lib.util.Check.oneOrMore;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 /**
  * A <i>page allocation policy</i> quantises allocation requests to a given <i>page</i> size.
+ * @see #of(DeviceContext)
  * @author Sarge
  */
 public class PageAllocationPolicy implements AllocationPolicy {
+	/**
+	 * Helper - Creates an allocation policy based on the optimal page granularity for the hardware.
+	 * @param dev Logical device
+	 * @return New page allocation policy
+	 * @see VkPhysicalDeviceLimits#bufferImageGranularity
+	 */
+	public static PageAllocationPolicy of(DeviceContext dev) {
+		final VulkanProperty.Provider provider = dev.provider();
+		final long granularity = provider.property("bufferImageGranularity").get();
+		return new PageAllocationPolicy(granularity);
+	}
+
 	private final long page;
 	private final long min;
 

@@ -2,21 +2,17 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
-import org.sarge.jove.platform.vulkan.memory.Allocator.DefaultAllocator;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class AllocatorTest extends AbstractVulkanTest {
+public class DefaultAllocatorTest extends AbstractVulkanTest {
 	private MemoryType type;
 
 	@BeforeEach
@@ -37,14 +33,19 @@ public class AllocatorTest extends AbstractVulkanTest {
 		assertNotNull(mem);
 		assertEquals(size, mem.size());
 
-		// Check API
-		final ArgumentCaptor<VkMemoryAllocateInfo> captor = ArgumentCaptor.forClass(VkMemoryAllocateInfo.class);
-		verify(lib).vkAllocateMemory(eq(dev), captor.capture(), isNull(), eq(POINTER));
+		// Init expected descriptor
+		final var expected = new VkMemoryAllocateInfo() {
+			@Override
+			public boolean equals(Object obj) {
+				final var info = (VkMemoryAllocateInfo) obj;
+				assertNotNull(info);
+				assertEquals(type.index(), info.memoryTypeIndex);
+				assertEquals(size, info.allocationSize);
+				return true;
+			}
+		};
 
-		// Check allocation descriptor
-		final VkMemoryAllocateInfo info = captor.getValue();
-		assertNotNull(info);
-		assertEquals(type.index(), info.memoryTypeIndex);
-		assertEquals(size, info.allocationSize);
+		// Check API
+		verify(lib).vkAllocateMemory(dev, expected, null, POINTER);
 	}
 }
