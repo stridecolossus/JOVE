@@ -18,7 +18,7 @@ In this final chapter of this section we will introduce the following:
 
 * A _view transform_ representing the viewers position and orientation.
 
-* _perspective projection_ so that fragments that the scene appears correctly foreshortened.
+* _perspective projection_ so that fragments in the scene appear correctly foreshortened.
 
 This will require the following new components:
 
@@ -254,7 +254,7 @@ And finally the uniform buffer resource is initialised in the `descriptors` bean
 DescriptorSet.set(descriptors, uniformBinding, uniform.uniform());
 ```
 
-Note that for the moment the same uniform buffer for all descriptor sets since the render loop is essentially single threaded.
+Note that for the moment the same uniform buffer is used in all descriptor sets since the render loop is essentially single threaded.
 
 To use the uniform buffer in the shader we add the following layout declaration:
 
@@ -644,7 +644,7 @@ public final class Quad {
 }
 ```
 
-Note that __both__ triangles have a counter clockwise winding order since the cube will be rendered using the triangle primitive (as opposed to a strip of triangles we have used up until now).
+Note that __both__ triangles have a counter clockwise winding order since the cube will be rendered using the triangle primitive (as opposed to a strip of triangles used so far).
 
 The triangle indices are aggregated into a single concatenated array:
 
@@ -674,7 +674,14 @@ for(int face = 0; face < FACES.length; ++face) {
 Finally each vertex is added to the cube model:
 
 ```java
-Vertex vertex = new Vertex(pos, normal, coord, col);
+// Build vertex
+Vertex vertex = new Vertex()
+    .position(pos)
+    .normal(normal)
+    .coordinate(coord)
+    .colour(col);
+
+// Add vertex to cube
 model.add(vertex);
 ```
 
@@ -868,31 +875,28 @@ We should now be able to see the fully 3D cube:
 
 ### Animation
 
-To animate the cube rotation we first add a temporary `while` loop to render multiple frames which terminates after a configurable period:
+To animate the cube rotation we first add a temporary `while` loop to render multiple frames which terminates after a specified period:
 
 ```java
-long period = cfg.getPeriod();
+long period = 5000;
 long start = System.currentTimeMillis();
 while(true) {
-    // Stop after a couple of rotations
     final long time = System.currentTimeMillis() - start;
-    if(time > 3 * period) {
+    if(time > period) {
         break;
     }
     ...
 }
 ```
 
-Next we remove the temporary rotation added above and build a model matrix on every frame.
-
-We animate the horizontal rotation angle by interpolating the period onto the unit-circle:
+The temporary static rotation added above is removed and the model matrix is constructed on every frame.  First horizontal rotation angle is animated by interpolating the period onto the unit-circle:
 
 ```java
 float angle = (time % period) * MathsUtil.TWO_PI / period;
 Matrix h = Matrix.rotation(Vector.Y, angle);
 ```
 
-This is combined with a fixed vertical rotation so we can see the top and bottom faces of the cube:
+This is combined with a fixed vertical rotation so that the top and bottom faces of the cube can be seen:
 
 ```java
 Matrix v = Matrix.rotation(Vector.X, MathsUtil.toRadians(30));

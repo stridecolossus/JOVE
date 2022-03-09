@@ -8,7 +8,6 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -164,16 +163,15 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Validates that this buffer supports the given usage flags.
-	 * @throws IllegalStateException if this buffer does not support <b>any</b> of the given usage flags
+	 * Validates that this buffer supports the given usage flag(s).
+	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the given usage flags
 	 */
 	public void require(VkBufferUsageFlag... flags) {
 		final Collection<VkBufferUsageFlag> required = Arrays.asList(flags);
-		if(Collections.disjoint(required, usage)) {
+		if(!usage.containsAll(required)) {
 			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
 		}
 	}
-	// TODO - should this be ALL?
 
 	/**
 	 * Helper - Provides access to the underlying buffer (mapping the buffer memory as required).

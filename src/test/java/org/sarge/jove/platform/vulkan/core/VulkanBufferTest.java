@@ -7,6 +7,9 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.INDEX_BUFFER;
+import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.TRANSFER_SRC;
+import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.VERTEX_BUFFER;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
@@ -28,7 +31,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
-	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.TRANSFER_SRC);
+	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(TRANSFER_SRC, VERTEX_BUFFER);
 	private static final long SIZE = 4;
 
 	private VulkanBuffer buffer;
@@ -87,13 +90,16 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void require() {
-		buffer.require(FLAGS.toArray(VkBufferUsageFlag[]::new));
-		buffer.require(VkBufferUsageFlag.TRANSFER_SRC);
+		buffer.require();
+		buffer.require(TRANSFER_SRC);
+		buffer.require(VERTEX_BUFFER);
+		buffer.require(TRANSFER_SRC, VERTEX_BUFFER);
 	}
 
 	@Test
 	void requireNotSupported() {
-		assertThrows(IllegalStateException.class, () -> buffer.require(VkBufferUsageFlag.STORAGE_BUFFER));
+		assertThrows(IllegalStateException.class, () -> buffer.require(INDEX_BUFFER));
+		assertThrows(IllegalStateException.class, () -> buffer.require(TRANSFER_SRC, INDEX_BUFFER));
 	}
 
 	@Test
@@ -118,7 +124,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		// Create staging buffer
 		final VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
 		assertNotNull(staging);
-		assertEquals(Set.of(VkBufferUsageFlag.TRANSFER_SRC), staging.usage());
+		assertEquals(Set.of(TRANSFER_SRC), staging.usage());
 		assertEquals(SIZE, staging.length());
 
 		// Check data is copied to buffer

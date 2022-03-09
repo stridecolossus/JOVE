@@ -68,39 +68,39 @@ public interface Bufferable {
 }
 ```
 
-A _vertex_ is a compound bufferable comprised of an arbitrary array of _components_ such as positions and texture coordinates:
+A _vertex_ is a compound object comprising the vertex position, colour, etc:
 
 ```java
 public class Vertex {
-    private Bufferable[] components;
+    private Point pos;
+    private Vector normal;
+    private Coordinate coord;
+    private Colour col;
+}
+```
 
-    public Vertex(Bufferable... components) {
-        this.components = notNull(components);
-    }
+Normals and texture coordinates are not required for the triangle demo so we will gloss over these objects until later.
 
-    public void buffer(ByteBuffer buffer) {
-        for(Bufferable obj : components) {
-            obj.buffer(buffer);
-        }
+The vertex class does not implement `Bufferable` but does provide a `buffer` method to write the vertex components to an NIO buffer:
+
+```java
+public void buffer(ByteBuffer bb) {
+    buffer(pos, bb);
+    buffer(normal, bb);
+    buffer(coord, bb);
+    buffer(col, bb);
+}
+
+private static void buffer(Bufferable obj, ByteBuffer bb) {
+    if(obj != null) {
+        obj.buffer(bb);
     }
 }
 ```
 
-Notes:
+Note that this implementation assumes vertex data is _interleaved_ and that all components are optional.
 
-* The vertex class does not implement `Bufferable` but does provide the `buffer` method to output the vertex components to an NIO buffer.
-
-* This implementation assumes vertex data is _interleaved_.
-
-We can now implement the _vertex components_ needed to deliver the triangle demo.
-
-In general a vertex is comprised of the following components:
-- position
-- normal
-- texture coordinate
-- colour
-
-Positions and normal vectors are both floating-point tuples with common functionality, we implement a small hierarchy with the following base-class:
+Positions and normals are both floating-point tuples with common functionality, here a small hierarchy is introduced with the following base-class:
 
 ```java
 public sealed class Tuple implements Bufferable permits Point, Vector {
@@ -126,7 +126,7 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 }
 ```
 
-A vertex position is a point in 3D space:
+The vertex position is a point in 3D space:
 
 ```java
 public final class Point extends Tuple {
@@ -141,7 +141,7 @@ public final class Point extends Tuple {
 }
 ```
 
-A colour is defined as an RGBA record:
+And colours are defined as an RGBA record:
 
 ```java
 public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
@@ -159,8 +159,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
     }
 }
 ```
-
-Vectors and texture coordinates are not required for the triangle demo so we will gloss over these objects until later.
 
 ### Vertex Buffer
 
@@ -189,12 +187,12 @@ public Command bind() {
 }
 ```
 
-The local `require` helper checks that the buffer supports a given operation (in this case that it is a vertex buffer that can be bound to a pipeline):
+The local `require` helper checks that the buffer supports a given operation, in this case that it contains vertex data:
 
 ```java
 public void require(VkBufferUsage... flags) {
     Collection<VkBufferUsage> required = Arrays.asList(flags);
-    if(Collections.disjoint(required, usage)) {
+    if(!usage.containsAll(required)) {
         throw new IllegalStateException(...);
     }
 }
@@ -495,13 +493,10 @@ private static final Bufferable TRIANGLE = new Bufferable() {
 
 ### Staging Buffer
 
-We next implement a helper on the VBO class to create a staging buffer.
-
-The memory properties define a buffer that is used as the source of a copy operation and is visible to the host (i.e. the application):
+We next implement a helper on the VBO class to create a staging buffer.  The memory properties define a buffer that is used as the source of a copy operation and is visible to the host (i.e. the application):
 
 ```java
 public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
-    // Init memory properties
     var props = new MemoryProperties.Builder<VkBufferUsage>()
         .usage(VkBufferUsage.TRANSFER_SRC)
         .required(VkMemoryProperty.HOST_VISIBLE)
@@ -542,13 +537,13 @@ public class VertexBufferConfiguration {
 }
 ```
 
-In the bean method we use the new helper to create the staging buffer:
+The new helper is used in the bean method to create the staging buffer:
 
 ```java
 VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, TRIANGLE);
 ```
 
-And similarly for the vertex buffer:
+And similarly for the destination vertex buffer:
 
 ```java
 MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
@@ -568,7 +563,7 @@ staging
     .submitAndWait(pool);
 ```
 
-And finally we release the staging buffer:
+And finally the staging buffer is released:
 
 ```java
 staging.destroy();
@@ -608,7 +603,7 @@ Note that currently this approach blocks the entire device, this will be replace
 
 ### Configuration
 
-The VBO is bound to the render sequence:
+In the demo application the VBO is bound to the render sequence:
 
 ```java
 public Buffer sequence(...) {
@@ -625,7 +620,7 @@ public Buffer sequence(...) {
 }
 ```
 
-And we configure the structure of the vertex data using the new pipeline stage builder:
+And the structure of the vertex data is configured using the new pipeline stage builder:
 
 ```java
 public Pipeline pipeline(...) {
@@ -653,7 +648,7 @@ public Pipeline pipeline(...) {
 
 There is a lot of mucking about and hard-coded data here that we will address in the next chapter.
 
-The final change to the demo is to remove the hard coded vertex data in the shader and configure the incoming VBO, which involves:
+The final change to the demo is to remove the hard coded vertex data in the shader and configure the incoming VBO which involves:
 
 - The addition of two `layout` directives to specify the incoming data from the vertex buffer, corresponding to the locations specified in the vertex attributes.
 
