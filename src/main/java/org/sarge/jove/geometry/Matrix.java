@@ -28,8 +28,8 @@ import org.sarge.lib.util.Check;
  * <p>
  * Where:
  * <ul>
- * <li>the top-left 3x3 component of the matrix is the view rotation and the right-hand column is the transformation</li>
- * <li>in camera terms R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i></li>
+ * <li>The top-left 3x3 component of the matrix is the view rotation and the right-hand column is the transformation</li>
+ * <li>In camera terms R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i></li>
  * <li>T is the view transformation (or eye position)</li>
  * </ul>
  * Note that both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).

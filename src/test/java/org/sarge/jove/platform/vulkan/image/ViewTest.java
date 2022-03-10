@@ -47,7 +47,7 @@ public class ViewTest extends AbstractVulkanTest {
 		when(image.handle()).thenReturn(new Handle(1));
 
 		// Create image view
-		view = new View(new Pointer(2), image, dev);
+		view = new View(new Pointer(2), dev, image);
 
 		// Init clear value
 		clear = new ColourClearValue(Colour.WHITE);

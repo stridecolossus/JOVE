@@ -12,7 +12,7 @@ import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>buffer copy command</i> is used to transfer data between two buffers.
+ * A <i>buffer copy command</i> is used to transfer data between Vulkan buffers.
  * @author Sarge
  */
 public class BufferCopyCommand implements Command {

@@ -41,7 +41,6 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
-	private final VulkanLibrary lib;
 	private final DeviceFeatures features;
 	private final Provider provider;
 	private final Map<Family, List<Queue>> queues;
@@ -54,8 +53,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 */
 	LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues) {
 		super(handle);
-		this.parent = parent;
-		this.lib = parent.instance().library();
+		this.parent = notNull(parent);
 		this.features = notNull(features);
 		this.provider = new Provider(parent.properties().limits(), features);
 		this.queues = Map.copyOf(queues);
@@ -115,12 +113,12 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * Waits for this device to become idle.
 	 */
 	public void waitIdle() {
-		check(lib.vkDeviceWaitIdle(this));
+		check(library().vkDeviceWaitIdle(this));
 	}
 
  	@Override
 	protected void release() {
-		lib.vkDestroyDevice(this, null);
+		library().vkDestroyDevice(this, null);
 	}
 
 	@Override

@@ -38,10 +38,10 @@ public class View extends AbstractVulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle 	Image view handle
-	 * @param image		Image
 	 * @param dev		Logical device
+	 * @param image		Image
 	 */
-	View(Pointer handle, Image image, DeviceContext dev) {
+	View(Pointer handle, DeviceContext dev, Image image) {
 		super(handle, dev);
 		this.image = notNull(image);
 	}
@@ -184,7 +184,7 @@ public class View extends AbstractVulkanObject {
 			check(lib.vkCreateImageView(dev, info, null, handle));
 
 			// Create image view
-			return new View(handle.getValue(), image, dev);
+			return new View(handle.getValue(), dev, image);
 		}
 	}
 
