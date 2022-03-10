@@ -39,6 +39,11 @@ public class BufferedModel extends AbstractModel {
 	}
 
 	@Override
+	public boolean isIntegerIndex() {
+		return isIntegerIndex(vertices.length() / Layout.stride(layout));
+	}
+
+	@Override
 	public Bufferable vertexBuffer() {
 		return vertices;
 	}

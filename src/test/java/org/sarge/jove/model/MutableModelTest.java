@@ -9,11 +9,13 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.BufferHelper;
+import org.sarge.jove.util.Mask;
 
 public class MutableModelTest {
 	private MutableModel model;
@@ -30,6 +32,7 @@ public class MutableModelTest {
 		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 		assertEquals(List.of(), model.layout());
 		assertEquals(0, model.count());
+		assertEquals(false, model.isIntegerIndex());
 		assertNotNull(model.vertices());
 		assertNotNull(model.index());
 		assertEquals(0, model.vertices().count());
@@ -113,6 +116,7 @@ public class MutableModelTest {
 		model.add(0);
 		model.add(0);
 		model.add(0);
+		assertEquals(false, model.isIntegerIndex());
 
 		// Build index buffer
 		final Bufferable index = model.indexBuffer().get();
@@ -134,17 +138,24 @@ public class MutableModelTest {
 		assertEquals(expected, actual);
 	}
 
+	@DisplayName("A small index is represented by short indices")
 	@Test
-	void largeIndex() {
-		// Create a model with an integer index
+	void shortIndex() {
 		model.add(vertex);
-		for(int n = 0; n < Model.SHORT; ++n) {
-			model.add(0);
-		}
+		model.add(0);
+		assertEquals(false, model.isIntegerIndex());
+		assertEquals(Short.BYTES, model.indexBuffer().get().length());
+	}
 
-		// Check buffer
-		final Bufferable index = model.indexBuffer().get();
-		assertNotNull(index);
-		assertEquals(2 * Model.SHORT, index.length());
+	@DisplayName("A large index is represented by integer indices")
+	@Test
+	void integerIndex() {
+		final long large = Mask.unsignedMaximum(Short.SIZE);
+		for(int n = 0; n < large; ++n) {
+			model.add(vertex);
+		}
+		model.add(0);
+		assertEquals(true, model.isIntegerIndex());
+		assertEquals(Integer.BYTES, model.indexBuffer().get().length());
 	}
 }

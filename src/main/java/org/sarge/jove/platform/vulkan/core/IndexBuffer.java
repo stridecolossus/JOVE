@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty;
@@ -30,45 +29,21 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @param type			Index type
 	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
 	 * @throws IllegalArgumentException if {@link #type} is invalid
-	 * @throws IllegalArgumentException if {@link #type} is {@link VkIndexType#UINT16} and the index is larger than this data type
 	 */
 	public IndexBuffer(VulkanBuffer buffer, VkIndexType type) {
 		super(buffer);
+		if(type == VkIndexType.NONE_NV) throw new IllegalArgumentException("Invalid index type: " + type);
 		this.type = notNull(type);
 		require(VkBufferUsageFlag.INDEX_BUFFER);
-		validate();
 	}
 
 	/**
 	 * Constructor.
-	 * @param buffer Buffer
-	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
+	 * @param buffer		Buffer
+	 * @param integral		Whether the index is represented by {@code int} or {@code short} values
 	 */
-	public IndexBuffer(VulkanBuffer buffer) {
-		this(buffer, type(buffer));
-	}
-
-	/**
-	 * Determines the Vulkan index data type depending on the length of the given buffer.
-	 * @param buffer Buffer
-	 * @return Index data type
-	 * @see Model#isIntegerIndex(long)
-	 */
-	private static VkIndexType type(VulkanBuffer buffer) {
-		return Model.isIntegerIndex(buffer.length()) ? VkIndexType.UINT32 : VkIndexType.UINT16;
-	}
-
-	/**
-	 * Validates the type of this index.
-	 */
-	private void validate() {
-		if(type == VkIndexType.NONE_NV) {
-			throw new UnsupportedOperationException("Invalid index type: " + type);
-		}
-
-		if((type == VkIndexType.UINT16) && (type(this) == VkIndexType.UINT32)) {
-			throw new IllegalArgumentException("Index is too large for short data type: " + this);
-		}
+	public IndexBuffer(VulkanBuffer buffer, boolean integral) {
+		this(buffer, integral ? VkIndexType.UINT32 : VkIndexType.UINT16);
 	}
 
 	/**

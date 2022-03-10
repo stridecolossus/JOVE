@@ -21,7 +21,7 @@ class AbstractModelTest {
 		model = new AbstractModel(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT)) {
 			@Override
 			public int count() {
-				return 0;
+				return 3;
 			}
 
 			@Override
@@ -32,6 +32,11 @@ class AbstractModelTest {
 			@Override
 			public Optional<Bufferable> indexBuffer() {
 				return null;
+			}
+
+			@Override
+			public boolean isIntegerIndex() {
+				return false;
 			}
 		};
 	}
@@ -57,10 +62,8 @@ class AbstractModelTest {
 	@SuppressWarnings("static-method")
 	@Test
 	void isIntegerIndex() {
-		final long max = Mask.unsignedMaximum(Short.SIZE);
-		assertEquals(false, Model.isIntegerIndex(0));
-		assertEquals(false, Model.isIntegerIndex(max - 1));
-		assertEquals(true, Model.isIntegerIndex(max));
-		assertEquals(true, Model.isIntegerIndex(Mask.unsignedMaximum(Integer.SIZE)));
+		final long large = Mask.unsignedMaximum(Short.SIZE);
+		assertEquals(false, AbstractModel.isIntegerIndex(0));
+		assertEquals(true, AbstractModel.isIntegerIndex((int) large));
 	}
 }

@@ -7,14 +7,24 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.util.Mask;
 
 /**
  * Skeleton implementation.
  * @author Sarge
  */
 public abstract class AbstractModel implements Model {
-	private final Primitive primitive;
-	private final List<Layout> layout;
+	/**
+	 * Maximum length of a {@code short} index buffer.
+	 */
+	private static final long SHORT = Mask.unsignedMaximum(Short.SIZE);
+
+	protected static boolean isIntegerIndex(int size) {
+		return size >= SHORT;
+	}
+
+	protected Primitive primitive;
+	protected final List<Layout> layout;
 
 	/**
 	 * Constructor.
@@ -23,17 +33,17 @@ public abstract class AbstractModel implements Model {
 	 */
 	protected AbstractModel(Primitive primitive, List<Layout> layout) {
 		this.primitive = notNull(primitive);
-		this.layout = List.copyOf(layout);
+		this.layout = notNull(layout);
 	}
 
 	@Override
-	public final Primitive primitive() {
+	public Primitive primitive() {
 		return primitive;
 	}
 
 	@Override
-	public final List<Layout> layout() {
-		return layout;
+	public List<Layout> layout() {
+		return List.copyOf(layout);
 	}
 
 	// TODO - when?

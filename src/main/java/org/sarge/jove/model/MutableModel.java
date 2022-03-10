@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout;
 
@@ -48,15 +47,15 @@ import org.sarge.jove.common.Layout;
  * @see Vertex
  * @author Sarge
  */
-public class MutableModel implements Model {
-	private Primitive primitive = Primitive.TRIANGLE_STRIP;
-	private final List<Layout> layout = new ArrayList<>();
+public class MutableModel extends AbstractModel {
 	private final List<Vertex> vertices = new ArrayList<>();
 	private final List<Integer> index = new ArrayList<>();
 
-	@Override
-	public Primitive primitive() {
-		return primitive;
+	/**
+	 * Constructor.
+	 */
+	public MutableModel() {
+		super(Primitive.TRIANGLE_STRIP, new ArrayList<>());
 	}
 
 	/**
@@ -68,26 +67,12 @@ public class MutableModel implements Model {
 		return this;
 	}
 
-	@Override
-	public List<Layout> layout() {
-		return List.copyOf(layout);
-	}
-
 	/**
 	 * Adds a vertex layout to this model.
 	 * @param layout Vertex layout
 	 */
 	public MutableModel layout(Layout layout) {
 		this.layout.add(notNull(layout));
-		return this;
-	}
-
-	/**
-	 * Helper - Adds multiple vertex layouts to this model.
-	 * @param layouts Vertex layouts
-	 */
-	public MutableModel layout(List<Layout> layouts) {
-		this.layout.addAll(layouts);
 		return this;
 	}
 
@@ -134,7 +119,7 @@ public class MutableModel implements Model {
 	 * @throws IllegalArgumentException if the index is invalid for this model
 	 */
 	public MutableModel add(int n) {
-		if((n < 0) ||(n >= vertices.size())) throw new IllegalArgumentException(String.format("Invalid index: index=%d vertices=%d", n, vertices.size()));
+		if((n < 0) || (n >= vertices.size())) throw new IllegalArgumentException(String.format("Invalid index: index=%d vertices=%d", n, vertices.size()));
 		index.add(n);
 		return this;
 	}
@@ -165,6 +150,11 @@ public class MutableModel implements Model {
 	}
 
 	@Override
+	public boolean isIntegerIndex() {
+		return isIntegerIndex(vertices.size());
+	}
+
+	@Override
 	public Optional<Bufferable> indexBuffer() {
 		// Check whether indexed
 		if(index.isEmpty()) {
@@ -172,7 +162,7 @@ public class MutableModel implements Model {
 		}
 
 		// Determine whether the index can be represented by short integers
-		final boolean integral = Model.isIntegerIndex(vertices.size());
+		final boolean integral = isIntegerIndex();
 
 		// Build index buffer
 		final Bufferable buffer = new Bufferable() {
@@ -205,15 +195,5 @@ public class MutableModel implements Model {
 			}
 		};
 		return Optional.of(buffer);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(primitive)
-				.append(layout)
-				.append("indexed", !index.isEmpty())
-				.append("count", count())
-				.build();
 	}
 }
