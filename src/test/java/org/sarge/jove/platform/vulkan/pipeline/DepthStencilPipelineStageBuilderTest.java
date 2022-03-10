@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,14 +43,5 @@ public class DepthStencilPipelineStageBuilderTest {
 		assertEquals(VulkanBoolean.TRUE, result.depthWriteEnable);
 		assertEquals(VkCompareOp.LESS_OR_EQUAL, result.depthCompareOp);
 		//assertEquals(VulkanBoolean.FALSE, result.stencilTestEnable);
-	}
-
-	@Test
-	void copy() {
-		final var copy = new DepthStencilPipelineStageBuilder();
-		copy.copy(builder);
-		assertNotNull(copy);
-		assertNotNull(copy.get());
-		assertNotSame(builder.get(), copy.get());
 	}
 }

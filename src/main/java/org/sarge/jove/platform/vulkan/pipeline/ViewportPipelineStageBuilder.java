@@ -34,12 +34,6 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	private final List<Rectangle> scissors = new ArrayList<>();
 	private boolean flip;
 
-	void copy(ViewportPipelineStageBuilder builder) {
-		flip = builder.flip;
-		viewports.addAll(builder.viewports);
-		scissors.addAll(builder.scissors);
-	}
-
 	/**
 	 * Sets whether to flip viewport rectangles (default is {@code true}).
 	 * <p>

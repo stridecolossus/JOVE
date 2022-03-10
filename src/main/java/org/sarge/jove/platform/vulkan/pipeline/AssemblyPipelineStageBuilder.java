@@ -17,10 +17,6 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		restart(false);
 	}
 
-	void copy(AssemblyPipelineStageBuilder builder) {
-		this.info = builder.info.copy();
-	}
-
 	/**
 	 * Sets the primitive topology.
 	 * @param primitive Primitive

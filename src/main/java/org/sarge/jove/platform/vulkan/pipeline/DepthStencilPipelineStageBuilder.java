@@ -25,10 +25,6 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 		// min/max bounds
 	}
 
-	void copy(DepthStencilPipelineStageBuilder builder) {
-		this.info = builder.info.copy();
-	}
-
 	/**
 	 * Sets whether depth-testing is enabled (default is {@code false}).
 	 * @param depthTestEnable Whether depth-test is enabled

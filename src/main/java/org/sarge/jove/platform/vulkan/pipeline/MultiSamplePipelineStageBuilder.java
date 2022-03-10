@@ -25,10 +25,6 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 		alphaToOneEnable(false);
 	}
 
-	void copy(MultiSamplePipelineStageBuilder builder) {
-		this.info = builder.info.copy();
-	}
-
 	/**
 	 * Sets the number of rasterization samples.
 	 * @param samples Sample count

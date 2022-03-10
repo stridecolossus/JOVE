@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,14 +39,5 @@ class AssemblyPipelineStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(VkPrimitiveTopology.TRIANGLE_STRIP, info.topology);
 		assertEquals(VulkanBoolean.FALSE, info.primitiveRestartEnable);
-	}
-
-	@Test
-	void copy() {
-		final AssemblyPipelineStageBuilder copy = new AssemblyPipelineStageBuilder();
-		copy.copy(builder);
-		assertNotNull(copy);
-		assertNotNull(copy.get());
-		assertNotSame(builder.get(), copy.get());
 	}
 }

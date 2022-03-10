@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -265,31 +263,6 @@ public class PipelineTest extends AbstractVulkanTest {
 				builder.allowDerivatives();
 				pipeline = builder.build(null, dev);
 				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
-			}
-
-			@Test
-			void derive() {
-				// Create a pipeline that can be derived from
-				init();
-				builder.allowDerivatives();
-
-				// Derive from this pipeline
-				final Pipeline.Builder derived = builder.derive();
-				assertNotNull(derived);
-				assertNotSame(derived, builder);
-
-				// Check that shaders can be overridden
-				addVertexShaderStage(derived);
-
-				// Construct pipelines
-				final List<Pipeline> pipelines = Pipeline.Builder.build(List.of(derived), null, dev);
-				assertNotNull(pipelines);
-				assertEquals(2, pipelines.size());
-
-				// Check derived pipeline
-				pipeline = pipelines.get(0);
-				assertNotNull(pipeline);
-				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
 			}
 		}
 	}

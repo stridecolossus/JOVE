@@ -36,11 +36,6 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 //	public int maxVertexInputBindingStride;
 //	public int maxVertexOutputComponents;
 
-	void copy(VertexInputPipelineStageBuilder builder) {
-		bindings.putAll(builder.bindings);
-		attributes.addAll(builder.attributes);
-	}
-
 	/**
 	 * Starts a new binding.
 	 * @return New binding builder

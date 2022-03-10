@@ -1,22 +1,17 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notEmpty;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -103,13 +98,6 @@ public class Pipeline extends AbstractVulkanObject {
 				this.stage = stage;
 			}
 
-			private ShaderStageBuilder(ShaderStageBuilder builder) {
-				this.stage = builder.stage;
-				this.shader = builder.shader;
-				this.name = builder.name;
-				this.constants = builder.constants;
-			}
-
 			/**
 			 * Sets the shader module.
 			 * @param shader Shader module
@@ -173,11 +161,7 @@ public class Pipeline extends AbstractVulkanObject {
 		private RenderPass pass;
 		private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
 		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
-
-		// Derivatives
-		private Handle base;			// Derive from existing pipeline instance
-		private Builder peer;			// Derive from a peer builder within an array of pipelines
-		private int index = -1;			// Patched peer index
+		private Pipeline base;
 
 		// Fixed function stages
 		private final VertexInputPipelineStageBuilder input = new VertexInputPipelineStageBuilder();
@@ -194,42 +178,6 @@ public class Pipeline extends AbstractVulkanObject {
 		 * Constructor.
 		 */
 		public Builder() {
-			init();
-		}
-
-		/**
-		 * Copy constructor.
-		 * @param peer Peer builder
-		 */
-		private Builder(Builder peer) {
-			// Clone properties
-			layout = peer.layout;
-			pass = peer.pass;
-			flags.addAll(peer.flags);
-
-			// Init as derivative
-			this.peer = peer;
-			derivative(this);
-
-			// Clone pipeline stages
-			for(ShaderStageBuilder b : peer.shaders.values()) {
-				shaders.put(b.stage, new ShaderStageBuilder(b));
-			}
-
-			// Clone pipeline properties
-			input.copy(peer.input);
-			assembly.copy(peer.assembly);
-			tesselation.copy(peer.tesselation);
-			viewport.copy(peer.viewport);
-			raster.copy(peer.raster);
-			multi.copy(peer.multi);
-			depth.copy(peer.depth);
-			blend.copy(peer.blend);
-			dynamic.copy(peer.dynamic);
-			init();
-		}
-
-		private void init() {
 			input.parent(this);
 			assembly.parent(this);
 			tesselation.parent(this);
@@ -289,38 +237,15 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Derives this pipeline from the given base pipeline.
-		 * @param base Base pipeline to derive from
+		 * Derives this pipeline from an existing base pipeline.
+		 * @param base Base pipeline
 		 * @throws IllegalArgumentException if the given pipeline does not allow derivatives
-		 * @see #allowDerivatives()
-		 * @see #derive()
 		 */
 		public Builder derive(Pipeline base) {
 			checkAllowDerivatives(base.flags());
-			this.base = base.handle();
-			derivative(this);
+			this.base = base;
+			flags.add(VkPipelineCreateFlag.DERIVATIVE);
 			return this;
-		}
-
-		/**
-		 * Derives a new pipeline from this base pipeline.
-		 * @return New builder for a derived pipeline
-		 * @throws IllegalStateException if this pipeline does not allow derivatives
-		 * @see #allowDerivatives()
-		 * @see #derive(Pipeline)
-		 */
-		public Builder derive() {
-			checkAllowDerivatives(flags);
-			final Builder builder = new Builder(this);
-			derivative(builder);
-			return builder;
-		}
-
-		/**
-		 * Sets this pipeline as derived.
-		 */
-		private static void derivative(Builder builder) {
-			builder.flags.add(VkPipelineCreateFlag.DERIVATIVE);
 		}
 
 		/**
@@ -394,13 +319,13 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public ShaderStageBuilder shader(VkShaderStage stage) {
 			final var shader = new ShaderStageBuilder(stage);
-			if(shaders.containsKey(stage) && (peer == null)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
+			if(shaders.containsKey(stage)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
 			shaders.put(stage, shader);
 			return shader;
 		}
 
 		/**
-		 * Populates a pipeline descriptor.
+		 * Populates the pipeline descriptor.
 		 */
 		private void populate(VkGraphicsPipelineCreateInfo info) {
 			// Init descriptor
@@ -432,12 +357,10 @@ public class Pipeline extends AbstractVulkanObject {
 			info.pDynamicState = dynamic.get();
 
 			// Init derivative pipeline
-			if(peer != null) {
-				if(base != null) throw new IllegalArgumentException("Cannot specify a base pipeline and a derivative index");
-				assert index >= 0;
+			if(base != null) {
+				info.basePipelineHandle = base.handle();
 			}
-			info.basePipelineHandle = base;
-			info.basePipelineIndex = index;
+			info.basePipelineIndex = -1;
 		}
 
 		/**
@@ -455,33 +378,15 @@ public class Pipeline extends AbstractVulkanObject {
 
 		/**
 		 * Constructs multiple pipelines.
+		 * TODO - peer derivatives
 		 * @param builders		Pipeline builders
 		 * @param cache			Optional pipeline cache
 		 * @param dev 			Logical device
 		 * @return New pipelines
-		 * @throws IllegalArgumentException if the pipeline layout or render pass have not been specified
-		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader stage has been configured
 		 */
-		public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
-			// Include peer builders if not already present
-			final List<Builder> list = new ArrayList<>(builders);
-			builders
-					.stream()
-					.map(b -> b.peer)
-					.filter(Objects::nonNull)
-					.filter(Predicate.not(list::contains))
-					.forEach(list::add);
-
-			// Patch peer index for derived pipelines
-			for(Builder b : list) {
-				if(b.peer != null) {
-					b.index = list.indexOf(b.peer);
-					assert b.index >= 0;
-				}
-			}
-
+		private static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
 			// Build array of descriptors
-			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(list, VkGraphicsPipelineCreateInfo::new, Builder::populate);
+			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(builders, VkGraphicsPipelineCreateInfo::new, Builder::populate);
 
 			// Allocate pipelines
 			final VulkanLibrary lib = dev.library();
@@ -489,17 +394,12 @@ public class Pipeline extends AbstractVulkanObject {
 			check(lib.vkCreateGraphicsPipelines(dev, cache, array.length, array, null, handles));
 
 			// Create pipelines
-			return IntStream
-					.range(0, array.length)
-					.mapToObj(n -> create(handles[n], list.get(n), dev))
-					.collect(toList());
-		}
-
-		/**
-		 * Creates a pipeline.
-		 */
-		private static Pipeline create(Pointer handle, Builder builder, DeviceContext dev) {
-			return new Pipeline(handle, dev, builder.layout, builder.flags);
+			final Pipeline[] pipelines = new Pipeline[array.length];
+			for(int n = 0; n < array.length; ++n) {
+				final Builder builder = builders.get(n);
+				pipelines[n] = new Pipeline(handles[n], dev, builder.layout, builder.flags);
+			}
+			return Arrays.asList(pipelines);
 		}
 	}
 

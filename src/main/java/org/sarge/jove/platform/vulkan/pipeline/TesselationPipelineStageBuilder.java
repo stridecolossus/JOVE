@@ -21,10 +21,6 @@ public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilde
 		return this;
 	}
 
-	void copy(TesselationPipelineStageBuilder builder) {
-		points = builder.points;
-	}
-
 	@Override
 	VkPipelineTessellationStateCreateInfo get() {
 		if(points == 0) {

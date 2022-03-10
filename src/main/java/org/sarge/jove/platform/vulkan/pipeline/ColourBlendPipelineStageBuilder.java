@@ -28,12 +28,6 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private final float[] constants = new float[4];
 	private VkLogicOp op;
 
-	void copy(ColourBlendPipelineStageBuilder builder) {
-		attachments.addAll(builder.attachments);
-		System.arraycopy(builder.constants, 0, constants, 0, constants.length);
-		op = builder.op;
-	}
-
 	/**
 	 * Starts a new attachment.
 	 * @return New colour-blend attachment builder

@@ -46,7 +46,7 @@ Sometime later we were encouraged by a friend to make a second attempt.  Our fir
 
 Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.
 
-There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to do exactly what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer.
+There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to do exactly what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer, and at the time of writing there was little in the way of tutorials or examples.
 
 Next we considered SWIG which is the code-generation technology used by LWJGL.  Again we were not encouraged, proprietary descriptors are required to bind to the native layer and we have already covered our issues with the resultant code.
 

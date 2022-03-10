@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,15 +29,5 @@ public class DynamicStatePipelineStageBuilderTest {
 	@Test
 	void buildEmpty() {
 		assertEquals(null, builder.get());
-	}
-
-	@Test
-	void copy() {
-		final var copy = new DynamicStatePipelineStageBuilder();
-		builder.state(VkDynamicState.SCISSOR);
-		copy.copy(builder);
-		assertNotNull(copy);
-		assertNotNull(copy.get());
-		assertNotSame(builder.get(), copy.get());
 	}
 }

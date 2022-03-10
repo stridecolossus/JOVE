@@ -15,24 +15,15 @@ import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
  * @author Sarge
  */
 public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo> {
-	private VkPipelineRasterizationStateCreateInfo info;
+	private VkPipelineRasterizationStateCreateInfo info = new VkPipelineRasterizationStateCreateInfo();
 
 	public RasterizerPipelineStageBuilder() {
-		this(new VkPipelineRasterizationStateCreateInfo());
 		depthClamp(false);
 		discard(false);
 		polygon(VkPolygonMode.FILL);
 		cull(VkCullMode.BACK);
 		winding(VkFrontFace.COUNTER_CLOCKWISE);
 		lineWidth(1);
-	}
-
-	private RasterizerPipelineStageBuilder(VkPipelineRasterizationStateCreateInfo info) {
-		this.info = notNull(info);
-	}
-
-	void copy(RasterizerPipelineStageBuilder builder) {
-		this.info = builder.info.copy();
 	}
 
 	/**
