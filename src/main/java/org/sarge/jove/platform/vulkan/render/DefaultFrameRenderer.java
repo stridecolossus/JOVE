@@ -6,7 +6,6 @@ import org.sarge.jove.platform.vulkan.VkPipelineStage;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.core.Work;
-import org.sarge.jove.platform.vulkan.core.Work.Batch;
 
 /**
  * Default implementation that composes a frame builder and submits render tasks to the work queue.
@@ -40,8 +39,7 @@ public class DefaultFrameRenderer implements VulkanFrame.FrameRenderer {
 				.build();
 
 		// Submit render sequence
-		final Batch batch = work.batch();
-		pool.submit(batch, frame.fence());
+		work.submit(frame.fence());
 	}
 	// TODO - how to handle multiple sequences?
 }

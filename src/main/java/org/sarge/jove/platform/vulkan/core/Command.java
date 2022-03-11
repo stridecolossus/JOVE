@@ -16,18 +16,24 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
+import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
+import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
+import org.sarge.jove.platform.vulkan.VkCommandBufferResetFlag;
+import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
+import org.sarge.jove.platform.vulkan.VkCommandPoolCreateFlag;
+import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
+import org.sarge.jove.platform.vulkan.VkCommandPoolResetFlag;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.core.Work.Batch;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>command</i> defines a piece of work to be performed on the hardware.
+ * A <i>command</i> defines an operation to be performed on the hardware.
  * @author Sarge
  */
 @FunctionalInterface
@@ -377,17 +383,6 @@ public interface Command {
 		private void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
 			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.array(buffers));
-		}
-
-		/**
-		 * Submits a batch of work submissions to this pool.
-		 * @param batch Work batch to submit
-		 * @param fence Optional fence
-		 */
-		public void submit(Batch batch, Fence fence) {
-			final VulkanLibrary lib = super.device().library();
-			final VkSubmitInfo[] array = batch.build();
-			check(lib.vkQueueSubmit(queue, array.length, array, fence));
 		}
 
 		/**

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Set;
@@ -21,13 +20,11 @@ import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
 import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSubmitInfo;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.core.Command.SecondaryBuffer;
-import org.sarge.jove.platform.vulkan.core.Work.Batch;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Memory;
@@ -261,17 +258,6 @@ class CommandTest extends AbstractVulkanTest {
 		void waitIdle() {
 			pool.waitIdle();
 			verify(lib).vkQueueWaitIdle(queue);
-		}
-
-		@Test
-		void submit() {
-			final Batch batch = mock(Batch.class);
-			final VkSubmitInfo[] array = new VkSubmitInfo[1];
-			when(batch.build()).thenReturn(array);
-
-			final Fence fence = mock(Fence.class);
-			pool.submit(batch, fence);
-			verify(lib).vkQueueSubmit(queue, 1, array, fence);
 		}
 
 		@Test
