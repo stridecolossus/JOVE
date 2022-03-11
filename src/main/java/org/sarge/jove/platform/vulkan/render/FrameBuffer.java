@@ -118,7 +118,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Builder for a frame buffer.
+	 * Builder for a <b>group</b> of frame buffers.
 	 */
 	public static class Builder {
 		private RenderPass pass;
@@ -126,7 +126,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		private final List<View> attachments = new ArrayList<>();
 
 		/**
-		 * Sets the render pass for this frame buffer.
+		 * Sets the render pass for the frame buffers.
 		 * @param pass Render pass
 		 */
 		public Builder pass(RenderPass pass) {
@@ -135,7 +135,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the extents of this frame buffer.
+		 * Sets the extents of the frame buffers.
 		 * @param extents Extents
 		 */
 		public Builder extents(Dimensions extents) {
@@ -144,7 +144,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Adds an attachment.
+		 * Adds an attachment to all frame buffers.
 		 * @param attachment Frame buffer attachment
 		 */
 		public Builder attachment(View attachment) {

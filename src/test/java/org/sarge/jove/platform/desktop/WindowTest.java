@@ -2,7 +2,6 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -12,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.Dimensions;
@@ -41,14 +41,10 @@ public class WindowTest {
 		when(desktop.library()).thenReturn(lib);
 
 		// Init window descriptor
-		final Window.Descriptor descriptor = new Window.Descriptor.Builder()
-				.title("title")
-				.size(new Dimensions(640, 480))
-				.property(Window.Property.DECORATED)
-				.build();
+		final Window.Descriptor descriptor = new Window.Descriptor("title", new Dimensions(640, 480), Set.of(Window.Property.DECORATED));
 
 		// Create window
-		window = Window.create(desktop, descriptor, null);
+		window = new Window(desktop, null, descriptor);
 	}
 
 	@Test
@@ -66,15 +62,6 @@ public class WindowTest {
 		// Check devices
 		assertNotNull(window.keyboard());
 		assertNotNull(window.mouse());
-
-		// Check GLFW window hints applied
-		verify(lib).glfwWindowHint(0x00020005, 1);
-	}
-
-	@Test
-	void createFailed() {
-		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(null);
-		assertThrows(RuntimeException.class, () -> Window.create(desktop, window.descriptor(), null));
 	}
 
 	@Test
@@ -131,5 +118,31 @@ public class WindowTest {
 	void destroy() {
 		window.destroy();
 		verify(lib).glfwDestroyWindow(window);
+	}
+
+	@Nested
+	class BuilderTests {
+		private Window.Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new Window.Builder();
+		}
+
+		@Test
+		void build() {
+			// Construct window
+			window = builder
+					.title("title")
+					.size(new Dimensions(640, 480))
+					.property(Window.Property.DECORATED)
+					.build(desktop);
+
+			// Check window properties
+			assertNotNull(window);
+
+			// Check GLFW window hints applied
+			verify(lib).glfwWindowHint(0x00020005, 1);
+		}
 	}
 }

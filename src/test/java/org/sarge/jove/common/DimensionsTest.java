@@ -42,4 +42,9 @@ class DimensionsTest {
 		assertEquals(1, dim.compareTo(new Dimensions(640, 0)));
 		assertEquals(-1, dim.compareTo(new Dimensions(999, 999)));
 	}
+
+	@Test
+	void rectangle() {
+		assertEquals(new Rectangle(0, 0, 640, 480), dim.rectangle());
+	}
 }

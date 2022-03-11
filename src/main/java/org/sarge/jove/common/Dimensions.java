@@ -52,6 +52,13 @@ public record Dimensions(int width, int height) implements Comparable<Dimensions
 		}
 	}
 
+	/**
+	 * @return These dimensions as a rectangle at the origin
+	 */
+	public Rectangle rectangle() {
+		return new Rectangle(0, 0, this);
+	}
+
 	@Override
 	public String toString() {
 		return width + "x" + height;
