@@ -40,6 +40,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * Creates a vertex buffer.
 	 * @param dev			Logical device
+	 * @param allocator		Memory allocator
 	 * @param len			Length (bytes)
 	 * @param dev			Memory properties
 	 * @return New vertex buffer
@@ -81,8 +82,9 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	/**
 	 * Helper - Creates and initialises a staging buffer containing the given data.
-	 * @param dev		Logical device
-	 * @param data		Data to write
+	 * @param dev			Logical device
+	 * @param allocator		Memory allocator
+	 * @param data			Data to write
 	 * @return New staging buffer containing the given data
 	 */
 	public static VulkanBuffer staging(LogicalDevice dev, AllocationService allocator, Bufferable data) {

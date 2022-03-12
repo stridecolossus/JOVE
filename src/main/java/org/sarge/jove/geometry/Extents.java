@@ -88,7 +88,7 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>positive</i> vertex of this extents which is <b>furthest</b> vertex in the direction of the normal.
+	 * Calculates the <i>positive</i> vertex of this extents which is the <b>furthest</b> vertex in the direction of the normal.
 	 * @param normal Normal
 	 * @return Positive vertex
 	 */
@@ -101,9 +101,9 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>negative</i> vertex of this extents which is <b>nearest</b> vertex in the direction of the normal.
+	 * Calculates the <i>negative</i> vertex of this extents which is the <b>nearest</b> vertex in the direction of the normal.
 	 * @param normal Normal
-	 * @return Positive vertex
+	 * @return Negative vertex
 	 */
 	public Point negative(Vector normal) {
 		return new Point(

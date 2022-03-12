@@ -58,6 +58,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 	/**
 	 * Constructor with full alpha.
+	 * @throws IllegalArgumentException if any argument is not a percentile value
 	 */
 	public Colour(float red, float green, float blue) {
 		this(red, green, blue, 1);

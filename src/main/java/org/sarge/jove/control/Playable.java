@@ -4,6 +4,7 @@ import org.sarge.jove.control.Player.State;
 
 /**
  * A <i>playable</i> is a media resource controlled by this player.
+ * @author Sarge
  */
 public interface Playable {
 	/**

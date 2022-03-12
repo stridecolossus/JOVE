@@ -24,13 +24,13 @@ import org.sarge.lib.util.Check;
  * Usage:
  * <p>
  * <pre>
- * 	// Create a selector for a depth-stencil with optimal tiling
- * 	PhysicalDevice dev = ...
- * 	Predicate predicate = FormatSelector.predicate(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
- * 	FormatSelector selector = new FormatSelector(dev::properties, predicate);
+ * // Create a selector for a depth-stencil with optimal tiling
+ * PhysicalDevice dev = ...
+ * Predicate predicate = FormatSelector.predicate(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
+ * FormatSelector selector = new FormatSelector(dev::properties, predicate);
  *
- * 	// Select a depth-stencil format
- * 	VkFormat format = selector.select(List.of(VkFormat.D32_SFLOAT)).orElseThrow();
+ * // Select a depth-stencil format
+ * VkFormat format = selector.select(List.of(VkFormat.D32_SFLOAT)).orElseThrow();
  * </pre>
  * <p>
  * @author Sarge
