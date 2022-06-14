@@ -2,8 +2,7 @@ package org.sarge.jove.scene;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -125,10 +124,10 @@ public class OrbitalCameraController extends DefaultCameraController {
 	}
 
 	@Override
-	protected void update(Point pt) {
-		final Point pos = pt.scale(radius).add(target);
+	protected void update(Vector vec) {
+		final Point pos = new Point(vec).scale(radius).add(target);
 		cam.move(pos);
-		cam.look(target);
+		cam.direction(vec.invert());
 	}
 
 	@Override

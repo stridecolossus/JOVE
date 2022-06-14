@@ -1,30 +1,20 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkApplicationInfo;
-import org.sarge.jove.platform.vulkan.VkExtensionProperties;
-import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
-import org.sarge.jove.platform.vulkan.VkLayerProperties;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Check;
 
-import com.sun.jna.Function;
-import com.sun.jna.Pointer;
-import com.sun.jna.StringArray;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.*;
+import com.sun.jna.ptr.*;
 
 /**
  * An <i>instance</i> is the root object for a Vulkan application.
@@ -37,8 +27,9 @@ public class Instance extends AbstractTransientNativeObject {
 
 	/**
 	 * Constructor.
-	 * @param lib			Vulkan library
 	 * @param handle		Instance handle
+	 * @param lib			Vulkan library
+	 * @param factory		Reference factory
 	 */
 	Instance(Handle handle, VulkanLibrary lib, ReferenceFactory factory) {
 		super(handle);
@@ -72,6 +63,7 @@ public class Instance extends AbstractTransientNativeObject {
 		if(ptr == null) throw new RuntimeException("Cannot find function pointer: " + name);
 
 		// Convert to function (first case supports unit-tests)
+		// TODO
 		if(ptr instanceof Function func) {
 			return func;
 		}

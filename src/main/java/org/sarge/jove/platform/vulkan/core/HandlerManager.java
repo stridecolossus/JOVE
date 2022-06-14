@@ -4,27 +4,17 @@ import static java.util.stream.Collectors.joining;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCallbackData;
-import org.sarge.jove.platform.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Function;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -158,10 +148,8 @@ public class HandlerManager {
 			final VkDebugUtilsMessageSeverity severityEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageSeverity.class).map(severity);
 			final Collection<VkDebugUtilsMessageType> typesEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageType.class).enumerate(type);
 
-			// Create message wrapper
+			// Wrap and delegate to handler
 			final Message message = new Message(severityEnum, typesEnum, pCallbackData);
-
-			// Delegate to handler
 			consumer.accept(message);
 
 			// Continue execution

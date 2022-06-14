@@ -104,6 +104,7 @@ public final class Vector extends Tuple {
 			return multiply(f);
 		}
 	}
+	// TODO - normalized vector sub-class?
 
 	/**
 	 * Calculates the angle between this and the given vector.

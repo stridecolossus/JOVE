@@ -4,14 +4,8 @@ import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiPredicate;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.function.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -20,11 +14,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.platform.vulkan.util.Extension;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.LazySupplier;
 

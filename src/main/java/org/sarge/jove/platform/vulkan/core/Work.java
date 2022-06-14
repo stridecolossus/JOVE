@@ -7,15 +7,11 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
-import org.sarge.jove.platform.vulkan.VkSubmitInfo;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
-import org.sarge.jove.util.IntegerArray;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -57,6 +53,7 @@ import org.sarge.lib.util.Check;
  * batch.submit(fence);
  * </pre>
  * @see Command
+ * @see Family
  * @author Sarge
  */
 public interface Work {

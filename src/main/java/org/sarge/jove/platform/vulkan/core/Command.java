@@ -5,10 +5,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -16,14 +13,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
-import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
-import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
-import org.sarge.jove.platform.vulkan.VkCommandBufferResetFlag;
-import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
-import org.sarge.jove.platform.vulkan.VkCommandPoolCreateFlag;
-import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.VkCommandPoolResetFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -90,7 +80,7 @@ public interface Command {
 		 * @param handle 		Command buffer handle
 		 * @param pool			Parent pool
 		 */
-		protected Buffer(Pointer handle, Pool pool) {
+		Buffer(Pointer handle, Pool pool) {
 			this.handle = new Handle(handle);
 			this.pool = notNull(pool);
 		}

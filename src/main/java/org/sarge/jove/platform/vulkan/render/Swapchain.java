@@ -4,43 +4,23 @@ import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.ClearValue;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.core.Fence;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.Semaphore;
-import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.image.Image;
-import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
-import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.util.IntegerArray;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.Mask;
-import org.sarge.jove.util.ReferenceFactory;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.ptr.*;
 
 /**
  * A <i>swapchain</i> presents rendered images to a {@link Surface}.
@@ -82,16 +62,6 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Default presentation mode (FIFO, guaranteed on all Vulkan implementations).
 	 */
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
-
-	/**
-	 * Indicates that a swapchain image could not be acquired or presented.
-	 * Note that {@link VkResult#SUBOPTIMAL_KHR} is considered as success
-	 */
-	public static class SwapchainException extends VulkanException {
-		private SwapchainException(int result) {
-			super(result);
-		}
-	}
 
 	private final VkFormat format;
 	private final Dimensions extents;
@@ -145,11 +115,18 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @throws SwapchainException
+	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame buffer.
+	 * Note that {@link VkResult#SUBOPTIMAL_KHR} is considered as success
 	 */
-	private static void validate(int result) {
+	public static class SwapchainInvalidated extends VulkanException {
+		private SwapchainInvalidated(int result) {
+			super(result);
+		}
+	}
+
+	private static void checkSwapchain(int result) {
 		final boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
-		if(!ok) throw new SwapchainException(result);
+		if(!ok) throw new SwapchainInvalidated(result);
 	}
 
 	/**
@@ -158,16 +135,16 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param fence			Optional fence
 	 * @return Image index
 	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
-	 * @throws SwapchainException if the swapchain image cannot be acquired
+	 * @throws SwapchainInvalidated if the swapchain image cannot be acquired
 	 */
-	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainException {
+	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
 		// Validate
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 
 		// Acquire swapchain image
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
-		validate(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
+		checkSwapchain(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
 
 		return index.getValue();
 	}
@@ -190,9 +167,9 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param queue				Presentation queue
 	 * @param index				Swapchain image index
 	 * @param semaphores		Wait semaphores
-	 * @throws SwapchainException if the swapchain image cannot be presented
+	 * @throws SwapchainInvalidated if the swapchain image cannot be presented
 	 */
-	public void present(Queue queue, int index, Set<Semaphore> semaphores) throws SwapchainException {
+	public void present(Queue queue, int index, Set<Semaphore> semaphores) throws SwapchainInvalidated {
 		// Create presentation descriptor
 		final VkPresentInfoKHR info = new VkPresentInfoKHR();
 
@@ -209,7 +186,7 @@ public class Swapchain extends AbstractVulkanObject {
 
 		// Present frame
 		final VulkanLibrary lib = device().library();
-		validate(lib.vkQueuePresentKHR(queue, info));
+		checkSwapchain(lib.vkQueuePresentKHR(queue, info));
 	}
 	// TODO - cache descriptor -> factory -> work submit?
 

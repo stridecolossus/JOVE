@@ -49,6 +49,7 @@ todo
 - re-build swapchain and pipeline after window viewport/focus change
 - check for depth attachment in frame-buffer::create
 - combine OBJ vertex component custom list implementation and parser? no need then for bi-consumer indirection? 
+- code gen type mapper sucks, should be declarative but not using nasty switches? table driven somehow (we already have the table!), functional?
 
 features/limits
 pipeline stages:

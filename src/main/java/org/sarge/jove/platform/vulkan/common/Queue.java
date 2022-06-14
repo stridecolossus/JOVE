@@ -15,7 +15,6 @@ import org.sarge.lib.util.Check;
  * A <i>queue</i> is used to submit work to the hardware.
  * @author Sarge
  */
-@SuppressWarnings("unused")
 public record Queue(Handle handle, Family family) implements NativeObject {
 	/**
 	 * Constructor.

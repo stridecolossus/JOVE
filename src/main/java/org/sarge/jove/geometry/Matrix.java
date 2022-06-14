@@ -82,14 +82,24 @@ public final class Matrix implements Transform, Bufferable {
 				.build();
 	}
 
+	/**
+	 * Creates a new matrix.
+	 * @param order Matrix order
+	 * @return Matrix
+	 */
+	private static float[][] matrix(int order) {
+		Check.oneOrMore(order);
+		return new float[order][order];
+	}
+
 	private final float[][] matrix;
 
 	/**
 	 * Constructor.
 	 * @param order Matrix order
 	 */
-	private Matrix(int order) {
-		matrix = new float[order][order];
+	private Matrix(float[][] matrix) {
+		this.matrix = matrix;
 	}
 
 	/**
@@ -161,13 +171,13 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix transpose() {
 		final int order = order();
-		final Matrix trans = new Matrix(order);
+		final float[][] trans = matrix(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				trans.matrix[r][c] = this.matrix[c][r];
+				trans[r][c] = this.matrix[c][r];
 			}
 		}
-		return trans;
+		return new Matrix(trans);
 	}
 
 	/**
@@ -186,18 +196,18 @@ public final class Matrix implements Transform, Bufferable {
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
 
 		// Multiply matrices
-		final Matrix result = new Matrix(order);
+		final float[][] result = matrix(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
 					total += this.matrix[r][n] * m.matrix[n][c];
 				}
-				result.matrix[r][c] = total;
+				result[r][c] = total;
 			}
 		}
 
-		return result;
+		return new Matrix(result);
 	}
 
 	@Override
@@ -236,7 +246,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private Matrix matrix;
+		private float[][] matrix;
 
 		/**
 		 * Default constructor for a 4x4 matrix.
@@ -251,16 +261,14 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
 		public Builder(int order) {
-			Check.oneOrMore(order);
-			matrix = new Matrix(order);
+			matrix = matrix(order);
 		}
 
 		/**
 		 * Initialises this matrix to identity.
 		 */
 		public Builder identity() {
-			final int order = matrix.order();
-			for(int n = 0; n < order; ++n) {
+			for(int n = 0; n < matrix.length; ++n) {
 				set(n, n, 1);
 			}
 			return this;
@@ -274,7 +282,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			matrix.matrix[row][col] = value;
+			matrix[row][col] = value;
 			return this;
 		}
 
@@ -309,12 +317,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			try {
-				return matrix;
-			}
-			finally {
-				matrix = null;
-			}
+			return new Matrix(matrix);
 		}
 	}
 }

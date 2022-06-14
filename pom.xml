@@ -5,89 +5,26 @@
 	<version>1.0.0-SNAPSHOT</version>
 	<name>JOVE</name>
 	<description>JOVE</description>
-  
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
-				<configuration>
-					<source>15</source>
-					<target>15</target>
-					<release>15</release>
-					<compilerArgs>--enable-preview</compilerArgs>
-					<compilerArgs>-XX:+ShowCodeDetailsInExceptionMessages</compilerArgs>
-				</configuration>
-			</plugin>
-			
-			<!--
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.0</version>
-				<dependencies>
-					<dependency>
-						<groupId>org.junit.platform</groupId>
-						<artifactId>junit-platform-surefire-provider</artifactId>
-						<version>1.0.1</version>
-					</dependency>
-					<dependency>
-						<groupId>org.junit.jupiter</groupId>
-						<artifactId>junit-jupiter-engine</artifactId>
-						<version>5.0.1</version>
-						<scope>test</scope>
-					</dependency>
-					<dependency>
-						<groupId>org.junit.vintage</groupId>
-						<artifactId>junit-vintage-engine</artifactId>
-						<version>4.12.1</version>
-						<scope>test</scope>
-					</dependency>
-					<dependency>
-						<groupId>org.junit.platform</groupId>
-						<artifactId>junit-platform-launcher</artifactId>
-						<version>1.0.1</version>
-						<scope>test</scope>
-					</dependency>
-					<dependency>
-						<groupId>org.junit.platform</groupId>
-						<artifactId>junit-platform-runner</artifactId>
-						<version>1.0.1</version>
-						<scope>test</scope>
-					</dependency>
-				</dependencies>
-			</plugin>
-			 -->
 
-<!--
-TODO - ant task? custom Mojo?
-			<plugin>
-			     <artifactId>maven-antrun-plugin</artifactId>
-			     <version>1.7</version>
-			     <executions>
-			         <execution>
-			             <phase>generate-sources</phase>
-			             <configuration>
-			                 <target>
-                                <exec dir="${project.basedir}/src/test/resources/demo" executable="" failonerror="true">
-                                </exec>
-                             </target>
-			             </configuration>
-			             <goals>
-			                 <goal>run</goal>
-			             </goals>
-			         </execution>
-			     </executions>
-			</plugin>
--->
-		</plugins>
- 	</build>
-	
-	<properties>
-	</properties>
-	
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <release>17</release>
+                    <compilerArgs>--enable-preview</compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 	<dependencies>
-	
 	   <dependency>
 	       <groupId>org.sarge.lib</groupId>
 			<artifactId>lib</artifactId>

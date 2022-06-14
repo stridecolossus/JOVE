@@ -6,18 +6,12 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.VkIndexType;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty;
-import org.sarge.jove.util.BufferHelper;
 
 /**
- * An <i>index buffer</i> binds an index to the pipeline.
+ * An <i>index buffer</i> binds a drawing index to the pipeline.
  * <p>
- * An index buffer is represented as {@code short} or {@code int} values depending on the length of the data, specified by {@link VkIndexType}.
+ * Note that the index is represented as either {@code short} or {@code int} values depending on the length of the vertex data referred to, specified by {@link VkIndexType}.
  * <p>
- * The {@link #IndexBuffer(VulkanBuffer)} constructor assumes that a buffer that is longer than an <b>unsigned short</b> has a {@link VkIndexType#UINT32} data type.
- * <p>
- * This behaviour can be overridden by the alternative {@link #IndexBuffer(VulkanBuffer, VkIndexType)} constructor.
- * <p>
- * @see BufferHelper#isShortIndex(long)
  * @author Sarge
  */
 public class IndexBuffer extends VulkanBuffer {

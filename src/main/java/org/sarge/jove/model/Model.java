@@ -1,13 +1,16 @@
 package org.sarge.jove.model;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.*;
 
 /**
  * A <i>model</i> is comprised of a vertex buffer with a specified layout and an optional index buffer.
+ *
+ * TODO
+ * - no point in keeping vertices/index in memory once its loaded to the GPU
+ * - factor out header again?
+ *
  * @author Sarge
  */
 public interface Model {

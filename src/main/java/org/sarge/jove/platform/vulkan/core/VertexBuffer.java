@@ -27,6 +27,7 @@ public class VertexBuffer extends VulkanBuffer {
 	 * Creates a command to bind this buffer as a vertex buffer (VBO).
 	 * @param binding Binding index
 	 * @return Command to bind this buffer
+	 * @see #bind(int, Collection)
 	 */
 	public Command bind(int binding) {
 		return bind(binding, List.of(this));
@@ -38,6 +39,7 @@ public class VertexBuffer extends VulkanBuffer {
 	 * @param buffers		Buffers to bind
 	 * @return Command to bind the given buffers
 	 * @throws IllegalStateException if any buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
+	 * @see #bind(int)
 	 */
 	public static Command bind(int start, Collection<VertexBuffer> buffers) {
 		final Pointer array = NativeObject.array(buffers);

@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.jove.util.MathsUtil.cos;
-import static org.sarge.jove.util.MathsUtil.sin;
+import static org.sarge.jove.util.MathsUtil.*;
 
 import org.sarge.jove.util.MathsUtil;
 
@@ -15,12 +14,12 @@ public final class Sphere {
 	}
 
 	/**
-	 * Calculates the point on the unit-sphere for the given rotation angles (in radians).
+	 * Calculates the vector to the point on the unit-sphere for the given rotation angles (in radians).
 	 * @param theta		Horizontal angle (or <i>yaw</i>) in the range zero to {@link MathsUtil#TWO_PI}
 	 * @param phi		Vertical angle (or <i>pitch</i>) in the range +/- {@link MathsUtil#HALF_PI}
-	 * @return Unit-sphere surface point
+	 * @return Unit-sphere surface vector
 	 */
-	public static Point point(float theta, float phi) {
+	public static Vector vector(float theta, float phi) {
 		// Apply 90 degree clockwise rotation to align with the -Z axis
 		final float angle = theta - MathsUtil.HALF_PI;
 
@@ -31,6 +30,6 @@ public final class Sphere {
 		final float z = sin(phi);
 
 		// Swizzle the coordinates to default space
-		return new Point(x, z, y);
+		return new Vector(x, z, y);
 	}
 }

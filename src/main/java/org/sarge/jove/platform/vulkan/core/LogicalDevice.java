@@ -4,30 +4,20 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
-import org.sarge.jove.platform.vulkan.VkDeviceQueueCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSubmitInfo;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty.Provider;
-import org.sarge.jove.util.FloatArray;
-import org.sarge.jove.util.ReferenceFactory;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.Percentile;
 
@@ -49,6 +39,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * Constructor.
 	 * @param handle 		Device handle
 	 * @param parent 		Parent physical device
+	 * @param features		Features enabled on this device
 	 * @param queues 		Work queues
 	 */
 	LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues) {
@@ -157,7 +148,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 */
 		private record RequiredQueue(Family family, List<Percentile> priorities) {
 			private void populate(VkDeviceQueueCreateInfo info) {
-				// Convert to floating-point
+				// Convert to floating-point array
 				final Float[] array = priorities
 						.stream()
 						.map(Percentile::floatValue)

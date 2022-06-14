@@ -1,14 +1,11 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -56,6 +53,13 @@ public class FormatBuilder {
 		 * @throws IllegalArgumentException if the type is not supported
 		 */
 		public static Type of(Class<?> type) {
+
+//			switch(type) {
+//				case Float.class -> {}
+//				case Integer.class -> {}
+//				default -> throw new IllegalArgumentException("Unsupported data type: " + type);
+//			}
+
 			return switch(type.getSimpleName().toLowerCase()) {
 				case "float" -> FLOAT;
 				case "integer", "int", "short" -> INT;
