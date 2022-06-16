@@ -6,9 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -18,9 +16,9 @@ import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * The <i>handler manager</i> is used to attach diagnostic handlers to the Vulkan instance.
+ * A <i>handler</i> is a diagnostics message handler attached to the instance.
  * <p>
- * Handlers are configured and attached to the instance using the {@link #builder()}.
+ * Handlers are configured and attached to the instance using the {@link Builder}.
  * <p>
  * Notes:
  * <ul>
@@ -30,46 +28,25 @@ import com.sun.jna.ptr.PointerByReference;
  * </ul>
  * @author Sarge
  */
-public class HandlerManager {
+public class Handler extends AbstractTransientNativeObject {
 	private final Instance instance;
-	private final Function create, destroy;
-	private final Collection<Handler> handlers = new ArrayList<>();
 
 	/**
 	 * Constructor.
-	 * @param instance Parent instance
+	 * @param handle 		Handle
+	 * @param instance		Parent instance
 	 */
-	HandlerManager(Instance instance) {
+	private Handler(Pointer handle, Instance instance) {
+		super(handle);
 		this.instance = notNull(instance);
-		this.create = instance.function("vkCreateDebugUtilsMessengerEXT");
-		this.destroy = instance.function("vkDestroyDebugUtilsMessengerEXT");
-	}
-
-	/**
-	 * @return Attached handlers
-	 */
-	public Stream<Handler> handlers() {
-		return handlers.stream();
-	}
-
-	/**
-	 * @return New builder for a handler
-	 */
-	public Builder builder() {
-		return new Builder();
-	}
-
-	/**
-	 * Releases all attached handlers.
-	 */
-	public synchronized void close() {
-		List.copyOf(handlers).forEach(Handler::destroy);
-		assert handlers.isEmpty();
 	}
 
 	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append("handlers", handlers.size()).build();
+	protected void release() {
+		final Function destroy = instance.function("vkDestroyDebugUtilsMessengerEXT");
+		final Pointer parent = instance.handle().toPointer();
+		final Object[] args = {parent, handle.toPointer(), null};
+		destroy.invoke(args);
 	}
 
 	/**
@@ -158,59 +135,35 @@ public class HandlerManager {
 	}
 
 	/**
-	 * A <i>handler</i> is a diagnostics message handler attached to the instance.
-	 */
-	public class Handler extends AbstractTransientNativeObject {
-		/**
-		 * Constructor.
-		 * @param handle Handle
-		 */
-		private Handler(Pointer handle) {
-			super(handle);
-		}
-
-		@Override
-		protected void release() {
-			// Destroy handler
-			final Pointer parent = instance.handle().toPointer();
-			final Object[] args = {parent, handle.toPointer(), null};
-			destroy.invoke(args);
-
-			// Remove handler
-			assert handlers.contains(this);
-			handlers.remove(this);
-		}
-	}
-
-	/**
-	 * Builder for a diagnostics message {@link Handler}.
+	 * Builder for a diagnostics handler.
 	 * <p>
 	 * Usage:
 	 * <pre>
-	 *  HandlerManager manager = instance.manager();
-	 *  Consumer consumer = ...
-	 *
-	 *  // Attach handler
-	 *  Handler handler = manager
-	 *  	.builder()
-	 *  	.severity(VkDebugUtilsMessageSeverity.WARNING)
-	 *  	.severity(VkDebugUtilsMessageSeverity.ERROR)
-	 *  	.type(VkDebugUtilsMessageType.GENERAL)
-	 *  	.type(VkDebugUtilsMessageType.VALIDATION)
-	 *  	.consumer(consumer)
-	 *  	.build();
-	 *
-	 *  // Alternatively
-	 *  manager
-	 *  	.builder()
-	 *  	.init()
-	 *  	.build();
+	 * new Builder(instance)
+	 *     .severity(VkDebugUtilsMessageSeverity.ERROR)
+	 *     .type(VkDebugUtilsMessageType.GENERAL)
+	 *     .consumer(System.err::println)
+	 *     .build();
 	 * </pre>
+	 * Notes:
+	 * <ul>
+	 * <li>if not explicitly configured the severity and types are initialised to default values</li>
+	 * <li>the default message consumer dumps diagnostic reports to the error console</li>
+	 * </ul>
 	 */
-	public class Builder {
+	public static class Builder {
+		private final Instance instance;
 		private final Set<VkDebugUtilsMessageSeverity> severity = new HashSet<>();
 		private final Set<VkDebugUtilsMessageType> types = new HashSet<>();
 		private Consumer<Message> consumer = System.err::println;
+
+		/**
+		 * Constructor.
+		 * @param instance Parent instance
+		 */
+		Builder(Instance instance) {
+			this.instance = notNull(instance);
+		}
 
 		/**
 		 * Sets the message consumer (dumps messages to the error console by default).
@@ -240,28 +193,19 @@ public class HandlerManager {
 		}
 
 		/**
-		 * Convenience method - Initialises this builder to the following defaults:
-		 * <ul>
-		 * <li>warnings and higher</li>
-		 * <li>general or validation message types</li>
-		 * </ul>
-		 */
-		public Builder init() {
-			severity(VkDebugUtilsMessageSeverity.WARNING);
-			severity(VkDebugUtilsMessageSeverity.ERROR);
-			type(VkDebugUtilsMessageType.GENERAL);
-			type(VkDebugUtilsMessageType.VALIDATION);
-			return this;
-		}
-
-		/**
 		 * Builds and attaches this handler.
 		 * @throws IllegalArgumentException if the message severities or types is empty
 		 */
 		public Handler build() {
-			// Validate
-			if(severity.isEmpty()) throw new IllegalArgumentException("No message severities specified");
-			if(types.isEmpty()) throw new IllegalArgumentException("No message types specified");
+			// Init default configuration if not explicitly specified
+			if(severity.isEmpty()) {
+				severity(VkDebugUtilsMessageSeverity.WARNING);
+				severity(VkDebugUtilsMessageSeverity.ERROR);
+			}
+			if(types.isEmpty()) {
+				type(VkDebugUtilsMessageType.GENERAL);
+				type(VkDebugUtilsMessageType.VALIDATION);
+			}
 
 			// Build handler descriptor
 			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
@@ -270,6 +214,9 @@ public class HandlerManager {
 			info.pfnUserCallback = new MessageCallback(consumer);
 			info.pUserData = null;
 
+			// Lookup creation function pointer
+			final Function create = instance.function("vkCreateDebugUtilsMessengerEXT");
+
 			// Register handler with instance
 			final Pointer parent = instance.handle().toPointer();
 			final PointerByReference ref = instance.factory().pointer();
@@ -277,10 +224,7 @@ public class HandlerManager {
 			check(create.invokeInt(args));
 
 			// Create handler
-			final Handler handler = new Handler(ref.getValue());
-			handlers.add(handler);
-
-			return handler;
+			return new Handler(ref.getValue(), instance);
 		}
 	}
 }

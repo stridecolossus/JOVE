@@ -23,7 +23,8 @@ import com.sun.jna.ptr.*;
 public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
 	private final ReferenceFactory factory;
-	private HandlerManager manager;
+	private final Map<String, Function> functions = new HashMap<>();
+	private final Collection<Handler> handlers = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -58,34 +59,27 @@ public class Instance extends AbstractTransientNativeObject {
 	 * @throws RuntimeException if the function cannot be found
 	 */
 	public Function function(String name) {
-		// Lookup function pointer
+		return functions.computeIfAbsent(name, this::lookup);
+	}
+
+	private Function lookup(String name) {
 		final Pointer ptr = lib.vkGetInstanceProcAddr(this, name);
 		if(ptr == null) throw new RuntimeException("Cannot find function pointer: " + name);
-
-		// Convert to function (first case supports unit-tests)
-		// TODO
-		if(ptr instanceof Function func) {
-			return func;
-		}
-		else {
-			return Function.getFunction(ptr);
-		}
+		return Function.getFunction(ptr);
 	}
 
 	/**
-	 * @return Manager for diagnostic handlers
+	 * Creates a builder for a new diagnostics handler for this instance.
+	 * @return Diagnostics handler builder
 	 */
-	public synchronized HandlerManager manager() {
-		if(manager == null) {
-			manager = new HandlerManager(this);
-		}
-		return manager;
+	public synchronized Handler.Builder handler() {
+		return new Handler.Builder(this);
 	}
 
 	@Override
 	protected void release() {
-		if(manager != null) {
-			manager.close();
+		for(Handler handler : handlers) {
+			handler.destroy();
 		}
 		lib.vkDestroyInstance(handle, null);
 	}
@@ -94,7 +88,7 @@ public class Instance extends AbstractTransientNativeObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append("manager", manager)
+				.append("handlers", handlers.size())
 				.build();
 	}
 
