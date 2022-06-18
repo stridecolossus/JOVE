@@ -1,23 +1,13 @@
 package org.sarge.jove.platform.desktop;
 
-import static java.util.stream.Collectors.toList;
-
 import java.awt.MouseInfo;
-import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.function.*;
 import java.util.stream.IntStream;
 
-import org.sarge.jove.control.Axis;
-import org.sarge.jove.control.Axis.AxisEvent;
-import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Event;
+import org.sarge.jove.control.*;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.ModifiedButton;
-import org.sarge.jove.control.PositionEvent;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
 
 /**
  * The <i>mouse device</i> exposes event sources for the mouse pointer, buttons and scroll-wheel.
@@ -34,6 +24,11 @@ public class MouseDevice extends DesktopDevice {
 	 */
 	MouseDevice(Window window) {
 		super(window);
+	}
+
+	@Override
+	public String name() {
+		return "Mouse";
 	}
 
 	@Override
@@ -63,18 +58,16 @@ public class MouseDevice extends DesktopDevice {
 	}
 
 	/**
-	 * @return Number of mouse buttons
-	 */
-	public int count() {
-		return buttons.buttons.size();
-	}
-
-	/**
 	 * Mouse pointer event source.
 	 */
 	private class MousePointer extends DesktopSource<MouseListener, PositionEvent> {
 		@Override
-		protected MouseListener listener(Consumer<Event> handler) {
+		public String name() {
+			return "MousePointer";
+		}
+
+		@Override
+		protected MouseListener listener(Consumer<PositionEvent> handler) {
 			return (ptr, x, y) -> {
 				final PositionEvent pos = new PositionEvent(this, (float) x, (float) y);
 				handler.accept(pos);
@@ -85,30 +78,27 @@ public class MouseDevice extends DesktopDevice {
 		protected BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
 			return lib::glfwSetCursorPosCallback;
 		}
-
-		@Override
-		public String toString() {
-			return "Pointer";
-		}
 	}
 
 	/**
 	 * Mouse buttons event source.
 	 */
 	private class MouseButtonSource extends DesktopSource<MouseButtonListener, Button> {
-		@SuppressWarnings("hiding")
-		private final List<ModifiedButton> buttons = IntStream
+		private final String[] id = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
 				.mapToObj(id -> Button.name("Mouse", id))
-				.map(ModifiedButton::new)
-				.collect(toList());
+				.toArray(String[]::new);
 
 		@Override
-		protected MouseButtonListener listener(Consumer<Event> handler) {
+		public String name() {
+			return "MouseButtons";
+		}
+
+		@Override
+		protected MouseButtonListener listener(Consumer<Button> handler) {
 			return (ptr, index, action, mods) -> {
-				final ModifiedButton button = buttons.get(index);
-				final Button event = button.resolve(action, mods);
-				handler.accept(event);
+				final Button button = new Button(MouseButtonSource.this, id[index], action, mods);
+				handler.accept(button);
 			};
 		}
 
@@ -121,8 +111,18 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse scroll-wheel source.
 	 */
-	private class MouseWheel extends DesktopSource<MouseListener, AxisEvent> implements Axis {
+	private class MouseWheel extends DesktopSource<MouseListener, Axis> implements Axis {
 		private float value;
+
+		@Override
+		public String name() {
+			return "MouseWheel";
+		}
+
+		@Override
+		public Source<?> source() {
+			return this;
+		}
 
 		@Override
 		public float value() {
@@ -130,11 +130,10 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected MouseListener listener(Consumer<Event> handler) {
+		protected MouseListener listener(Consumer<Axis> handler) {
 			return (ptr, x, y) -> {
-				value = (float) y;
-				final AxisEvent e = new AxisEvent(this, value);
-				handler.accept(e);
+				this.value = (float) y;
+				handler.accept(MouseWheel.this);
 			};
 		}
 

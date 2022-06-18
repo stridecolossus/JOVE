@@ -2,24 +2,19 @@ package org.sarge.jove.util;
 
 import static java.util.stream.Collectors.toMap;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.ToNativeContext;
-import com.sun.jna.TypeConverter;
+import com.sun.jna.*;
 
 /**
  * An <i>integer enumeration</i> is the base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
  * <p>
- * An integer enumeration has a {@link ReverseMapping} that used to map integer literals to the corresponding enumeration constants.
+ * An integer enumeration has a {@link ReverseMapping} which is used to map integer literals to the corresponding enumeration constants.
  * <p>
- * Integer enumerations can be used in JNA methods and structures by registering the custom {@link CONVERTER} with the relevant JNA library.
+ * Integer enumerations can be used in JNA methods and structures by registering the custom {@link #CONVERTER} with the relevant JNA library.
  * <p>
  * Usage:
  * <p>

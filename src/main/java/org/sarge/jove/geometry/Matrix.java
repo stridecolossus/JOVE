@@ -75,10 +75,10 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	public static Matrix scale(float x, float y, float z) {
 		return new Builder()
-				.identity()
 				.set(0, 0, x)
 				.set(1, 1, y)
 				.set(2, 2, z)
+				.set(3, 3, 1)
 				.build();
 	}
 
@@ -317,7 +317,12 @@ public final class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			return new Matrix(matrix);
+			try {
+				return new Matrix(matrix);
+			}
+			finally {
+				matrix = null;
+			}
 		}
 	}
 }

@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.desktop;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.function.*;
 
 import org.sarge.jove.control.Event;
-import org.sarge.jove.control.Event.Device;
-import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.Event.*;
 
 import com.sun.jna.Callback;
 
@@ -27,6 +25,7 @@ abstract class DesktopDevice implements Device {
 	/**
 	 * Template implementation for a source based on a GLFW callback.
 	 * @param <T> GLFW callback
+	 * @param <E> Event type
 	 */
 	abstract class DesktopSource<T extends Callback, E extends Event> implements Source<E> {
 		/**
@@ -34,7 +33,7 @@ abstract class DesktopDevice implements Device {
 		 * @param handler Event handler
 		 * @return New GLFW listener
 		 */
-		protected abstract T listener(Consumer<Event> handler);
+		protected abstract T listener(Consumer<E> handler);
 
 		/**
 		 * Provides the registration method for the listener.
@@ -44,7 +43,7 @@ abstract class DesktopDevice implements Device {
 		protected abstract BiConsumer<Window, T> method(DesktopLibrary lib);
 
 		@Override
-		public final void bind(Consumer<Event> handler) {
+		public final void bind(Consumer<E> handler) {
 			// Retrieve listener registration method
 			final DesktopLibrary lib = window.desktop().library();
 			final BiConsumer<Window, T> method = method(lib);

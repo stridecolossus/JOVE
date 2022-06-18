@@ -1,25 +1,28 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import java.util.function.Consumer;
+
+import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.PositionEvent.Handler;
 
 public class PositionEventTest {
-	private Source src;
+	private Source<PositionEvent> source;
 	private PositionEvent event;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		src = mock(Source.class);
-		event = new PositionEvent(src, 2, 3);
+		source = mock(Source.class);
+		event = new PositionEvent(source, 2, 3);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(src, event.type());
+		assertEquals(source, event.source());
 		assertEquals(2, event.x());
 		assertEquals(3, event.y());
 	}
@@ -27,8 +30,16 @@ public class PositionEventTest {
 	@Test
 	void equals() {
 		assertEquals(true, event.equals(event));
-		assertEquals(true, event.equals(new PositionEvent(src, 2, 3)));
+		assertEquals(true, event.equals(new PositionEvent(source, 2, 3)));
 		assertEquals(false, event.equals(null));
-		assertEquals(false, event.equals(new PositionEvent(src, 3, 4)));
+		assertEquals(false, event.equals(new PositionEvent(source, 3, 4)));
+	}
+
+	@Test
+	void adapter() {
+		final Handler handler = mock(Handler.class);
+		final Consumer<PositionEvent> adapter = Handler.adapter(handler);
+		adapter.accept(event);
+		verify(handler).handle(2, 3);
 	}
 }

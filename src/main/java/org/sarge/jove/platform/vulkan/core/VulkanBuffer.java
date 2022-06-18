@@ -1,31 +1,17 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferCreateInfo;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkIndexType;
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
-import org.sarge.jove.platform.vulkan.VkSharingMode;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.memory.AllocationService;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -38,12 +24,12 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class VulkanBuffer extends AbstractVulkanObject {
 	/**
-	 * Creates a vertex buffer.
+	 * Creates a buffer.
 	 * @param dev			Logical device
 	 * @param allocator		Memory allocator
 	 * @param len			Length (bytes)
 	 * @param dev			Memory properties
-	 * @return New vertex buffer
+	 * @return New buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
 	public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {

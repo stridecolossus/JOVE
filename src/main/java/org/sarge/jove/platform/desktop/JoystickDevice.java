@@ -1,17 +1,12 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis;
-import org.sarge.jove.control.Event.Device;
-import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.Event.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -102,6 +97,7 @@ public class JoystickDevice implements Device {
 	 * Polls axis events.
 	 */
 	private void pollAxes() {
+		// TODO - only need to do 'count' once
 		final float[] array = getAxisArray();
 		for(int n = 0; n < array.length; ++n) {
 			axes[n].update(array[n]);

@@ -1,28 +1,15 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.function.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.control.Axis;
-import org.sarge.jove.control.Axis.AxisEvent;
-import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Event;
-import org.sarge.jove.control.ModifiedButton;
-import org.sarge.jove.control.ModifiedButton.Modifier;
-import org.sarge.jove.control.PositionEvent;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.control.*;
 import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseButtonListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.MouseListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
 @SuppressWarnings("unchecked")
@@ -30,7 +17,7 @@ public class MouseDeviceTest {
 	private MouseDevice mouse;
 	private Window window;
 	private DesktopLibrary lib;
-	private Consumer<Event> handler;
+	private Consumer<PositionEvent> handler;
 
 	@BeforeEach
 	void before() {
@@ -45,10 +32,10 @@ public class MouseDeviceTest {
 		assertEquals(Set.of(mouse.pointer(), mouse.buttons(), mouse.wheel()), mouse.sources());
 	}
 
-	@Test
-	void count() {
-		assertEquals(true, mouse.count() > 0);
-	}
+//	@Test
+//	void count() {
+//		assertEquals(true, mouse.count() > 0);
+//	}
 
 	@Nested
 	class MousePointerTests {

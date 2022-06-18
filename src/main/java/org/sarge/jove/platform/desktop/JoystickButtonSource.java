@@ -1,19 +1,13 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.DefaultButton;
-import org.sarge.jove.control.DefaultButton.Action;
-import org.sarge.jove.control.Event.AbstractSource;
-import org.sarge.jove.control.Hat;
+import org.sarge.jove.control.Event.Source;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -22,11 +16,11 @@ import com.sun.jna.ptr.IntByReference;
  * Event source for joystick buttons.
  * @author Sarge
  */
-class JoystickButtonSource extends AbstractSource<Button> {
+class JoystickButtonSource implements Source<Button> {
 	private final int id;
 	private final Desktop desktop;
 	private final Button[] buttons;
-	private final Hat[] hats;
+//	private final Hat[] hats;
 	private final Map<Button, Byte> values = new HashMap<>();
 
 	/**
@@ -38,7 +32,16 @@ class JoystickButtonSource extends AbstractSource<Button> {
 		this.id = zeroOrMore(id);
 		this.desktop = notNull(desktop);
 		this.buttons = initButtons();
-		this.hats = initHats();
+//		this.hats = initHats();
+	}
+
+	@Override
+	public String name() {
+		return "Joystick-Buttons";
+	}
+
+	@Override
+	public void bind(Consumer<Button> handler) {
 	}
 
 	/**
@@ -49,17 +52,17 @@ class JoystickButtonSource extends AbstractSource<Button> {
 		final byte[] values = getButtonArray();
 
 		// Create buttons
-		final Button[] buttons = IntStream
+		final String[] buttons = IntStream
 				.range(0, values.length)
 				.mapToObj(id -> Button.name("Button", id))
-				.map(name -> new DefaultButton(name, Action.RELEASE))
-				.toArray(Button[]::new);
+				.toArray(String[]::new);
 
-		// Init button states
-		init(buttons);
-		update(values, buttons);
-
-		return buttons;
+//		// Init button states
+//		init(buttons);
+//		update(values, buttons);
+//
+//		return buttons;
+		return null;
 	}
 
 	/**
@@ -78,55 +81,55 @@ class JoystickButtonSource extends AbstractSource<Button> {
 		return Arrays.asList(buttons);
 	}
 
-	/**
-	 * @return Joystick hats
-	 */
-	private Hat[] initHats() {
-		// Retrieve hat values
-		final byte[] values = getHatArray();
-
-		// Create hats
-		final Hat[] hats = IntStream
-				.range(0, values.length)
-				.mapToObj(id -> Button.name("Hat", id))
-				.map(Hat::new)
-				.toArray(Hat[]::new);
-
-		// Init hat values
-		init(hats);
-		update(values, hats);
-
-		return hats;
-	}
-
-	/**
-	 * Queries the hat values for this joystick.
-	 */
-	private byte[] getHatArray() {
-		final IntByReference count = desktop.factory().integer();
-		final Pointer ptr = desktop.library().glfwGetJoystickHats(id, count);
-		return ptr.getByteArray(0, count.getValue());
-	}
-
-	/**
-	 * @return Joystick buttons
-	 */
-	List<Hat> hats() {
-		return Arrays.asList(hats);
-	}
+//	/**
+//	 * @return Joystick hats
+//	 */
+//	private Hat[] initHats() {
+//		// Retrieve hat values
+//		final byte[] values = getHatArray();
+//
+//		// Create hats
+//		final Hat[] hats = IntStream
+//				.range(0, values.length)
+//				.mapToObj(id -> Button.name("Hat", id))
+//				.map(Hat::new)
+//				.toArray(Hat[]::new);
+//
+//		// Init hat values
+//		init(hats);
+//		update(values, hats);
+//
+//		return hats;
+//	}
+//
+//	/**
+//	 * Queries the hat values for this joystick.
+//	 */
+//	private byte[] getHatArray() {
+//		final IntByReference count = desktop.factory().integer();
+//		final Pointer ptr = desktop.library().glfwGetJoystickHats(id, count);
+//		return ptr.getByteArray(0, count.getValue());
+//	}
+//
+//	/**
+//	 * @return Joystick buttons
+//	 */
+//	List<Hat> hats() {
+//		return Arrays.asList(hats);
+//	}
 
 	/**
 	 * Polls for joystick button events.
 	 */
 	void poll() {
-		// Ignore if no action handler
-		if(handler == null) {
-			return;
-		}
+//		// Ignore if no action handler
+//		if(handler == null) {
+//			return;
+//		}
 
 		// Poll events
 		update(getButtonArray(), buttons);
-		update(getHatArray(), hats);
+//		update(getHatArray(), hats);
 	}
 
 	/**
@@ -165,13 +168,13 @@ class JoystickButtonSource extends AbstractSource<Button> {
 		// Update state
 		values.put(button, value);
 
-		// Ignore if no event handler
-		if(handler == null) {
-			return;
-		}
-
-		// Generate event
-		final Button event = button.resolve(value);
-		handler.accept(event);
+//		// Ignore if no event handler
+//		if(handler == null) {
+//			return;
+//		}
+//
+//		// Generate event
+//		final Button event = button.resolve(value);
+//		handler.accept(event);
 	}
 }

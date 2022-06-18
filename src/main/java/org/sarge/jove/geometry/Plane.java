@@ -9,7 +9,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * Mathematically the <i>general form</i> of a plane is:
  * <pre>ax + by + cz + d = 0</pre>
- * where <i>n</i> is the plane normal <code>n = (a, b, c)</code> and <i>d</i> is the distance of the plane from the origin.
+ * where <code>n = (a, b, c)</code> is the plane normal and <i>d</i> is the distance of the plane from the origin.
  * <p>
  * Note that the distance increases in the <i>opposite</i> direction to the normal vector.
  * <br>

@@ -1,8 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -17,7 +16,7 @@ public class Semaphore extends AbstractVulkanObject {
 	 * @return New semaphore
 	 */
 	public static Semaphore create(DeviceContext dev) {
-		final VkSemaphoreCreateInfo info = new VkSemaphoreCreateInfo();
+		final var info = new VkSemaphoreCreateInfo();
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference handle = dev.factory().pointer();
 		VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, handle));

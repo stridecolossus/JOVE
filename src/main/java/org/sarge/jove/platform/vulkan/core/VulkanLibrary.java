@@ -2,23 +2,17 @@ package org.sarge.jove.platform.vulkan.core;
 
 import java.util.Map;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderLibrary;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
-import com.sun.jna.DefaultTypeMapper;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.TypeMapper;
+import com.sun.jna.*;
 
 /**
  * Vulkan API.
@@ -54,7 +48,7 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	 * @return Type mapper for custom JOVE types
 	 */
 	private static TypeMapper mapper() {
-		final DefaultTypeMapper mapper = new DefaultTypeMapper();
+		final var mapper = new DefaultTypeMapper();
 		mapper.addTypeConverter(VulkanBoolean.class, VulkanBoolean.CONVERTER);
 		mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
 		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);

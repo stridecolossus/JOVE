@@ -1,15 +1,10 @@
 package org.sarge.jove.platform.desktop;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.function.*;
 
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.control.ModifiedButton;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
 /**
@@ -19,7 +14,6 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 public class KeyboardDevice extends DesktopDevice {
 	private final KeyboardSource keyboard = new KeyboardSource();
 	private final KeyTable table = KeyTable.instance();
-	private final Map<Integer, ModifiedButton> keys = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -29,10 +23,15 @@ public class KeyboardDevice extends DesktopDevice {
 		super(window);
 	}
 
+	@Override
+	public String name() {
+		return "Keyboard";
+	}
+
 	/**
 	 * @return Keyboard event source
 	 */
-	Source<Button> keyboard() {
+	public Source<Button> keyboard() {
 		return keyboard;
 	}
 
@@ -41,41 +40,46 @@ public class KeyboardDevice extends DesktopDevice {
 		return Set.of(keyboard);
 	}
 
-	/**
-	 * Helper - Looks up a keyboard button by name.
-	 * @param name Key name
-	 * @return Keyboard button
-	 * @throws IllegalArgumentException for an unknown key name
-	 */
-	public Button key(String name) {
-		final int code = table.code(name);
-		return keyboard.key(code);
-	}
+//	/**
+//	 * Helper - Looks up a keyboard button by name.
+//	 * @param name Key name
+//	 * @return Keyboard button
+//	 * @throws IllegalArgumentException for an unknown key name
+//	 */
+//	public Button key(String name) {
+//		final int code = table.code(name);
+//		return keyboard.key(code);
+//	}
 
-	/**
-	 * Helper - Binds the keyboard to the given handler.
-	 * @param handler Keyboard handler
-	 */
-	public void bind(Consumer<Event> handler) {
-		keyboard.bind(handler);
-	}
+//	/**
+//	 * Helper - Binds the keyboard to the given handler.
+//	 * @param handler Keyboard handler
+//	 */
+//	public void bind(Consumer<Button> handler) {
+//		keyboard.bind(handler);
+//	}
 
 	/**
 	 * Keyboard event source.
 	 */
 	private class KeyboardSource extends DesktopSource<KeyListener, Button> {
 		@Override
-		protected KeyListener listener(Consumer<Event> handler) {
+		public String name() {
+			return "Keyboard";
+		}
+
+		@Override
+		protected KeyListener listener(Consumer<Button> handler) {
 			return (ptr, key, scancode, action, mods) -> {
-				final ModifiedButton base = keys.computeIfAbsent(key, this::key);
-				final Button button = base.resolve(action, mods);
+				final String name = table.name(key);
+				final Button button = new Button(KeyboardSource.this, name, action, mods);
 				handler.accept(button);
 			};
 		}
 
-		private ModifiedButton key(int code) {
-			return new ModifiedButton(table.name(code));
-		}
+//		private ModifiedButton key(int code) {
+//			return new ModifiedButton(table.name(code));
+//		}
 
 		@Override
 		protected BiConsumer<Window, KeyListener> method(DesktopLibrary lib) {
