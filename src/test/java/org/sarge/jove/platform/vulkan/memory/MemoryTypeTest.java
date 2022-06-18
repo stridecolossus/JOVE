@@ -1,20 +1,12 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkMemoryHeap;
-import org.sarge.jove.platform.vulkan.VkMemoryHeapFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
-import org.sarge.jove.platform.vulkan.VkMemoryType;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
-import org.sarge.jove.util.IntegerEnumeration;
 
 public class MemoryTypeTest {
 	private MemoryType type;
@@ -62,12 +54,12 @@ public class MemoryTypeTest {
 		// Create heap
 		final var heap = new VkMemoryHeap();
 		heap.size = 1;
-		heap.flags = IntegerEnumeration.mask(VkMemoryHeapFlag.DEVICE_LOCAL);
+		heap.flags = VkMemoryHeapFlag.DEVICE_LOCAL.value();
 
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = IntegerEnumeration.mask(VkMemoryProperty.DEVICE_LOCAL);
+		info.propertyFlags = VkMemoryProperty.DEVICE_LOCAL.value();
 
 		// Create memory properties
 		final var props = new VkPhysicalDeviceMemoryProperties();

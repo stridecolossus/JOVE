@@ -2,33 +2,18 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.IntFunction;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateFlag;
-import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorPoolSize;
-import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -235,7 +220,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 
 			// Init pool descriptor
 			final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
-			info.flags = IntegerEnumeration.mask(flags);
+			info.flags = IntegerEnumeration.reduce(flags);
 			info.poolSizeCount = pool.size();
 			info.pPoolSizes = StructureHelper.pointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 			info.maxSets = max;

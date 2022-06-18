@@ -2,17 +2,12 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
-import org.sarge.jove.platform.vulkan.VkFenceCreateInfo;
-import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
@@ -35,7 +30,7 @@ public class Fence extends AbstractVulkanObject {
 	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final VkFenceCreateInfo info = new VkFenceCreateInfo();
-		info.flags = IntegerEnumeration.mask(flags);
+		info.flags = IntegerEnumeration.reduce(flags);
 
 		// Create fence
 		final VulkanLibrary lib = dev.library();

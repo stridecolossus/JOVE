@@ -1,11 +1,10 @@
 package org.sarge.jove.util;
 
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.sun.jna.*;
 
@@ -63,11 +62,11 @@ public interface IntegerEnumeration {
 	}
 
 	/**
-	 * Builds an integer mask from the given enumeration constants.
+	 * Builds a bit-field from the given enumeration constants.
 	 * @param values Enumeration constants
-	 * @return Integer mask
+	 * @return Bit-field
 	 */
-	static <E extends IntegerEnumeration> int mask(Collection<E> values) {
+	static <E extends IntegerEnumeration> int reduce(Collection<E> values) {
 		return values
 				.stream()
 				.mapToInt(IntegerEnumeration::value)
@@ -75,13 +74,13 @@ public interface IntegerEnumeration {
 	}
 
 	/**
-	 * Builds an integer mask from the given enumeration constants.
+	 * Builds a bit-field from the given enumeration constants.
 	 * @param values Enumeration constants
-	 * @return Integer mask
+	 * @return Bit-field
 	 */
 	@SuppressWarnings("unchecked")
-	static <E extends IntegerEnumeration> int mask(E... values) {
-		return mask(Arrays.asList(values));
+	static <E extends IntegerEnumeration> int reduce(E... values) {
+		return reduce(Arrays.asList(values));
 	}
 
 	/**
@@ -170,13 +169,13 @@ public interface IntegerEnumeration {
 		 * Converts a bit-field to an ordered set of enumeration constants.
 		 * @param clazz		Enumeration class
 		 * @param bits		Bit field
-		 * @return Enumeration constants (in ascending order of value)
+		 * @return Enumeration constants
 		 */
-		public TreeSet<E> enumerate(int bits) {
+		public Set<E> enumerate(int bits) {
 			return new Mask(bits)
 					.stream()
 					.mapToObj(this::map)
-					.collect(Collectors.toCollection(TreeSet::new));
+					.collect(toSet());
 		}
 	}
 }

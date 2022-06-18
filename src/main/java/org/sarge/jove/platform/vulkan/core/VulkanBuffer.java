@@ -41,7 +41,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 		// Build buffer descriptor
 		final var info = new VkBufferCreateInfo();
-		info.usage = IntegerEnumeration.mask(props.usage());
+		info.usage = IntegerEnumeration.reduce(props.usage());
 		info.sharingMode = props.mode();
 		info.size = oneOrMore(len);
 		// TODO - queue families

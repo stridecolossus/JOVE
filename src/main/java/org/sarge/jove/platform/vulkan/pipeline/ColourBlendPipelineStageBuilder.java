@@ -3,26 +3,18 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
-import org.sarge.jove.platform.vulkan.VkBlendFactor;
-import org.sarge.jove.platform.vulkan.VkBlendOp;
-import org.sarge.jove.platform.vulkan.VkColorComponent;
-import org.sarge.jove.platform.vulkan.VkLogicOp;
-import org.sarge.jove.platform.vulkan.VkPipelineColorBlendAttachmentState;
-import org.sarge.jove.platform.vulkan.VkPipelineColorBlendStateCreateInfo;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.*;
 
 /**
  * Builder for the colour-blend pipeline stage.
  * @author Sarge
  */
 public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
-	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.mask(VkColorComponent.values());
+	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.reduce(VkColorComponent.values());
 
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 	private final float[] constants = new float[4];
@@ -165,7 +157,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 					.collect(toList());
 
 			// Convert to bit-field mask
-			this.mask = IntegerEnumeration.mask(components);
+			this.mask = IntegerEnumeration.reduce(components);
 
 			return this;
 		}

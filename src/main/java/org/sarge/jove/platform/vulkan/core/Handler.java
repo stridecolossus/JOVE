@@ -209,8 +209,8 @@ public class Handler extends AbstractTransientNativeObject {
 
 			// Build handler descriptor
 			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
-			info.messageSeverity = IntegerEnumeration.mask(severity);
-			info.messageType = IntegerEnumeration.mask(types);
+			info.messageSeverity = IntegerEnumeration.reduce(severity);
+			info.messageType = IntegerEnumeration.reduce(types);
 			info.pfnUserCallback = new MessageCallback(consumer);
 			info.pUserData = null;
 

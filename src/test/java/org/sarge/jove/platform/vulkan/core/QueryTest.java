@@ -1,29 +1,16 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.sarge.jove.platform.vulkan.VkQueryResultFlag.WAIT;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
-import org.sarge.jove.platform.vulkan.VkQueryControlFlag;
-import org.sarge.jove.platform.vulkan.VkQueryPipelineStatisticFlag;
-import org.sarge.jove.platform.vulkan.VkQueryPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.VkQueryResultFlag;
-import org.sarge.jove.platform.vulkan.VkQueryType;
-import org.sarge.jove.platform.vulkan.core.Query.Pool;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Query.*;
 import org.sarge.jove.platform.vulkan.core.Query.Pool.Builder;
-import org.sarge.jove.platform.vulkan.core.Query.ResultBuilder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerEnumeration;
 
@@ -265,7 +252,7 @@ public class QueryTest extends AbstractVulkanTest {
 
 			@Test
 			void acceptLongValues() {
-				final int flags = IntegerEnumeration.mask(VkQueryResultFlag.LONG, WAIT);
+				final int flags = IntegerEnumeration.reduce(VkQueryResultFlag.LONG, WAIT);
 				builder.longs().build().accept(bb);
 				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 8, flags);
 			}

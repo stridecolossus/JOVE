@@ -1,18 +1,11 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageSubresourceLayers;
-import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerEnumeration;
 
@@ -79,7 +72,7 @@ public class SubResourceTest {
 		void build() {
 			final VkImageSubresourceRange range = SubResource.toRange(builder.build());
 			assertNotNull(range);
-			assertEquals(IntegerEnumeration.mask(VkImageAspect.DEPTH, VkImageAspect.STENCIL), range.aspectMask);
+			assertEquals(IntegerEnumeration.reduce(VkImageAspect.DEPTH, VkImageAspect.STENCIL), range.aspectMask);
 			assertEquals(0, range.baseMipLevel);
 			assertEquals(1, range.levelCount);
 			assertEquals(0, range.baseArrayLayer);

@@ -2,22 +2,13 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.sarge.jove.platform.vulkan.VkAccess;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkImageMemoryBarrier;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.image.Image;
-import org.sarge.jove.platform.vulkan.image.SubResource;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -35,8 +26,8 @@ public class Barrier implements Command {
 	 * @param images		Image memory barriers
 	 */
 	private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, VkImageMemoryBarrier[] images) {
-		this.src = IntegerEnumeration.mask(src);
-		this.dest = IntegerEnumeration.mask(dest);
+		this.src = IntegerEnumeration.reduce(src);
+		this.dest = IntegerEnumeration.reduce(dest);
 		this.images = notNull(images);
 	}
 
@@ -159,8 +150,8 @@ public class Barrier implements Command {
 			 */
 			private void populate(VkImageMemoryBarrier barrier) {
 				barrier.image = image.handle();
-				barrier.srcAccessMask = IntegerEnumeration.mask(src);
-				barrier.dstAccessMask = IntegerEnumeration.mask(dest);
+				barrier.srcAccessMask = IntegerEnumeration.reduce(src);
+				barrier.dstAccessMask = IntegerEnumeration.reduce(dest);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
 				barrier.subresourceRange = SubResource.toRange(subresource);

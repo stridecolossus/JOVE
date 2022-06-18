@@ -1,16 +1,11 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageSubresourceLayers;
-import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
 /**
@@ -54,7 +49,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceRange toRange(SubResource res) {
 		final var range = new VkImageSubresourceRange();
-		range.aspectMask = IntegerEnumeration.mask(res.aspects());
+		range.aspectMask = IntegerEnumeration.reduce(res.aspects());
 		range.baseMipLevel = res.mipLevel();
 		range.levelCount = res.levelCount();
 		range.baseArrayLayer = res.baseArrayLayer();
@@ -68,7 +63,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceLayers toLayers(SubResource res) {
 		final var layers = new VkImageSubresourceLayers();
-		layers.aspectMask = IntegerEnumeration.mask(res.aspects());
+		layers.aspectMask = IntegerEnumeration.reduce(res.aspects());
 		layers.mipLevel = res.mipLevel();
 		layers.baseArrayLayer = res.baseArrayLayer();
 		layers.layerCount = res.layerCount();

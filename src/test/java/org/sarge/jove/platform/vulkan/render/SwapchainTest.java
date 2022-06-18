@@ -1,40 +1,23 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.core.Fence;
-import org.sarge.jove.platform.vulkan.core.Semaphore;
-import org.sarge.jove.platform.vulkan.core.Surface;
-import org.sarge.jove.platform.vulkan.image.Image;
-import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
-import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -210,10 +193,10 @@ public class SwapchainTest extends AbstractVulkanTest {
 			caps.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 			caps.minImageCount = 1;
 			caps.maxImageCount = 1;
-			caps.supportedTransforms = IntegerEnumeration.mask(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
+			caps.supportedTransforms = VkSurfaceTransformFlagKHR.IDENTITY_KHR.value();
 			caps.maxImageArrayLayers = 1;
-			caps.supportedUsageFlags = IntegerEnumeration.mask(VkImageUsageFlag.COLOR_ATTACHMENT);
-			caps.supportedCompositeAlpha = IntegerEnumeration.mask(VkCompositeAlphaFlagKHR.OPAQUE);
+			caps.supportedUsageFlags = VkImageUsageFlag.COLOR_ATTACHMENT.value();
+			caps.supportedCompositeAlpha = VkCompositeAlphaFlagKHR.OPAQUE.value();
 			when(props.capabilities()).thenReturn(caps);
 
 			// Init surface extents

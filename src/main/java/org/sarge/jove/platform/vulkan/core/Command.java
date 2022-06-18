@@ -2,8 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,11 +10,9 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.util.IntegerEnumeration;
 
@@ -134,7 +131,7 @@ public interface Command {
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
-			info.flags = IntegerEnumeration.mask(flags);
+			info.flags = IntegerEnumeration.reduce(flags);
 			info.pInheritanceInfo = null;
 
 			// Start buffer recording
@@ -192,7 +189,7 @@ public interface Command {
 		public void reset(VkCommandBufferResetFlag... flags) {
 			validate(State.EXECUTABLE);
 			// TODO - check pool has flag
-			final int mask = IntegerEnumeration.mask(flags);
+			final int mask = IntegerEnumeration.reduce(flags);
 			final VulkanLibrary lib = pool.device().library();
 			check(lib.vkResetCommandBuffer(this, mask));
 			state = State.INITIAL;
@@ -250,7 +247,7 @@ public interface Command {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
-			info.flags = IntegerEnumeration.mask(flags);
+			info.flags = IntegerEnumeration.reduce(flags);
 
 			// Create pool
 			final VulkanLibrary lib = dev.library();
@@ -353,9 +350,9 @@ public interface Command {
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
-			final int mask = IntegerEnumeration.mask(flags);
+			final int bits = IntegerEnumeration.reduce(flags);
 			final DeviceContext dev = super.device();
-			check(dev.library().vkResetCommandPool(dev, this, mask));
+			check(dev.library().vkResetCommandPool(dev, this, bits));
 		}
 
 		/**

@@ -1,18 +1,14 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkPushConstantRange;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
-@Nested
+@SuppressWarnings("static-method")
 class PushConstantRangeTest {
 	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
 
@@ -37,7 +33,7 @@ class PushConstantRangeTest {
 		range.populate(info);
 		assertEquals(4, info.offset);
 		assertEquals(8, info.size);
-		assertEquals(IntegerEnumeration.mask(STAGES), info.stageFlags);
+		assertEquals(IntegerEnumeration.reduce(STAGES), info.stageFlags);
 	}
 
 	@Test

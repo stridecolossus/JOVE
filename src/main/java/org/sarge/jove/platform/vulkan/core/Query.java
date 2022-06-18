@@ -1,25 +1,15 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
-import org.sarge.jove.platform.vulkan.VkQueryControlFlag;
-import org.sarge.jove.platform.vulkan.VkQueryPipelineStatisticFlag;
-import org.sarge.jove.platform.vulkan.VkQueryPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.VkQueryResultFlag;
-import org.sarge.jove.platform.vulkan.VkQueryType;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -103,7 +93,7 @@ public class Query {
 	 */
 	public Command begin(VkQueryControlFlag... flags) {
 		validate(false);
-		final int mask = IntegerEnumeration.mask(flags);
+		final int mask = IntegerEnumeration.reduce(flags);
 		return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, pool, slot, mask);
 	}
 
@@ -280,7 +270,7 @@ public class Query {
 				// Init pipeline statistics
 				if(type == VkQueryType.PIPELINE_STATISTICS) {
 					if(stats.isEmpty()) throw new IllegalArgumentException("No statistics specified for pipeline query");
-					info.pipelineStatistics = IntegerEnumeration.mask(stats);
+					info.pipelineStatistics = IntegerEnumeration.reduce(stats);
 				}
 				else {
 					if(!stats.isEmpty()) throw new IllegalArgumentException("Superfluous pipeline statistics specified");
@@ -445,7 +435,7 @@ public class Query {
 
 		/**
 		 * Validates this query result.
-		 * @return Flags mask
+		 * @return Flags bit-field
 		 */
 		private int validate() {
 			// Validate query range
@@ -460,7 +450,7 @@ public class Query {
 			}
 
 			// Build flags mask
-			return IntegerEnumeration.mask(flags);
+			return IntegerEnumeration.reduce(flags);
 		}
 
 		@Override

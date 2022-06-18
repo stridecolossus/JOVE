@@ -2,18 +2,12 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.function.*;
 
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkFormatFeature;
-import org.sarge.jove.platform.vulkan.VkFormatProperties;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.Mask;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -43,10 +37,10 @@ public class FormatSelector {
 	 * @return Format feature filter
 	 */
 	public static Predicate<VkFormatProperties> feature(Set<VkFormatFeature> features, boolean optimal) {
-		final int mask = IntegerEnumeration.mask(features);
+		final int bits = IntegerEnumeration.reduce(features);
 		return props -> {
 			final int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-			return new Mask(actual).contains(mask);
+			return new Mask(actual).contains(bits);
 		};
 	}
 

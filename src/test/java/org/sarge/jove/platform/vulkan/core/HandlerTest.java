@@ -43,7 +43,8 @@ public class HandlerTest {
 
 	@DisplayName("A diagnostics message has a human-readable description")
 	@Test
-	static void message() {
+	@SuppressWarnings("static-method")
+	void message() {
 		// Init callback
 		final var data = new VkDebugUtilsMessengerCallbackData();
 		data.pMessage = "message";

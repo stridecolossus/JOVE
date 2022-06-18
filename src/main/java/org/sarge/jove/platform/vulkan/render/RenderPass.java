@@ -3,29 +3,18 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.VkAttachmentDescription;
-import org.sarge.jove.platform.vulkan.VkAttachmentReference;
-import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
-import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSubpassContents;
-import org.sarge.jove.platform.vulkan.VkSubpassDependency;
-import org.sarge.jove.platform.vulkan.VkSubpassDescription;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
-import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency;
+import org.sarge.jove.platform.vulkan.render.Subpass.*;
 import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependency;
-import org.sarge.jove.util.IntegerEnumeration;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -198,14 +187,14 @@ public class RenderPass extends AbstractVulkanObject {
 			// Populate source properties
 			final Dependency src = dependency.source();
 			desc.srcSubpass = indexOf(subpass);
-			desc.srcStageMask = IntegerEnumeration.mask(src.stages());
-			desc.srcAccessMask = IntegerEnumeration.mask(src.access());
+			desc.srcStageMask = IntegerEnumeration.reduce(src.stages());
+			desc.srcAccessMask = IntegerEnumeration.reduce(src.access());
 
 			// Populate destination properties
 			final Dependency dest = dependency.destination();
 			desc.dstSubpass = indexOf(entry.getKey());
-			desc.dstStageMask = IntegerEnumeration.mask(dest.stages());
-			desc.dstAccessMask = IntegerEnumeration.mask(dest.access());
+			desc.dstStageMask = IntegerEnumeration.reduce(dest.stages());
+			desc.dstAccessMask = IntegerEnumeration.reduce(dest.access());
 		}
 
 		/**

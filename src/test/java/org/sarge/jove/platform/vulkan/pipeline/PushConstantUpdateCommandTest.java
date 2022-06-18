@@ -1,23 +1,17 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstantUpdateCommand.Builder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 
@@ -56,7 +50,7 @@ class PushConstantUpdateCommandTest extends AbstractVulkanTest {
 
 	@Test
 	void execute() {
-		final int stages = IntegerEnumeration.mask(STAGES);
+		final int stages = IntegerEnumeration.reduce(STAGES);
 		final Command.Buffer cmd = mock(Command.Buffer.class);
 		update.execute(lib, cmd);
 		verify(lib).vkCmdPushConstants(cmd, layout, stages, 4, 4, data);

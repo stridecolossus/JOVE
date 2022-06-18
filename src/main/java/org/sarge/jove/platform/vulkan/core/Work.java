@@ -9,8 +9,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.Command.Pool;
+import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
@@ -279,7 +278,7 @@ public interface Work {
 			Check.notNull(semaphore);
 			Check.notEmpty(stages);
 			if(work.wait.containsKey(semaphore)) throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
-			work.wait.put(semaphore, IntegerEnumeration.mask(stages));
+			work.wait.put(semaphore, IntegerEnumeration.reduce(stages));
 			return this;
 		}
 

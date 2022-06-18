@@ -2,8 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import java.util.Set;
 
-import org.sarge.jove.platform.vulkan.VkPushConstantRange;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -47,7 +46,7 @@ public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages)
 	 * Populates a push constant range descriptor.
 	 */
 	void populate(VkPushConstantRange range) {
-		range.stageFlags = IntegerEnumeration.mask(stages);
+		range.stageFlags = IntegerEnumeration.reduce(stages);
 		range.size = size;
 		range.offset = offset;
 	}

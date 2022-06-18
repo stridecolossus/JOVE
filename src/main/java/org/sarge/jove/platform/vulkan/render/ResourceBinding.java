@@ -1,15 +1,10 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutBinding;
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -41,7 +36,7 @@ public record ResourceBinding(int index, VkDescriptorType type, int count, Set<V
 		info.binding = index;
 		info.descriptorType = type;
 		info.descriptorCount = count;
-		info.stageFlags = IntegerEnumeration.mask(stages);
+		info.stageFlags = IntegerEnumeration.reduce(stages);
 	}
 
 	/**

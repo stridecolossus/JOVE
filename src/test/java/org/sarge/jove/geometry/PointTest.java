@@ -2,9 +2,9 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
+@SuppressWarnings("static-method")
 class PointTest {
 	private Point pos;
 
@@ -31,7 +31,7 @@ class PointTest {
 	}
 
 	@Test
-	static void origin() {
+	void origin() {
 		assertEquals(new Point(0, 0, 0), Point.ORIGIN);
 	}
 
@@ -53,7 +53,7 @@ class PointTest {
 	}
 
 	@Test
-	static void layout() {
+	void layout() {
 		assertEquals(3, Point.LAYOUT.size());
 		assertEquals(Float.class, Point.LAYOUT.type());
 		assertEquals(Float.BYTES, Point.LAYOUT.bytes());

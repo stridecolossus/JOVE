@@ -1,18 +1,14 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -60,7 +56,7 @@ public class PushConstantUpdateCommand implements Command {
 		this.layout = notNull(layout);
 		this.offset = zeroOrMore(offset);
 		this.data = notNull(data);
-		this.stages = IntegerEnumeration.mask(stages);
+		this.stages = IntegerEnumeration.reduce(stages);
 		validate(stages);
 	}
 

@@ -3,23 +3,16 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.memory.AllocationService;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
 
@@ -217,7 +210,7 @@ public interface Image extends NativeObject {
 
 			// Populate image structure
 			final VkImageCreateInfo info = new VkImageCreateInfo();
-			info.flags = IntegerEnumeration.mask(flags);
+			info.flags = IntegerEnumeration.reduce(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = toExtent(descriptor.extents());
@@ -226,7 +219,7 @@ public interface Image extends NativeObject {
 			info.samples = samples;
 			info.tiling = tiling;
 			info.initialLayout = layout;
-			info.usage = IntegerEnumeration.mask(props.usage());
+			info.usage = IntegerEnumeration.reduce(props.usage());
 			info.sharingMode = props.mode();
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 

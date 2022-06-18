@@ -18,19 +18,17 @@ title: Enumerations
 
 When first using the code generated enumerations we realised there were a couple of flaws in our thinking:
 
-1. Many of the Vulkan enumerations are not a contiguous set corresponding to the ordinal values and/or are actually bit-fields.
+1. There is also a requirement to map native values to the corresponding enumeration constants, e.g. when retrieving the set of `VkQueueFlag` for a physical device.
 
-2. For bit-field enumerations in particular some mechanism was required to build a bit-field _mask_ from a collection of constants and to perform the reverse operation.
+2. Additionally many of the enumerations are in fact bit-fields requiring some mechanism to reduce a collection of constants to the native unsigned integer representation (and again to perform the reverse operation).
 
-3. A native enumeration is implemented as an unsigned integer and was being mapped to `int` in the code generated structures and API methods, which is error prone and not self-documenting.
+3. A native enumeration is implemented as an unsigned integer and was being mapped to `int` in the code generated structures and API methods, which is not type-safe and lacks clarity.
 
-Therefore the actual use-case requirement is for some mechanism to map between an enumeration constant and its native value.
-
-For a library with a handful of enumerations this would be a minor issue that could be manually implemented, but for the large number of code-generated Vulkan enumerations something more practical is required that works for __all__ enumerations.
+For a library with a handful of enumerations these would be minor issues that could be manually implemented, but for the large number of code-generated Vulkan enumerations something more practical is required that works in __all__ cases.
 
 ## Solution
 
-What we really required was some sort of base-class but of course Java enumerations cannot be sub-classed.  However - although it is not common practice - an enumeration _can_ implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).
+What was really needed was some sort of base-class that implemented a common solution, but of course enumerations cannot be sub-classed.  However - although it is not common practice - a Java enumeration _can_ implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).
 
 This technique is leveraged to define a common abstraction for the code-generated enumerations to support the above requirements.
 
@@ -66,10 +64,10 @@ public enum VkImageUsageFlag implements IntegerEnumeration {
 }
 ```
 
-A static helper can now be implemented to build a bit-field mask from an arbitrary collection of enumeration constants:
+A static helper can now be implemented to reduce an arbitrary collection of constants to a bit-field:
 
 ```java
-static <E extends IntegerEnumeration> int mask(Collection<E> values) {
+static <E extends IntegerEnumeration> int reduce(Collection<E> values) {
     return values
         .stream()
         .mapToInt(IntegerEnumeration::value)
@@ -92,7 +90,7 @@ final class ReverseMapping<E extends IntegerEnumeration> {
 }
 ```
 
-Note that the reverse mapping silently ignores constants with duplicate native values (which should not be a problem).
+Note that some enumerations have constants with duplicate values which are silently ignored when building the reverse mapping.
 
 The enumeration constant for a given native value can now be looked up from the reverse mapping:
 
@@ -104,30 +102,20 @@ public E map(int value) {
 }
 ```
 
-Transforming a bit-field mask to the corresponding enumeration constants is slightly more involved, the following helper walks the bits of the mask and maps each to the corresponding enumeration constant:
+Transforming a bit-field to the corresponding enumeration constants is slightly more involved, the following helper walks the bits of the mask and maps each to the corresponding constant:
 
 ```java
-public TreeSet<E> enumerate(int mask) {
+public Set<E> enumerate(int bits) {
     return IntStream
-        .range(0, Integer.highestOneBit(mask))
+        .range(0, Integer.highestOneBit(bits))
         .map(bit -> 1 << bit)
-        .filter(value -> (value & mask) == value)
+        .filter(value -> (value & bits) == value)
         .mapToObj(this::map)
-        .collect(Collectors.toCollection(TreeSet::new));
+        .collect(toSet());
 }
 ```
 
-Note the use of a `TreeSet` to ensure the resultant collection is in ascending order (which simplifies some test cases).
-
-We add a factory method to the interface to retrieve the reverse mapping for a given enumeration:
-
-```java
-static <E extends IntegerEnumeration> ReverseMapping<E> mapping(Class<E> clazz) {
-    return ReverseMapping.get(clazz);
-}
-```
-
-The helper method creates and caches the reverse mappings on demand:
+Reverse mappings are generated and cached on demand:
 
 ```java
 final class ReverseMapping<E extends IntegerEnumeration> {
@@ -139,11 +127,19 @@ final class ReverseMapping<E extends IntegerEnumeration> {
 }
 ```
 
+Finally a public factory method is added to lookup a reverse mapping:
+
+```java
+static <E extends IntegerEnumeration> ReverseMapping<E> mapping(Class<E> clazz) {
+    return ReverseMapping.get(clazz);
+}
+```
+
 ## Type Conversion
 
 JNA uses _type converters_ to marshal Java types to/from their native equivalents and includes built-in converters for standard types (integer, string, pointer, etc).
 
-To use the integer enumerations in a type-safe manner in API methods and structures we implement the following custom converter:
+To use the integer enumerations in a type-safe manner in API methods and structures the following custom converter is implemented:
 
 ```java
 TypeConverter CONVERTER = new TypeConverter() {
@@ -205,11 +201,13 @@ public abstract class VulkanStructure extends Structure {
 }
 ```
 
+Finally the type mapping logic for structure fields in the code generator is modified to represent constants by the actual enumeration class.  Note that enumerations that are bit-fields remain as integer values (identified by Vulkan enumerations that are suffixed by `Bits`).
+
 ## Default Values
 
-The final complication when mapping from a native enumeration value is that a default or unspecified value (i.e. zero) may not be a valid enumeration constant.
+The final complication when mapping from a native enumeration value is that a default (i.e. integer zero) value may not be a valid enumeration constant.
 
-We introduce a _zero_ value to the reverse mapping which is initialised in the constructor:
+A _zero_ value is introduced to the reverse mapping which is initialised in the constructor:
 
 ```java
 final class ReverseMapping<E extends IntegerEnumeration> {
@@ -222,7 +220,7 @@ final class ReverseMapping<E extends IntegerEnumeration> {
     }
 ```
 
-This `zero` value is mapped from the enumeration constant with a zero value (if present) or is arbitrarily set to the first constant.
+This `zero` value is mapped from the enumeration constant with an integer zero value if present or is arbitrarily set to the first constant.
 
 In the type converter we can now safely handle invalid or unspecified native values:
 
@@ -238,4 +236,3 @@ public Object fromNative(Object nativeValue, FromNativeContext context) {
     }
 }
 ```
-

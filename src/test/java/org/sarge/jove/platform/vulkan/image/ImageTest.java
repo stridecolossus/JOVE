@@ -1,33 +1,25 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.sarge.jove.platform.vulkan.VkImageAspect.COLOR;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
-import org.sarge.jove.platform.vulkan.memory.AllocationService;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 
+@SuppressWarnings("static-method")
 public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
 	private static final Extents EXTENTS = new Extents(new Dimensions(3, 4));
@@ -151,7 +143,7 @@ public class ImageTest extends AbstractVulkanTest {
 			info.samples = VkSampleCount.COUNT_4;
 			info.tiling = VkImageTiling.LINEAR;
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
-			info.usage = IntegerEnumeration.mask(props.usage());
+			info.usage = IntegerEnumeration.reduce(props.usage());
 			info.sharingMode = props.mode();
 			verify(lib).vkCreateImage(dev, info, null, POINTER);
 
