@@ -145,7 +145,7 @@ public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages)
     }
 
     void populate(VkPushConstantRange range) {
-        range.stageFlags = IntegerEnumeration.mask(stages);
+        range.stageFlags = IntegerEnumeration.reduce(stages);
         range.size = size;
         range.offset = offset;
     }
@@ -807,7 +807,7 @@ Commands to perform the query can then be allocated from this instance:
 
 ```java
 public Command begin(VkQueryControlFlag... flags) {
-    int mask = IntegerEnumeration.mask(flags);
+    int mask = IntegerEnumeration.reduce(flags);
     return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, pool, slot, mask);
 }
 
@@ -852,7 +852,7 @@ The `stats` property of the builder is only relevant for a `PIPELINE_STATISTICS`
 ```java
 if(type == VkQueryType.PIPELINE_STATISTICS) {
     if(stats.isEmpty()) throw new IllegalArgumentException(...);
-    info.pipelineStatistics = IntegerEnumeration.mask(stats);
+    info.pipelineStatistics = IntegerEnumeration.reduce(stats);
 }
 else {
     if(!stats.isEmpty()) throw new IllegalArgumentException(...);

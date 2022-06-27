@@ -245,7 +245,7 @@ Instantiating the buffer follows the usual pattern of populating a descriptor an
 public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsage> props) {
     // Build buffer descriptor
     var info = new VkBufferCreateInfo();
-    info.usage = IntegerEnumeration.mask(props.usage());
+    info.usage = IntegerEnumeration.reduce(props.usage());
     info.sharingMode = props.mode();
     info.size = oneOrMore(len);
 

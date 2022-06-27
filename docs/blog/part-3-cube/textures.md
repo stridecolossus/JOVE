@@ -502,7 +502,7 @@ public DefaultImage build(LogicalDevice dev, AllocationService allocator) {
     info.samples = samples;
     info.tiling = tiling;
     info.initialLayout = layout;
-    info.usage = IntegerEnumeration.mask(props.usage());
+    info.usage = IntegerEnumeration.reduce(props.usage());
     info.sharingMode = props.mode();
     ...
 }
@@ -628,7 +628,7 @@ A slight irritation that only came to light during this chapter is that there ar
 ```java
 static VkImageSubresourceRange toRange(SubResource res) {
     final var range = new VkImageSubresourceRange();
-    range.aspectMask = IntegerEnumeration.mask(res.aspects());
+    range.aspectMask = IntegerEnumeration.reduce(res.aspects());
     range.baseMipLevel = res.mipLevel();
     range.levelCount = res.levelCount();
     range.baseArrayLayer = res.baseArrayLayer();
@@ -638,7 +638,7 @@ static VkImageSubresourceRange toRange(SubResource res) {
 
 static VkImageSubresourceLayers toLayers(SubResource res) {
     final var layers = new VkImageSubresourceLayers();
-    layers.aspectMask = IntegerEnumeration.mask(res.aspects());
+    layers.aspectMask = IntegerEnumeration.reduce(res.aspects());
     layers.mipLevel = res.mipLevel();
     layers.baseArrayLayer = res.baseArrayLayer();
     layers.layerCount = res.layerCount();
@@ -813,8 +813,8 @@ public class Barrier implements Command {
     private final VkImageMemoryBarrier[] images;
 
     private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, VkImageMemoryBarrier[] images) {
-        this.src = IntegerEnumeration.mask(src);
-        this.dest = IntegerEnumeration.mask(dest);
+        this.src = IntegerEnumeration.reduce(src);
+        this.dest = IntegerEnumeration.reduce(dest);
         this.images = notNull(images);
     }
 
@@ -866,8 +866,8 @@ The Vulkan descriptor for an image barrier is populated as follows:
 ```java
 private void populate(VkImageMemoryBarrier barrier) {
     barrier.image = image.handle();
-    barrier.srcAccessMask = IntegerEnumeration.mask(src);
-    barrier.dstAccessMask = IntegerEnumeration.mask(dest);
+    barrier.srcAccessMask = IntegerEnumeration.reduce(src);
+    barrier.dstAccessMask = IntegerEnumeration.reduce(dest);
     barrier.oldLayout = oldLayout;
     barrier.newLayout = newLayout;
     barrier.subresourceRange = SubResource.toRange(subresource);

@@ -514,7 +514,7 @@ We also a helper factory method to create a filter that selects a format based o
 
 ```java
 public static Predicate<VkFormatProperties> feature(Set<VkFormatFeature> features, boolean optimal) {
-    int mask = IntegerEnumeration.mask(features);
+    int mask = IntegerEnumeration.reduce(features);
     return props -> {
         int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
         return MathsUtil.isMask(mask, actual);

@@ -122,7 +122,7 @@ public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFla
     // Init pool descriptor
     var info = new VkCommandPoolCreateInfo();
     info.queueFamilyIndex = queue.family().index();
-    info.flags = IntegerEnumeration.mask(flags);
+    info.flags = IntegerEnumeration.reduce(flags);
 
     // Create pool
     VulkanLibrary lib = dev.library();
@@ -201,9 +201,9 @@ Finally the pool can also be reset which recycles resources and restores all all
 
 ```java
 public void reset(VkCommandPoolResetFlag... flags) {
-    int mask = IntegerEnumeration.mask(flags);
+    int bits = IntegerEnumeration.reduce(flags);
     DeviceContext dev = super.device();
-    check(dev.library().vkResetCommandPool(dev, this, mask));
+    check(dev.library().vkResetCommandPool(dev, this, bits));
 }
 ```
 
@@ -245,7 +245,7 @@ public Buffer begin(VkCommandBufferUsageFlag... flags) {
 
     // Init descriptor
     var info = new VkCommandBufferBeginInfo();
-    info.flags = IntegerEnumeration.mask(flags);
+    info.flags = IntegerEnumeration.reduce(flags);
 
     // Start buffer recording
     VulkanLibrary lib = pool.device().library();

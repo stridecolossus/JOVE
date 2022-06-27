@@ -897,7 +897,7 @@ We modify the builder to configure the semaphores for a work submission:
 
 ```java
 public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
-    wait.put(semaphore, IntegerEnumeration.mask(stages));
+    wait.put(semaphore, IntegerEnumeration.reduce(stages));
 }
 
 public Builder signal(Semaphore semaphore) {
@@ -966,7 +966,7 @@ Again a fence is created using a factory:
 public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
     // Init descriptor
     VkFenceCreateInfo info = new VkFenceCreateInfo();
-    info.flags = IntegerEnumeration.mask(flags);
+    info.flags = IntegerEnumeration.reduce(flags);
 
     // Create fence
     VulkanLibrary lib = dev.library();
@@ -1164,14 +1164,14 @@ private void dependency(Entry<Subpass, SubpassDependency> entry, VkSubpassDepend
     // Populate source properties
     final Dependency src = dependency.source();
     desc.srcSubpass = indexOf(dependency.subpass());
-    desc.srcStageMask = IntegerEnumeration.mask(src.stages());
-    desc.srcAccessMask = IntegerEnumeration.mask(src.access());
+    desc.srcStageMask = IntegerEnumeration.reduce(src.stages());
+    desc.srcAccessMask = IntegerEnumeration.reduce(src.access());
 
     // Populate destination properties
     final Dependency dest = dependency.destination();
     desc.dstSubpass = indexOf(entry.getKey());
-    desc.dstStageMask = IntegerEnumeration.mask(dest.stages());
-    desc.dstAccessMask = IntegerEnumeration.mask(dest.access());
+    desc.dstStageMask = IntegerEnumeration.reduce(dest.stages());
+    desc.dstAccessMask = IntegerEnumeration.reduce(dest.access());
 }
 ```
 

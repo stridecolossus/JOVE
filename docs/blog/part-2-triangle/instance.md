@@ -181,7 +181,7 @@ In the `build` method we use the code-generated structures for the first time to
 
 ```java
 public Instance build(VulkanLibrary lib) {
-    VkApplicationInfo app = new VkApplicationInfo();
+    var app = new VkApplicationInfo();
     app.pApplicationName = name;
     app.applicationVersion = ver.toInteger();
     app.pEngineName = "JOVE";
@@ -541,8 +541,8 @@ The `build` method first populates the descriptor for the diagnostics handler:
 ```java
 public Handler build() {
     var info = new VkDebugUtilsMessengerCreateInfoEXT();
-    info.messageSeverity = IntegerEnumeration.mask(severity);
-    info.messageType = IntegerEnumeration.mask(types);
+    info.messageSeverity = IntegerEnumeration.reduce(severity);
+    info.messageType = IntegerEnumeration.reduce(types);
     info.pfnUserCallback = new MessageCallback(consumer);
     info.pUserData = null;
     ...
@@ -714,8 +714,7 @@ In the demo application we can now configure and attach a diagnostics handler:
 
 ```java
 instance
-    .manager()
-    .builder()
+    .handler()
     .severity(VkDebugUtilsMessageSeverity.WARNING)
     .severity(VkDebugUtilsMessageSeverity.ERROR)
     .type(VkDebugUtilsMessageType.GENERAL)

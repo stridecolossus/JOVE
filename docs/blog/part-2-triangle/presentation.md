@@ -232,7 +232,7 @@ The `subresourceRange` field of the create descriptor specifies a subset of the 
 
 ```java
 var range = new VkImageSubresourceRange();
-range.aspectMask = IntegerEnumeration.mask(image.descriptor().aspects());
+range.aspectMask = IntegerEnumeration.reduce(image.descriptor().aspects());
 range.baseMipLevel = 0;
 range.levelCount = 1;
 range.baseArrayLayer = 0;

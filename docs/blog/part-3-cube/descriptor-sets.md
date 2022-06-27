@@ -73,7 +73,7 @@ private void populate(VkDescriptorSetLayoutBinding info) {
     info.binding = binding;
     info.descriptorType = type;
     info.descriptorCount = count;
-    info.stageFlags = IntegerEnumeration.mask(stages);
+    info.stageFlags = IntegerEnumeration.reduce(stages);
 }
 ```
 
@@ -206,7 +206,7 @@ The build method transforms the table to an array and populates the descriptor f
 
 ```java
 VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
-info.flags = IntegerEnumeration.mask(flags);
+info.flags = IntegerEnumeration.reduce(flags);
 info.poolSizeCount = entries.size();
 info.pPoolSizes = StructureCollector.toPointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 info.maxSets = max;
