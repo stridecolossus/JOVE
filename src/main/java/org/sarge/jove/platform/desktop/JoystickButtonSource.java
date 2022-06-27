@@ -41,7 +41,9 @@ class JoystickButtonSource implements Source<Button> {
 	}
 
 	@Override
-	public void bind(Consumer<Button> handler) {
+	public Object bind(Consumer<Button> handler) {
+		// TODO
+		return null;
 	}
 
 	/**

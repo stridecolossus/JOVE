@@ -1,19 +1,22 @@
 package org.sarge.jove.platform.desktop;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.awt.MouseInfo;
 import java.util.Set;
 import java.util.function.*;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.control.*;
-import org.sarge.jove.control.Event.Source;
+import org.sarge.jove.control.Event.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
 
 /**
  * The <i>mouse device</i> exposes event sources for the mouse pointer, buttons and scroll-wheel.
  * @author Sarge
  */
-public class MouseDevice extends DesktopDevice {
+public class MouseDevice implements Device {
+	private final Window window;
 	private final MouseWheel wheel = new MouseWheel();
 	private final MouseButtonSource buttons = new MouseButtonSource();
 	private final MousePointer ptr = new MousePointer();
@@ -23,7 +26,7 @@ public class MouseDevice extends DesktopDevice {
 	 * @param window Parent window
 	 */
 	MouseDevice(Window window) {
-		super(window);
+		this.window = notNull(window);
 	}
 
 	@Override
@@ -60,14 +63,19 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse pointer event source.
 	 */
-	private class MousePointer extends DesktopSource<MouseListener, PositionEvent> {
+	private class MousePointer implements DesktopSource<MouseListener, PositionEvent> {
 		@Override
 		public String name() {
 			return "MousePointer";
 		}
 
 		@Override
-		protected MouseListener listener(Consumer<PositionEvent> handler) {
+		public Window window() {
+			return window;
+		}
+
+		@Override
+		public MouseListener listener(Consumer<PositionEvent> handler) {
 			return (ptr, x, y) -> {
 				final PositionEvent pos = new PositionEvent(this, (float) x, (float) y);
 				handler.accept(pos);
@@ -75,7 +83,7 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
+		public BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
 			return lib::glfwSetCursorPosCallback;
 		}
 	}
@@ -83,7 +91,7 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse buttons event source.
 	 */
-	private class MouseButtonSource extends DesktopSource<MouseButtonListener, Button> {
+	private class MouseButtonSource implements DesktopSource<MouseButtonListener, Button> {
 		private final String[] id = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
 				.mapToObj(id -> Button.name("Mouse", id))
@@ -95,7 +103,12 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected MouseButtonListener listener(Consumer<Button> handler) {
+		public Window window() {
+			return window;
+		}
+
+		@Override
+		public MouseButtonListener listener(Consumer<Button> handler) {
 			return (ptr, index, action, mods) -> {
 				final Button button = new Button(MouseButtonSource.this, id[index], action, mods);
 				handler.accept(button);
@@ -103,7 +116,7 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected BiConsumer<Window, MouseButtonListener> method(DesktopLibrary lib) {
+		public BiConsumer<Window, MouseButtonListener> method(DesktopLibrary lib) {
 			return lib::glfwSetMouseButtonCallback;
 		}
 	}
@@ -111,7 +124,7 @@ public class MouseDevice extends DesktopDevice {
 	/**
 	 * Mouse scroll-wheel source.
 	 */
-	private class MouseWheel extends DesktopSource<MouseListener, Axis> implements Axis {
+	private class MouseWheel implements Axis, DesktopSource<MouseListener, Axis> {
 		private float value;
 
 		@Override
@@ -130,7 +143,12 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected MouseListener listener(Consumer<Axis> handler) {
+		public Window window() {
+			return window;
+		}
+
+		@Override
+		public MouseListener listener(Consumer<Axis> handler) {
 			return (ptr, x, y) -> {
 				this.value = (float) y;
 				handler.accept(MouseWheel.this);
@@ -138,7 +156,7 @@ public class MouseDevice extends DesktopDevice {
 		}
 
 		@Override
-		protected BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
+		public BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
 			return lib::glfwSetScrollCallback;
 		}
 	}

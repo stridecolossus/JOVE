@@ -43,8 +43,9 @@ class JoystickAxis implements Axis {
 	}
 
 	@Override
-	public void bind(Consumer<Axis> handler) {
+	public Object bind(Consumer<Axis> handler) {
 		this.handler = handler;
+		return null;
 	}
 
 	/**

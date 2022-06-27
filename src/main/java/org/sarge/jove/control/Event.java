@@ -8,11 +8,6 @@ import java.util.function.Consumer;
  * @author Sarge
  */
 public interface Event {
-//	/**
-//	 * @return Type discriminator for this event
-//	 */
-//	Object type();
-
 	/**
 	 * @return Source that generated this event
 	 */
@@ -22,7 +17,7 @@ public interface Event {
 	 * An <i>event source</i> generates events and is the <i>binding point</i> for event handlers.
 	 * @param <T> Event type
 	 */
-	interface Source<T extends Event> {
+	interface Source<E extends Event> {
 		/**
 		 * @return Name of this source
 		 */
@@ -31,21 +26,10 @@ public interface Event {
 		/**
 		 * Binds the given handler to this source.
 		 * @param handler Event handler
+		 * @return Underlying listener
 		 */
-		void bind(Consumer<T> handler);
+		Object bind(Consumer<E> handler);
 	}
-
-//	/**
-//	 * Skeleton implementation.
-//	 */
-//	abstract class AbstractSource<T extends Event> implements Source<T> {
-//		protected Consumer<T> handler;
-//
-//		@Override
-//		public void bind(Consumer<T> handler) {
-//			this.handler = handler;
-//		}
-//	}
 
 	/**
 	 * A <i>device</i> is comprised of a number of event sources.

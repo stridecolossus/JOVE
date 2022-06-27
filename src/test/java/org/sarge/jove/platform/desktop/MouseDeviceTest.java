@@ -8,7 +8,6 @@ import java.util.function.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.*;
-import org.sarge.jove.platform.desktop.DesktopDevice.DesktopSource;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
@@ -31,11 +30,6 @@ public class MouseDeviceTest {
 	void constructor() {
 		assertEquals(Set.of(mouse.pointer(), mouse.buttons(), mouse.wheel()), mouse.sources());
 	}
-
-//	@Test
-//	void count() {
-//		assertEquals(true, mouse.count() > 0);
-//	}
 
 	@Nested
 	class MousePointerTests {
@@ -105,11 +99,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MouseWheelTests {
-		private DesktopSource<MouseListener, AxisEvent> wheel;
+		private DesktopSource<MouseListener, Axis> wheel;
 
 		@BeforeEach
 		void before() {
-			wheel = (DesktopSource<MouseListener, AxisEvent>) mouse.wheel();
+			wheel = (DesktopSource<MouseListener, Axis>) mouse.wheel();
 		}
 
 		@Test
