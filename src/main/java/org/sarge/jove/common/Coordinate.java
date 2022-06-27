@@ -3,13 +3,14 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.sarge.jove.common.Coordinate.*;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public interface Coordinate extends Bufferable {
+public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coordinate2D, Coordinate3D {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
