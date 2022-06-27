@@ -22,6 +22,7 @@ import org.sarge.jove.platform.vulkan.util.*;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
+@SuppressWarnings("static-method")
 public class SwapchainTest extends AbstractVulkanTest {
 	private Swapchain swapchain;
 	private View view;
@@ -144,18 +145,16 @@ public class SwapchainTest extends AbstractVulkanTest {
 		verify(view).destroy();
 	}
 
-	@SuppressWarnings("static-method")
 	@Test
 	void format() {
 		assertEquals(VkFormat.B8G8R8A8_UNORM, Swapchain.DEFAULT_FORMAT);
 		// TODO - should be VkFormat.B8G8R8A8_SRGB; i.e. is it SRBG or UNORM?
 	}
 
-	@SuppressWarnings("static-method")
 	@Test
 	void mode() {
 		// Check default mode
-		final var props = mock(Surface.Properties.class);
+		final Surface props = mock(Surface.class);
 		assertEquals(VkPresentModeKHR.FIFO_KHR, Swapchain.mode(props, VkPresentModeKHR.MAILBOX_KHR));
 
 		// Select supported mode
@@ -177,16 +176,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 //			when(surface.handle()).thenReturn(new Handle(new Pointer(2)));
 
 			// Init supported presentation modes
-			final Surface.Properties props = mock(Surface.Properties.class);
-			when(props.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
-			when(props.surface()).thenReturn(surface);
+			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
 //			when(props.device()).thenReturn(null)
 
 			// Init supported formats
 			final VkSurfaceFormatKHR format = new VkSurfaceFormatKHR();
 			format.format = Swapchain.DEFAULT_FORMAT;
 			format.colorSpace = Swapchain.DEFAULT_COLOUR_SPACE;
-			when(props.formats()).thenReturn(List.of(format));
+			when(surface.formats()).thenReturn(List.of(format));
 
 			// Init surface capabilities descriptor
 			caps = new VkSurfaceCapabilitiesKHR();
@@ -197,7 +194,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			caps.maxImageArrayLayers = 1;
 			caps.supportedUsageFlags = VkImageUsageFlag.COLOR_ATTACHMENT.value();
 			caps.supportedCompositeAlpha = VkCompositeAlphaFlagKHR.OPAQUE.value();
-			when(props.capabilities()).thenReturn(caps);
+			when(surface.capabilities()).thenReturn(caps);
 
 			// Init surface extents
 			extent = new VkExtent2D();
@@ -206,7 +203,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			caps.currentExtent = extent;
 
 			// Create builder
-			builder = new Swapchain.Builder(dev, props);
+			builder = new Swapchain.Builder(dev, surface);
 		}
 
 		@Test

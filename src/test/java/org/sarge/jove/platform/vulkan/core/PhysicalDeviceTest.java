@@ -1,35 +1,17 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkFormatProperties;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceProperties;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceType;
-import org.sarge.jove.platform.vulkan.VkQueueFamilyProperties;
-import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Properties;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
@@ -150,8 +132,8 @@ public class PhysicalDeviceTest {
 		@Test
 		void presentation() {
 			// Create presentation selector
-			final Surface surface = mock(Surface.class);
-			final Selector selector = Selector.of(surface);
+			final Handle surface = new Handle(3);
+			final Selector selector = Selector.surface(surface);
 			assertNotNull(selector);
 
 			// Init supported boolean

@@ -6,12 +6,10 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 import java.util.function.*;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
@@ -126,7 +124,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @return Whether presentation is supported by the given family
 	 * @see Selector#of(Surface)
 	 */
-	public boolean isPresentationSupported(Surface surface, Family family) {
+	public boolean isPresentationSupported(Handle surface, Family family) {
 		final VulkanLibrary lib = instance.library();
 		final IntByReference supported = instance.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
@@ -178,7 +176,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @return Presentation selector
 		 * @see PhysicalDevice#isPresentationSupported(Surface, Family)
 		 */
-		public static Selector of(Surface surface) {
+		public static Selector surface(Handle surface) {
 			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
 			return new Selector(predicate);
 		}

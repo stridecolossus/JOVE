@@ -11,10 +11,10 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
@@ -216,8 +216,8 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param modes			Preferred presentation modes
 	 * @return Selected presentation mode
 	 */
-	public static VkPresentModeKHR mode(Surface.Properties props, VkPresentModeKHR... modes) {
-		final Set<VkPresentModeKHR> available = props.modes();
+	public static VkPresentModeKHR mode(Surface surface, VkPresentModeKHR... modes) {
+		final Set<VkPresentModeKHR> available = surface.modes();
 		return Arrays
 				.stream(modes)
 				.filter(available::contains)
@@ -231,21 +231,21 @@ public class Swapchain extends AbstractVulkanObject {
 	public static class Builder {
 		private final LogicalDevice dev;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
-		private final Surface.Properties props;
+		private final Surface surface;
 		private final VkSurfaceCapabilitiesKHR caps;
-		private ClearValue clear = ClearValue.NONE;
+		private ClearValue clear;
 
 		/**
 		 * Constructor.
 		 * @param dev			Logical device
-		 * @param props			Rendering surface properties
+		 * @param surface		Rendering surface
 		 */
-		public Builder(LogicalDevice dev, Surface.Properties props) {
-			if(dev.parent() != props.device()) throw new IllegalArgumentException("Mismatched device and surface");
+		public Builder(LogicalDevice dev, Surface surface) {
+			//if(dev.parent() != props.device()) throw new IllegalArgumentException("Mismatched device and surface");
 			this.dev = notNull(dev);
-			this.props = notNull(props);
-			this.caps = props.capabilities();
-			this.info.surface = props.surface().handle();
+			this.surface = notNull(surface);
+			this.caps = surface.capabilities();
+			this.info.surface = surface.handle();
 			init();
 		}
 
@@ -398,7 +398,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @see Surface.Properties#modes()
 		 */
 		public Builder presentation(VkPresentModeKHR mode) {
-			if(!props.modes().contains(mode)) throw new IllegalArgumentException("Unsupported presentation mode: " + mode);
+			if(!surface.modes().contains(mode)) throw new IllegalArgumentException("Unsupported presentation mode: " + mode);
 			info.presentMode = notNull(mode);
 			return this;
 		}
@@ -428,7 +428,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 */
 		public Swapchain build() {
 			// Validate surface format
-			props
+			surface
 					.formats()
 					.stream()
 					.filter(f -> f.format == info.imageFormat)

@@ -1,27 +1,15 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import java.util.Optional;
+
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.platform.vulkan.VkComponentSwizzle;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
-import org.sarge.jove.platform.vulkan.VkImageViewType;
-import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -59,7 +47,7 @@ public class ViewTest extends AbstractVulkanTest {
 		assertEquals(false, view.isDestroyed());
 		assertEquals(dev, view.device());
 		assertEquals(image, view.image());
-		assertEquals(ClearValue.NONE, view.clear());
+		assertEquals(Optional.empty(), view.clear());
 	}
 
 	@Test
@@ -70,7 +58,8 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void clearNone() {
-		view.clear(ClearValue.NONE);
+		view.clear(null);
+		assertEquals(Optional.empty(), view.clear());
 	}
 
 	@Test
