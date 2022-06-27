@@ -1,41 +1,25 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkDescriptorImageInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
-import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
-import org.sarge.jove.platform.vulkan.VkWriteDescriptorSet;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 
 public class DescriptorSetTest extends AbstractVulkanTest {
 	private ResourceBinding binding;
 	private DescriptorLayout layout;
 	private DescriptorSet descriptor;
 	private DescriptorResource res;
-	private VkDescriptorImageInfo info;
 
 	@BeforeEach
 	void before() {
@@ -44,10 +28,8 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
 
 		// Create sampler resource
-		info = new VkDescriptorImageInfo();
 		res = mock(DescriptorResource.class);
 		when(res.type()).thenReturn(VkDescriptorType.COMBINED_IMAGE_SAMPLER);
-		when(res.populate()).thenReturn(info);
 
 		// Create descriptor set
 		descriptor = new DescriptorSet(new Handle(new Pointer(2)), layout);
@@ -60,21 +42,14 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void resource() {
-		assertEquals(null, descriptor.resource(binding));
-	}
-
-	@Test
 	void invalid() {
 		final ResourceBinding other = new ResourceBinding(2, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
-		assertThrows(IllegalArgumentException.class, () -> descriptor.resource(other));
 		assertThrows(IllegalArgumentException.class, () -> descriptor.set(other, res));
 	}
 
 	@Test
 	void set() {
 		descriptor.set(binding, res);
-		assertEquals(res, descriptor.resource(binding));
 	}
 
 	@Test
@@ -100,29 +75,25 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	void update() {
 		// Apply update
 		descriptor.set(binding, res);
-		final int count = DescriptorSet.update(dev, Set.of(descriptor));
-		assertEquals(1, count);
+		assertEquals(1, DescriptorSet.update(dev, Set.of(descriptor)));
+
+		// Init expected write descriptor
+		final var write = new VkWriteDescriptorSet() {
+			@Override
+			public boolean equals(Object obj) {
+				final var expected = (VkWriteDescriptorSet) obj;
+				assertEquals(1, expected.dstBinding);
+				assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, expected.descriptorType);
+				assertEquals(descriptor.handle(), expected.dstSet);
+				assertEquals(1, expected.descriptorCount);
+				assertEquals(0, expected.dstArrayElement);
+				return true;
+			}
+		};
 
 		// Check API
-		// TODO
-		final ArgumentCaptor<VkWriteDescriptorSet[]> captor = ArgumentCaptor.forClass(VkWriteDescriptorSet[].class);
-		verify(lib).vkUpdateDescriptorSets(eq(dev), eq(1), captor.capture(), eq(0), isNull());
-
-		// Check updates array
-		final VkWriteDescriptorSet[] array = captor.getValue();
-		assertNotNull(array);
-		assertEquals(1, array.length);
-
-		// Check update descriptor
-		final VkWriteDescriptorSet write = array[0];
-		assertNotNull(write);
-		assertEquals(1, write.dstBinding);
-		assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, write.descriptorType);
-		assertEquals(descriptor.handle(), write.dstSet);
-		assertEquals(1, write.descriptorCount);
-		assertEquals(0, write.dstArrayElement);
-		assertEquals(info, write.pImageInfo);
-		assertEquals(null, write.pBufferInfo);
+		verify(lib).vkUpdateDescriptorSets(dev, 1, new VkWriteDescriptorSet[]{write}, 0, null);
+		verify(res).populate(write);
 	}
 
 	@Test
@@ -130,13 +101,6 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		descriptor.set(binding, res);
 		DescriptorSet.update(dev, Set.of(descriptor));
 		assertEquals(0, DescriptorSet.update(dev, Set.of(descriptor)));
-	}
-
-	@Test
-	void updateUnsupportedResource() {
-		when(res.populate()).thenReturn(mock(Structure.class));
-		descriptor.set(binding, res);
-		assertThrows(UnsupportedOperationException.class, () -> DescriptorSet.update(dev, Set.of(descriptor)));
 	}
 
 	@Test

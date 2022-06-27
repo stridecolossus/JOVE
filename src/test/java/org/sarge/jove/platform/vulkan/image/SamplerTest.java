@@ -1,20 +1,14 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
@@ -51,7 +45,10 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@Test
 		void populate() {
-			final var info = (VkDescriptorImageInfo) res.populate();
+			final var write = new VkWriteDescriptorSet();
+			res.populate(write);
+
+			final VkDescriptorImageInfo info = write.pImageInfo;
 			assertNotNull(info);
 			assertEquals(sampler.handle(), info.sampler);
 			assertEquals(view.handle(), info.imageView);

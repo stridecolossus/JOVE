@@ -1,12 +1,9 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty;
@@ -82,12 +79,12 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 	}
 
 	@Override
-	public VkDescriptorBufferInfo populate() {
+	public void populate(VkWriteDescriptorSet write) {
 		final var info = new VkDescriptorBufferInfo();
 		info.buffer = handle();
 		info.offset = offset;
 		info.range = length();					// TODO - maxUniformBufferRange, needs to be a separate parameter otherwise offset MUST be zero!
-		return info;
+		write.pBufferInfo = info;
 	}
 
 	/**

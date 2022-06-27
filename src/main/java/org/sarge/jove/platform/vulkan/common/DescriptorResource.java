@@ -1,8 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
-
-import com.sun.jna.Structure;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * A <i>descriptor resource</i> defines an object that can be applied to a descriptor set.
@@ -15,8 +13,7 @@ public interface DescriptorResource {
 	VkDescriptorType type();
 
 	/**
-	 * Builds the Vulkan descriptor for this resource.
-	 * @return Descriptor
+	 * Populates the write descriptor for this resource.
 	 */
-	Structure populate();
+	void populate(VkWriteDescriptorSet write);
 }

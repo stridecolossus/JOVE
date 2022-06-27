@@ -1,23 +1,16 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkDescriptorBufferInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
+import org.sarge.jove.platform.vulkan.util.*;
 
 public class ResourceBufferTest extends AbstractVulkanTest {
 	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.UNIFORM_BUFFER);
@@ -76,18 +69,14 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void populate() {
-		final VkDescriptorBufferInfo info = res.populate();
+		final var write = new VkWriteDescriptorSet();
+		res.populate(write);
+
+		final VkDescriptorBufferInfo info = write.pBufferInfo;
 		assertNotNull(info);
 		assertEquals(res.handle(), info.buffer);
 		assertEquals(res.length(), info.range);
 		assertEquals(0, info.offset);
-	}
-
-	@Test
-	void offset() {
-		final ResourceBuffer offset = res.offset(1);
-		assertNotNull(offset);
-		assertEquals(1, offset.populate().offset);
 	}
 
 	@Test

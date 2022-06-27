@@ -1,17 +1,12 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -54,12 +49,12 @@ public class Sampler extends AbstractVulkanObject {
 			}
 
 			@Override
-			public VkDescriptorImageInfo populate() {
+			public void populate(VkWriteDescriptorSet write) {
 				final var info = new VkDescriptorImageInfo();
 				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
 				info.sampler = Sampler.this.handle();
 				info.imageView = view.handle();
-				return info;
+				write.pImageInfo = info;
 			}
 		};
 	}
@@ -189,10 +184,10 @@ public class Sampler extends AbstractVulkanObject {
 		public Builder wrap(int component, VkSamplerAddressMode mode) {
 			Check.notNull(mode);
 			switch(component) {
-				case 0: info.addressModeU = mode; break;
-				case 1: info.addressModeV = mode; break;
-				case 2: info.addressModeW = mode; break;
-				default: throw new IndexOutOfBoundsException("Invalid address mode component: " + component);
+				case 0 -> info.addressModeU = mode;
+				case 1 -> info.addressModeV = mode;
+				case 2 -> info.addressModeW = mode;
+				default -> throw new IndexOutOfBoundsException("Invalid address mode component: " + component);
 			}
 			return this;
 		}
