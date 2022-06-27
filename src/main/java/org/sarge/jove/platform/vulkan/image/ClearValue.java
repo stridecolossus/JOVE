@@ -1,54 +1,20 @@
-package org.sarge.jove.platform.vulkan.common;
-
-import static org.sarge.lib.util.Check.notNull;
+package org.sarge.jove.platform.vulkan.image;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.VkClearValue;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.Percentile;
+import org.sarge.jove.platform.vulkan.image.ClearValue.*;
+import org.sarge.lib.util.*;
 
 /**
  * A <i>clear value</i> specifies the clear operation for an attachment.
  * @author Sarge
  */
-public interface ClearValue {
+public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
 	/**
 	 * Populates the given clear value descriptor.
 	 * @param value Descriptor
 	 */
 	void populate(VkClearValue value);
-
-	/**
-	 * @return Expected image aspect for this clear value
-	 */
-	VkImageAspect aspect();
-
-	/**
-	 * Empty clear value for an attachment that is not cleared.
-	 * @throws UnsupportedOperationException for all operations
-	 */
-	ClearValue NONE = new ClearValue() {
-		@Override
-		public VkImageAspect aspect() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void populate(VkClearValue value) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return obj == this;
-		}
-
-		@Override
-		public String toString() {
-			return "None";
-		}
-	};
 
 	/**
 	 * Clear value for a colour attachment.
@@ -60,11 +26,6 @@ public interface ClearValue {
 		 */
 		public ColourClearValue {
 			Check.notNull(col);
-		}
-
-		@Override
-		public VkImageAspect aspect() {
-			return VkImageAspect.COLOR;
 		}
 
 		@Override
@@ -88,13 +49,8 @@ public interface ClearValue {
 		 * Constructor.
 		 * @param depth Depth value
 		 */
-		public DepthClearValue(Percentile depth) {
-			this.depth = notNull(depth);
-		}
-
-		@Override
-		public VkImageAspect aspect() {
-			return VkImageAspect.DEPTH;
+		public DepthClearValue {
+			Check.notNull(depth);
 		}
 
 		@Override

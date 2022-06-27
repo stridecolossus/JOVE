@@ -1,17 +1,11 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.VkClearValue;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.common.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.common.ClearValue.DepthClearValue;
+import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.lib.util.Percentile;
 
 public class ClearValueTest {
@@ -24,11 +18,8 @@ public class ClearValueTest {
 
 	@Test
 	void colour() {
-		// Create colour clear value
+		// Apply colour clear
 		final ClearValue clear = new ColourClearValue(Colour.WHITE);
-		assertEquals(VkImageAspect.COLOR, clear.aspect());
-
-		// Apply clear
 		clear.populate(value);
 		assertNotNull(value.color);
 		assertArrayEquals(Colour.WHITE.toArray(), value.color.float32);
@@ -42,11 +33,8 @@ public class ClearValueTest {
 
 	@Test
 	void depth() {
-		// Create depth clear value
+		// Apply depth clear
 		final ClearValue clear = new DepthClearValue(Percentile.HALF);
-		assertEquals(VkImageAspect.DEPTH, clear.aspect());
-
-		// Apply clear
 		clear.populate(value);
 		assertNotNull(value.depthStencil);
 		assertEquals(0.5f, value.depthStencil.depth);
@@ -59,14 +47,9 @@ public class ClearValueTest {
 		assertEquals(false, clear.equals(new DepthClearValue(Percentile.ONE)));
 	}
 
+	@SuppressWarnings("static-method")
 	@Test
 	void defaultDepth() {
 		assertEquals(new DepthClearValue(Percentile.ONE), DepthClearValue.DEFAULT);
-	}
-
-	@Test
-	void none() {
-		assertThrows(UnsupportedOperationException.class, () -> ClearValue.NONE.aspect());
-		assertThrows(UnsupportedOperationException.class, () -> ClearValue.NONE.populate(null));
 	}
 }

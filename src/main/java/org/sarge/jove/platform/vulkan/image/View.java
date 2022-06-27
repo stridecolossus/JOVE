@@ -3,14 +3,14 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.Optional;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientNativeObject;
-import org.sarge.jove.platform.vulkan.VkImageViewCreateInfo;
-import org.sarge.jove.platform.vulkan.VkImageViewType;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer;
 
 import com.sun.jna.Pointer;
@@ -33,7 +33,7 @@ public class View extends AbstractVulkanObject {
 
 	private final Image image;
 
-	private ClearValue clear = ClearValue.NONE;
+	private ClearValue clear;
 
 	/**
 	 * Constructor.
@@ -57,30 +57,27 @@ public class View extends AbstractVulkanObject {
 	 * Clear value for this attachment.
 	 * @return Clear value
 	 */
-	public ClearValue clear() {
-		return clear;
+	public Optional<ClearValue> clear() {
+		return Optional.of(clear);
 	}
 
 	/**
 	 * Sets the clear value for this attachment.
-	 * @param aspect		Expected image aspect
-	 * @param clear			Clear value
+	 * @param clear Clear value or {@code null} if not cleared
 	 * @throws IllegalArgumentException if the clear value is incompatible with this view
 	 */
 	public View clear(ClearValue clear) {
-		validate(clear);
-		this.clear = notNull(clear);
+		if(clear != null) {
+			final VkImageAspect expected = switch(clear) {
+				case ColourClearValue col -> VkImageAspect.COLOR;
+				case DepthClearValue depth -> VkImageAspect.DEPTH;
+			};
+			if(!image.descriptor().aspects().contains(expected)) {
+				throw new IllegalArgumentException(String.format("Invalid clear value for this view: clear=%s view=%s", clear, this));
+			}
+		}
+		this.clear = clear;
 		return this;
-	}
-
-	private void validate(ClearValue clear) {
-		if(clear == ClearValue.NONE) {
-			return;
-		}
-
-		if(!image.descriptor().aspects().contains(clear.aspect())) {
-			throw new IllegalArgumentException(String.format("Invalid clear value for this view: clear=%s view=%s", clear, this));
-		}
 	}
 
 	@Override

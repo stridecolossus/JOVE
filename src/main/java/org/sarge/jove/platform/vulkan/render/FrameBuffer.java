@@ -2,33 +2,16 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Predicate;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkClearDepthStencilValue;
-import org.sarge.jove.platform.vulkan.VkClearValue;
-import org.sarge.jove.platform.vulkan.VkExtent2D;
-import org.sarge.jove.platform.vulkan.VkFramebufferCreateInfo;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkImageSubresourceRange;
-import org.sarge.jove.platform.vulkan.VkRenderPassBeginInfo;
-import org.sarge.jove.platform.vulkan.VkSubpassContents;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.ClearValue;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.image.Image;
-import org.sarge.jove.platform.vulkan.image.ImageDescriptor;
-import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -91,7 +74,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		final Collection<ClearValue> clear = attachments
 				.stream()
 				.map(View::clear)
-				.filter(Predicate.not(ClearValue.NONE::equals))
+				.flatMap(Optional::stream)
 				.collect(toList());
 
 		// Init clear values
