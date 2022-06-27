@@ -53,13 +53,6 @@ public class FormatBuilder {
 		 * @throws IllegalArgumentException if the type is not supported
 		 */
 		public static Type of(Class<?> type) {
-
-//			switch(type) {
-//				case Float.class -> {}
-//				case Integer.class -> {}
-//				default -> throw new IllegalArgumentException("Unsupported data type: " + type);
-//			}
-
 			return switch(type.getSimpleName().toLowerCase()) {
 				case "float" -> FLOAT;
 				case "integer", "int", "short" -> INT;

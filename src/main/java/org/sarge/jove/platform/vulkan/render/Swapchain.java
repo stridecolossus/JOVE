@@ -75,7 +75,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param dev				Logical device
 	 * @param format			Image format
 	 * @param extents			Image extents
-	 * @param attachments		Colour Attachments
+	 * @param attachments		Attachments
 	 */
 	Swapchain(Pointer handle, DeviceContext dev, VkFormat format, Dimensions extents, List<View> attachments) {
 		super(handle, dev);
@@ -108,7 +108,7 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Colour attachments
+	 * @return Attachments
 	 */
 	public List<View> attachments() {
 		return attachments;

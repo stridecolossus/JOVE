@@ -2,12 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.platform.vulkan.VkAttachmentDescription;
-import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
-import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkSampleCount;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
 /**
@@ -178,11 +173,8 @@ public class Attachment {
 		 * @return New attachment
 		 */
 		public Attachment build() {
-			// Validate
 			if(attachment.format == null) throw new IllegalArgumentException("No format specified for attachment");
 			if(attachment.finalLayout == null) throw new IllegalArgumentException("No final layout specified");
-
-			// Create attachment
 			return new Attachment(attachment);
 		}
 	}

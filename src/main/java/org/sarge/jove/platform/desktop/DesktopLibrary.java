@@ -1,8 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Library;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 
 /**
@@ -62,4 +60,5 @@ interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMo
 	 * @return Vulkan extensions (pointer to array of strings)
 	 */
 	Pointer glfwGetRequiredInstanceExtensions(IntByReference count);
+	// TODO - can return type be a StringArray?
 }

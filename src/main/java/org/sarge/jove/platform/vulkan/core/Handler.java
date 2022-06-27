@@ -23,8 +23,8 @@ import com.sun.jna.ptr.PointerByReference;
  * Notes:
  * <ul>
  * <li>Handlers are released when the instance itself is destroyed</li>
- * <li>In general it is expected that a single handler will be sufficient for most or all application requirements, however the API does support multiple handlers</li>
- * <li>Diagnostics messages can contain an arbitrary pointer to a <i>user data</i> object but this is assumed to be redundant for an OO implementation and is always {@code null}</li>
+ * <li>In general it is expected that a single handler will be sufficient for most application requirements, however the API does support multiple handlers</li>
+ * <li>Diagnostics messages contain an arbitrary pointer to a <i>user data</i> object but this is assumed to be redundant for an OO implementation and is always {@code null}</li>
  * </ul>
  * @author Sarge
  */
@@ -101,7 +101,6 @@ public class Handler extends AbstractTransientNativeObject {
 	 * <ul>
 	 * <li>A JNA callback <b>must</b> implement a <b>single</b> method (though this is not enforced at compile-time)</li>
 	 * <li>The signature of the callback is not part of the public Vulkan API</li>
-	 * <li>Diagnostics messages can contain an arbitrary pointer to a <i>user data</i> object but this is assumed to be redundant for an OO implementation and is always {@code null}</li>
 	 * <li>TODO - link to VK doc</li>
 	 * </ul>
 	 */
@@ -115,7 +114,7 @@ public class Handler extends AbstractTransientNativeObject {
 		/**
 		 * Callback handler method.
 		 * @param severity			Severity
-		 * @param type				Message type(s) mask
+		 * @param type				Message type(s) bit-field
 		 * @param pCallbackData		Data
 		 * @param pUserData			Optional user data (always {@code null})
 		 * @return Whether to continue execution (always {@code false})
@@ -166,7 +165,7 @@ public class Handler extends AbstractTransientNativeObject {
 		}
 
 		/**
-		 * Sets the message consumer (dumps messages to the error console by default).
+		 * Sets the message consumer (messages are dumped to the error console by default).
 		 * @param consumer Message consumer
 		 */
 		public Builder consumer(Consumer<Message> consumer) {

@@ -167,7 +167,7 @@ public class View extends AbstractVulkanObject {
 		 */
 		public View build() {
 			// Build view descriptor
-			final VkImageViewCreateInfo info = new VkImageViewCreateInfo();
+			final var info = new VkImageViewCreateInfo();
 			info.viewType = type;
 			info.format = image.descriptor().format();
 			info.image = image.handle();

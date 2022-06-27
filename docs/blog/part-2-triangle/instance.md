@@ -191,7 +191,7 @@ public Instance build(VulkanLibrary lib) {
 }
 ```
 
-The `apiVersion` field is the __maximum__ version of the Vulkan API that the application can use - we add a new constant to the API for the version supported by the SDK:
+The `apiVersion` field is the version of the Vulkan implementation required by the application, a new constant is added to the library:
 
 ```java
 public interface VulkanLibrary {

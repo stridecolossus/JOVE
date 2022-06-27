@@ -60,7 +60,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 */
 	public Command begin() {
 		// Create descriptor
-		final VkRenderPassBeginInfo info = new VkRenderPassBeginInfo();
+		final var info = new VkRenderPassBeginInfo();
 		info.renderPass = pass.handle();
 		info.framebuffer = this.handle();
 

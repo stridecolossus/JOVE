@@ -209,7 +209,7 @@ public interface Image extends NativeObject {
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");
 
 			// Populate image structure
-			final VkImageCreateInfo info = new VkImageCreateInfo();
+			final var info = new VkImageCreateInfo();
 			info.flags = IntegerEnumeration.reduce(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();

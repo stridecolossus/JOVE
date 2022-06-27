@@ -78,7 +78,7 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 	 * <li>negative if the angle is greater than 90 degrees</li>
 	 * <li>commutative {@code a.b = b.a}</li>
 	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
-	 * <li>of a vector with itself is the <i>magnitude</i> of that vector</li>
+	 * <li>is the <i>magnitude</i> of a vector when applied to itself</li>
 	 * </ul>
 	 * <p>
 	 * @param t Tuple

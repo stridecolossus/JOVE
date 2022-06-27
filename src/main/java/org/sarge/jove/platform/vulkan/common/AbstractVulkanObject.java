@@ -2,14 +2,13 @@ package org.sarge.jove.platform.vulkan.common;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 import com.sun.jna.Pointer;
 
 /**
- * An <i>abstract Vulkan object</i> is the template base-class for an object derived from the logical device.
+ * An <i>abstract Vulkan object</i> is a template base-class for an object derived from the logical device.
  * @author Sarge
  */
 public abstract class AbstractVulkanObject extends AbstractTransientNativeObject {

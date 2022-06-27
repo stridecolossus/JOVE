@@ -169,15 +169,15 @@ public class Instance extends AbstractTransientNativeObject {
 		 */
 		public Instance build(VulkanLibrary lib) {
 			// Init application descriptor
-			final VkApplicationInfo app = new VkApplicationInfo();
+			final var app = new VkApplicationInfo();
 			app.pApplicationName = name;
 			app.applicationVersion = ver.toInteger();
 			app.pEngineName = "JOVE";
 			app.engineVersion = VERSION.toInteger();
-			app.apiVersion = VulkanLibrary.VERSION.toInteger();
+			app.apiVersion = VulkanLibrary.VERSION.toInteger();			// TODO - optional?
 
 			// Init instance descriptor
-			final VkInstanceCreateInfo info = new VkInstanceCreateInfo();
+			final var info = new VkInstanceCreateInfo();
 			info.pApplicationInfo = app;
 
 			// Populate required extensions

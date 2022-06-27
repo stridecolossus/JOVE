@@ -4,23 +4,17 @@ import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.sarge.jove.io.ResourceLoader;
-import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
-import org.sarge.jove.platform.vulkan.VkSpecializationMapEntry;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.util.BufferHelper;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -119,40 +113,26 @@ public class Shader extends AbstractVulkanObject {
 		 * @return Size of this constant (bytes)
 		 */
 		private int size() {
-			if(value instanceof Integer) {
-				return Integer.BYTES;
-			}
-			else
-			if(value instanceof Float) {
-				return Float.BYTES;
-			}
-			else
-			if(value instanceof Boolean) {
-				return Integer.BYTES;
-			}
-			else {
-				throw new UnsupportedOperationException("Unsupported constant type: " + value.getClass());
-			}
+			return switch(value) {
+				case Integer n -> Integer.BYTES;
+				case Float f -> Float.BYTES;
+				case Boolean b -> Integer.BYTES;
+				default -> throw new UnsupportedOperationException("Unsupported constant type: " + value.getClass());
+			};
 		}
 
 		/**
 		 * Adds this constant to the data buffer.
 		 */
 		void append(ByteBuffer buffer) {
-			if(value instanceof Integer n) {
-				buffer.putInt(n);
-			}
-			else
-			if(value instanceof Float f) {
-				buffer.putFloat(f);
-			}
-			else
-			if(value instanceof Boolean b) {
-				final VulkanBoolean bool = VulkanBoolean.of(b);
-				buffer.putInt(bool.toInteger());
-			}
-			else {
-				assert false;
+			switch(value) {
+				case Integer n -> buffer.putInt(n);
+				case Float f -> buffer.putFloat(f);
+				case Boolean b -> {
+					final VulkanBoolean bool = VulkanBoolean.of(b);
+					buffer.putInt(bool.toInteger());
+				}
+				default -> throw new RuntimeException();
 			}
 		}
 	}

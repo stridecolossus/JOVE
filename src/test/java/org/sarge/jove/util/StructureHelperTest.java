@@ -1,23 +1,19 @@
 package org.sarge.jove.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.stream.Collector;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class StructureHelperTest {
 	private Object obj;
 	private BiConsumer<Object, MockStructure> populate;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		obj = new Object();
