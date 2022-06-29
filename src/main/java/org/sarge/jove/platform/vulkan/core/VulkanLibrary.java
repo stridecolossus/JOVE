@@ -71,7 +71,7 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	}
 
 	/**
-	 * Checks the result of a Vulkan operation.
+	 * Checks the result of a Vulkan API method.
 	 * @param result Result code
 	 * @throws VulkanException if the given result is not {@link VkResult#SUCCESS}
 	 */

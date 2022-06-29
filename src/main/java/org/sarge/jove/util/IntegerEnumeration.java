@@ -35,11 +35,11 @@ import com.sun.jna.*;
  * ReverseMapping&lt;Thing&gt; mapping = IntegerEnumeration.mapping(Thing.class);
  * Thing thing = mapping.map(1);	// ONE
  *
- * // Build integer mask from enumeration
- * int mask = IntegerEnumeration.mask(Thing.ONE, ...);
+ * // Build integer bit-field from enumeration
+ * int bits = IntegerEnumeration.reduce(Thing.ONE, ...);
  *
- * // Enumerate constants from integer mask
- * Set&lt;Thing&gt; set = mapping.enumerate(mask);
+ * // Enumerate constants from integer bit-field
+ * Set&lt;Thing&gt; set = mapping.enumerate(bits);
  * </pre>
  * <p>
  * @author Sarge

@@ -5,16 +5,11 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 import org.sarge.jove.util.ReferenceFactory;
 
-import com.sun.jna.DefaultTypeMapper;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 
 /**

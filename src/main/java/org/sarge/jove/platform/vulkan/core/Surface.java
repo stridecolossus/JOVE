@@ -112,7 +112,7 @@ public class Surface extends AbstractTransientNativeObject {
 	 */
 	interface Library {
 		/**
-		 * Queries whether a queue family supports presentation for the given surface.
+		 * Queries whether a queue family supports presentation to the given surface.
 		 * @param device				Physical device handle
 		 * @param queueFamilyIndex		Queue family
 		 * @param surface				Vulkan surface

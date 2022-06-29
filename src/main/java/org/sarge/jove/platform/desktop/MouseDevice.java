@@ -8,6 +8,7 @@ import java.util.function.*;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.control.*;
+import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
 
@@ -49,7 +50,7 @@ public class MouseDevice implements Device {
 	/**
 	 * @return Mouse buttons
 	 */
-	public Source<Button> buttons() {
+	public Source<Button<Action>> buttons() {
 		return buttons;
 	}
 
@@ -91,10 +92,10 @@ public class MouseDevice implements Device {
 	/**
 	 * Mouse buttons event source.
 	 */
-	private class MouseButtonSource implements DesktopSource<MouseButtonListener, Button> {
+	private class MouseButtonSource implements DesktopSource<MouseButtonListener, Button<Action>> {
 		private final String[] id = IntStream
 				.rangeClosed(1, MouseInfo.getNumberOfButtons())
-				.mapToObj(id -> Button.name("Mouse", id))
+				.mapToObj(id -> Event.name("Mouse", id))
 				.toArray(String[]::new);
 
 		@Override
@@ -108,9 +109,10 @@ public class MouseDevice implements Device {
 		}
 
 		@Override
-		public MouseButtonListener listener(Consumer<Button> handler) {
+		public MouseButtonListener listener(Consumer<Button<Action>> handler) {
 			return (ptr, index, action, mods) -> {
-				final Button button = new Button(MouseButtonSource.this, id[index], action, mods);
+				final Button<Action> button = new Button<>(MouseButtonSource.this, id[index], Action.map(action));
+				// TODO - modifiers
 				handler.accept(button);
 			};
 		}

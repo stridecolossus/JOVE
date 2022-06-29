@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
@@ -30,7 +31,6 @@ public class KeyboardDeviceTest {
 
 		// Create device
 		dev = new KeyboardDevice(window);
-
 	}
 
 	@Test
@@ -42,11 +42,12 @@ public class KeyboardDeviceTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	void bind() {
-		final Consumer<Button> handler = mock(Consumer.class);
-		final Source<Button> source = dev.keyboard();
+		final Consumer<Button<Action>> handler = mock(Consumer.class);
+		final Source<Button<Action>> source = dev.keyboard();
 		final KeyListener listener = (KeyListener) source.bind(handler);
 		assertNotNull(listener);
 		listener.key(null, 256, 0, 1, 2);
-		verify(handler).accept(new Button(source, "ESCAPE", 1, 2));
+		verify(handler).accept(new Button<>(source, "ESCAPE", Action.PRESS));
+		// TODO - modifiers
 	}
 }

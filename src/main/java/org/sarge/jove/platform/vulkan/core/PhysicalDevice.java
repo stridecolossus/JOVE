@@ -177,6 +177,19 @@ public class PhysicalDevice implements NativeObject {
 		 * @see PhysicalDevice#isPresentationSupported(Surface, Family)
 		 */
 		public static Selector surface(Handle surface) {
+
+			/**
+			 *
+			 * maintain local cache of matching dev/family? => doesn't really matter if done multiple times
+			 * predicate is device only?
+			 * also function dev -> family?
+			 * OR
+			 * helper on device that selects family given predicate<family> => used to determine Q family for logical device
+			 * re-used in predicate<device> adapter to select device
+			 *
+			 *
+			 */
+
 			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
 			return new Selector(predicate);
 		}

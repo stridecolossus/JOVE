@@ -1,6 +1,8 @@
 package org.sarge.jove.control;
 
-import java.util.Set;
+import static java.util.stream.Collectors.joining;
+
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -44,5 +46,22 @@ public interface Event {
 		 * @return Event sources
 		 */
 		Set<Source<?>> sources();
+	}
+
+	/**
+	 * Event name delimiter.
+	 */
+	String DELIMITER = "-";
+
+	/**
+	 * Builds a human-readable, hyphen-delimited name from the given tokens.
+	 * @param tokens Tokens
+	 * @return Event name
+	 */
+	static String name(Object... tokens) {
+		return Arrays
+				.stream(tokens)
+				.map(String::valueOf)
+				.collect(joining(DELIMITER));
 	}
 }

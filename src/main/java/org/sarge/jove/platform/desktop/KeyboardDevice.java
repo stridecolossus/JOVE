@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.function.*;
 
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 
@@ -34,7 +35,7 @@ public class KeyboardDevice implements Device {
 	/**
 	 * @return Keyboard event source
 	 */
-	public Source<Button> keyboard() {
+	public Source<Button<Action>> keyboard() {
 		return keyboard;
 	}
 
@@ -46,7 +47,7 @@ public class KeyboardDevice implements Device {
 	/**
 	 * Keyboard event source.
 	 */
-	private class KeyboardSource implements DesktopSource<KeyListener, Button> {
+	private class KeyboardSource implements DesktopSource<KeyListener, Button<Action>> {
 		@Override
 		public String name() {
 			return "Keyboard";
@@ -58,10 +59,11 @@ public class KeyboardDevice implements Device {
 		}
 
 		@Override
-		public KeyListener listener(Consumer<Button> handler) {
+		public KeyListener listener(Consumer<Button<Action>> handler) {
 			return (ptr, key, scancode, action, mods) -> {
 				final String name = table.name(key);
-				final Button button = new Button(KeyboardSource.this, name, action, mods);
+				final Button<Action> button = new Button<>(KeyboardSource.this, name, Action.map(action));
+				// TODO - modifiers
 				handler.accept(button);
 			};
 		}

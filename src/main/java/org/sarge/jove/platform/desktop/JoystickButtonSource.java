@@ -4,9 +4,9 @@ import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.Source;
 
 import com.sun.jna.Pointer;
@@ -16,12 +16,13 @@ import com.sun.jna.ptr.IntByReference;
  * Event source for joystick buttons.
  * @author Sarge
  */
-class JoystickButtonSource implements Source<Button> {
+class JoystickButtonSource implements Source<Button<Action>> {
 	private final int id;
 	private final Desktop desktop;
 	private final Button[] buttons;
 //	private final Hat[] hats;
-	private final Map<Button, Byte> values = new HashMap<>();
+	// TODO - hats => separate Source<Button<Hat>>
+	private final Map<Button<Action>, Byte> values = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -41,7 +42,7 @@ class JoystickButtonSource implements Source<Button> {
 	}
 
 	@Override
-	public Object bind(Consumer<Button> handler) {
+	public Object bind(Consumer<Button<Action>> handler) {
 		// TODO
 		return null;
 	}
@@ -49,21 +50,21 @@ class JoystickButtonSource implements Source<Button> {
 	/**
 	 * @return Joystick buttons
 	 */
-	private Button[] initButtons() {
-		// Retrieve initial button values
-		final byte[] values = getButtonArray();
-
-		// Create buttons
-		final String[] buttons = IntStream
-				.range(0, values.length)
-				.mapToObj(id -> Button.name("Button", id))
-				.toArray(String[]::new);
-
-//		// Init button states
-//		init(buttons);
-//		update(values, buttons);
+	private Button<Action>[] initButtons() {
+//		// Retrieve initial button values
+//		final byte[] values = getButtonArray();
 //
-//		return buttons;
+//		// Create buttons
+//		final String[] buttons = IntStream
+//				.range(0, values.length)
+//				.mapToObj(id -> Event.name("Button", id))
+//				.toArray(String[]::new);
+//
+////		// Init button states
+////		init(buttons);
+////		update(values, buttons);
+////
+////		return buttons;
 		return null;
 	}
 
@@ -79,7 +80,7 @@ class JoystickButtonSource implements Source<Button> {
 	/**
 	 * @return Joystick buttons
 	 */
-	List<Button> buttons() {
+	List<Button<Action>> buttons() {
 		return Arrays.asList(buttons);
 	}
 
