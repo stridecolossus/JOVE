@@ -1,19 +1,14 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer.ValidationLayerSet;
 
 import com.sun.jna.ptr.IntByReference;
@@ -80,10 +75,10 @@ public class ValidationLayerTest {
 		}
 	}
 
+	@SuppressWarnings({"unchecked", "static-method"})
 	@Test
 	void enumerate() {
 		// Init function
-		final VulkanLibrary lib = mock(VulkanLibrary.class);
 		final VulkanFunction<VkLayerProperties> func = mock(VulkanFunction.class);
 		final IntByReference count = new IntByReference(1);
 
@@ -98,6 +93,6 @@ public class ValidationLayerTest {
 		doAnswer(answer).when(func).enumerate(eq(count), any(VkLayerProperties.class));
 
 		// Check layer
-		assertEquals(Set.of(layer), ValidationLayer.layers(lib, count, func));
+		assertEquals(Set.of(layer), ValidationLayer.layers(count, func));
 	}
 }

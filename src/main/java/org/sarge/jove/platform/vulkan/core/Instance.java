@@ -220,7 +220,7 @@ public class Instance extends AbstractTransientNativeObject {
 
 		/**
 		 * Enumerates extension properties.
-		 * @param filter		Layer name or <tt>null</tt> for all
+		 * @param pLayerName	Layer name or {@code null} for extensions provided by the Vulkan implementation
 		 * @param count			Number of extensions
 		 * @param extensions	Extensions
 		 * @return Result

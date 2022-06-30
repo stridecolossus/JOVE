@@ -1,29 +1,16 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
 
@@ -57,10 +44,10 @@ public class LogicalDeviceTest {
 		parent = mock(PhysicalDevice.class);
 		when(parent.instance()).thenReturn(instance);
 
-		// Init device limits
-		final var props = mock(PhysicalDevice.Properties.class);
+		// Init device properties
+		final var props = new VkPhysicalDeviceProperties();
+		props.limits = new VkPhysicalDeviceLimits();
 		when(parent.properties()).thenReturn(props);
-		when(props.limits()).thenReturn(new VkPhysicalDeviceLimits());
 
 		// Init enabled features
 		final DeviceFeatures features = mock(DeviceFeatures.class);

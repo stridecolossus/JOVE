@@ -2,8 +2,7 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
@@ -29,6 +28,14 @@ public interface DeviceFeatures {
 	 * @return Whether this set contains the given features
 	 */
 	boolean contains(DeviceFeatures features);
+
+	/**
+	 *
+	 * TODO
+	 * - explicitly separate into SUPPORTED and REQUIRED implementations?
+	 * - sealed?
+	 *
+	 */
 
 	/**
 	 * Skeleton implementation.

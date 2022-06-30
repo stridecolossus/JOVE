@@ -1,9 +1,11 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import java.util.Map;
+import static java.util.stream.Collectors.toSet;
+
+import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
@@ -13,6 +15,7 @@ import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.*;
+import com.sun.jna.ptr.IntByReference;
 
 /**
  * Vulkan API.
@@ -79,6 +82,32 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 		if(result != SUCCESS) {
 			throw new VulkanException(result);
 		}
+	}
+
+	/**
+	 * Enumerates supported extensions for the Vulkan platform or a physical device.
+	 * @param count		Count
+	 * @param func 		Extensions function
+	 * @return Supported extensions
+	 */
+	static Set<String> extensions(IntByReference count, VulkanFunction<VkExtensionProperties> func) {
+		return Arrays
+				.stream(VulkanFunction.invoke(func, count, VkExtensionProperties::new))
+				.map(e -> e.extensionName)
+				.map(String::new)
+				.collect(toSet());
+	}
+
+	/**
+	 * Enumerates extensions supported by this platform.
+	 * @param lib		Vulkan
+	 * @param count		Count
+	 * @return Extensions supported by this platform
+	 * @see #extensions(IntByReference, VulkanFunction)
+	 */
+	static Set<String> extensions(VulkanLibrary lib, IntByReference count) {
+		final VulkanFunction<VkExtensionProperties> func = (ref, array) -> lib.vkEnumerateInstanceExtensionProperties(null, ref, array);
+		return extensions(count, func);
 	}
 }
 

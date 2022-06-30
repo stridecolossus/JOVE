@@ -321,10 +321,12 @@ We discuss the purpose of the standard validation layer below.
 Generally we will need to enable platform-specific extensions to actually perform rendering.
 
 Usually there will be two extensions for a Vulkan rendering surface:
-- the general surface: `VK_KHR_surface` 
-- and the platform specific implementation, e.g. `VK_KHR_xcb_surface` for Linux or `VK_KHR_win32_surface` for Windows.
 
-This is where we introduce a new package and JNA interface for the GLFW library:
+- the general surface: `VK_KHR_surface` 
+
+- and a platform specific implementation, e.g. `VK_KHR_xcb_surface` for Linux or `VK_KHR_win32_surface` for Windows.
+
+This is where a new package and JNA interface for the GLFW library is introduced:
 
 ```java
 interface DesktopLibrary extends Library {

@@ -2,9 +2,7 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toCollection;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -32,16 +30,17 @@ public record ValidationLayer(String name, int version) {
 	}
 
 	/**
-	 * Enumerates validation layers.
+	 * Enumerates validation layers supported by the platform or a physical device.
+	 * <p>
+	 * Note that validation layers at the device level are deprecated.
 	 * <p>
 	 * The {@link Set#contains(Object)} method considers a layer to be a member if a matching entry with an equal or greater version number is present.
 	 * <p>
-	 * @param lib			Vulkan
-	 * @param factory		Reference factory
+	 * @param count			Number of layers
 	 * @param func			Layers function
 	 * @return Validation layers
 	 */
-	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count, VulkanFunction<VkLayerProperties> func) {
+	public static Set<ValidationLayer> layers(IntByReference count, VulkanFunction<VkLayerProperties> func) {
 		return Arrays
 				.stream(VulkanFunction.invoke(func, count, VkLayerProperties::new))
 				.map(ValidationLayer::of)
@@ -51,12 +50,12 @@ public record ValidationLayer(String name, int version) {
 	/**
 	 * Enumerates validation layers supported by this platform.
 	 * @param lib 			Vulkan library
-	 * @param factory		Reference factory
+	 * @param count			Number of layers
 	 * @return Validation layers supported by this platform
 	 */
-	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference ref) {
-		final VulkanFunction<VkLayerProperties> func = (count, array) -> lib.vkEnumerateInstanceLayerProperties(count, array);
-		return layers(lib, ref, func);
+	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count) {
+		final VulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
+		return layers(count, func);
 	}
 
 	/**
@@ -90,7 +89,6 @@ public record ValidationLayer(String name, int version) {
 	 */
 	public ValidationLayer {
 		Check.notEmpty(name);
-		Check.oneOrMore(version);
 	}
 
 	/**

@@ -8,21 +8,17 @@ import java.util.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty.Provider;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.Percentile;
+import org.sarge.lib.util.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.StringArray;
+import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -46,7 +42,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		super(handle);
 		this.parent = notNull(parent);
 		this.features = notNull(features);
-		this.provider = new Provider(parent.properties().limits(), features);
+		this.provider = new Provider(parent.properties().limits, features);
 		this.queues = Map.copyOf(queues);
 	}
 

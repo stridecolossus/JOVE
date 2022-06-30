@@ -58,7 +58,7 @@ public class View extends AbstractVulkanObject {
 	 * @return Clear value
 	 */
 	public Optional<ClearValue> clear() {
-		return Optional.of(clear);
+		return Optional.ofNullable(clear);
 	}
 
 	/**

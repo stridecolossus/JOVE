@@ -53,7 +53,7 @@ public class ViewTest extends AbstractVulkanTest {
 	@Test
 	void clear() {
 		view.clear(clear);
-		assertEquals(clear, view.clear());
+		assertEquals(Optional.of(clear), view.clear());
 	}
 
 	@Test

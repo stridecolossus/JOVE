@@ -1,26 +1,24 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.function.*;
 
 import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Properties;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.*;
+import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
-public class PhysicalDeviceTest {
+class PhysicalDeviceTest {
 	private PhysicalDevice dev;
 	private VulkanLibrary lib;
 	private Instance instance;
@@ -37,30 +35,56 @@ public class PhysicalDeviceTest {
 
 		// Init reference factory
 		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		when(factory.integer()).thenReturn(new IntByReference());
+		when(factory.integer()).thenReturn(new IntByReference(1));
 		when(instance.factory()).thenReturn(factory);
 
 		// Create a queue family
 		family = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
 
 		// Create device
-		dev = new PhysicalDevice(new Pointer(42), instance, List.of(family));
+		dev = new PhysicalDevice(new Pointer(1), instance, List.of(family), DeviceFeatures.EMPTY);
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(dev.handle());
+		assertEquals(new Handle(1), dev.handle());
 		assertEquals(instance, dev.instance());
 		assertEquals(List.of(family), dev.families());
+		assertEquals(DeviceFeatures.EMPTY, dev.features());
 	}
 
+	@DisplayName("A physical device exposes a descriptor of its properties")
 	@Test
-	void features() {
-		final var features = dev.features();
-		assertNotNull(features);
-		verify(lib).vkGetPhysicalDeviceFeatures(eq(dev), any());
+	void properties() {
+		final VkPhysicalDeviceProperties props = dev.properties();
+		assertNotNull(props);
+		verify(lib).vkGetPhysicalDeviceProperties(dev, props);
 	}
 
+	@DisplayName("The supported extensions can be retrieved from a physical device")
+	@Test
+	void extensions() {
+		dev.extensions();
+		verify(lib).vkEnumerateDeviceExtensionProperties(dev, null, instance.factory().integer(), null);
+	}
+
+	@SuppressWarnings("deprecation")
+	@DisplayName("The supported validation layers can be retrieved from a physical device")
+	@Test
+	void layers() {
+		dev.layers();
+		verify(lib).vkEnumerateDeviceLayerProperties(dev, instance.factory().integer(), null);
+	}
+
+	@DisplayName("A physical device can optionally support presentation")
+	@Test
+	void isPresentationSupported() {
+		final Handle surface = new Handle(2);
+		assertEquals(true, dev.isPresentationSupported(surface, family));
+		verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev, 0, surface, instance.factory().integer());
+	}
+
+	@DisplayName("The properties of an image format can be queried from a physical device")
 	@Test
 	void format() {
 		final VkFormatProperties props = dev.properties(VkFormat.D32_SFLOAT);
@@ -68,127 +92,93 @@ public class PhysicalDeviceTest {
 	}
 
 	@Nested
-	class PropertiesTest {
-		private Properties props;
-		private VkPhysicalDeviceLimits limits;
+	class EnumeratorTest {
+		private Enumerator enumerator;
 
 		@BeforeEach
 		void before() {
-			// Init device limits
-			limits = new VkPhysicalDeviceLimits();
+			enumerator = new Enumerator(instance);
+		}
 
-			// Init properties
-			final Answer<Void> answer = inv -> {
-				final VkPhysicalDeviceProperties props = inv.getArgument(1);
-				props.deviceName = "device".getBytes();
-				props.pipelineCacheUUID = "cache".getBytes();
-				props.deviceType = VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-				props.limits = limits;
-				return null;
+		@DisplayName("The physical devices on the local machine can be enumerated")
+		@Test
+		void enumerate() {
+			// Init device handle
+			final IntByReference count = instance.factory().integer();
+			final Answer<Integer> answer = inv -> {
+				final Pointer[] array = inv.getArgument(2);
+				array[0] = new Pointer(1);
+				return 0;
 			};
-			doAnswer(answer).when(lib).vkGetPhysicalDeviceProperties(eq(dev), any(VkPhysicalDeviceProperties.class));
+			doAnswer(answer).when(lib).vkEnumeratePhysicalDevices(instance, count, new Pointer[1]);
 
-			// Retrieve properties
-			props = dev.properties();
+			// Init queue family
+			final var arg = new VkQueueFamilyProperties() {
+				@Override
+				public boolean equals(Object obj) {
+					return true;
+				}
+			};
+			final Answer<Integer> families = inv -> {
+				final VkQueueFamilyProperties props = inv.getArgument(2);
+				props.queueCount = 1;
+				props.queueFlags = VkQueueFlag.GRAPHICS.value();
+				return 0;
+			};
+			doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Pointer(1), count, arg);
+
+			// Enumerate devices
+			final List<PhysicalDevice> devices = enumerator.devices().toList();
+			assertEquals(List.of(dev), devices);
 		}
 
+		@DisplayName("A physical device can be matched by a required feature set")
 		@Test
-		void constructor() {
-			assertNotNull(props);
-			assertEquals("device", props.name());
-			assertEquals("cache", props.cache());
-			assertEquals(VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, props.type());
-		}
-
-		@Test
-		void cached() {
-			assertSame(props, dev.properties());
-		}
-
-		@Test
-		void limits() {
-			assertNotNull(props.limits());
-			assertNotSame(limits, props.limits());
+		void features() {
+			final Predicate<PhysicalDevice> predicate = Enumerator.features(DeviceFeatures.EMPTY);
+			assertNotNull(predicate);
+			assertEquals(true, predicate.test(dev));
 		}
 	}
 
+	@DisplayName("A physical device selector...")
 	@Nested
-	class SelectorTest {
+	class SelectorTests {
+		@DisplayName("can be used to filter candidate devices")
+		@SuppressWarnings("unchecked")
 		@Test
-		void failed() {
-			final Selector selector = new Selector((dev, family) -> false);
-			assertEquals(false, selector.test(dev));
-			assertThrows(NoSuchElementException.class, () -> selector.family());
+		void test() {
+			final BiPredicate<PhysicalDevice, Family> predicate = mock(BiPredicate.class);
+			final Selector selector = new Selector(predicate);
+			selector.test(dev);
+			verify(predicate).test(dev, family);
 		}
 
+		@DisplayName("cannot select the queue family it the device does not match the selector")
+		@SuppressWarnings("unchecked")
 		@Test
-		void flags() {
-			final Selector selector = Selector.of(Set.of(VkQueueFlag.GRAPHICS));
+		void select() {
+			final Selector selector = new Selector(mock(BiPredicate.class));
+			assertThrows(NoSuchElementException.class, () -> selector.select(dev));
+		}
+
+		@DisplayName("can be used to match a device that provides a specified queue family")
+		@Test
+		void queue() {
+			final Selector selector = Selector.of(VkQueueFlag.GRAPHICS);
 			assertNotNull(selector);
 			assertEquals(true, selector.test(dev));
-			assertEquals(family, selector.family());
+			assertEquals(family, selector.select(dev));
 		}
 
+		@DisplayName("can be used to match a device that supports presentation")
 		@Test
 		void presentation() {
-			// Create presentation selector
 			final Handle surface = new Handle(3);
-			final Selector selector = Selector.surface(surface);
+			final Selector selector = Selector.of(surface);
 			assertNotNull(selector);
-
-			// Init supported boolean
-			final IntByReference supported = new IntByReference(1);
-			when(instance.factory().integer()).thenReturn(supported);
-
-			// Check presentation queue
 			assertEquals(true, selector.test(dev));
-			assertEquals(family, selector.family());
-
-			// Check API
-			verify(lib).vkGetPhysicalDeviceSurfaceSupportKHR(dev, family.index(), surface, supported);
+			assertEquals(family, selector.select(dev));
 		}
-	}
-
-	@Test
-	void enumerate() {
-		// Init number of results
-		final IntByReference count = new IntByReference(1);
-		when(instance.factory().integer()).thenReturn(count);
-
-		// Return the device handle
-		final Pointer handle = new Pointer(1);
-		final Answer<Integer> answer = inv -> {
-			final Pointer[] array = inv.getArgument(2);
-			array[0] = handle;
-			return 0;
-		};
-		doAnswer(answer).when(lib).vkEnumeratePhysicalDevices(instance, count, new Pointer[1]);
-
-		// Return the queue families for this device
-		final Answer<Integer> families = inv -> {
-			final VkQueueFamilyProperties props = inv.getArgument(2);
-			props.queueCount = 1;
-			props.queueFlags = VkQueueFlag.GRAPHICS.value();
-			return 0;
-		};
-		doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(eq(handle), eq(count), any(VkQueueFamilyProperties.class));
-
-		// Enumerate devices
-		final Stream<PhysicalDevice> stream = PhysicalDevice.devices(instance);
-		assertNotNull(stream);
-
-		// Retrieve device
-		final List<PhysicalDevice> list = stream.collect(toList());
-		assertEquals(1, list.size());
-
-		// Check device
-		final PhysicalDevice dev = list.get(0);
-		assertNotNull(dev);
-		assertEquals(new Handle(handle), dev.handle());
-		assertEquals(instance, dev.instance());
-
-		// Check queue families
-		final Family expected = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
-		assertEquals(List.of(expected), dev.families());
 	}
 }
