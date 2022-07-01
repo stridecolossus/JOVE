@@ -688,30 +688,6 @@ This code is becoming a bit messy as we now have a loop iterating through three 
 
 In a later chapter we will introduce a further abstraction that composes these objects into a single list.
 
-### Render Loop
-
-In the render configuration we modify the code to repeatedly invoke frame rendering and presentation:
-
-```java
-long start = System.currentTimeMillis();
-while(true) {
-    // Stop after a second or so
-    if(System.currentTimeMillis() - start > 1000) {
-        break;
-    }
-
-    ...
-}
-```
-
-We refactor the method signature to inject the _list_ of command buffers.  The code now looks up the render sequence for a frame given the `index` returned from the `acquire` step:
-
-```java
-Buffer frame = render.get(index);
-```
-
-Note that we could just use one command buffer since our render loop is essentially single-threaded.  However the above prepares us for properly synchronised code that utilises the multi-threaded nature of the Vulkan pipeline.
-
 ### Texture Sampling
 
 To use the texture sampler we make the following changes to the fragment shader:

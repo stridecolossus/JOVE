@@ -445,30 +445,107 @@ interface Library {
 }
 ```
 
+### Presentation
+
+To support presentation the swapchain API is extended with the following methods:
+
+```java
+interface Library {
+    ...
+    int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
+    int vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
+}
+```
+
+The index of the next swapchain image to be rendered is determined by the following method:
+
+```java
+public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
+    // Acquire swapchain image
+    DeviceContext dev = super.device();
+    VulkanLibrary lib = dev.library();
+    int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+
+    // Check result
+    boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
+    if(!ok) throw new SwapchainException(result);
+
+    return index.getValue();
+}
+```
+
+Notes:
+
+* The `index` is a class member created from the reference factory in the swapchain constructor.
+
+* The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter, for the moment these values are `null` in the demo.
+
+* Acquiring the swapchain image is one of the few API methods that can return _multiple_ success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  A _suboptimal_ return value is considered as valid.
+
+* The `SwapchainInvalidated` exception indicates that the swapchain has become invalid, e.g. the surface has been resized or minimised.
+
+When an image has been rendered it can be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
+
+```java
+public void present(Queue queue, int index) {
+    // Create presentation descriptor
+    VkPresentInfoKHR info = new VkPresentInfoKHR();
+
+    // Populate swap-chain
+    info.swapchainCount = 1;
+    info.pSwapchains = NativeObject.toArray(List.of(this));
+    
+    ...
+}
+```
+
+The image(s) to be presented are represented as a contiguous memory block (mapping to a native pointer-to-integer-array):
+
+```java
+int[] array = new int[]{index.getValue()};
+Memory mem = new Memory(array.length * Integer.BYTES);
+mem.write(0, array, 0, array.length);
+info.pImageIndices = mem;
+```
+
+Finally the presentation task is added to the relevant work queue:
+
+```java
+check(lib.vkQueuePresentKHR(queue, info));
+```
+
+Notes:
+
+* The API supports presentation of multiple swapchains in one operation but for the moment we restrict ourselves to a single instance.
+
+* Similarly the `pImageIndices` array consists of a single image index.
+
+* The presentation task descriptor is created on every invocation of the `present` method which may be cached later.
+
 ### Rendering Sequence
 
-In the demo application we modify the devices configuration class by replacing the two queues with command pools:
+In the demo application the devices configuration class is modified by replacing the two queues with command pools:
 
 ```java
 class DeviceConfiguration {
-    private static Pool pool(LogicalDevice dev, Selector selector) {
-        Queue queue = dev.queue(selector.family());
+    private static Pool pool(LogicalDevice dev, Family family) {
+        Queue queue = dev.queue(family);
         return Pool.create(dev, queue);
     }
     
     @Bean
     public Pool graphics(LogicalDevice dev) {
-        return pool(dev, graphics);
+        return pool(dev, graphicsFamily);
     }
     
     @Bean
     public Pool presentation(LogicalDevice dev) {
-        return pool(dev, presentation);
+        return pool(dev, presentationFamily);
     }
 }
 ```
 
-Next we add a new configuration class for the rendering sequence based on the pseudo-code above:
+Next a new configuration class is added to construct the rendering sequence based on the pseudo-code above:
 
 ```java
 @Configuration
@@ -488,11 +565,9 @@ public class RenderConfiguration {
 }
 ```
 
-Note that the bean for the injected command pool is disambiguated by _name_ (alternatively we could use an explicit `@Qualifier` annotation).
+Note that the bean for the injected command pool is disambiguated by _name_ (alternatively an explicit `@Qualifier` annotation could have been used).
 
-To finally display the triangle we need to invoke presentation and rendering.
-
-We add another bean which starts a Spring `ApplicationRunner` once the container has been initialised:
+To finally display the triangle we invoke presentation in a new bean which starts a Spring `ApplicationRunner` once the container has been initialised:
 
 ```java
 @Bean
@@ -505,7 +580,7 @@ Although we have a double-buffer swapchain and many of the components required t
 
 ```java
 // Start next frame
-swapchain.acquire();
+int index = swapchain.acquire(null, null); // TODO - synchronisation
 
 // Render frame
 Work.of(render).submit();
@@ -515,7 +590,7 @@ Pool pool = render.pool();
 pool.waitIdle();
 
 // Present frame
-swapchain.present(pool.queue());
+swapchain.present(pool.queue(), index);
 
 // Wait...
 Thread.sleep(1000);
@@ -525,15 +600,15 @@ Notes:
 
 * The `acquire` method will generate a Vulkan error since we are not providing any synchronisation parameters.
 
-* We briefly block execution at the end of the 'loop' so we have a chance of seeing the results (if there are any).
+* Execution is briefly blocked at the end of the 'loop' so we have a chance of seeing the results (if there are any).
  
-* Obviously this is temporary code just sufficient to test this first demo - we will be implementing a proper render loop in future chapters.
+* Obviously this is temporary code just sufficient to test this first demo, a proper render loop will be addressed in a future chapter.
 
-* In particular the window will be non-functional, i.e. cannot be moved or closed.
+* The GLFW window will be non-functional since the input event queue is not being polled, i.e. cannot be moved or closed.
 
 ### Conclusion
 
-If all goes well when we run the demo we should see the following:
+If all goes well we should see the following when running the final demo:
 
 ![Triangle](triangle.png)
 
@@ -543,7 +618,7 @@ All that for a triangle?
 
 There are a couple of gotchas that could result in staring at a blank screen:
 
-* The triangle vertices in the vertex shader are ordered counter-clockwise which _should_ be the default winding order - although not covered in this part of the demo the _rasterizer_ pipeline stage may need to be configured explicitly (or culling switched off altogether).
+* The triangle vertices in the vertex shader are ordered counter-clockwise which _should_ be the default winding order.  Although not covered in this part of the demo the _rasterizer_ pipeline stage may need to be configured explicitly (or culling switched off altogether).
 
 * The arguments for the hard-coded drawing command are all integers and can easily be accidentally transposed.
 
@@ -558,6 +633,8 @@ In the final chapter for this phase of development we implemented:
 * A mechanism for submitting work to the hardware.
 
 * Specific commands to support rendering.
+
+* Support for presentation.
 
 * A crude render 'loop' to display the triangle.
 
