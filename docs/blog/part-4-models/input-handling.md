@@ -9,7 +9,7 @@ title: Input Handling
 - [Overview](#overview)
 - [InputEvents](#input-events)
 - [Action Bindings](#action-bindings)
-- [Camera Controllers](#camera-controllers)
+- [Cameras](#cameras)
 
 ---
 
@@ -963,11 +963,207 @@ There are still further use-cases that will be implemented in later chapters:
 
 ---
 
-## Camera Controllers
+## Cameras
 
-### Default Implementation
+### Overview
 
-The camera class is a simple model class, to implement richer functionality we will introduce a _camera controller_ that can be bound to input actions.
+One of the main use cases for the input handling framework is to implement a _camera_ that can be controlled by the keyboard and mouse.
+
+We will first implement a _camera model_ that represents the viewers position and orientation, replacing the current static view-transform matrix.
+
+This will be managed by a _camera controller_ that implements free-look and orbital modes.
+
+### Vector
+
+We start with new functionality for the `Vector` class required to support the camera model.
+
+A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible.  Additionally many algorithms work irrespective of whether the distance is squared or not.
+
+Therefore we treat the magnitude as the __squared__ length of the vector (which is highlighted in the documentation):
+
+```java
+/**
+ * @return Magnitude (or length) <b>squared</b> of this vector
+ */
+public float magnitude() {
+    return x * x + y * y + z * z;
+}
+```
+
+Many operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
+
+```java
+public Vector normalize() {
+    float len = magnitude();
+    if(MathsUtil.isEqual(1, len)) {
+        return this;
+    }
+    else {
+        float f = MathsUtil.inverseRoot(len);
+        return multiply(f);
+    }
+}
+```
+
+Where `multiply` scales a vector by a given value:
+
+```java
+public Vector multiply(float f) {
+    return new Vector(x * f, y * f, z * f);
+}
+```
+
+The camera class will also use the _cross product_ to yield the vector perpendicular to two other vectors (using the right-hand rule):
+
+```java
+public Vector cross(Vector vec) {
+    float x = this.y * vec.z - this.z * vec.y;
+    float y = this.z * vec.x - this.x * vec.z;
+    float z = this.x * vec.y - this.y * vec.x;
+    return new Vector(x, y, z);
+}
+```
+
+Finally we add a convenience method to generate the vector between two points:
+
+```java
+public static Vector between(Point start, Point end) {
+    float dx = end.x - start.x;
+    float dy = end.y - start.y;
+    float dz = end.z - start.z;
+    return new Vector(dx, dy, dz);
+}
+```
+
+Note that the vector class is immutable and all 'mutator' methods create a new instance.
+
+### Camera Model
+
+The camera is a model class (in MVC terms) representing the position and orientation of the viewer:
+
+```java
+public class Camera {
+    private Point pos = Point.ORIGIN;
+    private Vector dir = Vector.Z;
+    private Vector up = Vector.Y;
+}
+```
+
+Note that under the hood the camera direction is the inverse of the view direction, i.e. the camera points _out_ of the screen whereas the view is obviously into the screen.
+
+Various mutator methods are provided to move the camera position:
+
+```java
+public void move(Point pos) {
+    this.pos = notNull(pos);
+}
+
+public void move(Vector vec) {
+    pos = pos.add(vec);
+}
+
+public void move(float dist) {
+    move(dir.multiply(dist));
+}
+
+public void strafe(float dist) {
+    move(right.multiply(dist));
+}
+```
+
+And a convenience setter to point the camera at a given target location:
+
+```java
+public void look(Point pt) {
+    if(pos.equals(pt)) throw new IllegalArgumentException(...);
+    Vector look = Vector.between(pt, pos).normalize();
+    direction(look);
+}
+```
+
+Note that this camera model would be subject to gimbal locking, e.g. if the direction is set to the _up_ axis.  Validation is added (not shown) to the relevant setters to prevent this occurring.  Later on we will replace the _direction_ property with a more advanced implementation for the camera orientation to mitigate this problem.
+
+Next the following transient members are added to the camera class to support the view transform:
+
+```java
+public class Camera {
+    ...
+    private Vector right = Vector.X;
+    private Matrix matrix;
+    private boolean dirty = true;
+}
+```
+
+Where:
+
+* The `dirty` flag is signalled in the various mutator methods (not shown) when any of the camera properties are modified.
+
+* The `right` vector is the horizontal axis of the viewport (also used in the `strafe` method above).
+
+The view transform matrix for the camera is then constructed on demand:
+
+```java
+public Matrix matrix() {
+    if(dirty) {
+        update();
+        dirty = false;
+    }
+    return matrix;
+}
+```
+
+The `update` method first determines the viewport axes based on the camera axes:
+
+```java
+private void update() {
+    // Determine right axis
+    right = up.cross(dir).normalize();
+
+    // Determine up axis
+    Vector y = dir.cross(right).normalize();
+}
+```
+
+From the three axes we can now build the view transform matrix as before:
+
+```java
+// Build translation component
+Matrix trans = Matrix.translation(new Vector(pos));
+
+// Build rotation component
+Matrix rot = new Matrix.Builder()
+    .identity()
+    .row(0, right)
+    .row(1, y)
+    .row(2, dir)
+    .build();
+
+// Create camera matrix
+matrix = rot.multiply(trans);
+```
+
+A camera model is added to the demo configuration class:
+
+```java
+public class CameraConfiguration {
+    @Bean
+    public static Camera camera() {
+        Camera cam = new Camera();
+        cam.move(new Point(0, -0.5f, -2));
+        return cam;
+    }
+}
+```
+
+And finally the old view transform code is replaced by the camera to construct the final projection matrix:
+
+```java
+return projection.multiply(cam.matrix()).multiply(model);
+```
+
+### Camera Controller
+
+The camera class is a simple model class, to implement richer functionality we introduce a _camera controller_ that can be bound to input actions.
 
 We first implement a basic _free-look_ controller that rotates the scene about the cameras position:
 
@@ -992,7 +1188,7 @@ The view direction of the free-look camera is determined as follows:
 
 3. Point the camera in the direction of the calculated point.
 
-To transform the coordinates to yaw-pitch angles we add the _interpolator_ class:
+To transform the coordinates to yaw-pitch angles the _interpolator_ class is introduced:
 
 ```java
 @FunctionalInterface
@@ -1015,7 +1211,7 @@ public interface Interpolator {
 }
 ```
 
-We can now add two interpolators to the controller:
+Two interpolator instances are added to the controller to transform in both directions:
 
 ```java
 private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
@@ -1026,23 +1222,23 @@ Notes:
 
 * The ranges of the interpolators are dependant on the algorithm to calculate the point on the unit-sphere (see below).
 
-* We may need to make the interpolator ranges mutable, i.e. currently we assume the range is the entire viewport.
+* The interpolator ranges in future may need to be mutable, i.e. currently we assume the range is the entire viewport.
 
 * The interpolator class will be expanded with additional functionality in subsequent chapters.
 
 ### Unit Sphere
 
-To calculate the point on the unit-sphere we add another new helper class:
+To determine the camera direction a new helper class is implemented to calculate a point on the unit-sphere given yaw-pitch angles:
 
 ```java
 public final class Sphere {
     /**
-     * Calculates the point on the unit-sphere for the given rotation angles (in radians).
+     * Calculates the vector on the unit-sphere for the given rotation angles (in radians).
      * @param theta     Horizontal angle (or <i>yaw</i>) in the range zero to {@link MathsUtil#TWO_PI}
      * @param phi       Vertical angle (or <i>pitch</i>) in the range +/- {@link MathsUtil#HALF_PI}
-     * @return Unit-sphere surface point
+     * @return Unit-sphere vector
      */
-    public static Point point(float theta, float phi) {
+    public static Vector vector(float theta, float phi) {
         ...
     }
 }
@@ -1065,28 +1261,26 @@ However the _coordinate space_ of the generated points is not aligned with the V
 
 We assume that applications will always want to the resultant points in the default Vulkan space used elsewhere in JOVE, therefore we modify the default algorithm.
 
-To make the camera point in the negative Z direction we simply fiddle _theta_ with a 90 degree clockwise 'rotation':
+To make the camera point in the negative Z direction the _theta_ is fiddled with a 90 degree clockwise 'rotation':
 
 ```java
-// Apply 90 degree clockwise rotation to align with the -Z axis
 float angle = theta - MathsUtil.HALF_PI;
 ```
 
-To transpose the axes we swizzle the resultant coordinates:
+The axes are transposed by a swizzle of the resultant coordinates:
 
 ```java
-// Swizzle the coordinates to default space
-return new Point(x, z, y);
+return new Vector(x, z, y);
 ```
 
-We can now implement the controller update method to point the camera at the calculated point on the sphere:
+Finally we can implement the controller update method to point the camera at the calculated point on the sphere:
 
 ```java
 public void update(float x, float y) {
     float yaw = horizontal.interpolate(x / dim.width());
     float pitch = vertical.interpolate(y / dim.height());
-    Point pt = sphere.point(yaw, pitch);
-    cam.direction(new Vector(pt));
+    Vector vec = sphere.vector(yaw, pitch);
+    cam.direction(vec);
 }
 ```
 
@@ -1094,7 +1288,7 @@ public void update(float x, float y) {
 
 An _orbital_ (or arcball) camera controller rotates the view position _about_ a target point-of-interest.
 
-We first extend the default controller to include the target position and a _radius_ which is the distance from the camera:
+The default controller is sub-classed to include a target position and _radius_ which is the distance from the camera:
 
 ```java
 public class OrbitalCameraController extends DefaultCameraController {
@@ -1113,23 +1307,23 @@ The algorithm to calculate the position of the camera is the same as the default
 ```java
 public void update(float x, float y) {
     ...
-    Point pt = sphere.point(yaw, pitch);
-    update(pt);
+    Vector vec = sphere.vector(yaw, pitch);
+    update(vec);
 }
 
-protected void update(Point pos) {
-    cam.direction(new Vector(pos));
+protected void update(Vector vec) {
+    cam.direction(vec);
 }
 ```
 
-In the orbital implementation we move the camera to the calculated point on the sphere and then point it at the target:
+In the orbital implementation the camera is moved to the calculated point on the sphere and then pointed at the target (which is basically the inverse of the unit-sphere vector):
 
 ```java
 @Override
-protected void update(Point pt) {
-    Point pos = pt.scale(radius).add(target);
+protected void update(Vector vec) {
+    Point pos = new Point(vec).scale(radius).add(target);
     cam.move(pos);
-    cam.look(target);
+    cam.direction(vec.invert());
 }
 ```
 
@@ -1149,7 +1343,7 @@ Note that the camera controllers will still be subject to gimbal locking at the 
 
 ### Integration
 
-To integrate the new event framework and camera controller we add the following to the camera configuration class:
+To integrate the new event framework and camera controller the following is added to the camera configuration class:
 
 ```java
 public class CameraConfiguration {
@@ -1221,6 +1415,8 @@ In this chapter we implemented:
 * A generic input event framework that abstracts over the underlying GLFW implementation.
 
 * The action bindings class that aids separation of concerns for input events and application action handlers.
+
+* The camera model.
 
 * Free-look and orbital camera controllers.
 
