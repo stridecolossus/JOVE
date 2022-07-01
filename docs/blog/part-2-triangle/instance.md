@@ -35,11 +35,9 @@ For this we will require the following components:
 
 * The relevant code generated structures used to specify the requirements of the instance.
 
-As already mentioned in the [code generation](/JOVE/blog/part-1-intro/generation) chapter we will employ the GLFW library which provides services for managing windows, input devices, etc. that we will use in future chapters (the tutorial also uses GLFW).  However another compelling reason to use GLFW is that it also offers functionality to create a Vulkan rendering surface suitable for the platform on which the application is executed.
+As already mentioned in the [code generation](/JOVE/blog/part-1-intro/generation) chapter we will employ the GLFW library which provides services for managing windows, input devices, etc. that will be used in future chapters (the tutorial also uses GLFW).  Another compelling reason to use GLFW is that it integrates neatly with Vulkan, in particular providing a platform-independant mechanism for determining the required extensions for the instance.
 
-We _could_ use Vulkan extensions to implement the surface from the ground up but it makes sense to take advantage of the platform-independant implementation.  The disadvantage of this approach is that the logic becomes a little convoluted as the surface and Vulkan components are slightly inter-dependant, but this seems an acceptable trade-off.
-
-To create an instance for a given platform we therefore also require:
+Therefore to create the instance for a given platform we also require:
 
 * A second JNA library for GLFW.
 

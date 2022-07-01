@@ -5,7 +5,6 @@ import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
@@ -24,7 +23,6 @@ public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
 	private final ReferenceFactory factory;
 	private final Map<String, Function> functions = new HashMap<>();
-	private final Collection<Handler> handlers = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -78,18 +76,7 @@ public class Instance extends AbstractTransientNativeObject {
 
 	@Override
 	protected void release() {
-		for(Handler handler : handlers) {
-			handler.destroy();
-		}
 		lib.vkDestroyInstance(handle, null);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("handlers", handlers.size())
-				.build();
 	}
 
 	/**
