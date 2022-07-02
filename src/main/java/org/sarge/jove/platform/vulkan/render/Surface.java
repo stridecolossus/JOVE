@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
@@ -9,7 +9,8 @@ import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.LazySupplier;
 
@@ -21,9 +22,31 @@ import com.sun.jna.ptr.IntByReference;
  * @author Sarge
  */
 public class Surface extends AbstractTransientNativeObject {
+	/**
+	 * Default presentation mode (FIFO, guaranteed on all Vulkan implementations).
+	 */
+	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
+
+	/**
+	 * @return Default surface format
+	 */
+	public static VkSurfaceFormatKHR defaultSurfaceFormat() {
+		// Create surface format
+		final var format = new VkSurfaceFormatKHR();
+		format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
+
+		// Init default swapchain image format
+		format.format = new FormatBuilder()
+				.components("BGRA")
+				.bytes(1)
+				.signed(false)
+				.type(FormatBuilder.Type.NORM)
+				.build();
+
+		return format;
+	}
+
 	private final PhysicalDevice dev;
-	private final Supplier<List<VkSurfaceFormatKHR>> formats = new LazySupplier<>(this::loadFormats);
-	private final Supplier<Set<VkPresentModeKHR>> modes = new LazySupplier<>(this::loadModes);
 
 	/**
 	 * Constructor.
@@ -56,10 +79,6 @@ public class Surface extends AbstractTransientNativeObject {
 	 * @return Formats supported by this surface
 	 */
 	public List<VkSurfaceFormatKHR> formats() {
-		return formats.get();
-	}
-
-	private List<VkSurfaceFormatKHR> loadFormats() {
 		final Instance instance = dev.instance();
 		final VulkanLibrary lib = instance.library();
 		final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, Surface.this, count, array);
@@ -69,29 +88,31 @@ public class Surface extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * Helper - Selects the preferred surface format that supports the given format and colour-space or fall back to an arbitrary supported format.
+	 * Helper - Selects the preferred surface format that supports the given format and colour-space or falls back to {@link #DEFAULT_SURFACE_FORMAT}.
 	 * @param format		Surface format
 	 * @param space			Colour space
 	 * @return Selected surface format
 	 */
 	public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space) {
-		final List<VkSurfaceFormatKHR> formats = this.formats();
-		return formats
+		return find(format, space).orElseGet(Surface::defaultSurfaceFormat);
+	}
+
+	/**
+	 * Helper - Finds a matching surface format supported by this surface.
+	 */
+	Optional<VkSurfaceFormatKHR> find(VkFormat format, VkColorSpaceKHR space) {
+		return this
+				.formats()
 				.stream()
 				.filter(f -> f.format == format)
 				.filter(f -> f.colorSpace == space)
-				.findAny()
-				.orElse(formats.get(0));
+				.findAny();
 	}
 
 	/**
 	 * @return Presentation modes supported by this surface
 	 */
 	public Set<VkPresentModeKHR> modes() {
-		return modes.get();
-	}
-
-	private Set<VkPresentModeKHR> loadModes() {
 		// Retrieve array of presentation modes
 		final Instance instance = dev.instance();
 		final VulkanLibrary lib = instance.library();
@@ -108,9 +129,50 @@ public class Surface extends AbstractTransientNativeObject {
 	}
 
 	/**
+	 * Helper - Selects a preferred presentation mode or falls back to {@link #DEFAULT_PRESENTATION_MODE}.
+	 * @param modes Preferred presentation mode(s)
+	 * @return Selected presentation mode
+	 */
+	public VkPresentModeKHR mode(VkPresentModeKHR... modes) {
+		final Set<VkPresentModeKHR> available = this.modes();
+		return Arrays
+				.stream(modes)
+				.filter(available::contains)
+				.findAny()
+				.orElse(DEFAULT_PRESENTATION_MODE);
+	}
+
+	/**
+	 * Creates a cached instance of this surface to minimise calls to the API.
+	 * @return Cached surface
+	 */
+	public Surface cached() {
+		return new Surface(handle, dev) {
+			private final Supplier<VkSurfaceCapabilitiesKHR> caps = new LazySupplier<>(super::capabilities);
+			private final Supplier<List<VkSurfaceFormatKHR>> formats = new LazySupplier<>(super::formats);
+			private final Supplier<Set<VkPresentModeKHR>> modes = new LazySupplier<>(super::modes);
+
+			@Override
+			public VkSurfaceCapabilitiesKHR capabilities() {
+				return caps.get();
+			}
+
+			@Override
+			public List<VkSurfaceFormatKHR> formats() {
+				return formats.get();
+			}
+
+			@Override
+			public Set<VkPresentModeKHR> modes() {
+				return modes.get();
+			}
+		};
+	}
+
+	/**
 	 * Surface API.
 	 */
-	interface Library {
+	public interface Library {
 		/**
 		 * Queries whether a queue family supports presentation to the given surface.
 		 * @param device				Physical device handle

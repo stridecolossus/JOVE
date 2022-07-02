@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
-import org.sarge.jove.platform.vulkan.render.RenderLibrary;
+import org.sarge.jove.platform.vulkan.render.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerEnumeration;
 

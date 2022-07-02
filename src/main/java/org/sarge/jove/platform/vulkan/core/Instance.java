@@ -39,14 +39,14 @@ public class Instance extends AbstractTransientNativeObject {
 	/**
 	 * @return Vulkan library
 	 */
-	VulkanLibrary library() {
+	public VulkanLibrary library() {
 		return lib;
 	}
 
 	/**
 	 * @return Reference factory
 	 */
-	ReferenceFactory factory() {
+	public ReferenceFactory factory() {
 		return factory;
 	}
 

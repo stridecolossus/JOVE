@@ -4,7 +4,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.*;
 
@@ -22,7 +21,6 @@ import org.sarge.jove.platform.vulkan.util.*;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
-@SuppressWarnings("static-method")
 public class SwapchainTest extends AbstractVulkanTest {
 	private Swapchain swapchain;
 	private View view;
@@ -49,7 +47,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		when(view.image()).thenReturn(image);
 
 		// Create swapchain
-		swapchain = new Swapchain(new Pointer(2), dev, Swapchain.DEFAULT_FORMAT, extents, List.of(view));
+		swapchain = new Swapchain(new Pointer(2), dev, FORMAT, extents, List.of(view));
 
 		// Create semaphore
 		semaphore = mock(Semaphore.class);
@@ -63,7 +61,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertNotNull(swapchain.handle());
-		assertEquals(Swapchain.DEFAULT_FORMAT, swapchain.format());
+		assertEquals(FORMAT, swapchain.format());
 		assertEquals(new Dimensions(3, 4), swapchain.extents());
 		assertEquals(List.of(view), swapchain.attachments());
 		assertEquals(1, swapchain.count());
@@ -145,23 +143,6 @@ public class SwapchainTest extends AbstractVulkanTest {
 		verify(view).destroy();
 	}
 
-	@Test
-	void format() {
-		assertEquals(VkFormat.B8G8R8A8_UNORM, Swapchain.DEFAULT_FORMAT);
-		// TODO - should be VkFormat.B8G8R8A8_SRGB; i.e. is it SRBG or UNORM?
-	}
-
-	@Test
-	void mode() {
-		// Check default mode
-		final Surface props = mock(Surface.class);
-		assertEquals(VkPresentModeKHR.FIFO_KHR, Swapchain.mode(props, VkPresentModeKHR.MAILBOX_KHR));
-
-		// Select supported mode
-		when(props.modes()).thenReturn(Set.of(VkPresentModeKHR.MAILBOX_KHR));
-		assertEquals(VkPresentModeKHR.MAILBOX_KHR, Swapchain.mode(props, VkPresentModeKHR.MAILBOX_KHR));
-	}
-
 	@Nested
 	class BuilderTests {
 		private Swapchain.Builder builder;
@@ -181,9 +162,9 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 			// Init supported formats
 			final VkSurfaceFormatKHR format = new VkSurfaceFormatKHR();
-			format.format = Swapchain.DEFAULT_FORMAT;
-			format.colorSpace = Swapchain.DEFAULT_COLOUR_SPACE;
-			when(surface.formats()).thenReturn(List.of(format));
+//			format.format = Swapchain.DEFAULT_FORMAT;
+//			format.colorSpace = Swapchain.DEFAULT_COLOUR_SPACE;
+			when(surface.formats()).thenReturn(List.of(Surface.defaultSurfaceFormat()));
 
 			// Init surface capabilities descriptor
 			caps = new VkSurfaceCapabilitiesKHR();
@@ -270,16 +251,16 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, () -> builder.count(2));
 		}
 
-		@Test
-		void invalidFormat() {
-			assertThrows(IllegalArgumentException.class, "Unsupported surface format", () -> builder.format(VkFormat.UNDEFINED).build());
-		}
-
-		@Test
-		void invalidColourSpace() {
-			builder.format(Swapchain.DEFAULT_FORMAT);
-			assertThrows(IllegalArgumentException.class, "Unsupported surface format", () -> builder.space(VkColorSpaceKHR.ADOBERGB_LINEAR_EXT).build());
-		}
+//		@Test
+//		void invalidFormat() {
+//			assertThrows(IllegalArgumentException.class, "Unsupported surface format", () -> builder.format(VkFormat.UNDEFINED).build());
+//		}
+//
+//		@Test
+//		void invalidColourSpace() {
+//			builder.format(Swapchain.DEFAULT_FORMAT);
+//			assertThrows(IllegalArgumentException.class, "Unsupported surface format", () -> builder.space(VkColorSpaceKHR.ADOBERGB_LINEAR_EXT).build());
+//		}
 
 		@Test
 		void invalidArrayLayers() {

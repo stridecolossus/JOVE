@@ -43,26 +43,6 @@ import com.sun.jna.ptr.*;
  * @author Sarge
  */
 public class Swapchain extends AbstractVulkanObject {
-	/**
-	 * Default swapchain image format.
-	 */
-	public static final VkFormat DEFAULT_FORMAT = new FormatBuilder()
-			.components("BGRA")
-			.bytes(1)
-			.signed(false)
-			.type(FormatBuilder.Type.NORM)
-			.build();
-
-	/**
-	 * Default swapchain colour-space.
-	 */
-	public static final VkColorSpaceKHR DEFAULT_COLOUR_SPACE = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
-
-	/**
-	 * Default presentation mode (FIFO, guaranteed on all Vulkan implementations).
-	 */
-	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
-
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> attachments;
@@ -118,7 +98,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame buffer.
 	 * Note that {@link VkResult#SUBOPTIMAL_KHR} is considered as success
 	 */
-	public static class SwapchainInvalidated extends VulkanException {
+	public static final class SwapchainInvalidated extends VulkanException {
 		private SwapchainInvalidated(int result) {
 			super(result);
 		}
@@ -138,14 +118,10 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @throws SwapchainInvalidated if the swapchain image cannot be acquired
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
-		// Validate
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
-
-		// Acquire swapchain image
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
 		checkSwapchain(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
-
 		return index.getValue();
 	}
 
@@ -211,21 +187,6 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Helper - Selects a preferred presentation mode or fall back to {@link #DEFAULT_PRESENTATION_MODE}.
-	 * @param props			Surface properties
-	 * @param modes			Preferred presentation modes
-	 * @return Selected presentation mode
-	 */
-	public static VkPresentModeKHR mode(Surface surface, VkPresentModeKHR... modes) {
-		final Set<VkPresentModeKHR> available = surface.modes();
-		return Arrays
-				.stream(modes)
-				.filter(available::contains)
-				.findAny()
-				.orElse(DEFAULT_PRESENTATION_MODE);
-	}
-
-	/**
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
@@ -241,11 +202,9 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param surface		Rendering surface
 		 */
 		public Builder(LogicalDevice dev, Surface surface) {
-			//if(dev.parent() != props.device()) throw new IllegalArgumentException("Mismatched device and surface");
 			this.dev = notNull(dev);
 			this.surface = notNull(surface);
 			this.caps = surface.capabilities();
-			this.info.surface = surface.handle();
 			init();
 		}
 
@@ -256,13 +215,12 @@ public class Swapchain extends AbstractVulkanObject {
 			extent(caps.currentExtent.width, caps.currentExtent.height);
 			count(caps.minImageCount);
 			transform(caps.currentTransform);
-			format(DEFAULT_FORMAT);
-			space(DEFAULT_COLOUR_SPACE);
+			format(Surface.defaultSurfaceFormat());
 			arrays(1);
 			mode(VkSharingMode.EXCLUSIVE);
 			usage(VkImageUsageFlag.COLOR_ATTACHMENT);
 			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
-			presentation(DEFAULT_PRESENTATION_MODE);
+			presentation(Surface.DEFAULT_PRESENTATION_MODE);
 			clipped(true);
 		}
 
@@ -287,26 +245,8 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param format Surface format
 		 */
 		public Builder format(VkSurfaceFormatKHR format) {
-			format(format.format);
-			space(format.colorSpace);
-			return this;
-		}
-
-		/**
-		 * Sets the image format.
-		 * @param format Image format
-		 */
-		public Builder format(VkFormat format) {
-			info.imageFormat = notNull(format);
-			return this;
-		}
-
-		/**
-		 * Sets the colour-space.
-		 * @param space Colour-space
-		 */
-		public Builder space(VkColorSpaceKHR space) {
-			info.imageColorSpace = notNull(space);
+			info.imageFormat = notNull(format.format);
+			info.imageColorSpace = notNull(format.colorSpace);
 			return this;
 		}
 
@@ -329,9 +269,6 @@ public class Swapchain extends AbstractVulkanObject {
 		}
 		// TODO - constrain by actual resolution using glfwGetFramebufferSize()
 
-		/**
-		 * Helper - Populates the swapchain extents.
-		 */
 		private void extent(int w, int h) {
 			info.imageExtent.width = w;
 			info.imageExtent.height = h;
@@ -428,18 +365,17 @@ public class Swapchain extends AbstractVulkanObject {
 		 */
 		public Swapchain build() {
 			// Validate surface format
-			surface
-					.formats()
-					.stream()
-					.filter(f -> f.format == info.imageFormat)
-					.filter(f -> f.colorSpace == info.imageColorSpace)
-					.findAny()
-					.orElseThrow(() -> new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", info.imageFormat, info.imageColorSpace)));
+			if(surface.find(info.imageFormat, info.imageColorSpace).isEmpty()) {
+				throw new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", info.imageFormat, info.imageColorSpace));
+			}
+
+			// Init swapchain descriptor
+			info.surface = surface.handle();
+			info.oldSwapchain = null; // TODO
 
 			// TODO
 			info.queueFamilyIndexCount = 0;
 			info.pQueueFamilyIndices = null;
-			info.oldSwapchain = null;
 
 			// Create swapchain
 			final VulkanLibrary lib = dev.library();
