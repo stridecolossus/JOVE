@@ -1,9 +1,9 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
@@ -31,50 +31,56 @@ import org.sarge.lib.util.Check;
  */
 public class FormatSelector {
 	/**
-	 * Creates a selection test for the given format features.
+	 * Helper - Creates a format filter that matches the given set of features.
 	 * @param features		Required format features
-	 * @param optimal		Whether to select <i>optimal</i> or <i>linear</i> features
-	 * @return Format feature filter
+	 * @param optimal		Whether to match on the <i>optimal</i> or <i>linear</i> tiling features
+	 * @return Format filter
 	 */
-	public static Predicate<VkFormatProperties> feature(Set<VkFormatFeature> features, boolean optimal) {
+	public static Predicate<VkFormatProperties> filter(Set<VkFormatFeature> features, boolean optimal) {
+		Check.notEmpty(features);
 		final int bits = IntegerEnumeration.reduce(features);
 		return props -> {
-			final int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-			return new Mask(actual).contains(bits);
+			final Mask mask = new Mask(optimal ? props.optimalTilingFeatures : props.linearTilingFeatures);
+			return mask.contains(bits);
 		};
 	}
 
-	private final Function<VkFormat, VkFormatProperties> mapper;
-	private final Predicate<VkFormatProperties> predicate;
+	private final PhysicalDevice dev;
+	private final Predicate<VkFormatProperties> filter;
 
 	/**
 	 * Constructor.
-	 * @param mapper 		Function to lookup the properties for a given format
-	 * @param predicate		Selection criteria
+	 * @param dev			Physical device
+	 * @param filter		Format selector
 	 */
-	public FormatSelector(Function<VkFormat, VkFormatProperties> mapper, Predicate<VkFormatProperties> predicate) {
-		this.mapper = notNull(mapper);
-		this.predicate = notNull(predicate);
+	public FormatSelector(PhysicalDevice dev, Predicate<VkFormatProperties> filter) {
+		this.dev = notNull(dev);
+		this.filter = notNull(filter);
 	}
 
 	/**
-	 * Selects the first matching format from the given list of candidates.
+	 * Selects a format from the given list of candidates.
+	 * @param candidates Candidate formats
+	 * @return Selected format
+	 */
+	public Optional<VkFormat> select(VkFormat... candidates) {
+		return select(Arrays.asList(candidates));
+	}
+
+	/**
+	 * Selects a format from the given list of candidates.
 	 * @param candidates Candidate formats
 	 * @return Selected format
 	 */
 	public Optional<VkFormat> select(List<VkFormat> candidates) {
-		Check.notEmpty(candidates);
-		return candidates
-				.stream()
-				.filter(this::matches)
-				.findAny();
+		return candidates.stream().filter(this::matches).findAny();
 	}
 
 	/**
-	 * Retrieves the properties for the given format and applies the selection test.
+	 * Matches a candidate format.
 	 */
 	private boolean matches(VkFormat format) {
-		final VkFormatProperties props = mapper.apply(format);
-		return predicate.test(props);
+		final VkFormatProperties props = dev.properties(format);
+		return filter.test(props);
 	}
 }
