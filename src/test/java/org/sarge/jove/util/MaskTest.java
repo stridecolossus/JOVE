@@ -1,12 +1,8 @@
 package org.sarge.jove.util;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class MaskTest {
 	private Mask mask;
@@ -28,6 +24,12 @@ public class MaskTest {
 
 	@Test
 	void bit() {
+
+//		System.out.println(Integer.highestOneBit(0));
+//		System.out.println(Integer.highestOneBit(0b001));
+//		System.out.println(Integer.highestOneBit(0b010));
+//		System.out.println(Integer.highestOneBit(0b100));
+
 		assertEquals(true, mask.bit(0));
 		assertEquals(false, mask.bit(1));
 		assertEquals(true, mask.bit(2));
