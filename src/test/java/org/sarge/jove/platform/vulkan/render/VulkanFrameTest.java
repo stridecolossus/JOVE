@@ -1,15 +1,11 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
@@ -27,7 +23,6 @@ public class VulkanFrameTest extends AbstractVulkanTest {
 		// Create swapchain
 		swapchain = mock(Swapchain.class);
 		when(swapchain.device()).thenReturn(dev);
-		when(swapchain.count()).thenReturn(2);
 
 		// Create presentation queue
 		queue = new Queue(new Handle(1), new Family(0, 1, Set.of()));

@@ -11,8 +11,10 @@ import org.sarge.lib.util.Check;
 /**
  * The <i>format builder</i> is used to programatically select a Vulkan format.
  * <p>
- * Finding a format in the {@link VkFormat} enumeration can be difficult given the number of values.
- * However the naming convention is highly consistent and it is therefore often easier to specify the format programatically.
+ * Finding a {@link VkFormat} can be difficult given the size of the enumeration.
+ * However the naming convention is consistent and it is therefore possible to specify the format programatically.
+ * <p>
+ * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex {@link Layout}.
  * <p>
  * Examples:
  * <pre>
@@ -27,8 +29,6 @@ import org.sarge.lib.util.Check;
  * // Determine format from a component layout: <code>R32G32B32_SFLOAT</code>
  * VkFormat point = FormatBuilder.format(Point.LAYOUT);
  * </pre>
- * <p>
- * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex {@link Layout}.
  * <p>
  * @see VkFormat
  * @author Sarge

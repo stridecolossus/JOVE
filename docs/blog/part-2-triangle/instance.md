@@ -419,9 +419,6 @@ public class InstanceDemo {
         Desktop desktop = Desktop.create();
         if(!desktop.isVulkanSupported()) throw new RuntimeException("Vulkan not supported");
 
-        // Lookup required extensions
-        String[] extensions = desktop.extensions();
-
         // Init Vulkan
         VulkanLibrary lib = VulkanLibrary.create();
 

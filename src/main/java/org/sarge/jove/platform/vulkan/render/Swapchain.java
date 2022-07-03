@@ -81,13 +81,6 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Number of swapchain images
-	 */
-	public int count() {
-		return attachments.size();
-	}
-
-	/**
 	 * @return Attachments
 	 */
 	public List<View> attachments() {
@@ -243,8 +236,12 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Sets the surface format.
 		 * @param format Surface format
+		 * @throws IllegalArgumentException if the given format is not supported by the surface
 		 */
 		public Builder format(VkSurfaceFormatKHR format) {
+			if(surface.find(format.format, format.colorSpace).isEmpty()) {
+				throw new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", format.format, format.colorSpace));
+			}
 			info.imageFormat = notNull(format.format);
 			info.imageColorSpace = notNull(format.colorSpace);
 			return this;
@@ -364,11 +361,6 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the image format or colour-space is not supported by the surface
 		 */
 		public Swapchain build() {
-			// Validate surface format
-			if(surface.find(info.imageFormat, info.imageColorSpace).isEmpty()) {
-				throw new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", info.imageFormat, info.imageColorSpace));
-			}
-
 			// Init swapchain descriptor
 			info.surface = surface.handle();
 			info.oldSwapchain = null; // TODO

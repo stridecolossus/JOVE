@@ -17,15 +17,6 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>handler</i> is a diagnostics message handler attached to the instance.
- * <p>
- * Handlers are configured and attached to the instance using the {@link Builder}.
- * <p>
- * Notes:
- * <ul>
- * <li>Handlers are released when the instance itself is destroyed</li>
- * <li>In general it is expected that a single handler will be sufficient for most application requirements, however the API does support multiple handlers</li>
- * <li>Diagnostics messages contain an arbitrary pointer to a <i>user data</i> object but this is assumed to be redundant for an OO implementation and is always {@code null}</li>
- * </ul>
  * @author Sarge
  */
 public class Handler extends AbstractTransientNativeObject {
