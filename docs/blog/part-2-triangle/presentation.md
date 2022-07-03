@@ -14,7 +14,7 @@ title: Presentation
 
 ## Overview
 
-In the next two chapters we will implement the various components required for _presentation_ to the Vulkan surface:
+In the next two chapters we implement the various components required for _presentation_ to the Vulkan surface:
 
 * The _swapchain_ is a controller that manages the process of presenting a _frame buffer_ to the display.
 
@@ -26,7 +26,7 @@ In the next two chapters we will implement the various components required for _
 
 Generally an application will employ a double or triple-buffer strategy where a completed frame is presented while the next is being rendered, the buffers are swapped, and the process repeats for the next frame.  In addition Vulkan is designed to allow these activities to be executed in parallel if required.
 
-During this chapter we will also introduce several new framework components and supporting functionality (covered in detail at the end of the chapter).
+During this chapter we also introduce several new framework components and supporting functionality which are covered in detail towards at the end of the page.
 
 ---
 
@@ -40,16 +40,17 @@ We start with a new domain class that wraps the rendering surface previously ret
 
 ```java
 public class Surface extends AbstractTransientNativeObject {
-    private final Instance instance;
+    private final PhysicalDevice dev;
 
-    public Surface(Handle handle, Instance instance) {
-        super(handle);
-        this.instance = notNull(instance);
+    public Surface(Handle surface, PhysicalDevice dev) {
+        super(surface);
+        this.dev = notNull(dev);
     }
 
     @Override
     protected void release() {
-        VulkanLibrarySurface lib = instance.library();
+        final Instance instance = dev.instance();
+        final VulkanLibrary lib = instance.library();
         lib.vkDestroySurfaceKHR(instance, this, null);
     }
 }
@@ -63,15 +64,7 @@ Notes:
 
 * Both of these new framework components are detailed towards the end of the chapter.
 
-The new surface class provides a factory for the surface properties for the selected physical device:
-
-```java
-public Properties properties(PhysicalDevice dev) {
-    return new Properties(dev);
-}
-```
-
-The surface properties provides a number of accessors that are used to configure the swapchain.  The _surface capabilities_ specify minimum and maximum constraints on various aspects of the hardware, such as the number of frame buffers, the maximum dimensions of the image views, etc:
+The surface class provides a number of accessors that are used to configure the swapchain.  The _surface capabilities_ specify minimum and maximum constraints on various aspects of the hardware, such as the number of frame buffers, the maximum dimensions of the image views, etc:
 
 ```java
 public VkSurfaceCapabilitiesKHR capabilities() {
@@ -94,7 +87,7 @@ public Collection<VkSurfaceFormatKHR> formats() {
 }
 ```
 
-Finally the swapchain will support a number of available _presentation modes_ (at least one) which can be configured by the application:
+Finally the swapchain supports a number of available _presentation modes_ (at least one) which can be configured by the application:
 
 ```java
 public Set<VkPresentModeKHR> loadModes() {
@@ -116,11 +109,10 @@ return Arrays
     .collect(toSet());
 ```
 
-The new API methods are added to the surface library:
+A new JNA library is created for the various surface API methods:
 
 ```java
 public interface Library {
-    ...
     int  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, VkSurfaceCapabilitiesKHR caps);
     int  vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntByReference count, VkSurfaceFormatKHR formats);
     int  vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntByReference count, int[] modes);
@@ -130,9 +122,7 @@ public interface Library {
 
 ### Images
 
-Vulkan creates the images for the colour attachments for us when the swapchain is instantiated.
-
-We first create a new domain object for a Vulkan image:
+Vulkan creates the images for the colour attachments when the swapchain is instantiated:
 
 ```java
 public class Image implements NativeObject {
@@ -142,7 +132,7 @@ public class Image implements NativeObject {
 }
 ```
 
-The _image descriptor_ comprises the static properties of the image:
+The _image descriptor_ comprises the static properties of an image:
 
 ```java
 public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levels, int layers) {
@@ -163,11 +153,11 @@ public record Dimensions(int width, int height) {
 }
 ```
 
-We also add a builder to construct an image descriptor.
+A convenience builder is also implemented to construct an image descriptor.
 
 ### Image Views
 
-An _image view_ is a reference to an image and is the entry-point for operations such as layout transforms, sampling, etc:
+An _image view_ is the entry-point for operations on an image such as layout transforms, sampling, etc:
 
 ```java
 public class View extends AbstractVulkanObject {
@@ -195,7 +185,7 @@ Notes:
 
 * The view class initially has no functionality but will be expanded as we progress (in particular when addressing clearing attachments).
 
-To construct a view for a given image we implement a builder:
+An image view is constructed by a builder as usual:
 
 ```java
 public static class Builder {
@@ -256,7 +246,7 @@ private static VkComponentMapping create() {
 }
 ```
 
-Finally we add a new JNA library for images views:
+Finally a new JNA library is added for image views:
 
 ```java
 interface Library {
@@ -267,17 +257,13 @@ interface Library {
 
 ### Swapchain
 
-With the above in place we can now implement the swapchain itself:
+With the above in place the swapchain itself we now be implemented:
 
 ```java
 public class Swapchain extends AbstractVulkanObject {
-    public static final VkColorSpaceKHR DEFAULT_COLOUR_SPACE = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
-    public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
-    public static final VkFormat DEFAULT_FORMAT = VkFormat.B8G8R8A8_SRGB;
-
     private final VkFormat format;
     private final Dimensions extents;
-    private final List<View> views;
+    private final List<View> attachments;
 
     @Override
     protected Destructor<Swapchain> destructor(VulkanLibrary lib) {
@@ -297,27 +283,23 @@ The swapchain is another highly configurable domain object created via a builder
 public static class Builder {
     private final LogicalDevice dev;
     private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
+    private final Surface surface;
     private final VkSurfaceCapabilitiesKHR caps;
-    private final Collection<VkSurfaceFormatKHR> formats;
-    private final Set<VkPresentModeKHR> modes;
 }
 ```
 
-The available capabilities, formats and presentation modes are queried (once) from the surface:
+The surface capabilities are queried from the surface in the constructor:
 
 ```java
 public Builder(LogicalDevice dev, Surface surface) {
-    Surface.Properties props = surface.properties(dev.parent());
-    this.caps = props.capabilities();
-    this.formats = props.formats();
-    this.modes = props.modes();
     this.dev = notNull(dev);
-    info.surface = surface.handle();
+    this.surface = notNull(surface);
+    this.caps = surface.capabilities();
     init();
 }
 ```
 
-The constructor also initialises the swapchain properties to sensible defaults via the setters (based on the capabilities of the surface):
+The constructor also initialises the swapchain properties to sensible defaults via the setters based on the capabilities of the surface:
 
 ```java
 private void init() {
@@ -335,7 +317,7 @@ private void init() {
 }
 ```
 
-Constructing the swapchain is comprised of three steps:
+Constructing the swapchain comprises three steps:
 
 1. Create the swapchain.
 
@@ -355,7 +337,7 @@ public Swapchain build() {
 }
 ```
 
-Next we retrieve the handles to the swapchain images created by Vulkan:
+Next the handles to the swapchain images are retrieved:
 
 ```java
 VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
@@ -363,13 +345,10 @@ IntByReference count = factory.integer();
 Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
 ```
 
-The images share the same descriptor:
+The images all share the same descriptor:
 
 ```java
-Dimensions extents = new Dimensions(
-    info.imageExtent.width,
-    info.imageExtent.height
-);
+Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .format(info.imageFormat)
     .extents(new ImageExtents(extents))
@@ -377,7 +356,7 @@ ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .build();
 ```
 
-Which is used when we create the view for each swapchain image:
+Which is used when creating the view for each image:
 
 ```java
 var views = Arrays
@@ -388,7 +367,7 @@ var views = Arrays
     .collect(toList());
 ```
 
-We add the convenience `view` factory method on the image class to build a default view for a given image:
+A convenience `view` factory method is implemented on the image class to build a default view for that image:
 
 ```java
 public class Image {
@@ -404,7 +383,7 @@ Finally we create the swapchain domain object itself:
 return new Swapchain(chain.getValue(), dev, info.imageFormat, extents, views);
 ```
 
-And add a new API:
+A new JNA library is added for the swapchain:
 
 ```java
 interface Library {
@@ -413,147 +392,6 @@ interface Library {
     int  vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 }
 ```
-
-### Presentation
-
-To support presentation we extend the new API with the following methods:
-
-```java
-interface Library {
-    ...
-    int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
-    int vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
-}
-```
-
-We add the following to acquire the index of the next image to be rendered:
-
-```java
-public int acquire(Semaphore semaphore, Fence fence) throws SwapchainException {
-    // Acquire swapchain image
-    DeviceContext dev = super.device();
-    VulkanLibrary lib = dev.library();
-    int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
-
-    // Check result
-    boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
-    if(!ok) throw new SwapchainException(result);
-
-    return index.getValue();
-}
-```
-
-Notes:
-
-* The `index` is a class member created from the reference factory in the swapchain constructor.
-
-* The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter when we fully implement the render loop.  For the moment we will leave these values as `null` in the acquire method.
-
-* Acquiring the swapchain image is (probably) the only API method that can return multiple success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  We decide that a _suboptimal_ return value is considered as valid.
-
-* The `SwapchainException` is sub-class of a Vulkan exception and is used to indicate that the swapchain has become invalid, e.g. the surface has been resized or minimised.
-
-When an image has been rendered it can be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
-
-```java
-public void present(Queue queue, int index) {
-    // Create presentation descriptor
-    VkPresentInfoKHR info = new VkPresentInfoKHR();
-
-    // Populate swap-chain
-    info.swapchainCount = 1;
-    info.pSwapchains = NativeObject.toArray(List.of(this));
-    
-    ...
-}
-```
-
-Next we specify the array of images to be presented as a contiguous memory block:
-
-```java
-int[] array = new int[]{index.getValue()};
-Memory mem = new Memory(array.length * Integer.BYTES);
-mem.write(0, array, 0, array.length);
-info.pImageIndices = mem;
-```
-
-And finally we invoke the API method that adds the presentation task to the relevant work queue:
-
-```java
-check(lib.vkQueuePresentKHR(queue, info));
-```
-
-Notes:
-
-* The API supports presentation of multiple swapchains in one operation but we restrict ourselves to a single instance for the moment.
-
-* Similarly the `pImageIndices` array therefore consists of a single image index.
-
-* The presentation task descriptor is created on every invocation of the `present` method which we may well want to cache later.
-
-### Format Builder
-
-When developing the above code we realised that finding an image format in the `VkFormat` enumeration can be quite tricky - there are an awful lot of them.  However the enumeration names are logical and consistent which allows us to programatically select an image format.
-
-We introduce the following helper class that is used to specify the various component of a required format:
-
-```java
-public class FormatBuilder {
-    public static final String RGBA = "RGBA";
-
-    private String components = RGBA;
-    private int count = 4;
-    private int bytes = 4;
-    private Type type = Type.FLOAT;
-    private boolean signed = true;
-}
-```
-
-The `Type` field is an enumeration of the Vulkan component types:
-
-```java
-public enum Type {
-    INT,
-    FLOAT,
-    NORM,
-    SCALED,
-    RGB
-}
-```
-
-The builder constructs the format name and looks up the enumeration constant:
-
-```java
-public VkFormat build() {
-    // Build component layout
-    StringBuilder layout = new StringBuilder();
-    int size = bytes * Byte.SIZE;
-    for(int n = 0; n < count; ++n) {
-        layout.append(template.charAt(n));
-        layout.append(size);
-    }
-
-    // Build format string
-    char ch = signed ? 'S' : 'U';
-    String format = String.format("%s_%c%s", layout, ch, type.name());
-
-    // Lookup format
-    return VkFormat.valueOf(format);
-}
-```
-
-We can now refactor the demo to build the format rather than having to find it in the enumeration:
-
-```java
-VkFormat format = new FormatBuilder()
-    .template("BGRA")
-    .bytes(1)
-    .signed(true)
-    .type(FormatBuilder.Type.RGB)
-    .build();
-```
-
-Which maps to the `B8G8R8A8_SRGB` format used by the colour attachment.
 
 ---
 
@@ -567,11 +405,11 @@ Most of the Vulkan domain objects developed thus far have a _handle_ which is th
 
 There are a couple of issues with this approach:
 
-* A JNA pointer is mutable which essentially breaks the class if we expose the handle.
+* A JNA pointer is mutable which essentially breaks the class if the underlying pointer is exposed.
 
-* Currently our API methods are defined in terms of pointers which is not type-safe and requires additional code to convert to/from the handle.
+* Currently API methods are defined in terms of pointers which is not type-safe and also requires additional code to extract the handle.
 
-We will introduce another abstraction for native objects to resolve (or at least mitigate) these problems.
+Therefore new framework code is introduced for native objects to resolve (or at least mitigate) these problems.
 
 The `Handle` class is an immutable, opaque wrapper for a JNA pointer:
 
@@ -600,7 +438,7 @@ public final class Handle {
 }
 ```
 
-We next introduce a new base-class for domain objects that contain a handle:
+Domain objects that contain a handle are refactored to implement the following new abstraction:
 
 ```java
 public interface NativeObject {
@@ -608,7 +446,7 @@ public interface NativeObject {
 }
 ```
 
-And a JNA type converter to convert a native object to its underlying JNA pointer:
+And a new JNA type converter is implemented to transform a native object to the underlying JNA pointer:
 
 ```java
 TypeConverter CONVERTER = new TypeConverter() {
@@ -638,15 +476,15 @@ Registering this converter allows all domain objects to be used directly in API 
 
 Notes:
 
-* The `fromNative` method is disallowed since we will never be creating a domain object via a native method.
+* The `fromNative` method is disallowed since domain objects will never be instantiated via a native method.
 
-* We also register another type converter for the `Handle` class which is more convenient for Vulkan structure fields (and some API methods).
+* A further type converter is registered for the `Handle` class which is more convenient for Vulkan structure fields and some API methods.
 
-* The `toArray` helper on the new interface converts a collection of objects to a native pointer-to-array type as a contiguous memory block.
+* The `toArray` helper (not shown) on the new interface converts a collection of objects to a native pointer-to-array type as a contiguous memory block.
 
 ### Transient Objects
 
-For domain objects that are managed by the application we extend the above:
+The new abstraction is extended for domain objects that are managed by the application:
 
 ```java
 public interface TransientNativeObject extends NativeObject {
@@ -663,7 +501,7 @@ public interface TransientNativeObject extends NativeObject {
 }
 ```
 
-We can now create a template implementation that encapsulates a handle and the process of releasing resources on destruction:
+The following template implementation encapsulates a handle and manages the process of releasing resources on destruction:
 
 ```java
 public abstract class AbstractTransientNativeObject implements TransientNativeObject {
@@ -700,7 +538,7 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 
 ### Abstract Vulkan Object
 
-We also note that the majority of our Vulkan domain objects are derived from the logical device and share the following properties:
+We also note that the majority of the Vulkan domain objects are derived from the logical device and share the following properties:
 
 * A handle.
 
@@ -721,7 +559,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 }
 ```
 
-To destroy this object we introduce the following abstraction for a _destructor_ method:
+To destroy this object the following abstraction for a _destructor_ is introduced:
 
 ```java
 @FunctionalInterface
@@ -736,7 +574,7 @@ public interface Destructor<T extends AbstractVulkanObject> {
 }
 ```
 
-We add the following provider for the API method used to destroy the object:
+The new class provides the API method used to destroy the object:
 
 ```java
 /**
@@ -758,27 +596,6 @@ public synchronized void destroy() {
 
     // Delegate
     super.destroy();
-}
-```
-
-For example the swapchain can now be refactored as follows:
-
-```java
-public class Swapchain extends AbstractVulkanObject {
-    Swapchain(Pointer handle, DeviceContext dev, ...) {
-        super(handle, dev);
-        ...
-    }
-
-    @Override
-    protected Destructor<Swapchain> destructor(VulkanLibrary lib) {
-        return lib::vkDestroySwapchainKHR;
-    }
-
-    @Override
-    protected void release() {
-        attachments.forEach(View::destroy);
-    }
 }
 ```
 
@@ -821,7 +638,7 @@ But by default JNA maps a Java boolean to zero for false but **minus one** for t
 
 There are a lot of boolean values used across Vulkan so we needed some global solution to over-ride the default JNA mapping.
 
-We created the [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class to map a Java boolean to/from a native integer represented as zero or one:
+The [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class is created to map a Java boolean to/from a native integer represented as zero or one:
 
 ```java
 public final class VulkanBoolean {
@@ -855,7 +672,7 @@ public final class VulkanBoolean {
 }
 ```
 
-We also add convenience converters for a native value or a Java boolean:
+Convenience converters are added to transform the boolean value to a native integer or Java boolean:
 
 ```java
 public static VulkanBoolean of(int value) {
@@ -867,7 +684,7 @@ public static VulkanBoolean of(boolean bool) {
 }
 ```
 
-Again we used a JNA type converter to map the new type to/from its native representation in API methods and structures:
+Again a JNA type converter is used to map the new type to/from its native representation in API methods and structures:
 
 ```java
 public static final TypeConverter CONVERTER = new TypeConverter() {
@@ -902,6 +719,71 @@ public static final TypeConverter CONVERTER = new TypeConverter() {
 This solves the mapping problem in API methods and JNA structures that contain booleans and also has the side-benefit of being more type-safe and self-documenting.
 
 > As it turns out the JNA `W32APITypeMapper` helper class probably already solves this issue but by this point we had already code-generated the structures.
+
+### Format Builder
+
+When developing the swapchain we realised that finding an image `VkFormat` can be difficult given the size of the enumeration.
+However the naming convention is consistent and it is therefore possible to specify the format programatically.
+
+The following helper class allows an application to specify the various components of a required format:
+
+```java
+public class FormatBuilder {
+    public static final String RGBA = "RGBA";
+
+    private String components = RGBA;
+    private int count = 4;
+    private int bytes = 4;
+    private Type type = Type.FLOAT;
+    private boolean signed = true;
+}
+```
+
+The `Type` field is an enumeration of the Vulkan component types:
+
+```java
+public enum Type {
+    INT,
+    FLOAT,
+    NORM,
+    SCALED,
+    RGB
+}
+```
+
+The builder constructs the format name and looks up the resultant enumeration constant:
+
+```java
+public VkFormat build() {
+    // Build component layout
+    StringBuilder layout = new StringBuilder();
+    int size = bytes * Byte.SIZE;
+    for(int n = 0; n < count; ++n) {
+        layout.append(template.charAt(n));
+        layout.append(size);
+    }
+
+    // Build format string
+    char ch = signed ? 'S' : 'U';
+    String format = String.format("%s_%c%s", layout, ch, type.name());
+
+    // Lookup format
+    return VkFormat.valueOf(format);
+}
+```
+
+The demo can now be refactored to build the image format rather than having to find it manually in the enumeration:
+
+```java
+VkFormat format = new FormatBuilder()
+    .template("BGRA")
+    .bytes(1)
+    .signed(true)
+    .type(FormatBuilder.Type.RGB)
+    .build();
+```
+
+Which maps to the `B8G8R8A8_SRGB` format used by the colour attachment.
 
 ---
 

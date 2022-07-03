@@ -629,7 +629,7 @@ Where convenient we also implement intermediate aggregations, e.g. for the vario
 interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, LogicalDevice.Library
 ```
 
-From now on we will take this approach of aggregated API libraries which are implemented as inner classes of the companion domain objects.  This centralises each API with the class using its methods and reduces the number of super-interfaces for the root Vulkan library.
+From now on we take this approach of aggregated API libraries implemented as inner classes of the companion domain objects.  This co-locates each API with its associated class and reduces the number of super-interfaces for the root Vulkan library.
 
 In the demo we can now create the logical device and retrieve the work queues:
 
