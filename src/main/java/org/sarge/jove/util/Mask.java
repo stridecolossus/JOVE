@@ -18,34 +18,38 @@ public record Mask(int mask) {
 	}
 
 	/**
+	 * Converts the given bit index to a bit-field mask, i.e. performs a left-shift.
+	 * @param index Bit index
+	 * @return Bit-field
+	 */
+	public static int index(int index) {
+		return 1 << index;
+	}
+
+	/**
 	 * @param bits Bit-field
-	 * @return Whether this mask contains <b>all</b> the bits specified by the given bit-field
+	 * @return Whether this mask contains the given bit-field, i.e. is a super-set of the required bits
 	 */
 	public boolean contains(int bits) {
 		return (mask & bits) == bits;
 	}
 
 	/**
-	 * @param bit Bit index
-	 * @return Whether this mask contains the given bit
+	 * @param bits Bit-field
+	 * @return Whether the given bit-field matches this mask, i.e. the given bit-field is a super-set of this mask
 	 */
-	public boolean bit(int bit) {
-		return contains(1 << bit);
+	public boolean matches(int bits) {
+		return (mask & bits) == mask;
 	}
 
 	/**
 	 * @return The bits of this mask as a stream of integers
 	 */
 	public IntStream stream() {
-
-		// TODO - this is not right, e.g. for 0b100 (4) ->
-		// stream should be bit INDICES (and also using bit() method) -> 0 1 2
-		// but will actually be 0..4 -> i.e. 0 1 2 3!!!
-		// only works because duplicates reduce to a set
-
+		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
 		return IntStream
-				.range(0, Integer.highestOneBit(mask))
-				.map(bit -> 1 << bit)
+				.range(0, range)
+				.map(Mask::index)
 				.filter(this::contains);
 	}
 }

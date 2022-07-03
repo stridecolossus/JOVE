@@ -213,5 +213,11 @@ public class SwapchainTest extends AbstractVulkanTest {
 		void mode() {
 			assertThrows(IllegalArgumentException.class, () -> builder.presentation(VkPresentModeKHR.MAILBOX_KHR));
 		}
+
+		@DisplayName("The type of each attachment must be supported by the surface")
+		@Test
+		void usage() {
+			assertThrows(IllegalArgumentException.class, () -> builder.usage(VkImageUsageFlag.DEPTH_STENCIL_ATTACHMENT));
+		}
 	}
 }

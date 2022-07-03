@@ -38,10 +38,10 @@ public class FormatSelector {
 	 */
 	public static Predicate<VkFormatProperties> filter(Set<VkFormatFeature> features, boolean optimal) {
 		Check.notEmpty(features);
-		final int bits = IntegerEnumeration.reduce(features);
+		final Mask mask = new Mask(IntegerEnumeration.reduce(features));
 		return props -> {
-			final Mask mask = new Mask(optimal ? props.optimalTilingFeatures : props.linearTilingFeatures);
-			return mask.contains(bits);
+			final int bits = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
+			return mask.matches(bits);
 		};
 	}
 

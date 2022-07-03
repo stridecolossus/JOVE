@@ -4,7 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 
-public class MaskTest {
+@SuppressWarnings("static-method")
+class MaskTest {
 	private Mask mask;
 
 	@BeforeEach
@@ -14,26 +15,22 @@ public class MaskTest {
 
 	@Test
 	void contains() {
-		assertEquals(true,  mask.contains(0b101));
-		assertEquals(true,  mask.contains(0b100));
-		assertEquals(true,  mask.contains(0b001));
-		assertEquals(true,  mask.contains(0));
+		assertEquals(true,   mask.contains(0b101));
+		assertEquals(true,   mask.contains(0b100));
+		assertEquals(true,   mask.contains(0b001));
+		assertEquals(true,   mask.contains(0));
 		assertEquals(false,  mask.contains(0b111));
 		assertEquals(false,  mask.contains(0b1111));
 	}
 
 	@Test
-	void bit() {
-
-//		System.out.println(Integer.highestOneBit(0));
-//		System.out.println(Integer.highestOneBit(0b001));
-//		System.out.println(Integer.highestOneBit(0b010));
-//		System.out.println(Integer.highestOneBit(0b100));
-
-		assertEquals(true, mask.bit(0));
-		assertEquals(false, mask.bit(1));
-		assertEquals(true, mask.bit(2));
-		assertEquals(false, mask.bit(4));
+	void matches() {
+		assertEquals(true, 	mask.matches(0b111));
+		assertEquals(true,  mask.matches(0b101));
+		assertEquals(false, mask.matches(0b100));
+		assertEquals(false, mask.matches(0b001));
+		assertEquals(false,	mask.matches(0b010));
+		assertEquals(false, mask.matches(0));
 	}
 
 	@Test
@@ -50,7 +47,13 @@ public class MaskTest {
 		assertNotEquals(mask, new Mask(0));
 	}
 
-	@SuppressWarnings("static-method")
+	@Test
+	void index() {
+		assertEquals(0b001, Mask.index(0));
+		assertEquals(0b010, Mask.index(1));
+		assertEquals(0b100, Mask.index(2));
+	}
+
 	@Test
 	void unsignedMaximum() {
 		assertEquals(255, Mask.unsignedMaximum(8));

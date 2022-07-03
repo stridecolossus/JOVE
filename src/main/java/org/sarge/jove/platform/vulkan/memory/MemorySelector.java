@@ -2,17 +2,11 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.stream.Collectors.toList;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.IntStream;
 
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.util.Mask;
 
@@ -64,7 +58,7 @@ public class MemorySelector {
 		final Mask mask = new Mask(reqs.memoryTypeBits);
 		final List<MemoryType> candidates = IntStream
 				.range(0, types.length)
-				.filter(mask::bit)
+				.filter(n -> mask.contains(Mask.index(n)))
 				.mapToObj(n -> types[n])
 				.collect(toList());
 

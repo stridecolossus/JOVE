@@ -1,14 +1,10 @@
 package org.sarge.jove.scene;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 
 public class OrbitalCameraControllerTest {
 	private Camera cam;
