@@ -390,8 +390,88 @@ interface Library {
     int  vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
     void vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Pointer pAllocator);
     int  vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+    int  vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
+    int  vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
 }
 ```
+
+### Presentation
+
+Presentation is comprised of two new methods on the swapchain, the index of the next swapchain image to be rendered is retrieved as follows:
+
+```java
+public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
+    // Acquire swapchain image
+    DeviceContext dev = super.device();
+    VulkanLibrary lib = dev.library();
+    int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+
+    // Check result
+    boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
+    if(!ok) throw new SwapchainException(result);
+
+    return index.getValue();
+}
+```
+
+The image `index` is a new class member initialised from the reference factory in the constructor:
+
+```java
+public class Swapchain {
+    ...
+    private final IntByReference index;
+
+    Swapchain(...) {
+        this.index = dev.factory().integer();
+    }
+}
+```
+
+Notes:
+
+* The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter, for the moment these values are `null` in the demo.
+
+* Acquiring the swapchain image is one of the few API methods that can return _multiple_ success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  A _suboptimal_ return value is considered as valid.
+
+* The `SwapchainInvalidated` exception indicates that the swapchain has become invalid, e.g. the surface has been resized or minimised.
+
+When an image has been rendered it can then be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
+
+```java
+public void present(Queue queue, int index) {
+    // Create presentation descriptor
+    VkPresentInfoKHR info = new VkPresentInfoKHR();
+
+    // Populate swap-chain
+    info.swapchainCount = 1;
+    info.pSwapchains = NativeObject.toArray(List.of(this));
+    
+    ...
+}
+```
+
+The image(s) to be presented are represented as a contiguous memory block (mapping to a native pointer-to-integer-array):
+
+```java
+int[] array = new int[]{index.getValue()};
+Memory mem = new Memory(array.length * Integer.BYTES);
+mem.write(0, array, 0, array.length);
+info.pImageIndices = mem;
+```
+
+Finally the presentation task is added to the relevant work queue:
+
+```java
+check(lib.vkQueuePresentKHR(queue, info));
+```
+
+Notes:
+
+* The API supports presentation of multiple swapchains in one operation but for the moment we restrict ourselves to a single instance.
+
+* Similarly the `pImageIndices` array consists of a single image index.
+
+* The presentation task descriptor is created on every invocation of the `present` method which may be cached later.
 
 ---
 

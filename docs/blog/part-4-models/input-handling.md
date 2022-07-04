@@ -1316,14 +1316,14 @@ protected void update(Vector vec) {
 }
 ```
 
-In the orbital implementation the camera is moved to the calculated point on the sphere and then pointed at the target (which is basically the inverse of the unit-sphere vector):
+In the orbital implementation the camera is moved to the calculated point on the sphere and then pointed at the target:
 
 ```java
 @Override
 protected void update(Vector vec) {
     Point pos = new Point(vec).scale(radius).add(target);
     cam.move(pos);
-    cam.direction(vec.invert());
+    cam.direction(vec);
 }
 ```
 
