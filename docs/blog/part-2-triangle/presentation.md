@@ -363,16 +363,16 @@ var views = Arrays
     .stream(handles)
     .map(Handle::new)
     .map(image -> new Image(image, dev, descriptor))
-    .map(Image::view)
+    .map(View::of)
     .collect(toList());
 ```
 
-A convenience `view` factory method is implemented on the image class to build a default view for that image:
+Where the convenience `of` factory method constructs a default view for a given image:
 
 ```java
-public class Image {
-    public static View view() {
-        return new View.Builder().build(this);
+public class View {
+    public static View of(Image image) {
+        return new Builder(image).build();
     }
 }    
 ```

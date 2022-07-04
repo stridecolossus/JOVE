@@ -10,6 +10,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
@@ -106,6 +107,21 @@ public class LogicalDeviceTest {
 	}
 
 	@Nested
+	class RequiredQueueTests {
+		@DisplayName("A required queue must have at least one queue priority")
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(family, List.of()));
+		}
+
+		@DisplayName("The number of queues cannot exceed the available number of queues in the family")
+		@Test
+		void exceeds() {
+			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(family, 3));
+		}
+	}
+
+	@Nested
 	class BuilderTests {
 		private LogicalDevice.Builder builder;
 
@@ -122,7 +138,7 @@ public class LogicalDeviceTest {
 
 			// Create device
 			device = builder
-					.queues(family, List.of(Percentile.HALF, Percentile.ONE))
+					.queue(new RequiredQueue(family, List.of(Percentile.HALF, Percentile.ONE)))
 					.extension("ext")
 					.layer(ValidationLayer.STANDARD_VALIDATION)
 					.features(DeviceFeatures.of(required))
@@ -170,31 +186,11 @@ public class LogicalDeviceTest {
 			verify(lib).vkCreateDevice(parent, expected, null, ref);
 		}
 
-		@DisplayName("Duplicate queues should be aggregated")
-		@Test
-		void duplicate() {
-			builder.queue(family);
-			builder.queue(family);
-			device = builder.build();
-			assertEquals(1, device.queues().get(family).size());
-		}
-
-		@DisplayName("Cannot request empty list of queues")
-		@Test
-		void emptyQueues() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, List.of()));
-		}
-
-		@DisplayName("Cannot request more queues than available")
-		@Test
-		void invalidQueueCount() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queues(family, 3));
-		}
-
 		@DisplayName("Cannot request a queue from a different device")
 		@Test
 		void invalidQueueFamily() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(new Family(3, 4, Set.of())));
+			final Family other = new Family(3, 4, Set.of());
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(other)));
 		}
 
 		@DisplayName("Cannot request an extension that is not available")

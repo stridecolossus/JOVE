@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 
@@ -118,45 +118,77 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	}
 
 	/**
+	 * A <i>required queue</i> is a transient descriptor for a work queue for this device.
+	 */
+	public record RequiredQueue(Family family, List<Percentile> priorities) {
+		/**
+		 * Constructor.
+		 * @param family			Queue family
+		 * @param priorities		Priority of each queue
+		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
+		 */
+		public RequiredQueue {
+			Check.notNull(family);
+			priorities = List.copyOf(notEmpty(priorities));
+			if(priorities.size() > family.count()) {
+				throw new IllegalArgumentException(String.format("Number of queues exceeds family: avaiable=%d requested=%d", priorities.size(), family.count()));
+			}
+		}
+
+		/**
+		 * Constructor for a single queue with a default priority.
+		 * @param family Queue family
+		 */
+		public RequiredQueue(Family family) {
+			this(family, 1);
+		}
+
+		/**
+		 * Constructor for a group of queues with default priority.
+		 * @param family		Queue family
+		 * @param num			Number of required queues
+		 */
+		public RequiredQueue(Family family, int num) {
+			this(family, Collections.nCopies(num, Percentile.ONE));
+		}
+
+		/**
+		 * Populates the descriptor for this required work queue.
+		 */
+		private void populate(VkDeviceQueueCreateInfo info) {
+			// Convert to floating-point array
+			final Float[] array = priorities
+					.stream()
+					.map(Percentile::floatValue)
+					.toArray(Float[]::new);
+
+			// Populate queue descriptor
+			info.queueCount = array.length;
+			info.queueFamilyIndex = family.index();
+			info.pQueuePriorities = new FloatArray(ArrayUtils.toPrimitive(array));
+		}
+	}
+
+	/**
 	 * Builder for a logical device.
 	 * <p>
 	 * Usage:
 	 * <pre>
-	 * 	PhysicalDevice parent = ...
-	 * 	Family family = ...
+	 * PhysicalDevice parent = ...
+	 * Family family = ...
 	 *
-	 * 	// Init required device features
-	 * 	VkPhysicalDeviceFeatures required = ...
+	 * // Init required device features
+	 * VkPhysicalDeviceFeatures required = ...
 	 *
-	 *	// Create device
-	 * 	LogicalDevice dev = new Builder(parent)
-	 * 		.extension("extension")
-	 * 		.queue(family, Percentile.ONE)
-	 * 		.features(required)
-	 * 		.build();
+	 * // Create device
+	 * LogicalDevice dev = new Builder(parent)
+	 *     .extension("extension")
+	 *     .queue(new RequiredQueue(family))
+	 *     .features(required)
+	 *     .build();
 	 * </pre>
-	 * <p>
-	 * Note that the various {@link #queue(Family)} methods silently omit duplicates since the physical device may return the same family for a given queue specification.
 	 */
 	public static class Builder {
-		/**
-		 * Transient descriptor for required work queues.
-		 */
-		private record RequiredQueue(Family family, List<Percentile> priorities) {
-			private void populate(VkDeviceQueueCreateInfo info) {
-				// Convert to floating-point array
-				final Float[] array = priorities
-						.stream()
-						.map(Percentile::floatValue)
-						.toArray(Float[]::new);
-
-				// Populate queue descriptor
-				info.queueCount = array.length;
-				info.queueFamilyIndex = family.index();
-				info.pQueuePriorities = new FloatArray(ArrayUtils.toPrimitive(array));
-			}
-		}
-
 		private final PhysicalDevice parent;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
@@ -202,48 +234,23 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		}
 
 		/**
-		 * Adds a <b>single</b> queue of the given family to this device.
-		 * @param family Queue family
-		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
+		 * Adds a required work queue for this device.
+		 * @param queue Required queue
+		 * @throws IllegalArgumentException if the queue family is not a member of the parent physical device
+		 * @throws IllegalArgumentException for a duplicate queue family
 		 */
-		public Builder queue(Family family) {
-			return queues(family, 1);
-		}
-
-		/**
-		 * Adds the specified number of queues of the given family to this device.
-		 * @param family 		Queue family
-		 * @param num			Number of queues
-		 * @throws IllegalArgumentException if the given family is not a member of the parent physical device
-		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
-		 */
-		public Builder queues(Family family, int num) {
-			return queues(family, Collections.nCopies(num, Percentile.ONE));
-		}
-
-		/**
-		 * Adds multiple queues of the given family with the specified work priorities to this device.
-		 * @param family 		Queue family
-		 * @param priorities	Queue priorities
-		 * @throws IllegalArgumentException if the given family is not a member of the physical device
-		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
-		 */
-		public Builder queues(Family family, List<Percentile> priorities) {
-			// Validate
+		public Builder queue(RequiredQueue queue) {
+			final Family family = queue.family;
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}
-			if(priorities.isEmpty()) {
-				throw new IllegalArgumentException("Queue priorities cannot be empty");
+			if(queues.containsKey(family)) {
+				throw new IllegalArgumentException("Duplicate queue family: " + family);
 			}
-			if(priorities.size() > family.count()) {
-				throw new IllegalArgumentException(String.format("Number of queues exceeds family: avaiable=%d requested=%d", priorities.size(), family.count()));
-			}
-
-			// Register required queue
-			queues.put(family, new RequiredQueue(family, priorities));
+			queues.put(family, queue);
 			return this;
 		}
+
 
 		/**
 		 * Constructs this logical device.
