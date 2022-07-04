@@ -30,14 +30,6 @@ public interface DeviceFeatures {
 	boolean contains(DeviceFeatures features);
 
 	/**
-	 *
-	 * TODO
-	 * - explicitly separate into SUPPORTED and REQUIRED implementations?
-	 * - sealed?
-	 *
-	 */
-
-	/**
 	 * Skeleton implementation.
 	 */
 	abstract class AbstractDeviceFeatures implements DeviceFeatures {

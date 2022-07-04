@@ -468,28 +468,21 @@ public static class Builder {
     private final PhysicalDevice parent;
     private final Set<String> extensions = new HashSet<>();
     private final Set<String> layers = new HashSet<>();
-    private final Map<Family, List<Percentile>> queues = new HashMap<>();
+    private final Map<Family, RequiredQueue> queues = new HashMap<>();
 }
 ```
 
-The builder provides a number of over-loaded methods to specify _required_ work queues for the device (delegating to the final base implementation):
+The work queues that are required by the logical device are specified by a new transient type:
 
 ```java
-public Builder queue(Family family) {
-    return queues(family, 1);
-}
-
-public Builder queues(Family family, int num) {
-    return queues(family, Collections.nCopies(num, Percentile.ONE));
-}
-
-public Builder queues(Family family, List<Percentile> priorities) {
-    queues.put(family, new RequiredQueue(family, priorities));
-    return this;
+public record RequiredQueue(Family family, List<Percentile> priorities) {
+    private void populate(VkDeviceQueueCreateInfo info) {
+        ...
+    }
 }
 ```
 
-Notes:
+Where:
 
 - The _family_ is a queue family selected from the parent physical device.
 
@@ -497,19 +490,9 @@ Notes:
 
 - The `Percentile` class is a custom type for a percentile represented as a 0..1 floating-point value.
 
-- We can specify extensions and validation layers at both the instance and device level, however more recent Vulkan implementations will ignore layers specified at the device level (we retain both for backwards compatibility).
+Note that extensions and validation layers can be configured at both the instance and device level, however more recent Vulkan implementations will ignore layers specified at the device level (both are retained for backwards compatibility).
 
-The `RequiredQueue` is a transient record class:
-
-```java
-private record RequiredQueue(Family family, List<Percentile> priorities) {
-    private void populate(VkDeviceQueueCreateInfo info) {
-        ...
-    }
-}
-```
-
-The `build` method populates a Vulkan descriptor for the logical device:
+The `build` method populates the descriptor for the logical device:
 
 ```java
 public LogicalDevice build() {
@@ -526,7 +509,7 @@ public LogicalDevice build() {
 
     // Add queue descriptors
     info.queueCreateInfoCount = queues.size();
-    info.pQueueCreateInfos = StructureHelper.pointer(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
+    info.pQueueCreateInfos = StructureHelper.pointer(queues.values(), VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
     ...
 }
 ```
@@ -554,7 +537,7 @@ private void populate(VkDeviceQueueCreateInfo info) {
 
 Note that again we create a contiguous memory block for the array of queue priorities mapping to a `const float*` native type.
 
-The builder next invokes the API to create the device:
+The builder then invokes the API to instantiate the logical device:
 
 ```java
 Instance instance = parent.instance();
@@ -566,7 +549,7 @@ check(lib.vkCreateDevice(parent, info, null, handle));
 
 ### Work Queues
 
-Next the work queues are retrieved from the logical device:
+Next the work queues are retrieved from the new device:
 
 ```java
 Map<Family, List<Queue>> map = queues
