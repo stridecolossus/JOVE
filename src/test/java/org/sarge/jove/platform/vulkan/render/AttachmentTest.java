@@ -1,31 +1,24 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkAttachmentDescription;
-import org.sarge.jove.platform.vulkan.VkAttachmentLoadOp;
-import org.sarge.jove.platform.vulkan.VkAttachmentStoreOp;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkSampleCount;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.io.ImageData;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.render.Attachment.Builder;
 
-public class AttachmentTest {
-	private static final VkFormat COLOUR = VkFormat.R32G32B32A32_SFLOAT;
-	private static final VkFormat DEPTH = VkFormat.D32_SFLOAT;
+class AttachmentTest {
+	private static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
 
 	private Attachment attachment;
 
 	@BeforeEach
 	void before() {
 		attachment = new Builder()
-				.format(COLOUR)
+				.format(FORMAT)
 				.load(VkAttachmentLoadOp.CLEAR)
 				.store(VkAttachmentStoreOp.STORE)
 				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
@@ -34,7 +27,21 @@ public class AttachmentTest {
 
 	@Test
 	void constructor() {
-		assertEquals(COLOUR, attachment.format());
+		assertEquals(FORMAT, attachment.format());
+	}
+
+	@Test
+	void populate() {
+		final var descriptor = new VkAttachmentDescription();
+		attachment.populate(descriptor);
+		assertEquals(FORMAT, descriptor.format);
+		assertEquals(VkSampleCount.COUNT_1, descriptor.samples);
+		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
+		assertEquals(VkAttachmentStoreOp.STORE, descriptor.storeOp);
+		assertEquals(VkAttachmentLoadOp.DONT_CARE, descriptor.stencilLoadOp);
+		assertEquals(VkAttachmentStoreOp.DONT_CARE, descriptor.stencilStoreOp);
+		assertEquals(VkImageLayout.UNDEFINED, descriptor.initialLayout);
+		assertEquals(VkImageLayout.PRESENT_SRC_KHR, descriptor.finalLayout);
 	}
 
 	@Test
@@ -52,52 +59,29 @@ public class AttachmentTest {
 			builder = new Builder();
 		}
 
-		@DisplayName("Build a colour attachment")
 		@Test
-		void colour() {
-			final Attachment attachment = builder
-					.format(COLOUR)
+		void view() {
+			// Init image descriptor
+			final var descriptor = new ImageDescriptor.Builder()
+					.format(FORMAT)
+					.extents(new ImageData.Extents(new Dimensions(2, 3)))
+					.aspect(VkImageAspect.COLOR)
+					.build();
+
+			// Create image
+			final Image image = mock(Image.class);
+			final View view = mock(View.class);
+			when(image.descriptor()).thenReturn(descriptor);
+			when(view.image()).thenReturn(image);
+
+			// Build attachment from image view
+			builder
+					.format(view)
 					.load(VkAttachmentLoadOp.CLEAR)
 					.store(VkAttachmentStoreOp.STORE)
-					.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
-					.build();
+					.finalLayout(VkImageLayout.PRESENT_SRC_KHR);
 
-			final var desc = new VkAttachmentDescription();
-			assertNotNull(attachment);
-			attachment.populate(desc);
-
-			assertEquals(COLOUR, desc.format);
-			assertEquals(VkSampleCount.COUNT_1, desc.samples);
-			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
-			assertEquals(VkAttachmentStoreOp.STORE, desc.storeOp);
-			assertEquals(VkAttachmentLoadOp.DONT_CARE, desc.stencilLoadOp);
-			assertEquals(VkAttachmentStoreOp.DONT_CARE, desc.stencilStoreOp);
-			assertEquals(VkImageLayout.UNDEFINED, desc.initialLayout);
-			assertEquals(VkImageLayout.PRESENT_SRC_KHR, desc.finalLayout);
-		}
-
-		@DisplayName("Build a depth-stencil attachment")
-		@Test
-		void depth() {
-			final Attachment attachment = builder
-					.format(DEPTH)
-					.load(VkAttachmentLoadOp.CLEAR)
-					.stencilLoad(VkAttachmentLoadOp.CLEAR)
-					.finalLayout(VkImageLayout.DEPTH_STENCIL_READ_ONLY_OPTIMAL)
-					.build();
-
-			final var desc = new VkAttachmentDescription();
-			assertNotNull(attachment);
-			attachment.populate(desc);
-
-			assertEquals(DEPTH, desc.format);
-			assertEquals(VkSampleCount.COUNT_1, desc.samples);
-			assertEquals(VkAttachmentLoadOp.CLEAR, desc.loadOp);
-			assertEquals(VkAttachmentStoreOp.DONT_CARE, desc.storeOp);
-			assertEquals(VkAttachmentLoadOp.CLEAR, desc.stencilLoadOp);
-			assertEquals(VkAttachmentStoreOp.DONT_CARE, desc.stencilStoreOp);
-			assertEquals(VkImageLayout.UNDEFINED, desc.initialLayout);
-			assertEquals(VkImageLayout.DEPTH_STENCIL_READ_ONLY_OPTIMAL, desc.finalLayout);
+			assertEquals(attachment, builder.build());
 		}
 
 		@DisplayName("An attachment must have an image format")
@@ -109,7 +93,7 @@ public class AttachmentTest {
 		@DisplayName("An attachment must have a final layout")
 		@Test
 		void buildRequiresFinalLayout() {
-			builder.format(COLOUR);
+			builder.format(FORMAT);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 

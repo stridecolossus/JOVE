@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.util.IntegerEnumeration;
 
 /**
@@ -29,7 +30,6 @@ public class Attachment {
 	 * @param desc Attachment descriptor
 	 */
 	void populate(VkAttachmentDescription attachment) {
-		// TODO - copy structure memory directly?
 		attachment.format = descriptor.format;
 		attachment.samples = descriptor.samples;
 		attachment.loadOp = descriptor.loadOp;
@@ -81,13 +81,22 @@ public class Attachment {
 		}
 
 		/**
-		 * Sets the attachment format (usually the same as the swap-chain).
+		 * Sets the attachment format.
 		 * @param format Attachment format
 		 */
 		public Builder format(VkFormat format) {
 			// TODO - check undefined? or is that valid?
 			attachment.format = notNull(format);
 			return this;
+		}
+
+		/**
+		 * Helper - Sets the attachment format to that of the given image view.
+		 * @param view Image view
+		 */
+		public Builder format(View view) {
+			final VkFormat format = view.image().descriptor().format();
+			return format(format);
 		}
 
 		/**

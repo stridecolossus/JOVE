@@ -234,7 +234,7 @@ public class RenderPass extends AbstractVulkanObject {
 		void vkDestroyRenderPass(DeviceContext device, RenderPass renderPass, Pointer pAllocator);
 
 		/**
-		 * Command - Begins a render pass.
+		 * Begins a render pass.
 		 * @param commandBuffer			Command buffer
 		 * @param pRenderPassBegin		Descriptor
 		 * @param contents				Sub-pass contents
@@ -242,13 +242,13 @@ public class RenderPass extends AbstractVulkanObject {
 		void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
 
 		/**
-		 * Command - Ends a render pass.
+		 * Ends a render pass.
 		 * @param commandBuffer Command buffer
 		 */
 		void vkCmdEndRenderPass(Buffer commandBuffer);
 
 		/**
-		 * Command - Starts the next sub-pass.
+		 * Starts the next sub-pass.
 		 * @param commandBuffer			Command buffer
 		 * @param contents				Sub-pass contents
 		 */

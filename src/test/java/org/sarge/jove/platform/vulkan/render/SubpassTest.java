@@ -1,75 +1,171 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkAccess;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
-import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
-import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency;
-import org.sarge.jove.platform.vulkan.render.Subpass.SubpassDependency.Dependency;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.render.Subpass.*;
 
-public class SubpassTest {
+@SuppressWarnings("static-method")
+class SubpassTest {
 	private Subpass subpass;
-	private Reference colour, depth;
-	private SubpassDependency dependency;
+	private Attachment attachment;
+	private Reference ref;
 
 	@BeforeEach
 	void before() {
-		// Create attachment references
-		colour = reference(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-		depth = reference(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-		// Create a sub-pass dependency
-		final Dependency dep = new Dependency(Set.of(VkPipelineStage.FRAGMENT_SHADER), Set.of(VkAccess.SHADER_READ));
-		dependency = new SubpassDependency(mock(Subpass.class), dep, dep);
-
-		// Create sub-pass
-		subpass = new Subpass(List.of(colour), depth, List.of(dependency));
-	}
-
-	private static Reference reference(VkImageLayout layout) {
-		final Attachment attachment = new Attachment.Builder()
-				.format(AbstractVulkanTest.FORMAT)
-				.finalLayout(layout)
-				.build();
-
-		return new Reference(attachment, layout);
+		attachment = mock(Attachment.class);
+		ref = new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+		subpass = new Subpass(List.of(ref), null, List.of());
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(List.of(colour), subpass.colour());
-		assertEquals(Optional.of(depth), subpass.depth());
-		assertEquals(List.of(dependency), subpass.dependencies());
+		assertEquals(List.of(ref), subpass.colour());
+		assertEquals(Optional.empty(), subpass.depth());
+		assertEquals(List.of(), subpass.dependencies());
 	}
 
-	@SuppressWarnings("static-method")
+	@DisplayName("The subpass aggregates the attachments used in that subpass")
+	@Test
+	void attachments() {
+		assertNotNull(subpass.attachments());
+		assertEquals(List.of(attachment), subpass.attachments().toList());
+	}
+
+	@DisplayName("A subpass can contain a depth-stencil attachment")
+	@Test
+	void depth() {
+		subpass = new Subpass(List.of(), ref, List.of());
+		assertEquals(List.of(), subpass.colour());
+		assertEquals(Optional.of(ref), subpass.depth());
+		assertEquals(List.of(attachment), subpass.attachments().toList());
+	}
+
+	@DisplayName("A subpass can have dependencies to previous subpass stages")
+	@Test
+	void dependency() {
+		final var props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of());
+		final Dependency dependency = new Dependency(subpass, props, props);
+		final Subpass other = new Subpass(List.of(ref), null, List.of(dependency));
+		assertEquals(List.of(dependency), other.dependencies());
+	}
+
+	@DisplayName("A sub-pass must contain at least one attachment")
 	@Test
 	void empty() {
 		assertThrows(IllegalArgumentException.class, () -> new Subpass(List.of(), null, List.of()));
 	}
 
+	@DisplayName("A sub-pass connot contain a duplicate colour attachment")
 	@Test
-	void invalidDepthStencil() {
-		assertThrows(IllegalArgumentException.class, () -> new Subpass(List.of(colour), colour, List.of()));
+	void duplicate() {
+		assertThrows(IllegalArgumentException.class, () -> new Subpass(List.of(ref, ref), null, List.of()));
 	}
 
-	@SuppressWarnings("static-method")
+	@DisplayName("The depth-stencil attachment cannot duplicate a colour attachment")
 	@Test
-	void emptyPipelineStages() {
-		assertThrows(IllegalArgumentException.class, () -> new Dependency(Set.of(), Set.of()));
+	void invalid() {
+		assertThrows(IllegalArgumentException.class, () -> new Subpass(List.of(ref), ref, List.of()));
+	}
+
+	@Test
+	void equals() {
+		assertEquals(subpass, subpass);
+		assertEquals(subpass, new Subpass(List.of(ref), null, List.of()));
+		assertNotEquals(subpass, null);
+		assertNotEquals(subpass, new Subpass(List.of(), ref, List.of()));
+	}
+
+	@Nested
+	class ReferenceTests {
+		@Test
+		void constructor() {
+			assertEquals(attachment, ref.attachment());
+			assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, ref.layout());
+		}
+
+		@Test
+		void equals() {
+			assertEquals(ref, ref);
+			assertEquals(ref, new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL));
+			assertNotEquals(ref, null);
+			assertNotEquals(ref, new Reference(attachment, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
+		}
+	}
+
+	@Nested
+	class PropertiesTests {
+		private Subpass.Properties props;
+
+		@BeforeEach
+		void before() {
+			props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of(VkAccess.SHADER_READ));
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(Set.of(VkPipelineStage.VERTEX_SHADER), props.stages());
+			assertEquals(Set.of(VkAccess.SHADER_READ), props.access());
+		}
+
+		@DisplayName("The properties of a subpass dependency must contain at least one pipeline stage")
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> new Subpass.Properties(Set.of(), Set.of()));
+		}
+
+		@Test
+		void equals() {
+			assertEquals(props, props);
+			assertEquals(props, new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of(VkAccess.SHADER_READ)));
+			assertNotEquals(props, null);
+			assertNotEquals(props, new Subpass.Properties(Set.of(VkPipelineStage.FRAGMENT_SHADER), Set.of()));
+		}
+	}
+
+	@Nested
+	class DependencyTests {
+		private Dependency dependency;
+		private Subpass.Properties props;
+
+		@BeforeEach
+		void before() {
+			props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of());
+			dependency = new Dependency(subpass, props, props);
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(subpass, dependency.subpass());
+			assertEquals(props, dependency.source());
+			assertEquals(props, dependency.destination());
+		}
+
+		@DisplayName("A subpass can have a self-referential dependency")
+		@Test
+		void self() {
+			dependency = new Dependency(Subpass.SELF, props, props);
+			assertEquals(Subpass.SELF, dependency.subpass());
+		}
+
+		@DisplayName("A subpass can have a dependency to the implicit external subpass")
+		@Test
+		void external() {
+			dependency = new Dependency(Subpass.EXTERNAL, props, props);
+			assertEquals(Subpass.EXTERNAL, dependency.subpass());
+		}
+
+		@Test
+		void equals() {
+			assertEquals(dependency, dependency);
+			assertEquals(dependency, new Dependency(subpass, props, props));
+			assertNotEquals(dependency, null);
+			assertNotEquals(dependency, new Dependency(subpass, props, new Subpass.Properties(Set.of(VkPipelineStage.FRAGMENT_SHADER), Set.of())));
+		}
 	}
 
 	@Nested
@@ -81,63 +177,50 @@ public class SubpassTest {
 			builder = new Subpass.Builder();
 		}
 
+		@DisplayName("The builder can construct a subpass with a colour attachment")
 		@Test
-		void build() {
-			subpass = builder
-					.colour(colour)
-					.depth(depth)
+		void colour() {
+			final Subpass subpass = builder.colour(ref).build();
+			assertNotNull(subpass);
+			assertEquals(List.of(ref), subpass.colour());
+			assertEquals(Optional.empty(), subpass.depth());
+			assertEquals(List.of(attachment), subpass.attachments().toList());
+			assertEquals(List.of(), subpass.dependencies());
+		}
+
+		@DisplayName("The builder can construct a subpass with a depth-stencil attachment")
+		@Test
+		void depth() {
+			final Reference ref = new Reference(attachment, VkImageLayout.DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+			final Subpass subpass = builder.depth(ref).build();
+			assertNotNull(subpass);
+			assertEquals(List.of(), subpass.colour());
+			assertEquals(Optional.of(ref), subpass.depth());
+			assertEquals(List.of(attachment), subpass.attachments().toList());
+			assertEquals(List.of(), subpass.dependencies());
+		}
+
+		@DisplayName("The builder can construct a subpass dependency")
+		@Test
+		void dependency() {
+			final Subpass subpass = builder
+					.colour(ref)
 					.dependency()
-						.subpass(dependency.subpass())
+						.subpass(Subpass.EXTERNAL)
 						.source()
-							.stage(VkPipelineStage.FRAGMENT_SHADER)
+							.stage(VkPipelineStage.VERTEX_SHADER)
 							.access(VkAccess.SHADER_READ)
 							.build()
 						.destination()
-							.stage(VkPipelineStage.FRAGMENT_SHADER)
+							.stage(VkPipelineStage.VERTEX_SHADER)
 							.access(VkAccess.SHADER_READ)
 							.build()
 						.build()
 					.build();
 
-			assertNotNull(subpass);
-			assertEquals(List.of(colour), subpass.colour());
-			assertEquals(Optional.of(depth), subpass.depth());
+			final var props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of(VkAccess.SHADER_READ));
+			final Dependency dependency = new Dependency(Subpass.EXTERNAL, props, props);
 			assertEquals(List.of(dependency), subpass.dependencies());
-		}
-
-		@Test
-		void self() {
-			subpass = builder
-					.colour(colour)
-					.dependency()
-						.self()
-						.source()
-							.stage(VkPipelineStage.FRAGMENT_SHADER)
-							.build()
-						.destination()
-							.stage(VkPipelineStage.FRAGMENT_SHADER)
-							.build()
-						.build()
-					.build();
-
-			assertNotNull(subpass);
-			assertNotNull(subpass.dependencies());
-			assertEquals(1, subpass.dependencies().size());
-
-			final SubpassDependency self = subpass.dependencies().iterator().next();
-			assertNotNull(self);
-			assertEquals(Subpass.SELF, self.subpass());
-		}
-
-		@Test
-		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
-		void duplicateDepthStencil() {
-			builder.depth(depth);
-			assertThrows(IllegalArgumentException.class, () -> builder.depth(depth));
 		}
 	}
 }
