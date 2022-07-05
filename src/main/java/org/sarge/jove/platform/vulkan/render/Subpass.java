@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.*;
 
 /**
@@ -130,10 +130,34 @@ public class Subpass {
 	/**
 	 * @return Attachments used by this sub-pass
 	 */
-	public Stream<Attachment> attachments() {
+	public List<Reference> attachments() {
 		final List<Reference> attachments = new ArrayList<>(colour);
 		depth.ifPresent(attachments::add);
-		return attachments.stream().map(Reference::attachment);
+		return attachments;
+	}
+
+	/**
+	 * Populates a sub-pass descriptor.
+	 */
+	void populate(VkSubpassDescription desc) {
+		// Init descriptor
+		desc.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
+
+		// Populate colour attachments
+		desc.colorAttachmentCount = colour.size();
+		desc.pColorAttachments = StructureHelper.pointer(colour, VkAttachmentReference::new, Reference::populate);
+
+		// Populate depth attachment
+		desc.pDepthStencilAttachment = depth.map(Subpass::depth).orElse(null);
+	}
+
+	/**
+	 * Creates and populates the descriptor for the depth-stencil attachment.
+	 */
+	private static VkAttachmentReference depth(Reference ref) {
+		final var descriptor = new VkAttachmentReference();
+		ref.populate(descriptor);
+		return descriptor;
 	}
 
 	@Override
@@ -158,15 +182,51 @@ public class Subpass {
 	/**
 	 * A <i>reference</i> specifies an attachment used during this sub-pass.
 	 */
-	public record Reference(Attachment attachment, VkImageLayout layout) {
+	public static class Reference {
+		private final Attachment attachment;
+		private final VkImageLayout layout;
+		private Integer index;
+
 		/**
 		 * Constructor.
 		 * @param attachment		Attachment
 		 * @param layout			Image layout
 		 */
-		public Reference {
-			Check.notNull(attachment);
-			Check.notNull(layout);
+		public Reference(Attachment attachment, VkImageLayout layout) {
+			this.attachment = notNull(attachment);
+			this.layout = notNull(layout);
+		}
+
+		/**
+		 * @return Attachment
+		 */
+		public Attachment attachment() {
+			return attachment;
+		}
+
+		/**
+		 * Patches the attachment index.
+		 */
+		void index(int index) {
+			assert this.index == null;
+			this.index = index;
+		}
+
+		/**
+		 * Populates the descriptor for this attachment reference.
+		 */
+		void populate(VkAttachmentReference desc) {
+			desc.attachment = index;
+			desc.layout = layout;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Reference that) &&
+					(this.layout == that.layout) &&
+					this.attachment.equals(that.attachment);
 		}
 	}
 
@@ -217,17 +277,38 @@ public class Subpass {
 	/**
 	 * The <i>dependency properties</i> specifies the pipeline stage(s) and access requirements for the source or destination of a dependency.
 	 */
-	public record Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
+	public static class Properties {
+		private final Set<VkPipelineStage> stages;
+		private final Set<VkAccess> access;
+		private Integer index;
+
 		/**
 		 * Constructor.
 		 * @param stages	Pipeline stages
 		 * @param access	Access flags
 		 * @throws IllegalArgumentException if {@link #stages} is empty
 		 */
-		public Properties {
-			stages = Set.copyOf(stages);
-			access = Set.copyOf(access);
+		public Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
+			this.stages = Set.copyOf(stages);
+			this.access = Set.copyOf(access);
 			if(stages.isEmpty()) throw new IllegalArgumentException("At least one pipeline stage must be specified");
+		}
+
+		/**
+		 * Patches the sub-pass index.
+		 */
+		void index(int index) {
+			assert this.index == null;
+			this.index = zeroOrMore(index);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Properties that) &&
+					this.stages.equals(that.stages) &&
+					this.access.equals(that.access);
 		}
 
 		/**
@@ -283,7 +364,7 @@ public class Subpass {
 	public record Dependency(Subpass subpass, Properties source, Properties destination) {
 		/**
 		 * Constructor.
-		 * @param subpass			Dependant sub-pass
+		 * @param subpass			Source sub-pass
 		 * @param source			Source dependency properties
 		 * @param destination		Destination dependency properties (i.e. this sub-pass)
 		 */
@@ -291,6 +372,15 @@ public class Subpass {
 			Check.notNull(subpass);
 			Check.notNull(source);
 			Check.notNull(destination);
+		}
+
+		void populate(VkSubpassDependency dependency) {
+			dependency.srcSubpass = source.index;
+			dependency.dstSubpass = destination.index;
+			dependency.srcStageMask = IntegerEnumeration.reduce(source.stages);
+			dependency.srcAccessMask = IntegerEnumeration.reduce(source.access);
+			dependency.dstStageMask = IntegerEnumeration.reduce(destination.stages);
+			dependency.dstStageMask = IntegerEnumeration.reduce(destination.access);
 		}
 
 		/**
