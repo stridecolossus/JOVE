@@ -1,22 +1,15 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageType;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>image descriptor</i> specifies the properties of an image.
+ * An <i>image descriptor</i> specifies the static properties of an image.
  * @author Sarge
  */
 public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {

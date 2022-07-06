@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
@@ -38,8 +37,6 @@ public class VertexBuffer extends VulkanBuffer {
 	 * @param start 		Start binding index
 	 * @param buffers		Buffers to bind
 	 * @return Command to bind the given buffers
-	 * @throws IllegalStateException if any buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
-	 * @see #bind(int)
 	 */
 	public static Command bind(int start, Collection<VertexBuffer> buffers) {
 		final Pointer array = NativeObject.array(buffers);

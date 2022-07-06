@@ -1,21 +1,19 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkQueueFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
 import com.sun.jna.Pointer;
 
-public class QueueTest {
+class QueueTest {
 	private Queue queue;
 	private Family family;
 
@@ -42,5 +40,13 @@ public class QueueTest {
 		final VulkanLibrary lib = mock(VulkanLibrary.class);
 		queue.waitIdle(lib);
 		verify(lib).vkQueueWaitIdle(queue);
+	}
+
+	@Test
+	void of() {
+		final var props = new VkQueueFamilyProperties();
+		props.queueCount = 2;
+		props.queueFlags = VkQueueFlag.GRAPHICS.value();
+		assertEquals(family, Family.of(1, props));
 	}
 }

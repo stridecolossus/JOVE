@@ -225,7 +225,7 @@ public interface Work {
 		public String toString() {
 			return new ToStringBuilder(this)
 					.append(pool)
-					.append("batch", batch.size())
+					.append("size", batch.size())
 					.build();
 		}
 	}

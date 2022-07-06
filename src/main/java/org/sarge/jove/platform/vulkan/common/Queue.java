@@ -4,18 +4,17 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.Set;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkQueueFlag;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 /**
  * A <i>queue</i> is used to submit work to the hardware.
  * @author Sarge
  */
-public record Queue(Handle handle, Family family) implements NativeObject {
+public record Queue(Handle handle, Queue.Family family) implements NativeObject {
 	/**
 	 * Constructor.
 	 * @param handle	Handle
@@ -42,6 +41,17 @@ public record Queue(Handle handle, Family family) implements NativeObject {
 		 * Index for the <i>ignored</i> queue family.
 		 */
 		public static final int IGNORED = (~0);
+
+		/**
+		 * Helper - Creates a new queue family from the given descriptor.
+		 * @param index		Family index
+		 * @param props		Descriptor
+		 * @return New queue family
+		 */
+		public static Family of(int index, VkQueueFamilyProperties props) {
+			final Set<VkQueueFlag> flags = IntegerEnumeration.mapping(VkQueueFlag.class).enumerate(props.queueFlags);
+			return new Family(index, props.queueCount, flags);
+		}
 
 		/**
 		 * Constructor.

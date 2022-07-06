@@ -13,7 +13,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -191,7 +190,7 @@ public class PhysicalDevice implements NativeObject {
 			// Create queue families
 			final List<Family> families = IntStream
 					.range(0, props.length)
-					.mapToObj(n -> family(n, props[n]))
+					.mapToObj(n -> Family.of(n, props[n]))
 					.collect(toList());
 
 			// Retrieve device features
@@ -200,17 +199,6 @@ public class PhysicalDevice implements NativeObject {
 
 			// Create device
 			return new PhysicalDevice(handle, instance, families, DeviceFeatures.of(features));
-		}
-
-		/**
-		 * Creates a queue family.
-		 * @param index 	Family index
-		 * @param props		Queue properties
-		 * @return New queue family
-		 */
-		private static Family family(int index, VkQueueFamilyProperties props) {
-			final Set<VkQueueFlag> flags = IntegerEnumeration.mapping(VkQueueFlag.class).enumerate(props.queueFlags);
-			return new Family(index, props.queueCount, flags);
 		}
 
 		/**

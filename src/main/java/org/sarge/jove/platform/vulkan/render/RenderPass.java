@@ -105,7 +105,7 @@ public class RenderPass extends AbstractVulkanObject {
 	 * This helper class attempts to mitigate this complexity by encapsulating index mapping whilst co-locating the population functions with the relevant type where possible.
 	 * <p>
 	 */
-	static class Group {
+	private static class Group {
 		/**
 		 * Index of the implicit sub-pass before or after the render pass.
 		 */
