@@ -156,13 +156,13 @@ For further background reading see [OpenGL matrices tutorial](http://www.opengl-
 
 Matrices are passed to a shader via a _uniform buffer_ which is a descriptor set resource implemented as a general Vulkan buffer.
 
-A uniform buffer is created using the following new factory method on the `VulkanBuffer` class:
+The resource is created using the following new factory method on the `VulkanBuffer` class:
 
 ```java
-public Resource uniform() {
+public DescriptorResource uniform() {
     require(VkBufferUsage.UNIFORM_BUFFER);
 
-    return new Resource() {
+    return new DescriptorResource() {
         @Override
         public VkDescriptorType type() {
             return VkDescriptorType.UNIFORM_BUFFER;
@@ -172,8 +172,8 @@ public Resource uniform() {
         public void populate(VkWriteDescriptorSet write) {
             var info = new VkDescriptorBufferInfo();
             info.buffer = handle();
-            info.offset = 0;
-            info.range = len;
+            info.offset = offset;
+            info.range = length();
             write.pBufferInfo = info;
         }
     };

@@ -256,10 +256,10 @@ return new Pool(handle.getValue(), dev, max);
 
 A descriptor set is essentially a mutable map of _resources_ indexed by the bindings in the layout.
 
-We first define a descriptor set resource:
+A resource is defined as follows:
 
 ```java
-public interface Resource {
+public interface DescriptorResource {
     /**
      * @return Descriptor type
      */
@@ -273,10 +273,10 @@ public interface Resource {
 }
 ```
 
-We can now implement a factory for the descriptor set resource for the sampler:
+A factory can now be implemented to create a resource for the sampler:
 
 ```java
-public Resource resource(View texture) {
+public DescriptorResource resource(View texture) {
     return new Resource() {
         @Override
         public VkDescriptorType type() {
@@ -285,22 +285,19 @@ public Resource resource(View texture) {
 
         @Override
         public void populate(VkWriteDescriptorSet write) {
-            // Create sampler descriptor
             var info = new VkDescriptorImageInfo();
             info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
             info.sampler = Sampler.this.handle();
-            info.imageView = texture.handle();
-
-            // Add to write descriptor
+            info.imageView = view.handle();
             write.pImageInfo = info;
         }
     };
 }
 ```
 
-Note that the same `VkWriteDescriptorSet` descriptor is used for __all__ types of resource, in this case we populate the `pImageInfo` field for the texture sampler.
+Note that the same descriptor is used for __all__ types of resource, in this case the `pImageInfo` field is populated for the texture sampler.
 
-We can now finally implement the descriptor set domain object itself:
+Finally the descriptor set domain object can be implemented:
 
 ```java
 public class DescriptorSet implements NativeObject {
