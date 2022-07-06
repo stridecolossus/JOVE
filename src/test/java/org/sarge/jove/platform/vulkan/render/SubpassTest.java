@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.*;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
@@ -14,11 +15,13 @@ class SubpassTest {
 	private Subpass subpass;
 	private Attachment attachment;
 	private Reference ref;
+	private Subpass.Properties props;
 
 	@BeforeEach
 	void before() {
 		attachment = mock(Attachment.class);
 		ref = new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+		props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of(VkAccess.SHADER_READ));
 		subpass = new Subpass(List.of(ref), null, List.of());
 	}
 
@@ -26,14 +29,13 @@ class SubpassTest {
 	void constructor() {
 		assertEquals(List.of(ref), subpass.colour());
 		assertEquals(Optional.empty(), subpass.depth());
-		assertEquals(List.of(), subpass.dependencies());
+		assertEquals(List.of(), subpass.dependencies().toList());
 	}
 
 	@DisplayName("The subpass aggregates the attachments used in that subpass")
 	@Test
 	void attachments() {
-		assertNotNull(subpass.attachments());
-		assertEquals(List.of(attachment), subpass.attachments().toList());
+		assertEquals(List.of(ref), subpass.attachments());
 	}
 
 	@DisplayName("A subpass can contain a depth-stencil attachment")
@@ -42,16 +44,15 @@ class SubpassTest {
 		subpass = new Subpass(List.of(), ref, List.of());
 		assertEquals(List.of(), subpass.colour());
 		assertEquals(Optional.of(ref), subpass.depth());
-		assertEquals(List.of(attachment), subpass.attachments().toList());
+		assertEquals(List.of(ref), subpass.attachments());
 	}
 
 	@DisplayName("A subpass can have dependencies to previous subpass stages")
 	@Test
 	void dependency() {
-		final var props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of());
 		final Dependency dependency = new Dependency(subpass, props, props);
 		final Subpass other = new Subpass(List.of(ref), null, List.of(dependency));
-		assertEquals(List.of(dependency), other.dependencies());
+		assertEquals(List.of(dependency), other.dependencies().toList());
 	}
 
 	@DisplayName("A sub-pass must contain at least one attachment")
@@ -85,7 +86,14 @@ class SubpassTest {
 		@Test
 		void constructor() {
 			assertEquals(attachment, ref.attachment());
-			assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, ref.layout());
+		}
+
+		@Test
+		void populate() {
+			final var descriptor = new VkAttachmentReference();
+			ref.populate(3, descriptor);
+			assertEquals(3, descriptor.attachment);
+			assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, descriptor.layout);
 		}
 
 		@Test
@@ -99,13 +107,6 @@ class SubpassTest {
 
 	@Nested
 	class PropertiesTests {
-		private Subpass.Properties props;
-
-		@BeforeEach
-		void before() {
-			props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of(VkAccess.SHADER_READ));
-		}
-
 		@Test
 		void constructor() {
 			assertEquals(Set.of(VkPipelineStage.VERTEX_SHADER), props.stages());
@@ -130,11 +131,9 @@ class SubpassTest {
 	@Nested
 	class DependencyTests {
 		private Dependency dependency;
-		private Subpass.Properties props;
 
 		@BeforeEach
 		void before() {
-			props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of());
 			dependency = new Dependency(subpass, props, props);
 		}
 
@@ -160,11 +159,113 @@ class SubpassTest {
 		}
 
 		@Test
+		void populate() {
+			final var descriptor = new VkSubpassDependency();
+			dependency.populate(1, 2, descriptor);
+			assertEquals(0, descriptor.dependencyFlags);
+			assertEquals(1, descriptor.srcSubpass);
+			assertEquals(2, descriptor.dstSubpass);
+			assertEquals(VkPipelineStage.VERTEX_SHADER.value(), descriptor.srcStageMask);
+			assertEquals(VkPipelineStage.VERTEX_SHADER.value(), descriptor.dstStageMask);
+			assertEquals(VkAccess.SHADER_READ.value(), descriptor.srcAccessMask);
+			assertEquals(VkAccess.SHADER_READ.value(), descriptor.dstAccessMask);
+		}
+
+		@Test
 		void equals() {
 			assertEquals(dependency, dependency);
 			assertEquals(dependency, new Dependency(subpass, props, props));
 			assertNotEquals(dependency, null);
 			assertNotEquals(dependency, new Dependency(subpass, props, new Subpass.Properties(Set.of(VkPipelineStage.FRAGMENT_SHADER), Set.of())));
+		}
+	}
+
+	@Nested
+	class GroupTests {
+		private Group group;
+		private Subpass other;
+
+		@BeforeEach
+		void before() {
+			other = new Subpass.Builder()
+					.colour(ref)
+					.dependency()
+						.subpass(subpass)
+						.source()
+							.stage(VkPipelineStage.VERTEX_SHADER)
+							.access(VkAccess.SHADER_READ)
+							.build()
+						.destination()
+							.stage(VkPipelineStage.VERTEX_SHADER)
+							.access(VkAccess.SHADER_READ)
+							.build()
+						.build()
+					.build();
+
+			group = new Group(List.of(subpass, other));
+		}
+
+		@DisplayName("The total set of attachments can be retrieved from the group")
+		@Test
+		void attachments() {
+			assertEquals(List.of(attachment), group.attachments());
+		}
+
+		@DisplayName("The set of sub-pass dependencies can be retrieved from the group")
+		@Test
+		void dependencies() {
+			final var dependency = Pair.of(other, new Dependency(subpass, props, props));
+			assertEquals(List.of(dependency), group.dependencies());
+		}
+
+		@DisplayName("A descriptor for a sub-pass can be generated")
+		@Test
+		void subpass() {
+			final var descriptor = new VkSubpassDescription();
+			group.populate(subpass, descriptor);
+			assertEquals(0, descriptor.flags);
+			assertEquals(VkPipelineBindPoint.GRAPHICS, descriptor.pipelineBindPoint);
+			assertEquals(1, descriptor.colorAttachmentCount);
+			assertNotNull(descriptor.pColorAttachments);
+			assertNull(descriptor.pDepthStencilAttachment);
+		}
+
+		@DisplayName("A descriptor for a sub-pass dependency can be generated")
+		@Test
+		void dependency() {
+			final var dependency = Pair.of(other, new Dependency(subpass, props, props));
+			final var descriptor = new VkSubpassDependency();
+			group.populate(dependency, descriptor);
+			assertEquals(0, descriptor.srcSubpass);
+			assertEquals(1, descriptor.dstSubpass);
+		}
+
+		@DisplayName("A sub-pass in the group can have a dependency on the implicit external sub-pass")
+		@Test
+		void external() {
+			final var dependency = Pair.of(subpass, new Dependency(Subpass.EXTERNAL, props, props));
+			final var descriptor = new VkSubpassDependency();
+			group.populate(dependency, descriptor);
+			assertEquals(-1, descriptor.srcSubpass);
+			assertEquals(0, descriptor.dstSubpass);
+		}
+
+		@DisplayName("A sub-pass in the group can have a dependency on itself")
+		@Test
+		void self() {
+			final var dependency = Pair.of(subpass, new Dependency(Subpass.SELF, props, props));
+			final var descriptor = new VkSubpassDependency();
+			group.populate(dependency, descriptor);
+			assertEquals(0, descriptor.srcSubpass);
+			assertEquals(0, descriptor.dstSubpass);
+		}
+
+		@DisplayName("A sub-pass cannot have a dependency on a sub-pass that is not part of the group")
+		@Test
+		void missing() {
+			final Subpass missing = new Subpass(List.of(), ref, List.of());
+			final var dependency = Pair.of(subpass, new Dependency(missing, props, props));
+			assertThrows(IllegalArgumentException.class, () -> group.populate(dependency, new VkSubpassDependency()));
 		}
 	}
 
@@ -184,8 +285,7 @@ class SubpassTest {
 			assertNotNull(subpass);
 			assertEquals(List.of(ref), subpass.colour());
 			assertEquals(Optional.empty(), subpass.depth());
-			assertEquals(List.of(attachment), subpass.attachments().toList());
-			assertEquals(List.of(), subpass.dependencies());
+			assertEquals(List.of(ref), subpass.attachments());
 		}
 
 		@DisplayName("The builder can construct a subpass with a depth-stencil attachment")
@@ -196,8 +296,7 @@ class SubpassTest {
 			assertNotNull(subpass);
 			assertEquals(List.of(), subpass.colour());
 			assertEquals(Optional.of(ref), subpass.depth());
-			assertEquals(List.of(attachment), subpass.attachments().toList());
-			assertEquals(List.of(), subpass.dependencies());
+			assertEquals(List.of(ref), subpass.attachments());
 		}
 
 		@DisplayName("The builder can construct a subpass dependency")
@@ -220,7 +319,7 @@ class SubpassTest {
 
 			final var props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of(VkAccess.SHADER_READ));
 			final Dependency dependency = new Dependency(Subpass.EXTERNAL, props, props);
-			assertEquals(List.of(dependency), subpass.dependencies());
+			assertEquals(List.of(dependency), subpass.dependencies().toList());
 		}
 	}
 }

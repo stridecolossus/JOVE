@@ -3,8 +3,10 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.*;
@@ -44,9 +46,16 @@ import org.sarge.lib.util.*;
  * 	    .build();
  * </pre>
  * <p>
+ * The {@link Group} is a helper class used to populate descriptors for a group of sub-passes comprising the render pass.
+ * <p>
  * @author Sarge
  */
 public class Subpass {
+	/**
+	 * Index of the implicit sub-pass before or after the render pass.
+	 */
+	private static final int VK_SUBPASS_EXTERNAL = (~0);
+
 	/**
 	 * Implicit sub-pass before or after the render-pass.
 	 */
@@ -123,8 +132,8 @@ public class Subpass {
 	/**
 	 * @return Sub-pass dependencies
 	 */
-	public List<Dependency> dependencies() {
-		return dependencies;
+	public Stream<Dependency> dependencies() {
+		return dependencies.stream();
 	}
 
 	/**
@@ -134,30 +143,6 @@ public class Subpass {
 		final List<Reference> attachments = new ArrayList<>(colour);
 		depth.ifPresent(attachments::add);
 		return attachments;
-	}
-
-	/**
-	 * Populates a sub-pass descriptor.
-	 */
-	void populate(VkSubpassDescription desc) {
-		// Init descriptor
-		desc.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
-
-		// Populate colour attachments
-		desc.colorAttachmentCount = colour.size();
-		desc.pColorAttachments = StructureHelper.pointer(colour, VkAttachmentReference::new, Reference::populate);
-
-		// Populate depth attachment
-		desc.pDepthStencilAttachment = depth.map(Subpass::depth).orElse(null);
-	}
-
-	/**
-	 * Creates and populates the descriptor for the depth-stencil attachment.
-	 */
-	private static VkAttachmentReference depth(Reference ref) {
-		final var descriptor = new VkAttachmentReference();
-		ref.populate(descriptor);
-		return descriptor;
 	}
 
 	@Override
@@ -182,51 +167,23 @@ public class Subpass {
 	/**
 	 * A <i>reference</i> specifies an attachment used during this sub-pass.
 	 */
-	public static class Reference {
-		private final Attachment attachment;
-		private final VkImageLayout layout;
-		private Integer index;
-
+	public record Reference(Attachment attachment, VkImageLayout layout) {
 		/**
 		 * Constructor.
 		 * @param attachment		Attachment
 		 * @param layout			Image layout
 		 */
-		public Reference(Attachment attachment, VkImageLayout layout) {
-			this.attachment = notNull(attachment);
-			this.layout = notNull(layout);
-		}
-
-		/**
-		 * @return Attachment
-		 */
-		public Attachment attachment() {
-			return attachment;
-		}
-
-		/**
-		 * Patches the attachment index.
-		 */
-		void index(int index) {
-			assert this.index == null;
-			this.index = index;
+		public Reference {
+			Check.notNull(attachment);
+			Check.notNull(layout);
 		}
 
 		/**
 		 * Populates the descriptor for this attachment reference.
 		 */
-		void populate(VkAttachmentReference desc) {
-			desc.attachment = index;
-			desc.layout = layout;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof Reference that) &&
-					(this.layout == that.layout) &&
-					this.attachment.equals(that.attachment);
+		void populate(int index, VkAttachmentReference descriptor) {
+			descriptor.attachment = zeroOrMore(index);
+			descriptor.layout = layout;
 		}
 	}
 
@@ -277,38 +234,17 @@ public class Subpass {
 	/**
 	 * The <i>dependency properties</i> specifies the pipeline stage(s) and access requirements for the source or destination of a dependency.
 	 */
-	public static class Properties {
-		private final Set<VkPipelineStage> stages;
-		private final Set<VkAccess> access;
-		private Integer index;
-
+	public record Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
 		/**
 		 * Constructor.
 		 * @param stages	Pipeline stages
 		 * @param access	Access flags
 		 * @throws IllegalArgumentException if {@link #stages} is empty
 		 */
-		public Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
-			this.stages = Set.copyOf(stages);
-			this.access = Set.copyOf(access);
+		public Properties {
 			if(stages.isEmpty()) throw new IllegalArgumentException("At least one pipeline stage must be specified");
-		}
-
-		/**
-		 * Patches the sub-pass index.
-		 */
-		void index(int index) {
-			assert this.index == null;
-			this.index = zeroOrMore(index);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof Properties that) &&
-					this.stages.equals(that.stages) &&
-					this.access.equals(that.access);
+			stages = Set.copyOf(stages);
+			access = Set.copyOf(access);
 		}
 
 		/**
@@ -374,13 +310,19 @@ public class Subpass {
 			Check.notNull(destination);
 		}
 
-		void populate(VkSubpassDependency dependency) {
-			dependency.srcSubpass = source.index;
-			dependency.dstSubpass = destination.index;
+		/**
+		 * Populates a sub-pass dependency descriptor.
+		 * @param src				Source sub-pass index
+		 * @param dest				Destination index
+		 * @param dependency		Descriptor to populate
+		 */
+		void populate(int src, int dest, VkSubpassDependency dependency) {
+			dependency.srcSubpass = src;
+			dependency.dstSubpass = zeroOrMore(dest);
 			dependency.srcStageMask = IntegerEnumeration.reduce(source.stages);
 			dependency.srcAccessMask = IntegerEnumeration.reduce(source.access);
 			dependency.dstStageMask = IntegerEnumeration.reduce(destination.stages);
-			dependency.dstStageMask = IntegerEnumeration.reduce(destination.access);
+			dependency.dstAccessMask = IntegerEnumeration.reduce(destination.access);
 		}
 
 		/**
@@ -427,6 +369,133 @@ public class Subpass {
 				final Dependency dependency = new Dependency(subpass, src.create(), dest.create());
 				parent.dependencies.add(dependency);
 				return parent;
+			}
+		}
+	}
+
+	/**
+	 * A <i>sub-pass group</i> is a helper class used to generate Vulkan descriptors for a render pass.
+	 * <p>
+	 * The render pass is represented as an object graph of the various sub-pass domain objects, whereas the resultant Vulkan descriptors use indices to represent the object relationships.
+	 * This helper class attempts to mitigate this complexity by encapsulating index mapping whilst co-locating the population functions with the relevant type where possible.
+	 * <p>
+	 */
+	static class Group {
+		private final List<Subpass> subpasses;
+		private final List<Reference> references;
+
+		/**
+		 * Constructor.
+		 * @param subpasses Sub-passes in this group
+		 */
+		public Group(List<Subpass> subpasses) {
+			this.subpasses = List.copyOf(notEmpty(subpasses));
+			this.references = references(subpasses);
+		}
+
+		/**
+		 * @return Unique attachment references in this group
+		 */
+		private static List<Reference> references(List<Subpass> subpasses) {
+			return subpasses
+					.stream()
+					.map(Subpass::attachments)
+					.flatMap(List::stream)
+					.distinct()
+					.toList();
+		}
+
+		/**
+		 * @return Total attachments in this group
+		 */
+		public List<Attachment> attachments() {
+			return references
+					.stream()
+					.map(Reference::attachment)
+					.toList();
+		}
+
+		/**
+		 * Populates a sub-pass descriptor.
+		 * @param subpass			Sub-pass
+		 * @param descriptor		Descriptor to populate
+		 */
+		public void populate(Subpass subpass, VkSubpassDescription descriptor) {
+			// Init descriptor
+			descriptor.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
+
+			// Populate colour attachments
+			descriptor.colorAttachmentCount = subpass.colour.size();
+			descriptor.pColorAttachments = StructureHelper.pointer(subpass.colour, VkAttachmentReference::new, this::populate);
+
+			// Populate depth attachment
+			descriptor.pDepthStencilAttachment = subpass.depth.map(this::depth).orElse(null);
+		}
+
+		/**
+		 * Populates the descriptor for an attachment reference.
+		 */
+		private void populate(Reference ref, VkAttachmentReference descriptor) {
+			final int index = references.indexOf(ref);
+			ref.populate(index, descriptor);
+		}
+
+		/**
+		 * Creates and populates a descriptor for the depth-stencil attachment.
+		 */
+		private VkAttachmentReference depth(Reference ref) {
+			final var descriptor = new VkAttachmentReference();
+			populate(ref, descriptor);
+			return descriptor;
+		}
+
+		/**
+		 * @return Sub-pass dependencies zipped with the <b>destination</b> sub-pass
+		 */
+		public List<Pair<Subpass, Dependency>> dependencies() {
+			return subpasses
+					.stream()
+					.flatMap(subpass -> subpass.dependencies.stream().map(e -> Pair.of(subpass, e)))
+					.toList();
+		}
+
+		/**
+		 * Populates the descriptor for a sub-pass dependency.
+		 * @throws IllegalArgumentException if the sub-pass is not present
+		 */
+		public void populate(Pair<Subpass, Dependency> entry, VkSubpassDependency descriptor) {
+			// Lookup index of this sub-pass
+			final Subpass subpass = entry.getLeft();
+			final Dependency dependency = entry.getRight();
+			final int dest = subpasses.indexOf(subpass);
+			assert dest >= 0;
+
+			// Determine index of the source sub-pass
+			final int src = index(dependency.subpass, dest);
+
+			// Populate descriptor
+			dependency.populate(src, dest, descriptor);
+		}
+
+		/**
+		 * Determines the index of the source sub-pass.
+		 * @param src		Source sub-pass
+		 * @param dest		Index of the destination (i.e. this) sub-pass (for the {@link Subpass#SELF} case)
+		 * @return Source sub-pass index
+		 * @throws IllegalArgumentException if the sub-pass is not present
+		 */
+		private int index(Subpass src, int dest) {
+			if(src == Subpass.EXTERNAL) {
+				return VK_SUBPASS_EXTERNAL;
+			}
+			else
+			if(src == Subpass.SELF) {
+				return dest;
+			}
+			else {
+				final int index = subpasses.indexOf(src);
+				if(index == -1) throw new IllegalArgumentException("Invalid subpass for this render pass: " + src);
+				return index;
 			}
 		}
 	}

@@ -1,22 +1,14 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.platform.vulkan.VkAccess;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
-import org.sarge.jove.platform.vulkan.VkRenderPassCreateInfo;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -58,7 +50,8 @@ public class RenderPassTest extends AbstractVulkanTest {
 		assertEquals(List.of(attachment), pass.attachments());
 	}
 
-	@DisplayName("Check the API and descriptor")
+	// TODO - refactor to new approach
+	@DisplayName("A render pass can be created from a group of sub-passes")
 	@Test
 	void create() {
 		// Check API
@@ -98,34 +91,13 @@ public class RenderPassTest extends AbstractVulkanTest {
 		assertEquals(VkAccess.COLOR_ATTACHMENT_WRITE.value(), info.pDependencies.dstAccessMask);
 	}
 
-	@DisplayName("Create a render-pass with multiple attachments in different sub-passes")
-	@Test
-	void createMultiple() {
-		// Create another attachment
-		final Attachment other = new Attachment.Builder()
-				.format(FORMAT)
-				.finalLayout(VkImageLayout.GENERAL)
-				.build();
-
-		// Create a second sub-pass
-		final Subpass depth = new Subpass.Builder()
-				.depth(new Reference(other, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL))
-				.build();
-
-		// Create render-pass with two sub-passes
-		pass = RenderPass.create(dev, List.of(subpass, depth));
-
-		// Check attachments
-		assertEquals(List.of(attachment, other), pass.attachments());
-	}
-
 	@DisplayName("Create a render-pass with a self-referential sub-pass")
 	@Test
 	void createSelfDependency() {
 		subpass = new Subpass.Builder()
 				.colour(new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL))
 				.dependency()
-					.self()
+					.subpass(Subpass.SELF)
 					.source()
 						.stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
 						.build()
