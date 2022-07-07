@@ -293,11 +293,13 @@ private static String ensureStartsAlpha(String key) {
 }
 ```
 
-The leading numeric is replaced to ensure the name is valid:
+This case only applies for the enumerations that specify the number of image or view dimensions:
 
 ```java
 private static final String[] DIGITS = {"ONE", "TWO", "THREE"};
 ```
+
+The leading numeric is replaced by the corresponding token, for example the `VkImageType.VK_IMAGE_TYPE_2D` constant becomes `TWO_D`.
 
 ### Templates
 

@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
+import org.sarge.jove.platform.vulkan.render.Swapchain.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerArray;
 
@@ -83,29 +83,62 @@ public class SwapchainTest extends AbstractVulkanTest {
 		}
 	}
 
-	@DisplayName("A rendered attachment can be presented to the swapchain")
-	@Test
-	void present() {
-		// Present frame
-		final Queue queue = new Queue(new Handle(2), new Family(0, 1, Set.of()));
-		final Semaphore semaphore = mock(Semaphore.class);
-		when(semaphore.handle()).thenReturn(new Handle(3));
-		swapchain.present(queue, 4, Set.of(semaphore));
+	@Nested
+	class PresentationTests {
+		private Queue queue;
+		private Semaphore semaphore;
 
-		// Check API
-		final var expected = new VkPresentInfoKHR() {
-			@Override
-			public boolean equals(Object obj) {
-				final var info = (VkPresentInfoKHR) obj;
-				assertEquals(1, info.swapchainCount);
-				assertEquals(NativeObject.array(List.of(swapchain)), info.pSwapchains);
-				assertEquals(new IntegerArray(new int[]{4}), info.pImageIndices);
-				assertEquals(1, info.waitSemaphoreCount);
-				assertEquals(NativeObject.array(List.of(semaphore)), info.pWaitSemaphores);
-				return true;
-			}
-		};
-		verify(lib).vkQueuePresentKHR(queue, expected);
+		@BeforeEach
+		void before() {
+			queue = new Queue(new Handle(2), new Family(0, 1, Set.of()));
+			semaphore = mock(Semaphore.class);
+			when(semaphore.handle()).thenReturn(new Handle(3));
+		}
+
+		@DisplayName("A rendered swapchain image can be presented to the swapchain")
+		@Test
+		void present() {
+			swapchain.present(queue, 4, semaphore);
+
+			final var expected = new VkPresentInfoKHR() {
+				@Override
+				public boolean equals(Object obj) {
+					final var info = (VkPresentInfoKHR) obj;
+					assertEquals(1, info.swapchainCount);
+					assertEquals(NativeObject.array(List.of(swapchain)), info.pSwapchains);
+					assertEquals(new IntegerArray(new int[]{4}), info.pImageIndices);
+					assertEquals(1, info.waitSemaphoreCount);
+					assertEquals(NativeObject.array(List.of(semaphore)), info.pWaitSemaphores);
+					return true;
+				}
+			};
+
+			verify(lib).vkQueuePresentKHR(queue, expected);
+		}
+
+		@DisplayName("A presentation task can be constructed by the builder")
+		@Test
+		void builder() {
+			final VkPresentInfoKHR info = new PresentTaskBuilder()
+					.image(swapchain, 4)
+					.wait(semaphore)
+					.build();
+
+			assertNotNull(info);
+			assertEquals(1, info.swapchainCount);
+			assertEquals(NativeObject.array(List.of(swapchain)), info.pSwapchains);
+			assertEquals(new IntegerArray(new int[]{4}), info.pImageIndices);
+			assertEquals(1, info.waitSemaphoreCount);
+			assertEquals(NativeObject.array(List.of(semaphore)), info.pWaitSemaphores);
+		}
+
+		@DisplayName("A presentation task cannot contain a duplicate swapchain")
+		@Test
+		void duplicate() {
+			final var builder = new PresentTaskBuilder();
+			builder.image(swapchain, 4);
+			assertThrows(IllegalArgumentException.class, () -> builder.image(swapchain, 4));
+		}
 	}
 
 	// TODO - wait ready?

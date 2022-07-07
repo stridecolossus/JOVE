@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notEmpty;
 
 import java.util.List;
 
@@ -99,10 +98,10 @@ public class RenderPass extends AbstractVulkanObject {
 	}
 
 	/**
-	 * A <i>sub-pass group</i> is a helper class used to generate Vulkan descriptors for a render pass.
+	 * Helper class used to generate Vulkan descriptors for the render pass.
 	 * <p>
 	 * The render pass is represented as an object graph of the various sub-pass domain objects, whereas the resultant Vulkan descriptors use indices to represent the object relationships.
-	 * This helper class attempts to mitigate this complexity by encapsulating index mapping whilst co-locating the population functions with the relevant type where possible.
+	 * This helper attempts to mitigate this by encapsulating index mapping whilst co-locating the population functions with the relevant type where possible.
 	 * <p>
 	 */
 	private static class Group {
@@ -118,8 +117,8 @@ public class RenderPass extends AbstractVulkanObject {
 		 * Constructor.
 		 * @param subpasses Sub-passes in this group
 		 */
-		Group(List<Subpass> subpasses) {
-			this.subpasses = List.copyOf(notEmpty(subpasses));
+		private Group(List<Subpass> subpasses) {
+			this.subpasses = subpasses;
 			this.references = references(subpasses);
 		}
 
@@ -129,8 +128,7 @@ public class RenderPass extends AbstractVulkanObject {
 		private static List<Reference> references(List<Subpass> subpasses) {
 			return subpasses
 					.stream()
-					.map(Subpass::attachments)
-					.flatMap(List::stream)
+					.flatMap(Subpass::attachments)
 					.distinct()
 					.toList();
 		}

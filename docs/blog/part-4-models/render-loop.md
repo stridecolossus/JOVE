@@ -912,7 +912,7 @@ info.signalSemaphoreCount = signal.size();
 info.pSignalSemaphores = NativeObject.toArray(signal);
 ```
 
-Population of the wait semaphores is slightly more complicated because the two components are separate fields (rather than an array of some child structure).  We first populate the pointer array for the semaphores:
+Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  First the array of semaphores is populated:
 
 ```java
 info.waitSemaphoreCount = wait.size();
@@ -923,14 +923,31 @@ And then the list of stage masks for each semaphore (which for some reason is a 
 
 ```java
 int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
-Memory mem = new Memory(stages.length * Integer.BYTES);
-mem.write(0, stages, 0, stages.length);
-info.pWaitDstStageMask = mem;
+info.pWaitDstStageMask = new IntegerArray(stages);
 ```
 
-Note that the `wait` table is a linked map so that the two fields have the same order.
+Here the `IntegerArray` helper class in introduced to transform an integer array to a contiguous memory block:
+
+```java
+public class IntegerArray extends Memory {
+    public IntegerArray(int[] array) {
+        super(Integer.BYTES * array.length);
+        for(int n = 0; n < array.length; ++n) {
+            setInt(n * Integer.BYTES, array[n]);
+        }
+    }
+}
+```
+
+Notes:
+
+* We also introduce additional helpers for floating-point and pointer arrays.
+
+* Perhaps surprisingly JNA does not provide these helpers (or it does but they are hidden for some reason).
+
+* The `wait` table is a linked map so that the two fields have the same order.
   
-We can now configure the work submission for the render task to use the semaphores:
+In the demo we can now configure the work submission for the render task to use the semaphores:
 
 ```java
 new Work.Builder(buffer.pool())

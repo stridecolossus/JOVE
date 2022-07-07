@@ -130,34 +130,91 @@ public class Swapchain extends AbstractVulkanObject {
 		}
 		active[index] = fence;
 	}
+	// TODO - this does not belong here, however leave acquire/present using int rather than forcing some frame/fence class here
 
 	/**
-	 * Presents the next frame.
+	 * Helper - Presents the next frame for this swapchain.
 	 * @param queue				Presentation queue
 	 * @param index				Swapchain image index
-	 * @param semaphores		Wait semaphores
+	 * @param semaphore			Wait semaphore
 	 * @throws SwapchainInvalidated if the swapchain image cannot be presented
+	 * @see PresentTaskBuilder
+	 * @see #present(DeviceContext, Queue, VkPresentInfoKHR)
 	 */
-	public void present(Queue queue, int index, Set<Semaphore> semaphores) throws SwapchainInvalidated {
-		// Create presentation descriptor
-		final VkPresentInfoKHR info = new VkPresentInfoKHR();
+	public void present(Queue queue, int index, Semaphore semaphore) throws SwapchainInvalidated {
+		final VkPresentInfoKHR info = new PresentTaskBuilder()
+				.image(this, index)
+				.wait(semaphore)
+				.build();
 
-		// Populate wait semaphores
-		info.waitSemaphoreCount = semaphores.size();
-		info.pWaitSemaphores = NativeObject.array(semaphores);
+		present(this.device(), queue, info);
+	}
 
-		// Populate swap-chain
-		info.swapchainCount = 1;
-		info.pSwapchains = NativeObject.array(List.of(this));
-
-		// Set image indices
-		info.pImageIndices = new IntegerArray(new int[]{index});
-
-		// Present frame
-		final VulkanLibrary lib = device().library();
+	/**
+	 * Presents one-or-more swapchains to the given presentation queue.
+	 * @param dev			Logical device
+	 * @param queue			Presentation queue
+	 * @param info			Presentation task
+	 * @throws SwapchainInvalidated if a swapchain image cannot be presented
+	 * @see PresentTaskBuilder
+	 */
+	public static void present(DeviceContext dev, Queue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
+		final VulkanLibrary lib = dev.library();
 		checkSwapchain(lib.vkQueuePresentKHR(queue, info));
 	}
-	// TODO - cache descriptor -> factory -> work submit?
+
+	/**
+	 * The <i>presentation task builder</i> is used to construct the descriptor for swapchain presentation.
+	 * @see Swapchain#present(DeviceContext, Queue, VkPresentInfoKHR)
+	 */
+	public static class PresentTaskBuilder {
+		private final Map<Swapchain, Integer> images = new LinkedHashMap<>();
+		private final Set<Semaphore> semaphores = new HashSet<>();
+
+		/**
+		 * Adds a swapchain to present.
+		 * @param swapchain		Swapchain
+		 * @param index			Image index
+		 * @throws IllegalArgumentException for a duplicate swapchain
+		 */
+		public PresentTaskBuilder image(Swapchain swapchain, int index) {
+			if(images.containsKey(swapchain)) throw new IllegalArgumentException("Duplicate swapchain: " + swapchain);
+			images.put(swapchain, index);
+			return this;
+		}
+
+		/**
+		 * Adds a wait semaphore.
+		 * @param semaphore Wait semaphore
+		 */
+		public PresentTaskBuilder wait(Semaphore semaphore) {
+			semaphores.add(notNull(semaphore));
+			return this;
+		}
+
+		/**
+		 * Constructs this presentation task.
+		 * @return Presentation task
+		 */
+		public VkPresentInfoKHR build() {
+			// Create presentation descriptor
+			final var info = new VkPresentInfoKHR();
+
+			// Populate wait semaphores
+			info.waitSemaphoreCount = semaphores.size();
+			info.pWaitSemaphores = NativeObject.array(semaphores);
+
+			// Populate swap-chain
+			info.swapchainCount = images.size();
+			info.pSwapchains = NativeObject.array(images.keySet());
+
+			// Set image indices
+			final int[] array = images.values().stream().mapToInt(Integer::intValue).toArray();
+			info.pImageIndices = new IntegerArray(array);
+
+			return info;
+		}
+	}
 
 	@Override
 	protected Destructor<Swapchain> destructor(VulkanLibrary lib) {

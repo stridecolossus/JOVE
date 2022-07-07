@@ -5,6 +5,8 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 import java.util.stream.Stream;
 
+import javax.swing.GroupLayout.Group;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -112,31 +114,34 @@ public class Subpass {
 	/**
 	 * @return Colour attachment(s)
 	 */
-	public List<Reference> colour() {
+	List<Reference> colour() {
 		return colour;
 	}
 
 	/**
 	 * @return Depth-stencil attachment
 	 */
-	public Optional<Reference> depth() {
+	Optional<Reference> depth() {
 		return depth;
 	}
 
 	/**
 	 * @return Sub-pass dependencies
 	 */
-	public Stream<Dependency> dependencies() {
+	Stream<Dependency> dependencies() {
 		return dependencies.stream();
 	}
 
 	/**
 	 * @return Attachments used by this sub-pass
 	 */
-	public List<Reference> attachments() {
-		final List<Reference> attachments = new ArrayList<>(colour);
-		depth.ifPresent(attachments::add);
-		return attachments;
+	Stream<Reference> attachments() {
+		if(depth.isPresent()) {
+			return Stream.concat(colour.stream(), depth.stream());
+		}
+		else {
+			return colour.stream();
+		}
 	}
 
 	@Override

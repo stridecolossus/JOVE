@@ -172,25 +172,24 @@ return new RenderPass(pass.getValue(), dev, attachments);
 The `Group` helper class encapsulates the complexity of the attachment indices (and later on the sub-pass dependencies):
 
 ```java
-static class Group {
+private static class Group {
     private final List<Subpass> subpasses;
     private final List<Reference> references;
 
-    Group(List<Subpass> subpasses) {
-        this.subpasses = List.copyOf(notEmpty(subpasses));
+    private Group(List<Subpass> subpasses) {
+        this.subpasses = subpasses;
         this.references = references(subpasses);
     }
 }
 ```
 
-The total set of unique attachment references for a render pass are aggregated as follows:
+The set of unique attachment references for a render pass are aggregated by the following flattening operation:
 
 ```java
 private static List<Reference> references(List<Subpass> subpasses) {
     return subpasses
         .stream()
-        .map(Subpass::attachments)
-        .flatMap(List::stream)
+        .flatMap(Subpass::attachments)
         .distinct()
         .toList();
 }
@@ -199,10 +198,13 @@ private static List<Reference> references(List<Subpass> subpasses) {
 Which uses the following new accessor on the sub-pass:
 
 ```java
-public List<Reference> attachments() {
-    List<Reference> attachments = new ArrayList<>(colour);
-    depth.ifPresent(attachments::add);
-    return attachments;
+Stream<Reference> attachments() {
+    if(depth.isPresent()) {
+        return Stream.concat(colour.stream(), depth.stream());
+    }
+    else {
+        return colour.stream();
+    }
 }
 ```
 

@@ -54,7 +54,7 @@ public class VulkanFrameTest extends AbstractVulkanTest {
 		verify(renderer).render(frame);
 
 		// Check frame presented
-		verify(swapchain).present(queue, 1, Set.of(frame.ready()));
+		verify(swapchain).present(queue, 1, frame.ready());
 	}
 
 	@Test

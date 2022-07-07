@@ -2,14 +2,11 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Set;
 import java.util.function.IntFunction;
 
 import org.sarge.jove.platform.vulkan.VkFenceCreateFlag;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.core.Fence;
-import org.sarge.jove.platform.vulkan.core.Semaphore;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.scene.RenderTask;
 
 /**
@@ -117,7 +114,7 @@ public class VulkanFrame implements RenderTask.Frame {
 		renderer.render(this);
 
 		// Present frame
-		swapchain.present(presentation, index, Set.of(ready));
+		swapchain.present(presentation, index, ready);
 	}
 
 	@Override
