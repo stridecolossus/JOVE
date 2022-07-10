@@ -106,8 +106,9 @@ Transforming a bit-field to the corresponding enumeration constants is slightly 
 
 ```java
 public Set<E> enumerate(int bits) {
+    int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
     return IntStream
-        .range(0, Integer.highestOneBit(bits))
+        .range(0, range)
         .map(bit -> 1 << bit)
         .filter(value -> (value & bits) == value)
         .mapToObj(this::map)

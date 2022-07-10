@@ -94,7 +94,7 @@ Notes:
 
 To instantiate the API itself the following factory method is added to the library:
 
-```java
+```java 
 static VulkanLibrary create() {
     String name = switch(Platform.getOSType()) {
         case Platform.WINDOWS -> "vulkan-1";
@@ -738,7 +738,7 @@ void build() {
 }
 ```
 
-The test is designed to check that the builder invokes the correct API method with the expected arguments (including the `VkInstanceCreateInfo` descriptor).
+This test is designed to check that the builder invokes the correct API method with the expected arguments and `VkInstanceCreateInfo` descriptor.
 
 However by default all methods in the mocked library will return zero (which of course is the Vulkan success return code) so the test passes whether we include the `when` clause or not and essentially proves nothing.
 
@@ -891,6 +891,8 @@ void build() {
     verify(lib).vkCreateInstance(expected, null, factory.pointer());
 }
 ```
+
+Note that we have made the decision to have API methods return result codes as an integer rather than the more explicit `VkResult` enumeration, taking advantage of the fact that `VK_SUCCESS` maps to integer zero (the default returned by mocked API methods that are not stubbed).  This avoids forcing having to explicitly stub the result code in every unit-test at the expense of a slightly less type-safe approach.  Note that we _could_ override the default Mockito answer for the entire mocked API but this is a little messy to implement for little benefit.
 
 In general from now on we will not cover testing unless there is a specific point-of-interest, it can be assumed that unit-tests are developed in-parallel with the main code.
 

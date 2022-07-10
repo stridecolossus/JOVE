@@ -1091,60 +1091,73 @@ new Work.Builder(buffer.pool())
 swapchain.present(presentation, index, Set.of(ready));
 ```
 
-We also release the fence in the `close` method.
+The fence is also released in the `close` method.
 
-The demo should now run without validation errors (for the render loop anyway), however there are still further improvements we can implement.
+The demo should now run without validation errors (for the render loop anyway), however there are still further improvements that can be implemented.
 
 ### Sub-Pass Dependencies
 
 The final synchronisation mechanism is a _subpass dependency_ that specifies memory and execution dependencies between the stages of a render-pass.
 
-We first add a new transient data type to the sub-pass class that specifies a dependency:
+New transient data types are added for a dependency between two sub-pass stages:
 
 ```java
-public record SubpassDependency(Subpass subpass, Dependency source, Dependency destination) {
-    /**
-     * A <i>dependency</i> specifies the properties for the source or destination component of this sub-pass dependency.
-     */
-    public static record Dependency(Set<VkPipelineStage> stages, Set<VkAccess> access) {
+public record Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
+}
+```
+
+Where _subpass_ is the dependant sub-pass and the _source_ and _destination_ specify the dependency properties:
+
+```java
+public record Dependency(Subpass subpass, Properties source, Properties destination) {
+}
+```
+
+Notes:
+
+* In this design the _destination_ is implicitly the sub-pass containing the dependency.
+
+* The source and destination properties are comprised of the same data so we introduce the `Properties` object and companion builder.
+
+The sub-pass class and builder are modified to include the list of dependencies:
+
+```java
+public static class Builder {
+    private final List<Dependency> dependencies = new ArrayList<>();
+    ...
+
+    public Dependency.Builder dependency() {
+        return new Dependency.Builder(this);
+    }
+
+    public Subpass build() {
+        return new Subpass(colour, depth, dependencies);
     }
 }
 ```
 
-Where _subpass_ is the dependant sub-pass and the _source_ and _destination_ specify the dependency properties.  
-
-We add a new member for a list of `dependencies` to the sub-pass class and its builder.  Note that in our design the _destination_ is implicitly the sub-pass containing the dependency.
-
-Next we add a new nested builder to configure a sub-pass dependency:
+And a new builder is implemented to configure a dependency:
 
 ```java
-public class SubpassDependencyBuilder {
-    private final DependencyBuilder src = new DependencyBuilder();
-    private final DependencyBuilder dest = new DependencyBuilder();
+public static class Builder {
+    private final Subpass.Builder parent;
+    private final Properties.Builder src = new Properties.Builder(this);
+    private final Properties.Builder dest = new Properties.Builder(this);
     private Subpass subpass;
-}
-```
-
-The source and destination properties are essentially the same so we wrap these into yet another nested builder on the dependency builder:
-
-```java
-public class DependencyBuilder {
-    private final Set<VkPipelineStage> stages = new HashSet<>();
-    private final Set<VkAccess> access = new HashSet<>();
 }
 ```
 
 The build method constructs the dependency record and adds it to the list for the sub-pass:
 
 ```java
-public Builder build() {
-    SubpassDependency dependency = new SubpassDependency(subpass, src.create(), dest.create());
-    dependencies.add(dependency);
-    return Builder.this;
+public Subpass.Builder build() {
+    Dependency dependency = new Dependency(subpass, src.create(), dest.create());
+    parent.dependencies.add(dependency);
+    return parent;
 }
 ```
 
-Finally we add a special case constant for the implicit sub-pass before and after the render-pass:
+Finally a special case constant is added for the implicit sub-pass before and after the render-pass:
 
 ```java
 public static final Subpass EXTERNAL = new Subpass() {
@@ -1155,54 +1168,72 @@ public static final Subpass EXTERNAL = new Subpass() {
 };
 ```
 
-We modify the render pass builder to populate the dependencies:
+The dependencies are populated in the `create` method of the render pass:
 
 ```java
-List<Entry<Subpass, SubpassDependency>> dependencies = subpasses.stream().flatMap(Helper::stream).collect(toList());
+var dependencies = group.dependencies();
 info.dependencyCount = dependencies.size();
-info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, this::dependency);
+info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, group::populate);
 ```
 
-The purpose of the first line is to generate a flattened list of dependencies zipped up with the parent sub-pass (for which we use a map entry):
+The sub-pass and dependencies are configured as a transient object graph, whereas the resultant descriptors use indices to represent the relations between the various objects.  Therefore the overall list of sub-pass dependencies is flattened and then zipped with the sub-pass (since we need both) to populate the descriptors:
 
 ```java
-private static Stream<Entry<Subpass, SubpassDependency>> stream(Subpass subpass) {
-    return subpass
-        .dependencies()
+public List<Pair<Subpass, Dependency>> dependencies() {
+    return subpasses
         .stream()
-        .map(e -> Map.entry(subpass, e));
+        .flatMap(subpass -> subpass.dependencies().map(e -> Pair.of(subpass, e)))
+        .toList();
 }
 ```
 
-The reason for this somewhat ugly transformation is we need to lookup the indices of the source and destination sub-passes when we populate the descriptor for a dependency:
+Next the following method is added to the `Group` helper class to populate each zipped dependency:
 
 ```java
-private void dependency(Entry<Subpass, SubpassDependency> entry, VkSubpassDependency desc) {
-    // Populate source properties
-    final Dependency src = dependency.source();
-    desc.srcSubpass = indexOf(dependency.subpass());
-    desc.srcStageMask = IntegerEnumeration.reduce(src.stages());
-    desc.srcAccessMask = IntegerEnumeration.reduce(src.access());
+public void populate(Pair<Subpass, Dependency> entry, VkSubpassDependency descriptor) {
+    // Lookup index of this sub-pass
+    Subpass subpass = entry.getLeft();
+    Dependency dependency = entry.getRight();
+    int dest = subpasses.indexOf(subpass);
+    assert dest >= 0;
 
-    // Populate destination properties
-    final Dependency dest = dependency.destination();
-    desc.dstSubpass = indexOf(entry.getKey());
-    desc.dstStageMask = IntegerEnumeration.reduce(dest.stages());
-    desc.dstAccessMask = IntegerEnumeration.reduce(dest.access());
+    // Determine index of the source sub-pass
+    int src = index(dependency.subpass(), dest);
+
+    // Populate descriptor
+    dependency.populate(src, dest, descriptor);
 }
 ```
 
-The `indexOf` helper also handles the case for the implicit external sub-pass:
+Which looks up the sub-pass indices for the source and destination components:
 
 ```java
-private int indexOf(Subpass subpass) {
-    if(subpass == Subpass.EXTERNAL) {
+private int index(Subpass src, int dest) {
+    if(src == Subpass.EXTERNAL) {
         return VK_SUBPASS_EXTERNAL;
     }
+    else
+    if(src == Subpass.SELF) {
+        return dest;
+    }
+    else {
+        int index = subpasses.indexOf(src);
+        if(index == -1) throw new IllegalArgumentException(...);
+        return index;
+    }
+}
+```
 
-    int index = subpasses.indexOf(subpass);
-    if(index == -1) throw new IllegalArgumentException(...);
-    return index;
+Finally a dependency descriptor is populated given the two indices:
+
+```java
+void populate(int src, int dest, VkSubpassDependency dependency) {
+    dependency.srcSubpass = src;
+    dependency.dstSubpass = zeroOrMore(dest);
+    dependency.srcStageMask = IntegerEnumeration.reduce(source.stages);
+    dependency.srcAccessMask = IntegerEnumeration.reduce(source.access);
+    dependency.dstStageMask = IntegerEnumeration.reduce(destination.stages);
+    dependency.dstAccessMask = IntegerEnumeration.reduce(destination.access);
 }
 ```
 
@@ -1224,9 +1255,9 @@ Subpass subpass = new Subpass.Builder()
     .build();
 ```
 
-The _destination_ clause specifies that our sub-pass waits for the colour attachment to be ready for writing, i.e. we need to wait for the swapchain to finish using the image.
+The _destination_ clause specifies that the sub-pass should wait for the colour attachment to be ready for writing, i.e. when the swapchain has finished using the image.
 
-This should allow the application to more efficiently use the multi-threaded nature of the pipeline.
+This should allow Vulkan to more efficiently use the multi-threaded nature of the pipeline.
 
 ### Frames In-Flight
 
