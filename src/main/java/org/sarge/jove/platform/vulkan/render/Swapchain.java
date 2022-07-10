@@ -43,6 +43,9 @@ import com.sun.jna.ptr.*;
  * @author Sarge
  */
 public class Swapchain extends AbstractVulkanObject {
+	private static final int OUT_OF_DATE = VkResult.ERROR_OUT_OF_DATE_KHR.value();
+	private static final int SUB_OPTIMAL = VkResult.SUBOPTIMAL_KHR.value();
+
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> attachments;
@@ -89,17 +92,11 @@ public class Swapchain extends AbstractVulkanObject {
 
 	/**
 	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame buffer.
-	 * Note that {@link VkResult#SUBOPTIMAL_KHR} is considered as success
 	 */
 	public static final class SwapchainInvalidated extends VulkanException {
 		private SwapchainInvalidated(int result) {
 			super(result);
 		}
-	}
-
-	private static void checkSwapchain(int result) {
-		final boolean ok = (result == VulkanLibrary.SUCCESS) || (result == VkResult.SUBOPTIMAL_KHR.value());
-		if(!ok) throw new SwapchainInvalidated(result);
 	}
 
 	/**
@@ -108,14 +105,25 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param fence			Optional fence
 	 * @return Image index
 	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
-	 * @throws SwapchainInvalidated if the swapchain image cannot be acquired
+	 * @throws SwapchainInvalidated if the swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR}
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
+
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
-		checkSwapchain(lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index));
-		return index.getValue();
+		final int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+
+		if((result == VulkanLibrary.SUCCESS) || (result == SUB_OPTIMAL)) {
+			return index.getValue();
+		}
+		else
+		if(result == OUT_OF_DATE) {
+			throw new SwapchainInvalidated(result);
+		}
+		else {
+			throw new VulkanException(result);
+		}
 	}
 
 	/**
@@ -155,12 +163,19 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param queue			Presentation queue
 	 * @param info			Presentation task
-	 * @throws SwapchainInvalidated if a swapchain image cannot be presented
+	 * @throws SwapchainInvalidated if a swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR} or {@link VkResult#SUBOPTIMAL_KHR}
 	 * @see PresentTaskBuilder
 	 */
 	public static void present(DeviceContext dev, Queue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
 		final VulkanLibrary lib = dev.library();
-		checkSwapchain(lib.vkQueuePresentKHR(queue, info));
+		final int result = lib.vkQueuePresentKHR(queue, info);
+		if((result == OUT_OF_DATE) || (result == SUB_OPTIMAL)) {
+			throw new SwapchainInvalidated(result);
+		}
+		else
+		if(result != VulkanLibrary.SUCCESS) {
+			throw new VulkanException(result);
+		}
 	}
 
 	/**

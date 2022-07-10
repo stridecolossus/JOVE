@@ -1,22 +1,17 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static org.mockito.ArgumentMatchers.anyFloat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.ptr.*;
 
 /**
  * Base-class for a unit-test dependant on the Vulkan API and a logical device.

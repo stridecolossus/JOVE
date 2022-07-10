@@ -71,11 +71,11 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@DisplayName("The next image cannot be acquired if the swapchain has become invalid")
 		@Test
 		void error() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, INTEGER)).thenReturn(VkResult.NOT_READY.value());
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, INTEGER)).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR.value());
 			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 
-		@DisplayName("The next image can be acquired even if the swapchain is sub-optimal")
+		@DisplayName("The next image can be acquired if the swapchain is sub-optimal")
 		@Test
 		void suboptimal() {
 			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, INTEGER)).thenReturn(VkResult.SUBOPTIMAL_KHR.value());
