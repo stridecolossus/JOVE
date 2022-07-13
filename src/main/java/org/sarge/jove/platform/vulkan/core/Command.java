@@ -36,12 +36,23 @@ public interface Command {
 	 * Helper - Submits this as a <i>one time</i> command to the given pool and waits for completion.
 	 * @param pool Command pool
 	 * @return New command buffer
-	 * @see Work#submit(Command, Pool, Fence)
+	 * @see Work#submit(Fence)
+	 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
 	 */
 	default Buffer submitAndWait(Pool pool) {
-		// Submit work
+		// Init synchronisation
 		final Fence fence = Fence.create(pool.device());
-		final Buffer buffer = Work.submit(this, pool, fence);
+
+		// Allocate and record one-time command
+		final Buffer buffer = pool
+				.allocate()
+				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+				.add(this)
+				.end();
+
+		// Submit work
+		final Work work = Work.of(buffer);
+		work.submit(fence);
 
 		// Wait for completion
 		fence.waitReady();

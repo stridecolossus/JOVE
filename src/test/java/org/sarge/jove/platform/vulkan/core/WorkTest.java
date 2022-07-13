@@ -1,41 +1,31 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkPipelineStage;
-import org.sarge.jove.platform.vulkan.VkSubmitInfo;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.Command.Pool;
-import org.sarge.jove.platform.vulkan.core.Work.Batch;
-import org.sarge.jove.platform.vulkan.core.Work.DefaultWork;
+import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerArray;
+
+import com.sun.jna.Structure;
 
 public class WorkTest extends AbstractVulkanTest {
 	private Queue queue;
 	private Pool pool;
 	private Buffer buffer;
-	private DefaultWork work;
+	private Work work;
 
 	@BeforeEach
 	void before() {
 		// Create queue
-		final Queue.Family family = new Family(0, 1, Set.of());
+		final Family family = new Family(0, 1, Set.of());
 		queue = new Queue(new Handle(1), family);
 
 		// Create pool
@@ -55,9 +45,10 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void constructor() {
-		assertNotNull(work);
+		assertEquals(pool, work.pool());
 	}
 
+	@DisplayName("Work can be submitted to a queue")
 	@Test
 	void submit() {
 		// Submit work
@@ -68,15 +59,33 @@ public class WorkTest extends AbstractVulkanTest {
 		final VkSubmitInfo expected = new VkSubmitInfo() {
 			@Override
 			public boolean equals(Object obj) {
-				final VkSubmitInfo info = (VkSubmitInfo) obj;
-				assertEquals(1, info.commandBufferCount);
-				assertEquals(NativeObject.array(List.of(buffer)), info.pCommandBuffers);
-				return true;
+				return dataEquals((Structure) obj);
 			}
 		};
+		expected.commandBufferCount = 1;
+		expected.pCommandBuffers = NativeObject.array(List.of(buffer));
 
 		// Check API
 		verify(lib).vkQueueSubmit(queue, 1, new VkSubmitInfo[]{expected}, fence);
+	}
+
+	@DisplayName("A work batch must all submit to the same queue family")
+	@Test
+	void invalid() {
+		// Create a different pool
+		final Pool other = mock(Pool.class);
+		when(other.queue()).thenReturn(new Queue(new Handle(999), new Family(1, 2, Set.of())));
+
+		// Create a buffer using this pool
+		final Buffer buffer = mock(Buffer.class);
+		when(buffer.pool()).thenReturn(other);
+		when(buffer.isReady()).thenReturn(true);
+
+		// Create work
+		final Work invalid = Work.of(buffer);
+
+		// Check cannot submit to different queues
+		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, invalid), null));
 	}
 
 	@Test
@@ -85,38 +94,6 @@ public class WorkTest extends AbstractVulkanTest {
 		assertEquals(true, work.equals(Work.of(buffer)));
 		assertEquals(false, work.equals(null));
 		assertEquals(false, work.equals(mock(Work.class)));
-	}
-
-	@Nested
-	class BatchTest {
-		private Batch batch;
-
-		@BeforeEach
-		void before() {
-			batch = new Batch(List.of(work, work));
-		}
-
-		@Test
-		void submit() {
-			batch.submit(null);
-		}
-
-		@Test
-		void invalidQueueFamily() {
-			final Command.Pool other = mock(Pool.class);
-			final DefaultWork invalid = mock(DefaultWork.class);
-			when(invalid.pool()).thenReturn(other);
-			when(other.queue()).thenReturn(new Queue(new Handle(999), new Family(1, 2, Set.of())));
-			assertThrows(IllegalArgumentException.class, () -> new Batch(List.of(work, invalid)));
-		}
-
-		@Test
-		void equals() {
-			assertEquals(true, batch.equals(batch));
-			assertEquals(true, batch.equals(new Batch(List.of(work, work))));
-			assertEquals(false, batch.equals(null));
-			assertEquals(false, batch.equals(mock(Batch.class)));
-		}
 	}
 
 	@Nested
@@ -131,17 +108,20 @@ public class WorkTest extends AbstractVulkanTest {
 			builder = new Work.Builder(pool);
 		}
 
+		@DisplayName("A command buffer can be added to the work")
 		@Test
 		void add() {
 			builder.add(buffer);
 		}
 
+		@DisplayName("A command buffer that has not been recorded cannot be added to the work")
 		@Test
 		void addNotRecorded() {
 			when(buffer.isReady()).thenReturn(false);
 			assertThrows(IllegalStateException.class, () -> builder.add(buffer));
 		}
 
+		@DisplayName("All command buffers in the work must submit to the same queue family")
 		@Test
 		void addInvalidQueueFamily() {
 			final Pool other = mock(Pool.class);
@@ -150,22 +130,26 @@ public class WorkTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, () -> builder.add(buffer));
 		}
 
+		@DisplayName("The work can be configured to wait for a semaphore")
 		@Test
 		void waitSemaphore() {
 			builder.wait(wait, VkPipelineStage.TOP_OF_PIPE);
 		}
 
+		@DisplayName("A wait semaphore cannot be added to the work more than once")
 		@Test
 		void waitSemaphoreDuplicate() {
 			builder.wait(wait, VkPipelineStage.TOP_OF_PIPE);
 			assertThrows(IllegalArgumentException.class, () -> builder.wait(wait, VkPipelineStage.TOP_OF_PIPE));
 		}
 
+		@DisplayName("The work can be configured to signal a semaphore on completion")
 		@Test
 		void signalSemaphore() {
 			builder.signal(signal);
 		}
 
+		@DisplayName("A semaphore cannot be used as both a wait and a signal")
 		@Test
 		void invalidSemaphores() {
 			builder.wait(wait, VkPipelineStage.TOP_OF_PIPE);
@@ -173,6 +157,7 @@ public class WorkTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
+		@DisplayName("A work submission can be constructed via the builder")
 		@Test
 		void build() {
 			// Init semaphores

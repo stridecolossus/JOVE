@@ -1,34 +1,19 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkCommandBufferAllocateInfo;
-import org.sarge.jove.platform.vulkan.VkCommandBufferBeginInfo;
-import org.sarge.jove.platform.vulkan.VkCommandBufferLevel;
-import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
-import org.sarge.jove.platform.vulkan.VkCommandPoolCreateInfo;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.Command.Pool;
-import org.sarge.jove.platform.vulkan.core.Command.SecondaryBuffer;
+import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Memory;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 
 class CommandTest extends AbstractVulkanTest {
 	private Command cmd;
@@ -38,20 +23,14 @@ class CommandTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		queue = new Queue(new Handle(1), new Family(2, 1, Set.of()));
-		cmd = mock(Command.class);
+		cmd = spy(Command.class);
 		pool = Pool.create(dev, queue);
 	}
 
 	@Test
 	void submitAndWait() {
-		// Create command
-		cmd = spy(Command.class);
-
-		// Execute one-time command
 		final Buffer buffer = cmd.submitAndWait(pool);
 		verify(cmd).execute(lib, buffer);
-
-		// Check buffer is transient
 		assertEquals(0, pool.buffers().count());
 	}
 
