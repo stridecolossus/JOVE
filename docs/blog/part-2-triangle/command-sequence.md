@@ -283,18 +283,28 @@ We also add convenience mutators to reset or release a buffer back to the pool.
 
 ### Submission
 
-Submitting tasks to a work queue involves populating a Vulkan descriptor comprising one-or-more command buffers with a synchronisation specification.  We defer synchronisation until later as it is not needed for the triangle demo.
-
-We implement a new `Work` class that composes a work submission:
+Submitting tasks to a work queue involves populating a Vulkan descriptor for one-or-more command buffers with a synchronisation specification, which is encapsulated into a new class:
 
 ```java
 public class Work {
     private final Pool pool;
     private final List<Buffer> buffers = new ArrayList<>();
+    
+    private void populate(VkSubmitInfo info) {
+        ...
+    }
 }
 ```
 
-And the obligatory builder to add command buffers:
+Notes:
+
+* Although this object is not necessarily dependant on the command pool it is more convenient to have direct access to the pool (and the logical device).
+
+* In this case we prefer to give the new class a more explicit and meaningful name (rather than `SubmitInfo` for example).
+
+* Synchronisation is deferred until later as it is not needed for the triangle demo.
+
+A work instance is constructed by the obligatory builder which is used to add command buffers to the submission:
 
 ```java
 public Builder add(Buffer buffer) {
@@ -311,8 +321,6 @@ public Builder add(Buffer buffer) {
 }
 ```
 
-Although the work domain object is not necessarily dependant on the command pool it is more convenient for the code to have access to the pool (and the logical device).
-
 All command buffers __must__ be submitted to the same queue family which is validated by the `matches` helper:
 
 ```java
@@ -323,50 +331,41 @@ private static boolean matches(Work work, Pool pool) {
 }
 ```
 
-We also add a convenience factory to create a work submission for a single command buffer:
+Work is submitted to the queue as a _batch_ which again must all use the same queue family:
 
 ```java
-public static Work of(Buffer buffer) {
-    Pool pool = buffer.pool();
-    return new Builder(pool).add(buffer).build();
-}
-```
-
-Work is submitted to the queue as a _batch_ of submissions (which again must all use the same queue family):
-
-```java
-public static void submit(List<Work> work) {
-    // Validate
-    Check.notEmpty(work);
-    Pool pool = work.get(0).pool;
-    if(!work.stream().allMatch(e -> matches(e, pool))) {
-        throw new IllegalArgumentException(...);
+public static void submit(Collection<Work> batch, Fence fence) {
+    // Check batch submits to expected queue
+    Pool pool = batch.iterator().next().pool();
+    for(Work work : batch) {
+        if(!matches(pool, work.pool())) {
+            throw new IllegalArgumentException(...);
+        }
     }
 
-    // Populate array of submission descriptors
-    VkSubmitInfo[] array = StructureHelper.array(work, VkSubmitInfo::new, Work::populate);
-
-    // Submit work
+    // Submit batch
+    VkSubmitInfo[] array = StructureHelper.array(batch, VkSubmitInfo::new, Work::populate);
     VulkanLibrary lib = pool.device().library();
-    check(lib.vkQueueSubmit(pool.queue(), array.length, array, null));
+    check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
 }
 ```
 
-Where the Vulkan descriptor for each work submission in the batch is populated by the following helper on the `Work` class:
+Where the Vulkan descriptor for each work submission in the batch is populated as follows:
 
 ```java
 private void populate(VkSubmitInfo info) {
     info.commandBufferCount = buffers.size();
     info.pCommandBuffers = NativeObject.toArray(buffers);
+    // TODO - synchronisation
 }
 ```
 
-Finally we add the API method to the existing device library:
+Finally the new API method is added to the device library:
 
 ```java
 interface Library {
     ...
-    int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Handle fence);
+    int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 }
 ```
 
@@ -376,9 +375,9 @@ interface Library {
 
 ### Commands
 
-We can now implement the specific commands required for the triangle demo.
+We can now implement the specific commands required for rendering the triangle in the demo.
 
-We add the following factory method on the `FrameBuffer` class to begin rendering to that buffer:
+The following factory method is added on the `FrameBuffer` class to begin rendering to that buffer:
 
 ```java
 public Command begin() {
@@ -400,7 +399,7 @@ public Command begin() {
 }
 ```
 
-For the moment we temporarily bodge a grey clear value for the colour attachment:
+For the moment a temporarily bodge is added to clear the attachment to a grey colour:
 
 ```java
 VkClearValue clear = new VkClearValue();
@@ -418,7 +417,7 @@ Ending the render pass is defined as a constant since the command does not requi
 public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 ```
 
-To bind the pipeline in the render sequence we add the following factory to the `Pipeline` class:
+To bind the pipeline in the render sequence a new command factory method is added to the `Pipeline` class:
 
 ```java
 public Command bind() {
@@ -426,15 +425,15 @@ public Command bind() {
 }
 ```
 
-Finally we hard-code the draw command to render the triangle vertices:
+Finally the draw command is hard-coded to render the triangle vertices:
 
 ```java
 Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 ```
 
-This specifies the three triangles vertices, in a single instance, both starting at index zero.  We will implement a proper builder for draw commands in a later chapter.
+This specifies three triangles vertices, in a single instance, both starting at index zero.  A proper builder for draw commands will be implemented in a later chapter.
 
-Finally we add the API methods for the new commands to the render pass library:
+Finally the new drawing command are added to the render pass library:
 
 ```java
 interface Library {
@@ -519,15 +518,24 @@ swapchain.present(pool.queue(), index);
 Thread.sleep(1000);
 ```
 
+A convenience factory is added to the `Work` class to create a submission for a single command buffer:
+
+```java
+public static Work of(Buffer buffer) {
+    Pool pool = buffer.pool();
+    return new Builder(pool).add(buffer).build();
+}
+```
+
 Notes:
 
 * The `acquire` method will generate a Vulkan error since we are not providing any synchronisation parameters.
 
-* Execution is briefly blocked at the end of the 'loop' so we have a chance of seeing the results (if there are any).
+* Execution is briefly blocked at the end of the 'loop' so we have a chance of seeing the results (assuming there are any).
  
 * Obviously this is temporary code just sufficient to test this first demo, a proper render loop will be addressed in a future chapter.
 
-* The GLFW window will be non-functional since the input event queue is not being polled, i.e. cannot be moved or closed.
+* The window will be non-functional since the GLFW event queue is not being polled, i.e. cannot be moved or closed.
 
 ### Conclusion
 

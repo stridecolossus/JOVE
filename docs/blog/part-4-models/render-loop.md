@@ -792,7 +792,7 @@ So far we have avoided synchronisation by simply blocking the device after rende
 
 All of these methods return immediately with the actual work queued for execution in the background.
 
-The Vulkan API provides several synchronisation mechanisms that can be used by the application, a _semaphore_ is the simplest of these and is used to synchronise operations within or across work queues.  The class itself is trivial (since semaphores do not have any public functionality):
+The Vulkan API provides several synchronisation mechanisms that can be used by the application, a _semaphore_ is the simplest of these and is used to synchronise operations within or across work queues.  The class itself is trivial since semaphores do not have any public functionality:
 
 ```java
 public class Semaphore extends AbstractVulkanObject {
@@ -837,19 +837,19 @@ public RenderLoop(Swapchain swapchain, ...) {
 }
 ```
 
-We pass the _available_ semaphore to the acquire method which passes it on to the API method:
+The _available_ semaphore is passed to the acquire method:
 
 ```java
 int index = swapchain.acquire(available);
 ```
 
-The _ready_ semaphore is passed to the presentation method:
+And _ready_ is used when presenting the frame:
 
 ```java
 swapchain.present(presentation, Set.of(ready));
 ```
 
-And the method is modified to populate the relevant member of the descriptor for the presentation operation:
+The `present` method is modified to populate the relevant member of the descriptor:
 
 ```java
 public void present(Queue queue, Set<Semaphore> semaphores) {
@@ -860,7 +860,7 @@ public void present(Queue queue, Set<Semaphore> semaphores) {
 }
 ```
 
-Finally we release the semaphores when the render loop object is destroyed:
+Finally the semaphores are released when the render loop object is destroyed:
 
 ```java
 public void close() {
@@ -871,11 +871,11 @@ public void close() {
 
 Note that here the cleanup method is named `close` to take advantage of the _inferred_ bean destructor method used by the Spring container.
 
-If we run the demo as it now stands (with the work queue blocking still present) we will get additional errors because the semaphores are never actually signalled.
+If we run the demo as it now stands (with the work queue blocking still present) there will be additional errors because the semaphores are never actually signalled.
 
 ### Work Submission
 
-To use the semaphores we extend the work class by adding two new members:
+To use the semaphores the work class is extended by adding two new members:
 
 ```java
 public class Work {
@@ -889,19 +889,21 @@ Each entry in the `wait` table consists of:
 
 * A semaphore that must be signalled before the work can be performed.
 
-* The stages(s) of the pipeline to wait on (represented as an integer mask).
+* The stages(s) of the pipeline to wait on stored as an integer mask.
 
 The `signal` member is the set of semaphores to be signalled when the work has completed.
 
-We modify the builder to configure the semaphores for a work submission:
+The builder is modified to configure the semaphores:
 
 ```java
 public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
     wait.put(semaphore, IntegerEnumeration.reduce(stages));
+    return this;
 }
 
 public Builder signal(Semaphore semaphore) {
     signal.add(semaphore);
+    return this;
 }
 ```
 
@@ -912,21 +914,25 @@ info.signalSemaphoreCount = signal.size();
 info.pSignalSemaphores = NativeObject.toArray(signal);
 ```
 
-Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  First the array of semaphores is populated:
+Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  Note that the table is a linked map to ensure that both fields are iterated in the same order.
+
+First the array of semaphores is populated:
 
 ```java
 info.waitSemaphoreCount = wait.size();
 info.pWaitSemaphores = NativeObject.toArray(wait.keySet());
 ```
 
-And then the list of stage masks for each semaphore (which for some reason is a pointer-to-integer array):
+And then the list of pipeline stage for each semaphore:
 
 ```java
 int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
 info.pWaitDstStageMask = new IntegerArray(stages);
 ```
 
-Here the `IntegerArray` helper class in introduced to transform an integer array to a contiguous memory block:
+Note that the `pWaitDstStageMask` implies it is a bit-field but is in fact a pointer to an integer array.
+
+Here the `IntegerArray` helper class is introduced to transform an array of integers to a contiguous memory block:
 
 ```java
 public class IntegerArray extends Memory {
@@ -939,14 +945,8 @@ public class IntegerArray extends Memory {
 }
 ```
 
-Notes:
+Additional helpers are also implemented for arrays of floating-point values and pointers.  Surprisingly JNA does not provide these helpers (or it does but they are hidden for some reason).
 
-* We also introduce additional helpers for floating-point and pointer arrays.
-
-* Perhaps surprisingly JNA does not provide these helpers (or it does but they are hidden for some reason).
-
-* The `wait` table is a linked map so that the two fields have the same order.
-  
 In the demo we can now configure the work submission for the render task to use the semaphores:
 
 ```java
