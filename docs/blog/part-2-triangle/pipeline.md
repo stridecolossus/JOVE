@@ -15,13 +15,13 @@ title: The Graphics Pipeline
 
 ## Overview
 
-The _graphics pipeline_ configures the various _stages_ executed by the hardware to render a fragment.
+The _graphics pipeline_ configures the various _stages_ executed by the hardware to render vertices and fragments.
 
 A pipeline stage is either a configurable _fixed function_ or a _programmable stage_ implemented by a _shader module_.
 
-Configuring the pipeline requires a large amount of information for even the simplest case (though much of this is often default data or empty structures).
+Configuring the pipeline requires a large amount of information for even the simplest case although much of this data is often default or empty structures.
 
-In this chapter we will implement the mandatory fixed-function pipeline stages and the _vertex shader_ stage required for the triangle demo:
+In this chapter we will implement the mandatory fixed-function and _vertex shader_ stages required for the triangle demo.
 
 ---
 
@@ -49,7 +49,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 The _pipeline layout_ specifies the _resources_ (texture samplers, uniform buffers and push constants) used by the pipeline.  None of these are needed for the triangle demo but we are still required to specify a layout for the pipeline.
 
-We create a bare-bones implementation for this stage of development:
+A bare-bones implementation is created to support this stage of development:
 
 ```java
 public class PipelineLayout extends AbstractVulkanObject {
@@ -64,7 +64,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 }
 ```
 
-And a builder to create the layout:
+With a companion builder that is largely empty for the moment:
 
 ```java
 public PipelineLayout build() {
@@ -86,7 +86,7 @@ Our goals for configuration of the pipeline are:
 
 2. Apply sensible defaults for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
 
-3. Factor out the code for configuration of the pipeline stages into separate classes (for maintainability and testability reasons).
+3. Factor out the code for configuration of the pipeline stages into separate classes for maintainability and testability.
 
 We start with an outline builder for the pipeline:
 
@@ -107,7 +107,7 @@ public static class Builder {
 }
 ```
 
-Next we create nested builders for the mandatory fixed-function pipeline stages:
+Next nested builders are added for the mandatory fixed-function pipeline stages:
 
 ```java
 private final VertexInputStageBuilder input = new VertexInputStageBuilder();
@@ -125,11 +125,11 @@ public VertexInputStageBuilder input() {
 }
 ```
 
-If the number and complexity of these nested builders was relatively small we would implement them as inner classes of the pipeline (as we did for the render pass in the previous chapter).  This is clearly not viable for the pipeline - the parent class would become unwieldy and difficult to maintain or test.
+If the number and complexity of these nested builders was relatively small they would be implemented as inner classes of the pipeline, but this is clearly not viable for the pipeline - the main class would become unwieldy and difficult to maintain or test.
 
-Therefore we need to factor out the nested builders into their own source files whilst maintaining the fluid interface.  After some research we failed to find a decent strategy or pattern for this approach (though we did find some absolutely hideous solutions using reflection and other shenanigans).
+Ideally the various sub-builders would be factored out into separate source files whilst maintaining an overall fluid interface, however after some research we failed to find a decent strategy or pattern for this approach (though there are some absolutely hideous solutions using reflection and other shenanigans).
 
-Our solution is that each nested builder will have a reference to the parent pipeline builder (returned in its `build` method) and a package-private `get` method that constructs the resultant object.  We wrap this up in the following template class:
+Our solution is that each sub-builder will have a reference to the parent pipeline builder and a package-private accessor for the constructed data, which is wrapped into the following template:
 
 ```java
 abstract class AbstractPipelineStageBuilder<T> {
@@ -154,7 +154,7 @@ abstract class AbstractPipelineStageBuilder<T> {
 }
 ```
 
-For example the viewport stage builder (which we complete below) is declared as follows:
+For example the viewport stage builder (see below) is declared as follows:
 
 ```java
 public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
@@ -165,13 +165,13 @@ public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelin
 }
 ```
 
-This is a slightly ropey implementation but it is relatively simple and achieves our goal of a fluid nested builder.  The resultant classes are relatively self-contained in terms of maintenance and testing and the nastier details are at least package-private.
+This is a slightly ropey implementation but is relatively simple, achieves the goal of a fluid interface comprising multiple sub-builders, and the nastier details are at least package-private.
 
 ### Viewport
 
-To avoid making this chapter overly long we only cover the implementation of the mandatory pipeline stages required for the triangle demo and introduce other stages as they are needed in future chapters.
+To avoid making this chapter overly long only the implementation of the mandatory pipeline stages required for the triangle demo are detailed, with the other stages introduced as they become relevant in future chapters.
 
-The only fixed-function that we __must__ configure is the _viewport pipeline stage_ that defines the drawing regions of the frame buffers and rasterizer:
+The only fixed-function that __must__ be configured is the _viewport pipeline stage_ which defines the drawing regions of the rasterizer:
 
 ```java
 public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
@@ -228,12 +228,12 @@ Finally the builder populates the Vulkan descriptor for the viewport stage:
 @Override
 VkPipelineViewportStateCreateInfo get() {
     // Validate
-    final int count = viewports.size();
+    int count = viewports.size();
     if(count == 0) throw new IllegalArgumentException(...);
     if(scissors.size() != count) throw new IllegalArgumentException(...);
 
     // Add viewports
-    final var info = new VkPipelineViewportStateCreateInfo();
+    var info = new VkPipelineViewportStateCreateInfo();
     info.viewportCount = count;
     info.pViewports = StructureHelper.pointer(viewports, VkViewport::new, Viewport::populate);
 
@@ -258,17 +258,15 @@ private void populate(VkViewport viewport) {
 }
 ```
 
-Note there are separate fields for the number of viewports and scissors but they __must__ be the same value.
+Note there are separate fields for the number of viewports and scissors but they __must__ have the same value.
 
 ---
 
 ## Shaders
 
-The other component that we must implement is the programmable pipeline stage to support a _vertex shader_ to render the triangle.
-
 ### Shader Module
 
-We first create the _shader module_ domain object:
+The other component that must be implemented to render the triangle is a programmable pipeline stage to support the _vertex shader_:
 
 ```java
 public class Shader extends AbstractVulkanObject {
@@ -279,7 +277,7 @@ public class Shader extends AbstractVulkanObject {
 }
 ```
 
-Shaders are created via a factory that first converts the SPIV code to a byte-buffer:
+Shaders are created via a factory method that converts the SPIV code to a byte-buffer:
 
 ```java
 public static Shader create(LogicalDevice dev, byte[] code) {
@@ -291,7 +289,7 @@ public static Shader create(LogicalDevice dev, byte[] code) {
 }
 ```
 
-And as usual we populate a Vulkan descriptor for the shader and invoke the relevant API method:
+As usual the shader is created by populating a Vulkan descriptor, invoking the API, and creating the domain object:
 
 ```java
 // Create descriptor
@@ -317,7 +315,7 @@ interface Library {
 }
 ```
 
-We also add the following helper to load a shader from the file system:
+The following helper is also added to new class to load the shader code from the file system:
 
 ```java
 public static Shader load(LogicalDevice dev, InputStream in) throws IOException {
@@ -328,10 +326,12 @@ public static Shader load(LogicalDevice dev, InputStream in) throws IOException 
 
 ### Shader Pipeline Stage
 
-A pipeline can be comprised of multiple programmable shader stages, therefore in this case we implement the nested builder for shaders as an inner class of the pipeline builder:
+A pipeline can be comprised of multiple programmable shader stages, therefore in this case the sub-builder for a shader is implemented as an inner class of the pipeline builder:
 
 ```java
 public static class Builder {
+    private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
+
     public class ShaderStageBuilder {
         private final VkShaderStage stage;
         private Shader shader;
@@ -340,29 +340,19 @@ public static class Builder {
 }
 ```
 
-The build method returns control to the parent pipeline builder:
+A new shader stage is configured via the following factory method:
 
 ```java
-public Builder build() {
-    validate();
-    return Builder.this;
-}
-```
-
-We add a map of shader stages to the pipeline builder and a factory method to start a new shader stage (checking for duplicates):
-
-```java
-private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
 
 public ShaderStageBuilder shader(VkShaderStage stage) {
-    final var shader = new ShaderStageBuilder(stage);
+    var shader = new ShaderStageBuilder(stage);
     if(shaders.containsKey(stage)) throw new IllegalArgumentException(...);
     shaders.put(stage, shader);
     return shader;
 }
 ```
 
-And the following helper to populate the resultant JNA descriptor array:
+Finally the descriptor for the shader is populated as follows:
 
 ```java
 void populate(VkPipelineShaderStageCreateInfo info) {
@@ -375,12 +365,12 @@ void populate(VkPipelineShaderStageCreateInfo info) {
 
 ### Conclusion
 
-We can now complete the parent builder which first populates the Vulkan descriptor for the pipeline:
+The parent builder can now be completed, which first populates the Vulkan descriptor for the pipeline itself:
 
 ```java
 public Pipeline build(LogicalDevice dev) {
     // Create descriptor
-    final var pipeline = new VkGraphicsPipelineCreateInfo();
+    var pipeline = new VkGraphicsPipelineCreateInfo();
 
     // Init layout
     if(layout == null) throw new IllegalArgumentException("No pipeline layout specified");
@@ -393,7 +383,7 @@ public Pipeline build(LogicalDevice dev) {
 }
 ```
 
-Next the fixed-function stages are retrieved from the various nested builders and added to the descriptor:
+Next the fixed-function stages are retrieved from the various sub-builders and added:
 
 ```java
 pipeline.pVertexInputState = input.get();
@@ -404,7 +394,7 @@ pipeline.pDepthStencilState = depth.get();
 pipeline.pColorBlendState = blend.get();
 ```
 
-We then populate the array of programmable shader stages:
+And similarly for the programmable stages:
 
 ```java
 if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
@@ -412,15 +402,12 @@ pipeline.stageCount = shaders.size();
 pipeline.pStages = StructureHelper.pointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
 ```
 
-Finally we invoke the API to instantiate the pipeline:
+Finally the pipeline is instantiated:
 
 ```java
-// Allocate pipeline
 VulkanLibrary lib = dev.library();
 Pointer[] pipelines = new Pointer[1];
 check(lib.vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{pipeline}, null, pipelines));
-
-// Create pipeline
 return new Pipeline(pipelines[0], dev, layout);
 ```
 
@@ -435,7 +422,7 @@ interface Library {
 }
 ```
 
-Note that Vulkan supports creation of multiple pipelines in one operation but we restrict the code to a single instance for the moment.
+Note that Vulkan supports creation of multiple pipelines in one operation but the code is restricted to a single instance for the moment.
 
 ---
 
@@ -488,7 +475,7 @@ void main() {
 }
 ```
 
-We also need to compile the shaders to SPIV using the `GLSLC` utility application provided as part of the Vulkan SDK:
+The shaders are compiled off-line from GLSL to SPIV code using the `GLSLC` utility application (provided as part of the Vulkan SDK):
 
 ```
 cd JOVE/src/test/resources/demo/triangle
@@ -498,7 +485,7 @@ glslc triangle.vert -o spv.triangle.vert
 
 ### Configuration
 
-We implement a new configuration class to load the shaders:
+A new configuration class is implemented to load and configure the two shaders:
 
 ```java
 @Configuration
@@ -519,7 +506,7 @@ class PipelineConfiguration {
 
 Note that in general we prefer construction injection but the `@AutoWired` member is more convenient in this case.
 
-Finally we configure the graphics pipeline:
+Finally the rendering pipeline is configured using the various builders implemented in this chapter:
 
 ```java
 @Bean
@@ -547,5 +534,5 @@ public Pipeline pipeline(RenderPass pass, Swapchain swapchain, Shader vertex, Sh
 
 ## Summary
 
-In this chapter we implemented a nested builder to configure the graphics pipeline and shader modules.
+In this chapter we implemented a fluid interface comprising nested builders to configure the graphics pipeline and shader modules.
 

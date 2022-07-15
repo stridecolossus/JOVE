@@ -49,7 +49,6 @@ public class Swapchain extends AbstractVulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> attachments;
-	private final IntByReference index;
 	private final Fence[] active;
 
 	/**
@@ -65,7 +64,6 @@ public class Swapchain extends AbstractVulkanObject {
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.attachments = List.copyOf(attachments);
-		this.index = dev.factory().integer();
 		this.active = new Fence[attachments.size()];
 	}
 
@@ -108,12 +106,16 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @throws SwapchainInvalidated if the swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR}
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
+		// Validate
 		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
 
+		// Retrieve next image index
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
+		final IntByReference index = dev.factory().integer();
 		final int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
 
+		// Check API
 		if((result == VulkanLibrary.SUCCESS) || (result == SUB_OPTIMAL)) {
 			return index.getValue();
 		}

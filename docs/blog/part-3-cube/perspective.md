@@ -85,7 +85,7 @@ public final class Matrix implements Bufferable {
 
 The matrix data is implemented as a 2D floating-point array, this is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.
 
-A matrix is a bufferable object:
+A matrix is also a bufferable object:
 
 ```java
 public int length() {
@@ -104,42 +104,36 @@ public void buffer(ByteBuffer buffer) {
 
 Note that the row-column indices are transposed to output the matrix in _column major_ order which is the default expected by Vulkan.
 
-A matrix is constructed by a companion builder:
+Matrices are constructed by a companion builder:
 
 ```java
 public static class Builder {
-    private Matrix matrix;
+    private float[][] matrix;
 
     public Builder(int order) {
-        matrix = new Matrix(order);
+        matrix = new float[order][order];
     }
     
     public Matrix build() {
-        try {
-            return matrix;
-        }
-        finally {
-            matrix = null;
-        }
+        return new Matrix(matrix);
     }
 }
 ```
 
-A matrix element is populated using the following builder method:
+Matrix elements are populated using the following method:
 
 ```java
 public Builder set(int row, int col, float value) {
-    matrix.matrix[row][col] = value;
+    matrix[row][col] = value;
     return this;
 }
 ```
 
-Which is also used to initialise an _identity_ matrix:
+Which is also used to initialise the _identity_ matrix:
 
 ```java
 public Builder identity() {
-    int order = matrix.order();
-    for(int n = 0; n < order; ++n) {
+    for(int n = 0; n < matrix.length; ++n) {
         set(n, n, 1);
     }
     return this;

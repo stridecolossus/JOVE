@@ -752,21 +752,21 @@ However this introduces further problems:
 
 ### Reference Types
 
-The Vulkan API (and most other native libraries) make extensive use of _by-reference_ types to return data, with the actual return value of the method generally representing an error code (since base C does not support the notion of exceptions).  For example the `vkCreateInstance` API method returns the `handle` of the newly created instance via a JNA `PointerByReference` type.
+The Vulkan API (and many other native libraries) make extensive use of _by-reference_ types to return data, with the actual return value of the method generally representing an error code.  For example `vkCreateInstance` returns the `handle` of the newly created instance via a JNA `PointerByReference` type.
 
 Mercifully this approach is virtually unknown in Java but it does pose an awkward problem when we come to testing - the usual Java unit-testing frameworks (JUnit, Mockito) are designed around the return value of a method generally being the important part and any error conditions modelled by exceptions.
 
-If we pass a new `PointerByReference` created in the test it will be a different instance to the one created in the `build` method itself - it would be difficult to determine whether the test was legitimately successful or only passed by luck.
+If a `PointerByReference` is created in the test it will be a different instance to one created in the `build` method itself, it would be difficult to determine whether the test was legitimately successful or only passed by luck.
 
-We could change the `verify` statement to use Mockito matchers:
+The `verify` statement could be refactored to use Mockito matchers:
 
 ```java
 verify(lib).vkCreateInstance(..., isA(PointerByReference.class));
 ```
 
-But this only allows us to check that the argument was not `null` rather than verifying the actual value.  Additionally __every__ argument would then have to be a Mockito argument matcher which just adds more development complexity and obfuscates the test.
+But this only checks that the argument was not `null` rather than verifying the actual value.  Additionally __every__ argument would then have to be an argument matcher which just adds more development complexity and obfuscates the test.
 
-We could alternatively use a Mockito _answer_ for the handle to initialise the argument, but that would require tedious and repetitive code for _every_ unit-test that exercises API methods with by-reference return values (which is pretty much all of them).
+Alternatively a Mockito _answer_ could be used to initialise the returned handler argument, but that would require tedious and repetitive code for _every_ unit-test that exercises API methods with by-reference return values (which is pretty much all of them).
 
 To resolve (or at least mitigate) this issue we introduce the _reference factory_ that is responsible for generating by-reference objects used in API calls:
 
@@ -784,7 +784,7 @@ public interface ReferenceFactory {
 }
 ```
 
-We can now mock the reference factory and/or stub individual factory methods as appropriate for a given unit-test.
+The reference factory and/or individual methods can then be mocked as appropriate for a given unit-test.
 
 The default implementation simply creates new instances on demand:
 
@@ -826,35 +826,22 @@ public static class Builder {
 
 ### Structure Equality
 
-We also want to validate that the code constructs the expected Vulkan structures to be passed to the API method.  Unfortunately it turns out that two JNA structures with the same data are __not__ equal and the above `verify` test fails even though the code is working correctly.  A review of the JNA source code shows that the structure class essentially violates the Java `equals` contract assumed by the testing frameworks.
+The unit-test also asserts that the code constructs the expected Vulkan structures to be passed to the API method.  Unfortunately it turns out that two JNA structures with the same data are __not__ equal and the above `verify` test fails even though the code is working correctly.  A review of the JNA source code shows that the structure class essentially violates the Java `equals` contract assumed by the testing frameworks.
 
-A JNA structure provides the `dataEquals` method but this compares the native representation of the structure rather than the fields themselves.  Additionally the developer is also required to ensure that both structure have been written to native memory which is fiddly and error prone.
+Over-riding the default implementation of `equals` would be risky since structures are compared by equality within JNA itself.  Also note that Mockito does not support stubbing of the basic `Object` methods (equals, to-string, etc) since these are also used internally.
 
-We could use a Mockito _argument captor_ to intercepts and check the data passed to the API method, but again this means __all__ arguments must be matchers and adds another layer of complexity, just to get around the fact that JNA structures do not support equality as expected.
-
-Instead we take the simpler (if more dubious) option of bastardising the `equals` method of the expected structure to validate the actual data:
+Therefore we take the simpler (if more dubious) option of bastardising the `equals` method of a sub-class of the expected structure:
 
 ```java
 var expected = new VkInstanceCreateInfo() {
     @Override
     public boolean equals(Object obj) {
-        // Check instance descriptor
-        var info = (VkInstanceCreateInfo) obj;
-        assertEquals(1, info.enabledExtensionCount);
-        ...
-
-        // Check application descriptor
-        VkApplicationInfo app = info.pApplicationInfo;
-        assertNotNull(app);
-        assertEquals("test", app.pApplicationName);
-        ...
-
-        return true;
+        return dataEquals((Structure) obj);
     }
 };
 ```
 
-### Conclusion
+The `dataEquals` JNA method compares the native representation of the structure.  This is slightly repetitive since the same bodge has to implemented for _every_ case where a test needs to verify Vulkan descriptors but we have not been able to find a neater solution.
 
 Using the reference factory and the structure equality bodge the final unit-test looks like this:
 
@@ -884,8 +871,12 @@ void build() {
 
     // Init expected create descriptor
     var expected = new VkInstanceCreateInfo() {
-        ...
+        @Override
+        public boolean equals(Object obj) {
+            return dataEquals((Structure) obj);
+        }
     };
+    ...
 
     // Check API
     verify(lib).vkCreateInstance(expected, null, factory.pointer());

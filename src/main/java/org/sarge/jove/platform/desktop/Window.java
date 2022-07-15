@@ -1,25 +1,16 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.function.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.AbstractTransientNativeObject;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.LazySupplier;
+import org.sarge.lib.util.*;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -75,7 +66,7 @@ public class Window extends AbstractTransientNativeObject {
 			final int value = this == DISABLE_OPENGL ? 0 : 1; // TODO
 			lib.glfwWindowHint(hint, value);
 		}
-		// TODO - probably need different implementations for hints, disable OpenGL, full-screen, etc
+		// TODO - different implementations for hints, disable OpenGL, full-screen, etc => sealed class?
 	}
 
 	/**

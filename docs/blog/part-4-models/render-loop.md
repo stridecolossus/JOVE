@@ -1099,25 +1099,21 @@ The demo should now run without validation errors (for the render loop anyway), 
 
 The final synchronisation mechanism is a _subpass dependency_ that specifies memory and execution dependencies between the stages of a render-pass.
 
-New transient data types are added for a dependency between two sub-pass stages:
-
-```java
-public record Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
-}
-```
-
-Where _subpass_ is the dependant sub-pass and the _source_ and _destination_ specify the dependency properties:
+A new transient data type is added for a dependency between two sub-pass stages:
 
 ```java
 public record Dependency(Subpass subpass, Properties source, Properties destination) {
 }
 ```
 
-Notes:
+Where _subpass_ is the dependant sub-pass and _source_ and _destination_ specify the properties between the the two stages:
 
-* In this design the _destination_ is implicitly the sub-pass containing the dependency.
+```java
+public record Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
+}
+```
 
-* The source and destination properties are comprised of the same data so we introduce the `Properties` object and companion builder.
+Note that in this the _destination_ is implicitly the sub-pass containing the dependency.
 
 The sub-pass class and builder are modified to include the list of dependencies:
 
@@ -1136,7 +1132,7 @@ public static class Builder {
 }
 ```
 
-And a new builder is implemented to configure a dependency:
+A new builder is implemented to configure a sub-pass dependency:
 
 ```java
 public static class Builder {
@@ -1147,7 +1143,7 @@ public static class Builder {
 }
 ```
 
-The build method constructs the dependency record and adds it to the list for the sub-pass:
+The build method constructs the dependency and adds it to the sub-pass:
 
 ```java
 public Subpass.Builder build() {

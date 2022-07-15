@@ -151,7 +151,7 @@ info.attachmentCount = attachments.size();
 info.pAttachments = StructureHelper.pointer(attachments, VkAttachmentDescription::new, Attachment::populate);
 ```
 
-Next the sub-passes are populated (again using the helper):
+Next the sub-passes are populated:
 
 ```java
 info.subpassCount = subpasses.size();
@@ -195,7 +195,7 @@ private static List<Reference> references(List<Subpass> subpasses) {
 }
 ```
 
-Which uses the following new accessor on the sub-pass:
+Which uses a new accessor on the sub-pass:
 
 ```java
 Stream<Reference> attachments() {

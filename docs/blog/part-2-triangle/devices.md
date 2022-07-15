@@ -735,21 +735,23 @@ VkQueueFamilyProperties[] props = VulkanFunction.invoke(func, count, VkQueueFami
 
 ### Structure Collector
 
-Vulkan makes heavy use of structures to configure a variety of objects.
+Vulkan makes heavy use of structures to configure a variety of objects, however _arrays_ of JNA structures pose a number of problems:
 
-However an array of JNA structures poses a number of problems:
-
-* Unlike a standard POJO an array of JNA structures __must__ be allocated using the JNA `toArray` helper method to create a contiguous memory block.
-
-* Obviously we must therefore know the size of the array _before_ it can be populated, which imposes constraints on how the data is handled, in particular whether we can employ Java streams.
+* Unlike a standard POJO an array of JNA structures __must__ be allocated using the JNA `toArray` factory method to create a contiguous block of memory.
 
 * Many API methods expect a pointer-to-array, i.e. the __first__ element of the array.
 
 * Additionally there are edge cases where `null` is a valid argument.
 
-None of these are particularly difficult to overcome but the number of situations where this occurs makes the code tedious to develop, error-prone, and less testable.
+* Obviously the size of the array must be known _before_ it can be populated, which imposes constraints on how the data is handled (in particular whether Java streams can be employed).
 
-To address these issues we implement the following helper that allocates and populates a JNA array from an arbitrary collection of domain objects:
+* We would prefer a solution that employs internal iteration (similar to streams) rather than having to implement loops throughout the code-base.
+
+* JNA does not support cloning or copying of structures out-of-the-box therefore data must be represented by custom or transient data types (in any case JNA structures are really only intended as 'carriers' for marshalling to/from native structures).
+
+None of these are particularly difficult issues to overcome, but the number of cases where this occurs makes the code tedious to develop, error-prone, and less testable.
+
+We implement the following helper that allocates and populates a JNA structure array from an arbitrary collection of domain objects, providing a common solution to address these issues:
 
 ```java
 public final class StructureHelper {
@@ -765,7 +767,7 @@ public final class StructureHelper {
 
         // Populate array
         Iterator<T> itr = data.iterator();
-        for(final R element : array) {
+        for(R element : array) {
             populate.accept(itr.next(), element);
         }
         assert !itr.hasNext();
@@ -775,19 +777,19 @@ public final class StructureHelper {
 }
 ```
 
-Notes:
+Where:
 
-- _T_ is the domain type, e.g. a map entry for a required queue in the logical device.
+* _T_ is the domain type, e.g. a `RequiredQueue` for the logical device.
 
-- _R_ is the array component type, e.g. `VkDeviceQueueCreateInfo`.
+* _R_ is the component type of the resultant array, e.g. `VkDeviceQueueCreateInfo`.
 
-- _identity_ generates an instance of the structure used to allocate the array.
+* And _identity_ provides an instance of the structure used to allocate the array.
 
-- And _populate_ 'fills' a JNA structure from the corresponding domain object (note that JNA structures do not support copying or cloning).
+The `populate` method 'fills' an element of the array from the corresponding domain object (generally implemented as a hidden helper method on the domain class).
 
-- This implementation uses an iterator since there is no simple means of instantiating a generic array (without passing additional arguments or peeking at the data collection).
+Note that this implementation uses an iterator over the incoming data since there is no simple means of instantiating a generic array and using a simpler loop to walk both.
 
-For the case where the API method requires a pointer-to-array argument we provide the following alternative:
+The following alternative is provided for the case where the API method requires a pointer-to-array argument:
 
 ```java
 public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
@@ -800,26 +802,17 @@ public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R>
     }
 
     // Convert to pointer-to-array
-    R ptr = array[0];
-
-    // Check valid structure
-    if(!(ptr instanceof ByReference)) {
-        throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + ptr.getClass());
-    }
-
-    return ptr;
+    return array[0];
 }
 ```
 
-Note that a pointer-to-array mandates that the structure is a JNA by-reference type.
-
-In the logical device we use this helper to build the array of required queue descriptors:
+In the logical device the new helper class is used to build the array of required queue descriptors:
 
 ```java
 info.pQueueCreateInfos = StructureHelper.pointer(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
 ```
 
-Finally we also provide a generalised custom stream collector:
+Finally we also provide a generalised custom stream collector which is more convenient in some cases:
 
 ```java
 /**
@@ -842,53 +835,18 @@ public static <T, R extends Structure> Collector<T, ?, R[]> collector(Supplier<R
 }
 ```
 
-These helpers centralise the logic of allocating and populating a structure array using internal iteration.
-
 ---
 
 ## Summary
 
 In this chapter we:
 
-- Created a GLFW window and Vulkan surface
+* Created a GLFW window and Vulkan surface
 
-- Enumerated the physical devices available on the local hardware and selected one appropriate for the demo application.
+* Enumerated the physical devices available on the local hardware and selected one appropriate for the demo application.
 
-- Created the logical device and work queues used in subsequent chapters
+* Created the logical device and work queues used in subsequent chapters
 
-- Added supporting functionality for _two stage invocation_ and population of structure arrays.
+* Added supporting functionality for _two stage invocation_ and population of structure arrays.
 
-The new device domain classes are illustrated in the following diagram:
-
-```mermaid
-classDiagram
-
-class PhysicalDevice {
-    -handle
-    +devices(Instance)
-}
-Instance <-- PhysicalDevice
-
-class Properties {
-    +name() String
-    +type()
-}
-PhysicalDevice --> Properties
-
-class Family {
-    -index
-    -count
-    -flags
-}
-PhysicalDevice --> "*" Family
-
-Family <-- Queue
-Queue : -handle
-
-class LogicalDevice {
-    -handle
-}
-PhysicalDevice <-- LogicalDevice
-LogicalDevice --> "*" Queue
-```
 
