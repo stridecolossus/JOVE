@@ -107,19 +107,15 @@ Inevitably there will usually be some _thrashing_ at the start of a new project,
 
 ## Approach
 
-Although this is a personal project we _will_ strive to apply best practice to our design and development as we would if it were a professional contract.
-
-In general our goals are:
+Although this is a personal project we will still strive to apply best practice to design and development:
 
 * Maintainability - The prime directive: code should be designed and implemented such that it can be easily extended, refactored and fixed.
 
-* Clarity - The purpose of any code component should be clear and coherent, i.e. we aim for simplicity where possible.
+* Clarity - The purpose of any code component should be clear and coherent, i.e. aim for simplicity where possible.
 
 * Testability - All code is developed with testing in mind from the outset.
 
 To attempt to achieve these goals our approach is:
-
-* Follow the _right first time_ principle.
 
 * Aggressive refactoring of existing components to avoid code duplication and complexity, or where better understanding of Vulkan invalidates previous design decisions or assumptions.
 
@@ -127,13 +123,11 @@ To attempt to achieve these goals our approach is:
 
 * High test coverage with unit-tests developed _test-first_ or _test-in-parallel_ with the source code.
 
-* Detailed documentation throughout (with a focus on examples and illustration of use-cases).
+* Detailed documentation throughout, with a focus on examples and illustration of use-cases.
 
-* Third-party libraries and technologies must be well-documented and widely supported.
+* Third-party libraries and technologies should be well-documented and widely supported.
 
-Some of these might seem high-flown or even pointless for a personal project, however experience teaches us that sound principles avoids pain and bugs in the future, especially for a large project perhaps developed over several years.
-
-On the other hand this _is_ a personal project and we allow ourselves some freedom in our decisions that might not be possible under the constraints of a real-world project - we can reinvent as many wheels as we choose if there is sufficient reason (or challenge) in doing so.
+On the other hand this _is_ a personal project so we allow ourselves some freedoms that might not be possible under the constraints of a real-world project - we can reinvent as many wheels as we choose if there is sufficient reason (or challenge) in doing so.
 
 ---
 
