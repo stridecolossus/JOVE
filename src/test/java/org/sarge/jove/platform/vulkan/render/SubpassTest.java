@@ -34,7 +34,8 @@ class SubpassTest {
 	@DisplayName("The subpass aggregates the attachments used in that subpass")
 	@Test
 	void attachments() {
-		assertEquals(List.of(ref), subpass.attachments());
+		assertNotNull(subpass.attachments());
+		assertEquals(List.of(ref), subpass.attachments().toList());
 	}
 
 	@DisplayName("A subpass can contain a depth-stencil attachment")
@@ -43,7 +44,7 @@ class SubpassTest {
 		subpass = new Subpass(List.of(), ref, List.of());
 		assertEquals(List.of(), subpass.colour());
 		assertEquals(Optional.of(ref), subpass.depth());
-		assertEquals(List.of(ref), subpass.attachments());
+		assertEquals(List.of(ref), subpass.attachments().toList());
 	}
 
 	@DisplayName("A subpass can have dependencies to previous subpass stages")
@@ -195,7 +196,7 @@ class SubpassTest {
 			assertNotNull(subpass);
 			assertEquals(List.of(ref), subpass.colour());
 			assertEquals(Optional.empty(), subpass.depth());
-			assertEquals(List.of(ref), subpass.attachments());
+			assertEquals(List.of(ref), subpass.attachments().toList());
 		}
 
 		@DisplayName("The builder can construct a subpass with a depth-stencil attachment")
@@ -206,7 +207,7 @@ class SubpassTest {
 			assertNotNull(subpass);
 			assertEquals(List.of(), subpass.colour());
 			assertEquals(Optional.of(ref), subpass.depth());
-			assertEquals(List.of(ref), subpass.attachments());
+			assertEquals(List.of(ref), subpass.attachments().toList());
 		}
 
 		@DisplayName("The builder can construct a subpass dependency")
