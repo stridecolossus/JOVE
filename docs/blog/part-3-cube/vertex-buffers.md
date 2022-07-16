@@ -572,34 +572,28 @@ staging.destroy();
 The `submitAndWait` method is a new helper on the command class:
 
 ```java
-default void submitAndWait(Pool pool) {
-    Buffer buffer = Work.submit(this, pool);
-    pool.waitIdle(); // TODO - synchronise using fence
-    buffer.free();
-    return buffer;
-}
-```
-
-Which delegates to another factory that creates and submits a _one-time_ command:
-
-```java
-public static Buffer submit(Command cmd, Pool pool) {
+default Buffer submitAndWait(Pool pool) {
     // Allocate and record one-time command
-    Buffer buffer = pool
-        .allocate()
-        .begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-        .add(cmd)
-        .end();
+    final Buffer buffer = pool
+            .allocate()
+            .begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+            .add(this)
+            .end();
 
     // Submit work
-    Work work = Work.of(buffer);
-    work.submit();
+    final Work work = Work.of(buffer);
+
+    // Wait for completion
+    pool.waitIdle(); // TODO - synchronise using fence
+
+    // Release resources
+    buffer.free();
 
     return buffer;
 }
 ```
 
-Note that currently this approach blocks the entire device, this will be replaced later with proper synchronisation.
+Note that this approach currently blocks the entire device which will be replaced later with proper synchronisation.
 
 ### Configuration
 

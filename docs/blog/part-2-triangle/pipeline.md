@@ -180,7 +180,7 @@ public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelin
 }
 ```
 
-A `Viewport` is a local type that aggregates the viewport rectangle and near/far rendering depths:
+A `Viewport` is a local type that composes a viewport rectangle and near/far rendering depths:
 
 ```java
 private record Viewport(Rectangle rect, Percentile min, Percentile max)
@@ -192,7 +192,7 @@ Where `Rectangle` is another trivial record type:
 public record Rectangle(int x, int y, int width, int height)
 ```
 
-We add the following setters to specify the viewports and scissors:
+Te builder provides methods to add viewports and scissor rectangles:
 
 ```java
 public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
@@ -206,21 +206,7 @@ public ViewportStageBuilder scissor(Rectangle rect) {
 }
 ```
 
-And additional convenience methods to add a default viewport and optionally a scissor with the same dimensions:
-
-```java
-public ViewportStageBuilder viewport(Rectangle rect) {
-    return viewport(rect, false);
-}
-
-public ViewportStageBuilder viewport(Rectangle rect, boolean scissor) {
-    viewport(rect, Percentile.ZERO, Percentile.ONE);
-    if(scissor) {
-        scissor(rect);
-    }
-    return this;
-}
-```
+And additional convenience overloads (not shown) for the common cases of a viewport with default min/max rendering depth and a scissor rectangle with the same dimensions.
 
 Finally the builder populates the Vulkan descriptor for the viewport stage:
 
@@ -326,7 +312,7 @@ public static Shader load(LogicalDevice dev, InputStream in) throws IOException 
 
 ### Shader Pipeline Stage
 
-A pipeline can be comprised of multiple programmable shader stages, therefore in this case the sub-builder for a shader is implemented as an inner class of the pipeline builder:
+A pipeline can be comprised of multiple programmable shader stages, therefore in this case the sub-builder is implemented as an inner class of the pipeline builder:
 
 ```java
 public static class Builder {

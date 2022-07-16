@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toMap;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -24,13 +22,13 @@ import com.sun.jna.ptr.PointerByReference;
  * <p>
  * Example for a texture sampler:
  * <pre>
- *  // Define binding for a sampler at binding zero
- *  Binding binding = new Binding.Builder()
+ *  // Define binding for a sampler (at slot zero)
+ *  ResourceBinding binding = new ResourceBinding.Builder()
  * 		.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
  * 		.stage(VkShaderStage.FRAGMENT)
  * 		.build()
  *
- *  // Create layout for a sampler at binding zero
+ *  // Create layout for a sampler
  *  Layout layout = Layout.create(List.of(binding, ...));
  *
  *  // Create descriptor pool for 3 swapchain images
@@ -60,73 +58,30 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class DescriptorSet implements NativeObject {
-	/**
-	 * An <i>entry</i> records the resource for each binding in this descriptor set.
-	 */
-	private class Entry {
-		private final ResourceBinding binding;
-		private boolean dirty = true;
-		private DescriptorResource res;
-
-		/**
-		 * Constructor.
-		 * @param binding Binding descriptor
-		 */
-		private Entry(ResourceBinding binding) {
-			this.binding = notNull(binding);
-		}
-
-		/**
-		 * @return Whether this entry has been modified
-		 */
-		boolean isDirty() {
-			return dirty;
-		}
-
-		/**
-		 * Marks this entry as updated.
-		 */
-		void clear() {
-			assert dirty;
-			dirty = false;
-		}
-
-		/**
-		 * Populates the given descriptor set update record from this entry.
-		 * @param write Descriptor set update record
-		 */
-		private void populate(VkWriteDescriptorSet write) {
-			// Validate
-			final DescriptorSet set = DescriptorSet.this;
-			if(res == null) {
-				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%d", set, binding.index()));
-			}
-
-			// Init write descriptor
-			write.dstBinding = binding.index();
-			write.descriptorType = binding.type();
-			write.dstSet = set.handle();
-			write.descriptorCount = 1;		// Number of elements in resource
-			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
-
-			// Init resource descriptor
-			res.populate(write);
-		}
-	}
-
 	private final Handle handle;
 	private final DescriptorLayout layout;
-	private final Map<ResourceBinding, Entry> entries;
+	private final Map<ResourceBinding, DescriptorResource> entries = new HashMap<>();
+	private final Set<ResourceBinding> modified = new HashSet<>();
 
 	/**
 	 * Constructor.
 	 * @param handle Descriptor set handle
 	 * @param layout Layout
 	 */
-	public DescriptorSet(Handle handle, DescriptorLayout layout) {
-		this.handle = notNull(handle);
+	DescriptorSet(Pointer handle, DescriptorLayout layout) {
+		this.handle = new Handle(handle);
 		this.layout = notNull(layout);
-		this.entries = layout.bindings().values().stream().collect(toMap(Function.identity(), Entry::new));
+		init();
+	}
+
+	/**
+	 * Initialises all entries as modified.
+	 */
+	private void init() {
+		for(ResourceBinding binding : layout.bindings().values()) {
+			entries.put(binding, null);
+			modified.add(binding);
+		}
 	}
 
 	@Override
@@ -142,52 +97,92 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * @param binding Binding descriptor
-	 * @return Entry for this given binding
-	 */
-	private Entry entry(ResourceBinding binding) {
-		final Entry entry = entries.get(binding);
-		if(entry == null) throw new IllegalArgumentException(String.format("Invalid binding for this descriptor set: binding=%s set=%s", binding, this));
-		return entry;
-	}
-
-	/**
-	 * @return Modified entries in this descriptor set
-	 */
-	private Stream<Entry> modified() {
-		return entries
-				.values()
-				.stream()
-				.filter(Entry::isDirty);
-	}
-
-	/**
 	 * Sets the resource in this descriptor set for the given binding.
 	 * @param binding 	Binding
 	 * @param res		Resource
-	 * @throws IllegalArgumentException if the binding does not belong to the layout of this descriptor set
-	 * @see #set(Collection, ResourceBinding, DescriptorResource)
+	 * @throws IllegalArgumentException if {@link #binding} does not belong to this descriptor set
+	 * @throws IllegalArgumentException if {@link #res} is not the expected type for the binding
 	 */
 	public void set(ResourceBinding binding, DescriptorResource res) {
-		final Entry entry = entry(binding);
+		// Check binding is a member of this descriptor set
+		if(!layout.bindings().values().contains(binding)) {
+			throw new IllegalArgumentException(String.format("Invalid binding for this set: binding=%s this=%s", binding, this));
+		}
+
+		// Check expected resource
 		if(binding.type() != res.type()) {
 			throw new IllegalArgumentException(String.format("Invalid resource for this binding: expected=%s actual=%s", binding.type(), res.type()));
 		}
-		entry.res = notNull(res);
-		entry.dirty = true;
+
+		// Update entry
+		entries.put(binding, res);
+		modified.add(binding);
 	}
 
 	/**
-	 * Helper - Bulk implementation of the {@link #set(ResourceBinding, DescriptorResource)} method.
+	 * Bulk implementation to sets the resource in a group of descriptor sets for the given binding.
 	 * @param sets			Descriptor sets
 	 * @param binding		Binding
 	 * @param res			Resource
-	 * @throws IllegalArgumentException if the binding does not belong to the layout of all descriptor sets
+	 * @see #set(ResourceBinding, DescriptorResource)
 	 */
 	public static void set(Collection<DescriptorSet> sets, ResourceBinding binding, DescriptorResource res) {
 		for(DescriptorSet ds : sets) {
 			ds.set(binding, res);
 		}
+	}
+
+	/**
+	 * Transient modified entry.
+	 */
+	private record Modified(DescriptorSet set, ResourceBinding binding, DescriptorResource res) {
+		/**
+		 * Constructor.
+		 * @param set			Descriptor set
+		 * @param binding		Binding
+		 * @param res			Modified resource
+		 * @throws IllegalStateException if the resource has not been populated
+		 */
+		private Modified {
+			if(res == null) {
+				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%s", set, binding));
+			}
+		}
+
+		/**
+		 * Populates a modified descriptor set entry.
+		 */
+		private void populate(VkWriteDescriptorSet write) {
+			// Init write descriptor
+			write.dstBinding = binding.index();
+			write.descriptorType = binding.type();
+			write.dstSet = set.handle();
+			write.descriptorCount = 1;		// Number of elements in resource
+			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
+
+			// Init resource descriptor
+			res.populate(write);
+		}
+
+		/**
+		 * Marks this modification as updated.
+		 */
+		private void reset() {
+			final var dirty = set.modified;
+			assert !dirty.isEmpty();
+			dirty.clear();
+		}
+	}
+
+	/**
+	 * @return Modified entries in this descriptor set
+	 */
+	private Stream<Modified> modified() {
+		return entries
+				.entrySet()
+				.stream()
+				.filter(e -> modified.contains(e.getKey()))
+				.map(e -> new Modified(this, e.getKey(), e.getValue()));
 	}
 
 	/**
@@ -198,19 +193,24 @@ public class DescriptorSet implements NativeObject {
 	 */
 	public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
 		// Enumerate dirty resources
-		final var writes = descriptors
+		final List<Modified> dirty = descriptors
 				.stream()
 				.flatMap(DescriptorSet::modified)
-				.peek(Entry::clear)
-				.collect(StructureHelper.collector(VkWriteDescriptorSet::new, Entry::populate));
+				.toList();
 
 		// Ignore if nothing to update
-		if((writes == null) || (writes.length == 0)) {
+		if(dirty.isEmpty()) {
 			return 0;
 		}
 
 		// Apply update
+		final VkWriteDescriptorSet[] writes = StructureHelper.array(dirty, VkWriteDescriptorSet::new, Modified::populate);
 		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+
+		// Reset updated entries
+		for(Modified mod : dirty) {
+			mod.reset();
+		}
 
 		return writes.length;
 	}

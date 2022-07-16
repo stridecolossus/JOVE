@@ -32,7 +32,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		when(res.type()).thenReturn(VkDescriptorType.COMBINED_IMAGE_SAMPLER);
 
 		// Create descriptor set
-		descriptor = new DescriptorSet(new Handle(new Pointer(2)), layout);
+		descriptor = new DescriptorSet(new Pointer(2), layout);
 	}
 
 	@Test

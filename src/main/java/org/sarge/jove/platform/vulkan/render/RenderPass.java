@@ -192,7 +192,7 @@ public class RenderPass extends AbstractVulkanObject {
 		 * Populates the descriptor for a sub-pass dependency.
 		 * @throws IllegalArgumentException if the sub-pass is not present
 		 */
-		public void populate(Pair<Subpass, Dependency> entry, VkSubpassDependency descriptor) {
+		private void populate(Pair<Subpass, Dependency> entry, VkSubpassDependency descriptor) {
 			// Lookup index of this sub-pass
 			final Subpass subpass = entry.getLeft();
 			final Dependency dependency = entry.getRight();

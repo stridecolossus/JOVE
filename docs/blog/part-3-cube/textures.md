@@ -17,7 +17,7 @@ title: Textures
 
 In this chapter we will load and apply a _texture_ to the demo.
 
-This involves uploading the image data to the hardware in a similar fashion to the vertex buffers in the previous chapter.  However for texture images we also make use of _pipeline barriers_ to transform the image to the appropriate layout during the loading process.
+This involves uploading the image data to the hardware in a similar fashion to the vertex buffers in the previous chapter.  However textures also make use of _pipeline barriers_ to transform the image to the appropriate layout during the loading process.
 
 The process of loading a texture consists of the following steps:
 
@@ -35,23 +35,23 @@ The process of loading a texture consists of the following steps:
 
 7. Transition the texture to a layout ready for sampling.
 
-Note that unlike the swapchain images the application is responsible for allocating and managing texture images, therefore we will also refactor the existing image accordingly.
+Note that unlike the swapchain images the application is responsible for allocating and managing texture images, therefore the existing Vulkan image class will be refactored accordingly.
 
-We will require the following components:
+The following additional components and changes are required:
 
-* A new domain object representing a platform-independant image and an associated loader.
+* A new domain object representing a platform-independant image.
 
-* The refactored image class.
+* An associated loader.
+
+* The refactored Vulkan image class.
 
 * A command to copy the image data to the texture.
 
 * Pipeline barriers.
 
-* The texture sampler.
+* A texture sampler.
 
 * Texture coordinates.
-
-We will first modify the demo to render a quad and implement texture coordinates before moving on to loading the image to the texture.
 
 ---
 
@@ -59,7 +59,9 @@ We will first modify the demo to render a quad and implement texture coordinates
 
 ### Quad
 
-First we will change the vertex data to render a coloured quad with white in the bottom-right corner:
+We will first modify the demo to render a quad before moving on to loading and applying a texture.
+
+The vertex data is modified to render a coloured quad with white in the bottom-right corner:
 
 ```java
 new Vertex(new Point(-0.5f, -0.5f, 0), new Colour(1, 0, 0, 1)),
@@ -92,7 +94,7 @@ After changing the number of vertices to 4 in the drawing command we should see 
 
 ### Coordinates
 
-Next we implement the texture coordinate domain object:
+Next the texture coordinate domain object is introduced:
 
 ```java
 public interface Coordinate extends Bufferable {
@@ -118,7 +120,7 @@ public interface Coordinate extends Bufferable {
 }
 ```
 
-For convenience we define the texture coordinates for a quad in the 2D implementation:
+For convenience texture coordinates for a quad are provided in the 2D implementation:
 
 ```java
 public static final Coordinate2D
@@ -128,7 +130,7 @@ public static final Coordinate2D
     BOTTOM_RIGHT    = new Coordinate2D(1, 1);
 ```
 
-We can now replace the colour data in the quad with texture coordinates as shown here for the top-left vertex:
+The colour data in the quad can now be replaced with texture coordinates, as shown here for the top-left vertex:
 
 ```java
 new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
@@ -136,9 +138,10 @@ new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
 
 ### Component Layout
 
-As noted in the previous chapter the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.  However we already implicitly have the necessary information in the vertex components which just needs to be exposed.
+As noted in the previous chapter the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.
+However the necessary information is already implicit in the vertex components which just needs to be made explicit.
 
-We first introduce the following record type to represent the layout of some arbitrary object:
+A new type is introduced to represent the data layout of some arbitrary object:
 
 ```java
 public record Layout(int size, Class<?> type, int bytes, boolean signed) {
@@ -172,7 +175,7 @@ public static int bytes(Class<?> type) {
 }
 ```
 
-We also add a convenience factory for a floating-point layout:
+A convenience factory is added for a floating-point layout:
 
 ```java
 public static Layout of(int size) {
@@ -180,24 +183,11 @@ public static Layout of(int size) {
 }
 ```
 
-We add layouts for the existing vertex components, for example the layout for an RGBA colour is:
+Layout constants are added for the existing types, for example an RGBA colour:
 
 ```java
 public record Colour(...) {
     public static final Layout LAYOUT = Layout.of(4);
-}
-```
-
-Next we add a convenience factory method to the `FormatBuilder` to determine the format of a vertex attribute from a given layout:
-
-```java
-public static VkFormat format(Layout layout) {
-    return new FormatBuilder()
-        .count(layout.size())
-        .bytes(layout.bytes())
-        .type(layout.type())
-        .signed(layout.signed())
-        .build();
 }
 ```
 
@@ -219,7 +209,7 @@ public VertexInputStageBuilder add(List<Layout> layouts) {
 }
 ```
 
-Where `stride` is a helper accessor on the layout class:
+Where `stride` is an accessor on the layout class:
 
 ```java
 public static int stride(List<Layout> layouts) {
@@ -227,7 +217,7 @@ public static int stride(List<Layout> layouts) {
 }
 ```
 
-Next a vertex attribute is created for each layout:
+A vertex attribute is created for each layout:
 
 ```java
 int offset = 0;
@@ -253,6 +243,19 @@ Note that this implementation assumes:
 
 * Vertex data is interleaved and contiguous.
 
+The format for each vertex attribute is determined from the layout by a new convenience factory method on the `FormatBuilder` helper:
+
+```java
+public static VkFormat format(Layout layout) {
+    return new FormatBuilder()
+        .count(layout.size())
+        .bytes(layout.bytes())
+        .type(layout.type())
+        .signed(layout.signed())
+        .build();
+}
+```
+
 We can now replace the configuration for the vertex data in the pipeline with the following considerably simpler configuration:
 
 ```java
@@ -263,7 +266,7 @@ We can now replace the configuration for the vertex data in the pipeline with th
 
 ### Vertex Shader
 
-The final change modifies the vertex shader to replace the colour with a texture coordinate passed through to the fragment shader:
+The final change modifies the vertex shader to replace the colours with texture coordinates passed through to the fragment shader:
 
 ```glsl
 #version 450
@@ -279,7 +282,7 @@ void main() {
 }
 ```
 
-In the fragment shader we fake a red-green colour based on the texture coordinates:
+In the fragment shader a red-green colour is faked based on the texture coordinate:
 
 ```glsl
 #version 450 core
@@ -305,9 +308,9 @@ We can now be fairly confident that the texture coordinates are being handled co
 
 ### Image Data
 
-In the short-term we will use the built-in AWT support for images - we are likely to want to replace this with a more flexible (and frankly better) implementation at some point in the future, e.g. to support a wider choice of image formats or to use the Android platform (where the AWT package is unavailable).
+To load image data from the file system we will use the built-in AWT support in the short-term.  We are likely to want to replace this with a more flexible (and frankly better) implementation at some point in the future, e.g. to support a wider choice of image formats or to use the Android platform (where the AWT package is unavailable).
 
-Our requirements for images are fairly straight-forward so we introduce the following abstraction rather than using (for example) Java images directly:
+The requirements for images are fairly straight-forward so the following abstraction is introduced rather than using (for example) Java images directly:
 
 ```java
 public interface ImageData {
@@ -327,11 +330,7 @@ Notes:
 
 * The _layout_ class is reused to specify the structure of the image data.
 
-We impose the following assumptions:
-
-* One byte per channel.
-
-* Colour images contain an alpha channel.
+* Assume one byte per colour channel.
 
 The AWT helper is used to load the Java image:
 
@@ -409,7 +408,7 @@ static void write(byte[] bytes, ByteBuffer bb) {
 }
 ```
 
-This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  We add the following unit-test to check the texture images we will be using in the next few chapters:
+This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  The following unit-test is added to check the texture images that will be used in the next few chapters:
 
 ```java
 @DisplayName("Should load supported image formats")
@@ -430,7 +429,7 @@ void map(String filename, int type) throws IOException {
 
 ### Texture Image
 
-To allow us to create Vulkan images programatically we first change the existing implementation to an interface:
+To allow the demo to create Vulkan images programatically the existing implementation is refactored as an interface:
 
 ```java
 public interface Image extends NativeObject {
@@ -446,7 +445,7 @@ public interface Image extends NativeObject {
 }
 ```
 
-And we refactor the swapchain builder to instantiate a new local implementation:
+The swapchain builder is similarly refactored to instantiate a new local implementation:
 
 ```java
 private static class SwapChainImage implements Image {
@@ -456,7 +455,7 @@ private static class SwapChainImage implements Image {
 }
 ```
 
-We next add a second image implementation to support textures:
+A second implementation can now be implemented to support textures:
 
 ```java
 class DefaultImage extends AbstractVulkanObject implements Image {
@@ -477,7 +476,7 @@ class DefaultImage extends AbstractVulkanObject implements Image {
 }
 ```
 
-With a builder to configure the various image properties:
+An image is configured and instantiated as normal via a builder:
 
 ```java
 class Builder {
@@ -489,11 +488,11 @@ class Builder {
 }
 ```
 
-To instantiate an image we first populate the relevant descriptor:
+First the Vulkan descriptor for the image is populated from the various image properties:
 
 ```java
 public DefaultImage build(LogicalDevice dev, AllocationService allocator) {
-    VkImageCreateInfo info = new VkImageCreateInfo();
+    var info = new VkImageCreateInfo();
     info.imageType = descriptor.type();
     info.format = descriptor.format();
     info.extent = descriptor.extents().toExtent3D();
@@ -530,7 +529,7 @@ DeviceMemory mem = allocator.allocate(reqs, props);
 check(lib.vkBindImageMemory(dev, handle.getValue(), mem, 0));
 ```
 
-And finally we create the domain object:
+And finally the domain object is created wrapping the image:
 
 ```java
 return new DefaultImage(handle.getValue(), dev, descriptor, mem);
@@ -550,7 +549,7 @@ interface Library {
 
 ### Image Sub-Resource
 
-The copy command and pipeline barrier are dependant on the image _sub-resource_ which we glossed over in the previous chapter.
+The copy command and pipeline barrier are dependant on the image _sub-resource_ which were glossed over in the previous chapter.
 
 A sub-resource is a subset of the aspects, MIP levels and array layers of an image:
 
@@ -564,7 +563,7 @@ public interface SubResource {
 }
 ```
 
-We note that the existing `ImageDescriptor` is essentially a sub-resource with default (zero) values for the MIP level and array layer, therefore we refactor the descriptor accordingly:
+We note that the existing `ImageDescriptor` is essentially a sub-resource with default (zero) values for the MIP level and array layer, therefore the descriptor is refactored accordingly:
 
 ```java
 public record ImageDescriptor(...) implements SubResource {
@@ -603,9 +602,7 @@ public Builder levelCount(int levelCount) {
 }
 ```
 
-Later we may want to add further validation to ensure a sub-resource is actually derived from the image in question (for the moment we rely on the validation layer).
-
-Finally the build method initialises the aspect mask to the parent image if not explicitly specified and creates a private sub-resource implementation:
+Finally the build method initialises the aspect mask to the parent image if not explicitly specified:
 
 ```java
 public SubResource build() {
@@ -623,7 +620,7 @@ public SubResource build() {
 }
 ```
 
-A slight irritation that only came to light during this chapter is that there are two slightly different Vulkan descriptors for sub-resources even though the fields are almost identical.  We add two factory methods to transform a sub-resource to either (spot the difference):
+A slight irritation that only came to light during this chapter is that there are two slightly different Vulkan descriptors for sub-resources even though the fields are almost identical.  New factory methods are implemented to transform a sub-resource to either (spot the difference):
 
 ```java
 static VkImageSubresourceRange toRange(SubResource res) {
@@ -648,7 +645,7 @@ static VkImageSubresourceLayers toLayers(SubResource res) {
 
 ### Image Copying
 
-The process of copying the image data from the staging buffer to the texture is implemented as a new command:
+The process of copying the image data from the staging buffer to the texture is a command:
 
 ```java
 public class ImageCopyCommand implements Command {
@@ -718,7 +715,7 @@ public Command invert() {
 
 ### Texture Sampler
 
-A _texture sampler_ is used by the fragment shader to sample a colour from the texture:
+A _texture sampler_ is used by a shader to sample a colour from the texture:
 
 ```java
 public class Sampler extends AbstractVulkanObject {
@@ -733,7 +730,7 @@ public class Sampler extends AbstractVulkanObject {
 }
 ```
 
-To configure the sampler we implement a builder which is essentially a wrapper for the underlying Vulkan structure:
+A sampler is configured via a builder which is essentially a wrapper for the underlying Vulkan structure:
 
 ```java
 public static class Builder {
@@ -756,16 +753,16 @@ The `wrap` method is a helper that configures the _address mode_ in any of the t
 ```java
 public Builder wrap(int component, VkSamplerAddressMode mode) {
     switch(component) {
-        case 0: info.addressModeU = mode; break;
-        case 1: info.addressModeV = mode; break;
-        case 2: info.addressModeW = mode; break;
-        default: throw new IndexOutOfBoundsException(...);
+        case 0 -> info.addressModeU = mode;
+        case 1 -> info.addressModeV = mode;
+        case 2 -> info.addressModeW = mode;
+        default -> throw new IndexOutOfBoundsException(...);
     }
     return this;
 }
 ```
 
-We also provide a convenience enumeration that simplifies selecting an addressing mode:
+A convenience enumeration is also provided that somewhat simplifies selecting an addressing mode:
 
 ```java
 public enum Wrap {
@@ -794,7 +791,7 @@ public Sampler build(LogicalDevice dev) {
 }
 ```
 
-Finally we add the new API methods to the image library:
+The API methods for managing sampler are added to the image library:
 
 ```java
 interface Library {
@@ -829,9 +826,9 @@ Notes:
 
 * The _src_ and _dest_ members specify at what stage(s) in the pipeline the transition should occur.
 
-* For the demo we only require a partial implementation to support image transitions (the other arguments are initialised to zero or `null` in the API call).
+* The demo only requires a partial implementation to support image transitions.
 
-We implement a builder to configure a barrier:
+A barrier is configured and created via a builder:
 
 ```java
 public static class Builder {
@@ -848,7 +845,7 @@ public static class Builder {
 }
 ```
 
-To configure an image memory transition as part of the barrier we implement a nested builder:
+The image memory part of the barrier is configured by a nested builder:
 
 ```java
 public class ImageBarrierBuilder {
@@ -861,7 +858,7 @@ public class ImageBarrierBuilder {
 }
 ```
 
-The Vulkan descriptor for an image barrier is populated as follows:
+The Vulkan descriptor for the barrier is populated as follows:
 
 ```java
 private void populate(VkImageMemoryBarrier barrier) {
@@ -876,11 +873,11 @@ private void populate(VkImageMemoryBarrier barrier) {
 
 ### Component Mapping
 
-The last piece of functionality we will need is some means of determining the _component mapping_ for an image when we created the texture view.
+The last piece of functionality needed for the texture is some means of determining the _component mapping_ for an image when creating the texture view.
 
 Native images have channels in `ABGR` order whereas Vulkan textures are generally `RGBA`, the component mapping allows the image view to _swizzle_ the image channels as required.
 
-We implement a new helper class that constructs the appropriate component mapping from the _components_ property of the image layout:
+A new helper class constructs the appropriate component mapping from the _components_ property of the image layout:
 
 ```java
 public final class ComponentMapping {
@@ -943,7 +940,7 @@ public static ComponentMapping of(String mapping) {
 }
 ```
 
-Finally the identity component mapping is replaced:
+Finally the identity component mapping is refactored:
 
 ```java
 public final class ComponentMapping {
@@ -959,7 +956,7 @@ public final class ComponentMapping {
 
 ## Integration
 
-We now have all the new components we need to load an image to the hardware and create the texture sampler.
+We now have all the components required to load an image to the hardware and create the texture sampler.
 
 We start with a new configuration class:
 
@@ -980,22 +977,22 @@ public class TextureConfiguration {
 }
 ```
 
-In the `texture` bean method we first load the image from the file-system:
+In the `texture` bean method the image is loaded from the file-system:
 
 ```java
 ImageData.Loader loader = new NativeImageLoader();
 ImageData image = loader.load(new FileInputStream("./src/main/resources/thiswayup.jpg"));
 ```
 
-From which we can determine the appropriate Vulkan format:
+From which the appropriate Vulkan format can be determined:
 
 ```java
 VkFormat format = FormatBuilder.format(image.layout());
 ```
 
-The resultant image is a `TYPE_4BYTE_ABGR` buffered image which maps to the `R8G8B8A8_UNORM` format.
+The image is a `TYPE_4BYTE_ABGR` Java image which corresponds to the `R8G8B8A8_UNORM` Vulkan format.
 
-Next we create a texture with a configuration suitable to the image starting with the descriptor:
+Next the texture is configured starting with the image descriptor:
 
 ```java
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
@@ -1006,7 +1003,7 @@ ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .build();
 ```
 
-The memory properties specifies a texture using device memory that can be written to and sampled from:
+The memory properties specify a texture on the hardware that can be written to and sampled from:
 
 ```java
 var props = new MemoryProperties.Builder<VkImageUsage>()
@@ -1016,7 +1013,7 @@ var props = new MemoryProperties.Builder<VkImageUsage>()
     .build();
 ```
 
-And we create the texture image:
+Finally the texture image is instantiated:
 
 ```java
 Image texture = new Image.Builder()
@@ -1039,13 +1036,13 @@ new Barrier.Builder()
     .submitAndWait(graphics);
 ```
 
-We load the image data to a staging buffer:
+The image data is transferred to a staging buffer:
 
 ```java
 VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data());
 ```
 
-And invoke the copy command:
+And then copied to the texture:
 
 ```java
 new ImageCopyCommand.Builder()
@@ -1057,7 +1054,7 @@ new ImageCopyCommand.Builder()
     .submitAndWait(graphics);
 ```
 
-The texture is then transitioned again for use by the sampler:
+Which is then transitioned again ready for use by the sampler:
 
 ```java
 new Barrier.Builder()
@@ -1073,7 +1070,7 @@ new Barrier.Builder()
     .submitAndWait(graphics);
 ```
 
-The component mapping is determined from the image by the new helper:
+The component mapping for the texture is determined from the image by the new helper:
 
 ```java
 VkComponentMapping mapping = ComponentMapping.of(image.components());
@@ -1081,7 +1078,7 @@ VkComponentMapping mapping = ComponentMapping.of(image.components());
 
 This swizzles the `ABGR` channels of the native image to the `RGBA` default expected by Vulkan.
 
-Finally we create the image view for the texture:
+Finally an image view is created for the texture:
 
 ```java
 return new View.Builder(texture)
@@ -1089,19 +1086,17 @@ return new View.Builder(texture)
     .build();
 ```
 
-This code is still quite long-winded but at least is relatively straight-forward.  We could perhaps make better use of dependency injection but most of the created objects are transient (other than the staging buffer which is explicitly destroyed).
-
 ---
 
 ## Summary
 
 In this chapter we:
 
-- Introduced texture coordinates.
+* Introduced texture coordinates.
 
-- Created a basic image loader.
+* Created a basic image loader.
 
-- Added support for texture images and samplers.
+* Added support for texture images and samplers.
 
-- Partially implemented pipeline barriers.
+* Partially implemented pipeline barriers.
 

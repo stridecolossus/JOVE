@@ -914,7 +914,8 @@ info.signalSemaphoreCount = signal.size();
 info.pSignalSemaphores = NativeObject.toArray(signal);
 ```
 
-Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  Note that the table is a linked map to ensure that both fields are iterated in the same order.
+Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  
+For this reason the table is a linked map to ensure that both fields are iterated in the same order.
 
 First the array of semaphores is populated:
 
@@ -1097,7 +1098,7 @@ The demo should now run without validation errors (for the render loop anyway), 
 
 ### Sub-Pass Dependencies
 
-The final synchronisation mechanism is a _subpass dependency_ that specifies memory and execution dependencies between the stages of a render-pass.
+The final synchronisation mechanism is a _subpass dependency_ which specifies memory and execution dependencies between the stages of a render-pass.
 
 A new transient data type is added for a dependency between two sub-pass stages:
 
@@ -1106,14 +1107,14 @@ public record Dependency(Subpass subpass, Properties source, Properties destinat
 }
 ```
 
-Where _subpass_ is the dependant sub-pass and _source_ and _destination_ specify the properties between the the two stages:
+Where _subpass_ is the dependant sub-pass and _source_ and _destination_ specify the properties between the two stages:
 
 ```java
 public record Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
 }
 ```
 
-Note that in this the _destination_ is implicitly the sub-pass containing the dependency.
+Note that in this design the _destination_ is implicitly the sub-pass containing the dependency.
 
 The sub-pass class and builder are modified to include the list of dependencies:
 

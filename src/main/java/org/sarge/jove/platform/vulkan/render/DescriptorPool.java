@@ -1,15 +1,14 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
-import java.util.function.IntFunction;
+import java.util.Map.Entry;
 import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -72,7 +71,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		}
 
 		// Build allocation descriptor
-		final VkDescriptorSetAllocateInfo info = new VkDescriptorSetAllocateInfo();
+		final var info = new VkDescriptorSetAllocateInfo();
 		info.descriptorPool = this.handle();
 		info.descriptorSetCount = size;
 		info.pSetLayouts = NativeObject.array(layouts);
@@ -84,14 +83,10 @@ public class DescriptorPool extends AbstractVulkanObject {
 		check(lib.vkAllocateDescriptorSets(dev, info, handles));
 
 		// Create descriptor sets
-		final IntFunction<DescriptorSet> ctor = index -> {
-			final Handle handle = new Handle(handles[index]);
-			return new DescriptorSet(handle, layouts.get(index));
-		};
-		final var allocated = IntStream
+		final List<DescriptorSet> allocated = IntStream
 				.range(0, handles.length)
-				.mapToObj(ctor)
-				.collect(toList());
+				.mapToObj(n -> new DescriptorSet(handles[n], layouts.get(n)))
+				.toList();
 
 		// Record sets allocated by this pool
 		sets.addAll(allocated);
@@ -212,14 +207,13 @@ public class DescriptorPool extends AbstractVulkanObject {
 			if(max == null) {
 				max = limit;
 			}
-			else {
-				if(limit > max) {
-					throw new IllegalArgumentException(String.format("Total available descriptor sets exceeds the specified maximum: limit=%d max=%d", limit, max));
-				}
+			else
+			if(limit > max) {
+				throw new IllegalArgumentException(String.format("Total available descriptor sets exceeds the specified maximum: limit=%d max=%d", limit, max));
 			}
 
 			// Init pool descriptor
-			final VkDescriptorPoolCreateInfo info = new VkDescriptorPoolCreateInfo();
+			final var info = new VkDescriptorPoolCreateInfo();
 			info.flags = IntegerEnumeration.reduce(flags);
 			info.poolSizeCount = pool.size();
 			info.pPoolSizes = StructureHelper.pointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
@@ -237,7 +231,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		/**
 		 * Populates a descriptor pool size from a map entry.
 		 */
-		private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
+		private static void populate(Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
 			size.type = entry.getKey();
 			size.descriptorCount = entry.getValue();
 		}

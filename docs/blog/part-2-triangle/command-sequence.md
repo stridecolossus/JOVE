@@ -14,9 +14,9 @@ title: Rendering Commands
 
 ## Overview
 
-We are on the last lap for the goal of this phase of development - rendering a simple triangle.
+We are on the last lap for the goal of this phase of development to render a simple triangle.
 
-The final components we need to complete the demo are the command sequence for drawing the triangle and a simple render loop that acquires and presents a frame.
+The final components required to complete the demo are the command sequence for drawing the triangle and presentation of a rendered frame.
 
 ---
 
@@ -50,7 +50,7 @@ buffer
     .end();
 ```
 
-We start with an outline class for commands, buffers and pools:
+The starting point is an outline class for commands, buffers and pools:
 
 ```java
 @FunctionalInterface
@@ -76,9 +76,9 @@ public interface Command {
 }
 ```
 
-The `Command` interface abstracts the signature of a Vulkan command where the arguments are always comprised of the Vulkan API and the command buffer.
+The `Command` interface abstracts the signature of a Vulkan command where the arguments always comprise the Vulkan API and the command buffer.
 
-We also create a new API to support the new domain objects:
+A new API is implemented for commands:
 
 ```java
 interface Library {
@@ -97,7 +97,7 @@ interface Library {
 
 ### Command Pool
 
-We start with the command pool:
+The command pool is tackled first:
 
 ```java
 class Pool extends AbstractVulkanObject {
@@ -115,7 +115,7 @@ class Pool extends AbstractVulkanObject {
 }
 ```
 
-A pool is created via a factory method:
+Command pools are created via a factory method:
 
 ```java
 public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFlag... flags) {
@@ -134,7 +134,7 @@ public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFla
 }
 ```
 
-To allocate command buffers we add the following factory method:
+Command buffers can then be allocated from the pool via the following factory method:
 
 ```java
 public List<Buffer> allocate(int num, boolean primary) {
@@ -169,7 +169,7 @@ buffers.addAll(list);
 return list;
 ```
 
-Note that command buffers are automatically released by the pool when it is destroyed, however we also track the allocated buffers:
+Note that command buffers are automatically released by the pool when it is destroyed, however they are also tracked in the class to ensure the pool is correctly released:
 
 ```java
 class Pool {
@@ -278,8 +278,6 @@ public Buffer end() {
     return this;
 }
 ```
-
-We also add convenience mutators to reset or release a buffer back to the pool.
 
 ### Submission
 
@@ -433,7 +431,7 @@ Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
 
 This specifies three triangles vertices, in a single instance, both starting at index zero.  A proper builder for draw commands will be implemented in a later chapter.
 
-Finally the new drawing command are added to the render pass library:
+The new drawing commands are added to the render pass library:
 
 ```java
 interface Library {
@@ -498,11 +496,11 @@ public static ApplicationRunner render(Swapchain swapchain, Buffer render) {
 }
 ```
 
-Although we have a double-buffer swapchain and many of the components required to implement a fully threaded render loop, for the moment we bodge a single frame:
+Although we have a double-buffer swapchain and many of the components required to implement a fully fledged render loop, for the moment we bodge a single frame:
 
 ```java
 // Start next frame
-int index = swapchain.acquire(null, null); // TODO - synchronisation
+int index = swapchain.acquire(null, null);
 
 // Render frame
 Work.of(render).submit();
@@ -512,7 +510,7 @@ Pool pool = render.pool();
 pool.waitIdle();
 
 // Present frame
-swapchain.present(pool.queue(), index);
+swapchain.present(pool.queue(), index, null);
 
 // Wait...
 Thread.sleep(1000);
@@ -529,7 +527,7 @@ public static Work of(Buffer buffer) {
 
 Notes:
 
-* The `acquire` method will generate a Vulkan error since we are not providing any synchronisation parameters.
+* The presentation methods will generate Vulkan errors since the synchronisation arguments are unspecified.
 
 * Execution is briefly blocked at the end of the 'loop' so we have a chance of seeing the results (assuming there are any).
  
@@ -549,9 +547,9 @@ All that for a triangle?
 
 There are a couple of gotchas that could result in staring at a blank screen:
 
-* The triangle vertices in the vertex shader are ordered counter-clockwise which _should_ be the default winding order.  Although not covered in this part of the demo the _rasterizer_ pipeline stage may need to be configured explicitly (or culling switched off altogether).
+* The triangle vertices in the vertex shader are ordered counter-clockwise which _should_ be the default winding order.  Although not covered in this part of the demo the _rasterizer_ pipeline stage may need to be configured explicitly and/or culling switched off altogether.
 
-* The arguments for the hard-coded drawing command are all integers and can easily be accidentally transposed.
+* The arguments for the hard-coded drawing command are all integer values and can easily be accidentally transposed.
 
 ---
 
