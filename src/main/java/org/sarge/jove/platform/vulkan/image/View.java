@@ -32,7 +32,6 @@ public class View extends AbstractVulkanObject {
 	}
 
 	private final Image image;
-
 	private ClearValue clear;
 
 	/**
@@ -120,7 +119,7 @@ public class View extends AbstractVulkanObject {
 
 		private final Image image;
 		private VkImageViewType type;
-		private ComponentMapping mapping = ComponentMapping.IDENTITY;
+		private VkComponentMapping mapping = ComponentMapping.identity();
 		private SubResource subresource;
 
 		/**
@@ -143,11 +142,11 @@ public class View extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the component mapping for the view.
+		 * Sets the component mapping for the view (default is {@link ComponentMapping#IDENTITY}).
 		 * @param mapping Component mapping
 		 * @see ComponentMapping
 		 */
-		public Builder mapping(ComponentMapping mapping) {
+		public Builder mapping(VkComponentMapping mapping) {
 			this.mapping = notNull(mapping);
 			return this;
 		}
@@ -171,7 +170,7 @@ public class View extends AbstractVulkanObject {
 			info.viewType = type;
 			info.format = image.descriptor().format();
 			info.image = image.handle();
-			info.components = mapping.build();
+			info.components = mapping;
 			info.subresourceRange = SubResource.toRange(subresource);
 
 			// Allocate image view
