@@ -22,38 +22,39 @@ import com.sun.jna.ptr.PointerByReference;
  * <p>
  * Example for a texture sampler:
  * <pre>
- *  // Define binding for a sampler (at slot zero)
- *  ResourceBinding binding = new ResourceBinding.Builder()
- * 		.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
- * 		.stage(VkShaderStage.FRAGMENT)
- * 		.build()
+ * // Define binding for a sampler
+ * ResourceBinding binding = new ResourceBinding.Builder()
+ *     .binding(0)
+ *     .type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+ *     .stage(VkShaderStage.FRAGMENT)
+ *     .build()
  *
- *  // Create layout for a sampler
- *  Layout layout = Layout.create(List.of(binding, ...));
+ * // Create layout for a sampler
+ * DescriptorLayout layout = DescriptorLayout.create(List.of(binding, ...));
  *
- *  // Create descriptor pool for 3 swapchain images
- *  Pool pool = new Pool.Builder(dev)
- *  	.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 3)
- *  	.max(3)
+ * // Create descriptor pool for double-buffered swapchain
+ * DescriptorPool pool = new DescriptorPool.Builder(dev)
+ *  	.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
+ *  	.max(2)
  *  	.build();
  *
- *  // Create descriptors
- *  List descriptors = pool.allocate(layout, 3);
+ * // Create descriptors
+ * List descriptors = pool.allocate(layout, 2);
  *
- *  // Create a descriptor set resource
- *  View view = ...
- *  Resource res = sampler.resource(view);
- *  ...
+ * // Create a descriptor set resource for the sampler
+ * View view = ...
+ * DescriptorResource res = sampler.resource(view);
+ * ...
  *
- *  // Set resource
- *  DescriptorSet first = descriptors.get(0);
- *  first.set(binding, res);
+ * // Set resource
+ * DescriptorSet first = descriptors.get(0);
+ * first.set(binding, res);
  *
- *  // Or bulk set resources
- *  DescriptorSet.set(descriptors, binding, res);
+ * // Or bulk set resources in all sets
+ * DescriptorSet.set(descriptors, binding, res);
  *
- *  // Apply updates
- *  DescriptorSet.update(dev, descriptors);
+ * // Apply updates
+ * DescriptorSet.update(dev, descriptors);
  * </pre>
  * @author Sarge
  */

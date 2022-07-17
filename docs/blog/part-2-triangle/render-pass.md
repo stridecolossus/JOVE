@@ -298,17 +298,14 @@ public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View>
 The frame buffer is then created via the API and wrapped by a new domain object instance:
 
 ```java
-// Allocate frame buffer
 DeviceContext dev = pass.device();
 VulkanLibrary lib = dev.library();
 PointerByReference buffer = dev.factory().pointer();
 check(lib.vkCreateFramebuffer(dev, info, null, buffer));
-
-// Create frame buffer
 return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
 ```
 
-Frame buffer functionality will be developed further when rendering is address in the next chapter.
+Frame buffer functionality will be developed further when rendering is addressed in the next chapter.
 
 The API for frame buffers is simple:
 
@@ -357,15 +354,14 @@ Subpass subpass = new Subpass.Builder()
 return RenderPass.create(dev, List.of(subpass));
 ```
 
-Finally we create the frame buffers:
+Finally a frame buffer is created:
 
 ```java
-FrameBuffer[] buffers = swapchain
-    .views()
-    .stream()
-    .map(view -> FrameBuffer.create(pass, swapchain.extents(), List.of(view))
-    .toArray(FrameBuffer[]::new);
+View view = swapchain.views().get(0);
+FrameBuffer fb = FrameBuffer.create(pass, swapchain.extents(), view);
 ```
+
+Although the swapchain supports multiple attachments the demo will use a single frame-buffer until a proper rendering loop in implemented later.
 
 ---
 

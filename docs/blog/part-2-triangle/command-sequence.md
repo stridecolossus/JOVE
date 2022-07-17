@@ -530,7 +530,7 @@ Notes:
 * The presentation methods will generate Vulkan errors since the synchronisation arguments are unspecified.
 
 * Execution is briefly blocked at the end of the 'loop' so we have a chance of seeing the results (assuming there are any).
- 
+
 * Obviously this is temporary code just sufficient to test this first demo, a proper render loop will be addressed in a future chapter.
 
 * The window will be non-functional since the GLFW event queue is not being polled, i.e. cannot be moved or closed.

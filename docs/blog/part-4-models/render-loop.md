@@ -15,28 +15,28 @@ title: The Render Loop and Synchronisation
 
 ## Overview
 
-Before we start the next demo application there are several issues with the existing, crude render loop we have implemented so far.
+Before we progress the demo there are several issues with the existing, crude render loop implemented in the previous chapter:
 
-In no particular order:
+* The rendering code is completely single-threaded by blocking the entire device.
 
-* The rendering code is completely single-threaded (by blocking the work queues).
+* The window event queue is not being polled, meaning the window is inoperable.
 
-* The window event queue is blocked.
+* There is no mechanism to terminate an application other than the dodgy timer (or force-quitting the process).
 
-* There is no mechanism to terminate the application (other than the timer code or force-quitting the process).
-
-* The code mixes up the following:
+* The existing render loop mixes up the following:
     * The Vulkan rendering process
     * The application logic to update the rotation
-    * And the code to control the loop (the dodgy timer)
+    * And code to control the loop
 
-In this chapter we will address these issues by implementing the following:
+In this chapter these issues will be addressed by the introduction of the following:
 
-* New reusable components to separate the rendering process and the application logic.
+* New JOVE components to separate the rendering process and the application logic.
 
 * A GLFW keyboard handler to gracefully exit the application.
 
-* New reusable framework code for the rotation animation.
+* New framework code for animations.
+
+* The introduction of multiple frames buffers to properly use the swapchain functionality.
 
 * Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
@@ -291,6 +291,96 @@ public class FrameThrottle implements FrameTracker.Listener {
 ```
 
 Both of these implementations are quite crude but do the job.
+
+### Application Configuration
+
+Since the demo is moving towards a proper double-buffered swapchain and render loop, now is a good point to externalise some of the application configuration to simplify testing and data modifications.
+
+A new `ConfigurationProperties` component is added to the demo:
+
+```java
+@Configuration
+@ConfigurationProperties
+public class ApplicationConfiguration {
+    private String title;
+    private int frames;
+    private Colour col = Colour.BLACK;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public int getFrameCount() {
+        return frames;
+    }
+
+    public void setFrameCount(int frames) {
+        this.frames = frames;
+    }
+
+    public Colour getBackground() {
+        return col;
+    }
+
+    public void setBackground(float[] col) {
+        this.col = Colour.of(col);
+    }
+}
+```
+
+The properties are configured in the `application.properties` file:
+
+```java
+title: Rotating Cube Demo
+frameCount: 2
+background = 0.3, 0.3, 0.3
+```
+
+Notes:
+
+* The properties class __must__ be a simple POJO (with old-school getters and setters) to be auto-magically populated by the Spring framework.
+
+* The `background` property (the clear colour for for the swapchain views) is a comma-separated list which Spring injects as an array.
+
+The swapchain is refactored accordingly:
+
+```java
+class PresentationConfiguration {
+    @Autowired private LogicalDevice dev;
+    @Autowired private ApplicationConfiguration cfg;
+
+    @Bean
+    public Swapchain swapchain(Surface surface) {
+        return new Swapchain.Builder(dev, surface)
+            .count(cfg.getFrameCount())
+            .clear(cfg.getBackground())
+            .build();
+    }
+}
+```
+
+The application title in the window and instance configuration are updated similarly replacing the injected `@Value` parameters used previously.
+
+Finally the frame buffer bean is also modified to generate a buffer per swapchain image:
+
+```java
+@Bean
+public static List<FrameBuffer> buffers(Swapchain swapchain, RenderPass pass) {
+    Dimensions extents = swapchain.extents();
+    return swapchain
+        .views()
+        .stream()
+        .map(view -> FrameBuffer.create(pass, extents, List.of(view)))
+        .collect(toList());
+}
+```
+
+Note that the demo will now generate validation errors on termination since the frame buffers will no longer be automatically destroyed.
+TODO
 
 ### Integration
 
