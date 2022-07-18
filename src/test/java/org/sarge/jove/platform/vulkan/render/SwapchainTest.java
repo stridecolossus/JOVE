@@ -156,7 +156,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			surface = mock(Surface.class);
 			when(surface.handle()).thenReturn(new Handle(1));
 			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
-			when(surface.find(format.format, format.colorSpace)).thenReturn(Optional.of(format));
+			when(surface.format(format.format, format.colorSpace)).thenReturn(Optional.of(format));
 
 			// Init surface capabilities used by the swapchain
 			final var caps = new VkSurfaceCapabilitiesKHR();

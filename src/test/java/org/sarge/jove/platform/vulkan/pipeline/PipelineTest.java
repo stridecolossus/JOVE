@@ -1,29 +1,15 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.platform.vulkan.VkGraphicsPipelineCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
-import org.sarge.jove.platform.vulkan.VkPipelineCreateFlag;
-import org.sarge.jove.platform.vulkan.VkPipelineShaderStageCreateInfo;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
-import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder.ShaderStageBuilder;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
@@ -95,12 +81,8 @@ public class PipelineTest extends AbstractVulkanTest {
 			builder
 					.layout(layout)
 					.pass(pass)
-					.viewport()
-						.viewportAndScissor(viewport)
-						.build()
-					.shader(VkShaderStage.VERTEX)
-						.shader(mock(Shader.class))
-						.build();
+					.viewport(viewport)
+					.shader(VkShaderStage.VERTEX, mock(Shader.class));
 		}
 
 		@Test

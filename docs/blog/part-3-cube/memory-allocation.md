@@ -277,23 +277,11 @@ The `select` method first enumerates the _candidate_ memory types by applying th
 public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
     List<MemoryType> candidates = IntStream
         .range(0, types.length)
-        .filter(n -> MathsUtil.isBit(reqs.memoryTypeBits, n))
+        .filter(n -> ((1 << n) & reqs.memoryTypeBits) == n)
         .mapToObj(n -> types[n])
         .collect(toList());
 
     ...
-}
-```
-
-Where `MathsUtil` is a new utility class for common arithmetic functions, the following methods are used to test whether a given memory type bit is set in the supplied bit-field filter:
-
-```java
-public static boolean isBit(int mask, int bit) {
-    return isMask(1 << bit, mask);
-}
-
-public static boolean isMask(int value, int mask) {
-    return (value & mask) == value;
 }
 ```
 

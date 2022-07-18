@@ -5,6 +5,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -251,7 +252,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			return this;
 		}
 
-
 		/**
 		 * Constructs this logical device.
 		 * @return New logical device
@@ -259,7 +259,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 */
 		public LogicalDevice build() {
 			// Create descriptor
-			final VkDeviceCreateInfo info = new VkDeviceCreateInfo();
+			final var info = new VkDeviceCreateInfo();
 
 			// Add required features
 			info.pEnabledFeatures = required.descriptor();
@@ -287,9 +287,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			final Map<Family, List<Queue>> map = queues
 					.values()
 					.stream()
-					.map(required -> queues(handle.getValue(), required))
-					.map(Arrays::asList)
-					.flatMap(List::stream)
+					.flatMap(required -> queues(handle.getValue(), required))
 					.collect(groupingBy(Queue::family));
 
 			// Create logical device
@@ -306,7 +304,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param required		Required queue descriptor
 		 * @return Work queues
 		 */
-		private Queue[] queues(Pointer dev, RequiredQueue required) {
+		private Stream<Queue> queues(Pointer dev, RequiredQueue required) {
 			// Init library
 			final Instance instance = parent.instance();
 			final Library lib = instance.library();
@@ -320,7 +318,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 				queues[n] = new Queue(new Handle(ref.getValue()), required.family);
 			}
 
-			return queues;
+			return Arrays.stream(queues);
 		}
 	}
 

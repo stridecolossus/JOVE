@@ -263,7 +263,7 @@ The surface class provides a number of accessors that are used to configure the 
 public VkSurfaceCapabilitiesKHR capabilities() {
     VulkanLibrary lib = dev.library();
     VkSurfaceCapabilitiesKHR caps = new VkSurfaceCapabilitiesKHR();
-    check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, Surface.this, caps));
+    check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, this, caps));
     return caps;
 }
 ```
@@ -273,10 +273,10 @@ The supported _image formats_ are retrieved using the two-stage approach:
 ```java
 public Collection<VkSurfaceFormatKHR> formats() {
     VulkanLibrary lib = instance.library();
-    VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface.this, count, array);
+    VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
     IntByReference count = instance.factory().integer();
     var formats = VulkanFunction.enumerate(func, count, VkSurfaceFormatKHR::new);
-    return Arrays.stream(formats).collect(toList());
+    return Arrays.asList(formats);
 }
 ```
 
@@ -285,7 +285,7 @@ Finally the swapchain supports a number of available _presentation modes_ (at le
 ```java
 public Set<VkPresentModeKHR> modes() {
     VulkanLibrary lib = instance.library();
-    VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array);
+    VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, this, count, array);
     IntByReference count = instance.factory().integer();
     int[] array = VulkanFunction.invoke(func, count, int[]::new);
     ...
@@ -395,7 +395,7 @@ public View build() {
     info.viewType = type;
     info.format = image.descriptor().format();
     info.image = image.handle();
-    info.components = new VkComponentMapping();
+    info.components = mapping;
     info.subresourceRange = ...
 
     // Allocate image view
@@ -424,16 +424,16 @@ info.subresourceRange = range;
 The component mapping specifies the swizzle for the RGBA colour components of the view:
 
 ```java
-private static final VkComponentMapping DEFAULT_COMPONENT_MAPPING = create();
+private static final VkComponentMapping DEFAULT_COMPONENT_MAPPING = identity();
 
-private static VkComponentMapping create() {
-    VkComponentSwizzle identity = VkComponentSwizzle.IDENTITY;
-    var mapping = new VkComponentMapping();
-    mapping.r = identity;
-    mapping.g = identity;
-    mapping.b = identity;
-    mapping.a = identity;
-    return mapping;
+private static VkComponentMapping identity() {
+    var swizzle = VkComponentSwizzle.IDENTITY;
+    var identity = new VkComponentMapping();
+    identity.r = swizzle;
+    identity.g = swizzle;
+    identity.b = swizzle;
+    identity.a = swizzle;
+    return identity;
 }
 ```
 

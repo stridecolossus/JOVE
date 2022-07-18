@@ -53,7 +53,7 @@ public class FormatSelectorTest {
 
 		@Test
 		void optimal() {
-			final Predicate<VkFormatProperties> filter = FormatSelector.filter(Set.of(FEATURE), true);
+			final Predicate<VkFormatProperties> filter = FormatSelector.filter(true, Set.of(FEATURE));
 			assertNotNull(filter);
 			assertEquals(true, filter.test(props));
 			assertEquals(false, filter.test(new VkFormatProperties()));
@@ -61,7 +61,7 @@ public class FormatSelectorTest {
 
 		@Test
 		void linear() {
-			final Predicate<VkFormatProperties> filter = FormatSelector.filter(Set.of(FEATURE), false);
+			final Predicate<VkFormatProperties> filter = FormatSelector.filter(false, Set.of(FEATURE));
 			assertNotNull(filter);
 			assertEquals(true, filter.test(props));
 			assertEquals(false, filter.test(new VkFormatProperties()));

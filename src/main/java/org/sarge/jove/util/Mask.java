@@ -7,7 +7,6 @@ import java.util.stream.IntStream;
  * @author Sarge
  */
 public record Mask(int mask) {
-
 	/**
 	 * Calculates the maximum unsigned integer value for the given number of bits.
 	 * @param bits Number of bits

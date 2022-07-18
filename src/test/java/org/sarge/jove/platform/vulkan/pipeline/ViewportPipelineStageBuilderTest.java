@@ -1,11 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.lib.util.Percentile;
 
@@ -49,12 +46,6 @@ public class ViewportPipelineStageBuilderTest {
 		assertEquals(2, descriptor.pScissors.offset.y);
 		assertEquals(3, descriptor.pScissors.extent.width);
 		assertEquals(4, descriptor.pScissors.extent.height);
-	}
-
-	@Test
-	void viewportAndScissor() {
-		final var descriptor = builder.viewportAndScissor(rect).get();
-		assertEquals(1, descriptor.scissorCount);
 	}
 
 	@Test

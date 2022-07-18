@@ -71,7 +71,7 @@ public class Surface extends AbstractTransientNativeObject {
 	public VkSurfaceCapabilitiesKHR capabilities() {
 		final VulkanLibrary lib = dev.instance().library();
 		final var caps = new VkSurfaceCapabilitiesKHR();
-		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, Surface.this, caps));
+		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, this, caps));
 		return caps;
 	}
 
@@ -81,7 +81,7 @@ public class Surface extends AbstractTransientNativeObject {
 	public List<VkSurfaceFormatKHR> formats() {
 		final Instance instance = dev.instance();
 		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, Surface.this, count, array);
+		final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
 		final IntByReference count = instance.factory().integer();
 		final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(func, count, VkSurfaceFormatKHR::new);
 		return Arrays.asList(array);
@@ -91,16 +91,22 @@ public class Surface extends AbstractTransientNativeObject {
 	 * Helper - Selects the preferred surface format that supports the given format and colour-space or falls back to {@link #DEFAULT_SURFACE_FORMAT}.
 	 * @param format		Surface format
 	 * @param space			Colour space
+	 * @param def			Default surface format or {@code null} for the {@link #defaultSurfaceFormat()}
 	 * @return Selected surface format
 	 */
-	public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space) {
-		return find(format, space).orElseGet(Surface::defaultSurfaceFormat);
+	public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space, VkSurfaceFormatKHR def) {
+		return format(format, space)
+				.or(() -> Optional.ofNullable(def))
+				.orElseGet(Surface::defaultSurfaceFormat);
 	}
 
 	/**
-	 * Helper - Finds a matching surface format supported by this surface.
+	 * Finds the surface format matching the given specification.
+	 * @param format		Surface format
+	 * @param space			Colour space
+	 * @return Surface format
 	 */
-	Optional<VkSurfaceFormatKHR> find(VkFormat format, VkColorSpaceKHR space) {
+	Optional<VkSurfaceFormatKHR> format(VkFormat format, VkColorSpaceKHR space) {
 		return this
 				.formats()
 				.stream()
@@ -116,7 +122,7 @@ public class Surface extends AbstractTransientNativeObject {
 		// Retrieve array of presentation modes
 		final Instance instance = dev.instance();
 		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, Surface.this, count, array);
+		final VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, this, count, array);
 		final IntByReference count = instance.factory().integer();
 		final int[] array = VulkanFunction.invoke(func, count, int[]::new);
 

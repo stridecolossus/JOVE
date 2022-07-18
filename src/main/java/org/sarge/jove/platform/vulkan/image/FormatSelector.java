@@ -13,18 +13,15 @@ import org.sarge.lib.util.Check;
 /**
  * A <i>format selector</i> is used to select an appropriate format from a list of candidates.
  * <p>
- * The {@link VkFormatProperties} for a given format can be retrieved via the {@link PhysicalDevice#properties()} method.
+ * The {@link VkFormatProperties} for a given format can be retrieved via the {@link PhysicalDevice#properties(VkFormat)} method.
  * <p>
  * Usage:
  * <p>
  * <pre>
- * // Create a selector for a depth-stencil with optimal tiling
  * PhysicalDevice dev = ...
- * Predicate predicate = FormatSelector.predicate(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
- * FormatSelector selector = new FormatSelector(dev::properties, predicate);
- *
- * // Select a depth-stencil format
- * VkFormat format = selector.select(List.of(VkFormat.D32_SFLOAT)).orElseThrow();
+ * Predicate predicate = FormatSelector.filter(true, VkFormatFeature.DEPTH_STENCIL_ATTACHMENT);
+ * FormatSelector selector = new FormatSelector(dev, predicate);
+ * VkFormat format = selector.select(VkFormat.D32_SFLOAT, ...).orElseThrow();
  * </pre>
  * <p>
  * @author Sarge
@@ -36,7 +33,7 @@ public class FormatSelector {
 	 * @param optimal		Whether to match on the <i>optimal</i> or <i>linear</i> tiling features
 	 * @return Format filter
 	 */
-	public static Predicate<VkFormatProperties> filter(Set<VkFormatFeature> features, boolean optimal) {
+	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> features) {
 		Check.notEmpty(features);
 		final Mask mask = new Mask(IntegerEnumeration.reduce(features));
 		return props -> {
@@ -56,6 +53,17 @@ public class FormatSelector {
 	public FormatSelector(PhysicalDevice dev, Predicate<VkFormatProperties> filter) {
 		this.dev = notNull(dev);
 		this.filter = notNull(filter);
+	}
+
+	/**
+	 * Convenience constructor to select matching format features.
+	 * @param dev			Physical device
+	 * @param optimal		Whether to match on the <i>optimal</i> or <i>linear</i> tiling features
+	 * @param features		Required format features
+	 * @see #filter(boolean, Set)
+	 */
+	public FormatSelector(PhysicalDevice dev, boolean optimal, VkFormatFeature... features) {
+		this(dev, filter(optimal, Set.copyOf(Arrays.asList(features))));
 	}
 
 	/**

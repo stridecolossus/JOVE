@@ -27,6 +27,8 @@ Creating the instance involves the following steps:
 
 4. Invoke the API to create the instance given this descriptor.
 
+5. Create the domain object encapsulating the handle of the new instance.
+
 For this we will require the following components:
 
 * Implementation of a JNA library to create/destroy the instance.
@@ -606,7 +608,7 @@ Next the API method is looked up from the parent instance:
 Function create = instance.function("vkCreateDebugUtilsMessengerEXT");
 ```
 
-Which is a new accessor on the instance class:
+Which is a new factory on the instance class:
 
 ```java
 public Function function(String name) {

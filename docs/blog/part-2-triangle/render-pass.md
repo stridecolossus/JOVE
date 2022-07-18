@@ -422,26 +422,25 @@ class DesktopConfiguration {
     }
 
     @Bean
-    public static Surface surface(Instance instance, Window window) {
-        Handle handle = window.surface(instance.handle());
-        return new Surface(handle, instance);
+    public static Handle surface(Instance instance, Window window) {
+        return window.surface(instance.handle());
     }
 }
 ```
 
-The `@Configuration` annotation denotes a class that contains components to be managed by the container declared by the `@Bean` annotation.  Note that Spring beans are generally singleton instances.
+The `@Configuration` annotation denotes a class containing a number of `@Bean` methods that create the components to be managed by the container.  Note that Spring beans are generally singleton instances.
 
 Here we can see the benefits of using dependency injection:
 
 * The code to instantiate each component is now factored out into neater, more concise factory methods.
 
-* The dependencies of each component are _declared_ in the signature of each bean method and the container _injects_ the relevant arguments for us (or throws an error if a bean does not exist).
+* The dependencies of each component are _declared_ in the signature of each bean method and the container _injects_ the relevant arguments for us (or throws an error if a dependency cannot be resolved).
 
 * Components are instantiated by the container in logical order inferred from the dependencies, e.g. for the troublesome surface handle.
 
 This should result in code that is both simpler to develop and (more importantly) considerably easier to refactor and fix.  In particular we no longer need to be concerned about dependencies when new components are added or existing components are modified.
 
-However one disadvantage of this approach is that we cannot easily recreate the swapchain when it is invalidated, e.g. when the window is minimised or resized.  This functionality is deferred to a future chapter.
+However one disadvantage of this approach is that the swapchain cannot be easily recreated when it is invalidated, e.g. when the window is minimised or resized.  This functionality is deferred to a future chapter.
 
 ### Integration
 
@@ -489,7 +488,7 @@ class DeviceConfiguration {
     private final Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
     private final Selector presentation;
 
-    public DeviceConfiguration(Surface surface) {
+    public DeviceConfiguration(Handle surface) {
         presentation = Selector.of(surface);
     }
 }
@@ -515,8 +514,8 @@ public LogicalDevice device(PhysicalDevice dev) {
     return new LogicalDevice.Builder(dev)
         .extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
         .layer(ValidationLayer.STANDARD_VALIDATION)
-        .queue(graphics.family())
-        .queue(presentation.family())
+        .queue(graphics.select(dev))
+        .queue(presentation.select(dev))
         .build();
 }
 ```
@@ -526,12 +525,12 @@ Finally we expose the resultant work queues:
 ```java
 @Bean
 public Queue graphics(LogicalDevice dev) {
-    return dev.queue(graphics.family());
+    return dev.queue(graphics.select(dev.parent()));
 }
 
 @Bean
 public Queue presentation(LogicalDevice dev) {
-    return dev.queue(presentation.family());
+    return dev.queue(presentation.select(dev.parent()));
 }
 ```
 

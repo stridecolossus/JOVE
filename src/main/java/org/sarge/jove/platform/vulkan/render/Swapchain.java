@@ -313,7 +313,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @throws IllegalArgumentException if the given format is not supported by the surface
 		 */
 		public Builder format(VkSurfaceFormatKHR format) {
-			if(surface.find(format.format, format.colorSpace).isEmpty()) {
+			if(surface.format(format.format, format.colorSpace).isEmpty()) {
 				throw new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", format.format, format.colorSpace));
 			}
 			info.imageFormat = notNull(format.format);

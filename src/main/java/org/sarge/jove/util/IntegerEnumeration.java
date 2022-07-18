@@ -165,6 +165,8 @@ public interface IntegerEnumeration {
 			return constant;
 		}
 
+
+
 		/**
 		 * Converts a bit-field to an ordered set of enumeration constants.
 		 * @param clazz		Enumeration class

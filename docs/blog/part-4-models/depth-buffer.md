@@ -23,7 +23,7 @@ This will include the introduction of a _depth test_ requiring the following new
 
 * Attachment clear values.
 
-We will also implement several improvements to the existing code including the introduction of a _camera_ model.
+Finally we will introduce various improvements to the existing code to simplify configuration of the presentation logic.
 
 ---
 
@@ -31,9 +31,9 @@ We will also implement several improvements to the existing code including the i
 
 ### Configuration
 
-We start a new `ModelDemo` project based on the previous rotating cube demo, minus the rotation animation.
+A new `ModelDemo` project is started based on the previous rotating cube demo, minus the rotation animation.
 
-Next we replace the previous VBO configuration with a new class that loads the buffered model:
+Next the previous VBO configuration is replaced with a new class that loads the buffered model:
 
 ```java
 @Configuration
@@ -50,7 +50,7 @@ public class ModelConfiguration {
 }
 ```
 
-We then create the VBO and index buffer objects for the model:
+Then the VBO and index buffer objects are created for the model:
 
 ```java
 @Bean
@@ -60,7 +60,7 @@ public VertexBuffer vbo(Model model) {
 }
 
 @Bean
-public VulkanBuffer index(Model model) {
+public IndexBuffer index(Model model) {
     VulkanBuffer buffer = buffer(model.index().get(), VkBufferUsage.INDEX_BUFFER);
     return new IndexBuffer(buffer);
 }
@@ -99,7 +99,7 @@ In the render configuration the index buffer is injected and bound to the pipeli
 add(index.bind())
 ```
 
-The following temporary code is added to initialise the projection matrix (having removed the animation):
+The following temporary code is added to initialise the projection matrix:
 
 ```java
 @Component
@@ -139,7 +139,7 @@ public DrawCommand build() {
 }
 ```
 
-We provide convenience factory methods to create simple draw commands:
+Convenience factory methods are added for common use-cases:
 
 ```java
 static DrawCommand draw(int count) {
@@ -151,7 +151,7 @@ static DrawCommand indexed(int count) {
 }
 ```
 
-Finally we add a further helper to create a draw command for a given model:
+Finally a further helper is implemented to create a draw command for a given model:
 
 ```java
 static DrawCommand of(Model model) {
@@ -165,13 +165,13 @@ static DrawCommand of(Model model) {
 }
 ```
 
-We can now replace the hard-coded command in the render sequence:
+The hard-coded draw command can now be replaced in the render sequence:
 
 ```java
 Command draw = DrawCommand.of(model);
 ```
 
-Finally, the previous view transform means we are looking at the model from above - we add a temporary static rotation to get a better viewing angle:
+Finally, the previous view transform means we are looking at the model from above, a temporary static rotation is added to get a better viewing angle:
 
 ```java
 public static Matrix matrix(Swapchain swapchain) {
@@ -203,23 +203,23 @@ Where:
 
 * And _y_ rotates vertically so the camera is facing the corner of the chalet with the door.
 
-We run the demo and see what we get - which is a bit of a mess!
+We run the demo and see what we get, which is a bit of a mess!
 
 ![Broken Chalet Model](mess.png)
 
 There are a couple of issues here:
 
-* The texture looks upside down - the grass is on the roof and vice-versa.
+* The texture looks upside down, the grass is on the roof and vice-versa.
 
-* We are seeing bits of the model that should be obscured - fragments are being rendered arbitrarily overlapping each other.
+* Fragments are being rendered arbitrarily overlapping each other.
 
 ### Texture Coordinate Invert
 
 The upside-down texture is due to the fact that OBJ texture coordinates (and OpenGL) assume an origin at the bottom-left of the image, whereas for Vulkan the 'start' of the texture image is the top-left corner.
 
-We _could_ fiddle the texture coordinates in the shader, or flip the texture using an editor application, or invert it programatically at load time, but none of these resolve the actual root problem.  Flipping the image just adds extra effort and inverting at load-time would only make loading slower.  Instead we will flip the vertical texture coordinates _once_ when the model is loaded.
+We _could_ fiddle the texture coordinates in the shader, or flip the texture using an editor application, or invert it programatically at load time.  However none of these resolve the actual root problem, flipping the image would just add extra effort, and inverting at load-time would only make loading slower.  Instead the vertical texture coordinate is flipped _once_ when the OBJ model is first loaded.
 
-The following adapter method flips the vertical component of each texture coordinate before it is instantiated:
+The following adapter method flips the vertical component of each texture coordinate:
 
 ```java
 private static Coordinate2D flip(float[] array) {
@@ -236,7 +236,7 @@ add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, ObjectModel::c
 
 We assume that this will apply to all OBJ models, it can always be made an optional feature if that assumption turns out to be incorrect.
 
-The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so we are not rendering the model inside-out for example).
+The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so the model is not being rendered inside-out for example).
 
 ---
 
@@ -244,7 +244,7 @@ The model now looks to be textured correctly, in particular the signs on the fro
 
 ### Pipeline Stage
 
-To resolve the issue of overlapping fragments we either need to order the geometry by distance from the camera or use a _depth test_ to ensure that obscured fragments are not rendered.  A depth test is implemented using a _depth buffer_ which is a frame buffer attachment that stores the depth of each rendered fragment, discarding subsequent fragments that are closer to the camera.
+To resolve the issue of overlapping fragments, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are not rendered.  The depth test is uses a _depth buffer_ which is an attachment that stores the depth of each rendered fragment, discarding subsequent fragments that are closer to the camera.
 
 The depth test is configured by a new pipeline stage:
 
@@ -260,36 +260,21 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 }
 ```
 
-We can now enable the depth test in the pipeline configuration:
+In the previous demos the clear value for the colour attachments was hard-coded, with the addition of the depth buffer this functionality will now be properly implemented.
 
-```java
-.depth()
-    .enable(true)
-    .build()
-```
+Introducing clear values should have been easy, however there was a nasty surprise when adding the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
 
-### Clear Values
-
-In the previous demos we hard-coded a clear value for the colour attachments, with the addition of the depth buffer we will now properly implement this functionality.
-
-Introducing clear values should have been easy, however we had a nasty surprise when we added the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
-
-Thankfully JNA supports unions out-of-the-box.  We manually modified the generated code and used the `setType` method of the JNA union class to 'select' the relevant properties.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
+Thankfully JNA supports unions out-of-the-box.  The generated code was manually modified to use the `setType` method of the JNA union class to 'select' the relevant properties.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
 
 A clear value is defined by the following abstraction:
 
 ```java
-public interface ClearValue {
+public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
     /**
      * Populates the given clear value descriptor.
      * @param value Descriptor
      */
     void populate(VkClearValue value);
-
-    /**
-     * @return Expected image aspect for this clear value
-     */
-    VkImageAspect aspect();
 }
 ```
 
@@ -297,11 +282,6 @@ The temporary code can now be moved to a new implementation for colour attachmen
 
 ```java
 record ColourClearValue(Colour col) implements ClearValue {
-    @Override
-    public VkImageAspect aspect() {
-        return VkImageAspect.COLOR;
-    }
-
     @Override
     public void populate(VkClearValue value) {
         value.setType("color");
@@ -311,14 +291,14 @@ record ColourClearValue(Colour col) implements ClearValue {
 }
 ```
 
-For a depth-stencil attachment we add a second implementation:
+And similarly a second implementation for the depth-stencil attachment:
 
 ```java
 record DepthClearValue(Percentile depth) implements ClearValue {
-    @Override
-    public VkImageAspect aspect() {
-        return VkImageAspect.DEPTH;
-    }
+    /**
+     * Default clear value for a depth attachment.
+     */
+    public static final DepthClearValue DEFAULT = new DepthClearValue(Percentile.ONE);
 
     @Override
     public void populate(VkClearValue value) {
@@ -329,58 +309,32 @@ record DepthClearValue(Percentile depth) implements ClearValue {
 }
 ```
 
-Finally we also create an empty implementation for the default value:
-
-```java
-ClearValue NONE = new ClearValue() {
-    @Override
-    public VkImageAspect aspect() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void populate(VkClearValue value) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this;
-    }
-
-    @Override
-    public String toString() {
-        return "None";
-    }
-};
-```
-
 The clear value now becomes a mutable property of the image view:
 
 ```java
 public class View extends AbstractVulkanObject {
-    private ClearValue clear = ClearValue.NONE;
+    private ClearValue clear;
+
+    public Optional<ClearValue> clear() {
+        return Optional.ofNullable(clear);
+    }
 
     public View clear(ClearValue clear) {
-        validate(clear);
-        this.clear = notNull(clear);
+        this.clear = clear;
         return this;
     }
 }
 ```
 
-Where `validate` checks that the `aspect` of the clear value matches the image view.
+The builder for the swapchain class is also refactored to conveniently initialise a clear colour for all swapchain images.
 
-We also refactor the builder for the swapchain class to conveniently initialise a clear colour for all swapchain images.
-
-Finally we refactor the `begin` method of the frame buffer to populate the clear values at the start of the render-pass:
+Finally the `begin` method of the frame buffer is updated to populate the clear values at the start of the render-pass:
 
 ```java
-// Map attachments to clear values
 Collection<ClearValue> clear = attachments
     .stream()
     .map(View::clear)
-    .filter(Predicate.not(ClearValue.NONE::equals))
+    .flatMap(Optional::stream)
     .collect(toList());
 
 // Init clear values
@@ -390,7 +344,7 @@ info.pClearValues = StructureHelper.pointer(clear, VkClearValue::new, ClearValue
 
 ### Integration
 
-To use the depth test we first add a new depth-stencil attachment to the render-pass configuration:
+To use the depth test in the demo a new depth-stencil attachment is added to the render-pass configuration:
 
 ```java
 Attachment colour = ...
@@ -413,9 +367,9 @@ Notes:
 
 * The _store_ operation is left as the default (don't care).
 
-* Similarly the _old layout_ property is left as undefined since we do not use the previous contents.
+* Similarly the _old layout_ property is left as undefined since the previous contents are unused.
 
-Unlike the swapchain images we are required to create the image for the depth buffer - we start with the image descriptor:
+Unlike the swapchain images we are required to create and manage the image for the depth buffer attachment:
 
 ```java
 @Bean
@@ -425,12 +379,12 @@ public View depth(Swapchain swapchain, AllocationService allocator) {
         .extents(new ImageExtents(swapchain.extents()))
         .format(VkFormat.D32_SFLOAT)
         .build();
+        
+    ...
 }
 ```
 
-The _extents_ of the depth buffer should be same as the swapchain images.
-
-Next we create the image:
+Next the image for the depth attachment is instantiated:
 
 ```java
 MemoryProperties<VkImageUsage> props = new MemoryProperties.Builder<VkImageUsage>()
@@ -445,7 +399,7 @@ Image image = new Image.Builder()
     .build(dev, allocator);
 ```
 
-Finally we create a view of the image configured with the new clear value:
+And a view of the image configured with a clear value:
 
 ```java
 new View.Builder(image)
@@ -459,13 +413,19 @@ The depth buffer is then added to each frame buffer along with the colour attach
 FrameBuffer.create(pass, extents, List.of(view, depth))
 ```
 
+Finally the depth test is enabled in the pipeline configuration:
+
+```java
+.depth()
+    .enable(true)
+    .build()
+```
+
 Notes:
 
 * Depth buffer images do not need to be programatically transitioned as Vulkan automatically manages the image during the render pass.
 
 * The same depth buffer can safely be used in each frame since only a single sub-pass will be executing at any one time in the current render loop.
-
-* We add a convenience constant for the default `DEPTH` clear value for a depth-stencil attachment.
 
 With the depth buffer enabled we should finally be able to see the chalet model:
 
@@ -479,108 +439,127 @@ Ta-da!
 
 ### Format Selector
 
-Rather than hard-coding the format of the depth buffer image and attachment we create a helper class that selects the most suitable format from a list of candidates:
+Rather than hard-coding the format of the depth buffer the following helper is implemented to select a suitable format from a list of candidates:
 
 ```java
 public class FormatSelector {
-    private final Function<VkFormat, VkFormatProperties> mapper;
-    private final Predicate<VkFormatProperties> predicate;
+    private final PhysicalDevice dev;
+    private final Predicate<VkFormatProperties> filter;
 
     public Optional<VkFormat> select(List<VkFormat> candidates) {
-        return candidates
-            .stream()
-            .filter(this::matches)
-            .findAny();
-    }
-
-    private boolean matches(VkFormat format) {
-        VkFormatProperties props = mapper.apply(format);
-        return predicate.test(props);
+        return candidates.stream().filter(this::matches).findAny();
     }
 }
 ```
 
-The _mapper_ retrieves the format properties for a given Vulkan format which will use a new accessor on the physical device:
+The `matches` method looks up the format properties from the device and applies the filter test:
 
 ```java
-public VkFormatProperties properties(VkFormat format) {
-    var props = new VkFormatProperties();
-    instance.library().vkGetPhysicalDeviceFormatProperties(this, format, props);
-    return props;
+private boolean matches(VkFormat format) {
+    VkFormatProperties props = dev.properties(format);
+    return filter.test(props);
 }
 ```
 
-We also a helper factory method to create a filter that selects a format based on the _optimal_ or _linear_ tiling features:
+The following factory method creates a format predicate for optimal or linear tiling features:
 
 ```java
-public static Predicate<VkFormatProperties> feature(Set<VkFormatFeature> features, boolean optimal) {
-    int mask = IntegerEnumeration.reduce(features);
+public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> features) {
+    Mask mask = new Mask(IntegerEnumeration.reduce(features));
     return props -> {
-        int actual = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-        return MathsUtil.isMask(mask, actual);
+        int bits = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
+        return mask.matches(bits);
     };
 }
 ```
 
-In the configuration class we can now select the best depth buffer format:
+Where `Mask` is a new utility class for common bit-level operations:
+
+```java
+public record Mask(int mask) {
+    public boolean matches(int bits) {
+        return (mask & bits) == mask;
+    }
+}
+```
+
+A convenience constructor (not shown) is also added to create a selector using the `filter` factory method.
+
+The optimal format can now be selected in the demo when configuring the depth buffer:
 
 ```java
 @Bean
 public View depth(Swapchain swapchain, AllocationService allocator) {
-    // Select depth format
-    var filter = FormatSelector.feature(Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT), true);
-    PhysicalDevice parent = dev.parent();
-    FormatSelector selector = new FormatSelector(parent::properties, filter);
-    VkFormat format = selector.select(List.of(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT)).orElseThrow();
+    FormatSelector selector = new FormatSelector(dev.parent(), true, VkFormatFeature.DEPTH_STENCIL_ATTACHMENT);
+    VkFormat format = selector.select(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT).orElseThrow();
     ...
 }
 ```
-
-Later on we may want to encapsulate this code into another helper method or class and possibly retrieve the candidates from a configuration file.
 
 ### Swapchain Configuration
 
 We also make some modifications to the configuration of the swapchain to select various properties rather than hard-coding.
 
-First the following helper is added to the surface properties class to select an image format, falling back to an arbitrary format if the optimal configuration is not available:
+First the following helper is added to the surface class to select an image format, falling back to a format if the requested configuration is not available:
 
 ```java
-public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space) {
-    List<VkSurfaceFormatKHR> formats = this.formats();
-    return formats
+public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space, VkSurfaceFormatKHR def) {
+    return this
+        .formats()
         .stream()
         .filter(f -> f.format == format)
         .filter(f -> f.colorSpace == space)
         .findAny()
-        .orElse(formats.get(0));
+        .or(() -> Optional.ofNullable(def))
+        .orElseGet(Surface::defaultSurfaceFormat);
 }
 ```
 
-Next we implement another helper on the swapchain class that selects a preferred presentation mode or falls back to the default:
+Where the following factory creates the commonly supported default format:
 
 ```java
-public static VkPresentModeKHR mode(Surface.Properties props, VkPresentModeKHR... modes) {
-    Set<VkPresentModeKHR> available = props.modes();
+public static VkSurfaceFormatKHR defaultSurfaceFormat() {
+    // Create surface format
+    var format = new VkSurfaceFormatKHR();
+    format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
+
+    // Init default swapchain image format
+    format.format = new FormatBuilder()
+            .components("BGRA")
+            .bytes(1)
+            .signed(false)
+            .type(FormatBuilder.Type.NORM)
+            .build();
+
+    return format;
+}
+```
+
+A second helper is added to select a preferred presentation mode:
+
+```java
+public VkPresentModeKHR mode(VkPresentModeKHR... modes) {
+    Set<VkPresentModeKHR> available = this.modes();
     return Arrays
-        .stream(modes)
-        .filter(available::contains)
-        .findAny()
-        .orElse(DEFAULT_PRESENTATION_MODE);
+            .stream(modes)
+            .filter(available::contains)
+            .findAny()
+            .orElse(DEFAULT_PRESENTATION_MODE);
 }
 ```
 
 The configuration of the swapchain is now more robust:
 
 ```java
-public Swapchain swapchain(Surface.Properties props, ApplicationConfiguration cfg) {
+public Swapchain swapchain(Surface surface, ApplicationConfiguration cfg) {
     // Select presentation mode
-    VkPresentModeKHR mode = Swapchain.mode(props, VkPresentModeKHR.MAILBOX_KHR);
+    VkPresentModeKHR mode = surface.mode(VkPresentModeKHR.MAILBOX_KHR);
 
     // Select SRGB surface format
-    VkSurfaceFormatKHR format = props.format(VkFormat.B8G8R8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
+    VkSurfaceFormatKHR format = surface.format(VkFormat.B8G8R8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
 
     // Create swapchain
-    return new Swapchain.Builder(dev, props)
+    return new Swapchain.Builder(dev, surface)
         .count(cfg.getFrameCount())
         .clear(cfg.getBackground())
         .format(format)
@@ -589,11 +568,26 @@ public Swapchain swapchain(Surface.Properties props, ApplicationConfiguration cf
 }
 ```
 
-Notes:
+Finally the surface property accessors can be cached to API calls:
 
-* The `swapchain` bean now accepts the surface properties rather than the surface itself (since we now also use the properties in the selection code).
+```java
+public Surface cached() {
+    return new Surface(handle, dev) {
+        private final Supplier<VkSurfaceCapabilitiesKHR> caps = new LazySupplier<>(super::capabilities);
+        private final Supplier<List<VkSurfaceFormatKHR>> formats = new LazySupplier<>(super::formats);
+        private final Supplier<Set<VkPresentModeKHR>> modes = new LazySupplier<>(super::modes);
 
-* The presentation modes and surface formats are lazily retrieved in the surface class to minimise API calls.
+        @Override
+        public VkSurfaceCapabilitiesKHR capabilities() {
+            return caps.get();
+        }
+        
+        ...
+    };
+}
+```
+
+Where `LazySupplier` returns a singleton instance using a relatively cheap thread-safe implementation.
 
 ### Global Flip
 

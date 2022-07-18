@@ -64,14 +64,14 @@ public class SurfaceTest extends AbstractVulkanTest {
 	void selectFormat() {
 		final Surface cached = surface.cached();
 		final VkSurfaceFormatKHR format = cached.formats().iterator().next();
-		assertEquals(format, cached.format(format.format, format.colorSpace));
+		assertEquals(format, cached.format(format.format, format.colorSpace, null));
 	}
 
 	@DisplayName("A surface falls back to the default format for an unsupported surface format")
 	@Test
 	void selectFormatDefault() {
 		final VkSurfaceFormatKHR expected = Surface.defaultSurfaceFormat();
-		final VkSurfaceFormatKHR actual = surface.format(VkFormat.UNDEFINED, VkColorSpaceKHR.BT2020_LINEAR_EXT);
+		final VkSurfaceFormatKHR actual = surface.format(VkFormat.UNDEFINED, VkColorSpaceKHR.BT2020_LINEAR_EXT, null);
 		assertEquals(expected.format, actual.format);
 		assertEquals(expected.colorSpace, actual.colorSpace);
 	}

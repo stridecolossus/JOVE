@@ -20,8 +20,6 @@ We will then implement some improvements to reduce the memory footprint of the r
 
 > In the real world we would use a more modern format that supported animation, skeletons, etc. but the OBJ is relatively simple to implement and is used in the Vulkan tutorial.
 
-Note there is no new Vulkan functionality introduced in this chapter.
-
 ---
 
 ## Model Loader

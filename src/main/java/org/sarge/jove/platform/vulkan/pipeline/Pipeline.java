@@ -6,6 +6,7 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -268,6 +269,16 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
+		 * Convenience helper to add a viewport and scissor rectangle with the same dimensions.
+		 * @param rect Viewport/scissor rectangle
+		 */
+		public Builder viewport(Rectangle rect) {
+			viewport.viewport(rect);
+			viewport.scissor(rect);
+			return this;
+		}
+
+		/**
 		 * @return Builder for the rasterizer stage
 		 */
 		public RasterizerPipelineStageBuilder rasterizer() {
@@ -313,6 +324,17 @@ public class Pipeline extends AbstractVulkanObject {
 			if(shaders.containsKey(stage)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
 			shaders.put(stage, shader);
 			return shader;
+		}
+
+		/**
+		 * Convenience helper to add a shader stage with default configuration.
+		 * @param stage		Shader stage
+		 * @param shader	Shader module
+		 */
+		public Builder shader(VkShaderStage stage, Shader shader) {
+			return shader(stage)
+					.shader(shader)
+					.build();
 		}
 
 		/**

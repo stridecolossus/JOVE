@@ -2,16 +2,12 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.platform.vulkan.VkPipelineViewportStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkRect2D;
-import org.sarge.jove.platform.vulkan.VkViewport;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.StructureHelper;
-import org.sarge.lib.util.Check;
-import org.sarge.lib.util.Percentile;
+import org.sarge.lib.util.*;
 
 /**
  * Builder for the viewport stage descriptor.
@@ -72,16 +68,6 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 */
 	public ViewportPipelineStageBuilder scissor(Rectangle rect) {
 		scissors.add(notNull(rect));
-		return this;
-	}
-
-	/**
-	 * Convenience helper to add a viewport rectangle with default min/max depth <b>and</b> a scissor with the same dimensions.
-	 * @param rect Viewport/scissor rectangle
-	 */
-	public ViewportPipelineStageBuilder viewportAndScissor(Rectangle rect) {
-		viewport(rect);
-		scissor(rect);
 		return this;
 	}
 

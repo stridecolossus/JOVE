@@ -6,12 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.common.*;
+import org.sarge.jove.geometry.*;
 
 /**
  * A <i>vertex</i> is a mutable object comprising the position, normal, texture coordinate and colour of a model vertex.
@@ -127,13 +123,6 @@ public class Vertex {
 			obj.buffer(bb);
 		}
 	}
-
-
-
-
-
-
-
 
 	@Override
 	public int hashCode() {

@@ -183,7 +183,7 @@ PhysicalDevice
 
 ### Application Window
 
-To select the physical device that supports presentation we first need a Vulkan surface which is derived from a native window created using GLFW:
+To select the physical device that supports presentation we first need a Vulkan surface, which is derived from a native window created using GLFW:
 
 ```java
 public class Window {
@@ -486,7 +486,7 @@ Where:
 
 - The _family_ is a queue family selected from the parent physical device.
 
-- The _priorities_ is a list of percentile values that specifies the priority of each required queue.
+- The _priorities_ is a list of percentile values that specifies the required number of queues in the family and their relative priorities.
 
 - The `Percentile` class is a custom type for a percentile represented as a 0..1 floating-point value.
 
@@ -517,27 +517,31 @@ public LogicalDevice build() {
 JNA requires a native array to be a contiguous memory block (as opposed to a Java array where the memory address of the elements is arbitrary).
 Here we introduce the `StructureHelper` helper class (detailed at the end of the chapter) which handles the transformation of a Java collection to a JNA structure array.
 
-The `populate` method is invoked by the helper to 'fill' the JNA structure from a domain object (the required queue in this case):
+The `populate` method is invoked by the helper to 'fill' the JNA structure from the domain object:
 
 ```java
-private void populate(VkDeviceQueueCreateInfo info) {
-    // Allocate contiguous memory block for the priorities
+record RequiredQueue {
+    private void populate(VkDeviceQueueCreateInfo info) {
+        info.queueCount = array.length;
+        info.queueFamilyIndex = family.index();
+        info.pQueuePriorities = build();
+    }
+}
+```
+
+The queue priorities is another array field that must be a contiguous memory block (mapping to the native `const float*` type) constructed by the following helper:
+
+```java
+private Pointer build() {
     Percentile[] array = priorities.toArray(Percentile[]::new);
     Memory mem = new Memory(array.length * Float.BYTES);
     for(int n = 0; n < array.length; ++n) {
         mem.setFloat(n * Float.BYTES, array[n].floatValue());
     }
-
-    // Populate queue descriptor
-    info.queueCount = array.length;
-    info.queueFamilyIndex = family.index();
-    info.pQueuePriorities = mem;
 }
 ```
 
-Note that again we create a contiguous memory block for the array of queue priorities mapping to a `const float*` native type.
-
-The builder then invokes the API to instantiate the logical device:
+Finally the builder invokes the API to instantiate the logical device:
 
 ```java
 Instance instance = parent.instance();
@@ -555,16 +559,14 @@ Next the work queues are retrieved from the new device:
 Map<Family, List<Queue>> map = queues
     .values()
     .stream()
-    .map(required -> queues(handle.getValue(), required))
-    .map(Arrays::asList)
-    .flatMap(List::stream)
+    .flatMap(required -> queues(handle.getValue(), required))
     .collect(groupingBy(Queue::family));
 ```
 
 Which uses the following helper to instantiate an array of queues for each entry:
 
 ```java
-private Queue[] queues(Pointer dev, RequiredQueue required) {
+private Stream<Queue> queues(Pointer dev, RequiredQueue required) {
     // Init library
     Instance instance = parent.instance();
     Library lib = instance.library();
@@ -578,7 +580,7 @@ private Queue[] queues(Pointer dev, RequiredQueue required) {
         queues[n] = new Queue(ref.getValue(), required.family);
     }
 
-    return queues;
+    return Arrays.stream(queues);
 }
 ```
 

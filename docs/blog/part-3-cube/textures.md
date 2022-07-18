@@ -877,30 +877,23 @@ The last piece of functionality needed for the texture is some means of determin
 
 Native images have channels in `ABGR` order whereas Vulkan textures are generally `RGBA`, the component mapping allows the image view to _swizzle_ the image channels as required.
 
-A new helper class constructs the appropriate component mapping from the _components_ property of the image layout:
+A new utility class constructs the appropriate component mapping from the _components_ property of the image layout:
 
 ```java
 public final class ComponentMapping {
-    private final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[4];
+    private static final int SIZE = 4;
 
-    private ComponentMapping() {
-    }
-
-    private void populate(String mapping) {
-        // Validate
-        final int len = mapping.length();
-        if(len == 0) throw new IllegalArgumentException("Component mapping cannot be empty");
-        if(len > swizzle.length) throw new IllegalArgumentException(String.format("Invalid component mapping length [%s]", mapping));
-
-        // Init swizzle array
+    public static VkComponentMapping of(String mapping) {
+        var swizzle = new VkComponentSwizzle[SIZE];
         for(int n = 0; n < len; ++n) {
             swizzle[n] = swizzle(mapping.charAt(n));
         }
+        return build(swizzle);
     }
-}
+}    
 ```
 
-The `swizzle` method maps a channel mapping character to the corresponding swizzle:
+The `swizzle` method maps a channel character to the corresponding enumeration constant:
 
 ```java
 private static VkComponentSwizzle swizzle(char mapping) {
@@ -921,7 +914,7 @@ The resultant component mapping descriptor is constructed from the array as foll
 
 ```java
 public VkComponentMapping build() {
-    VkComponentMapping components = new VkComponentMapping();
+    var components = new VkComponentMapping();
     components.r = swizzle[0];
     components.g = swizzle[1];
     components.b = swizzle[2];
@@ -930,27 +923,17 @@ public VkComponentMapping build() {
 }
 ```
 
-The component mapping is the constructed from the string representation using a factory method:
+Finally the identity component mapping is refactored accordingly:
 
 ```java
-public static ComponentMapping of(String mapping) {
-    final ComponentMapping instance = new ComponentMapping();
-    instance.populate(mapping);
-    return instance;
+public static VkComponentMapping identity() {
+    var swizzle = new VkComponentSwizzle[SIZE];
+    Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
+    return build(swizzle);
 }
 ```
 
-Finally the identity component mapping is refactored:
-
-```java
-public final class ComponentMapping {
-    public static final ComponentMapping IDENTITY = new ComponentMapping();
-
-    static {
-        Arrays.fill(IDENTITY.swizzle, VkComponentSwizzle.IDENTITY);
-    }
-}
-```
+Note that a new instance is constructed on invocation since JNA structures are mutable.
 
 ---
 
