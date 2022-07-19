@@ -49,36 +49,6 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	}
 
 	/**
-	 * Determines the number of bytes for the given numeric type.
-	 * <p>
-	 * The {@link #type} parameter can be either a wrapper or primitive type.
-	 * <p>
-	 * For example: {@link Float} or {@code float} is mapped to {@link Float#BYTES}.
-	 * <p>
-	 * The following types are supported:
-	 * <ul>
-	 * <li>float</li>
-	 * <li>integer</li>
-	 * <li>short</li>
-	 * <li>byte</li>
-	 * </ul>
-	 * <p>
-	 * @param type Type
-	 * @return Number of bytes
-	 * @throws IllegalArgumentException for an unsupported type
-	 */
-	public static int bytes(Class<?> type) {
-		// TODO - JDK17 switch
-		return switch(type.getSimpleName().toLowerCase()) {
-			case "float" -> Float.BYTES;
-			case "int", "integer" -> Integer.BYTES;
-			case "short" -> Short.BYTES;
-			case "byte" -> Byte.BYTES;
-			default -> throw new IllegalArgumentException("Unsupported layout component type: " + type);
-		};
-	}
-
-	/**
 	 * Calculates the total <i>stride</i> of the given layouts.
 	 * @param layouts Layouts
 	 * @return Stride

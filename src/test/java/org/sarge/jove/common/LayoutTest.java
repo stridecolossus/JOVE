@@ -1,13 +1,10 @@
 package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class LayoutTest {
 	private Layout layout;
@@ -54,37 +51,5 @@ public class LayoutTest {
 		assertEquals(true, layout.equals(new Layout(3, Float.class, Float.BYTES, true)));
 		assertEquals(false, layout.equals(null));
 		assertEquals(false, layout.equals(new Layout(4, Float.class, Float.BYTES, true)));
-	}
-
-	@Nested
-	class BytesTests {
-		@Test
-		void floats() {
-			assertEquals(Float.BYTES, Layout.bytes(Float.class));
-			assertEquals(Float.BYTES, Layout.bytes(float.class));
-		}
-
-		@Test
-		void integers() {
-			assertEquals(Integer.BYTES, Layout.bytes(Integer.class));
-			assertEquals(Integer.BYTES, Layout.bytes(int.class));
-		}
-
-		@Test
-		void shorts() {
-			assertEquals(Short.BYTES, Layout.bytes(Short.class));
-			assertEquals(Short.BYTES, Layout.bytes(short.class));
-		}
-
-		@Test
-		void bytes() {
-			assertEquals(Byte.BYTES, Layout.bytes(Byte.class));
-			assertEquals(Byte.BYTES, Layout.bytes(Byte.class));
-		}
-
-		@Test
-		void unsupported() {
-			assertThrows(IllegalArgumentException.class, () -> Layout.bytes(String.class));
-		}
 	}
 }
