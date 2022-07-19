@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
@@ -153,7 +152,7 @@ public class Shader extends AbstractVulkanObject {
 				.entrySet()
 				.stream()
 				.map(Constant::new)
-				.collect(toList());
+				.toList();
 
 		// Patch offsets and calculate total size
 		int size = 0;

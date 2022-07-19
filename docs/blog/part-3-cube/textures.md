@@ -59,7 +59,7 @@ The following additional components and changes are required:
 
 ### Quad
 
-We will first modify the demo to render a quad before moving on to loading and applying a texture.
+We will first modify the demo to render a quad before moving on to loading and applying the texture.
 
 The vertex data is modified to render a coloured quad with white in the bottom-right corner:
 
@@ -78,15 +78,8 @@ The default drawing primitive is a _triangle strip_ with vertices ordered as fol
 1---3---5
 ```
 
-The first triangle is comprised of the first three vertices with each subsequent triangle incrementing the 'index' by one resulting in 012, 123, 234, etc. 
-
-Notes:
-
-* By default the Y direction is inverted in the Vulkan coordinate system.
-
-* The triangles in a strip have a counter-clockwise winding order by default.
-
-* However a triangle strip is rendered with an _alternating_ winding order.
+The first triangle is comprised of the first three vertices with each subsequent triangle incrementing the 'index' by one resulting in 012, 123, 234, etc.
+Therefore a triangle strip has an _alternating_ winding order.
 
 After changing the number of vertices to 4 in the drawing command we should see something like the following:
 

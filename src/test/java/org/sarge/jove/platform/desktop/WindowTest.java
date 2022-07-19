@@ -41,7 +41,7 @@ public class WindowTest {
 		when(desktop.library()).thenReturn(lib);
 
 		// Init window descriptor
-		final Window.Descriptor descriptor = new Window.Descriptor("title", new Dimensions(640, 480), Set.of(Window.Property.DECORATED));
+		final Window.Descriptor descriptor = new Window.Descriptor("title", new Dimensions(640, 480), Set.of(Window.Hint.DECORATED));
 
 		// Create window
 		window = new Window(desktop, null, descriptor);
@@ -57,7 +57,7 @@ public class WindowTest {
 		assertNotNull(window.descriptor());
 		assertEquals("title", window.descriptor().title());
 		assertEquals(new Dimensions(640, 480), window.descriptor().size());
-		assertEquals(Set.of(Window.Property.DECORATED), window.descriptor().properties());
+		assertEquals(Set.of(Window.Hint.DECORATED), window.descriptor().hints());
 
 		// Check devices
 		assertNotNull(window.keyboard());
@@ -135,7 +135,7 @@ public class WindowTest {
 			window = builder
 					.title("title")
 					.size(new Dimensions(640, 480))
-					.property(Window.Property.DECORATED)
+					.hint(Window.Hint.DECORATED)
 					.build(desktop);
 
 			// Check window properties

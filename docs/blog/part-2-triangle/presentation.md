@@ -7,8 +7,9 @@ title: Presentation
 ## Contents
 
 - [Overview](#overview)
-- [Swapchain](#swapchain)
 - [Framework](#framework-enhancements)
+- [Swapchain](#swapchain)
+- [Improvements](#improvements)
 
 ---
 
@@ -675,6 +676,10 @@ Notes:
 * The presentation task descriptor is created on every invocation of the `present` method which will probably be cached later.
 
 * In this case a sub-optimal swapchain is __not__ considered valid.
+
+---
+
+## Improvements
 
 ### Format Builder
 

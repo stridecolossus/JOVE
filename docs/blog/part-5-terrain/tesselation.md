@@ -533,7 +533,7 @@ Notes:
 
 * The `layout(vertices=4) out` declaration specifies the number of control points to be processed by the shader (a quad in this case).
 
-* Note that this shader is executed for each patch but the tesselation levels are generally only calculated once per control point.  It is common practice to the wrap the calculation of the tesselation levels in the conditional statement using the built-in GLSL `gl_InvocationID` variable.
+* Note that this shader is executed for each control point but the tesselation levels are generally calculated once per patch, it is common practice to the wrap the calculation of the tesselation levels in a conditional statement using the built-in GLSL `gl_InvocationID` variable.
 
 Configuration of the tesselation stage in the pipeline is very trivial:
 

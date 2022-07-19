@@ -103,7 +103,7 @@ Note that this implementation assumes vertex data is _interleaved_ and that all 
 Positions and normals are both floating-point tuples with common functionality, here a small hierarchy is introduced with the following base-class:
 
 ```java
-public sealed class Tuple implements Bufferable permits Point, Vector {
+public class Tuple implements Bufferable {
     public static final int SIZE = 3;
 
     public final float x, y, z;

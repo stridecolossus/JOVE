@@ -193,7 +193,7 @@ The matrix is loaded into a uniform buffer:
 ```java
 @Bean
 public static VulkanBuffer uniform(LogicalDevice dev, AllocationService allocator, Matrix matrix) {
-    MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
+    var props = new MemoryProperties.Builder<VkBufferUsage>()
         .usage(VkBufferUsage.UNIFORM_BUFFER)
         .required(VkMemoryProperty.HOST_VISIBLE)
         .required(VkMemoryProperty.HOST_COHERENT)
@@ -235,11 +235,10 @@ The new resource is registered with the descriptor set pool:
 
 ```java
 public Pool pool() {
-    final int count = cfg.getFrameCount();
     return new Pool.Builder()
         .add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, count)
         .add(VkDescriptorType.UNIFORM_BUFFER, count)
-        .max(count)
+        .max(1)
         .build(dev);
 }
 ```
@@ -250,9 +249,7 @@ And finally the uniform buffer resource is initialised in the `descriptors` bean
 DescriptorSet.set(descriptors, uniformBinding, uniform.uniform());
 ```
 
-Note that for the moment the same uniform buffer is used in all descriptor sets since the render loop is essentially single threaded.
-
-To use the uniform buffer in the shader we add the following layout declaration:
+To use the uniform buffer in the shader the following layout declaration is added:
 
 ```glsl
 layout(binding=1) uniform ubo {
@@ -441,6 +438,8 @@ Notes:
 * This code is based on the example from the Vulkan Cookbook.
 
 * The matrix assumes the Y axis points __down__ the viewport.
+
+* `MathsUtil` is a utility class providing common constants, wrappers for trigonometric functions, and helpers for various mathematical use cases.
 
 A convenience constant is added for a perspective projection with a default field-of-view:
 
@@ -781,7 +780,7 @@ Which is multiplied with the projection and view transform to generate the final
 return projection.multiply(view).multiply(model);
 ```
 
-Again note the order of operations - here the rotation is applied to the model, then the view transform, and finally the perspective projection.
+Again note the order of operations: here the rotation is applied to the model, then the view transform, and finally the perspective projection.
 
 We should now be able to see the fully 3D cube:
 

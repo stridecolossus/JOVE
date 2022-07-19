@@ -614,20 +614,12 @@ The _size_ of each constant is determined as follows:
 
 ```java
 private int size() {
-    if(value instanceof Integer) {
-        return Integer.BYTES;
-    }
-    else
-    if(value instanceof Float) {
-        return Float.BYTES;
-    }
-    else
-    if(value instanceof Boolean) {
-        return Integer.BYTES;
-    }
-    else {
-        throw new IllegalArgumentException(...);
-    }
+    return switch(value) {
+        case Integer n -> Integer.BYTES;
+        case Float f -> Float.BYTES;
+        case Boolean b -> Integer.BYTES;
+        default -> throw new UnsupportedOperationException(...);
+    };
 }
 ```
 
@@ -678,21 +670,15 @@ for(Constant entry : table) {
 Where `append` is another helper on the local class:
 
 ```java
-private void append(ByteBuffer buffer) {
-    if(value instanceof Integer n) {
-        buffer.putInt(n);
-    }
-    else
-    if(value instanceof Float f) {
-        buffer.putFloat(f);
-    }
-    else
-    if(value instanceof Boolean b) {
-        final VulkanBoolean bool = VulkanBoolean.of(b);
-        buffer.putInt(bool.toInteger());
-    }
-    else {
-        assert false;
+void append(ByteBuffer buffer) {
+    switch(value) {
+        case Integer n -> buffer.putInt(n);
+        case Float f -> buffer.putFloat(f);
+        case Boolean b -> {
+            VulkanBoolean bool = VulkanBoolean.of(b);
+            buffer.putInt(bool.toInteger());
+        }
+        default -> throw new RuntimeException();
     }
 }
 ```

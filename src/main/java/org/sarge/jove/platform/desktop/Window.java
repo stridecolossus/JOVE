@@ -19,9 +19,9 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Window extends AbstractTransientNativeObject {
 	/**
-	 * Window properties.
+	 * Window hints.
 	 */
-	public enum Property {
+	public enum Hint {
 		/**
 		 * Window can be resized.
 		 */
@@ -45,44 +45,38 @@ public class Window extends AbstractTransientNativeObject {
 		/**
 		 * Disables creation of an OpenGL context for this window.
 		 */
-		DISABLE_OPENGL(0x00022001),
-
-		/**
-		 * Whether this window should be full-screen.
-		 */
-		FULL_SCREEN(0);		// TODO
+		DISABLE_OPENGL(0x00022001);
 
 		private final int hint;
 
-		private Property(int hint) {
+		private Hint(int hint) {
 			this.hint = hint;
 		}
 
 		/**
-		 * Applies this property.
+		 * Applies this hint.
 		 * @param lib Desktop library
 		 */
 		void apply(DesktopLibrary lib) {
-			final int value = this == DISABLE_OPENGL ? 0 : 1; // TODO
+			final int value = this == DISABLE_OPENGL ? 0 : 1;
 			lib.glfwWindowHint(hint, value);
 		}
-		// TODO - different implementations for hints, disable OpenGL, full-screen, etc => sealed class?
 	}
 
 	/**
 	 * Descriptor for the properties of this window.
 	 */
-	public record Descriptor(String title, Dimensions size, Set<Property> properties) {
+	public record Descriptor(String title, Dimensions size, Set<Hint> hints) {
 		/**
 		 * Constructor.
-		 * @param title				Window title
-		 * @param size				Dimensions
-		 * @param properties		Properties
+		 * @param title			Window title
+		 * @param size			Dimensions
+		 * @param hints			Window hints
 		 */
 		public Descriptor {
 			Check.notEmpty(title);
 			Check.notNull(size);
-			properties = Check.notNull(properties);
+			hints = Check.notNull(hints);
 		}
 	}
 
@@ -214,7 +208,7 @@ public class Window extends AbstractTransientNativeObject {
 	public static class Builder {
 		private String title;
 		private Dimensions size;
-		private final Set<Property> props = new HashSet<>();
+		private final Set<Hint> hints = new HashSet<>();
 		private Monitor monitor;
 
 		/**
@@ -236,11 +230,11 @@ public class Window extends AbstractTransientNativeObject {
 		}
 
 		/**
-		 * Adds a window property.
-		 * @param p Property
+		 * Adds a window hint.
+		 * @param hint Window hint
 		 */
-		public Builder property(Property p) {
-			props.add(notNull(p));
+		public Builder hint(Hint hint) {
+			hints.add(notNull(hint));
 			return this;
 		}
 
@@ -262,12 +256,12 @@ public class Window extends AbstractTransientNativeObject {
 			// Apply window hints
 			final DesktopLibrary lib = desktop.library();
 			lib.glfwDefaultWindowHints();
-			for(Property p : props) {
-				p.apply(lib);
+			for(Hint hint : hints) {
+				hint.apply(lib);
 			}
 
 			// Create window descriptor
-			final Descriptor descriptor = new Descriptor(title, size, props);
+			final Descriptor descriptor = new Descriptor(title, size, hints);
 
 			// Create window
 			final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), title, monitor, null);
