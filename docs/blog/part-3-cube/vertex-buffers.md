@@ -15,9 +15,9 @@ title: Vertex Buffers
 
 ## Overview
 
-In this chapter we will replace the hard-coded triangle data in the shader with a _vertex buffer_ (also known as a _vertex buffer object_ or VBO).
+In this chapter the hard-coded triangle data in the shader is replaced with a _vertex buffer_ (also known as a _vertex buffer object_ or VBO).
 
-We will then transfer the vertex data to a _device local_ buffer (i.e. memory on the GPU) for optimal performance.
+The vertex data will then be transferred to a _device local_ buffer (i.e. memory on the GPU) for optimal performance.
 
 This process involves the following steps:
 
@@ -35,7 +35,7 @@ This process involves the following steps:
 
 7. Release the staging buffer.
 
-We will need to implement the following:
+The following components will be introduced:
 
 * New domain classes to specify the vertex data.
 
@@ -43,7 +43,7 @@ We will need to implement the following:
 
 * A command to copy between buffers.
 
-* The _vertex input stage_ of the pipeline to configure the structure of the vertex data.
+* The _vertex input_ pipeline stage to configure the structure of the vertex data in the shader.
 
 ---
 
@@ -68,37 +68,35 @@ public interface Bufferable {
 }
 ```
 
-A _vertex_ is a compound object comprising the vertex position, colour, etc:
+A _vertex_ is generally comprised of some or all of the following:
+- position
+- normal
+- texture coordinate
+- colour
+
+Normals and texture coordinates are not required for the triangle demo so these are glossed over in this chapter.
+
+The vertex implementation is a compound object comprised of an arbitrary group of bufferable data:
 
 ```java
-public class Vertex {
-    private Point pos;
-    private Vector normal;
-    private Coordinate coord;
-    private Colour col;
-}
-```
+public class Vertex implements Bufferable {
+    private final List<Bufferable> components;
 
-Normals and texture coordinates are not required for the triangle demo so we will gloss over these objects until later.
+    @Override
+    public int length() {
+        return components.stream().mapToInt(Bufferable::length).sum();
+    }
 
-The vertex class does not implement `Bufferable` but does provide a `buffer` method to write the vertex components to an NIO buffer:
-
-```java
-public void buffer(ByteBuffer bb) {
-    buffer(pos, bb);
-    buffer(normal, bb);
-    buffer(coord, bb);
-    buffer(col, bb);
-}
-
-private static void buffer(Bufferable obj, ByteBuffer bb) {
-    if(obj != null) {
-        obj.buffer(bb);
+    @Override
+    public void buffer(ByteBuffer buffer) {
+        for(Bufferable b : components) {
+            b.buffer(buffer);
+        }
     }
 }
 ```
 
-Note that this implementation assumes vertex data is _interleaved_ and that all components are optional.
+Note that this implementation assumes the vertex data is _interleaved_.
 
 Positions and normals are both floating-point tuples with common functionality, here a small hierarchy is introduced with the following base-class:
 
@@ -126,7 +124,7 @@ public class Tuple implements Bufferable {
 }
 ```
 
-The vertex position is a point in 3D space:
+A vertex position is a point in 3D space:
 
 ```java
 public final class Point extends Tuple {
@@ -187,7 +185,7 @@ public Command bind() {
 }
 ```
 
-The local `require` helper checks that the buffer supports a given operation, in this case that it contains vertex data:
+The local `require` helper checks that the buffer supports a given operation, in this case that it is being used as a vertex buffer:
 
 ```java
 public void require(VkBufferUsage... flags) {
@@ -198,7 +196,7 @@ public void require(VkBufferUsage... flags) {
 }
 ```
 
-Copying the vertex data from staging to a device-local buffer is also implemented as a command:
+Copying the vertex data from staging to a device-local buffer is also a command:
 
 ```java
 public Command copy(VulkanBuffer dest) {
@@ -258,14 +256,14 @@ public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator
 }
 ```
 
-Next we retrieve the memory requirements for the vertex buffer:
+Next the memory requirements are retrieved for the new buffer:
 
 ```java
 var reqs = new VkMemoryRequirements();
 lib.vkGetBufferMemoryRequirements(dev, handle.getValue(), reqs);
 ```
 
-Which are passed to the allocation service with the specified memory properties:
+Which are passed to the allocation service along with the configured memory properties:
 
 ```java
 DeviceMemory mem = allocator.allocate(reqs, props);
@@ -277,7 +275,7 @@ The allocated memory is then bound to the buffer:
 check(lib.vkBindBufferMemory(dev, handle.getValue(), mem, 0L));
 ```
 
-And finally we create the vertex buffer domain object:
+And finally the domain object is created:
 
 ```java
 return new VulkanBuffer(handle.getValue(), dev, props.usage(), mem, len);
@@ -305,13 +303,13 @@ interface Library {
 
 ### Overview
 
-To use the vertex buffer in the shader we need to configure the structure of the data in the pipeline which consists of two pieces of information:
+To use the vertex buffer in the shader the structure of the data must be configured in the pipeline, which consists of two pieces of information:
 
 1. A _binding_ that specifies the vertex data to be passed to the shader.
 
-2. A number of _vertex attributes_ that define the structure of the data (corresponding to layouts of the vertex components).
+2. A number of _vertex attributes_ that define the structure of the data, i.e. the layout of each component of a vertex.
 
-We introduce a new pipeline stage with nested builders for the bindings and attributes:
+The new pipeline stage is implemented with nested builders for the bindings and attributes:
 
 ```java
 public class VertexInputStageBuilder extends AbstractPipelineBuilder<VkPipelineVertexInputStateCreateInfo> {
@@ -343,7 +341,7 @@ VkPipelineVertexInputStateCreateInfo get() {
 }
 ```
 
-Note that the nested builders are added to the parent rather than using any intermediate data objects.
+Note that the nested builders are added to the parent rather than using any transient or intermediate data objects.
 
 ### Bindings
 
@@ -359,7 +357,7 @@ public class BindingBuilder {
 
 Note that the binding _index_ is initialised to the next available slot but can also be explicitly overridden.
 
-The _stride_ is the number of bytes per vertex (normally the `length` of a vertex).
+The _stride_ is the number of bytes per vertex (normally the `length` of the vertex).
 
 The `populate` method fills an instance of the corresponding Vulkan descriptor for the binding:
 
@@ -459,41 +457,41 @@ public BindingBuilder build() {
 
 ### Vertex Data
 
-We bring all this new functionality together to programatically create the triangle vertices and copy the vertex data to the hardware.
+All this new functionality is brought together to programatically create the triangle vertices and copy the vertex data to the hardware.
 
-The triangle vertices are specified as a simple array:
+A new configuration class is added for the vertex buffer and triangle data:
+
+```java
+@Configuration
+public class VertexBufferConfiguration {
+    private static final Vertex[] vertices = ...
+
+    @Bean
+    public static VulkanBuffer vbo(LogicalDevice dev, AllocationService allocator, Pool pool) {
+        ...
+    }
+}
+```
+
+The triangle vertices are specified as a simple array (copied from the original shader):
 
 ```java
 Vertex[] vertices = {
-    new Vertex(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)),
-    new Vertex(new Point(0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)),
-    new Vertex(new Point(-0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)),
+    Vertex.of(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)),
+    Vertex.of(new Point(0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)),
+    Vertex.of(new Point(-0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)),
 };
 ```
 
-Which we wrap with a temporary compound bufferable object:
+For the moment we reuse the vertex class to wrap up the array as a single bufferable object:
 
 ```java
-private static final Bufferable TRIANGLE = new Bufferable() {
-    private final Vertex[] vertices = ...
-
-    @Override
-    public int length() {
-        return 3 * vertices[0].length();
-    }
-
-    @Override
-    public void buffer(ByteBuffer buffer) {
-        for(Vertex v : vertices) {
-            v.buffer(buffer);
-        }
-    }
-};
+Vertex triangle = new Vertex(Arrays.asList(vertices));
 ```
 
-### Staging Buffer
+This will be replaced with a more specialised _model_ implementation later on.
 
-We next implement a helper on the VBO class to create a staging buffer.  The memory properties define a buffer that is used as the source of a copy operation and is visible to the host (i.e. the application):
+Next a new helper is added to create a staging buffer:
 
 ```java
 public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
@@ -503,47 +501,29 @@ public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
         .required(VkMemoryProperty.HOST_COHERENT)
         .build();
 
+    int len = data.length();
+    VulkanBuffer buffer = create(dev, len, props);
+
     ...
 }
 ```
 
-Next we create the staging VBO:
+The memory properties define a buffer that is used as the source of a copy operation and is visible to the host (i.e. the application).
 
-```java
-int len = data.length();
-VulkanBuffer buffer = create(dev, len, props);
-```
-
-And write the buffered triangle data:
+The `data` is then written to the staging buffer:
 
 ```java
 ByteBuffer bb = buffer.memory().map().buffer();
 data.buffer(bb);
 ```
 
-### Vertex Buffers
-
-We start a new configuration class for the vertex buffer and triangle data:
+In the new `vbo` bean method the new helper is used to create the staging buffer and copy the interleaved triangle data:
 
 ```java
-@Configuration
-public class VertexBufferConfiguration {
-    private static final Bufferable TRIANGLE = ...
-
-    @Bean
-    public static VulkanBuffer vbo(LogicalDevice dev, AllocationService allocator, Pool pool) {
-        ...
-    }
-}
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, triangle);
 ```
 
-The new helper is used in the bean method to create the staging buffer:
-
-```java
-VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, TRIANGLE);
-```
-
-And similarly for the destination vertex buffer:
+Next the destination buffer on the GPU is instantiated:
 
 ```java
 MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
@@ -555,7 +535,7 @@ MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsa
 VulkanBuffer vbo = VulkanBuffer.create(dev, allocator, staging.length(), props);
 ```
 
-We next submit the copy command and wait for it to complete:
+The triangle data is copied from the staging buffer to the destination:
 
 ```java
 staging
@@ -563,7 +543,7 @@ staging
     .submitAndWait(pool);
 ```
 
-And finally the staging buffer is released:
+And finally the staging buffer can be released:
 
 ```java
 staging.destroy();
@@ -593,7 +573,7 @@ default Buffer submitAndWait(Pool pool) {
 }
 ```
 
-Note that this approach currently blocks the entire device which will be replaced later with proper synchronisation.
+Note that this approach currently blocks the entire device, this will be replaced later with proper synchronisation.
 
 ### Configuration
 
@@ -640,13 +620,13 @@ public Pipeline pipeline(...) {
             .build()
 ```
 
-There is a lot of mucking about and hard-coded data here that we will address in the next chapter.
+There is a lot of mucking about and hard-coded data here that will be addressed in the next chapter.
 
 The final change to the demo is to remove the hard coded vertex data in the shader and configure the incoming VBO which involves:
 
 - The addition of two `layout` directives to specify the incoming data from the vertex buffer, corresponding to the locations specified in the vertex attributes.
 
-- Set `gl_Position` to the position of each vertex.
+- Output the position of each vertex.
 
 - Pass through the colour of each vertex onto the next stage.
 
@@ -670,17 +650,17 @@ void main() {
 
 If all goes well we should see the same triangle.
 
-A good test is to change the vertex positions and/or colours to make sure we are actually using the new functionality and shader.
+A good test is to change the vertex positions and/or colours to make sure the new functionality and shader are actually being used.
 
 ---
 
 ## Summary
 
-In this chapter we:
+In this chapter we implemented:
 
-- Created new domain objects and supporting framework code to define vertex data.
+- New domain objects and supporting framework code to define vertex data.
 
-- Implemented the VBO class to transfer the data from the application to the hardware.
+- The vertex buffer class to transfer the data from the application to the hardware.
 
-- Integrated the vertex input pipeline stage builder.
+- The vertex input pipeline stage builder.
 
