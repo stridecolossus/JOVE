@@ -1,22 +1,14 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.geometry.*;
+import org.sarge.jove.model.*;
+import org.sarge.jove.model.Model.Header;
 
 public class ObjectModelTest {
 	private ObjectModel model;
@@ -97,16 +89,15 @@ public class ObjectModelTest {
 			// Check model
 			final Model result = models.get(0);
 			assertNotNull(result);
+			assertTrue(result.index().isPresent());
 
 			// Check model header
-			assertEquals(Primitive.TRIANGLES, result.primitive());
-			assertEquals(List.of(Point.LAYOUT, Vertex.NORMALS, Coordinate2D.LAYOUT), result.layout());
-			assertEquals(3, result.count());
-			assertTrue(result.indexBuffer().isPresent());
+			final var layout = List.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
+			assertEquals(new Header(Primitive.TRIANGLES, 3, layout), result.header());
 
 			// Check model data
-			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertexBuffer().length());
-			assertEquals(3 * Short.BYTES, result.indexBuffer().get().length());
+			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertices().length());
+			assertEquals(3 * Short.BYTES, result.index().get().length());
 		}
 
 		@Test

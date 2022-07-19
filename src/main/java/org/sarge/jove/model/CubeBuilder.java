@@ -1,10 +1,8 @@
 package org.sarge.jove.model;
 
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -38,7 +36,6 @@ public class CubeBuilder {
 	};
 
 	// Face normals
-	// TODO
 	private static final Vector[] NORMALS = {
 			Vector.Z,
 			Vector.Z.invert(),
@@ -49,7 +46,6 @@ public class CubeBuilder {
 	};
 
 	// Face colours
-	// TODO
 	private static final Colour[] COLOURS = {
 		new Colour(1, 0, 0),
 		new Colour(0, 1, 0),
@@ -74,17 +70,27 @@ public class CubeBuilder {
 	}
 
 	/**
-	 * Constructs this cube.
+	 * Constructs a cube with a default vertex layout.
 	 * @return New cube model
 	 */
-	public MutableModel build() {
-		// Init model
-		final MutableModel model = new MutableModel()
+	public Model build() {
+		final var builder = new Model.Builder()
 				.primitive(Primitive.TRIANGLES)
 				.layout(Point.LAYOUT)
-				.layout(Coordinate2D.LAYOUT);
+				.layout(Model.NORMALS)
+				.layout(Coordinate2D.LAYOUT)
+				.layout(Colour.LAYOUT);
 
-		// Build cube
+		build(builder);
+
+		return builder.build();
+	}
+
+	/**
+	 * Constructs a cube using the given builder.
+	 * @param builder Model builder
+	 */
+	public void build(Model.Builder builder) {
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -92,16 +98,14 @@ public class CubeBuilder {
 
 				// Lookup vertex components
 				final Point pos = VERTICES[index].scale(size);
-//				final Vector normal = NORMALS[face];
+				final Vector normal = NORMALS[face];
 				final Coordinate coord = Quad.COORDINATES.get(corner);
-//				final Colour col = COLOURS[face];
+				final Colour col = COLOURS[face];
 
 				// Add vertex to cube
-				final Vertex vertex = Vertex.of(pos, coord);
-				model.add(vertex);
+				final Vertex vertex = Vertex.of(pos, normal, coord, col);
+				builder.add(vertex);
 			}
 		}
-
-		return model;
 	}
 }

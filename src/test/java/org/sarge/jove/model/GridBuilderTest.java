@@ -1,26 +1,18 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
+import org.sarge.jove.model.Model.Header;
 
 class GridBuilderTest {
 	private GridBuilder builder;
@@ -39,9 +31,8 @@ class GridBuilderTest {
 				.build();
 
 		assertNotNull(model);
-		assertEquals(Primitive.TRIANGLES, model.primitive());
-		assertEquals((3 * 3) * (2 * 3), model.count());
-		assertEquals(Optional.empty(), model.indexBuffer());
+		assertEquals(new Header(Primitive.TRIANGLES, (3 * 3) * (2 * 3), List.of(Point.LAYOUT, Coordinate2D.LAYOUT)), model.header());
+		assertEquals(Optional.empty(), model.index());
 	}
 
 	@DisplayName("Create a simple grid with no index factory applied (points)")
@@ -53,8 +44,8 @@ class GridBuilderTest {
 				.build();
 
 		assertNotNull(model);
-		assertEquals(4 * 4, model.count());
-		assertEquals(Optional.empty(), model.indexBuffer());
+		assertEquals(4 * 4, model.header().count());
+		assertEquals(Optional.empty(), model.index());
 	}
 
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
@@ -62,10 +53,8 @@ class GridBuilderTest {
 	void buildQuadStrip() {
 		final Model model = builder.primitive(Primitive.PATCH).index(Quad.STRIP).build();
 		assertNotNull(model);
-		assertEquals((3 * 3) * 4, model.count());
-		assertEquals(Primitive.PATCH, model.primitive());
-		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
-		assertTrue(model.indexBuffer().isPresent());
+		assertEquals(new Header(Primitive.PATCH, (3 * 3) * 4, List.of(Point.LAYOUT, Coordinate2D.LAYOUT)), model.header());
+		assertTrue(model.index().isPresent());
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")

@@ -1,15 +1,12 @@
 package org.sarge.jove.platform.obj;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import org.sarge.jove.common.Coordinate;
+import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.Model;
-import org.sarge.jove.model.MutableModel;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.*;
 
 /**
  * The <i>OBJ model</i> holds the transient vertex data during parsing.
@@ -20,7 +17,7 @@ class ObjectModel {
 	private final List<Vector> normals = new VertexComponentList<>();
 	private final List<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
-	private MutableModel current = new DuplicateModel();
+	private Model.Builder builder = new DuplicateModelBuilder();
 	private boolean empty = true;
 
 	/**
@@ -47,19 +44,19 @@ class ObjectModel {
 	 */
 	private void build() {
 		// Init model layout
-		current.layout(Point.LAYOUT);
+		builder.layout(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			current.layout(Vertex.NORMALS);
+			builder.layout(Model.NORMALS);
 		}
 		if(!coords.isEmpty()) {
-			current.layout(Coordinate2D.LAYOUT);
+			builder.layout(Coordinate2D.LAYOUT);
 		}
 
 		// Add model
-		models.add(current);
+		models.add(builder.build());
 
 		// Start new model
-		current = new DuplicateModel();
+		builder = new DuplicateModelBuilder();
 	}
 
 	/**
@@ -100,21 +97,21 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position
-		final Vertex vertex = new Vertex();
-		vertex.position(positions.get(v));
+		final var components = new ArrayList<Bufferable>();
+		components.add(positions.get(v));
 
 		// Add optional normal
 		if(vn != null) {
-			vertex.normal(normals.get(vn));
+			components.add(normals.get(vn));
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
-			vertex.coordinate(coords.get(vt));
+			components.add(coords.get(vt));
 		}
 
 		// Add vertex to model
-		current.add(vertex);
+		builder.add(new Vertex(components));
 		empty = false;
 	}
 

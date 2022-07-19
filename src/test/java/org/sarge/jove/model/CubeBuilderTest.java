@@ -1,14 +1,14 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.Model.Header;
 
 public class CubeBuilderTest {
 	private CubeBuilder builder;
@@ -20,12 +20,11 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final MutableModel cube = builder.size(2).build();
+		final Model cube = builder.size(2).build();
 		final int count = 6 * 2 * 3;
+		final var layout = List.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT, Colour.LAYOUT);
 		assertNotNull(cube);
-		assertEquals(Primitive.TRIANGLES, cube.primitive());
-		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), cube.layout());
-		assertEquals(count, cube.count());
-		assertEquals(count, cube.vertices().count());
+		assertEquals(new Header(Primitive.TRIANGLES, count, layout), cube.header());
+		assertEquals(count * Layout.stride(layout) , cube.vertices().length());
 	}
 }

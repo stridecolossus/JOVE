@@ -1,17 +1,11 @@
 package org.sarge.jove.model;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.*;
+import java.util.*;
 
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.io.DataHelper;
-import org.sarge.jove.io.ResourceLoader;
+import org.sarge.jove.common.*;
+import org.sarge.jove.io.*;
+import org.sarge.jove.model.Model.Header;
 
 /**
  * The <i>model loader</i> persists a JOVE model.
@@ -26,7 +20,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 	}
 
 	@Override
-	public BufferedModel load(DataInputStream in) throws IOException {
+	public Model load(DataInputStream in) throws IOException {
 		// Load and verify file format version
 		helper.version(in);
 
@@ -47,7 +41,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		final Bufferable index = helper.buffer(in);
 
 		// Create model
-		return new BufferedModel(primitive, layouts, count, vertices, index);
+		return new Model(new Header(primitive, count, layouts), vertices, index);
 	}
 
 	/**
@@ -58,22 +52,23 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 	 */
 	public void save(Model model, DataOutputStream out) throws IOException {
 		// Write model header
+		final Header header = model.header();
 		helper.writeVersion(out);
-		out.writeUTF(model.primitive().name());
-		out.writeInt(model.count());
+		out.writeUTF(header.primitive().name());
+		out.writeInt(header.count());
 
 		// Write vertex layout
-		final List<Layout> layouts = model.layout();
+		final List<Layout> layouts = header.layout();
 		out.writeInt(layouts.size());
 		for(Layout c : layouts) {
 			helper.write(c, out);
 		}
 
 		// Write vertices
-		helper.write(model.vertexBuffer(), out);
+		helper.write(model.vertices(), out);
 
 		// Write index
-		final Optional<Bufferable> index = model.indexBuffer();
+		final Optional<Bufferable> index = model.index();
 		if(index.isPresent()) {
 			helper.write(index.get(), out);
 		}

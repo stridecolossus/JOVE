@@ -1,23 +1,18 @@
 package org.sarge.jove.platform.obj;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Primitive;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.*;
+import org.sarge.jove.model.Model.Header;
 
 public class ObjectModelLoaderTest {
 	private ObjectModelLoader loader;
@@ -61,16 +56,13 @@ public class ObjectModelLoaderTest {
 		assertNotNull(model);
 
 		// Check header
-		assertEquals(3, model.count());
-		assertEquals(Primitive.TRIANGLES, model.primitive());
-		assertEquals(List.of(Point.LAYOUT, Vertex.NORMALS, Coordinate2D.LAYOUT), model.layout());
-		assertTrue(model.indexBuffer().isPresent());
+		final var layout = List.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
+		assertEquals(new Header(Primitive.TRIANGLES, 3, layout), model.header());
 
-		// Check vertex buffer
-		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertexBuffer().length());
-
-		// Check index buffer
-		assertEquals(3 * Short.BYTES, model.indexBuffer().get().length());
+		// Check model data
+		assertTrue(model.index().isPresent());
+		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().length());
+		assertEquals(3 * Short.BYTES, model.index().get().length());
 	}
 
 	@Test

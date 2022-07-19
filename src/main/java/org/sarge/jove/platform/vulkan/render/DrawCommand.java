@@ -1,12 +1,10 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 /**
@@ -57,8 +55,8 @@ public interface DrawCommand extends Command {
 	 * @return New draw command
 	 */
 	static DrawCommand of(Model model) {
-		final int count = model.count();
-		if(model.indexBuffer().isPresent()) {
+		final int count = model.header().count();
+		if(model.index().isPresent()) {
 			return indexed(count);
 		}
 		else {

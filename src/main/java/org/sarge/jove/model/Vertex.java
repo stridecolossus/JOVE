@@ -1,132 +1,98 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.stream.Collectors.joining;
 
 import java.nio.ByteBuffer;
-import java.util.Objects;
+import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.common.Bufferable;
 
 /**
- * A <i>vertex</i> is a mutable object comprising the position, normal, texture coordinate and colour of a model vertex.
+ * A <i>vertex</i> is compound bufferable objects comprising a set of arbitrary vertex components.
  * @author Sarge
  */
-public class Vertex {
+public class Vertex implements Bufferable {
 	/**
-	 * Layout for vertex normals.
+	 * Creates a new vertex from the given component array.
+	 * @param components Vertex components
+	 * @return New vertex
 	 */
-	public static final Layout NORMALS = Layout.floats(Vector.SIZE);
+	public static Vertex of(Bufferable... components) {
+		return new Vertex(Arrays.asList(components));
+	}
+
+	private final List<Bufferable> components;
 
 	/**
-	 * Creates a simple vertex.
-	 * @param pos Vertex position
-	 * @return New simple vertex
+	 * Constructor.
+	 * @param components Vertex components
 	 */
-	public static Vertex of(Point pos) {
-		return new Vertex().position(pos);
+	public Vertex(List<Bufferable> components) {
+		this.components = List.copyOf(components);
 	}
 
 	/**
-	 * Creates a default vertex comprising a position and texture coordinate.
-	 * @param pos			Vertex position
-	 * @param coord			Texture coordinate
-	 * @return New default vertex
+	 * Retrieves a component from this vertex by index.
+	 * @param <T> Component type
+	 * @param index Component index
+	 * @return Vertex component
+	 * @throws IndexOutOfBoundsException if the index is invalid for this vertex
+	 * @throws ClassCastException if the specified component is not the expected type
 	 */
-	public static Vertex of(Point pos, Coordinate coord) {
-		return new Vertex().position(pos).coordinate(coord);
+	@SuppressWarnings("unchecked")
+	public <T> T component(int index) {
+		return (T) components.get(index);
 	}
 
-	private Point pos;
-	private Vector normal;
-	private Coordinate coord;
-	private Colour col;
-
-	/**
-	 * @return Vertex position or {@code null} if none
-	 */
-	public Point position() {
-		return pos;
+	@Override
+	public int length() {
+		return components.stream().mapToInt(Bufferable::length).sum();
 	}
 
-	/**
-	 * Sets the position of this vertex.
-	 * @param pos Vertex position
-	 */
-	public Vertex position(Point pos) {
-		this.pos = notNull(pos);
-		return this;
-	}
-
-	/**
-	 * @return Vertex normal or {@code null} if none
-	 */
-	public Vector normal() {
-		return normal;
-	}
-
-	/**
-	 * Sets the normal of this vertex.
-	 * @param normal Vertex normal
-	 */
-	public Vertex normal(Vector normal) {
-		this.normal = notNull(normal);
-		return this;
-	}
-
-	/**
-	 * @return Texture coordinate of this vertex or {@code null} if none
-	 */
-	public Coordinate coordinate() {
-		return coord;
-	}
-
-	/**
-	 * Sets the texture coordinate of this vertex.
-	 * @param coord Texture coordinate
-	 */
-	public Vertex coordinate(Coordinate coord) {
-		this.coord = notNull(coord);
-		return this;
-	}
-
-	/**
-	 * @return Colour of this vertex normal or {@code null} if none
-	 */
-	public Colour colour() {
-		return col;
-	}
-
-	/**
-	 * Sets the colour of this vertex.
-	 * @param col Vertex colour
-	 */
-	public Vertex colour(Colour col) {
-		this.col = notNull(col);
-		return this;
-	}
-
-	/**
-	 * Writes this vertex to the given buffer.
-	 * @param bb Buffer
-	 */
-	public void buffer(ByteBuffer bb) {
-		buffer(pos, bb);
-		buffer(normal, bb);
-		buffer(coord, bb);
-		buffer(col, bb);
-	}
-
-	private static void buffer(Bufferable obj, ByteBuffer bb) {
-		if(obj != null) {
-			obj.buffer(bb);
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		for(Bufferable b : components) {
+			b.buffer(buffer);
 		}
+	}
+
+	/**
+	 * Converts the data of this vertex to match the specified component types.
+	 * @param types Required component types
+	 * @return New vertex
+	 */
+	public Vertex map(List<Class<? extends Bufferable>> types) {
+		final List<Bufferable> result = components
+				.stream()
+				.filter(e -> types.contains(e.getClass()))
+				.toList();
+
+		return new Vertex(result);
+	}
+
+	/**
+	 * Tests whether the components of this vertex <b>exactly</b> match the given required types.
+	 * @param types Required component types
+	 * @return Whether this vertex matches the given component types
+	 */
+	public boolean matches(List<Class<? extends Bufferable>> types) {
+		final int count = types.size();
+		if(components.size() != count) {
+			return false;
+		}
+
+		for(int n = 0; n < count; ++n) {
+			if(components.get(n).getClass() != types.get(n)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(pos, normal, coord, col);
+		return components.hashCode();
 	}
 
 	@Override
@@ -134,19 +100,14 @@ public class Vertex {
 		return
 				(obj == this) ||
 				(obj instanceof Vertex that) &&
-				Objects.equals(this.pos, that.pos) &&
-				Objects.equals(this.normal, that.normal) &&
-				Objects.equals(this.coord, that.coord) &&
-				Objects.equals(this.col, that.col);
+				this.components.equals(that.components);
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this)
-				.append(pos)
-				.append(normal)
-				.append(coord)
-				.append(col)
-				.build();
+		return components
+				.stream()
+				.map(Bufferable::toString)
+				.collect(joining(","));
 	}
 }

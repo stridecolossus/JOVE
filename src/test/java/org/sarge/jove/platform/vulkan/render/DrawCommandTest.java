@@ -2,24 +2,18 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import java.util.Optional;
+import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.model.Model;
-import org.sarge.jove.model.Primitive;
+import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.*;
+import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
-import org.sarge.jove.platform.vulkan.render.DrawCommand.Builder;
-import org.sarge.jove.platform.vulkan.render.DrawCommand.IndirectBuilder;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.render.DrawCommand.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class DrawCommandTest extends AbstractVulkanTest {
@@ -51,16 +45,11 @@ class DrawCommandTest extends AbstractVulkanTest {
 	@DisplayName("Create a draw command for a model")
 	@Test
 	void model() {
-		// Create an indexed model
-		final Model model = mock(Model.class);
-		when(model.count()).thenReturn(2);
-		when(model.primitive()).thenReturn(Primitive.TRIANGLES);
-		when(model.indexBuffer()).thenReturn(Optional.of(mock(Bufferable.class)));
-
-		// Check indexed draw command
+		final Bufferable data = mock(Bufferable.class);
+		final Model model = new Model(new Header(Primitive.TRIANGLES, 3, List.of(Point.LAYOUT)), data, data);
 		final DrawCommand draw = DrawCommand.of(model);
 		draw.execute(lib, cmd);
-		verify(lib).vkCmdDrawIndexed(cmd, 2, 1, 0, 0, 0);
+		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
 	}
 
 	@Nested
