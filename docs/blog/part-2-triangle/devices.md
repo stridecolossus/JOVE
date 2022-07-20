@@ -183,7 +183,7 @@ PhysicalDevice
 
 ### Application Window
 
-To select the physical device that supports presentation we first need a Vulkan surface, which is derived from a native window created using GLFW:
+To select the physical device that supports presentation a Vulkan surface is needed, which is dependant on a native window created using GLFW:
 
 ```java
 public class Window {
@@ -204,10 +204,10 @@ public record Descriptor(String title, Dimensions size, Set<Property> properties
 }
 ```
 
-The _properties_ is an enumeration of the various visual capabilities of a window:
+The visual properties of a window (_hints_ in GLFW parlance) are copied from the header and wrapped as an enumeration:
 
 ```java
-public enum Property {
+public enum Hint {
     RESIZABLE(0x00020003),
     DECORATED(0x00020005),
     AUTO_ICONIFY(0x00020006),
@@ -216,18 +216,11 @@ public enum Property {
 
     private final int hint;
 
-    private Property(int hint) {
+    private Hint(int hint) {
         this.hint = hint;
-    }
-
-    void apply(DesktopLibrary lib) {
-        int value = this == DISABLE_OPENGL ? 0 : 1;
-        lib.glfwWindowHint(hint, value);
     }
 }
 ```
-
-The enumeration values (window _hints_ in GLFW parlance) are copied from the header file.
 
 A hint is applied to a new window by the following helper:
 
@@ -269,7 +262,7 @@ Notes:
 
 * This is a bare-bones implementation sufficient for the triangle demo, however we will almost certainly need to refactor this code to support richer functionality, e.g. full-screen windows.
 
-* A convenience builder is also added for the window descriptor.
+* A convenience builder is also added to create and configure a window.
 
 * By default GLFW creates an OpenGL surface for a new window which is disabled using the `DISABLE_OPENGL` window hint.
 

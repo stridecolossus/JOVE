@@ -63,13 +63,13 @@ g group
 f 1/1 2/2 3/3
 ```
 
-We will implement the minimal functionality required for the chalet model with the following assumptions and constraints on the scope of the loader:
+The minimal functionality required for the chalet model will be implemented, with the following assumptions and constraints on the scope of the loader:
 
 * Face primitives are assumed to be triangles.
 
 * Only the above commands will be supported, others are silently ignored.
 
-* The OBJ format specifies material descriptors that specify texture properties (amongst other features) however we will hard-code the texture image in the demo.
+* The OBJ format specifies material descriptors that specify texture properties (amongst other features) however the texture image will be hard-coded in the demo.
 
 ### Vertex Data
 
@@ -111,17 +111,9 @@ class VertexComponentList<T> extends ArrayList<T> {
 }
 ```
 
-We also add trivial package-private mutators to add the various vertex components to the model:
-
-```java
-void position(Point v) {
-    positions.add(v);
-}
-```
-
 ### Model Loader
 
-We can now parse the OBJ file as follows:
+The process of loading and parsing the OBJ model is:
 
 1. Create an instance of the above transient model.
 
@@ -141,7 +133,7 @@ public class ObjectModelLoader {
 }
 ```
 
-The loader applies the above logic and delegates to a local helper method to parse a line:
+The loader applies the above logic and delegates to a local method to parse each line:
 
 ```java
 public Stream<Model> load(Reader r) throws IOException {
@@ -170,7 +162,7 @@ private boolean isComment(String line) {
 }
 ```
 
-In the parse method we first tokenize the line and then delegate to a _parser_ for the command:
+In the parse method each line is tokenized and then delegated to a _parser_ for the command:
 
 ```java
 private void parse(String line) {
@@ -203,7 +195,7 @@ public interface Parser {
 }
 ```
 
-An unsupported command is delegated to an error handler which is a simple line consumer:
+Unsupported commands are handed off to an error handler which by default silently consumes the line:
 
 ```java
 private Consumer<String> handler = line -> {};
@@ -211,9 +203,9 @@ private Consumer<String> handler = line -> {};
 
 Normally we would throw an exception for an unknown command but it seems more prudent to ignore by default (given the nature of OBJ files).
 
-We also provide the following:
+The following configuration options are also provided:
 
-* An `add` method to register a command parser.
+* An `add` method to register command parsers.
 
 * A setter to override the error handler as required.
 
@@ -229,7 +221,7 @@ We note that the process of parsing the various vertex components (v, vn, vt) is
 
 3. Add the resultant object to the model.
 
-We first implement an _array constructor_ on all the relevant vertex components, for example both points and vectors delegate to the following tuple constructor:
+First an _array constructor_ is implemented on the relevant vertex components, for example both points and vectors delegate to the following tuple constructor:
 
 ```java
 protected Tuple(float[] array) {
@@ -240,7 +232,7 @@ protected Tuple(float[] array) {
 }
 ```
 
-Next we abstract the common pattern by implementing a new generic parser:
+Next the common pattern is abstracted by implementing a new general parser for vertex components:
 
 ```java
 class VertexComponentParser<T extends Bufferable> implements Parser {
@@ -258,7 +250,7 @@ Where:
 
 * _consumer_ is a reference to a setter method of the model for that vertex component.
 
-To continue the example, we can specify the parser for a vertex position as follows:
+To continue the example, the parser for a vertex position is specified as follows:
 
 ```java
 new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position);
@@ -281,7 +273,7 @@ public void parse(String[] args, ObjectModel model) {
 }
 ```
 
-Finally we register built-in parsers for the supported vertex components:
+Finally built-in parsers are registered for the common vertex components:
 
 ```java
 public ObjectModelLoader() {
@@ -293,7 +285,7 @@ public ObjectModelLoader() {
 
 ### Face Parser
 
-The parser for the face command (f) iterates over the face vertices (which we assume to be a triangle):
+The parser for the face command iterates over the face vertices, which assumed to be a triangle:
 
 ```java
 public void parse(String[] args, ObjectModel model) {
@@ -335,7 +327,7 @@ if(parts.length == 3) {
 }
 ```
 
-Finally we delegate to a new mutator on the model to add a vertex given the three parsed indices:
+Finally the components are looked up by index, wrapped into a vertex instance, and added to the model:
 
 ```java
 public void vertex(int v, Integer vn, Integer vt) {
@@ -354,7 +346,7 @@ public void vertex(int v, Integer vn, Integer vt) {
     }
 
     // Construct vertex
-    Vertex vertex = new Vertex(components.toArray(Bufferable[]::new));
+    Vertex vertex = new Vertex(components);
     vertices.add(vertex);
 }
 ```
@@ -373,7 +365,7 @@ The OBJ builder constructs the JOVE model(s) from the transient data:
 public class ObjectModel {
     ...
     private final List<Model> models = new ArrayList<>();
-    private MutableModel current = new MutableModel();
+    private Model.Builder builder = new Model.Builder();
 
     public List<Model> build() {
         buildCurrentGroup();
@@ -387,20 +379,19 @@ The `buildCurrentGroup` method initialises the layout of the current model and i
 ```java
 private void buildCurrentGroup() {
     // Init model layout
-    List<Layout> layout = new ArrayList<>();
-    layout.add(Point.LAYOUT);
+    builder.layout(Point.LAYOUT);
     if(!normals.isEmpty()) {
-        layout.add(Vertex.NORMALS);
+        builder.layout(Vertex.NORMALS);
     }
     if(!coords.isEmpty()) {
-        layout.add(Coordinate2D.LAYOUT);
+        builder.layout(Coordinate2D.LAYOUT);
     }
 
     // Add model
-    models.add(current);
+    models.add(builder.build());
 
     // Start new model
-    current = new MutableModel();
+    builder = new Model.Builder();
 }
 ```
 
@@ -425,7 +416,7 @@ public void start() {
 
 Notes that some OBJ files start with a group declaration, so the `start` method ignores the case where no vertex data has been added to the current group.
 
-To complete the loader we register the remaining command parsers:
+To complete the loader the remaining command parsers are registered:
 
 ```java
 add("f", new FaceParser());
@@ -447,92 +438,94 @@ First an optional index buffer is added to the model definition:
 
 ```java
 public interface Model {
-    ...
-    
-    /**
-     * @return Whether this is an indexed model
-     */
-    boolean isIndexed();
-
     /**
      * @return Index buffer
      */
-    Bufferable index();
+    Optional<Bufferable> index();
 }
 ```
 
-In the default model implementation the index is a simple integer array:
+The index is added to the model builder:
 
 ```java
-public class MutableModel extends AbstractModel {
-    private final List<Vertex> vertices;
-    private final int[] index;
+public static class Builder {
+    private final List<Integer> index = new ArrayList<>();
 
-    @Override
-    public boolean isIndexed() {
-        return index.length() > 0;
+    public Builder add(int index) {
+        if((index < 0) || (index >= vertices.size())) throw new IllegalArgumentException(...);
+        this.index.add(index);
+        return this;
     }
 }
 ```
 
-The bufferable object for the index is generated as follows:
+The `build` method for the model is refactored to determine the draw count depending on whether a model is indexed:
 
 ```java
-@Override
-public Bufferable index() {
-    return new Bufferable() {
-        private final int len = index.length * Integer.BYTES;
+public Model build() {
+    // Determine whether indexed
+    int count;
+    Bufferable indices;
+    if(index.isEmpty()) {
+        count = vertices.size();
+        indices = null;
+    }
+    else {
+        count = index.size();
+        indices = index();
+    }
 
+    // Create model
+    ...
+}
+```
+
+The index buffer is generated as follows:
+
+```java
+private Bufferable index() {
+    return new Bufferable() {
         @Override
         public int length() {
-            return len;
+            return index.size() * Integer.BYTES;
         }
 
         @Override
         public void buffer(ByteBuffer bb) {
-            ...
+            if(bb.isDirect()) {
+                for(int n : index) {
+                    bb.putInt(n);
+                }
+            }
+            else {
+                int[] array = index.stream().mapToInt(Integer::intValue).toArray();
+                bb.asIntBuffer().put(array);
+            }
         }
     };
 }
 ```
 
-The target byte-buffer is transformed to an `IntBuffer` which is more convenient in this case:
+Duplicate vertices are handled in a new model builder sub-class:
 
 ```java
-public void buffer(ByteBuffer bb) {
-    IntBuffer buffer = bb.asIntBuffer();
-    if(buffer.isDirect()) {
-        for(int n : index) {
-            buffer.put(n);
-        }
-    }
-    else {
-        buffer.put(index);
-    }
-}
-```
-
-Duplicate vertices are handled in a new model sub-class:
-
-```java
-public class DuplicateVertexModel extends MutableModel {
+public class DuplicateModelBuilder extends Model.Builder {
     private final Map<Vertex, Integer> map = new HashMap<>();
-    private final List<Integer> index = new ArrayList<>();
 }
 ```
 
 The de-duplication process for a given vertex is:
 
-1. Lookup the index of the vertex (if present).
+1. Lookup the index of the vertex.
 
-2. If the vertex already exists in the model add its index to the index buffer.
+2. If the vertex already exists in the model add its index.
 
-3. Otherwise add the vertex __and__ its allocated index to the model and create a new index entry.
+3. Otherwise add the vertex __and__ its allocated index and create a new `map` entry.
 
 This is implemented in the overloaded `add` method as follows:
 
 ```java
-public DuplicateVertexModel add(Vertex v) {
+public DuplicateModelBuilder add(Vertex v) {
     Integer prev = map.get(v);
     if(prev == null) {
         // Register new vertex
@@ -551,13 +544,13 @@ public DuplicateVertexModel add(Vertex v) {
 }
 ```
 
-Note that the index `mapping` assumes the vertex class has a decently efficient hashing implementation.
+Note that this implementation assumes that the vertex class has a decently efficient hashing implementation.
 
-The OBJ loader is refactored to use the new indexed builder which reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
+The OBJ loader is refactored to use the new builder sub-class which reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
 
 ### Index Buffer
 
-An index buffer is similar to the existing implementation but requires a different `bind` method and additionally has a data type (for short or integer indices), therefore we introduce a new sub-class:
+An index buffer is similar to the existing implementation but requires a different `bind` method and additionally has a data type (for short or integer indices), therefore a new sub-class is introduced:
 
 ```java
 public class IndexBuffer extends VulkanBuffer {
@@ -570,14 +563,12 @@ public class IndexBuffer extends VulkanBuffer {
     }
 
     public Command bind(long offset) {
-        return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, 0, type);
+        return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
     }
 }
 ```
 
-Note that although the above class supports both short and integer index types the model implementation assumes 32-bit values, we defer support for both data types until a later chapter.
-
-The new vertex buffer implementation is also factored out from the base-class:
+The vertex buffer implementation is also factored out from the base-class:
 
 ```java
 public class VertexBuffer extends VulkanBuffer {
@@ -602,7 +593,7 @@ public class VertexBuffer extends VulkanBuffer {
 }
 ```
 
-Similarly for a buffer that is used as a descriptor set resource (e.g. a uniform buffer):
+Similarly for buffers that are used as descriptor set resources (such as uniform buffers):
 
 ```java
 public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
@@ -730,42 +721,14 @@ Finally we output the optional index buffer using the same helper.
 
 We _could_ have implemented the model loader using Java serialization, which might have resulted in simpler code but is generally quite nasty to debug, at least our custom format is relatively straight-forward to implement and follow.
 
-### Buffered Models
+### Model Loader
 
-Obviously when this data is loaded back we do not want to reuse the mutable model class since we only require the underlying buffers.  We therefore introduce a new _buffered model_ implementation that simply composes the VBO and index:
-
-```java
-public class BufferedModel extends AbstractModel {
-    private final Bufferable vertices;
-    private final Bufferable index;
-
-    ...
-
-    @Override
-    public boolean isIndexed() {
-        return index.length() > 0;
-    }
-
-    @Override
-    public Bufferable vertices() {
-        return vertices;
-    }
-
-    @Override
-    public Optional<Bufferable> index() {
-        return index;
-    }
-}
-```
-
-We add a new public method to the loader class to read a persisted model:
+Next a new public method is added to the loader class to read back a persisted model:
 
 ```java
 public BufferedModel load(DataInputStream in) throws IOException {
 }
 ```
-
-Here we use the inverse input stream to read Java primitives and byte-arrays.
 
 The loader first verifies that the file-format version is supported:
 
@@ -776,14 +739,14 @@ if(version > VERSION) {
 }
 ```
 
-Next we load the model header:
+Next the model header is loaded:
 
 ```java
 Primitive primitive = Primitive.valueOf(in.readUTF());
 int count = in.readInt();
 ```
 
-The process of loading and re-constructing the model layout is slightly more complex since we have to lookup the class of the _type_ by name:
+The process of loading and re-constructing the vertex layout is slightly more complex since the component _type_ must be looked up by name:
 
 ```java
 int num = in.readInt();
@@ -803,17 +766,17 @@ for(int n = 0; n < num; ++n) {
 }
 ```
 
-Next we load the vertex and index buffers:
+Next the vertex and index buffers are loaded:
 
 ```java
 Bufferable vertices = loadBuffer(in);
 Bufferable index = loadBuffer(in);
 ```
 
-And finally we create the new buffered model:
+And finally the model is instantiated:
 
 ```java
-return new BufferedModel(primitive, layout, count, vertices, index);
+return new BufferedModel(new Header(primitive, count, layout), vertices, index);
 ```
 
 The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additional check for an empty buffer):
@@ -822,9 +785,14 @@ The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additiona
 private static Bufferable loadBuffer(DataInputStream in) throws IOException {
     // Read buffer size
     int len = in.readInt();
+    
+    // Check for empty buffer
+    if(len == 0) {
+        return null;
+    }
 
     // Load bytes
-    final byte[] bytes = new byte[len];
+    byte[] bytes = new byte[len];
     in.readFully(bytes);
 
     // Convert to buffer

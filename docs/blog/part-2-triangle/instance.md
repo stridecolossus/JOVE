@@ -29,7 +29,7 @@ Creating the instance involves the following steps:
 
 5. Create the domain object encapsulating the handle of the new instance.
 
-For this we will require the following components:
+This will require the following components:
 
 * Implementation of a JNA library to create/destroy the instance.
 
@@ -37,7 +37,7 @@ For this we will require the following components:
 
 * The relevant code generated structures used to specify the requirements of the instance.
 
-As already mentioned in the [code generation](/JOVE/blog/part-1-intro/generation) chapter we will employ the GLFW library which provides services for managing windows, input devices, etc. that will be used in future chapters (the tutorial also uses GLFW).  Another compelling reason to use GLFW is that it integrates neatly with Vulkan, in particular providing a platform-independant mechanism for determining the required extensions for the instance.
+As already mentioned in the [code generation](/JOVE/blog/part-1-intro/generation) chapter the GLFW library will be used in future chapter for managing windows, input devices, etc. and the tutorial also uses GLFW.  However another compelling reason to use this library is that it integrates neatly with Vulkan, in particular providing a platform-independant mechanism for determining the required extensions for the instance.
 
 Therefore to create the instance for a given platform we also require:
 
@@ -45,7 +45,7 @@ Therefore to create the instance for a given platform we also require:
 
 * Additional domain objects for extensions and validation layers.
 
-We will also implement the diagnostics extension to support logging and error reporting which will become _very_ helpful in subsequent chapters.
+The diagnostics extension to support logging and error reporting will also be implemented which will become _very_ helpful in subsequent chapters.
 
 Finally we will address some issues around unit-testing Vulkan and JNA based code.
 
@@ -55,7 +55,7 @@ Finally we will address some issues around unit-testing Vulkan and JNA based cod
 
 ### Vulkan Library
 
-We start by defining the Vulkan library for management of the instance:
+We start by defining a JNA library for management of the Vulkan instance:
 
 ```java
 interface VulkanLibrary extends Library {
@@ -118,7 +118,7 @@ public class Instance {
     private final Pointer handle;
 
     private Instance(VulkanLibrary lib, Pointer handle) {
-        this.api = notNull(lib);
+        this.lib = notNull(lib);
         this.handle = notNull(handle);
     }
 
@@ -199,7 +199,7 @@ public interface VulkanLibrary {
 }
 ```
 
-Next we populate the descriptor for the instance, which only consists of the application details for the moment:
+Next the instance descriptor is populated, which consists only of the application details for the moment:
 
 ```java
 var info = new VkInstanceCreateInfo();
@@ -210,15 +210,15 @@ The relevant API method is invoked to create the instance:
 
 ```java
 PointerByReference handle = new PointerByReference();
-check(api.vkCreateInstance(info, null, handle));
+check(lib.vkCreateInstance(info, null, handle));
 ```
 
 Note that the `handle` to the new instance is returned _by-reference_ using the JNA `PointerByReference` helper type, corresponding to the native `VkInstance* pInstance` parameter.
 
-Finally the domain object is created wrapping the handle:
+Finally the domain object is created to wrap the handle and the library:
 
 ```java
-return new Instance(api, handle.getValue());
+return new Instance(lib, handle.getValue());
 ```
 
 The `check` method wraps a Vulkan API call and validates the result code:
@@ -265,7 +265,7 @@ An _extension_ is a platform-specific extension to the Vulkan API, e.g. swapchai
 
 A _validation layer_ is a hook or interceptor that adds additional functionality to the API (usually diagnostics) such as parameter validation, resource leak detection, etc.
 
-To support these we add two new properties to the builder:
+These new properties are added to the builder:
 
 ```java
 public static class Builder {
@@ -322,13 +322,13 @@ The purpose of the standard validation layer is discussed below.
 
 ### Required Extensions
 
-Generally platform-specific extensions are required to actually perform rendering, which usually comprises two extensions for a Vulkan rendering surface:
+Generally platform-specific extensions are required to actually perform rendering, which usually comprises two extensions:
 
 - the general surface: `VK_KHR_surface` 
 
 - and a platform specific implementation, e.g. `VK_KHR_xcb_surface` for Linux or `VK_KHR_win32_surface` for Windows.
 
-This is where a new package and JNA interface for the GLFW library is introduced:
+This is where a new package and JNA library for GLFW is introduced:
 
 ```java
 interface DesktopLibrary extends Library {
@@ -357,7 +357,7 @@ interface DesktopLibrary extends Library {
 }
 ```
 
-Next we create the _desktop_ service that abstracts over the underlying GLFW implementation:
+The _desktop_ service abstracts over the underlying GLFW implementation:
 
 ```java
 public class Desktop {
@@ -410,7 +410,7 @@ Notes:
 
 * The new package is called `desktop` rather than using an ugly GLFW acronym.
 
-* In reality the new GLFW framework was already in place before this stage of the tutorial, but we will continue to introduce the functionality as it becomes relevant as though it was developed at that time.
+* In reality the new GLFW framework was already in place before this stage of the tutorial, but we will continue to introduce functionality as it becomes relevant.
 
 Finally we can create our first demo application to instantiate a Vulkan instance for the local hardware:
 
@@ -437,7 +437,7 @@ public class InstanceDemo {
 }
 ```
 
-We also add a convenience method to the builder to add the array of extensions returned by GLFW.
+A convenience method is also added to the instance builder to add the array of extensions returned by GLFW.
 
 ---
 
@@ -447,7 +447,7 @@ We also add a convenience method to the builder to add the array of extensions r
 
 Vulkan implements the `STANDARD_VALIDATION` layer that provides an excellent error and diagnostics reporting mechanism, offering comprehensive logging as well as identifying common problems such as orphaned object handles, invalid parameters, performance warnings, etc.  This functionality is not mandatory but its safe to say it is _highly_ recommended during development, so we will address it now before we progress any further.
 
-However there is a complication - the reporting mechanism is not a core part of the API but is itself an extension.  The relevant function pointers must be looked up from the instance and the associated data structures must be determined from the Vulkan documentation.
+However there is a complication: the reporting mechanism is not a core part of the API but is itself an extension.  The relevant function pointers must be looked up from the instance and the associated data structures must be determined from the Vulkan documentation.
 
 Registering a diagnostics handler consists of the following steps:
 
@@ -467,7 +467,7 @@ Our design for the the process of reporting a message is as follows:
 
 3. Which is delegated to a consumer for the application (which by default dumps the message to the error console).
 
-To implement all the above we require the following components:
+The following new components are required:
 
 * A builder to specify the diagnostics reporting requirements for the application.
 
@@ -477,11 +477,11 @@ To implement all the above we require the following components:
 
 * A `Message` record that aggregates the diagnostics report.
 
-Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors at source.  Although this means we are often essentially replicating the validation layer the development overhead is usually worth the effort, it considerably easier to diagnose an exception stack-trace as opposed to an error message with limited context.
+Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors at source.  Although this means the code is often essentially replicating the validation layer the development overhead is usually worth the effort, it considerably easier to diagnose an exception stack-trace as opposed to an error message with limited context.
 
 ### Handler
 
-We start with the new domain object for a diagnostics handler with inner classes for messages and the callback:
+First a new domain object is implemented for a diagnostics handler with inner classes for messages and the callback:
 
 ```java
 public class Handler {
@@ -509,7 +509,7 @@ public record Message(
 )
 ```
 
-Vulkan reports diagnostics messages via the callback function which is implemented by the JNA `Callback` interface:
+Vulkan reports diagnostics messages via a callback function which is implemented by a JNA `Callback` interface:
 
 ```java
 static class MessageCallback implements Callback {
@@ -555,7 +555,7 @@ Message message = new Message(severityEnum, typesEnum, pCallbackData);
 consumer.accept(message);
 ```
 
-We also add a custom `toString` implementation to the `Message` record to build a human-readable representation of a diagnostics report:
+A custom `toString` implementation is added to the `Message` record to build a human-readable representation of a diagnostics report:
 
 ```java
 public String toString() {
@@ -676,7 +676,7 @@ public interface VulkanLibrary {
 }
 ```
 
-In the demo application we can now configure and attach a diagnostics handler:
+In the demo a diagnostics handler can now be configured and attached to the instance:
 
 ```java
 instance

@@ -154,20 +154,6 @@ Where:
 
 * and _signed_ specifies whether the data is signed.
 
-The number of bytes can be mapped from common Java types using the following helper:
-
-```java
-public static int bytes(Class<?> type) {
-    return switch(type.getSimpleName().toLowerCase()) {
-        case "float" -> Float.BYTES;
-        case "int", "integer" -> Integer.BYTES;
-        case "short" -> Short.BYTES;
-        case "byte" -> Byte.BYTES;
-        default -> throw new IllegalArgumentException(...);
-    };
-}
-```
-
 A convenience factory is added for a floating-point layout:
 
 ```java

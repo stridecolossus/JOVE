@@ -264,7 +264,7 @@ In the previous demos the clear value for the colour attachments was hard-coded,
 
 Introducing clear values should have been easy, however there was a nasty surprise when adding the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
 
-Thankfully JNA supports unions out-of-the-box.  The generated code was manually modified to use the `setType` method of the JNA union class to 'select' the relevant properties.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
+Thankfully JNA supports unions out-of-the-box, the generated code was manually modified as unions.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
 
 A clear value is defined by the following abstraction:
 
@@ -290,6 +290,8 @@ record ColourClearValue(Colour col) implements ClearValue {
     }
 }
 ```
+
+The `setType` method of a JNA union is used to 'select' the relevant properties.  
 
 And similarly a second implementation for the depth-stencil attachment:
 
@@ -500,7 +502,7 @@ public View depth(Swapchain swapchain, AllocationService allocator) {
 
 We also make some modifications to the configuration of the swapchain to select various properties rather than hard-coding.
 
-First the following helper is added to the surface class to select an image format, falling back to a format if the requested configuration is not available:
+First the following helper is added to the surface class to select an image format, falling back to a default format if the requested configuration is not available:
 
 ```java
 public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space, VkSurfaceFormatKHR def) {
@@ -568,7 +570,7 @@ public Swapchain swapchain(Surface surface, ApplicationConfiguration cfg) {
 }
 ```
 
-Finally the surface property accessors can be cached to API calls:
+Finally the surface property accessors can be cached to minimise API calls:
 
 ```java
 public Surface cached() {

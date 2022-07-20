@@ -32,7 +32,7 @@ References:
 
 ### Definition
 
-We start with an abstraction for device memory:
+We start with the following abstraction for device memory:
 
 ```java
 public interface DeviceMemory extends TransientNativeObject {
@@ -93,7 +93,7 @@ public interface Region {
 
 ### Default Implementation
 
-We create a new domain object for the default implementation:
+A new domain object is created for the default implementation:
 
 ```java
 public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
@@ -116,7 +116,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 }
 ```
 
-And an inner class for the implementation of the mapped region:
+With an inner class for a mapped region of the memory:
 
 ```java
 public class DefaultDeviceMemory ... {
@@ -190,7 +190,7 @@ public synchronized void unmap() {
 
 The memory types supported by the hardware are specified by the `VkPhysicalDeviceMemoryProperties` descriptor.
 
-We represent each memory type by a new domain record:
+Each memory type is represented by a new domain class:
 
 ```java
 public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties) {
@@ -226,19 +226,14 @@ public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
 }
 ```
 
-Finally we implement a _memory properties_ record:
+Finally the following new type specifies the usage properties for a memory request:
 
 ```java
 public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryProperty> required, Set<VkMemoryProperty> optimal) {
-    public static class Builder {
-        ...
-    }
 }
 ```
 
-This new type specifies the intent of the memory and the _optimal_ and _required_ properties for the request (used in memory selection below).
-
-Note that the record is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
+Note that this type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
 
 ### Memory Selection
 
@@ -328,7 +323,7 @@ public static MemorySelector create(LogicalDevice dev) {
 
 ### Memory Allocation
 
-Next we define the _allocator_ that is responsible for allocating memory of a given type:
+Next we introduce an _allocator_ which is responsible for allocating memory of a given type:
 
 ```java
 @FunctionalInterface
@@ -351,7 +346,7 @@ public interface Allocator {
 }
 ```
 
-We provide a factory to create a default implementation that simply allocates a new memory block on each request:
+The default implementation simply allocates a new memory block on each request:
 
 ```java
 static Allocator allocator(DeviceContext dev) {
@@ -413,17 +408,17 @@ Our requirements are:
 
 - A pool grows as required.
 
-- Memory can be pre-allocated to suit the application (to reduce the number of allocations and avoid fragmentation).
+- Memory can be pre-allocated to reduce the number of allocations and avoid fragmentation.
 
 - Memory allocated by the pool can be destroyed by the application and potentially re-allocated.
 
 - The allocator and pool(s) should provide useful statistics to the application, e.g. number of allocations, free memory, etc.
 
-To support these requirements we will introduce a second device memory implementation for a _block_ of memory managed by the pool.  Device memory is then allocated from a block with available free memory or new blocks are created on demand to grow the pool.
+To support these requirements a second device memory implementation is introduced for a _block_ of memory managed by the pool.  Device memory is then allocated from a block with available free memory or new blocks are created on demand to grow the pool.
 
 ### Memory Blocks
 
-A memory block is a wrapper for an area of memory and maintains the list of allocations from the block:
+A memory block is a wrapper for an area of memory and maintains the list of allocations from that block:
 
 ```java
 class Block {
@@ -691,7 +686,7 @@ Note that although the pool supports pre-allocation of blocks and reallocation, 
 
 ### Allocator
 
-We next create a new allocator implementation to manage a group of memory pools:
+Next a second allocator implementation is created to manage a group of memory pools:
 
 ```java
 public class PoolAllocator implements Allocator {
@@ -747,7 +742,7 @@ public synchronized void destroy() {
 }
 ```
 
-Finally we provide accessors for the various pool properties:
+Finally accessors are provided for the various pool properties:
 
 ```java
 public int count() {
@@ -769,13 +764,13 @@ public long size() {
 
 ### Allocation Policy
 
-We next introduce an _allocation policy_ which modifies the size of a memory request to support the following requirements:
+Next an _allocation policy_ is introduced to modify memory requests to support the following requirements:
 
 * Configuration of the growth policy for memory pools.
 
 * Memory pagination (see below).
 
-An allocation policy is defined by the following function:
+Allocation policies are defined by the following function:
 
 ```java
 @FunctionalInterface
@@ -795,7 +790,7 @@ public interface AllocationPolicy {
 }
 ```
 
-We provide various implementations, in particular the following factory creates a policy to grow a memory pool:
+Various convenience implementation are provided, in particular the following factory creates a policy to grow a memory pool:
 
 ```java
 static AllocationPolicy expand(float scale) {
@@ -820,7 +815,7 @@ default AllocationPolicy then(AllocationPolicy policy) {
 }
 ```
 
-An allocation policy is added to the pool allocator which is applied before delegating to the memory pool:
+The pool allocator is refactored to apply the allocation policy before delegating the memory pool:
 
 ```java
 public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
@@ -842,7 +837,7 @@ The `VkPhysicalDeviceLimits` descriptor contains two properties that can be used
 
 * `maxMemoryAllocationCount` is the maximum number of individual memory allocations that can be supported by the hardware.
 
-We first implement a custom pagination policy which quantises the memory request to a given page size:
+A custom pagination policy quantises the memory request to a given page size:
 
 ```java
 public class PageAllocationPolicy implements AllocationPolicy {
@@ -856,6 +851,8 @@ public class PageAllocationPolicy implements AllocationPolicy {
     }
 }
 ```
+
+TODO - this is very out of date
 
 Next we implement a convenience factory to create and configure a pool allocator based on the hardware:
 
@@ -926,7 +923,7 @@ Obviously this is not an ideal solution since the developer needs to be aware th
 
 ### Allocation Request Routing
 
-We also anticipate that an application will require different allocation strategies depending on the use-cases for device memory.
+It is anticipated that an application will also require different allocation strategies depending on the use-cases for device memory.
 
 For example:
 

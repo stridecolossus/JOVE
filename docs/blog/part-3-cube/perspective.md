@@ -487,33 +487,22 @@ Note that the translation component of the view transform was reverted back to t
 
 ### Model
 
-Next the _model_ class is introduced composing a vertex buffer and the properties of the model:
+The cube will be represented by a _model_ which composes vertex data and the properties of the model:
 
 ```java
-public interface Model {
+public class Model {
     /**
-     * @return Drawing primitive
+     * Descriptor for this model.
      */
-    Primitive primitive();
+    public record Header(Primitive primitive, int count, List<Layout> layout) {
+    }
 
-    /**
-     * @return Draw count
-     */
-    int count();
-
-    /**
-     * @return Vertex layout
-     */
-    List<Layout> layout();
-
-    /**
-     * @return Vertex buffer
-     */
-    Bufferable vertexBuffer();
+    private final Header header;
+    private final Bufferable vertices;
 }
 ```
 
-Where _layout_ specifies the structure of each vertex in the model.
+Where _count_ is the draw count for the model and _layout_ specifies the structure of each vertex in the model.
 
 Rather than fiddling the code-generated `VkPrimitiveTopology` enumeration a wrapper is implemented for the drawing primitive which can then provide additional helpers:
 
@@ -538,42 +527,38 @@ public enum Primitive {
 }
 ```
 
-The model is constructed by the following mutable implementation:
+A model is constructed by a companion builder:
 
 ```java
-public class MutableModel implements Model {
+public static class Builder {
     private Primitive primitive = Primitive.TRIANGLE_STRIP;
     private final List<Layout> layout = new ArrayList<>();
     private final List<Vertex> vertices = new ArrayList<>();
-
-    @Override
-    public int count() {
-        return vertices.size();
-    }
-
-    public MutableModel add(Vertex v) {
-        vertices.add(notNull(v));
-        return this;
+    
+    ...
+    
+    public Model build() {    
+        Header header = new Header(primitive, vertices.size(), layout);
+        Bufferable data = vertices();
+        return new Model(header, data);
     }
 }
 ```
 
-The interleaved vertex buffer is generated from the mutable model in the same manner as the hard-coded quad vertices:
+The interleaved vertex buffer is generated from the mutable model in the same manner as the hard-coded quad previously:
 
 ```java
 public Bufferable vertices() {
     return new Bufferable() {
-        private final int len = vertices.size() * Layout.stride(layout);
-
         @Override
         public int length() {
-            return len;
+            return Layout.stride(layout) * vertices.size();
         }
 
         @Override
-        public void buffer(ByteBuffer buffer) {
-            for(Vertex v : vertices) {
-                v.buffer(buffer);
+        public void buffer(ByteBuffer bb) {
+            for(Bufferable b : vertices) {
+                b.buffer(bb);
             }
         }
     };
@@ -582,14 +567,14 @@ public Bufferable vertices() {
 
 ### Cube Builder
 
-The new mutable model implementation is then used to construct a cube model:
+The new model implementation is then used to construct a cube:
 
 ```java
 public class CubeBuilder {
     private float size = MathsUtil.HALF;
     
-    public MutableModel build() {
-        MutableModel model = new MutableModel()
+    public Model build() {
+        var model = new Model.Builder()
             .primitive(Primitive.TRIANGLES)
             .layout(Point.LAYOUT)
             .layout(Coordinate2D.LAYOUT);
@@ -718,10 +703,10 @@ The vertex input and assembly stages are now specified by the cube model in the 
 return new Pipeline.Builder()
     ...
     .input()
-        .add(model.layout())
+        .add(model.header().layout())
         .build()
     .assembly()
-        .topology(model.primitive())
+        .topology(model.header().primitive())
         .build()
     .build(dev);
 ```
@@ -729,7 +714,7 @@ return new Pipeline.Builder()
 Finally the draw command is updated in the render sequence:
 
 ```java
-int count = model.count();
+int count = model.header().count();
 Command draw = (api, handle) -> api.vkCmdDraw(handle, count, 1, 0, 0);
 ```
 

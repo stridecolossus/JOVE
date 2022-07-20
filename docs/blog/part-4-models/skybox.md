@@ -15,11 +15,11 @@ title: Skybox
 
 ## Overview
 
-In this chapter we will add a _skybox_ to the demo application which is implemented as a cube centred on the camera rendered with a cubemap texture.
+In this chapter we will add a _skybox_ to the demo implemented as a cube centred on the camera.
 
-We will then enhance the image framework to support multiple layers and MIP levels and implement a new and more efficient image loader.
+The image framework will also be enhanced to support multiple layers and MIP levels with a new and more efficient image loader.
 
-Finally we will also implement functionality to support optional device features.
+Finally we also introduce new functionality to support optional device features.
 
 ---
 
@@ -89,7 +89,7 @@ public RasterizerStageBuilder() {
 }
 ```
 
-Next we create a cube model for the skybox:
+Next a cube model is created for the skybox:
 
 ```java
 @Bean
@@ -99,8 +99,9 @@ public static Model skybox() {
 ```
 
 Note that we only use the vertex positions in the skybox shader (see below).
+TODO
 
-Finally a cubemap sampler is created which also clamps texture coordinates:
+Finally a cubemap sampler is created which clamps the texture coordinates:
 
 ```java
 @Bean
@@ -113,7 +114,7 @@ public Sampler cubeSampler() {
 
 ### Shaders
 
-In the vertex shader for the skybox we first split the matrices which were previously multiplied together by the application:
+In the vertex shader for the skybox the various matrices that were previously multiplied together by the application are separated:
 
 ```glsl
 #version 450
@@ -136,7 +137,7 @@ void main() {
 }
 ```
 
-Note that we use the build-in `mat3` operator to extract the rotation component of the view matrix.
+The built in `mat3` operator is used to extract the rotation component of the view matrix.
 
 The projection transformation sets the last two components to be the same value such that the resultant vertex lies on the far clipping plane, i.e. the skybox is drawn _behind_ the rest of the geometry.
 
@@ -145,12 +146,6 @@ gl_Position = (projection * vec4(pos, 0.0)).xyzz;
 ```
 
 Finally the texture coordinate is simply set to the incoming vertex position (hence the reason for not including texture coordinates in the cube model).
-
-```glsl
-outCoords = inPosition;
-```
-
-> We could have used a similar technique in the rotating cube demo.
 
 The full vertex shader is as follows:
 
@@ -178,7 +173,7 @@ Notes:
 
 * The `model` matrix is not used in the skybox shader.
 
-* The existing vertex shader for the chalet model is refactored accordingly (both pipelines share the same layout).
+* The existing vertex shader for the chalet model is refactored accordingly (with both pipelines sharing the same layout).
 
 The fragment shader is the same as the previous demo except the sampler has a `samplerCube` declaration:
 
@@ -196,9 +191,9 @@ void main() {
 
 ### Loader
 
-Initially we will load separate images for each 'face' of the cubemap texture.  The code roughly follows the same pattern as the chalet texture with the following differences:
+Initially we will load a separate image for each face of the cubemap texture.
 
-The texture is configured with six array layers (for each face of the cube):
+First a texture is configured with an array layer for each face of the cube:
 
 ```java
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
@@ -210,7 +205,7 @@ ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .build();
 ```
 
-We add a new `cubemap` method to the image builder:
+The image for the texture is configured as a cubemap:
 
 ```java
 Image texture = new Image.Builder()
@@ -220,7 +215,7 @@ Image texture = new Image.Builder()
     .build(dev, allocator);
 ```
 
-Configuring the texture as a cubemap is specified as a creation flag:
+Which uses a new method on the builder:
 
 ```java
 public Builder cubemap() {
@@ -228,7 +223,7 @@ public Builder cubemap() {
 }
 ```
 
-We next iterate over an array of filenames to load each image:
+Next the image for each face is loaded:
 
 ```java
 var loader = new ResourceLoaderAdapter<>(src, new NativeImageLoader());
@@ -239,7 +234,7 @@ for(int n = 0; n < 6; ++n) {
 }
 ```
 
-And perform a separate copy operation:
+Which we perform a separate copy operation for each image:
 
 ```java
 new ImageCopyCommand.Builder()
@@ -251,7 +246,7 @@ new ImageCopyCommand.Builder()
     .submitAndWait(graphics);
 ```
 
-Where the sub-resource specifies the array layer for each face of the cubemap texture:
+Where the sub-resource specifies the array layer for each face of the cubemap:
 
 ```java
 SubResource res = new SubResource.Builder(descriptor)
@@ -259,7 +254,7 @@ SubResource res = new SubResource.Builder(descriptor)
     .build();
 ```
 
-Finally we create a cubemap view for the image:
+Finally a view is created for the cubemap texture:
 
 ```java
 SubResource subresource = new SubResource.Builder(descriptor)
@@ -306,21 +301,22 @@ TODO
 
 The process of loading the cubemap texture is quite slow since the native image loader has considerable overhead and each cubemap texture is loaded and copied separately.
 
-Ideally we would prefer a file format that provides:
+Ideally we would prefer a solution that encompasses:
 
-* Images that more closely match the target Vulkan texture with minimal (or ideally zero) transformation.
+* Image data that more closely matches the target Vulkan format with minimal (or ideally zero) transformation.
 
-* Compound images to allow the use of more efficient bulk transfer operations.
+* Compound images allowing more efficient bulk transfer operations.
 
 * Multiple MIP levels.
 
 * And eventually compressed image formats.
 
 To satisfy all these requirements we will use the [KTX2](https://www.khronos.org/ktx/) image format which is pretty much the standard for Vulkan texture images.
+Texture images, cubemaps, MIP pyramids, etc. can then be prepared offline minimising the work that needs to be performed at runtime.
 
-Texture images, cubemaps, MIP levels, etc. can then be prepared offline minimising the work that needs to be performed at runtime.
+The following changes are required:
 
-In addition to a KTX loader we will also need:
+* A new loader for a KTX image.
 
 * Modifications to the image class to support multiple layers and MIP levels.
 
@@ -349,11 +345,11 @@ Where:
 
 * The level _offset_ indexes into the image data array.
 
-We also introduce a skeleton implementation and refactor the native image loader accordingly with a single layer and MIP level.
+A skeleton implementation is introduced and the existing native image loader is refactored accordingly with a single layer and MIP level.
 
 ### Loose Ends
 
-A KTX image is a binary format with _little endian_ byte ordering whereas Java is big-endian by default.  We _could_ load the entire file into an NIO byte buffer with little endian ordering, which has a similar API to the data stream, but we would prefer to stick with I/O streams for consistency with the existing loaders.  Additionally we anticipate that we will need to support other little endian file formats in the future.
+A KTX image is a binary format with _little endian_ byte ordering whereas Java is big-endian by default.  The entire file _could_ be loaded into an NIO byte buffer with little endian ordering (which has a similar API to the data stream) but we would prefer to stick with I/O streams for consistency with the existing loaders.  Additionally we anticipate that we will need to support other little endian file formats in the future.
 
 The matter is further complicated when one considers the weird implementation of the `DataInputStream` class where __all__ methods are declared `final` (though not the class itself oddly enough) so it is essentially closed for extension.  This class implements `DataInput` but there is no way to provide a custom implementation of this interface to the stream, so the abstraction is completely pointless.  Therefore we are forced to completely re-implement the whole data stream class rather than building on what is already available - great design!
 
@@ -383,7 +379,7 @@ public byte readByte() throws IOException {
 }
 ```
 
-We can now provide overridden implementations for the cases that we _need_ to handle which boils down to three methods (out of fifteen) to support little endian data types, for example:
+Overridden implementations are now added for the methods that need to support little endian data types, for example:
 
 ```java
 public class LittleEndianDataInputStream extends InputStream implements DataInput {
@@ -404,7 +400,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 
 ### KTX Loader
 
-We can now use the new data stream in the implementation for the KTX loader:
+The new stream class is used in the implementation for the KTX loader:
 
 ```java
 public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
@@ -442,11 +438,11 @@ Notes:
 
 * For the moment we will assume image data is uncompressed and gloss over this section of the loader.
 
-* The KTX file format has a large number of byte offsets/indices into the file itself which we largely ignore.
+* The KTX file format has a large number of byte offsets/indices into the file itself which are largely ignored.
 
-* We constrain the loader to only support the latest KTX2 version of the file format which is designed around Vulkan (the SDK provides tools to transform older files if necessary).
+* The loader is constrained to support the latest KTX2 version of the file format which is designed around Vulkan (the SDK provides tools to transform older files if necessary).
 
-The header token is a fixed length byte array which we use to validate the file format:
+The header token is a fixed length byte array which is first used to validate the file format:
 
 ```java
 // Load header
@@ -488,7 +484,7 @@ Notes:
 
 * There is some overlap in terminology here: A Vulkan image can have multiple _array layers_ which can be used for a cubemap image, the KTX equivalent is the `faceCount`.  However the KTX format also supports multiple _layers_ which would map to one the array types defined in the `VkImageViewType` enumeration.  We try to use the terms appropriate to the loader and the modified image class in each case.  Note that Vulkan does not support an array of 3D images.
 
-Next we load the MIP level index:
+Next the MIP level index is parsed:
 
 ```java
 private static List<Level> loadIndex(DataInput in, int count) throws IOException {
@@ -503,7 +499,7 @@ private static List<Level> loadIndex(DataInput in, int count) throws IOException
 }
 ```
 
-The _offset_ field is an offset into the file itself, we truncate this value to the start of the image data:
+The _offset_ field is an offset into the file itself, which is truncated to the start of the image data:
 
 ```java
 int offset = index[index.length - 1].offset();
@@ -517,7 +513,7 @@ Note that the index is in MIP level order (starting at zero for the largest imag
 
 ### Data Format Descriptor
 
-The next section is the DFD (Data Format Descriptor) which specifies the structure of the image components.  We could simply skip this section and hard-code the corresponding fields in the image, but actually parsing and using this data makes the loader more robust and also exercises our understanding of the file format.
+The next section is the DFD (Data Format Descriptor) which specifies the structure of the image components.  This section could be simply skipped and the corresponding fields hard-coded in the image, but actually parsing and using this data makes the loader more robust and also exercises our understanding of the file format.
 
 The DFD starts with a header block (again comments added to illustrate the values for the chalet image):
 
@@ -534,7 +530,7 @@ byte flags = in.readByte();               // KHR_DF_FLAG_ALPHA_STRAIGHT (0) or K
 
 The enumeration names are taken from the KTX documentation.
 
-The header is followed by the texel dimensions and byte planes of the image which we ignore (for the moment anyway):
+The header is followed by the texel dimensions and byte planes of the image which are ignored (for the moment anyway):
 
 ```java
 // Skip texel dimensions
@@ -546,7 +542,7 @@ in.readFully(array);                            // 0-3
 in.readFully(array);                            // 4-7
 ```
 
-Finally we load the _samples_ section which specifies the structure of each component of the image pixels:
+Finally the _samples_ section specifies the structure of each component of the image pixels:
 
 ```java
 int num = (blockSize - 24) /  16;
@@ -564,7 +560,7 @@ for(int n = 0; n < num; ++n) {
 }
 ```
 
-Where the `channel` helper method maps the channel byte to the corresponding character:
+Where the `channel` helper method maps a channel byte to the corresponding character:
 
 ```java
 private static char channel(byte channel) {
@@ -584,7 +580,7 @@ The resultant array of _components_ is used to populate the relevant field in th
 
 A KTX image can also contain an arbitrary number of _key-value_ pairs that provide supplementary information about the image.
 
-Again we could simple skip this section to position the stream at the start of the image data, but parsing the key-values verifies our understanding of the file format.
+Again this could be skipped to position the stream at the start of the image data, but parsing the key-values verifies our understanding of the file format.
 
 Each key-value is essentially a byte array:
 
@@ -623,7 +619,7 @@ private static int padding(int len) {
 }
 ```
 
-A slight annoyance is that this section does not simply provide the number of key-values, instead we have to infer this from the size of the data itself:
+A slight annoyance is that this section does not simply provide the number of key-values, instead the loop bound has to be inferred from the size of the data itself:
 
 ```java
 // Calculate position
@@ -652,7 +648,7 @@ Notes:
 
 * A cubemap image is ordered by MIP level and __then__ face.
 
-Finally we create the resultant image domain object:
+Finally the resultant image domain object is instantiated:
 
 ```java
 Layout layout = Layout.bytes(components.length());
@@ -661,7 +657,7 @@ return new DefaultImageData(extents, components, layout, format, levels, faceCou
 
 ### Copy Region
 
-The previous implementation invoked a copy command for _each_ image.  To support the cubemap image we will extend the copy command to support _copy regions_ such that each face of the image can be transferred to the corresponding array layer in the cubemap texture in one operation.
+The previous implementation invoked a copy command for _each_ image.  To support the cubemap image the copy command is extended to support _copy regions_ such that each face of the image can be transferred to the corresponding array layer in one operation.
 
 First a copy region is defined as a simple transient record with a companion builder:
 
@@ -700,7 +696,7 @@ public static class Builder {
 }
 ```
 
-We also add a convenience variant to add a copy region for an entire image:
+A convenience variant is added to specify a single copy region for an entire image:
 
 ```java
 public Builder region(ImageData image) {
@@ -712,7 +708,7 @@ public Builder region(ImageData image) {
 }
 ```
 
-Within the loop we calculate the extents of each mipmap level:
+Within the loop the extents of each mipmap level are calculated:
 
 ```java
 Extents extents = descriptor.extents().mip(level);
@@ -736,33 +732,31 @@ private static int mip(int value, int level) {
 }
 ```
 
-We can then generate a copy region for each layer (or cubemap face) in that MIP level:
+A copy region can then be generated for each face in the MIP level:
 
 ```java
 int count = descriptor.layerCount();
 for(int layer = 0; layer < count; ++layer) {
-    // Build sub-resource
-    SubResource res = new SubResource.Builder(descriptor)
-        .baseArrayLayer(layer)
-        .mipLevel(level)
-        .build();
-
-    // Determine layer offset within this level
-    int offset = levels[level].offset(layer, count);
-
-    // Create copy region
-    CopyRegion region = new CopyRegion.Builder()
-        .offset(offset)
-        .subresource(res)
-        .extents(extents)
-        .build();
-
-    // Add region
-    region(region);
+    ...
 }
 ```
 
-The offset of each layer (or face) within a MIP level is calculated by a new convenience helper method on the `Level` class:
+First the sub-resource for each copy region is configured for each face and MIP level:
+
+```java
+SubResource res = new SubResource.Builder(descriptor)
+    .baseArrayLayer(layer)
+    .mipLevel(level)
+    .build();
+```
+
+Next the offset into the image data is calculated:
+
+```java
+int offset = levels[level].offset(layer, count);
+```
+
+Which delegates to a new helper on the `Level` class:
 
 ```java
 public int offset(int layer, int count) {
@@ -770,11 +764,21 @@ public int offset(int layer, int count) {
 }
 ```
 
+Finally the copy region for is constructed and added to the command:
+
+```java
+CopyRegion region = new CopyRegion.Builder()
+    .offset(offset)
+    .subresource(res)
+    .extents(extents)
+    .build();
+```
+
 ### Integration
 
 Although we should now have all the functionality required to support multiple MIP levels and cubemap images we start with the texture for the chalet model with a single level.
 
-To create the KTX file we run the following command (downloaded from the SDK):
+The following command (downloaded from the SDK) is used to the created the KTX file:
 
 ```
 toktx --t2 --target_type RGBA chalet.ktx2 chalet.jpg
@@ -793,7 +797,7 @@ var loader = new ResourceLoaderAdapter<>(data, new VulkanImageLoader());
 ImageData image = loader.load("chalet.ktx2");
 ```
 
-We also add a new helper to determine the image format using the hint if available or delegating to the previous implementation using the image layout:
+A new helper is added to determine the image format using the hint if available or delegating to the previous implementation using the image layout:
 
 ```java
 public class FormatBuilder {
@@ -809,7 +813,7 @@ public class FormatBuilder {
 }
 ```
 
-Finally we modify the copy command using the new helper method to construct the regions:
+Finally the copy command uses the new helper method to construct the regions:
 
 ```java
 // Create staging buffer
@@ -827,7 +831,7 @@ new ImageCopyCommand.Builder()
 
 A crude timing comparison shows that the KTX image loader is almost an order of magnitude faster than using the previous native image.  However note that the KTX file is currently uncompressed and is considerably larger than the JPEG equivalent.  In most cases an application would generally prefer to compromise on larger file sizes to reduce loading times.
 
-Next we run the following command to generate a MIP pyramid for the image (which takes a few seconds):
+Next the following command generates a MIP pyramid for the image (which takes a few seconds):
 
 ```
 toktx --t2 --target_type RGBA --genmipmap chalet.ktx2 chalet.jpg
@@ -837,7 +841,7 @@ The quality of the texture should now be considerably improved when zooming out.
 
 Notes:
 
-* The loading time for the whole mipmap image is approximately a 50% overhead (which makes sense).
+* The loading time for the whole mipmap image is approximately a 100% overhead (which makes sense).
 
 * The default configuration of the texture sampler should automatically support the mipmap image.
 

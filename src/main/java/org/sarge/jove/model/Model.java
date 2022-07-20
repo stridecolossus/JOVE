@@ -192,7 +192,7 @@ public class Model {
 			}
 			else {
 				count = index.size();
-				indices = index(count);
+				indices = index();
 			}
 
 			// Create model
@@ -223,13 +223,13 @@ public class Model {
 		/**
 		 * Constructs the index buffer.
 		 */
-		private Bufferable index(int count) {
+		private Bufferable index() {
 			return new Bufferable() {
-				private final boolean integral = Header.isIntegerIndex(count);
+				private final boolean integral = Header.isIntegerIndex(index.size());
 
 				@Override
 				public int length() {
-					return count * (integral ? Integer.BYTES: Short.BYTES);
+					return index.size() * (integral ? Integer.BYTES: Short.BYTES);
 				}
 
 				@Override

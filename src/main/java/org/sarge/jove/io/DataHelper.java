@@ -2,13 +2,10 @@ package org.sarge.jove.io;
 
 import static org.sarge.lib.util.Check.oneOrMore;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.util.BufferHelper;
 
 /**
@@ -21,18 +18,6 @@ import org.sarge.jove.util.BufferHelper;
 @SuppressWarnings("static-method")
 public class DataHelper {
 	private static final int VERSION = 1;
-
-	private static final Bufferable EMPTY = new Bufferable() {
-		@Override
-		public int length() {
-			return 0;
-		}
-
-		@Override
-		public void buffer(ByteBuffer bb) {
-			throw new UnsupportedOperationException();
-		}
-	};
 
 	private final int ver;
 
@@ -76,7 +61,7 @@ public class DataHelper {
 	/**
 	 * Loads a bufferable object.
 	 * @param in Input stream
-	 * @return New buffer
+	 * @return New buffer or {@code null} if empty
 	 * @throws IOException if the buffer cannot be loaded
 	 */
 	public Bufferable buffer(DataInput in) throws IOException {
@@ -85,7 +70,7 @@ public class DataHelper {
 
 		// Ignore if empty buffer
 		if(len == 0) {
-			return EMPTY;
+			return null;
 		}
 
 		// Load bytes
