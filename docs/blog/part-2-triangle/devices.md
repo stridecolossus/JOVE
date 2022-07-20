@@ -197,14 +197,14 @@ public class Window {
 }
 ```
 
-The _window descriptor_ wraps up the details of the window in a simple record:
+The _window descriptor_ wraps up the properties of the window in a simple record:
 
 ```java
-public record Descriptor(String title, Dimensions size, Set<Property> properties) {
+public record Descriptor(String title, Dimensions size, Set<Hint> hints) {
 }
 ```
 
-The visual properties of a window (_hints_ in GLFW parlance) are copied from the header and wrapped as an enumeration:
+The visual properties of a window (_hints_ in GLFW parlance) are copied from the header and wrapped in the following enumeration:
 
 ```java
 public enum Hint {
@@ -583,7 +583,23 @@ Finally the builder creates the domain object for the new device:
 return new LogicalDevice(handle.getValue(), parent, map);
 ```
 
-The new API is implemented as an inner member of the logical device class:
+In the demo we can now create the logical device and retrieve the work queues:
+
+```java
+// Create device
+LogicalDevice dev = new LogicalDevice.Builder(gpu)
+    .extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
+    .layer(ValidationLayer.STANDARD_VALIDATION)
+    .queue(graphicsFamily)
+    .queue(presentationFamily)
+    .build();
+    
+// Lookup work queues
+Queue graphicsQueue = dev.queue(graphicsFamily);
+Queue presentationQueue = dev.queue(presentationFamily);
+```
+
+The new API is implemented as an inner class of the logical device:
 
 ```java
 interface Library {
@@ -601,29 +617,13 @@ The various API interfaces are then integrated into the main Vulkan library:
 public interface VulkanLibrary extends Library, DeviceLibrary, ...
 ```
 
-Where convenient we also implement intermediate aggregations, e.g. for the various device libraries:
+Where convenient intermediate interfaces aggregate multiple JNA libraries, e.g. for the various device libraries:
 
 ```java
 interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, LogicalDevice.Library
 ```
 
-From now on we take this approach of aggregated API libraries implemented as inner classes of the companion domain objects.  This co-locates each API with its associated class and reduces the number of super-interfaces for the root Vulkan library.
-
-In the demo we can now create the logical device and retrieve the work queues:
-
-```java
-// Create device
-LogicalDevice dev = new LogicalDevice.Builder(gpu)
-    .extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
-    .layer(ValidationLayer.STANDARD_VALIDATION)
-    .queue(graphicsFamily)
-    .queue(presentationFamily)
-    .build();
-    
-// Lookup work queues
-Queue graphicsQueue = dev.queue(graphicsFamily);
-Queue presentationQueue = dev.queue(presentationFamily);
-```
+From now we take this approach of implementing API libraries as inner classes of the companion domain object, co-locating each API with its associated class and reducing the number of super-interfaces for the root Vulkan library.
 
 ---
 

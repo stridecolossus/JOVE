@@ -70,7 +70,7 @@ public interface IntegerEnumeration {
 		return values
 				.stream()
 				.mapToInt(IntegerEnumeration::value)
-				.sum();
+				.reduce(0, (a, b) -> a | b);
 	}
 
 	/**
@@ -113,7 +113,7 @@ public interface IntegerEnumeration {
 			final ReverseMapping<?> mapping = ReverseMapping.get(type);
 			final int value = (int) nativeValue;
 			if(value == 0) {
-				return mapping.zero;
+				return mapping.def;
 			}
 			else {
 				return mapping.map(value);
@@ -140,7 +140,7 @@ public interface IntegerEnumeration {
 		}
 
 		private final Map<Integer, E> map;
-		private final E zero;
+		private final E def;
 
 		/**
 		 * Constructor.
@@ -149,7 +149,7 @@ public interface IntegerEnumeration {
 		private ReverseMapping(Class<E> clazz) {
 			final E[] array = clazz.getEnumConstants();
 			this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
-			this.zero = map.getOrDefault(0, array[0]);
+			this.def = map.getOrDefault(0, array[0]);
 		}
 
 		/**
@@ -161,11 +161,9 @@ public interface IntegerEnumeration {
 		 */
 		public E map(int value) {
 			final E constant = map.get(value);
-			if(constant == null) throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, zero.getClass().getSimpleName()));
+			if(constant == null) throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass().getSimpleName()));
 			return constant;
 		}
-
-
 
 		/**
 		 * Converts a bit-field to an ordered set of enumeration constants.

@@ -72,7 +72,7 @@ With a hand-crafted implementation of the JNA library the bulk of what would bec
 
 * Defining a Java interface to represent the native API was relatively simple with JNA providing logical mappings for method parameters.
 
-* Although GLFW does not require much in the way of structured data we found using JNA structures to be simple and straight-forward.
+* Although structured data is not used much in GLFW using JNA structures was simple and straight-forward.
 
 * JNA also supports callbacks specified as Java interfaces.
 
@@ -86,7 +86,7 @@ In particular:
 
 * Where we did come across problems or confusing situations there was plenty of documentation, examples and tutorials.
 
-At this point we paused to take stock because of course there was the elephant in the room - Vulkan is a complex API with a large number of enumerations and structures.  Some of these components are also absolutely huge such as the `VkStructureType` enumeration or the `VkPhysicalDeviceLimits` structure.  Hand-crafting even a fraction of the API could be done but it would be very tedious and highly error-prone.
+At this point we paused to take stock because of course there was the elephant in the room: Vulkan is a complex API with a large number of enumerations and structures.  Some of these components are also absolutely huge such as the `VkStructureType` enumeration or the `VkPhysicalDeviceLimits` structure.  Hand-crafting even a fraction of the API could be done but it would be very tedious and highly error-prone.
 
 We needed a code generator.
 
@@ -96,29 +96,27 @@ We needed a code generator.
 
 ### Overview
 
-Having decided that JNA was the way forward we needed some mechanism to actually generate the API.
+Having decided that JNA was the way forward some mechanism was needed to actually generate the API.
 
-We first established some requirements and constraints:
+First some requirements and constraints were established for the scope of the generator:
 
-1. The generator will be considered complete once we have generated an acceptable proportion of the API rather than attempting to cover every possible use-case.  i.e. avoid diminishing returns on the time and effort to cover every edge case.
+1. The process will be considered complete once an acceptable proportion of the API has been generated, rather than attempting to cover every possible use-case.  i.e. avoid diminishing returns on the time and effort to cover every edge case.
 
 2. That said the generated code will be treated as read-only, we will attempt to avoid fiddling the generated source code where possible.
 
-3. The generator will be invoked manually rather than being a part of an automated build process (which makes things considerably simpler).
+3. The generator will be invoked manually rather than being a part of an automated build process, making things considerably simpler.
 
 4. For future versions of the Vulkan API we assume Khronos will take the same approach as OpenGL, whereby new iterations of the API are extensions and additions rather than replacements for existing components, i.e. each release can be code generated separately.
 
 5. Any tools and libraries should follow the general goal of being well-documented and supported.
 
-We first tried the [JNAeator](https://github.com/nativelibs4java/jnaerator) tool that generates JNA bindings from a native library, which seemed perfect for our requirements.  Unfortunately this tool produced a seemingly random package structure with the generated code looking more like the nasty SWIG bindings than the nice, neat code we had hand-crafted.  It also seemed quite old and inactive, and the fact that it used yet another library called _BridJ_ that we couldn't find a site for was not encouraging.
-
-We next looked for a more general solution expecting (naively) that there would be some library or tool out there that could be used to parse a C/C++ header to enumerate the structures, enumerations and API methods.
+We first tried the [JNAeator](https://github.com/nativelibs4java/jnaerator) tool that generates JNA bindings from a native library, which seemed perfect for our requirements.  Unfortunately this tool produced a seemingly random package structure with the generated code looking more like the nasty SWIG bindings than the nice, neat code hand-crafted above.  It also seemed quite old and inactive, and the fact that it used yet another library called _BridJ_ that for which there was no current site was not encouraging.
 
 ### CDT
 
-After some research we largely drew a blank - the only option seemed to be an obscure Eclipse component called CDT used for code assist.  It wasn't an actual library as such (there is no maven or project page for example), we had to include a couple of JAR files directly in our project.
+Further research largely drew a blank, the only option seemed to be an obscure Eclipse component called CDT used for code assist in Eclipse.  This is not an actual library as such, there is no Maven or project page for example, we had to include a couple of JAR files directly into the generator project.
 
-CDT builds an AST (Abstract Source Tree) from a C/C++ source file, which is a node-tree representing the various elements of the code.  In the main class for the code generator we first load the header file:
+CDT builds an AST (Abstract Source Tree) from a C/C++ source or header file, which is a node-tree representing the various elements of the code.  In the main class for the code generator header file is first loaded:
 
 ```java
 FileContent content = FileContent.createForExternalFileLocation(args[0]);
@@ -150,7 +148,7 @@ We did eventually manage to use CDT to extract the information required for the 
 
 * CDT is not a public library so the documentation was virtually non-existent.
 
-* Not being a compiler expert we didn't understand most of the terminology, attempting to extract the relevant information from the AST was a process of blind searching across mysteriously named fields and types.
+* Most of the terminology and logic means little to someone who is not a compiler expert, attempting to extract the relevant information from the AST was a process of blind searching across mysteriously named fields and types.
 
 * The AST also seems to require a lot of casting between different types of node that are all very similar but not quite the same.
 
@@ -177,7 +175,7 @@ public class HeaderVisitor extends ASTVisitor {
 }
 ```
 
-Note that we are required to set a __public__ class member to select the AST nodes to be visited - WTF!
+Note that a __public__ class member has to be set in addition to overloading the relevant visitor method(s) to select the AST nodes to be visited - WTF!
 
 ### Enumerations
 
@@ -305,7 +303,7 @@ The leading numeric is replaced by the corresponding token, for example the `VkI
 
 ### Templates
 
-To generate the source code we use [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for what we were doing, in particular providing support for collections.
+To generate the source code we selected [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for this scenario, in particular providing support for collections.
 
 The _template processor_ is a wrapper for the Velocity engine:
 
@@ -359,7 +357,7 @@ map.put("name", StringUtils.removeEnd(name, "Bits"));
 map.put("values", transformed);
 ```
 
-Finally we invoke the template processor:
+And finally the template processor is invoked with the arguments:
 
 ```java
 String source = proc.generate("enumeration.template.txt", map);
@@ -401,9 +399,9 @@ Notes:
 
 * The various tokens prefixed by the hash character are Velocity directives whose purpose should be fairly self-evident.
 
-* We explain the purpose of the `IntegerEnumeration` in the next chapter.
+* The purpose of the `IntegerEnumeration` is explained in the next chapter.
 
-The line that actually generates a enumeration constant might be slightly confusing at first glance due to white-space constraints.  The following fragment expands the `if..else..end` directive to illustrate the logic, which adds a comma between each constant and a semi-colon after the final value:
+The line that actually generates a enumeration constant might be slightly confusing at first glance due to white-space constraints.  The following fragment expands the `if..else..end` directive to illustrate the logic, adding a comma between each constant and a semi-colon after the final value:
 
 ```java
 #if($foreach.hasNext)
@@ -463,7 +461,7 @@ Note that although the constants are represented as _long_ values in the AST the
 
 ### Structures
 
-For structures we first define a simple POJO for a each field:
+A simple POJO is defined for each field of a structure:
 
 ```java
 public class StructureField {
@@ -579,7 +577,7 @@ List<String> imports = fields
     .collect(toList());
 ```
 
-All top-level Vulkan structures have an `sType` field that identifies the type of the structure to the native layer.  Since the values in `VkStructureType` are highly logical and regular we can generate the enumeration constant from the name of the structure and inject it into the template:
+All top-level Vulkan structures have an `sType` field that identifies the type of the structure to the native layer.  Since the values in `VkStructureType` are highly logical and regular the name of the enumeration constant can be generated from the structure and injected into the template:
 
 ```java
 boolean top = fields.stream().map(StructureField::getName).anyMatch("sType"::equals);
@@ -591,7 +589,7 @@ if(top) {
 }
 ```
 
-For example the type of the `VkApplicationInfo` structure is set to `APPLICATION_INFO`.  This saves us the effort of having to manually populate this field when we use the structure - a nice bonus.
+For example the type of the `VkApplicationInfo` structure is set to `APPLICATION_INFO`.  This saves the effort of having to manually populate this field when using the structure, a nice little bonus.
 
 The template for a Vulkan structure is slightly more complicated than the enumerations:
 
@@ -770,16 +768,16 @@ Note that __all__ the generated components reside in a single package in a separ
 
 In the end we decided not to code generate the API methods for a variety of reasons:
 
-1. Although we could re-use the type mapping for structures we anticipate that we _will_ want to manually fiddle with the signatures of the API methods, so we might as well craft them by hand.
+1. Although the structure type mapping logic could be reused it is anticipated that we _will_ want to manually fiddle with the signatures of the API methods, so they might as well be hand-crafted.
 
-2. The number of API methods is relatively small in comparison to the number of enumerations and structures.
+2. Also the number of API methods is relatively small in comparison to the number of enumerations and structures.
 
-3. We would also like to group related API methods, both for ease of finding a method and to break up the overall library.  Obviously the header file has no notion of packaging so we would have to do this grouping manually anyway.
+3. Additionally we would also like to group related API methods, both for ease of finding a method and to break up the overall library.  Obviously the header file has no notion of packaging so this grouping would have to be done manually anyway.
 
 4. Finally we also intend to document each method as we introduce it to JOVE, partially for future reference, but also to better understand the API.
 
-The code generator ran in a few milliseconds so we could iteratively modify the code until we achieved an acceptable level of results.  As it turned out there were only two structures that did not automatically compile, since these were for an extension we had never heard of we simply deleted them.
+The generator ran in a matter of milliseconds so the code could be iteratively modified until an acceptable level of results was achieved.  As it turned out there were only two structures that did not automatically compile, since these were for an extension we had never heard they were simply deleted.
 
 At the time of writing (for Vulkan version 1.1.101.0) the generator produced 390 structures and 142 enumerations.  The API consisted of 91 methods (excluding extensions) so the decision to implement methods manually was not particularly onerous.
 
-In retrospect we spent far too much time messing around with CDT, and it certainly does not adhere to our goal of using well documented third-party tools.  We probably ought to have tried to implement a custom parser (our requirements are relatively simple) and this may be something to consider for future versions of the Vulkan API.
+In retrospect far too much time messing around with CDT, and it certainly does not adhere to the goal of using well documented third-party tools.  We probably ought to have tried to implement a custom header parser (our requirements are relatively simple) and this may be something to consider for future versions of the Vulkan API.

@@ -71,7 +71,7 @@ static <E extends IntegerEnumeration> int reduce(Collection<E> values) {
     return values
         .stream()
         .mapToInt(IntegerEnumeration::value)
-        .sum();
+        .reduce(0, (a, b) -> a | b);
 }
 ```
 
@@ -206,31 +206,31 @@ Finally the type mapping logic for structure fields in the code generator is mod
 
 ## Default Values
 
-The final complication when mapping from a native enumeration value is that a default (i.e. integer zero) value may not be a valid enumeration constant.
+The final complication when mapping from a native enumeration value is that a `null` or unspecified value (i.e. zero) may not be a valid enumeration constant.
 
-A _zero_ value is introduced to the reverse mapping which is initialised in the constructor:
+A default value is introduced to the reverse mapping which is initialised in the constructor:
 
 ```java
 final class ReverseMapping<E extends IntegerEnumeration> {
     ...
-    private final E zero;
+    private final E def;
 
     private ReverseMapping(Class<E> clazz) {
         this.map = ...
-        this.zero = map.getOrDefault(0, array[0]);
+        this.def = map.getOrDefault(0, array[0]);
     }
 ```
 
-This `zero` value is mapped from the enumeration constant with an integer zero value if present or is arbitrarily set to the first constant.
+The default value is mapped from the enumeration constant with integer zero if present or is arbitrarily set to the first constant.
 
-In the type converter we can now safely handle invalid or unspecified native values:
+In the type converter invalid or unspecified native values can now be safely handled:
 
 ```java
 public Object fromNative(Object nativeValue, FromNativeContext context) {
     final ReverseMapping<?> mapping = ReverseMapping.get(type);
     final int value = (int) nativeValue;
-    if(value == 0) {
-        return mapping.zero;
+    if((value == null) || (value == 0)) {
+        return mapping.def;
     }
     else {
         return mapping.map(value);
