@@ -54,18 +54,11 @@ public class Model {
 		}
 
 		/**
-		 * @return Whether this model uses an {@code int} or {@code short} index
-		 */
-		public boolean isIntegerIndex() {
-			return isIntegerIndex(count);
-		}
-
-		/**
-		 * Determines the index type.
+		 * Determines where the given draw count requires an {@code int} or {@code short} index.
 		 * @param count Draw count
-		 * @return Whether this model has an integer index
+		 * @return Index type
 		 */
-		private static boolean isIntegerIndex(int count) {
+		public static boolean isIntegerIndex(int count) {
 			return count >= SHORT;
 		}
 	}

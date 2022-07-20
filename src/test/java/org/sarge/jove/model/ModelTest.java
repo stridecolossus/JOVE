@@ -9,7 +9,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
-import org.sarge.jove.util.Mask;
 
 class ModelTest {
 	private Model model;
@@ -31,7 +30,6 @@ class ModelTest {
 			assertEquals(Primitive.TRIANGLE_STRIP, header.primitive());
 			assertEquals(3, header.count());
 			assertEquals(List.of(Point.LAYOUT), header.layout());
-			assertEquals(false, header.isIntegerIndex());
 		}
 
 		@DisplayName("The draw count must logically match the drawing primitive")
@@ -46,10 +44,13 @@ class ModelTest {
 			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.LINES, 2, List.of(Point.LAYOUT, Model.NORMALS)));
 		}
 
+		@DisplayName("The index buffer for a model can be stored as integer or short values")
 		@Test
-		void integers() {
-			header = new Header(Primitive.TRIANGLE_STRIP, (int) Mask.unsignedMaximum(Short.SIZE), List.of(Point.LAYOUT));
-			assertEquals(true, header.isIntegerIndex());
+		void isIntegerIndex() {
+			final int max = 65535;
+			assertEquals(false, Header.isIntegerIndex(0));
+			assertEquals(false, Header.isIntegerIndex(max - 1));
+			assertEquals(true, Header.isIntegerIndex(max));
 		}
 	}
 

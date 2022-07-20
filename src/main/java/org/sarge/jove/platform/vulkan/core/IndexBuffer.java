@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 /**
  * An <i>index buffer</i> binds a drawing index to the pipeline.
@@ -62,13 +61,13 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @throws IllegalStateException if the index is larger than the hardware limit
 	 */
 	private void validateLimit() {
-		// Ignore short index
+		// A short index is always supported
 		if(type == VkIndexType.UINT16) {
 			return;
 		}
 
 		// Lookup maximum index length
-		final long max = this.device().provider().property(new VulkanProperty.Key("maxDrawIndexedIndexValue")).get();
+		final long max = this.device().provider().property("maxDrawIndexedIndexValue").get();
 
 		// Ignore maximum unsigned integer value
 		if(max == -1) {
@@ -78,7 +77,7 @@ public class IndexBuffer extends VulkanBuffer {
 		// Validate size of this index
 		final long count = this.length() / Integer.BYTES;
 		if(count > max) {
-			throw new IllegalStateException(String.format("Index too large: count=%d max=%s index=%s", count, max, this));
+			throw new IllegalStateException(String.format("Index too large: count=%d max=%d index=%s", count, max, this));
 		}
 		// TODO - mod by offset?
 	}

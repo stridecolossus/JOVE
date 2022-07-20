@@ -1,11 +1,8 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -35,24 +32,24 @@ import org.sarge.lib.util.Check;
  * <p>
  * Usage:
  * <pre>
- *  // Define property
- *  Key key = new Key.Builder()
- *      .name("maxSamplerAnisotropy")
- *      .feature("samplerAnisotropy")
- *      .build();
+ * // Define property
+ * Key key = new Key.Builder()
+ *     .name("maxSamplerAnisotropy")
+ *     .feature("samplerAnisotropy")
+ *     .build();
  *
- *  // Query property
- *  DeviceContext dev = ...
- *  VulkanProperty prop = dev.provider().property(key);
+ * // Query property
+ * DeviceContext dev = ...
+ * VulkanProperty prop = dev.provider().property(key);
  *
- *  // Retrieve the property value
- *  float max = prop.get();
+ * // Retrieve the property value
+ * float max = prop.get();
  *
- *  // Validate the feature is enabled
- *  prop.validate();
+ * // Validate the feature is enabled
+ * prop.validate();
  *
- *  // Validate an argument
- *  prop.validate(8f);
+ * // Validate an argument
+ * prop.validate(8f);
  * </pre>
  * <p>
  * @author Sarge
@@ -65,7 +62,7 @@ public class VulkanProperty {
 	/**
 	 * Constructor.
 	 * @param key			Property key
-	 * @param enabled		Whether this property is optional and enabled
+	 * @param enabled		Whether this property is enabled
 	 * @param value			Property value
 	 */
 	VulkanProperty(Key key, boolean enabled, Object value) {
@@ -75,85 +72,68 @@ public class VulkanProperty {
 	}
 
 	/**
-	 * @return Whether this property is optional and enabled
+	 * @return Whether this property is enabled
 	 */
 	public boolean isEnabled() {
 		return enabled;
 	}
 
 	/**
-	 * Validates that this property is enabled.
-	 * @param dev Logical device
-	 * @throws IllegalStateException if this property is not enabled
-	 */
-	public void validate() {
-		if(!enabled) throw new IllegalStateException("Property is not enabled: " + key);
-	}
-
-	/**
 	 * Validates that this property is enabled and supports the given value.
-	 * @param dev 		Logical device
-	 * @param arg		Property value
+	 * @param arg Property value
 	 * @throws IllegalStateException if this property is not enabled
-	 * @throws IllegalArgumentException if {@link #value} is not supported by the hardware
+	 * @throws IllegalArgumentException if the given value is not supported by the hardware
 	 * @throws UnsupportedOperationException if the property cannot be validated
+	 * @see #validate()
 	 */
 	public void validate(float arg) {
-		validate();
+		if(!enabled) throw new IllegalStateException("Property is not enabled: " + key);
 
-		if(value instanceof Number num) {
-			if((arg < key.min) || (arg > num.floatValue())) {
-				error(arg);
-			}
-		}
-		else
-		if(value instanceof float[] range) {
-			validateRange(arg, range);
-		}
-		else
-		if(value instanceof int[] range) {
-			if(range.length != 2) {
-				throw new UnsupportedOperationException("Invalid integer range: " + this);
-			}
-			if((arg < range[0]) || (arg > range[1])) {
-				error(arg);
-			}
-		}
-		else
-		if(value instanceof VulkanBoolean bool) {
-			throw new UnsupportedOperationException("Boolean property cannot be validated: " + this);
-		}
-		else {
-			throw new UnsupportedOperationException("Unsupported device limit: " + this);
-		}
-	}
+		switch(value) {
+			case Number num -> validate(arg, key.min, num);
 
-	/**
-	 * Validates a floating-point range.
-	 */
-	private void validateRange(float arg, float[] range) {
-		if(range.length == 2) {
-			// Validate simple min/max range
-			if((arg < range[0]) || (arg > range[1])) {
-				error(arg);
-			}
-		}
-		else {
-			// Validate quantised range
-			for(float f : range) {
-				if(MathsUtil.isEqual(f, arg)) {
-					return;
+			case float[] range -> {
+				if(range.length == 2) {
+					// Validate simple min/max range
+					validate(arg, range[0], range[1]);
+				}
+				else {
+					// Validate quantised range
+					validate(arg, range);
 				}
 			}
-			error(arg);
+
+			case int[] range -> {
+				if(range.length != 2) throw new UnsupportedOperationException("Invalid integer range: " + this);
+				validate(arg, range[0], range[1]);
+			}
+
+			case VulkanBoolean bool -> throw new UnsupportedOperationException("Boolean property cannot be validated: " + this);
+
+			default -> throw new UnsupportedOperationException("Unsupported device limit: " + this);
 		}
 	}
 
 	/**
-	 * @throws IllegalArgumentException
+	 * Validates a ranged property.
 	 */
-	private void error(float arg) {
-		throw new IllegalArgumentException(String.format("Property out-of-range: value=%f property=%s", arg, this));
+	private <T extends Number> void validate(T arg, T min, T max) {
+		final float f = arg.floatValue();
+		if((f < min.floatValue()) || (f > max.floatValue())) {
+			throw new IllegalArgumentException(String.format("Property out-of-range: value=%s property=%s", arg, this));
+		}
+	}
+
+	/**
+	 * Validates a quantised property.
+	 */
+	private void validate(float arg, float[] values) {
+		for(float f : values) {
+			if(MathsUtil.isEqual(f, arg)) {
+				return;
+			}
+		}
+		throw new IllegalArgumentException(String.format("Quantised property out-of-range: value=%f property=%s", arg, this));
 	}
 
 	/**

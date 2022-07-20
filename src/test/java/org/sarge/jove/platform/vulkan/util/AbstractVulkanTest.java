@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -65,23 +63,9 @@ public abstract class AbstractVulkanTest {
 	 * @param enabled		Whether the optional feature is enabled
 	 */
 	protected void property(VulkanProperty.Key key, Number value, boolean enabled) {
-		// Create property
-		final VulkanProperty prop = mock(VulkanProperty.class);
-		when(dev.provider().property(key)).thenReturn(prop);
-		when(prop.get()).thenReturn(value);
-
-		// Mock disabled features
-		if(!enabled) {
-			doThrow(IllegalStateException.class).when(prop).validate();
-		}
-
-		// Mock argument validation
-		final Answer<Void> answer = inv -> {
-			if(!enabled) throw new IllegalStateException("Mocked property disabled");
-			final float arg = inv.getArgument(0);
-			if(arg > value.floatValue()) throw new IllegalArgumentException("Mocked property out-of-range");
-			return null;
-		};
-		doAnswer(answer).when(prop).validate(anyFloat());
+		final var prop = new VulkanProperty(key, enabled, value);
+		final var provider = dev.provider();
+		when(provider.property(key)).thenReturn(prop);
+		when(provider.property(key.name())).thenReturn(prop);
 	}
 }

@@ -1,22 +1,14 @@
 package org.sarge.jove.io;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.AdditionalAnswers;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.*;
 
 public class DataHelperTest {
 	private DataHelper helper;
@@ -64,10 +56,7 @@ public class DataHelperTest {
 	@Test
 	void loadBufferableEmpty() throws IOException {
 		when(in.readInt()).thenReturn(0);
-		final Bufferable empty = helper.buffer(in);
-		assertNotNull(empty);
-		assertEquals(0, empty.length());
-		assertThrows(UnsupportedOperationException.class, () -> empty.buffer(null));
+		assertEquals(null, helper.buffer(in));
 	}
 
 	@Test

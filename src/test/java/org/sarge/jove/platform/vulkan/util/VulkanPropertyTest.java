@@ -1,18 +1,12 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty.Key;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty.Provider;
+import org.sarge.jove.platform.vulkan.util.VulkanProperty.*;
 
 public class VulkanPropertyTest {
 	private static final String NAME = "maxSamplerAnisotropy";
@@ -31,9 +25,14 @@ public class VulkanPropertyTest {
 		assertEquals(Float.valueOf(4), prop.get());
 	}
 
+	@SuppressWarnings("static-method")
+	@Test
+	void disabled() {
+		assertEquals(false, new VulkanProperty(new Key(NAME), false, 1f).isEnabled());
+	}
+
 	@Test
 	void validate() {
-		prop.validate();
 		prop.validate(1);
 	}
 
@@ -41,12 +40,6 @@ public class VulkanPropertyTest {
 	void validateInvalidValue() {
 		assertThrows(IllegalArgumentException.class, () -> prop.validate(5));
 		assertThrows(IllegalArgumentException.class, () -> prop.validate(-1));
-	}
-
-	@Test
-	void validateNotEnabled() {
-		prop = new VulkanProperty(new Key(NAME), false, 1f);
-		assertThrows(IllegalStateException.class, () -> prop.validate());
 	}
 
 	@Test
@@ -112,11 +105,6 @@ public class VulkanPropertyTest {
 		}
 
 		@Test
-		void simple() {
-			provider.property(new Key(NAME)).validate();
-		}
-
-		@Test
 		void range() {
 			// Create floating-point range
 			final VulkanProperty range = provider.property(new Key("lineWidthRange", 1, "lineWidthGranularity", null));
@@ -125,7 +113,6 @@ public class VulkanPropertyTest {
 			assertArrayEquals(new float[]{1f, 1.5f, 2f}, range.get());
 
 			// Validate
-			range.validate();
 			range.validate(1f);
 			range.validate(1.5f);
 			range.validate(2f);

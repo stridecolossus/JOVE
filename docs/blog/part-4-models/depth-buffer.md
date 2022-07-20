@@ -62,7 +62,7 @@ public VertexBuffer vbo(Model model) {
 @Bean
 public IndexBuffer index(Model model) {
     VulkanBuffer buffer = buffer(model.index().get(), VkBufferUsage.INDEX_BUFFER);
-    return new IndexBuffer(buffer);
+    return new IndexBuffer(buffer, VkIndexType.UINT32);
 }
 ```
 

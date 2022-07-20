@@ -274,6 +274,59 @@ private IntStream buildIndex(IndexFactory factory) {
 }
 ```
 
+Since the index buffer for the grid will often be relatively small this is a good opportunity to implement the _short_ index buffer:
+
+First the following helper is added to the model class to determine the type of index based on the draw count:
+
+```java
+public record Header(...) {
+    /**
+     * Maximum length of a {@code short} index buffer.
+     */
+    private static final long SHORT = Mask.unsignedMaximum(Short.SIZE);
+
+    /**
+     * Determines where the given draw count requires an {@code int} or {@code short} index.
+     * @param count Draw count
+     * @return Index type
+     */
+    public static boolean isIntegerIndex(int count) {
+        return count >= SHORT;
+    }
+}
+```
+
+The length of the index buffer is then calculated based on the component type of the index:
+
+```java
+private Bufferable index() {
+    return new Bufferable() {
+        private final boolean integral = Header.isIntegerIndex(index.size());
+
+        public int length() {
+            return index.size() * (integral ? Integer.BYTES: Short.BYTES);
+        }
+    };
+}
+```
+
+Finally an additional clause is added to the method that copies the index to the hardware:
+
+```java
+public void buffer(ByteBuffer bb) {
+    if(integral) {
+        ...
+    }
+    else {
+        for(int n : index) {
+            bb.putShort((short) n);
+        }
+    }
+}
+```
+
+Note the `IndexBuffer` class itself is unchanged, although the next chapter will introduce validation of the size of the index against the device limits.
+
 ### Height Maps
 
 To generate height data for the terrain grid we will load a _height map_ image.  Although the height of a given vertex can easily be sampled from the image there are several cases where an application will need to programatically 'sample' the height-map, e.g. to generate surface normals.
