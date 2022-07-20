@@ -17,7 +17,7 @@ title: Introduction
 
 ## Overview
 
-In this first section we set the scene for the project:
+This first section sets the scene for the project:
 
 * What are we trying to achieve?
 
@@ -29,17 +29,17 @@ In this first section we set the scene for the project:
 
 * How do we bind to the native Vulkan libraries?
 
-If the reader has no interest in the _why_ and wants to get straight to the _how_ then this introductory section can easily be skipped.
+If the reader has no interest in the _why_ and wants to get straight to the _how_ then this introductory section can be skipped.
 
-The remaining chapters in this section are concerned with binding to the Vulkan native library, again the reader can skip to the [start](/JOVE/blog/part-2-triangle/instance) of the blog proper with the bindings assumed to be in place.
+Inevitably there is usually some _thrashing_ at the start of a new project, especially one employing new and relatively unknown technologies.  In particular there will be a major change of direction in terms of binding to the native Vulkan library, which is the subject of the following chapters in this section.  Again the reader can skip to the [start](/JOVE/blog/part-2-triangle/instance) of the blog proper with the bindings assumed to be in place.
 
 ---
 
 ## Background
 
-For several years as a personal project we had developed a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive the previous project and start afresh with a Vulkan implementation named __JOVE__.
+For several years as a personal project we had been developing a Java-based OpenGL library and suite of demo applications.  With the advent of Vulkan we decided to archive the previous project and start afresh with a Vulkan implementation named __JOVE__.
 
-This is obviously not a small amount of effort, our rationale for such an undertaking is:
+Our rationale for this project is:
 
 * A general interest in 3D graphics and mathematics.
 
@@ -100,8 +100,6 @@ Given the above we can make the following design decisions:
 * Unless explicitly stated otherwise __all__ mutable components can be considered __non__ thread safe.
 
 * Data transfer operations are implemented using NIO buffers since this is the most convenient 'primitive' supported by the JNA library.
-
-Inevitably there will usually be some _thrashing_ at the start of a new project, especially one employing new and relatively unknown technologies, in particular there will be a major change of direction when binding to the native library as we shall see in the next chapter.
 
 ---
 

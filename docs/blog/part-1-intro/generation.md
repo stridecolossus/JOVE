@@ -20,25 +20,27 @@ title: Code Generating the Vulkan API
 
 The previous project was implemented using [LWJGL](https://www.lwjgl.org/) which provides Java bindings for the native OpenGL library (amongst others).  LWJGL had recently implemented a Vulkan port and we expected to be able to use the new bindings to get to grips with the Vulkan API.
 
-However things did not work out as we had hoped.  Not at all.
+However things did not work out as hoped.  Not at all.
 
-Working through the [tutorial](https://vulkan-tutorial.com/) we found we were spending more time trying to understand LWJGL rather than learning how to use Vulkan, with each step forward leading to another road-block or mystifying code.  There were several reasons for this:
+Progressing through the [tutorial](https://vulkan-tutorial.com/) we realised more time was being spent trying to understand LWJGL than learning how to use Vulkan, with each step forward leading to some mystifying situation or another road-block.
 
-* The bindings provided by LWJGL are code-generated from the native library, which obviously means that the resultant classes will never be as clean as a hand-crafted solution.  However it appears that most (if not all) of the internals are exposed as __public__ members completely obfuscating the purpose and usage of the bindings.
+There were a variety of reasons for this:
 
-* This is exacerbated by the JavaDoc which essentially just replicates the signature of each method without explaining _what_ it does (or why there are multiple versions of each method).
+* The Vulkan API contains a huge number of enumerations __all__ of which are bundled into a __single__ class as old school integer constants resulting in a class with several __thousand__ members.  Irrespective of the likelihood of accidentally using the wrong enumeration and the type safety issues, finding an enumeration constant is virtually impossible.
 
-* In particular __all__ the enumerations and API methods are bundled into a __single__ class.  Again this makes finding a given constant or method very time-consuming, and there are the obvious type safety issues for enumeration arguments and structure fields.
+* The API also makes heavy use of structures to configure Vulkan components which are implemented by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members and there are also a slew of allocation methods implemented on __every__ structure, again making finding the right method becomes an annoyance, and this is repeated for every field in every structure.
 
-* The paucity of decent examples and tutorials did not help - those that we found all seemed to do the same thing in slightly different ways without any explanation of _why_ a certain approach was used.  In addition most examples were basically C code masquerading as Java, with little or no in-code documentation or modularity, essentially a wall-o-code that was virtually impossible to follow and practically useless as an exemplar.
+* This is not helped by the JavaDoc which essentially just replicates the signature of each method without explaining _what_ it does or why there are multiple versions of each method.
+
+* The paucity of decent examples and tutorials only exacerbated matters: those we found were basically just C code masquerading as Java with little or no documentation or modularity, essentially a wall-o-code that was very difficult to navigate and practically worthless as an exemplar.
 
 A couple of examples:
 
-Pretty much the first task for a Vulkan application is to create the _instance_ which involves populating a couple of structures and invoking the relevant API method.  The `VkApplicationInfo` structure specifies some properties of the application and the required API version.  The native structure has six fields, whereas the LWJGL implementation has over 70 class members - finding the appropriate setter is very difficult, the code assist popup in our IDE has scroll-bars!  And this is one of the simplest structures.
+The first task for a Vulkan application is to create the _instance_ which involves populating a couple of structures and invoking the relevant API method.  The `VkApplicationInfo` structure specifies some properties of the application and the required API version.  The native structure has six fields whereas the LWJGL implementation has over 70 class members, the code assist popup in our IDE has scroll-bars, and this is one of the simplest structures.
 
-One of the fields in this structure is the application name which in the tutorial is a simple string.  In the LWJGL implementation we had to instantiate a memory stack, invoke a static helper method to allocate an NIO buffer for the string, and pass _that_ to the structure.  Presumably this is for off-heap performance and thread safety reasons, but there is no explanation of _why_ we needed to do this, whether there were alternatives, was the application responsible for releasing it later, etc.  This pattern is replicated for __every__ non-primitive field in every structure.
+One of the fields in this structure is the application name which is a string (or a C pointer-to-character-array).  In the LWJGL implementation we had to instantiate a memory stack object, invoke a static helper method to allocate an NIO buffer for the string from this helper, and pass _that_ to the structure.  Presumably there are logical reasons for this (off-heap performance or thread safety perhaps) but there was no explanation of _why_, whether there were alternatives, was the application responsible for releasing resources later, etc.
 
-In summary we could have blindly copied the example code, but we wouldn't know _why_ it worked and would have learnt nothing.  This is not intended as a negative 'review' of LWJGL, we had used it with excellent results in the previous OpenGL implementation.  Unfortunately our experience in the new project was frankly irritating, we had no idea how we were supposed to use the bindings, had barely scratched the surface of the Vulkan API, and eventually we just got bored and gave up.
+Obviously the LWJGL port was code-generated from the Vulkan header, therefore it is to be expected that there are oddities and compromises in the resultant API which would never be as 'clean' as a totally hand-crafted solution.  This is not intended to be a negative 'review' but our experience was frankly irritating for the reasons stated above: everything seemed to take an age to implement, much of the code was basically a mystery, and we had barely scratched the surface of Vulkan.  Eventually we lost interest and gave up.
 
 ### Alternatives
 
