@@ -137,6 +137,7 @@ public class Pipeline extends AbstractVulkanObject {
 			 */
 			void populate(VkPipelineShaderStageCreateInfo info) {
 				validate();
+				info.sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO; // TODO - toArray() does not init this!
 				info.stage = stage;
 				info.module = shader.handle();
 				info.pName = name;

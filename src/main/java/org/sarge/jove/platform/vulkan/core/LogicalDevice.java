@@ -245,15 +245,11 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * Adds a required work queue for this device.
 		 * @param queue Required queue
 		 * @throws IllegalArgumentException if the queue family is not a member of the parent physical device
-		 * @throws IllegalArgumentException for a duplicate queue family
 		 */
 		public Builder queue(RequiredQueue queue) {
 			final Family family = queue.family;
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
-			}
-			if(queues.containsKey(family)) {
-				throw new IllegalArgumentException("Duplicate queue family: " + family);
 			}
 			queues.put(family, queue);
 			return this;
