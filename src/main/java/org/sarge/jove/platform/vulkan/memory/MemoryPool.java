@@ -2,10 +2,7 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -140,7 +137,7 @@ public class MemoryPool {
 				.stream()
 				.flatMap(Block::allocations)
 				.filter(DeviceMemory::isDestroyed)
-				.filter(mem -> mem.size() <= size)
+				.filter(mem -> mem.size() >= size)
 				.sorted(Comparator.comparingLong(DeviceMemory::size))
 				.findAny()
 				.map(BlockDeviceMemory::reallocate);

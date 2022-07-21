@@ -1,14 +1,9 @@
 package org.sarge.jove.platform.desktop;
 
-import static java.util.stream.Collectors.toList;
-
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
 import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
 import org.sarge.jove.util.ReferenceFactory;
@@ -99,7 +94,7 @@ public record Monitor(Handle handle, String name, Dimensions size, List<DisplayM
 			// Retrieve display modes
 			final DesktopDisplayMode first = lib.glfwGetVideoModes(ptr, count);
 			final DesktopDisplayMode[] array = (DesktopDisplayMode[]) first.toArray(count.getValue());
-			final List<DisplayMode> modes = Arrays.stream(array).map(DisplayMode::of).collect(toList());
+			final List<DisplayMode> modes = Arrays.stream(array).map(DisplayMode::of).toList();
 
 			// Create monitor
 			return new Monitor(new Handle(ptr), name, new Dimensions(w.getValue(), h.getValue()), modes);
@@ -109,6 +104,6 @@ public record Monitor(Handle handle, String name, Dimensions size, List<DisplayM
 		return Arrays
 				.stream(monitors)
 				.map(create)
-				.collect(toList());
+				.toList();
 	}
 }

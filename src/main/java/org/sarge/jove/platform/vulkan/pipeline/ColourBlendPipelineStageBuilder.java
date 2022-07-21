@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
@@ -154,7 +153,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 					.chars()
 					.mapToObj(Character::toString)
 					.map(VkColorComponent::valueOf)
-					.collect(toList());
+					.toList();
 
 			// Convert to bit-field mask
 			this.mask = IntegerEnumeration.reduce(components);

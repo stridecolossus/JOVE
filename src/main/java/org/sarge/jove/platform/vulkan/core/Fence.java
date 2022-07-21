@@ -82,6 +82,7 @@ public class Fence extends AbstractVulkanObject {
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
 		final int result = lib.vkGetFenceStatus(dev, this);
+		// Note - cannot use switch expression here (values must be constants)
 		if(result == SIGNALLED) {
 			return true;
 		}
@@ -92,7 +93,6 @@ public class Fence extends AbstractVulkanObject {
 		else {
 			throw new VulkanException(result);
 		}
-		// Note - cannot use switch expression here (values must be constants)
 	}
 
 	/**

@@ -1,25 +1,15 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
-import java.io.DataInput;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
 
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.DefaultImageData;
-import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.io.ImageData.Level;
-import org.sarge.jove.io.ResourceLoader;
+import org.sarge.jove.common.*;
+import org.sarge.jove.io.*;
+import org.sarge.jove.io.ImageData.*;
 import org.sarge.jove.util.LittleEndianDataInputStream;
 
 /**
@@ -143,7 +133,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		return IntStream
 				.range(0, count)
 				.mapToObj(n -> new Level(offset[n] - start, length[n]))
-				.collect(toList());
+				.toList();
 	}
 
 	/**

@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
@@ -75,7 +74,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 				.stream()
 				.map(View::clear)
 				.flatMap(Optional::stream)
-				.collect(toList());
+				.toList();
 
 		// Init clear values
 		info.clearValueCount = clear.size();
@@ -201,7 +200,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 					.stream()
 					.map(this::concat)
 					.map(this::create)
-					.collect(toList());
+					.toList();
 		}
 
 		/**

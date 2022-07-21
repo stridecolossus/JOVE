@@ -1,25 +1,14 @@
 package org.sarge.jove.scene;
 
-import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.sarge.jove.geometry.Point.ORIGIN;
-import static org.sarge.jove.geometry.Vector.X;
-import static org.sarge.jove.geometry.Vector.Y;
-import static org.sarge.jove.geometry.Vector.Z;
+import static org.sarge.jove.geometry.Vector.*;
 
 import java.util.Arrays;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Plane;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.util.MathsUtil;
 
@@ -169,7 +158,7 @@ class SphereVolumeTest {
 		 */
 		private void test(Point origin, Float... expected) {
 			// Calc expected distances relative to ray origin
-			final var list = Arrays.stream(expected).map(n -> n - origin.x).collect(toList());
+			final var list = Arrays.stream(expected).map(n -> n - origin.x).toList();
 
 			// Check intersection results
 			final Intersection result = sphere.intersect(new Ray(origin, X));

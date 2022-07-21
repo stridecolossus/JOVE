@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
@@ -322,7 +321,7 @@ public interface Command {
 			final List<T> list = Arrays
 					.stream(handles)
 					.map(ptr -> ctor.apply(ptr, this))
-					.collect(toList());
+					.toList();
 
 			// Register buffers
 			buffers.addAll(list);

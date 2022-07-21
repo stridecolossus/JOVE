@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
@@ -469,7 +468,7 @@ public class Swapchain extends AbstractVulkanObject {
 					.map(image -> new SwapChainImage(image, dev, descriptor))
 					.map(View::of)
 					.map(view -> view.clear(clear))
-					.collect(toList());
+					.toList();
 
 			// Create domain object
 			return new Swapchain(chain.getValue(), dev, info.imageFormat, extents, views);

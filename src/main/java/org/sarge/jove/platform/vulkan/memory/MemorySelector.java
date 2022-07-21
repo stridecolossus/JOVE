@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static java.util.stream.Collectors.toList;
-
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -60,7 +58,7 @@ public class MemorySelector {
 				.range(0, types.length)
 				.filter(n -> mask.contains(Mask.index(n)))
 				.mapToObj(n -> types[n])
-				.collect(toList());
+				.toList();
 
 		// Find matching memory type
 		return

@@ -15,9 +15,9 @@ title: Memory Allocation
 
 ## Overview
 
-In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).  A Vulkan implementation specifies a set of _memory types_ such that the application can select the appropriate memory type depending on the usage scenario.
+In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).
 
-The [Vulkan documentation](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html) suggests implementing a _fallback strategy_ when selecting the memory type.  The application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
+A Vulkan implementation specifies a set of _memory types_ such that the application can select the appropriate memory type depending on the usage scenario.  The [documentation](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html) suggests implementing a _fallback strategy_ when selecting the memory type.  The application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 
 Additionally the maximum number of memory allocations supported by the hardware is limited.  A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool (growing the available memory as required).  Initially we will allocate a new memory block for every request and then extend the implementation to use a memory pool.
 
@@ -346,19 +346,19 @@ public interface Allocator {
 }
 ```
 
-The default implementation simply allocates a new memory block on each request:
+The default implementation simply allocates new memory on request:
 
 ```java
 static Allocator allocator(DeviceContext dev) {
     return (type, size) -> {
         // Init memory descriptor
-        final var info = new VkMemoryAllocateInfo();
+        var info = new VkMemoryAllocateInfo();
         info.allocationSize = oneOrMore(size);
         info.memoryTypeIndex = type.index();
 
         // Allocate memory
-        final VulkanLibrary lib = dev.library();
-        final PointerByReference ref = dev.factory().pointer();
+        VulkanLibrary lib = dev.library();
+        PointerByReference ref = dev.factory().pointer();
         check(lib.vkAllocateMemory(dev, info, null, ref));
 
         // Create memory wrapper
@@ -671,7 +671,7 @@ private Optional<DeviceMemory> reallocate(long size) {
         .stream()
         .flatMap(Block::allocations)
         .filter(DeviceMemory::isDestroyed)
-        .filter(mem -> mem.size() <= size)
+        .filter(mem -> mem.size() >= size)
         .sorted(Comparator.comparingLong(DeviceMemory::size))
         .findAny()
         .map(BlockDeviceMemory::reallocate);
