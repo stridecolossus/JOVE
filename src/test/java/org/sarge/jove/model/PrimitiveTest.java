@@ -3,13 +3,11 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+@SuppressWarnings("static-method")
 class PrimitiveTest {
 	@DisplayName("Primitives specify the number of vertices")
 	@ParameterizedTest
@@ -66,19 +64,5 @@ class PrimitiveTest {
 	void invalidVertexCount(Primitive primitive) {
 		assertEquals(false, primitive.isValidVertexCount(1));
 		assertEquals(false, primitive.isValidVertexCount(primitive.size() + 1));
-	}
-
-	@DisplayName("Triangle-based primitives should provide an index factory")
-	@Test
-	void index() {
-		assertEquals(Optional.of(Triangle.INDEX_TRIANGLES), Primitive.TRIANGLES.index());
-		assertEquals(Optional.of(Triangle.INDEX_STRIP), Primitive.TRIANGLE_STRIP.index());
-	}
-
-	@DisplayName("Other primitives should NOT provide an index factory")
-	@ParameterizedTest
-	@EnumSource(value=Primitive.class, names={"TRIANGLES", "TRIANGLE_STRIP"}, mode=EXCLUDE)
-	void unindexed(Primitive primitive) {
-		assertEquals(Optional.empty(), primitive.index());
 	}
 }

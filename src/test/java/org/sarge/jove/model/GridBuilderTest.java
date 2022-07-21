@@ -3,7 +3,7 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
@@ -22,36 +22,10 @@ class GridBuilderTest {
 		builder = new GridBuilder();
 	}
 
-	@DisplayName("Create an unindexed grid with duplicate vertices (delegates to the index factory of the primitive")
-	@Test
-	void build() {
-		final Model model = builder
-				.size(new Dimensions(4, 4))
-				.tile(0.25f)
-				.build();
-
-		assertNotNull(model);
-		assertEquals(new Header(Primitive.TRIANGLES, (3 * 3) * (2 * 3), List.of(Point.LAYOUT, Coordinate2D.LAYOUT)), model.header());
-		assertEquals(Optional.empty(), model.index());
-	}
-
-	@DisplayName("Create a simple grid with no index factory applied (points)")
-	@Test
-	void buildNotIndexed() {
-		final Model model = builder
-				.primitive(Primitive.POINTS)
-				.index(null)
-				.build();
-
-		assertNotNull(model);
-		assertEquals(4 * 4, model.header().count());
-		assertEquals(Optional.empty(), model.index());
-	}
-
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
 	@Test
 	void buildQuadStrip() {
-		final Model model = builder.primitive(Primitive.PATCH).index(Quad.STRIP).build();
+		final Model model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
 		assertNotNull(model);
 		assertEquals(new Header(Primitive.PATCH, (3 * 3) * 4, List.of(Point.LAYOUT, Coordinate2D.LAYOUT)), model.header());
 		assertTrue(model.index().isPresent());

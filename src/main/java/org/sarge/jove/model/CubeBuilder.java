@@ -56,7 +56,7 @@ public class CubeBuilder {
 	};
 
 	// Indices for the two counter-clockwise triangles of each face
-	private static final int[] TRIANGLES = Triangle.INDEX_TRIANGLES.strip(0, 1).toArray();
+	private static final int[] TRIANGLES = IndexFactory.TRIANGLES.indices(1).toArray();
 
 	private float size = MathsUtil.HALF;
 
@@ -99,7 +99,7 @@ public class CubeBuilder {
 				// Lookup vertex components
 				final Point pos = VERTICES[index].scale(size);
 				final Vector normal = NORMALS[face];
-				final Coordinate coord = Quad.COORDINATES.get(corner);
+				final Coordinate coord = Coordinate2D.QUAD.get(corner);
 				final Colour col = COLOURS[face];
 
 				// Add vertex to cube

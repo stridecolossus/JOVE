@@ -631,7 +631,7 @@ From now we take this approach of implementing API libraries as inner classes of
 
 ### Two-Stage Invocation
 
-When enumerating the physical devices we first came across API methods that are invoked __twice__ to retrieve data from Vulkan (usually an array of structures or pointer handles).
+When enumerating the physical devices we first came across API methods that are invoked __twice__ to retrieve data from Vulkan, usually an array of structures or pointer handles.
 
 The process is generally:
 

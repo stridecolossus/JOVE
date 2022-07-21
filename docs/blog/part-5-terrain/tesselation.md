@@ -51,7 +51,7 @@ public class GridBuilder {
     private Primitive primitive = Primitive.TRIANGLES;
     private IndexFactory index;
 
-    public MutableModel build() {
+    public Model build() {
         ...
     }
 }
@@ -82,7 +82,7 @@ public interface HeightFunction {
 }
 ```
 
-We provide a default implementation for a constant value:
+A default implementation is provided for a constant value:
 
 ```java
 static HeightFunction literal(float height) {
@@ -90,27 +90,35 @@ static HeightFunction literal(float height) {
 }
 ```
 
-Note that the builder uses this implementation to set the height of all vertices to zero by default.
+Note that this implementation is used to initialise the height of all vertices to zero by default.
 
-The grid is centred on the origin of the model so we first calculate the _half distances_ of the vertices relative to the origin:
+The builder first initialises the grid model:
 
 ```java
-public MutableModel build() {
-    int w = size.width();
-    int h = size.height();
-    float dx = tile * (w - 1) / 2;
-    float dz = tile * (h - 1) / 2;
-
+public Model build() {
+    var model = new Model.Builder()
+        .primitive(primitive)
+        .layout(Point.LAYOUT)
+        .layout(Coordinate2D.LAYOUT);
+        
     ...
-
-    return model;
+        
+    return model.build();
 }
 ```
 
-Next the builder iterates through the grid to generate the vertices (in row major order):
+The grid is centred on the origin of the model so the _half distances_ of the vertices are calculated relative to the centre:
 
 ```java
-List<Vertex> vertices = new ArrayList<>();
+int w = size.width();
+int h = size.height();
+float dx = tile * (w - 1) / 2;
+float dz = tile * (h - 1) / 2;
+```
+
+Next the builder iterates through the grid to generate the vertices (in column major order):
+
+```java
 for(int row = 0; row < h; ++row) {
     for(int col = 0; col < w; ++col) {
         ...
@@ -133,148 +141,77 @@ And the texture coordinate is simply mapped from the row and column indices:
 Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 ```
 
-Finally we create the vertex:
+Finally each vertex is added to the model:
 
 ```java
 Vertex vertex = new Vertex(pos, coord);
-vertices.add(vertex);
+model.add(vertex);
 ```
 
 ### Index Factory
 
-To generate an index for the model the following factory abstraction is introduced:
+To generate the index for the model the following factory abstraction is introduced:
 
 ```java
 @FunctionalInterface
 public interface IndexFactory {
     /**
-     * Generates indices for a primitives in this strip.
-     * @param index Primitive index
-     * @param count Number of quads in the strip
-     * @return Indices
-     */
-    IntStream indices(int index, int count);
-
-    /**
-     * Generates indices for a strip.
-     * @param start Starting index
-     * @param count Number of quads in this strip
+     * Generates the indices for a quad strip.
+     * @param width Strip width
      * @return Strip indices
      */
-    default IntStream strip(int start, int count) {
-        return IntStream
-            .range(0, count)
-            .flatMap(n -> indices(start + n, count));
-    }
+    IntStream indices(int width);
 }
 ```
 
-This interface is implemented in a new helper class to generate an index for a _list_ of triangles:
+The following constant generates an index for a quad strip comprised of triangles:
 
 ```java
-public final class Triangle {
-    public static final IndexFactory INDEX_TRIANGLES = (index, count) -> {
-        int next = index + count + 1;
-        return IntStream.of(
-            index, next, index + 1,
-            next, next + 1, index + 1
-        );
-    };
+IndexFactory TRIANGLES = width -> IntStream
+    .range(0, width)
+    .flatMap(n -> triangles(n, width));
+```
+
+Which delegates to the following helper to generates two triangles per quad with a counter-clockwise winding order:
+
+```java
+static IntStream triangles(int index, int width) {
+    int next = index + 1;
+    int bottom = index + width + 1;
+    return IntStream.of(
+        index, bottom, next,
+        bottom, bottom + 1, next
+    );
 }
 ```
 
-Note that the generated index is comprised of two counter-clockwise triangles per quad (similar to the cube demo).
-
-A triangle _strip_ has a slightly different implementation:
+An index can also be implemented as a triangle-strip:
 
 ```java
-public static final IndexFactory INDEX_STRIP = new IndexFactory() {
-    @Override
-    public IntStream indices(int index, int count) {
-        return IntStream.of(index, index + count + 1);
-    }
-
-    @Override
-    public IntStream strip(int start, int count) {
-        return IntStream
-            .rangeClosed(0, count)
-            .flatMap(n -> indices(start + n, count));
-    }
-};
+IndexFactory TRIANGLE_STRIP = width -> IntStream
+    .rangeClosed(0, width)
+    .flatMap(n -> IntStream.of(n, n + width + 1));
 ```
 
-Here the default `strip` method is overridden to append the final two indices of the triangle strip in the same manner as we did way back in the [Cube Demo](/JOVE/blog/part-3-cube/textures) chapter.  
-
-Finally the primitive enumeration is modified to provide an index factory where appropriate:
+In the builder the index for the model is generated via the configured factory:
 
 ```java
-public enum Primitive {
-    TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST, Triangle.INDEX_TRIANGLES),
-    TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP, Triangle.INDEX_STRIP),
-    ...
+IntStream
+    .range(0, h - 1)
+    .flatMap(row -> index.row(row, w - 1))
+    .forEach(model::add);
+```
 
-    public Optional<IndexFactory> index() {
-        return Optional.ofNullable(index);
-    }
+Which uses the following adapter to generate a strip for each row of the grid:
+
+```java
+default IntStream row(int row, int width) {
+    final int start = row * width;
+    return indices(width).map(n -> n + start);
 }
 ```
 
-The remaining primitives return an empty index factory, the purpose of this addition should become clear shortly.
-
-### Grid Index
-
-The grid builder will support the following use-cases for the index:
-
-1. The general case for an indexed model where the index is generated by the configured factory.
-
-2. A more specialised case for an unindexed grid containing duplicate vertices that are _looked up_ via the index factory of the model primitive (where the configured index is `null`).
-
-3. And the degenerate case for a grid of points (where both the index is `null` and the primitive does not provide an index factory).
-
-This is slightly convoluted but provides the flexibility to configure the behaviour of the index generation used later.
-
-Note that the setter for the _index_ property of the builder accept a `null` value.
-
-The builder first initialises the grid model:
-
-```java
-MutableModel model = new MutableModel(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
-```
-
-The index is then generated for the above use cases as follows:
-
-```java
-if(index == null) {
-    Optional<IndexFactory> factory = primitive.index();
-    if(factory.isPresent()) {
-        // Build unindexed model with duplicate vertices
-        buildIndex(factory.get()).mapToObj(vertices::get).forEach(model::add);
-    }
-    else {
-        // Otherwise assume point or patch grid
-        vertices.forEach(model::add);
-    }
-}
-else {
-    // Build indexed model with the configured factory
-    vertices.forEach(model::add);
-    buildIndex(index).forEach(model::add);
-}
-```
-
-The `buildIndex` helper invokes the factory to generate a strip for each row of the grid:
-
-```java
-private IntStream buildIndex(IndexFactory factory) {
-    int w = size.width() - 1;
-    return IntStream
-        .range(0, size.height() - 1)
-        .map(row -> row * size.height())
-        .flatMap(start -> factory.strip(start, w));
-}
-```
-
-Since the index buffer for the grid will often be relatively small this is a good opportunity to implement the _short_ index buffer:
+Since the index buffer for the grid will often be relatively small this is a good opportunity to implement _short_ index buffers.
 
 First the following helper is added to the model class to determine the type of index based on the draw count:
 
@@ -296,7 +233,7 @@ public record Header(...) {
 }
 ```
 
-The length of the index buffer is then calculated based on the component type of the index:
+The length of the index buffer is then calculated based on the appropriate component type:
 
 ```java
 private Bufferable index() {
@@ -416,7 +353,7 @@ Finally the KTX loader is improved to handle height-map images with one channel 
 
 ### Integration
 
-In the new application we retain the following from the previous skybox demo:
+In the new application the following is retained from the previous skybox demo:
 
 * The essential Vulkan components (devices, swapchain, etc).
 
@@ -428,7 +365,7 @@ In the new application we retain the following from the previous skybox demo:
 
 * The descriptor sets for the texture sampler.
 
-First we create the terrain grid:
+First a simple, flat terrain grid is generated using the new builder:
 
 ```java
 @Bean
@@ -440,9 +377,9 @@ public static Model model() {
 }
 ```
 
-The vertex shader is the same as the previous demos and the fragment shader simply generates a constant colour for all fragments.  This should render a flat plane since the height of each vertex is zero.
+The vertex shader is the same as the previous demos and the fragment shader simply generates a constant colour for all fragments.  This should render a flat plane since the height of each vertex is initialised to zero.
 
-Next we load the height-map image and use it to generate the grid:
+Next the height-map image is loaded and used it to generate the terrain:
 
 ```java
 @Bean
@@ -456,7 +393,7 @@ public static Model model(ImageData heightmap) {
 }
 ```
 
-Finally we change the fragment shader to also sample the height-map image:
+The fragment shader is also modified to sample the height-map for each generated vertex:
 
 ```glsl
 #version 450
@@ -470,7 +407,7 @@ void main() {
 }
 ```
 
-The sampler is modified to clamp texture coordinates:
+Where the sampler is modified to clamp texture coordinates:
 
 ```java
 public Sampler sampler() {
@@ -508,16 +445,20 @@ In the demo we will generate a low-polygon terrain model and employ LOD tesselat
 
 ### Terrain Model
 
-The terrain model is a grid of _patches_ with an index specifying each quad of the terrain.
-
-The existing grid builder does not require any modifications, the only changes needed are the addition of the `PATCH` primitive and an index factory that generates a quad-strip:
+The terrain model is a grid of _patches_ with an index specifying each quad of the terrain:
 
 ```java
-public final class Quad {
-    public static final IndexFactory STRIP = (n, count) -> {
-        int next = n + count + 1;
-        return IntStream.of(n, next, next + 1, n + 1);
-    };
+IndexFactory QUADS = width -> IntStream
+    .range(0, width)
+    .flatMap(n -> quad(n, width));
+```
+
+Which uses the following helper to generate counter-clockwise indices for each quad in the strip:
+
+```java
+static IntStream quad(int index, int width) {
+    int next = index + width + 1;
+    return IntStream.of(index, next, next + 1, index + 1);
 }
 ```
 
@@ -529,7 +470,7 @@ public static Model model() {
         .size(new Dimensions(64, 64))
         .scale(0.25f)
         .primitive(Primitive.PATCH)
-        .index(Quad.STRIP)
+        .index(IndexFactory.QUADS)
         .build();
 }
 ```
@@ -745,12 +686,8 @@ The pipeline configuration is modified to include the two new shaders and the te
 public Pipeline pipeline(...) {
     return new Pipeline.Builder()
         ...
-        .shader(VkShaderStage.TESSELLATION_CONTROL)
-            .shader(control)
-            .build()
-        .shader(VkShaderStage.TESSELLATION_EVALUATION)
-            .shader(evaluation)
-            .build()
+        .shader(VkShaderStage.TESSELLATION_CONTROL, control)
+        .shader(VkShaderStage.TESSELLATION_EVALUATION, evaluation)
         .tesselation()
             .points(4)
             .build()

@@ -1,7 +1,7 @@
 package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.*;
 
 import org.sarge.jove.common.Coordinate.*;
 import org.sarge.jove.util.MathsUtil;
@@ -71,6 +71,11 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 			BOTTOM_LEFT 	= new Coordinate2D(0, 1),
 			TOP_RIGHT 		= new Coordinate2D(1, 0),
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
+
+		/**
+		 * Texture coordinates for a quad with a counter-clockwise winding order.
+		 */
+		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, BOTTOM_LEFT, TOP_RIGHT, BOTTOM_RIGHT);
 
 		@Override
 		public int length() {

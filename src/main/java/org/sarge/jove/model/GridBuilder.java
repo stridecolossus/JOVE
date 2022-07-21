@@ -2,7 +2,6 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.*;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.*;
@@ -81,13 +80,14 @@ public class GridBuilder {
 				return image.pixel(x, y, component) * normalise;
 			};
 		}
+		// TODO - factor out to helper? or image class itself?
 	}
 
 	private Dimensions size = new Dimensions(4, 4);
 	private float tile = 1;
 	private HeightFunction height = HeightFunction.literal(0);
 	private Primitive primitive = Primitive.TRIANGLES;
-	private IndexFactory index;
+	private IndexFactory index = IndexFactory.TRIANGLES;
 
 	/**
 	 * Sets the size of the grid.
@@ -131,12 +131,11 @@ public class GridBuilder {
 	}
 
 	/**
-	 * Sets the index factory used to generate an indexed model.
-	 * @param index Index factory or {@code null} to delegate to {@link Primitive#index()}
-	 * @see #primitive(Primitive)
+	 * Sets the factory used to generate an indexed grid (default is {@link Triangle#INDEX_STRIP}).
+	 * @param index Index factory
 	 */
 	public GridBuilder index(IndexFactory index) {
-		this.index = index;
+		this.index = notNull(index);
 		return this;
 	}
 
@@ -149,6 +148,12 @@ public class GridBuilder {
 	 * @return New grid model
 	 */
 	public Model build() {
+		// Init model
+		final var model = new Model.Builder()
+				.primitive(primitive)
+				.layout(Point.LAYOUT)
+				.layout(Coordinate2D.LAYOUT);
+
 		// Calculate half distance in both directions
 		final int w = size.width();
 		final int h = size.height();
@@ -156,7 +161,6 @@ public class GridBuilder {
 		final float halfHeight = tile * (h - 1) / 2;
 
 		// Build grid vertices (column major)
-		final List<Vertex> vertices = new ArrayList<>();
 		for(int row = 0; row < h; ++row) {
 			for(int col = 0; col < w; ++col) {
 				// Determine grid position and height
@@ -172,46 +176,17 @@ public class GridBuilder {
 
 				// Add grid vertex
 				final Vertex vertex = Vertex.of(pos, coord);
-				vertices.add(vertex);
+				model.add(vertex);
 			}
 		}
 
-		// Build model
-		final var model = new Model.Builder()
-				.primitive(primitive)
-				.layout(Point.LAYOUT)
-				.layout(Coordinate2D.LAYOUT);
+		// Build index
+		IntStream
+				.range(0, h - 1)
+				.flatMap(row -> index.row(row, w - 1))
+				.forEach(model::add);
 
-		if(index == null) {
-			final Optional<IndexFactory> factory = primitive.index();
-			if(factory.isPresent()) {
-				// Build unindexed model with duplicate vertices
-				build(factory.get()).mapToObj(vertices::get).forEach(model::add);
-			}
-			else {
-				// Otherwise assume point or patch grid
-				vertices.forEach(model::add);
-			}
-		}
-		else {
-			// Build indexed model with the configured factory
-			vertices.forEach(model::add);
-			build(index).forEach(model::add);
-		}
-
+		// Construct grid
 		return model.build();
-	}
-
-	/**
-	 * Generates the grid index.
-	 * @param factory Index factory
-	 * @return Grid index
-	 */
-	private IntStream build(IndexFactory factory) {
-		final int w = size.width() - 1;
-		return IntStream
-				.range(0, size.height() - 1)
-				.map(row -> row * size.height())
-				.flatMap(start -> factory.strip(start, w));
 	}
 }
