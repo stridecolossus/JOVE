@@ -2,29 +2,21 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 import com.sun.jna.Pointer;
 
 class PipelineLayoutTest extends AbstractVulkanTest {
 	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
-	private static final VulkanProperty.Key PROPERTY = new VulkanProperty.Key("maxPushConstantsSize");
 
 	private PipelineLayout layout;
 
@@ -65,7 +57,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			final PushConstantRange range = new PushConstantRange(0, 4, Set.of(VkShaderStage.VERTEX));
 
 			// Init push constants max size
-			property(PROPERTY, 4, true);
+			limit("maxPushConstantsSize", 4);
 
 			// Create layout
 			final PipelineLayout layout = builder
@@ -104,7 +96,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 		@Test
 		void buildEmpty() {
-			property(PROPERTY, 0, true);
+			limit("maxPushConstantsSize", 0);
 			assertNotNull(builder.build(dev));
 		}
 	}

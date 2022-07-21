@@ -45,27 +45,23 @@ public abstract class AbstractVulkanTest {
 		when(factory.integer()).thenReturn(INTEGER);
 		when(factory.pointer()).thenReturn(POINTER);
 
-		// Init properties and features
-		final VulkanProperty.Provider provider = mock(VulkanProperty.Provider.class);
+		// Init device limits
+		final DeviceLimits limits = mock(DeviceLimits.class);
 
 		// Create logical device
 		dev = mock(LogicalDevice.class);
 		when(dev.handle()).thenReturn(new Handle(1));
 		when(dev.library()).thenReturn(lib);
 		when(dev.factory()).thenReturn(factory);
-		when(dev.provider()).thenReturn(provider);
+		when(dev.limits()).thenReturn(limits);
 	}
 
 	/**
-	 * Sets a device property.
-	 * @param key			Property key
-	 * @param value			Value
-	 * @param enabled		Whether the optional feature is enabled
+	 * Sets a device limit.
+	 * @param name		Limit name
+	 * @param value		Limit
 	 */
-	protected void property(VulkanProperty.Key key, Number value, boolean enabled) {
-		final var prop = new VulkanProperty(key, enabled, value);
-		final var provider = dev.provider();
-		when(provider.property(key)).thenReturn(prop);
-		when(provider.property(key.name())).thenReturn(prop);
+	protected void limit(String name, Number value) {
+		when(dev.limits().value(name)).thenReturn(value);
 	}
 }

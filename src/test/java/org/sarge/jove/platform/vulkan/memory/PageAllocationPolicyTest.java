@@ -1,14 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
+import org.sarge.jove.platform.vulkan.util.DeviceLimits;
 
 public class PageAllocationPolicyTest {
 	private AllocationPolicy policy;
@@ -34,16 +31,10 @@ public class PageAllocationPolicyTest {
 	@Test
 	void of() {
 		// Init page granularity
-		final VulkanProperty granularity = mock(VulkanProperty.class);
-		when(granularity.get()).thenReturn(5L);
-
-		// Init property provider
-		final VulkanProperty.Provider provider = mock(VulkanProperty.Provider.class);
-		when(provider.property("bufferImageGranularity")).thenReturn(granularity);
-
-		// Init device
 		final DeviceContext dev = mock(DeviceContext.class);
-		when(dev.provider()).thenReturn(provider);
+		final DeviceLimits limits = mock(DeviceLimits.class);
+		when(limits.value("bufferImageGranularity")).thenReturn(5L);
+		when(dev.limits()).thenReturn(limits);
 
 		// Create paged policy
 		policy = PageAllocationPolicy.of(dev);

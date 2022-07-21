@@ -5,6 +5,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -15,7 +16,6 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty.Provider;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.*;
 
@@ -29,7 +29,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
 	private final DeviceFeatures features;
-	private final Provider provider;
+	private final Supplier<DeviceLimits> limits = new LazySupplier<>(this::loadLimits);
 	private final Map<Family, List<Queue>> queues;
 
 	/**
@@ -43,7 +43,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		super(handle);
 		this.parent = notNull(parent);
 		this.features = notNull(features);
-		this.provider = new Provider(parent.properties().limits, features);
 		this.queues = Map.copyOf(queues);
 	}
 
@@ -65,15 +64,23 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	}
 
 	/**
-	 * @return Device features enabled on this device
+	 * @return Features enabled on this device
 	 */
 	public DeviceFeatures features() {
 		return features;
 	}
 
+	/**
+	 * Initialises device limits for this device.
+	 */
+	private DeviceLimits loadLimits() {
+		final VkPhysicalDeviceProperties props = parent.properties();
+		return new DeviceLimits(props.limits, features);
+	}
+
 	@Override
-	public Provider provider() {
-		return provider;
+	public DeviceLimits limits() {
+		return limits.get();
 	}
 
 	/**

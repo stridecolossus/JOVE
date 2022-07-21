@@ -6,7 +6,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 /**
  * A <i>resource buffer</i> wraps a Vulkan buffer as a descriptor resource, e.g. a {@link VkBufferUsageFlag#UNIFORM_BUFFER}.
@@ -66,11 +65,8 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 		}
 
 		// Validate buffer size
-		super
-				.device()
-				.provider()
-				.property(new VulkanProperty.Key(key))
-				.validate(length());
+		final int max = this.device().limits().value(key);
+		if(length() > max) throw new IllegalStateException(String.format("Buffer too large: length=%d limit=%d", length(), max));
 	}
 
 	@Override

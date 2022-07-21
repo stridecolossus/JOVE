@@ -1,21 +1,15 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkIndexType;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 
 public class IndexBufferTest extends AbstractVulkanTest {
 	private static final long SIZE = 4;
@@ -57,7 +51,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	@Test
 	void bind() {
 		// Init maximum index length
-		property(new VulkanProperty.Key("maxDrawIndexedIndexValue"), 1L, true);
+		limit("maxDrawIndexedIndexValue", 1L);
 
 		// Create bind command
 		final Command bind = index.bind(0);
@@ -79,7 +73,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void bindInvalidLength() {
-		property(new VulkanProperty.Key("maxDrawIndexedIndexValue"), 0L, true);
+		limit("maxDrawIndexedIndexValue", 0L);
 		assertThrows(IllegalStateException.class, () -> index.bind(0));
 	}
 

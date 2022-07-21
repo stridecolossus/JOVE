@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -97,14 +97,6 @@ public class Sampler extends AbstractVulkanObject {
 	 * Builder for a sampler.
 	 */
 	public static class Builder {
-		static final VulkanProperty.Key ANISOTROPY = new VulkanProperty.Key.Builder()
-				.name("maxSamplerAnisotropy")
-				.feature("samplerAnisotropy")
-				.min(1)
-				.build();
-
-		static final VulkanProperty.Key LOD_BIAS = new VulkanProperty.Key("maxSamplerLodBias");
-
 		private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
 
 		public Builder() {
@@ -252,11 +244,6 @@ public class Sampler extends AbstractVulkanObject {
 			if(info.minLod > info.maxLod) {
 				throw new IllegalArgumentException("Invalid min/max LOD");
 			}
-
-			// Validate device limits
-			final VulkanProperty.Provider provider = dev.provider();
-			provider.property(ANISOTROPY).validate(info.maxAnisotropy);
-			provider.property(LOD_BIAS).validate(info.mipLodBias);
 
 			// Instantiate sampler
 			final VulkanLibrary lib = dev.library();

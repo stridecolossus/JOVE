@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.*;
 import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
+import org.sarge.jove.platform.vulkan.util.DeviceLimits;
 
 /**
  * A <i>draw command</i> is used to render a model.
@@ -147,12 +147,6 @@ public interface DrawCommand extends Command {
 	 * Builder for an <i>indirect</i> draw command.
 	 */
 	class IndirectBuilder {
-		static final VulkanProperty.Key MULTIDRAW = new VulkanProperty.Key.Builder()
-				.name("maxDrawIndirectCount")
-				.feature("multiDrawIndirect")
-				.min(1)
-				.build();
-
 		private boolean indexed;
 		private long offset;
 		private int count = 1;
@@ -207,7 +201,10 @@ public interface DrawCommand extends Command {
 			buffer.validate(offset);
 
 			// Check indirect multi-draw is supported
-			buffer.device().provider().property(MULTIDRAW).validate(count);
+			final DeviceLimits limits = buffer.device().limits();
+			final int max = limits.value("maxDrawIndirectCount");
+			limits.require("multiDrawIndirect");
+			if(count > max) throw new IllegalArgumentException(String.format("Invalid indirect draw count: count=%d max=%d", count, max));
 
 			// Create command
 			if(indexed) {

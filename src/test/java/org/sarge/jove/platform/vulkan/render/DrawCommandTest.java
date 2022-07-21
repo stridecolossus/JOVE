@@ -115,11 +115,15 @@ class DrawCommandTest extends AbstractVulkanTest {
 			when(buffer.device()).thenReturn(dev);
 		}
 
+		private void init(int size) {
+			limit("maxDrawIndirectCount", size);
+		}
+
 		@DisplayName("Indirect draw")
 		@Test
 		void build() {
 			// Init device limit
-			property(IndirectBuilder.MULTIDRAW, 3f, true);
+			init(3);
 
 			// Invoke indirect draw
 			builder
@@ -133,12 +137,13 @@ class DrawCommandTest extends AbstractVulkanTest {
 			verify(lib).vkCmdDrawIndirect(cmd, buffer, 2, 3, 4);
 			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
 			verify(buffer).validate(2);
+			verify(dev.limits()).require("multiDrawIndirect");
 		}
 
 		@DisplayName("Indirect indexed draw")
 		@Test
 		void indexed() {
-			property(IndirectBuilder.MULTIDRAW, 1f, true);
+			init(1);
 			builder.indexed().build(buffer).execute(lib, cmd);
 			verify(lib).vkCmdDrawIndexedIndirect(cmd, buffer, 0, 1, 0);
 			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
@@ -147,17 +152,9 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@DisplayName("Draw count cannot exceed the hardware limit")
 		@Test
 		void buildInvalidDrawCount() {
-			property(IndirectBuilder.MULTIDRAW, 1f, true);
+			init(1);
 			builder.count(2);
 			assertThrows(IllegalArgumentException.class, () -> builder.build(buffer));
-		}
-
-		@DisplayName("Draw count other than zero or one must be a supported device feature")
-		@Test
-		void buildDrawCountNotSupported() {
-			property(IndirectBuilder.MULTIDRAW, 2f, false);
-			builder.count(2);
-			assertThrows(IllegalStateException.class, () -> builder.build(buffer));
 		}
 	}
 }

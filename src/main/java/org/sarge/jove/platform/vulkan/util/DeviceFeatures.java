@@ -127,7 +127,8 @@ public interface DeviceFeatures {
 
 			@Override
 			public VkPhysicalDeviceFeatures descriptor() {
-				return features.copy();
+				// TODO - mutable!
+				return features;
 			}
 
 			@Override

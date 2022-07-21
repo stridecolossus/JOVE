@@ -69,9 +69,19 @@ public class LogicalDeviceTest {
 		assertEquals(parent, device.parent());
 		assertEquals(lib, device.library());
 		assertEquals(parent.instance().factory(), device.factory());
-		assertNotNull(device.features());
-		assertNotNull(device.provider());
 		assertEquals(false, device.isDestroyed());
+	}
+
+	@Test
+	void features() {
+		assertNotNull(device.features());
+	}
+
+	@Test
+	void limits() {
+		when(parent.properties()).thenReturn(new VkPhysicalDeviceProperties());
+		final DeviceLimits limits = device.limits();
+		assertNotNull(limits);
 	}
 
 	@DisplayName("Query device for available queues")

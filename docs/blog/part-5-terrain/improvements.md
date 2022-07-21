@@ -1,5 +1,5 @@
----
-title: Pipeline Improvements
+    ---
+title: Improvements
 ---
 
 ---
@@ -14,6 +14,7 @@ This chapter introduces various improvements to the pipeline and shader code use
 - [Pipeline Cache](#pipeline-cache)
 - [Specialisation Constants](#specialisation-constants)
 - [Queries](#queries)
+- [Device Limits](#device-limits)
 
 ---
 
@@ -999,6 +1000,101 @@ Note that frame listener tasks are invoked _before_ the render sequence so the q
 
 ---
 
+## Device Limits
+
+The `VkPhysicalDeviceLimits` structure specifies various limits supported by the hardware, this is wrapped by a new helper class:
+
+```java
+public class DeviceLimits {
+    private final VkPhysicalDeviceLimits limits;
+    private final DeviceFeatures features;
+}
+```
+
+For convenience the supported device features are also incorporated into this new class and can be enforced as required:
+
+```java
+public void require(String name) {
+    if(!features.features().contains(name)) {
+        throw new IllegalStateException("Feature not supported: " + name);
+    }
+}
+```
+
+A device limit can be queried from the structure by name:
+
+```java
+public <T> T value(String name) {
+    return (T) limits.readField(name);
+}
+```
+
+The reason for implementing limits by name is two-fold:
+
+1. The `readField` approach avoids the problem of the underlying JNA structure being totally mutable.
+
+2. It is assumed that applications will prefer to query by name rather than coding for specific structure fields.
+
+Some device limits are a _quantised_ range of permissible values which can be retrieved by the following helper:
+
+```java
+public float[] range(String name, String granularity) {
+    // Lookup range bounds
+    float[] bounds = value(name);
+    float min = bounds[0];
+    float max = bounds[1];
+
+    // Lookup granularity step
+    float step = value(granularity);
+
+    // Determine number of values
+    int num = (int) ((max - min) / step);
+
+    // Build quantised range
+    float[] range = new float[num + 1];
+    for(int n = 0; n < num; ++n) {
+        range[n] = min + n * step;
+    }
+    range[num] = max;
+
+    return range;
+}
+```
+
+Where _name_ is the limit and _granularity_ specifies the step size, e.g. `pointSizeRange` and `pointSizeGranularity` for the range of valid point primitives.
+
+The device limits are lazily retrieved from the logical device:
+
+```java
+public class LogicalDevice ... {
+    ...
+    private final Supplier<DeviceLimits> limits = new LazySupplier<>(this::loadLimits);
+
+    private DeviceLimits loadLimits() {
+        VkPhysicalDeviceProperties props = parent.properties();
+        return new DeviceLimits(props.limits, features);
+    }
+
+    @Override
+    public DeviceLimits limits() {
+        return limits.get();
+    }
+}
+```
+
+For example, the builder for an indirect draw command can now validate that the command configuration is supported by the hardware:
+
+```java
+DeviceLimits limits = buffer.device().limits();
+int max = limits.value("maxDrawIndirectCount");
+limits.require("multiDrawIndirect");
+if(count > max) throw new IllegalArgumentException(...);
+```
+
+Although the validation layer would also trap this problem when the command is _executed_ the above code applies the validation at _instantiation_ time (which may be earlier).
+
+---
+
 ## Summary
 
 In this chapter we implemented the following framework enhancements:
@@ -1012,3 +1108,6 @@ In this chapter we implemented the following framework enhancements:
 * Support for specialisation constants.
 
 * A new framework to support pipeline queries.
+
+* Support for device limits.
+

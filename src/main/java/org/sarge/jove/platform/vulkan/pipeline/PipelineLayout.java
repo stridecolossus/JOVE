@@ -2,24 +2,17 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkPipelineLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPushConstantRange;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
-import org.sarge.jove.platform.vulkan.util.VulkanProperty;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -70,8 +63,6 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * Builder for a pipeline layout.
 	 */
 	public static class Builder {
-		private static final VulkanProperty.Key MAX_PUSH_CONSTANTS = new VulkanProperty.Key("maxPushConstantsSize");
-
 		private final List<DescriptorLayout> sets = new ArrayList<>();
 		private final List<PushConstantRange> ranges = new ArrayList<>();
 
@@ -110,6 +101,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 			// Add push constant ranges
 			info.pushConstantRangeCount = ranges.size();
 			info.pPushConstantRanges = StructureHelper.pointer(ranges, VkPushConstantRange::new, PushConstantRange::populate);
+			// TODO - must not have same stages
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();
@@ -117,14 +109,15 @@ public class PipelineLayout extends AbstractVulkanObject {
 			check(lib.vkCreatePipelineLayout(dev, info, null, layout));
 
 			// Determine overall size of the push constants data
-			final int max = ranges
+			final int size = ranges
 					.stream()
 					.mapToInt(PushConstantRange::length)
 					.max()
 					.orElse(0);
 
 			// Check that overall size is supported by the hardware
-			dev.provider().property(MAX_PUSH_CONSTANTS).validate(max);
+			final int max = dev.limits().value("maxPushConstantsSize");
+			if(size > max) throw new IllegalArgumentException(String.format("Push constant size too large: size=%d max=%d", size, max));
 
 			// Enumerate pipeline stages
 			final Set<VkShaderStage> stages = ranges
@@ -134,7 +127,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 					.collect(toSet());
 
 			// Create layout
-			return new PipelineLayout(layout.getValue(), dev, max, stages);
+			return new PipelineLayout(layout.getValue(), dev, size, stages);
 		}
 	}
 
