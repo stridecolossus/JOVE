@@ -126,7 +126,6 @@ public class Desktop {
 	/**
 	 * Sets a handler for GLFW errors.
 	 * @param handler Error handler
-	 * @see #CONSOLE_ERROR_HANDLER
 	 */
 	public void setErrorHandler(Consumer<String> handler) {
 		final ErrorCallback callback = (error, description) -> {

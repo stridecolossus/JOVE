@@ -39,7 +39,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void constructorShortIndex() {
-		index = new IndexBuffer(buffer, false);
+		index = new IndexBuffer(buffer, 1);
 		assertEquals(VkIndexType.UINT16, index.type());
 	}
 

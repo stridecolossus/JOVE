@@ -23,14 +23,15 @@ public interface IndexFactory {
 	IntStream indices(int width);
 
 	/**
-	 * Adapter that generates the indices for a row of a grid.
-	 * @param row		Row index
-	 * @param width		Strip width
-	 * @return Row indices
+	 * Creates an adapter that generates indices for the row of a grid.
+	 * @param row Row index
+	 * @return Row index factory
 	 */
-	default IntStream row(int row, int width) {
-		final int start = row * width;
-		return indices(width).map(n -> n + start);
+	default IndexFactory row(int row) {
+		return width -> {
+			final int start = row * width + 1;
+			return indices(width).map(n -> n + start);
+		};
 	}
 
 	/**

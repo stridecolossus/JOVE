@@ -60,5 +60,4 @@ interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMo
 	 * @return Vulkan extensions (pointer to array of strings)
 	 */
 	Pointer glfwGetRequiredInstanceExtensions(IntByReference count);
-	// TODO - can return type be a StringArray?
 }

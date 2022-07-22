@@ -33,7 +33,7 @@ features todo
 - object tracker
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - screenshots, how? render to off-screen attachment?
-- degenerate triangles for strip? and/or primitive restart?
+- degenerate triangles for strip?
 
 blog
 - pipeline cache
@@ -41,7 +41,6 @@ blog
 - index of VK/JOVE objects by chapter
 
 framework
-- API methods return VkResult instead of int? makes tests messier though? can add interceptor to return success by default using mock(obj, prefs) 
 - re-build swapchain and pipeline after window viewport/focus change
 
 improvements

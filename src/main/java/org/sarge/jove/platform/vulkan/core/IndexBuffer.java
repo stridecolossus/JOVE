@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
@@ -30,12 +31,14 @@ public class IndexBuffer extends VulkanBuffer {
 	}
 
 	/**
-	 * Constructor.
+	 * Constructor that determines the index type for a given draw count.
 	 * @param buffer		Buffer
-	 * @param integral		Whether the index is represented by {@code int} or {@code short} values
+	 * @param count			Index draw count
+	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
+	 * @see Model.Header#isIntegerIndex(int)
 	 */
-	public IndexBuffer(VulkanBuffer buffer, boolean integral) {
-		this(buffer, integral ? VkIndexType.UINT32 : VkIndexType.UINT16);
+	public IndexBuffer(VulkanBuffer buffer, int count) {
+		this(buffer, Model.Header.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);
 	}
 
 	/**

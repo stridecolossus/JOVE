@@ -183,7 +183,8 @@ public class GridBuilder {
 		// Build index
 		IntStream
 				.range(0, h - 1)
-				.flatMap(row -> index.row(row, w - 1))
+				.mapToObj(row -> index.row(row))
+				.flatMapToInt(row -> row.indices(w - 1))
 				.forEach(model::add);
 
 		// Construct grid

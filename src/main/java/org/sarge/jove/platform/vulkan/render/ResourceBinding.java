@@ -9,7 +9,7 @@ import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>descriptor set binding</i> defines the resource properties for a binding in a descriptor set.
+ * A <i>resource binding</i> defines the properties of a binding in a descriptor set.
  * @author Sarge
  */
 public record ResourceBinding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {

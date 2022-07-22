@@ -46,27 +46,27 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 
 	/**
 	 * Extracts the memory types supported by the hardware from the given descriptor.
-	 * @param props Memory properties descriptor
+	 * @param descriptor Memory properties descriptor
 	 * @return Memory types
 	 */
-	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
+	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
 		// Extract heaps
-		final Heap[] heaps = new Heap[props.memoryHeapCount];
+		final Heap[] heaps = new Heap[descriptor.memoryHeapCount];
 		final var heapMapper = IntegerEnumeration.mapping(VkMemoryHeapFlag.class);
 		for(int n = 0; n < heaps.length; ++n) {
-			final VkMemoryHeap heap = props.memoryHeaps[n];
+			final VkMemoryHeap heap = descriptor.memoryHeaps[n];
 			final Set<VkMemoryHeapFlag> flags = heapMapper.enumerate(heap.flags);
 			heaps[n] = new Heap(heap.size, flags);
 		}
 
 		// Extract memory types
-		final MemoryType[] types = new MemoryType[props.memoryTypeCount];
+		final MemoryType[] types = new MemoryType[descriptor.memoryTypeCount];
 		final var typeMapper = IntegerEnumeration.mapping(VkMemoryProperty.class);
 		for(int n = 0; n < types.length; ++n) {
-			final VkMemoryType type = props.memoryTypes[n];
+			final VkMemoryType type = descriptor.memoryTypes[n];
 			final Heap heap = heaps[type.heapIndex];
-			final Set<VkMemoryProperty> properties = typeMapper.enumerate(type.propertyFlags);
-			types[n] = new MemoryType(n, heap, properties);
+			final Set<VkMemoryProperty> props = typeMapper.enumerate(type.propertyFlags);
+			types[n] = new MemoryType(n, heap, props);
 		}
 
 		return types;

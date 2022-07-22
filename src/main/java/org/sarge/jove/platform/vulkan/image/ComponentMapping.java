@@ -5,7 +5,7 @@ import java.util.Arrays;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
- * The <i>component mapping</i> is a utility class used to construct the RGBA swizzle for a Vulkan image view.
+ * The <i>component mapping</i> is a utility class used to construct the channel swizzles for a Vulkan image view.
  * @author Sarge
  */
 public final class ComponentMapping {

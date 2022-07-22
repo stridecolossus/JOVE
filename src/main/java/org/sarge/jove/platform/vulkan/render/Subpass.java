@@ -5,8 +5,6 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 import java.util.stream.Stream;
 
-import javax.swing.GroupLayout.Group;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -47,8 +45,6 @@ import org.sarge.lib.util.*;
  * 	    .build();
  * </pre>
  * <p>
- * The {@link Group} is a helper class used to populate descriptors for a group of sub-passes comprising the render pass.
- * <p>
  * @author Sarge
  */
 public class Subpass {
@@ -72,6 +68,16 @@ public class Subpass {
 			return "SELF";
 		}
 	};
+
+	/**
+	 * Convenience factory for a sub-pass with a single {@link VkImageLayout#COLOR_ATTACHMENT_OPTIMAL} attachment.
+	 * @param colour Colour attachment
+	 * @return New default sub-pass
+	 */
+	public static Subpass of(Attachment colour) {
+		final Reference ref = new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+		return new Subpass(List.of(ref), null, List.of());
+	}
 
 	private final List<Reference> colour;
 	private final Optional<Reference> depth;

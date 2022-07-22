@@ -32,7 +32,7 @@ import org.sarge.jove.platform.vulkan.util.DeviceLimits;
  */
 public interface DrawCommand extends Command {
 	/**
-	 * Creates a draw command.
+	 * Creates a simple draw command.
 	 * @param count Number of vertices
 	 * @return New draw command
 	 */
@@ -77,7 +77,7 @@ public interface DrawCommand extends Command {
 		/**
 		 * Sets the number of vertices to draw.
 		 * @param count Draw count
-		 * @see #indexed(int)
+		 * @see #indexed()
 		 */
 		public Builder count(int count) {
 			this.count = oneOrMore(count);
@@ -86,6 +86,7 @@ public interface DrawCommand extends Command {
 
 		/**
 		 * Sets this as an <i>indexed</i> draw command starting at the <b>first</b> index.
+		 * @see #indexed(int)
 		 */
 		public Builder indexed() {
 			return indexed(0);
@@ -101,7 +102,7 @@ public interface DrawCommand extends Command {
 		}
 
 		/**
-		 * Sets the index of the first vertex.
+		 * Sets the index of the first vertex (default is zero).
 		 * @param firstVertex First vertex
 		 */
 		public Builder firstVertex(int firstVertex) {
@@ -110,7 +111,7 @@ public interface DrawCommand extends Command {
 		}
 
 		/**
-		 * Sets the number of instances.
+		 * Sets the number of instances (default is one).
 		 * @param instanceCount Number of instances
 		 */
 		public Builder instances(int instanceCount) {
@@ -119,7 +120,7 @@ public interface DrawCommand extends Command {
 		}
 
 		/**
-		 * Sets the index of the first instance.
+		 * Sets the index of the first instance (default is zero).
 		 * @param firstInstance First instance
 		 */
 		public Builder firstInstance(int firstInstance) {
@@ -139,8 +140,6 @@ public interface DrawCommand extends Command {
 				return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
 			}
 		}
-		// TODO - maxDrawIndexedIndexValue - UINT32
-		// TODO - restart mask, not UINT32???
 	}
 
 	/**
