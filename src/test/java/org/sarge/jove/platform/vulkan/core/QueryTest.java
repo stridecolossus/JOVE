@@ -10,75 +10,98 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Query.*;
-import org.sarge.jove.platform.vulkan.core.Query.Pool.Builder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerEnumeration;
 
-import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 
 public class QueryTest extends AbstractVulkanTest {
 	private Pool pool;
-	private Query query;
-	private Command.Buffer cmd;
+	private Command.Buffer buffer;
 
 	@BeforeEach
 	void before() {
-		pool = new Pool(new Pointer(1), dev, VkQueryType.OCCLUSION, 2);
-		query = pool.query(0);
-		cmd = mock(Command.Buffer.class);
+		buffer = mock(Command.Buffer.class);
 	}
 
-	@Test
-	void constructor() {
-		assertNotNull(query);
+	@Nested
+	class DefaultQueryTests {
+		private DefaultQuery query;
+
+		@BeforeEach
+		void before() {
+			pool = Pool.create(dev, VkQueryType.OCCLUSION, 1);
+			query = pool.query(0);
+		}
+
+		@Test
+		void constructor() {
+			assertNotNull(query);
+		}
+
+		@Test
+		void begin() {
+			final Command begin = query.begin(VkQueryControlFlag.PRECISE);
+			assertNotNull(begin);
+			begin.execute(lib, buffer);
+			verify(lib).vkCmdBeginQuery(buffer, pool, 0, VkQueryControlFlag.PRECISE.value());
+		}
+
+		@Test
+		void end() {
+			final Command end = query.end();
+			assertNotNull(end);
+			end.execute(lib, buffer);
+			verify(lib).vkCmdEndQuery(buffer, pool, 0);
+		}
 	}
 
-	@Test
-	void reset() {
-		final Command reset = query.reset();
-		assertNotNull(reset);
-		reset.execute(lib, cmd);
-		verify(lib).vkCmdResetQueryPool(cmd, pool, 0, 1);
-	}
+	@Nested
+	class TimestampTests {
+		private Timestamp timestamp;
 
-	@Test
-	void begin() {
-		final Command begin = query.begin(VkQueryControlFlag.PRECISE);
-		assertNotNull(begin);
-		begin.execute(lib, cmd);
-		verify(lib).vkCmdBeginQuery(cmd, pool, 0, VkQueryControlFlag.PRECISE.value());
-	}
+		@BeforeEach
+		void before() {
+			pool = Pool.create(dev, VkQueryType.TIMESTAMP, 1);
+			timestamp = pool.timestamp(0);
+		}
 
-	@Test
-	void end() {
-		final Command end = query.end();
-		assertNotNull(end);
-		end.execute(lib, cmd);
-		verify(lib).vkCmdEndQuery(cmd, pool, 0);
-	}
-
-	@Test
-	void timestamp() {
-		pool = new Pool(new Pointer(1), dev, VkQueryType.TIMESTAMP, 2);
-		query = pool.query(0);
-		final Command timestamp = query.timestamp(VkPipelineStage.VERTEX_SHADER);
-		assertNotNull(timestamp);
-		timestamp.execute(lib, cmd);
-		verify(lib).vkCmdWriteTimestamp(cmd, VkPipelineStage.VERTEX_SHADER, pool, 0);
-	}
-
-	@Test
-	void invalidQueryCommand() {
-		assertThrows(IllegalStateException.class, () -> query.timestamp(VkPipelineStage.VERTEX_SHADER));
+		@Test
+		void timestamp() {
+			final Command cmd = timestamp.timestamp(VkPipelineStage.VERTEX_SHADER);
+			assertNotNull(timestamp);
+			cmd.execute(lib, buffer);
+			verify(lib).vkCmdWriteTimestamp(buffer, VkPipelineStage.VERTEX_SHADER, pool, 0);
+		}
 	}
 
 	@Nested
 	class PoolTest {
+		@BeforeEach
+		void before() {
+			pool = Pool.create(dev, VkQueryType.OCCLUSION, 2);
+		}
+
 		@Test
 		void constructor() {
+			assertNotNull(pool);
 			assertEquals(dev, pool.device());
 			assertEquals(false, pool.isDestroyed());
 			assertEquals(2, pool.slots());
+		}
+
+		@Test
+		void create() {
+			final var expected = new VkQueryPoolCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					return dataEquals((Structure) obj);
+				}
+			};
+			expected.queryType = VkQueryType.OCCLUSION;
+			expected.queryCount = 1;
+			expected.pipelineStatistics = 0;
+			verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
 		}
 
 		@Test
@@ -91,8 +114,8 @@ public class QueryTest extends AbstractVulkanTest {
 		void reset() {
 			final Command reset = pool.reset();
 			assertNotNull(reset);
-			reset.execute(lib, cmd);
-			verify(lib).vkCmdResetQueryPool(cmd, pool, 0, 2);
+			reset.execute(lib, buffer);
+			verify(lib).vkCmdResetQueryPool(buffer, pool, 0, 2);
 		}
 
 		@Test
@@ -108,87 +131,19 @@ public class QueryTest extends AbstractVulkanTest {
 		}
 	}
 
-	@Nested
-	class BuilderTest {
-		private Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new Builder();
-		}
-
-		@Test
-		void build() {
-			// Create pool
-			pool = builder
-					.type(VkQueryType.OCCLUSION)
-					.slots(3)
-					.build(dev);
-
-			// Check pool
-			assertNotNull(pool);
-			assertEquals(dev, pool.device());
-			assertEquals(false, pool.isDestroyed());
-			assertEquals(3, pool.slots());
-
-			// Init expected descriptor
-			final var expected = new VkQueryPoolCreateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final var info = (VkQueryPoolCreateInfo) obj;
-					assertNotNull(info);
-					assertEquals(0, info.flags);
-					assertEquals(VkQueryType.OCCLUSION, info.queryType);
-					assertEquals(3, info.queryCount);
-					assertEquals(0, info.pipelineStatistics);
-					return true;
-				}
-			};
-
-			// Check API
-			verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
-		}
-
-		@Test
-		void buildPipelineStatistics() {
-			// Create pool for pipeline statistics
-			pool = builder
-					.type(VkQueryType.PIPELINE_STATISTICS)
-					.statistic(VkQueryPipelineStatisticFlag.CLIPPING_PRIMITIVES)
-					.build(dev);
-
-			// Init expected descriptor
-			final var expected = new VkQueryPoolCreateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final var info = (VkQueryPoolCreateInfo) obj;
-					assertEquals(VkQueryType.PIPELINE_STATISTICS, info.queryType);
-					assertEquals(VkQueryPipelineStatisticFlag.CLIPPING_PRIMITIVES.value(), info.pipelineStatistics);
-					return true;
-				}
-			};
-
-			// Check API
-			verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
-		}
-
-		@Test
-		void buildMissingQueryType() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
-		}
-
-		@Test
-		void buildEmptyPipelineStatistics() {
-			builder.type(VkQueryType.PIPELINE_STATISTICS);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
-		}
-
-		@Test
-		void buildIllogicalPipelineStatistics() {
-			builder.type(VkQueryType.OCCLUSION);
-			builder.statistic(VkQueryPipelineStatisticFlag.CLIPPING_PRIMITIVES);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
-		}
+	@Test
+	void statistics() {
+		pool = Pool.create(dev, VkQueryType.PIPELINE_STATISTICS, 1, VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS);
+		final var expected = new VkQueryPoolCreateInfo() {
+			@Override
+			public boolean equals(Object obj) {
+				return dataEquals((Structure) obj);
+			}
+		};
+		expected.queryType = VkQueryType.PIPELINE_STATISTICS;
+		expected.queryCount = 1;
+		expected.pipelineStatistics = VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS.value();
+		verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
 	}
 
 	@Nested
@@ -197,6 +152,7 @@ public class QueryTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
+			pool = Pool.create(dev, VkQueryType.OCCLUSION, 2);
 			builder = pool.result();
 		}
 
@@ -213,13 +169,6 @@ public class QueryTest extends AbstractVulkanTest {
 		@Test
 		void countInvalid() {
 			assertThrows(IllegalArgumentException.class, () -> builder.count(3));
-		}
-
-		@Test
-		void buildInvalidRange() {
-			builder.start(1);
-			builder.count(2);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
 		@Test
@@ -264,28 +213,21 @@ public class QueryTest extends AbstractVulkanTest {
 			}
 		}
 
-		@Nested
-		class CopyBufferTests {
-			private VulkanBuffer buffer;
+		@Test
+		void copy() {
+			// Create buffer for results
+			final VulkanBuffer dest = mock(VulkanBuffer.class);
+			when(dest.length()).thenReturn(2 * 4L);
 
-			@BeforeEach
-			void before() {
-				buffer = mock(VulkanBuffer.class);
-				when(buffer.length()).thenReturn(2 * 4L);
-			}
+			// Build copy command
+			final Command copy = builder.build(dest, 0);
+			assertNotNull(copy);
+			verify(dest).require(VkBufferUsageFlag.TRANSFER_DST);
+			verify(dest).validate(8L);
 
-			@Test
-			void build() {
-				// Build copy command
-				final Command copy = builder.build(buffer, 0);
-				assertNotNull(copy);
-				verify(buffer).require(VkBufferUsageFlag.TRANSFER_DST);
-				verify(buffer).validate(8L);
-
-				// Execute command
-				copy.execute(lib, cmd);
-				verify(lib).vkCmdCopyQueryPoolResults(cmd, pool, 0, 2, buffer, 0, 4, 0);
-			}
+			// Execute command
+			copy.execute(lib, buffer);
+			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, 0);
 		}
 	}
 }
