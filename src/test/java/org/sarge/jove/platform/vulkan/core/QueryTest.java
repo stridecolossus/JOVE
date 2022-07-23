@@ -24,6 +24,7 @@ public class QueryTest extends AbstractVulkanTest {
 		buffer = mock(Command.Buffer.class);
 	}
 
+	@DisplayName("A measurement query...")
 	@Nested
 	class DefaultQueryTests {
 		private DefaultQuery query;
@@ -32,13 +33,10 @@ public class QueryTest extends AbstractVulkanTest {
 		void before() {
 			pool = Pool.create(dev, VkQueryType.OCCLUSION, 1);
 			query = pool.query(0);
-		}
-
-		@Test
-		void constructor() {
 			assertNotNull(query);
 		}
 
+		@DisplayName("is started by a command wrapping a segment of the render sequence")
 		@Test
 		void begin() {
 			final Command begin = query.begin(VkQueryControlFlag.PRECISE);
@@ -47,6 +45,7 @@ public class QueryTest extends AbstractVulkanTest {
 			verify(lib).vkCmdBeginQuery(buffer, pool, 0, VkQueryControlFlag.PRECISE.value());
 		}
 
+		@DisplayName("is ended by a command wrapping a segment of the render sequence")
 		@Test
 		void end() {
 			final Command end = query.end();
@@ -56,40 +55,30 @@ public class QueryTest extends AbstractVulkanTest {
 		}
 	}
 
-	@Nested
-	class TimestampTests {
-		private Timestamp timestamp;
-
-		@BeforeEach
-		void before() {
-			pool = Pool.create(dev, VkQueryType.TIMESTAMP, 1);
-			timestamp = pool.timestamp(0);
-		}
-
-		@Test
-		void timestamp() {
-			final Command cmd = timestamp.timestamp(VkPipelineStage.VERTEX_SHADER);
-			assertNotNull(timestamp);
-			cmd.execute(lib, buffer);
-			verify(lib).vkCmdWriteTimestamp(buffer, VkPipelineStage.VERTEX_SHADER, pool, 0);
-		}
+	@DisplayName("A timestamp query is performed by a command injected into the render sequence")
+	@Test
+	void timestamp() {
+		pool = Pool.create(dev, VkQueryType.TIMESTAMP, 1);
+		final Timestamp timestamp = pool.timestamp(0);
+		final Command cmd = timestamp.timestamp(VkPipelineStage.VERTEX_SHADER);
+		assertNotNull(timestamp);
+		cmd.execute(lib, buffer);
+		verify(lib).vkCmdWriteTimestamp(buffer, VkPipelineStage.VERTEX_SHADER, pool, 0);
 	}
 
+	@DisplayName("A query pool...")
 	@Nested
 	class PoolTest {
 		@BeforeEach
 		void before() {
 			pool = Pool.create(dev, VkQueryType.OCCLUSION, 2);
-		}
-
-		@Test
-		void constructor() {
 			assertNotNull(pool);
 			assertEquals(dev, pool.device());
 			assertEquals(false, pool.isDestroyed());
 			assertEquals(2, pool.slots());
 		}
 
+		@DisplayName("is created via the Vulkan API")
 		@Test
 		void create() {
 			final var expected = new VkQueryPoolCreateInfo() {
@@ -104,12 +93,26 @@ public class QueryTest extends AbstractVulkanTest {
 			verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
 		}
 
+		@DisplayName("cannot allocate more queries than the available number of slots")
 		@Test
 		void queryInvalidSlot() {
 			assertThrows(IllegalArgumentException.class, () -> pool.query(2));
 			assertThrows(IllegalArgumentException.class, () -> pool.query(-1));
 		}
 
+		@DisplayName("cannot specify pipeline statistics for other types of query")
+		@Test
+		void createInvalidPipelineStatistic() {
+			assertThrows(IllegalArgumentException.class, () -> Pool.create(dev, VkQueryType.OCCLUSION, 1, VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS));
+		}
+
+		@DisplayName("must specify at least one pipeline statisticquery")
+		@Test
+		void createEmptyPipelineStatistics() {
+			assertThrows(IllegalArgumentException.class, () -> Pool.create(dev, VkQueryType.PIPELINE_STATISTICS, 1));
+		}
+
+		@DisplayName("can be reset")
 		@Test
 		void reset() {
 			final Command reset = pool.reset();
@@ -118,11 +121,13 @@ public class QueryTest extends AbstractVulkanTest {
 			verify(lib).vkCmdResetQueryPool(buffer, pool, 0, 2);
 		}
 
+		@DisplayName("cannot reset query slots that are out-of-range")
 		@Test
 		void resetInvalidRange() {
 			assertThrows(IllegalArgumentException.class, () -> pool.reset(1, 2));
 		}
 
+		@DisplayName("can be destroyed")
 		@Test
 		void destroy() {
 			pool.destroy();
@@ -131,6 +136,7 @@ public class QueryTest extends AbstractVulkanTest {
 		}
 	}
 
+	@DisplayName("A pipeline statistics query has additional statistics flags")
 	@Test
 	void statistics() {
 		pool = Pool.create(dev, VkQueryType.PIPELINE_STATISTICS, 1, VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS);
@@ -146,6 +152,7 @@ public class QueryTest extends AbstractVulkanTest {
 		verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
 	}
 
+	@DisplayName("The results for a query...")
 	@Nested
 	class ResultBuilderTest {
 		private ResultBuilder builder;
@@ -154,23 +161,22 @@ public class QueryTest extends AbstractVulkanTest {
 		void before() {
 			pool = Pool.create(dev, VkQueryType.OCCLUSION, 2);
 			builder = pool.result();
-		}
-
-		@Test
-		void constructor() {
 			assertNotNull(builder);
 		}
 
+		@DisplayName("cannot specify a starting query slot that is out-of-range for the pool")
 		@Test
 		void startInvalid() {
 			assertThrows(IllegalArgumentException.class, () -> builder.start(2));
 		}
 
+		@DisplayName("cannot specify a number of slots that is out-of-range for the pool")
 		@Test
 		void countInvalid() {
 			assertThrows(IllegalArgumentException.class, () -> builder.count(3));
 		}
 
+		@DisplayName("cannot specify a results stride that is not a multiple of the specified data type")
 		@Test
 		void buildInvalidStride() {
 			builder.stride(3);
@@ -184,21 +190,19 @@ public class QueryTest extends AbstractVulkanTest {
 
 			@BeforeEach
 			void before() {
-				accessor = builder.flag(WAIT).build();
 				bb = ByteBuffer.allocate(42);
-			}
-
-			@Test
-			void constructor() {
+				accessor = builder.flag(WAIT).build();
 				assertNotNull(accessor);
 			}
 
+			@DisplayName("can be copied to an NIO buffer on demand")
 			@Test
 			void accept() {
 				accessor.accept(bb);
 				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 4, WAIT.value());
 			}
 
+			@DisplayName("can be configured as long values")
 			@Test
 			void acceptLongValues() {
 				final int flags = IntegerEnumeration.reduce(VkQueryResultFlag.LONG, WAIT);
@@ -206,6 +210,7 @@ public class QueryTest extends AbstractVulkanTest {
 				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 8, flags);
 			}
 
+			@DisplayName("cannot be copied to a buffer that is too small for the results")
 			@Test
 			void acceptInvalidBufferLength() {
 				bb.position(bb.limit());
@@ -213,6 +218,7 @@ public class QueryTest extends AbstractVulkanTest {
 			}
 		}
 
+		@DisplayName("can be copied to a Vulkan buffer")
 		@Test
 		void copy() {
 			// Create buffer for results

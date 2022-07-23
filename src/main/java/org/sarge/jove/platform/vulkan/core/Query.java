@@ -100,7 +100,7 @@ public interface Query {
 		public static Pool create(DeviceContext dev, VkQueryType type, int slots, VkQueryPipelineStatisticFlag... stats) {
 			// Validate
 			if((type == VkQueryType.PIPELINE_STATISTICS) != (stats.length > 0)) {
-				throw new IllegalArgumentException("TODO");
+				throw new IllegalArgumentException("Empty or superfluous pipeline statistics");
 			}
 
 			// Init create descriptor

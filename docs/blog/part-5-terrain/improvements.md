@@ -736,17 +736,21 @@ shader(VkShaderStage.TESSELLATION_EVALUATION)
 ### Overview
 
 Vulkan provides a _query_ API that allows an application to perform the following:
+
 * _occlusion_ queries.
+
 * retrieve pipeline statistics.
+
 * inject timestamps into a command sequence.
-* and some other extensions that are out-of-scope for this project.
+
+* and some extensions that are out-of-scope for this project.
 
 A _query_ is generally implemented as a pair of commands that wrap a segment of a rendering sequence, except for timestamps which consist of a single atomic command.
-Queries are allocated from a _query pool_ which is essentially an array of available _slots_ for the results (which are either integer or long values).
+Queries are allocated from a _query pool_ which is essentially an array of available _slots_ for the results.
 
-After execution the results of the query can be retrieved on-demand to an arbitrary NIO buffer or copied asynchronously to a `TRANSFER_DST` Vulkan buffer.
+After execution the results of the query can be retrieved on-demand to an arbitrary NIO buffer or copied asynchronously to a Vulkan buffer.
 
-A new JNA library is added for the query API:
+First a new JNA library is created for the query API:
 
 ```java
 interface Library {
@@ -763,104 +767,96 @@ interface Library {
 
 ### Queries
 
-We start with an outline class for a query and its parent pool:
+The outline class for the query framework is as follows:
 
 ```java
-public class Query {
-    private final int slot;
-    private final Pool pool;
+public interface Query {
+    /**
+     * Default implementation for a measurement query wrapping a portion of the render sequence.
+     */
+    interface DefaultQuery extends Query {
+    }
+
+    /**
+     * Timestamp query.
+     */
+    interface Timestamp extends Query {
+    }
 
     public static class Pool extends AbstractVulkanObject {
+        private final VkQueryType type;
         private final int slots;
+    }
+}
+```
+
+A query pool is instantiated via a factory method:
+
+```java
+public static Pool create(DeviceContext dev, VkQueryType type, int slots, VkQueryPipelineStatisticFlag... stats) {
+    // Init create descriptor
+    var info = new VkQueryPoolCreateInfo();
+    info.queryType = notNull(type);
+    info.queryCount = oneOrMore(slots);
+    info.pipelineStatistics = IntegerEnumeration.reduce(stats);
+
+    // Instantiate query pool
+    PointerByReference ref = dev.factory().pointer();
+    VulkanLibrary lib = dev.library();
+    check(lib.vkCreateQueryPool(dev, info, null, ref));
+
+    // Create pool
+    return new Pool(ref.getValue(), dev, type, slots);
+}
+```
+
+Note that the `stats` collection parameter is only valid for a `PIPELINE_STATISTICS` query.
+
+Query instances can then be allocated from the pool, the default implementation is used to wrap a segment of the rendering sequence:
+
+```java
+public DefaultQuery query(int slot) {
+    return new DefaultQuery() {
+        @Override
+        public Command begin(VkQueryControlFlag... flags) {
+            int mask = IntegerEnumeration.reduce(flags);
+            return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
+        }
 
         @Override
-        protected Destructor<Pool> destructor(VulkanLibrary lib) {
-            return lib::vkDestroyQueryPool;
+        public Command end() {
+            return (lib, buffer) -> lib.vkCmdEndQuery(buffer, Pool.this, slot);
         }
-    }
+    };
 }
 ```
 
-A query instance is created by the following factory method on the pool:
+Similarly for timestamp queries:
 
 ```java
-public Query query(int slot) {
-    if(slot >= slots) throw new IllegalArgumentException(...);
-    return new Query(slot, this);
+public Timestamp timestamp(int slot) {
+    return new Timestamp() {
+        @Override
+        public Command timestamp(VkPipelineStage stage) {
+            return (lib, buffer) -> lib.vkCmdWriteTimestamp(buffer, stage, Pool.this, slot);
+        }
+    };
 }
 ```
 
-Commands to perform the query can then be allocated from this instance:
+Finally query slots (or the entire pool) must be reset before execution:
 
 ```java
-public Command begin(VkQueryControlFlag... flags) {
-    int mask = IntegerEnumeration.reduce(flags);
-    return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, pool, slot, mask);
-}
-
-public Command end() {
-    return (lib, buffer) -> lib.vkCmdEndQuery(buffer, pool, slot);
-}
-
-public Command timestamp(VkPipelineStage stage) {
-    return (lib, buffer) -> lib.vkCmdWriteTimestamp(buffer, stage, pool, slot);
+public Command reset(int start, int num) {
+    return (lib, buffer) -> lib.vkCmdResetQueryPool(buffer, this, start, num);
 }
 ```
 
-### Query Pool
+Note that this command __must__ be invoked before the start of a render pass.
 
-A query pool is created as normal via a builder:
+### Results Builder
 
-```java
-public static class Builder {
-    private VkQueryType type;
-    private int slots = 1;
-    private final Set<VkQueryPipelineStatisticFlag> stats = new HashSet<>();
-    
-    public Pool build(DeviceContext dev) {
-        ...
-    }
-}
-```
-
-The `build` method first populates a descriptor for the pool:
-
-```java
-public Pool build(DeviceContext dev) {
-    var info = new VkQueryPoolCreateInfo();
-    info.queryType = type;
-    info.queryCount = slots;
-    ...
-}
-```
-
-The `stats` property of the builder is only relevant for a `PIPELINE_STATISTICS` query:
-
-```java
-if(type == VkQueryType.PIPELINE_STATISTICS) {
-    if(stats.isEmpty()) throw new IllegalArgumentException(...);
-    info.pipelineStatistics = IntegerEnumeration.reduce(stats);
-}
-else {
-    if(!stats.isEmpty()) throw new IllegalArgumentException(...);
-}
-```
-
-Finally the pool is allocated via the API and wrapped by the domain object:
-
-```java
-// Instantiate query pool
-PointerByReference ref = dev.factory().pointer();
-VulkanLibrary lib = dev.library();
-check(lib.vkCreateQueryPool(dev, info, null, ref));
-
-// Create pool
-return new Pool(ref.getValue(), dev, slots);
-```
-
-### Query Results
-
-Retrieval of the results of one-or-more queries is slightly complicated:
+Retrieval of the results of a query is somewhat complicated:
 
 * There are two supported mechanisms: on-demand or asynchronous copy to a buffer.
 
@@ -868,7 +864,7 @@ Retrieval of the results of one-or-more queries is slightly complicated:
 
 * Results can be integer or long data types.
 
-Therefore configuration of the results is also specified by a builder that is instantiated from the query pool:
+Therefore configuration of the results is specified by a builder instantiated from the query pool:
 
 ```java
 public class Pool ... {
@@ -890,7 +886,7 @@ public static class ResultBuilder {
 }
 ```
 
-We also provide a convenience method to initialise the results to a long data type, which requires a specific query flag as well as setting the `stride` field appropriately:
+A convenience setter is provided to initialise the results to a long data type:
 
 ```java
 public ResultBuilder longs() {
@@ -900,8 +896,8 @@ public ResultBuilder longs() {
 }
 ```
 
-Since query results can be retrieved using two different mechanisms the builder provides __two__ build methods, 
-for the case where the results are retrieved on-demand the application provides an NIO buffer:
+Since query results can be retrieved using two different mechanisms the builder provides __two__ build methods.
+For the case where the results are retrieved on-demand the application provides an NIO buffer:
 
 ```java
 public Consumer<ByteBuffer> build() {
@@ -915,7 +911,25 @@ public Consumer<ByteBuffer> build() {
 }
 ```
 
-The `validate` method (not shown) checks that `stride` is a multiple of the specified data type and builds the flags bit-mask.
+The `validate` method checks that the `stride` is a multiple of the specified data type and builds the flags bit-mask:
+
+```java
+private int validate() {
+    // Validate query range
+    if(start + count > pool.slots) {
+        throw new IllegalArgumentException(...);
+    }
+
+    // Validate stride
+    long multiple = flags.contains(VkQueryResultFlag.LONG) ? Long.BYTES : Integer.BYTES;
+    if((stride % multiple) != 0) {
+        throw new IllegalArgumentException(...);
+    }
+
+    // Build flags mask
+    return IntegerEnumeration.reduce(flags);
+}
+```
 
 The second variant generates a command that is injected into the render sequence to asynchronously copy the results to a given Vulkan buffer:
 
@@ -928,17 +942,6 @@ public Command build(VulkanBuffer buffer, long offset) {
     };
 }
 ```
-
-Finally the query slots are reset before each execution using the following command factory on the pool class:
-
-```java
-public Command reset(int start, int num) {
-    if(start + num > slots) throw new IllegalArgumentException(...);
-    return (lib, buffer) -> lib.vkCmdResetQueryPool(buffer, this, start, num);
-}
-```
-
-Note that the slots __must__ be reset before the query begins and this command __must__ be invoked before the start of a render pass.
 
 ### Integration
 
@@ -957,7 +960,7 @@ public Query.Pool queryPool(LogicalDevice dev) {
 }
 ```
 
-And a query instance allocated from the pool:
+Next a query instance is allocated from the pool:
 
 ```java
 @Bean
@@ -970,7 +973,7 @@ The query wraps the render pass in the command sequence:
 
 ```java
 buffer
-    .add(query.pool().reset(0, 1))
+    .add(pool.reset())
     .add(frame.begin())
         .add(query.begin())
             ...
@@ -978,9 +981,9 @@ buffer
     .add(FrameBuffer.END)
 ```
 
-Again note that the reset command is invoked before the start of the render pass.
+Again note the pool is `reset` before the start of the pass.
 
-Finally we configure retrieval of the query results as a frame listener task that dumps the vertex count to the console:
+Finally the query results are configured as a frame listener task that dumps the vertex count to the console:
 
 ```java
 @Bean
@@ -996,7 +999,7 @@ public Task queryResults() {
 
 The terrain demo application should now output the number of the vertices generated on each frame.  Obviously this is a very crude implementation to illustrate the query framework.
 
-Note that frame listener tasks are invoked _before_ the render sequence so the query results will likely fail on the first invocation with a `VK_NOT_READY` result code.
+Note that if the results task is executed before the render sequence the first invocation is likely to fail with a `VK_NOT_READY` result code.
 
 ---
 
