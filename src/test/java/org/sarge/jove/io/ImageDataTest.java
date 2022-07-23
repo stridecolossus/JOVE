@@ -1,21 +1,13 @@
 package org.sarge.jove.io;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.io.ImageData.DefaultImageData;
-import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.io.ImageData.Level;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.io.ImageData.*;
 
 public class ImageDataTest {
 	private static final Extents EXTENTS = new Extents(new Dimensions(2, 3));
@@ -98,6 +90,8 @@ public class ImageDataTest {
 		void offsetInvalidLayerIndex() {
 			assertThrows(IllegalArgumentException.class, () -> level.offset(4, 4));
 		}
+
+		// TODO - levels()
 	}
 
 	@Nested

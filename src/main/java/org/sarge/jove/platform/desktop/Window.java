@@ -8,6 +8,7 @@ import java.util.function.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
 import org.sarge.lib.util.*;
 
 import com.sun.jna.*;
@@ -84,7 +85,7 @@ public class Window extends AbstractTransientNativeObject {
 	private final Descriptor descriptor;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
-	private final Map<Object, Set<Callback>> registry = new WeakHashMap<>();
+	private final Map<Object, Callback> registry = new WeakHashMap<>();
 
 	/**
 	 * Constructor.
@@ -127,51 +128,63 @@ public class Window extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * Sets the event listener for this window.
+	 * Sets the listener for window state changes.
 	 * @param listener Listener for window state changes or {@code null} to remove the listener
 	 */
-	public void listener(WindowListener listener) {
+	public void listener(WindowListener.Type type, WindowListener listener) {
+		// Determine listener registration method
 		final DesktopLibrary lib = desktop.library();
+		final BiConsumer<Window, WindowStateListener> method = switch(type) {
+			case ENTER -> lib::glfwSetCursorEnterCallback;
+			case FOCUS -> lib::glfwSetWindowFocusCallback;
+			case ICONIFIED -> lib::glfwSetWindowIconifyCallback;
+		};
+
+		// Register listener
 		if(listener == null) {
-			lib.glfwSetCursorEnterCallback(this, null);
-			lib.glfwSetWindowFocusCallback(this, null);
-			lib.glfwSetWindowIconifyCallback(this, null);
-			lib.glfwSetWindowSizeCallback(this, null);
+			method.accept(this, null);
+			register(type, null);
 		}
 		else {
-			listener(lib::glfwSetCursorEnterCallback, (window, enter) -> listener.cursor(enter));
-			listener(lib::glfwSetWindowFocusCallback, (window, focus) -> listener.focus(focus));
-			listener(lib::glfwSetWindowIconifyCallback, (window, iconify) -> listener.minimised(iconify));
-			listener(lib::glfwSetWindowSizeCallback, (window, w, h) -> listener.resize(w, h));
+			final WindowStateListener adapter = (ptr, state) -> listener.state(type, state == 1);
+			method.accept(this, adapter);
+			register(type, adapter);
 		}
 	}
 
 	/**
-	 * Helper - Registers a window listener.
-	 * <p>
-	 * Note that JNA callbacks <b>must</b> contain a single public method, i.e. the same {@link WindowListener} cannot be passed to each API method</li>
-	 * <p>
-	 * @param <T> Callback type
-	 * @param method		GLFW registration method
-	 * @param listener		Callback
+	 * Sets the listener for window resize events.
+	 * @param listener Resize listener or {@code null} to remove the listener
 	 */
-	private <T extends Callback> void listener(BiConsumer<Window, T> method, T listener) {
-		method.accept(this, listener);
-		register("window.listeners", listener);
+	public void resize(IntBinaryOperator listener) {
+		final String key = "resize";
+		final DesktopLibrary lib = desktop.library();
+		if(listener == null) {
+			lib.glfwSetWindowSizeCallback(this, null);
+			register(key, null);
+		}
+		else {
+			final WindowResizeListener adapter = (ptr, w, h) -> listener.applyAsInt(w, h);
+			lib.glfwSetWindowSizeCallback(this, adapter);
+			register(key, adapter);
+		}
 	}
 
 	/**
 	 * Registers a JNA callback listener attached to this window.
 	 * <p>
-	 * The set of listeners is <i>weakly</i> referenced by the given key.
-	 * This prevents callbacks being garbage collected and thus de-registered by GLFW until the key itself becomes stale.
+	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus de-registered by GLFW.
 	 * <p>
 	 * @param key			Key
-	 * @param listener		Listener
+	 * @param callback 		Callback listener
 	 */
-	protected void register(Object key, Callback listener) {
-		final Set<Callback> set = registry.computeIfAbsent(key, ignored -> new HashSet<>());
-		set.add(notNull(listener));
+	protected void register(Object key, Callback callback) {
+		if(callback == null) {
+			registry.remove(key);
+		}
+		else {
+			registry.put(key, callback);
+		}
 	}
 
 	/**

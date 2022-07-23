@@ -1,27 +1,21 @@
 package org.sarge.jove.platform.desktop;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowResizeListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowStateListener;
 import org.sarge.jove.util.ReferenceFactory;
 
-import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -34,7 +28,6 @@ public class WindowTest {
 	void before() {
 		// Init native library
 		lib = mock(DesktopLibrary.class);
-		when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(new Pointer(1));
 
 		// Init desktop
 		desktop = mock(Desktop.class);
@@ -65,53 +58,67 @@ public class WindowTest {
 	}
 
 	@Test
-	void listener() {
-		// Attach listener
+	void failed() {
+		final var builder = new Window.Builder();
+		assertThrows(RuntimeException.class, () -> builder.build(desktop));
+	}
+
+	@ParameterizedTest
+	@EnumSource(WindowListener.Type.class)
+	void listener(WindowListener.Type type) {
+		// Register state-change listener
 		final WindowListener listener = mock(WindowListener.class);
-		window.listener(listener);
+		window.listener(type, listener);
 
-		// Check cursor callback attached to the window
-		final ArgumentCaptor<WindowStateListener> captor = ArgumentCaptor.forClass(WindowStateListener.class);
-		verify(lib).glfwSetCursorEnterCallback(eq(window), captor.capture());
+		// Check API
+		final var captor = ArgumentCaptor.forClass(WindowStateListener.class);
+		switch(type) {
+			case ENTER -> verify(lib).glfwSetCursorEnterCallback(eq(window), captor.capture());
+			case FOCUS -> verify(lib).glfwSetWindowFocusCallback(eq(window), captor.capture());
+			case ICONIFIED -> verify(lib).glfwSetWindowIconifyCallback(eq(window), captor.capture());
+		}
 
-		// Invoke the callback and check delegated to the listener
-		final WindowStateListener callback = captor.getValue();
-		assertNotNull(callback);
-		callback.state(null, true);
-		verify(listener).cursor(true);
-
-		// Check other callbacks
-		verify(lib).glfwSetWindowFocusCallback(eq(window), any(WindowStateListener.class));
-		verify(lib).glfwSetWindowIconifyCallback(eq(window), any(WindowStateListener.class));
-		verify(lib).glfwSetWindowSizeCallback(eq(window), any(WindowResizeListener.class));
+		// Check listener
+		final WindowStateListener adapter = captor.getValue();
+		adapter.state(null, 1);
+		verify(listener).state(type, true);
 	}
 
 	@Test
-	void removeListener() {
-		window.listener(null);
+	void remove() {
+		final var type = WindowListener.Type.ENTER;
+		window.listener(type, null);
 		verify(lib).glfwSetCursorEnterCallback(window, null);
-		verify(lib).glfwSetWindowFocusCallback(window, null);
-		verify(lib).glfwSetWindowIconifyCallback(window, null);
-		verify(lib).glfwSetWindowSizeCallback(window, null);
-	}
-
-	@Test
-	void register() {
-		// TODO - can we effectively test this?
-		window.register(new Object(), mock(Callback.class));
 	}
 
 	@Test
 	void surface() {
 		// Init reference factory
-		final ReferenceFactory factory = mock(ReferenceFactory.class);
+		final Pointer ptr = new Pointer(1);
+		final var ref = new PointerByReference(ptr);
+		final var factory = mock(ReferenceFactory.class);
 		when(desktop.factory()).thenReturn(factory);
-		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(1)));
+		when(factory.pointer()).thenReturn(ref);
 
-		// Retrieve window surface
+		// Create surface for this window
 		final Handle instance = new Handle(new Pointer(2));
 		final Handle surface = window.surface(instance);
-		assertNotNull(surface);
+		assertEquals(new Handle(ptr), surface);
+		verify(lib).glfwCreateWindowSurface(instance, window, null, ref);
+	}
+
+	@Test
+	void surfaceFailed() {
+		// Init reference factory
+		final var ref = new PointerByReference();
+		final var factory = mock(ReferenceFactory.class);
+		when(desktop.factory()).thenReturn(factory);
+		when(factory.pointer()).thenReturn(ref);
+
+		// Checks for unavailable surface
+		final Handle instance = new Handle(new Pointer(2));
+		when(lib.glfwCreateWindowSurface(instance, window, null, ref)).thenReturn(999);
+		assertThrows(RuntimeException.class, () -> window.surface(instance));
 	}
 
 	@Test
@@ -131,6 +138,10 @@ public class WindowTest {
 
 		@Test
 		void build() {
+			// Init API
+			final Pointer ptr = new Pointer(1);
+			when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(ptr);
+
 			// Construct window
 			window = builder
 					.title("title")
@@ -138,10 +149,10 @@ public class WindowTest {
 					.hint(Window.Hint.DECORATED)
 					.build(desktop);
 
-			// Check window properties
+			// Check window
 			assertNotNull(window);
-
-			// Check GLFW window hints applied
+			assertEquals(new Handle(ptr), window.handle());
+			assertEquals(false, window.isDestroyed());
 			verify(lib).glfwWindowHint(0x00020005, 1);
 		}
 	}

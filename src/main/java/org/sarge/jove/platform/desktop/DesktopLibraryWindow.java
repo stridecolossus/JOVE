@@ -2,8 +2,7 @@ package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.common.Handle;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -67,7 +66,7 @@ interface DesktopLibraryWindow {
 		 * @param window		Window
 		 * @param state			State
 		 */
-		void state(Pointer window, boolean state);
+		void state(Pointer window, int state);
 	}
 
 	/**
