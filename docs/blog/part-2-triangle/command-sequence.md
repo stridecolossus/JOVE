@@ -140,7 +140,7 @@ Command buffers can then be allocated from the pool via the following factory me
 public List<Buffer> allocate(int num, boolean primary) {
     // Init descriptor
     var info = new VkCommandBufferAllocateInfo();
-    info.level = primary ? VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_PRIMARY : VkCommandBufferLevel.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+    info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
     info.commandBufferCount = oneOrMore(num);
     info.commandPool = this.handle();
 

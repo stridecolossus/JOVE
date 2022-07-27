@@ -30,7 +30,7 @@ Creating the logical device consists of the following steps:
 
 4. Retrieve the required work queues.
 
-For our demo we need to choose a device that supports presentation so the _desktop_ library will be extended to create a window and a Vulkan rendering surface.  We _could_ use Vulkan extensions to implement the surface from the ground up but it makes sense to take advantage of the platform-independant implementation.  The disadvantage of this approach is that the logic becomes a little convoluted as the surface and Vulkan components are slightly inter-dependant, but this seems an acceptable trade-off.
+The demo requires a device that supports presentation so the _desktop_ library will be extended to create a window and Vulkan rendering surface.
 
 ---
 
@@ -67,9 +67,19 @@ public record Queue(Pointer handle, Family family) {
 
 Note that the constructor for the family copies the set of queue flags and rewrites the constructor argument.  This is the standard approach for ensuring that a record class is immutable, although unfortunately this is currently flagged as a warning in our IDE.
 
-### Enumerating the Physical Devices
+The queue also provides a method to block until all work has been processed:
 
-To enumerate the available physical devices we invoke the `vkEnumeratePhysicalDevices` API method _twice_:
+```java
+public record Queue {
+    public void waitIdle(VulkanLibrary lib) {
+        check(lib.vkQueueWaitIdle(handle));
+    }
+}
+```
+
+### Device Enumeration
+
+To enumerate the available physical devices the `vkEnumeratePhysicalDevices` API method is invoked _twice_:
 
 1. Once to retrieve the number of available devices via an integer-by-reference value (the array parameter is set to `null`).
 
@@ -119,7 +129,7 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 }
 ```
 
-Note that again the same API method is invoked twice to retrieve the queue families.  However in this case we use the JNA `toArray` factory method on an instance of a `VkQueueFamilyProperties` structure to allocate the array and pass the _first_ element to the API method (i.e. the array maps to a native pointer-to-structure).  This common pattern will be abstracted at the end of the chapter.
+Note that again the same API method is invoked twice to retrieve the queue families.  However in this case the JNA `toArray` factory method is invoked on an instance of a `VkQueueFamilyProperties` structure to allocate the array and the the _first_ element is passed to the API method (i.e. a native pointer to array of structures).  This common pattern will be abstracted at the end of the chapter.
 
 Finally another helper is implemented to create a queue family domain object:
 
@@ -142,8 +152,6 @@ List<Family> families = IntStream
 // Create device
 return new PhysicalDevice(handle, instance, families);
 ```
-
-### Device Properties
 
 The physical device exposes a set of properties containing the name and type of the device, hardware limits, etc:
 
@@ -260,7 +268,7 @@ return new Window(desktop, window, descriptor);
 
 Notes:
 
-* This is a bare-bones implementation sufficient for the triangle demo, however we will almost certainly need to refactor this code to support richer functionality, e.g. full-screen windows.
+* This is a bare-bones implementation sufficient for the triangle demo, however it will almost certainly need to be refactored to support richer functionality, e.g. full-screen windows.
 
 * A convenience builder is also added to create and configure a window.
 
@@ -300,7 +308,9 @@ Pointer surface = window.surface(instance.handle());
 
 ### Selector
 
-As previously mentioned the process of selecting the physical device is slightly messy due to the inter-dependencies between the Vulkan instance, the rendering surface and the presentation queue.  This is exacerbated by the mechanism Vulkan uses to select the work queues which essentially requires the same logic to be applied twice: once to select the physical device with the required queue capabilities, and again to retrieve each queue from the resultant logical device.
+Note that we _could_ have used Vulkan extensions to implement the surface from the ground up but it makes sense to take advantage of the platform-independant implementation.  The disadvantage of this approach is that the logic becomes a little convoluted as the surface and Vulkan components are slightly inter-dependant, but this seems an acceptable trade-off.
+
+This complexity is exacerbated by the mechanism Vulkan uses to select the work queues which essentially requires the same logic to be applied twice: once to select the physical device with the required queue capabilities, and again to retrieve each queue from the resultant logical device.
 
 After trying several approaches we settled on the design described below which determines the queue family as a _side effect_ of selecting the device (the same approach is used in the tutorial). This is something we would generally try to avoid but it seems acceptable in this case, and the resultant API is at least relatively simple from the perspective of the user.
 
@@ -346,7 +356,7 @@ private Optional<Family> findLocal(PhysicalDevice dev) {
 }
 ```
 
-Finally we add a factory method to create a selector that matches a device by queue properties:
+Finally a factory method is added to create a selector that matches a device by queue properties:
 
 ```java
 public static Selector of(VkQueueFlag... flags) {
@@ -365,7 +375,7 @@ public static Selector of(Handle surface) {
 }
 ```
 
-Which delegates to a new query method on the device:
+Delegating to a new query method on the device:
 
 ```java
 public boolean isPresentationSupported(Handle surface, Family family) {
@@ -423,36 +433,6 @@ public class LogicalDevice {
     }
 }
 ```
-
-We also provide a convenience accessor to retrieve a single work queue for a given family:
-
-```java
-public Queue queue(Family family) {
-    List<Queue> list = queues.get(family);
-    if((list == null) || list.isEmpty()) throw new IllegalArgumentException(...);
-    return list.get(0);
-}
-```
-
-And a helper method to block execution until the device is idle:
-
-```java
-public void waitIdle() {
-    check(lib.vkDeviceWaitIdle(handle));
-}
-```
-
-Similarly for an individual queue:
-
-```java
-public record Queue {
-    public void waitIdle(VulkanLibrary lib) {
-        check(lib.vkQueueWaitIdle(handle));
-    }
-}
-```
-
-### Builder
 
 The logical device is another object that is highly configurable and is therefore constructed via a builder:
 
@@ -577,26 +557,46 @@ private Stream<Queue> queues(Pointer dev, RequiredQueue required) {
 }
 ```
 
-Finally the builder creates the domain object for the new device:
+And finally the builder creates the domain object for the new device:
 
 ```java
 return new LogicalDevice(handle.getValue(), parent, map);
 ```
 
-In the demo we can now create the logical device and retrieve the work queues:
+In the demo we can now create the logical device:
 
 ```java
-// Create device
 LogicalDevice dev = new LogicalDevice.Builder(gpu)
     .extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
     .layer(ValidationLayer.STANDARD_VALIDATION)
     .queue(graphicsFamily)
     .queue(presentationFamily)
     .build();
-    
-// Lookup work queues
+```
+
+And then retrieve the work queues:
+
+```java
 Queue graphicsQueue = dev.queue(graphicsFamily);
 Queue presentationQueue = dev.queue(presentationFamily);
+```
+
+Which uses the following convenience accessor to retrieve the queue for a given family:
+
+```java
+public Queue queue(Family family) {
+    List<Queue> list = queues.get(family);
+    if((list == null) || list.isEmpty()) throw new IllegalArgumentException(...);
+    return list.get(0);
+}
+```
+
+The whole device can be blocked until all queues have been processed:
+
+```java
+public void waitIdle() {
+    check(lib.vkDeviceWaitIdle(handle));
+}
 ```
 
 The new API is implemented as an inner class of the logical device:
@@ -695,7 +695,7 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
 }
 ```
 
-For an array of JNA structures we need a second, slightly different implementation since the array __must__ be a contiguous block of memory allocated using the `toArray` helper:
+For an array of JNA structures a second, slightly different implementation is needed since the array __must__ be a contiguous block of memory allocated using the `toArray` helper:
 
 ```java
 static <T extends Structure> T[] invoke(VulkanFunction<T> func, IntByReference count, Supplier<T> identity) {
@@ -746,7 +746,7 @@ Vulkan makes heavy use of structures to configure a variety of objects, however 
 
 None of these are particularly difficult issues to overcome, but the number of cases where this occurs makes the code tedious to develop, error-prone, and less testable.
 
-We implement the following helper that allocates and populates a JNA structure array from an arbitrary collection of domain objects, providing a common solution to address these issues:
+The following helper allocates and populates a JNA structure array from an arbitrary collection of domain objects, providing a common solution to address these issues:
 
 ```java
 public final class StructureHelper {
@@ -807,7 +807,7 @@ In the logical device the new helper class is used to build the array of require
 info.pQueueCreateInfos = StructureHelper.pointer(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
 ```
 
-Finally we also provide a generalised custom stream collector which is more convenient in some cases:
+Finally a generalised custom stream collector is provided which is more convenient in some cases:
 
 ```java
 /**

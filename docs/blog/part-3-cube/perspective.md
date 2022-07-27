@@ -504,7 +504,9 @@ public class Model {
 
 Where _count_ is the draw count for the model and _layout_ specifies the structure of each vertex in the model.
 
-Rather than fiddling the code-generated `VkPrimitiveTopology` enumeration a wrapper is implemented for the drawing primitive which can then provide additional helpers:
+The model header is factored into a separate domain class since the actual model vertices (and later the index buffer) are not required once the data has been loaded to the hardware.
+
+Rather than fiddling the code-generated `VkPrimitiveTopology` enumeration a wrapper is implemented for drawing primitives which can then provide additional helpers:
 
 ```java
 public enum Primitive {

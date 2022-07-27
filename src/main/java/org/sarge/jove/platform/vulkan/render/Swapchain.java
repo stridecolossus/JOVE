@@ -420,7 +420,7 @@ public class Swapchain extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the clear colour for the swapchain images (default is {@link Colour#BLACK}).
+		 * Sets the clear colour for the swapchain images (default is no clear operation).
 		 * @param clear Clear colour
 		 */
 		public Builder clear(Colour clear) {
