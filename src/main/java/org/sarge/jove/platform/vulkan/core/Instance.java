@@ -70,7 +70,7 @@ public class Instance extends AbstractTransientNativeObject {
 	 * Creates a builder for a new diagnostics handler for this instance.
 	 * @return Diagnostics handler builder
 	 */
-	public synchronized Handler.Builder handler() {
+	public Handler.Builder handler() {
 		return new Handler.Builder(this);
 	}
 

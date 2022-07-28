@@ -12,13 +12,11 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
  * LogicalDevice dev = ...
  * DeviceLimits limits = dev.limits();
  * limits.require("multiDrawIndirect");
- * float max = limits.value("maxDrawIndirectCount");
- * </pre>
+ * float max = limits.value("maxDrawIndirectCount");</pre>
  * <p>
- * Some limits are a quantised range of values which can be queried for the {@link #range(String, String)} helper method:
+ * Some limits are a quantised range of values which can be queried using the {@link #range(String, String)} helper method:
  * <pre>
- * float[] sizes = limits.range("pointSizeRange", "pointSizeGranularity");
- * </pre>
+ * float[] sizes = limits.range("pointSizeRange", "pointSizeGranularity");</pre>
  * @see VkPhysicalDeviceLimits
  * @author Sarge
  */

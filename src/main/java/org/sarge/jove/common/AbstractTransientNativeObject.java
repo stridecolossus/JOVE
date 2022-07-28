@@ -40,7 +40,7 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
 	}
 
 	@Override
-	public synchronized void destroy() {
+	public void destroy() {
 		if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
 		release();
 		destroyed = true;

@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -95,7 +94,7 @@ public class PoolAllocator implements Allocator {
 	/**
 	 * Releases <b>all</b> allocated memory back to the pool.
 	 */
-	public synchronized void release() {
+	public void release() {
 		pools.values().forEach(MemoryPool::release);
 		assert free() == size();
 	}
@@ -103,7 +102,7 @@ public class PoolAllocator implements Allocator {
 	/**
 	 * Destroys <b>all</b> memory allocation by this pool.
 	 */
-	public synchronized void destroy() {
+	public void destroy() {
 		pools.values().forEach(MemoryPool::destroy);
 		count = 0;
 		assert size() == 0;

@@ -91,7 +91,7 @@ public class MemoryPool {
 	 * @param size  Memory size
 	 * @return Allocated memory
 	 */
-	synchronized DeviceMemory allocate(long size) {
+	DeviceMemory allocate(long size) {
 		// Short cut to allocate a new block if pool has insufficient free memory
 		if(free() < size) {
 			return allocateNewBlock(size);
@@ -175,7 +175,7 @@ public class MemoryPool {
 	/**
 	 * Releases <b>all</b> memory allocated back to this pool.
 	 */
-	public synchronized void release() {
+	public void release() {
 		final var allocations = this.allocations();
 		allocations.forEach(DeviceMemory::destroy);
 		assert free() == total;
@@ -184,7 +184,7 @@ public class MemoryPool {
 	/**
 	 * Destroys <b>all</b> memory allocated by this pool.
 	 */
-	public synchronized void destroy() {
+	public void destroy() {
 		for(Block b : blocks) {
 			b.destroy();
 		}

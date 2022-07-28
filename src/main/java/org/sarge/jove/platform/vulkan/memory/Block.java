@@ -2,10 +2,7 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -168,7 +165,7 @@ class Block {
 		}
 
 		@Override
-		public synchronized void destroy() {
+		public void destroy() {
 			checkAlive();
 			destroyed = true;
 		}

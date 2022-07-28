@@ -208,7 +208,7 @@ public interface Command {
 		/**
 		 * Releases this buffer back to the pool.
 		 */
-		public synchronized void free() {
+		public void free() {
 			pool.free(Set.of(this));
 			pool.buffers.remove(this);
 		}
@@ -368,7 +368,7 @@ public interface Command {
 		/**
 		 * Frees <b>all</b> command buffers in this pool.
 		 */
-		public synchronized void free() {
+		public void free() {
 			free(buffers);
 			buffers.clear();
 		}

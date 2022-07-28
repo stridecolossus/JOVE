@@ -63,7 +63,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 * @return New descriptor sets
 	 * @throws IllegalArgumentException if the requested number of sets exceeds the maximum for this pool
 	 */
-	public synchronized List<DescriptorSet> allocate(List<DescriptorLayout> layouts) {
+	public List<DescriptorSet> allocate(List<DescriptorLayout> layouts) {
 		// Check pool size
 		final int size = layouts.size();
 		if(sets.size() + size > max) {
@@ -110,7 +110,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 * @param sets Sets to release
 	 * @throws IllegalArgumentException if the given sets are not present in this pool or have already been released
 	 */
-	public synchronized void free(Collection<DescriptorSet> sets) {
+	public void free(Collection<DescriptorSet> sets) {
 		// Remove sets
 		if(!this.sets.containsAll(sets)) throw new IllegalArgumentException(String.format("Invalid descriptor sets for this pool: sets=%s pool=%s", sets, this));
 		this.sets.removeAll(sets);
@@ -124,7 +124,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 * Releases <b>all</b> descriptor-sets allocated by this pool.
 	 * @throws IllegalArgumentException if the pool is already empty
 	 */
-	public synchronized void free() {
+	public void free() {
 		if(sets.isEmpty()) throw new IllegalArgumentException("Pool is already empty");
 		final DeviceContext dev = this.device();
 		check(dev.library().vkResetDescriptorPool(dev, this, 0));

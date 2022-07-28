@@ -1,17 +1,13 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.lib.util.Check;
 
@@ -25,7 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 	private final long size;
 
-	private volatile DefaultRegion region;
+	private DefaultRegion region;
 
 	/**
 	 * Constructor.
@@ -84,7 +80,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		}
 
 		@Override
-		public synchronized void unmap() {
+		public void unmap() {
 			// Validate mapping is active
 			checkMapped();
 
@@ -118,7 +114,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	}
 
 	@Override
-	public synchronized Region map(long offset, long size) {
+	public Region map(long offset, long size) {
 		// Validate
 		Check.zeroOrMore(offset);
 		Check.oneOrMore(size);
