@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -22,16 +22,13 @@ import com.sun.jna.Structure.FieldOrder;
 	"size"
 })
 public class VkBufferMemoryBarrier extends VulkanStructure {
-	public static class ByValue extends VkBufferMemoryBarrier implements Structure.ByValue { }
-	public static class ByReference extends VkBufferMemoryBarrier implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.BUFFER_MEMORY_BARRIER;
 	public Pointer pNext;
-	public VkAccess srcAccessMask;
-	public VkAccess dstAccessMask;
+	public int srcAccessMask;
+	public int dstAccessMask;
 	public int srcQueueFamilyIndex;
 	public int dstQueueFamilyIndex;
-	public Pointer buffer;
+	public Handle buffer;
 	public long offset;
 	public long size;
 }

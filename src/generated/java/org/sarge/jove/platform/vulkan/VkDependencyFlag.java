@@ -7,15 +7,14 @@ import org.sarge.jove.util.IntegerEnumeration;
  * This class has been code-generated.
  */
 public enum VkDependencyFlag implements IntegerEnumeration {
- 	VK_DEPENDENCY_BY_REGION_BIT(1), 	
- 	VK_DEPENDENCY_DEVICE_GROUP_BIT(4), 	
- 	VK_DEPENDENCY_VIEW_LOCAL_BIT(2), 	
- 	VK_DEPENDENCY_VIEW_LOCAL_BIT_KHR(2), 	
- 	VK_DEPENDENCY_DEVICE_GROUP_BIT_KHR(4), 	
- 	VK_DEPENDENCY_FLAG_BITS_MAX_ENUM(2147483647); 	
+ 	BY_REGION(1),
+ 	DEVICE_GROUP(4),
+ 	VIEW_LOCAL(2),
+ 	VIEW_LOCAL_KHR(2),
+ 	DEVICE_GROUP_KHR(4);
 
 	private final int value;
-	
+
 	private VkDependencyFlag(int value) {
 		this.value = value;
 	}
