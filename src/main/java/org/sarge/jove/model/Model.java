@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
@@ -140,6 +142,25 @@ public class Model {
 		public Builder layout(Layout layout) {
 			this.layout.add(notNull(layout));
 			return this;
+		}
+
+		/**
+		 *
+		 * @return
+		 */
+		public List<?> filter() {
+			final Map<Layout, Class<?>> filter = Map.of(
+					Point.LAYOUT,			Point.class,
+//					NORMALS,				Vector.class,
+					Coordinate2D.LAYOUT,	Coordinate2D.class,
+					Colour.LAYOUT,			Colour.class
+			);
+
+			return layout
+					.stream()
+					.map(filter::get)
+					.filter(Objects::nonNull)
+					.toList();
 		}
 
 		/**

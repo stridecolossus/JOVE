@@ -70,16 +70,14 @@ public class CubeBuilder {
 	}
 
 	/**
-	 * Constructs a cube with a default vertex layout.
+	 * Constructs a cube with a default vertex layout (vertices and texture coordinates).
 	 * @return New cube model
 	 */
 	public Model build() {
 		final var builder = new Model.Builder()
 				.primitive(Primitive.TRIANGLES)
 				.layout(Point.LAYOUT)
-				.layout(Model.NORMALS)
-				.layout(Coordinate2D.LAYOUT)
-				.layout(Colour.LAYOUT);
+				.layout(Coordinate2D.LAYOUT);
 
 		build(builder);
 
@@ -91,6 +89,7 @@ public class CubeBuilder {
 	 * @param builder Model builder
 	 */
 	public void build(Model.Builder builder) {
+		final var filter = builder.filter();
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -102,8 +101,12 @@ public class CubeBuilder {
 				final Coordinate coord = Coordinate2D.QUAD.get(corner);
 				final Colour col = COLOURS[face];
 
-				// Add vertex to cube
-				final Vertex vertex = Vertex.of(pos, normal, coord, col);
+				// Build vertex
+				final Vertex vertex = Vertex
+						.of(pos, normal, coord, col)
+						.map(filter);
+
+				// Add to cube
 				builder.add(vertex);
 			}
 		}

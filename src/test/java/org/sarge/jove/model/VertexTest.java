@@ -50,20 +50,4 @@ public class VertexTest {
 		assertEquals(1, bb.getFloat());
 		assertEquals(0, bb.remaining());
 	}
-
-	@Test
-	void matches() {
-		assertEquals(true, vertex.matches(List.of(Point.class, Colour.class)));
-		assertEquals(false, vertex.matches(List.of(Point.class)));
-		assertEquals(false, vertex.matches(List.of(Colour.class)));
-		assertEquals(false, vertex.matches(List.of(Colour.class, Point.class)));
-		assertEquals(false, vertex.matches(List.of()));
-	}
-
-	@Test
-	void map() {
-		final Vertex result = vertex.map(List.of(Colour.class));
-		assertEquals(true, result.matches(List.of(Colour.class)));
-		assertEquals(Colour.WHITE, result.component(0));
-	}
 }

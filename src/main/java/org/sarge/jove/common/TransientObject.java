@@ -13,9 +13,8 @@ public interface TransientObject {
 
 	/**
 	 * @return Whether this object has been destroyed
-	 * @throws UnsupportedOperationException by default
 	 */
 	default boolean isDestroyed() {
-		throw new UnsupportedOperationException();
+		return false;
 	}
 }

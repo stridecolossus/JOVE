@@ -81,7 +81,6 @@ public class Desktop {
 	/**
 	 * @return GLFW library
 	 */
-	public
 	DesktopLibrary library() {
 		return lib;
 	}

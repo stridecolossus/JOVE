@@ -57,37 +57,17 @@ public class Vertex implements Bufferable {
 	}
 
 	/**
-	 * Converts the data of this vertex to match the specified component types.
-	 * @param types Required component types
-	 * @return New vertex
+	 *
+	 * @param filter
+	 * @return
 	 */
-	public Vertex map(List<Class<? extends Bufferable>> types) {
-		final List<Bufferable> result = components
+	public Vertex map(List<?> filter) {
+		final var result = components
 				.stream()
-				.filter(e -> types.contains(e.getClass()))
+				.filter(c -> filter.contains(c.getClass()))
 				.toList();
 
 		return new Vertex(result);
-	}
-
-	/**
-	 * Tests whether the components of this vertex <b>exactly</b> match the given required types.
-	 * @param types Required component types
-	 * @return Whether this vertex matches the given component types
-	 */
-	public boolean matches(List<Class<? extends Bufferable>> types) {
-		final int count = types.size();
-		if(components.size() != count) {
-			return false;
-		}
-
-		for(int n = 0; n < count; ++n) {
-			if(components.get(n).getClass() != types.get(n)) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	@Override
