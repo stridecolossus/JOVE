@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-import org.sarge.jove.common.TransientNativeObject;
+import org.sarge.jove.common.*;
 
 /**
  * A <i>device memory</i> instance is an area of device or host memory accessible to the hardware.
@@ -38,7 +38,7 @@ import org.sarge.jove.common.TransientNativeObject;
  * </pre>
  * @author Sarge
  */
-public interface DeviceMemory extends TransientNativeObject {
+public interface DeviceMemory extends NativeObject, TransientObject {
 	/**
 	 * A <i>region</i> is a mapped area of device memory.
 	 */

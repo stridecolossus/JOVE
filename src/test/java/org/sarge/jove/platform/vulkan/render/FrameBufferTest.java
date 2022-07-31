@@ -46,6 +46,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		buffer = new FrameBuffer(new Pointer(1), dev, pass, List.of(view), EXTENTS);
 	}
 
+	@DisplayName("A frame buffer is comprised of the swapchain image and additional attachments")
 	@Test
 	void constructor() {
 		assertEquals(new Handle(1), buffer.handle());
@@ -53,6 +54,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		assertEquals(List.of(view), buffer.attachments());
 	}
 
+	@DisplayName("A frame buffer can be destroyed")
 	@Test
 	void destroy() {
 		buffer.destroy();
@@ -60,6 +62,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		verify(lib).vkDestroyFramebuffer(dev, buffer, null);
 	}
 
+	@DisplayName("A frame buffer can be used to start a render pass")
 	@Test
 	void begin() {
 		// Create command
@@ -103,6 +106,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		verify(lib).vkCmdBeginRenderPass(cmd, expected, VkSubpassContents.INLINE);
 	}
 
+	@DisplayName("A frame buffer can be created to complete the render pass")
 	@Test
 	void end() {
 		final Command.Buffer cmd = mock(Command.Buffer.class);
@@ -111,17 +115,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 	}
 
 	@Nested
-	class BuilderTest {
-		private FrameBuffer.Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new FrameBuffer.Builder()
-					.pass(pass)
-					.extents(EXTENTS)
-					.attachment(view);
-		}
-
+	class CreateTests {
 		private void init(VkFormat format, Dimensions extents) {
 			// Init image
 			final ImageDescriptor descriptor = new ImageDescriptor.Builder()
@@ -136,11 +130,21 @@ public class FrameBufferTest extends AbstractVulkanTest {
 			when(image.descriptor()).thenReturn(descriptor);
 		}
 
-		@Test
-		void build() {
-			// Construct buffer
+		@BeforeEach
+		void before() {
 			init(FORMAT, EXTENTS);
-			assertNotNull(builder.build());
+		}
+
+		@DisplayName("A frame buffer can be created for a swapchain image")
+		@Test
+		void create() {
+			// Construct buffer
+			buffer = FrameBuffer.create(pass, EXTENTS, List.of(view));
+			assertNotNull(buffer);
+			assertEquals(new Handle(POINTER.getValue()), buffer.handle());
+			assertEquals(dev, buffer.device());
+			assertEquals(false, buffer.isDestroyed());
+			assertEquals(List.of(view), buffer.attachments());
 
 			// Check API
 			final var expected = new VkFramebufferCreateInfo() {
@@ -169,45 +173,22 @@ public class FrameBufferTest extends AbstractVulkanTest {
 
 		@DisplayName("Number of configured attachments should match the render pass")
 		@Test
-		void buildInvalidAttachmentCount() {
-			init(FORMAT, EXTENTS);
-			builder.attachment(view);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		void createInvalidAttachmentCount() {
+			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, EXTENTS, List.of(view, view)));
 		}
 
 		@DisplayName("Frame buffer image formats should match the attachments")
 		@Test
-		void buildInvalidAttachmentFormat() {
+		void createInvalidFormat() {
 			init(VkFormat.UNDEFINED, EXTENTS);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, EXTENTS, List.of(view, view)));
 		}
 
 		@DisplayName("Attachment dimensions cannot be smaller than the frame buffer")
 		@Test
-		void buildInvalidAttachmentExtents() {
+		void createInvalidExtents() {
 			init(FORMAT, new Dimensions(1, 2));
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
-		void buildMultiple() {
-			// Init attachment
-			init(FORMAT, EXTENTS);
-
-			// Build buffers
-			final List<FrameBuffer> list = new FrameBuffer.Builder()
-					.pass(pass)
-					.extents(EXTENTS)
-					.build(List.of(view));
-
-			// Check results
-			assertNotNull(list);
-			assertEquals(1, list.size());
-
-			// Check frame buffer
-			buffer = list.get(0);
-			assertNotNull(buffer);
-			assertEquals(List.of(view), buffer.attachments());
+			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, EXTENTS, List.of(view)));
 		}
 	}
 }

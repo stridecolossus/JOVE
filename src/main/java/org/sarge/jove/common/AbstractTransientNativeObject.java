@@ -8,7 +8,7 @@ import com.sun.jna.Pointer;
  * Template implementation for a native object managed by the application.
  * @author Sarge
  */
-public abstract class AbstractTransientNativeObject implements TransientNativeObject {
+public abstract class AbstractTransientNativeObject implements NativeObject, TransientObject {
 	protected final Handle handle;
 
 	private boolean destroyed;

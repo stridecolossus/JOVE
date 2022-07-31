@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.TransientNativeObject;
+import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -86,7 +86,7 @@ public class View extends AbstractVulkanObject {
 
 	@Override
 	protected void release() {
-		if(image instanceof TransientNativeObject obj) {
+		if(image instanceof TransientObject obj) {
 			obj.destroy();
 		}
 	}

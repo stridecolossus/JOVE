@@ -26,6 +26,58 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 */
 	public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
 
+	/**
+	 * Creates a frame buffer.
+	 * @param pass				Render pass
+	 * @param extents			Image extents
+	 * @param images			Attachment images
+	 * @return New frame buffer
+	 * @throws IllegalArgumentException if the number of images is not the same as the number of attachments in the render pass
+	 * @throws IllegalArgumentException if an image is not of the expected format of the corresponding attachment
+	 * @throws IllegalArgumentException if an image is smaller than the given extents
+	 */
+	public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> images) {
+		// Validate attachments
+		final List<Attachment> attachments = pass.attachments();
+		final int size = attachments.size();
+		if(images.size() != size) {
+			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", images.size(), attachments.size()));
+		}
+		for(int n = 0; n < size; ++n) {
+			// Validate matching format
+			final Attachment attachment = attachments.get(n);
+			final View view = images.get(n);
+			final ImageDescriptor descriptor = view.image().descriptor();
+			if(attachment.format() != descriptor.format()) {
+				throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
+			}
+
+			// Validate attachment contains frame-buffer extents
+			final Dimensions dim = descriptor.extents().size();
+			if(extents.compareTo(dim) > 0) {
+				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dim, extents));
+			}
+		}
+
+		// Build descriptor
+		final var info = new VkFramebufferCreateInfo();
+		info.renderPass = pass.handle();
+		info.attachmentCount = images.size();
+		info.pAttachments = NativeObject.array(images);
+		info.width = extents.width();
+		info.height = extents.height();
+		info.layers = 1; // TODO - layers?
+
+		// Allocate frame buffer
+		final DeviceContext dev = pass.device();
+		final VulkanLibrary lib = dev.library();
+		final PointerByReference buffer = dev.factory().pointer();
+		check(lib.vkCreateFramebuffer(dev, info, null, buffer));
+
+		// Create frame buffer
+		return new FrameBuffer(buffer.getValue(), dev, pass, images, extents);
+	}
+
 	private final RenderPass pass;
 	private final List<View> attachments;
 	private final Dimensions extents;
@@ -97,120 +149,6 @@ public class FrameBuffer extends AbstractVulkanObject {
 				.append("extents", extents)
 				.append("attachments", attachments)
 				.build();
-	}
-
-	/**
-	 * Builder for a <b>group</b> of frame buffers.
-	 */
-	public static class Builder {
-		private RenderPass pass;
-		private Dimensions extents;
-		private final List<View> attachments = new ArrayList<>();
-
-		/**
-		 * Sets the render pass for the frame buffers.
-		 * @param pass Render pass
-		 */
-		public Builder pass(RenderPass pass) {
-			this.pass = notNull(pass);
-			return this;
-		}
-
-		/**
-		 * Sets the extents of the frame buffers.
-		 * @param extents Extents
-		 */
-		public Builder extents(Dimensions extents) {
-			this.extents = notNull(extents);
-			return this;
-		}
-
-		/**
-		 * Adds an attachment to all frame buffers.
-		 * @param attachment Frame buffer attachment
-		 */
-		public Builder attachment(View attachment) {
-			attachments.add(notNull(attachment));
-			return this;
-		}
-
-		/**
-		 * Constructs this frame buffer.
-		 * @param attachments Attachments
-		 * @return New frame buffer
-		 */
-		private FrameBuffer create(List<View> attachments) {
-			// Validate attachments
-			final List<Attachment> expected = pass.attachments();
-			final int size = expected.size();
-			if(attachments.size() != size) {
-				throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", attachments.size(), expected.size()));
-			}
-			for(int n = 0; n < size; ++n) {
-				// Validate matching format
-				final Attachment attachment = expected.get(n);
-				final View view = attachments.get(n);
-				final ImageDescriptor descriptor = view.image().descriptor();
-				if(attachment.format() != descriptor.format()) {
-					throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
-				}
-
-				// Validate attachment contains frame-buffer extents
-				final Dimensions dim = descriptor.extents().size();
-				if(extents.compareTo(dim) > 0) {
-					throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dim, extents));
-				}
-			}
-			// TODO - samples, aspects(?), layers
-
-			// Build descriptor
-			final var info = new VkFramebufferCreateInfo();
-			info.renderPass = pass.handle();
-			info.attachmentCount = attachments.size();
-			info.pAttachments = NativeObject.array(attachments);
-			info.width = extents.width();
-			info.height = extents.height();
-			info.layers = 1; // TODO - layers?
-
-			// Allocate frame buffer
-			final DeviceContext dev = pass.device();
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference buffer = dev.factory().pointer();
-			check(lib.vkCreateFramebuffer(dev, info, null, buffer));
-
-			// Create frame buffer
-			return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
-		}
-
-		/**
-		 * Constructs this frame buffer.
-		 * @return New frame buffer
-		 */
-		public FrameBuffer build() {
-			return create(this.attachments);
-		}
-
-		/**
-		 * Constructs multiple frame buffers with the given attachments.
-		 * @param attachments Attachments
-		 * @return New frame buffers
-		 */
-		public List<FrameBuffer> build(List<View> attachments) {
-			return attachments
-					.stream()
-					.map(this::concat)
-					.map(this::create)
-					.toList();
-		}
-
-		/**
-		 * Adds the given attachment.
-		 */
-		private List<View> concat(View attachment) {
-			final List<View> list = new ArrayList<>(attachments);
-			list.add(attachment);
-			return list;
-		}
 	}
 
 	/**
