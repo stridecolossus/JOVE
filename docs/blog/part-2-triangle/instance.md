@@ -21,13 +21,13 @@ Creating the instance involves the following steps:
 
 1. Instantiate the Vulkan API using JNA.
 
-2. Specify the API extensions we require for our application.
+2. Specify the API extensions required for the application.
 
-3. Configure a JNA structure descriptor outlining our requirements for the instance.
+3. Populate a JNA structure descriptor to configure the requirements of the instance.
 
 4. Invoke the API to create the instance given this descriptor.
 
-5. Create the domain object encapsulating the handle of the new instance.
+5. Create the domain object encapsulating the new instance.
 
 This will require the following components:
 
@@ -261,9 +261,9 @@ public class VulkanException extends RuntimeException {
 
 There are two other pieces of information to be supplied when creating the instance: extensions and validation layers.
 
-An _extension_ is a platform-specific extension to the Vulkan API, e.g. swapchain support, native window surfaces, etc.
+An _extension_ is a platform-specific addition to the Vulkan API, e.g. swapchain support, native window surfaces, etc.
 
-A _validation layer_ is a hook or interceptor that adds additional functionality to the API (usually diagnostics) such as parameter validation, resource leak detection, etc.
+A _validation layer_ is a hook or interceptor for API methods providing additional functionality, usually diagnostics such as parameter validation, resource leak detection, etc.
 
 These new properties are added to the builder:
 
@@ -463,9 +463,9 @@ Our design for the the process of reporting a message is as follows:
 
 1. Vulkan invokes the callback to report a diagnostics message.
 
-2. The callback parameters are aggregated into a message record.
+2. The callback arguments are aggregated into a message record.
 
-3. Which is delegated to a consumer for the application (which by default dumps the message to the error console).
+3. And this message is delegated to a consumer configured by the application.
 
 The following new components are required:
 
@@ -477,7 +477,7 @@ The following new components are required:
 
 * A `Message` record that aggregates the diagnostics report.
 
-Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors at source.  Although this means the code is often essentially replicating the validation layer the development overhead is usually worth the effort, it considerably easier to diagnose an exception stack-trace as opposed to an error message with limited context.
+Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors at source.  Although this means the code is often essentially replicating the validation layer the development overhead is usually worth the effort, it is considerably easier to diagnose an exception at the root of a problem, rather than an error message with limited context that may occur later in the application (e.g. during rendering).
 
 ### Handler
 
@@ -589,6 +589,8 @@ public static class Builder {
     private Consumer<Message> consumer = System.err::println;
 }
 ```
+
+Note that by default diagnostics messages are simply dumped to the error console.
 
 The `build` method first populates the descriptor for the handler:
 
@@ -756,7 +758,7 @@ However this introduces further problems:
 
 The Vulkan API (and many other native libraries) make extensive use of _by-reference_ types to return data, with the actual return value of the method generally representing an error code.  For example `vkCreateInstance` returns the `handle` of the newly created instance via a JNA `PointerByReference` type.
 
-Mercifully this approach is virtually unknown in Java but it does pose an awkward problem when we come to testing - the usual Java unit-testing frameworks (JUnit, Mockito) are designed around the return value of a method generally being the important part and any error conditions modelled by exceptions.
+Mercifully this approach is virtually unknown in Java but it does pose an awkward problem when we come to testing: the usual Java unit-testing frameworks (JUnit, Mockito) are designed around the return value of a method generally being the important part and any error conditions modelled by exceptions.
 
 If a `PointerByReference` is created in the test it will be a different instance to one created in the `build` method itself, it would be difficult to determine whether the test was legitimately successful or only passed by luck.
 
@@ -768,7 +770,7 @@ verify(lib).vkCreateInstance(..., isA(PointerByReference.class));
 
 But this only checks that the argument was not `null` rather than verifying the actual value.  Additionally __every__ argument would then have to be an argument matcher which just adds more development complexity and obfuscates the test.
 
-Alternatively a Mockito _answer_ could be used to initialise the returned handler argument, but that would require tedious and repetitive code for _every_ unit-test that exercises API methods with by-reference return values (which is pretty much all of them).
+Alternatively a Mockito _answer_ could be used to initialise the reference argument, but that would require tedious and repetitive code for _every_ unit-test that exercises API methods with by-reference return values (which is pretty much all the methods that instantiate Vulkan components).
 
 To resolve (or at least mitigate) this issue we introduce the _reference factory_ that is responsible for generating by-reference objects used in API calls:
 

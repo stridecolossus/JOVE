@@ -26,9 +26,9 @@ Progressing through the [tutorial](https://vulkan-tutorial.com/) we realised mor
 
 There were a variety of reasons for this:
 
-* The Vulkan API contains a huge number of enumerations __all__ of which are bundled into a __single__ class as old school integer constants resulting in a class with several __thousand__ members.  Irrespective of the likelihood of accidentally using the wrong enumeration and the type safety issues, finding an enumeration constant is virtually impossible.
+* The Vulkan API contains a huge number of enumerations __all__ of which are bundled into a __single__ class as old school integer constants, resulting in a class with several __thousand__ members.  Besides the likelihood of accidentally using the wrong enumeration and the obvious type safety issues, finding an enumeration constant is virtually impossible.
 
-* The API also makes heavy use of structures to configure Vulkan components which are implemented by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members and there are also a slew of allocation methods implemented on __every__ structure, again making finding the right method becomes an annoyance, and this is repeated for every field in every structure.
+* The API also makes heavy use of structures to configure Vulkan components which are implemented by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members and there are also a slew of allocation methods implemented on __every__ structure.  Again finding the right method becomes an annoyance, and this is repeated for every field in every structure.
 
 * This is not helped by the JavaDoc which essentially just replicates the signature of each method without explaining _what_ it does or why there are multiple versions of each method.
 
@@ -38,7 +38,7 @@ A couple of examples:
 
 The first task for a Vulkan application is to create the _instance_ which involves populating a couple of structures and invoking the relevant API method.  The `VkApplicationInfo` structure specifies some properties of the application and the required API version.  The native structure has six fields whereas the LWJGL implementation has over 70 class members, the code assist popup in our IDE has scroll-bars, and this is one of the simplest structures.
 
-One of the fields in this structure is the application name which is a string (or a C pointer-to-character-array).  In the LWJGL implementation we had to instantiate a memory stack object, invoke a static helper method to allocate an NIO buffer for the string from this helper, and pass _that_ to the structure.  Presumably there are logical reasons for this (off-heap performance or thread safety perhaps) but there was no explanation of _why_, whether there were alternatives, was the application responsible for releasing resources later, etc.
+One of the fields in this structure is the application name which is a string (mapping to a C pointer-to-character-array).  In the LWJGL implementation we had to instantiate a memory stack object, use that on a different static helper method to allocate an NIO buffer for the string, and pass _that_ to the structure.  Presumably there are logical reasons for this (off-heap performance or thread safety perhaps) but there was no clue as to _why_ this had to be done, whether there were alternatives, was the application responsible for releasing resources later, etc.  If the binding is not responsible for marshalling Java types to native equivalents what is it actually for?
 
 Obviously the LWJGL port was code-generated from the Vulkan header, therefore it is to be expected that there are oddities and compromises in the resultant API which would never be as 'clean' as a totally hand-crafted solution.  This is not intended to be a negative 'review' but our experience was frankly irritating for the reasons stated above: everything seemed to take an age to implement, much of the code was basically a mystery, and we had barely scratched the surface of Vulkan.  Eventually we lost interest and gave up.
 
@@ -54,7 +54,7 @@ Next we considered SWIG which is the code-generation technology used by LWJGL.  
 
 Finally we came across JNA (which was new to the author) and initial impressions were promising:
 
-* The premise of auto-magically mapping Java interfaces to the native API seemed ideal (no additional descriptors required).
+* The premise of auto-magically mapping Java interfaces to the native API seemed ideal, with no additional metadata or descriptors required.
 
 * In particular the support for mapping C/C++ structures to Java classes was very appealing given the large number of structures that are used to configure a Vulkan application.
 
@@ -66,11 +66,11 @@ We had a possible winner.
 
 ### JNA
 
-To see whether JNA would suit our purposes we first exercised it against a simpler library.  We already intended using [GLFW](https://www.glfw.org/) for desktop related functionality (such as creating native windows, managing input devices, etc) and it integrates nicely with Vulkan as we will see later.
+To see whether JNA would suit our purposes we first exercised it against a simpler library.  We had already planned to use [GLFW](https://www.glfw.org/) for desktop related functionality (such as creating native windows, managing input devices, etc) and it integrates nicely with Vulkan as we will see later.
 
 With a hand-crafted implementation of the JNA library the bulk of what would become the _desktop_ package of JOVE was developed in a couple of hours, the progress reflecting our initial positive impressions of JNA:
 
-* Defining a Java interface to represent the native API was relatively simple with JNA providing logical mappings for method parameters.
+* Defining a Java interface to represent the native API was relatively simple with JNA providing logical mappings to marshal between Java and native types.
 
 * Although structured data is not used much in GLFW using JNA structures was simple and straight-forward.
 
@@ -86,7 +86,7 @@ In particular:
 
 * Where we did come across problems or confusing situations there was plenty of documentation, examples and tutorials.
 
-At this point we paused to take stock because of course there was the elephant in the room: Vulkan is a complex API with a large number of enumerations and structures.  Some of these components are also absolutely huge such as the `VkStructureType` enumeration or the `VkPhysicalDeviceLimits` structure.  Hand-crafting even a fraction of the API could be done but it would be very tedious and highly error-prone.
+At this point we paused to take stock because of course there was the elephant in the room: Vulkan is a complex API with a large number of enumerations and structures.  Some of these components are also absolutely huge such as the `VkStructureType` enumeration or the `VkPhysicalDeviceLimits` structure.  We had shown that hand-crafting a fraction of the API could be done, but it would be very tedious and highly error-prone to attempt to do the same for the entire Vulkan library.
 
 We needed a code generator.
 
@@ -110,7 +110,7 @@ First some requirements and constraints were established for the scope of the ge
 
 5. Any tools and libraries should follow the general goal of being well-documented and supported.
 
-We first tried the [JNAeator](https://github.com/nativelibs4java/jnaerator) tool that generates JNA bindings from a native library, which seemed perfect for our requirements.  Unfortunately this tool produced a seemingly random package structure with the generated code looking more like the nasty SWIG bindings than the nice, neat code hand-crafted above.  It also seemed quite old and inactive, and the fact that it used yet another library called _BridJ_ that for which there was no current site was not encouraging.
+We first tried the [JNAeator](https://github.com/nativelibs4java/jnaerator) tool that generates JNA bindings from a native library, which seemed perfect for our requirements.  Unfortunately this tool produced a seemingly random package structure with the generated code looking more like the nasty SWIG bindings than the nice, neat code we had hand-crafted.  It also seemed quite old and inactive, and the fact that it used yet another library called _BridJ_ that for which there was no current site was not encouraging.
 
 ### CDT
 
