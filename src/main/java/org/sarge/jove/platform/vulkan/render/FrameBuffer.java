@@ -161,7 +161,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pFramebuffer		Returned frame buffer
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
 

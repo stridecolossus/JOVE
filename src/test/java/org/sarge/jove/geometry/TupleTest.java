@@ -1,20 +1,20 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class TupleTest {
 	private Tuple tuple;
 
 	@BeforeEach
 	void before() {
-		tuple = new Tuple(1, 2, 3);
+		tuple = new Tuple(1, 2, 3) {
+			// Empty
+		};
 	}
 
 	@Test
@@ -26,25 +26,32 @@ public class TupleTest {
 
 	@Test
 	void copy() {
-		tuple = new Tuple(tuple);
+		tuple = new Tuple(tuple) {
+			// Empty
+		};
 		assertEquals(1, tuple.x);
 		assertEquals(2, tuple.y);
 		assertEquals(3, tuple.z);
+	}
+
+	private void create(float[] array) {
+		tuple = new Tuple(array) {
+			// Empty
+		};
 	}
 
 	@Test
 	void array() {
-		tuple = new Tuple(new float[]{1, 2, 3});
+		create(new float[]{1, 2, 3});
 		assertEquals(1, tuple.x);
 		assertEquals(2, tuple.y);
 		assertEquals(3, tuple.z);
 	}
 
-	@SuppressWarnings("static-method")
 	@Test
 	void arrayInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[0]));
-		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[]{1, 2, 3, 4}));
+		assertThrows(IllegalArgumentException.class, () -> create(new float[0]));
+		assertThrows(IllegalArgumentException.class, () -> create(new float[]{1, 2, 3, 4}));
 	}
 
 	@Test

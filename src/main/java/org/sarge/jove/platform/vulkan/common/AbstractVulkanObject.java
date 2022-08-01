@@ -32,7 +32,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	/**
 	 * Constructor.
 	 * @param handle		Object handle
-	 * @param dev			Device context
+	 * @param dev			Logical device
 	 */
 	protected AbstractVulkanObject(Pointer handle, DeviceContext dev) {
 		this(new Handle(handle), dev);
@@ -41,7 +41,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	/**
 	 * Constructor.
 	 * @param handle		Object handle
-	 * @param dev			Device context
+	 * @param dev			Logical device
 	 */
 	protected AbstractVulkanObject(Handle handle, DeviceContext dev) {
 		super(handle);

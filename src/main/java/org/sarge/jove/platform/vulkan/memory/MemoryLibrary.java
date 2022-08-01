@@ -15,8 +15,8 @@ public interface MemoryLibrary {
 	 * @param device			Logical device
 	 * @param pAllocateInfo		Memory descriptor
 	 * @param pAllocator		Allocator
-	 * @param pMemory			Returned memory handle
-	 * @return Result code
+	 * @param pMemory			Returned memory
+	 * @return Result
 	 */
 	int vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
 
@@ -34,9 +34,9 @@ public interface MemoryLibrary {
 	 * @param memory			Buffer memory
 	 * @param offset			Offset
 	 * @param size				Data length
-	 * @param flags				Flags
+	 * @param flags				Flags (reserved)
 	 * @param ppData			Returned pointer to the memory buffer
-	 * @return Result code
+	 * @return Result
 	 */
 	int vkMapMemory(DeviceContext device, DefaultDeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
 

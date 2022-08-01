@@ -3,15 +3,12 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.stream.Collectors.toMap;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutBinding;
-import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
@@ -34,7 +31,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 */
 	public static DescriptorLayout create(DeviceContext dev, List<ResourceBinding> bindings) {
 		// Init layout descriptor
-		final VkDescriptorSetLayoutCreateInfo info = new VkDescriptorSetLayoutCreateInfo();
+		final var info = new VkDescriptorSetLayoutCreateInfo();
 		info.bindingCount = bindings.size();
 		info.pBindings = StructureHelper.pointer(bindings, VkDescriptorSetLayoutBinding::new, ResourceBinding::populate);
 

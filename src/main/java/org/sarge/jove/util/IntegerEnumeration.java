@@ -154,7 +154,6 @@ public interface IntegerEnumeration {
 
 		/**
 		 * Maps an enumeration literal to the corresponding enumeration constant.
-		 * @param clazz Enumeration class
 		 * @param value Literal
 		 * @return Constant
 		 * @throws IllegalArgumentException if the enumeration does not contain the given value
@@ -166,9 +165,8 @@ public interface IntegerEnumeration {
 		}
 
 		/**
-		 * Converts a bit-field to an ordered set of enumeration constants.
-		 * @param clazz		Enumeration class
-		 * @param bits		Bit field
+		 * Converts a bit-field to a set of enumeration constants.
+		 * @param bits Bit field
 		 * @return Enumeration constants
 		 */
 		public Set<E> enumerate(int bits) {

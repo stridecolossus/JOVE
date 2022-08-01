@@ -227,7 +227,7 @@ public interface DrawCommand extends Command {
 		 * @param firstVertex			First vertex index
 		 * @param firstInstance			First index index
 		 */
-		void vkCmdDraw(Command.Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
+		void vkCmdDraw(Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
 
 		/**
 		 * Draws indexed vertices.
@@ -238,7 +238,7 @@ public interface DrawCommand extends Command {
 		 * @param firstVertex			First vertex index
 		 * @param firstInstance			First instance
 		 */
-		void vkCmdDrawIndexed(Command.Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
+		void vkCmdDrawIndexed(Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
 
 		/**
 		 * Indirect draw.
@@ -248,7 +248,7 @@ public interface DrawCommand extends Command {
 		 * @param drawCount				Draw count
 		 * @param stride				Stride
 		 */
-		void vkCmdDrawIndirect(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
+		void vkCmdDrawIndirect(Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
 
 		/**
 		 * Indirect indexed draw.
@@ -258,6 +258,6 @@ public interface DrawCommand extends Command {
 		 * @param drawCount				Draw count
 		 * @param stride				Stride
 		 */
-		void vkCmdDrawIndexedIndirect(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
+		void vkCmdDrawIndexedIndirect(Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
 	}
 }

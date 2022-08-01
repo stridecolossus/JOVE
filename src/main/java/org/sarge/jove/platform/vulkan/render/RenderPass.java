@@ -238,8 +238,8 @@ public class RenderPass extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
-		 * @param pRenderPass		Returned render pass handle
-		 * @return Result code
+		 * @param pRenderPass		Returned render pass
+		 * @return Result
 		 */
 		int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
 

@@ -44,7 +44,7 @@ class PointTest {
 
 	@Test
 	void add() {
-		assertEquals(new Point(5, 7, 9), pos.add(new Tuple(4, 5, 6)));
+		assertEquals(new Point(5, 7, 9), pos.add(new Point(4, 5, 6)));
 	}
 
 	@Test

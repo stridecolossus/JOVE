@@ -520,10 +520,10 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Swap-chain descriptor
 		 * @param pAllocator		Allocator
-		 * @param pSwapchain		Returned swap-chain handle
-		 * @return Result code
+		 * @param pSwapchain		Returned swap-chain
+		 * @return Result
 		 */
-		int vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
+		int vkCreateSwapchainKHR(DeviceContext device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
 
 		/**
 		 * Destroys a swap-chain.
@@ -541,7 +541,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param pSwapchainImages			Image handles
 		 * @return Result code
 		 */
-		int vkGetSwapchainImagesKHR(LogicalDevice device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+		int vkGetSwapchainImagesKHR(DeviceContext device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 
 		/**
 		 * Acquires the next image in the swap-chain.
@@ -551,7 +551,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param semaphore				Optional semaphore
 		 * @param fence					Optional fence
 		 * @param pImageIndex			Returned image index
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
 
@@ -559,7 +559,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * Presents to the swapchain.
 		 * @param queue					Presentation queue
 		 * @param pPresentInfo			Pointer to descriptor
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
 	}

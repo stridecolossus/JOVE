@@ -15,7 +15,7 @@ import com.sun.jna.ptr.IntByReference;
 /**
  * The <i>desktop</i> service manages windows and monitors implemented using the GLFW native library.
  * <p>
- * Note that several GLFW operations __must__ be executed on the main thread, e.g. {@link #poll()}.
+ * Note that several GLFW operations <b>must</b> be executed on the main thread, e.g. {@link #poll()}.
  * <p>
  * @see <a href="https://www.glfw.org/docs/latest/index.html">GLFW documentation</a>
  * @see <a href="https://github.com/badlogic/jglfw/blob/master/jglfw/jni/glfw-3.0/include/GL/glfw3.h">C header</a>
@@ -108,7 +108,7 @@ public class Desktop {
 
 	/**
 	 * Processes pending input events.
-	 * This method __must__ be executed on the main thread.
+	 * This method <b>must</b> be executed on the main thread.
 	 */
 	public void poll() {
 		lib.glfwPollEvents();

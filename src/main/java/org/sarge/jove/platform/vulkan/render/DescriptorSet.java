@@ -263,7 +263,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param pCreateInfo			Create descriptor
 		 * @param pAllocator			Allocator
 		 * @param pSetLayout			Returned layout handle
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
 
@@ -281,7 +281,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param pCreateInfo			Descriptor
 		 * @param pAllocator			Allocator
 		 * @param pDescriptorPool		Returned pool
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
 
@@ -298,7 +298,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param device				Logical device
 		 * @param pAllocateInfo			Allocation descriptor
 		 * @param pDescriptorSets		Returned descriptor set handles
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
 
@@ -307,7 +307,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param device				Logical device
 		 * @param descriptorPool		Descriptor set pool
 		 * @param flags					Unused
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkResetDescriptorPool(DeviceContext device, DescriptorPool descriptorPool, int flags);
 
@@ -317,7 +317,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param descriptorPool		Descriptor set pool
 		 * @param descriptorSetCount	Number of descriptor sets
 		 * @param pDescriptorSets		Descriptor set handles
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkFreeDescriptorSets(DeviceContext device, DescriptorPool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
 

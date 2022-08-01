@@ -3,27 +3,21 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Collection;
 
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.io.FileDataSource;
-import org.sarge.jove.io.ResourceLoader;
+import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 import org.sarge.jove.util.BufferHelper;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.ptr.*;
 
 /**
  * A <i>pipeline cache</i> allows the result of pipeline construction to be reused between pipelines and runs of an application.
@@ -155,8 +149,8 @@ public class PipelineCache extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Pipeline cache descriptor
 		 * @param pAllocator		Allocator
-		 * @param pPipelineCache	Returned pipeline cache handle
-		 * @return Result code
+		 * @param pPipelineCache	Returned pipeline cache
+		 * @return Result
 		 */
 		int vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineCache);
 
@@ -166,7 +160,7 @@ public class PipelineCache extends AbstractVulkanObject {
 		 * @param dstCache			Target cache
 		 * @param srcCacheCount		Number of caches to merge
 		 * @param pSrcCaches		Array of caches to merge
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, Pointer pSrcCaches);
 
@@ -176,7 +170,7 @@ public class PipelineCache extends AbstractVulkanObject {
 		 * @param cache				Pipeline cache
 		 * @param pDataSize			Cache size
 		 * @param pData				Cache data
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntByReference pDataSize, ByteBuffer pData);
 
