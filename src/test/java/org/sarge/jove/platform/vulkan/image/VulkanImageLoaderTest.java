@@ -1,22 +1,13 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Layout;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.VkFormat;
 
@@ -111,7 +102,7 @@ public class VulkanImageLoaderTest {
 		assertNotNull(image);
 
 		// Check image
-		assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
+		assertEquals(new Dimensions(2, 3), image.size());
 		assertEquals("RGBA", image.components());
 		assertEquals(FORMAT, image.format());
 		assertEquals(Layout.bytes(4, 1), image.layout());

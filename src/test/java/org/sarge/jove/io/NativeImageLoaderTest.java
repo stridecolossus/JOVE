@@ -1,25 +1,16 @@
 package org.sarge.jove.io;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.io.ImageData.Extents;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData.Level;
 
 public class NativeImageLoaderTest {
@@ -30,9 +21,9 @@ public class NativeImageLoaderTest {
 		loader = new NativeImageLoader();
 	}
 
-	private void check(ImageData image) {
+	private static void check(ImageData image) {
 		// Check image header
-		assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
+		assertEquals(new Dimensions(2, 3), image.size());
 		assertEquals(1, image.layers());
 		assertNotNull(image.components());
 		assertEquals(0, image.format());

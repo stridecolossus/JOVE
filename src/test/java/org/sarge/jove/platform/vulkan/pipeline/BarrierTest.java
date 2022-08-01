@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -140,7 +139,7 @@ public class BarrierTest {
 			// Init image descriptor and sub-resource
 			final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 					.format(VkFormat.UNDEFINED)
-					.extents(new ImageData.Extents(new Dimensions(3, 4)))
+					.extents(new Dimensions(3, 4))
 					.aspect(VkImageAspect.COLOR)
 					.build();
 

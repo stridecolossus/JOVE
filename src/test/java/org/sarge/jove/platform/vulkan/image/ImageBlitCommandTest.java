@@ -1,23 +1,15 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.platform.vulkan.VkFilter;
-import org.sarge.jove.platform.vulkan.VkImageBlit;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkOffset3D;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.image.ImageBlitCommand.Builder;
 import org.sarge.jove.platform.vulkan.image.ImageBlitCommand.Builder.BlitRegion;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ImageBlitCommandTest extends AbstractVulkanTest {

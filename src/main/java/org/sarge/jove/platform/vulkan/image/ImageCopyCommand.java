@@ -1,23 +1,15 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.io.ImageData.Level;
-import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkOffset3D;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -125,7 +117,7 @@ public class ImageCopyCommand implements Command {
 			copy.bufferImageHeight = height;
 			copy.imageSubresource = SubResource.toLayers(res);
 			copy.imageOffset = imageOffset;
-			copy.imageExtent = Image.toExtent(extents);
+			copy.imageExtent = extents.toExtent();
 		}
 
 		/**
@@ -278,7 +270,7 @@ public class ImageCopyCommand implements Command {
 			final int count = descriptor.layerCount();
 			final Level[] levels = image.levels().toArray(Level[]::new);
 			for(int level = 0; level < levels.length; ++level) {
-				// Calculate MIP level extents
+				// Determine extents for this MIP level
 				final Extents extents = descriptor.extents().mip(level);
 
 				// Load layers for this MIP level

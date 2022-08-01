@@ -7,7 +7,6 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -457,7 +456,7 @@ public class Swapchain extends AbstractVulkanObject {
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
 			final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 					.format(info.imageFormat)
-					.extents(new Extents(extents))
+					.extents(extents)
 					.aspect(VkImageAspect.COLOR)
 					.build();
 

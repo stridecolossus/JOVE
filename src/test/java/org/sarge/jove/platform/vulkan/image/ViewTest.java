@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
@@ -25,7 +24,7 @@ public class ViewTest extends AbstractVulkanTest {
 		// Create image descriptor
 		final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 				.format(FORMAT)
-				.extents(new Extents(new Dimensions(3, 4)))
+				.extents(new Dimensions(3, 4))
 				.aspect(VkImageAspect.COLOR)
 				.build();
 

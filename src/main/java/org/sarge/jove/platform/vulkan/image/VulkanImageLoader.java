@@ -4,12 +4,11 @@ import static java.util.stream.Collectors.joining;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
-import org.sarge.jove.io.ImageData.*;
+import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.util.LittleEndianDataInputStream;
 
 /**
@@ -38,10 +37,8 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final int typeSize = in.readInt();
 
 		// Load image extents
-		final Extents extents = new Extents(
-				new Dimensions(in.readInt(), in.readInt()),
-				Math.max(1, in.readInt())
-		);
+		final Dimensions size = new Dimensions(in.readInt(), in.readInt());
+		final int depth = Math.max(1, in.readInt());
 
 		// Load image data size
 		final int layerCount = Math.max(1, in.readInt());
@@ -50,7 +47,7 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 
 		// Validate
 		validate(1, layerCount, "LayerCount");
-		if((faceCount == Image.CUBEMAP_ARRAY_LAYERS) && !extents.size().isSquare()) {
+		if((faceCount == Image.CUBEMAP_ARRAY_LAYERS) && !size.isSquare()) {
 			throw new IllegalArgumentException("Cubemap images must be square");
 		}
 
@@ -92,11 +89,33 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final Layout layout = Layout.bytes(samples.length, samples[0].bytes());
 		final String components = Arrays.stream(samples).map(Sample::channel).collect(joining());
 
-		// Init pixel mapper
-		final IntUnaryOperator pixel = n -> LittleEndianDataInputStream.convert(data, n, layout.bytes());
+		// Create KTX image
+		return new ImageData(size, components, layout, data) {
+			@Override
+			public int depth() {
+				return depth;
+			}
 
-		// Create image
-		return new DefaultImageData(extents, components, layout, format, index, faceCount, Bufferable.of(data), pixel);
+			@Override
+			public int format() {
+				return format;
+			}
+
+			@Override
+			public List<Level> levels() {
+				return index;
+			}
+
+			@Override
+			public int layers() {
+				return faceCount;
+			}
+
+			@Override
+			protected int pixel(int index) {
+				return LittleEndianDataInputStream.convert(data, index, layout.bytes());
+			}
+		};
 	}
 
 	/**

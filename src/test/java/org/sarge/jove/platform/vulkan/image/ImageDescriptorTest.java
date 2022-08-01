@@ -1,21 +1,17 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageType;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
+@SuppressWarnings("static-method")
 public class ImageDescriptorTest extends AbstractVulkanTest {
 	private static final VkImageType TYPE = VkImageType.TWO_D;
 	private static final Set<VkImageAspect> ASPECTS = Set.of(VkImageAspect.COLOR);

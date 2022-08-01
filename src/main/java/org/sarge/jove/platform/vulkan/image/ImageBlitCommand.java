@@ -2,19 +2,13 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.platform.vulkan.VkFilter;
-import org.sarge.jove.platform.vulkan.VkImageBlit;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkOffset3D;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -62,7 +56,7 @@ public class ImageBlitCommand implements Command {
 			/**
 			 * Minimum blit offset.
 			 */
-			public static final Extents MIN_OFFSET = new Extents(new Dimensions(0, 0), 0);
+			public static final Extents MIN_OFFSET = new Extents(new Dimensions(0, 0));
 
 			/**
 			 * Constructor.
@@ -142,8 +136,8 @@ public class ImageBlitCommand implements Command {
 		 */
 		private static VkOffset3D[] offsets(BlitRegion region) {
 			final VkOffset3D[] offsets = new VkOffset3D[2];
-			offsets[0] = Image.toOffset(region.min);
-			offsets[1] = Image.toOffset(region.max);
+			offsets[0] = region.min.toOffset();
+			offsets[1] = region.max.toOffset();
 			return offsets;
 		}
 

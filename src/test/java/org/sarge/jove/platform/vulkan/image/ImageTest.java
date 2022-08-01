@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.DefaultImage;
 import org.sarge.jove.platform.vulkan.memory.*;
@@ -22,7 +21,7 @@ import com.sun.jna.Pointer;
 @SuppressWarnings("static-method")
 public class ImageTest extends AbstractVulkanTest {
 	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
-	private static final Extents EXTENTS = new Extents(new Dimensions(3, 4));
+	private static final Dimensions EXTENTS = new Dimensions(3, 4);
 
 	private DefaultImage image;
 	private Pointer handle;

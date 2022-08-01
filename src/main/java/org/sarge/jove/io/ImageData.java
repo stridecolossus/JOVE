@@ -1,12 +1,11 @@
 package org.sarge.jove.io;
 
+import static org.sarge.lib.util.Check.*;
+
 import java.util.List;
-import java.util.function.IntUnaryOperator;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -19,59 +18,12 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public interface ImageData {
-	/**
-	 * @return Image extents
-	 */
-	Extents extents();
-
-	/**
-	 * @return Pixel components
-	 */
-	String components();
-
-	/**
-	 * @return Pixel layout
-	 */
-	Layout layout();
-
-	/**
-	 * @return Vulkan format hint
-	 */
-	int format();
-
-	/**
-	 * @return MIP levels
-	 */
-	List<Level> levels();
-
-	/**
-	 * @return Number of image layers
-	 */
-	int layers();
-
-	/**
-	 * @return Image data
-	 */
-	Bufferable data();
-
-	/**
-	 * Retrieves the pixel at the given image coordinates.
-	 * <p>
-	 * Note that the pixel is sampled from the <b>first</b> layer and MIP level.
-	 * <p>
-	 * @param component RGBA component index
-	 * @return Pixel
-	 * @throws ArrayIndexOutOfBoundsException if the coordinates are invalid for this image
-	 * @throws IllegalArgumentException if the component index is invalid for this image
-	 */
-	int pixel(int x, int y, int component);
-
+@SuppressWarnings("static-method")
+public class ImageData {
 	/**
 	 * An <i>image level</i> specifies a MIP level of this image.
-	 * @see Extents#mip(int)
 	 */
-	record Level(int offset, int length) {
+	public record Level(int offset, int length) {
 		/**
 		 * Constructor.
 		 * @param offset		Offset into the image data
@@ -105,114 +57,138 @@ public interface ImageData {
 		}
 	}
 
+	private final Dimensions size;
+	private final String components;
+	private final Layout layout;
+	private final byte[] data;
+
 	/**
-	 * Extents of this image.
+	 * Constructor.
+	 * @param size				Image dimensions
+	 * @param components		Pixel components
+	 * @param layout			Pixel layout
+	 * @param data				Image data
+	 * @throws IllegalArgumentException if the size of the components and layout do not match
+	 * @throws IllegalArgumentException if the length of the image data does not match the image extents or the number of MIP levels and array layers
 	 */
-	record Extents(Dimensions size, int depth) {
-		/**
-		 * Constructor.
-		 * @param dim		Image dimensions
-		 * @param depth		Depth
-		 */
-		public Extents {
-			Check.notNull(size);
-			Check.zeroOrMore(depth);
+	public ImageData(Dimensions size, String components, Layout layout, byte[] data) {
+		this.size = notNull(size);
+		this.components = notEmpty(components);
+		this.layout = notNull(layout);
+		this.data = notNull(data);
+		validate();
+	}
+
+	private void validate() {
+		// Check number of components and layout match
+		if(components.length() != layout.size()) {
+			throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
 		}
 
-		/**
-		 * Convenience constructor for a 2D image.
-		 */
-		public Extents(Dimensions size) {
-			this(size, 1);
-		}
+//		// Check
+//		// TODO
+////		final int expected = extents.size.area() * layout.length();
+////		if(levels.get(0).length != expected) {
+////			throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, image.length));
+////		}
 
-		/**
-		 * Calculates the image extents for the given MIP level.
-		 * @param level MIP level
-		 * @return MIP extents
-		 */
-		public Extents mip(int level) {
-			Check.zeroOrMore(level);
-
-			if(level == 0) {
-				return this;
-			}
-
-			final int w = mip(size.width(), level);
-			final int h = mip(size.height(), level);
-			return new Extents(new Dimensions(w, h), depth);
-		}
-
-		private static int mip(int value, int level) {
-			return Math.max(1, value >> level);
+		// Check overall image buffer matches MIP levels
+		final int total = this.levels().stream().mapToInt(Level::length).sum();
+		if(data.length != total) {
+			throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%d", total, data.length));
 		}
 	}
 
 	/**
-	 * Default implementation.
+	 * @return Image dimensions
 	 */
-	record DefaultImageData(Extents extents, String components, Layout layout, int format, List<Level> levels, int layers, Bufferable data, IntUnaryOperator pixel) implements ImageData {
-		/**
-		 * Constructor.
-		 * @param extents			Image extents
-		 * @param components		Components
-		 * @param layout			Layout descriptor
-		 * @param format			Vulkan format hint
-		 * @param levels			MIP levels
-		 * @param layers			Number of array layers
-		 * @param data				Image data buffer
-		 * @param pixel				Pixel mapper
-		 * @throws IllegalArgumentException if the size of the components and layout do not match
-		 * @throws IllegalArgumentException if the length of the data buffer does not match the image extents
-		 */
-		public DefaultImageData {
-			Check.notNull(extents);
-			Check.notEmpty(components);
-			Check.notNull(layout);
-			levels = List.copyOf(levels);
-			Check.oneOrMore(layers);
-			Check.notNull(data);
+	public Dimensions size() {
+		return size;
+	}
 
-			// Check number of components and layout match
-			if(components.length() != layout.size()) {
-				throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
-			}
+	/**
+	 * @return Image depth
+	 */
+	public int depth() {
+		return 1;
+	}
 
-			// Check
-			// TODO
-//			final int expected = extents.size.area() * layout.length();
-//			if(levels.get(0).length != expected) {
-//				throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, image.length));
-//			}
+	/**
+	 * @return Pixel components
+	 */
+	public String components() {
+		return components;
+	}
 
-			// Check overall image buffer matches MIP levels
-			final int total = levels.stream().mapToInt(Level::length).sum();
-			if(data.length() != total) {
-				throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, data.length()));
-			}
+	/**
+	 * @return Pixel layout
+	 */
+	public Layout layout() {
+		return layout;
+	}
 
-			// TODO - validate levels? or at least < biggest?
-		}
+	/**
+	 * @return Vulkan format hint
+	 */
+	public int format() {
+		throw new UnsupportedOperationException();
+	}
 
-		@Override
-		public int pixel(int x, int y, int component) {
-			Check.range(component, 0, components.length() - 1);
-			final int offset = levels.get(0).offset;
-			final int start = (x + y * extents.size.width()) * layout.length();
-			final int index = offset + start + (component * layout.bytes());
-			return pixel.applyAsInt(index);
-		}
+	/**
+	 * @return MIP levels
+	 */
+	public List<Level> levels() {
+		return List.of(new Level(0, data.length));
+	}
 
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append(components)
-					.append(layout)
-					.append("format", format)
-					.append(extents)
-					.append("levels", levels.size())
-					.append("layers", layers)
-					.build();
-		}
+	/**
+	 * @return Number of array layers
+	 */
+	public int layers() {
+		return 1;
+	}
+
+	/**
+	 * @return Image data
+	 */
+	public Bufferable data() {
+		return Bufferable.of(data);
+	}
+
+	/**
+	 * Retrieves the pixel at the given image coordinates (sampled from the <b>first</b> layer and MIP level).
+	 * @param component RGBA component index
+	 * @return Pixel
+	 * @throws ArrayIndexOutOfBoundsException if the coordinates are invalid for this image
+	 * @throws IllegalArgumentException if the component index is invalid for this image
+	 */
+	public int pixel(int x, int y, int component) {
+		Check.range(component, 0, components.length() - 1);
+		final int offset = levels().get(0).offset;
+		final int start = (x + y * size.width()) * layout.length();
+		final int index = offset + start + (component * layout.bytes());
+		return pixel(index);
+	}
+
+	/**
+	 * Retrieves the pixel at the given byte index.
+	 * @param index Index
+	 * @return Pixel
+	 */
+	protected int pixel(int index) {
+		return data[index];
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append(size)
+				.append("depth", depth())
+				.append(components)
+				.append(layout)
+				.append("levels", levels().size())
+				.append("layers", layers())
+				.append("format", format())
+				.build();
 	}
 }

@@ -1,24 +1,13 @@
 package org.sarge.jove.io;
 
-import static java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
-import static java.awt.image.BufferedImage.TYPE_4BYTE_ABGR;
-import static java.awt.image.BufferedImage.TYPE_BYTE_GRAY;
-import static java.awt.image.BufferedImage.TYPE_BYTE_INDEXED;
+import static java.awt.image.BufferedImage.*;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
+import java.awt.image.*;
+import java.io.*;
 
 import javax.imageio.ImageIO;
 
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.io.ImageData.DefaultImageData;
-import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.io.ImageData.Level;
+import org.sarge.jove.common.*;
 
 /**
  * Loader for a Java image implemented using {@link ImageIO}.
@@ -57,11 +46,8 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		};
 		assert data.length == size.area() * layout.length();
 
-		// Create synthetic MIP index
-		final var levels = List.of(new Level(0, data.length));
-
 		// Create image
-		return new DefaultImageData(new Extents(size), components, layout, 0, levels, 1, Bufferable.of(data), index -> data[index]);
+		return new ImageData(size, components, layout, data);
 	}
 
 	/**

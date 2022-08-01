@@ -7,7 +7,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
@@ -202,7 +201,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			// Check colour image
 			final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 					.format(format.format)
-					.extents(new ImageData.Extents(extents))
+					.extents(extents)
 					.aspect(VkImageAspect.COLOR)
 					.build();
 			final Image image = view.image();

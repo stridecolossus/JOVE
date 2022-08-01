@@ -1,27 +1,15 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.Extents;
-import org.sarge.jove.platform.vulkan.VkBufferImageCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkImageAspect;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
-import org.sarge.jove.platform.vulkan.VkOffset3D;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.ImageCopyCommand.CopyRegion;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -41,7 +29,7 @@ public class ImageCopyCommandTest {
 
 		// Define image
 		final var descriptor = new ImageDescriptor.Builder()
-				.extents(new Extents(new Dimensions(2, 3)))
+				.extents(new Dimensions(2, 3))
 				.format(AbstractVulkanTest.FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.build();
@@ -83,7 +71,7 @@ public class ImageCopyCommandTest {
 		@Test
 		void constructorInvalidImageAspects() {
 			final var descriptor = new ImageDescriptor.Builder()
-					.extents(new Extents(new Dimensions(2, 3)))
+					.extents(new Dimensions(2, 3))
 					.format(AbstractVulkanTest.FORMAT)
 					.aspect(VkImageAspect.DEPTH)
 					.aspect(VkImageAspect.STENCIL)

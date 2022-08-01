@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.render.Attachment.Builder;
@@ -64,7 +63,7 @@ class AttachmentTest {
 			// Init image descriptor
 			final var descriptor = new ImageDescriptor.Builder()
 					.format(FORMAT)
-					.extents(new ImageData.Extents(new Dimensions(2, 3)))
+					.extents(new Dimensions(2, 3))
 					.aspect(VkImageAspect.COLOR)
 					.build();
 

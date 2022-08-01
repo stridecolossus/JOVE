@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.io.ImageData.Extents;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -21,7 +20,7 @@ public class SubResourceTest {
 				.format(AbstractVulkanTest.FORMAT)
 				.mipLevels(3)
 				.arrayLayers(4)
-				.extents(new Extents(new Dimensions(5, 6)))
+				.extents(new Dimensions(5, 6))
 				.build();
 
 		res = new SubResource.Builder(descriptor)

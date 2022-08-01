@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -28,7 +27,7 @@ public class FrameSetTest extends AbstractVulkanTest {
 		final ImageDescriptor descriptor = new ImageDescriptor.Builder()
 				.aspect(VkImageAspect.COLOR)
 				.format(FORMAT)
-				.extents(new ImageData.Extents(EXTENTS))
+				.extents(EXTENTS)
 				.build();
 
 		// Create image

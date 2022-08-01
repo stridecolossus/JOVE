@@ -4,14 +4,16 @@ import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 
-import org.sarge.jove.io.ImageData.Extents;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
 import org.sarge.lib.util.Check;
 
 /**
  * An <i>image descriptor</i> specifies the static properties of an image.
  * @author Sarge
  */
+@SuppressWarnings("unused")
 public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
 	// Valid image aspect combinations
 	private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
@@ -21,10 +23,90 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 	);
 
 	/**
+	 * Image extents.
+	 */
+	public record Extents(Dimensions size, int depth) {
+		/**
+		 * Constructor.
+		 * @param dim		Image dimensions
+		 * @param depth		Depth
+		 */
+		public Extents {
+			Check.notNull(size);
+			Check.range(depth, 1, 3);
+		}
+
+		/**
+		 * Constructor for a 2D image.
+		 * @param size Image extents
+		 */
+		public Extents(Dimensions size) {
+			this(size, 1);
+		}
+
+		/**
+		 * @return Whether these extents are valid for the given type of image
+		 */
+		private boolean isValid(VkImageType type) {
+			return switch(type) {
+				case ONE_D -> (size.height() == 1) && (depth == 1);
+				case TWO_D -> depth == 1;
+				case THREE_D -> true;
+			};
+		}
+
+		/**
+		 * Converts to Vulkan 3D extents.
+		 * @return 3D extents
+		 */
+		public VkExtent3D toExtent() {
+			final VkExtent3D extent = new VkExtent3D();
+			extent.width = size.width();
+			extent.height = size.height();
+			extent.depth = depth;
+			return extent;
+		}
+
+		/**
+		 * Converts to Vulkan offsets.
+		 * @return Offsets
+		 */
+		public VkOffset3D toOffset() {
+			final VkOffset3D offset = new VkOffset3D();
+			offset.x = size.width();
+			offset.y = size.height();
+			offset.z = depth;
+			return offset;
+		}
+
+		/**
+		 * Calculates the image extents for the given MIP level.
+		 * @param level MIP level
+		 * @return MIP extents
+		 */
+		public Extents mip(int level) {
+			if(level == 0) {
+				return this;
+			}
+			else {
+				Check.oneOrMore(level);
+				final int w = mip(size.width(), level);
+				final int h = mip(size.height(), level);
+				return new Extents(new Dimensions(w, h), depth);
+			}
+		}
+
+		private static int mip(int value, int level) {
+			return Math.max(1, value >> level);
+		}
+	}
+
+	/**
 	 * Constructor.
 	 * @param type			Image type
 	 * @param format		Format
-	 * @param extents		Extents
+	 * @param size			Image dimensions
+	 * @param depth			Image depth
 	 * @param aspects		Image aspect(s)
 	 * @param levelCount	Number of mip levels
 	 * @param layerCount	Number of array layers
@@ -41,12 +123,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 		Check.oneOrMore(layerCount);
 
 		// Validate extents
-		final boolean valid = switch(type) {
-			case ONE_D -> (extents.size().height() == 1) && (extents.depth() == 1);
-			case TWO_D -> extents.depth() == 1;
-			case THREE_D -> true;
-		};
-		if(!valid) {
+		if(extents.isValid(type)) {
 			throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
 		}
 
@@ -102,11 +179,19 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 
 		/**
 		 * Sets the image extents.
-		 * @param extents Image extents
+		 * @param size Image dimensions
 		 */
 		public Builder extents(Extents extents) {
 			this.extents = notNull(extents);
 			return this;
+		}
+
+		/**
+		 * Sets the image extents.
+		 * @param size Image dimensions
+		 */
+		public Builder extents(Dimensions size) {
+			return extents(new Extents(size));
 		}
 
 		/**

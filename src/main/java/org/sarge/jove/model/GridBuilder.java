@@ -66,7 +66,7 @@ public class GridBuilder {
 			if(component >= image.components().length()) throw new IllegalArgumentException(String.format("Invalid component index: component=%d image=%s", component, image));
 
 			// Map grid coordinates to image dimensions
-			final Dimensions dim = image.extents().size();
+			final Dimensions dim = image.size();
 			final float w = dim.width() / size.width();
 			final float h = dim.height() / size.height();
 
