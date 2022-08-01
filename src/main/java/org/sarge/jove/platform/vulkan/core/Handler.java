@@ -17,6 +17,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>handler</i> is a diagnostics message handler attached to the instance.
+ * @see Instance#handler()
  * @author Sarge
  */
 public class Handler extends AbstractTransientNativeObject {

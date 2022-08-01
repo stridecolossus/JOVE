@@ -81,7 +81,7 @@ public interface Image extends NativeObject {
 		 * @param descriptor	Image descriptor
 		 * @param mem			Device memory
 		 */
-		protected DefaultImage(Pointer handle, LogicalDevice dev, ImageDescriptor descriptor, DeviceMemory mem) {
+		protected DefaultImage(Pointer handle, DeviceContext dev, ImageDescriptor descriptor, DeviceMemory mem) {
 			super(handle, dev);
 			this.descriptor = notNull(descriptor);
 			this.mem = notNull(mem);
@@ -253,9 +253,9 @@ public interface Image extends NativeObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pImage			Returned image
-		 * @return Result code
+		 * @return Result
 		 */
-		int vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
+		int vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
 
 		/**
 		 * Destroys an image.
@@ -271,7 +271,7 @@ public interface Image extends NativeObject {
 		 * @param image					Image
 		 * @param pMemoryRequirements	Returned memory requirements
 		 */
-		void vkGetImageMemoryRequirements(LogicalDevice device, Pointer image, VkMemoryRequirements pMemoryRequirements);
+		void vkGetImageMemoryRequirements(DeviceContext device, Pointer image, VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds image memory.
@@ -279,9 +279,9 @@ public interface Image extends NativeObject {
 		 * @param image				Image
 		 * @param memory			Image memory
 		 * @param memoryOffset		Offset
-		 * @return Result code
+		 * @return Result
 		 */
-		int vkBindImageMemory(LogicalDevice device, Pointer image, DeviceMemory memory, long memoryOffset);
+		int vkBindImageMemory(DeviceContext device, Pointer image, DeviceMemory memory, long memoryOffset);
 
 		/**
 		 * Copies a buffer to an image.

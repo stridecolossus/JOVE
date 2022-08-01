@@ -25,7 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class Shader extends AbstractVulkanObject {
 	/**
 	 * Creates a shader module.
-	 * @param dev		Parent device
+	 * @param dev		Logical device
 	 * @param code		Shader SPIV code
 	 * @return New shader
 	 */
@@ -47,7 +47,7 @@ public class Shader extends AbstractVulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle 		Shader module handle
-	 * @param dev			Device
+	 * @param dev			Logical device
 	 */
 	private Shader(Pointer handle, DeviceContext dev) {
 		super(handle, dev);
@@ -185,15 +185,15 @@ public class Shader extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param info				Shader descriptor
 		 * @param pAllocator		Allocator
-		 * @param shader			Returned shader handle
-		 * @return Result code
+		 * @param shader			Returned shader module
+		 * @return Result
 		 */
 		int vkCreateShaderModule(DeviceContext device, VkShaderModuleCreateInfo info, Pointer pAllocator, PointerByReference shader);
 
 		/**
 		 * Destroys a shader.
 		 * @param device			Logical device
-		 * @param shader			Shader
+		 * @param shader			Shader module
 		 * @param pAllocator		Allocator
 		 */
 		void vkDestroyShaderModule(DeviceContext device, Shader shader, Pointer pAllocator);

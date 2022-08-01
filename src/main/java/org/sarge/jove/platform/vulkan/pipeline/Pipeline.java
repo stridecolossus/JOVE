@@ -428,8 +428,8 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @param createInfoCount	Number of pipelines to create
 		 * @param pCreateInfos		Descriptor(s)
 		 * @param pAllocator		Allocator
-		 * @param pPipelines		Returned pipeline handle(s)
-		 * @return Result code
+		 * @param pPipelines		Returned pipeline(s)
+		 * @return Result
 		 */
 		int vkCreateGraphicsPipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
 
@@ -442,7 +442,7 @@ public class Pipeline extends AbstractVulkanObject {
 		void vkDestroyPipeline(DeviceContext device, Pipeline pipeline, Pointer pAllocator);
 
 		/**
-		 * Command to bind a pipeline.
+		 * Binds a pipeline to the render sequence.
 		 * @param commandBuffer			Command buffer
 		 * @param pipelineBindPoint		Bind-point
 		 * @param pipeline				Pipeline to bind

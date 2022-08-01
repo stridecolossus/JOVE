@@ -86,7 +86,7 @@ public class View extends AbstractVulkanObject {
 
 	@Override
 	protected void release() {
-		if(image instanceof TransientObject obj) {
+		if(image instanceof TransientObject obj && !obj.isDestroyed()) {
 			obj.destroy();
 		}
 	}
@@ -193,8 +193,8 @@ public class View extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Image view descriptor
 		 * @param pAllocator		Allocator
-		 * @param pView				Returned image view handle
-		 * @return Result code
+		 * @param pView				Returned image view
+		 * @return Result
 		 */
 		int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
 

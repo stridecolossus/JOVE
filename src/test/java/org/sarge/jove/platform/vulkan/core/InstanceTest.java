@@ -1,18 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkApplicationInfo;
-import org.sarge.jove.platform.vulkan.VkInstanceCreateInfo;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
@@ -50,7 +44,7 @@ public class InstanceTest {
 	@Test
 	void destroy() {
 		instance.destroy();
-		verify(lib).vkDestroyInstance(instance.handle(), null);
+		verify(lib).vkDestroyInstance(instance, null);
 	}
 
 	@Test

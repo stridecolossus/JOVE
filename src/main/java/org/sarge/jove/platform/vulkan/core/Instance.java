@@ -76,7 +76,7 @@ public class Instance extends AbstractTransientNativeObject {
 
 	@Override
 	protected void release() {
-		lib.vkDestroyInstance(handle, null);
+		lib.vkDestroyInstance(this, null);
 	}
 
 	/**
@@ -203,13 +203,13 @@ public class Instance extends AbstractTransientNativeObject {
 		 * @param instance		Instance handle
 		 * @param allocator		Allocator
 		 */
-		void vkDestroyInstance(Handle instance, Pointer allocator);
+		void vkDestroyInstance(Instance instance, Pointer allocator);
 
 		/**
 		 * Enumerates extension properties.
 		 * @param pLayerName	Layer name or {@code null} for extensions provided by the Vulkan implementation
 		 * @param count			Number of extensions
-		 * @param extensions	Extensions
+		 * @param extensions	Extensions (pointer-to-array)
 		 * @return Result
 		 */
 		int vkEnumerateInstanceExtensionProperties(String pLayerName, IntByReference count, VkExtensionProperties extensions);
@@ -217,13 +217,13 @@ public class Instance extends AbstractTransientNativeObject {
 		/**
 		 * Enumerates validation layer properties.
 		 * @param count			Number of layers
-		 * @param layers		Layers
+		 * @param layers		Layers (pointer-to-array)
 		 * @return Result
 		 */
 		int vkEnumerateInstanceLayerProperties(IntByReference count, VkLayerProperties layers);
 
 		/**
-		 * Looks up an instance function.
+		 * Looks up a function pointer for the given instance.
 		 * @param instance		Vulkan instance
 		 * @param name			Function name
 		 * @return Function pointer

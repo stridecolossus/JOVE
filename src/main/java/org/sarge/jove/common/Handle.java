@@ -1,9 +1,6 @@
 package org.sarge.jove.common;
 
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.Pointer;
-import com.sun.jna.ToNativeContext;
-import com.sun.jna.TypeConverter;
+import com.sun.jna.*;
 
 /**
  * A <i>handle</i> is an opaque wrapper for a JNA pointer.
@@ -18,7 +15,6 @@ public final class Handle {
 	 */
 	public Handle(Pointer ptr) {
 		this(Pointer.nativeValue(ptr));
-		// TODO - ptr is often NULL in unit-tests, should we check here?
 	}
 
 	/**

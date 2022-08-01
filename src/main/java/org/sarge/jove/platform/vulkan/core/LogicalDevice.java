@@ -139,7 +139,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			Check.notNull(family);
 			priorities = List.copyOf(notEmpty(priorities));
 			if(priorities.size() > family.count()) {
-				throw new IllegalArgumentException(String.format("Number of queues exceeds family: avaiable=%d requested=%d", priorities.size(), family.count()));
+				throw new IllegalArgumentException(String.format("Number of queues exceeds family: available=%d requested=%d", family.count(), priorities.size()));
 			}
 		}
 
@@ -182,15 +182,17 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * <p>
 	 * Usage:
 	 * <pre>
+	 * // Determine required work queue family
 	 * PhysicalDevice parent = ...
-	 * Family family = ...
+	 * Family family = parent.queues().stream().filter(...);
 	 *
 	 * // Init required device features
-	 * VkPhysicalDeviceFeatures required = ...
+	 * DeviceFeatures features = DeviceFeatures.of(...);
 	 *
 	 * // Create device
 	 * LogicalDevice dev = new Builder(parent)
-	 *     .extension("extension")
+	 *     .extension(VulkanLibrary.EXTENSION_SWAP_CHAIN)
+	 *     .layer(ValidationLayer.STANDARD_VALIDATION)
 	 *     .queue(new RequiredQueue(family))
 	 *     .features(required)
 	 *     .build();
@@ -227,7 +229,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 */
 		public Builder extension(String ext) {
 			Check.notEmpty(ext);
-			if(VulkanLibrary.EXTENSION_DEBUG_UTILS.equals(ext)) throw new IllegalArgumentException("Invalid extensions for logical device: " + ext);
+			if(VulkanLibrary.EXTENSION_DEBUG_UTILS.equals(ext)) throw new IllegalArgumentException("Invalid extension for logical device: " + ext);
 			extensions.add(ext);
 			return this;
 		}
@@ -275,7 +277,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
 			info.enabledLayerCount = layers.size();
 
-			// Add queue descriptors
+			// Add required queues
 			info.queueCreateInfoCount = queues.size();
 			info.pQueueCreateInfos = StructureHelper.pointer(queues.values(), VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
 
@@ -343,19 +345,18 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * Destroys a logical device.
 		 * @param device				Device handle
 		 * @param pAllocator			Allocator
-		 * @return Result
 		 */
 		void vkDestroyDevice(LogicalDevice device, Pointer pAllocator);
 
 		/**
 		 * Waits for the given device to become idle.
 		 * @param device Logical device
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkDeviceWaitIdle(LogicalDevice device);
 
 		/**
-		 * Retrieves logical device queue handle(s).
+		 * Retrieves a work queue for the given logical device.
 		 * @param device				Device handle
 		 * @param queueFamilyIndex		Queue family index
 		 * @param queueIndex			Queue index
@@ -369,14 +370,14 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param submitCount			Number of submissions
 		 * @param pSubmits				Work submissions
 		 * @param fence					Optional fence
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 
 		/**
 		 * Waits for the given queue to become idle.
 		 * @param queue Queue
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkQueueWaitIdle(Queue queue);
 	}

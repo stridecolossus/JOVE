@@ -361,8 +361,8 @@ public class PhysicalDevice implements NativeObject {
 		/**
 		 * Enumerates the queue families of a device.
 		 * @param device		Device handle
-		 * @param count			Number of devices
-		 * @param props			Queue family properties
+		 * @param count			Number of properties
+		 * @param props			Queue family properties (pointer-to-array)
 		 */
 		void vkGetPhysicalDeviceQueueFamilyProperties(Pointer device, IntByReference count, VkQueueFamilyProperties props);
 
@@ -371,7 +371,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param device		Physical device handle
 		 * @param layer			Layer name or {@code null} for extensions provided by the Vulkan implementation
 		 * @param count			Number of extensions
-		 * @param extensions	Returned extensions
+		 * @param extensions	Returned extensions (pointer-to-array)
 		 * @return Result
 		 * @see Instance.Library#vkEnumerateInstanceExtensionProperties(String, IntByReference, VkExtensionProperties)
 		 */
@@ -381,7 +381,7 @@ public class PhysicalDevice implements NativeObject {
 		 * Enumerates device-specific validation layers.
 		 * @param device		Physical device handle
 		 * @param count			Number of layers
-		 * @param extensions	Returned layers
+		 * @param extensions	Returned layers (pointer-to-array)
 		 * @return Result
 		 * @deprecated Since 1.0.13 device-only layers are deprecated and this method <b>must</b> return the layers for the Vulkan implementation
 		 * @see Instance.Library#vkEnumerateInstanceLayerProperties(IntByReference, VkLayerProperties)

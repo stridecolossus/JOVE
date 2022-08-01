@@ -140,8 +140,8 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Pipeline layout descriptor
 		 * @param pAllocator		Allocator
-		 * @param pPipelineLayout	Returned pipeline layout handle
-		 * @return Result code
+		 * @param pPipelineLayout	Returned pipeline layout
+		 * @return Result
 		 */
 		int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
 

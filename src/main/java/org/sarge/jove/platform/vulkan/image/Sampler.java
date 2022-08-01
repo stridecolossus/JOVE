@@ -264,8 +264,8 @@ public class Sampler extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Sampler descriptor
 		 * @param pAllocator		Allocator
-		 * @param pSampler			Returned sampler handle
-		 * @return Result code
+		 * @param pSampler			Returned sampler
+		 * @return Result
 		 */
 		int vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
 
