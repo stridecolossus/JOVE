@@ -37,7 +37,7 @@ public class WindowTest {
 		final Window.Descriptor descriptor = new Window.Descriptor("title", new Dimensions(640, 480), Set.of(Window.Hint.DECORATED));
 
 		// Create window
-		window = new Window(desktop, null, descriptor);
+		window = new Window(new Pointer(1), desktop, descriptor);
 	}
 
 	@Test

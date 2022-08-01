@@ -212,7 +212,7 @@ public record Descriptor(String title, Dimensions size, Set<Hint> hints) {
 }
 ```
 
-The visual properties of a window (_hints_ in GLFW parlance) are copied from the header and wrapped in the following enumeration:
+The visual properties of a window (_hints_ in GLFW parlance) are copied from the header and wrapped into the following enumeration:
 
 ```java
 public enum Hint {
@@ -220,7 +220,7 @@ public enum Hint {
     DECORATED(0x00020005),
     AUTO_ICONIFY(0x00020006),
     MAXIMISED(0x00020008),
-    DISABLE_OPENGL(0x00022001),
+    DISABLE_OPENGL(0x00022001);
 
     private final int hint;
 
@@ -230,12 +230,24 @@ public enum Hint {
 }
 ```
 
-A hint is applied to a new window by the following helper:
+By default GLFW creates an OpenGL surface for a new window which can be disabled using the `DISABLE_OPENGL` hint.  However the argument for this hint is irritatingly the opposite of what one would expect (and all the other hints), therefore the argument is over-ridden in this case:
 
 ```java
-void apply(DesktopLibrary lib) {
-    int value = this == DISABLE_OPENGL ? 0 : 1;
-    lib.glfwWindowHint(hint, value);
+public enum Hint {
+    ...
+    DISABLE_OPENGL(...) {
+        protected int argument() {
+            return 0;
+        }
+    };
+
+    protected int argument() {
+        return 1;
+    }
+
+    void apply(DesktopLibrary lib) {
+        lib.glfwWindowHint(hint, argument());
+    }
 }
 ```
 
@@ -271,10 +283,6 @@ Notes:
 * This is a bare-bones implementation sufficient for the triangle demo, however it will almost certainly need to be refactored to support richer functionality, e.g. full-screen windows.
 
 * A convenience builder is also added to create and configure a window.
-
-* By default GLFW creates an OpenGL surface for a new window which is disabled using the `DISABLE_OPENGL` window hint.
-
-* The argument for this hint is irritatingly the opposite of what one would expect (and all the other hints).
 
 * The above implementation ignores display monitors for the moment.
 

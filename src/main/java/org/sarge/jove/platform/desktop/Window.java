@@ -46,7 +46,12 @@ public class Window extends AbstractTransientNativeObject {
 		/**
 		 * Disables creation of an OpenGL context for this window.
 		 */
-		DISABLE_OPENGL(0x00022001);
+		DISABLE_OPENGL(0x00022001) {
+			@Override
+			protected int argument() {
+				return 0;
+			}
+		};
 
 		private final int hint;
 
@@ -54,13 +59,17 @@ public class Window extends AbstractTransientNativeObject {
 			this.hint = hint;
 		}
 
+		@SuppressWarnings("static-method")
+		protected int argument() {
+			return 1;
+		}
+
 		/**
 		 * Applies this hint.
 		 * @param lib Desktop library
 		 */
 		void apply(DesktopLibrary lib) {
-			final int value = this == DISABLE_OPENGL ? 0 : 1;
-			lib.glfwWindowHint(hint, value);
+			lib.glfwWindowHint(hint, argument());
 		}
 	}
 
@@ -89,11 +98,11 @@ public class Window extends AbstractTransientNativeObject {
 
 	/**
 	 * Constructor.
-	 * @param desktop			Desktop service
 	 * @param window			Window handle
+	 * @param desktop			Desktop service
 	 * @param descriptor		Window descriptor
 	 */
-	Window(Desktop desktop, Pointer window, Descriptor descriptor) {
+	Window(Pointer window, Desktop desktop, Descriptor descriptor) {
 		super(new Handle(window));
 		this.desktop = notNull(desktop);
 		this.descriptor = notNull(descriptor);
@@ -283,7 +292,7 @@ public class Window extends AbstractTransientNativeObject {
 			}
 
 			// Create window domain object
-			return new Window(desktop, window, descriptor);
+			return new Window(window, desktop, descriptor);
 		}
 	}
 }
