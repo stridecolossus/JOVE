@@ -1,18 +1,12 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.positive;
+import static org.sarge.jove.util.MathsUtil.*;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Plane;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -21,12 +15,12 @@ import org.sarge.jove.util.MathsUtil;
  */
 public class SphereVolume implements Volume {
 	/**
-	 * Helper - Creates a sphere volume that encloses the given extents.
-	 * @param extents Extents
+	 * Helper - Creates a sphere volume that encloses the given bounds.
+	 * @param bounds Bounds
 	 * @return Sphere volume
 	 */
-	public static SphereVolume of(Extents extents) {
-		return new SphereVolume(extents.centre(), extents.largest() / 2);
+	public static SphereVolume of(Bounds bounds) {
+		return new SphereVolume(bounds.centre(), bounds.largest() / 2);
 	}
 
 	private final Point centre;
@@ -78,12 +72,12 @@ public class SphereVolume implements Volume {
 	}
 
 	/**
-	 * Helper - Tests whether this sphere is intersected by the given extents.
-	 * @param extents Extents
+	 * Helper - Tests whether this sphere is intersected by the given bounds.
+	 * @param bounds Bounds
 	 * @return Whether intersected
 	 */
-	public boolean intersects(Extents extents) {
-		final Point pt = extents.nearest(centre);
+	public boolean intersects(Bounds bounds) {
+		final Point pt = bounds.nearest(centre);
 		return contains(pt);
 	}
 
@@ -152,6 +146,26 @@ public class SphereVolume implements Volume {
 			// Ray originates on the sphere surface
 			return Intersection.of(0f);
 		}
+	}
+
+	/**
+	 * Calculates the vector to the point on the unit-sphere for the given rotation angles (in radians).
+	 * @param theta		Horizontal angle (or <i>yaw</i>) in the range zero to {@link MathsUtil#TWO_PI}
+	 * @param phi		Vertical angle (or <i>pitch</i>) in the range +/- {@link MathsUtil#HALF_PI}
+	 * @return Unit-sphere surface vector
+	 */
+	public static Vector vector(float theta, float phi) {
+		// Apply 90 degree clockwise rotation to align with the -Z axis
+		final float angle = theta - MathsUtil.HALF_PI;
+
+		// Calculate unit-sphere coordinates
+		final float cos = cos(phi);
+		final float x = cos(angle) * cos;
+		final float y = sin(angle) * cos;
+		final float z = sin(phi);
+
+		// Swizzle the coordinates to default space
+		return new Vector(x, z, y);
 	}
 
 	// https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection#bounding_spheres

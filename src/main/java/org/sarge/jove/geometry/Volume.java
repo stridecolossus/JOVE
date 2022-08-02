@@ -1,9 +1,5 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Plane;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
@@ -21,9 +17,9 @@ public interface Volume {
 	/**
 	 * Determines whether this volume intersects the given volume.
 	 * <p>
-	 * In general a bounding volume intersection test is assumed to ultimately degenerate to a test against a sphere or an {@link Extents}.
+	 * In general a bounding volume intersection test is assumed to ultimately degenerate to a test against a sphere or a {@link Bounds}.
 	 * <br>
-	 * An implementation should perform class-specific intersection tests or delegate to the supplied volume.
+	 * Implementations should perform class-specific intersection tests or delegate to the supplied volume.
 	 * <br>
 	 * Note that {@link #intersects(Volume)} throws an exception by default.
 	 * <p>

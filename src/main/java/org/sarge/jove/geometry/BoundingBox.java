@@ -1,69 +1,57 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Objects;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Plane;
 import org.sarge.jove.geometry.Plane.HalfSpace;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>bounding box</i> is an axis-aligned rectangular volume implemented as an adapter of an {@link Extents}.
+ * A <i>bounding box</i> is an axis-aligned rectilinear volume implemented as an adapter for a {@link Bounds}.
  * @author Sarge
  */
 public class BoundingBox implements Volume {
-	private final Extents extents;
+	private final Bounds bounds;
 
 	/**
-	 * Constructor given extents.
-	 * @param extents Extents
+	 * Constructor.
+	 * @param bounds Bounds
 	 */
-	public BoundingBox(Extents extents) {
-		this.extents = notNull(extents);
+	public BoundingBox(Bounds bounds) {
+		this.bounds = notNull(bounds);
 	}
 
 	/**
-	 * @return Extents of this bounding box
+	 * @return Bounds of this volume
 	 */
-	public Extents extents() {
-		return extents;
+	public Bounds bounds() {
+		return bounds;
 	}
 
 	@Override
 	public boolean contains(Point pt) {
-		return extents.contains(pt);
+		return bounds.contains(pt);
 	}
 
 	@Override
 	public boolean intersects(Volume vol) {
-		if(vol instanceof SphereVolume sphere) {
-			return sphere.intersects(extents);
-		}
-		else
-		if(vol instanceof BoundingBox box) {
-			return extents.intersects(box.extents);
-		}
-		else {
-			return vol.intersects(this);
-		}
+		return switch(vol) {
+			case SphereVolume sphere -> sphere.intersects(bounds);
+			case BoundingBox box -> bounds.intersects(box.bounds);
+			default -> vol.intersects(this);
+		};
 	}
 
 	@Override
 	public boolean intersects(Plane plane) {
 		final Vector normal = plane.normal();
-		final Point neg = extents.negative(normal);
+		final Point neg = bounds.negative(normal);
 		if(plane.halfspace(neg) == HalfSpace.NEGATIVE) {
 			return false;
 		}
 
-		final Point pos = extents.positive(normal);
+		final Point pos = bounds.positive(normal);
 		if(plane.halfspace(pos) == HalfSpace.NEGATIVE) {
 			return false;
 		}
@@ -82,8 +70,8 @@ public class BoundingBox implements Volume {
 			// Tests are performed component-wise
 			final float origin = ray.origin().get(n);
 			final float dir = ray.direction().get(n);
-			final float min = extents.min().get(n);
-			final float max = extents.max().get(n);
+			final float min = bounds.min().get(n);
+			final float max = bounds.max().get(n);
 
 			if(MathsUtil.isZero(dir)) {
 				// Stop if parallel ray misses the box
@@ -118,16 +106,16 @@ public class BoundingBox implements Volume {
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(extents);
+		return bounds.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof BoundingBox box) && this.extents.equals(box.extents);
+		return (obj == this) || (obj instanceof BoundingBox that) && this.bounds.equals(that.bounds);
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(extents).build();
+		return new ToStringBuilder(this).append(bounds).build();
 	}
 }

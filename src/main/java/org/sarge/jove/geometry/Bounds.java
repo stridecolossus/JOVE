@@ -2,18 +2,17 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collector;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * An <i>extents</i> defines an axis-aligned rectilinear volume specified by min/max points.
+ * A <i>bounds</i> defines an axis-aligned rectilinear volume specified by min/max points.
  * @author Sarge
  */
-public class Extents {
+public class Bounds {
 	private final Point min, max;
 
 	/**
@@ -21,7 +20,7 @@ public class Extents {
 	 * @param min Minimum extent
 	 * @param max Maximum extent
 	 */
-	public Extents(Point min, Point max) {
+	public Bounds(Point min, Point max) {
 		this.min = notNull(min);
 		this.max = notNull(max);
 	}
@@ -41,7 +40,7 @@ public class Extents {
 	}
 
 	/**
-	 * @return Centre point of this extents
+	 * @return Centre point of this bounds
 	 */
 	public Point centre() {
 		return min.add(max).scale(MathsUtil.HALF);
@@ -56,7 +55,7 @@ public class Extents {
 	}
 
 	/**
-	 * Tests whether this extents contains the given point.
+	 * Tests whether this bounds contains the given point.
 	 * @param pt Point
 	 * @return Whether contained
 	 */
@@ -72,7 +71,7 @@ public class Extents {
 	}
 
 	/**
-	 * Determines the vertex of this extents that is nearest to the given point.
+	 * Determines the vertex of this bounds nearest to the given point.
 	 * @param pt Point
 	 * @return Nearest point
 	 */
@@ -88,7 +87,7 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>positive</i> vertex of this extents which is the <b>furthest</b> vertex in the direction of the normal.
+	 * Calculates the <i>positive</i> vertex of this bounds, i.e. the <b>furthest</b> vertex in the direction of the normal.
 	 * @param normal Normal
 	 * @return Positive vertex
 	 */
@@ -101,7 +100,7 @@ public class Extents {
 	}
 
 	/**
-	 * Calculates the <i>negative</i> vertex of this extents which is the <b>nearest</b> vertex in the direction of the normal.
+	 * Calculates the <i>negative</i> vertex of this bounds, i.e. the <b>nearest</b> vertex in the direction of the normal.
 	 * @param normal Normal
 	 * @return Negative vertex
 	 */
@@ -114,23 +113,23 @@ public class Extents {
 	}
 
 	/**
-	 * Tests whether two extents intersect.
-	 * @param extents Extents
-	 * @return Whether the extents intersect
+	 * Tests whether two bounds intersect.
+	 * @param that Bounds
+	 * @return Whether the bounds intersect
 	 */
-	public boolean intersects(Extents extents) {
+	public boolean intersects(Bounds that) {
 		return
-				(min.x <= extents.max.x) && (max.x >= extents.min.x) &&
-				(min.y <= extents.max.y) && (max.y >= extents.min.y) &&
-				(min.z <= extents.max.z) && (max.z >= extents.min.z);
+				(min.x <= that.max.x) && (max.x >= that.min.x) &&
+				(min.y <= that.max.y) && (max.y >= that.min.y) &&
+				(min.z <= that.max.z) && (max.z >= that.min.z);
 	}
 
 	/**
-	 * Inverts this extents.
-	 * @return Inverted extents
+	 * Inverts this bounds.
+	 * @return Inverted bounds
 	 */
-	public Extents invert() {
-		return new Extents(min, max) {
+	public Bounds invert() {
+		return new Bounds(min, max) {
 			@Override
 			public boolean contains(Point pt) {
 				return !super.contains(pt);
@@ -147,7 +146,7 @@ public class Extents {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof Extents that) &&
+				(obj instanceof Bounds that) &&
 				min.equals(that.min) && max.equals(that.max);
 	}
 
@@ -157,15 +156,15 @@ public class Extents {
 	}
 
 	/**
-	 * Helper - Creates a collector that constructs an extents from a stream of points.
-	 * @return New extents collector
+	 * Helper - Creates a collector that constructs bounds from a stream of points.
+	 * @return New bounds collector
 	 */
-	public static Collector<Point, ?, Extents> collector() {
+	public static Collector<Point, ?, Bounds> collector() {
 		return Collector.of(Builder::new, Builder::add, Builder::combine, Builder::build);
 	}
 
 	/**
-	 * Builder for extents.
+	 * Builder for bounds.
 	 */
 	public static class Builder {
 		private final float[] min, max;
@@ -187,7 +186,7 @@ public class Extents {
 		}
 
 		/**
-		 * Adds a point to this extents.
+		 * Adds a point to this bounds.
 		 * @param pt Point to add
 		 */
 		public Builder add(Point pt) {
@@ -219,11 +218,11 @@ public class Extents {
 		}
 
 		/**
-		 * Constructs this extents.
-		 * @return New extents
+		 * Constructs this bounds.
+		 * @return New bounds
 		 */
-		public Extents build() {
-			return new Extents(new Point(min), new Point(max));
+		public Bounds build() {
+			return new Bounds(new Point(min), new Point(max));
 		}
 	}
 }

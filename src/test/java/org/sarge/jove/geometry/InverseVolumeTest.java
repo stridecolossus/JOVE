@@ -1,17 +1,12 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Point;
+import org.junit.jupiter.api.*;
 
 class InverseVolumeTest {
 	private Volume inverse, vol;
-	private Extents extents;
 
 	@BeforeEach
 	void before() {

@@ -1,38 +1,29 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Vector;
 
 class BoundingBoxTest {
 	private BoundingBox box;
-	private Extents extents;
+	private Bounds bounds;
 
 	@BeforeEach
 	void before() {
-		extents = new Extents(new Point(1, 2, 3), new Point(4, 5, 6));
-		box = new BoundingBox(extents);
+		bounds = new Bounds(new Point(1, 2, 3), new Point(4, 5, 6));
+		box = new BoundingBox(bounds);
 	}
 
+	@DisplayName("A bounding box is an adapter for min/max bounds")
 	@Test
 	void constructor() {
-		assertEquals(extents, box.extents());
+		assertEquals(bounds, box.bounds());
 	}
 
+	@DisplayName("A bounding box can determine whether a given point lies within the bounds")
 	@Test
 	void contains() {
 		assertTrue(box.contains(new Point(1, 2, 3)));
@@ -43,23 +34,16 @@ class BoundingBoxTest {
 
 	@Test
 	void intersects() {
-		assertEquals(false, box.intersects(mock(Volume.class)));
+		assertEquals(false, box.intersects(Volume.EMPTY));
 	}
 
 	@Nested
 	class BoxSphereIntersectionTests {
-		private Point centre;
-
-		@BeforeEach
-		void before() {
-			centre = extents.centre();
-		}
-
 		@Test
 		void intersects() {
-			assertEquals(true, box.intersects(new SphereVolume(centre, 1)));
-			assertEquals(true, box.intersects(new SphereVolume(centre, 4)));
-			assertEquals(true, box.intersects(new SphereVolume(centre, Float.MAX_VALUE)));
+			assertEquals(true, box.intersects(new SphereVolume(bounds.centre(), 1)));
+			assertEquals(true, box.intersects(new SphereVolume(bounds.centre(), 4)));
+			assertEquals(true, box.intersects(new SphereVolume(bounds.centre(), Float.MAX_VALUE)));
 		}
 
 		@Test
@@ -78,17 +62,17 @@ class BoundingBoxTest {
 		@Test
 		void self() {
 			assertEquals(true, box.intersects(box));
-			assertEquals(true, box.intersects(new BoundingBox(extents)));
+			assertEquals(true, box.intersects(new BoundingBox(bounds)));
 		}
 
 		@Test
 		void overlapping() {
-			assertEquals(true, box.intersects(new BoundingBox(new Extents(Point.ORIGIN, extents.min()))));
+			assertEquals(true, box.intersects(new BoundingBox(new Bounds(Point.ORIGIN, bounds.min()))));
 		}
 
 		@Test
 		void outside() {
-			assertEquals(false, box.intersects(new BoundingBox(new Extents(Point.ORIGIN, Point.ORIGIN))));
+			assertEquals(false, box.intersects(new BoundingBox(new Bounds(Point.ORIGIN, Point.ORIGIN))));
 		}
 	}
 
@@ -98,8 +82,8 @@ class BoundingBoxTest {
 
 		@BeforeEach
 		void before() {
-			extents = new Extents(new Point(3, 2, 0), new Point(5, 4, 0));
-			box = new BoundingBox(extents);
+			bounds = new Bounds(new Point(3, 2, 0), new Point(5, 4, 0));
+			box = new BoundingBox(bounds);
 			ray = new Ray(new Point(1, 2, 0), new Vector(2, 1, 0));
 		}
 

@@ -1,8 +1,6 @@
 package org.sarge.jove.particle;
 
-import org.sarge.jove.geometry.Plane;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.scene.Volume;
+import org.sarge.jove.geometry.*;
 
 /**
  * Collision surface.

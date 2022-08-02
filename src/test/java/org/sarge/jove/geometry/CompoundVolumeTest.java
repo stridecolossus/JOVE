@@ -1,4 +1,4 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Point;
 
 class CompoundVolumeTest {
 	private Volume vol;

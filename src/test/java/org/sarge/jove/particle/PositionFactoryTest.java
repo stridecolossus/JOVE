@@ -1,15 +1,11 @@
 package org.sarge.jove.particle;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Random;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.*;
 
 public class PositionFactoryTest {
 	@Test
@@ -27,7 +23,7 @@ public class PositionFactoryTest {
 
 	@Test
 	public void extents() {
-		final var factory = PositionFactory.extents(new Extents(Point.ORIGIN, Point.ORIGIN), new Random());
+		final var factory = PositionFactory.extents(new Bounds(Point.ORIGIN, Point.ORIGIN), new Random());
 		assertEquals(Point.ORIGIN, factory.position());
 	}
 

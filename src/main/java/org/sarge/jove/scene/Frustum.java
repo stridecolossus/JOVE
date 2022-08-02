@@ -3,11 +3,8 @@ package org.sarge.jove.scene;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.Plane;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
 
 /**
  * A <i>frustum</i> is a clipping space specified as an array of planes.

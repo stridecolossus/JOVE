@@ -2,9 +2,7 @@ package org.sarge.jove.particle;
 
 import java.util.Random;
 
-import org.sarge.jove.geometry.Extents;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 
 /**
  * A <i>position factory</i> generates the starting position of a {@link Particle}.
@@ -46,15 +44,15 @@ public interface PositionFactory {
 	}
 
 	/**
-	 * Creates a position factory that generates points within the given extents.
-	 * @param extents 		Extents
+	 * Creates a position factory that generates points within the given bounds.
+	 * @param bounds 		Bounds
 	 * @param random		Random vector factory
 	 * @return Position factory
 	 */
-	static PositionFactory extents(Extents extents, Random random) {
+	static PositionFactory extents(Bounds bounds, Random random) {
 		return () -> {
-			final Point min = extents.min();
-			final Vector range = Vector.between(min, extents.max());
+			final Point min = bounds.min();
+			final Vector range = Vector.between(min, bounds.max());
 			// TODO - use component/indices?
 			return new Point(
 					random(min.x, range.x, random),

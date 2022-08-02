@@ -1,18 +1,13 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Plane;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
- * A <i>compound volume</i> is comprised of a list of bounding volumes.
+ * A <i>compound volume</i> is comprised of a group of bounding volumes.
  * <p>
  * Note that this implementation does not make any assumptions or apply any constraints on the relationship between the list of volumes (other than their order).
  * <p>
@@ -81,7 +76,7 @@ public class CompoundVolume implements Volume {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof CompoundVolume that) && this.volumes.equals(that.volumes);
+		return (obj == this) || (obj instanceof CompoundVolume that) && this.volumes.equals(that.volumes);
 	}
 
 	@Override

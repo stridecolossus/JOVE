@@ -1,16 +1,11 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.spy;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Plane;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 class VolumeTest {
@@ -23,11 +18,11 @@ class VolumeTest {
 
 	@Test
 	void intersectsDefault() {
-		assertThrows(UnsupportedOperationException.class, () -> vol.intersects((Volume) null));
+		assertThrows(UnsupportedOperationException.class, () -> vol.intersects(Volume.EMPTY));
 	}
 
 	@Nested
-	class NullVolumeTests {
+	class EmptyVolumeTests {
 		@Test
 		void contains() {
 			assertEquals(false, Volume.EMPTY.contains(null));
@@ -35,12 +30,12 @@ class VolumeTest {
 
 		@Test
 		void intersectsVolume() {
-			assertEquals(false, Volume.EMPTY.intersects((Volume) null));
+			assertEquals(false, Volume.EMPTY.intersects(Volume.EMPTY));
 		}
 
 		@Test
 		void intersectsPlane() {
-			assertEquals(false, Volume.EMPTY.intersects((Plane) null));
+			assertEquals(false, Volume.EMPTY.intersects(new Plane(Vector.Y, 1)));
 		}
 
 		@Test

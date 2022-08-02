@@ -37,7 +37,7 @@ public class DefaultCameraController {
 	public void update(float x, float y) {
 		final float yaw = horizontal.interpolate(x / dim.width());
 		final float pitch = vertical.interpolate(y / dim.height());
-		final Vector vec = Sphere.vector(yaw, pitch);
+		final Vector vec = SphereVolume.vector(yaw, pitch);
 		update(vec);
 	}
 

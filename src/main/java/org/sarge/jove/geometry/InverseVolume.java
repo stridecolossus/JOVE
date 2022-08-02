@@ -1,13 +1,10 @@
-package org.sarge.jove.scene;
+package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Plane;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
@@ -52,7 +49,7 @@ public class InverseVolume implements Volume {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof InverseVolume that) && this.vol.equals(that.vol);
+		return (obj == this) || (obj instanceof InverseVolume that) && this.vol.equals(that.vol);
 	}
 
 	@Override
