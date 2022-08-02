@@ -46,7 +46,7 @@ Obviously the LWJGL port was code-generated from the Vulkan header, therefore it
 
 Sometime later we were encouraged by a friend to make a second attempt.  Our first design decision was that unless LWJGL had materially changed we would look for alternative bindings.  Unfortunately there were none (that we could find) so our focus shifted to implementing custom bindings to the native Vulkan library.
 
-Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.
+Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.  Additionally JNI offered nothing to support the large number of enumerations and structures used by Vulkan.
 
 There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to do exactly what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer, and at the time of writing there was little in the way of tutorials or examples.
 

@@ -293,12 +293,12 @@ The requirements for images are fairly straight-forward so the following abstrac
 
 ```java
 public interface ImageData {
-    record Extents(Dimensions size, int depth) {
-    }
+    Dimensions size();
 
-    Extents extents();
     String components();
+
     Layout layout();
+
     Bufferable data();
 }
 ```
@@ -337,7 +337,7 @@ The image data is extracted as a byte array.
 
 ```java
 DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
-byte[] bytes = buffer.getData();
+byte[] data = buffer.getData();
 ```
 
 The image properties are next extracted from the Java image:
@@ -345,46 +345,12 @@ The image properties are next extracted from the Java image:
 ```java
 Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
 Layout layout = new Layout(components, Byte.class, 1, false);
-Bufferable data = Bufferable.of(bytes);
 ```
 
 And finally the image domain object is instantiated:
 
 ```java
-return new DefaultImageData(new Extents(size), components, layout, 0, levels, Bufferable.of(data));
-```
-
-The bufferable object for the image data buffer is a wrapper for the underlying array:
-
-```java
-static Bufferable of(byte[] bytes) {
-    return new Bufferable() {
-        @Override
-        public int length() {
-            return bytes.length;
-        }
-
-        @Override
-        public void buffer(ByteBuffer buffer) {
-            write(bytes, buffer);
-        }
-    };
-}
-```
-
-Which delegates to another helper to write the array to an NIO buffer:
-
-```java
-static void write(byte[] bytes, ByteBuffer bb) {
-    if(bb.isDirect()) {
-        for(byte b : bytes) {
-            bb.put(b);
-        }
-    }
-    else {
-        bb.put(bytes);
-    }
-}
+return new DefaultImageData(size, components, layout, data);
 ```
 
 This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  The following unit-test is added to check the texture images that will be used in the next few chapters:
@@ -654,7 +620,7 @@ public static class Builder {
 A copy command is comprised of a number of _copy regions_ which are specified by a transient record:
 
 ```java
-public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
+public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
     public static class Builder {
         ...
     }
@@ -670,9 +636,11 @@ private void populate(VkBufferImageCopy copy) {
     copy.bufferImageHeight = height;
     copy.imageSubresource = SubResource.toLayers(res);
     copy.imageOffset = imageOffset;
-    copy.imageExtent = extents.toExtent3D();
+    copy.imageExtent = extents.toExtent();
 }
 ```
+
+Where the `toExtent` helper constructs a `VkExtent3D` for the image.
 
 The builder for the copy command generates the array of copy region descriptors:
 

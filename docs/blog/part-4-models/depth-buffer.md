@@ -378,7 +378,7 @@ Unlike the swapchain images we are required to create and manage the image for t
 public View depth(Swapchain swapchain, AllocationService allocator) {
     ImageDescriptor descriptor = new ImageDescriptor.Builder()
         .aspect(VkImageAspect.DEPTH)
-        .extents(new ImageExtents(swapchain.extents()))
+        .extents(swapchain.extents())
         .format(VkFormat.D32_SFLOAT)
         .build();
         

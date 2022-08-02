@@ -199,7 +199,7 @@ First a texture is configured with an array layer for each face of the cube:
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .type(VkImageType.TWO_D)
     .aspect(VkImageAspect.COLOR)
-    .extents(new ImageExtents(...))
+    .extents(...)
     .format(format)
     .arrayLayers(6)
     .build();
@@ -462,10 +462,8 @@ int format = in.readInt();                              // 43 = R8G8B8A8_SRGB
 int typeSize = in.readInt();                            // Size of the data type in bytes (1)
 
 // Load image extents
-Extents extents = new Extents(
-    new Dimensions(in.readInt(), in.readInt()),         // 4096 x 4096
-    Math.max(1, in.readInt())                           // Image depth (0)
-);
+Dimensions size = new Dimensions(in.readInt(), in.readInt());
+int depth = Math.max(1, in.readInt());                  // Image depth (0)
 
 // Load image data size
 int layerCount = Math.max(1, in.readInt());             // Assume 1
@@ -664,7 +662,7 @@ First a copy region is defined as a simple transient record with a companion bui
 ```java
 public class ImageCopyCommand implements Command {
     ...
-    public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, ImageExtents extents) {
+    public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
     }
 }
 ```
@@ -678,7 +676,7 @@ private void populate(VkBufferImageCopy copy) {
     copy.bufferImageHeight = height;
     copy.imageSubresource = SubResource.toLayers(res);
     copy.imageOffset = imageOffset;
-    copy.imageExtent = extents.toExtent3D();
+    copy.imageExtent = extents.toExtent();
 }
 ```
 

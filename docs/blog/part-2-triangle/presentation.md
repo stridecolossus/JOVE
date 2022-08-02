@@ -329,14 +329,14 @@ public class Image implements NativeObject {
 The _image descriptor_ comprises the static properties of an image:
 
 ```java
-public record ImageDescriptor(VkImageType type, VkFormat format, ImageExtents extents, Set<VkImageAspect> aspects, int levels, int layers) {
+public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levels, int layers) {
 }
 ```
 
 Where _extents_ specifies the dimensions of the image:
 
 ```java
-public record ImageExtents(Dimensions dimensions, int depth) {
+public record Extents(Dimensions dimensions, int depth) {
 }
 ```
 
@@ -543,7 +543,7 @@ The images all share the same descriptor:
 Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
 ImageDescriptor descriptor = new ImageDescriptor.Builder()
     .format(info.imageFormat)
-    .extents(new ImageExtents(extents))
+    .extents(extents)
     .aspect(VkImageAspect.COLOR)
     .build();
 ```
