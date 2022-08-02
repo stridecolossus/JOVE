@@ -1,10 +1,8 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import com.sun.jna.Pointer;
 
@@ -25,13 +23,20 @@ public class AbstractTransientNativeObjectTest {
 		};
 	}
 
+	@DisplayName("A transient object has a native handle")
 	@Test
 	void constructor() {
 		assertEquals(new Handle(ptr), obj.handle());
+	}
+
+	@DisplayName("A new transient object is not destroyed")
+	@Test
+	void isDestroyed() {
 		assertEquals(false, obj.isDestroyed());
 		assertEquals(false, destroyed);
 	}
 
+	@DisplayName("A transient object can be destroyed")
 	@Test
 	void destroy() {
 		obj.destroy();
@@ -39,6 +44,7 @@ public class AbstractTransientNativeObjectTest {
 		assertEquals(true, destroyed);
 	}
 
+	@DisplayName("A transient object cannot be destroyed more than once")
 	@Test
 	void destroyAlreadyDestroyed() {
 		obj.destroy();

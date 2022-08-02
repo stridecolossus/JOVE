@@ -1,15 +1,10 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 class ColourTest {
 	private Colour col;
@@ -19,27 +14,56 @@ class ColourTest {
 		col = new Colour(0.1f, 0.2f, 0.3f, 1f);
 	}
 
+	@DisplayName("A colour is comprised of RGBA components")
 	@Test
 	void constructor() {
 		assertEquals(0.1f, col.red());
 		assertEquals(0.2f, col.green());
 		assertEquals(0.3f, col.blue());
 		assertEquals(1.0f, col.alpha());
+	}
+
+	@DisplayName("A colour has a 4-component layout")
+	@Test
+	void layout() {
 		assertEquals(Layout.floats(4), Colour.LAYOUT);
 		assertEquals(4 * Float.BYTES, col.length());
 	}
 
-	@Test
-	void array() {
-		assertEquals(col, Colour.of(new float[]{col.red(), col.green(), col.blue(), 1f}));
-		assertEquals(col, Colour.of(new float[]{col.red(), col.green(), col.blue()}));
+	@Nested
+	class ArrayConstructorTests {
+		@DisplayName("A colour can be constructed from a RGBA array")
+		@Test
+		void constructor() {
+			assertEquals(col, Colour.of(new float[]{col.red(), col.green(), col.blue(), 1f}));
+		}
+
+		@DisplayName("A colour can be constructed from a RGB array with an implicit full alpha channel")
+		@Test
+		void alpha() {
+			assertEquals(col, Colour.of(new float[]{col.red(), col.green(), col.blue()}));
+		}
+
+		@DisplayName("A colour cannot be constructed from an empty array")
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> Colour.of(new float[0]));
+		}
+
+		@DisplayName("A colour cannot be constructed from an array that does not contain RGB(A) components")
+		@Test
+		void invalid() {
+			assertThrows(IllegalArgumentException.class, () -> Colour.of(new float[]{1}));
+		}
 	}
 
+	@DisplayName("A colour has a length in bytes")
 	@Test
-	void constructorInvalid() {
-		assertThrows(IllegalArgumentException.class, () -> new Colour(0, 0, 0, 999));
+	void length() {
+		assertEquals(4 * Float.BYTES, col.length());
 	}
 
+	@DisplayName("A colour can be written to an NIO buffer")
 	@Test
 	void buffer() {
 		final ByteBuffer buffer = ByteBuffer.allocate(4 * Float.BYTES);
@@ -51,6 +75,7 @@ class ColourTest {
 		assertEquals(col.alpha(), buffer.getFloat());
 	}
 
+	@DisplayName("A colour can be converted to an RGBA array")
 	@Test
 	void toArray() {
 		final float[] array = col.toArray();
@@ -59,8 +84,9 @@ class ColourTest {
 
 	@Test
 	void equals() {
-		assertTrue(col.equals(col));
-		assertFalse(col.equals(null));
-		assertFalse(col.equals(Colour.WHITE));
+		assertEquals(col, col);
+		assertEquals(col, new Colour(0.1f, 0.2f, 0.3f, 1f));
+		assertNotEquals(col, null);
+		assertNotEquals(col, Colour.WHITE);
 	}
 }

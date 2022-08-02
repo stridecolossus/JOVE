@@ -17,6 +17,7 @@ public class TupleTest {
 		};
 	}
 
+	@DisplayName("A tuple is comprised of XYZ components")
 	@Test
 	void constructor() {
 		assertEquals(1, tuple.x);
@@ -24,6 +25,7 @@ public class TupleTest {
 		assertEquals(3, tuple.z);
 	}
 
+	@DisplayName("A tuple can be copied from an existing tuple")
 	@Test
 	void copy() {
 		tuple = new Tuple(tuple) {
@@ -40,6 +42,7 @@ public class TupleTest {
 		};
 	}
 
+	@DisplayName("A tuple can be created from an array")
 	@Test
 	void array() {
 		create(new float[]{1, 2, 3});
@@ -48,12 +51,14 @@ public class TupleTest {
 		assertEquals(3, tuple.z);
 	}
 
+	@DisplayName("A tuple cannot be created from an array that does not comprise XYZ components")
 	@Test
 	void arrayInvalidLength() {
 		assertThrows(IllegalArgumentException.class, () -> create(new float[0]));
 		assertThrows(IllegalArgumentException.class, () -> create(new float[]{1, 2, 3, 4}));
 	}
 
+	@DisplayName("The components of a tuple can be retrieved by index")
 	@Test
 	void get() {
 		assertEquals(1, tuple.get(0));
@@ -66,11 +71,19 @@ public class TupleTest {
 		assertThrows(IndexOutOfBoundsException.class, () -> tuple.get(3));
 	}
 
+	@DisplayName("The dot product of a tuple is equivalent to the magnitude of a vector")
 	@Test
 	void dot() {
 		assertEquals(1 * 1 + 2 * 2 + 3 * 3, tuple.dot(tuple));
 	}
 
+	@DisplayName("A tuple has a length in bytes")
+	@Test
+	void length() {
+		assertEquals(3 * Float.BYTES, tuple.length());
+	}
+
+	@DisplayName("A tuple can be written to an NIO buffer")
 	@Test
 	void buffer() {
 		final ByteBuffer buffer = ByteBuffer.allocate(3 * Float.BYTES);
@@ -84,5 +97,11 @@ public class TupleTest {
 	@Test
 	void hash() {
 		assertEquals(Objects.hash(1f, 2f, 3f), tuple.hashCode());
+	}
+
+	@DisplayName("A tuple can be compared to another tuple sub-class")
+	@Test
+	void isEqual() {
+		assertEquals(true, tuple.isEqual(tuple));
 	}
 }
