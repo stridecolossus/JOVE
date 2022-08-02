@@ -13,12 +13,11 @@ import org.sarge.lib.util.Check;
  * <p>
  * The image {@link #components} specifies the order of the channels comprising the image, e.g. {@code ABGR} for a transparent native image.
  * <p>
- * The {@link #layout} describes the number of channels comprising the image and the structure of each pixel.
- * For example a transparent image with one byte per channel would have the following layout: <code>new Layout(4, Byte.class, 1, false)</code>
+ * The {@link #layout} describes the pixel structure of each channel.
+ * For example an RGB image with one byte per channel would have the following layout: <code>new Layout(3, Byte.class, 1, false)</code>
  * <p>
  * @author Sarge
  */
-@SuppressWarnings("static-method")
 public class ImageData {
 	/**
 	 * An <i>image level</i> specifies a MIP level of this image.
@@ -68,10 +67,12 @@ public class ImageData {
 	 * @param components		Pixel components
 	 * @param layout			Pixel layout
 	 * @param data				Image data
+	 * @param levels			MIP level index
 	 * @throws IllegalArgumentException if the size of the components and layout do not match
-	 * @throws IllegalArgumentException if the length of the image data does not match the image extents or the number of MIP levels and array layers
+	 * @throws IllegalArgumentException if the length of the image data does not match the image extents
+	 * @throws IllegalArgumentException if the image data does not match the number of MIP levels and array layers
 	 */
-	public ImageData(Dimensions size, String components, Layout layout, byte[] data) {
+	protected ImageData(Dimensions size, String components, Layout layout, byte[] data) {
 		this.size = notNull(size);
 		this.components = notEmpty(components);
 		this.layout = notNull(layout);
@@ -131,7 +132,7 @@ public class ImageData {
 	 * @return Vulkan format hint
 	 */
 	public int format() {
-		throw new UnsupportedOperationException();
+		return 0;
 	}
 
 	/**
@@ -161,6 +162,7 @@ public class ImageData {
 	 * @return Pixel
 	 * @throws ArrayIndexOutOfBoundsException if the coordinates are invalid for this image
 	 * @throws IllegalArgumentException if the component index is invalid for this image
+	 * @see #pixel(int)
 	 */
 	public int pixel(int x, int y, int component) {
 		Check.range(component, 0, components.length() - 1);
@@ -172,8 +174,9 @@ public class ImageData {
 
 	/**
 	 * Retrieves the pixel at the given byte index.
-	 * @param index Index
+	 * @param index Byte index
 	 * @return Pixel
+	 * @throws ArrayIndexOutOfBoundsException if the index is invalid for this image
 	 */
 	protected int pixel(int index) {
 		return data[index];

@@ -6,8 +6,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.sarge.jove.platform.vulkan.VkImageAspect.COLOR;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
@@ -18,9 +16,7 @@ import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 
-@SuppressWarnings("static-method")
 public class ImageTest extends AbstractVulkanTest {
-	private static final Set<VkImageAspect> COLOUR = Set.of(COLOR);
 	private static final Dimensions EXTENTS = new Dimensions(3, 4);
 
 	private DefaultImage image;
@@ -67,24 +63,6 @@ public class ImageTest extends AbstractVulkanTest {
 		assertEquals(6, Image.CUBEMAP_ARRAY_LAYERS);
 	}
 
-	@Test
-	void toExtent() {
-		final VkExtent3D extents = Image.toExtent(EXTENTS);
-		assertNotNull(extents);
-		assertEquals(3, extents.width);
-		assertEquals(4, extents.height);
-		assertEquals(1, extents.depth);
-	}
-
-	@Test
-	void toOffset() {
-		final VkOffset3D offset = Image.toOffset(EXTENTS);
-		assertNotNull(offset);
-		assertEquals(3, offset.x);
-		assertEquals(4, offset.y);
-		assertEquals(1, offset.z);
-	}
-
 	@Nested
 	class BuilderTests {
 		private Image.Builder builder;
@@ -94,7 +72,7 @@ public class ImageTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			// Init image memory properties
-			props = new MemoryProperties.Builder()
+			props = new MemoryProperties.Builder<VkImageUsageFlag>()
 					.mode(VkSharingMode.CONCURRENT)
 					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
 					.build();
@@ -136,7 +114,7 @@ public class ImageTest extends AbstractVulkanTest {
 			info.flags = VkImageCreateFlag.CUBE_COMPATIBLE.value();
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
-			info.extent = Image.toExtent(descriptor.extents());
+			info.extent = descriptor.extents().toExtent();
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
 			info.samples = VkSampleCount.COUNT_4;

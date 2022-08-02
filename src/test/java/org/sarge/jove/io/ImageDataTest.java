@@ -3,66 +3,74 @@ package org.sarge.jove.io;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-import java.util.function.IntUnaryOperator;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData.*;
+import org.sarge.jove.io.ImageData.Level;
 
 public class ImageDataTest {
-	private static final Extents EXTENTS = new Extents(new Dimensions(2, 3));
-	private static final List<Level> LEVELS = List.of(new Level(0, 2 * 3 * 4));
+	private static final Dimensions EXTENTS = new Dimensions(2, 3);
 	private static final Layout LAYOUT = Layout.bytes(4, 1);
 	private static final byte[] DATA = new byte[2 * 3 * 4];
 
+	private ImageData image;
+
+	@BeforeEach
+	void before() {
+		image = new ImageData(EXTENTS, "RGBA", LAYOUT, DATA);
+	}
+
+	@DisplayName("An image has a header and pixel data")
+	@Test
+	void constructor() {
+		assertEquals(EXTENTS, image.size());
+		assertEquals("RGBA", image.components());
+		assertNotNull(image.data());
+	}
+
+	@DisplayName("An image has a component layout specifying the structure of each pixel")
+	@Test
+	void layout() {
+		assertEquals(Layout.bytes(4, 1), image.layout());
+	}
+
+	@DisplayName("A basic image...")
 	@Nested
-	class DefaultImageDataTests {
-		private ImageData image;
-		private IntUnaryOperator pixel;
-
-		@BeforeEach
-		void before() {
-			pixel = n -> DATA[n];
-			image = new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 42, LEVELS, 1, Bufferable.of(DATA), pixel);
-		}
-
+	class BasicImageTests {
+		@DisplayName("has a single MIP level")
 		@Test
-		void constructor() {
-			assertEquals(new Extents(new Dimensions(2, 3)), image.extents());
-			assertEquals("RGBA", image.components());
-			assertEquals(Layout.bytes(4, 1), image.layout());
-			assertEquals(42, image.format());
-			assertEquals(1, image.layers());
+		void levels() {
 			assertEquals(List.of(new Level(0, 2 * 3 * 4)), image.levels());
-			assertNotNull(image.data());
 		}
 
+		@DisplayName("has a single array layer")
 		@Test
-		void invalidComponentLayout() {
-			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", Layout.bytes(3, 1), 0, LEVELS, 1, Bufferable.of(DATA), pixel));
+		void defaults() {
+			assertEquals(1, image.depth());
+			assertEquals(1, image.layers());
 		}
 
+		@DisplayName("does not have a Vulkan format hint")
 		@Test
-		void invalidDataLength() {
-			assertThrows(IllegalArgumentException.class, () -> new DefaultImageData(EXTENTS, "RGBA", LAYOUT, 0, LEVELS, 1, Bufferable.of(new byte[0]), pixel));
-		}
-
-		@Test
-		void pixel() {
-			assertEquals(0, image.pixel(0, 0, 0));
-		}
-
-		@Test
-		void pixelInvalidCoordinate() {
-			assertThrows(ArrayIndexOutOfBoundsException.class, () -> image.pixel(2, 3, 0));
-		}
-
-		@Test
-		void pixelInvalidComponentIndex() {
-			assertThrows(IllegalArgumentException.class, () -> image.pixel(0, 0, 4));
+		void format() {
+			assertEquals(0, image.format());
 		}
 	}
 
+	@DisplayName("The layout of an image must match the components string")
+	@Test
+	void invalidComponentLayout() {
+		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", Layout.bytes(3, 1), DATA));
+	}
+
+	@DisplayName("The length of the image data must match the specified layout and dimensions")
+	@Test
+	void invalidDataLength() {
+		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", LAYOUT, new byte[0]));
+		// TODO - assertThrows(IllegalArgumentException.class, () -> new ImageData(new Dimensions(4, 5), "RGBA", LAYOUT, DATA));
+	}
+
+	@DisplayName("An image MIP level...")
 	@Nested
 	class LevelTests {
 		private Level level;
@@ -72,12 +80,14 @@ public class ImageDataTest {
 			level = new Level(3, 16);
 		}
 
+		@DisplayName("has an offset into the image data and a length")
 		@Test
 		void constructor() {
 			assertEquals(3, level.offset());
 			assertEquals(16, level.length());
 		}
 
+		@DisplayName("can determine the offset into the image data for a given layer")
 		@Test
 		void offset() {
 			assertEquals(3, level.offset(0, 4));
@@ -86,35 +96,34 @@ public class ImageDataTest {
 			assertEquals(15, level.offset(3, 4));
 		}
 
+		@DisplayName("cannot have an offset for an invalid layer")
 		@Test
 		void offsetInvalidLayerIndex() {
 			assertThrows(IllegalArgumentException.class, () -> level.offset(4, 4));
 		}
-
-		// TODO - levels()
 	}
 
+	@DisplayName("A pixel in the image data...")
 	@Nested
-	class ExtentsTests {
-		private Extents extents;
-
-		@BeforeEach
-		void before() {
-			extents = new Extents(new Dimensions(640, 480), 3);
+	class PixelTests {
+		@DisplayName("can be looked up by position and component")
+		@Test
+		void pixel() {
+			final int index = (1 + 2 * 2) * 4 + 3;
+			DATA[index] = 42;
+			assertEquals(42, image.pixel(1, 2, 3));
 		}
 
+		@DisplayName("cannot be out-of-bounds of the image dimensions")
 		@Test
-		void constructor() {
-			assertEquals(3, extents.depth());
-			assertEquals(640, extents.size().width());
-			assertEquals(480, extents.size().height());
-			assertEquals(3, extents.depth());
+		void pixelInvalidCoordinate() {
+			assertThrows(ArrayIndexOutOfBoundsException.class, () -> image.pixel(2, 3, 0));
 		}
 
+		@DisplayName("cannot be looked up by an invalid component index")
 		@Test
-		void mip() {
-			assertEquals(new Extents(new Dimensions(320, 240), 3), extents.mip(1));
-			assertEquals(extents, extents.mip(0));
+		void pixelInvalidComponentIndex() {
+			assertThrows(IllegalArgumentException.class, () -> image.pixel(0, 0, 4));
 		}
 	}
 }

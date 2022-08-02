@@ -33,7 +33,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 		 */
 		public Extents {
 			Check.notNull(size);
-			Check.range(depth, 1, 3);
+			Check.oneOrMore(depth);
 		}
 
 		/**
@@ -123,7 +123,7 @@ public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents
 		Check.oneOrMore(layerCount);
 
 		// Validate extents
-		if(extents.isValid(type)) {
+		if(!extents.isValid(type)) {
 			throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
 		}
 
