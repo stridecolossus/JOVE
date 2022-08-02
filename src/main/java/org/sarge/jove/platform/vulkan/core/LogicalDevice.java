@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -41,8 +41,8 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 */
 	LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues) {
 		super(handle);
-		this.parent = notNull(parent);
-		this.features = notNull(features);
+		this.parent = requireNonNull(parent);
+		this.features = requireNonNull(features);
 		this.queues = Map.copyOf(queues);
 	}
 
@@ -136,11 +136,12 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
 		public RequiredQueue {
-			Check.notNull(family);
-			priorities = List.copyOf(notEmpty(priorities));
+			requireNonNull(family);
+			Check.notEmpty(priorities);
 			if(priorities.size() > family.count()) {
 				throw new IllegalArgumentException(String.format("Number of queues exceeds family: available=%d requested=%d", family.count(), priorities.size()));
 			}
+			priorities = List.copyOf(priorities);
 		}
 
 		/**
@@ -210,7 +211,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param parent Parent physical device
 		 */
 		public Builder(PhysicalDevice parent) {
-			this.parent = notNull(parent);
+			this.parent = requireNonNull(parent);
 		}
 
 		/**
@@ -218,7 +219,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param required Required features
 		 */
 		public Builder features(DeviceFeatures required) {
-			this.required = notNull(required);
+			this.required = requireNonNull(required);
 			return this;
 		}
 

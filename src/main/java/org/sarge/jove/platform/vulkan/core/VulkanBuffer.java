@@ -10,6 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.util.IntegerEnumeration;
@@ -225,7 +226,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pBuffer			Returned buffer
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
 
@@ -234,7 +235,6 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param device			Logical device
 		 * @param pBuffer			Buffer
 		 * @param pAllocator		Allocator
-		 * @return Result code
 		 */
 		void vkDestroyBuffer(DeviceContext device, VulkanBuffer buffer, Pointer pAllocator);
 
@@ -243,7 +243,6 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param device					Logical device
 		 * @param pBuffer					Buffer
 		 * @param pMemoryRequirements		Returned memory requirements
-		 * @return Result code
 		 */
 		void vkGetBufferMemoryRequirements(LogicalDevice device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
 
@@ -253,7 +252,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pBuffer			Buffer
 		 * @param memory			Memory
 		 * @param memoryOffset		Offset
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkBindBufferMemory(LogicalDevice device, Pointer buffer, DeviceMemory memory, long memoryOffset);
 
@@ -265,7 +264,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pBuffers			Buffer(s)
 		 * @param pOffsets			Buffer offset(s)
 		 */
-		void vkCmdBindVertexBuffers(Command.Buffer commandBuffer, int firstBinding, int bindingCount, Pointer pBuffers, long[] pOffsets);
+		void vkCmdBindVertexBuffers(Buffer commandBuffer, int firstBinding, int bindingCount, Pointer pBuffers, long[] pOffsets);
 
 		/**
 		 * Binds an index buffer.
@@ -274,16 +273,16 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param offset			Offset
 		 * @param indexType			Index data-type
 		 */
-		void vkCmdBindIndexBuffer(Command.Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType);
+		void vkCmdBindIndexBuffer(Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType);
 
 		/**
-		 * Command to copy a buffer.
+		 * Copies a buffer.
 		 * @param commandBuffer		Command buffer
 		 * @param srcBuffer			Source
 		 * @param dstBuffer			Destination
 		 * @param regionCount		Number of regions
 		 * @param pRegions			Region descriptor(s)
 		 */
-		void vkCmdCopyBuffer(Command.Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions);
+		void vkCmdCopyBuffer(Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions);
 	}
 }

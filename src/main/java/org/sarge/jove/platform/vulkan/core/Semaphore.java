@@ -42,7 +42,7 @@ public class Semaphore extends AbstractVulkanObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pSemaphore		Returned semaphore
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSemaphore);
 
