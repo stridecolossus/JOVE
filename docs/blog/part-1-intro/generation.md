@@ -26,9 +26,9 @@ Progressing through the [tutorial](https://vulkan-tutorial.com/) we realised mor
 
 There were a variety of reasons for this:
 
-* The Vulkan API contains a huge number of enumerations __all__ of which are bundled into a __single__ class as old school integer constants, resulting in a class with several __thousand__ members.  Besides the likelihood of accidentally using the wrong enumeration and the obvious type safety issues, finding an enumeration constant is virtually impossible.
+* The Vulkan API contains a huge number of enumerations __all__ of which are bundled by LWJGL as old school integer constants into a __single__ class, resulting in a God-class with several __thousand__ members.  Besides the likelihood of accidentally using the wrong enumeration and the obvious type safety issues, finding an enumeration constant is virtually impossible.
 
-* The API also makes heavy use of structures to configure Vulkan components which are implemented by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members and there are also a slew of allocation methods implemented on __every__ structure.  Again finding the right method becomes an annoyance, and this is repeated for every field in every structure.
+* The API also makes heavy use of structures to configure Vulkan components which are implemented by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members, there are multiple setters for each field, and a slew of allocation methods implemented on __every__ structure.  Again finding the right method becomes an annoyance.  This is repeated for every field in every structure.
 
 * This is not helped by the JavaDoc which essentially just replicates the signature of each method without explaining _what_ it does or why there are multiple versions of each method.
 
@@ -48,7 +48,7 @@ Sometime later we were encouraged by a friend to make a second attempt.  Our fir
 
 Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.  Additionally JNI offered nothing to support the large number of enumerations and structures used by Vulkan.
 
-There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to do exactly what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer, and at the time of writing there was little in the way of tutorials or examples.
+There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to support much of what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer, and at the time of writing there was little in the way of tutorials or examples.
 
 Next we considered SWIG which is the code-generation technology used by LWJGL.  Again we were not encouraged, proprietary descriptors are required to bind to the native layer and we have already covered our issues with the resultant code.
 
@@ -114,7 +114,7 @@ We first tried the [JNAeator](https://github.com/nativelibs4java/jnaerator) tool
 
 ### CDT
 
-Further research largely drew a blank, the only option seemed to be an obscure Eclipse component called CDT used for code assist in Eclipse.  This is not an actual library as such, there is no Maven or project page for example, we had to include a couple of JAR files directly into the generator project.
+Further research largely drew a blank, the only option seemed to be an obscure Eclipse component called CDT used for code assist in the IDE.  This is not an actual library as such, there is no Maven or project page for example, we had to include a couple of JAR files directly into the generator project.
 
 CDT builds an AST (Abstract Source Tree) from a C/C++ source or header file, which is a node-tree representing the various elements of the code.  In the main class for the code generator header file is first loaded:
 
@@ -299,7 +299,7 @@ This case only applies for the enumerations that specify the number of image or 
 private static final String[] DIGITS = {"ONE", "TWO", "THREE"};
 ```
 
-The leading numeric is replaced by the corresponding token, for example the `VkImageType.VK_IMAGE_TYPE_2D` constant becomes `TWO_D`.
+The leading numeric is replaced by the corresponding token, for example the `VK_IMAGE_TYPE_2D` constant becomes `TWO_D`.
 
 ### Templates
 
@@ -352,8 +352,8 @@ In the generator the arguments for an enumeration are constructed as follows:
 
 ```java
 Map<String, Object> map = new HashMap<>();
-map.put("package", PACKAGE);
-map.put("name", StringUtils.removeEnd(name, "Bits"));
+map.put("package", "org.sarge.jove.platform.vulkan");
+map.put("name", name);
 map.put("values", transformed);
 ```
 
@@ -370,15 +370,10 @@ package $package;
 
 import org.sarge.jove.util.IntegerEnumeration;
 
-/**
- * Vulkan enumeration wrapper.
- * This class has been code-generated.
- */
 public enum $name implements IntegerEnumeration {
-#foreach($entry in $values.entrySet())
-    ${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
-    
-#end
+    #foreach($entry in $values.entrySet())
+        ${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
+    #end
 
     private final int value;
     
@@ -770,9 +765,9 @@ In the end we decided not to code generate the API methods for a variety of reas
 
 1. Although the structure type mapping logic could be reused it is anticipated that we _will_ want to manually fiddle with the signatures of the API methods, so they might as well be hand-crafted.
 
-2. Also the number of API methods is relatively small in comparison to the number of enumerations and structures.
+2. The number of API methods is relatively small in comparison to the number of enumerations and structures.
 
-3. Additionally we would also like to group related API methods, both for ease of finding a method and to break up the overall library.  Obviously the header file has no notion of packaging so this grouping would have to be done manually anyway.
+3. Ideally we would like to group related API methods both for ease of finding a method and to break up the overall library.  Obviously the header file has no notion of packaging so this grouping would have to be done manually anyway.
 
 4. Finally we also intend to document each method as we introduce it to JOVE, partially for future reference, but also to better understand the API.
 
@@ -780,4 +775,4 @@ The generator ran in a matter of milliseconds so the code could be iteratively m
 
 At the time of writing (for Vulkan version 1.1.101.0) the generator produced 390 structures and 142 enumerations.  The API consisted of 91 methods (excluding extensions) so the decision to implement methods manually was not particularly onerous.
 
-In retrospect far too much time messing around with CDT, and it certainly does not adhere to the goal of using well documented third-party tools.  We probably ought to have tried to implement a custom header parser (our requirements are relatively simple) and this may be something to consider for future versions of the Vulkan API.
+In retrospect far too much time was spent messing around with CDT, and it certainly does not adhere to the goal of using well documented third-party tools.  We probably ought to have tried to implement a custom header parser (our requirements are relatively simple) and this may be something to consider for future versions of the Vulkan API.

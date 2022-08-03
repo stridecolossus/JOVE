@@ -56,20 +56,6 @@ public class Vertex implements Bufferable {
 		}
 	}
 
-	/**
-	 *
-	 * @param filter
-	 * @return
-	 */
-	public Vertex map(List<?> filter) {
-		final var result = components
-				.stream()
-				.filter(c -> filter.contains(c.getClass()))
-				.toList();
-
-		return new Vertex(result);
-	}
-
 	@Override
 	public int hashCode() {
 		return components.hashCode();

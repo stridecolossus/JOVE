@@ -10,29 +10,29 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public class CubeBuilder {
-	// Vertices
+	// Vertices (ordered as quad strips)
 	private static final Point[] VERTICES = {
 			// Front
-			new Point(-1, +1, 1),
 			new Point(-1, -1, 1),
-			new Point(+1, +1, 1),
 			new Point(+1, -1, 1),
+			new Point(-1, +1, 1),
+			new Point(+1, +1, 1),
 
 			// Back
-			new Point(+1, +1, -1),
 			new Point(+1, -1, -1),
-			new Point(-1, +1, -1),
 			new Point(-1, -1, -1),
+			new Point(+1, +1, -1),
+			new Point(-1, +1, -1),
 	};
 
 	// Face indices
 	private static final int[][] FACES = {
 			{ 0, 1, 2, 3 }, // Front
 			{ 4, 5, 6, 7 }, // Back
-			{ 2, 3, 4, 5 }, // Right
-			{ 6, 7, 0, 1 }, // Left
-			{ 1, 7, 3, 5 }, // Bottom
-			{ 6, 0, 4, 2 }, // Top
+			{ 1, 4, 3, 6 }, // Right
+			{ 5, 0, 7, 2 }, // Left
+			{ 3, 6, 2, 7 }, // Bottom
+			{ 0, 5, 1, 4 }, // Top
 	};
 
 	// Face normals
@@ -87,9 +87,9 @@ public class CubeBuilder {
 	/**
 	 * Constructs a cube using the given builder.
 	 * @param builder Model builder
+	 * @see #vertex(Point, Vector, Coordinate, Colour)
 	 */
 	public void build(Model.Builder builder) {
-		final var filter = builder.filter();
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -102,13 +102,23 @@ public class CubeBuilder {
 				final Colour col = COLOURS[face];
 
 				// Build vertex
-				final Vertex vertex = Vertex
-						.of(pos, normal, coord, col)
-						.map(filter);
-
-				// Add to cube
+				final Vertex vertex = vertex(pos, normal, coord, col);
 				builder.add(vertex);
 			}
 		}
+	}
+
+	/**
+	 * Builds a cube vertex.
+	 * Default implementation creates a vertex composed of the vertex position and texture coordinate.
+	 * @param pos			Vertex position
+	 * @param normal		Normal
+	 * @param coord			Texture coordinate
+	 * @param col			Colour
+	 * @return New vertex
+	 * @see Vertex#of(Bufferable...)
+	 */
+	protected Vertex vertex(Point pos, Vector normal, Coordinate coord, Colour col) {
+		return Vertex.of(pos, coord);
 	}
 }

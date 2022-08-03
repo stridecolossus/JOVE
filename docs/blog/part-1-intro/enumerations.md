@@ -30,7 +30,7 @@ For a library with a handful of enumerations these would be minor issues that co
 
 What was really needed was some sort of base-class that implemented a common solution, but of course enumerations cannot be sub-classed.  However - although it is not common practice - a Java enumeration _can_ implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).
 
-This technique is leveraged to define a common abstraction for the code-generated enumerations to support the above requirements.
+This technique is leveraged to define a common abstraction as a basis to support the above requirements.
 
 The [interface](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/util/IntegerEnumeration.java) itself is trivial:
 
@@ -43,7 +43,7 @@ public interface IntegerEnumeration {
 }
 ```
 
-The interface is implemented in the template for the code-generated enumerations as illustrated in the following example:
+The enumeration template was modified to implement the new interface as illustrated in the following example:
 
 ```java
 public enum VkImageUsageFlag implements IntegerEnumeration {

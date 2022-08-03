@@ -4,9 +4,9 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 /**
  * The <i>frame presenter</i> encapsulates the process of rendering and presenting a frame to the swapchain.
@@ -28,25 +28,44 @@ import org.sarge.jove.platform.vulkan.core.Command.*;
  * @author Sarge
  */
 public class FramePresenter implements TransientObject {
-	private final FrameSet frames;
-	private final RenderSequence seq;
+	private final Swapchain swapchain;
+	private final FrameBuilder builder;
 	private final Semaphore available, ready;
 	private final Fence fence;
 	private VkPipelineStage stage = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT;
 
 	/**
 	 * Constructor.
-	 * @param frames		Frame buffers
-	 * @param seq			Rendering sequence
+	 * @param swapchain		Swapchain
+	 * @param builder		Frame builder
 	 */
-	public FramePresenter(FrameSet frames, RenderSequence seq) {
-		final DeviceContext dev = frames.swapchain().device();
-		this.frames = notNull(frames);
-		this.seq = notNull(seq);
+	public FramePresenter(Swapchain swapchain, FrameBuilder builder) {
+		final DeviceContext dev = swapchain.device();
+		this.swapchain = notNull(swapchain);
+		this.builder = notNull(builder);
 		this.available = Semaphore.create(dev);
 		this.ready = Semaphore.create(dev);
 		this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
 	}
+
+	/**
+	 *
+	 * TODO - interface...
+	 *
+	 * frame in flight
+	 * - available, ready
+	 * - fence
+	 * - submit(buffer)
+	 * - waitReady()
+	 *
+	 * purpose
+	 * - encapsulates active frame
+	 * - handles sync
+	 *
+	 * PresentTaskBuilder
+	 * - move here?
+	 *
+	 */
 
 //	/**
 //	 * Sets the pipeline stage for
@@ -60,33 +79,37 @@ public class FramePresenter implements TransientObject {
 	/**
 	 * Renders and presents the next frame.
 	 */
-	public void render() {
+	public void render(RenderSequence seq) {
 		// TODO
 		fence.waitReady();
 		fence.reset();
 
 		// Acquire next frame
-		final Swapchain swapchain = frames.swapchain();
 		final int index = swapchain.acquire(available, null);
 
-		// Retrieve render sequence
-		final FrameBuffer frame = frames.buffer(index);
-		final Buffer buffer = seq.build(frame);
-		final Pool pool = buffer.pool();
-
 		// Submit render task
-		new Work.Builder(pool)
-				.add(buffer)
-				.wait(available, stage)
-				.signal(ready)
-				.build()
-				.submit(fence);
+		final Buffer buffer = builder.build(index, seq);
+		submit(buffer);
 
 		// Block until frame is rendered
 		fence.waitReady();
 
 		// Present frame
-		swapchain.present(pool.queue(), index, ready);
+		final Queue queue = buffer.pool().queue();
+		swapchain.present(queue, index, ready);
+	}
+
+	/**
+	 * Submits the render task for the next frame.
+	 * @param buffer Render task
+	 */
+	protected void submit(Buffer buffer) {
+		new Work.Builder(buffer.pool())
+				.add(buffer)
+				.wait(available, stage)
+				.signal(ready)
+				.build()
+				.submit(fence);
 	}
 
 	@Override

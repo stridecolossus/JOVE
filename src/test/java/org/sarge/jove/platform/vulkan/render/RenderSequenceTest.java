@@ -1,45 +1,48 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
-import java.util.function.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 public class RenderSequenceTest {
+	private Command cmd;
+	private Buffer buffer;
 	private RenderSequence seq;
-	private Supplier<Buffer> factory;
-	private Consumer<Buffer> recorder;
 
-	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		factory = mock(Supplier.class);
-		recorder = mock(Consumer.class);
-		seq = new RenderSequence(factory, recorder, VkCommandBufferUsage.ONE_TIME_SUBMIT);
+		cmd = mock(Command.class);
+		buffer = mock(Buffer.class);
+		seq = RenderSequence.of(List.of(cmd));
+		assertNotNull(seq);
 	}
 
 	@Test
-	void build() {
-		// Create the target frame buffer
-		final FrameBuffer frame = mock(FrameBuffer.class);
-		final Command begin = mock(Command.class);
-		when(frame.begin()).thenReturn(begin);
+	void sequence() {
+		seq.record(buffer);
+		verify(buffer).add(cmd);
+	}
 
-		// Create command buffer
-		final Buffer buffer = mock(Buffer.class);
-		when(factory.get()).thenReturn(buffer);
+	@Test
+	void wrap() {
+		final Command before = mock(Command.class);
+		final Command after = mock(Command.class);
+		final RenderSequence wrapper = seq.wrap(before, after);
+		wrapper.record(buffer);
+		verify(buffer).add(before);
+		verify(buffer).add(cmd);
+		verify(buffer).add(after);
+	}
 
-		// Build rendering sequence
-		assertEquals(buffer, seq.build(frame));
-		verify(buffer).begin(VkCommandBufferUsage.ONE_TIME_SUBMIT);
-		verify(buffer).add(begin);
-		verify(recorder).accept(buffer);
-		verify(buffer).add(FrameBuffer.END);
-		verify(buffer).end();
+	@Test
+	void compound() {
+		final RenderSequence compound = RenderSequence.compound(List.of(seq, seq));
+		compound.record(buffer);
+		verify(buffer, times(2)).add(cmd);
 	}
 }
