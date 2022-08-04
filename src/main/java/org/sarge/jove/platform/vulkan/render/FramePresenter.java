@@ -13,7 +13,14 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 /**
  * The <i>frame presenter</i> is the controller for the process of rendering frames to the swapchain.
- * TODO
+ * <p>
+ * The presenter cycles through an array of <i>in flight</i> frames that are responsible for synchronisation of the render process.
+ * The next in-flight {@link Frame} is selected using the {@link #next()} accessor.
+ * <p>
+ * The {@link DefaultFrame} is a default implementation of the standard approach for rendering a frame with Vulkan synchronisation primitives.
+ * The {@link #frame(int, DeviceContext)} factory method can be over-ridden to change the frame implementation.
+ * <p>
+ * @see FrameBuilder
  * @author Sarge
  */
 public class FramePresenter implements TransientObject {
@@ -53,18 +60,29 @@ public class FramePresenter implements TransientObject {
 		final Semaphore available = Semaphore.create(dev);
 		final Semaphore ready = Semaphore.create(dev);
 		final Fence fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
-		return new Frame(available, ready, fence);
+		return new DefaultFrame(available, ready, fence);
 	}
 
 	/**
 	 * Selects the next in-flight frame to be rendered.
 	 * @return Next frame
 	 */
-	public synchronized Frame next() {
+	protected synchronized Frame next() {
 		if(active >= frames.length) {
 			active = 0;
 		}
 		return frames[active++];
+	}
+
+	/**
+	 * Renders the next frame.
+	 * This is a blocking operation.
+	 * @param seq Render sequence
+	 * @see Frame
+	 */
+	public void render(RenderSequence seq) {
+		final Frame frame = next();
+		frame.render(seq, builder, swapchain);
 	}
 
 	@Override
@@ -87,27 +105,55 @@ public class FramePresenter implements TransientObject {
 	/**
 	 * A <i>frame</i> encapsulates the process of rendering and presenting the next frame to the swapchain.
 	 */
-	public class Frame {
+	public interface Frame extends TransientObject {
+		/**
+		 * Renders this frame.
+		 * @param seq				Render sequence
+		 * @param builder			Task builder
+		 * @param swapchain			Target swapchain
+		 */
+		void render(RenderSequence seq, FrameBuilder builder, Swapchain swapchain);
+	}
+
+	/**
+	 * Default implementation for the <i>standard</i> frame rendering approach.
+	 * <p>
+	 * This implementation comprises the following steps:
+	 * <ol>
+	 * <li>Acquire the next frame buffer index from the swapchain</li>
+	 * <li>Construct a task to render to this frame buffer via {@link FrameBuilder#build(int, RenderSequence)}</li>
+	 * <li>Submit the render task to the rendering work queue</li>
+	 * <li>Present the rendered frame to the swapchain</li>
+	 * </ul>
+	 * Note that currently this is a blocking implementation using Vulkan synchronisation primitives to manage the multi-threaded nature of the rendering process.
+	 * <p>
+	 * The render process blocks the current thread:
+	 * <ul>
+	 * <li>at the beginning of the task to ensure the previous in-flight has completed (avoiding out-of-order frames)</li>
+	 * <li>after a render task has been submitted until the frame is ready for presentation</li>
+	 * <ul>
+	 * <p>
+	 * This implementation assumes the application is responsible for invoking rendering tasks and task synchronisation, e.g. possibly using a scheduling task executor.
+	 * <p>
+	 */
+	public static class DefaultFrame implements Frame {
 		private final Semaphore available, ready;
 		private final Fence fence;
 
 		/**
 		 * Constructor.
-		 * @param available			Signals this frame is available for rendering
-		 * @param ready				Signals this frame has been rendered and is ready for presentation
-		 * @param fence				Synchronises the render task
+		 * @param available			Frame is available for rendering
+		 * @param ready				Frame has been rendered and is ready for presentation
+		 * @param fence				Render task synchronisation
 		 */
-		protected Frame(Semaphore available, Semaphore ready, Fence fence) {
+		protected DefaultFrame(Semaphore available, Semaphore ready, Fence fence) {
 			this.available = requireNonNull(available);
 			this.ready = requireNonNull(ready);
 			this.fence = requireNonNull(fence);
 		}
 
-		/**
-		 * Renders the next frame.
-		 * @param seq Render sequence
-		 */
-		public void render(RenderSequence seq) {
+		@Override
+		public void render(RenderSequence seq, FrameBuilder builder, Swapchain swapchain) {
 			// Wait for previous in-flight frame to complete
 			fence.waitReady();
 			fence.reset();
@@ -141,10 +187,8 @@ public class FramePresenter implements TransientObject {
 					.submit(fence);
 		}
 
-		/**
-		 * Releases synchronisation resources.
-		 */
-		protected void destroy() {
+		@Override
+		public void destroy() {
 			available.destroy();
 			ready.destroy();
 			fence.destroy();

@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 public interface RenderSequence {
 	/**
 	 * Records this render sequence to the given command buffer.
-	 * @param buffer Command buffer to record
+	 * @param buffer Render task
 	 * @see Buffer#add(Command)
 	 */
 	void record(Buffer buffer);

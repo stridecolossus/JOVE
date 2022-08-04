@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
-import org.sarge.jove.platform.vulkan.render.FramePresenter.Frame;
+import org.sarge.jove.platform.vulkan.render.FramePresenter.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class FramePresenterTest extends AbstractVulkanTest {
@@ -21,11 +21,14 @@ class FramePresenterTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
+		// Create swapchain
 		swapchain = mock(Swapchain.class);
 		when(swapchain.device()).thenReturn(dev);
 
+		// Init render task builder
 		builder = mock(FrameBuilder.class);
 
+		// Create controller
 		presenter = new FramePresenter(swapchain, builder, 2);
 	}
 
@@ -54,7 +57,7 @@ class FramePresenterTest extends AbstractVulkanTest {
 			when(available.handle()).thenReturn(new Handle(1));
 			when(ready.handle()).thenReturn(new Handle(2));
 			when(fence.handle()).thenReturn(new Handle(3));
-			frame = presenter.new Frame(available, ready, fence);
+			frame = new DefaultFrame(available, ready, fence);
 		}
 
 		@Test
@@ -76,7 +79,7 @@ class FramePresenterTest extends AbstractVulkanTest {
 			when(builder.build(0, seq)).thenReturn(buffer);
 
 			// Render frame
-			frame.render(seq);
+			frame.render(seq, builder, swapchain);
 
 			// Check synchronisation
 			verify(fence, times(2)).waitReady();
