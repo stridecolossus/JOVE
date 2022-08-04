@@ -1,7 +1,10 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -9,113 +12,142 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 /**
- * The <i>frame presenter</i> encapsulates the process of rendering and presenting a frame to the swapchain.
- * <p>
- * The {@link #render()} method comprises the following steps:
- * <ol>
- * <li>Acquire the next frame from the swapchain</li>
- * <li>Build the render sequence for the target frame buffer</li>
- * <li>Submit the render sequence to the presentation queue</li>
- * <li>Present the rendered frame to the swapchain via</li>
- * </ol>
- * <p>
- * Notes:
- * <ul>
- * <li>Submission of the rendering task is a blocking operation</li>
- * <li>This default implementation employs Vulkan synchronisation primitives to TODO</li>
- * </ul>
- * <p>
+ * The <i>frame presenter</i> is the controller for the process of rendering frames to the swapchain.
+ * TODO
  * @author Sarge
  */
 public class FramePresenter implements TransientObject {
 	private final Swapchain swapchain;
 	private final FrameBuilder builder;
-	private final Semaphore available, ready;
-	private final Fence fence;
-	private VkPipelineStage stage = VkPipelineStage.COLOR_ATTACHMENT_OUTPUT;
+	private final Frame[] frames;
+	private int active;
 
 	/**
 	 * Constructor.
 	 * @param swapchain		Swapchain
-	 * @param builder		Frame builder
+	 * @param builder		Render task builder
+	 * @param frames		Number of in-flight frames
 	 */
-	public FramePresenter(Swapchain swapchain, FrameBuilder builder) {
+	public FramePresenter(Swapchain swapchain, FrameBuilder builder, int frames) {
+		this.swapchain = requireNonNull(swapchain);
+		this.builder = requireNonNull(builder);
+		this.frames = new Frame[frames];
+		init();
+	}
+
+	/**
+	 * Initialises the in-flight frames.
+	 */
+	private void init() {
 		final DeviceContext dev = swapchain.device();
-		this.swapchain = notNull(swapchain);
-		this.builder = notNull(builder);
-		this.available = Semaphore.create(dev);
-		this.ready = Semaphore.create(dev);
-		this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
+		Arrays.setAll(frames, n -> frame(n, dev));
 	}
 
 	/**
-	 *
-	 * TODO - interface...
-	 *
-	 * frame in flight
-	 * - available, ready
-	 * - fence
-	 * - submit(buffer)
-	 * - waitReady()
-	 *
-	 * purpose
-	 * - encapsulates active frame
-	 * - handles sync
-	 *
-	 * PresentTaskBuilder
-	 * - move here?
-	 *
+	 * Creates a new in-flight frame.
+	 * @param index		Frame index
+	 * @param dev		Logical device
+	 * @return New frame
 	 */
-
-//	/**
-//	 * Sets the pipeline stage for
-//	 * @param stage
-//	 */
-//	public void setPipelineStage(VkPipelineStage stage) {
-//		this.stage = notNull(stage);
-//	}
-// TODO - interface? with default/abstract template implementation?
-
-	/**
-	 * Renders and presents the next frame.
-	 */
-	public void render(RenderSequence seq) {
-		// TODO
-		fence.waitReady();
-		fence.reset();
-
-		// Acquire next frame
-		final int index = swapchain.acquire(available, null);
-
-		// Submit render task
-		final Buffer buffer = builder.build(index, seq);
-		submit(buffer);
-
-		// Block until frame is rendered
-		fence.waitReady();
-
-		// Present frame
-		final Queue queue = buffer.pool().queue();
-		swapchain.present(queue, index, ready);
+	protected Frame frame(int index, DeviceContext dev) {
+		final Semaphore available = Semaphore.create(dev);
+		final Semaphore ready = Semaphore.create(dev);
+		final Fence fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
+		return new Frame(available, ready, fence);
 	}
 
 	/**
-	 * Submits the render task for the next frame.
-	 * @param buffer Render task
+	 * Selects the next in-flight frame to be rendered.
+	 * @return Next frame
 	 */
-	protected void submit(Buffer buffer) {
-		new Work.Builder(buffer.pool())
-				.add(buffer)
-				.wait(available, stage)
-				.signal(ready)
-				.build()
-				.submit(fence);
+	public synchronized Frame next() {
+		if(active >= frames.length) {
+			active = 0;
+		}
+		return frames[active++];
 	}
 
 	@Override
 	public void destroy() {
-		available.destroy();
-		ready.destroy();
-		fence.destroy();
+		for(Frame frame : frames) {
+			frame.destroy();
+		}
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append(swapchain)
+				.append(builder)
+				.append("frames", frames.length)
+				.append("active", active)
+				.build();
+	}
+
+	/**
+	 * A <i>frame</i> encapsulates the process of rendering and presenting the next frame to the swapchain.
+	 */
+	public class Frame {
+		private final Semaphore available, ready;
+		private final Fence fence;
+
+		/**
+		 * Constructor.
+		 * @param available			Signals this frame is available for rendering
+		 * @param ready				Signals this frame has been rendered and is ready for presentation
+		 * @param fence				Synchronises the render task
+		 */
+		protected Frame(Semaphore available, Semaphore ready, Fence fence) {
+			this.available = requireNonNull(available);
+			this.ready = requireNonNull(ready);
+			this.fence = requireNonNull(fence);
+		}
+
+		/**
+		 * Renders the next frame.
+		 * @param seq Render sequence
+		 */
+		public void render(RenderSequence seq) {
+			// Wait for previous in-flight frame to complete
+			fence.waitReady();
+			fence.reset();
+
+			// Acquire next frame buffer
+			final int index = swapchain.acquire(available, null);
+
+			// Render frame
+			final Buffer buffer = builder.build(index, seq);
+			submit(buffer);
+
+			// Block until frame rendered
+			fence.waitReady();
+
+			// Present rendered frame
+			// TODO - present task builder?
+			final Queue queue = buffer.pool().queue();
+			swapchain.present(queue, index, ready);
+		}
+
+		/**
+		 * Submits the render task for this frame.
+		 * @param buffer Render task
+		 */
+		protected void submit(Buffer buffer) {
+			new Work.Builder(buffer.pool())
+					.add(buffer)
+					.wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+					.signal(ready)
+					.build()
+					.submit(fence);
+		}
+
+		/**
+		 * Releases synchronisation resources.
+		 */
+		protected void destroy() {
+			available.destroy();
+			ready.destroy();
+			fence.destroy();
+		}
 	}
 }

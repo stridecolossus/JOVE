@@ -32,6 +32,11 @@ public class Button<T> implements Event {
 		}
 	}
 
+	// TODO
+	public static Consumer<Button<Action>> handler(Runnable action) {
+		return ignored -> action.run();
+	}
+
 	private final Source<Button<T>> source;
 	private final String id;
 	private final T action;
@@ -92,10 +97,5 @@ public class Button<T> implements Event {
 	@Override
 	public String toString() {
 		return name();
-	}
-
-	// TODO
-	public static Consumer<Button<Action>> handler(Runnable action) {
-		return button -> action.run();
 	}
 }
