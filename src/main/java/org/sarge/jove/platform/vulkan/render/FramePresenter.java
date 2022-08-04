@@ -158,6 +158,12 @@ public class FramePresenter implements TransientObject {
 			fence.waitReady();
 			fence.reset();
 
+			// TODO - out-of-order check
+			// prev = new Fence[swapchain.images];
+			// prev[active].waitReady() - if not NULL!
+			// prev[active] = this;
+			// invalidates the above? check tutorial
+
 			// Acquire next frame buffer
 			final int index = swapchain.acquire(available, null);
 

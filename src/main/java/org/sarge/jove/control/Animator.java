@@ -1,7 +1,6 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -9,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * An <i>animator</i> is a specialised player for an {@link Animation}.
  * @author Sarge
  */
-public class Animator extends Player implements FrameTracker.Listener {
+public class Animator extends Player {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */
@@ -77,15 +76,18 @@ public class Animator extends Player implements FrameTracker.Listener {
 		this.speed = speed;
 	}
 
-	@Override
-	public void update(FrameTracker tracker) {
+	/**
+	 * Updates this animator.
+	 * @param elapsed Elapsed time since previous frame (ms)
+	 */
+	public void update(long elapsed) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
 		// Update time position
-		time += speed * tracker.elapsed();
+		time += speed * elapsed;
 
 		// Check for completed animation
 		if(time > duration) {

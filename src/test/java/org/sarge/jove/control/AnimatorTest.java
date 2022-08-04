@@ -1,30 +1,20 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.control.Player.State;
 
 class AnimatorTest {
 	private Animator animator;
 	private Animation animation;
-	private FrameTracker frame;
 
 	@BeforeEach
 	void before() {
-		// Create animation
 		animation = mock(Animation.class);
 		animator = new Animator(5000, animation);
-
-		// Init frame listener
-		frame = mock(FrameTracker.class);
-		when(frame.elapsed()).thenReturn(1000L);
 	}
 
 	@Test
@@ -45,7 +35,7 @@ class AnimatorTest {
 	@Test
 	void update() {
 		animator.state(State.PLAY);
-		animator.update(frame);
+		animator.update(1000);
 		verify(animation).update(animator);
 		assertEquals(1000, animator.time());
 	}
@@ -54,21 +44,20 @@ class AnimatorTest {
 	void updateSpeed() {
 		animator.state(State.PLAY);
 		animator.speed(2);
-		animator.update(frame);
+		animator.update(1000);
 		assertEquals(2000, animator.time());
 	}
 
 	@Test
 	void updateNotPlaying() {
-		animator.update(frame);
+		animator.update(1000);
 		verifyNoMoreInteractions(animation);
 	}
 
 	@Test
 	void updateFinished() {
-		when(frame.elapsed()).thenReturn(6000L);
 		animator.state(State.PLAY);
-		animator.update(frame);
+		animator.update(6000);
 		verify(animation).update(animator);
 		assertEquals(State.STOP, animator.state());
 		assertEquals(5000, animator.time());
@@ -76,10 +65,9 @@ class AnimatorTest {
 
 	@Test
 	void updateRepeating() {
-		when(frame.elapsed()).thenReturn(6000L);
 		animator.state(State.PLAY);
 		animator.repeat(true);
-		animator.update(frame);
+		animator.update(6000);
 		verify(animation).update(animator);
 		assertEquals(State.PLAY, animator.state());
 		assertEquals(1000, animator.time());

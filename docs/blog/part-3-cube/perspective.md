@@ -789,7 +789,7 @@ while(true) {
 }
 ```
 
-The temporary static rotation added previously is replaced a matrix constructed on every frame.  First a horizontal rotation is animated by interpolating the period onto the unit-circle:
+The temporary static rotation added previously is replaced by a matrix constructed on every frame.  First a horizontal rotation is animated by interpolating the period onto the unit-circle:
 
 ```java
 float angle = (time % period) * MathsUtil.TWO_PI / period;
@@ -803,12 +803,17 @@ Matrix v = Matrix.rotation(Vector.X, MathsUtil.toRadians(30));
 Matrix model = h.multiply(v);
 ```
 
-Finally the projection-view matrix and uniform buffer objects are injected to compose the final matrix to be passed to the shader:
+The projection-view and model matrices are then composed and loaded to the uniform buffer:
 
 ```java
 Matrix m = matrix.multiply(model);
 uniform.load(m);
 ```
+
+In the loop the `Thread.sleep()` bodge is replaced with a second `pool.waitIdle()` call to block until each frame has been rendered.
+
+Finally the presentation configuration is modified to create an array of frame buffers (one per swapchain image) to properly utilise the swapchain functionality.
+Note that since the above loop is completely single-threaded a single frame buffer with a hard coded index would probably still work.
 
 Hopefully we can now finally see the goal for this chapter: the proverbial rotating textured cube.
 
@@ -818,9 +823,9 @@ Note that there are still several problems with this crude render loop that will
 
 * The GLFW event queue thread is still blocked.
 
-* The render loop will generate validation errors on every frame (no synchronisation has been configured).
+* The render loop will generate validation errors on every frame since synchronisation has not been configured.
 
-* This demo will overload the hardware since there are no limits on the number of frames being submitted for rendering.
+* Warnings will also be generated because the array of frame buffers is not automatically released on termination.
 
 ---
 
