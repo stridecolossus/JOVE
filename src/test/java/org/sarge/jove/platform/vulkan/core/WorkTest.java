@@ -40,7 +40,7 @@ public class WorkTest extends AbstractVulkanTest {
 		when(buffer.isReady()).thenReturn(true);
 
 		// Create work instance
-		work = Work.of(buffer);
+		work = new Work.Builder(pool).add(buffer).build();
 	}
 
 	@Test
@@ -82,7 +82,7 @@ public class WorkTest extends AbstractVulkanTest {
 		when(buffer.isReady()).thenReturn(true);
 
 		// Create work
-		final Work invalid = Work.of(buffer);
+		final Work invalid = new Work.Builder(other).add(buffer).build();
 
 		// Check cannot submit to different queues
 		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, invalid), null));
@@ -91,7 +91,6 @@ public class WorkTest extends AbstractVulkanTest {
 	@Test
 	void equals() {
 		assertEquals(true, work.equals(work));
-		assertEquals(true, work.equals(Work.of(buffer)));
 		assertEquals(false, work.equals(null));
 		assertEquals(false, work.equals(mock(Work.class)));
 	}

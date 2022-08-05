@@ -50,8 +50,10 @@ public interface Command {
 				.end();
 
 		// Submit work
-		final Work work = Work.of(buffer);
-		work.submit(fence);
+		new Work.Builder(pool)
+				.add(buffer)
+				.build()
+				.submit(fence);
 
 		// Wait for completion
 		fence.waitReady();
