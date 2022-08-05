@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
 /**
- * An <i>image sub-resource</i> defines a subset of the image aspects, mip levels and array layers of an image.
+ * An <i>image sub-resource</i> defines a subset of the aspects, mip levels and array layers of an image.
  * @author Sarge
  */
 public interface SubResource {
