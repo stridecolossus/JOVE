@@ -1,7 +1,5 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -24,8 +22,55 @@ public interface Rotation extends Transform {
 	float angle();
 
 	/**
+	 * Creates a rotation instance.
+	 * @param axis		Axis
+	 * @param angle		Rotation angle (radians)
+	 * @return New rotation
+	 */
+	static Rotation of(Vector axis, float angle) {
+		return new Rotation() {
+			private final Matrix matrix = Rotation.matrix(axis, angle);
+
+			@Override
+			public Vector axis() {
+				return axis;
+			}
+
+			@Override
+			public float angle() {
+				return angle;
+			}
+
+			@Override
+			public Matrix matrix() {
+				return matrix;
+			}
+
+			@Override
+			public int hashCode() {
+				return Objects.hash(axis, angle);
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				return
+						(obj == this) ||
+						(obj instanceof Rotation that) &&
+						this.axis().equals(that.axis()) &&
+						MathsUtil.isEqual(this.angle(), that.angle());
+			}
+
+			@Override
+			public String toString() {
+				return new ToStringBuilder(this).append(axis).append(angle).build();
+			}
+		};
+	}
+
+	/**
 	 * Creates a matrix for the given rotation.
-	 * @param rot Rotation
+	 * @param axis		Axis
+	 * @param angle		Rotation angle (radians)
 	 * @return New rotation matrix
 	 * @throws UnsupportedOperationException for an <i>arbitrary</i> axis
 	 * @see Quaternion#of(Rotation)
@@ -58,74 +103,5 @@ public interface Rotation extends Transform {
 			throw new UnsupportedOperationException("Arbitrary axis not supported (use quaternion)");
 		}
 		return matrix.build();
-	}
-
-	/**
-	 * Skeleton implementation.
-	 */
-	abstract class AbstractRotation implements Rotation {
-		private final Vector axis;
-		protected float angle;
-
-		/**
-		 * Constructor.
-		 * @param axis		Rotation axis
-		 * @param angle		Angle
-		 */
-		protected AbstractRotation(Vector axis, float angle) {
-			this.axis = notNull(axis);
-			this.angle = angle;
-		}
-
-		@Override
-		public final Vector axis() {
-			return axis;
-		}
-
-		@Override
-		public final float angle() {
-			return angle;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(axis, angle);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof Rotation that) &&
-					this.axis.equals(that.axis()) &&
-					MathsUtil.isEqual(this.angle, that.angle());
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this).append(axis).append(angle).build();
-		}
-	}
-
-	/**
-	 * Default implementation.
-	 */
-	class DefaultRotation extends AbstractRotation {
-		private final Matrix matrix;
-
-		/**
-		 * Constructor.
-		 * @param axis		Rotation axis
-		 * @param angle		Angle
-		 */
-		public DefaultRotation(Vector axis, float angle) {
-			super(axis, angle);
-			this.matrix = Rotation.matrix(axis, angle);
-		}
-
-		@Override
-		public Matrix matrix() {
-			return matrix;
-		}
 	}
 }

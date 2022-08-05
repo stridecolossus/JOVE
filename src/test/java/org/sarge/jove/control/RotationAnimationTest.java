@@ -1,13 +1,9 @@
 package org.sarge.jove.control;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.MutableRotation;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 
@@ -16,7 +12,7 @@ class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(new MutableRotation(Vector.Y));
+		animation = new RotationAnimation(Vector.Y);
 	}
 
 	@Test

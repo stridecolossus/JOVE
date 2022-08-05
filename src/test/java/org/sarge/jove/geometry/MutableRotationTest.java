@@ -1,12 +1,9 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.util.MathsUtil.HALF;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class MutableRotationTest {
 	private MutableRotation rot;
@@ -34,13 +31,5 @@ public class MutableRotationTest {
 		rot.angle(HALF);
 		assertEquals(HALF, rot.angle());
 		assertNotNull(rot.matrix());
-	}
-
-	@Test
-	void equals() {
-		assertEquals(rot, rot);
-		assertEquals(rot, new MutableRotation(Vector.Y));
-		assertNotEquals(rot, null);
-		assertNotEquals(rot, new MutableRotation(Vector.Z));
 	}
 }

@@ -3,12 +3,10 @@ package org.sarge.jove.scene;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 
 /**
- * A <i>camera</i> is a model of the viewers position and orientation.
+ * A <i>camera</i> is a model of the viewers position and orientation, used to generate the <i>view transform</i> matrix.
  * @author Sarge
  */
 public class Camera {

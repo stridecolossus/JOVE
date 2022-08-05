@@ -1,14 +1,9 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.util.MathsUtil.PI;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Rotation.DefaultRotation;
+import org.junit.jupiter.api.*;
 
 class RotationTest {
 	@Nested
@@ -21,7 +16,7 @@ class RotationTest {
 					.set(2, 2, -1)
 					.build();
 
-			assertEquals(expected, new DefaultRotation(Vector.X, PI).matrix());
+			assertEquals(expected, Rotation.of(Vector.X, PI).matrix());
 		}
 
 		@Test
@@ -32,7 +27,7 @@ class RotationTest {
 					.set(2, 2, -1)
 					.build();
 
-			assertEquals(expected, new DefaultRotation(Vector.Y, PI).matrix());
+			assertEquals(expected, Rotation.of(Vector.Y, PI).matrix());
 		}
 
 		@Test
@@ -43,12 +38,12 @@ class RotationTest {
 					.set(1, 1, -1)
 					.build();
 
-			assertEquals(expected, new DefaultRotation(Vector.Z, PI).matrix());
+			assertEquals(expected, Rotation.of(Vector.Z, PI).matrix());
 		}
 
 		@Test
 		void matrixInvalidArbitraryAxis() {
-			assertThrows(UnsupportedOperationException.class, () -> new DefaultRotation(new Vector(1, 2, 3), PI).matrix());
+			assertThrows(UnsupportedOperationException.class, () -> Rotation.of(new Vector(1, 2, 3), PI).matrix());
 		}
 	}
 
@@ -58,7 +53,7 @@ class RotationTest {
 
 		@BeforeEach
 		void before() {
-			rot = new DefaultRotation(Vector.Y, PI);
+			rot = Rotation.of(Vector.Y, PI);
 		}
 
 		@Test
@@ -71,9 +66,9 @@ class RotationTest {
 		@Test
 		void equals() {
 			assertEquals(rot, rot);
-			assertEquals(rot, new DefaultRotation(Vector.Y, PI));
+			assertEquals(rot, Rotation.of(Vector.Y, PI));
 			assertNotEquals(rot, null);
-			assertNotEquals(rot, new DefaultRotation(Vector.Y, 0));
+			assertNotEquals(rot, Rotation.of(Vector.Y, 0));
 		}
 	}
 }

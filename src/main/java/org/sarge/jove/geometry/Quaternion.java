@@ -2,12 +2,12 @@ package org.sarge.jove.geometry;
 
 import java.util.Arrays;
 
-import org.sarge.jove.geometry.Rotation.DefaultRotation;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>quaternion</i> is more compact and efficient representation of a rotation about an arbitrary axis.
+ * A <i>quaternion</i> is a more compact and efficient representation of a rotation about an arbitrary axis.
  * @see <a href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">Wikipedia</a>
+ * @see Rotation
  * @author Sarge
  */
 public final class Quaternion implements Transform {
@@ -61,7 +61,7 @@ public final class Quaternion implements Transform {
 		final float scale = MathsUtil.inverseRoot(1 - w * w);
 		final float angle = 2 * MathsUtil.acos(w);
 		final Vector axis = new Vector(x, y, z).multiply(scale);
-		return new DefaultRotation(axis, angle);
+		return Rotation.of(axis, angle);
 	}
 
 	/**

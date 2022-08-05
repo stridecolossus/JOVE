@@ -1,13 +1,9 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.util.MathsUtil.PI;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.Rotation.DefaultRotation;
+import org.junit.jupiter.api.*;
 
 public class QuaternionTest {
 	private Quaternion quaternion;
@@ -27,7 +23,7 @@ public class QuaternionTest {
 
 	@Test
 	void of() {
-		assertEquals(quaternion, Quaternion.of(new DefaultRotation(Vector.Y, PI)));
+		assertEquals(quaternion, Quaternion.of(Rotation.of(Vector.Y, PI)));
 	}
 
 	@Test
@@ -42,7 +38,7 @@ public class QuaternionTest {
 
 	@Test
 	void matrix() {
-		final Rotation rot = new DefaultRotation(Vector.Y, PI);
+		final Rotation rot = Rotation.of(Vector.Y, PI);
 		assertEquals(rot.matrix(), quaternion.matrix());
 	}
 
