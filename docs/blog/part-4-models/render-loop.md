@@ -183,7 +183,7 @@ public void render(RenderSequence seq) {
     Buffer buffer = builder.build(index, seq);
     
     // Submit render task
-    final Pool pool = buffer.pool();
+    Pool pool = buffer.pool();
     Work.of(buffer).submit();
     pool.waitIdle();
 
@@ -208,22 +208,13 @@ public static FrameSet frames(Swapchain swapchain, RenderPass pass) {
 }
 ```
 
-The frame presentation logic:
+And the frame presentation logic:
 
 ```java
 @Bean
-public static FramePresenter presenter(FrameSet frames, @Qualifier("presentation") Command.Pool pool) {
+public static FramePresenter presenter(FrameSet frames, @Qualifier("graphics") Command.Pool pool) {
     var builder = new FrameBuilder(frames::buffer, pool::allocate, VkCommandBufferUsage.ONE_TIME_SUBMIT);
     return new FramePresenter(frames.swapchain(), builder, 2);
-}
-```
-
-And the factory for the render task:
-
-```java
-@Bean
-public static Supplier<Buffer> factory(@Qualifier("graphics") Command.Pool pool) {
-    return () -> pool.allocate().begin(VkCommandBufferUsage.ONE_TIME_SUBMIT);
 }
 ```
 
@@ -236,7 +227,7 @@ public static RenderSequence sequence() {
 }
 ```
 
-And the animation logic can now be factored out into a separate task:
+And the animation logic is factored out into a separate task:
 
 ```java
 @Bean
@@ -262,7 +253,7 @@ To gracefully exit the application a GLFW keyboard listener is added to the main
 
 ```java
 public class RotatingCubeDemo {
-    private final AtomicBoolean running = new AtomicBoolean(true); // TODO - toggle handler
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
     @Bean
     KeyListener exit(Window window) {
@@ -310,6 +301,8 @@ CommandLineRunner runner(LogicalDevice dev, FramePresenter presenter, RenderSequ
 A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread.  Therefore the application loop (for the moment) cannot be a separate thread or implemented using the task executor framework.
 
 Note that GLFW silently ignores a thread-safe method that is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
+
+TODO
 
 The new render loop is still mixing the application logic, the Vulkan rendering loop, and polling of the GLFW event queue.  However we now have a framework of simpler, cohesive components that are easier to comprehend, test and build upon in future applications.  There is still scope for further refactoring later to more fully utilise Java and Vulkan synchronisation.
 
@@ -854,7 +847,7 @@ This should allow Vulkan to more efficiently use the multi-threaded nature of th
 
 ### Frames In-Flight
 
-The render loop is still likely not fully utilising the pipeline since the code for a frame is essentially single-threaded, whereas Vulkan is designed such that completed pipeline stages can be used to render the next frame.  Multiple _in flight_ frames are introduced to make better use of the pipeline whilst still bounding the overall amount of work.
+The render loop is still likely not fully utilising the pipeline since the code for a frame is essentially single-threaded, whereas Vulkan is designed to allow completed pipeline stages to be used to render the next frame in parallel.  Multiple _in flight_ frames are introduced to take advantage of this feature.
 
 First the existing render loop and synchronisation primitives are wrapped into an inner class which tracks the in-flight progress of a frame:
 
@@ -877,7 +870,7 @@ And the constructor is modified to create an _array_ of frames:
 public class Presenter implements TransientObject {
     ...
     private final Frame[] frames;
-    private int active;
+    private int next;
 
     public FramePresenter(Swapchain swapchain, FrameBuilder builder, int frames) {
         ...
@@ -898,43 +891,16 @@ Notes:
 
 * The `Presenter` is now a transient object and releases the synchronisation primitives for each frame on destruction.
 
-* The `active` member is the index of the _next_ in-flight frame.
-
-The `render` method is now modified to delegate to the next in-flight frame from the array:
+Finally the `next` frame to be rendered is retrieved from the presenter:
 
 ```java
-public void render(RenderSequence seq) {
-    if(active >= frames.length) {
-        active = 0;
-    }
-    Frame frame = frames[active++];
-    frames.render(seq);
+public synchronized Frame next() {
+    int index = next++ % frames.length;
+    return frames[index];
 }
 ```
 
-Multiple frames can now be safely processed in parallel with the synchronisation implemented above better using the pipeline whilst still bounding the amount of work.
-
-TODO
-
-There is one further potential failure case: if the number of in-flight frames is larger than the number of swapchain images and/or an image is acquired out-of-order we may end up rendering an image that is already in-flight.
-
-To avoid this scenario we track the swapchain images that are actively in-flight:
-
-```java
-public class Swapchain extends AbstractVulkanObject {
-    private final Fence[] active;
-
-    public void waitReady(int index, Fence fence) {
-        final Fence prev = active[index];
-        if(prev != null) {
-            prev.waitReady();
-        }
-        active[index] = fence;
-    }
-}
-```
-
-After acquiring the image index the in-flight frame invokes this method to additionally wait on the active image.
+Multiple frames can now be executed in parallel, the synchronisation introduced above better utilises the pipeline, and the array of in-flight frames bounds the overall work.
 
 ---
 
