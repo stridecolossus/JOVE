@@ -412,7 +412,10 @@ new View.Builder(image)
 The depth buffer is then added to each frame buffer along with the colour attachment:
 
 ```java
-FrameBuffer.create(pass, extents, List.of(view, depth))
+@Bean
+public static FrameSet frames(Swapchain swapchain, RenderPass pass, View depth) {
+    return new FrameSet(swapchain, pass, List.of(depth));
+}
 ```
 
 Finally the depth test is enabled in the pipeline configuration:

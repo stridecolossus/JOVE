@@ -1,4 +1,4 @@
-        ---
+---
 title: The Render Loop and Synchronisation
 ---
 
@@ -25,10 +25,7 @@ Before we progress the demo there are several issues with the existing, crude re
 
 * There is no mechanism to terminate the application other than the dodgy timer or force-quitting the process.
 
-* The existing render loop mixes up the following:
-    * The Vulkan rendering process
-    * The application logic to update the rotation
-    * The loop control logic
+* The existing render loop is cumbersome and mixes unrelated activities (rendering, animation, event polling).
 
 In this chapter these issues are addressed by the introduction of the following:
 
@@ -197,7 +194,7 @@ At the moment this probably appears a lot of work for little benefit, hopefully 
 
 ### Integration
 
-The new framework components can now be used to break up the existing code into simpler components.
+The new framework can now be used to break up the existing demo into simpler components.
 
 First the presentation configuration is modified to create the frame buffers:
 
@@ -505,8 +502,7 @@ info.signalSemaphoreCount = signal.size();
 info.pSignalSemaphores = NativeObject.toArray(signal);
 ```
 
-Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  
-For this reason the table is a linked map to ensure that both fields are iterated in the same order.
+Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  Therefore the table is a linked map to ensure that both fields are iterated in the same order.
 
 First the array of semaphores is populated:
 

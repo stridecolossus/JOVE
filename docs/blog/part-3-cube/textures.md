@@ -19,23 +19,7 @@ In this chapter we will load and apply a _texture_ to the demo.
 
 This involves uploading the image data to the hardware in a similar fashion to the vertex buffers in the previous chapter.  However textures also make use of _pipeline barriers_ to transform the image to the appropriate layout during the loading process.
 
-The process of loading a texture consists of the following steps:
-
-1. Load the native image.
-
-2. Transform the image to a format and structure supported by Vulkan.
-
-3. Copy the image data to a staging buffer.
-
-4. Create a texture on the hardware.
-
-5. Transition the texture so it is ready for the image.
-
-6. Copy the staged image data to the texture.
-
-7. Transition the texture to a layout ready for sampling.
-
-Note that unlike the swapchain images the application is responsible for allocating and managing texture images, therefore the existing Vulkan image class will be refactored accordingly.
+Unlike the swapchain images the application is responsible for allocating and managing texture images, therefore the existing Vulkan image class will be refactored accordingly.
 
 The following additional components and changes are required:
 
@@ -285,6 +269,24 @@ We can now be fairly confident that the texture coordinates are being handled co
 
 ## Textures
 
+### Overview
+
+The process of loading a texture consists of the following steps:
+
+1. Load the native image.
+
+2. Transform the image to a format and structure supported by Vulkan.
+
+3. Copy the image data to a staging buffer.
+
+4. Create a texture on the hardware.
+
+5. Transition the texture so it is ready for the image.
+
+6. Copy the staged image data to the texture.
+
+7. Transition the texture to a layout ready for sampling.
+
 ### Image Data
 
 To load image data from the file system we will use the built-in AWT support in the short-term.  We are likely to want to replace this with a more flexible (and frankly better) implementation at some point in the future, e.g. to support a wider choice of image formats or to use the Android platform (where the AWT package is unavailable).
@@ -293,12 +295,24 @@ The requirements for images are fairly straight-forward so the following abstrac
 
 ```java
 public interface ImageData {
+    /**
+     * @return Image dimensions
+     */
     Dimensions size();
 
+    /**
+     * @return Pixel components
+     */
     String components();
 
+    /**
+     * @return Pixel layout
+     */
     Layout layout();
 
+    /**
+     * @return Image data
+     */
     Bufferable data();
 }
 ```
@@ -307,9 +321,7 @@ Notes:
 
 * The _components_ string specifies the image channels, e.g. `BGRA`
 
-* The _layout_ class is reused to specify the structure of the image data.
-
-* Assume one byte per colour channel.
+* This implementation assumes one byte per colour channel (for the moment).
 
 The AWT helper is used to load the Java image:
 
