@@ -132,7 +132,7 @@ public class ViewTest extends AbstractVulkanTest {
 			};
 
 			// Check API
-			verify(lib).vkCreateImageView(dev, expected, null, POINTER);
+			verify(lib).vkCreateImageView(dev, expected, null, factory.pointer());
 		}
 	}
 }

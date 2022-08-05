@@ -47,7 +47,6 @@ public class Swapchain extends AbstractVulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> attachments;
-//	private final Fence[] active;
 
 	/**
 	 * Constructor.
@@ -62,7 +61,6 @@ public class Swapchain extends AbstractVulkanObject {
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.attachments = List.copyOf(attachments);
-//		this.active = new Fence[attachments.size()];
 	}
 
 	/**
@@ -125,20 +123,6 @@ public class Swapchain extends AbstractVulkanObject {
 			throw new VulkanException(result);
 		}
 	}
-
-//	/**
-//	 * Waits for a previous image to be completed.
-//	 * @param index		Previous swapchain image index
-//	 * @param fence		Fence for next frame
-//	 */
-//	public void waitReady(int index, Fence fence) {
-//		final Fence prev = active[index];
-//		if(prev != null) {
-//			prev.waitReady();
-//		}
-//		active[index] = fence;
-//	}
-//	// TODO - this does not belong here, however leave acquire/present using int rather than forcing some frame/fence class here
 
 	/**
 	 * Helper - Presents the next frame for this swapchain.

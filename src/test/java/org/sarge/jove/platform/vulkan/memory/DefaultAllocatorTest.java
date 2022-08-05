@@ -1,13 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -46,6 +44,6 @@ public class DefaultAllocatorTest extends AbstractVulkanTest {
 		};
 
 		// Check API
-		verify(lib).vkAllocateMemory(dev, expected, null, POINTER);
+		verify(lib).vkAllocateMemory(dev, expected, null, factory.pointer());
 	}
 }

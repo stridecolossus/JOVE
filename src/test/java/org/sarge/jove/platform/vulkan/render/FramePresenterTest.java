@@ -1,18 +1,22 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
-import org.sarge.jove.platform.vulkan.render.FramePresenter.*;
+import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.platform.vulkan.render.FramePresenter.Frame;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.ReferenceFactory;
+
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.*;
 
 class FramePresenterTest extends AbstractVulkanTest {
 	private FramePresenter presenter;
@@ -21,12 +25,30 @@ class FramePresenterTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		// Create swapchain
+		// Create swapchain with two images
+		final View attachment = mock(View.class);
 		swapchain = mock(Swapchain.class);
 		when(swapchain.device()).thenReturn(dev);
+		when(swapchain.attachments()).thenReturn(List.of(attachment, attachment));
 
 		// Init render task builder
 		builder = mock(FrameBuilder.class);
+
+		// TODO - needed to avoid semaphores with same handle being used twice, nasty?
+		final ReferenceFactory factory = new ReferenceFactory() {
+			private int index;
+
+			@Override
+			public IntByReference integer() {
+				return null;
+			}
+
+			@Override
+			public PointerByReference pointer() {
+				return new PointerByReference(new Pointer(++index));
+			}
+		};
+		when(dev.factory()).thenReturn(factory);
 
 		// Create controller
 		presenter = new FramePresenter(swapchain, builder, 2);
@@ -39,65 +61,40 @@ class FramePresenterTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void destroy() {
-		presenter.destroy();
+	void cycle() {
+		final Frame first = presenter.next();
+		assertNotNull(presenter.next());
+		assertSame(first, presenter.next());
 	}
 
-	@Nested
-	class FrameTest {
-		private Frame frame;
-		private Semaphore available, ready;
-		private Fence fence;
+	@Test
+	void render() {
+		// Init command buffer
+		final Pool pool = mock(Pool.class);
+		final Buffer buffer = mock(Buffer.class);
+		when(buffer.handle()).thenReturn(new Handle(4));
+		when(buffer.isReady()).thenReturn(true);
+		when(buffer.pool()).thenReturn(pool);
+		when(pool.device()).thenReturn(dev);
 
-		@BeforeEach
-		void before() {
-			available = mock(Semaphore.class);
-			ready = mock(Semaphore.class);
-			fence = mock(Fence.class);
-			when(available.handle()).thenReturn(new Handle(1));
-			when(ready.handle()).thenReturn(new Handle(2));
-			when(fence.handle()).thenReturn(new Handle(3));
-			frame = new DefaultFrame(available, ready, fence);
-		}
+		// Create presentation queue
+		final Queue queue = new Queue(new Handle(5), new Family(1, 2, Set.of()));
+		when(pool.queue()).thenReturn(queue);
 
-		@Test
-		void render() {
-			// Init command buffer
-			final Pool pool = mock(Pool.class);
-			final Buffer buffer = mock(Buffer.class);
-			when(buffer.handle()).thenReturn(new Handle(4));
-			when(buffer.isReady()).thenReturn(true);
-			when(buffer.pool()).thenReturn(pool);
-			when(pool.device()).thenReturn(dev);
+		// Init frame builder
+		final RenderSequence seq = mock(RenderSequence.class);
+		when(builder.build(0, seq)).thenReturn(buffer);
 
-			// Create presentation queue
-			final Queue queue = new Queue(new Handle(5), new Family(1, 2, Set.of()));
-			when(pool.queue()).thenReturn(queue);
+		// Render frame
+		final Frame frame = presenter.next();
+		frame.render(seq);
 
-			// Init frame builder
-			final RenderSequence seq = mock(RenderSequence.class);
-			when(builder.build(0, seq)).thenReturn(buffer);
+		// TODO - how to test what the frame actually does?
+		// verify(swapchain).acquire(null, null)
+	}
 
-			// Render frame
-			frame.render(seq, builder, swapchain);
-
-			// Check synchronisation
-			verify(fence, times(2)).waitReady();
-			verify(fence).reset();
-
-			// Check next frame buffer is acquired
-			verify(swapchain).acquire(available, null);
-
-			// Check frame is presented
-			verify(swapchain).present(queue, 0, ready);
-		}
-
-		@Test
-		void destroy() {
-			frame.destroy();
-			verify(available).destroy();
-			verify(ready).destroy();
-			verify(fence).destroy();
-		}
+	@Test
+	void destroy() {
+		presenter.destroy();
 	}
 }

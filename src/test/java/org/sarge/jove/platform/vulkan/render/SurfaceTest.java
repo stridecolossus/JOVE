@@ -56,7 +56,7 @@ public class SurfaceTest extends AbstractVulkanTest {
 	void formats() {
 		final List<VkSurfaceFormatKHR> formats = surface.formats();
 		assertNotNull(formats);
-		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(physical, surface, INTEGER, formats.get(0));
+		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(physical, surface, factory.integer(), formats.get(0));
 	}
 
 	@DisplayName("An available surface format can be selected for the surface")
@@ -77,7 +77,6 @@ public class SurfaceTest extends AbstractVulkanTest {
 	}
 
 	@DisplayName("A surface has a minimum default supported surface format")
-	@SuppressWarnings("static-method")
 	@Test
 	void defaultSurfaceFormat() {
 		final VkSurfaceFormatKHR format = Surface.defaultSurfaceFormat();
@@ -91,7 +90,7 @@ public class SurfaceTest extends AbstractVulkanTest {
 	void modes() {
 		final Set<VkPresentModeKHR> modes = surface.modes();
 		final VkPresentModeKHR first = modes.iterator().next();
-		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(physical, surface, INTEGER, new int[]{first.value()});
+		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(physical, surface, factory.integer(), new int[]{first.value()});
 	}
 
 	@DisplayName("An available presentation mode can be selected for the surface")
@@ -123,11 +122,11 @@ public class SurfaceTest extends AbstractVulkanTest {
 		// Check surface formats are cached
 		final List<VkSurfaceFormatKHR> formats = cached.formats();
 		assertEquals(formats, cached.formats());
-		verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfaceFormatsKHR(physical, surface, INTEGER, formats.get(0));
+		verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfaceFormatsKHR(physical, surface, factory.integer(), formats.get(0));
 
 		// Check presentation modes are cached
 		final Set<VkPresentModeKHR> modes = cached.modes();
 		assertEquals(modes, cached.modes());
-		verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfacePresentModesKHR(physical, surface, INTEGER, new int[]{modes.iterator().next().value()});
+		verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfacePresentModesKHR(physical, surface, factory.integer(), new int[]{modes.iterator().next().value()});
 	}
 }

@@ -58,7 +58,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@Test
 		void acquire() {
 			assertEquals(1, swapchain.acquire(semaphore, fence));
-			verify(lib).vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, INTEGER);
+			verify(lib).vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, factory.integer());
 		}
 
 		@DisplayName("Acquiring the next image requires at least one synchronisation argument")
@@ -70,14 +70,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@DisplayName("The next image cannot be acquired if the swapchain has become invalid")
 		@Test
 		void error() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, INTEGER)).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR.value());
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, factory.integer())).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR.value());
 			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 
 		@DisplayName("The next image can be acquired if the swapchain is sub-optimal")
 		@Test
 		void suboptimal() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, INTEGER)).thenReturn(VkResult.SUBOPTIMAL_KHR.value());
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, factory.integer())).thenReturn(VkResult.SUBOPTIMAL_KHR.value());
 			swapchain.acquire(null, fence);
 		}
 	}
@@ -227,8 +227,8 @@ public class SwapchainTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateSwapchainKHR(dev, expected, null, POINTER);
-			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle().toPointer(), INTEGER, new Pointer[1]);
+			verify(lib).vkCreateSwapchainKHR(dev, expected, null, factory.pointer());
+			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle().toPointer(), factory.integer(), new Pointer[1]);
 		}
 
 		@DisplayName("The swapchain format must be supported by the surface")

@@ -18,9 +18,6 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Fence extends AbstractVulkanObject {
-	private static final int SIGNALLED = VulkanLibrary.SUCCESS;
-	private static final int NOT_SIGNALLED = VkResult.NOT_READY.value();
-
 	/**
 	 * Creates a fence.
 	 * @param dev			Logical device
@@ -81,18 +78,12 @@ public class Fence extends AbstractVulkanObject {
 	public boolean signalled() {
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
-		final int result = lib.vkGetFenceStatus(dev, this);
-		// Note - cannot use switch expression here (values must be constants)
-		if(result == SIGNALLED) {
-			return true;
-		}
-		else
-		if(result == NOT_SIGNALLED) {
-			return false;
-		}
-		else {
-			throw new VulkanException(result);
-		}
+		final VkResult result = lib.vkGetFenceStatus(dev, this);
+		return switch(result) {
+			case SUCCESS -> true;
+			case NOT_READY -> false;
+			default -> throw new VulkanException(result);
+		};
 	}
 
 	/**
@@ -126,7 +117,7 @@ public class Fence extends AbstractVulkanObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pSemaphore		Returned fence
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFence);
 
@@ -143,7 +134,7 @@ public class Fence extends AbstractVulkanObject {
 		 * @param device			Device
 		 * @param fenceCount		Number of fences
 		 * @param pFences			Fences
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkResetFences(DeviceContext device, int fenceCount, Pointer pFences);
 
@@ -152,9 +143,8 @@ public class Fence extends AbstractVulkanObject {
 		 * @param device
 		 * @param fence
 		 * @return Fence status flag
-		 * @see VkResult
 		 */
-		int vkGetFenceStatus(DeviceContext device, Fence fence);
+		VkResult vkGetFenceStatus(DeviceContext device, Fence fence);
 
 		/**
 		 * Waits for a number of fences.
@@ -163,7 +153,7 @@ public class Fence extends AbstractVulkanObject {
 		 * @param pFences			Fences
 		 * @param waitAll			Whether to wait for <b>all</b> fences or <b>any</b>
 		 * @param timeout			Timeout or {@link Long#MAX_VALUE}
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkWaitForFences(DeviceContext device, int fenceCount, Pointer pFences, VulkanBoolean waitAll, long timeout);
 	}

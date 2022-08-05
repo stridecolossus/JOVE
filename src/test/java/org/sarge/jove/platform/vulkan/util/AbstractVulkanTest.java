@@ -21,16 +21,6 @@ public abstract class AbstractVulkanTest {
 	 */
 	public static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
 
-	/**
-	 * Integer returned-by-reference.
-	 */
-	public static final IntByReference INTEGER = new IntByReference(1);
-
-	/**
-	 * Pointer returned-by-reference.
-	 */
-	public static final PointerByReference POINTER = new PointerByReference(new Pointer(2));
-
 	protected LogicalDevice dev;
 	protected VulkanLibrary lib;
 	protected ReferenceFactory factory;
@@ -42,15 +32,15 @@ public abstract class AbstractVulkanTest {
 
 		// Init reference factory
 		factory = mock(ReferenceFactory.class);
-		when(factory.integer()).thenReturn(INTEGER);
-		when(factory.pointer()).thenReturn(POINTER);
+		when(factory.integer()).thenReturn(new IntByReference(1));
+		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(2)));
 
 		// Init device limits
 		final DeviceLimits limits = mock(DeviceLimits.class);
 
 		// Create logical device
 		dev = mock(LogicalDevice.class);
-		when(dev.handle()).thenReturn(new Handle(1));
+		when(dev.handle()).thenReturn(new Handle(3));
 		when(dev.library()).thenReturn(lib);
 		when(dev.factory()).thenReturn(factory);
 		when(dev.limits()).thenReturn(limits);

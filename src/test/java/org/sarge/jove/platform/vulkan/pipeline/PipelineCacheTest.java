@@ -1,27 +1,15 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.DataSource;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
@@ -54,20 +42,23 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 
 		// Check cache
 		assertNotNull(cache);
-		assertEquals(new Handle(POINTER.getValue()), cache.handle());
 		assertEquals(dev, cache.device());
 		assertEquals(false, cache.isDestroyed());
 
-		// Check API
-		final ArgumentCaptor<VkPipelineCacheCreateInfo> captor = ArgumentCaptor.forClass(VkPipelineCacheCreateInfo.class);
-		verify(lib).vkCreatePipelineCache(eq(dev), captor.capture(), isNull(), eq(POINTER));
+		// Init expected create descriptor
+		final var expected = new VkPipelineCacheCreateInfo() {
+			@Override
+			public boolean equals(Object obj) {
+				final var actual = (VkPipelineCacheCreateInfo) obj;
+				assertEquals(0, actual.flags);
+				assertEquals(DATA.length, actual.initialDataSize);
+				assertNotNull(actual.pInitialData);
+				return true;
+			}
+		};
 
-		// Check create descriptor
-		final VkPipelineCacheCreateInfo info = captor.getValue();
-		assertNotNull(info);
-		assertEquals(0, info.flags);
-		assertEquals(DATA.length, info.initialDataSize);
-		assertNotNull(info.pInitialData);
+		// Check API
+		verify(lib).vkCreatePipelineCache(dev, expected, null, factory.pointer());
 	}
 
 	@Test
@@ -80,8 +71,8 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 		final ByteBuffer data = cache.data();
 		assertNotNull(data);
 		assertEquals(1, data.capacity());
-		verify(lib).vkGetPipelineCacheData(dev, cache, INTEGER, null);
-		verify(lib).vkGetPipelineCacheData(dev, cache, INTEGER, data);
+		verify(lib).vkGetPipelineCacheData(dev, cache, factory.integer(), null);
+		verify(lib).vkGetPipelineCacheData(dev, cache, factory.integer(), data);
 	}
 
 	@Test

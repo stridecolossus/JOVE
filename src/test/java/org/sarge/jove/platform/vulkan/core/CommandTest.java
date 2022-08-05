@@ -187,7 +187,7 @@ class CommandTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateCommandPool(dev, expected, null, POINTER);
+			verify(lib).vkCreateCommandPool(dev, expected, null, factory.pointer());
 		}
 
 		@Test

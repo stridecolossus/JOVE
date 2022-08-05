@@ -90,7 +90,7 @@ public class QueryTest extends AbstractVulkanTest {
 			expected.queryType = VkQueryType.OCCLUSION;
 			expected.queryCount = 1;
 			expected.pipelineStatistics = 0;
-			verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
+			verify(lib).vkCreateQueryPool(dev, expected, null, factory.pointer());
 		}
 
 		@DisplayName("cannot allocate more queries than the available number of slots")
@@ -149,7 +149,7 @@ public class QueryTest extends AbstractVulkanTest {
 		expected.queryType = VkQueryType.PIPELINE_STATISTICS;
 		expected.queryCount = 1;
 		expected.pipelineStatistics = VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS.value();
-		verify(lib).vkCreateQueryPool(dev, expected, null, POINTER);
+		verify(lib).vkCreateQueryPool(dev, expected, null, factory.pointer());
 	}
 
 	@DisplayName("The results for a query...")

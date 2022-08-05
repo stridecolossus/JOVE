@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 
@@ -10,24 +10,21 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.lib.util.Check;
 
 /**
- * The <i>frame presenter</i> is the controller for the process of rendering frames to the swapchain.
+ * The <i>frame presenter</i> is the controller for the process of rendering to the swapchain.
  * <p>
  * The presenter cycles through an array of <i>in flight</i> frames that are responsible for synchronisation of the render process.
- * The next in-flight {@link Frame} is selected using the {@link #next()} accessor.
+ * The next in-flight {@link Frame} is selected using the {@link #next()} method.
  * <p>
- * The {@link DefaultFrame} is a default implementation of the standard approach for rendering a frame with Vulkan synchronisation primitives.
- * The {@link #frame(int, DeviceContext)} factory method can be over-ridden to change the frame implementation.
- * <p>
- * @see FrameBuilder
  * @author Sarge
  */
 public class FramePresenter implements TransientObject {
 	private final Swapchain swapchain;
 	private final FrameBuilder builder;
 	private final Frame[] frames;
-	private int active;
+	private int next;
 
 	/**
 	 * Constructor.
@@ -36,8 +33,9 @@ public class FramePresenter implements TransientObject {
 	 * @param frames		Number of in-flight frames
 	 */
 	public FramePresenter(Swapchain swapchain, FrameBuilder builder, int frames) {
-		this.swapchain = requireNonNull(swapchain);
-		this.builder = requireNonNull(builder);
+		Check.oneOrMore(frames);
+		this.swapchain = notNull(swapchain);
+		this.builder = notNull(builder);
 		this.frames = new Frame[frames];
 		init();
 	}
@@ -47,42 +45,16 @@ public class FramePresenter implements TransientObject {
 	 */
 	private void init() {
 		final DeviceContext dev = swapchain.device();
-		Arrays.setAll(frames, n -> frame(n, dev));
+		Arrays.setAll(frames, n -> new Frame(dev));
 	}
 
 	/**
-	 * Creates a new in-flight frame.
-	 * @param index		Frame index
-	 * @param dev		Logical device
-	 * @return New frame
-	 */
-	protected Frame frame(int index, DeviceContext dev) {
-		final Semaphore available = Semaphore.create(dev);
-		final Semaphore ready = Semaphore.create(dev);
-		final Fence fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
-		return new DefaultFrame(available, ready, fence);
-	}
-
-	/**
-	 * Selects the next in-flight frame to be rendered.
+	 * Retrieves the next frame to be rendered.
 	 * @return Next frame
 	 */
-	protected synchronized Frame next() {
-		if(active >= frames.length) {
-			active = 0;
-		}
-		return frames[active++];
-	}
-
-	/**
-	 * Renders the next frame.
-	 * This is a blocking operation.
-	 * @param seq Render sequence
-	 * @see Frame
-	 */
-	public void render(RenderSequence seq) {
-		final Frame frame = next();
-		frame.render(seq, builder, swapchain);
+	public synchronized Frame next() {
+		final int index = next++ % frames.length;
+		return frames[index];
 	}
 
 	@Override
@@ -97,104 +69,74 @@ public class FramePresenter implements TransientObject {
 		return new ToStringBuilder(this)
 				.append(swapchain)
 				.append(builder)
-				.append("frames", frames.length)
-				.append("active", active)
 				.build();
 	}
 
 	/**
-	 * A <i>frame</i> encapsulates the process of rendering and presenting the next frame to the swapchain.
-	 */
-	public interface Frame extends TransientObject {
-		/**
-		 * Renders this frame.
-		 * @param seq				Render sequence
-		 * @param builder			Task builder
-		 * @param swapchain			Target swapchain
-		 */
-		void render(RenderSequence seq, FrameBuilder builder, Swapchain swapchain);
-	}
-
-	/**
-	 * Default implementation for the <i>standard</i> frame rendering approach.
+	 * A <i>frame</i> encapsulates the process of rendering and presenting to the swapchain.
 	 * <p>
-	 * This implementation comprises the following steps:
+	 * Generally the {@link #render(RenderSequence)} process is:
 	 * <ol>
-	 * <li>Acquire the next frame buffer index from the swapchain</li>
-	 * <li>Construct a task to render to this frame buffer via {@link FrameBuilder#build(int, RenderSequence)}</li>
-	 * <li>Submit the render task to the rendering work queue</li>
+	 * <li>Acquire the next swapchain image</li>
+	 * <li>Submit the render task</li>
 	 * <li>Present the rendered frame to the swapchain</li>
+	 * </ol>
+	 * <p>
+	 * Note that although the individual steps are asynchronous operations this is a blocking method.
+	 * <p>
+	 * This method blocks on the following conditions:
+	 * <ul>
+	 * <li>The previous work is completed</li>
+	 * <li>The next swapchain image becomes available</li>
+	 * <li>The render task has been completed and is ready for presentation</li>
 	 * </ul>
-	 * Note that currently this is a blocking implementation using Vulkan synchronisation primitives to manage the multi-threaded nature of the rendering process.
-	 * <p>
-	 * The render process blocks the current thread:
-	 * <ul>
-	 * <li>at the beginning of the task to ensure the previous in-flight has completed (avoiding out-of-order frames)</li>
-	 * <li>after a render task has been submitted until the frame is ready for presentation</li>
-	 * <ul>
-	 * <p>
-	 * This implementation assumes the application is responsible for invoking rendering tasks and task synchronisation, e.g. possibly using a scheduling task executor.
-	 * <p>
+	 * Note that this method does <b>not</b> block after the frame has been presented.
 	 */
-	public static class DefaultFrame implements Frame {
+	public class Frame {
 		private final Semaphore available, ready;
 		private final Fence fence;
 
-		/**
-		 * Constructor.
-		 * @param available			Frame is available for rendering
-		 * @param ready				Frame has been rendered and is ready for presentation
-		 * @param fence				Render task synchronisation
-		 */
-		protected DefaultFrame(Semaphore available, Semaphore ready, Fence fence) {
-			this.available = requireNonNull(available);
-			this.ready = requireNonNull(ready);
-			this.fence = requireNonNull(fence);
+		private Frame(DeviceContext dev) {
+			this.available = Semaphore.create(dev);
+			this.ready = Semaphore.create(dev);
+			this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
 		}
 
-		@Override
-		public void render(RenderSequence seq, FrameBuilder builder, Swapchain swapchain) {
-			// Wait for previous in-flight frame to complete
+		/**
+		 * Renders this frame.
+		 * @param seq Render sequence
+		 */
+		public void render(RenderSequence seq) {
+			// Wait for completion of the previous frame
 			fence.waitReady();
 			fence.reset();
 
-			// TODO - out-of-order check
-			// prev = new Fence[swapchain.images];
-			// prev[active].waitReady() - if not NULL!
-			// prev[active] = this;
-			// invalidates the above? check tutorial
-
-			// Acquire next frame buffer
+			// Acquire next swapchain image
 			final int index = swapchain.acquire(available, null);
 
-			// Render frame
+			// Build render task
 			final Buffer buffer = builder.build(index, seq);
-			submit(buffer);
 
-			// Block until frame rendered
-			fence.waitReady();
-
-			// Present rendered frame
-			// TODO - present task builder?
-			final Queue queue = buffer.pool().queue();
-			swapchain.present(queue, index, ready);
-		}
-
-		/**
-		 * Submits the render task for this frame.
-		 * @param buffer Render task
-		 */
-		protected void submit(Buffer buffer) {
+			// Submit render task
 			new Work.Builder(buffer.pool())
 					.add(buffer)
 					.wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
 					.signal(ready)
 					.build()
 					.submit(fence);
+
+			// Wait for frame to be rendered
+			fence.waitReady();
+
+			// Present rendered frame
+			final Queue queue = buffer.pool().queue();
+			swapchain.present(queue, index, ready);
 		}
 
-		@Override
-		public void destroy() {
+		/**
+		 * Releases resources.
+		 */
+		private void destroy() {
 			available.destroy();
 			ready.destroy();
 			fence.destroy();

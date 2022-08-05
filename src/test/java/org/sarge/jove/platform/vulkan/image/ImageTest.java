@@ -99,7 +99,6 @@ public class ImageTest extends AbstractVulkanTest {
 
 			// Check image
 			assertNotNull(image);
-			assertEquals(new Handle(POINTER.getValue()), image.handle());
 			assertEquals(descriptor, image.descriptor());
 			assertEquals(dev, image.device());
 			assertEquals(false, image.isDestroyed());
@@ -122,13 +121,13 @@ public class ImageTest extends AbstractVulkanTest {
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
 			info.usage = IntegerEnumeration.reduce(props.usage());
 			info.sharingMode = props.mode();
-			verify(lib).vkCreateImage(dev, info, null, POINTER);
+			verify(lib).vkCreateImage(dev, info, null, factory.pointer());
 
 			// TODO
 			//verify(lib).vkGetImageMemoryRequirements(DEVICE, POINTER.getValue(), new VkMemoryRequirements());
 
 			// Check bind memory API
-			verify(lib).vkBindImageMemory(dev, POINTER.getValue(), mem, 0L);
+			verify(lib).vkBindImageMemory(dev, factory.pointer().getValue(), mem, 0L);
 		}
 
 		@Test

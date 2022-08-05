@@ -91,7 +91,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			};
 
 			// Check pipeline allocation API
-			verify(lib).vkCreatePipelineLayout(dev, expected, null, POINTER);
+			verify(lib).vkCreatePipelineLayout(dev, expected, null, factory.pointer());
 		}
 
 		@Test

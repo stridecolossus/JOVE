@@ -77,7 +77,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 			}
 		};
 
-		verify(lib).vkCreateRenderPass(dev, expected, null, POINTER);
+		verify(lib).vkCreateRenderPass(dev, expected, null, factory.pointer());
 	}
 
 	@DisplayName("The attachments for a render pass is the aggregate of the sub-passes")

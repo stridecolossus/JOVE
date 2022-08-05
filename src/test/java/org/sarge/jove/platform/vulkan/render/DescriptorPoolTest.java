@@ -1,30 +1,16 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toSet;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateFlag;
-import org.sarge.jove.platform.vulkan.VkDescriptorPoolCreateInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorSetAllocateInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -143,16 +129,18 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 			assertEquals(0, pool.sets().count());
 
 			// Check API
-			final ArgumentCaptor<VkDescriptorPoolCreateInfo> captor = ArgumentCaptor.forClass(VkDescriptorPoolCreateInfo.class);
-			verify(lib).vkCreateDescriptorPool(eq(dev), captor.capture(), isNull(), eq(POINTER));
-
-			// Check create descriptor
-			final VkDescriptorPoolCreateInfo info = captor.getValue();
-			assertNotNull(info);
-			assertEquals(3, info.maxSets);
-			assertEquals(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET.value(), info.flags);
-			assertEquals(1, info.poolSizeCount);
-			assertNotNull(info.pPoolSizes);
+			final var expected = new VkDescriptorPoolCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final var info = (VkDescriptorPoolCreateInfo) obj;
+					assertEquals(3, info.maxSets);
+					assertEquals(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET.value(), info.flags);
+					assertEquals(1, info.poolSizeCount);
+					assertNotNull(info.pPoolSizes);
+					return true;
+				}
+			};
+			verify(lib).vkCreateDescriptorPool(dev, expected, null, factory.pointer());
 		}
 
 		@Test

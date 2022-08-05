@@ -109,7 +109,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 			// Check sampler
 			assertNotNull(sampler);
-			verify(lib).vkCreateSampler(dev, expected, null, POINTER);
+			verify(lib).vkCreateSampler(dev, expected, null, factory.pointer());
 		}
 
 		@Test
@@ -138,7 +138,7 @@ public class SamplerTest extends AbstractVulkanTest {
 				}
 			};
 			assertNotNull(builder.build(dev));
-			verify(lib).vkCreateSampler(dev, expected, null, POINTER);
+			verify(lib).vkCreateSampler(dev, expected, null, factory.pointer());
 		}
 
 		@Test

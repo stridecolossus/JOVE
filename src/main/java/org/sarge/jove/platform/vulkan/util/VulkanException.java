@@ -6,7 +6,7 @@ import org.sarge.jove.util.IntegerEnumeration;
 /**
  * A <i>Vulkan exception</i> wraps an error code returned by the Vulkan platform.
  * <p>
- * Note that Vulkan API methods return {@code int} rather than {@link VkResult} explicitly for forward-compatibility.
+ * Note that Vulkan API methods generally return {@code int} rather than {@link VkResult} explicitly for forward-compatibility.
  * <p>
  * @author Sarge
  */
@@ -18,7 +18,24 @@ public class VulkanException extends RuntimeException {
 	 * @param result Vulkan result code
 	 */
 	public VulkanException(int result) {
-		super(String.format("%s[%d]", reason(result), result));
+		this(reason(result), result);
+	}
+
+	/**
+	 * Constructor.
+	 * @param result Vulkan result
+	 */
+	public VulkanException(VkResult result) {
+		this(result.name(), result.value());
+	}
+
+	/**
+	 * Constructor.
+	 * @param reason Reason
+	 * @param result Result code
+	 */
+	private VulkanException(String reason, int result) {
+		super(String.format("%s[%d]", reason, result));
 		this.result = result;
 	}
 

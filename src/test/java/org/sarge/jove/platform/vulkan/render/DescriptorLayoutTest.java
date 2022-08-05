@@ -1,22 +1,13 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkDescriptorSetLayoutCreateInfo;
-import org.sarge.jove.platform.vulkan.VkDescriptorType;
-import org.sarge.jove.platform.vulkan.VkShaderStage;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -59,14 +50,18 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 		layout = DescriptorLayout.create(dev, List.of(binding));
 		assertNotNull(layout);
 
-		// Check API
-		final ArgumentCaptor<VkDescriptorSetLayoutCreateInfo> captor = ArgumentCaptor.forClass(VkDescriptorSetLayoutCreateInfo.class);
-		verify(lib).vkCreateDescriptorSetLayout(eq(dev), captor.capture(), isNull(), eq(POINTER));
+		// Init expected create descriptor
+		final var expected = new VkDescriptorSetLayoutCreateInfo() {
+			@Override
+			public boolean equals(Object obj) {
+				final var actual = (VkDescriptorSetLayoutCreateInfo) obj;
+				assertEquals(1, actual.bindingCount);
+				assertNotNull(actual.pBindings);
+				return true;
+			}
+		};
 
-		// Check create descriptor
-		final VkDescriptorSetLayoutCreateInfo info = captor.getValue();
-		assertNotNull(info);
-		assertEquals(1, info.bindingCount);
-		assertNotNull(info.pBindings);
+		// Check API
+		verify(lib).vkCreateDescriptorSetLayout(dev, expected, null, factory.pointer());
 	}
 }

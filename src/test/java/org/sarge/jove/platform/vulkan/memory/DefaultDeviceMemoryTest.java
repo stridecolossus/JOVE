@@ -1,17 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -65,7 +59,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			final Region region = mem.map();
 			assertNotNull(region);
 			assertEquals(Optional.of(region), mem.region());
-			verify(lib).vkMapMemory(dev, mem, 0, SIZE, 0, POINTER);
+			verify(lib).vkMapMemory(dev, mem, 0, SIZE, 0, factory.pointer());
 		}
 
 		@Test
@@ -73,7 +67,7 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			final Region region = mem.map(1, 2);
 			assertNotNull(region);
 			assertEquals(Optional.of(region), mem.region());
-			verify(lib).vkMapMemory(dev, mem, 1, 2, 0, POINTER);
+			verify(lib).vkMapMemory(dev, mem, 1, 2, 0, factory.pointer());
 		}
 
 		@Test

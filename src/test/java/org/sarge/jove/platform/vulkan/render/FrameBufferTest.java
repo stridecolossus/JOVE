@@ -140,7 +140,6 @@ public class FrameBufferTest extends AbstractVulkanTest {
 			// Construct buffer
 			buffer = FrameBuffer.create(pass, EXTENTS, List.of(view));
 			assertNotNull(buffer);
-			assertEquals(new Handle(POINTER.getValue()), buffer.handle());
 			assertEquals(dev, buffer.device());
 			assertEquals(false, buffer.isDestroyed());
 			assertEquals(List.of(view), buffer.attachments());
@@ -167,7 +166,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateFramebuffer(dev, expected, null, POINTER);
+			verify(lib).vkCreateFramebuffer(dev, expected, null, factory.pointer());
 		}
 
 		@DisplayName("Number of configured attachments should match the render pass")

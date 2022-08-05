@@ -1,24 +1,15 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
-import org.sarge.jove.platform.vulkan.VkSpecializationMapEntry;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ShaderTest extends AbstractVulkanTest {
@@ -48,7 +39,7 @@ public class ShaderTest extends AbstractVulkanTest {
 				return true;
 			}
 		};
-		verify(lib).vkCreateShaderModule(dev, expected, null, POINTER);
+		verify(lib).vkCreateShaderModule(dev, expected, null, factory.pointer());
 	}
 
 	@Test
