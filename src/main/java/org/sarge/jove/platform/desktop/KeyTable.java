@@ -1,9 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -31,7 +28,7 @@ class KeyTable {
 	 * @return Key table
 	 */
 	private static BidiMap<Integer, String> load() {
-		try(final InputStream in = KeyTable.class.getResourceAsStream("/key.table.txt")) {
+		try(final InputStream in = KeyTable.class.getResourceAsStream("key.table.txt")) {
 			return new BufferedReader(new InputStreamReader(in))
 					.lines()
 					.map(String::trim)
