@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.render.FrameProcessor.Frame;
+import org.sarge.jove.platform.vulkan.render.FrameProcessor.Listener;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.ReferenceFactory;
 
@@ -55,19 +55,6 @@ class FrameProcessorTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void next() {
-		final Frame frame = proc.next();
-		assertNotNull(frame);
-	}
-
-	@Test
-	void cycle() {
-		final Frame first = proc.next();
-		assertNotNull(proc.next());
-		assertSame(first, proc.next());
-	}
-
-	@Test
 	void render() {
 		// Init command buffer
 		final Pool pool = mock(Pool.class);
@@ -85,12 +72,16 @@ class FrameProcessorTest extends AbstractVulkanTest {
 		final RenderSequence seq = mock(RenderSequence.class);
 		when(builder.build(0, seq)).thenReturn(buffer);
 
+		final Listener listener = mock(Listener.class);
+		proc.add(listener);
+
 		// Render frame
-		final Frame frame = proc.next();
-		frame.render(seq);
+		proc.render(seq);
 
 		// TODO - how to test what the frame actually does?
 		// verify(swapchain).acquire(null, null)
+
+		verify(listener).frame(anyLong(), anyLong());
 	}
 
 	@Test

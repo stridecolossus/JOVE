@@ -2,11 +2,12 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Arrays;
+import java.util.*;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.lib.util.Check;
@@ -20,8 +21,21 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class FrameProcessor implements TransientObject {
+	/**
+	 * Frame listener.
+	 */
+	public interface Listener {
+		/**
+		 * Notifies a completed frame.
+		 * @param time			Completion time
+		 * @param elapsed		Elapsed duration (ms)
+		 */
+		void frame(long time, long elapsed);
+	}
+
 	private final Swapchain swapchain;
 	private final FrameBuilder builder;
+	private final Set<Listener> listeners = new HashSet<>();
 	private final Frame[] frames;
 	private int next;
 
@@ -48,17 +62,32 @@ public class FrameProcessor implements TransientObject {
 	}
 
 	/**
-	 * Retrieves the next frame to be rendered.
-	 * @return Next frame
+	 * Register a frame completion listener.
+	 * @param listener Listener to add
 	 */
-	public synchronized Frame next() {
-		final int index = next++ % frames.length;
-		return frames[index];
+	public void add(Listener listener) {
+		listeners.add(notNull(listener));
 	}
 
+	/**
+	 * Renders a frame.
+	 * @param seq Render sequence
+	 */
 	public void render(RenderSequence seq) {
-		final Frame frame = next();
+		// Select next in-flight frame
+		final int index = next++ % frames.length;
+		final Frame frame = frames[index];
+
+		// Render frame
+		final long start = System.currentTimeMillis();
 		frame.render(seq);
+
+		// Notify frame completion
+		final long now = System.currentTimeMillis();
+		final long elapsed = now - start;
+		for(Listener listener : listeners) {
+			listener.frame(now, elapsed);
+		}
 	}
 
 	@Override
@@ -88,7 +117,7 @@ public class FrameProcessor implements TransientObject {
 	 * </ul>
 	 * Note that this method does <b>not</b> block after the frame has been presented.
 	 */
-	public class Frame {
+	private class Frame {
 		private final Semaphore available, ready;
 		private final Fence fence;
 

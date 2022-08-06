@@ -79,8 +79,6 @@ boolean     | no        | no            | boolean       | window                
 
 Where _name_ specifies whether the event has a specific name property and _parameterized_ indicates an event that has multiple values, e.g. mouse buttons.
 
-> Apparently GLFW version 4 will deprecate callbacks in favour of query methods but we will cross that bridge if and when we upgrade the native library.
-
 ### Framework
 
 Based on the above we start with an abstraction for an event:

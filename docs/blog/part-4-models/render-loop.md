@@ -160,7 +160,9 @@ public Buffer build(int index, RenderSequence seq) {
 }
 ```
 
-Next the acquire-render-present process is factored out to another new component:
+### Controller
+
+Next the acquire-render-present process is factored out to a new controller component:
 
 ```java
 public class FrameProcessor {
@@ -169,7 +171,7 @@ public class FrameProcessor {
 }
 ```
 
-And the existing, blocking loop is refactored using the new framework components:
+The existing rendering process is moved and refactored accordingly:
 
 ```java
 public void render(RenderSequence seq) {
@@ -195,13 +197,88 @@ public void render(RenderSequence seq) {
 }
 ```
 
-At the moment this probably appears a lot of work for little benefit, hopefully the rationale for this new framework becomes apparent as we progress.
+A listener can be attached to the controller to notify frame completion events:
+
+```java
+public class FrameProcessor {
+    private final Set<Listener> listeners = new HashSet<>();
+
+    public interface Listener {
+        /**
+         * Notifies a completed frame.
+         * @param time          Completion time
+         * @param elapsed       Elapsed duration (ms)
+         */
+        void frame(long time, long elapsed);
+    }
+
+    public void add(Listener listener) {
+        listeners.add(listener);
+    }
+}
+```
+
+The controller is modified once more to wrap the render logic and broadcast completion events to interested listeners:
+
+```java
+public void render(RenderSequence seq) {
+    // Render frame
+    long start = System.currentTimeMillis();
+    ...
+
+    // Notify frame completion
+    long now = System.currentTimeMillis();
+    long elapsed = now - start;
+    for(Listener listener : listeners) {
+        listener.frame(now, elapsed);
+    }
+}
+```
+
+### Render Loop
+
+The final piece in the new framework is a new render loop component that takes advantage of the scheduling functionality in the executor framework:
+
+```java
+public class RenderLoop {
+    private final ScheduledExecutorService executor;
+    private ScheduledFuture<?> future;
+    private long rate;
+}
+```
+
+Once started this component executes render tasks with a target frame-rate:
+
+```java
+public void start(Runnable task) {
+    if(future != null) throw new IllegalStateException(...);
+    future = executor.scheduleAtFixedRate(task, 0, rate, TimeUnit.MILLISECONDS);
+}
+```
+
+The frame-rate is a configurable property:
+
+```java
+public void rate(int fps) {
+    this.rate = TimeUnit.SECONDS.toMillis(1) / fps;
+}
+```
+
+The render loop can also be terminated:
+
+```java
+public void stop() {
+    if(future == null) throw new IllegalStateException(...);
+    future.cancel(true);
+    future = null;
+}
+```
 
 ### Integration
 
-The new framework can now be used to break up the existing demo into simpler components.
+The new framework is used to break up the existing demo into simpler components.
 
-First the presentation configuration is modified to create the frame buffers:
+First the presentation configuration is modified to create the set of frame buffers:
 
 ```java
 @Bean
@@ -229,16 +306,37 @@ public static RenderSequence sequence() {
 }
 ```
 
-And the animation logic is factored out into a separate task:
+A new executor service is added to the main class of the demo:
 
 ```java
 @Bean
-public static Runnable animation(Matrix projection, Matrix view, ResourceBuffer uniform) {
+public static ScheduledExecutorService executor() {
+    return Executors.newSingleThreadScheduledExecutor();
+}
+```
+
+Which is composed with the frame processor and render sequence to initialise and start the render loop:
+
+```java
+@Bean
+public static RenderLoop loop(ScheduledExecutorService executor, FrameProcessor proc, RenderSequence seq) {
+    Runnable task = () -> proc.render(seq);
+    RenderLoop loop = new RenderLoop(executor);
+    loop.start(task);
+    return loop;
+}
+```
+
+Finally the animation logic is factored out into a frame listener:
+
+```java
+@Bean
+public static FrameProcessor.Listener animation(Matrix projection, Matrix view, ResourceBuffer uniform) {
     long period = 2000;
     ByteBuffer bb = uniform.buffer();
-    return () -> {
+    return (time, elapsed) -> {
         // Build rotation matrix
-        float angle = (System.currentTimeMillis() % period) * MathsUtil.TWO_PI / period;
+        float angle = (time % period) * MathsUtil.TWO_PI / period;
         Matrix h = Rotation.matrix(Vector.Y, angle);
         Matrix v = Rotation.matrix(Vector.X, MathsUtil.toRadians(30));
         Matrix model = h.multiply(v);
@@ -251,15 +349,30 @@ public static Runnable animation(Matrix projection, Matrix view, ResourceBuffer 
 }
 ```
 
+Which is registered with the controller via the following method:
+
+```java
+@Autowired
+void listeners(FrameProcessor proc, Collection<FrameProcessor.Listener> listeners) {
+    listeners.forEach(proc::add);
+}
+```
+
+Notes:
+
+* Spring auto-magically creates the set of listeners from those registered with the container.
+
+* To avoid having to implement messy synchronisation the animation is updated once per frame.
+
+### Graceful Exit
+
 To gracefully exit the application a GLFW keyboard listener is added to the main configuration class:
 
 ```java
 public class RotatingCubeDemo {
-    private final AtomicBoolean running = new AtomicBoolean(true);
-
     @Bean
     KeyListener exit(Window window) {
-        KeyListener listener = (ptr, key, scancode, action, mods) -> running.set(false);
+        KeyListener listener = (ptr, key, scancode, action, mods) -> System.exit(0));
         window.desktop().library().glfwSetKeyCallback(window.handle(), listener);
         return listener;
     }
@@ -282,31 +395,31 @@ interface KeyListener extends Callback {
 }
 ```
 
-This handler toggles the global `running` flag on a key-press.  Note that the listener is registered with the container even though it is unused elsewhere, this prevents it being garbage collected and automatically de-registered.
-
-Finally the render loop can now be somewhat simplified to the following:
+A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread, unfortunately it cannot be implemented as a separate thread or using the executor framework.  Therefore the polling logic has to remain as an activity on the main thread:
 
 ```java
 @Bean
-CommandLineRunner runner(LogicalDevice dev, FrameProcessor proc, RenderSequence seq, Runnable update, Desktop desktop) {
+static CommandLineRunner runner(Desktop desktop) {
     return args -> {
-        while(running.get()) {
-            update.run();
-            proc.next().render(seq);
+        while(true) {
             desktop.poll();
         }
-        dev.waitIdle();
     };
 }
 ```
 
-A complication of particular importance is that GLFW event processing __must__ be performed on the main application thread.  Therefore the application loop (for the moment) cannot be a separate thread or implemented using the task executor framework.
+See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
 
-Note that GLFW silently ignores a thread-safe method that is not invoked on the main thread.  See the [GLFW thread documentation](https://www.glfw.org/docs/latest/intro.html#thread_safety) for more details.
+> Apparently GLFW version 4 will deprecate callbacks in favour of query methods which would remove this problem.
 
-TODO
+Finally a cleanup method is added to the main class to ensure the Vulkan device is shutdown correctly.
 
-The new render loop is still mixing the application logic, the Vulkan rendering loop, and polling of the GLFW event queue.  However we now have a framework of simpler, cohesive components that are easier to comprehend, test and build upon in future applications.  There is still scope for further refactoring later to more fully utilise Java and Vulkan synchronisation.
+```java
+@PreDestroy
+void destroy() {
+    dev.waitIdle();
+}
+```
 
 ### Application Configuration
 
@@ -330,17 +443,7 @@ public class ApplicationConfiguration {
         this.title = title;
     }
 
-    public int getFrameCount() {
-        return frames;
-    }
-
-    public void setFrameCount(int frames) {
-        this.frames = frames;
-    }
-
-    public Colour getBackground() {
-        return col;
-    }
+    ...
 
     public void setBackground(float[] col) {
         this.col = Colour.of(col);
@@ -362,7 +465,7 @@ Notes:
 
 * The `background` property (the clear colour for for the swapchain views) is a comma-separated list which Spring injects as an array.
 
-The properties are injected into the relevant beans, for example the swapchain is now be refactored as follows:
+The properties are injected into the relevant beans, for example the swapchain can now be refactored as follows:
 
 ```java
 class PresentationConfiguration {
@@ -379,7 +482,7 @@ class PresentationConfiguration {
 }
 ```
 
-The application title in the window and instance configuration are updated similarly replacing the injected `@Value` parameters used previously.
+The demo application is refactored to use the new configuration properties replacing the injected `@Value` parameters used previously.
 
 ---
 
@@ -887,12 +990,13 @@ Notes:
 
 * The controller is now a transient object and releases the synchronisation primitives for each frame on destruction.
 
-Finally the `next` frame to be rendered is retrieved from the controller:
+Finally the `render` method is modified to delegate to the next in-flight frame:
 
 ```java
-public synchronized Frame next() {
+public void render(RenderSequence seq) {
     int index = next++ % frames.length;
-    return frames[index];
+    Frame frame = frames[index];
+    ...
 }
 ```
 
