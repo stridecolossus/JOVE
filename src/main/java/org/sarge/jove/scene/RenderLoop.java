@@ -2,29 +2,35 @@ package org.sarge.jove.scene;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.*;
 import java.util.concurrent.*;
 
 import org.sarge.lib.util.Check;
 
 /**
- * The <i>render loop</i> schedules render tasks and notifies interested listeners on frame completion.
+ * The <i>render loop</i> schedules render tasks.
+ * <p>
+ * Usage:
+ * <pre>
+ * // Create render loop running at 50 frames-per-second
+ * RenderLoop loop = new RenderLoop();
+ * loop.rate(50);
+ *
+ * // Start render loop
+ * RenderSequence seq = ...
+ * FrameProcessor proc = ...
+ * Runnable task = () -> proc.next().render(seq);
+ * loop.start(task);
+ *
+ * ...
+ *
+ * // Stop rendering
+ * loop.stop();
+ * loop.close();
+ * </pre>
+ * <p>
  * @author Sarge
  */
 public class RenderLoop {
-	/**
-	 * Listener for frame completion.
-	 */
-	@FunctionalInterface
-	public interface Listener {
-		/**
-		 * Notifies a completed frame.
-		 * @param elapsed Elapsed time (ms)
-		 */
-		void frame(long elapsed);
-	}
-
-	private final Set<Listener> listeners = new HashSet<>();
 	private final ScheduledExecutorService executor;
 	private ScheduledFuture<?> future;
 	private long rate;
@@ -61,19 +67,11 @@ public class RenderLoop {
 
 	/**
 	 * Sets the target frame-rate (default is 60 FPS).
-	 * @param fps Frame-per-second
+	 * @param fps Frames-per-second
 	 */
 	public void rate(int fps) {
 		check();
 		this.rate = TimeUnit.SECONDS.toMillis(1) / fps;
-	}
-
-	/**
-	 * Registers a frame listener.
-	 * @param listener Listener to add
-	 */
-	public void add(Listener listener) {
-		listeners.add(notNull(listener));
 	}
 
 	/**
@@ -85,26 +83,13 @@ public class RenderLoop {
 
 	/**
 	 * Starts the render loop.
-	 * @param render Render task
+	 * @param task Render task
 	 * @throws IllegalStateException if rendering has already been started
 	 */
-	public void start(Runnable render) {
-		Check.notNull(render);
+	public void start(Runnable task) {
+		Check.notNull(task);
 		check();
-
-		// Create listener adapter
-		final Runnable wrapper = () -> {
-			final long start = System.currentTimeMillis();
-			render.run();
-
-			final long elapsed = System.currentTimeMillis() - start;
-			for(Listener listener : listeners) {
-				listener.frame(elapsed);
-			}
-		};
-
-		// Start render loop
-		future = executor.scheduleAtFixedRate(wrapper, 0, rate, TimeUnit.MILLISECONDS);
+		future = executor.scheduleAtFixedRate(task, 0, rate, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -117,7 +102,12 @@ public class RenderLoop {
 		future = null;
 	}
 
+	/**
+	 * Terminates this render loop.
+	 * @throws IllegalStateException if rendering has not been started
+	 */
 	public void close() {
+		stop();
 		executor.shutdownNow();
 	}
 }

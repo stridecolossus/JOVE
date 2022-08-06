@@ -11,15 +11,15 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.render.FramePresenter.Frame;
+import org.sarge.jove.platform.vulkan.render.FrameProcessor.Frame;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.*;
 
-class FramePresenterTest extends AbstractVulkanTest {
-	private FramePresenter presenter;
+class FrameProcessorTest extends AbstractVulkanTest {
+	private FrameProcessor proc;
 	private Swapchain swapchain;
 	private FrameBuilder builder;
 
@@ -51,20 +51,20 @@ class FramePresenterTest extends AbstractVulkanTest {
 		when(dev.factory()).thenReturn(factory);
 
 		// Create controller
-		presenter = new FramePresenter(swapchain, builder, 2);
+		proc = new FrameProcessor(swapchain, builder, 2);
 	}
 
 	@Test
 	void next() {
-		final Frame frame = presenter.next();
+		final Frame frame = proc.next();
 		assertNotNull(frame);
 	}
 
 	@Test
 	void cycle() {
-		final Frame first = presenter.next();
-		assertNotNull(presenter.next());
-		assertSame(first, presenter.next());
+		final Frame first = proc.next();
+		assertNotNull(proc.next());
+		assertSame(first, proc.next());
 	}
 
 	@Test
@@ -86,7 +86,7 @@ class FramePresenterTest extends AbstractVulkanTest {
 		when(builder.build(0, seq)).thenReturn(buffer);
 
 		// Render frame
-		final Frame frame = presenter.next();
+		final Frame frame = proc.next();
 		frame.render(seq);
 
 		// TODO - how to test what the frame actually does?
@@ -95,6 +95,6 @@ class FramePresenterTest extends AbstractVulkanTest {
 
 	@Test
 	void destroy() {
-		presenter.destroy();
+		proc.destroy();
 	}
 }

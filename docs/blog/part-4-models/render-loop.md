@@ -163,7 +163,7 @@ public Buffer build(int index, RenderSequence seq) {
 Next the acquire-render-present process is factored out to another new component:
 
 ```java
-public class FramePresenter {
+public class FrameProcessor {
     private final Swapchain swapchain;
     private final FrameBuilder builder;
 }
@@ -210,13 +210,13 @@ public static FrameSet frames(Swapchain swapchain, RenderPass pass) {
 }
 ```
 
-And the frame presentation logic:
+And the presentation controller:
 
 ```java
 @Bean
-public static FramePresenter presenter(FrameSet frames, @Qualifier("graphics") Command.Pool pool) {
+public static FrameProcessor processor(FrameSet frames, @Qualifier("graphics") Command.Pool pool) {
     var builder = new FrameBuilder(frames::buffer, pool::allocate, VkCommandBufferUsage.ONE_TIME_SUBMIT);
-    return new FramePresenter(frames.swapchain(), builder, 2);
+    return new FrameProcessor(frames.swapchain(), builder, 2);
 }
 ```
 
@@ -288,11 +288,11 @@ Finally the render loop can now be somewhat simplified to the following:
 
 ```java
 @Bean
-CommandLineRunner runner(LogicalDevice dev, FramePresenter presenter, RenderSequence seq, Runnable update, Desktop desktop) {
+CommandLineRunner runner(LogicalDevice dev, FrameProcessor proc, RenderSequence seq, Runnable update, Desktop desktop) {
     return args -> {
         while(running.get()) {
             update.run();
-            presenter.render(seq);
+            proc.next().render(seq);
             desktop.poll();
         }
         dev.waitIdle();
@@ -452,10 +452,10 @@ public void present(Queue queue, int index, Semaphore semaphore) {
 }
 ```
 
-Finally the semaphores are released when the presenter is destroyed:
+Finally the semaphores are released when the controller is destroyed:
 
 ```java
-public class FramePresenter implements TransientObject {
+public class FrameProcessor implements TransientObject {
     @Override
     public void destroy() {
         available.destroy();
@@ -637,14 +637,14 @@ public boolean signalled() {
 }
 ```
 
-A fence is created in the constructor of the presenter component:
+A fence is created in the constructor of the controller:
 
 ```java
-public class FramePresenter implements TransientObject {
+public class FrameProcessor implements TransientObject {
     ...
     private final Fence fence;
 
-    public FramePresenter(...) {
+    public FrameProcessor(...) {
         ...
         this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
     }
@@ -848,7 +848,7 @@ The render loop is still likely not fully utilising the pipeline since the code 
 First the existing render loop and synchronisation primitives are wrapped into an inner class which tracks the in-flight progress of a frame:
 
 ```java
-public class Presenter {
+public class FrameProcessor {
     public class Frame {
         private final Semaphore available, ready;
         private final Fence fence;
@@ -863,12 +863,12 @@ public class Presenter {
 And the constructor is modified to create an _array_ of frames:
 
 ```java
-public class Presenter implements TransientObject {
+public class FrameProcessor implements TransientObject {
     ...
     private final Frame[] frames;
     private int next;
 
-    public FramePresenter(Swapchain swapchain, FrameBuilder builder, int frames) {
+    public FrameProcessor(Swapchain swapchain, FrameBuilder builder, int frames) {
         ...
         this.frames = new Frame[frames];
         init();
@@ -885,9 +885,9 @@ Notes:
 
 * The number of in-flight frames does not necessarily have to be the same as the number of swapchains images (though in practice this is generally the case).
 
-* The `Presenter` is now a transient object and releases the synchronisation primitives for each frame on destruction.
+* The controller is now a transient object and releases the synchronisation primitives for each frame on destruction.
 
-Finally the `next` frame to be rendered is retrieved from the presenter:
+Finally the `next` frame to be rendered is retrieved from the controller:
 
 ```java
 public synchronized Frame next() {

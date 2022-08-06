@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -13,14 +12,14 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.lib.util.Check;
 
 /**
- * The <i>frame presenter</i> is the controller for the process of rendering to the swapchain.
+ * The <i>frame processor</i> is the controller for rendering and presenting frames to the swapchain.
  * <p>
- * The presenter cycles through an array of <i>in flight</i> frames that are responsible for synchronisation of the render process.
+ * The processor cycles through an array of <i>in flight</i> frames that are responsible for synchronisation of the render process.
  * The next in-flight {@link Frame} is selected using the {@link #next()} method.
  * <p>
  * @author Sarge
  */
-public class FramePresenter implements TransientObject {
+public class FrameProcessor implements TransientObject {
 	private final Swapchain swapchain;
 	private final FrameBuilder builder;
 	private final Frame[] frames;
@@ -32,7 +31,7 @@ public class FramePresenter implements TransientObject {
 	 * @param builder		Render task builder
 	 * @param frames		Number of in-flight frames
 	 */
-	public FramePresenter(Swapchain swapchain, FrameBuilder builder, int frames) {
+	public FrameProcessor(Swapchain swapchain, FrameBuilder builder, int frames) {
 		Check.oneOrMore(frames);
 		this.swapchain = notNull(swapchain);
 		this.builder = notNull(builder);
@@ -57,19 +56,16 @@ public class FramePresenter implements TransientObject {
 		return frames[index];
 	}
 
+	public void render(RenderSequence seq) {
+		final Frame frame = next();
+		frame.render(seq);
+	}
+
 	@Override
 	public void destroy() {
 		for(Frame frame : frames) {
 			frame.destroy();
 		}
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(swapchain)
-				.append(builder)
-				.build();
 	}
 
 	/**
@@ -114,16 +110,9 @@ public class FramePresenter implements TransientObject {
 			// Acquire next swapchain image
 			final int index = swapchain.acquire(available, null);
 
-			// Build render task
-			final Buffer buffer = builder.build(index, seq);
-
 			// Submit render task
-			new Work.Builder(buffer.pool())
-					.add(buffer)
-					.wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
-					.signal(ready)
-					.build()
-					.submit(fence);
+			final Buffer buffer = builder.build(index, seq);
+			submit(buffer);
 
 			// Wait for frame to be rendered
 			fence.waitReady();
@@ -131,6 +120,18 @@ public class FramePresenter implements TransientObject {
 			// Present rendered frame
 			final Queue queue = buffer.pool().queue();
 			swapchain.present(queue, index, ready);
+		}
+
+		/**
+		 * Submits a render task.
+		 */
+		private void submit(Buffer buffer) {
+			new Work.Builder(buffer.pool())
+					.add(buffer)
+					.wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+					.signal(ready)
+					.build()
+					.submit(fence);
 		}
 
 		/**

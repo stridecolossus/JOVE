@@ -1,24 +1,19 @@
 package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.scene.RenderLoop.Listener;
 
 @Timeout(1)
 public class RenderLoopTest {
 	private RenderLoop loop;
 	private Runnable task;
-	private Listener listener;
 
 	@BeforeEach
 	void before() {
 		task = mock(Runnable.class);
 		loop = new RenderLoop();
-		listener = mock(Listener.class);
-		loop.add(listener);
 	}
 
 	@AfterEach
@@ -62,12 +57,6 @@ public class RenderLoopTest {
 		void stop() {
 			assertThrows(IllegalStateException.class, () -> loop.stop());
 		}
-
-		@DisplayName("does not generate frame events")
-		@Test
-		void listener() {
-			verifyNoInteractions(listener);
-		}
 	}
 
 	@DisplayName("A running render loop...")
@@ -96,12 +85,6 @@ public class RenderLoopTest {
 		@Test
 		void fps() {
 			assertThrows(IllegalStateException.class, () -> loop.rate(60));
-		}
-
-		@Test
-		void listener() throws InterruptedException {
-			Thread.sleep(100);
-			verify(listener, atLeastOnce()).frame(anyLong());
 		}
 	}
 }
