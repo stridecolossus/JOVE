@@ -326,16 +326,23 @@ First the general image abstraction is modified to support multiple layers and M
 
 ```java
 public interface ImageData {
+    /**
+     * @return Vulkan format hint
+     */
     int format();
 
     record Level(int offset, int length) {
     }
     
+    /**
+     * @return MIP levels
+     */
     List<Level> levels();
 
+    /**
+     * @return Number of array layers
+     */
     int layers();
-    
-    Bufferable data();
 }
 ```
 

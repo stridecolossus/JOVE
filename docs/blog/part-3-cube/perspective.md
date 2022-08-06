@@ -217,7 +217,7 @@ public void load(Bufferable data) {
 ```
 
 Note that in this case the uniform buffer is visible to the host (i.e. the application) which is less performant than device-local memory.
-However this allows the application to update the matrix as required without the overhead of copying via an intermediate staging buffer.
+However this allows the application to update the matrix per frame without the overhead of copying via an intermediate staging buffer.
 
 A second binding is required in the descriptor set layout for the uniform buffer:
 
@@ -358,7 +358,7 @@ For example, given the following matrices:
 
 The result for element [0, 0] is `ac + bd` (and similarly for the rest of the matrix).
 
-To test the view transform matrix, in the `matrix` bean the eye position (or camera) is moved one unit to the right (or move the scene one unit to the left, whichever way you look at it):
+To test the view transform matrix, in the `matrix` bean the eye position (or camera) is moved one unit to the right (or the scene is moved one unit to the left, whichever way you look at it):
 
 ```java
 Matrix trans = new Matrix.Builder()
@@ -767,7 +767,7 @@ Which is multiplied with the projection and view transform to generate the final
 return projection.multiply(view).multiply(model);
 ```
 
-Again note the order of operations: here the rotation is applied to the model, then the view transform, and finally the perspective projection.
+Again note the order of operations: the rotation is applied to the model, then the view transform, and finally the perspective projection.
 
 We should now be able to see the fully 3D cube:
 

@@ -414,11 +414,11 @@ Our requirements are:
 
 - The allocator and pool(s) should provide useful statistics to the application, e.g. number of allocations, free memory, etc.
 
-To support these requirements a second device memory implementation is introduced for a _block_ of memory managed by the pool.  Device memory is then allocated from a block with available free memory or new blocks are created on demand to grow the pool.
+To support these requirements a second device memory implementation is introduced for a _block_ of memory managed by the pool.  Memory requests are then served from a block with available free memory or new blocks are created on demand to grow the pool.
 
 ### Memory Blocks
 
-A memory block is a wrapper for an area of memory and maintains the list of allocations from that block:
+A memory block is a wrapper for a memory instance and maintains the list of allocations from that block:
 
 ```java
 class Block {
@@ -508,7 +508,7 @@ class BlockDeviceMemory implements DeviceMemory {
 }
 ```
 
-Note that since only one region mapping is allowed per memory block the `map` method silently releases the previous mapping (if any).
+Note that since only one region mapping is allowed per memory instance the `map` method silently releases the previous mapping (if any).
 
 Destroyed allocations are not removed from the block but are only marked as released and can be reallocated:
 

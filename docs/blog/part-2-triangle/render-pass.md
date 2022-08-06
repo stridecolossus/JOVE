@@ -417,7 +417,7 @@ class DesktopConfiguration {
         return new Window.Builder()
             .title("TriangleDemo")
             .size(new Dimensions(1024, 768))
-            .property(Window.Property.DISABLE_OPENGL)
+            .property(Window.Hint.DISABLE_OPENGL)
             .build(desktop);
     }
 
