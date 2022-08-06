@@ -1,13 +1,9 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
@@ -76,7 +72,6 @@ class FormatBuilderTest {
 	@Test
 	void imageFormatLayout() {
 		final ImageData image = mock(ImageData.class);
-		final VkFormat format = VkFormat.UNDEFINED;
 		when(image.layout()).thenReturn(Layout.floats(3));
 		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
 	}

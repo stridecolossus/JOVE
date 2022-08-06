@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.lib.util.Check.*;
 
+import java.util.Map;
+
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
@@ -46,19 +48,24 @@ public class FormatBuilder {
 		SCALED,
 		RGB;
 
+		private static final Map<String, Type> TYPES = Map.of(
+				"integer",		INT,
+				"int",			INT,
+				"short",		INT,
+				"float",		FLOAT,
+				"byte",			NORM
+		);
+
 		/**
-		 * Maps the given Java type to a Vulkan component type.
+		 * Maps the given Java type to the corresponding Vulkan component type.
 		 * @param type Type
 		 * @return Vulkan type
-		 * @throws IllegalArgumentException if the type is not supported
+		 * @throws IllegalArgumentException if the given type is not supported
 		 */
 		public static Type of(Class<?> type) {
-			return switch(type.getSimpleName().toLowerCase()) {
-				case "float" -> FLOAT;
-				case "integer", "int", "short" -> INT;
-				case "byte" -> NORM;
-				default -> throw new IllegalArgumentException("Unsupported data type: " + type);
-			};
+			final Type result = TYPES.get(type.getSimpleName().toLowerCase());
+			if(result == null) throw new IllegalArgumentException("Unsupported data type: " + type);
+			return result;
 		}
 	}
 
@@ -71,7 +78,7 @@ public class FormatBuilder {
 		return new FormatBuilder()
 				.count(layout.size())
 				.bytes(layout.bytes())
-				.type(layout.type())
+				.type(Type.of(layout.type()))
 				.signed(layout.signed())
 				.build();
 	}
@@ -163,16 +170,6 @@ public class FormatBuilder {
 	 */
 	public FormatBuilder type(Type type) {
 		this.type = notNull(type);
-		return this;
-	}
-
-	/**
-	 * Sets the data type.
-	 * @param type Data type
-	 * @see Type#of(Class)
-	 */
-	public FormatBuilder type(Class<?> type) {
-		this.type = Type.of(type);
 		return this;
 	}
 
