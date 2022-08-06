@@ -6,6 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.ptr.IntByReference;
@@ -40,9 +41,9 @@ public record ValidationLayer(String name, int version) {
 	 * @param func			Layers function
 	 * @return Validation layers
 	 */
-	public static Set<ValidationLayer> layers(IntByReference count, VulkanFunction<VkLayerProperties> func) {
+	public static Set<ValidationLayer> layers(IntByReference count, StructureVulkanFunction<VkLayerProperties> func) {
 		return Arrays
-				.stream(VulkanFunction.invoke(func, count, VkLayerProperties::new))
+				.stream(func.invoke(count, VkLayerProperties::new))
 				.map(ValidationLayer::of)
 				.collect(toCollection(ValidationLayerSet::new));
 	}
@@ -54,7 +55,7 @@ public record ValidationLayer(String name, int version) {
 	 * @return Validation layers supported by this platform
 	 */
 	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count) {
-		final VulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
+		final StructureVulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
 		return layers(count, func);
 	}
 

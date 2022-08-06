@@ -11,6 +11,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.LazySupplier;
 
@@ -81,9 +82,9 @@ public class Surface extends AbstractTransientNativeObject {
 	public List<VkSurfaceFormatKHR> formats() {
 		final Instance instance = dev.instance();
 		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
+		final StructureVulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
 		final IntByReference count = instance.factory().integer();
-		final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(func, count, VkSurfaceFormatKHR::new);
+		final VkSurfaceFormatKHR[] array = func.invoke(count, VkSurfaceFormatKHR::new);
 		return Arrays.asList(array);
 	}
 
@@ -124,7 +125,7 @@ public class Surface extends AbstractTransientNativeObject {
 		final VulkanLibrary lib = instance.library();
 		final VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, this, count, array);
 		final IntByReference count = instance.factory().integer();
-		final int[] array = VulkanFunction.invoke(func, count, int[]::new);
+		final int[] array = func.invoke(count, int[]::new);
 
 		// Convert to enumeration
 		final var mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);

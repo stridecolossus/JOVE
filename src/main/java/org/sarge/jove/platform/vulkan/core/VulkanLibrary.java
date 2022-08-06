@@ -12,6 +12,7 @@ import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
 import org.sarge.jove.platform.vulkan.render.*;
 import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.*;
@@ -90,9 +91,9 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	 * @param func 		Extensions function
 	 * @return Supported extensions
 	 */
-	static Set<String> extensions(IntByReference count, VulkanFunction<VkExtensionProperties> func) {
+	static Set<String> extensions(IntByReference count, StructureVulkanFunction<VkExtensionProperties> func) {
 		return Arrays
-				.stream(VulkanFunction.invoke(func, count, VkExtensionProperties::new))
+				.stream(func.invoke(count, VkExtensionProperties::new))
 				.map(e -> e.extensionName)
 				.map(String::new)
 				.collect(toSet());
@@ -106,7 +107,7 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	 * @see #extensions(IntByReference, VulkanFunction)
 	 */
 	static Set<String> extensions(VulkanLibrary lib, IntByReference count) {
-		final VulkanFunction<VkExtensionProperties> func = (ref, array) -> lib.vkEnumerateInstanceExtensionProperties(null, ref, array);
+		final StructureVulkanFunction<VkExtensionProperties> func = (ref, array) -> lib.vkEnumerateInstanceExtensionProperties(null, ref, array);
 		return extensions(count, func);
 	}
 }

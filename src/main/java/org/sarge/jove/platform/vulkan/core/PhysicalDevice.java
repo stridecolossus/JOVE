@@ -13,6 +13,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -83,7 +84,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public Set<String> extensions() {
 		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<VkExtensionProperties> func = (count, array) -> lib.vkEnumerateDeviceExtensionProperties(this, null, count, array);
+		final StructureVulkanFunction<VkExtensionProperties> func = (count, array) -> lib.vkEnumerateDeviceExtensionProperties(this, null, count, array);
 		final IntByReference count = instance.factory().integer();
 		return VulkanLibrary.extensions(count, func);
 	}
@@ -96,7 +97,7 @@ public class PhysicalDevice implements NativeObject {
 	@Deprecated
 	public Set<ValidationLayer> layers() {
 		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<VkLayerProperties> func = (count, array) -> lib.vkEnumerateDeviceLayerProperties(this, count, array);
+		final StructureVulkanFunction<VkLayerProperties> func = (count, array) -> lib.vkEnumerateDeviceLayerProperties(this, count, array);
 		final IntByReference count = instance.factory().integer();
 		return ValidationLayer.layers(count, func);
 	}
@@ -169,7 +170,7 @@ public class PhysicalDevice implements NativeObject {
 		public Stream<PhysicalDevice> devices() {
 			final VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
 			final IntByReference count = instance.factory().integer();
-			final Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
+			final Pointer[] handles = func.invoke(count, Pointer[]::new);
 			return Arrays.stream(handles).map(this::create);
 		}
 
@@ -180,12 +181,12 @@ public class PhysicalDevice implements NativeObject {
 		 */
 		private PhysicalDevice create(Pointer handle) {
 			// Enumerate queue families for this device (for some reason the return type is void)
-			final VulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
+			final StructureVulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
 				instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 				return VulkanLibrary.SUCCESS;
 			};
 			final IntByReference count = instance.factory().integer();
-			final VkQueueFamilyProperties[] props = VulkanFunction.invoke(func, count, VkQueueFamilyProperties::new);
+			final VkQueueFamilyProperties[] props = func.invoke(count, VkQueueFamilyProperties::new);
 
 			// Create queue families
 			final List<Family> families = IntStream

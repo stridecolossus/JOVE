@@ -307,7 +307,7 @@ In the demo we can now create a native window and retrieve the handle to the Vul
 Window window = new Window.Builder()
     .title("demo")
     .size(new Dimensions(1280, 760))
-    .property(Window.Property.DISABLE_OPENGL)
+    .property(Window.Hint.DISABLE_OPENGL)
     .build(desktop);
 
 // Retrieve rendering surface
@@ -675,9 +675,9 @@ VulkanFunction<Pointer[]> func = (count, devices) -> lib.vkEnumeratePhysicalDevi
 Two-stage invocation of the function is encapsulated in the following helper:
 
 ```java
-static <T> T invoke(VulkanFunction<T> func, IntByReference count, IntFunction<T> factory) {
+default <T> T invoke(IntByReference count, IntFunction<T> factory) {
     // Invoke to determine the size of the data
-    check(func.enumerate(count, null));
+    check(enumerate(count, null));
 
     // Instantiate the data object
     int size = count.getValue();
@@ -685,7 +685,7 @@ static <T> T invoke(VulkanFunction<T> func, IntByReference count, IntFunction<T>
 
     // Invoke again to populate the data object
     if(size > 0) {
-        check(func.enumerate(count, data));
+        check(enumerate(count, data));
     }
 
     return data;
@@ -698,7 +698,7 @@ The process of enumerating the physical devices can now be refactored to the fol
 public static Stream<PhysicalDevice> devices(Instance instance) {
     VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
     IntByReference count = instance.factory().integer();
-    Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
+    Pointer[] handles = func.invoke(count, Pointer[]::new);
     return Arrays.stream(handles).map(ptr -> create(ptr, instance));
 }
 ```
@@ -706,19 +706,21 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
 For an array of JNA structures a second, slightly different implementation is needed since the array __must__ be a contiguous block of memory allocated using the `toArray` helper:
 
 ```java
-static <T extends Structure> T[] invoke(VulkanFunction<T> func, IntByReference count, Supplier<T> identity) {
-    // Invoke to determine the length of the array
-    check(func.enumerate(count, null));
-
-    // Instantiate the structure array
-    T[] array = (T[]) identity.get().toArray(count.getValue());
-
-    // Invoke again to populate the array (note passes first element)
-    if(array.length > 0) {
-        check(func.enumerate(count, array[0]));
+interface StructureVulkanFunction<T extends Structure> extends VulkanFunction<T> {
+    default T[] invoke(IntByReference count, Supplier<T> identity) {
+        // Invoke to determine the length of the array
+        check(enumerate(count, null));
+    
+        // Instantiate the structure array
+        T[] array = (T[]) identity.get().toArray(count.getValue());
+    
+        // Invoke again to populate the array (note passes first element)
+        if(array.length > 0) {
+            check(enumerate(count, array[0]));
+        }
+    
+        return array;
     }
-
-    return array;
 }
 ```
 
@@ -731,9 +733,9 @@ Notes:
 As an example, the code to retrieve the queue families for a physical device now becomes:
 
 ```java
-VulkanFunction<VkQueueFamilyProperties> func = (count, array) -> instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
+StructureVulkanFunction<VkQueueFamilyProperties> func = (count, array) -> instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 IntByReference count = instance.factory().integer();
-VkQueueFamilyProperties[] props = VulkanFunction.invoke(func, count, VkQueueFamilyProperties::new);
+VkQueueFamilyProperties[] props = func.invoke(count, VkQueueFamilyProperties::new);
 ```
 
 ### Structure Collector

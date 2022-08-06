@@ -10,6 +10,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer.ValidationLayerSet;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 
 import com.sun.jna.ptr.IntByReference;
 
@@ -75,11 +76,11 @@ public class ValidationLayerTest {
 		}
 	}
 
-	@SuppressWarnings({"unchecked", "static-method"})
+	@SuppressWarnings("unchecked")
 	@Test
 	void enumerate() {
 		// Init function
-		final VulkanFunction<VkLayerProperties> func = mock(VulkanFunction.class);
+		final StructureVulkanFunction<VkLayerProperties> func = spy(StructureVulkanFunction.class);
 		final IntByReference count = new IntByReference(1);
 
 		// Return a layer

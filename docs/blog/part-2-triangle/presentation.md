@@ -274,9 +274,9 @@ The supported _image formats_ are retrieved using the two-stage approach:
 ```java
 public Collection<VkSurfaceFormatKHR> formats() {
     VulkanLibrary lib = instance.library();
-    VulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
+    StructureVulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
     IntByReference count = instance.factory().integer();
-    var formats = VulkanFunction.enumerate(func, count, VkSurfaceFormatKHR::new);
+    var formats = func.enumerate(count, VkSurfaceFormatKHR::new);
     return Arrays.asList(formats);
 }
 ```
@@ -288,7 +288,7 @@ public Set<VkPresentModeKHR> modes() {
     VulkanLibrary lib = instance.library();
     VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, this, count, array);
     IntByReference count = instance.factory().integer();
-    int[] array = VulkanFunction.invoke(func, count, int[]::new);
+    int[] array = func.invoke(count, int[]::new);
     ...
 }
 ```
@@ -534,7 +534,7 @@ Next the handles to the swapchain images are retrieved:
 ```java
 VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
 IntByReference count = factory.integer();
-Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
+Pointer[] handles = func.invoke(count, Pointer[]::new);
 ```
 
 The images all share the same descriptor:
@@ -579,11 +579,11 @@ A new JNA library is added for the swapchain:
 
 ```java
 interface Library {
-    int  vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
-    void vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Pointer pAllocator);
-    int  vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
-    int  vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
-    int  vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
+    int         vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
+    void        vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Pointer pAllocator);
+    int         vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+    VkResult    vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
+    VkResult    vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
 }
 ```
 
@@ -598,36 +598,24 @@ public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated
     DeviceContext dev = super.device();
     VulkanLibrary lib = dev.library();
     IntByReference index = dev.factory().integer();
-    int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+    VkResult result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
     ...
 }
 ```
 
 The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter, for the moment these values are `null` in the demo.
 
-Acquiring the swapchain image is one of the few API methods that can return _multiple_ success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  Therefore the following code replaces the usual `check` on the API result code:
+Acquiring the swapchain image is one of the few API methods that can return _multiple_ success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  Therefore the API method returns a `VkResult` and the usual `check` test is replaced by the following:
 
 ```java
-if((result == VulkanLibrary.SUCCESS) || (result == SUB_OPTIMAL)) {
-    return index.getValue();
-}
-else
-if(result == OUT_OF_DATE) {
-    throw new SwapchainInvalidated(result);
-}
-else {
-    throw new VulkanException(result);
-}
+return switch(result) {
+    case SUCCESS, SUBOPTIMAL_KHR -> index.getValue();
+    case ERROR_OUT_OF_DATE_KHR -> throw new SwapchainInvalidated(result);
+    default -> throw new VulkanException(result);
+};
 ```
 
-Where the new result codes are constants looked up from the Vulkan enumeration:
-
-```java
-private static final int OUT_OF_DATE = VkResult.ERROR_OUT_OF_DATE_KHR.value();
-private static final int SUB_OPTIMAL = VkResult.SUBOPTIMAL_KHR.value();
-```
-
-The `SwapchainInvalidated` exception indicates that the swapchain has become invalid, e.g. the surface has been resized or minimised.  Note that a _suboptimal_ return value is considered as valid in this case.
+The `SwapchainInvalidated` exception indicates that the window has been resized or minimised.  Note that a _suboptimal_ return value is considered as valid in this case.
 
 When an image has been rendered it can then be presented to the surface, which requires population of a Vulkan descriptor for the presentation task:
 
@@ -657,13 +645,10 @@ Finally the presentation task is added to the relevant work queue:
 
 ```java
 VulkanLibrary lib = dev.library();
-int result = lib.vkQueuePresentKHR(queue, info);
-if((result == OUT_OF_DATE) || (result == SUB_OPTIMAL)) {
-    throw new SwapchainInvalidated(result);
-}
-else
-if(result != VulkanLibrary.SUCCESS) {
-    throw new VulkanException(result);
+VkResult result = lib.vkQueuePresentKHR(queue, info);
+switch(result) {
+    case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new SwapchainInvalidated(result);
+    default -> check(result.value());
 }
 ```
 
