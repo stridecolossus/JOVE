@@ -181,7 +181,12 @@ public void render(RenderSequence seq) {
     
     // Submit render task
     Pool pool = buffer.pool();
-    Work.of(buffer).submit();
+    new Work.Builder(pool)
+        .add(buffer)
+        .build()
+        .submit();
+        
+    // Wait for frame to be rendered
     pool.waitIdle();
 
     // Present rendered frame
@@ -623,17 +628,12 @@ The state of the fence can also be programatically queried:
 public boolean signalled() {
     DeviceContext dev = this.device();
     VulkanLibrary lib = dev.library();
-    int result = lib.vkGetFenceStatus(dev, this);
-    if(result == SUCCESS) {
-        return true;
-    }
-    else
-    if(result == NOT_SIGNALLED) {
-        return false;
-    }
-    else {
-        throw new VulkanException(result);
-    }
+    VkResult result = lib.vkGetFenceStatus(dev, this);
+    return switch(result) {
+        case SUCCESS -> true;
+        case NOT_READY -> false;
+        default -> throw new VulkanException(result);
+    };
 }
 ```
 

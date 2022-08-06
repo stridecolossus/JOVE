@@ -57,8 +57,8 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@DisplayName("The next image to be rendered can be acquired from the swapchain")
 		@Test
 		void acquire() {
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, factory.integer())).thenReturn(VkResult.SUCCESS);
 			assertEquals(1, swapchain.acquire(semaphore, fence));
-			verify(lib).vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, factory.integer());
 		}
 
 		@DisplayName("Acquiring the next image requires at least one synchronisation argument")
@@ -70,14 +70,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@DisplayName("The next image cannot be acquired if the swapchain has become invalid")
 		@Test
 		void error() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, factory.integer())).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR.value());
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, factory.integer())).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR);
 			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 
 		@DisplayName("The next image can be acquired if the swapchain is sub-optimal")
 		@Test
 		void suboptimal() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, factory.integer())).thenReturn(VkResult.SUBOPTIMAL_KHR.value());
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, factory.integer())).thenReturn(VkResult.SUBOPTIMAL_KHR);
 			swapchain.acquire(null, fence);
 		}
 	}
@@ -97,8 +97,6 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@DisplayName("A rendered swapchain image can be presented to the swapchain")
 		@Test
 		void present() {
-			swapchain.present(queue, 4, semaphore);
-
 			final var expected = new VkPresentInfoKHR() {
 				@Override
 				public boolean equals(Object obj) {
@@ -111,8 +109,8 @@ public class SwapchainTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-
-			verify(lib).vkQueuePresentKHR(queue, expected);
+			when(lib.vkQueuePresentKHR(queue, expected)).thenReturn(VkResult.SUCCESS);
+			swapchain.present(queue, 4, semaphore);
 		}
 
 		@DisplayName("A presentation task can be constructed by the builder")

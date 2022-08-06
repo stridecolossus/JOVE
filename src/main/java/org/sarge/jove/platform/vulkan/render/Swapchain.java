@@ -41,9 +41,6 @@ import com.sun.jna.ptr.*;
  * @author Sarge
  */
 public class Swapchain extends AbstractVulkanObject {
-	private static final int OUT_OF_DATE = VkResult.ERROR_OUT_OF_DATE_KHR.value();
-	private static final int SUB_OPTIMAL = VkResult.SUBOPTIMAL_KHR.value();
-
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> attachments;
@@ -88,7 +85,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame buffer.
 	 */
 	public static final class SwapchainInvalidated extends VulkanException {
-		private SwapchainInvalidated(int result) {
+		private SwapchainInvalidated(VkResult result) {
 			super(result);
 		}
 	}
@@ -109,19 +106,14 @@ public class Swapchain extends AbstractVulkanObject {
 		final DeviceContext dev = super.device();
 		final VulkanLibrary lib = dev.library();
 		final IntByReference index = dev.factory().integer();
-		final int result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+		final VkResult result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
 
-		// Check API
-		if((result == VulkanLibrary.SUCCESS) || (result == SUB_OPTIMAL)) {
-			return index.getValue();
-		}
-		else
-		if(result == OUT_OF_DATE) {
-			throw new SwapchainInvalidated(result);
-		}
-		else {
-			throw new VulkanException(result);
-		}
+		// Check result
+		return switch(result) {
+			case SUCCESS, SUBOPTIMAL_KHR -> index.getValue();
+			case ERROR_OUT_OF_DATE_KHR -> throw new SwapchainInvalidated(result);
+			default -> throw new VulkanException(result);
+		};
 	}
 
 	/**
@@ -152,13 +144,10 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	public static void present(DeviceContext dev, Queue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
 		final VulkanLibrary lib = dev.library();
-		final int result = lib.vkQueuePresentKHR(queue, info);
-		if((result == OUT_OF_DATE) || (result == SUB_OPTIMAL)) {
-			throw new SwapchainInvalidated(result);
-		}
-		else
-		if(result != VulkanLibrary.SUCCESS) {
-			throw new VulkanException(result);
+		final VkResult result = lib.vkQueuePresentKHR(queue, info);
+		switch(result) {
+			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new SwapchainInvalidated(result);
+			default -> check(result.value());
 		}
 	}
 
@@ -434,7 +423,7 @@ public class Swapchain extends AbstractVulkanObject {
 			// Retrieve swapchain images
 			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
 			final IntByReference count = factory.integer();
-			final Pointer[] handles = VulkanFunction.invoke(func, count, Pointer[]::new);
+			final Pointer[] handles = func.invoke(count, Pointer[]::new);
 
 			// Init swapchain image descriptor
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
@@ -536,7 +525,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param pImageIndex			Returned image index
 		 * @return Result
 		 */
-		int vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
+		VkResult vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
 
 		/**
 		 * Presents to the swapchain.
@@ -544,6 +533,6 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param pPresentInfo			Pointer to descriptor
 		 * @return Result
 		 */
-		int vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
+		VkResult vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
 	}
 }
