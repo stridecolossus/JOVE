@@ -26,7 +26,9 @@ public interface Transform {
 	 * @return Compound transform
 	 */
 	static Transform of(List<Transform> transforms) {
-		record Compound(List<Transform> list) implements Transform { // TODO - record ???
+		return new Transform() {
+			private final List<Transform> list = List.copyOf(transforms);
+
 			@Override
 			public boolean isDirty() {
 				return list.stream().anyMatch(Transform::isDirty);
@@ -36,8 +38,6 @@ public interface Transform {
 			public Matrix matrix() {
 				return list.stream().map(Transform::matrix).reduce(Matrix.IDENTITY, Matrix::multiply);
 			}
-		}
-
-		return new Compound(List.copyOf(transforms));
+		};
 	}
 }

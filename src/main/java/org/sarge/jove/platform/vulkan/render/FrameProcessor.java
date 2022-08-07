@@ -2,9 +2,11 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.time.Instant;
 import java.util.*;
 
 import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.control.FrameListener;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -16,26 +18,31 @@ import org.sarge.lib.util.Check;
  * The <i>frame processor</i> is the controller for rendering and presenting frames to the swapchain.
  * <p>
  * The processor cycles through an array of <i>in flight</i> frames that are responsible for synchronisation of the render process.
- * The next in-flight {@link Frame} is selected using the {@link #next()} method.
  * <p>
+ * A <i>frame</i> encapsulates the process of rendering and presenting to the swapchain.
+ * <p>
+ * Generally the {@link #render(RenderSequence)} process is:
+ * <ol>
+ * <li>Acquire the next swapchain image</li>
+ * <li>Submit the render task</li>
+ * <li>Present the rendered frame to the swapchain</li>
+ * </ol>
+ * <p>
+ * Although the individual steps are asynchronous operations this is a blocking method on the following steps during rendering:
+ * <ul>
+ * <li>The previous work is completed</li>
+ * <li>The next swapchain image becomes available</li>
+ * <li>The render task has been completed and is ready for presentation</li>
+ * </ul>
+ * Note however that this method does <b>not</b> block after the frame has been presented.
+ * <p>
+ * @see FrameListener
  * @author Sarge
  */
 public class FrameProcessor implements TransientObject {
-	/**
-	 * Frame listener.
-	 */
-	public interface Listener {
-		/**
-		 * Notifies a completed frame.
-		 * @param time			Completion time
-		 * @param elapsed		Elapsed duration (ms)
-		 */
-		void frame(long time, long elapsed);
-	}
-
 	private final Swapchain swapchain;
 	private final FrameBuilder builder;
-	private final Set<Listener> listeners = new HashSet<>();
+	private final Set<FrameListener> listeners = new HashSet<>();
 	private final Frame[] frames;
 	private int next;
 
@@ -65,7 +72,7 @@ public class FrameProcessor implements TransientObject {
 	 * Register a frame completion listener.
 	 * @param listener Listener to add
 	 */
-	public void add(Listener listener) {
+	public void add(FrameListener listener) {
 		listeners.add(notNull(listener));
 	}
 
@@ -79,14 +86,13 @@ public class FrameProcessor implements TransientObject {
 		final Frame frame = frames[index];
 
 		// Render frame
-		final long start = System.currentTimeMillis();
+		final Instant start = Instant.now();
 		frame.render(seq);
 
 		// Notify frame completion
-		final long now = System.currentTimeMillis();
-		final long elapsed = now - start;
-		for(Listener listener : listeners) {
-			listener.frame(now, elapsed);
+		final Instant end = Instant.now();
+		for(FrameListener listener : listeners) {
+			listener.frame(start, end);
 		}
 	}
 
@@ -98,24 +104,7 @@ public class FrameProcessor implements TransientObject {
 	}
 
 	/**
-	 * A <i>frame</i> encapsulates the process of rendering and presenting to the swapchain.
-	 * <p>
-	 * Generally the {@link #render(RenderSequence)} process is:
-	 * <ol>
-	 * <li>Acquire the next swapchain image</li>
-	 * <li>Submit the render task</li>
-	 * <li>Present the rendered frame to the swapchain</li>
-	 * </ol>
-	 * <p>
-	 * Note that although the individual steps are asynchronous operations this is a blocking method.
-	 * <p>
-	 * This method blocks on the following conditions:
-	 * <ul>
-	 * <li>The previous work is completed</li>
-	 * <li>The next swapchain image becomes available</li>
-	 * <li>The render task has been completed and is ready for presentation</li>
-	 * </ul>
-	 * Note that this method does <b>not</b> block after the frame has been presented.
+	 * Default synchronised implementation.
 	 */
 	private class Frame {
 		private final Semaphore available, ready;

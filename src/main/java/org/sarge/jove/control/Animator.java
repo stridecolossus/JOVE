@@ -2,13 +2,15 @@ package org.sarge.jove.control;
 
 import static org.sarge.lib.util.Check.*;
 
+import java.time.*;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * An <i>animator</i> is a specialised player for an {@link Animation}.
  * @author Sarge
  */
-public class Animator extends Player {
+public class Animator extends Player implements FrameListener {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */
@@ -52,8 +54,8 @@ public class Animator extends Player {
 	}
 
 	/**
-	 * Helper - Calculates the animation <i>position</i> as a floating-point value in the range zero to one.
-	 * @return Animation position
+	 * Helper - Calculates the animation <i>position</i> as a floating-point value.
+	 * @return Animation position (0..1)
 	 */
 	public float position() {
 		return time / (float) duration;
@@ -76,17 +78,15 @@ public class Animator extends Player {
 		this.speed = speed;
 	}
 
-	/**
-	 * Updates this animator.
-	 * @param elapsed Elapsed time since previous frame (ms)
-	 */
-	public void update(long elapsed) {
+	@Override
+	public void frame(Instant start, Instant end) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
 		// Update time position
+		final long elapsed = Duration.between(start, end).toMillis();
 		time += speed * elapsed;
 
 		// Check for completed animation

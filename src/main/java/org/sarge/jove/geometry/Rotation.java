@@ -1,5 +1,7 @@
 package org.sarge.jove.geometry;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -22,19 +24,53 @@ public interface Rotation extends Transform {
 	float angle();
 
 	/**
+	 * Skeleton implementation.
+	 */
+	abstract class AbstractRotation implements Rotation {
+		private final Vector axis;
+
+		/**
+		 * Constructor.
+		 * @param axis Rotation axis
+		 */
+		protected AbstractRotation(Vector axis) {
+			this.axis = notNull(axis);
+		}
+
+		@Override
+		public final Vector axis() {
+			return axis;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(axis, angle());
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Rotation that) &&
+					this.axis().equals(that.axis()) &&
+					MathsUtil.isEqual(this.angle(), that.angle());
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this).append(axis).append(angle()).build();
+		}
+	}
+
+	/**
 	 * Creates a rotation instance.
 	 * @param axis		Axis
 	 * @param angle		Rotation angle (radians)
 	 * @return New rotation
 	 */
 	static Rotation of(Vector axis, float angle) {
-		return new Rotation() {
-			private final Matrix matrix = Rotation.matrix(axis, angle);
-
-			@Override
-			public Vector axis() {
-				return axis;
-			}
+		return new AbstractRotation(axis) {
+			private final Matrix matrix = super.matrix();
 
 			@Override
 			public float angle() {
@@ -45,38 +81,19 @@ public interface Rotation extends Transform {
 			public Matrix matrix() {
 				return matrix;
 			}
-
-			@Override
-			public int hashCode() {
-				return Objects.hash(axis, angle);
-			}
-
-			@Override
-			public boolean equals(Object obj) {
-				return
-						(obj == this) ||
-						(obj instanceof Rotation that) &&
-						this.axis().equals(that.axis()) &&
-						MathsUtil.isEqual(this.angle(), that.angle());
-			}
-
-			@Override
-			public String toString() {
-				return new ToStringBuilder(this).append(axis).append(angle).build();
-			}
 		};
 	}
 
 	/**
-	 * Creates a matrix for the given rotation.
-	 * @param axis		Axis
-	 * @param angle		Rotation angle (radians)
-	 * @return New rotation matrix
+	 * @return Rotation matrix
 	 * @throws UnsupportedOperationException for an <i>arbitrary</i> axis
 	 * @see Quaternion#of(Rotation)
 	 */
-	static Matrix matrix(Vector axis, float angle) {
+	@Override
+	default Matrix matrix() {
 		final Builder matrix = new Matrix.Builder().identity();
+		final Vector axis = this.axis();
+		final float angle = this.angle();
 		final float sin = MathsUtil.sin(angle);
 		final float cos = MathsUtil.cos(angle);
 		if(Vector.X.equals(axis)) {

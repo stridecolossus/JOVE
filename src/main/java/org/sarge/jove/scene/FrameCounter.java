@@ -1,18 +1,16 @@
 package org.sarge.jove.scene;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Instant;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.platform.vulkan.render.FrameProcessor;
+import org.sarge.jove.control.FrameListener;
 
 /**
  * A <i>frame counter</i> is an adapter for a render task that also tracks frame completion events and FPS.
  * @author Sarge
  */
-public class FrameCounter implements FrameProcessor.Listener {
-	private static final long SECOND = TimeUnit.SECONDS.toMillis(1);
-
-	private long end;
+public class FrameCounter implements FrameListener {
+	private Instant next = Instant.EPOCH;
 	private int count;
 	private int fps;
 
@@ -31,14 +29,12 @@ public class FrameCounter implements FrameProcessor.Listener {
 	}
 
 	@Override
-	public void frame(long time, long elapsed) {
-		if(time > end) {
+	public void frame(Instant start, Instant end) {
+		++count;
+		if(start.isAfter(next)) {
 			fps = count;
 			count = 1;
-			end = time + SECOND;
-		}
-		else {
-			++count;
+			next = start.plusSeconds(1);
 		}
 	}
 

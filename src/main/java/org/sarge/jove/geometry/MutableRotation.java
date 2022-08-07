@@ -1,16 +1,13 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.geometry.Rotation.AbstractRotation;
 
 /**
  * A <i>mutable rotation</i> specifies a counter-clockwise rotation about an axis.
  * @see Quaternion#of(Rotation)
  * @author Sarge
  */
-public class MutableRotation implements Rotation {
-	private final Vector axis;
+public class MutableRotation extends AbstractRotation {
 	private float angle;
 	private boolean dirty = true;
 
@@ -19,12 +16,7 @@ public class MutableRotation implements Rotation {
 	 * @param axis Rotation axis
 	 */
 	public MutableRotation(Vector axis) {
-		this.axis = notNull(axis);
-	}
-
-	@Override
-	public Vector axis() {
-		return axis;
+		super(axis);
 	}
 
 	@Override
@@ -50,10 +42,5 @@ public class MutableRotation implements Rotation {
 	public Matrix matrix() {
 		dirty = false;
 		return Quaternion.of(this).matrix();
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(axis).append(angle).toString();
 	}
 }

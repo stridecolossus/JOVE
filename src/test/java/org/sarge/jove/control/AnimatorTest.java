@@ -3,6 +3,8 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.control.Player.State;
@@ -35,7 +37,7 @@ class AnimatorTest {
 	@Test
 	void update() {
 		animator.state(State.PLAY);
-		animator.update(1000);
+		animator.frame(Instant.EPOCH, Instant.ofEpochSecond(1));
 		verify(animation).update(animator);
 		assertEquals(1000, animator.time());
 	}
@@ -44,20 +46,20 @@ class AnimatorTest {
 	void updateSpeed() {
 		animator.state(State.PLAY);
 		animator.speed(2);
-		animator.update(1000);
+		animator.frame(Instant.EPOCH, Instant.ofEpochSecond(1));
 		assertEquals(2000, animator.time());
 	}
 
 	@Test
 	void updateNotPlaying() {
-		animator.update(1000);
+		animator.frame(Instant.EPOCH, Instant.ofEpochSecond(1));
 		verifyNoMoreInteractions(animation);
 	}
 
 	@Test
 	void updateFinished() {
 		animator.state(State.PLAY);
-		animator.update(6000);
+		animator.frame(Instant.EPOCH, Instant.ofEpochSecond(6));
 		verify(animation).update(animator);
 		assertEquals(State.STOP, animator.state());
 		assertEquals(5000, animator.time());
@@ -67,7 +69,7 @@ class AnimatorTest {
 	void updateRepeating() {
 		animator.state(State.PLAY);
 		animator.repeat(true);
-		animator.update(6000);
+		animator.frame(Instant.EPOCH, Instant.ofEpochSecond(6));
 		verify(animation).update(animator);
 		assertEquals(State.PLAY, animator.state());
 		assertEquals(1000, animator.time());
