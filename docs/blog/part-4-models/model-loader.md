@@ -63,7 +63,7 @@ g group
 f 1/1 2/2 3/3
 ```
 
-The minimal functionality required for the chalet model will be implemented, with the following assumptions and constraints on the scope of the loader:
+Only the minimal functionality required for the chalet model will be implemented, with the following assumptions and constraints on the scope of the loader:
 
 * Face primitives are assumed to be triangles.
 
@@ -123,7 +123,7 @@ The process of loading and parsing the OBJ model is:
 
 4. Generate the resultant JOVE model(s).
 
-We start with the following class outline:
+The class outline for the loader comprises the transient data model and OBJ command parsers:
 
 ```java
 public class ObjectModelLoader {
@@ -201,7 +201,7 @@ Unsupported commands are handed off to an error handler which by default silentl
 private Consumer<String> handler = line -> {};
 ```
 
-Normally we would throw an exception for an unknown command but it seems more prudent to ignore by default (given the nature of OBJ files).
+Normally we would throw an exception for an unknown command but it seems more prudent to ignore by default given the generally flakey nature of OBJ files.
 
 The following configuration options are also provided:
 
@@ -213,7 +213,7 @@ The following configuration options are also provided:
 
 ### Vertex Components
 
-We note that the process of parsing the various vertex components (v, vn, vt) is the same in all cases:
+We note that the process of parsing the various vertex components (position, normal, texture coordinate) is the same in all cases:
 
 1. Parse the command arguments to a floating-point array.
 
@@ -285,7 +285,7 @@ public ObjectModelLoader() {
 
 ### Face Parser
 
-The parser for the face command iterates over the face vertices, which assumed to be a triangle:
+The parser for the face command iterates over the face vertices, which are assumed to be triangles:
 
 ```java
 public void parse(String[] args, ObjectModel model) {
@@ -432,7 +432,7 @@ Where the `GROUP` parser delegates to the `start` method to begin a new group.
 
 ### De-Duplication
 
-From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to introduce an _index buffer_ to the model to reduce the total amount of data, at the expense of a second buffer for the index itself.
+From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is de-duplicate the model before rendering and introduce an _index buffer_ to to reduce the total amount of data (at the expense of a second buffer for the index itself).
 
 First an optional index buffer is added to the model definition:
 
@@ -516,11 +516,11 @@ public class DuplicateModelBuilder extends Model.Builder {
 
 The de-duplication process for a given vertex is:
 
-1. Lookup the index of the vertex.
+1. Lookup the index of the vertex from the `map` table.
 
-2. If the vertex already exists in the model add its index.
+2. If the vertex already exists add its index to the model.
 
-3. Otherwise add the vertex __and__ its allocated index and create a new `map` entry.
+3. Otherwise add the vertex __and__ its index to the model and register it in the lookup table.
 
 This is implemented in the overloaded `add` method as follows:
 
@@ -550,7 +550,7 @@ The OBJ loader is refactored to use the new builder sub-class which reduces the 
 
 ### Index Buffer
 
-An index buffer is similar to the existing implementation but requires a different `bind` method and additionally has a data type (for short or integer indices), therefore a new sub-class is introduced:
+An index buffer is similar to the existing implementation but requires a different `bind` method and additionally has a data type (for short or integer indices), therefore a new buffer sub-class is introduced:
 
 ```java
 public class IndexBuffer extends VulkanBuffer {
@@ -651,9 +651,9 @@ Instead we note that as things stand the following steps in the loading process 
 
 3. Transformation to NIO buffers.
 
-Ideally we would only perform the above steps _once_ since we are only really interested in the resultant vertex and index bufferable objects.  Therefore we introduce a custom persistence mechanism to write a model to the file-system _once_ which can then be loaded without the overhead of the above steps.
+Ideally the above steps would only be performed _once_ since we are only really interested in the resultant vertex and index bufferable objects.  Therefore a custom persistence mechanism is introduced to write the final model to the file-system _once_ as an off-line activity which can then be loaded with minimal overhead.
 
-The model loader outputs a model to a `DataOutputStream` which supports both Java primitives and byte arrays:
+A new component outputs a model to a `DataOutputStream` which supports both Java primitives and byte arrays:
 
 ```java
 public class ModelLoader {
@@ -664,20 +664,21 @@ public class ModelLoader {
 }
 ```
 
-In the `write` method we first output the version number of our custom file-format (for later verification):
+The `write` method first writes the version number of the custom file-format (for later verification):
 
 ```java
 out.writeInt(VERSION);
 ```
 
-Next we write the header information of the model:
+The model header is written next:
 
 ```java
-out.writeUTF(model.primitive().name());
-out.writeInt(model.count());
+Header header = model.header();
+out.writeUTF(header.primitive().name());
+out.writeInt(header.count());
 ```
 
-Followed by the vertex layout of the model:
+Followed by the vertex layout:
 
 ```java
 List<Layout> layout = model.layout();
@@ -691,7 +692,7 @@ for(Layout c : layout) {
 
 Note that the _type_ of each component in the layout is output as a string using the `writeUTF` method on the stream.
 
-Next we write the vertex buffer:
+Next the vertex buffer is output:
 
 ```java
 writeBuffer(model.vertices(), out);
@@ -717,16 +718,14 @@ private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOE
 }
 ```
 
-Finally we output the optional index buffer using the same helper.
-
-We _could_ have implemented the model loader using Java serialization, which might have resulted in simpler code but is generally quite nasty to debug, at least our custom format is relatively straight-forward to implement and follow.
+And finally the optional index buffer is written using the same helper.
 
 ### Model Loader
 
-Next a new public method is added to the loader class to read back a persisted model:
+Next a new public method is added to the loader class to read back the persisted model:
 
 ```java
-public BufferedModel load(DataInputStream in) throws IOException {
+public Model load(DataInputStream in) throws IOException {
 }
 ```
 
@@ -776,7 +775,7 @@ Bufferable index = loadBuffer(in);
 And finally the model is instantiated:
 
 ```java
-return new BufferedModel(new Header(primitive, count, layout), vertices, index);
+return new Model(new Header(primitive, count, layout), vertices, index);
 ```
 
 The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additional check for an empty buffer):

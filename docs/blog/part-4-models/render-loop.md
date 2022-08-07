@@ -8,8 +8,8 @@ title: The Render Loop and Synchronisation
 
 - [Overview](#overview)
 - [Render Loop](#render-loop)
-- [Animation](#animation)
 - [Synchronisation](#synchronisation)
+- [Animation](#animation)
 
 ---
 
@@ -29,11 +29,11 @@ Before we progress the demo there are several issues with the existing, crude re
 
 In this chapter these issues are addressed by the introduction of the following:
 
+* New JOVE components to separate the various activities into reusable, coherent components.
+
 * Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
 * A GLFW keyboard handler to gracefully exit the application.
-
-* New JOVE components to separate the rendering process and the application logic.
 
 * An animation framework.
 
@@ -62,7 +62,7 @@ In the constructor a frame buffer is created for each swapchain image:
 
 ```java
 public FrameSet(Swapchain swapchain, RenderPass pass, List<View> additional) {
-    ...
+    List<View> images = swapchain.attachments();
     Dimensions extents = swapchain.extents();
     for(View image : images) {
         // Enumerate attachments
@@ -124,6 +124,21 @@ buffer.add(fb.begin());
 buffer.add(FrameBuffer.END);
 ```
 
+And finally the render sequence is recorded within the render pass commands, the final `build` method now looks like this (indentation added for clarity):
+
+```java
+public Buffer build(int index, RenderSequence seq) {
+    Buffer buffer = factory.get();
+    FrameBuffer fb = frames.apply(index);
+    buffer.begin(flags);
+        buffer.add(fb.begin());
+            seq.record(buffer);
+        buffer.add(FrameBuffer.END);
+    buffer.end();
+    return buffer;
+}
+```
+
 The _render sequence_ is a convenience abstraction for recording a sequence of rendering commands:
 
 ```java
@@ -142,21 +157,6 @@ For the moment this simply wraps an arbitrary collection of commands:
 ```java
 static RenderSequence of(List<Command> commands) {
     return buffer -> commands.forEach(buffer::add);
-}
-```
-
-Finally the render sequence is recorded within the render pass commands, the final `build` method now looks like this (indentation added for clarity):
-
-```java
-public Buffer build(int index, RenderSequence seq) {
-    Buffer buffer = factory.get();
-    FrameBuffer fb = frames.apply(index);
-    buffer.begin(flags);
-        buffer.add(fb.begin());
-            seq.record(buffer);
-        buffer.add(FrameBuffer.END);
-    buffer.end();
-    return buffer;
 }
 ```
 
@@ -218,7 +218,7 @@ public class FrameProcessor {
 }
 ```
 
-The controller is modified once more to wrap the render logic and broadcast completion events to interested listeners:
+The `render` method is modified is wrapped with a simple timer and broadcast the frame completion event to interested listeners:
 
 ```java
 public void render(RenderSequence seq) {
@@ -274,6 +274,8 @@ public void stop() {
 }
 ```
 
+This new component should allow applications to configure a target frame-rate without having to implement fiddly timing and thread yielding logic.  Note that the executor automatically handles tasks that take longer than the configured period, i.e. if a frame takes longer to render than the specified frame-rate, the next frame starts later, and is not run concurrently.
+
 ### Integration
 
 The new framework is used to break up the existing demo into simpler components.
@@ -291,7 +293,7 @@ And the presentation controller:
 
 ```java
 @Bean
-public static FrameProcessor processor(FrameSet frames, @Qualifier("graphics") Command.Pool pool) {
+public FrameProcessor processor(FrameSet frames, @Qualifier("graphics") Command.Pool pool) {
     var builder = new FrameBuilder(frames::buffer, pool::allocate, VkCommandBufferUsage.ONE_TIME_SUBMIT);
     return new FrameProcessor(frames.swapchain(), builder, 2);
 }
@@ -319,9 +321,10 @@ Which is composed with the frame processor and render sequence to initialise and
 
 ```java
 @Bean
-public static RenderLoop loop(ScheduledExecutorService executor, FrameProcessor proc, RenderSequence seq) {
+public RenderLoop loop(ScheduledExecutorService executor, FrameProcessor proc, RenderSequence seq) {
     Runnable task = () -> proc.render(seq);
     RenderLoop loop = new RenderLoop(executor);
+    loop.rate(60);
     loop.start(task);
     return loop;
 }
@@ -332,7 +335,7 @@ Finally the animation logic is factored out into a frame listener:
 ```java
 @Bean
 public static FrameProcessor.Listener animation(Matrix projection, Matrix view, ResourceBuffer uniform) {
-    long period = 2000;
+    long period = 2500;
     ByteBuffer bb = uniform.buffer();
     return (time, elapsed) -> {
         // Build rotation matrix
@@ -432,8 +435,10 @@ A new `ConfigurationProperties` component is added to the demo:
 @ConfigurationProperties
 public class ApplicationConfiguration {
     private String title;
-    private int frames;
-    private Colour col = Colour.BLACK;
+    private int frameCount;
+    private int frameRate;
+    private Colour col;
+    private long period;
 
     public String getTitle() {
         return title;
@@ -456,7 +461,9 @@ The properties are configured in the `application.properties` file:
 ```java
 title: Rotating Cube Demo
 frameCount: 2
+frameRate: 60
 background: 0.3, 0.3, 0.3
+period: 2500
 ```
 
 Notes:
@@ -465,7 +472,9 @@ Notes:
 
 * The `background` property (the clear colour for for the swapchain views) is a comma-separated list which Spring injects as an array.
 
-The properties are injected into the relevant beans, for example the swapchain can now be refactored as follows:
+The demo application is refactored by injecting the properties into the relevant beans replacing any hard-coded values and injected `@Value` parameters used previously.
+
+For example the swapchain can now be refactored as follows:
 
 ```java
 class PresentationConfiguration {
@@ -481,8 +490,6 @@ class PresentationConfiguration {
     }
 }
 ```
-
-The demo application is refactored to use the new configuration properties replacing the injected `@Value` parameters used previously.
 
 ---
 
@@ -527,7 +534,7 @@ public static Semaphore create(DeviceContext dev) {
 }
 ```
 
-Two semaphores are created in the constructor of the _presenter_ to signal the following conditions:
+Two semaphores are created in the constructor of the controller to signal the following conditions:
 
 1. An acquired swapchain image is `available` for rendering.
 
@@ -1351,11 +1358,11 @@ MutableRotation <-- AbstractRotation
 
 ### Quaternions
 
-A _quaternion_ is more compact and efficient representation of a rotation but is less intuitive to use and comprehend.
+A _quaternion_ is a more compact and efficient representation of a rotation but is less intuitive to use and comprehend.
 
 See [Wikipedia](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation).
 
-Generally we use quaternions to represents a rotation about an _arbitrary_ axis or where multiple rotations are frequently composed (e.g. for skeletal animation).
+Generally quaternions are used to represent a rotation about an _arbitrary_ axis or where multiple rotations are frequently composed, e.g. skeletal animation.
 
 ```java
 public final class Quaternion implements Transform {
@@ -1448,15 +1455,12 @@ A lot of work but now we have a decent animation framework for future demos.
 
 ## Summary
 
-In this chapter we:
+In this chapter we improved the render loop by:
 
-- Factored out a reusable render loop component.
+- Factoring out the various aspects of the application and render loops into separate, reusable components.
 
-- Factored out the application loop.
+- Integration of the GLFW window event queue and implemented a means of gracefully terminating the demo.
 
-- Integrated the GLFW window event queue and implemented a means of gracefully terminating the demo.
+- Implementation of Vulkan synchronisation to safely utilise the multi-threaded rendering pipeline.
 
-- Implemented new framework support for playable media and animations.
-
-- Implemented synchronisation to ensure that the frame rendering is correctly synchronised within the pipeline and across the work queues.
 
