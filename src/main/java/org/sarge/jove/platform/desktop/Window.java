@@ -59,7 +59,6 @@ public class Window extends AbstractTransientNativeObject {
 			this.hint = hint;
 		}
 
-		@SuppressWarnings("static-method")
 		protected int argument() {
 			return 1;
 		}

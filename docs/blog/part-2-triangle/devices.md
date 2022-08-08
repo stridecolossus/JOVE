@@ -257,7 +257,7 @@ The window is created via a factory method given a descriptor, starting with the
 public static Window create(Desktop desktop, Descriptor descriptor) {
     DesktopLibrary lib = desktop.library();
     lib.glfwDefaultWindowHints();
-    for(Property p : descriptor.properties) {
+    for(Hint hint : descriptor.hints) {
         p.apply(lib);
     }
     ...
@@ -307,7 +307,7 @@ In the demo we can now create a native window and retrieve the handle to the Vul
 Window window = new Window.Builder()
     .title("demo")
     .size(new Dimensions(1280, 760))
-    .property(Window.Hint.DISABLE_OPENGL)
+    .hint(Window.Hint.DISABLE_OPENGL)
     .build(desktop);
 
 // Retrieve rendering surface
