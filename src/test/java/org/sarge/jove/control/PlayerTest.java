@@ -1,15 +1,11 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
+import static org.sarge.jove.control.Playable.State.PLAY;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Player.Listener;
-import org.sarge.jove.control.Player.State;
 
 class PlayerTest {
 	private Player player;
@@ -21,78 +17,65 @@ class PlayerTest {
 
 	@Test
 	void constructor() {
-		assertEquals(State.STOP, player.state());
+		assertEquals(false, player.isPlaying());
 		assertEquals(false, player.isRepeating());
 	}
 
-	@Test
-	void play() {
-		player.state(State.PLAY);
-		assertEquals(State.PLAY, player.state());
+	@DisplayName("A playable object...")
+	@Nested
+	class PlayableTests {
+		private Playable playable;
+
+		@BeforeEach
+		void before() {
+			playable = spy(Playable.class);
+			player.add(playable);
+		}
+
+		@DisplayName("can be added to a player")
+		@Test
+		void add() {
+			player.state(PLAY);
+			player.repeat(true);
+			assertEquals(PLAY, player.state());
+			assertEquals(PLAY, playable.state());
+			assertEquals(true, playable.isRepeating());
+		}
+
+		@DisplayName("can be removed from a player")
+		@Test
+		void remove() {
+			player.remove(playable);
+			player.state(PLAY);
+			verifyNoMoreInteractions(playable);
+		}
 	}
 
-	@Test
-	void pause() {
-		player.state(State.PLAY);
-		player.state(State.PAUSE);
-		assertEquals(State.PAUSE, player.state());
-	}
+	@DisplayName("A player listener...")
+	@Nested
+	class ListenerTests {
+		private Listener listener;
 
-	@Test
-	void unpause() {
-		player.state(State.PLAY);
-		player.state(State.PAUSE);
-		player.state(State.PLAY);
-		assertEquals(State.PLAY, player.state());
-	}
+		@BeforeEach
+		void before() {
+			listener = mock(Listener.class);
+		}
 
-	@Test
-	void stop() {
-		player.state(State.PLAY);
-		player.state(State.STOP);
-		assertEquals(State.STOP, player.state());
-	}
+		@DisplayName("can be registered to a player")
+		@Test
+		void add() {
+			player.add(listener);
+			player.state(PLAY);
+			verify(listener).update(player);
+		}
 
-	@Test
-	void playAlreadyPlaying() {
-		player.state(State.PLAY);
-		assertThrows(IllegalStateException.class, () -> player.state(State.PLAY));
-	}
-
-	@Test
-	void pauseNotPlaying() {
-		assertThrows(IllegalStateException.class, () -> player.state(State.PAUSE));
-	}
-
-	@Test
-	void stopAlreadyStopped() {
-		assertThrows(IllegalStateException.class, () -> player.state(State.STOP));
-	}
-
-	@Test
-	void repeat() {
-		player.repeat(true);
-		assertEquals(true, player.isRepeating());
-	}
-
-	@Test
-	void listener() {
-		final Listener listener = mock(Listener.class);
-		player.add(listener);
-		player.state(State.PLAY);
-		player.state(State.PAUSE);
-		player.state(State.STOP);
-		verify(listener).update(State.PLAY);
-		verify(listener).update(State.PAUSE);
-		verify(listener).update(State.STOP);
-	}
-
-	@Test
-	void remove() {
-		final Listener listener = mock(Listener.class);
-		player.add(listener);
-		player.remove(listener);
-		player.state(State.PLAY);
-		verifyNoMoreInteractions(listener);
+		@DisplayName("can be removed from a player")
+		@Test
+		void remove() {
+			player.add(listener);
+			player.remove(listener);
+			player.state(PLAY);
+			verifyNoMoreInteractions(listener);
+		}
 	}
 }

@@ -6,6 +6,7 @@ import java.time.Instant;
  * A <i>frame listener</li> notifies completion of a rendered frame.
  * @author Sarge
  */
+@FunctionalInterface
 public interface FrameListener {
 	/**
 	 * Notifies a completed frame.

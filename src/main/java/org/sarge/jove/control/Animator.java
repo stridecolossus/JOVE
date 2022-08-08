@@ -7,10 +7,10 @@ import java.time.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * An <i>animator</i> is a specialised player for an {@link Animation}.
+ * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated on frame completion.
  * @author Sarge
  */
-public class Animator extends Player implements FrameListener {
+public class Animator extends Playable implements FrameListener {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */

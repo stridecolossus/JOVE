@@ -197,20 +197,25 @@ public void render(RenderSequence seq) {
 }
 ```
 
-A listener can be attached to the controller to notify frame completion events:
+Next a new listener is introduced for frame completion events:
+
+```java
+@FunctionalInterface
+public interface FrameListener {
+    /**
+     * Notifies a completed frame.
+     * @param start     Start time
+     * @param end       Completion time
+     */
+    void frame(Instant start, Instant end);
+}
+```
+
+Which is registered with the controller:
 
 ```java
 public class FrameProcessor {
     private final Set<Listener> listeners = new HashSet<>();
-
-    public interface Listener {
-        /**
-         * Notifies a completed frame.
-         * @param time          Completion time
-         * @param elapsed       Elapsed duration (ms)
-         */
-        void frame(long time, long elapsed);
-    }
 
     public void add(Listener listener) {
         listeners.add(listener);
@@ -218,19 +223,18 @@ public class FrameProcessor {
 }
 ```
 
-The `render` method is modified is wrapped with a simple timer and broadcast the frame completion event to interested listeners:
+The `render` method is wrapped with the frame duration and broadcasts frame completion events:
 
 ```java
 public void render(RenderSequence seq) {
     // Render frame
-    long start = System.currentTimeMillis();
+    Instant start = Instant.now();
     ...
 
     // Notify frame completion
-    long now = System.currentTimeMillis();
-    long elapsed = now - start;
+    Instant end = Instant.now();
     for(Listener listener : listeners) {
-        listener.frame(now, elapsed);
+        listener.frame(start, end);
     }
 }
 ```
@@ -1007,83 +1011,66 @@ public void render(RenderSequence seq) {
 }
 ```
 
-Multiple frames can now be executed in parallel, the synchronisation introduced above better utilises the pipeline, and the array of in-flight frames bounds the overall work.
+Multiple frames can now be executed in parallel, the introduced synchronisation better utilises the pipeline, and the array of in-flight frames bounds the overall work.
 
 ---
 
 ## Animation
 
-### Playable Media
+### Animator
 
-To apply a rotation animation to the cube demo we will implement new functionality that builds on the matrix and frame listener functionality, starting with the following supporting framework components for playable media:
+The final enhancement to the existing code is the implementation of a new framework to support animation.
 
-```mermaid
-classDiagram
-
-class State {
-    PLAY
-    PAUSE
-    STOP
-}
-
-class Playable {
-    +state(State)
-    +isPlaying()
-    +repeat(boolean)
-}
-
-class Listener {
-    +update(State)
-}
-
-Playable <|.. Player
-Player : -boolean repeat
-Player --> State
-Player *--> "*" Listener 
-
-Player <|-- MediaPlayer
-MediaPlayer --> Playable
-```
-
-The new _player_ base-class is a controller for managing objects or media that can be played:
+First the following new abstraction defines something that can be played:
 
 ```java
-public class Player implements Playable {
+public abstract class Playable {
     /**
      * Playable states.
      */
-    enum State {
+    public enum State {
         PLAY,
         PAUSE,
         STOP
     }
 
-    private final Collection<Listener> listeners = new HashSet<>();
     private State state = State.STOP;
     private boolean repeat;
+
+    public boolean isPlaying() {
+        return state == State.PLAY;
+    }
 }
 ```
 
-The player implements the _observer_ pattern to notify state change transitions:
+A playable resource is managed by the _player_ controller:
 
 ```java
-@FunctionalInterface
-public interface Listener {
-    /**
-     * Notifies a player state change.
-     * @param state New state
-     */
-    void update(State state);
+public class Player extends Playable {
+    @FunctionalInterface
+    public interface Listener {
+        /**
+         * Notifies a player state change.
+         * @param state New state
+         */
+        void update(State state);
+    }
+
+    private final Collection<Playable> playing = new ArrayList<>();
+    private final Collection<Listener> listeners = new HashSet<>();
 }
 ```
 
-The player is a simple state-machine that validates transitions and notifies the attached listeners:
+Note that a player is itself a playable object that delegates state changes and notifies attached listeners:
 
 ```java
+@Override
 public void state(State state) {
-    // Update state
-    state.validate(this.state);
-    this.state = notNull(state);
+    // Change state
+    super.state(state);
+    for(Playable p : playing) {
+        p.state(state);
+    }
 
     // Notify listeners
     for(Listener listener : listeners) {
@@ -1092,65 +1079,10 @@ public void state(State state) {
 }
 ```
 
-The player states are illustrated in the following diagram:
-
-```mermaid
-stateDiagram-v2
-    [*] --> STOP
-    STOP --> PLAY
-    PLAY --> PAUSE
-    PAUSE --> PLAY
-    PLAY --> STOP
-```
-
-Next we introduce the following abstraction for playable media such as audio files:
+An _animator_ is a playable object that updates an animation on each frame:
 
 ```java
-public interface Playable {
-    /**
-     * Sets the state of this playable.
-     * @param state New state
-     */
-    void state(State state);
-
-    /**
-     * @return Whether this playable is playing
-     */
-    boolean isPlaying();
-
-    /**
-     * Sets whether this playable should repeat.
-     * @param repeat Whether repeating
-     */
-    void repeat(boolean repeat);
-}
-```
-
-A more specialised player implementation is provided for playable media such as audio files:
-
-```java
-public class MediaPlayer extends Player {
-    private final Playable playable;
-
-    private void update() {
-        if(isPlaying() && !playable.isPlaying()) {
-            super.state(State.STOP);
-        }
-    }
-}
-```
-
-Some playable objects may stop playing in the background (e.g. an OpenAL audio file running on a separate thread), the local `update` method checks whether the media has stopped since the last invocation, this check is applied in the various public methods of the player.
-
-### Animation
-
-An _animator_ is a second player specialisation for an _animation_ that is updated per frame:
-
-```java
-public class Animator extends Player implements FrameTracker.Listener {
-    /**
-     * An <i>animation</i> is updated by this animator.
-     */
+public class Animator extends Playable implements FrameListener {
     @FunctionalInterface
     public interface Animation {
         /**
@@ -1162,31 +1094,32 @@ public class Animator extends Player implements FrameTracker.Listener {
 
     private final long duration;
     private final Animation animation;
-
     private long time;
     private float speed = 1;
 }
 ```
 
-The `update` method of the animator first checks whether the animation is currently playing:
+The animator ignores frame events if it has been stopped or paused:
 
 ```java
 @Override
-public void update(FrameTracker tracker) {
+public void frame(Instant start, Instant end) {
     if(!isPlaying()) {
         return;
     }
     ...
+    animation.update(this);
 }
 ```
 
-Next the _time_ position within the duration of the animation is calculated from the frame update:
+Next the _elapsed_ time is calculated to update the current _time_ position of the animation:
 
 ```java
-time += speed * TimeUnit.NANOSECONDS.toMillis(tracker.elapsed());
+long elapsed = Duration.between(start, end).toMillis();
+time += speed * elapsed;
 ```
 
-At the end of the animation the position is clamped to the duration or stops if the player is not configured to repeat:
+The position is quantised to the duration or stops if the animation is not repeating:
 
 ```java
 if(time > duration) {
@@ -1200,15 +1133,9 @@ if(time > duration) {
 }
 ```
 
-Finally the animation is updated to the new position:
-
-```java
-animation.update(this);
-```
-
 ### Rotation Animation
 
-The second new abstraction defines an arbitrary view _transform_ that is implemented as a matrix:
+Next a second new abstraction is introduced for a general matrix transformation:
 
 ```java
 @FunctionalInterface
@@ -1227,7 +1154,7 @@ public interface Transform {
 }
 ```
 
-A _rotation_ is a transform comprised of an axis-angle:
+A rotation is a transform specified by an axis-angle:
 
 ```java
 public interface Rotation extends Transform {
@@ -1241,78 +1168,49 @@ public interface Rotation extends Transform {
      */
     float angle();
 
-    /**
-     * Creates a matrix for the given rotation.
-     * @param rot Rotation
-     * @return New rotation matrix
-     * @throws UnsupportedOperationException for an <i>arbitrary</i> axis
-     * @see Quaternion#of(Rotation)
-     */
-    static Matrix matrix(Vector axis, float angle) {
+    @Override
+    default Matrix matrix() {
         ...
     }
 }
 ```
 
-Note that the rotation `matrix` factory method is moved here since it more logically sits in the new class.
+Note that the existing factory method for the rotation matrix is moved to this new class where it logically belongs.
 
-Simple fixed rotations are represented by the following default implementation:
-
-```java
-class DefaultRotation extends AbstractRotation {
-    private final Matrix matrix;
-
-    public DefaultRotation(Vector axis, float angle) {
-        super(axis, angle);
-        this.matrix = Rotation.matrix(axis, angle);
-    }
-
-    @Override
-    public Matrix matrix() {
-        return matrix;
-    }
-}
-```
-
-A second implementation is added for a mutable axis-angle rotation:
+A skeleton template class for rotations is implemented and sub-classed by the following mutable implementation:
 
 ```java
 public class MutableRotation extends AbstractRotation {
+    private float angle;
     private boolean dirty = true;
 
     public MutableRotation(Vector axis) {
-        super(axis, 0);
+        super(axis);
     }
 
-    /**
-     * Sets the rotation angle.
-     * @param angle Rotation angle (radians)
-     */
     public void angle(float angle) {
         this.angle = angle;
         dirty = true;
     }
 
     @Override
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    @Override
     public Matrix matrix() {
-        dirty = false;
-        return Quaternion.of(this).matrix();
+        ...
     }
 }
 ```
 
-Note that here the matrix is calculated used a _quaternion_ (detailed below) which supports arbitrary rotation axes.
+The implementation of the `matrix` method is covered below.
 
-Finally the following adapter composes the new mutable implementation and animates the rotation angle about the unit-circle:
+A rotation animation can now be implemented by composing a mutable rotation:
 
 ```java
 public class RotationAnimation implements Animation {
     private final MutableRotation rot;
+
+    public RotationAnimation(Vector axis) {
+        this.rot = new MutableRotation(axis);
+    }
 
     @Override
     public void update(Animator animator) {
@@ -1320,40 +1218,6 @@ public class RotationAnimation implements Animation {
         rot.angle(angle);
     }
 }
-```
-
-The animation framework is illustrated in the following class diagram:
-
-```mermaid
-classDiagram
-
-class Animator {
-    -long duration
-    +speed(float)
-}
-Player <|-- Animator
-
-class Animation {
-    +update(Animator)
-}
-Animation <|.. RotationAnimation
-Animator --> Animation
-
-class Transform {
-    +matrix() Matrix
-}
-Transform <|-- Rotation
-
-class AbstractRotation {
-    +axis() Vector
-    +angle() float
-}
-Rotation <|.. AbstractRotation
-
-class DefaultRotation <!-- AbstractRotation
-DefaultRotation : -matrix Matrix
-
-MutableRotation <-- AbstractRotation
 ```
 
 ### Quaternions
@@ -1374,6 +1238,10 @@ public final class Quaternion implements Transform {
     public float magnitude() {
         return w * w + x * x + y * y + z * z;
     }
+
+    public Matrix matrix() {
+        ...
+    }
 }
 ```
 
@@ -1387,80 +1255,90 @@ public static Quaternion of(Rotation rot) {
 }
 ```
 
-And converted back to a rotation in the inverse operation:
+And converted to a rotation in the inverse operation:
 
 ```java
 public Rotation rotation() {
     float scale = MathsUtil.inverseRoot(1 - w * w);
     float angle = 2 * MathsUtil.acos(w);
     Vector axis = new Vector(x, y, z).multiply(scale);
-    return new DefaultRotation(axis, angle);
+    return Rotation.of(axis, angle);
 }
 ```
 
-Finally a matrix can be constructed from the quaternion as follows:
+The `matrix` method of the mutable rotation can now be implemented in terms of a quaternion:
 
 ```java
-public Matrix matrix() {
-    float xx = x * x;
-    float xy = x * y;
-    float xz = x * z;
-    float xw = x * w;
-    float yy = y * y;
-    float yz = y * z;
-    float yw = y * w;
-    float zz = z * z;
-    float zw = z * w;
-
-    return new Matrix.Builder()
-        .identity()
-        .set(0, 0, 1 - 2 * (yy + zz))
-        .set(1, 0, 2 * (xy + zw))
-        .set(2, 0, 2 * (xz - yw))
-        .set(0, 1, 2 * (xy - zw))
-        .set(1, 1, 1 - 2 * (xx + zz))
-        .set(2, 1, 2 * (yz + xw))
-        .set(0, 2, 2 * (xz + yw))
-        .set(1, 2, 2 * (yz - xw))
-        .set(2, 2, 1 - 2 * (xx + yy))
-        .build();
+public class MutableRotation extends AbstractRotation {
+    @Override
+    public Matrix matrix() {
+        dirty = false;
+        return Quaternion.of(this).matrix();
+    }
 }
 ```
 
 ### Integration
 
-In the demo we add two new components for the rotation animation:
+In the cube demo the existing hand-crafted matrix code is replaced by a rotation animation:
 
 ```java
 @Bean
-MutableRotation rotation() {
-    return new MutableRotation(Vector.Y);
-}
-
-@Bean
-Animator animator(MutableRotation rot) {
-    Animator animator = new Animator(5000, new AnimationRotation(rot));
-    animator.state(Animator.State.PLAY);
-    return animator;
+static RotationAnimation rotation() {
+    return new RotationAnimation(new Vector(MathsUtil.HALF, 1, 0).normalize());
 }
 ```
 
-Note that Spring auto-magically registers the animator with the frame listener.
+Note that the rotation axis is normalised, otherwise the results will be interesting!
 
-Finally the mutable rotation is injected into the `update` bean to update the modelview matrix and the crude hand-crafted animation code can now be removed.
+The animation and timing logic is replaced by an animator:
 
-A lot of work but now we have a decent animation framework for future demos.
+```java
+@Bean
+static Animator animator(ApplicationConfiguration cfg, RotationAnimation rot) {
+    return new Animator(cfg.getPeriod(), rot);
+}
+```
+
+Which is controlled by a player:
+
+```java
+@Bean
+public static Player player(Animator animator) {
+    Player player = new Player();
+    player.add(animator);
+    player.state(Playable.State.PLAY);
+    player.repeat(true);
+    return player;
+}
+```
+
+And finally the code to update the uniform buffer is refactored accordingly:
+
+```java
+public static FrameListener update(ResourceBuffer uniform, Matrix projection, Matrix view, RotationAnimation rot) {
+    ByteBuffer bb = uniform.buffer();
+    return (time, elapsed) -> {
+        Matrix model = rot.rotation().matrix();
+        Matrix matrix = projection.multiply(view).multiply(model);
+        matrix.buffer(bb);
+        bb.rewind();
+    };
+}
+```
+
+This might appear a lot of work but we now have a decent animation framework for future demos and separate components that can more easily collaborate with input devices later.
 
 ---
 
 ## Summary
 
-In this chapter we improved the render loop by:
+In this chapter the render loop was improved by:
 
 - Factoring out the various aspects of the application and render loops into separate, reusable components.
 
-- Integration of the GLFW window event queue and implemented a means of gracefully terminating the demo.
+- Integration of the GLFW window event queue and a means of gracefully terminating the demo.
 
 - Implementation of Vulkan synchronisation to safely utilise the multi-threaded rendering pipeline.
 
-
+- The addition of a new framework for animations.

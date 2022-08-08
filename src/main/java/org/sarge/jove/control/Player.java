@@ -2,34 +2,15 @@ package org.sarge.jove.control;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>player</i> is a controller for media and animations.
+ * A <i>player</i> is a controller for playable media and animations.
  * @author Sarge
  */
-public class Player implements Playable {
-	/**
-	 * Playable states.
-	 */
-	enum State {
-		PLAY,
-		PAUSE,
-		STOP;
-
-		private void validate(State prev) {
-			if(this == prev) {
-				throw new IllegalStateException("Duplicate player state: " + this);
-			}
-			if((this == PAUSE) && (prev != PLAY)) {
-				throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", prev, this));
-			}
-		}
-	}
-
+public class Player extends Playable {
 	/**
 	 * Listener for player state changes.
 	 */
@@ -37,49 +18,28 @@ public class Player implements Playable {
 	public interface Listener {
 		/**
 		 * Notifies a player state change.
-		 * @param state New state
+		 * @param player Player
 		 */
-		void update(State state);
+		void update(Player player);
 	}
 
+	private final Collection<Playable> playing = new ArrayList<>();
 	private final Collection<Listener> listeners = new HashSet<>();
-	private State state = State.STOP;
-	private boolean repeat;
 
-	@Override
-	public boolean isPlaying() {
-		return state == State.PLAY;
+	/**
+	 * Adds a playable to this player.
+	 * @param playable Playable to add
+	 */
+	public void add(Playable playable) {
+		playing.add(notNull(playable));
 	}
 
 	/**
-	 * @return Current state of this player
+	 * Removes a playable.
+	 * @param playable Playable to remove
 	 */
-	public State state() {
-		return state;
-	}
-
-	@Override
-	public void state(State state) {
-		// Update state
-		state.validate(this.state);
-		this.state = notNull(state);
-
-		// Notify listeners
-		for(Listener listener : listeners) {
-			listener.update(state);
-		}
-	}
-
-	/**
-	 * @return Whether this player is repeating
-	 */
-	public boolean isRepeating() {
-		return repeat;
-	}
-
-	@Override
-	public void repeat(boolean repeat) {
-		this.repeat = repeat;
+	public void remove(Playable playable) {
+		playing.remove(playable);
 	}
 
 	/**
@@ -99,10 +59,30 @@ public class Player implements Playable {
 	}
 
 	@Override
+	public void state(State state) {
+		// Change state
+		super.state(state);
+		for(Playable p : playing) {
+			p.state(state);
+		}
+
+		// Notify listeners
+		for(Listener listener : listeners) {
+			listener.update(this);
+		}
+	}
+
+	@Override
+	public void repeat(boolean repeat) {
+		for(Playable p : playing) {
+			p.repeat(repeat);
+		}
+	}
+
+	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("state", state)
-				.append("repeating", repeat)
+				.appendSuper(super.toString())
 				.append("listeners", listeners.size())
 				.build();
 	}
