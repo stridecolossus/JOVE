@@ -124,7 +124,7 @@ buffer.add(fb.begin());
 buffer.add(FrameBuffer.END);
 ```
 
-And finally the render sequence is recorded within the render pass commands, the final `build` method now looks like this (indentation added for clarity):
+And finally the render sequence is recorded.  The `build` method now looks like this (indentation added for clarity):
 
 ```java
 public Buffer build(int index, RenderSequence seq) {
@@ -223,7 +223,7 @@ public class FrameProcessor {
 }
 ```
 
-The `render` method is wrapped with the frame duration and broadcasts frame completion events:
+The `render` method is wrapped with an elapsed duration and broadcasts frame completion events:
 
 ```java
 public void render(RenderSequence seq) {
@@ -241,7 +241,7 @@ public void render(RenderSequence seq) {
 
 ### Render Loop
 
-The final piece in the new framework is a new render loop component that takes advantage of the scheduling functionality in the executor framework:
+The final piece of the new framework is a render loop that takes advantage of the scheduling functionality in the executor framework:
 
 ```java
 public class RenderLoop {
@@ -279,6 +279,26 @@ public void stop() {
 ```
 
 This new component should allow applications to configure a target frame-rate without having to implement fiddly timing and thread yielding logic.  Note that the executor automatically handles tasks that take longer than the configured period, i.e. if a frame takes longer to render than the specified frame-rate, the next frame starts later, and is not run concurrently.
+
+Finally we implement the following simple FPS counter to verify the render loop:
+
+```java
+public class FrameCounter implements FrameListener {
+    private Instant next = Instant.EPOCH;
+    private int count;
+    private int fps;
+
+    @Override
+    public void frame(Instant start, Instant end) {
+        ++count;
+        if(start.isAfter(next)) {
+            fps = count;
+            count = 1;
+            next = start.plusSeconds(1);
+        }
+    }
+}
+```
 
 ### Integration
 
@@ -338,7 +358,7 @@ Finally the animation logic is factored out into a frame listener:
 
 ```java
 @Bean
-public static FrameProcessor.Listener animation(Matrix projection, Matrix view, ResourceBuffer uniform) {
+public static FrameListener animation(Matrix projection, Matrix view, ResourceBuffer uniform) {
     long period = 2500;
     ByteBuffer bb = uniform.buffer();
     return (time, elapsed) -> {
@@ -1175,7 +1195,7 @@ public interface Rotation extends Transform {
 }
 ```
 
-Note that the existing factory method for the rotation matrix is moved to this new class where it logically belongs.
+The existing factory method for the rotation `matrix` is moved to this new class where it logically belongs.
 
 A skeleton template class for rotations is implemented and sub-classed by the following mutable implementation:
 
@@ -1327,8 +1347,6 @@ public static FrameListener update(ResourceBuffer uniform, Matrix projection, Ma
 }
 ```
 
-This might appear a lot of work but we now have a decent animation framework for future demos and separate components that can more easily collaborate with input devices later.
-
 ---
 
 ## Summary
@@ -1342,3 +1360,6 @@ In this chapter the render loop was improved by:
 - Implementation of Vulkan synchronisation to safely utilise the multi-threaded rendering pipeline.
 
 - The addition of a new framework for animations.
+
+This might appear a lot of work for little benefit, however we now have a framework which can be more easily extended in future chapters, in particular when input devices and scene graphs are introduced later.
+

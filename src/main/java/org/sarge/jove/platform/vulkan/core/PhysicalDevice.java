@@ -293,6 +293,7 @@ public class PhysicalDevice implements NativeObject {
 
 		/**
 		 * Selects the queue family matching this selector from the given device.
+		 * Note this method assumes the device has been matched by this selector as a side-effect.
 		 * @param dev Device
 		 * @return Queue family
 		 * @throws NoSuchElementException if the device does not contain a matching queue family
@@ -316,8 +317,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @return Queue family
 		 */
 		private Optional<Family> findLocal(PhysicalDevice dev) {
-			return
-					dev
+			return dev
 					.families
 					.stream()
 					.filter(family -> predicate.test(dev, family))
