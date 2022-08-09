@@ -16,17 +16,13 @@ public class ObjectModelTest {
 	@BeforeEach
 	void before() {
 		model = new ObjectModel();
+		model.positions().add(Point.ORIGIN);
+		model.normals().add(Vector.X);
+		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 	}
 
 	@Nested
 	class VertexTests {
-		@BeforeEach
-		void before() {
-			model.position(Point.ORIGIN);
-			model.normal(Vector.X);
-			model.coordinate(Coordinate2D.BOTTOM_LEFT);
-		}
-
 		@DisplayName("Add a vertex with all 3 components")
 		@Test
 		void vertexAll() {
@@ -66,12 +62,6 @@ public class ObjectModelTest {
 	@Nested
 	class BuilderTests {
 		private void triangle() {
-			// Add vertex data
-			model.position(Point.ORIGIN);
-			model.normal(Vector.X);
-			model.coordinate(Coordinate2D.BOTTOM_LEFT);
-
-			// Add face
 			for(int n = 0; n < 3; ++n) {
 				model.vertex(1, 1, 1);
 			}
@@ -104,7 +94,9 @@ public class ObjectModelTest {
 		void start() {
 			triangle();
 			model.start();
-			triangle();
+			assertEquals(true, model.positions().isEmpty());
+			assertEquals(true, model.normals().isEmpty());
+			assertEquals(true, model.coordinates().isEmpty());
 			assertEquals(2, model.models().size());
 		}
 	}

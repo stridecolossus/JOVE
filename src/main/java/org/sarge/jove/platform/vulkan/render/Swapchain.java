@@ -115,6 +115,7 @@ public class Swapchain extends AbstractVulkanObject {
 			default -> throw new VulkanException(result);
 		};
 	}
+	// TODO - return Frame(index, fence), + waitReady() for frame completion? => move present() and modify PresentTaskBuilder
 
 	/**
 	 * Helper - Presents the next frame for this swapchain.

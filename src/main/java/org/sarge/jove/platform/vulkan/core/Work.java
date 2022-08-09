@@ -54,6 +54,15 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class Work {
+	/**
+	 * Helper - Creates a new work submission for the given command buffer.
+	 * @param buffer Command buffer
+	 * @return New work
+	 */
+	public static Work of(Buffer buffer) {
+		return Builder.of(buffer).build();
+	}
+
 	private final Pool pool;
 	private final List<Buffer> buffers = new ArrayList<>();
 	private final Map<Semaphore, Integer> wait = new LinkedHashMap<>();
@@ -162,6 +171,15 @@ public class Work {
 	 * Builder for a work submission.
 	 */
 	public static class Builder {
+		/**
+		 * Helper - Creates a new work builder for the given command buffer.
+		 * @param buffer Command buffer
+		 * @return New work builder
+		 */
+		public static Builder of(Buffer buffer) {
+			return new Builder(buffer.pool()).add(buffer);
+		}
+
 		private Work work;
 
 		/**

@@ -2,20 +2,14 @@ package org.sarge.jove.platform.obj;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.function.Consumer;
 
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.io.ResourceLoader;
-import org.sarge.jove.io.TextLoader;
+import org.sarge.jove.io.*;
 import org.sarge.jove.model.Model;
 import org.sarge.lib.util.Check;
 
@@ -40,9 +34,9 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position));
-		add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, ObjectModel::coordinate));
-		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normal));
+		add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, model.positions()));
+		add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, model.coordinates()));
+		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, model.normals()));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

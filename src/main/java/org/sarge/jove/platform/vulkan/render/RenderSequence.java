@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.List;
 
@@ -26,8 +26,8 @@ public interface RenderSequence {
 	 * @return Wrapped render sequence
 	 */
 	default RenderSequence wrap(Command before, Command after) {
-		requireNonNull(before);
-		requireNonNull(after);
+		notNull(before);
+		notNull(after);
 		return buffer -> {
 			buffer.add(before);
 			RenderSequence.this.record(buffer);

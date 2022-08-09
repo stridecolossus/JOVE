@@ -13,9 +13,9 @@ import org.sarge.jove.model.*;
  * @author Sarge
  */
 class ObjectModel {
-	private final List<Point> positions = new VertexComponentList<>();
-	private final List<Vector> normals = new VertexComponentList<>();
-	private final List<Coordinate> coords = new VertexComponentList<>();
+	private final VertexComponentList<Point> positions = new VertexComponentList<>();
+	private final VertexComponentList<Vector> normals = new VertexComponentList<>();
+	private final VertexComponentList<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
 	private Model.Builder builder = new DuplicateModelBuilder();
 	private boolean empty = true;
@@ -60,27 +60,24 @@ class ObjectModel {
 	}
 
 	/**
-	 * Adds a vertex position.
-	 * @param v Vertex position
+	 * @return Vertex positions
 	 */
-	void position(Point v) {
-		positions.add(v);
+	VertexComponentList<Point> positions() {
+		return positions;
 	}
 
 	/**
-	 * Adds a normal.
-	 * @param vn Vertex normal
+	 * @return Normals
 	 */
-	void normal(Vector vn) {
-		normals.add(vn);
+	VertexComponentList<Vector> normals() {
+		return normals;
 	}
 
 	/**
-	 * Adds a texture coordinate.
-	 * @param vt Texture coordinate
+	 * @return Texture coordinates
 	 */
-	void coordinate(Coordinate vt) {
-		coords.add(vt);
+	VertexComponentList<Coordinate> coordinates() {
+		return coords;
 	}
 
 	/**

@@ -2,7 +2,6 @@ package org.sarge.jove.platform.obj;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.sarge.jove.common.Bufferable;
@@ -16,19 +15,19 @@ import org.sarge.lib.util.Check;
 class VertexComponentParser<T extends Bufferable> implements Parser {
 	private final float[] array;
 	private final Function<float[], T> ctor;
-	private final BiConsumer<ObjectModel, T> consumer;
+	private final VertexComponentList<T> list;
 
 	/**
 	 * Constructor.
-	 * @param size			Size
-	 * @param ctor			Array constructor
-	 * @param consumer		Consumer for the parsed component
+	 * @param size		Size
+	 * @param ctor		Array constructor
+	 * @param list		Vertex component
 	 */
-	public VertexComponentParser(int size, Function<float[], T> ctor, BiConsumer<ObjectModel, T> consumer) {
+	public VertexComponentParser(int size, Function<float[], T> ctor, VertexComponentList<T> list) {
 		Check.oneOrMore(size);
 		this.array = new float[size];
 		this.ctor = notNull(ctor);
-		this.consumer = notNull(consumer);
+		this.list = notNull(list);
 	}
 
 	@Override
@@ -47,6 +46,6 @@ class VertexComponentParser<T extends Bufferable> implements Parser {
 		final T value = ctor.apply(array);
 
 		// Add to model
-		consumer.accept(model, value);
+		list.add(value);
 	}
 }
