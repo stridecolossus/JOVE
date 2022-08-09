@@ -19,7 +19,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * An <i>image</i> is a texture or data image stored on the hardware.
+ * A Vulkan <i>image</i> is a texture or data image stored on the hardware.
  * @author Sarge
  */
 public interface Image extends NativeObject {

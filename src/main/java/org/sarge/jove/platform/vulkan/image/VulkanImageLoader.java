@@ -224,8 +224,6 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 			in.readInt();
 			in.readInt();
 			in.readInt();
-
-			// Create sample
 		}
 
 		return samples;

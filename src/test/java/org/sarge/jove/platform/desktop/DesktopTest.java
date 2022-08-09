@@ -1,17 +1,13 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.function.Consumer;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 import org.sarge.jove.util.TestHelper.IntByReferenceMatcher;
@@ -25,15 +21,13 @@ public class DesktopTest {
 	@BeforeEach
 	void before() {
 		lib = mock(DesktopLibrary.class);
-		when(lib.glfwInit()).thenReturn(1);
-		desktop = Desktop.create(lib);
+		desktop = new Desktop(lib);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(lib, desktop.library());
 		assertNotNull(desktop.factory());
-		verify(lib).glfwInitHint(0x00050001, 0);
 	}
 
 	@Test

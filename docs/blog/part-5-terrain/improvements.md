@@ -591,7 +591,7 @@ Where _constants_ is a map of arbitrary values indexed by identifier.
 The method first transforms the map to a list:
 
 ```java
-List<Constant> table = constants.entrySet().stream().map(Constant::new).collect(toList());
+List<Constant> table = constants.entrySet().stream().map(Constant::new).toList();
 ```
 
 Where each constant is an instance of a local class constructed from each map entry:

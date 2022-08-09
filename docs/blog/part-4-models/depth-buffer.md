@@ -337,7 +337,7 @@ Collection<ClearValue> clear = attachments
     .stream()
     .map(View::clear)
     .flatMap(Optional::stream)
-    .collect(toList());
+    .toList();
 
 // Init clear values
 info.clearValueCount = clear.size();

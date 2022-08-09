@@ -8,13 +8,17 @@ import java.util.Objects;
 import org.junit.jupiter.api.*;
 
 public class TupleTest {
+	private static class MockTuple extends Tuple {
+		private MockTuple(float x, float y, float z) {
+			super(x, y, z);
+		}
+	}
+
 	private Tuple tuple;
 
 	@BeforeEach
 	void before() {
-		tuple = new Tuple(1, 2, 3) {
-			// Empty
-		};
+		tuple = new MockTuple(1, 2, 3);
 	}
 
 	@DisplayName("A tuple is comprised of XYZ components")
@@ -99,9 +103,11 @@ public class TupleTest {
 		assertEquals(Objects.hash(1f, 2f, 3f), tuple.hashCode());
 	}
 
-	@DisplayName("A tuple can be compared to another tuple sub-class")
 	@Test
-	void isEqual() {
-		assertEquals(true, tuple.isEqual(tuple));
+	void equals() {
+		assertEquals(tuple, tuple);
+		assertEquals(tuple, new MockTuple(1, 2, 3));
+		assertNotEquals(tuple, null);
+		assertNotEquals(tuple, new MockTuple(4, 5, 6));
 	}
 }

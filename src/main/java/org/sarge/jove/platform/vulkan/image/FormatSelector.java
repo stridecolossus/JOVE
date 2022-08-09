@@ -13,7 +13,7 @@ import org.sarge.lib.util.Check;
 /**
  * A <i>format selector</i> is used to choose an appropriate format from a list of candidates.
  * <p>
- * The {@link VkFormatProperties} for a given format can be retrieved via the {@link PhysicalDevice#properties(VkFormat)} method.
+ * The {@link VkFormatProperties} for a given format are retrieved via the {@link PhysicalDevice#properties(VkFormat)} method.
  * <p>
  * Usage:
  * <p>

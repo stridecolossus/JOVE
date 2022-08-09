@@ -6,7 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 
-@SuppressWarnings("static-method")
 class ComponentMappingTest {
 	@DisplayName("The identity component mapping is comprised of the identity swizzle")
 	@Test
@@ -28,6 +27,17 @@ class ComponentMappingTest {
 		assertEquals(VkComponentSwizzle.G, mapping.g);
 		assertEquals(VkComponentSwizzle.B, mapping.b);
 		assertEquals(VkComponentSwizzle.A, mapping.a);
+	}
+
+	@DisplayName("Unspecified channels are ONE by default")
+	@Test
+	void unspecified() {
+		final VkComponentMapping mapping = ComponentMapping.of("R");
+		assertNotNull(mapping);
+		assertEquals(VkComponentSwizzle.R, mapping.r);
+		assertEquals(VkComponentSwizzle.ONE, mapping.g);
+		assertEquals(VkComponentSwizzle.ONE, mapping.b);
+		assertEquals(VkComponentSwizzle.ONE, mapping.a);
 	}
 
 	@DisplayName("A component mapping also supports the special case swizzle characters")

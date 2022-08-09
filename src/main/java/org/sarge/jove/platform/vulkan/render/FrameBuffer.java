@@ -30,23 +30,23 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * Creates a frame buffer.
 	 * @param pass				Render pass
 	 * @param extents			Image extents
-	 * @param images			Attachment images
+	 * @param views				Attachments
 	 * @return New frame buffer
 	 * @throws IllegalArgumentException if the number of images is not the same as the number of attachments in the render pass
 	 * @throws IllegalArgumentException if an image is not of the expected format of the corresponding attachment
 	 * @throws IllegalArgumentException if an image is smaller than the given extents
 	 */
-	public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> images) {
+	public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> views) {
 		// Validate attachments
 		final List<Attachment> attachments = pass.attachments();
 		final int size = attachments.size();
-		if(images.size() != size) {
-			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", images.size(), attachments.size()));
+		if(views.size() != size) {
+			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", views.size(), attachments.size()));
 		}
 		for(int n = 0; n < size; ++n) {
 			// Validate matching format
 			final Attachment attachment = attachments.get(n);
-			final View view = images.get(n);
+			final View view = views.get(n);
 			final ImageDescriptor descriptor = view.image().descriptor();
 			if(attachment.format() != descriptor.format()) {
 				throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
@@ -62,8 +62,8 @@ public class FrameBuffer extends AbstractVulkanObject {
 		// Build descriptor
 		final var info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
-		info.attachmentCount = images.size();
-		info.pAttachments = NativeObject.array(images);
+		info.attachmentCount = views.size();
+		info.pAttachments = NativeObject.array(views);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO - layers?
@@ -75,7 +75,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		check(lib.vkCreateFramebuffer(dev, info, null, buffer));
 
 		// Create frame buffer
-		return new FrameBuffer(buffer.getValue(), dev, pass, images, extents);
+		return new FrameBuffer(buffer.getValue(), dev, pass, views, extents);
 	}
 
 	private final RenderPass pass;
@@ -87,7 +87,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @param handle 			Handle
 	 * @param dev				Logical device
 	 * @param pass				Render pass
-	 * @param attachments		Image attachments
+	 * @param attachments		Attachments
 	 * @param extents			Image extents
 	 */
 	FrameBuffer(Pointer handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
@@ -98,7 +98,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Image attachments
+	 * @return Attachments
 	 */
 	public List<View> attachments() {
 		return attachments;

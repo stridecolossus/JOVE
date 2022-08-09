@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.toList;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
@@ -113,7 +112,7 @@ public class PhysicalDevice implements NativeObject {
 		final VulkanLibrary lib = instance.library();
 		final IntByReference supported = instance.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
-		return VulkanBoolean.of(supported.getValue()).isTrue();
+		return VulkanBoolean.of(supported.getValue()).toBoolean();
 	}
 
 	/**
@@ -192,7 +191,7 @@ public class PhysicalDevice implements NativeObject {
 			final List<Family> families = IntStream
 					.range(0, props.length)
 					.mapToObj(n -> Family.of(n, props[n]))
-					.collect(toList());
+					.toList();
 
 			// Retrieve device features
 			final var features = new VkPhysicalDeviceFeatures();

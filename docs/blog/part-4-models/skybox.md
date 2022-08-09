@@ -511,7 +511,7 @@ int offset = index[index.length - 1].offset();
 return Arrays
     .stream(index)
     .map(level -> new Level(level.offset() - offset, level.length()))
-    .collect(toList());
+    .toList();
 ```
 
 Note that the index is in MIP level order (starting at zero for the largest image) whereas the actual image data is the __reverse__ (smallest MIP image first).

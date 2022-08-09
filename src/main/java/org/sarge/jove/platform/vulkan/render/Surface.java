@@ -52,7 +52,7 @@ public class Surface extends AbstractTransientNativeObject {
 	/**
 	 * Constructor.
 	 * @param surface		Surface handle
-	 * @param instance		Vulkan instance
+	 * @param dev			Physical device
 	 */
 	public Surface(Handle surface, PhysicalDevice dev) {
 		super(surface);
@@ -136,7 +136,7 @@ public class Surface extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * Helper - Selects a preferred presentation mode or falls back to {@link #DEFAULT_PRESENTATION_MODE}.
+	 * Helper - Selects a preferred presentation mode falling back to {@link #DEFAULT_PRESENTATION_MODE}.
 	 * @param modes Preferred presentation mode(s)
 	 * @return Selected presentation mode
 	 */

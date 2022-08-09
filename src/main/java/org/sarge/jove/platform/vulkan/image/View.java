@@ -38,7 +38,7 @@ public class View extends AbstractVulkanObject {
 	 * Constructor.
 	 * @param handle 	Image view handle
 	 * @param dev		Logical device
-	 * @param image		Image
+	 * @param image		Underlying image
 	 */
 	View(Pointer handle, DeviceContext dev, Image image) {
 		super(handle, dev);
@@ -53,7 +53,7 @@ public class View extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Clear value for this attachment.
+	 * Clear value for this view attachment.
 	 * @return Clear value
 	 */
 	public Optional<ClearValue> clear() {
@@ -61,7 +61,7 @@ public class View extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Sets the clear value for this attachment.
+	 * Sets the clear value for this view attachment.
 	 * @param clear Clear value or {@code null} if not cleared
 	 * @throws IllegalArgumentException if the clear value is incompatible with this view
 	 */

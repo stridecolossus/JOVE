@@ -1,13 +1,11 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.ToNativeContext;
-import com.sun.jna.TypeConverter;
+import com.sun.jna.*;
 
 /**
  * A <i>Vulkan boolean</i> is a custom JNA type wrapper for boolean values used in the Vulkan API.
  * <p>
- * An instance of this class is mapped to a native {@code int} with a value that is <i>explicitly</i> one for {@code true} and zero for {@code false}.
+ * An instance of this class is mapped to a native {@code int} with a value that is <i>explicitly</i> integer one for {@code true} and zero for {@code false}.
  * This circumvents the default JNA mapping which is an <i>arbitrary non-zero</i> value for {@code true}.
  * <p>
  * @author Sarge
@@ -85,7 +83,7 @@ public final class VulkanBoolean {
 	/**
 	 * @return Whether this boolean is {@link #TRUE}
 	 */
-	public boolean isTrue() {
+	public boolean toBoolean() {
 		return this == TRUE;
 	}
 
@@ -108,6 +106,6 @@ public final class VulkanBoolean {
 
 	@Override
 	public String toString() {
-		return String.valueOf(isTrue());
+		return String.valueOf(toBoolean());
 	}
 }

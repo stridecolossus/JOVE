@@ -486,7 +486,7 @@ private void parse(IASTCompositeTypeSpecifier structure) {
         .skip(1)
         .map(IASTSimpleDeclaration.class::cast)
         .map(HeaderVisitor::field)
-        .collect(toList());
+        .toList();
 
     generator.structure(name, fields);
 }
@@ -569,7 +569,7 @@ List<String> imports = fields
     .map(StructureField::getPath)
     .filter(Objects::nonNull)
     .distinct()
-    .collect(toList());
+    .toList();
 ```
 
 All top-level Vulkan structures have an `sType` field that identifies the type of the structure to the native layer.  Since the values in `VkStructureType` are highly logical and regular the name of the enumeration constant can be generated from the structure and injected into the template:

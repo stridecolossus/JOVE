@@ -147,7 +147,7 @@ Which is used to transform the array of structures when creating the device:
 List<Family> families = IntStream
     .range(0, props.length)
     .mapToObj(n -> family(n, props[n]))
-    .collect(toList());
+    .toList();
 
 // Create device
 return new PhysicalDevice(handle, instance, families);

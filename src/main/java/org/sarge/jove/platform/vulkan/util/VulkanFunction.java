@@ -39,13 +39,13 @@ public interface VulkanFunction<T> {
 	int enumerate(IntByReference count, T data);
 
 	/**
-	 * Invokes a Vulkan function that uses the <i>two-stage invocation</i> approach.
+	 * Invokes this function using the <i>two-stage invocation</i> approach.
 	 * <p>
 	 * Example to retrieve an array of pointers:
 	 * <pre>
 	 * VulkanLibrary lib = ...
 	 * VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array, ...);
-	 * Pointer[] array = VulkanFunction.enumerate(func, new IntegerByReference(), Pointer[]::new);</pre>
+	 * Pointer[] array = func.enumerate(new IntegerByReference(), Pointer[]::new);</pre>
 	 * This method is equivalent to the following:
 	 * <pre>
 	 * // Count number of results
@@ -58,10 +58,9 @@ public interface VulkanFunction<T> {
 	 * // Populate array
 	 * lib.someFunction(count, array, ...);</pre>
 	 * @param <T> Data type
-	 * @param func			Vulkan function
 	 * @param count			Count
 	 * @param factory		Creates the resultant data object
-	 * @return Resultant data
+	 * @return Function result
 	 */
 	default T invoke(IntByReference count, IntFunction<T> factory) {
 		// Invoke to determine the size of the data
@@ -80,12 +79,12 @@ public interface VulkanFunction<T> {
 	}
 
 	/**
-	 * Vulkan function that retrieves an array of JNA structures.
+	 * Adapter for a Vulkan function that retrieves an <b>array</b> of JNA structures.
 	 * @param <T> Vulkan structure
 	 */
 	interface StructureVulkanFunction<T extends Structure> extends VulkanFunction<T> {
 		/**
-		 * Invokes a Vulkan function that uses the <i>two-stage invocation</i> approach to retrieve an <b>array</b> of JNA structures.
+		 * Invokes this function using the <i>two-stage invocation</i> approach to retrieve an array of JNA structures.
 		 * <p>
 		 * Note that a JNA structure array <b>must</b> be a contiguous block of memory allocated via the {@link Structure#toArray(int)} helper.
 		 * <p>
@@ -93,7 +92,7 @@ public interface VulkanFunction<T> {
 		 * <pre>
 		 * VulkanLibrary lib = ...
 		 * VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array, ...);
-		 * SomeStructure[] array = VulkanFunction.enumerate(func, new IntegerByReference(), SomeStructure::new);</pre>
+		 * SomeStructure[] array = func.enumerate(new IntegerByReference(), SomeStructure::new);</pre>
 		 * This adapter is equivalent to the following:
 		 * <pre>
 		 * // Count number of results
@@ -107,7 +106,6 @@ public interface VulkanFunction<T> {
 		 * lib.someFunction(count, array[0], ...);</pre>
 		 * <p>
 		 * @param <T> Structure type
-		 * @param func			Vulkan function
 		 * @param count			Count
 		 * @param identity		Identity structure
 		 * @return JNA structure array

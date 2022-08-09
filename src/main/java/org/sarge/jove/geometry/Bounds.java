@@ -17,8 +17,8 @@ public class Bounds {
 
 	/**
 	 * Constructor.
-	 * @param min Minimum extent
-	 * @param max Maximum extent
+	 * @param min Minimum bound
+	 * @param max Maximum bound
 	 */
 	public Bounds(Point min, Point max) {
 		this.min = notNull(min);
@@ -47,7 +47,7 @@ public class Bounds {
 	}
 
 	/**
-	 * @return Largest extent size
+	 * @return Largest extent of this bounds
 	 */
 	public float largest() {
 		final Vector vec = Vector.between(min, max);
@@ -87,7 +87,7 @@ public class Bounds {
 	}
 
 	/**
-	 * Calculates the <i>positive</i> vertex of this bounds, i.e. the <b>furthest</b> vertex in the direction of the normal.
+	 * Calculates the <i>positive</i> vertex of this bounds, i.e. the <b>furthest</b> vertex in the direction of the given normal.
 	 * @param normal Normal
 	 * @return Positive vertex
 	 */
@@ -100,7 +100,7 @@ public class Bounds {
 	}
 
 	/**
-	 * Calculates the <i>negative</i> vertex of this bounds, i.e. the <b>nearest</b> vertex in the direction of the normal.
+	 * Calculates the <i>negative</i> vertex of this bounds, i.e. the <b>nearest</b> vertex in the direction of the given normal.
 	 * @param normal Normal
 	 * @return Negative vertex
 	 */

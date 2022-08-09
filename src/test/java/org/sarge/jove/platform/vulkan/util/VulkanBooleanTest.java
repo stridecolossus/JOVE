@@ -2,15 +2,13 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
-@SuppressWarnings("static-method")
 class VulkanBooleanTest {
 	@Test
-	void isTrue() {
-		assertEquals(true, VulkanBoolean.TRUE.isTrue());
-		assertEquals(false, VulkanBoolean.FALSE.isTrue());
+	void toBoolean() {
+		assertEquals(true, VulkanBoolean.TRUE.toBoolean());
+		assertEquals(false, VulkanBoolean.FALSE.toBoolean());
 	}
 
 	@Test

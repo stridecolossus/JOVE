@@ -106,16 +106,9 @@ public abstract class Tuple implements Bufferable {
 
 	@Override
 	public boolean equals(Object obj) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * Helper - Tests whether two tuples are equal.
-	 * @param that Tuple
-	 * @return Whether equal
-	 */
-	protected final boolean isEqual(Tuple that) {
 		return
+				(obj == this) ||
+				(obj instanceof Tuple that) &&
 				MathsUtil.isEqual(this.x, that.x) &&
 				MathsUtil.isEqual(this.y, that.y) &&
 				MathsUtil.isEqual(this.z, that.z);

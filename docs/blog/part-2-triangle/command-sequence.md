@@ -161,7 +161,7 @@ The handles of the newly allocated buffers are then transformed to the domain ob
 List<Buffer> list = Arrays
     .stream(handles)
     .map(ptr -> new Buffer(ptr, this))
-    .collect(toList());
+    .toList();
 
 // Register buffers
 buffers.addAll(list);

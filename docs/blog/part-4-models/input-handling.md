@@ -554,7 +554,7 @@ private class MouseButton extends DesktopSource<MouseButtonListener> {
         .rangeClosed(1, MouseInfo.getNumberOfButtons())
         .mapToObj(id -> Button.name("Mouse", id))
         .map(ModifiedButton::new)
-        .collect(toList());
+        .toList();
 }
 ```
 

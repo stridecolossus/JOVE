@@ -50,6 +50,9 @@ public final class ComponentMapping {
 		for(int n = 0; n < len; ++n) {
 			swizzle[n] = swizzle(mapping.charAt(n));
 		}
+		for(int n = len; n < SIZE; ++n) {
+			swizzle[n] = VkComponentSwizzle.ONE;
+		}
 
 		// Create mapping
 		return build(swizzle);

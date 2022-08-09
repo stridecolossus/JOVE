@@ -13,7 +13,7 @@ import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 
 /**
- * The <i>desktop</i> service manages windows and monitors implemented using the GLFW native library.
+ * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
  * <p>
  * Note that several GLFW operations <b>must</b> be executed on the main thread, e.g. {@link #poll()}.
  * <p>
@@ -46,24 +46,14 @@ public class Desktop {
 		// Load native library
 		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
 
-		// Create desktop service
-		return create(lib);
-	}
-
-	/**
-	 * Creates the desktop service.
-	 * @param lib GLFW library
-	 * @return New desktop service
-	 */
-	static Desktop create(DesktopLibrary lib) {
-		// Disable joystick hats being present in the array of buttons
+		// TODO - nasty fiddle
 		lib.glfwInitHint(0x00050001, 0);
 
 		// Init GLFW
 		final int result = lib.glfwInit();
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
 
-		// Create desktop
+		// Create desktop service
 		return new Desktop(lib);
 	}
 
@@ -74,7 +64,7 @@ public class Desktop {
 	 * Constructor.
 	 * @param lib GLFW library
 	 */
-	private Desktop(DesktopLibrary lib) {
+	Desktop(DesktopLibrary lib) {
 		this.lib = notNull(lib);
 	}
 

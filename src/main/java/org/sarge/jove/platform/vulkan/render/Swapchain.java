@@ -23,20 +23,14 @@ import com.sun.jna.ptr.*;
 /**
  * A <i>swapchain</i> presents rendered images to a {@link Surface}.
  * <p>
- * The process of rendering a frame is generally:
- * <ol>
- * <li>Acquire the next swapchain image via {@link #acquire(Semaphore, Fence)}</li>
- * <li>Wait for the previous frame to be rendered to that image (if in progress) using {@link #waitReady(int, Fence)}</li>
- * <li>Render the frame</li>
- * <li>Present the rendered frame to the surface using {@link #present(Queue, int, Set)}</li>
- * </ol>
+ * A swapchain is comprised of a number of <i>attachments</i> consisting of a colour attachment for each swapchain image.
+ * Note that swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
  * <p>
- * Notes:
- * <ul>
- * <li>A swapchain is created and configured by the {@link Builder}</li>
- * <li>The swapchain is comprised of a number of colour attachments which can be accessed using {@link #attachments()}</li>
- * <li>The preferred presentation mode can be selected by the {@link #mode(Surface.Properties, VkPresentModeKHR...)} helper</li>
- * </ul>
+ * The process of rendering a frame is comprised of two operations:
+ * <ol>
+ * <li>Acquire the index of the next swapchain image using {@link #acquire(Semaphore, Fence)}</li>
+ * <li>Present a rendered frame to the surface using {@link #present(Queue, int, Set)}</li>
+ * </ol>
  * <p>
  * @author Sarge
  */
@@ -61,28 +55,28 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Image format
+	 * @return Swapchain Image format
 	 */
 	public VkFormat format() {
 		return format;
 	}
 
 	/**
-	 * @return Swap-chain extents
+	 * @return Swapchain extents
 	 */
 	public Dimensions extents() {
 		return extents;
 	}
 
 	/**
-	 * @return Attachments
+	 * @return Colour attachments
 	 */
 	public List<View> attachments() {
 		return attachments;
 	}
 
 	/**
-	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame buffer.
+	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame buffer, generally when the window is resized or minimised.
 	 */
 	public static final class SwapchainInvalidated extends VulkanException {
 		private SwapchainInvalidated(VkResult result) {
@@ -91,7 +85,7 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Acquires the next image in this swap-chain.
+	 * Acquires the next swapchain image.
 	 * @param semaphore		Optional semaphore signalled when the frame has been acquired
 	 * @param fence			Optional fence
 	 * @return Image index
@@ -118,11 +112,11 @@ public class Swapchain extends AbstractVulkanObject {
 	// TODO - return Frame(index, fence), + waitReady() for frame completion? => move present() and modify PresentTaskBuilder
 
 	/**
-	 * Helper - Presents the next frame for this swapchain.
+	 * Presents the next frame to this swapchain.
 	 * @param queue				Presentation queue
 	 * @param index				Swapchain image index
 	 * @param semaphore			Wait semaphore
-	 * @throws SwapchainInvalidated if the swapchain image cannot be presented
+	 * @throws SwapchainInvalidated if the image cannot be presented
 	 * @see PresentTaskBuilder
 	 * @see #present(DeviceContext, Queue, VkPresentInfoKHR)
 	 */
@@ -136,7 +130,7 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Presents one-or-more swapchains to the given presentation queue.
+	 * Presents multiple swapchain images to the given presentation queue.
 	 * @param dev			Logical device
 	 * @param queue			Presentation queue
 	 * @param info			Presentation task

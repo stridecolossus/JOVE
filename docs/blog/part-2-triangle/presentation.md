@@ -556,7 +556,7 @@ var views = Arrays
     .map(Handle::new)
     .map(image -> new Image(image, dev, descriptor))
     .map(View::of)
-    .collect(toList());
+    .toList();
 ```
 
 Where the convenience `of` factory method constructs a default view for a given image:

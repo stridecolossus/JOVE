@@ -274,7 +274,7 @@ public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> prop
         .range(0, types.length)
         .filter(n -> ((1 << n) & reqs.memoryTypeBits) == n)
         .mapToObj(n -> types[n])
-        .collect(toList());
+        .toList();
 
     ...
 }
