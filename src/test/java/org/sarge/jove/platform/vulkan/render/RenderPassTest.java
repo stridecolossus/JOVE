@@ -3,11 +3,11 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
-import java.util.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Subpass.*;
+import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class RenderPassTest extends AbstractVulkanTest {
@@ -15,7 +15,6 @@ public class RenderPassTest extends AbstractVulkanTest {
 	private Subpass subpass;
 	private Attachment attachment;
 	private Reference ref;
-	private Subpass.Properties props;
 
 	@BeforeEach
 	void before() {
@@ -27,8 +26,21 @@ public class RenderPassTest extends AbstractVulkanTest {
 
 		// Create sub-pass
 		ref = new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-		props = new Subpass.Properties(Set.of(VkPipelineStage.VERTEX_SHADER), Set.of(VkAccess.SHADER_READ));
-		subpass = new Subpass(List.of(ref), null, List.of(new Dependency(Subpass.EXTERNAL, props, props)));
+		subpass = new Subpass(List.of(ref), null);
+
+		// Add a dependency
+		subpass
+				.dependency()
+				.subpass(Subpass.EXTERNAL)
+				.source()
+					.stage(VkPipelineStage.VERTEX_SHADER)
+					.access(VkAccess.SHADER_READ)
+					.build()
+				.destination()
+					.stage(VkPipelineStage.VERTEX_SHADER)
+					.access(VkAccess.SHADER_READ)
+					.build()
+				.build();
 
 		// Create render pass
 		pass = RenderPass.create(dev, List.of(subpass));
@@ -83,8 +95,7 @@ public class RenderPassTest extends AbstractVulkanTest {
 	@DisplayName("The attachments for a render pass is the aggregate of the sub-passes")
 	@Test
 	void dependencies() {
-		final Dependency dependency = new Dependency(subpass, props, props);
-		final Subpass other = new Subpass(List.of(ref), null, List.of(dependency));
+		final Subpass other = new Subpass(List.of(ref), null);
 		final RenderPass pass = RenderPass.create(dev, List.of(subpass, other));
 		assertEquals(List.of(attachment), pass.attachments());
 	}
@@ -105,9 +116,18 @@ public class RenderPassTest extends AbstractVulkanTest {
 	@DisplayName("A render pass cannot contain a dependency to a sub-pass that is not a member of the render pass")
 	@Test
 	void missing() {
-		final Dependency dependency = new Dependency(subpass, props, props);
-		final Subpass missing = new Subpass(List.of(), ref, List.of(dependency));
-		assertThrows(IllegalArgumentException.class, () -> RenderPass.create(dev, List.of(missing)));
+		final Subpass missing = new Subpass(List.of(), ref);
+		subpass
+				.dependency()
+				.subpass(missing)
+				.source()
+					.stage(VkPipelineStage.VERTEX_SHADER)
+					.build()
+				.destination()
+					.stage(VkPipelineStage.VERTEX_SHADER)
+					.build()
+				.build();
+		assertThrows(IllegalArgumentException.class, () -> RenderPass.create(dev, List.of(subpass)));
 	}
 
 	@Test
