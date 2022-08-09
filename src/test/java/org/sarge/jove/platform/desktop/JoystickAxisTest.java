@@ -8,7 +8,8 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Axis;
 
-public class JoystickAxisTest {
+@Disabled
+class JoystickAxisTest {
 	private JoystickAxis axis;
 
 	@BeforeEach

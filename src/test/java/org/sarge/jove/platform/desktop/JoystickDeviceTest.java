@@ -9,7 +9,8 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.*;
 
-public class JoystickDeviceTest extends AbstractJoystickTest {
+@Disabled
+class JoystickDeviceTest extends AbstractJoystickTest {
 	private JoystickDevice dev;
 	private Consumer<Event> handler;
 

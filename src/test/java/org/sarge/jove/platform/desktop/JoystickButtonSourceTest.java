@@ -10,6 +10,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.control.*;
 import org.sarge.jove.control.Button.Action;
 
+@Disabled
 public class JoystickButtonSourceTest extends AbstractJoystickTest {
 	private JoystickButtonSource src;
 	private Consumer<Event> handler;

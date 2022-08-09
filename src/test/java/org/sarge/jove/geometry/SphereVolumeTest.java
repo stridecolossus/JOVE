@@ -213,19 +213,19 @@ class SphereVolumeTest {
 	class UnitSphereTests {
 		@Test
 		void top() {
-			assertEquals(new Point(0, -1, 0), SphereVolume.vector(0, -HALF_PI));
-			assertEquals(new Point(0, -1, 0), SphereVolume.vector(TWO_PI, -HALF_PI));
+			assertEquals(new Vector(0, -1, 0), SphereVolume.vector(0, -HALF_PI));
+			assertEquals(new Vector(0, -1, 0), SphereVolume.vector(TWO_PI, -HALF_PI));
 		}
 
 		@Test
 		void bottom() {
-			assertEquals(new Point(0, 1, 0), SphereVolume.vector(0, +HALF_PI));
-			assertEquals(new Point(0, 1, 0), SphereVolume.vector(TWO_PI, +HALF_PI));
+			assertEquals(new Vector(0, 1, 0), SphereVolume.vector(0, +HALF_PI));
+			assertEquals(new Vector(0, 1, 0), SphereVolume.vector(TWO_PI, +HALF_PI));
 		}
 
 		@Test
 		void middle() {
-			assertEquals(new Point(0, 0, 1), SphereVolume.vector(PI, 0));
+			assertEquals(new Vector(0, 0, 1), SphereVolume.vector(PI, 0));
 		}
 	}
 

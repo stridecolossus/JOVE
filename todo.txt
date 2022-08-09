@@ -47,7 +47,6 @@ improvements
 - pipeline cache could use Java prefs? and/or user home folder?
 - interpolator revamp
 - joystick from desktop service
-- combine OBJ vertex component custom list implementation and parser? no need then for bi-consumer indirection? 
 - code gen type mapper sucks, should be declarative but not using nasty switches? table driven somehow (we already have the table!), functional?
 - manually fiddled by-reference for pointer-to-array of structure
 

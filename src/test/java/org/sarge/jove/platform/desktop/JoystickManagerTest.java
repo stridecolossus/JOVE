@@ -1,20 +1,17 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
 import org.sarge.jove.platform.desktop.JoystickManager.ConnectionListener;
 
-public class JoystickManagerTest extends AbstractJoystickTest {
+@Disabled
+class JoystickManagerTest extends AbstractJoystickTest {
 	private JoystickDevice dev;
 	private JoystickManager manager;
 
