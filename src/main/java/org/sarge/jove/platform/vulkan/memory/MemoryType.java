@@ -2,11 +2,7 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import java.util.Set;
 
-import org.sarge.jove.platform.vulkan.VkMemoryHeap;
-import org.sarge.jove.platform.vulkan.VkMemoryHeapFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
-import org.sarge.jove.platform.vulkan.VkMemoryType;
-import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
@@ -52,7 +48,7 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
 		// Extract heaps
 		final Heap[] heaps = new Heap[descriptor.memoryHeapCount];
-		final var heapMapper = IntegerEnumeration.mapping(VkMemoryHeapFlag.class);
+		final var heapMapper = IntegerEnumeration.reverse(VkMemoryHeapFlag.class);
 		for(int n = 0; n < heaps.length; ++n) {
 			final VkMemoryHeap heap = descriptor.memoryHeaps[n];
 			final Set<VkMemoryHeapFlag> flags = heapMapper.enumerate(heap.flags);
@@ -61,7 +57,7 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 
 		// Extract memory types
 		final MemoryType[] types = new MemoryType[descriptor.memoryTypeCount];
-		final var typeMapper = IntegerEnumeration.mapping(VkMemoryProperty.class);
+		final var typeMapper = IntegerEnumeration.reverse(VkMemoryProperty.class);
 		for(int n = 0; n < types.length; ++n) {
 			final VkMemoryType type = descriptor.memoryTypes[n];
 			final Heap heap = heaps[type.heapIndex];

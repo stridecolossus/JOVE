@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.common.AbstractTransientNativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.*;
@@ -104,6 +105,9 @@ public class Handler extends AbstractTransientNativeObject {
 	 * </ul>
 	 */
 	static class MessageCallback implements Callback {
+		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = IntegerEnumeration.reverse(VkDebugUtilsMessageSeverity.class);
+		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = IntegerEnumeration.reverse(VkDebugUtilsMessageType.class);
+
 		private final Consumer<Message> consumer;
 
 		MessageCallback(Consumer<Message> consumer) {
@@ -120,11 +124,11 @@ public class Handler extends AbstractTransientNativeObject {
 		 */
 		public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackData pCallbackData, Pointer pUserData) {
 			// Transform bit-masks to enumerations
-			final VkDebugUtilsMessageSeverity severityEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageSeverity.class).map(severity);
-			final Set<VkDebugUtilsMessageType> typesEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageType.class).enumerate(type);
+			final VkDebugUtilsMessageSeverity severities = SEVERITY.map(severity);
+			final Set<VkDebugUtilsMessageType> types = TYPE.enumerate(type);
 
 			// Wrap and delegate to handler
-			final Message message = new Message(severityEnum, typesEnum, pCallbackData);
+			final Message message = new Message(severities, types, pCallbackData);
 			consumer.accept(message);
 
 			// Continue execution

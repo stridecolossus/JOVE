@@ -2,11 +2,9 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSampleCount;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
-import org.sarge.jove.util.IntegerArray;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Percentile;
 
 /**
@@ -42,7 +40,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @see #samples(VkSampleCount)
 	 */
 	public MultiSamplePipelineStageBuilder samples(int rasterizationSamples) {
-		info.rasterizationSamples = IntegerEnumeration.mapping(VkSampleCount.class).map(rasterizationSamples);
+		info.rasterizationSamples = IntegerEnumeration.reverse(VkSampleCount.class).map(rasterizationSamples);
 		return this;
 	}
 

@@ -155,7 +155,7 @@ public class DescriptorSet implements NativeObject {
 		 */
 		private void populate(VkWriteDescriptorSet write) {
 			// Init write descriptor
-			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET; // TODO
+			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
 			write.dstBinding = binding.index();
 			write.descriptorType = binding.type();
 			write.dstSet = set.handle();

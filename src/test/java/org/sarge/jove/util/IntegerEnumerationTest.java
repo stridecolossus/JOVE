@@ -35,7 +35,7 @@ public class IntegerEnumerationTest {
 
 	@BeforeEach
 	void before() {
-		mapping = IntegerEnumeration.mapping(MockEnum.class);
+		mapping = IntegerEnumeration.reverse(MockEnum.class);
 	}
 
 	@Test
@@ -58,8 +58,7 @@ public class IntegerEnumerationTest {
 		assertThrows(IllegalArgumentException.class, () -> mapping.map(999));
 	}
 
-	@DisplayName("An arbitrary collection of constants can be reduced to an integer bit-field")
-	@SuppressWarnings("static-method")
+	@DisplayName("A collection of enumeration constants can be reduced to an integer bit-field")
 	@Test
 	void reduce() {
 		assertEquals(0, IntegerEnumeration.reduce(Set.of()));

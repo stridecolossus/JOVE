@@ -128,7 +128,7 @@ public class Surface extends AbstractTransientNativeObject {
 		final int[] array = func.invoke(count, int[]::new);
 
 		// Convert to enumeration
-		final var mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
+		final var mapping = IntegerEnumeration.reverse(VkPresentModeKHR.class);
 		return Arrays
 				.stream(array)
 				.mapToObj(mapping::map)

@@ -51,17 +51,6 @@ public interface IntegerEnumeration {
 	int value();
 
 	/**
-	 * Retrieves the reverse mapping for the given integer enumeration.
-	 * This method is thread-safe.
-	 * @param <E> Integer enumeration
-	 * @param clazz Enumeration class
-	 * @return Reverse mapping
-	 */
-	static <E extends IntegerEnumeration> ReverseMapping<E> mapping(Class<E> clazz) {
-		return ReverseMapping.get(clazz);
-	}
-
-	/**
 	 * Builds a bit-field from the given enumeration constants.
 	 * @param values Enumeration constants
 	 * @return Bit-field
@@ -81,6 +70,18 @@ public interface IntegerEnumeration {
 	@SuppressWarnings("unchecked")
 	static <E extends IntegerEnumeration> int reduce(E... values) {
 		return reduce(Arrays.asList(values));
+	}
+
+	/**
+	 * Retrieves the reverse mapping for the given integer enumeration.
+	 * This method is thread-safe.
+	 * @param <E> Integer enumeration
+	 * @param clazz Enumeration class
+	 * @return Reverse mapping
+	 */
+	@SuppressWarnings("unchecked")
+	public static <E extends IntegerEnumeration> ReverseMapping<E> reverse(Class<E> clazz) {
+		return (ReverseMapping<E>) ReverseMapping.get(clazz);
 	}
 
 	/**
@@ -135,8 +136,8 @@ public interface IntegerEnumeration {
 		 * @return Reverse mapping
 		 */
 		@SuppressWarnings("unchecked")
-		private static <E extends IntegerEnumeration> ReverseMapping<E> get(Class<?> clazz) {
-			return (ReverseMapping<E>) CACHE.computeIfAbsent(clazz, ReverseMapping::new);
+		private static ReverseMapping<?> get(Class<?> clazz) {
+			return CACHE.computeIfAbsent(clazz, ReverseMapping::new);
 		}
 
 		private final Map<Integer, E> map;

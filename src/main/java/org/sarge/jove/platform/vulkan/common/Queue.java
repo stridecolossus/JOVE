@@ -49,7 +49,7 @@ public record Queue(Handle handle, Queue.Family family) implements NativeObject 
 		 * @return New queue family
 		 */
 		public static Family of(int index, VkQueueFamilyProperties props) {
-			final Set<VkQueueFlag> flags = IntegerEnumeration.mapping(VkQueueFlag.class).enumerate(props.queueFlags);
+			final Set<VkQueueFlag> flags = IntegerEnumeration.reverse(VkQueueFlag.class).enumerate(props.queueFlags);
 			return new Family(index, props.queueCount, flags);
 		}
 

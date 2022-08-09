@@ -53,7 +53,7 @@ public class VulkanException extends RuntimeException {
 	 */
 	private static String reason(int result) {
 		try {
-			return IntegerEnumeration.mapping(VkResult.class).map(result).name();
+			return IntegerEnumeration.reverse(VkResult.class).map(result).name();
 		}
 		catch(IllegalArgumentException e) {
 			return "Unknown error code";

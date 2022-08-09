@@ -115,7 +115,7 @@ public class Attachment {
 		 * @see #samples(VkSampleCount)
 		 */
 		public Builder samples(int samples) {
-			attachment.samples = IntegerEnumeration.mapping(VkSampleCount.class).map(samples);
+			attachment.samples = IntegerEnumeration.reverse(VkSampleCount.class).map(samples);
 			return this;
 		}
 
