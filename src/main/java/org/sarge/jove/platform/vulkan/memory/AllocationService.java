@@ -2,8 +2,7 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -12,7 +11,7 @@ import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.lib.util.Check;
 
 /**
- * The <i>allocation service</i> processes memory requests.
+ * The <i>allocation service</i> serves memory requests.
  * <p>
  * The service composes:
  * <ol>
@@ -27,18 +26,18 @@ import org.sarge.lib.util.Check;
  * Usage:
  * <p>
  * <pre>
- * 	// Create service with default allocator
- * 	Allocator allocator = ...
- * 	AllocationService service = new AllocationService(new MemorySelector(), allocator);
+ * // Create service with default allocator
+ * Allocator allocator = ...
+ * AllocationService service = new AllocationService(new MemorySelector(), allocator);
  *
- * 	// Route to a different allocator
- * 	Predicate&lt;MemoryProperties&gt; predicate = ...
- * 	Allocator other = ...
- * 	service.route(predicate, other);
+ * // Route to a different allocator
+ * Predicate&lt;MemoryProperties&gt; predicate = ...
+ * Allocator other = ...
+ * service.route(predicate, other);
  *
- * 	// Allocate memory
- * 	VkMemoryRequirements reqs = ...
- * 	DeviceMemory mem = service.allocate(reqs, props);
+ * // Allocate memory
+ * VkMemoryRequirements reqs = ...
+ * DeviceMemory mem = service.allocate(reqs, props);
  * </pre>
  * <p>
  * @author Sarge

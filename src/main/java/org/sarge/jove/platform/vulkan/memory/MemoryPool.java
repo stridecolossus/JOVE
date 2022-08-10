@@ -6,25 +6,29 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 
 /**
  * A <i>memory pool</i> is comprised of a number of <i>blocks</i> from which device memory is allocated.
- * The pool grows as required according to the configured {@link AllocationPolicy}.
  * <p>
- * Released memory allocations are restored to the pool and potentially reallocated.
+ * Notes:
+ * <ul>
+ * <li>The pool grows as required according to the configured {@link AllocationPolicy}</li>
+ * <li>Released memory allocations are restored to the pool and potentially reallocated</li>
+ * <li>Free memory can be pre-allocated into the pool using the {@link MemoryPool#init(long)} method</li>
+ * </ul>
  * <p>
- * Free memory can be pre-allocated into the pool using the {@link MemoryPool#init(long)} method.
- * <p>
- * Note that the mapped {@link Region} for a block can be silently unmapped by the pool since only one mapped region is permitted per block by the underlying implementation.
+ * TODO
+ * Note that a mapped {@link Region} for a block can be silently unmapped by the pool since only one mapped region is permitted per block by the underlying implementation.
  * The client is responsible for ensuring that a new region is mapped as required.
  * Alternatively a non-pooled allocator implementation should be considered where memory mapping is highly volatile.
  * <p>
  * @author Sarge
  */
-public class MemoryPool {
+public class MemoryPool implements TransientObject {
 	private final MemoryType type;
 	private final Allocator allocator;
 	private final List<Block> blocks = new ArrayList<>();
@@ -35,7 +39,7 @@ public class MemoryPool {
 	 * @param type				Memory type
 	 * @param allocator			Allocator
 	 */
-	MemoryPool(MemoryType type, Allocator allocator) {
+	public MemoryPool(MemoryType type, Allocator allocator) {
 		this.type = notNull(type);
 		this.allocator = notNull(allocator);
 	}
@@ -67,7 +71,7 @@ public class MemoryPool {
 	/**
 	 * @return Memory allocations in this pool
 	 */
-	Stream<? extends DeviceMemory> allocations() {
+	public Stream<? extends DeviceMemory> allocations() {
 		return blocks
 				.stream()
 				.flatMap(Block::allocations)
@@ -91,7 +95,7 @@ public class MemoryPool {
 	 * @param size  Memory size
 	 * @return Allocated memory
 	 */
-	DeviceMemory allocate(long size) {
+	public DeviceMemory allocate(long size) {
 		// Short cut to allocate a new block if pool has insufficient free memory
 		if(free() < size) {
 			return allocateNewBlock(size);
@@ -181,9 +185,7 @@ public class MemoryPool {
 		assert free() == total;
 	}
 
-	/**
-	 * Destroys <b>all</b> memory allocated by this pool.
-	 */
+	@Override
 	public void destroy() {
 		for(Block b : blocks) {
 			b.destroy();

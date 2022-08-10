@@ -109,7 +109,6 @@ public interface Command {
 		/**
 		 * @return Whether this is a primary or secondary command buffer
 		 */
-		@SuppressWarnings("static-method")
 		public boolean isPrimary() {
 			return true;
 		}
@@ -422,7 +421,7 @@ public interface Command {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pCommandPool		Returned command pool
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pCommandPool);
 
@@ -439,7 +438,7 @@ public interface Command {
 		 * @param device			Logical device
 		 * @param commandPool		Command pool
 		 * @param flags				Flags
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkResetCommandPool(DeviceContext device, Pool commandPool, int flags);
 
@@ -448,7 +447,7 @@ public interface Command {
 		 * @param device			Logical device
 		 * @param pAllocateInfo		Descriptor
 		 * @param pCommandBuffers	Returned buffer handles
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkAllocateCommandBuffers(DeviceContext device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
 
@@ -465,14 +464,14 @@ public interface Command {
 		 * Starts recording.
 		 * @param commandBuffer			Command buffer
 		 * @param pBeginInfo			Descriptor
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
 
 		/**
 		 * Stops recording.
 		 * @param commandBuffer Command buffer
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkEndCommandBuffer(Buffer commandBuffer);
 
@@ -480,7 +479,7 @@ public interface Command {
 		 * Resets a command buffer.
 		 * @param commandBuffer			Command buffer
 		 * @param flags					Flags
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkResetCommandBuffer(Buffer commandBuffer, int flags);
 

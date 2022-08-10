@@ -2,11 +2,9 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
-import org.sarge.jove.platform.vulkan.VkSharingMode;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -18,7 +16,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * Example for the properties of an image:
  * <pre>
- * MemoryProperties&lt;VkImageUsageFlag&gt; props = new MemoryProperties.Builder&lt;&gt;()
+ * var props = new MemoryProperties.Builder&lt;VkImageUsageFlag&gt;()
  *     .usage(VkImageUsage.COLOR_ATTACHMENT)
  *     .mode(VkSharingMode.CONCURRENT)
  *     .optimal(VkMemoryProperty.HOST_COHERENT)
