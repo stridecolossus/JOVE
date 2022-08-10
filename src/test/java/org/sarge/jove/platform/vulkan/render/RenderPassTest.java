@@ -7,132 +7,149 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Subpass.Reference;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+
+import com.sun.jna.Pointer;
 
 public class RenderPassTest extends AbstractVulkanTest {
 	private RenderPass pass;
-	private Subpass subpass;
 	private Attachment attachment;
-	private Reference ref;
 
 	@BeforeEach
 	void before() {
-		// Create attachment
 		attachment = new Attachment.Builder()
 				.format(FORMAT)
 				.finalLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
 				.build();
 
-		// Create sub-pass
-		ref = new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-		subpass = new Subpass(List.of(ref), null);
-
-		// Add a dependency
-		subpass
-				.dependency()
-				.subpass(Subpass.EXTERNAL)
-				.source()
-					.stage(VkPipelineStage.VERTEX_SHADER)
-					.access(VkAccess.SHADER_READ)
-					.build()
-				.destination()
-					.stage(VkPipelineStage.VERTEX_SHADER)
-					.access(VkAccess.SHADER_READ)
-					.build()
-				.build();
-
-		// Create render pass
-		pass = RenderPass.create(dev, List.of(subpass));
+		pass = new RenderPass(new Pointer(1), dev, List.of(attachment));
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(pass);
+		assertEquals(dev, pass.device());
+		assertEquals(false, pass.isDestroyed());
 		assertEquals(List.of(attachment), pass.attachments());
-	}
-
-	@Test
-	void create() {
-		final var expected = new VkRenderPassCreateInfo() {
-			@Override
-			public boolean equals(Object obj) {
-				// Check descriptor
-				final var info = (VkRenderPassCreateInfo) obj;
-				assertEquals(0, info.flags);
-
-				// Check attachments
-				assertEquals(1, info.attachmentCount);
-				assertEquals(FORMAT, info.pAttachments.format);
-				assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, info.pAttachments.finalLayout);
-
-				// Check sub-passes
-				assertEquals(1, info.subpassCount);
-				assertEquals(1, info.pSubpasses.colorAttachmentCount);
-				assertEquals(null, info.pSubpasses.pDepthStencilAttachment);
-
-				// Check dependencies
-				assertEquals(1, info.dependencyCount);
-				assertEquals(0, info.pDependencies.dependencyFlags);
-
-				// Check source dependency
-				assertEquals(-1, info.pDependencies.srcSubpass);
-				assertEquals(VkPipelineStage.VERTEX_SHADER.value(), info.pDependencies.srcStageMask);
-				assertEquals(VkAccess.SHADER_READ.value(), info.pDependencies.srcAccessMask);
-
-				// Check destination dependency
-				assertEquals(0, info.pDependencies.dstSubpass);
-				assertEquals(VkPipelineStage.VERTEX_SHADER.value(), info.pDependencies.dstStageMask);
-				assertEquals(VkAccess.SHADER_READ.value(), info.pDependencies.dstAccessMask);
-
-				return true;
-			}
-		};
-
-		verify(lib).vkCreateRenderPass(dev, expected, null, factory.pointer());
-	}
-
-	@DisplayName("The attachments for a render pass is the aggregate of the sub-passes")
-	@Test
-	void dependencies() {
-		final Subpass other = new Subpass(List.of(ref), null);
-		final RenderPass pass = RenderPass.create(dev, List.of(subpass, other));
-		assertEquals(List.of(attachment), pass.attachments());
-	}
-
-	@DisplayName("Cannot create a render-pass without any sub-passes")
-	@Test
-	void empty() {
-		assertThrows(IllegalArgumentException.class, () -> RenderPass.create(dev, List.of()));
-	}
-
-	@DisplayName("A render pass cannot contain an explicit EXTERNAL or SELF sub-pass")
-	@Test
-	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> RenderPass.create(dev, List.of(Subpass.EXTERNAL)));
-		assertThrows(IllegalArgumentException.class, () -> RenderPass.create(dev, List.of(Subpass.SELF)));
-	}
-
-	@DisplayName("A render pass cannot contain a dependency to a sub-pass that is not a member of the render pass")
-	@Test
-	void missing() {
-		final Subpass missing = new Subpass(List.of(), ref);
-		subpass
-				.dependency()
-				.subpass(missing)
-				.source()
-					.stage(VkPipelineStage.VERTEX_SHADER)
-					.build()
-				.destination()
-					.stage(VkPipelineStage.VERTEX_SHADER)
-					.build()
-				.build();
-		assertThrows(IllegalArgumentException.class, () -> RenderPass.create(dev, List.of(subpass)));
 	}
 
 	@Test
 	void destroy() {
 		pass.destroy();
 		verify(lib).vkDestroyRenderPass(dev, pass, null);
+	}
+
+	@Nested
+	class BuilderTests {
+		private RenderPass.Builder builder;
+		private Attachment depth;
+
+		@BeforeEach
+		void before() {
+			depth = new Attachment.Builder()
+					.format(FORMAT)
+					.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+					.build();
+
+			builder = new RenderPass.Builder();
+		}
+
+		@DisplayName("Reference indices are allocated by the subpass")
+		@Test
+		void allocate() {
+			final Subpass subpass = builder.subpass();
+			assertEquals(0, subpass.allocate());
+			assertEquals(1, subpass.allocate());
+		}
+
+		@DisplayName("A render-pass must contain at least one subpass")
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
+		}
+
+		@DisplayName("A subpass can be added to a render-pass")
+		@Test
+		void build() {
+			// Builder render-pass with a single subpass
+			pass = builder
+					.subpass()
+						.colour(attachment)
+						.build()
+					.build(dev);
+
+			// Check render-pass
+			assertNotNull(pass);
+			assertEquals(List.of(attachment), pass.attachments());
+
+			// Check API
+			final var expected = new VkRenderPassCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final var actual = (VkRenderPassCreateInfo) obj;
+					assertEquals(0, actual.flags);
+					assertEquals(1, actual.attachmentCount);
+					assertEquals(1, actual.subpassCount);
+					assertEquals(0, actual.dependencyCount);
+					return true;
+				}
+			};
+			verify(lib).vkCreateRenderPass(dev, expected, null, factory.pointer());
+		}
+
+		@DisplayName("A render-pass contains the aggregated set of attachments for its sub-passes")
+		@Test
+		void attachments() {
+			pass = builder
+					.subpass()
+						.colour(attachment)
+						.build()
+					.subpass()
+						.depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+						.build()
+					.build(dev);
+
+			assertEquals(List.of(attachment, depth), pass.attachments());
+		}
+
+		@DisplayName("A subpass dependency can be configured between two subpasses")
+		@Test
+		void dependencies() {
+			// Create a dependant subpass
+			final Subpass other = builder
+					.subpass()
+					.depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+			// Create a subpass dependency
+			builder
+					.subpass()
+					.colour(attachment)
+					.dependency()
+						.dependency(other)
+						.source()
+							.stage(VkPipelineStage.TRANSFER)
+							.build()
+						.destination()
+							.stage(VkPipelineStage.TRANSFER)
+							.build()
+						.build()
+					.build();
+
+			// Build render-pass
+			assertNotNull(builder.build(dev));
+
+			// Check API
+			final var expected = new VkRenderPassCreateInfo() {
+				@Override
+				public boolean equals(Object obj) {
+					final var actual = (VkRenderPassCreateInfo) obj;
+					assertEquals(0, actual.flags);
+					assertEquals(2, actual.attachmentCount);
+					assertEquals(2, actual.subpassCount);
+					assertEquals(1, actual.dependencyCount);
+					return true;
+				}
+			};
+			verify(lib).vkCreateRenderPass(dev, expected, null, factory.pointer());
+		}
 	}
 }

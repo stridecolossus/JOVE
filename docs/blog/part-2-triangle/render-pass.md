@@ -16,107 +16,134 @@ title: The Render Pass
 
 In this chapter we will develop the remaining components required to complete the presentation functionality started in the previous chapter.
 
-We will also introduce a new framework to address the convoluted structure of the demo application.
-
----
-
-## Render Pass
-
-### Overview
-
 A _render pass_ is comprised of the following:
 
-* A group of _attachments_ that define the structure and format of the frame buffers.
+* A set of _attachments_ that define the structure and format of the frame buffer images.
 
 * One-or-more _sub passes_ that operate sequentially on the attachments.
 
 * A number of _dependencies_ that specify how the sub-passes are linked to allow the hardware to synchronise the process.
 
-Notes:
+A render pass with multiple sub-passes is generally used to implement post-processing effects.
+Subpass dependencies are deferred to a later chapter as they are not needed for this stage of development.
 
-* A render pass with multiple sub-passes is used (for example) to implement post-processing effects.
+A new framework library will also be introduced to address the convoluted structure of the demo application.
 
-* Sub-pass dependencies is deferred to a later chapter as they are no needed at this stage of development.
+---
 
-Generation of the Vulkan descriptors for a render pass is slightly complicated since we prefer to represent the data as an object graph, whereas the resultant descriptors use indices for the relationships between the various components.  Where feasible the code to populate the descriptors is co-located with the relevant type, however the attachment and dependency indices will require a separate helper class.
+## Render Pass
 
 ### Attachments
 
-An attachment is essentially a wrapper for the underlying code-generated structure:
+An attachment is essentially a wrapper for the underlying Vulkan structure:
 
 ```java
-public class Attachment {
-    private final VkAttachmentDescription desc;
-
-    private Attachment(VkAttachmentDescription desc) {
-        this.desc = notNull(desc);
+public record Attachment(VkFormat format, VkSampleCount samples, Operations colour, Operations stencil, VkImageLayout before, VkImageLayout after) {
+    /**
+     * Convenience wrapper for load-store operations.
+     */
+    public record Operations(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
     }
 }
 ```
+
+Where _colour_ and _stencil_ are the load-store operations for the colour and depth-stencil attachments respectively.
 
 When creating the render pass the contiguous array of attachments is populated by the following method:
 
 ```java
-public void populate(VkAttachmentDescription attachment) {
-    attachment.format = desc.format;
-    attachment.samples = desc.samples;
-    attachment.loadOp = desc.loadOp;
-    attachment.storeOp = desc.storeOp;
-    attachment.stencilLoadOp = desc.stencilLoadOp;
-    attachment.stencilStoreOp = desc.stencilStoreOp;
-    attachment.initialLayout = desc.initialLayout;
-    attachment.finalLayout = desc.finalLayout;
+void populate(VkAttachmentDescription attachment) {
+    attachment.format = format;
+    attachment.samples = samples;
+    attachment.loadOp = colour.load;
+    attachment.storeOp = colour.store;
+    attachment.stencilLoadOp = stencil.load;
+    attachment.stencilStoreOp = stencil.store;
+    attachment.initialLayout = before;
+    attachment.finalLayout = after;
 }
 ```
 
-Note that the attachment class wraps an instance of the underlying Vulkan descriptor, which avoids having to replicate the fields and implement a large constructor.  However JNA does not support cloning of a structure out-of-the-box so the `populate` method unfortunately has to perform a field-by-field copy.
-
-The builder initialises most of the attachment properties to sensible defaults:
+A convenience builder is implemented that initialises the attachment properties to sensible defaults:
 
 ```java
 public static class Builder {
-    private VkAttachmentDescription desc = new VkAttachmentDescription();
+    private VkFormat format;
+    private VkSampleCount samples = VkSampleCount.COUNT_1;
+    private VkAttachmentLoadOp load = VkAttachmentLoadOp.DONT_CARE;
+    private VkAttachmentStoreOp store = VkAttachmentStoreOp.DONT_CARE;
+    private VkAttachmentLoadOp stencilLoad = VkAttachmentLoadOp.DONT_CARE;
+    private VkAttachmentStoreOp stencilStore = VkAttachmentStoreOp.DONT_CARE;
+    private VkImageLayout before = VkImageLayout.UNDEFINED;
+    private VkImageLayout after;
+}
+```
 
-    public Builder() {
-        samples(VkSampleCountFlag.COUNT_1);
-        load(VkAttachmentLoadOp.DONT_CARE);
-        store(VkAttachmentStoreOp.DONT_CARE);
-        stencilLoad(VkAttachmentLoadOp.DONT_CARE);
-        stencilStore(VkAttachmentStoreOp.DONT_CARE);
-        initialLayout(VkImageLayout.UNDEFINED);
+### Subpass
+
+A _subpass_ is a mutable type comprising the attachments used in that stage of rendering:
+
+```java
+public class Subpass {
+    private final List<Reference> colour = new ArrayList<>();
+    private Reference depth;
+}
+```
+
+A colour attachment can be added to the subpass:
+
+```java
+public Subpass colour(Attachment colour, VkImageLayout layout) {
+    this.colour.add(new Reference(colour, layout));
+    return this;
+}
+```
+
+Where a `Reference` is a inner wrapper for a referenced attachment used in the subpass:
+
+```java
+record Reference(Attachment attachment, VkImageLayout layout) {
+    void populate(VkAttachmentReference descriptor) {
+        descriptor.attachment = ...
+        descriptor.layout = layout;
     }
-    
-    ...
-    
-    public Attachment build() {
-        return new Attachment(desc);
+}
+```
+
+Population of the `attachment` field index is detailed below.
+
+The single depth-stencil attachment is added similarly:
+
+```java
+public Subpass depth(Attachment depth, VkImageLayout layout) {
+    this.depth = new Reference(depth, layout);
+    return this;
+}
+```
+
+Finally the descriptor for the subpass is populated as follows:
+
+```java
+void populate(VkSubpassDescription descriptor) {
+    // Init descriptor
+    descriptor.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
+
+    // Populate colour attachments
+    descriptor.colorAttachmentCount = colour.size();
+    descriptor.pColorAttachments = StructureHelper.pointer(colour, VkAttachmentReference::new, Reference::populate);
+
+    // Populate depth attachment
+    if(depth != null) {
+        var ref = new VkAttachmentReference();
+        depth.populate(ref);
+        descriptor.pDepthStencilAttachment = ref;
     }
 }
 ```
 
 ### Render Pass
 
-A sub-pass is comprised of the colour and depth-stencil attachments used for that stage of rendering:
-
-```java
-public class Subpass {
-    public record Reference(Attachment attachment, VkImageLayout layout) {
-    }
-    
-    private final List<Reference> colour;
-    private final Optional<Reference> depth;
-}
-```
-
-Notes:
-
-* The sub-pass is a transient object only used to create and configure the render-pass.
-
-* The constructor also validates the integrity of the attachments (not shown).
-
-* The obligatory builder is also added to create and configure a sub-pass.
-
-The render pass domain object itself is relatively simple:
+The domain class for a render pass contains the overall set of attachments used by its sub-passes:
 
 ```java
 public class RenderPass extends AbstractVulkanObject {
@@ -126,39 +153,106 @@ public class RenderPass extends AbstractVulkanObject {
     protected Destructor<RenderPass> destructor(VulkanLibrary lib) {
         return lib::vkDestroyRenderPass;
     }
-    
-    static class Group {
+}
+```
+
+And is constructed via a builder:
+
+```java
+public static class Builder {
+    private final List<Subpass> subpasses = new ArrayList<>();
+
+    /**
+     * @return New subpass builder
+     */
+    public Subpass subpass() {
+        Subpass subpass = ...
+        subpasses.add(subpass);
+        return subpass;
+    }
+}
+```
+
+We prefer to specify the render pass by an object graph of the sub-passes and attachments references, whereas the underlying Vulkan descriptors use indices to refer to attachments (and later on sub-pass dependencies).  However all of these are transient objects that have no relevance once the render pass has been instantiated.  Additionally the application does not care about the attachment indices, unlike (for example) vertex attributes which are dependant on the shader layout.
+
+Therefore the render pass builder _allocates_ attachment indices by the introduction of the over-ridden `allocate` protected method:
+
+```java
+public static class Builder {
+    ...
+    private int ref;
+
+    public Subpass subpass() {
+        Subpass subpass = new Subpass() {
+            @Override
+            protected int allocate() {
+                return ref++;
+            }
+        
+            @Override
+            public Builder build() {
+                return Builder.this;
+            }
+        };
         ...
     }
 }
 ```
 
-A render-pass is created via a factory method given a list of sub-passes:
+An `index` member is added to the attachment `Reference` and initialised accordingly:
 
 ```java
-public static RenderPass create(DeviceContext dev, List<Subpass> subpasses) {
-    Group group = new Group(subpasses);
-    var info = new VkRenderPassCreateInfo();
-    ...
+public Subpass colour(Attachment colour, VkImageLayout layout) {
+    int index = allocate();
+    this.colour.add(new Reference(index, colour, layout));
+    return this;
 }
 ```
 
-The `Group` helper class (detailed below) aggregates the total set of attachments for the render pass and populates the relevant descriptor properties:
+This makes the render pass and subpass slightly inter-dependant but effectively hides the indices whilst allowing both classes to be tested in isolation.
+
+In the render pass builder the overall set of attachments is aggregated from the sub-passes:
 
 ```java
-List<Attachment> attachments = group.attachments();
+public RenderPass build(DeviceContext dev) {
+    List<Attachment> attachments = subpasses
+        .stream()
+        .flatMap(Subpass::references)
+        .distinct()
+        .map(Reference::attachment)
+        .toList();
+}
+```
+
+Where each subpass enumerates the attachments that it uses:
+
+```java
+Stream<Reference> references() {
+    if(depth == null) {
+        return colour.stream();
+    }
+    else {
+        return Stream.concat(colour.stream(), Stream.of(depth));
+    }
+}
+```
+
+Next the attachments are populated in the create descriptor for the render pass:
+
+```java
+var info = new VkRenderPassCreateInfo();
 info.attachmentCount = attachments.size();
 info.pAttachments = StructureHelper.pointer(attachments, VkAttachmentDescription::new, Attachment::populate);
 ```
 
-Next the sub-passes are populated:
+Followed by the sub-passes:
 
 ```java
 info.subpassCount = subpasses.size();
-info.pSubpasses = StructureHelper.pointer(subpasses, VkSubpassDescription::new, group::populate);
+info.pSubpasses = StructureHelper.pointer(subpasses, VkSubpassDescription::new, Subpass::populate);
 ```
 
-And finally the API is invoked to instantiate the render pass:
+And finally the render pass is instantiated:
 
 ```java
 VulkanLibrary lib = dev.library();
@@ -167,94 +261,7 @@ check(lib.vkCreateRenderPass(dev, info, null, pass));
 return new RenderPass(pass.getValue(), dev, attachments);
 ```
 
-### Group
-
-The `Group` helper class encapsulates the complexity of the attachment indices (and later on the sub-pass dependencies):
-
-```java
-private static class Group {
-    private final List<Subpass> subpasses;
-    private final List<Reference> references;
-
-    private Group(List<Subpass> subpasses) {
-        this.subpasses = subpasses;
-        this.references = references(subpasses);
-    }
-}
-```
-
-The set of unique attachment references for a render pass are aggregated by the following flattening operation:
-
-```java
-private static List<Reference> references(List<Subpass> subpasses) {
-    return subpasses
-        .stream()
-        .flatMap(Subpass::attachments)
-        .distinct()
-        .toList();
-}
-```
-
-Which uses a new accessor on the sub-pass:
-
-```java
-Stream<Reference> attachments() {
-    if(depth.isPresent()) {
-        return Stream.concat(colour.stream(), depth.stream());
-    }
-    else {
-        return colour.stream();
-    }
-}
-```
-
-The overall set of attachments can then be retrieved from the helper and used to populate the render pass descriptor:
-
-```java
-public List<Attachment> attachments() {
-    return references
-        .stream()
-        .map(Reference::attachment)
-        .toList();
-}
-```
-
-Population of the descriptors for each sub-pass is also dependant on the attachment `references` member:
-
-```java
-public void populate(Subpass subpass, VkSubpassDescription descriptor) {
-    // Init descriptor
-    descriptor.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
-
-    // Populate colour attachments
-    descriptor.colorAttachmentCount = subpass.colour.size();
-    descriptor.pColorAttachments = StructureHelper.pointer(subpass.colour, VkAttachmentReference::new, this::populate);
-
-    // Populate depth attachment
-    descriptor.pDepthStencilAttachment = subpass.depth.map(this::depth).orElse(null);
-}
-```
-
-The local `populate` method looks up the index of an attachment and then delegates to the reference to complete the descriptor:
-
-```java
-private void populate(Reference ref, VkAttachmentReference descriptor) {
-    final int index = references.indexOf(ref);
-    ref.populate(index, descriptor);
-}
-```
-
-The optional depth-stencil attachment is populated similarly:
-
-```java
-private VkAttachmentReference depth(Reference ref) {
-    final var descriptor = new VkAttachmentReference();
-    populate(ref, descriptor);
-    return descriptor;
-}
-```
-
-Finally we create a new API for the render pass:
+The API for the render pass is simple:
 
 ```java
 interface Library {

@@ -815,163 +815,118 @@ public void render(RenderSequence seq) {
 
 The demo should now run without validation errors (for the render loop anyway), however there are still further improvements that can be implemented.
 
-### Sub-Pass Dependencies
+### Subpass Dependencies
 
 The final synchronisation mechanism is a _subpass dependency_ which specifies memory and execution dependencies between the stages of a render-pass.
 
-A new transient data type is added for a dependency between two sub-pass stages:
+A subpass dependency is configured via two new mutable types:
 
 ```java
-public record Dependency(Subpass subpass, Properties source, Properties destination) {
+public class Dependency {
+    private Integer index;
+    private final Properties src = new Properties(this);
+    private final Properties dest = new Properties(this);
 }
 ```
 
-Where _subpass_ is the dependant sub-pass and _source_ and _destination_ specify the properties between the two stages:
+Where `index` is refers to the dependant subpass by _index_ (see below).
+
+And _source_ and _destination_ specify the properties of the dependency:
 
 ```java
-public record Properties(Set<VkPipelineStage> stages, Set<VkAccess> access) {
+public class Properties {
+    private final Dependency dependency;
+    private final Set<VkPipelineStage> stages = new HashSet<>();
+    private final Set<VkAccess> access = new HashSet<>();
 }
 ```
 
-Note that in this design the _destination_ is implicitly the sub-pass containing the dependency.
-
-The sub-pass class and builder are modified to include the list of dependencies:
+The subpass domain class is modified to include the list of dependencies:
 
 ```java
-public static class Builder {
-    private final List<Dependency> dependencies = new ArrayList<>();
+public class Subpass {
     ...
+    private int index;
+    private final List<Dependency> dependencies = new ArrayList<>();
 
-    public Dependency.Builder dependency() {
-        return new Dependency.Builder(this);
-    }
-
-    public Subpass build() {
-        return new Subpass(colour, depth, dependencies);
+    public Dependency dependency() {
+        return new Dependency();
     }
 }
 ```
 
-A new builder is implemented to configure a sub-pass dependency:
+The subpass _index_ is allocated by the builder of the parent render pass:
 
 ```java
-public static class Builder {
-    private final Subpass.Builder parent;
-    private final Properties.Builder src = new Properties.Builder(this);
-    private final Properties.Builder dest = new Properties.Builder(this);
-    private Subpass subpass;
+public Subpass subpass() {
+    Subpass subpass = new Subpass(subpasses.size()) {
+        ...
+    };
 }
 ```
 
-The build method constructs the dependency and adds it to the sub-pass:
+The dependant subpass can be configured:
 
 ```java
-public Subpass.Builder build() {
-    Dependency dependency = new Dependency(subpass, src.create(), dest.create());
-    parent.dependencies.add(dependency);
-    return parent;
+public Dependency dependency(Subpass subpass) {
+    index = subpass.index;
+    return this;
 }
 ```
 
-Finally a special case constant is added for the implicit sub-pass before and after the render-pass:
+A subpass can also be dependant on the implicit subpass before or after the render pass:
 
 ```java
-public static final Subpass EXTERNAL = new Subpass() {
-    @Override
-    public String toString() {
-        return "EXTERNAL";
-    }
-};
+public Dependency external() {
+    index = VK_SUBPASS_EXTERNAL;
+    return this;
+}
 ```
 
-The dependencies are populated in the `create` method of the render pass:
+The descriptor for the subpass dependency is populated as follows:
 
 ```java
-var dependencies = group.dependencies();
+void populate(VkSubpassDependency info) {
+    info.srcSubpass = index;
+    info.dstSubpass = Subpass.this.index;
+    info.srcStageMask = IntegerEnumeration.reduce(src.stages);
+    info.srcAccessMask = IntegerEnumeration.reduce(src.access);
+    info.dstStageMask = IntegerEnumeration.reduce(dest.stages);
+    info.dstAccessMask = IntegerEnumeration.reduce(dest.access);
+}
+```
+
+Note that the _destination_ of the dependency is implicitly the enclosing subpass.
+
+The final change is to modify the render pass builder to populate the aggregated subpass dependencies:
+
+```java
+List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
 info.dependencyCount = dependencies.size();
-info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, group::populate);
+info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, Dependency::populate);
 ```
 
-The sub-pass and dependencies are configured as a transient object graph, whereas the resultant descriptors use indices to represent the relations between the various objects.  Therefore the overall list of sub-pass dependencies is flattened and then zipped with the sub-pass (since we need both) to populate the descriptors:
+In the demo a dependency can now be configured on the implicit `external` subpass:
 
 ```java
-public List<Pair<Subpass, Dependency>> dependencies() {
-    return subpasses
-        .stream()
-        .flatMap(subpass -> subpass.dependencies().map(e -> Pair.of(subpass, e)))
-        .toList();
-}
-```
-
-Next the following method is added to the `Group` helper class to populate each zipped dependency:
-
-```java
-public void populate(Pair<Subpass, Dependency> entry, VkSubpassDependency descriptor) {
-    // Lookup index of this sub-pass
-    Subpass subpass = entry.getLeft();
-    Dependency dependency = entry.getRight();
-    int dest = subpasses.indexOf(subpass);
-    assert dest >= 0;
-
-    // Determine index of the source sub-pass
-    int src = index(dependency.subpass(), dest);
-
-    // Populate descriptor
-    dependency.populate(src, dest, descriptor);
-}
-```
-
-Which looks up the sub-pass indices for the source and destination components:
-
-```java
-private int index(Subpass src, int dest) {
-    if(src == Subpass.EXTERNAL) {
-        return VK_SUBPASS_EXTERNAL;
-    }
-    else
-    if(src == Subpass.SELF) {
-        return dest;
-    }
-    else {
-        int index = subpasses.indexOf(src);
-        if(index == -1) throw new IllegalArgumentException(...);
-        return index;
-    }
-}
-```
-
-Finally a dependency descriptor is populated given the two indices:
-
-```java
-void populate(int src, int dest, VkSubpassDependency dependency) {
-    dependency.srcSubpass = src;
-    dependency.dstSubpass = zeroOrMore(dest);
-    dependency.srcStageMask = IntegerEnumeration.reduce(source.stages);
-    dependency.srcAccessMask = IntegerEnumeration.reduce(source.access);
-    dependency.dstStageMask = IntegerEnumeration.reduce(destination.stages);
-    dependency.dstAccessMask = IntegerEnumeration.reduce(destination.access);
-}
-```
-
-In the demo we can now configure a dependency between our single sub-pass and the implicit starting sub-pass:
-
-```java
-Subpass subpass = new Subpass.Builder()
-    .colour(new Reference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL))
-    .dependency()
-        .subpass(Subpass.EXTERNAL)
-        .source()
-            .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
-            .build()
-        .destination()
-            .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
-            .access(VkAccess.COLOR_ATTACHMENT_WRITE)
+RenderPass pass = new RenderPass.Builder()
+    .subpass()
+        .colour(attachment)
+        .dependency()
+            .external()
+            .source()
+                .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+                .build()
+            .destination()
+                .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+                .access(VkAccess.COLOR_ATTACHMENT_WRITE)
+                .build()
             .build()
         .build()
-    .build();
+    .build(dev);
 ```
 
-The _destination_ clause specifies that the sub-pass should wait for the colour attachment to be ready for writing, i.e. when the swapchain has finished using the image.
+The _destination_ clause specifies that the subpass should wait for the colour attachment to be ready for writing, i.e. when the swapchain has finished using the image.
 
 This should allow Vulkan to more efficiently use the multi-threaded nature of the pipeline.
 

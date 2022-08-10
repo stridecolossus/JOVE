@@ -15,19 +15,21 @@ title: Presentation
 
 ## Overview
 
-In the next two chapters we will implement the various components required for _presentation_ to the Vulkan surface:
+In the next couple of chapters we will implement the various components required for _presentation_ to the Vulkan surface.
 
-* The _swapchain_ is the controller that manages the process of presenting a _frame buffer_ to the display.
+The first of these is the _swapchain_ which is a controller for the process of presenting frames to the display.  The swapchain is comprised of a number of image attachments that are the target of the rendering process.
 
-* Each _frame buffer_ is comprised of a number of _attachments_ which are the target images for rendering, i.e. colour attachments, depth buffers, etc.
+Generally an application will employ a double or triple-buffer strategy where a completed frame is presented while the next is being rendered, the buffers are swapped, and the process repeats for the next frame.  Additionally Vulkan is designed to allow these activities to be performed in parallel.
 
-* Attachments are instances of an _image view_ which provides functionality for managing Vulkan images.
+The following new components are required:
 
-* A _render pass_ specifies how attachments are managed during the rendering process.
+* The swapchain domain class.
 
-Generally an application will employ a double or triple-buffer strategy where a completed frame is presented while the next is being rendered, the buffers are swapped, and the process repeats for the next frame.  In addition Vulkan is designed to allow these activities to be executed in parallel if required.
+* A mechanism for querying the physical capabilities of the graphics hardware in order to configure presentation.
 
-First several new framework components are introduced that are used in the new presentation functionality.
+* New types for Vulkan images and views that are used to implement the attachments.
+
+First several new framework components are introduced that will be used in the new presentation functionality.
 
 ---
 
@@ -375,7 +377,7 @@ Notes:
 
 * However the application is responsible for creating (and destroying) the image views.
 
-* The view class initially has no functionality but will be expanded as we progress, in particular when addressing clearing attachments.
+* The view class initially has no functionality but will be expanded later, in particular when addressing clearing attachments.
 
 An image view is constructed by a builder as usual:
 
@@ -749,27 +751,13 @@ public final class VulkanBoolean {
 
     private final int value;
 
-    private VulkanBoolean(int value) {
-        this.value = value;
-    }
-
     public boolean toBoolean() {
         return this == TRUE;
     }
 
     @Override
-    public int hashCode() {
-        return value;
-    }
-
-    @Override
     public boolean equals(Object obj) {
         return obj == this;
-    }
-
-    @Override
-    public String toString() {
-        return String.valueOf(value);
     }
 }
 ```
