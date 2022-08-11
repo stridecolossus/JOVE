@@ -86,7 +86,8 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		in.readFully(data, 0, len);
 
 		// Build image layout
-		final Layout layout = Layout.bytes(samples.length, samples[0].bytes());
+		// TODO - should be INTEGER? but VK format needs to be UNORM
+		final Layout layout = new Layout(samples.length, Layout.Type.NORMALIZED, samples[0].bytes(), false);
 		final String components = Arrays.stream(samples).map(Sample::channel).collect(joining());
 
 		// Create KTX image

@@ -52,7 +52,7 @@ class GridBuilderTest {
 			final ImageData image = mock(ImageData.class);
 			when(image.size()).thenReturn(new Dimensions(8, 8));
 			when(image.components()).thenReturn("RGBA");
-			when(image.layout()).thenReturn(new Layout(1, Byte.class, 2, false));
+			when(image.layout()).thenReturn(new Layout(1, Layout.Type.INTEGER, 2, false));
 			when(image.pixel(2, 2, 1)).thenReturn(65535);
 
 			// Create height-map function

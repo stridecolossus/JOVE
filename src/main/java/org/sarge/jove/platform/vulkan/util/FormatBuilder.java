@@ -2,8 +2,6 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.lib.util.Check.*;
 
-import java.util.Map;
-
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
@@ -16,69 +14,74 @@ import org.sarge.lib.util.Check;
  * Finding a {@link VkFormat} can be difficult given the size of the enumeration.
  * However the naming convention is consistent and it is therefore possible to specify the format programatically.
  * <p>
+ * Generally the identifier for a format is comprised of two elements: the <i>component format</i> and the <i>numeric format</i>.
+ * The component format specifies the number of components (or channels) and the size of each in bytes.
+ * The numeric format specifies the range of each value and whether it is signed.
+ * <p>
  * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex {@link Layout}.
  * <p>
  * Examples:
  * <pre>
  * // Construct a format: <code>B16G16R16A16_UNORM</code>
  * VkFormat format = new FormatBuilder()
- *      .components("BGRA")			// BGRA
- *      .bytes(2)					// 16
- *      .signed(false)				// U
- *      .type(Type.NORM)			// NORM
- *      .build();
+ *     .components("BGRA")  // BGRA
+ *     .bytes(2)            // 16
+ *     .signed(false)       // U
+ *     .type(Type.NORM)     // NORM
+ *     .build();
  *
  * // Determine format from a component layout: <code>R32G32B32_SFLOAT</code>
- * VkFormat point = FormatBuilder.format(Point.LAYOUT);
- * </pre>
+ * VkFormat point = FormatBuilder.format(Point.LAYOUT);</pre>
  * <p>
  * @see VkFormat
+ * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#texel-block-size">Texel block sizes</a>
  * @author Sarge
  */
 public class FormatBuilder {
 	private static final IntegerEnumeration.ReverseMapping<VkFormat> MAPPING = IntegerEnumeration.reverse(VkFormat.class);
 
 	/**
-	 * Component data-type.
+	 * Vulkan numeric formats.
+	 * <p>
+	 * The Vulkan numeric formats correspond the general {@link Layout.Type} equivalents with the following special cases:
+	 * <ul>
+	 * <li>{@link #SCALED} are integer values converted to floating-point</li>
+	 * <li>{@link #RGB} uses the {@code sRGB} nonlinear encoding</li>
+	 * </ul>
 	 */
-	public enum Type {
+	public enum NumericFormat {
 		INT,
 		FLOAT,
 		NORM,
 		SCALED,
 		RGB;
 
-		private static final Map<String, Type> TYPES = Map.of(
-				"integer",		INT,
-				"int",			INT,
-				"short",		INT,
-				"float",		FLOAT,
-				"byte",			NORM
-		);
-
 		/**
-		 * Maps the given Java type to the corresponding Vulkan component type.
-		 * @param type Type
-		 * @return Vulkan type
+		 * Maps the given layout component type to the corresponding Vulkan numeric format.
+		 * @param type Layout component type
+		 * @return Vulkan numeric format
 		 * @throws IllegalArgumentException if the given type is not supported
 		 */
-		public static Type of(Class<?> type) {
-			final Type result = TYPES.get(type.getSimpleName().toLowerCase());
-			if(result == null) throw new IllegalArgumentException("Unsupported data type: " + type);
-			return result;
+		public static NumericFormat of(Layout.Type type) {
+			return switch(type) {
+				case INTEGER -> INT;
+				case FLOAT -> FLOAT;
+				case NORMALIZED -> NORM;
+				default -> throw new IllegalArgumentException("Unsupported component type: " + type);
+			};
 		}
 	}
 
 	/**
-	 * Helper - Determines the format for the given vertex layout.
-	 * @param layout Vertex layout
-	 * @return Format for the given vertex layout
+	 * Helper - Determines the Vulkan format for the given layout.
+	 * @param layout Layout
+	 * @return Format for the given layout
 	 */
 	public static VkFormat format(Layout layout) {
 		return new FormatBuilder()
 				.count(layout.size())
 				.bytes(layout.bytes())
-				.type(Type.of(layout.type()))
+				.type(NumericFormat.of(layout.type()))
 				.signed(layout.signed())
 				.build();
 	}
@@ -88,7 +91,7 @@ public class FormatBuilder {
 	 * <p>
 	 * The image format is determined as follows:
 	 * <ol>
-	 * <li>Use the {@link ImageData#format()} hint unless this value is {@link VkFormat#UNDEFINED}</li>
+	 * <li>Use the format hint unless this value is {@link VkFormat#UNDEFINED}</li>
 	 * <li>Otherwise delegate to {@link #format(Layout)} using the layout of the image</li>
 	 * </ol>
 	 * <p>
@@ -109,7 +112,7 @@ public class FormatBuilder {
 	private String components;
 	private int count;
 	private int bytes = Float.BYTES;
-	private Type type = Type.FLOAT;
+	private NumericFormat numeric = NumericFormat.FLOAT;
 	private boolean signed = true;
 
 	/**
@@ -165,21 +168,21 @@ public class FormatBuilder {
 	}
 
 	/**
-	 * Sets the Vulkan data type.
-	 * @param type Data type (default is {@link Type#FLOAT})
+	 * Sets the numeric format.
+	 * @param numeric Numeric format (default is {@link NumericFormat#FLOAT})
 	 */
-	public FormatBuilder type(Type type) {
-		this.type = notNull(type);
+	public FormatBuilder type(NumericFormat numeric) {
+		this.numeric = notNull(numeric);
 		return this;
 	}
 
 	/**
-	 * Builds the format identifier.
+	 * Builds this format.
 	 * @return Vulkan format
 	 * @throws IllegalArgumentException if the format is not supported
 	 */
 	public VkFormat build() {
-		// Build component layout
+		// Build component format
 		final StringBuilder layout = new StringBuilder();
 		final int size = bytes * Byte.SIZE;
 		for(int n = 0; n < count; ++n) {
@@ -189,7 +192,7 @@ public class FormatBuilder {
 
 		// Build format string
 		final char ch = signed ? 'S' : 'U';
-		final String format = String.format("%s_%c%s", layout, ch, type.name());
+		final String format = String.format("%s_%c%s", layout, ch, numeric.name());
 
 		// Lookup format
 		return VkFormat.valueOf(format);

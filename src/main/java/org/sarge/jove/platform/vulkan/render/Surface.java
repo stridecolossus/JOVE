@@ -41,7 +41,7 @@ public class Surface extends AbstractTransientNativeObject {
 				.components("BGRA")
 				.bytes(1)
 				.signed(false)
-				.type(FormatBuilder.Type.NORM)
+				.type(FormatBuilder.NumericFormat.NORM)
 				.build();
 
 		return format;

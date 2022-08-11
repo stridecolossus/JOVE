@@ -15,7 +15,6 @@ import org.sarge.jove.util.BufferHelper;
  * <p>
  * @author Sarge
  */
-@SuppressWarnings("static-method")
 public class DataHelper {
 	private static final int VERSION = 1;
 
@@ -109,22 +108,10 @@ public class DataHelper {
 	 * @throws IOException if the layout cannot be loaded
 	 */
 	public Layout layout(DataInput in) throws IOException {
-		// Load layout
 		final int size = in.readInt();
 		final int bytes = in.readInt();
-		final String name = in.readUTF();
+		final Layout.Type type = Layout.Type.valueOf(in.readUTF());
 		final boolean signed = in.readBoolean();
-
-		// Lookup layout component type
-		final Class<?> type;
-		try {
-			type = Class.forName(name);
-		}
-		catch(ClassNotFoundException e) {
-			throw new IOException("Unknown layout component type: " + name, e);
-		}
-
-		// Create layout
 		return new Layout(size, type, bytes, signed);
 	}
 
@@ -137,7 +124,7 @@ public class DataHelper {
 	public void write(Layout layout, DataOutput out) throws IOException {
 		out.writeInt(layout.size());
 		out.writeInt(layout.bytes());
-		out.writeUTF(layout.type().getName());
+		out.writeUTF(layout.type().name());
 		out.writeBoolean(layout.signed());
 	}
 }

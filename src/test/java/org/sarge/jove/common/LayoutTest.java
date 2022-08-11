@@ -1,27 +1,28 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Layout.Type;
 
 public class LayoutTest {
 	private Layout layout;
 
 	@BeforeEach
 	void before() {
-		layout = new Layout(3, Float.class, Float.BYTES, true);
+		layout = new Layout(3, Type.FLOAT, Float.BYTES, true);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(3, layout.size());
-		assertEquals(Float.class, layout.type());
+		assertEquals(Type.FLOAT, layout.type());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(true, layout.signed());
 		assertEquals(3 * Float.BYTES, layout.length());
-		assertEquals("3Float4", layout.toString());
+		assertEquals("3-FLOAT4", layout.toString());
 	}
 
 	@Test
@@ -30,26 +31,15 @@ public class LayoutTest {
 	}
 
 	@Test
-	void bytes() {
-		layout = Layout.bytes(3, 2);
-		assertEquals(3, layout.size());
-		assertEquals(Byte.class, layout.type());
-		assertEquals(2, layout.bytes());
-		assertEquals(false, layout.signed());
-		assertEquals(3 * 2, layout.length());
-		assertEquals("3Byte2U", layout.toString());
-	}
-
-	@Test
 	void stride() {
-		assertEquals(2 * 3 * Float.BYTES, Layout.stride(List.of(layout, layout)));
+		assertEquals(2 * layout.length(), Layout.stride(List.of(layout, layout)));
 	}
 
 	@Test
 	void equals() {
-		assertEquals(true, layout.equals(layout));
-		assertEquals(true, layout.equals(new Layout(3, Float.class, Float.BYTES, true)));
-		assertEquals(false, layout.equals(null));
-		assertEquals(false, layout.equals(new Layout(4, Float.class, Float.BYTES, true)));
+		assertEquals(layout, layout);
+		assertEquals(layout, new Layout(3, Type.FLOAT, Float.BYTES, true));
+		assertNotEquals(layout, null);
+		assertNotEquals(layout, new Layout(3, Type.NORMALIZED, Float.BYTES, true));
 	}
 }

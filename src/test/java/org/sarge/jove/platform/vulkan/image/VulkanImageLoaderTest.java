@@ -105,7 +105,7 @@ public class VulkanImageLoaderTest {
 		assertEquals(new Dimensions(2, 3), image.size());
 		assertEquals("RGBA", image.components());
 		assertEquals(FORMAT, image.format());
-		assertEquals(Layout.bytes(4, 1), image.layout());
+		assertEquals(new Layout(4, Layout.Type.NORMALIZED, 1, false), image.layout());
 		assertEquals(1, image.layers());
 
 		// Check MIP levels (ordered by MIP level with offsets smallest first)

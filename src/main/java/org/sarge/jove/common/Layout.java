@@ -10,42 +10,34 @@ import org.sarge.lib.util.Check;
  * A layout is comprised of:
  * <ul>
  * <li>{@link #size} number of components, e.g. 3 for a vertex normal</li>
- * <li>the {@link #type} of each component, e.g. {@link Float}</li>
+ * <li>the {@link #type} of each component, e.g. {@link Layout.Type#FLOAT}</li>
  * <li>the number of {@link #bytes} per component, e.g. {@link Float#BYTES}</li>
  * <li>whether the data is {@link #signed}</li>
  * </ul>
  * <p>
- * The {@link #bytes(Class)} method can be used to determine the number of bytes per component for common numeric types such as {@link Float}.
+ * Example for the layout of a floating-point 3-tuple such as a vector: <pre>new Layout(3, Type.FLOAT, Float.BYTES, true)</pre>
  * <p>
- * Example: The following are synonymous for a floating-point 3-tuple:
- * <pre>
- *     new Layout(3, Float.class, Float.BYTES, true);
- *     new Layout(3, Float.class, true);
- *     Layout.floats(3);
- * </pre>
- * <p>
- * The {@link #toString()} representation of a layout is a compacted string with a {@code U} suffix for unsigned types, for example the above layout is represented as {@code 3Float4}.
+ * The {@link #toString()} representation of a layout is a compacted string with a {@code U} suffix for unsigned types, for example the above layout is represented as {@code 3-FLOAT4}.
  * <p>
  * @author Sarge
  */
-public record Layout(int size, Class<?> type, int bytes, boolean signed) {
+public record Layout(int size, Layout.Type type, int bytes, boolean signed) {
 	/**
-	 * Creates a signed floating-point layout with {@link #size} components.
+	 * Component types.
+	 */
+	public enum Type {
+		INTEGER,
+		FLOAT,
+		NORMALIZED
+	}
+
+	/**
+	 * Creates a signed {@link Type#FLOAT} layout with {@link #size} components.
 	 * @param size Number of components
 	 * @return New floating-point layout
 	 */
 	public static Layout floats(int size) {
-		return new Layout(size, Float.class, Float.BYTES, true);
-	}
-
-	/**
-	 * Creates an unsigned byte layout with {@link #size} components.
-	 * @param size 		Number of components
-	 * @param bytes		Number of bytes per component
-	 * @return New byte layout
-	 */
-	public static Layout bytes(int size, int bytes) {
-		return new Layout(size, Byte.class, bytes, false);
+		return new Layout(size, Type.FLOAT, Float.BYTES, true);
 	}
 
 	/**
@@ -82,7 +74,8 @@ public record Layout(int size, Class<?> type, int bytes, boolean signed) {
 	public String toString() {
 		final StringBuilder str = new StringBuilder();
 		str.append(size);
-		str.append(type.getSimpleName());
+		str.append('-');
+		str.append(type);
 		str.append(bytes);
 		if(!signed) {
 			str.append("U");

@@ -33,7 +33,7 @@ public class NativeImageLoaderTest {
 		final Layout layout = image.layout();
 		assertNotNull(layout);
 		assertEquals(num, layout.size());
-		assertEquals(Byte.class, layout.type());
+		assertEquals(Layout.Type.NORMALIZED, layout.type());
 		assertEquals(Byte.BYTES, layout.bytes());
 		assertEquals(false, layout.signed());
 		assertEquals(num, layout.length());

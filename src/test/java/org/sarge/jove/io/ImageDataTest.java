@@ -10,7 +10,7 @@ import org.sarge.jove.io.ImageData.Level;
 
 public class ImageDataTest {
 	private static final Dimensions EXTENTS = new Dimensions(2, 3);
-	private static final Layout LAYOUT = Layout.bytes(4, 1);
+	private static final Layout LAYOUT = new Layout(4, Layout.Type.INTEGER, 1, false);
 	private static final byte[] DATA = new byte[2 * 3 * 4];
 
 	private ImageData image;
@@ -31,7 +31,7 @@ public class ImageDataTest {
 	@DisplayName("An image has a component layout specifying the structure of each pixel")
 	@Test
 	void layout() {
-		assertEquals(Layout.bytes(4, 1), image.layout());
+		assertEquals(LAYOUT, image.layout());
 	}
 
 	@DisplayName("A basic image...")
@@ -60,7 +60,7 @@ public class ImageDataTest {
 	@DisplayName("The layout of an image must match the components string")
 	@Test
 	void invalidComponentLayout() {
-		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", Layout.bytes(3, 1), DATA));
+		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", Layout.floats(3), DATA));
 	}
 
 	@DisplayName("The length of the image data must match the specified layout and dimensions")
