@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
-import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 
 /**
@@ -144,7 +143,7 @@ public class MemoryPool implements TransientObject {
 				.filter(mem -> mem.size() >= size)
 				.sorted(Comparator.comparingLong(DeviceMemory::size))
 				.findAny()
-				.map(BlockDeviceMemory::reallocate);
+				.map(DeviceMemory::reallocate);
 	}
 
 	/**

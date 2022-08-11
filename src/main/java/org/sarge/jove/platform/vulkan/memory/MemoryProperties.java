@@ -8,20 +8,19 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.lib.util.Check;
 
 /**
- * A set of <i>memory properties</i> specifies the usage and requirements of a memory request.
+ * A set of <i>memory properties</i> specifies the purpose and requirements of a memory request.
  * <p>
- * In general a consumer will allocate memory that matches the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
+ * In general the client requests memory for the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
  * <br>
- * Note that this implementation does not apply any assumptions or constraints on the relationship between the optimal and required memory property sets.
+ * Note that this implementation does not apply any assumptions or constraints on the relationship between the optimal and required memory properties.
  * <p>
  * Example for the properties of an image:
  * <pre>
  * var props = new MemoryProperties.Builder&lt;VkImageUsageFlag&gt;()
- *     .usage(VkImageUsage.COLOR_ATTACHMENT)
+ *     .usage(VkImageUsageFlag.COLOR_ATTACHMENT)
  *     .mode(VkSharingMode.CONCURRENT)
  *     .optimal(VkMemoryProperty.HOST_COHERENT)
- *     .build()
- * </pre>
+ *     .build()</pre>
  * <p>
  * @param <T> Usage enumeration
  * @author Sarge
@@ -55,33 +54,25 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 
 		/**
 		 * Adds a <i>required</i> memory property.
-		 * @param flag Required memory property
+		 * @param prop Required memory property
 		 */
-		public Builder<T> required(VkMemoryProperty flag) {
-			required.add(notNull(flag));
+		public Builder<T> required(VkMemoryProperty prop) {
+			required.add(notNull(prop));
 			return this;
 		}
 
 		/**
 		 * Adds an <i>optimal</i> memory property.
-		 * @param flag Optimal memory property
+		 * @param prop Optimal memory property
 		 */
-		public Builder<T> optimal(VkMemoryProperty flag) {
-			optimal.add(notNull(flag));
+		public Builder<T> optimal(VkMemoryProperty prop) {
+			optimal.add(notNull(prop));
 			return this;
 		}
 
 		/**
-		 * Helper - Copies the <i>required</i> properties to the <i>optional</i> properties.
-		 */
-		public Builder<T> optimal() {
-			optimal.addAll(required);
-			return this;
-		}
-
-		/**
-		 * Adds a usage for this memory.
-		 * @param usage Memory usage
+		 * Adds a usage flag for this memory.
+		 * @param usage Memory usage flag
 		 */
 		public Builder<T> usage(T usage) {
 			this.usage.add(notNull(usage));
@@ -98,8 +89,8 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		}
 
 		/**
-		 * Constructs this memory request.
-		 * @return New memory request
+		 * Constructs this memory properties instance.
+		 * @return New memory properties
 		 */
 		public MemoryProperties<T> build() {
 			return new MemoryProperties<>(usage, mode, required, optimal);

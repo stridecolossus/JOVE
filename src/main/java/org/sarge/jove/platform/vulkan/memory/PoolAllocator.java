@@ -18,14 +18,14 @@ import org.sarge.lib.util.Check;
  */
 public class PoolAllocator implements Allocator {
 	private final Allocator allocator;
-	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
-	private final AllocationPolicy policy;
 	private final int max;
+	private final AllocationPolicy policy;
+	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
 	private int count;
 
 	/**
 	 * Constructor.
-	 * @param allocator 	Underlying allocator
+	 * @param allocator 	Delegate allocator
 	 * @param max			Maximum number of allocations
 	 * @param policy		Allocation policy
 	 */

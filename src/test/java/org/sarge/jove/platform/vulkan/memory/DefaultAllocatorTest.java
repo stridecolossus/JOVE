@@ -12,26 +12,24 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class DefaultAllocatorTest extends AbstractVulkanTest {
 	private MemoryType type;
+	private Allocator allocator;
 
 	@BeforeEach
 	void before() {
 		final Heap heap = new Heap(0, Set.of());
 		type = new MemoryType(1, heap, Set.of());
+		allocator = new DefaultAllocator(dev);
 	}
 
 	@Test
 	void allocate() {
-		// Create default allocator
-		final Allocator allocator = new DefaultAllocator(dev);
-		assertNotNull(allocator);
-
 		// Allocate memory
 		final long size = 42;
 		final DeviceMemory mem = allocator.allocate(type, size);
 		assertNotNull(mem);
 		assertEquals(size, mem.size());
 
-		// Init expected descriptor
+		// Check API
 		final var expected = new VkMemoryAllocateInfo() {
 			@Override
 			public boolean equals(Object obj) {
@@ -42,8 +40,6 @@ public class DefaultAllocatorTest extends AbstractVulkanTest {
 				return true;
 			}
 		};
-
-		// Check API
 		verify(lib).vkAllocateMemory(dev, expected, null, factory.pointer());
 	}
 }

@@ -1,26 +1,20 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.sarge.jove.platform.vulkan.VkMemoryProperty.HOST_CACHED;
-import static org.sarge.jove.platform.vulkan.VkMemoryProperty.HOST_VISIBLE;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.platform.vulkan.VkMemoryProperty.*;
 import static org.sarge.jove.platform.vulkan.VkSharingMode.CONCURRENT;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkImageUsageFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties.Builder;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
 
 public class MemoryPropertiesTest {
 	private static final Set<VkImageUsageFlag> USAGE = Set.of(VkImageUsageFlag.COLOR_ATTACHMENT);
 	private static final Set<VkMemoryProperty> REQUIRED = Set.of(HOST_VISIBLE);
 	private static final Set<VkMemoryProperty> OPTIMAL = Set.of(HOST_VISIBLE, HOST_CACHED);
 
-	private MemoryProperties props;
+	private MemoryProperties<VkImageUsageFlag> props;
 
 	@BeforeEach
 	void before() {
@@ -36,30 +30,36 @@ public class MemoryPropertiesTest {
 	}
 
 	@Test
-	void invalidUsageEmpty() {
-		assertThrows(IllegalArgumentException.class, () -> new MemoryProperties(Set.of(), CONCURRENT, REQUIRED, OPTIMAL));
+	void equals() {
+		assertEquals(props, props);
+		assertNotEquals(props, null);
 	}
 
 	@Nested
 	class BuilderTests {
-		private Builder builder;
+		private MemoryProperties.Builder<VkImageUsageFlag> builder;
 
 		@BeforeEach
 		void before() {
-			builder = new Builder();
+			builder = new MemoryProperties.Builder<>();
 		}
 
 		@Test
 		void build() {
-			final MemoryProperties result = builder
+			builder
 					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
 					.mode(CONCURRENT)
 					.required(HOST_VISIBLE)
-					.optimal()
+					.optimal(HOST_VISIBLE)
 					.optimal(HOST_CACHED)
 					.build();
 
-			assertEquals(props, result);
+			assertEquals(props, builder.build());
+		}
+
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 	}
 }

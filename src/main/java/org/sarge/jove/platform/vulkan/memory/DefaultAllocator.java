@@ -1,8 +1,7 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -11,7 +10,7 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * Default implementation that allocates new device memory on demand.
+ * An <i>allocator</i> is responsible for allocating device memory.
  * @author Sarge
  */
 public class DefaultAllocator implements Allocator {

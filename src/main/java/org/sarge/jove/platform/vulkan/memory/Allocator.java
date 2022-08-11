@@ -4,7 +4,6 @@ package org.sarge.jove.platform.vulkan.memory;
  * An <i>allocator</i> is responsible for allocating device memory.
  * @author Sarge
  */
-@FunctionalInterface
 public interface Allocator {
 	/**
 	 * An <i>allocation exception</i> is thrown when this allocator cannot allocate memory.

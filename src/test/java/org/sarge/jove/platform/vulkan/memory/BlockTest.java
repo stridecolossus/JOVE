@@ -1,20 +1,12 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 
 public class BlockTest {
@@ -77,7 +69,7 @@ public class BlockTest {
 
 	@Nested
 	class BlockDeviceMemoryTests {
-		private BlockDeviceMemory allocation;
+		private DeviceMemory allocation;
 
 		@BeforeEach
 		void before() {
@@ -110,14 +102,8 @@ public class BlockTest {
 
 		@Test
 		void mapReplacePrevious() {
-			// Map region
-			final Region region = allocation.map();
-
-			// Init previous mapping on underlying memory
 			final Region prev = mock(Region.class);
 			when(mem.region()).thenReturn(Optional.of(prev));
-
-			// Map again and check previous mapping is released
 			allocation.map();
 			verify(prev).unmap();
 		}

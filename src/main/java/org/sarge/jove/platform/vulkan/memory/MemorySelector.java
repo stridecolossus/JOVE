@@ -20,6 +20,7 @@ public class MemorySelector {
 	 * Creates a memory selector for the given device.
 	 * @param dev Logical device
 	 * @return New memory selector
+	 * @see MemoryType#enumerate(VkPhysicalDeviceMemoryProperties)
 	 */
 	public static MemorySelector create(LogicalDevice dev) {
 		// Retrieve supported memory types

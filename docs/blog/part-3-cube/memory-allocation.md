@@ -9,20 +9,19 @@ title: Memory Allocation
 - [Overview](#overview)
 - [Device Memory](#device-memory)
 - [Memory Pool](#memory-pool)
-- [Enhancements](#enhancements)
+- [Allocation Strategy](#allocation-strategy)
 
 ---
 
 ## Overview
 
-In the following chapters we will be implementing vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).
+The following chapters will implement vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).
 
-A Vulkan implementation specifies a set of _memory types_ such that the application can select the appropriate memory type depending on the usage scenario.  The [documentation](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html) suggests implementing a _fallback strategy_ when selecting the memory type.  The application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
+A Vulkan implementation specifies a set of _memory types_ from which an application can select depending on the usage scenario.  The suggests implementing a _fallback strategy_ when selecting the memory type: the application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 
-Additionally the maximum number of memory allocations supported by the hardware is limited.  A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool (growing the available memory as required).  Initially we will allocate a new memory block for every request and then extend the implementation to use a memory pool.
+Additionally the maximum number of memory allocations supported by the hardware is limited.  A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool and growing the available memory as required.  Initially we will allocate a new memory block for each request and then extend the implementation to use a memory pool.
 
 References:
-
 - [VkPhysicalDeviceMemoryProperties](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html)
 - [Custom Allocators (Blog)](http://kylehalladay.com/blog/tutorial/2017/12/13/Custom-Allocators-Vulkan.html)
 
@@ -68,7 +67,7 @@ public interface DeviceMemory extends TransientNativeObject {
 A _region_ is a _mapped_ segment of this memory that can be accessed for read or write operations:
 
 ```java
-public interface Region {
+interface Region {
     /**
      * @return Size of this region (bytes)
      */
@@ -91,23 +90,11 @@ public interface Region {
 }
 ```
 
-### Default Implementation
-
-A new domain object is created for the default implementation:
+Next a default implementation is created:
 
 ```java
 public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
     private final long size;
-
-    public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long size) {
-        super(handle, dev);
-        this.len = oneOrMore(size);
-    }
-
-    @Override
-    public long size() {
-        return size;
-    }
 
     @Override
     protected Destructor<DefaultDeviceMemory> destructor(VulkanLibrary lib) {
@@ -116,7 +103,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 }
 ```
 
-With an inner class for a mapped region of the memory:
+With an inner class for the mapped region of the memory:
 
 ```java
 public class DefaultDeviceMemory ... {
@@ -140,10 +127,10 @@ public class DefaultDeviceMemory ... {
 }
 ```
 
-The `map` method creates a mapped region for the memory:
+The `map` method creates the mapped region for the memory:
 
 ```java
-public synchronized Region map(long offset, long size) {
+public Region map(long offset, long size) {
     // Map memory
     DeviceContext dev = this.device();
     VulkanLibrary lib = dev.library();
@@ -157,31 +144,23 @@ public synchronized Region map(long offset, long size) {
 }
 ```
 
-Note that only one mapped region is permitted for a given device memory object.
+Note that only one mapped region is permitted for a given device memory instance.
 
-An NIO buffer can then be retrieved from a mapped region to read or write to the memory:
+An NIO buffer can then be retrieved from the mapped region to read or write to the memory:
 
 ```java
 public ByteBuffer buffer(long offset, long size) {
-    checkMapped();
-    if(offset + size > this.size) throw new IllegalArgumentException(...);
     return ptr.getByteBuffer(offset, size);
 }
 ```
 
-Finally a mapped region can be released:
+Finally the mapped region can be released:
 
 ```java
-public synchronized void unmap() {
-    // Validate mapping is active
-    checkMapped();
-
-    // Release mapping
+public void unmap() {
     DeviceContext dev = device();
     VulkanLibrary lib = dev.library();
     lib.vkUnmapMemory(dev, DefaultDeviceMemory.this);
-
-    // Clear mapping
     region = null;
 }
 ```
@@ -247,7 +226,7 @@ The Vulkan documentation outlines the suggested approach for selecting the appro
 
 4. Or fall back to the _required_ properties.
 
-The allocation algorithm is encapsulated in a new component:
+This algorithm is encapsulated in a new component:
 
 ```java
 public class MemorySelector {
@@ -323,10 +302,9 @@ public static MemorySelector create(LogicalDevice dev) {
 
 ### Memory Allocation
 
-Next we introduce an _allocator_ which is responsible for allocating memory of a given type:
+The second abstraction is an _allocator_ which is responsible for allocating memory of a given type:
 
 ```java
-@FunctionalInterface
 public interface Allocator {
     /**
      * An <i>allocation exception</i> is thrown when this allocator cannot allocate memory.
@@ -346,11 +324,14 @@ public interface Allocator {
 }
 ```
 
-The default implementation simply allocates new memory on request:
+The default implementation simply allocates new memory on demand:
 
 ```java
-static Allocator allocator(DeviceContext dev) {
-    return (type, size) -> {
+public class DefaultAllocator implements Allocator {
+    private final DeviceContext dev;
+
+    @Override
+    public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
         // Init memory descriptor
         var info = new VkMemoryAllocateInfo();
         info.allocationSize = oneOrMore(size);
@@ -363,13 +344,13 @@ static Allocator allocator(DeviceContext dev) {
 
         // Create memory wrapper
         return new DefaultDeviceMemory(ref.getValue(), dev, size);
-    };
+    }
 }
 ```
 
 Note that the actual size of the allocated memory may be larger than the requested length depending on how the hardware handles alignment.
 
-All the above components are brought together into the following service which is the entry-point for allocation of device memory:
+The selector and allocator are then composed into a new service that is responsible for memory allocation:
 
 ```java
 public class AllocationService {
@@ -400,9 +381,9 @@ interface Library {
 
 ### Overview
 
-With a basic memory framework in place we can now implement a memory pool.
+With a basic memory framework in place we can now implement the memory pool.
 
-Our requirements are:
+The requirements for the pool are as follows:
 
 - One pool per memory type.
 
@@ -414,11 +395,11 @@ Our requirements are:
 
 - The allocator and pool(s) should provide useful statistics to the application, e.g. number of allocations, free memory, etc.
 
-To support these requirements a second device memory implementation is introduced for a _block_ of memory managed by the pool.  Memory requests are then served from a block with available free memory or new blocks are created on demand to grow the pool.
+To support these requirements a second memory implementation is introduced for a _block_ of memory managed by the pool, requests are then served from a block with available free memory or new blocks are created on demand.
 
 ### Memory Blocks
 
-A memory block is a wrapper for a memory instance and maintains the list of allocations from that block:
+A block is a wrapper for a device memory instance and maintains the allocations from the block:
 
 ```java
 class Block {
@@ -437,7 +418,7 @@ class Block {
 }
 ```
 
-Memory is allocated from the end of the block indicated by the `next` free-space offset:
+Memory requests are allocated from the end of the block indicated by the `next` free-space offset:
 
 ```java
 BlockDeviceMemory allocate(long size) {
@@ -467,13 +448,8 @@ class BlockDeviceMemory implements DeviceMemory {
     }
     
     @Override
-    public synchronized void destroy() {
-        checkAlive();
+    public void destroy() {
         destroyed = true;
-    }
-
-    private void checkAlive() {
-        if(isDestroyed()) throw new IllegalStateException(...);
     }
 }
 ```
@@ -496,7 +472,6 @@ class BlockDeviceMemory implements DeviceMemory {
 
     @Override
     public Region map(long offset, long size) {
-        checkAlive();
         mem.region().ifPresent(Region::unmap);
         return mem.map(offset, size);
     }
@@ -538,7 +513,7 @@ long free() {
 Where `ALIVE` is a simple helper constant:
 
 ```java
-static final Predicate<BlockDeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
+Predicate<DeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
 ```
 
 ### Pool
@@ -552,7 +527,7 @@ public class MemoryPool {
     private final List<Block> blocks = new ArrayList<>();
     private long total;
 
-    synchronized DeviceMemory allocate(long size) {
+    DeviceMemory allocate(long size) {
         ...
     }
 }
@@ -572,7 +547,7 @@ public long free() {
 All memory allocations can be released back to the pool:
 
 ```java
-public synchronized void release() {
+public void release() {
     Stream<? extends DeviceMemory> allocations = this.allocations();
     allocations.forEach(DeviceMemory::close);
     assert free() == total;
@@ -593,7 +568,7 @@ Stream<? extends DeviceMemory> allocations() {
 Destroying the pool also destroys the allocated memory blocks:
 
 ```java
-public synchronized void destroy() {
+public void destroy() {
     for(Block b : blocks) {
         b.destroy();
     }
@@ -607,7 +582,7 @@ To service an allocation request the pool tries the following in order:
 
 1. Find a block with sufficient free memory.
 
-2. Find a released allocation that can be re-allocated.
+2. Or find a released allocation that can be re-allocated.
 
 3. Otherwise allocate a new block.
 
@@ -742,29 +717,13 @@ public synchronized void destroy() {
 }
 ```
 
-Finally accessors are provided for the various pool properties:
-
-```java
-public int count() {
-    return count;
-}
-
-public long free() {
-    return pools.values().stream().mapToLong(Pool::free).sum();
-}
-
-public long size() {
-    return pools.values().stream().mapToLong(Pool::size).sum();
-}
-```
-
 ---
 
-## Enhancements
+## Allocation Strategy
 
 ### Allocation Policy
 
-Next an _allocation policy_ is introduced to modify memory requests to support the following requirements:
+The final abstraction is an _allocation policy_ which modifies memory requests to support the following requirements:
 
 * Configuration of the growth policy for memory pools.
 
@@ -790,7 +749,7 @@ public interface AllocationPolicy {
 }
 ```
 
-Various convenience implementation are provided, in particular the following factory creates a policy to grow a memory pool:
+Various convenience implementations are provided, in particular the following factory creates a policy to grow a memory pool:
 
 ```java
 static AllocationPolicy expand(float scale) {
@@ -852,88 +811,13 @@ public class PageAllocationPolicy implements AllocationPolicy {
 }
 ```
 
-TODO - this is very out of date
+A future chapter will introduce functionality to more easily configure components that are dependant on the device limits.
 
-Next we implement a convenience factory to create and configure a pool allocator based on the hardware:
-
-```java
-public static PoolAllocator create(LogicalDevice dev, Allocator allocator, float expand) {
-    // Init allocator if not specified
-    Allocator delegate = allocator == null ? Allocator.allocator(dev) : allocator;
-
-    // Create paged allocation policy
-    VkPhysicalDeviceLimits limits = dev.parent().properties().limits();
-    AllocationPolicy paged = new PageAllocationPolicy(limits.bufferImageGranularity);
-    AllocationPolicy grow = AllocationPolicy.expand(expand);
-    AllocationPolicy policy = grow.then(paged);
-
-    // Create pool allocator
-    return new PoolAllocator(delegate, limits.maxMemoryAllocationCount, policy);
-}
-```
-
-The `VkPhysicalDeviceLimits` structure is a child of `VkPhysicalDeviceProperties` wrapped by the `Properties` helper class of the physical device:
-
-```java
-public class PhysicalDevice ... {
-    public class Properties {
-        private final VkPhysicalDeviceProperties struct = new VkPhysicalDeviceProperties();
-        ...
-
-        public VkPhysicalDeviceLimits limits() {
-            return struct.limits;
-        }
-    }
-}
-```
-
-However this implementation directly exposes the limits which as a JNA structure is a mutable object, potentially allowing an application to accidentally monkey with the data.  Ideally we would also wrap this information in another immutable domain object, however this structure is absolutely huge and the wrapper approach is simply not viable.  Unfortunately neither is there an obvious means of making a JNA structure immutable.
-
-Instead we introduce a mechanism to _clone_ a JNA structure by copying the underlying memory:
-
-```java
-public abstract class VulkanStructure extends Structure {
-    public <T extends VulkanStructure> T copy() {
-        // Create copy
-        T copy = (T) Structure.newInstance(this.getClass());
-        write();
-
-        // Read backing data
-        int size = this.size();
-        byte[] data = getPointer().getByteArray(0, size);
-
-        // Write to copy
-        copy.getPointer().write(0, data, 0, size);
-        copy.read();
-
-        return copy;
-    }
-}
-```
-
-The accessor for the device `limits` is modified accordingly to clone on demand:
-
-```java
-public VkPhysicalDeviceLimits limits() {
-    return struct.limits.copy();
-}
-```
-
-Obviously this is not an ideal solution since the developer needs to be aware that the accessor clones a new copy on every invocation.
-
-### Allocation Request Routing
+### Routing Policy
 
 It is anticipated that an application will also require different allocation strategies depending on the use-cases for device memory.
 
-For example:
-
-* Applications would probably prefer to avoid frequent mapping of memory that is highly volatile, e.g. a uniform buffer for projection matrices.
-
-* Transient memory is generally explicitly released by an application, e.g. staging buffers.
-
-* A memory pool is generally suitable for similar or frequent types of request (e.g. an image processing application) whereas one-off allocations can probably be arbitrarily satisfied.
-
-To support these different use-cases we introduce a _routing policy_ to the allocation service:
+An allocation service sub-class with a _routing policy_ is introduced for these requirements:
 
 ```java
 public class AllocationService {
@@ -944,7 +828,6 @@ public class AllocationService {
     }
 
     private final List<Route> routes = new ArrayList<>();
-    private final Allocator def;
     ...
 
     public void route(Predicate<MemoryProperties<?>> predicate, Allocator allocator) {
@@ -953,23 +836,21 @@ public class AllocationService {
 }
 ```
 
-The `allocate` method is modified to find the matching route based on the memory properties of the request:
+The appropriate allocator for a given memory request is then determined based on the configured routes:
 
 ```java
-public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-    // Route request
-    Allocator allocator = routes
+@Override
+protected Allocator allocator(MemoryProperties<?> props) {
+    return routes
         .stream()
         .filter(r -> r.predicate().test(props))
         .findAny()
-        .map(r -> r.allocator())
-        .orElse(def);
-
-    // Select memory type and delegate request
-    MemoryType type = selector.select(reqs, props);
-    return allocator.allocate(type, reqs.size);
+        .map(Route::allocator)
+        .orElseGet(() -> super.allocator(props));
 }
 ```
+
+And the base-class is modified by the addition of the new `allocator` provider method.
 
 Notes:
 
@@ -977,11 +858,11 @@ Notes:
 
 * Routes are implicitly ordered.
 
-* The allocator in the constructor is the default if there is no matching route (or no routes are configured).
+* This implementation delegates to the default allocator if there is no matching route.
 
 ---
 
 ## Summary
 
-In this chapter we implemented the framework for memory allocation that will be used when creating vertex buffers and texture images.
+In this chapter the framework for memory allocation was implemented to support vertex buffers and texture images.
 

@@ -26,7 +26,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	/**
 	 * Constructor.
 	 * @param handle		Memory pointer
-	 * @param dev			Logical device context
+	 * @param dev			Logical device
 	 * @param len			Size of this memory (bytes)
 	 */
 	public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long len) {
@@ -47,10 +47,9 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	/**
 	 * Mapped region implementation.
 	 */
-	@SuppressWarnings("hiding")
 	private class DefaultRegion implements Region {
 		private final Pointer ptr;
-		private final long size;
+		private final long segment;
 		private final long offset;
 
 		/**
@@ -62,18 +61,19 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		private DefaultRegion(Pointer ptr, long offset, long size) {
 			this.ptr = notNull(ptr);
 			this.offset = zeroOrMore(offset);
-			this.size = oneOrMore(size);
+			this.segment = oneOrMore(size);
 		}
 
 		@Override
 		public long size() {
-			return size;
+			return segment;
 		}
 
 		@Override
 		public ByteBuffer buffer(long offset, long size) {
+			checkAlive();
 			checkMapped();
-			if(offset + size > this.size) {
+			if(offset + size > this.segment) {
 				throw new IllegalArgumentException(String.format("Buffer offset/length is larger than region: offset=%d size=%d region=%s", offset, size, this));
 			}
 			return ptr.getByteBuffer(offset, size);
@@ -82,6 +82,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		@Override
 		public void unmap() {
 			// Validate mapping is active
+			checkAlive();
 			checkMapped();
 
 			// Release mapping
@@ -99,7 +100,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 					(obj == this) ||
 					(obj instanceof DefaultRegion that) &&
 					(this.offset == that.offset) &&
-					(this.size == that.size) &&
+					(this.segment == that.segment) &&
 					this.ptr.equals(that.ptr);
 		}
 
@@ -108,7 +109,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 			return new ToStringBuilder(this)
 					.appendSuper(super.toString())
 					.append("offset", offset)
-					.append("size", size)
+					.append("size", segment)
 					.build();
 		}
 	}
@@ -149,10 +150,9 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 	}
 
 	/**
-	 * @throws IllegalStateException if this region has been destroyed or invalidated
+	 * @throws IllegalStateException if the region has been unmapped or invalidated
 	 */
 	private void checkMapped() {
-		checkAlive();
 		if(region == null) throw new IllegalStateException("Memory region has been invalidated: " + this);
 	}
 

@@ -1386,23 +1386,23 @@ bindings.bind(mouse.pointer(), controller::update);
 bindings.bind(mouse.wheel(), controller::zoom);
 ```
 
-Finally we modify the matrix bean to apply the local rotation to the chalet model and to calculate the final projection matrix:
+Finally the matrix bean is modified to apply the local rotation to the chalet model and to build the final projection matrix:
 
 ```java
 @Bean
-public Task matrix(ResourceBuffer uniform) {
+public FrameListener matrix(ResourceBuffer uniform) {
     Matrix x = Rotation.matrix(Vector.X, MathsUtil.toRadians(90));
     Matrix y = Rotation.matrix(Vector.Y, MathsUtil.toRadians(-120));
     Matrix model = y.multiply(x);
 
-    return () -> {
-        final Matrix matrix = projection.multiply(cam.matrix()).multiply(model);
+    return (start, end) -> {
+        Matrix matrix = projection.multiply(cam.matrix()).multiply(model);
         uniform.load(matrix);
     };
 }
 ```
 
-When we run the application we should now be able to use the mouse to look around the chalet model and zoom in using the scroll wheel.  Nice.
+We should now be able to use the mouse to look around the chalet model and zoom in using the scroll wheel.  Nice.
 
 ---
 

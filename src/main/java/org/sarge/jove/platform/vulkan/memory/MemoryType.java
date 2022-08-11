@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.memory;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -11,8 +10,7 @@ import org.sarge.lib.util.Check;
  * A <i>memory type</i> specifies the properties of a type of memory supported by the hardware.
  * @author Sarge
  */
-@SuppressWarnings("unused")
-public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties) {
+public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> properties) {
 	/**
 	 * Constructor.
 	 * @param index				Index

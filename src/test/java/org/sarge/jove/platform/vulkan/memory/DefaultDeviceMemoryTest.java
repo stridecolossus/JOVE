@@ -1,8 +1,9 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
@@ -11,20 +12,17 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	private static final int SIZE = 3;
 
 	private DefaultDeviceMemory mem;
 	private Pointer handle;
-	private byte[] array;
 
 	@BeforeEach
 	void before() {
 		handle = mock(Pointer.class);
 		mem = new DefaultDeviceMemory(handle, dev, SIZE);
-		array = new byte[SIZE];
 	}
 
 	@Test
@@ -32,142 +30,182 @@ public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		assertEquals(new Handle(handle), mem.handle());
 		assertEquals(false, mem.isDestroyed());
 		assertEquals(SIZE, mem.size());
-		assertEquals(Optional.empty(), mem.region());
-	}
-
-	@Test
-	void destroy() {
-		mem.map();
-		mem.destroy();
-		assertEquals(true, mem.isDestroyed());
-		assertEquals(Optional.empty(), mem.region());
 	}
 
 	@Test
 	void equals() {
-		assertEquals(true, mem.equals(mem));
-		assertEquals(true, mem.equals(new DefaultDeviceMemory(handle, dev, SIZE)));
-		assertEquals(false, mem.equals(null));
-		assertEquals(false, mem.equals(mock(DeviceMemory.class)));
-		assertEquals(false, mem.equals(new DefaultDeviceMemory(handle, dev, 42)));
+		assertEquals(mem, mem);
+		assertEquals(mem, new DefaultDeviceMemory(handle, dev, SIZE));
+		assertNotEquals(mem, null);
+		assertNotEquals(mem, mock(DeviceMemory.class));
 	}
 
+
+	@DisplayName("A newly allocated device memory instance...")
 	@Nested
-	class MappingTests {
+	class Allocated {
+		@DisplayName("is initially unmapped")
+		@Test
+		void region() {
+			assertEquals(Optional.empty(), mem.region());
+		}
+
+		@DisplayName("can be mapped")
 		@Test
 		void map() {
-			final Region region = mem.map();
-			assertNotNull(region);
-			assertEquals(Optional.of(region), mem.region());
-			verify(lib).vkMapMemory(dev, mem, 0, SIZE, 0, factory.pointer());
+			assertNotNull(mem.map());
 		}
 
+		@DisplayName("cannot map a region larger than the memory")
 		@Test
-		void mapSegment() {
-			final Region region = mem.map(1, 2);
-			assertNotNull(region);
-			assertEquals(Optional.of(region), mem.region());
-			verify(lib).vkMapMemory(dev, mem, 1, 2, 0, factory.pointer());
+		void invalid() {
+			assertThrows(IllegalArgumentException.class, () -> mem.map(1, SIZE));
 		}
 
+		@DisplayName("can be destroyed")
 		@Test
-		void mapAlreadyMapped() {
-			mem.map();
-			assertThrows(IllegalStateException.class, () -> mem.map());
+		void destroy() {
+			mem.destroy();
+			assertEquals(true, mem.isDestroyed());
 		}
 
+		@DisplayName("cannot be reallocated by default")
 		@Test
-		void mapInvalidSize() {
-			assertThrows(IllegalArgumentException.class, () -> mem.map(0, 0));
-			assertThrows(IllegalArgumentException.class, () -> mem.map(4, 0));
-		}
-
-		@Test
-		void mapInvalidOffset() {
-			assertThrows(IllegalArgumentException.class, () -> mem.map(SIZE, 1));
+		void reallocate() {
+			assertThrows(UnsupportedOperationException.class, () -> mem.reallocate());
 		}
 	}
 
+	@DisplayName("A mapped device memory instance...")
 	@Nested
-	class RegionTests {
+	class Mapped {
 		private Region region;
-		private Pointer ptr;
 
 		@BeforeEach
 		void before() {
-			// Create mapped memory pointer
-			ptr = mock(Pointer.class);
-
-			// Init reference factory for this pointer (note by-ref has to be mocked for getValue() to work)
-			final PointerByReference ref = mock(PointerByReference.class);
-			when(factory.pointer()).thenReturn(ref);
-			when(ref.getValue()).thenReturn(ptr);
-
-			// Map memory region
 			region = mem.map();
 		}
 
+		@DisplayName("has a region mapping")
 		@Test
-		void constructor() {
+		void region() {
 			assertNotNull(region);
 			assertEquals(SIZE, region.size());
 			assertEquals(Optional.of(region), mem.region());
 		}
 
+		@DisplayName("cannot be mapped more than once")
 		@Test
-		void buffer() {
-			region.buffer();
-			verify(ptr).getByteBuffer(0, SIZE);
+		void map() {
+			assertThrows(IllegalStateException.class, () -> mem.map());
 		}
 
-		@Test
-		void bufferSegment() {
-			region.buffer(2, 1);
-			verify(ptr).getByteBuffer(2, 1);
-		}
-
-		@Test
-		void bufferInvalidLength() {
-			assertThrows(IllegalArgumentException.class, () -> region.buffer(0, 4));
-			assertThrows(IllegalArgumentException.class, () -> region.buffer(1, 3));
-		}
-
-		@Test
-		void bufferDestroyed() {
-			mem.destroy();
-			assertThrows(IllegalStateException.class, () -> region.buffer());
-		}
-
-		@Test
-		void bufferReleased() {
-			region.unmap();
-			assertThrows(IllegalStateException.class, () -> region.buffer());
-		}
-
+		@DisplayName("can be unmapped")
 		@Test
 		void unmap() {
 			region.unmap();
 			assertEquals(Optional.empty(), mem.region());
-			verify(lib).vkUnmapMemory(dev, mem);
 		}
 
+		@DisplayName("can provide a buffer for read-write operations")
 		@Test
-		void unmapAlreadyReleased() {
-			region.unmap();
-			assertThrows(IllegalStateException.class, () -> region.unmap());
+		void buffer() {
+			final ByteBuffer bb = region.buffer();
+			assertNotNull(bb);
+			assertEquals(SIZE, bb.capacity());
 		}
 
+		@DisplayName("cannot provide a buffer larger than the region")
 		@Test
-		void unmapDestroyed() {
+		void invalid() {
+			assertThrows(IllegalArgumentException.class, () -> region.buffer(1, SIZE));
+		}
+
+		@DisplayName("can be destroyed")
+		@Test
+		void destroy() {
 			mem.destroy();
-			assertThrows(IllegalStateException.class, () -> region.unmap());
+			assertEquals(true, mem.isDestroyed());
+			assertEquals(Optional.empty(), mem.region());
 		}
 
 		@Test
 		void equals() {
-			assertEquals(true, region.equals(region));
-			assertEquals(false, region.equals(null));
-			assertEquals(false, region.equals(mock(Region.class)));
+			assertEquals(region, region);
+			assertNotEquals(region, null);
+			assertNotEquals(region, mock(Region.class));
+		}
+	}
+
+	@DisplayName("An unmapped memory region...")
+	@Nested
+	class Unmapped {
+		private Region region;
+
+		@BeforeEach
+		void before() {
+			region = mem.map();
+			region.unmap();
+		}
+
+		@DisplayName("can be re-mapped")
+		@Test
+		void map() {
+			mem.map();
+		}
+
+		@DisplayName("cannot be unmapped more than once")
+		@Test
+		void unmap() {
+			assertThrows(IllegalStateException.class, () -> region.unmap());
+		}
+
+		@DisplayName("cannot no longer provide a buffer")
+		@Test
+		void buffer() {
+			assertThrows(IllegalStateException.class, () -> region.buffer());
+		}
+	}
+
+	@DisplayName("A destroyed memory instance...")
+	@Nested
+	class Destroyed {
+		private Region region;
+
+		@BeforeEach
+		void before() {
+			region = mem.map();
+			mem.destroy();
+		}
+
+		@DisplayName("cannot be mapped")
+		@Test
+		void map() {
+			assertThrows(IllegalStateException.class, () -> mem.map());
+		}
+
+		@DisplayName("cannot be unmapped")
+		@Test
+		void unmap() {
+			assertThrows(IllegalStateException.class, () -> region.unmap());
+		}
+
+		@DisplayName("is automatically unmapped")
+		@Test
+		void unmapped() {
+			assertEquals(Optional.empty(), mem.region());
+		}
+
+		@DisplayName("cannot provide a buffer")
+		@Test
+		void buffer() {
+			assertThrows(IllegalStateException.class, () -> region.buffer());
+		}
+
+		@DisplayName("cannot be destroyed again")
+		@Test
+		void destroy() {
+			assertThrows(IllegalStateException.class, () -> mem.destroy());
 		}
 	}
 }

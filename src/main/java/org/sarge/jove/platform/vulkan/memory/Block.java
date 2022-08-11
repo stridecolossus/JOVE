@@ -11,9 +11,9 @@ import org.sarge.jove.common.Handle;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>block</i> is a chunk of memory managed by a {@link MemoryPool}.
+ * A <i>block</i> is an area of device memory managed by a {@link MemoryPool} from which allocations can be served.
  * <p>
- * Note that the mapped region can be silently released by this implementation since only one mapped region is permitted per block.
+ * Note that the mapped region can be silently released by this implementation since only one region is permitted per memory instance.
  * <p>
  * @author Sarge
  */
@@ -21,7 +21,7 @@ class Block {
 	/**
 	 * Active memory filter.
 	 */
-	static final Predicate<BlockDeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
+	public static final Predicate<DeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
 
 	private final DeviceMemory mem;
 	private final List<BlockDeviceMemory> allocations = new ArrayList<>();
@@ -54,7 +54,7 @@ class Block {
 	/**
 	 * @return Allocated memory in this block
 	 */
-	Stream<BlockDeviceMemory> allocations() {
+	Stream<? extends DeviceMemory> allocations() {
 		return allocations.stream();
 	}
 
@@ -63,7 +63,7 @@ class Block {
 	 * @param size Memory size
 	 * @return New memory allocation
 	 * @throws IllegalStateException if this block has been released
-	 * @throws IllegalArgumentException if {@link #size} is larger than the available free space
+	 * @throws IllegalArgumentException if the given size is larger than the available free space
 	 */
 	BlockDeviceMemory allocate(long size) {
 		// Validate
@@ -104,7 +104,7 @@ class Block {
 	/**
 	 * Proxy implementation for memory allocated from this block.
 	 */
-	class BlockDeviceMemory implements DeviceMemory {
+	private class BlockDeviceMemory implements DeviceMemory {
 		private final long offset;
 		private final long size;
 
@@ -149,12 +149,10 @@ class Block {
 			return mem.map(offset, size);
 		}
 
-		/**
-		 * Reallocates this memory.
-		 */
-		BlockDeviceMemory reallocate() {
-			if(!destroyed) throw new IllegalStateException("Device memory has not been destroyed: " + this);
-			if(mem.isDestroyed()) throw new IllegalStateException("Device memory cannot be reallocated: " + this);
+		@Override
+		public DeviceMemory reallocate() {
+			if(!destroyed) throw new IllegalStateException("Block allocation cannot be reallocated: " + this);
+			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
 			destroyed = false;
 			return this;
 		}
@@ -176,7 +174,7 @@ class Block {
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(offset, size);
+			return Objects.hash(mem, offset, size);
 		}
 
 		@Override
@@ -186,7 +184,7 @@ class Block {
 					(obj instanceof BlockDeviceMemory that) &&
 					(this.size == that.size) &&
 					(this.offset == that.offset) &&
-					(this.handle().equals(that.handle()));
+					this.handle().equals(that.handle());
 		}
 
 		@Override
