@@ -108,7 +108,7 @@ class BoundingBoxTest {
 		void intersect() {
 			final Intersection intersection = box.intersect(ray);
 			assertNotNull(intersection);
-			assertEquals(List.of(1f, 2f), intersection.distances());
+			assertArrayEquals(new float[]{1, 2}, intersection.distances());
 		}
 
 		@DisplayName("A ray can intersect a corner of a bounding box")
@@ -136,7 +136,7 @@ class BoundingBoxTest {
 		void parallel() {
 			final Intersection intersection = box.intersect(new Ray(new Point(2, 2, 0), Vector.X));
 			assertNotNull(intersection);
-			assertEquals(List.of(1f, 3f), intersection.distances());
+			assertArrayEquals(new float[]{1, 3}, intersection.distances());
 		}
 
 		@DisplayName("A ray does not intersect a bounding box if the direction is parallel to that box")

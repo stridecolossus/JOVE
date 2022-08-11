@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import static org.sarge.jove.util.MathsUtil.*;
 import static org.sarge.lib.util.Check.*;
 
-import java.util.*;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -111,12 +111,12 @@ public class SphereVolume implements Volume {
 			final float b = nearest + offset;
 			if(len < r) {
 				// Ray origin is inside the sphere
-				return List.of(b);
+				return new float[]{b};
 			}
 			else {
 				// Ray is outside the sphere (two intersections)
 				final float a = nearest - offset;
-				return List.of(a, b);
+				return new float[]{a, b};
 			}
 		};
 	}
@@ -139,12 +139,12 @@ public class SphereVolume implements Volume {
 			return () -> {
 				final float dist = len - nearest * nearest;
 				final float offset = MathsUtil.sqrt(r - dist);
-				return List.of(offset + nearest);
+				return new float[]{offset + nearest};
 			};
 		}
 		else {
 			// Ray originates on the sphere surface
-			return Intersection.of(0f);
+			return Intersection.ZERO;
 		}
 	}
 
@@ -179,7 +179,11 @@ public class SphereVolume implements Volume {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof SphereVolume that) && this.centre.equals(that.centre) && MathsUtil.isEqual(this.radius, that.radius);
+		return
+				(obj == this) ||
+				(obj instanceof SphereVolume that) &&
+				this.centre.equals(that.centre) &&
+				MathsUtil.isEqual(this.radius, that.radius);
 	}
 
 	@Override

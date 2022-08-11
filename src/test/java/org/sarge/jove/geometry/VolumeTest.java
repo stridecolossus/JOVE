@@ -3,8 +3,6 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.spy;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
@@ -42,7 +40,7 @@ class VolumeTest {
 		void intersectsRay() {
 			final Intersection intersection = Volume.EMPTY.intersect(null);
 			assertNotNull(intersection);
-			assertEquals(List.of(), intersection.distances());
+			assertArrayEquals(new float[0], intersection.distances());
 		}
 
 		@Test

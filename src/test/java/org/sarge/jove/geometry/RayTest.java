@@ -1,13 +1,8 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 class RayTest {
@@ -35,17 +30,14 @@ class RayTest {
 	class IntersectionTests {
 		@Test
 		void none() {
-			assertEquals(List.of(), Intersection.NONE.distances());
-			assertEquals(true, Intersection.NONE.equals(Intersection.NONE));
+			assertArrayEquals(new float[0], Intersection.NONE.distances());
 		}
 
 		@Test
 		void of() {
-			final float result = 42;
-			final Intersection intersection = Intersection.of(result);
+			final Intersection intersection = Intersection.of(1, 2);
 			assertNotNull(intersection);
-			assertEquals(List.of(result), intersection.distances());
-			assertEquals(true, intersection.equals(intersection));
+			assertArrayEquals(new float[]{1, 2}, intersection.distances());
 		}
 	}
 }

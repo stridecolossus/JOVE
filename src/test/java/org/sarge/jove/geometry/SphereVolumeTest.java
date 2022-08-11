@@ -5,8 +5,6 @@ import static org.mockito.Mockito.*;
 import static org.sarge.jove.geometry.Vector.*;
 import static org.sarge.jove.util.MathsUtil.*;
 
-import java.util.Arrays;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.util.MathsUtil;
@@ -155,14 +153,14 @@ class SphereVolumeTest {
 		 * @param origin			Ray origin
 		 * @param expected			Expected intersection points (X axis only, relative to ray origin)
 		 */
-		private void test(Point origin, Float... expected) {
-			// Calc expected distances relative to ray origin
-			final var list = Arrays.stream(expected).map(n -> n - origin.x).toList();
+		private void test(Point origin, float... expected) {
+//			// Calc expected distances relative to ray origin
+//			final var list = Arrays.stream(expected).map(n -> n - origin.x).toList();
 
 			// Check intersection results
 			final Intersection result = sphere.intersect(new Ray(origin, X));
 			assertNotNull(result);
-			assertEquals(list, result.distances());
+			assertArrayEquals(expected, result.distances());
 		}
 
 		@DisplayName("Sphere behind, does not intersect")
@@ -174,13 +172,13 @@ class SphereVolumeTest {
 		@DisplayName("Sphere behind, ray originates inside the sphere")
 		@Test
 		void behindInside() {
-			test(new Point(1, 0, 0), RADIUS);
+			test(new Point(1, 0, 0), 2);
 		}
 
 		@DisplayName("Sphere behind, ray originates on the sphere surface")
 		@Test
 		void behindTouching() {
-			test(new Point(RADIUS, 0, 0), RADIUS);
+			test(new Point(RADIUS, 0, 0), 0);
 		}
 
 		@DisplayName("Sphere ahead, does not intersect")
@@ -192,20 +190,20 @@ class SphereVolumeTest {
 		@DisplayName("Sphere ahead, ray originates inside the sphere")
 		@Test
 		void inside() {
-			test(new Point(-1, 0, 0), RADIUS);
+			test(new Point(-1, 0, 0), 4);
 		}
 
 		@DisplayName("Sphere ahead, intersects twice")
 		@Test
 		void intersects() {
 			// TODO
-			test(new Point(-OUTSIDE, 0, 0), -RADIUS, RADIUS);
+			test(new Point(-OUTSIDE, 0, 0), 1, 7);
 		}
 
 		@DisplayName("Sphere ahead, ray originates on the sphere surface")
 		@Test
 		void touching() {
-			test(new Point(-RADIUS, 0, 0), -RADIUS, RADIUS);
+			test(new Point(-RADIUS, 0, 0), 0, 6);
 		}
 	}
 
