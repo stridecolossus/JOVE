@@ -173,9 +173,9 @@ public static class Builder {
 }
 ```
 
-We prefer to specify the render pass by an object graph of the sub-passes and attachments references, whereas the underlying Vulkan descriptors use indices to refer to attachments (and later on sub-pass dependencies).  However all of these are transient objects that have no relevance once the render pass has been instantiated.  Additionally the application does not care about the attachment indices, unlike (for example) vertex attributes which are dependant on the shader layout.
+We prefer to specify the render pass by an object graph of the sub-passes and attachments, whereas the underlying Vulkan descriptors use indices to refer to attachments (and later on sub-pass dependencies).  However all of these are transient objects that have no relevance once the render pass has been instantiated.  Additionally the application does not care about the attachment indices, unlike (for example) vertex attributes which are dependant on the shader layout.
 
-Therefore the render pass builder _allocates_ attachment indices by the introduction of the over-ridden `allocate` protected method:
+Therefore the render pass builder _allocates_ attachment indices by the introduction of the over-ridden `allocate` method:
 
 ```java
 public static class Builder {
@@ -354,11 +354,11 @@ Attachment attachment = new Attachment.Builder()
 The render pass consists of a single sub-pass to render the colour attachment:
 
 ```java
-Subpass subpass = new Subpass.Builder()
-    .colour(new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL))
+return new RenderPass.Builder()
+    .subpass()
+        .colour(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
+        .build()
     .build();
-
-return RenderPass.create(dev, List.of(subpass));
 ```
 
 Finally a frame buffer is created:
@@ -368,7 +368,7 @@ View view = swapchain.views().get(0);
 FrameBuffer fb = FrameBuffer.create(pass, swapchain.extents(), view);
 ```
 
-Although the swapchain supports multiple attachments the demo will use a single frame-buffer until a proper rendering loop in implemented later.
+Although the swapchain supports multiple attachments the demo will use a single frame-buffer until a proper rendering loop is implemented later.
 
 ---
 
@@ -376,7 +376,7 @@ Although the swapchain supports multiple attachments the demo will use a single 
 
 ### Background
 
-Although we are perhaps half-way to our goal of rendering a triangle it is already apparent that our demo is becoming unwieldy:
+Although we are perhaps half-way to our goal of rendering a triangle it is already apparent that the demo is becoming unwieldy:
 
 * The main application code is one large, imperative method.
 
@@ -384,7 +384,7 @@ Although we are perhaps half-way to our goal of rendering a triangle it is alrea
 
 * All components are created and managed in a single source file rather than being factoring out to discrete, coherent classes.
 
-What we have is a 'God class' which will become harder to navigate and maintain as we add more code to the demo.  We _could_ abandon OO design principles and just follow the often seen C/C++ practice of declaring all components as mutable class members in a single class, but this only hides (and obfuscates) the inter-dependencies and does not address the shear volume of code.
+What we have is a 'God class' which will become harder to navigate and maintain as more code is added to the demo.  
 
 The obvious solution is to use a _dependency injection_ framework that manages the components and dependencies for us, freeing development to focus on each component in relative isolation.  For this we will use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks.
 
@@ -405,7 +405,9 @@ public class TriangleDemo {
 
 This should run the new application though it obviously doesn't do anything yet.
 
-Spring Boot is essentially a _container_ for the components that comprise the application, and is responsible for handling the lifecycle of each component and _auto-wiring_ the dependencies at instantiation time.  When the application is started Spring performs a _component scan_ of the project to identify the _beans_ to be managed by the container, which by default starts at the package containing the main class.
+Spring Boot is essentially a _container_ for the components that comprise the application, and is responsible for handling the lifecycle of each component and _auto-wiring_ the dependencies at instantiation time.
+
+When the application is started Spring performs a _component scan_ of the project to identify the _beans_ to be managed by the container, which by default starts at the package containing the main class.
 
 We start by factoring out the various desktop components into a Spring _configuration_ class:
 
@@ -435,7 +437,7 @@ class DesktopConfiguration {
 }
 ```
 
-The `@Configuration` annotation denotes a class containing a number of `@Bean` methods that create the components to be managed by the container.  Note that Spring beans are generally singleton instances.
+The `@Configuration` annotation denotes a class containing a number of `@Bean` methods that create components to be managed by the container.
 
 Here we can see the benefits of using dependency injection:
 
@@ -445,7 +447,9 @@ Here we can see the benefits of using dependency injection:
 
 * Components are instantiated by the container in logical order inferred from the dependencies, e.g. for the troublesome surface handle.
 
-This should result in code that is both simpler to develop and (more importantly) considerably easier to refactor and fix.  In particular we no longer need to be concerned about dependencies when new components are added or existing components are modified.
+* Note that Spring beans are generally singleton instances.
+
+This should result in code that is both simpler to develop and (more importantly) considerably easier to refactor and fix.  In particular we no longer need to be concerned about dependencies when components are added or modified.
 
 However one disadvantage of this approach is that the swapchain cannot be easily recreated when it is invalidated, e.g. when the window is minimised or resized.  This functionality is deferred to a future chapter.
 
@@ -501,7 +505,7 @@ class DeviceConfiguration {
 }
 ```
 
-In this case we also use _constructor injection_ to inject the surface handle for the `presentation` queue selector.
+In this case _constructor injection_ is used to inject the surface handle for the `presentation` queue selector.
 
 The bean methods for the devices are straight-forward:
 
@@ -527,7 +531,7 @@ public LogicalDevice device(PhysicalDevice dev) {
 }
 ```
 
-Finally we expose the resultant work queues:
+Finally the resultant work queues are exposed:
 
 ```java
 @Bean
@@ -545,9 +549,7 @@ The swapchain, render pass and frame buffers are instantiated similarly.
 
 ### Cleanup
 
-Spring provides a couple of other bonuses when we address cleanup of the various Vulkan components.
-
-The following bean processor is registered to release all native JOVE objects:
+Spring offers another bonuses when cleaning up the various Vulkan components on application termination.  The following bean processor releases all native JOVE objects:
 
 ```java
 @Bean
@@ -555,7 +557,7 @@ static DestructionAwareBeanPostProcessor destroyer() {
     return new DestructionAwareBeanPostProcessor() {
         @Override
         public void postProcessBeforeDestruction(Object bean, String beanName) throws BeansException {
-            if(bean instanceof TransientNativeObject obj) {
+            if(bean instanceof TransientNativeObject obj && !obj.isDestroyed()) {
                 obj.destroy();
             }
         }
@@ -563,7 +565,7 @@ static DestructionAwareBeanPostProcessor destroyer() {
 }
 ```
 
-Alternatively the container also invokes an _inferred_ public destructor method named `close` or `shutdown` on all registered beans, though we prefer the less obtrusive (and more explicit) approach using the bean processor.
+Alternatively the container invokes _inferred_ public destructor methods named `close` or `shutdown` on registered beans, though we prefer the more explicit approach.
 
 Finally the container also ensures that components are destroyed in the correct reverse order (inferred from the dependencies) removing another responsibility from the developer.
 
@@ -573,7 +575,7 @@ Nice.
 
 ## Summary
 
-In this chapter we implemented the render pass and frame-buffer components required for presentation.
+In this chapter the render pass and frame-buffer components required for presentation were implemented.
 
-We also introduced Spring Boot to manage the various inter-dependant Vulkan components.
+Spring Boot was introduced to manage the various inter-dependant Vulkan components.
 

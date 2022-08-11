@@ -238,22 +238,16 @@ Next the common pattern is abstracted by implementing a new general parser for v
 class VertexComponentParser<T extends Bufferable> implements Parser {
     private final float[] array;
     private final Function<float[], T> ctor;
-    private final BiConsumer<ObjectModel, T> consumer;
+    private final VertexComponentList<T> list;
 }
 ```
 
-Where:
-
-* _T_ is the component type.
-
-* _ctor_ is a method reference to the _array constructor_ for a given type of component.
-
-* _consumer_ is a reference to a setter method of the model for that vertex component.
+Where _T_ is the component type and _ctor_ is a method reference to the _array constructor_ of that type.
 
 To continue the example, the parser for a vertex position is specified as follows:
 
 ```java
-new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position);
+new VertexComponentParser<>(Point.SIZE, Point::new, model.positions());
 ```
 
 The parse method follows the steps outlined above:
@@ -265,11 +259,11 @@ public void parse(String[] args, ObjectModel model) {
         array[n] = Float.parseFloat(args[n + 1]);
     }
 
-    // Create object using array constructor
+    // Create component
     T value = ctor.apply(array);
 
     // Add to model
-    consumer.accept(model, value);
+    list.add(value);
 }
 ```
 
@@ -277,9 +271,9 @@ Finally built-in parsers are registered for the common vertex components:
 
 ```java
 public ObjectModelLoader() {
-    add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, ObjectModel::position));
-    add("vt", new VertexComponentParser<>(2, Coordinate2D::new, ObjectModel::coordinate));
-    add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, ObjectModel::normal));
+    add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, model.positions()));
+    add("vt", new VertexComponentParser<>(2, Coordinate2D::new, model.coordinates()));
+    add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, model.normals()));
 }
 ```
 
@@ -332,7 +326,7 @@ Finally the components are looked up by index, wrapped into a vertex instance, a
 ```java
 public void vertex(int v, Integer vn, Integer vt) {
     // Add vertex position
-    List<Bufferable> components = new ArrayList<>();
+    var components = new ArrayList<Bufferable>();
     components.add(positions.get(v));
 
     // Add optional normal
@@ -432,7 +426,7 @@ Where the `GROUP` parser delegates to the `start` method to begin a new group.
 
 ### De-Duplication
 
-From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is de-duplicate the model before rendering and introduce an _index buffer_ to to reduce the total amount of data (at the expense of a second buffer for the index itself).
+From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to de-duplicate the model before rendering and introduce an _index buffer_ to to reduce the total amount of data, at the expense of a second buffer for the index itself.
 
 First an optional index buffer is added to the model definition:
 

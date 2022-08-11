@@ -581,7 +581,7 @@ A slight irritation that only came to light during this chapter is that there ar
 
 ```java
 static VkImageSubresourceRange toRange(SubResource res) {
-    final var range = new VkImageSubresourceRange();
+    var range = new VkImageSubresourceRange();
     range.aspectMask = IntegerEnumeration.reduce(res.aspects());
     range.baseMipLevel = res.mipLevel();
     range.levelCount = res.levelCount();
@@ -591,7 +591,7 @@ static VkImageSubresourceRange toRange(SubResource res) {
 }
 
 static VkImageSubresourceLayers toLayers(SubResource res) {
-    final var layers = new VkImageSubresourceLayers();
+    var layers = new VkImageSubresourceLayers();
     layers.aspectMask = IntegerEnumeration.reduce(res.aspects());
     layers.mipLevel = res.mipLevel();
     layers.baseArrayLayer = res.baseArrayLayer();

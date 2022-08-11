@@ -231,7 +231,7 @@ private static Coordinate2D flip(float[] array) {
 And the parser in the OBJ loader is updated accordingly:
 
 ```java
-add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, ObjectModel::coordinate));
+add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, model.coordinates()));
 ```
 
 We assume that this will apply to all OBJ models, it can always be made an optional feature if that assumption turns out to be incorrect.
@@ -244,7 +244,7 @@ The model now looks to be textured correctly, in particular the signs on the fro
 
 ### Pipeline Stage
 
-To resolve the issue of overlapping fragments, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are not rendered.  The depth test is uses a _depth buffer_ which is an attachment that stores the depth of each rendered fragment, discarding subsequent fragments that are closer to the camera.
+To resolve the issue of overlapping fragments, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are not rendered.  The depth test uses the _depth buffer_ which is a special attachment that records the depth of each rendered fragment, discarding subsequent fragments that are closer to the camera.
 
 The depth test is configured by a new pipeline stage:
 

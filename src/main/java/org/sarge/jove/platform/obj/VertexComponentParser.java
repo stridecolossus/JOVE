@@ -42,7 +42,7 @@ class VertexComponentParser<T extends Bufferable> implements Parser {
 			array[n] = Float.parseFloat(args[n + 1]);
 		}
 
-		// Create object using array constructor
+		// Create component
 		final T value = ctor.apply(array);
 
 		// Add to model
