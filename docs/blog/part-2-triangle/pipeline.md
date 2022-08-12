@@ -15,13 +15,13 @@ title: The Graphics Pipeline
 
 ## Overview
 
-The _graphics pipeline_ configures the various _stages_ executed by the hardware to render vertices and fragments.
+The _graphics pipeline_ configures the various _stages_ executed by the hardware to perform rendering.
 
 A pipeline stage is either a configurable _fixed function_ or a _programmable stage_ implemented by a _shader module_.
 
 Configuring the pipeline requires a large amount of information for even the simplest case although much of this data is often default or empty structures.
 
-In this chapter we will implement the mandatory fixed-function and _vertex shader_ stages required for the triangle demo.
+In this chapter we will implement the mandatory fixed-function and shader stages required for the triangle demo.
 
 ---
 
@@ -84,7 +84,7 @@ Our goals for configuration of the pipeline are:
 
 1. Implement a fluid interface for pipeline construction.
 
-2. Apply sensible defaults for the optional pipeline stages to reduce the amount of boiler-plate for a given application.
+2. Apply sensible defaults for the optional pipeline stages to minimise the amount of boiler-plate for a given application.
 
 3. Factor out the code for configuration of the pipeline stages into separate classes for maintainability and testability.
 
@@ -107,7 +107,7 @@ public static class Builder {
 }
 ```
 
-Next nested builders are added for the mandatory fixed-function pipeline stages:
+Next nested builders are added for the fixed-function pipeline stages:
 
 ```java
 private final VertexInputStageBuilder input = new VertexInputStageBuilder();
@@ -192,7 +192,7 @@ Where `Rectangle` is another trivial record type:
 public record Rectangle(int x, int y, int width, int height)
 ```
 
-Te builder provides methods to add viewports and scissor rectangles:
+The builder provides methods to add viewports:
 
 ```java
 public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
@@ -200,13 +200,29 @@ public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile 
     return this;
 }
 
+public ViewportPipelineStageBuilder viewport(Rectangle rect) {
+    return viewport(rect, Percentile.ZERO, Percentile.ONE);
+}
+```
+
+And scissor rectangles:
+
+```java
 public ViewportStageBuilder scissor(Rectangle rect) {
     scissors.add(notNull(rect));
     return this;
 }
 ```
 
-And additional convenience overloads (not shown) for the common cases of a viewport with default min/max rendering depth and a scissor rectangle with the same dimensions.
+The following overloaded helper is added to the parent pipeline builder for the common case of a single viewport and scissor rectangle with the same dimensions:
+
+```java
+public Builder viewport(Rectangle rect) {
+    viewport.viewport(rect);
+    viewport.scissor(rect);
+    return this;
+}
+```
 
 Finally the builder populates the Vulkan descriptor for the viewport stage:
 
@@ -252,7 +268,7 @@ Note there are separate fields for the number of viewports and scissors but they
 
 ### Shader Module
 
-The other component that must be implemented to render the triangle is a programmable pipeline stage to support the _vertex shader_:
+The other component that must be implemented to render the triangle is a programmable pipeline stage to support the _vertex_ and _fragement_ shaders:
 
 ```java
 public class Shader extends AbstractVulkanObject {
@@ -263,7 +279,7 @@ public class Shader extends AbstractVulkanObject {
 }
 ```
 
-Shaders are created via a factory method that converts the SPIV code to a byte-buffer:
+Shaders are created via a factory method that first converts the SPIV code to a byte-buffer:
 
 ```java
 public static Shader create(LogicalDevice dev, byte[] code) {
@@ -326,10 +342,9 @@ public static class Builder {
 }
 ```
 
-A new shader stage is configured via the following factory method:
+A shader stage is configured via the following factory method:
 
 ```java
-
 public ShaderStageBuilder shader(VkShaderStage stage) {
     var shader = new ShaderStageBuilder(stage);
     if(shaders.containsKey(stage)) throw new IllegalArgumentException(...);
@@ -342,7 +357,6 @@ Finally the descriptor for the shader is populated as follows:
 
 ```java
 void populate(VkPipelineShaderStageCreateInfo info) {
-    validate();
     info.stage = stage;
     info.module = shader.handle();
     info.pName = name;
@@ -351,7 +365,7 @@ void populate(VkPipelineShaderStageCreateInfo info) {
 
 ### Conclusion
 
-The parent builder can now be completed, which first populates the Vulkan descriptor for the pipeline itself:
+The parent builder can now be completed by first populating the Vulkan descriptor for the pipeline itself:
 
 ```java
 public Pipeline build(LogicalDevice dev) {
@@ -369,7 +383,7 @@ public Pipeline build(LogicalDevice dev) {
 }
 ```
 
-Next the fixed-function stages are retrieved from the various sub-builders and added:
+Next the fixed-function stages are retrieved from the various sub-builders:
 
 ```java
 pipeline.pVertexInputState = input.get();
@@ -416,7 +430,7 @@ Note that Vulkan supports creation of multiple pipelines in one operation but th
 
 ### Vertex Shader
 
-The vertex shader hard-codes the triangle vertices and passes the colour for each vertex through to the fragment shader:
+The vertex shader hard-codes the triangle vertices and passes the colour of each vertex through to the fragment shader:
 
 ```glsl
 #version 450
@@ -447,7 +461,7 @@ Notes:
 
 * All shader code is copied as-is from the tutorial.
 
-The colour for each vertex is simply passed through to the next stage by the fragment shader:
+The colour for each vertex is simply passed through to the rasterizer by the fragment shader:
 
 ```glsl
 #version 450

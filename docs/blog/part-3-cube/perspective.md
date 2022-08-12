@@ -9,6 +9,7 @@ title: Perspective Projection
 - [Overview](#overview)
 - [View Transformation](#view-transformation)
 - [Cube Model](#cube-model)
+- [Integration](#integration)
 
 ---
 
@@ -197,6 +198,7 @@ public static VulkanBuffer uniform(LogicalDevice dev, AllocationService allocato
         .usage(VkBufferUsage.UNIFORM_BUFFER)
         .required(VkMemoryProperty.HOST_VISIBLE)
         .required(VkMemoryProperty.HOST_COHERENT)
+        .copy()
         .build();
 
     VulkanBuffer uniform = VulkanBuffer.create(dev, allocator, matrix.length(), props);
@@ -661,9 +663,13 @@ Vertex vertex = Vertex.of(pos, coord);
 model.add(vertex);
 ```
 
-### Integration
+---
 
-In the demo we replace the hard-coded quad vertices with the cube model:
+## Integration
+
+### Model
+
+In the demo the hard-coded quad vertices are replaced by a cube model:
 
 ```java
 public class VertexBufferConfiguration {
@@ -819,7 +825,7 @@ Hopefully we can now finally see the goal for this chapter: the proverbial rotat
 
 Huzzah!
 
-Note that there are still several problems with this crude render loop that will be addressed in the next few chapters:
+Note there are a number of problems with this crude render loop that will be addressed in the next few chapters:
 
 * The GLFW event queue thread is still blocked.
 

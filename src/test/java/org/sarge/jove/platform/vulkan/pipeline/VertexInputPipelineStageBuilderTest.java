@@ -4,13 +4,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
-import java.util.List;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkVertexInputRate;
+import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.platform.vulkan.*;
 
 public class VertexInputPipelineStageBuilderTest {
 	private static final VkFormat FORMAT = VkFormat.B8G8R8_SINT;
@@ -72,7 +69,7 @@ public class VertexInputPipelineStageBuilderTest {
 
 	@Test
 	void buildAddVertexLayout() {
-		final var layout = List.of(Layout.floats(1), Layout.floats(2));
+		final var layout = CompoundLayout.of(Layout.floats(1), Layout.floats(2));
 		final var descriptor = builder.add(layout).get();
 		assertNotNull(descriptor);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);

@@ -503,7 +503,7 @@ And finally the domain object is created wrapping the image:
 return new DefaultImage(handle.getValue(), dev, descriptor, mem);
 ```
 
-The image API is extended accordingly:
+A new API is created for images:
 
 ```java
 interface Library {
@@ -511,7 +511,6 @@ interface Library {
     void vkDestroyImage(DeviceContext device, Image image, Pointer pAllocator);
     void vkGetImageMemoryRequirements(LogicalDevice device, Pointer image, VkMemoryRequirements pMemoryRequirements);
     int  vkBindImageMemory(LogicalDevice device, Pointer image, DeviceMemory memory, long memoryOffset);
-    ...
 }
 ```
 
@@ -531,7 +530,7 @@ public interface SubResource {
 }
 ```
 
-We note that the existing `ImageDescriptor` is essentially a sub-resource with default (zero) values for the MIP level and array layer, therefore the descriptor is refactored accordingly:
+We note that the existing `ImageDescriptor` is essentially a sub-resource with default values for the MIP level and array layer, therefore the descriptor is refactored accordingly:
 
 ```java
 public record ImageDescriptor(...) implements SubResource {
@@ -616,7 +615,7 @@ static VkImageSubresourceLayers toLayers(SubResource res) {
 The process of copying the image data from the staging buffer to the texture is a command:
 
 ```java
-public class ImageCopyCommand implements Command {
+public class ImageCopyCommand extends ImmediateCommand {
     private final Image image;
     private final VulkanBuffer buffer;
     private final VkBufferImageCopy[] regions;
@@ -640,14 +639,10 @@ public static class Builder {
 }
 ```
 
-A copy command is comprised of a number of _copy regions_ which are specified by a transient record:
+A copy command is comprised of a number of _copy regions_ which are specified by a new type:
 
 ```java
-public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
-    public static class Builder {
-        ...
-    }
-}
+public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents)
 ```
 
 The descriptor for each copy region is populated as follows:
@@ -689,10 +684,6 @@ A _texture sampler_ is used by a shader to sample a colour from the texture:
 
 ```java
 public class Sampler extends AbstractVulkanObject {
-    public static final float VK_LOD_CLAMP_NONE = 1000;
-
-    ...
-    
     @Override
     protected Destructor<Sampler> destructor(VulkanLibrary lib) {
         return lib::vkDestroySampler;
@@ -704,6 +695,8 @@ A sampler is configured via a builder which is essentially a wrapper for the und
 
 ```java
 public static class Builder {
+    public static final float VK_LOD_CLAMP_NONE = 1000;
+
     private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
 
     public Builder() {
@@ -735,17 +728,25 @@ public Builder wrap(int component, VkSamplerAddressMode mode) {
 A convenience enumeration is also provided that somewhat simplifies selecting an addressing mode:
 
 ```java
-public enum Wrap {
-    REPEAT,
-    EDGE,
-    BORDER;
+public enum AddressMode {
+    REPEAT(VkSamplerAddressMode.REPEAT, VkSamplerAddressMode.MIRRORED_REPEAT),
+    EDGE(VkSamplerAddressMode.CLAMP_TO_EDGE, VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE),
+    BORDER(VkSamplerAddressMode.CLAMP_TO_BORDER, null);
 
-    public VkSamplerAddressMode mode(boolean mirror) {
-        return switch(this) {
-            case REPEAT -> mirror ? VkSamplerAddressMode.MIRRORED_REPEAT : VkSamplerAddressMode.REPEAT;
-            case EDGE -> mirror ? VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE : VkSamplerAddressMode.CLAMP_TO_EDGE;
-            case BORDER -> VkSamplerAddressMode.CLAMP_TO_BORDER;
-        };
+    private final VkSamplerAddressMode mode, mirrored;
+
+    private AddressMode(VkSamplerAddressMode mode, VkSamplerAddressMode mirrored) {
+        this.mode = notNull(mode);
+        this.mirrored = mirrored;
+    }
+
+    public VkSamplerAddressMode mode() {
+        return mode;
+    }
+
+    public VkSamplerAddressMode mirror() {
+        if(mirrored == null) throw new IllegalStateException(...);
+        return mirrored;
     }
 }
 ```
@@ -775,7 +776,7 @@ interface Library {
 A _pipeline barrier_ is a command used to synchronise access to images, buffers and memory objects within the pipeline:
 
 ```java
-public class Barrier implements Command {
+public class Barrier extends ImmediateCommand {
     private final int src, dest;
     private final VkImageMemoryBarrier[] images;
 
@@ -805,9 +806,7 @@ public static class Builder {
     private final Set<VkPipelineStage> srcStages = new HashSet<>();
     private final Set<VkPipelineStage> destStages = new HashSet<>();
     private final List<ImageBarrierBuilder> images = new ArrayList<>();
-    
-    ...
-    
+
     public Barrier build() {
         var array = StructureHelper.array(images, VkImageMemoryBarrier::new, ImageBarrierBuilder::populate);
         return new Barrier(srcStages, destStages, array);
@@ -845,9 +844,9 @@ private void populate(VkImageMemoryBarrier barrier) {
 
 The last piece of functionality needed for the texture is some means of determining the _component mapping_ for an image when creating the texture view.
 
-Native images have channels in `ABGR` order whereas Vulkan textures are generally `RGBA`, the component mapping allows the image view to _swizzle_ the image channels as required.
+Java images have channels in `ABGR` order whereas Vulkan textures are generally `RGBA`, the component mapping allows the image view to _swizzle_ the channels as required.
 
-A new utility class constructs the appropriate component mapping from the _components_ property of the image layout:
+A new utility class constructs the appropriate component mapping from the _components_ property of the image:
 
 ```java
 public final class ComponentMapping {
@@ -911,7 +910,7 @@ Note that a new instance is constructed on invocation since JNA structures are m
 
 We now have all the components required to load an image to the hardware and create the texture sampler.
 
-We start with a new configuration class:
+The texture is loaded by a new configuration class:
 
 ```java
 @Configuration
@@ -930,7 +929,7 @@ public class TextureConfiguration {
 }
 ```
 
-In the `texture` bean method the image is loaded from the file-system:
+In the `texture` bean the image is loaded from the file-system:
 
 ```java
 ImageData.Loader loader = new NativeImageLoader();
@@ -963,6 +962,7 @@ var props = new MemoryProperties.Builder<VkImageUsage>()
     .usage(VkImageUsage.TRANSFER_DST)
     .usage(VkImageUsage.SAMPLED)
     .required(VkMemoryProperty.DEVICE_LOCAL)
+    .copy()
     .build();
 ```
 
@@ -986,7 +986,7 @@ new Barrier.Builder()
         .destination(VkAccess.TRANSFER_WRITE)
         .build()
     .build()
-    .submitAndWait(graphics);
+    .submit(graphics);
 ```
 
 The image data is transferred to a staging buffer:
@@ -1004,7 +1004,7 @@ new ImageCopyCommand.Builder()
     .layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
     .region(CopyRegion.of(descriptor))
     .build()
-    .submitAndWait(graphics);
+    .submit(graphics);
 ```
 
 Which is then transitioned again ready for use by the sampler:
@@ -1020,7 +1020,7 @@ new Barrier.Builder()
         .destination(VkAccess.SHADER_READ)
         .build()
     .build()
-    .submitAndWait(graphics);
+    .submit(graphics);
 ```
 
 The component mapping for the texture is determined from the image by the new helper:

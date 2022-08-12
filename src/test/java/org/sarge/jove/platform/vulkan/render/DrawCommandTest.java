@@ -4,10 +4,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Model.Header;
@@ -46,7 +45,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 	@Test
 	void model() {
 		final Bufferable data = mock(Bufferable.class);
-		final Model model = new Model(new Header(Primitive.TRIANGLES, 3, List.of(Point.LAYOUT)), data, data);
+		final Model model = new Model(new Header(Primitive.TRIANGLES, 3, CompoundLayout.of(Point.LAYOUT)), data, data);
 		final DrawCommand draw = DrawCommand.of(model);
 		draw.execute(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
+import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.MathsUtil;
 
@@ -24,6 +25,27 @@ public class SamplerTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertEquals(new Handle(new Pointer(1)), sampler.handle());
+	}
+
+	@Nested
+	class AddressModeTests {
+		@Test
+		void modes() {
+			assertEquals(VkSamplerAddressMode.REPEAT, AddressMode.REPEAT.mode());
+			assertEquals(VkSamplerAddressMode.CLAMP_TO_EDGE, AddressMode.EDGE.mode());
+			assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, AddressMode.BORDER.mode());
+		}
+
+		@Test
+		void mirrored() {
+			assertEquals(VkSamplerAddressMode.MIRRORED_REPEAT, AddressMode.REPEAT.mirror());
+			assertEquals(VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE, AddressMode.EDGE.mirror());
+		}
+
+		@Test
+		void invalid() {
+			assertThrows(IllegalStateException.class, () -> AddressMode.BORDER.mirror());
+		}
 	}
 
 	@Nested

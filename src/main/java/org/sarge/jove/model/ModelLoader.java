@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.io.*;
 import org.sarge.jove.model.Model.Header;
 
@@ -41,7 +42,8 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		final Bufferable index = helper.buffer(in);
 
 		// Create model
-		return new Model(new Header(primitive, count, layouts), vertices, index);
+		final Header header = new Header(primitive, count, new CompoundLayout(layouts));
+		return new Model(header, vertices, index);
 	}
 
 	/**
@@ -58,7 +60,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		out.writeInt(header.count());
 
 		// Write vertex layout
-		final List<Layout> layouts = header.layout();
+		final List<Layout> layouts = header.layout().layouts();
 		out.writeInt(layouts.size());
 		for(Layout c : layouts) {
 			helper.write(c, out);

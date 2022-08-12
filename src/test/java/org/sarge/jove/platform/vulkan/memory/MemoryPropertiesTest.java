@@ -44,6 +44,7 @@ public class MemoryPropertiesTest {
 			builder = new MemoryProperties.Builder<>();
 		}
 
+		@DisplayName("Memory properties can be constructed using a builder")
 		@Test
 		void build() {
 			builder
@@ -57,9 +58,24 @@ public class MemoryPropertiesTest {
 			assertEquals(props, builder.build());
 		}
 
+		@DisplayName("The memory properties must contain at least one usage flag")
 		@Test
 		void empty() {
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@DisplayName("The optimal properties can be copied from the required properties")
+		@Test
+		void copy() {
+			builder
+					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
+					.mode(CONCURRENT)
+					.required(HOST_VISIBLE)
+					.optimal(HOST_CACHED)
+					.copy()
+					.build();
+
+			assertEquals(props, builder.build());
 		}
 	}
 }

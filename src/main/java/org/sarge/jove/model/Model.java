@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
@@ -24,7 +25,7 @@ public class Model {
 	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(Primitive primitive, int count, List<Layout> layout) {
+	public record Header(Primitive primitive, int count, CompoundLayout layout) {
 		/**
 		 * Maximum length of a {@code short} index buffer.
 		 */
@@ -43,13 +44,13 @@ public class Model {
 		public Header {
 			Check.notNull(primitive);
 			Check.zeroOrMore(count);
-			layout = List.copyOf(layout);
+			Check.notNull(layout);
 
 			if(!primitive.isValidVertexCount(count)) {
 				throw new IllegalArgumentException(String.format("Invalid number of model vertices %d for primitive %s", count, primitive));
 			}
 
-			final boolean normals = layout.stream().anyMatch(e -> e == NORMALS);
+			final boolean normals = layout.layouts().stream().anyMatch(e -> e == NORMALS);
 			if(normals && !primitive.isNormalSupported()) {
 				throw new IllegalArgumentException("Vertex normals are not supported by primitive: " + primitive);
 			}
@@ -211,19 +212,19 @@ public class Model {
 			}
 
 			// Create model
-			final Header header = new Header(primitive, count, layout);
-			final Bufferable data = vertices();
+			final Header header = new Header(primitive, count, new CompoundLayout(layout));
+			final Bufferable data = vertices(header);
 			return new Model(header, data, indices);
 		}
 
 		/**
 		 * Constructs the vertex buffer.
 		 */
-		private Bufferable vertices() {
+		private Bufferable vertices(final Header header) {
 			return new Bufferable() {
 				@Override
 				public int length() {
-					return Layout.stride(layout) * vertices.size();
+					return header.layout().stride() * vertices.size();
 				}
 
 				@Override

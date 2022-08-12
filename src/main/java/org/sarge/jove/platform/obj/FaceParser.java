@@ -3,9 +3,9 @@ package org.sarge.jove.platform.obj;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * The <i>face parser</i> parses an OBJ face command.
+ * The <i>face parser</i> parses the OBJ face command.
  * <p>
- * A <i>face</i> is comprised of a set of <i>vertices</i> each consisting of the following indices into the model:
+ * Each <i>face</i> is a polygon of <i>vertices</i> each comprising the following indices into the model:
  * <ul>
  * <li>vertex (or position)</li>
  * <li>texture coordinate</li>
@@ -14,25 +14,25 @@ import org.apache.commons.lang3.StringUtils;
  * <p>
  * Notes:
  * <ul>
- * <li>The {@code normal} and {@code texture coordinate} are both optional</li>
- * <li>Indices start at <b>one</b></li>
- * <li>An index can also be <i>negative</i> relative to the current size of the model, e.g. -1 is the <i>last</i> element</li>
+ * <li>The normal and texture coordinate are optional</li>
+ * <li>Indices start at <b>one</b> and can be negative</li>
  * <li><b>Constraint</b> This implementation assumes all faces are <b>triangles</b></li>
  * </ul>
  * <p>
  * Face format:
  * <p>
  * Each face is specified as a slash-delimited tuple of indices.
- * Note that the {@code texture coordinate} is empty for the case where a face vertex is comprised of a vertex and normal.
+ * The texture coordinate component is empty for the case where a face vertex is comprised of a vertex and normal.
  * <p>
  * Examples:
  * <pre>
- *  f 1			// Simple vertex
- *  f 1/2			// Vertex and texture coordinate
- *  f 1/2/3		// Vertex, coordinate and normal
- *  f 1//3		// Vertex and normal
+ * f 1          // Simple vertex
+ * f 1/2        // Vertex and texture coordinate
+ * f 1/2/3      // Vertex, coordinate and normal
+ * f 1//3       // Vertex and normal
  * </pre>
  * @see ObjectModel#position(Integer[])
+ * @see VertexComponentList#get(int)
  * @author Sarge
  */
 class FaceParser implements Parser {

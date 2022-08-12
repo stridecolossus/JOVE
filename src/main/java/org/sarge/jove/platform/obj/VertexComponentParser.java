@@ -21,7 +21,7 @@ class VertexComponentParser<T extends Bufferable> implements Parser {
 	 * Constructor.
 	 * @param size		Size
 	 * @param ctor		Array constructor
-	 * @param list		Vertex component
+	 * @param list		Vertex components
 	 */
 	public VertexComponentParser(int size, Function<float[], T> ctor, VertexComponentList<T> list) {
 		Check.oneOrMore(size);
@@ -34,7 +34,7 @@ class VertexComponentParser<T extends Bufferable> implements Parser {
 	public void parse(String[] args, ObjectModel model) {
 		// Validate
 		if(args.length != array.length + 1) {
-			throw new IllegalArgumentException(String.format("Invalid number of elements: expected=%d actual=%d", array.length, args.length));
+			throw new IllegalArgumentException(String.format("Invalid number of elements: expected=%d actual=%d", array.length, args.length - 1));
 		}
 
 		// Convert to array

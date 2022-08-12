@@ -1,22 +1,12 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.VkPipelineVertexInputStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkVertexInputAttributeDescription;
-import org.sarge.jove.platform.vulkan.VkVertexInputBindingDescription;
-import org.sarge.jove.platform.vulkan.VkVertexInputRate;
+import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.StructureHelper;
 
@@ -53,21 +43,21 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * <li>Vertex data is assumed to be contiguous, i.e. the offset of each component is the end of the previous element</li>
 	 * </ul>
 	 * <p>
-	 * @param layouts Vertex component layouts
+	 * @param layouts Vertex layout
 	 */
-	public VertexInputPipelineStageBuilder add(List<Layout> layouts) {
+	public VertexInputPipelineStageBuilder add(CompoundLayout layout) {
 		// Add binding
 		final BindingBuilder binding = new BindingBuilder();
 
 		// Init vertex stride
-		final int stride = Layout.stride(layouts);
+		final int stride = layout.stride();
 		binding.stride(stride);
 
 		// Add attribute for each layout component
 		int offset = 0;
-		for(Layout component : layouts) {
+		for(Layout e : layout.layouts()) {
 			// Determine component format
-			final VkFormat format = FormatBuilder.format(component);
+			final VkFormat format = FormatBuilder.format(e);
 
 			// Add attribute for component
 			new AttributeBuilder(binding)
@@ -76,7 +66,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 					.build();
 
 			// Increment offset to the start of the next attribute
-			offset += component.length();
+			offset += e.length();
 		}
 		assert offset == stride;
 

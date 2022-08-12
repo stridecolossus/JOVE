@@ -211,7 +211,7 @@ public Subpass colour(Attachment colour, VkImageLayout layout) {
 
 This makes the render pass and subpass slightly inter-dependant but effectively hides the indices whilst allowing both classes to be tested in isolation.
 
-In the render pass builder the overall set of attachments is aggregated from the sub-passes:
+In the render pass builder the overall set of attachments is first aggregated from the sub-passes:
 
 ```java
 public RenderPass build(DeviceContext dev) {
@@ -314,7 +314,7 @@ return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
 
 Frame buffer functionality will be developed further when rendering is addressed in the next chapter.
 
-The API for frame buffers is simple:
+The API for frame buffers is also simple:
 
 ```java
 interface Library {
@@ -549,7 +549,7 @@ The swapchain, render pass and frame buffers are instantiated similarly.
 
 ### Cleanup
 
-Spring offers another bonuses when cleaning up the various Vulkan components on application termination.  The following bean processor releases all native JOVE objects:
+Spring offers another bonus when cleaning up the various Vulkan components on application termination.  The following bean processor releases all native JOVE objects:
 
 ```java
 @Bean
@@ -575,7 +575,5 @@ Nice.
 
 ## Summary
 
-In this chapter the render pass and frame-buffer components required for presentation were implemented.
-
-Spring Boot was introduced to manage the various inter-dependant Vulkan components.
+In this chapter the final components required for presentation were implemented and Spring Boot was introduced to manage the various inter-dependant Vulkan components.
 

@@ -74,8 +74,6 @@ A _vertex_ is generally comprised of some or all of the following:
 - texture coordinate
 - colour
 
-Normals and texture coordinates are not required for the triangle demo so these are glossed over in this chapter.
-
 The vertex implementation is a compound object comprised of an arbitrary group of bufferable data:
 
 ```java
@@ -98,7 +96,9 @@ public class Vertex implements Bufferable {
 
 Note that this implementation assumes the vertex data is _interleaved_.
 
-Positions and normals are both floating-point tuples with common functionality, here a small hierarchy is introduced with the following base-class:
+Normals and texture coordinates are not required for the triangle demo so these are glossed over in this chapter.
+
+Positions and vectors are both floating-point tuples with common functionality, here a small hierarchy is introduced with the following base-class:
 
 ```java
 public class Tuple implements Bufferable {
@@ -495,10 +495,11 @@ Next a new helper is added to create a staging buffer:
 
 ```java
 public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
-    var props = new MemoryProperties.Builder<VkBufferUsage>()
-        .usage(VkBufferUsage.TRANSFER_SRC)
+    var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+        .usage(VkBufferUsageFlag.TRANSFER_SRC)
         .required(VkMemoryProperty.HOST_VISIBLE)
         .required(VkMemoryProperty.HOST_COHERENT)
+        .copy()
         .build();
 
     int len = data.length();
@@ -526,54 +527,57 @@ VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, triangle);
 Next the destination buffer on the GPU is instantiated:
 
 ```java
-MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
-    .usage(VkBufferUsage.TRANSFER_DST)
-    .usage(VkBufferUsage.VERTEX_BUFFER)
+var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+    .usage(VkBufferUsageFlag.TRANSFER_DST)
+    .usage(VkBufferUsageFlag.VERTEX_BUFFER)
     .required(VkMemoryProperty.DEVICE_LOCAL)
+    .copy()
     .build();
 
 VulkanBuffer vbo = VulkanBuffer.create(dev, allocator, staging.length(), props);
 ```
 
-The triangle data is copied from the staging buffer to the destination:
+The triangle data can now be copied from the staging buffer:
 
 ```java
 staging
     .copy(vbo)
-    .submitAndWait(pool);
+    .submit(pool);
 ```
 
-And finally the staging buffer can be released:
+And finally the staging buffer is released:
 
 ```java
 staging.destroy();
 ```
 
-The `submitAndWait` method is a new helper on the command class:
+The `submit` method is a helper on a new base-class used by the copy command:
 
 ```java
-default Buffer submitAndWait(Pool pool) {
-    // Allocate and record one-time command
-    final Buffer buffer = pool
+abstract class ImmediateCommand implements Command {
+    public Buffer submit(Pool pool) {
+        // Allocate and record one-time command
+        Buffer buffer = pool
             .allocate()
             .begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
             .add(this)
             .end();
-
-    // Submit work
-    final Work work = Work.of(buffer);
-
-    // Wait for completion
-    pool.waitIdle(); // TODO - synchronise using fence
-
-    // Release resources
-    buffer.free();
-
-    return buffer;
+    
+        // Submit work
+        Work work = Work.of(buffer);
+    
+        // Wait for completion
+        pool.waitIdle(); // TODO - synchronise using fence
+    
+        // Release resources
+        buffer.free();
+    
+        return buffer;
+    }
 }
 ```
 
-Note that this approach currently blocks the entire device, this will be replaced later with proper synchronisation.
+Note that this approach currently blocks the work queue, this will be replaced later with proper synchronisation.
 
 ### Configuration
 
@@ -586,9 +590,9 @@ public Buffer sequence(...) {
         .allocate()
         .begin()
             .add(frame.begin())
-            .add(pipeline.bind())
-            .add(vbo.bind())
-            .add(draw)
+                .add(pipeline.bind())
+                .add(vbo.bind())
+                .add(draw)
             .add(FrameBuffer.END)
         .end();
 }
@@ -646,9 +650,9 @@ void main() {
 }
 ```
 
-(The fragment shader is unchanged).
+Remember that the modified vertex shader will need to recompiled (the fragment shader is unchanged).
 
-If all goes well we should see the same triangle.
+If all goes well we should still see the same triangle.
 
 A good test is to change the vertex positions and/or colours to make sure the new functionality and shader are actually being used.
 

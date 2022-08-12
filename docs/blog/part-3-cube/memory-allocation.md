@@ -17,7 +17,7 @@ title: Memory Allocation
 
 The following chapters will implement vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).
 
-A Vulkan implementation specifies a set of _memory types_ from which an application can select depending on the usage scenario.  The documentation suggests implementing a _fallback strategy_ when selecting the memory type: the application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
+A Vulkan implementation specifies a set of _memory types_ from which an application can select depending on the usage scenario.  The documentation suggests implementing a _fallback strategy_ when selecting the memory type: the application specifies _optimal_ and _minimal_ properties for the requested memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 
 Additionally the maximum number of memory allocations supported by the hardware is limited.  A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool, growing the available memory as required.  Initially we will allocate a new memory instance for each request and then extend the implementation to use a memory pool.
 
@@ -214,6 +214,16 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 
 Note that this type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
 
+A companion builder is implemented to construct the new type with the following convenience method to copy the _required_ properties to the _optimal_ set:
+
+```java
+public Builder<T> copy() {
+    if(required.isEmpty()) throw new IllegalStateException(...);
+    optimal.addAll(required);
+    return this;
+}
+```
+
 ### Memory Selection
 
 The Vulkan documentation outlines the suggested approach for selecting the appropriate memory type for a given allocation request as follows:
@@ -248,15 +258,11 @@ public class MemorySelector {
 The `select` method first enumerates the _candidate_ memory types by applying the filter:
 
 ```java
-public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-    List<MemoryType> candidates = IntStream
-        .range(0, types.length)
-        .filter(n -> ((1 << n) & reqs.memoryTypeBits) == n)
-        .mapToObj(n -> types[n])
-        .toList();
-
-    ...
-}
+List<MemoryType> candidates = IntStream
+    .range(0, types.length)
+    .filter(n -> ((1 << n) & reqs.memoryTypeBits) == n)
+    .mapToObj(n -> types[n])
+    .toList();
 ```
 
 Next the best available type is selected from these candidates:
@@ -272,10 +278,6 @@ Where the `find` method is a helper which matches the memory properties:
 
 ```java
 private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryProperty> props) {
-    if(props.isEmpty()) {
-        return Optional.empty();
-    }
-
     return types
         .stream()
         .filter(type -> type.properties().containsAll(props))
@@ -350,7 +352,7 @@ public class DefaultAllocator implements Allocator {
 
 Note that the actual size of the allocated memory may be larger than the requested length depending on how the hardware handles alignment.
 
-The selector and allocator are then composed into a new service that is responsible for memory allocation:
+The selector and allocator are composed into a new service that is responsible for memory allocation:
 
 ```java
 public class AllocationService {
@@ -774,7 +776,7 @@ default AllocationPolicy then(AllocationPolicy policy) {
 }
 ```
 
-The pool allocator is refactored to apply the allocation policy before delegating the memory pool:
+The pool allocator is refactored to apply the allocation policy before delegating to the memory pool:
 
 ```java
 public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
@@ -817,10 +819,13 @@ A future chapter will introduce functionality to more easily configure component
 
 It is anticipated that an application will also require different allocation strategies depending on the use-cases for device memory.
 
-An allocation service sub-class with a _routing policy_ is introduced for these requirements:
+For example a memory pool could be used for infrequent, one-off memory requests for transferring data to the hardware.
+Whereas it may be more appropriate to pre-allocate a single, fixed memory instance for highly volatile memory such as a uniform buffer.
+
+A sub-class of the allocation service is introduced with a _routing policy_ to support multiple use-cases:
 
 ```java
-public class AllocationService {
+public class AllocationRoutingService extends AllocationService {
     /**
      * Route descriptor.
      */
@@ -828,7 +833,6 @@ public class AllocationService {
     }
 
     private final List<Route> routes = new ArrayList<>();
-    ...
 
     public void route(Predicate<MemoryProperties<?>> predicate, Allocator allocator) {
         routes.add(new Route(predicate, allocator));
@@ -836,7 +840,7 @@ public class AllocationService {
 }
 ```
 
-The appropriate allocator for a given memory request is then determined based on the configured routes:
+The appropriate `allocator` for a given memory request is then determined from the routing policy:
 
 ```java
 @Override

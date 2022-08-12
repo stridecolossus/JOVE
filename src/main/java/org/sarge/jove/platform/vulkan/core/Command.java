@@ -32,37 +32,42 @@ public interface Command {
 	void execute(VulkanLibrary lib, Buffer buffer);
 
 	/**
-	 * Helper - Submits this as a <i>one time</i> command to the given pool and waits for completion.
-	 * @param pool Command pool
-	 * @return New command buffer
-	 * @see Work#submit(Fence)
-	 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
+	 * An <i>immediate command</i> is a convenience base-class for one-off commands such a transfer operations.
 	 */
-	default Buffer submitAndWait(Pool pool) {
-		// Init synchronisation
-		final Fence fence = Fence.create(pool.device());
+	abstract class ImmediateCommand implements Command {
+		/**
+		 * Submits this as a <i>one time</i> command to the given pool and waits for completion.
+		 * @param pool Command pool
+		 * @return Submitted command buffer
+		 * @see Work#submit(Fence)
+		 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
+		 */
+		public Buffer submit(Pool pool) {
+			// Init synchronisation
+			final Fence fence = Fence.create(pool.device());
 
-		// Allocate and record one-time command
-		final Buffer buffer = pool
-				.allocate()
-				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-				.add(this)
-				.end();
+			// Allocate and record one-time command
+			final Buffer buffer = pool
+					.allocate()
+					.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+					.add(this)
+					.end();
 
-		// Submit work
-		new Work.Builder(pool)
-				.add(buffer)
-				.build()
-				.submit(fence);
+			// Submit work
+			new Work.Builder(pool)
+					.add(buffer)
+					.build()
+					.submit(fence);
 
-		// Wait for completion
-		fence.waitReady();
+			// Wait for completion
+			fence.waitReady();
 
-		// Release resources
-		fence.destroy();
-		buffer.free();
+			// Release resources
+			fence.destroy();
+			buffer.free();
 
-		return buffer;
+			return buffer;
+		}
 	}
 
 	/**

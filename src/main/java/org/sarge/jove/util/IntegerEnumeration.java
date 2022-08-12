@@ -26,6 +26,7 @@ import com.sun.jna.*;
  *
  *     private final int value;
  *
+ *     @Override
  *     public int value() {
  *         return value;
  *     }

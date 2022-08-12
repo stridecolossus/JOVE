@@ -43,10 +43,10 @@ Command draw = ...
 
 buffer
     .begin()
-    .add(pass.begin())
-    .add(pipeline.bind())
-    .add(draw)
-    .add(pass.end());
+        .add(pass.begin())
+            .add(pipeline.bind())
+            .add(draw)
+        .add(pass.end());
     .end();
 ```
 
@@ -223,18 +223,13 @@ class Buffer implements NativeObject {
     private final Pool pool;
     private State state = State.INITIAL;
 
-    private Buffer(Pointer handle, Pool pool) {
-        this.handle = new Handle(handle);
-        this.pool = notNull(pool);
-    }
-
     public boolean isReady() {
         return state == State.EXECUTABLE;
     }
 }
 ```
 
-The _state_ member track whether the buffer has been recorded or is ready for execution (the enumeration names are based on the Vulkan documentation).
+The _state_ member tracks whether the buffer has been recorded or is ready for execution (the enumeration names are based on the Vulkan documentation).
 
 The `begin` method starts the recording of a command sequence:
 
@@ -262,7 +257,8 @@ The sequence is then recorded by adding commands:
 ```java
 public Buffer add(Command cmd) {
     if(state != State.RECORDING) throw new IllegalStateException(...);
-    cmd.execute(pool.device().library(), this);
+    VulkanLibrary lib = pool.device().library();
+    cmd.execute(lib, this);
     return this;
 }
 ```
@@ -477,8 +473,8 @@ public class RenderConfiguration {
             .allocate()
             .begin()
                 .add(frame.begin())
-                .add(pipeline.bind())
-                .add(draw)
+                    .add(pipeline.bind())
+                    .add(draw)
                 .add(FrameBuffer.END)
             .end();
     }

@@ -54,7 +54,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param fences		Fences
 	 * @param all			Whether to wait for all or any fence
-	 * @param timeout		Timeout (ms)
+	 * @param timeout		Timeout (nanoseconds)
 	 */
 	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
 		final Pointer array = NativeObject.array(fences);
@@ -152,7 +152,7 @@ public class Fence extends AbstractVulkanObject {
 		 * @param fenceCount		Number of fences
 		 * @param pFences			Fences
 		 * @param waitAll			Whether to wait for <b>all</b> fences or <b>any</b>
-		 * @param timeout			Timeout or {@link Long#MAX_VALUE}
+		 * @param timeout			Timeout or {@link Long#MAX_VALUE} (nanoseconds)
 		 * @return Result
 		 */
 		int vkWaitForFences(DeviceContext device, int fenceCount, Pointer pFences, VulkanBoolean waitAll, long timeout);

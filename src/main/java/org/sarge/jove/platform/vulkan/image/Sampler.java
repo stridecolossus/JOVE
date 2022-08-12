@@ -18,11 +18,6 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Sampler extends AbstractVulkanObject {
 	/**
-	 * Default maximum LOD clamp.
-	 */
-	public static final float VK_LOD_CLAMP_NONE = 1000;
-
-	/**
 	 * Constructor.
 	 * @param handle		Sampler handle
 	 * @param dev			Logical device
@@ -60,36 +55,47 @@ public class Sampler extends AbstractVulkanObject {
 	}
 
 	/**
-	 * The <i>wrapping policy</i> specifies how coordinates outside of the texture are handled.
+	 * The <i>address mode</i> specifies how coordinates outside of the texture are handled.
+	 * @see VkSamplerAddressMode
 	 */
-	public enum Wrap {
+	public enum AddressMode {
 		/**
 		 * Coordinates are repeated.
 		 */
-		REPEAT,
+		REPEAT(VkSamplerAddressMode.REPEAT, VkSamplerAddressMode.MIRRORED_REPEAT),
 
 		/**
 		 * Coordinates are clamped to the edge of the texture.
 		 */
-		EDGE,
+		EDGE(VkSamplerAddressMode.CLAMP_TO_EDGE, VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE),
 
 		/**
 		 * Uses the specified border colour.
 		 * @see Builder#border(VkBorderColor)
 		 */
-		BORDER;
+		BORDER(VkSamplerAddressMode.CLAMP_TO_BORDER, null);
+
+		private final VkSamplerAddressMode mode, mirrored;
+
+		private AddressMode(VkSamplerAddressMode mode, VkSamplerAddressMode mirrored) {
+			this.mode = notNull(mode);
+			this.mirrored = mirrored;
+		}
 
 		/**
-		 * Maps this policy to the sampler addressing mode.
-		 * @param mirror Whether coordinates are mirrored
 		 * @return Address mode
 		 */
-		public VkSamplerAddressMode mode(boolean mirror) {
-			return switch(this) {
-				case REPEAT -> mirror ? VkSamplerAddressMode.MIRRORED_REPEAT : VkSamplerAddressMode.REPEAT;
-				case EDGE -> mirror ? VkSamplerAddressMode.MIRROR_CLAMP_TO_EDGE : VkSamplerAddressMode.CLAMP_TO_EDGE;
-				case BORDER -> VkSamplerAddressMode.CLAMP_TO_BORDER;
-			};
+		public VkSamplerAddressMode mode() {
+			return mode;
+		}
+
+		/**
+		 * @return Mirrored address mode
+		 * @throws IllegalStateException if this mode cannot be mirrored
+		 */
+		public VkSamplerAddressMode mirror() {
+			if(mirrored == null) throw new IllegalStateException("Address mode cannot be mirrored: " + this);
+			return mirrored;
 		}
 	}
 
@@ -97,6 +103,11 @@ public class Sampler extends AbstractVulkanObject {
 	 * Builder for a sampler.
 	 */
 	public static class Builder {
+		/**
+		 * Default maximum LOD clamp.
+		 */
+		private static final float VK_LOD_CLAMP_NONE = 1000;
+
 		private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
 
 		public Builder() {
@@ -171,7 +182,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * @param component			Component index 0..2 (U, V or W direction)
 		 * @param mode				Addressing mode
 		 * @throws IndexOutOfBoundsException for an invalid component index
-		 * @see Wrap#mode(boolean)
+		 * @see AddressingMode#mode(boolean)
 		 */
 		public Builder wrap(int component, VkSamplerAddressMode mode) {
 			Check.notNull(mode);

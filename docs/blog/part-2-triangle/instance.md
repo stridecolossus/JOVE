@@ -638,7 +638,7 @@ Next the function to create the handler is invoked with the appropriate argument
 
 ```java
 Pointer parent = instance.handle();
-PointerByReference ref = instance.factory().pointer();
+PointerByReference ref = new PointerByReference();
 Object[] args = {parent, info, null, ref};
 check(create.invokeInt(args));
 ```
@@ -659,7 +659,7 @@ Notes:
 
 ### Integration
 
-To attach a diagnostics handler the relevant extension and the validation layer must be enabled:
+To attach a diagnostics handler in the demo the relevant extension and the validation layer must be enabled:
 
 ```java
 Instance instance = new Instance.Builder()
@@ -678,7 +678,7 @@ public interface VulkanLibrary {
 }
 ```
 
-In the demo a diagnostics handler can now be configured and attached to the instance:
+A handler can now be configured and attached to the instance:
 
 ```java
 instance
@@ -760,7 +760,7 @@ The Vulkan API (and many other native libraries) make extensive use of _by-refer
 
 Mercifully this approach is virtually unknown in Java but it does pose an awkward problem when we come to testing: the usual Java unit-testing frameworks (JUnit, Mockito) are designed around the return value of a method generally being the important part and any error conditions modelled by exceptions.
 
-If a `PointerByReference` is created in the test it will be a different instance to one created in the `build` method itself, it would be difficult to determine whether the test was legitimately successful or only passed by luck.
+If a `PointerByReference` is created in the test it will be a different instance to the one created in the `build` method itself, it would be difficult to determine whether the test was legitimately successful or only passed by luck.
 
 The `verify` statement could be refactored to use Mockito matchers:
 
@@ -809,7 +809,7 @@ public interface ReferenceFactory {
 }
 ```
 
-The builder for the instance is modified to retrieve a pointer reference from the factory:
+A default reference factory is added to the instance builder and the existing code is refactored accordingly:
 
 ```java
 public static class Builder {
@@ -887,9 +887,9 @@ void build() {
 }
 ```
 
-Note that we have made the decision to have API methods return result codes as an integer rather than the more explicit `VkResult` enumeration, taking advantage of the fact that `VK_SUCCESS` maps to integer zero (the default returned by mocked API methods that are not stubbed).  This avoids forcing having to explicitly stub the result code in every unit-test at the expense of a slightly less type-safe approach.  Note that we _could_ override the default Mockito answer for the entire mocked API but this is a little messy to implement for little benefit.
+Note that we have made the decision to have API methods return result codes as an integer rather than the more explicit `VkResult` enumeration, taking advantage of the fact that `VK_SUCCESS` maps to integer zero (the default returned by mocked API methods that are not stubbed).  This avoids forcing having to explicitly stub the result code in every unit-test at the expense of a slightly less type-safe approach.  Note that we _could_ override the default Mockito answer for the entire mocked API but this is a little messy to implement for minimal benefit.
 
-In general from now on we will not cover testing unless there is a specific point-of-interest, it can be assumed that unit-tests are developed in-parallel with the main code.
+In general from now on testing is not covered unless there is a specific point-of-interest, it can be assumed that unit-tests are developed in-parallel with the main code.
 
 ---
 

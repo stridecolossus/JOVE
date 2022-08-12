@@ -18,7 +18,7 @@ title: Vulkan Devices
 
 Hardware components that support Vulkan are represented by a _physical device_ which defines the capabilities of that component (rendering, data transfer, etc).  In general there will be a single physical device (i.e. the GPU) or perhaps also an on-board graphics device for a laptop.
 
-A _logical device_ is an instance of a physical device and is the central component for all subsequent Vulkan functionality.  The logical device also exposes a number of asynchronous _work queues_ that are used for various tasks such as invoking rendering, transferring data to/from the hardware, etc.  The process of displaying a rendered frame is known as _presentation_ and is implemented by Vulkan as a task on the _presentation queue_.
+A _logical device_ is an instance of a physical device and is the central component for all subsequent Vulkan functionality.  The logical device also exposes a number of asynchronous _work queues_ that are used for various tasks such as invoking rendering, transferring data to/from the hardware, etc.
 
 Creating the logical device consists of the following steps:
 
@@ -30,7 +30,7 @@ Creating the logical device consists of the following steps:
 
 4. Retrieve the required work queues.
 
-The demo requires a device that supports presentation so the _desktop_ library will be extended to create a window and Vulkan rendering surface.
+The process of displaying a rendered frame is known as _presentation_ and is implemented by Vulkan as a task on a presentation queue.  The demo requires a device that supports presentation so the _desktop_ library will be extended to create a window with a Vulkan rendering surface.
 
 ---
 
@@ -106,7 +106,7 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
 }
 ```
 
-The `create` method is a helper that retrieves the array of queue families for each device:
+The `create` method is a helper that first retrieves the array of queue families for each device:
 
 ```java
 private static PhysicalDevice create(Pointer handle, Instance instance) {
@@ -131,7 +131,7 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 
 Note that again the same API method is invoked twice to retrieve the queue families.  However in this case the JNA `toArray` factory method is invoked on an instance of a `VkQueueFamilyProperties` structure to allocate the array and the the _first_ element is passed to the API method (i.e. a native pointer to array of structures).  This common pattern will be abstracted at the end of the chapter.
 
-Finally another helper is implemented to create a queue family domain object:
+Another helper is implemented to create a queue family domain object:
 
 ```java
 private static Family family(int index, VkQueueFamilyProperties props) {
@@ -140,16 +140,18 @@ private static Family family(int index, VkQueueFamilyProperties props) {
 }
 ```
 
-Which is used to transform the array of structures when creating the device:
+Which is used to transform the array of queue families:
 
 ```java
-// Create queue families
 List<Family> families = IntStream
     .range(0, props.length)
     .mapToObj(n -> family(n, props[n]))
     .toList();
+```
 
-// Create device
+And finally the device domain object is instantiated:
+
+```java
 return new PhysicalDevice(handle, instance, families);
 ```
 
@@ -314,6 +316,18 @@ Window window = new Window.Builder()
 Pointer surface = window.surface(instance.handle());
 ```
 
+The API methods for the window and surface are added as a new JNA library:
+
+```java
+interface DesktopLibraryWindow {
+    Pointer glfwCreateWindow(int w, int h, String title, Pointer monitor, Pointer shared);
+    void    glfwDestroyWindow(Pointer window);
+    void    glfwDefaultWindowHints();
+    void    glfwWindowHint(int hint, int value);
+    int     glfwCreateWindowSurface(Pointer instance, Pointer window, Pointer allocator, PointerByReference surface);
+}
+```
+
 ### Selector
 
 Note that we _could_ have used Vulkan extensions to implement the surface from the ground up but it makes sense to take advantage of the platform-independant implementation.  The disadvantage of this approach is that the logic becomes a little convoluted as the surface and Vulkan components are slightly inter-dependant, but this seems an acceptable trade-off.
@@ -355,8 +369,7 @@ private Optional<Family> find(PhysicalDevice dev) {
 }
 
 private Optional<Family> findLocal(PhysicalDevice dev) {
-    return
-        dev
+    return dev
         .families
         .stream()
         .filter(family -> predicate.test(dev, family))
@@ -377,7 +390,7 @@ public static Selector of(VkQueueFlag... flags) {
 And a second implementation that selects devices that support presentation to the given Vulkan surface:
 
 ```java
-public static Selector of(Handle surface) {
+public static Selector of(Pointer surface) {
     BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
     return new Selector(predicate);
 }
@@ -386,7 +399,7 @@ public static Selector of(Handle surface) {
 Delegating to a new query method on the device:
 
 ```java
-public boolean isPresentationSupported(Handle surface, Family family) {
+public boolean isPresentationSupported(Pointer surface, Family family) {
     VulkanLibrary lib = instance.library();
     IntByReference supported = instance.factory().integer();
     check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
@@ -456,11 +469,7 @@ public static class Builder {
 The work queues that are required by the logical device are specified by a new transient type:
 
 ```java
-public record RequiredQueue(Family family, List<Percentile> priorities) {
-    private void populate(VkDeviceQueueCreateInfo info) {
-        ...
-    }
-}
+public record RequiredQueue(Family family, List<Percentile> priorities)
 ```
 
 Where:
@@ -501,12 +510,10 @@ Here we introduce the `StructureHelper` helper class (detailed at the end of the
 The `populate` method is invoked by the helper to 'fill' the JNA structure from the domain object:
 
 ```java
-record RequiredQueue {
-    private void populate(VkDeviceQueueCreateInfo info) {
-        info.queueCount = array.length;
-        info.queueFamilyIndex = family.index();
-        info.pQueuePriorities = build();
-    }
+private void populate(VkDeviceQueueCreateInfo info) {
+    info.queueCount = array.length;
+    info.queueFamilyIndex = family.index();
+    info.pQueuePriorities = build();
 }
 ```
 
@@ -699,7 +706,7 @@ public static Stream<PhysicalDevice> devices(Instance instance) {
     VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
     IntByReference count = instance.factory().integer();
     Pointer[] handles = func.invoke(count, Pointer[]::new);
-    return Arrays.stream(handles).map(ptr -> create(ptr, instance));
+    ...
 }
 ```
 

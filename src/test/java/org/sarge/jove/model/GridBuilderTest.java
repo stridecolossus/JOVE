@@ -3,12 +3,11 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
@@ -27,7 +26,7 @@ class GridBuilderTest {
 	void buildQuadStrip() {
 		final Model model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
 		assertNotNull(model);
-		assertEquals(new Header(Primitive.PATCH, (3 * 3) * 4, List.of(Point.LAYOUT, Coordinate2D.LAYOUT)), model.header());
+		assertEquals(new Header(Primitive.PATCH, (3 * 3) * 4, CompoundLayout.of(Point.LAYOUT, Coordinate2D.LAYOUT)), model.header());
 		assertTrue(model.index().isPresent());
 	}
 

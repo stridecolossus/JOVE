@@ -3,6 +3,7 @@ package org.sarge.jove.scene;
 import static org.sarge.jove.util.MathsUtil.HALF_PI;
 import static org.sarge.lib.util.Check.notNull;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
@@ -47,5 +48,10 @@ public class DefaultCameraController {
 	 */
 	protected void update(Vector vec) {
 		cam.direction(vec);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append(cam).build();
 	}
 }

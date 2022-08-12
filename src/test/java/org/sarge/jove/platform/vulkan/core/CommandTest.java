@@ -16,22 +16,24 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.*;
 
 class CommandTest extends AbstractVulkanTest {
-	private Command cmd;
 	private Queue queue;
 	private Pool pool;
 
 	@BeforeEach
 	void before() {
 		queue = new Queue(new Handle(1), new Family(2, 1, Set.of()));
-		cmd = spy(Command.class);
 		pool = Pool.create(dev, queue);
 	}
 
-	@Test
-	void submitAndWait() {
-		final Buffer buffer = cmd.submitAndWait(pool);
-		verify(cmd).execute(lib, buffer);
-		assertEquals(0, pool.buffers().count());
+	@Nested
+	class ImmediateCommandTests {
+		@Test
+		void submit() {
+			final ImmediateCommand cmd = spy(ImmediateCommand.class);
+			final Buffer buffer = cmd.submit(pool);
+			verify(cmd).execute(lib, buffer);
+			assertEquals(0, pool.buffers().count());
+		}
 	}
 
 	@Nested
@@ -95,6 +97,7 @@ class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		void add() {
+			final Command cmd = mock(Command.class);
 			buffer.begin();
 			buffer.add(cmd);
 			verify(cmd).execute(lib, buffer);

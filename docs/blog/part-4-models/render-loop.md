@@ -327,10 +327,12 @@ Next the rendering command sequence is wrapped into the new class:
 
 ```java
 @Bean
-public static RenderSequence sequence() {
+public static RenderSequence sequence(List<Command> commands) {
     return RenderSequence.of(...);
 }
 ```
+
+Where the `commands` have been factored out into separate beans and are automatically aggregated by the container.
 
 A new executor service is added to the main class of the demo:
 
@@ -531,7 +533,9 @@ So far we have avoided synchronisation by simply blocking the work queues after 
 
 All of these methods return immediately with the actual work queued for execution in the background.
 
-The Vulkan API provides several synchronisation mechanisms that can be used by the application, a _semaphore_ is the simplest of these and is used to synchronise operations within or across work queues.  The class itself is trivial since semaphores do not have any public functionality:
+The Vulkan API provides several synchronisation mechanisms that can be used by the application, a _semaphore_ is the simplest of these and is used to synchronise operations within or across work queues.
+
+The class itself is trivial since semaphores do not have any public functionality:
 
 ```java
 public class Semaphore extends AbstractVulkanObject {
@@ -691,7 +695,7 @@ This should resolve the validation errors due to the semaphores never being sign
 
 ### Fence
 
-However if one were to remove the `waitIdle` calls in the existing render loop the validation layer will again flood with errors, the command buffers are incorrectly being concurrently used for multiple frames.  Additionally the application is continually queueing up rendering work without checking whether it actually completes, which can be seen if one watches the memory usage.
+However if one were to remove the `waitIdle` calls in the existing render loop the validation layer will again flood with errors, the command buffers are incorrectly being used concurrently for multiple frames.  Additionally the application is continually queueing up rendering work without checking whether it actually completes, which can be seen if one watches the memory usage.
 
 To resolve both of these issues the second synchronisation mechanism is introduced which synchronises Vulkan and application code:
 
@@ -732,7 +736,7 @@ public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all
 }
 ```
 
-Where _all_ specifies whether to wait for any or all of the supplied fences and _timeout_ is expressed in milliseconds.
+Where _all_ specifies whether to wait for any or all of the supplied fences and _timeout_ is expressed in nanoseconds.
 
 A signalled fence can also be reset:
 
@@ -934,7 +938,7 @@ This should allow Vulkan to more efficiently use the multi-threaded nature of th
 
 The render loop is still likely not fully utilising the pipeline since the code for a frame is essentially single-threaded, whereas Vulkan is designed to allow completed pipeline stages to be used to render the next frame in parallel.  Multiple _in flight_ frames are introduced to take advantage of this feature.
 
-First the existing render loop and synchronisation primitives are wrapped into an inner class which tracks the in-flight progress of a frame:
+First the existing render loop and synchronisation primitives are wrapped into an inner class which tracks the in-flight progress of each frame:
 
 ```java
 public class FrameProcessor {

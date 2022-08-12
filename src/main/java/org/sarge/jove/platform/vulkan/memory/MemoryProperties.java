@@ -71,6 +71,16 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		}
 
 		/**
+		 * Convenience helper to initialise the <i>optimal</i> properties to the configured <i>required</i> set.
+		 * @throws IllegalStateException if the required properties are empty
+		 */
+		public Builder<T> copy() {
+			if(required.isEmpty()) throw new IllegalStateException("No required properties specified");
+			optimal.addAll(required);
+			return this;
+		}
+
+		/**
 		 * Adds a usage flag for this memory.
 		 * @param usage Memory usage flag
 		 */

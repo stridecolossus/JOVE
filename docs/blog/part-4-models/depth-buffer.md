@@ -33,7 +33,7 @@ Finally we will introduce various improvements to the existing code to simplify 
 
 A new `ModelDemo` project is started based on the previous rotating cube demo, minus the rotation animation.
 
-Next the previous VBO configuration is replaced with a new class that loads the buffered model:
+The previous VBO configuration is replaced with a new class that loads the persisted model:
 
 ```java
 @Configuration
@@ -78,13 +78,14 @@ private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
         .usage(VkBufferUsage.TRANSFER_DST)
         .usage(usage)
         .required(VkMemoryProperty.DEVICE_LOCAL)
+        .copy()
         .build();
 
     // Create buffer
     VulkanBuffer buffer = VulkanBuffer.create(dev, allocator, staging.length(), props);
 
     // Copy staging to buffer
-    staging.copy(buffer).submitAndWait(graphics);
+    staging.copy(buffer).submit(graphics);
 
     // Release staging
     staging.destroy();
@@ -93,10 +94,13 @@ private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
 }
 ```
 
-In the render configuration the index buffer is injected and bound to the pipeline:
+And the index is bound in the render configuration:
 
 ```java
-add(index.bind())
+@Bean("index.bind")
+static Command index(IndexBuffer index) {
+    return vbo.bind(0);
+}
 ```
 
 The following temporary code is added to initialise the projection matrix:
@@ -110,8 +114,6 @@ static class ApplicationLoop implements CommandLineRunner {
     }
 }
 ```
-
-The `@Autowired` annotation instructs the container to invoke the method once the component has been instantiated.
 
 Finally the drawing command must be updated for the indexed model, we take the opportunity to implement a convenience builder on the `DrawCommand` class:
 
@@ -203,7 +205,7 @@ Where:
 
 * And _y_ rotates vertically so the camera is facing the corner of the chalet with the door.
 
-We run the demo and see what we get, which is a bit of a mess!
+We run the new demo to see what we get, which is a bit of a mess!
 
 ![Broken Chalet Model](mess.png)
 
@@ -260,7 +262,7 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 }
 ```
 
-In the previous demos the clear value for the colour attachments was hard-coded, with the addition of the depth buffer this functionality will now be properly implemented.
+In the previous demos the clear value for the colour attachments was hard-coded, with the addition of the depth buffer this functionality now needs to be properly implemented.
 
 Introducing clear values should have been easy, however there was a nasty surprise when adding the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
 
@@ -293,7 +295,7 @@ record ColourClearValue(Colour col) implements ClearValue {
 
 The `setType` method of a JNA union is used to 'select' the relevant properties.  
 
-And similarly a second implementation for the depth-stencil attachment:
+A second implementation is added for the depth-stencil attachment:
 
 ```java
 record DepthClearValue(Percentile depth) implements ClearValue {
@@ -333,6 +335,7 @@ The builder for the swapchain class is also refactored to conveniently initialis
 Finally the `begin` method of the frame buffer is updated to populate the clear values at the start of the render-pass:
 
 ```java
+// Enumerate clear values
 Collection<ClearValue> clear = attachments
     .stream()
     .map(View::clear)
@@ -367,11 +370,11 @@ Notes:
 
 * The format of the depth buffer attachment is temporarily hard-coded to one that is commonly available on most Vulkan implementations.
 
-* The _store_ operation is left as the default (don't care).
+* The _store_ operation is left as the `DONT_CARE` default.
 
-* Similarly the _old layout_ property is left as undefined since the previous contents are unused.
+* Similarly the _old layout_ property is `UNDEFINED` since the previous contents are not relevant.
 
-Unlike the swapchain images we are required to create and manage the image for the depth buffer attachment:
+Unlike the swapchain images the application is responsible for creating and managing the image for the depth buffer attachment:
 
 ```java
 @Bean
@@ -392,6 +395,7 @@ Next the image for the depth attachment is instantiated:
 MemoryProperties<VkImageUsage> props = new MemoryProperties.Builder<VkImageUsage>()
     .usage(VkImageUsage.DEPTH_STENCIL_ATTACHMENT)
     .required(VkMemoryProperty.DEVICE_LOCAL)
+    .copy()
     .build();
 
 Image image = new Image.Builder()
@@ -401,7 +405,7 @@ Image image = new Image.Builder()
     .build(dev, allocator);
 ```
 
-And a view of the image configured with a clear value:
+And a view is created with a depth clear value:
 
 ```java
 new View.Builder(image)

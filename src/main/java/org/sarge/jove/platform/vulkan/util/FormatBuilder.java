@@ -18,20 +18,19 @@ import org.sarge.lib.util.Check;
  * The component format specifies the number of components (or channels) and the size of each in bytes.
  * The numeric format specifies the range of each value and whether it is signed.
  * <p>
- * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex {@link Layout}.
  * <p>
- * Examples:
+ * Example:
  * <pre>
- * // Construct a format: <code>B16G16R16A16_UNORM</code>
  * VkFormat format = new FormatBuilder()
  *     .components("BGRA")  // BGRA
  *     .bytes(2)            // 16
  *     .signed(false)       // U
  *     .type(Type.NORM)     // NORM
- *     .build();
- *
- * // Determine format from a component layout: <code>R32G32B32_SFLOAT</code>
- * VkFormat point = FormatBuilder.format(Point.LAYOUT);</pre>
+ *     .build();            // B16G16R16A16_UNORM</pre>
+ * <p>
+ * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex layout:
+ * <pre>
+ * VkFormat point = FormatBuilder.format(Point.LAYOUT); // R32G32B32_SFLOAT</pre>
  * <p>
  * @see VkFormat
  * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#texel-block-size">Texel block sizes</a>
@@ -60,14 +59,14 @@ public class FormatBuilder {
 		 * Maps the given layout component type to the corresponding Vulkan numeric format.
 		 * @param type Layout component type
 		 * @return Vulkan numeric format
-		 * @throws IllegalArgumentException if the given type is not supported
+		 * @throws UnsupportedOperationException if the given type is not supported
 		 */
 		public static NumericFormat of(Layout.Type type) {
 			return switch(type) {
 				case INTEGER -> INT;
 				case FLOAT -> FLOAT;
 				case NORMALIZED -> NORM;
-				default -> throw new IllegalArgumentException("Unsupported component type: " + type);
+				default -> throw new UnsupportedOperationException("Unsupported component type: " + type);
 			};
 		}
 	}
@@ -91,13 +90,12 @@ public class FormatBuilder {
 	 * <p>
 	 * The image format is determined as follows:
 	 * <ol>
-	 * <li>Use the format hint unless this value is {@link VkFormat#UNDEFINED}</li>
-	 * <li>Otherwise delegate to {@link #format(Layout)} using the layout of the image</li>
+	 * <li>Use the {@link ImageData#format()} hint unless this value is {@link VkFormat#UNDEFINED}</li>
+	 * <li>Otherwise delegate to {@link #format(Layout)} using the image layout</li>
 	 * </ol>
 	 * <p>
 	 * @param image Image
 	 * @return Image format
-	 * @see ImageData#format()
 	 */
 	public static VkFormat format(ImageData image) {
 		final int format = image.format();
@@ -123,9 +121,10 @@ public class FormatBuilder {
 	}
 
 	/**
-	 * Sets the colour component template characters, e.g. {@code ARGB}.
-	 * @param template Colour component template string
-	 * @throws IllegalArgumentException if the given template is empty, contains an invalid character, or is longer than 4 components
+	 * Sets the colour components, e.g. {@code RGBA}.
+	 * @param template Colour components
+	 * @throws IllegalArgumentException if the given components is empty or is longer than 4 components
+	 * @see Colour#RGBA
 	 */
 	public FormatBuilder components(String components) {
 		if(components.length() > 4) throw new IllegalArgumentException(String.format("Invalid components [%s]", components));

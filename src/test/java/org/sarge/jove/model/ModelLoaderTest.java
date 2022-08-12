@@ -4,10 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.io.*;
-import java.util.*;
+import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
 
@@ -55,7 +56,7 @@ class ModelLoaderTest {
 		assertNotNull(result);
 
 		// Check header
-		assertEquals(new Header(Primitive.TRIANGLES, 3, List.of(Point.LAYOUT)), result.header());
+		assertEquals(new Header(Primitive.TRIANGLES, 3, CompoundLayout.of(Point.LAYOUT)), result.header());
 
 		// Check vertices
 		final Bufferable vertices = result.vertices();

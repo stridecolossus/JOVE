@@ -9,7 +9,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
 
 /**
- * The <i>OBJ model</i> holds the transient vertex data during parsing.
+ * The <i>OBJ model</i> comprises the transient vertex data during parsing.
  * @author Sarge
  */
 class ObjectModel {
@@ -91,6 +91,7 @@ class ObjectModel {
 	 * @param vn		Normal index
 	 * @param vt		Texture coordinate index
 	 * @throws IndexOutOfBoundsException for an invalid index
+	 * @see VertexComponentList#get(int)
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Add vertex position

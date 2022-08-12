@@ -66,7 +66,7 @@ public record ResourceBinding(int binding, VkDescriptorType type, int count, Set
 
 Where _count_ is the size of the resource (which can be an array) and _stages_ specifies where the resource is used in the pipeline.
 
-A convenience builder is added to the binding and the following method to populate the corresponding Vulkan structure:
+A convenience builder is added to the binding and the following method populates the corresponding Vulkan structure:
 
 ```java
 private void populate(VkDescriptorSetLayoutBinding info) {
@@ -175,7 +175,7 @@ public static class Builder {
 }
 ```
 
-The _pool_ member is a table specifying the number of each type of descriptor set available in the pool:
+The _pool_ member is a table specifying the available number of each type of descriptor set:
 
 ```java
 public Builder add(VkDescriptorType type, int count) {
@@ -280,7 +280,7 @@ public DescriptorResource resource(View texture) {
 }
 ```
 
-Note that the same structure is used for __all__ types of resource, in this case the `pImageInfo` field is populated for the texture sampler.
+Note that the same structure is used to update __all__ types of resource, in this case the `pImageInfo` field is populated for the texture sampler.
 
 Finally the descriptor set domain object can be implemented:
 
@@ -343,8 +343,7 @@ Applying the updated resources to the descriptor sets is slightly complicated:
 First a transient type is implemented that composes a modified entry:
 
 ```java
-private record Modified(DescriptorSet set, ResourceBinding binding, DescriptorResource res) {
-}
+private record Modified(DescriptorSet set, ResourceBinding binding, DescriptorResource res)
 ```
 
 The modified resources can then be enumerated from a descriptor set:
@@ -550,10 +549,10 @@ And finally the descriptor set is bound to the pipeline in the render sequence:
 ```java
 .begin()
     .add(frame.begin())
-    .add(pipeline.bind())
-    .add(vbo.bind())
-    .add(descriptor.bind(pipeline.layout()))
-    .add(draw)
+        .add(pipeline.bind())
+        .add(vbo.bind())
+        .add(descriptor.bind(pipeline.layout()))
+        .add(draw)
     .add(FrameBuffer.END)
 .end();
 ```
@@ -571,11 +570,11 @@ The fragment shader now looks like this:
 ```glsl
 #version 450 core
 
-layout(binding = 0) uniform sampler2D texSampler;
+layout(binding=0) uniform sampler2D texSampler;
 
-layout(location = 0) in vec2 texCoord;
+layout(location=0) in vec2 texCoord;
 
-layout(location = 0) out vec4 outColor;
+layout(location=0) out vec4 outColor;
 
 void main(void) {
     outColor = texture(texSampler, texCoord);

@@ -7,6 +7,7 @@ import java.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
@@ -40,7 +41,7 @@ import com.sun.jna.Structure;
  * <p>
  * @author Sarge
  */
-public class Barrier implements Command {
+public class Barrier extends ImmediateCommand {
 	private final int src, dest;
 	private final int flags;
 	private final VkImageMemoryBarrier[] images;

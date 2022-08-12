@@ -243,7 +243,7 @@ new ImageCopyCommand.Builder()
     .layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
     .subresource(res)
     .build()
-    .submitAndWait(graphics);
+    .submit(graphics);
 ```
 
 Where the sub-resource specifies the array layer for each face of the cubemap:
@@ -831,7 +831,7 @@ new ImageCopyCommand.Builder()
     .layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
     .region(image)
     .build()
-    .submitAndWait(transfer);
+    .submit(transfer);
 ```
 
 A crude timing comparison shows that the KTX image loader is almost an order of magnitude faster than using the previous native image.  However note that the KTX file is currently uncompressed and is considerably larger than the JPEG equivalent.  In most cases an application would generally prefer to compromise on larger file sizes to reduce loading times.

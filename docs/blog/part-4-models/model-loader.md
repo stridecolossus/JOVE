@@ -293,7 +293,7 @@ public void parse(String[] args, ObjectModel model) {
 Each vertex is a slash-delimited tuple of indices into the vertex data:
 
 ```java
-String[] parts = StringUtils.split(face, '/');
+String[] parts = StringUtils.splitPreserveAllTokens(face, '/');
 if(parts.length > 3) throw new IllegalArgumentException(...);
 ```
 
@@ -426,7 +426,7 @@ Where the `GROUP` parser delegates to the `start` method to begin a new group.
 
 ### De-Duplication
 
-From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to de-duplicate the model before rendering and introduce an _index buffer_ to to reduce the total amount of data, at the expense of a second buffer for the index itself.
+From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to de-duplicate the model before rendering and introduce an _index buffer_ to  reduce the total amount of data, at the expense of a second buffer for the index itself.
 
 First an optional index buffer is added to the model definition:
 
@@ -500,7 +500,7 @@ private Bufferable index() {
 }
 ```
 
-Duplicate vertices are handled in a new model builder sub-class:
+Duplicate vertices are handled by a new model builder sub-class:
 
 ```java
 public class DuplicateModelBuilder extends Model.Builder {
@@ -721,6 +721,7 @@ Next a new public method is added to the loader class to read back the persisted
 
 ```java
 public Model load(DataInputStream in) throws IOException {
+    ...
 }
 ```
 
@@ -740,7 +741,7 @@ Primitive primitive = Primitive.valueOf(in.readUTF());
 int count = in.readInt();
 ```
 
-The process of loading and re-constructing the vertex layout is slightly more complex since the component _type_ must be looked up by name:
+Followed by the vertex layout:
 
 ```java
 int num = in.readInt();

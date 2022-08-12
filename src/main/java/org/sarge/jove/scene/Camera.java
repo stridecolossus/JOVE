@@ -13,12 +13,10 @@ public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
 	private Vector dir = Vector.Z;
-
-	// Axes
 	private Vector up = Vector.Y;
-	private Vector right = Vector.X;
 
-	// Matrix
+	// Transient view transform
+	private Vector right = Vector.X;
 	private Matrix matrix;
 	private boolean dirty = true;
 
@@ -149,7 +147,6 @@ public class Camera {
 
 	/**
 	 * Updates the camera axes and matrix.
-	 * @see Matrix
 	 */
 	protected void update() {
 		// Determine right axis

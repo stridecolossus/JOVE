@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Model.Header;
 
@@ -18,7 +19,7 @@ class ModelTest {
 
 	@BeforeEach
 	void before() {
-		header = new Header(Primitive.TRIANGLE_STRIP, 3, List.of(Point.LAYOUT));
+		header = new Header(Primitive.TRIANGLE_STRIP, 3, CompoundLayout.of(Point.LAYOUT));
 		data = mock(Bufferable.class);
 		vertex = Vertex.of(Point.ORIGIN);
 	}
@@ -35,13 +36,13 @@ class ModelTest {
 		@DisplayName("The draw count must logically match the drawing primitive")
 		@Test
 		void invalid() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.TRIANGLES, 2, List.of(Point.LAYOUT)));
+			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.TRIANGLES, 2, CompoundLayout.of(Point.LAYOUT)));
 		}
 
 		@DisplayName("A model cannot contain normals if unsupported by the drawing primitive")
 		@Test
 		void normals() {
-			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.LINES, 2, List.of(Point.LAYOUT, Model.NORMALS)));
+			assertThrows(IllegalArgumentException.class, () -> new Header(Primitive.LINES, 2, CompoundLayout.of(Point.LAYOUT, Model.NORMALS)));
 		}
 
 		@DisplayName("The index buffer for a model can be stored as integer or short values")

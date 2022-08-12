@@ -2,10 +2,8 @@ package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout.Type;
+import org.sarge.jove.common.Layout.*;
 
 public class LayoutTest {
 	private Layout layout;
@@ -41,17 +39,28 @@ public class LayoutTest {
 		assertEquals(new Layout(3, Type.FLOAT, true, Float.BYTES), Layout.floats(3));
 	}
 
-	@DisplayName("A vertex stride can be calculated for a set of layouts")
-	@Test
-	void stride() {
-		assertEquals(2 * layout.length(), Layout.stride(List.of(layout, layout)));
-	}
-
 	@Test
 	void equals() {
 		assertEquals(layout, layout);
 		assertEquals(layout, new Layout(3, Type.FLOAT, false, Float.BYTES));
 		assertNotEquals(layout, null);
 		assertNotEquals(layout, new Layout(3, Type.NORMALIZED, true, 1));
+	}
+
+	@Nested
+	class CompoundLayoutTests {
+		private CompoundLayout compound;
+
+		@BeforeEach
+		void before() {
+			compound = CompoundLayout.of(layout, layout);
+			assertNotNull(compound);
+		}
+
+		@DisplayName("A compound layout has a total stride equal to its total length")
+		@Test
+		void stride() {
+			assertEquals(2 * layout.length(), compound.stride());
+		}
 	}
 }

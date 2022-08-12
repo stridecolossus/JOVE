@@ -66,7 +66,7 @@ public final class Handle {
 
     @Override
     public boolean equals(Object obj) {
-        return (obj == this) || ((obj instanceof Handle that) && this.ptr.equals(that.ptr));
+        return (obj == this) || (obj instanceof Handle that) && this.ptr.equals(that.ptr);
     }
 
     @Override
@@ -119,6 +119,8 @@ Notes:
 * A further type converter is registered for the `Handle` class which is more convenient for Vulkan structure fields and some API methods.
 
 * The `toArray` helper (not shown) on the new interface converts a collection of objects to a native pointer-to-array type as a contiguous memory block.
+
+* The GLFW library is refactored similarly.
 
 ### Transient Objects
 
@@ -278,7 +280,7 @@ public Collection<VkSurfaceFormatKHR> formats() {
     VulkanLibrary lib = instance.library();
     StructureVulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
     IntByReference count = instance.factory().integer();
-    var formats = func.enumerate(count, VkSurfaceFormatKHR::new);
+    var formats = func.invoke(count, VkSurfaceFormatKHR::new);
     return Arrays.asList(formats);
 }
 ```
@@ -315,6 +317,8 @@ public interface Library {
     void vkDestroySurfaceKHR(Instance instance, Surface surface, Pointer allocator);
 }
 ```
+
+Note that the API parameters are now expressed in terms of domain objects rather than JNA pointers thanks to the framework introduced earlier.
 
 ### Images
 
@@ -412,7 +416,7 @@ public View build() {
 }
 ```
 
-The `subresourceRange` field of the create descriptor specifies a subset of the mipmap levels and array layers accessible to the view.  For this demo we will use the whole image so the descriptor is hard-coded for the moment:
+The `subresourceRange` field of the create descriptor specifies a subset of the image aspects, mipmap levels, etc. accessible to the view.  For this demo the whole image will be used so the descriptor is hard-coded for the moment:
 
 ```java
 var range = new VkImageSubresourceRange();
@@ -607,7 +611,7 @@ public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated
 
 The _semaphore_ and _fence_ are synchronisation primitives that are covered in a later chapter, for the moment these values are `null` in the demo.
 
-Acquiring the swapchain image is one of the few API methods that can return _multiple_ success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  Therefore the API method returns a `VkResult` and the usual `check` test is replaced by the following:
+Acquiring the swapchain image is one of the few API methods that can return _multiple_ success codes (see [vkAcquireNextImageKHR](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkAcquireNextImageKHR.html)).  Therefore in this case the API method returns a `VkResult` and the usual `check` test is replaced by the following:
 
 ```java
 return switch(result) {
@@ -742,7 +746,7 @@ But by default JNA maps a Java boolean to zero for false but __minus one__ for t
 
 There are a lot of boolean values used across Vulkan so we needed some global solution to over-ride the default JNA mapping.
 
-The [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class was implemented to marshal a Java boolean to/from a native integer represented as zero or one:
+The [VulkanBoolean](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/common/VulkanBoolean.java) class was implemented to marshal a Java boolean to/from a native integer explicitly represented as zero or one:
 
 ```java
 public final class VulkanBoolean {

@@ -127,7 +127,7 @@ public class SphereVolume implements Volume {
 	 * @param len			Distance from the ray origin to the centre of the sphere
 	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
-	protected Intersection intersectBehind(Ray ray, float len, float nearest) {
+	private Intersection intersectBehind(Ray ray, float len, float nearest) {
 		// Stop if ray is outside of the sphere
 		final float r = radius * radius;
 		if(len > r) {
