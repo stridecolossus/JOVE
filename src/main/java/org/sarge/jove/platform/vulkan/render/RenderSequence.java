@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
  * A <i>render sequence</i> records Vulkan commands to a render task.
  * @author Sarge
  */
+@FunctionalInterface
 public interface RenderSequence {
 	/**
 	 * Records this render sequence to the given command buffer.

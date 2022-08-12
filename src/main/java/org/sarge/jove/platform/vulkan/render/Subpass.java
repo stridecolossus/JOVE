@@ -212,7 +212,7 @@ public class Subpass {
 	}
 
 	/**
-	 * Builder for a dependency on this subpass.
+	 * A <i>subpass dependency</i> configures this subpass to be dependant on a previous stage of the render-pass.
 	 */
 	public class Dependency {
 		/**
@@ -293,7 +293,7 @@ public class Subpass {
 	}
 
 	/**
-	 * Builder for the source or destination properties of this dependency.
+	 * Source or destination properties of this dependency.
 	 */
 	public class Properties {
 		private final Dependency dependency;
