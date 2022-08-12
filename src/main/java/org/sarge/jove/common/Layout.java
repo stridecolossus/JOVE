@@ -21,7 +21,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public record Layout(int size, Layout.Type type, int bytes, boolean signed) {
+public record Layout(int size, Layout.Type type, boolean signed, int bytes) {
 	/**
 	 * Component types.
 	 */
@@ -37,7 +37,7 @@ public record Layout(int size, Layout.Type type, int bytes, boolean signed) {
 	 * @return New floating-point layout
 	 */
 	public static Layout floats(int size) {
-		return new Layout(size, Type.FLOAT, Float.BYTES, true);
+		return new Layout(size, Type.FLOAT, true, Float.BYTES);
 	}
 
 	/**
@@ -53,8 +53,8 @@ public record Layout(int size, Layout.Type type, int bytes, boolean signed) {
 	 * Constructor.
 	 * @param size			Number of components
 	 * @param type			Component type
-	 * @param bytes			Number of bytes per component
 	 * @param signed		Whether components are signed or unsigned
+	 * @param bytes			Number of bytes per component
 	 */
 	public Layout {
 		Check.oneOrMore(size);
@@ -63,7 +63,6 @@ public record Layout(int size, Layout.Type type, int bytes, boolean signed) {
 	}
 
 	/**
-	 * Helper.
 	 * @return Length of a component with this layout (bytes)
 	 */
 	public int length() {

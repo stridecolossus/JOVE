@@ -17,9 +17,9 @@ title: Memory Allocation
 
 The following chapters will implement vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).
 
-A Vulkan implementation specifies a set of _memory types_ from which an application can select depending on the usage scenario.  The suggests implementing a _fallback strategy_ when selecting the memory type: the application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
+A Vulkan implementation specifies a set of _memory types_ from which an application can select depending on the usage scenario.  The documentation suggests implementing a _fallback strategy_ when selecting the memory type: the application requests _optimal_ and _minimal_ properties for the required memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 
-Additionally the maximum number of memory allocations supported by the hardware is limited.  A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool and growing the available memory as required.  Initially we will allocate a new memory block for each request and then extend the implementation to use a memory pool.
+Additionally the maximum number of memory allocations supported by the hardware is limited.  A real-world application would allocate a memory _pool_ and then serve allocation requests as offsets into that pool, growing the available memory as required.  Initially we will allocate a new memory instance for each request and then extend the implementation to use a memory pool.
 
 References:
 - [VkPhysicalDeviceMemoryProperties](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceMemoryProperties.html)
@@ -399,7 +399,7 @@ To support these requirements a second memory implementation is introduced for a
 
 ### Memory Blocks
 
-A block is a wrapper for a device memory instance and maintains the allocations from the block:
+A _block_ is a wrapper for a device memory instance and manages allocations from the block:
 
 ```java
 class Block {

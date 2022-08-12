@@ -829,7 +829,7 @@ public class Dependency {
 }
 ```
 
-Where `index` is refers to the dependant subpass by _index_ (see below).
+Where `index` refers to the dependant subpass by _index_ (see below).
 
 And _source_ and _destination_ specify the properties of the dependency:
 

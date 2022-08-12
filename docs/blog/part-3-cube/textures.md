@@ -121,7 +121,16 @@ However the necessary information is already implicit in the vertex components w
 A new type is introduced to represent the data layout of some arbitrary object:
 
 ```java
-public record Layout(int size, Class<?> type, int bytes, boolean signed) {
+public record Layout(int size, Type type, boolean signed, int bytes) {
+    /**
+     * Component types.
+     */
+    public enum Type {
+        INTEGER,
+        FLOAT,
+        NORMALIZED
+    }
+
     public int length() {
         return size * bytes;
     }
@@ -132,17 +141,17 @@ Where:
 
 * _size_ is the number of components comprising the object, e.g. 3 for a vertex normal.
 
-* _type_ is the class of each component, e.g. `Float`
+* _type_ is the numeric type of each component.
 
-* _bytes_ is the number of bytes per component, e.g. `Float.BYTES`
+* _signed_ specifies whether the data is signed.
 
-* and _signed_ specifies whether the data is signed.
+* and _bytes_ is the number of bytes per component, e.g. `Float.BYTES`
 
 A convenience factory is added for a floating-point layout:
 
 ```java
-public static Layout of(int size) {
-    return new Layout(size, Float.class, true);
+public static Layout floats(int size) {
+    return new Layout(size, Type.FLOAT, true, Float.BYTES);
 }
 ```
 
@@ -150,7 +159,7 @@ Layout constants are added for the existing types, for example an RGBA colour:
 
 ```java
 public record Colour(...) {
-    public static final Layout LAYOUT = Layout.of(4);
+    public static final Layout LAYOUT = Layout.floats(4);
 }
 ```
 
@@ -213,17 +222,19 @@ public static VkFormat format(Layout layout) {
     return new FormatBuilder()
         .count(layout.size())
         .bytes(layout.bytes())
-        .type(layout.type())
         .signed(layout.signed())
+        .type(Type.of(layout.type()))
         .build();
 }
 ```
+
+Where the new `Type.of` helper maps the general component type to the Vulkan equivalent.
 
 We can now replace the configuration for the vertex data in the pipeline with the following considerably simpler configuration:
 
 ```java
 .input()
-    .add(List.of(Point.LAYOUT, Coordinate2D.LAYOUT))
+    .add(Point.LAYOUT, Coordinate2D.LAYOUT)
     .build()
 ```
 
@@ -356,7 +367,7 @@ The image properties are next extracted from the Java image:
 
 ```java
 Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
-Layout layout = new Layout(components, Byte.class, 1, false);
+Layout layout = new Layout(components, Layout.Type.NORMALIZED, false, 1);
 ```
 
 And finally the image domain object is instantiated:

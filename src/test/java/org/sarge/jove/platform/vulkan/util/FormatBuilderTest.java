@@ -17,6 +17,26 @@ class FormatBuilderTest {
 		builder = new FormatBuilder();
 	}
 
+	@DisplayName("The builder can construct a valid format")
+	@Test
+	void build() {
+		builder
+				.components("RGBA")
+				.count(4)
+				.bytes(4)
+				.signed(true)
+				.type(NumericFormat.FLOAT);
+
+		assertEquals(VkFormat.R32G32B32A32_SFLOAT, builder.build());
+	}
+
+	@DisplayName("The builder is initialised to default values")
+	@Test
+	void def() {
+		assertEquals(VkFormat.R32G32B32A32_SFLOAT, builder.build());
+	}
+
+	@DisplayName("The builder can construct an sRGB surface format")
 	@Test
 	void srgb() {
 		builder
@@ -24,85 +44,71 @@ class FormatBuilderTest {
 			.bytes(1)
 			.type(NumericFormat.RGB)
 			.signed(true);
+
 		assertEquals(VkFormat.B8G8R8_SRGB, builder.build());
 	}
 
-	@Test
-	void defaults() {
-		assertEquals(VkFormat.R32G32B32A32_SFLOAT, builder.build());
-	}
-
+	@DisplayName("The component count cannot be longer than the configured components string")
 	@Test
 	void count() {
-		assertEquals(VkFormat.R32G32_SFLOAT, builder.count(2).build());
-	}
-
-	@Test
-	void buildInvalidComponentCount() {
+		assertThrows(IllegalArgumentException.class, () -> builder.count(5).build());
 		assertThrows(IllegalArgumentException.class, () -> builder.components("RGB").count(4).build());
 	}
 
+	@DisplayName("The components string cannot be longer than 4 characters")
 	@Test
-	void componentTemplateInvalid() {
-		assertThrows(IllegalArgumentException.class, () -> builder.components(""));
+	void components() {
 		assertThrows(IllegalArgumentException.class, () -> builder.components("cobblers"));
-		assertThrows(IllegalArgumentException.class, () -> builder.components("RGBA?"));
 	}
 
+	@DisplayName("The components string cannot be empty")
 	@Test
-	void bytesInvalid() {
+	void empty() {
+		assertThrows(IllegalArgumentException.class, () -> builder.components(""));
+	}
+
+	@DisplayName("The number of bytes per component must be a power-of-two")
+	@Test
+	void bytes() {
 		assertThrows(IllegalArgumentException.class, () -> builder.bytes(0));
 		assertThrows(IllegalArgumentException.class, () -> builder.bytes(3));
 	}
 
-	@Test
-	void layout() {
-		assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Layout(3, Layout.Type.FLOAT, 2, true)));
-		assertEquals(VkFormat.R8G8_UNORM, FormatBuilder.format(new Layout(2, Layout.Type.NORMALIZED, 1, false)));
+	@Nested
+	class NumericFormatTests {
+		@DisplayName("The layout component types map to the Vulkan euivalent")
+		@Test
+		void of() {
+			assertEquals(NumericFormat.INT, NumericFormat.of(Layout.Type.INTEGER));
+			assertEquals(NumericFormat.FLOAT, NumericFormat.of(Layout.Type.FLOAT));
+			assertEquals(NumericFormat.NORM, NumericFormat.of(Layout.Type.NORMALIZED));
+		}
 	}
 
-	@Test
-	void imageFormatHint() {
-		final ImageData image = mock(ImageData.class);
-		final VkFormat format = VkFormat.B8G8R8_SRGB;
-		when(image.format()).thenReturn(format.value());
-		assertEquals(format, FormatBuilder.format(image));
-	}
+	@Nested
+	class Helpers {
+		@DisplayName("The builder can construct a format for a given vertex layout")
+		@Test
+		void layout() {
+			assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Layout(3, Layout.Type.FLOAT, true, 2)));
+		}
 
-	@Test
-	void imageFormatLayout() {
-		final ImageData image = mock(ImageData.class);
-		when(image.layout()).thenReturn(Layout.floats(3));
-		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
+		@DisplayName("The builder can determine the format for an image using the hint")
+		@Test
+		void hint() {
+			final ImageData image = mock(ImageData.class);
+			final VkFormat format = VkFormat.B8G8R8_SRGB;
+			when(image.format()).thenReturn(format.value());
+			assertEquals(format, FormatBuilder.format(image));
+		}
+
+		@DisplayName("The builder can determine the format for an image where the hint is not provided")
+		@Test
+		void image() {
+			final ImageData image = mock(ImageData.class);
+			when(image.layout()).thenReturn(Layout.floats(3));
+			when(image.format()).thenReturn(0);
+			assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
+		}
 	}
 }
-
-//
-//	@Nested
-//	class TypeTests {
-//		@Test
-//		void floats() {
-//			assertEquals(Type.FLOAT, Type.of(Float.class));
-//			assertEquals(Type.FLOAT, Type.of(float.class));
-//		}
-//
-//		@Test
-//		void integer() {
-//			assertEquals(Type.INT, Type.of(Integer.class));
-//			assertEquals(Type.INT, Type.of(int.class));
-//			assertEquals(Type.INT, Type.of(Short.class));
-//			assertEquals(Type.INT, Type.of(short.class));
-//		}
-//
-//		@Test
-//		void bytes() {
-//			assertEquals(Type.NORM, Type.of(Byte.class));
-//			assertEquals(Type.NORM, Type.of(byte.class));
-//		}
-//
-//		@Test
-//		void invalidComponentTypeMapping() {
-//			assertThrows(IllegalArgumentException.class, () -> Type.of(String.class));
-//		}
-//	}
-//}

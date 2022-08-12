@@ -12,24 +12,36 @@ public class LayoutTest {
 
 	@BeforeEach
 	void before() {
-		layout = new Layout(3, Type.FLOAT, Float.BYTES, true);
+		layout = new Layout(3, Type.FLOAT, false, Float.BYTES);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(3, layout.size());
 		assertEquals(Type.FLOAT, layout.type());
+		assertEquals(false, layout.signed());
 		assertEquals(Float.BYTES, layout.bytes());
-		assertEquals(true, layout.signed());
-		assertEquals(3 * Float.BYTES, layout.length());
-		assertEquals("3-FLOAT4", layout.toString());
 	}
 
+	@DisplayName("A layout has a length in bytes")
+	@Test
+	void length() {
+		assertEquals(3 * Float.BYTES, layout.length());
+	}
+
+	@DisplayName("A layout has a human-readable representation")
+	@Test
+	void string() {
+		assertEquals("3-FLOAT4U", layout.toString());
+	}
+
+	@DisplayName("A floating-point layout can be conveniently created")
 	@Test
 	void floats() {
-		assertEquals(layout, Layout.floats(3));
+		assertEquals(new Layout(3, Type.FLOAT, true, Float.BYTES), Layout.floats(3));
 	}
 
+	@DisplayName("A vertex stride can be calculated for a set of layouts")
 	@Test
 	void stride() {
 		assertEquals(2 * layout.length(), Layout.stride(List.of(layout, layout)));
@@ -38,8 +50,8 @@ public class LayoutTest {
 	@Test
 	void equals() {
 		assertEquals(layout, layout);
-		assertEquals(layout, new Layout(3, Type.FLOAT, Float.BYTES, true));
+		assertEquals(layout, new Layout(3, Type.FLOAT, false, Float.BYTES));
 		assertNotEquals(layout, null);
-		assertNotEquals(layout, new Layout(3, Type.NORMALIZED, Float.BYTES, true));
+		assertNotEquals(layout, new Layout(3, Type.NORMALIZED, true, 1));
 	}
 }

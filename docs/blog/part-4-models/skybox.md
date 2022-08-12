@@ -656,7 +656,7 @@ Notes:
 Finally the resultant image domain object is instantiated:
 
 ```java
-Layout layout = Layout.bytes(components.length());
+Layout layout = new Layout(components.length(), Layout.Type.NORMALIZED, false, 1);
 return new DefaultImageData(extents, components, layout, format, levels, faceCount, Bufferable.of(data));
 ```
 

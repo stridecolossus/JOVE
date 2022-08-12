@@ -109,10 +109,10 @@ public class DataHelper {
 	 */
 	public Layout layout(DataInput in) throws IOException {
 		final int size = in.readInt();
-		final int bytes = in.readInt();
 		final Layout.Type type = Layout.Type.valueOf(in.readUTF());
 		final boolean signed = in.readBoolean();
-		return new Layout(size, type, bytes, signed);
+		final int bytes = in.readInt();
+		return new Layout(size, type, signed, bytes);
 	}
 
 	/**
@@ -123,8 +123,8 @@ public class DataHelper {
 	 */
 	public void write(Layout layout, DataOutput out) throws IOException {
 		out.writeInt(layout.size());
-		out.writeInt(layout.bytes());
 		out.writeUTF(layout.type().name());
 		out.writeBoolean(layout.signed());
+		out.writeInt(layout.bytes());
 	}
 }

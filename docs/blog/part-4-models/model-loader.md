@@ -677,10 +677,11 @@ Followed by the vertex layout:
 ```java
 List<Layout> layout = model.layout();
 out.writeInt(layout.size());
-for(Layout c : layout) {
-    out.writeInt(c.size());
-    out.writeInt(c.bytes());
-    out.writeUTF(c.type().getName());
+for(Layout e : layout) {
+    out.writeInt(e.size());
+    out.writeUTF(e.type().name());
+    out.writeBoolean(e.signed());
+    out.writeInt(e.bytes());
 }
 ```
 
@@ -746,16 +747,10 @@ int num = in.readInt();
 List<Layout> layout = new ArrayList<>();
 for(int n = 0; n < num; ++n) {
     int size = in.readInt();
+    Layout.Type type = Layout.Type.valueOf(in.readUTF());
+    boolean signed = in.readBoolean();
     int bytes = in.readInt();
-    String name = in.readUTF();
-    Class<?> type;
-    try {
-        type = Class.forName(name);
-    }
-    catch(ClassNotFoundException e) {
-        throw new IOException(...);
-    }
-    layout.add(new Layout(size, type, bytes, true));
+    layout.add(new Layout(size, type, signed, bytes));
 }
 ```
 
