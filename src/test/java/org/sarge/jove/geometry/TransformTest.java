@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
@@ -15,10 +14,5 @@ class TransformTest {
 		assertNotNull(compound);
 		assertEquals(false, compound.isDirty());
 		assertEquals(Matrix.IDENTITY, compound.matrix());
-	}
-
-	@Test
-	void billboard() {
-		// TODO
 	}
 }

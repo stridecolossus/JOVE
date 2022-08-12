@@ -190,6 +190,7 @@ public class Model {
 			index.add(-1);
 			return this;
 		}
+		// TODO - this screws the count test in the model header
 
 		/**
 		 * Constructs this model.

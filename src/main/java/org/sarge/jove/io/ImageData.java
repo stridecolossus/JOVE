@@ -86,13 +86,6 @@ public class ImageData {
 			throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
 		}
 
-//		// Check
-//		// TODO
-////		final int expected = extents.size.area() * layout.length();
-////		if(levels.get(0).length != expected) {
-////			throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%s", total, image.length));
-////		}
-
 		// Check overall image buffer matches MIP levels
 		final int total = this.levels().stream().mapToInt(Level::length).sum();
 		if(data.length != total) {

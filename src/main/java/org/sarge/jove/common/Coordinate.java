@@ -74,7 +74,6 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 
 		/**
 		 * Texture coordinates for a quad with a counter-clockwise winding order.
-		 * TODO - doc is wrong now
 		 */
 		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT);
 

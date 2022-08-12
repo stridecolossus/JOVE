@@ -103,7 +103,7 @@ public class ImageTest extends AbstractVulkanTest {
 			assertEquals(dev, image.device());
 			assertEquals(false, image.isDestroyed());
 
-			// Check create image API
+			// Init expected creation descriptor
 			final VkImageCreateInfo info = new VkImageCreateInfo() {
 				@Override
 				public boolean equals(Object obj) {
@@ -121,13 +121,12 @@ public class ImageTest extends AbstractVulkanTest {
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
 			info.usage = IntegerEnumeration.reduce(props.usage());
 			info.sharingMode = props.mode();
+
+			// Check API
+			final Pointer ptr = factory.pointer().getValue();
 			verify(lib).vkCreateImage(dev, info, null, factory.pointer());
-
-			// TODO
-			//verify(lib).vkGetImageMemoryRequirements(DEVICE, POINTER.getValue(), new VkMemoryRequirements());
-
-			// Check bind memory API
-			verify(lib).vkBindImageMemory(dev, factory.pointer().getValue(), mem, 0L);
+			verify(lib).vkGetImageMemoryRequirements(eq(dev), eq(ptr), any(VkMemoryRequirements.class));
+			verify(lib).vkBindImageMemory(dev, ptr, mem, 0L);
 		}
 
 		@Test

@@ -196,7 +196,6 @@ class SphereVolumeTest {
 		@DisplayName("Sphere ahead, intersects twice")
 		@Test
 		void intersects() {
-			// TODO
 			test(new Point(-OUTSIDE, 0, 0), 1, 7);
 		}
 

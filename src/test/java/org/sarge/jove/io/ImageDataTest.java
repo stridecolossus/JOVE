@@ -67,7 +67,6 @@ public class ImageDataTest {
 	@Test
 	void invalidDataLength() {
 		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", LAYOUT, new byte[0]));
-		// TODO - assertThrows(IllegalArgumentException.class, () -> new ImageData(new Dimensions(4, 5), "RGBA", LAYOUT, DATA));
 	}
 
 	@DisplayName("An image MIP level...")

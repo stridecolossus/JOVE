@@ -9,7 +9,6 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 /**
  * The <i>frame builder</i> is responsible for configuring the render task for the next frame.
- * TODO
  * @see FrameSet#buffer(int)
  * @see FrameBuffer#begin()
  * @see Buffer#add(org.sarge.jove.platform.vulkan.core.Command)

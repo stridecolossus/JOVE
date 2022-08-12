@@ -1,12 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
-import org.sarge.jove.platform.vulkan.VkCullMode;
-import org.sarge.jove.platform.vulkan.VkFrontFace;
-import org.sarge.jove.platform.vulkan.VkPipelineRasterizationStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPolygonMode;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 /**
@@ -29,7 +25,6 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	/**
 	 * Sets whether fragment depth values are clamped (default is {@code false})
 	 * @param depthClampEnable Whether to clamp depth values
-	 * TODO - check feature
 	 */
 	public RasterizerPipelineStageBuilder depthClamp(boolean depthClampEnable) {
 		info.depthClampEnable = VulkanBoolean.of(depthClampEnable);

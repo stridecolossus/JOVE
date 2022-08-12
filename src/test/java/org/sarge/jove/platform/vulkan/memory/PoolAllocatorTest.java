@@ -59,7 +59,6 @@ public class PoolAllocatorTest extends AbstractVulkanTest {
 		assertNotNull(mem);
 		assertEquals(1, mem.size());
 		assertEquals(false, mem.isDestroyed());
-//		assertEquals(block.handle(), mem.handle());
 		assertEquals(1, allocator.count());
 		assertEquals(1, allocator.size());
 		assertEquals(0, allocator.free());
@@ -97,10 +96,5 @@ public class PoolAllocatorTest extends AbstractVulkanTest {
 		assertEquals(0, allocator.size());
 		assertEquals(0, allocator.free());
 		assertEquals(1, allocator.pools().size());
-	}
-
-	@Test
-	void create() {
-		// TODO
 	}
 }
