@@ -10,6 +10,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -117,7 +118,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 	class CreateTests {
 		private void init(VkFormat format, Dimensions extents) {
 			// Init image
-			final ImageDescriptor descriptor = new ImageDescriptor.Builder()
+			final Descriptor descriptor = new Descriptor.Builder()
 					.format(format)
 					.extents(extents)
 					.aspect(VkImageAspect.COLOR)

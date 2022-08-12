@@ -6,6 +6,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.util.IntegerEnumeration;
 
 /**
@@ -74,7 +75,7 @@ public interface SubResource {
 	 * Builder for an image sub-resource.
 	 */
 	public static class Builder {
-		private final ImageDescriptor descriptor;
+		private final Descriptor descriptor;
 		private Set<VkImageAspect> aspects = new HashSet<>();
 		private int mipLevel;
 		private int levelCount = 1;
@@ -85,7 +86,7 @@ public interface SubResource {
 		 * Constructor.
 		 * @param parent Parent image descriptor
 		 */
-		public Builder(ImageDescriptor descriptor) {
+		public Builder(Descriptor descriptor) {
 			this.descriptor = notNull(descriptor);
 		}
 

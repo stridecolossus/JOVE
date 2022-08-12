@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.util.StructureHelper;
 
 import com.sun.jna.Pointer;
@@ -47,7 +48,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 			// Validate matching format
 			final Attachment attachment = attachments.get(n);
 			final View view = views.get(n);
-			final ImageDescriptor descriptor = view.image().descriptor();
+			final Descriptor descriptor = view.image().descriptor();
 			if(attachment.format() != descriptor.format()) {
 				throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
 			}

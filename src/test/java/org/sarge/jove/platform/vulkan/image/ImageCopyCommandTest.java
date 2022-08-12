@@ -10,6 +10,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.image.ImageCopyCommand.CopyRegion;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -28,7 +29,7 @@ public class ImageCopyCommandTest {
 		lib = mock(VulkanLibrary.class);
 
 		// Define image
-		final var descriptor = new ImageDescriptor.Builder()
+		final var descriptor = new Descriptor.Builder()
 				.extents(new Dimensions(2, 3))
 				.format(AbstractVulkanTest.FORMAT)
 				.aspect(VkImageAspect.COLOR)
@@ -70,7 +71,7 @@ public class ImageCopyCommandTest {
 
 		@Test
 		void constructorInvalidImageAspects() {
-			final var descriptor = new ImageDescriptor.Builder()
+			final var descriptor = new Descriptor.Builder()
 					.extents(new Dimensions(2, 3))
 					.format(AbstractVulkanTest.FORMAT)
 					.aspect(VkImageAspect.DEPTH)
@@ -92,7 +93,7 @@ public class ImageCopyCommandTest {
 
 		@Test
 		void of() {
-			final ImageDescriptor descriptor = image.descriptor();
+			final Descriptor descriptor = image.descriptor();
 			final CopyRegion expected = new CopyRegion(0, 0, 0, descriptor, offset, descriptor.extents());
 			assertEquals(expected, CopyRegion.of(descriptor));
 		}

@@ -12,6 +12,7 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerArray;
@@ -197,7 +198,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertEquals(false, view.isDestroyed());
 
 			// Check colour image
-			final ImageDescriptor descriptor = new ImageDescriptor.Builder()
+			final Descriptor descriptor = new Descriptor.Builder()
 					.format(format.format)
 					.extents(extents)
 					.aspect(VkImageAspect.COLOR)

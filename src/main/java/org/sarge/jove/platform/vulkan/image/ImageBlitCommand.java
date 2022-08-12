@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
+import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 

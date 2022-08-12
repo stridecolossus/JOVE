@@ -3,7 +3,7 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
-import java.util.*;
+import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
@@ -30,7 +30,7 @@ class ModelTest {
 		void constructor() {
 			assertEquals(Primitive.TRIANGLE_STRIP, header.primitive());
 			assertEquals(3, header.count());
-			assertEquals(List.of(Point.LAYOUT), header.layout());
+			assertEquals(CompoundLayout.of(Point.LAYOUT), header.layout());
 		}
 
 		@DisplayName("The draw count must logically match the drawing primitive")

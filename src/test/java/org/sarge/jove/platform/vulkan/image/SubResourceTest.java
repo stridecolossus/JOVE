@@ -5,16 +5,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerEnumeration;
 
 public class SubResourceTest {
-	private ImageDescriptor descriptor;
+	private Descriptor descriptor;
 	private SubResource res;
 
 	@BeforeEach
 	void before() {
-		descriptor = new ImageDescriptor.Builder()
+		descriptor = new Descriptor.Builder()
 				.aspect(VkImageAspect.DEPTH)
 				.aspect(VkImageAspect.STENCIL)
 				.format(AbstractVulkanTest.FORMAT)

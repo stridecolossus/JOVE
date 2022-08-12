@@ -7,9 +7,9 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.platform.vulkan.image.ImageBlitCommand.Builder;
 import org.sarge.jove.platform.vulkan.image.ImageBlitCommand.Builder.BlitRegion;
-import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ImageBlitCommandTest extends AbstractVulkanTest {

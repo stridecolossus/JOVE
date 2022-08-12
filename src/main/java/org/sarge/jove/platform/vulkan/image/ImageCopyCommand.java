@@ -10,7 +10,7 @@ import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
-import org.sarge.jove.platform.vulkan.image.ImageDescriptor.Extents;
+import org.sarge.jove.platform.vulkan.image.Image.*;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
@@ -73,7 +73,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 * @param descriptor Image descriptor
 		 * @return New copy region
 		 */
-		public static CopyRegion of(ImageDescriptor descriptor) {
+		public static CopyRegion of(Descriptor descriptor) {
 			return new CopyRegion.Builder()
 					.subresource(descriptor)
 					.extents(descriptor.extents())
@@ -267,7 +267,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 * @throws NullPointerException if the image texture has not been populated
 		 */
 		public Builder region(ImageData image) {
-			final ImageDescriptor descriptor = this.image.descriptor();
+			final Descriptor descriptor = this.image.descriptor();
 			final int count = descriptor.layerCount();
 			final Level[] levels = image.levels().toArray(Level[]::new);
 			for(int level = 0; level < levels.length; ++level) {
