@@ -3,7 +3,6 @@ package org.sarge.jove.control;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -11,8 +10,7 @@ import org.sarge.lib.util.Check;
  * A <i>position event</i> represents a 2D movement event such as the mouse pointer.
  * @author Sarge
  */
-@SuppressWarnings("unused")
-public record PositionEvent(Source<PositionEvent> source, float x, float y) implements Event {
+public record PositionEvent(Event.Source<PositionEvent> source, float x, float y) implements Event {
 	/**
 	 * Constructor.
 	 * @param source Event source

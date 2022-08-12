@@ -107,7 +107,7 @@ Finally a cubemap sampler is created which clamps the texture coordinates:
 @Bean
 public Sampler cubeSampler() {
     return new Sampler.Builder(dev)
-        .wrap(Wrap.EDGE, false)
+        .mode(AddressMode.EDGE.mode())
         .build();
 }
 ```
@@ -119,14 +119,14 @@ In the vertex shader for the skybox the various matrices that were previously mu
 ```glsl
 #version 450
 
-layout(set = 0, binding = 1) uniform UniformBuffer {
+layout(set=0, binding=1) uniform UniformBuffer {
     mat4 model;
     mat4 view;
     mat4 projection;
 };
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 0) out vec3 outCoords;
+layout(location=0) in vec3 inPosition;
+layout(location=0) out vec3 outCoords;
 ```
 
 The reason for this change is to allow the vertex positions of the skybox cube to be transformed by the view without being affected by the other components:
@@ -152,15 +152,15 @@ The full vertex shader is as follows:
 ```glsl
 #version 450
 
-layout(set = 0, binding = 1) uniform UniformBuffer {
+layout(set=0, binding=1) uniform UniformBuffer {
     mat4 model;
     mat4 view;
     mat4 projection;
 };
 
-layout(location = 0) in vec3 inPosition;
+layout(location=0) in vec3 inPosition;
 
-layout(location = 0) out vec3 outCoords;
+layout(location=0) out vec3 outCoords;
 
 void main() {
     vec3 pos = mat3(view) * inPosition;
@@ -180,9 +180,9 @@ The fragment shader is the same as the previous demo except the sampler has a `s
 ```glsl
 #version 450
 
-layout(location = 0) in vec3 inCoords;
-layout(set = 0, binding = 0) uniform samplerCube cubemap;
-layout(location = 0) out vec4 outColour;
+layout(location=0) in vec3 inCoords;
+layout(set=0, binding=0) uniform samplerCube cubemap;
+layout(location=0) out vec4 outColour;
 
 void main() {
     outColour = texture(cubemap, inCoords);
@@ -191,12 +191,12 @@ void main() {
 
 ### Loader
 
-Initially we will load a separate image for each face of the cubemap texture.
+Initially a separate image is loaded for each face of the cubemap texture.
 
-First a texture is configured with an array layer for each face of the cube:
+First a texture is configured with an array layer for each face:
 
 ```java
-ImageDescriptor descriptor = new ImageDescriptor.Builder()
+Descriptor descriptor = new Descriptor.Builder()
     .type(VkImageType.TWO_D)
     .aspect(VkImageAspect.COLOR)
     .extents(...)
@@ -208,7 +208,7 @@ ImageDescriptor descriptor = new ImageDescriptor.Builder()
 The image for the texture is configured as a cubemap:
 
 ```java
-Image texture = new Image.Builder()
+Image texture = new DefaultImage.Builder()
     .descriptor(descriptor)
     .properties(props)
     .cubemap()
@@ -223,23 +223,24 @@ public Builder cubemap() {
 }
 ```
 
-Next the image for each face is loaded:
+Next the image for each face is loaded and copied to a staging buffer:
 
 ```java
 var loader = new ResourceLoaderAdapter<>(src, new NativeImageLoader());
 String[] filenames = {"posx", "negx", ...};
 for(int n = 0; n < 6; ++n) {
     ImageData image = loader.load(filenames[n] + ".jpg");
+    VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, image.data());
     ...
 }
 ```
 
-Which we perform a separate copy operation for each image:
+And a separate copy operation is performed:
 
 ```java
 new ImageCopyCommand.Builder()
-    .image(texture)
     .buffer(staging)
+    .image(texture)
     .layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
     .subresource(res)
     .build()
@@ -348,7 +349,7 @@ public interface ImageData {
 
 Where:
 
-* The _format_ accessor is a _hint_ for the Vulkan image format (although note that the image class is a general implementation).
+* The _format_ accessor is a _hint_ for the Vulkan image format (although note that this interface is a general abstraction).
 
 * The level _offset_ indexes into the image data array.
 
@@ -372,21 +373,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 }
 ```
 
-Most of the methods defined in `DataInput` simply delegate to the underlying stream, for example:
-
-```java
-@Override
-public int skipBytes(int n) throws IOException {
-    return in.skipBytes(n);
-}
-
-@Override
-public byte readByte() throws IOException {
-    return in.readByte();
-}
-```
-
-Overridden implementations are now added for the methods that need to support little endian data types, for example:
+Most of the methods defined in `DataInput` simply delegate to the underlying stream, overridden implementations are added for the methods that need to support little endian data types, for example:
 
 ```java
 public class LittleEndianDataInputStream extends InputStream implements DataInput {
@@ -487,7 +474,9 @@ Notes:
 
 * The KTX format supports image arrays specified by the _layerCount_ field, the loader constrains this value to one.
 
-* There is some overlap in terminology here: A Vulkan image can have multiple _array layers_ which can be used for a cubemap image, the KTX equivalent is the `faceCount`.  However the KTX format also supports multiple _layers_ which would map to one the array types defined in the `VkImageViewType` enumeration.  We try to use the terms appropriate to the loader and the modified image class in each case.  Note that Vulkan does not support an array of 3D images.
+* There is some overlap in terminology here: A Vulkan image can have multiple _array layers_ which can be used for a cubemap image, the KTX equivalent is the `faceCount`.  However the KTX format also supports multiple _layers_ which would map to one the array types defined in the `VkImageViewType` enumeration.  We try to use the terms appropriate to the loader and the modified image class in each case.
+
+* Vulkan does not support an array of 3D images.
 
 Next the MIP level index is parsed:
 
@@ -667,7 +656,7 @@ The previous implementation invoked a copy command for _each_ image.  To support
 First a copy region is defined as a simple transient record with a companion builder:
 
 ```java
-public class ImageCopyCommand implements Command {
+public class ImageCopyCommand extends ImmediateCommand {
     ...
     public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
     }
@@ -769,7 +758,7 @@ public int offset(int layer, int count) {
 }
 ```
 
-Finally the copy region for is constructed and added to the command:
+Finally the copy region is constructed and added to the command:
 
 ```java
 CopyRegion region = new CopyRegion.Builder()
@@ -783,7 +772,7 @@ CopyRegion region = new CopyRegion.Builder()
 
 Although we should now have all the functionality required to support multiple MIP levels and cubemap images we start with the texture for the chalet model with a single level.
 
-The following command (downloaded from the SDK) is used to the created the KTX file:
+The following command (downloaded from the SDK) is used to generate the KTX file:
 
 ```
 toktx --t2 --target_type RGBA chalet.ktx2 chalet.jpg

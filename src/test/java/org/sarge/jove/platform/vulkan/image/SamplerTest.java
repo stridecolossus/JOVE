@@ -94,7 +94,7 @@ public class SamplerTest extends AbstractVulkanTest {
 					.min(VkFilter.LINEAR)
 					.mag(VkFilter.NEAREST)
 					.mipmap(VkSamplerMipmapMode.NEAREST)
-					.wrap(VkSamplerAddressMode.CLAMP_TO_BORDER)
+					.mode(VkSamplerAddressMode.CLAMP_TO_BORDER)
 					.border(VkBorderColor.FLOAT_TRANSPARENT_BLACK)
 					.minLod(2)
 					.maxLod(3)

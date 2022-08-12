@@ -116,7 +116,7 @@ public class Sampler extends AbstractVulkanObject {
 			mipmap(VkSamplerMipmapMode.LINEAR);
 			maxLod(VK_LOD_CLAMP_NONE);
 			anisotropy(1);
-			wrap(VkSamplerAddressMode.REPEAT);
+			mode(VkSamplerAddressMode.REPEAT);
 			border(VkBorderColor.FLOAT_TRANSPARENT_BLACK);
 			unnormalizedCoordinates(false);
 		}
@@ -178,13 +178,13 @@ public class Sampler extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the wrapping policy for the given component.
+		 * Sets the address mode for the given component.
 		 * @param component			Component index 0..2 (U, V or W direction)
-		 * @param mode				Addressing mode
+		 * @param mode				Address mode
 		 * @throws IndexOutOfBoundsException for an invalid component index
 		 * @see AddressingMode#mode(boolean)
 		 */
-		public Builder wrap(int component, VkSamplerAddressMode mode) {
+		public Builder mode(int component, VkSamplerAddressMode mode) {
 			Check.notNull(mode);
 			switch(component) {
 				case 0 -> info.addressModeU = mode;
@@ -196,12 +196,12 @@ public class Sampler extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the wrapping policy for all three components.
-		 * @param mode Addressing mode
+		 * Sets the address mode for all three components.
+		 * @param mode Address mode
 		 */
-		public Builder wrap(VkSamplerAddressMode mode) {
+		public Builder mode(VkSamplerAddressMode mode) {
 			for(int n = 0; n < 3; ++n) {
-				wrap(n, mode);
+				mode(n, mode);
 			}
 			return this;
 		}
