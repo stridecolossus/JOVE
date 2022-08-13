@@ -26,7 +26,6 @@ import com.sun.jna.*;
  *
  *     private final int value;
  *
- *     @Override
  *     public int value() {
  *         return value;
  *     }
@@ -54,6 +53,7 @@ public interface IntegerEnumeration {
 	/**
 	 * Builds a bit-field from the given enumeration constants.
 	 * @param values Enumeration constants
+	 * @param <E> Enumeration
 	 * @return Bit-field
 	 */
 	static <E extends IntegerEnumeration> int reduce(Collection<E> values) {
@@ -66,6 +66,7 @@ public interface IntegerEnumeration {
 	/**
 	 * Builds a bit-field from the given enumeration constants.
 	 * @param values Enumeration constants
+	 * @param <E> Enumeration
 	 * @return Bit-field
 	 */
 	@SuppressWarnings("unchecked")
@@ -76,7 +77,7 @@ public interface IntegerEnumeration {
 	/**
 	 * Retrieves the reverse mapping for the given integer enumeration.
 	 * This method is thread-safe.
-	 * @param <E> Integer enumeration
+	 * @param <E> Enumeration
 	 * @param clazz Enumeration class
 	 * @return Reverse mapping
 	 */

@@ -7,7 +7,7 @@ import java.time.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated on frame completion.
+ * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated per frame.
  * @author Sarge
  */
 public class Animator extends Playable implements FrameListener {

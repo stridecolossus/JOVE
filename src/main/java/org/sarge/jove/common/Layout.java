@@ -5,7 +5,7 @@ import java.util.*;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>layout</i> is a descriptor for the structure of of data tuples such as image pixels or vertex components.
+ * A <i>layout</i> is a descriptor for the structure of data tuples such as image pixels or vertex components.
  * <p>
  * A layout is comprised of:
  * <ul>
