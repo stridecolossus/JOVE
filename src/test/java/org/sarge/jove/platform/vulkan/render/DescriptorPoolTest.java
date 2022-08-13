@@ -11,18 +11,19 @@ import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
 public class DescriptorPoolTest extends AbstractVulkanTest {
-	private ResourceBinding binding;
+	private Binding binding;
 	private DescriptorLayout layout;
 	private DescriptorPool pool;
 
 	@BeforeEach
 	void before() {
-		binding = new ResourceBinding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
 		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
 		pool = new DescriptorPool(new Pointer(2), dev, 1);
 	}

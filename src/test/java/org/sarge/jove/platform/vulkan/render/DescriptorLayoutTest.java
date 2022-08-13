@@ -8,24 +8,25 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
 public class DescriptorLayoutTest extends AbstractVulkanTest {
-	private ResourceBinding binding;
+	private Binding binding;
 	private DescriptorLayout layout;
 
 	@BeforeEach
 	void before() {
-		binding = new ResourceBinding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
 		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(new Handle(new Pointer(1)), layout.handle());
-		assertEquals(binding, layout.binding(1));
+		assertEquals(Map.of(1, binding), layout.bindings());
 	}
 
 	@Test
@@ -63,5 +64,38 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 
 		// Check API
 		verify(lib).vkCreateDescriptorSetLayout(dev, expected, null, factory.pointer());
+	}
+
+	@Nested
+	class ResourceBindingTests {
+		@BeforeEach
+		void before() {
+			binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(1, binding.index());
+			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, binding.type());
+			assertEquals(2, binding.count());
+			assertEquals(Set.of(VkShaderStage.FRAGMENT), binding.stages());
+		}
+
+		@Test
+		void constructorEmptyStages() {
+			assertThrows(IllegalArgumentException.class, () -> new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of()));
+		}
+
+		@Test
+		void build() {
+			final Binding result = new Binding.Builder()
+					.binding(1)
+					.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
+					.count(2)
+					.stage(VkShaderStage.FRAGMENT)
+					.build();
+
+			assertEquals(binding, result);
+		}
 	}
 }

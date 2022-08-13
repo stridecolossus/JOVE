@@ -11,12 +11,13 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
+import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
 public class DescriptorSetTest extends AbstractVulkanTest {
-	private ResourceBinding binding;
+	private Binding binding;
 	private DescriptorLayout layout;
 	private DescriptorSet descriptor;
 	private DescriptorResource res;
@@ -24,7 +25,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create layout with a sampler binding
-		binding = new ResourceBinding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
 		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
 
 		// Create sampler resource
@@ -43,7 +44,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 	@Test
 	void invalid() {
-		final ResourceBinding other = new ResourceBinding(2, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+		final Binding other = new Binding(2, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
 		assertThrows(IllegalArgumentException.class, () -> descriptor.set(other, res));
 	}
 
