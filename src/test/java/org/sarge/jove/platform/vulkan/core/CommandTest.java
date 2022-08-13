@@ -32,7 +32,6 @@ class CommandTest extends AbstractVulkanTest {
 			final ImmediateCommand cmd = spy(ImmediateCommand.class);
 			final Buffer buffer = cmd.submit(pool);
 			verify(cmd).execute(lib, buffer);
-			assertEquals(0, pool.buffers().count());
 		}
 	}
 
@@ -111,10 +110,12 @@ class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		void secondary() {
-			final List<SecondaryBuffer> sec = pool.secondary(1);
+//			final Collection<SecondaryBuffer> sec = pool.secondary(1);
+			final SecondaryBuffer sec = mock(SecondaryBuffer.class);
+			when(sec.handle()).thenReturn(new Handle(2));
 			buffer.begin();
-			buffer.add(sec);
-			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(sec));
+			buffer.add(List.of(sec));
+			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(List.of(sec)));
 		}
 
 		@Test
@@ -143,7 +144,8 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void free() {
 			buffer.free();
-			assertEquals(0, pool.buffers().count());
+			final Memory array = NativeObject.array(List.of(buffer));
+			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
 		}
 	}
 
@@ -153,7 +155,7 @@ class CommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			sec = pool.secondary(1).get(0);
+			sec = pool.secondary(1).iterator().next();
 		}
 
 		@Test
@@ -175,8 +177,6 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void constructor() {
 			assertEquals(queue, pool.queue());
-			assertNotNull(pool.buffers());
-			assertEquals(0, pool.buffers().count());
 		}
 
 		@Test
@@ -196,7 +196,7 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void allocate() {
 			// Allocate a buffer
-			final List<Buffer> buffers = pool.allocate(1);
+			final Collection<Buffer> buffers = pool.allocate(1);
 			assertNotNull(buffers);
 			assertEquals(1, buffers.size());
 
@@ -216,7 +216,7 @@ class CommandTest extends AbstractVulkanTest {
 
 		@Test
 		void secondary() {
-			final List<SecondaryBuffer> buffers = pool.secondary(1);
+			final Collection<SecondaryBuffer> buffers = pool.secondary(1);
 			assertNotNull(buffers);
 			assertEquals(1, buffers.size());
 		}
@@ -230,8 +230,7 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void free() {
 			final Buffer buffer = pool.allocate();
-			pool.free();
-			assertEquals(0, pool.buffers().count());
+			pool.free(Set.of(buffer));
 			final Memory array = NativeObject.array(List.of(buffer));
 			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
 		}

@@ -4,9 +4,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
@@ -32,7 +30,7 @@ public interface Command {
 	void execute(VulkanLibrary lib, Buffer buffer);
 
 	/**
-	 * An <i>immediate command</i> is a convenience base-class for one-off commands such a transfer operations.
+	 * An <i>immediate command</i> is a convenience base-class for one-off commands such as transfer operations.
 	 */
 	abstract class ImmediateCommand implements Command {
 		/**
@@ -212,19 +210,18 @@ public interface Command {
 
 		/**
 		 * Releases this buffer back to the pool.
+		 * @see Pool#free(Collection)
 		 */
 		public void free() {
 			pool.free(Set.of(this));
-			pool.buffers.remove(this);
 		}
 
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
-					.append("handle", handle)
-					.append("state", state)
-					.append("pool", pool)
-					.append("primary", isPrimary())
+					.append(handle)
+					.append(state)
+					.append(pool)
 					.build();
 		}
 	}
@@ -274,7 +271,6 @@ public interface Command {
 		}
 
 		private final Queue queue;
-		private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
 
 		/**
 		 * Constructor.
@@ -295,24 +291,16 @@ public interface Command {
 		}
 
 		/**
-		 * @return Command buffers
-		 */
-		public Stream<Buffer> buffers() {
-			return buffers.stream();
-		}
-		// TODO - will we ever need/use this? better to leave to specific applications, caches, etc?
-
-		/**
 		 * Allocates a number of command buffers from this pool.
 		 * @param num			Number of buffers to allocate
-		 * @param primary		Whether primary or secondary
+		 * @param level			Buffer level
 		 * @param ctor			Constructor
 		 * @return Allocated buffers
 		 */
-		private <T extends Buffer> List<T> allocate(int num, boolean primary, BiFunction<Pointer, Pool, T> ctor) {
+		private <T extends Buffer> List<T> allocate(int num, VkCommandBufferLevel level, BiFunction<Pointer, Pool, T> ctor) {
 			// Init descriptor
 			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
-			info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
+			info.level = notNull(level);
 			info.commandBufferCount = oneOrMore(num);
 			info.commandPool = this.handle();
 
@@ -323,15 +311,10 @@ public interface Command {
 			check(lib.vkAllocateCommandBuffers(dev, info, handles));
 
 			// Create buffers
-			final List<T> list = Arrays
+			return Arrays
 					.stream(handles)
 					.map(ptr -> ctor.apply(ptr, this))
 					.toList();
-
-			// Register buffers
-			buffers.addAll(list);
-
-			return list;
 		}
 
 		/**
@@ -339,7 +322,8 @@ public interface Command {
 		 * @return New command buffer
 		 */
 		public Buffer allocate() {
-			return allocate(1).get(0);
+			final List<Buffer> buffers = allocate(1, VkCommandBufferLevel.PRIMARY, Buffer::new);
+			return buffers.get(0);
 		}
 
 		/**
@@ -347,8 +331,8 @@ public interface Command {
 		 * @param num Number of buffers to allocate
 		 * @return New command buffers
 		 */
-		public List<Buffer> allocate(int num) {
-			return allocate(num, true, Buffer::new);
+		public Collection<Buffer> allocate(int num) {
+			return allocate(num, VkCommandBufferLevel.PRIMARY, Buffer::new);
 		}
 
 		/**
@@ -356,8 +340,8 @@ public interface Command {
 		 * @param num Number of secondary buffers to allocate
 		 * @return New secondary buffers
 		 */
-		public List<SecondaryBuffer> secondary(int num) {
-			return allocate(num, false, SecondaryBuffer::new);
+		public Collection<SecondaryBuffer> secondary(int num) {
+			return allocate(num, VkCommandBufferLevel.SECONDARY, SecondaryBuffer::new);
 		}
 
 		/**
@@ -371,18 +355,10 @@ public interface Command {
 		}
 
 		/**
-		 * Frees <b>all</b> command buffers in this pool.
-		 */
-		public void free() {
-			free(buffers);
-			buffers.clear();
-		}
-
-		/**
 		 * Releases a set of command buffers back to this pool.
 		 * @param buffers Buffers to release
 		 */
-		private void free(Collection<Buffer> buffers) {
+		public void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
 			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.array(buffers));
 		}
@@ -402,16 +378,10 @@ public interface Command {
 		}
 
 		@Override
-		protected void release() {
-			buffers.clear();
-		}
-
-		@Override
 		public String toString() {
 			return new ToStringBuilder(this)
 					.appendSuper(super.toString())
 					.append("queue", queue)
-					.append("buffers", buffers.size())
 					.build();
 		}
 	}

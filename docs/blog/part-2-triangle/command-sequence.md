@@ -137,10 +137,10 @@ public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFla
 Command buffers can then be allocated from the pool via the following factory method:
 
 ```java
-public List<Buffer> allocate(int num, boolean primary) {
+public List<Buffer> allocate(int num, VkCommandBufferLevel level) {
     // Init descriptor
     var info = new VkCommandBufferAllocateInfo();
-    info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
+    info.level = notNull(level);
     info.commandBufferCount = oneOrMore(num);
     info.commandPool = this.handle();
 
@@ -157,41 +157,18 @@ public List<Buffer> allocate(int num, boolean primary) {
 The handles of the newly allocated buffers are then transformed to the domain object:
 
 ```java
-// Create buffers
-List<Buffer> list = Arrays
+return Arrays
     .stream(handles)
     .map(ptr -> new Buffer(ptr, this))
     .toList();
-
-// Register buffers
-buffers.addAll(list);
-
-return list;
 ```
 
-Note that command buffers are automatically released by the pool when it is destroyed, however they are also tracked in the class to ensure the pool is correctly released:
-
-```java
-class Pool {
-    private final Collection<Buffer> buffers = ConcurrentHashMap.newKeySet();
-    ...
-
-    @Override
-    protected void release() {
-        buffers.clear();
-    }
-}
-```
+Note that command buffers are automatically released by the pool when it is destroyed.
 
 Buffers can also be explicitly released back to the pool by the application:
 
 ```java
-public synchronized void free() {
-    free(buffers);
-    buffers.clear();
-}
-
-private void free(Collection<Buffer> buffers) {
+public void free(Collection<Buffer> buffers) {
     DeviceContext dev = super.device();
     dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.toArray(buffers));
 }
