@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.*;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
@@ -23,7 +23,6 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class DescriptorPool extends AbstractVulkanObject {
-	private final Set<DescriptorSet> sets = new HashSet<>();
 	private final int max;
 
 	/**
@@ -45,90 +44,44 @@ public class DescriptorPool extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Available number of sets that can be allocated by this pool
-	 */
-	public int available() {
-		return max - sets.size();
-	}
-
-	/**
-	 * @return Allocated descriptor sets
-	 */
-	public Stream<DescriptorSet> sets() {
-		return sets.stream();
-	}
-
-	/**
 	 * Allocates a number of descriptor sets for the given layouts.
 	 * @return New descriptor sets
-	 * @throws IllegalArgumentException if the requested number of sets exceeds the maximum for this pool
 	 */
-	public Collection<DescriptorSet> allocate(List<DescriptorLayout> layouts) {
-		// Check pool size
-		final int size = layouts.size();
-		if(sets.size() + size > max) {
-			throw new IllegalArgumentException("Number of descriptor sets exceeds the maximum for this pool");
-		}
-
+	public Collection<DescriptorSet> allocate(int count, List<DescriptorLayout> layouts) {
 		// Build allocation descriptor
 		final var info = new VkDescriptorSetAllocateInfo();
 		info.descriptorPool = this.handle();
-		info.descriptorSetCount = size;
+		info.descriptorSetCount = oneOrMore(count);
 		info.pSetLayouts = NativeObject.array(layouts);
 
 		// Allocate descriptors sets
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
-		final Pointer[] handles = new Pointer[size];
+		final Pointer[] handles = new Pointer[count];
 		check(lib.vkAllocateDescriptorSets(dev, info, handles));
 
 		// Create descriptor sets
-		final List<DescriptorSet> allocated = IntStream
+		return IntStream
 				.range(0, handles.length)
 				.mapToObj(n -> new DescriptorSet(handles[n], layouts.get(n)))
 				.toList();
-
-		// Record sets allocated by this pool
-		sets.addAll(allocated);
-
-		return allocated;
-	}
-
-	/**
-	 * Helper - Allocates a number of descriptor-sets with the given layout.
-	 * @param layout		Layout
-	 * @param num			Number of sets to allocate
-	 * @return New descriptor-sets
-	 * @see #allocate(List)
-	 */
-	public Collection<DescriptorSet> allocate(DescriptorLayout layout, int num) {
-		return allocate(Collections.nCopies(num, layout));
 	}
 
 	/**
 	 * Releases the given sets back to this pool.
 	 * @param sets Sets to release
-	 * @throws IllegalArgumentException if the given sets are not present in this pool or have already been released
 	 */
 	public void free(Collection<DescriptorSet> sets) {
-		// Remove sets
-		if(!this.sets.containsAll(sets)) throw new IllegalArgumentException(String.format("Invalid descriptor sets for this pool: sets=%s pool=%s", sets, this));
-		this.sets.removeAll(sets);
-
-		// Release sets
 		final DeviceContext dev = this.device();
 		check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.array(sets)));
 	}
 
 	/**
-	 * Releases <b>all</b> descriptor-sets allocated by this pool.
-	 * @throws IllegalArgumentException if the pool is already empty
+	 * Resets this pool and releases <b>all</b> allocated descriptor sets.
 	 */
-	public void free() {
-		if(sets.isEmpty()) throw new IllegalArgumentException("Pool is already empty");
+	public void reset() {
 		final DeviceContext dev = this.device();
 		check(dev.library().vkResetDescriptorPool(dev, this, 0));
-		sets.clear();
 	}
 
 	@Override
@@ -137,15 +90,9 @@ public class DescriptorPool extends AbstractVulkanObject {
 	}
 
 	@Override
-	protected void release() {
-		sets.clear();
-	}
-
-	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append("sets", sets.size())
 				.append("max", max)
 				.build();
 	}

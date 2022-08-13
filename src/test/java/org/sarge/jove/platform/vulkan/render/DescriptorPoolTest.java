@@ -1,9 +1,8 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.util.*;
 
@@ -33,30 +32,24 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 		assertEquals(new Handle(new Pointer(2)), pool.handle());
 		assertEquals(dev, pool.device());
 		assertEquals(1, pool.maximum());
-		assertEquals(1, pool.available());
-		assertNotNull(pool.sets());
-		assertEquals(0, pool.sets().count());
 	}
 
 	@Test
 	void destroy() {
 		pool.destroy();
 		verify(lib).vkDestroyDescriptorPool(dev, pool, null);
-		assertEquals(0, pool.sets().count());
 	}
 
 	@Test
 	void allocate() {
 		// Allocate some sets
-		final var sets = pool.allocate(List.of(layout));
+		final var sets = pool.allocate(1, List.of(layout));
 		assertNotNull(sets);
 		assertEquals(1, sets.size());
 
 		// Check allocated sets
 		assertNotNull(sets.iterator().next());
 		assertEquals(1, pool.maximum());
-		assertEquals(0, pool.available());
-		assertEquals(new HashSet<>(sets), pool.sets().collect(toSet()));
 
 		// Check API
 		final ArgumentCaptor<VkDescriptorSetAllocateInfo> captor = ArgumentCaptor.forClass(VkDescriptorSetAllocateInfo.class);
@@ -71,39 +64,17 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void allocateExceedsPoolSize() {
-		pool.allocate(layout, 1);
-		assertThrows(IllegalArgumentException.class, () -> pool.allocate(layout, 1));
-	}
-
-	@Test
 	void free() {
-		final Collection<DescriptorSet> sets = pool.allocate(List.of(layout));
+		final Collection<DescriptorSet> sets = pool.allocate(1, List.of(layout));
 		pool.free(sets);
 		verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.array(sets));
 		assertEquals(1, pool.maximum());
-		assertEquals(1, pool.available());
-		assertEquals(0, pool.sets().count());
 	}
 
 	@Test
-	void freeEmpty() {
-		assertThrows(IllegalArgumentException.class, () -> pool.free());
-	}
-
-	@Test
-	void freeNotPresent() {
-		assertThrows(IllegalArgumentException.class, () -> pool.free(List.of(mock(DescriptorSet.class))));
-	}
-
-	@Test
-	void freeAll() {
-		pool.allocate(List.of(layout));
-		pool.free();
+	void reset() {
+		pool.reset();
 		verify(lib).vkResetDescriptorPool(dev, pool, 0);
-		assertEquals(1, pool.maximum());
-		assertEquals(1, pool.available());
-		assertEquals(0, pool.sets().count());
 	}
 
 	@Nested
@@ -126,8 +97,6 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 			// Check pool
 			assertNotNull(pool);
 			assertEquals(3, pool.maximum());
-			assertEquals(3, pool.available());
-			assertEquals(0, pool.sets().count());
 
 			// Check API
 			final var expected = new VkDescriptorPoolCreateInfo() {
@@ -153,7 +122,6 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 					.build(dev);
 
 			assertEquals(1, pool.maximum());
-			assertEquals(1, pool.available());
 		}
 
 		@Test
