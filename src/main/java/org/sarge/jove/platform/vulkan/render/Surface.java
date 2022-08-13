@@ -29,7 +29,7 @@ public class Surface extends AbstractTransientNativeObject {
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
 
 	/**
-	 * @return Default surface format
+	 * @return Default surface format (sRGB non-linear)
 	 */
 	public static VkSurfaceFormatKHR defaultSurfaceFormat() {
 		// Create surface format

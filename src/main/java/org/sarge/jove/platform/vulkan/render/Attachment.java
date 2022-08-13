@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.platform.vulkan.render.Attachment.Operations;
 import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
@@ -13,8 +12,7 @@ import org.sarge.lib.util.Check;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-@SuppressWarnings("unused")
-public record Attachment(VkFormat format, VkSampleCount samples, Operations colour, Operations stencil, VkImageLayout before, VkImageLayout after) {
+public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Operations colour, Attachment.Operations stencil, VkImageLayout before, VkImageLayout after) {
 	/**
 	 * Convenience wrapper for load-store operations.
 	 */

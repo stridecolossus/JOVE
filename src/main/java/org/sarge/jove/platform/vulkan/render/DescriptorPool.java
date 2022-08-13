@@ -63,7 +63,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 * @return New descriptor sets
 	 * @throws IllegalArgumentException if the requested number of sets exceeds the maximum for this pool
 	 */
-	public List<DescriptorSet> allocate(List<DescriptorLayout> layouts) {
+	public Collection<DescriptorSet> allocate(List<DescriptorLayout> layouts) {
 		// Check pool size
 		final int size = layouts.size();
 		if(sets.size() + size > max) {
@@ -101,7 +101,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 * @return New descriptor-sets
 	 * @see #allocate(List)
 	 */
-	public List<DescriptorSet> allocate(DescriptorLayout layout, int num) {
+	public Collection<DescriptorSet> allocate(DescriptorLayout layout, int num) {
 		return allocate(Collections.nCopies(num, layout));
 	}
 
@@ -144,7 +144,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("handle", this.handle())
+				.appendSuper(super.toString())
 				.append("sets", sets.size())
 				.append("max", max)
 				.build();
@@ -159,7 +159,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		private Integer max;
 
 		/**
-		 * Adds a number of available sets to this pool.
+		 * Adds a descriptor type to this pool.
 		 * @param type		Descriptor set type
 		 * @param count		Number of available sets of this type
 		 */

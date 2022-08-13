@@ -53,7 +53,7 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 		assertEquals(1, sets.size());
 
 		// Check allocated sets
-		assertNotNull(sets.get(0));
+		assertNotNull(sets.iterator().next());
 		assertEquals(1, pool.maximum());
 		assertEquals(0, pool.available());
 		assertEquals(new HashSet<>(sets), pool.sets().collect(toSet()));
@@ -78,7 +78,7 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 
 	@Test
 	void free() {
-		final List<DescriptorSet> sets = pool.allocate(List.of(layout));
+		final Collection<DescriptorSet> sets = pool.allocate(List.of(layout));
 		pool.free(sets);
 		verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.array(sets));
 		assertEquals(1, pool.maximum());

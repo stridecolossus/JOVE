@@ -24,8 +24,8 @@ import com.sun.jna.ptr.*;
 /**
  * A <i>swapchain</i> presents rendered images to a {@link Surface}.
  * <p>
- * A swapchain is comprised of a number of <i>attachments</i> consisting of a colour attachment for each swapchain image.
- * Note that swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
+ * A swapchain is comprised of an array of colour image <i>attachments</i>.
+ * Note that the swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
  * <p>
  * The process of rendering a frame is comprised of two operations:
  * <ol>

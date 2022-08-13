@@ -115,7 +115,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 * @throws IllegalArgumentException for if the bindings are empty
 	 * @throws IllegalStateException for a duplicate binding index
 	 */
-	public static DescriptorLayout create(DeviceContext dev, List<Binding> bindings) {
+	public static DescriptorLayout create(DeviceContext dev, Collection<Binding> bindings) {
 		// Init layout descriptor
 		final var info = new VkDescriptorSetLayoutCreateInfo();
 		info.bindingCount = bindings.size();
@@ -139,7 +139,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 * @param bindings		Bindings
 	 * @throws IllegalStateException for a duplicate binding index
 	 */
-	DescriptorLayout(Pointer handle, DeviceContext dev, List<Binding> bindings) {
+	DescriptorLayout(Pointer handle, DeviceContext dev, Collection<Binding> bindings) {
 		super(handle, dev);
 		Check.notEmpty(bindings);
 		this.bindings = bindings.stream().collect(toMap(Binding::index, Function.identity()));
