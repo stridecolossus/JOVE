@@ -99,7 +99,7 @@ And the index is bound in the render configuration:
 ```java
 @Bean("index.bind")
 static Command index(IndexBuffer index) {
-    return vbo.bind(0);
+    return index.bind(0);
 }
 ```
 
@@ -379,7 +379,7 @@ Unlike the swapchain images the application is responsible for creating and mana
 ```java
 @Bean
 public View depth(Swapchain swapchain, AllocationService allocator) {
-    ImageDescriptor descriptor = new ImageDescriptor.Builder()
+    Descriptor descriptor = new Descriptor.Builder()
         .aspect(VkImageAspect.DEPTH)
         .extents(swapchain.extents())
         .format(VkFormat.D32_SFLOAT)

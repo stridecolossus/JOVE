@@ -328,25 +328,25 @@ Vulkan creates the images for the colour attachments when the swapchain is insta
 public class Image implements NativeObject {
     private final Handle handle;
     private final LogicalDevice dev;
-    private final ImageDescriptor descriptor;
+    private final Descriptor descriptor;
 }
 ```
 
-The _image descriptor_ comprises the static properties of an image:
+The _image descriptor_ specifies the static properties of an image:
 
 ```java
-public record ImageDescriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levels, int layers) {
+public record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levels, int layers) {
 }
 ```
 
-Where _extents_ specifies the dimensions of the image:
+And the _extents_ are the dimensions of the image:
 
 ```java
 public record Extents(Dimensions dimensions, int depth) {
 }
 ```
 
-And `Dimensions` is a simple record for the size of an arbitrary 2D rectangle:
+Where `Dimensions` is a simple record for the size of an arbitrary 2D rectangle:
 
 ```java
 public record Dimensions(int width, int height) {
@@ -547,7 +547,7 @@ The images all share the same descriptor:
 
 ```java
 Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
-ImageDescriptor descriptor = new ImageDescriptor.Builder()
+Descriptor descriptor = new Descriptor.Builder()
     .format(info.imageFormat)
     .extents(extents)
     .aspect(VkImageAspect.COLOR)

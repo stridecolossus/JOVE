@@ -306,25 +306,10 @@ The requirements for images are fairly straight-forward so the following abstrac
 
 ```java
 public interface ImageData {
-    /**
-     * @return Image dimensions
-     */
-    Dimensions size();
-
-    /**
-     * @return Pixel components
-     */
-    String components();
-
-    /**
-     * @return Pixel layout
-     */
-    Layout layout();
-
-    /**
-     * @return Image data
-     */
-    Bufferable data();
+    private final Dimensions size;
+    private final String components;
+    private final Layout layout;
+    private final byte[] data;
 }
 ```
 
@@ -337,7 +322,7 @@ Notes:
 The AWT helper is used to load the Java image:
 
 ```java
-public static class NativeImageLoader {
+public class NativeImageLoader {
     public ImageData load(InputStream in) throws IOException {
         BufferedImage image = ImageIO.read(in);
         if(image == null) throw new IOException(...);
@@ -373,7 +358,7 @@ Layout layout = new Layout(components, Layout.Type.NORMALIZED, false, 1);
 And finally the image domain object is instantiated:
 
 ```java
-return new DefaultImageData(size, components, layout, data);
+return new ImageData(size, components, layout, data);
 ```
 
 This loader is somewhat crude and brute-force, but it does the business for the images we are interested in for the forseeable future.  The following unit-test is added to check the texture images that will be used in the next few chapters:
@@ -397,14 +382,14 @@ void map(String filename, int type) throws IOException {
 
 ### Texture Image
 
-To allow the demo to create Vulkan images programatically the existing implementation is refactored as an interface:
+To allow the demo to create Vulkan images programatically the existing class is refactored to an interface:
 
 ```java
 public interface Image extends NativeObject {
     /**
      * @return Descriptor for this image
      */
-    ImageDescriptor descriptor();
+    Descriptor descriptor();
 
     /**
      * @return Device context for this image
@@ -413,13 +398,13 @@ public interface Image extends NativeObject {
 }
 ```
 
-The swapchain builder is similarly refactored to instantiate a new local implementation:
+The swapchain builder is refactored to instantiate a new local implementation:
 
 ```java
 private static class SwapChainImage implements Image {
     private final Handle handle;
     private final LogicalDevice dev;
-    private final ImageDescriptor descriptor;
+    private final Descriptor descriptor;
 }
 ```
 
@@ -427,7 +412,7 @@ A second implementation can now be implemented to support textures:
 
 ```java
 class DefaultImage extends AbstractVulkanObject implements Image {
-    private final ImageDescriptor descriptor;
+    private final Descriptor descriptor;
     private final DeviceMemory mem;
 
     @Override
@@ -448,7 +433,7 @@ An image is configured and instantiated as normal via a builder:
 
 ```java
 class Builder {
-    private ImageDescriptor descriptor;
+    private Descriptor descriptor;
     private MemoryProperties<VkImageUsage> props;
     private VkSampleCountFlag samples = VkSampleCountFlag.COUNT_1;
     private VkImageTiling tiling = VkImageTiling.OPTIMAL;
@@ -530,10 +515,10 @@ public interface SubResource {
 }
 ```
 
-We note that the existing `ImageDescriptor` is essentially a sub-resource with default values for the MIP level and array layer, therefore the descriptor is refactored accordingly:
+We note that the existing image descriptor is essentially a sub-resource with default values for the MIP level and array layer, therefore this type is refactored accordingly:
 
 ```java
-public record ImageDescriptor(...) implements SubResource {
+public record Descriptor(...) implements SubResource {
     @Override
     public int mipLevel() {
         return 0;
@@ -550,7 +535,7 @@ The sub-resource can now be initialised to the image descriptor in the various u
 
 ```java
 public static class Builder {
-    private final ImageDescriptor descriptor;
+    private final Descriptor descriptor;
     private Set<VkImageAspect> aspects = new HashSet<>();
     private int mipLevel;
     private int levelCount;
@@ -947,7 +932,7 @@ The image is a `TYPE_4BYTE_ABGR` Java image which corresponds to the `R8G8B8A8_U
 Next the texture is configured starting with the image descriptor:
 
 ```java
-ImageDescriptor descriptor = new ImageDescriptor.Builder()
+Descriptor descriptor = new Descriptor.Builder()
     .type(VkImageType.TWO_D)
     .aspect(VkImageAspect.COLOR)
     .extents(image.extents())

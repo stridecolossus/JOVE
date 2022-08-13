@@ -328,32 +328,38 @@ First the general image abstraction is modified to support multiple layers and M
 ```java
 public interface ImageData {
     /**
-     * @return Vulkan format hint
+     * @return Image depth
      */
-    int format();
-
-    record Level(int offset, int length) {
+    public int depth() {
+        return 1;
     }
-    
+
+    public record Level(int offset, int length) { ... }
+
     /**
      * @return MIP levels
      */
-    List<Level> levels();
+    public List<Level> levels() {
+        return List.of(new Level(0, data.length));
+    }
 
     /**
      * @return Number of array layers
      */
-    int layers();
+    public int layers() {
+        return 1;
+    }
+
+    /**
+     * @return Vulkan format hint
+     */
+    public int format() {
+        return 0;
+    }
 }
 ```
 
-Where:
-
-* The _format_ accessor is a _hint_ for the Vulkan image format (although note that this interface is a general abstraction).
-
-* The level _offset_ indexes into the image data array.
-
-A skeleton implementation is introduced and the existing native image loader is refactored accordingly with a single layer and MIP level.
+The `format` accessor is a _hint_ for the Vulkan image format, note however that this class is a general image abstraction.
 
 ### Loose Ends
 
@@ -568,7 +574,11 @@ private static char channel(byte channel) {
 }
 ```
 
-The resultant array of _components_ is used to populate the relevant field in the image later.
+The resultant array of _components_ is used to determine the pixel layout:
+
+```java
+Layout layout = new Layout(components.length(), Layout.Type.NORMALIZED, false, 1);
+```
 
 ### Key-Values
 
@@ -645,8 +655,27 @@ Notes:
 Finally the resultant image domain object is instantiated:
 
 ```java
-Layout layout = new Layout(components.length(), Layout.Type.NORMALIZED, false, 1);
-return new DefaultImageData(extents, components, layout, format, levels, faceCount, Bufferable.of(data));
+return new ImageData(size, components, layout, data) {
+    @Override
+    public int depth() {
+        return depth;
+    }
+
+    @Override
+    public int format() {
+        return format;
+    }
+
+    @Override
+    public List<Level> levels() {
+        return index;
+    }
+
+    @Override
+    public int layers() {
+        return faceCount;
+    }
+};
 ```
 
 ### Copy Region
@@ -694,7 +723,7 @@ A convenience variant is added to specify a single copy region for an entire ima
 
 ```java
 public Builder region(ImageData image) {
-    ImageDescriptor descriptor = this.image.descriptor();
+    Descriptor descriptor = this.image.descriptor();
     Level[] levels = image.levels().toArray(Level[]::new);
     for(int level = 0; level < levels.length; ++level) {
         ...
