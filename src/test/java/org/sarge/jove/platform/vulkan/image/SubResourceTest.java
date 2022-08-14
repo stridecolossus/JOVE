@@ -40,7 +40,7 @@ public class SubResourceTest {
 
 	@Test
 	void toLayers() {
-		final VkImageSubresourceLayers layers = SubResource.toLayers(res);
+		final VkImageSubresourceLayers layers = res.toLayers();
 		assertNotNull(layers);
 		assertEquals(VkImageAspect.DEPTH.value(), layers.aspectMask);
 		assertEquals(1, layers.mipLevel);
@@ -50,7 +50,7 @@ public class SubResourceTest {
 
 	@Test
 	void toRange() {
-		final VkImageSubresourceRange range = SubResource.toRange(res);
+		final VkImageSubresourceRange range = res.toRange();
 		assertNotNull(range);
 		assertEquals(VkImageAspect.DEPTH.value(), range.aspectMask);
 		assertEquals(1, range.baseMipLevel);
@@ -70,7 +70,7 @@ public class SubResourceTest {
 
 		@Test
 		void build() {
-			final VkImageSubresourceRange range = SubResource.toRange(builder.build());
+			final VkImageSubresourceRange range = builder.build().toRange();
 			assertNotNull(range);
 			assertEquals(IntegerEnumeration.reduce(VkImageAspect.DEPTH, VkImageAspect.STENCIL), range.aspectMask);
 			assertEquals(0, range.baseMipLevel);
@@ -83,7 +83,7 @@ public class SubResourceTest {
 		@Test
 		void buildOverrideAspect() {
 			builder.aspect(VkImageAspect.DEPTH);
-			final VkImageSubresourceRange range = SubResource.toRange(builder.build());
+			final VkImageSubresourceRange range = builder.build().toRange();
 			assertNotNull(range);
 			assertEquals(VkImageAspect.DEPTH.value(), range.aspectMask);
 		}

@@ -7,7 +7,8 @@ import java.util.Map.Entry;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
@@ -16,7 +17,7 @@ import org.sarge.lib.util.Check;
  * The <i>image blit command</i> copies regions of an image, potentially performing format conversion, scaling and filtering.
  * @author Sarge
  */
-public class ImageBlitCommand implements Command {
+public class ImageBlitCommand extends ImmediateCommand {
 	private final Image src, dest;
 	private final VkImageLayout srcLayout, destLayout;
 	private final VkImageBlit[] regions;
@@ -122,12 +123,12 @@ public class ImageBlitCommand implements Command {
 		private void populate(Entry<BlitRegion, BlitRegion> entry, VkImageBlit blit) {
 			// Populate source region
 			final BlitRegion src = entry.getKey();
-			blit.srcSubresource = SubResource.toLayers(src.subresource);
+			blit.srcSubresource = src.subresource.toLayers();
 			blit.srcOffsets = offsets(src);
 
 			// Populate destination region
 			final BlitRegion dest = entry.getValue();
-			blit.dstSubresource = SubResource.toLayers(dest.subresource);
+			blit.dstSubresource = dest.subresource.toLayers();
 			blit.dstOffsets = offsets(dest);
 		}
 

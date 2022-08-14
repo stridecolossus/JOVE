@@ -10,14 +10,13 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>default image</i> is managed by the application.
+ * A <i>default image</i> is a Vulkan image managed by the application.
  * @author Sarge
  */
 public class DefaultImage extends AbstractVulkanObject implements Image {
@@ -149,8 +148,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		 * @param dev 			Logical device
 		 * @param allocator		Memory allocator
 		 * @return New image
-		 * @throws IllegalArgumentException if the number of array layers is not one for a {@link VkImageType#TYPE_3D} image
-		 * @throws VulkanException if the image cannot be created
+		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
 		 */
 		public DefaultImage build(LogicalDevice dev, AllocationService allocator) {
 			// Validate

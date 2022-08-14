@@ -5,8 +5,9 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.*;
@@ -87,31 +88,22 @@ public class Shader extends AbstractVulkanObject {
 	/**
 	 * Transient specialisation constant record.
 	 */
-	private static class Constant {
-		private final int id;
+	public static class Constant {
 		private final Object value;
-		private final int size;
-		private int offset;
-
-		Constant(Entry<Integer, Object> entry) {
-			this.id = entry.getKey();
-			this.value = entry.getValue();
-			this.size = size();
-		}
 
 		/**
-		 * Populates the descriptor for this constant.
+		 * Constructor.
+		 * @param value
 		 */
-		void populate(VkSpecializationMapEntry entry) {
-			entry.constantID = id;
-			entry.offset = offset;
-			entry.size = size;
+		public Constant(Object value) {
+			this.value = notNull(value);
+			size();
 		}
 
 		/**
 		 * @return Size of this constant (bytes)
 		 */
-		private int size() {
+		int size() {
 			return switch(value) {
 				case Integer n -> Integer.BYTES;
 				case Float f -> Float.BYTES;
@@ -134,46 +126,52 @@ public class Shader extends AbstractVulkanObject {
 				default -> throw new RuntimeException();
 			}
 		}
-	}
 
-	/**
-	 * Constructs the descriptor for the given specialisation constants.
-	 * @param constants Specialisation constants indexed by ID
-	 * @return Specialisation constants descriptor or {@code null} if empty
-	 */
-	public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
-		// Skip if empty
-		if(constants.isEmpty()) {
-			return null;
+		/**
+		 * Constructs the descriptor for the given specialisation constants.
+		 * @param constants Specialisation constants indexed by ID
+		 * @return Specialisation constants descriptor or {@code null} if empty
+		 */
+		public static VkSpecializationInfo build(Map<Integer, Constant> constants) {
+			// Skip if empty
+			if(constants.isEmpty()) {
+				return null;
+			}
+
+			/**
+			 * Generates the descriptor for each constant.
+			 * Also initialises the buffer offset of each entry and calculates the total length.
+			 */
+			final var populate = new BiConsumer<Entry<Integer, Constant>, VkSpecializationMapEntry>() {
+				private int len = 0;
+
+				@Override
+				public void accept(Entry<Integer, Constant> entry, VkSpecializationMapEntry out) {
+					// Init constant
+					final int size = entry.getValue().size();
+					out.size = size;
+					out.constantID = entry.getKey();
+
+					// Update buffer offset
+					out.offset = len;
+					len += size;
+				}
+			};
+
+			// Populate map entries
+			final var info = new VkSpecializationInfo();
+			info.mapEntryCount = constants.size();
+			info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
+
+			// Populate constant data
+			info.dataSize = populate.len;
+			info.pData = BufferHelper.allocate(populate.len);
+			for(Constant c : constants.values()) {
+				c.append(info.pData);
+			}
+
+			return info;
 		}
-
-		// Convert to table of constants
-		final List<Constant> table = constants
-				.entrySet()
-				.stream()
-				.map(Constant::new)
-				.toList();
-
-		// Patch offsets and calculate total size
-		int size = 0;
-		for(Constant e : table) {
-			e.offset = size;
-			size += e.size;
-		}
-
-		// Populate map entries
-		final var info = new VkSpecializationInfo();
-		info.mapEntryCount = table.size();
-		info.pMapEntries = StructureHelper.pointer(table, VkSpecializationMapEntry::new, Constant::populate);
-
-		// Populate constant data
-		info.dataSize = size;
-		info.pData = BufferHelper.allocate(size);
-		for(Constant c : table) {
-			c.append(info.pData);
-		}
-
-		return info;
 	}
 
 	/**

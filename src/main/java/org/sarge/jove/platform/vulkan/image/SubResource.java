@@ -45,29 +45,27 @@ public interface SubResource {
 	int layerCount();
 
 	/**
-	 * @param res Sub-resource
 	 * @return New sub-resource range descriptor
 	 */
-	static VkImageSubresourceRange toRange(SubResource res) {
+	default VkImageSubresourceRange toRange() {
 		final var range = new VkImageSubresourceRange();
-		range.aspectMask = IntegerEnumeration.reduce(res.aspects());
-		range.baseMipLevel = res.mipLevel();
-		range.levelCount = res.levelCount();
-		range.baseArrayLayer = res.baseArrayLayer();
-		range.layerCount = res.layerCount();
+		range.aspectMask = IntegerEnumeration.reduce(aspects());
+		range.baseMipLevel = mipLevel();
+		range.levelCount = levelCount();
+		range.baseArrayLayer = baseArrayLayer();
+		range.layerCount = layerCount();
 		return range;
 	}
 
 	/**
-	 * @param res Sub-resource
 	 * @return New sub-resource layers descriptor
 	 */
-	static VkImageSubresourceLayers toLayers(SubResource res) {
+	default VkImageSubresourceLayers toLayers() {
 		final var layers = new VkImageSubresourceLayers();
-		layers.aspectMask = IntegerEnumeration.reduce(res.aspects());
-		layers.mipLevel = res.mipLevel();
-		layers.baseArrayLayer = res.baseArrayLayer();
-		layers.layerCount = res.layerCount();
+		layers.aspectMask = IntegerEnumeration.reduce(aspects());
+		layers.mipLevel = mipLevel();
+		layers.baseArrayLayer = baseArrayLayer();
+		layers.layerCount = layerCount();
 		return layers;
 	}
 

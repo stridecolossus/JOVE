@@ -116,7 +116,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 			copy.bufferOffset = offset;
 			copy.bufferRowLength = length;
 			copy.bufferImageHeight = height;
-			copy.imageSubresource = SubResource.toLayers(res);
+			copy.imageSubresource = res.toLayers();
 			copy.imageOffset = imageOffset;
 			copy.imageExtent = extents.toExtent();
 		}

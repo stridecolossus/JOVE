@@ -123,8 +123,7 @@ public interface Image extends NativeObject {
 		 * Constructor.
 		 * @param type			Image type
 		 * @param format		Format
-		 * @param size			Image dimensions
-		 * @param depth			Image depth
+		 * @param extents		Image extents
 		 * @param aspects		Image aspect(s)
 		 * @param levelCount	Number of mip levels
 		 * @param layerCount	Number of array layers
@@ -178,7 +177,7 @@ public interface Image extends NativeObject {
 			private int layers = 1;
 
 			/**
-			 * Sets the image type (default is {@link VkImageType#TWO_D}).
+			 * Sets the image type (default is a 2D image).
 			 * @param type Image type
 			 */
 			public Builder type(VkImageType type) {
@@ -242,6 +241,7 @@ public interface Image extends NativeObject {
 			/**
 			 * Constructs this descriptor.
 			 * @return New image descriptor
+			 * @see Descriptor#Descriptor(VkImageType, VkFormat, Extents, Set, int, int)
 			 */
 			public Descriptor build() {
 				return new Descriptor(type, format, extents, aspects, levels, layers);

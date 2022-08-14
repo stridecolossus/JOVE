@@ -10,6 +10,7 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.pipeline.Shader.Constant;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ShaderTest extends AbstractVulkanTest {
@@ -71,38 +72,67 @@ public class ShaderTest extends AbstractVulkanTest {
 		}
 	}
 
+	@DisplayName("Shader specialisation constants...")
 	@Nested
 	class SpecialisationConstantTests {
+		@DisplayName("can be floating-point values")
 		@Test
-		void empty() {
-			assertEquals(null, Shader.constants(Map.of()));
+		void floats() {
+			final Constant constant = new Constant(42f);
+			final ByteBuffer bb = mock(ByteBuffer.class);
+			constant.append(bb);
+			verify(bb).putFloat(42f);
+			assertEquals(Float.BYTES, constant.size());
 		}
 
+		@DisplayName("can be integer values")
+		@Test
+		void integer() {
+			final Constant constant = new Constant(42);
+			final ByteBuffer bb = mock(ByteBuffer.class);
+			constant.append(bb);
+			verify(bb).putInt(42);
+			assertEquals(Integer.BYTES, constant.size());
+		}
+
+		@DisplayName("can be boolean values")
+		@Test
+		void bool() {
+			final Constant constant = new Constant(true);
+			final ByteBuffer bb = mock(ByteBuffer.class);
+			constant.append(bb);
+			verify(bb).putInt(1);
+			assertEquals(Integer.BYTES, constant.size());
+		}
+
+		@DisplayName("must be a supported type")
 		@Test
 		void invalid() {
-			assertThrows(UnsupportedOperationException.class, () -> Shader.constants(Map.of(0, "doh")));
+			assertThrows(UnsupportedOperationException.class, () -> new Shader.Constant("doh"));
 		}
 
+		@DisplayName("can be empty")
+		@Test
+		void empty() {
+			assertEquals(null, Shader.Constant.build(Map.of()));
+		}
+
+		@DisplayName("can be converted to a data buffer of the constant values")
 		@Test
 		void constants() {
 			// Build constants table
-			final Map<Integer, Object> map = new LinkedHashMap<>();
-			map.put(1, 1);			// Integer
-			map.put(2, 2f);			// Float
-			map.put(3, true);		// Boolean
+			final Map<Integer, Constant> map = Map.of(
+					1, new Constant(1),
+					2, new Constant(2f),
+					3, new Constant(true)
+			);
 
 			// Create constants
-			final VkSpecializationInfo info = Shader.constants(map);
+			final VkSpecializationInfo info = Constant.build(new LinkedHashMap<>(map));
 			assertNotNull(info);
+			assertNotNull(info.pMapEntries);
 			assertEquals(3, info.mapEntryCount);
 			assertEquals(4 + 4 + 4, info.dataSize);
-
-			// Check first entry
-			final VkSpecializationMapEntry entry = info.pMapEntries;
-			assertNotNull(entry);
-			assertEquals(1, entry.constantID);
-			assertEquals(0, entry.offset);
-			assertEquals(4, entry.size);
 
 			// Check data buffer
 			final ByteBuffer bb = ByteBuffer.allocate(12);
