@@ -1,10 +1,10 @@
 package org.sarge.jove.util;
 
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.*;
 
 import org.sarge.jove.common.Bufferable;
+
+import com.sun.jna.Structure;
 
 /**
  * The <i>buffer helper</i> provides utility methods for managing NIO byte buffers.
@@ -36,6 +36,45 @@ public final class BufferHelper {
 	}
 
 	/**
+	 * Creates a bufferable wrapping the given array.
+	 * @param bytes Byte array
+	 * @return Bufferable array
+	 */
+	public static Bufferable of(byte[] bytes) {
+		return new Bufferable() {
+			@Override
+			public int length() {
+				return bytes.length;
+			}
+
+			@Override
+			public void buffer(ByteBuffer bb) {
+				write(bytes, bb);
+			}
+		};
+	}
+
+	/**
+	 * Creates a bufferable wrapping the given JNA structure.
+	 * @param struct Structure
+	 * @return Bufferable structure
+	 */
+	public static Bufferable of(Structure struct) {
+		return new Bufferable() {
+			@Override
+			public int length() {
+				return struct.size();
+			}
+
+			@Override
+			public void buffer(ByteBuffer bb) {
+				final byte[] array = struct.getPointer().getByteArray(0, struct.size());
+				write(array, bb);
+			}
+		};
+	}
+
+	/**
 	 * Converts a byte buffer to an array.
 	 * @param bb Byte buffer
 	 * @return Byte array
@@ -60,7 +99,7 @@ public final class BufferHelper {
 	 * @param array		Byte array
 	 * @param bb		Buffer
 	 */
-	public static void write(byte[] array, ByteBuffer bb) {
+	private static void write(byte[] array, ByteBuffer bb) {
 		if(bb.isDirect()) {
 			for(byte b : array) {
 				bb.put(b);

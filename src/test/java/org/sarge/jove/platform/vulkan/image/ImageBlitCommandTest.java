@@ -43,7 +43,7 @@ public class ImageBlitCommandTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Init copy regions
-			final SubResource res = mock(SubResource.class);
+			final SubResource res = spy(SubResource.class);
 			final Extents offset = new Extents(new Dimensions(2, 3));
 			final BlitRegion src = new BlitRegion(res, BlitRegion.MIN_OFFSET, offset);
 			final BlitRegion dest = new BlitRegion(res, BlitRegion.MIN_OFFSET, offset);

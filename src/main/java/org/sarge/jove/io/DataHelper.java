@@ -77,7 +77,7 @@ public class DataHelper {
 		in.readFully(bytes);
 
 		// Convert to buffer
-		return Bufferable.of(bytes);
+		return BufferHelper.of(bytes);
 	}
 
 	/**

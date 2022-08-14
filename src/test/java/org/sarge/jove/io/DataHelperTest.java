@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.mockito.AdditionalAnswers;
 import org.sarge.jove.common.*;
+import org.sarge.jove.util.BufferHelper;
 
 public class DataHelperTest {
 	private DataHelper helper;
@@ -62,7 +63,7 @@ public class DataHelperTest {
 	@Test
 	void writeBuffer() throws IOException {
 		final byte[] bytes = new byte[1];
-		helper.write(Bufferable.of(bytes), out);
+		helper.write(BufferHelper.of(bytes), out);
 		verify(out).writeInt(1);
 		verify(out).write(bytes);
 	}

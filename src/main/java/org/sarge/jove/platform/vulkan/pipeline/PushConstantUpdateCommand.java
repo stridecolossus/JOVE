@@ -118,13 +118,12 @@ public class PushConstantUpdateCommand implements Command {
 	 * Usage:
 	 * <p>
 	 * <pre>
-	 * 	PipelineLayout layout = ...
-	 * 	ByteBuffer buffer = ...
-	 * 	PushUpdateCommand update = new Builder()
-	 * 		.data(buffer)
-	 * 		.stage(VkPipelineStage.FRAGMENT_SHADER)
-	 * 		.build(layout);
-	 * </pre>
+	 * PipelineLayout layout = ...
+	 * ByteBuffer buffer = ...
+	 * PushUpdateCommand update = new Builder()
+	 *     .data(buffer)
+	 *     .stage(VkPipelineStage.FRAGMENT_SHADER)
+	 *     .build(layout);</pre>
 	 * <p>
 	 * This implementation provides overloaded variants of the {@link #data(ByteBuffer)} method to specify the backing data buffer of the update command:
 	 * <ul>

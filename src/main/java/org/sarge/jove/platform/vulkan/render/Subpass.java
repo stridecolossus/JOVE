@@ -9,7 +9,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
-
 /**
  * A <i>sub-pass</i> specifies a stage of a render-pass.
  * <p>
@@ -22,6 +21,7 @@ import org.sarge.lib.util.Check;
  *         .depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
  *         .build()
  *     .build(dev);</pre>
+ * <p>
  * Subpass dependencies can be configured between the stages of a render-pass:
  * <p>
  * <pre>
@@ -91,9 +91,7 @@ public class Subpass {
 	}
 
 	/**
-	 * Populates a descriptor for this sub-pass.
-	 * @param subpass			Sub-pass
-	 * @param descriptor		Descriptor to populate
+	 * Populates the descriptor for this sub-pass.
 	 */
 	void populate(VkSubpassDescription descriptor) {
 		// Init descriptor
@@ -205,6 +203,7 @@ public class Subpass {
 
 	/**
 	 * Constructs this subpass.
+	 * @return Parent render-pass builder
 	 */
 	public RenderPass.Builder build() {
 		verify();
@@ -235,7 +234,7 @@ public class Subpass {
 		}
 
 		/**
-		 * Sets this as a dependency on the implicit external subpass before or after this subpass.
+		 * Sets this as a dependency on the implicit external subpass before or after the render-pass.
 		 */
 		public Dependency external() {
 			index = VK_SUBPASS_EXTERNAL;
@@ -280,7 +279,6 @@ public class Subpass {
 
 		/**
 		 * Populates the descriptor for this dependency.
-		 * @param info Dependency descriptor
 		 */
 		void populate(VkSubpassDependency info) {
 			info.srcSubpass = index;

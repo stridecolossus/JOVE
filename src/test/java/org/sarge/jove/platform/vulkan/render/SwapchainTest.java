@@ -172,14 +172,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 			caps.currentExtent.height = extents.height();
 
 			// Create builder
-			builder = new Swapchain.Builder(dev, surface);
+			builder = new Swapchain.Builder(surface);
 		}
 
 		@DisplayName("A swapchain can be constructed with a default builder configuration")
 		@Test
 		void build() {
 			// Create swapchain
-			swapchain = builder.build();
+			swapchain = builder.build(dev);
 			assertNotNull(swapchain);
 			assertNotNull(swapchain.handle());
 			assertEquals(false, swapchain.isDestroyed());

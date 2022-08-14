@@ -39,30 +39,6 @@ public class Fence extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Resets a group of fences.
-	 * @param dev			Logical device
-	 * @param fences		Fences to reset
-	 */
-	public static void reset(DeviceContext dev, Collection<Fence> fences) {
-		final Pointer array = NativeObject.array(fences);
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkResetFences(dev, fences.size(), array));
-	}
-
-	/**
-	 * Waits for a group of fences.
-	 * @param dev			Logical device
-	 * @param fences		Fences
-	 * @param all			Whether to wait for all or any fence
-	 * @param timeout		Timeout (nanoseconds)
-	 */
-	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
-		final Pointer array = NativeObject.array(fences);
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkWaitForFences(dev, fences.size(), array, VulkanBoolean.of(all), timeout));
-	}
-
-	/**
 	 * Constructor.
 	 * @param handle		Handle
 	 * @param dev			Logical device
@@ -87,11 +63,35 @@ public class Fence extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Resets a group of fences.
+	 * @param dev			Logical device
+	 * @param fences		Fences to reset
+	 */
+	public static void reset(DeviceContext dev, Collection<Fence> fences) {
+		final Pointer array = NativeObject.array(fences);
+		final VulkanLibrary lib = dev.library();
+		check(lib.vkResetFences(dev, fences.size(), array));
+	}
+
+	/**
 	 * Resets this fence.
 	 * @see #reset(LogicalDevice, Collection)
 	 */
 	public void reset() {
 		reset(device(), Set.of(this));
+	}
+
+	/**
+	 * Waits for a group of fences.
+	 * @param dev			Logical device
+	 * @param fences		Fences
+	 * @param all			Whether to wait for all or any fence
+	 * @param timeout		Timeout (nanoseconds)
+	 */
+	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
+		final Pointer array = NativeObject.array(fences);
+		final VulkanLibrary lib = dev.library();
+		check(lib.vkWaitForFences(dev, fences.size(), array, VulkanBoolean.of(all), timeout));
 	}
 
 	/**
@@ -116,7 +116,7 @@ public class Fence extends AbstractVulkanObject {
 		 * @param device			Device
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
-		 * @param pSemaphore		Returned fence
+		 * @param pFence			Returned fence
 		 * @return Result
 		 */
 		int vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFence);
@@ -151,7 +151,7 @@ public class Fence extends AbstractVulkanObject {
 		 * @param device			Device
 		 * @param fenceCount		Number of fences
 		 * @param pFences			Fences
-		 * @param waitAll			Whether to wait for <b>all</b> fences or <b>any</b>
+		 * @param waitAll			Whether to wait for <b>all</b> or <b>any</b> fence
 		 * @param timeout			Timeout or {@link Long#MAX_VALUE} (nanoseconds)
 		 * @return Result
 		 */

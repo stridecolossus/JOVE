@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
+import org.sarge.jove.util.BufferHelper;
 import org.sarge.lib.util.Check;
 
 /**
@@ -64,12 +65,10 @@ public class ImageData {
 	/**
 	 * Constructor.
 	 * @param size				Image dimensions
-	 * @param components		Pixel components
+	 * @param components		Channel components
 	 * @param layout			Pixel layout
 	 * @param data				Image data
-	 * @param levels			MIP level index
 	 * @throws IllegalArgumentException if the size of the components and layout do not match
-	 * @throws IllegalArgumentException if the length of the image data does not match the image extents
 	 * @throws IllegalArgumentException if the image data does not match the number of MIP levels and array layers
 	 */
 	protected ImageData(Dimensions size, String components, Layout layout, byte[] data) {
@@ -146,7 +145,7 @@ public class ImageData {
 	 * @return Image data
 	 */
 	public Bufferable data() {
-		return Bufferable.of(data);
+		return BufferHelper.of(data);
 	}
 
 	/**

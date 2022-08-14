@@ -28,7 +28,7 @@ interface DesktopLibraryWindow {
 	void glfwDestroyWindow(Window window);
 
 	/**
-	 * Resets all window hints to their default values.
+	 * Resets all window hints to the default values.
 	 */
 	void glfwDefaultWindowHints();
 

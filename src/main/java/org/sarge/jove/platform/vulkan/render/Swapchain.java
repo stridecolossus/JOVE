@@ -77,7 +77,7 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame buffer, generally when the window is resized or minimised.
+	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame, generally when the window is resized or minimised.
 	 */
 	public static final class SwapchainInvalidated extends VulkanException {
 		private SwapchainInvalidated(VkResult result) {
@@ -156,7 +156,7 @@ public class Swapchain extends AbstractVulkanObject {
 		private final Set<Semaphore> semaphores = new HashSet<>();
 
 		/**
-		 * Adds a swapchain to present.
+		 * Adds a swapchain image to be presented.
 		 * @param swapchain		Swapchain
 		 * @param index			Image index
 		 * @throws IllegalArgumentException for a duplicate swapchain
@@ -188,7 +188,7 @@ public class Swapchain extends AbstractVulkanObject {
 			info.waitSemaphoreCount = semaphores.size();
 			info.pWaitSemaphores = NativeObject.array(semaphores);
 
-			// Populate swap-chain
+			// Populate swapchain
 			info.swapchainCount = images.size();
 			info.pSwapchains = NativeObject.array(images.keySet());
 
@@ -224,7 +224,6 @@ public class Swapchain extends AbstractVulkanObject {
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
-		private final LogicalDevice dev;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private final Surface surface;
 		private final VkSurfaceCapabilitiesKHR caps;
@@ -232,18 +231,16 @@ public class Swapchain extends AbstractVulkanObject {
 
 		/**
 		 * Constructor.
-		 * @param dev			Logical device
-		 * @param surface		Rendering surface
+		 * @param surface Rendering surface
 		 */
-		public Builder(LogicalDevice dev, Surface surface) {
-			this.dev = notNull(dev);
+		public Builder(Surface surface) {
 			this.surface = notNull(surface);
 			this.caps = surface.capabilities();
 			init();
 		}
 
 		/**
-		 * Initialises the swap-chain descriptor.
+		 * Initialises the swapchain descriptor.
 		 */
 		private void init() {
 			extent(caps.currentExtent.width, caps.currentExtent.height);
@@ -397,11 +394,12 @@ public class Swapchain extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Constructs this swap-chain.
-		 * @return New swap-chain
+		 * Constructs this swapchain.
+		 * @param Logical device
+		 * @return New swapchain
 		 * @throws IllegalArgumentException if the image format or colour-space is not supported by the surface
 		 */
-		public Swapchain build() {
+		public Swapchain build(DeviceContext dev) {
 			// Init swapchain descriptor
 			info.surface = surface.handle();
 			info.oldSwapchain = null; // TODO
@@ -435,10 +433,16 @@ public class Swapchain extends AbstractVulkanObject {
 					.map(Handle::new)
 					.map(image -> new SwapChainImage(image, dev, descriptor))
 					.map(View::of)
-					.map(view -> view.clear(clear))
 					.toList();
 
-			// Create domain object
+			// Init clear operation
+			if(clear != null) {
+				for(View view : views) {
+					view.clear(clear);
+				}
+			}
+
+			// Create swapchain
 			return new Swapchain(chain.getValue(), dev, info.imageFormat, extents, views);
 		}
 
@@ -447,16 +451,16 @@ public class Swapchain extends AbstractVulkanObject {
 		 */
 		private static class SwapChainImage implements Image {
 			private final Handle handle;
-			private final LogicalDevice dev;
+			private final DeviceContext dev;
 			private final Descriptor descriptor;
 
 			/**
 			 * Constructor.
 			 * @param handle			Swapchain image
 			 * @param dev				Logical device
-			 * @param descriptor		Descriptor
+			 * @param descriptor		Image descriptor
 			 */
-			private SwapChainImage(Handle handle, LogicalDevice dev, Descriptor descriptor) {
+			private SwapChainImage(Handle handle, DeviceContext dev, Descriptor descriptor) {
 				this.handle = notNull(handle);
 				this.dev = notNull(dev);
 				this.descriptor = notNull(descriptor);
@@ -473,8 +477,13 @@ public class Swapchain extends AbstractVulkanObject {
 			}
 
 			@Override
-			public LogicalDevice device() {
+			public DeviceContext device() {
 				return dev;
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				return obj == this;
 			}
 		}
 	}
@@ -484,17 +493,17 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	interface Library {
 		/**
-		 * Creates a swap-chain for the given device.
+		 * Creates a swapchain for the given device.
 		 * @param device			Logical device
-		 * @param pCreateInfo		Swap-chain descriptor
+		 * @param pCreateInfo		Swapchain descriptor
 		 * @param pAllocator		Allocator
-		 * @param pSwapchain		Returned swap-chain
+		 * @param pSwapchain		Returned swapchain
 		 * @return Result
 		 */
 		int vkCreateSwapchainKHR(DeviceContext device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
 
 		/**
-		 * Destroys a swap-chain.
+		 * Destroys a swapchain.
 		 * @param device			Logical device
 		 * @param swapchain			Swap-chain
 		 * @param pAllocator		Allocator
@@ -502,7 +511,7 @@ public class Swapchain extends AbstractVulkanObject {
 		void vkDestroySwapchainKHR(DeviceContext device, Swapchain swapchain, Pointer pAllocator);
 
 		/**
-		 * Retrieves swap-chain image handles.
+		 * Retrieves swapchain image handles.
 		 * @param device					Logical device
 		 * @param swapchain					Swap-chain handle
 		 * @param pSwapchainImageCount		Number of images
@@ -512,7 +521,7 @@ public class Swapchain extends AbstractVulkanObject {
 		int vkGetSwapchainImagesKHR(DeviceContext device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 
 		/**
-		 * Acquires the next image in the swap-chain.
+		 * Acquires the next image in the swapchain.
 		 * @param device				Logical device
 		 * @param swapchain				Swap-chain
 		 * @param timeout				Timeout (ns) or {@link Long#MAX_VALUE} to disable

@@ -29,15 +29,15 @@ class ComponentMappingTest {
 		assertEquals(VkComponentSwizzle.A, mapping.a);
 	}
 
-	@DisplayName("Unspecified channels are ONE by default")
+	@DisplayName("Unspecified channels are IDENTITY by default")
 	@Test
 	void unspecified() {
 		final VkComponentMapping mapping = ComponentMapping.of("R");
 		assertNotNull(mapping);
 		assertEquals(VkComponentSwizzle.R, mapping.r);
-		assertEquals(VkComponentSwizzle.ONE, mapping.g);
-		assertEquals(VkComponentSwizzle.ONE, mapping.b);
-		assertEquals(VkComponentSwizzle.ONE, mapping.a);
+		assertEquals(VkComponentSwizzle.IDENTITY, mapping.g);
+		assertEquals(VkComponentSwizzle.IDENTITY, mapping.b);
+		assertEquals(VkComponentSwizzle.IDENTITY, mapping.a);
 	}
 
 	@DisplayName("A component mapping also supports the special case swizzle characters")
