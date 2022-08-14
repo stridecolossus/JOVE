@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toMap;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -62,69 +60,10 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class DescriptorSet implements NativeObject {
-	/**
-	 * Descriptor resource entry.
-	 */
-	private class Entry {
-		private final Binding binding;
-		private DescriptorResource res;
-		private boolean dirty = true;
-
-		private Entry(Binding binding) {
-			this.binding = notNull(binding);
-		}
-
-		/**
-		 * Sets the resource for this entry.
-		 */
-		void set(DescriptorResource res) {
-			this.res = notNull(res);
-			this.dirty = true;
-		}
-
-		/**
-		 * Marks this entry as unmodified after an update.
-		 */
-		void reset() {
-			assert dirty == true;
-			dirty = false;
-		}
-
-		/**
-		 * @return Whether this entry has been modified since the previous update
-		 */
-		boolean isDirty() {
-			if(res == null) {
-				throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%s", DescriptorSet.this, binding));
-			}
-			return dirty;
-		}
-
-		/**
-		 * Populates a modified descriptor set entry.
-		 */
-		void populate(VkWriteDescriptorSet write) {
-			// Init write descriptor
-			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
-			write.dstBinding = binding.index();
-			write.descriptorType = binding.type();
-			write.dstSet = handle;
-			write.descriptorCount = 1;		// Number of elements in resource
-			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
-
-			// Init resource descriptor
-			res.populate(write);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this).append(binding.index()).append(res).build();
-		}
-	}
-
 	private final Handle handle;
 	private final DescriptorLayout layout;
-	private final Map<Binding, Entry> entries;
+	private final Map<Binding, DescriptorResource> entries = new HashMap<>();
+	private final Set<Binding> modified = new HashSet<>();
 
 	/**
 	 * Constructor.
@@ -134,7 +73,11 @@ public class DescriptorSet implements NativeObject {
 	DescriptorSet(Pointer handle, DescriptorLayout layout) {
 		this.handle = new Handle(handle);
 		this.layout = notNull(layout);
-		this.entries = layout.bindings().values().stream().collect(toMap(Function.identity(), Entry::new));
+		init();
+	}
+
+	private void init() {
+		layout.bindings().values().forEach(modified::add);
 	}
 
 	@Override
@@ -157,9 +100,8 @@ public class DescriptorSet implements NativeObject {
 	 * @throws IllegalArgumentException if {@link #res} is not the expected type for the binding
 	 */
 	public void set(Binding binding, DescriptorResource res) {
-		// Check binding is a member of this descriptor set
-		final Entry entry = entries.get(binding);
-		if(entry == null) {
+		// Check binding belongs to this set
+		if(!layout.bindings().values().contains(binding)) {
 			throw new IllegalArgumentException(String.format("Invalid binding for this set: binding=%s this=%s", binding, this));
 		}
 
@@ -169,7 +111,8 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		// Update entry
-		entry.set(res);
+		entries.put(binding, res);
+		modified.add(binding);
 	}
 
 	/**
@@ -186,13 +129,40 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
+	 * Transient modified descriptor set record.
+	 */
+	private record Modified(DescriptorSet set, Binding binding, DescriptorResource res) {
+		/**
+		 * Constructor.
+		 */
+		private Modified {
+			if(res == null) throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%s", set, binding));
+		}
+
+		/**
+		 * Populates a modified descriptor set entry.
+		 */
+		void populate(VkWriteDescriptorSet write) {
+			// Init write descriptor
+			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
+			write.dstBinding = binding.index();
+			write.descriptorType = binding.type();
+			write.dstSet = set.handle();
+			write.descriptorCount = 1;		// Number of elements in resource
+			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
+
+			// Init resource descriptor
+			res.populate(write);
+		}
+	}
+
+	/**
 	 * @return Modified entries in this descriptor set
 	 */
-	private Stream<Entry> modified() {
-		return entries
-				.values()
+	private Stream<Modified> modified() {
+		return modified
 				.stream()
-				.filter(Entry::isDirty);
+				.map(e -> new Modified(this, e, entries.get(e)));
 	}
 
 	/**
@@ -202,8 +172,8 @@ public class DescriptorSet implements NativeObject {
 	 * @return Number of updated descriptor sets
 	 */
 	public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
-		// Enumerate modified resources
-		final List<Entry> modified = descriptors
+		// Enumerate modified sets
+		final List<Modified> modified = descriptors
 				.stream()
 				.flatMap(DescriptorSet::modified)
 				.toList();
@@ -214,13 +184,15 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		// Apply update
-		final VkWriteDescriptorSet[] writes = StructureHelper.array(modified, VkWriteDescriptorSet::new, Entry::populate);
+		final VkWriteDescriptorSet[] writes = StructureHelper.array(modified, VkWriteDescriptorSet::new, Modified::populate);
 		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
 
-		// Reset updated entries
-		for(Entry e : modified) {
-			e.reset();
-		}
+		// Reset updated sets
+		modified
+				.stream()
+				.map(Modified::set)
+				.map(e -> e.modified)
+				.forEach(Set::clear);
 
 		return writes.length;
 	}

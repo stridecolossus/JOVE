@@ -48,7 +48,7 @@ The layout is tackled first:
 
 ```java
 public static class Layout extends AbstractVulkanObject {
-    private final Map<Integer, ResourceBinding> bindings;
+    private final Map<Integer, Binding> bindings;
 
     @Override
     protected Destructor<Layout> destructor(VulkanLibrary lib) {
@@ -60,8 +60,7 @@ public static class Layout extends AbstractVulkanObject {
 A layout is comprised of a number of indexed _resource bindings_ defined as follows:
 
 ```java
-public record ResourceBinding(int binding, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
-}
+public record Binding(int binding, VkDescriptorType type, int count, Set<VkShaderStage> stages)
 ```
 
 Where _count_ is the size of the resource (which can be an array) and _stages_ specifies where the resource is used in the pipeline.
@@ -102,16 +101,9 @@ Next up is the descriptor set pool:
 
 ```java
 public static class Pool extends AbstractVulkanObject {
-    private final Set<DescriptorSet> sets = new HashSet<>();
-
     @Override
     protected Destructor<Pool> destructor(VulkanLibrary lib) {
         return lib::vkDestroyDescriptorPool;
-    }
-
-    @Override
-    protected void release() {
-        sets.clear();
     }
 }
 ```
@@ -119,17 +111,17 @@ public static class Pool extends AbstractVulkanObject {
 Descriptor sets are requested from the pool as follows:
 
 ```java
-public List<DescriptorSet> allocate(List<Layout> layouts) {
+public Collection<DescriptorSet> allocate(int count, List<Layout> layouts) {
     // Build allocation descriptor
     var info = new VkDescriptorSetAllocateInfo();
     info.descriptorPool = this.handle();
-    info.descriptorSetCount = size;
+    info.descriptorSetCount = oneOrMore(count);
     info.pSetLayouts = NativeObject.toArray(layouts);
 
     // Allocate descriptors sets
     DeviceContext dev = this.device();
     VulkanLibrary lib = dev.library();
-    Pointer[] handles = new Pointer[size];
+    Pointer[] handles = new Pointer[count];
     check(lib.vkAllocateDescriptorSets(dev, info, handles));
     ...
 }
@@ -144,24 +136,25 @@ List<DescriptorSet> allocated = IntStream
     .toList();
 ```
 
-Note that the pool manages the allocated descriptor sets, however the domain object also tracks the domain objects for validation purposes.
-
 Descriptor sets can also be programatically released back to the pool:
 
 ```java
 public void free(Collection<DescriptorSet> sets) {
-    this.sets.removeAll(sets);
     DeviceContext dev = this.device();
-    check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.toArray(sets)));
-}
-
-public void free() {
-    if(sets.isEmpty()) throw new IllegalArgumentException(...);
-    DeviceContext dev = this.device();
-    check(dev.library().vkResetDescriptorPool(dev, this, 0));
-    sets.clear();
+    check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.array(sets)));
 }
 ```
+
+Finally the pool can be reset to recycle all descriptor sets back to the pool:
+
+```java
+public void reset() {
+    final DeviceContext dev = this.device();
+    check(dev.library().vkResetDescriptorPool(dev, this, 0));
+}
+```
+
+Note that allocated descriptor sets are automatically released when the pool is destroyed.
 
 ### Builder
 
@@ -288,23 +281,16 @@ Finally the descriptor set domain object can be implemented:
 public class DescriptorSet implements NativeObject {
     private final Handle handle;
     private final Layout layout;
-    private final Map<ResourceBinding, DescriptorResource> entries = new HashMap<>();
-    private final Set<ResourceBinding> modified = new HashSet<>();
-
-    public DescriptorSet(Handle handle, Layout layout) {
-        this.handle = notNull(handle);
-        this.layout = notNull(layout);
-        init();
-    }
+    private final Map<Binding, DescriptorResource> entries;
+    private final Set<Binding> modified = new HashSet<>();
 }
 ```
 
-The descriptor set `entries` member is initialised to an empty set of resources:
+All bindings are initialised as modified:
 
 ```java
 private void init() {
-    for(ResourceBinding binding : layout.bindings().values()) {
-        entries.put(binding, null);
+    for(Binding binding : layout.bindings().values()) {
         modified.add(binding);
     }
 }
@@ -313,8 +299,8 @@ private void init() {
 A resource can now be bound to the descriptor set:
 
 ```java
-public void set(ResourceBinding binding, DescriptorResource res) {
-    // Check binding is a member of this descriptor set
+public void set(Binding binding, DescriptorResource res) {
+    // Check binding belongs to this set
     if(!layout.bindings().values().contains(binding)) {
         throw new IllegalArgumentException(...);
     }
@@ -336,25 +322,27 @@ Applying the updated resources to the descriptor sets is slightly complicated:
 
 1. Each modified descriptor set requires a separate `VkWriteDescriptorSet` structure.
 
-2. The Vulkan descriptor for each update is dependant on the descriptor set, the binding and the resource.
+2. The Vulkan descriptor for each update is dependant on the descriptor set, the binding _and_ the resource.
 
 3. Updates are applied as a batch operation.
 
 First a transient type is implemented that composes a modified entry:
 
 ```java
-private record Modified(DescriptorSet set, ResourceBinding binding, DescriptorResource res)
+private record Modified(DescriptorSet set, Binding binding, DescriptorResource res) {
+    private Modified {
+        if(res == null) throw new IllegalStateException(...);
+    }
+}
 ```
 
 The modified resources can then be enumerated from a descriptor set:
 
 ```java
 private Stream<Modified> modified() {
-    return entries
-        .entrySet()
+    return modified
         .stream()
-        .filter(e -> modified.contains(e.getKey()))
-        .map(e -> new Modified(this, e.getKey(), e.getValue()));
+        .map(e -> new Modified(this, e, entries.get(e)));
 }
 ```
 
@@ -374,18 +362,18 @@ private void populate(VkWriteDescriptorSet write) {
 }
 ```
 
-To apply a batch of updates the total set of `Modified` descriptor sets is first enumerated:
+To apply a batch of updates the total set of modified sets is first enumerated:
 
 ```java
 public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
     // Enumerate modified resources
-    List<Modified> dirty = descriptors
+    List<Modified> modified = descriptors
         .stream()
         .flatMap(DescriptorSet::modified)
         .toList();
 
     // Ignore if nothing to update
-    if(dirty.isEmpty()) {
+    if(modified.isEmpty()) {
         return 0;
     }
     
@@ -398,26 +386,18 @@ public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptor
 The set of updates is transformed to an array of Vulkan descriptors and the API is invoked to apply the changes:
 
 ```java
-VkWriteDescriptorSet[] writes = StructureHelper.array(dirty, VkWriteDescriptorSet::new, Modified::populate);
+VkWriteDescriptorSet[] writes = StructureHelper.array(modified, VkWriteDescriptorSet::new, Modified::populate);
 dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
 ```
 
 Finally the `modified` descriptor sets are cleared:
 
 ```java
-for(Modified mod : dirty) {
-    mod.reset();
-}
-```
-
-Which delegates to a local helper on the descriptor set class:
-
-```java
-private void reset() {
-    var dirty = set.modified;
-    assert !dirty.isEmpty();
-    dirty.clear();
-}
+modified
+    .stream()
+    .map(Modified::set)
+    .map(e -> e.modified)
+    .forEach(Set::clear);
 ```
 
 A new library is created for the API methods in this chapter:
