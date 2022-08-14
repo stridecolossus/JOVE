@@ -50,20 +50,29 @@ public class ViewTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void clear() {
-		view.clear(clear);
-		assertEquals(Optional.of(clear), view.clear());
+	void of() {
+		when(image.device()).thenReturn(dev);
+		assertNotNull(View.of(image));
 	}
 
-	@Test
-	void clearNone() {
-		view.clear(null);
-		assertEquals(Optional.empty(), view.clear());
-	}
+	@Nested
+	class ClearTests {
+		@Test
+		void clear() {
+			view.clear(clear);
+			assertEquals(Optional.of(clear), view.clear());
+		}
 
-	@Test
-	void clearInvalidAspect() {
-		assertThrows(IllegalArgumentException.class, () -> view.clear(DepthClearValue.DEFAULT));
+		@Test
+		void none() {
+			view.clear(null);
+			assertEquals(Optional.empty(), view.clear());
+		}
+
+		@Test
+		void invalid() {
+			assertThrows(IllegalArgumentException.class, () -> view.clear(DepthClearValue.DEFAULT));
+		}
 	}
 
 	@Test
@@ -72,12 +81,6 @@ public class ViewTest extends AbstractVulkanTest {
 		verify(lib).vkDestroyImageView(dev, view, null);
 		verify(image).destroy();
 		verifyNoMoreInteractions(lib);
-	}
-
-	@Test
-	void of() {
-		when(image.device()).thenReturn(dev);
-		assertNotNull(View.of(image));
 	}
 
 	@Nested

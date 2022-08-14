@@ -136,10 +136,10 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		 * @param layout Initial layout
 		 */
 		public Builder initialLayout(VkImageLayout layout) {
-			if((layout != VkImageLayout.UNDEFINED) && (layout != VkImageLayout.PREINITIALIZED)) {
-				throw new IllegalArgumentException("Invalid initial layout: " + layout);
+			switch(layout) {
+				case UNDEFINED, PREINITIALIZED -> this.layout = layout;
+				default -> throw new IllegalArgumentException("Invalid initial layout: " + layout);
 			}
-			this.layout = notNull(layout);
 			return this;
 		}
 

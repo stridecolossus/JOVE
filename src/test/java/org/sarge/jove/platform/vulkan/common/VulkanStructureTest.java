@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.util.MockStructure;
 
-public class VulkanStructureTest {
+class VulkanStructureTest {
 	private MockStructure struct;
 
 	@BeforeEach

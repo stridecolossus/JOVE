@@ -18,38 +18,31 @@ public class ClearValueTest {
 
 	@Test
 	void colour() {
-		// Apply colour clear
 		final ClearValue clear = new ColourClearValue(Colour.WHITE);
 		clear.populate(value);
 		assertNotNull(value.color);
 		assertArrayEquals(Colour.WHITE.toArray(), value.color.float32);
-
-		// Check equality
-		assertEquals(true, clear.equals(clear));
-		assertEquals(true, clear.equals(new ColourClearValue(Colour.WHITE)));
-		assertEquals(false, clear.equals(null));
-		assertEquals(false, clear.equals(new ColourClearValue(Colour.BLACK)));
+		assertEquals(clear, clear);
+		assertEquals(clear, new ColourClearValue(Colour.WHITE));
+		assertNotEquals(clear, null);
+		assertNotEquals(clear, new ColourClearValue(Colour.BLACK));
 	}
 
 	@Test
 	void depth() {
-		// Apply depth clear
 		final ClearValue clear = new DepthClearValue(Percentile.HALF);
 		clear.populate(value);
 		assertNotNull(value.depthStencil);
 		assertEquals(0.5f, value.depthStencil.depth);
 		assertEquals(0, value.depthStencil.stencil);
-
-		// Check equality
-		assertEquals(true, clear.equals(clear));
-		assertEquals(true, clear.equals(new DepthClearValue(Percentile.HALF)));
-		assertEquals(false, clear.equals(null));
-		assertEquals(false, clear.equals(new DepthClearValue(Percentile.ONE)));
+		assertEquals(clear, clear);
+		assertEquals(clear, new DepthClearValue(Percentile.HALF));
+		assertNotEquals(clear, null);
+		assertNotEquals(clear, DepthClearValue.DEFAULT);
 	}
 
-	@SuppressWarnings("static-method")
 	@Test
-	void defaultDepth() {
+	void def() {
 		assertEquals(new DepthClearValue(Percentile.ONE), DepthClearValue.DEFAULT);
 	}
 }

@@ -16,7 +16,7 @@ import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 
-public class DefaultImageTest extends AbstractVulkanTest {
+class DefaultImageTest extends AbstractVulkanTest {
 	private static final Dimensions EXTENTS = new Dimensions(3, 4);
 
 	private DefaultImage image;
@@ -48,12 +48,15 @@ public class DefaultImageTest extends AbstractVulkanTest {
 	void constructor() {
 		assertEquals(new Handle(handle), image.handle());
 		assertEquals(dev, image.device());
+		assertEquals(false, image.isDestroyed());
 		assertEquals(descriptor, image.descriptor());
+		assertEquals(mem, image.memory());
 	}
 
 	@Test
 	void destroy() {
 		image.destroy();
+		assertEquals(true, image.isDestroyed());
 		verify(lib).vkDestroyImage(dev, image, null);
 		verify(mem).destroy();
 	}
@@ -124,20 +127,23 @@ public class DefaultImageTest extends AbstractVulkanTest {
 			verify(lib).vkBindImageMemory(dev, ptr, mem, 0L);
 		}
 
+		@DisplayName("A default image must have memory properties")
 		@Test
-		void buildEmptyMemoryProperties() {
+		void properties() {
 			builder.descriptor(descriptor);
 			assertThrows(IllegalArgumentException.class, () -> builder.build(dev, allocator));
 		}
 
+		@DisplayName("A default image must have an image descriptor")
 		@Test
-		void buildEmptyImageDescriptor() {
+		void descriptor() {
 			builder.properties(props);
 			assertThrows(IllegalArgumentException.class, () -> builder.build(dev, allocator));
 		}
 
+		@DisplayName("A default image must have a valid initial layout")
 		@Test
-		void buildInvalidLayout() {
+		void layout() {
 			assertThrows(IllegalArgumentException.class, () -> builder.initialLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL));
 		}
 	}
