@@ -10,7 +10,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.pipeline.Shader.Constant;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ShaderTest extends AbstractVulkanTest {
@@ -72,63 +71,20 @@ public class ShaderTest extends AbstractVulkanTest {
 		}
 	}
 
-	@DisplayName("Shader specialisation constants...")
 	@Nested
 	class SpecialisationConstantTests {
-		@DisplayName("can be floating-point values")
-		@Test
-		void floats() {
-			final Constant constant = new Constant(42f);
-			final ByteBuffer bb = mock(ByteBuffer.class);
-			constant.append(bb);
-			verify(bb).putFloat(42f);
-			assertEquals(Float.BYTES, constant.size());
-		}
-
-		@DisplayName("can be integer values")
-		@Test
-		void integer() {
-			final Constant constant = new Constant(42);
-			final ByteBuffer bb = mock(ByteBuffer.class);
-			constant.append(bb);
-			verify(bb).putInt(42);
-			assertEquals(Integer.BYTES, constant.size());
-		}
-
-		@DisplayName("can be boolean values")
-		@Test
-		void bool() {
-			final Constant constant = new Constant(true);
-			final ByteBuffer bb = mock(ByteBuffer.class);
-			constant.append(bb);
-			verify(bb).putInt(1);
-			assertEquals(Integer.BYTES, constant.size());
-		}
-
-		@DisplayName("must be a supported type")
-		@Test
-		void invalid() {
-			assertThrows(UnsupportedOperationException.class, () -> new Shader.Constant("doh"));
-		}
-
-		@DisplayName("can be empty")
-		@Test
-		void empty() {
-			assertEquals(null, Shader.Constant.build(Map.of()));
-		}
-
-		@DisplayName("can be converted to a data buffer of the constant values")
+		@DisplayName("Shader specialisation constants can be constructed from an indexed map of values")
 		@Test
 		void constants() {
 			// Build constants table
-			final Map<Integer, Constant> map = Map.of(
-					1, new Constant(1),
-					2, new Constant(2f),
-					3, new Constant(true)
+			final Map<Integer, Object> map = Map.of(
+					1, 1,
+					2, 2f,
+					3, true
 			);
 
 			// Create constants
-			final VkSpecializationInfo info = Constant.build(new LinkedHashMap<>(map));
+			final VkSpecializationInfo info = Shader.constants(new LinkedHashMap<>(map));
 			assertNotNull(info);
 			assertNotNull(info.pMapEntries);
 			assertEquals(3, info.mapEntryCount);
@@ -140,6 +96,18 @@ public class ShaderTest extends AbstractVulkanTest {
 			bb.putFloat(2f);
 			bb.putInt(1);
 			assertEquals(bb, info.pData);
+		}
+
+		@DisplayName("Shader specialisation constants can be empty")
+		@Test
+		void empty() {
+			assertEquals(null, Shader.constants(Map.of()));
+		}
+
+		@DisplayName("A specialisation constant must be a supported type")
+		@Test
+		void invalid() {
+			assertThrows(UnsupportedOperationException.class, () -> Shader.constants(Map.of(1, "doh")));
 		}
 	}
 }

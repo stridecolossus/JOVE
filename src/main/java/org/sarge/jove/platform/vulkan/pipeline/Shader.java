@@ -86,92 +86,82 @@ public class Shader extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Transient specialisation constant record.
+	 * Constructs the descriptor for the given specialisation constants.
+	 * <p>
+	 * The following types are supported:
+	 * <ul>
+	 * <li>Integer</li>
+	 * <li>Float</li>
+	 * <li>{@link VulkanBoolean}</li>
+	 * </ul>
+	 * Note that numeric constants must be a wrapper type.
+	 * <p>
+	 * @param constants Specialisation constants indexed by identifier
+	 * @return Specialisation constants descriptor or {@code null} if empty
+	 * @throws UnsupportedOperationException for an unsupported constant type
 	 */
-	public static class Constant {
-		private final Object value;
-
-		/**
-		 * Constructor.
-		 * @param value
-		 */
-		public Constant(Object value) {
-			this.value = notNull(value);
-			size();
+	public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
+		// Skip if empty
+		if(constants.isEmpty()) {
+			return null;
 		}
 
 		/**
-		 * @return Size of this constant (bytes)
+		 * Generates the descriptor for each constant and calculates the total length as a side-effect.
 		 */
-		int size() {
-			return switch(value) {
-				case Integer n -> Integer.BYTES;
-				case Float f -> Float.BYTES;
-				case Boolean b -> Integer.BYTES;
-				default -> throw new UnsupportedOperationException("Unsupported constant type: " + value.getClass());
-			};
-		}
+		final var populate = new BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry>() {
+			private int len = 0;
 
-		/**
-		 * Adds this constant to the data buffer.
-		 */
-		void append(ByteBuffer buffer) {
+			@Override
+			public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry out) {
+				// Init constant
+				final int size = size(entry.getValue());
+				out.size = size;
+				out.constantID = entry.getKey();
+
+				// Update buffer offset
+				out.offset = len;
+				len += size;
+			}
+
+			/**
+			 * Determines the size of a constant.
+			 */
+			private static int size(Object value) {
+				return switch(value) {
+					case Integer n -> Integer.BYTES;
+					case Float f -> Float.BYTES;
+					case Boolean b -> Integer.BYTES;
+					default -> throw new UnsupportedOperationException("Unsupported constant type: " + value.getClass());
+				};
+			}
+		};
+
+		// Populate map entries
+		final var info = new VkSpecializationInfo();
+		info.mapEntryCount = constants.size();
+		info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
+
+		// Build constants data buffer
+		final ByteBuffer buffer = BufferHelper.allocate(populate.len);
+		for(Object value : constants.values()) {
 			switch(value) {
 				case Integer n -> buffer.putInt(n);
 				case Float f -> buffer.putFloat(f);
 				case Boolean b -> {
-					final VulkanBoolean bool = VulkanBoolean.of(b);
-					buffer.putInt(bool.toInteger());
+					final int bool = VulkanBoolean.of(b).toInteger();
+					buffer.putInt(bool);
 				}
 				default -> throw new RuntimeException();
 			}
 		}
+		assert !buffer.hasRemaining();
 
-		/**
-		 * Constructs the descriptor for the given specialisation constants.
-		 * @param constants Specialisation constants indexed by ID
-		 * @return Specialisation constants descriptor or {@code null} if empty
-		 */
-		public static VkSpecializationInfo build(Map<Integer, Constant> constants) {
-			// Skip if empty
-			if(constants.isEmpty()) {
-				return null;
-			}
+		// Populate data buffer
+		info.dataSize = populate.len;
+		info.pData = buffer;
 
-			/**
-			 * Generates the descriptor for each constant.
-			 * Also initialises the buffer offset of each entry and calculates the total length.
-			 */
-			final var populate = new BiConsumer<Entry<Integer, Constant>, VkSpecializationMapEntry>() {
-				private int len = 0;
-
-				@Override
-				public void accept(Entry<Integer, Constant> entry, VkSpecializationMapEntry out) {
-					// Init constant
-					final int size = entry.getValue().size();
-					out.size = size;
-					out.constantID = entry.getKey();
-
-					// Update buffer offset
-					out.offset = len;
-					len += size;
-				}
-			};
-
-			// Populate map entries
-			final var info = new VkSpecializationInfo();
-			info.mapEntryCount = constants.size();
-			info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
-
-			// Populate constant data
-			info.dataSize = populate.len;
-			info.pData = BufferHelper.allocate(populate.len);
-			for(Constant c : constants.values()) {
-				c.append(info.pData);
-			}
-
-			return info;
-		}
+		return info;
 	}
 
 	/**

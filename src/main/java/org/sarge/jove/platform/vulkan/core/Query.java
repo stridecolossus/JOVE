@@ -421,7 +421,7 @@ public interface Query {
 		 * @param pCreateInfo		Create descriptor
 		 * @param pAllocator		Allocator
 		 * @param pQueryPool		Returned query pool
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pQueryPool);
 
@@ -478,7 +478,7 @@ public interface Query {
 		 * @param pData				Data buffer
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
-		 * @return Result code
+		 * @return Result
 		 */
 		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, ByteBuffer pData, long stride, int flags);
 

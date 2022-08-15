@@ -1,4 +1,4 @@
----
+    ---
 title: Improvements
 ---
 
@@ -69,10 +69,10 @@ public static ByteBuffer buffer(byte[] array) {
 }
 ```
 
-Where `write` is a further utility method:
+Where `write` is a local helper method:
 
 ```java
-public static void write(byte[] array, ByteBuffer bb) {
+private static void write(byte[] array, ByteBuffer bb) {
     if(bb.isDirect()) {
         for(byte b : array) {
             bb.put(b);
@@ -100,7 +100,7 @@ public static void insert(int index, Bufferable data, ByteBuffer bb) {
 
 This is useful for buffers that are essentially an 'array' of some type of bufferable object (which we use below).
 
-Finally in the same vein we add a new factory method to the bufferable class to wrap a JNA structure:
+Finally in the same vein another new factory method is added to wrap a JNA structure:
 
 ```java
 static Bufferable of(Structure struct) {
@@ -113,7 +113,7 @@ static Bufferable of(Structure struct) {
         @Override
         public void buffer(ByteBuffer bb) {
             byte[] array = struct.getPointer().getByteArray(0, struct.size());
-            BufferHelper.write(array, bb);
+            write(array, bb);
         }
     };
 }
@@ -564,64 +564,101 @@ TODO - cache manager, file source helper, integration
 
 ## Specialisation Constants
 
-The new shaders contain a number of hard coded parameters (such as the tesselation factor and height scalar) which would ideally be programatically configured (possibly from a properties file).
+The terrain shaders contain a number of hard coded parameters (such as the tesselation factor and height scalar) which would ideally be programatically configured (possibly from a properties file).
 
-Additionally in general we would like to centralise common or shared parameters to avoid hard-coding the same information in multiple locations or having to replicate shaders with different parameters.
+Additionally in general we prefer to centralise common or shared parameters to avoid hard-coding the same information in multiple locations or having to replicate shaders for different parameters.
 
-Vulkan provides _specialisation constants_ for these requirements which are be used to parameterise a shader when it is instantiated.
+Vulkan provides _specialisation constants_ for these requirements which parameterise a shader when it is instantiated.
 
-The descriptor for a set of specialisation constants is constructed using a new factory method on the shader class:
+For example in the evaluation shader the hard-coded height scale is replaced with the following constant declaration:
+
+```glsl
+layout(constant_id=1) const float HeightScale = 2.5;
+```
+
+Note that the constant also has a default value if it is not explicitly configured by the application.
+
+The descriptor for a set of specialisation constants is constructed via a new factory method:
 
 ```java
-public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
+public static VkSpecializationInfo build(Map<Integer, Object> constants) {
     // Skip if empty
     if(constants.isEmpty()) {
         return null;
     }
-
-    var info = new VkSpecializationInfo();
     ...
-
-    return info;
 }
 ```
 
-Where _constants_ is a map of arbitrary values indexed by identifier.
-
-The method first transforms the map to a list:
+Each constant generates a separate child descriptor:
 
 ```java
-List<Constant> table = constants.entrySet().stream().map(Constant::new).toList();
+var info = new VkSpecializationInfo();
+info.mapEntryCount = constants.size();
+info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
 ```
 
-Where each constant is an instance of a local class constructed from each map entry:
+Where `populate` is factored out to the following function:
 
 ```java
-class Constant {
-    private final int id;
-    private final Object value;
-    private final int size;
-    private int offset;
+var populate = new BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry>() {
+    private int len = 0;
 
-    private Constant(Entry<Integer, Object> entry) {
-        this.id = entry.getKey();
-        this.value = entry.getValue();
-        this.size = size();
+    @Override
+    public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry out) {
+        ...
     }
-}
+};
 ```
 
-The _size_ of each constant is determined as follows:
+This function populates the descriptor for each entry and calculates the buffer offset and total length as a side-effect:
 
 ```java
-private int size() {
+// Init constant
+int size = size(entry.getValue());
+out.size = size;
+out.constantID = entry.getKey();
+
+// Update buffer offset
+out.offset = len;
+len += size;
+```
+
+Where `size` is a local helper:
+
+```java
+int size() {
     return switch(value) {
         case Integer n -> Integer.BYTES;
         case Float f -> Float.BYTES;
         case Boolean b -> Integer.BYTES;
-        default -> throw new UnsupportedOperationException(...);
+        default -> throw new UnsupportedOperationException();
     };
 }
+```
+
+The constants are then written to a data buffer:
+
+```java
+ByteBuffer buffer = BufferHelper.allocate(populate.len);
+for(Object value : constants.values()) {
+    switch(value) {
+        case Integer n -> buffer.putInt(n);
+        case Float f -> buffer.putFloat(f);
+        case Boolean b -> {
+            int bool = VulkanBoolean.of(b).toInteger();
+            buffer.putInt(bool);
+        }
+        default -> throw new RuntimeException();
+    }
+}
+```
+
+And finally this data is added to the descriptor:
+
+```java
+info.dataSize = populate.len;
+info.pData = buffer;
 ```
 
 Notes:
@@ -630,61 +667,7 @@ Notes:
 
 * Booleans are represented as integer values.
 
-The _offset_ of each constant within the data buffer is determined by the following simple loop (which also calculates the total length of the buffer):
-
-```java
-int size = 0;
-for(Constant e : table) {
-    e.offset = size;
-    size += e.size;
-}
-```
-
-Each constant has a descriptor:
-
-```java
-var info = new VkSpecializationInfo();
-info.mapEntryCount = constants.size();
-info.pMapEntries = StructureHelper.pointer(table, VkSpecializationMapEntry::new, Constant::populate);
-```
-
-Which is populated from the local class:
-
-```java
-private void populate(VkSpecializationMapEntry entry) {
-    entry.constantID = id;
-    entry.offset = offset;
-    entry.size = size;
-}
-```
-
-Finally the data buffer for the specialisation constants is allocated and filled:
-
-```java
-info.dataSize = size;
-info.pData = BufferHelper.allocate(size);
-for(Constant entry : table) {
-    entry.append(info.pData);
-}
-```
-
-Where `append` is another helper on the local class:
-
-```java
-void append(ByteBuffer buffer) {
-    switch(value) {
-        case Integer n -> buffer.putInt(n);
-        case Float f -> buffer.putFloat(f);
-        case Boolean b -> {
-            VulkanBoolean bool = VulkanBoolean.of(b);
-            buffer.putInt(bool.toInteger());
-        }
-        default -> throw new RuntimeException();
-    }
-}
-```
-
-The specialisation constants are applied to a shader during pipeline configuration:
+Specialisation constants are configured in the pipeline:
 
 ```java
 public class ShaderStageBuilder {
@@ -704,19 +687,11 @@ public class ShaderStageBuilder {
 }
 ```
 
-For example in the evaluation shader we can replace the hard-coded height scale with the following constant declaration:
-
-```glsl
-layout(constant_id=1) const float HeightScale = 2.5;
-```
-
-Note that the constant also has a default value if it is not explicitly configured by the application.
-
 The set of constants used in both tesselation shaders is initialised in the pipeline configuration class:
 
 ```java
 class PipelineConfiguration {
-    private final VkSpecializationInfo constants = Shader.constants(Map.of(0, 20f, 1, 2.5f));
+    private final VkSpecializationInfo constants = Shader.build(Map.of(0, 20f, 1, 2.5f));
 }
 ```
 
@@ -756,12 +731,12 @@ First a new JNA library is created for the query API:
 interface Library {
     int  vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pQueryPool);
     void vkDestroyQueryPool(DeviceContext device, Pool queryPool, Pointer pAllocator);
-    void vkCmdResetQueryPool(Command.Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount);
-    void vkCmdBeginQuery(Command.Buffer commandBuffer, Pool queryPool, int query, int flags);
-    void vkCmdEndQuery(Command.Buffer commandBuffer, Pool queryPool, int query);
-    void vkCmdWriteTimestamp(Command.Buffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
+    void vkCmdResetQueryPool(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount);
+    void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, int flags);
+    void vkCmdEndQuery(Buffer commandBuffer, Pool queryPool, int query);
+    void vkCmdWriteTimestamp(Buffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
     int  vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, ByteBuffer pData, long stride, int flags);
-    void vkCmdCopyQueryPoolResults(Command.Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, int flags);
+    void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, int flags);
 }
 ```
 
@@ -874,7 +849,7 @@ public class Pool ... {
 }
 ```
 
-The builder specifies the data type and the range of slots to be populated:
+The builder specifies the data type and the range of query slots to be retrieved:
 
 ```java
 public static class ResultBuilder {
@@ -902,6 +877,7 @@ For the case where the results are retrieved on-demand the application provides 
 ```java
 public Consumer<ByteBuffer> build() {
     int mask = validate();
+
     DeviceContext dev = pool.device();
     Library lib = dev.library();
 
@@ -951,7 +927,7 @@ First we create a query pool that counts the number of vertices generated by the
 
 ```java
 @Bean
-public Query.Pool queryPool(LogicalDevice dev) {
+public Pool queryPool(LogicalDevice dev) {
     return new Pool.Builder()
         .type(VkQueryType.PIPELINE_STATISTICS)
         .statistic(VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS)
@@ -983,11 +959,11 @@ buffer
 
 Again note the pool is `reset` before the start of the pass.
 
-Finally the query results are configured as a frame listener task that dumps the vertex count to the console:
+Finally the query results are configured as a frame listener to dump the vertex count to the console:
 
 ```java
 @Bean
-public Task queryResults() {
+public FrameListener queryResults() {
     ByteBuffer results = BufferHelper.allocate(Integer.BYTES);
     Consumer<ByteBuffer> consumer = pool.result().build();
     return () -> {
@@ -997,9 +973,7 @@ public Task queryResults() {
 }
 ```
 
-The terrain demo application should now output the number of the vertices generated on each frame.  Obviously this is a very crude implementation to illustrate the query framework.
-
-Note that if the results task is executed before the render sequence the first invocation is likely to fail with a `VK_NOT_READY` result code.
+The terrain demo application should now output the number of the vertices generated on each frame.  Obviously this is a very crude implementation just to illustrate the query framework.
 
 ---
 
