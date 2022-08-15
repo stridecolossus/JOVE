@@ -3,11 +3,10 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.*;
 
 /**
  * Builder for the rasterizer pipeline stage.
- * @see VkPipelineRasterizationStateCreateInfo
  * @author Sarge
  */
 public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineRasterizationStateCreateInfo> {
@@ -43,8 +42,8 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	/**
 	 * Sets the polygon fill mode (default is {@link VkPolygonMode#FILL}).
 	 * @param polygonMode Polygon mode
-	 * TODO - check feature if not fill, line, point
 	 */
+	@RequiredFeature(field="polygonMode", feature="fillModeNonSolid")
 	public RasterizerPipelineStageBuilder polygon(VkPolygonMode polygonMode) {
 		info.polygonMode = notNull(polygonMode);
 		return this;
@@ -88,8 +87,8 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	 * Sets the line width (default is {@code one}).
 	 * @param lineWidth Line width
 	 * @throws IllegalArgumentException if the line width is less-than one
-	 * TODO - check feature if > 1
 	 */
+	@RequiredFeature(field="lineWidth", feature="wideLines")
 	public RasterizerPipelineStageBuilder lineWidth(float lineWidth) {
 		info.lineWidth = oneOrMore(lineWidth);
 		return this;

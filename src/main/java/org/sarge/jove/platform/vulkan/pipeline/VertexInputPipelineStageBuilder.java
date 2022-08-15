@@ -19,13 +19,6 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
 	private final List<AttributeBuilder> attributes = new ArrayList<>();
 
-// TODO - limits
-//	public int maxVertexInputAttributes;
-//	public int maxVertexInputBindings;
-//	public int maxVertexInputAttributeOffset;
-//	public int maxVertexInputBindingStride;
-//	public int maxVertexOutputComponents;
-
 	/**
 	 * Starts a new binding.
 	 * @return New binding builder

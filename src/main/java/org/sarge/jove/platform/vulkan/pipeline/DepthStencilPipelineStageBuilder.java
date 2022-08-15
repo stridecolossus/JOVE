@@ -2,13 +2,11 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.jove.platform.vulkan.VkCompareOp;
-import org.sarge.jove.platform.vulkan.VkPipelineDepthStencilStateCreateInfo;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.util.*;
 
 /**
  * Builder for the depth-stencil pipeline stage.
- * @see VkPipelineDepthStencilStateCreateInfo
  * @author Sarge
  */
 public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
@@ -29,6 +27,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * Sets whether depth-testing is enabled (default is {@code false}).
 	 * @param depthTestEnable Whether depth-test is enabled
 	 */
+	@RequiredFeature(field="depthTestEnable", feature="depthBounds")
 	public DepthStencilPipelineStageBuilder enable(boolean depthTestEnable) {
 		info.depthTestEnable = VulkanBoolean.of(depthTestEnable);
 		return this;

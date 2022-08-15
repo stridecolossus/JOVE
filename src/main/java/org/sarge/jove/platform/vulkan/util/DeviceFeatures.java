@@ -60,11 +60,6 @@ public interface DeviceFeatures {
 		public boolean contains(DeviceFeatures features) {
 			return features.equals(this);
 		}
-
-		@Override
-		public String toString() {
-			return "EMPTY";
-		}
 	};
 
 	/**

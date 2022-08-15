@@ -2,11 +2,10 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.*;
 
 /**
  * Builder for the input assembly pipeline stage.
- * @see VkPipelineInputAssemblyStateCreateInfo
  * @author Sarge
  */
 public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
@@ -30,6 +29,7 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * Sets whether primitive restart is enabled.
 	 * @param restart Whether restart is enabled
 	 */
+	@RequiredFeature(field="primitiveRestartEnable", feature="primitiveTopologyListRestart")
 	public AssemblyPipelineStageBuilder restart(boolean restart) {
 		info.primitiveRestartEnable = VulkanBoolean.of(restart);
 		return this;

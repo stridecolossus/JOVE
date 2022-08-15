@@ -6,12 +6,12 @@ import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.*;
 
 /**
  * Builder for the viewport stage descriptor.
- * @see VkPipelineViewportStateCreateInfo
  * @author Sarge
  */
 public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
@@ -49,6 +49,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * @param min		Minimum depth
 	 * @param max		Maximum depth
 	 */
+	@RequiredFeature(field="viewportCount", feature="multiViewport")
 	public ViewportPipelineStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
 		viewports.add(new Viewport(rect, min, max));
 		return this;
@@ -105,27 +106,12 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		out.extent.height = in.height();
 	}
 
-	// TODO - limits
-//		public int maxViewports;
-//		public int[] maxViewportDimensions = new int[2];
-//		public float[] viewportBoundsRange = new float[2];
-//		public int viewportSubPixelBits;
-
 	@Override
 	VkPipelineViewportStateCreateInfo get() {
 		// Validate
 		final int count = viewports.size();
-		if(count == 0) {
-			throw new IllegalArgumentException("No viewports specified");
-		}
-		else
-		if(count > 1) {
-			// TODO - count < limits.maxViewports
-			// TODO - multiViewport
-		}
-		if(scissors.size() != count) {
-			throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
-		}
+		if(count == 0) throw new IllegalArgumentException("No viewports specified");
+		if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
 
 		// Add viewports
 		final var info = new VkPipelineViewportStateCreateInfo();

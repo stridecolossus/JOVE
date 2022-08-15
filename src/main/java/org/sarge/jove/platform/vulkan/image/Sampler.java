@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -219,6 +219,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * Sets the number of texel samples for anisotropy filtering (default is disabled).
 		 * @param anisotropy Number of texel samples
 		 */
+		@RequiredFeature(field="maxAnisotropy", feature="samplerAnisotropy")
 		public Builder anisotropy(float anisotropy) {
 			info.maxAnisotropy = oneOrMore(anisotropy);
 			info.anisotropyEnable = VulkanBoolean.of(anisotropy > 1);
