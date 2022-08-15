@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.stream.Collectors.toMap;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
-import java.util.function.Function;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
@@ -112,10 +110,14 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param bindings		Bindings
 	 * @return New descriptor set layout
-	 * @throws IllegalArgumentException for if the bindings are empty
-	 * @throws IllegalStateException for a duplicate binding index
+	 * @throws IllegalArgumentException if the bindings are empty or contain duplicate indices
 	 */
 	public static DescriptorLayout create(DeviceContext dev, Collection<Binding> bindings) {
+		// Check binding indices
+		if(bindings.stream().map(Binding::index).distinct().toList().size() != bindings.size()) {
+			throw new IllegalArgumentException("Binding indices must be unique: " + bindings);
+		}
+
 		// Init layout descriptor
 		final var info = new VkDescriptorSetLayoutCreateInfo();
 		info.bindingCount = bindings.size();
@@ -130,31 +132,35 @@ public class DescriptorLayout extends AbstractVulkanObject {
 		return new DescriptorLayout(handle.getValue(), dev, bindings);
 	}
 
-	private final Map<Integer, Binding> bindings;
+	private final Collection<Binding> bindings;
 
 	/**
 	 * Constructor.
 	 * @param handle		Layout handle
 	 * @param dev			Logical device
 	 * @param bindings		Bindings
-	 * @throws IllegalStateException for a duplicate binding index
 	 */
 	DescriptorLayout(Pointer handle, DeviceContext dev, Collection<Binding> bindings) {
 		super(handle, dev);
 		Check.notEmpty(bindings);
-		this.bindings = bindings.stream().collect(toMap(Binding::index, Function.identity()));
+		this.bindings = Set.copyOf(bindings);
 	}
 
 	/**
 	 * @return Bindings
 	 */
-	public Map<Integer, Binding> bindings() {
+	public Collection<Binding> bindings() {
 		return bindings;
 	}
 
 	@Override
 	protected Destructor<DescriptorLayout> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyDescriptorSetLayout;
+	}
+
+	@Override
+	public int hashCode() {
+		return bindings.hashCode();
 	}
 
 	@Override
@@ -169,7 +175,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append(bindings.values())
+				.append(bindings)
 				.build();
 	}
 }

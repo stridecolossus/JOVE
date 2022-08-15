@@ -29,7 +29,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 * Constructor.
 	 * @param handle		Pool handle
 	 * @param dev			Logical device
-	 * @param max			Maximum number of descriptor sets that <b>can</b> be allocated by this pool
+	 * @param max			Maximum number of descriptor sets that can be allocated from this pool
 	 */
 	DescriptorPool(Pointer handle, DeviceContext dev, int max) {
 		super(handle, dev);
@@ -37,21 +37,25 @@ public class DescriptorPool extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Maximum number of sets that <b>can</b> be allocated by this pool
+	 * @return Maximum number of sets that can be allocated from this pool
 	 */
 	public int maximum() {
 		return max;
 	}
 
 	/**
-	 * Allocates a number of descriptor sets for the given layouts.
+	 * Allocates a number of descriptor sets with the given layout(s).
+	 * @param layouts Layout for each set
 	 * @return New descriptor sets
 	 */
-	public Collection<DescriptorSet> allocate(int count, List<DescriptorLayout> layouts) {
+	public Collection<DescriptorSet> allocate(List<DescriptorLayout> layouts) {
+		Check.notEmpty(layouts);
+		final int count = layouts.size();
+
 		// Build allocation descriptor
 		final var info = new VkDescriptorSetAllocateInfo();
 		info.descriptorPool = this.handle();
-		info.descriptorSetCount = oneOrMore(count);
+		info.descriptorSetCount = count;
 		info.pSetLayouts = NativeObject.array(layouts);
 
 		// Allocate descriptors sets
@@ -62,9 +66,26 @@ public class DescriptorPool extends AbstractVulkanObject {
 
 		// Create descriptor sets
 		return IntStream
-				.range(0, handles.length)
+				.range(0, count)
 				.mapToObj(n -> new DescriptorSet(handles[n], layouts.get(n)))
 				.toList();
+	}
+
+	/**
+	 * @see #allocate(List)
+	 */
+	public Collection<DescriptorSet> allocate(DescriptorLayout... layouts) {
+		return allocate(Arrays.asList(layouts));
+	}
+
+	/**
+	 * Convenience method to allocate a number of descriptor sets each with the given layout.
+	 * @param count			Number of sets to allocate
+	 * @param layout		Descriptor layout
+	 * @return New descriptor sets
+	 */
+	public Collection<DescriptorSet> allocate(int count, DescriptorLayout layout) {
+		return allocate(Collections.nCopies(count, layout));
 	}
 
 	/**
@@ -98,7 +119,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Builder for a descriptor-set pool.
+	 * Builder for a descriptor pool.
 	 */
 	public static class Builder {
 		private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
@@ -110,7 +131,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		 * @param type		Descriptor set type
 		 * @param count		Number of available sets of this type
 		 */
-		public DescriptorPool.Builder add(VkDescriptorType type, int count) {
+		public Builder add(VkDescriptorType type, int count) {
 			Check.notNull(type);
 			Check.oneOrMore(count);
 			pool.put(type, count);
@@ -121,7 +142,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		 * Sets the maximum number of sets that <b>can</b> be allocated from this pool.
 		 * @param max Maximum number of sets
 		 */
-		public DescriptorPool.Builder max(int max) {
+		public Builder max(int max) {
 			this.max = oneOrMore(max);
 			return this;
 		}
@@ -130,7 +151,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 		 * Adds a creation flag for this pool.
 		 * @param flag Flag
 		 */
-		public DescriptorPool.Builder flag(VkDescriptorPoolCreateFlag flag) {
+		public Builder flag(VkDescriptorPoolCreateFlag flag) {
 			flags.add(notNull(flag));
 			return this;
 		}

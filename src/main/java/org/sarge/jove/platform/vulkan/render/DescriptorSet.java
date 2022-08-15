@@ -39,23 +39,17 @@ import com.sun.jna.ptr.PointerByReference;
  *  	.max(2)
  *  	.build();
  *
- * // Create descriptors
- * List descriptors = pool.allocate(layout, 2);
+ * // Create descriptor
+ * DescriptorSet descriptor = pool.allocate(layout);
  *
- * // Create a descriptor set resource for the sampler
+ * // Create a sampler resource
+ * Sampler sampler = ...
  * View view = ...
  * DescriptorResource res = sampler.resource(view);
- * ...
  *
- * // Set resource
- * DescriptorSet first = descriptors.get(0);
- * first.set(binding, res);
- *
- * // Or bulk set resources in all sets
- * DescriptorSet.set(descriptors, binding, res);
- *
- * // Apply updates
- * DescriptorSet.update(dev, descriptors);
+ * // Populate resource
+ * descriptor.set(binding, res);
+ * DescriptorSet.update(dev, Set.of(descriptor));
  * </pre>
  * @author Sarge
  */
@@ -73,11 +67,7 @@ public class DescriptorSet implements NativeObject {
 	DescriptorSet(Pointer handle, DescriptorLayout layout) {
 		this.handle = new Handle(handle);
 		this.layout = notNull(layout);
-		init();
-	}
-
-	private void init() {
-		layout.bindings().values().forEach(modified::add);
+		this.modified.addAll(layout.bindings());
 	}
 
 	@Override
@@ -101,7 +91,7 @@ public class DescriptorSet implements NativeObject {
 	 */
 	public void set(Binding binding, DescriptorResource res) {
 		// Check binding belongs to this set
-		if(!layout.bindings().values().contains(binding)) {
+		if(!layout.bindings().contains(binding)) {
 			throw new IllegalArgumentException(String.format("Invalid binding for this set: binding=%s this=%s", binding, this));
 		}
 
@@ -228,8 +218,9 @@ public class DescriptorSet implements NativeObject {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(entries.values())
+				.append(handle)
+				.append(entries)
+				.append("modified", !modified.isEmpty())
 				.build();
 	}
 

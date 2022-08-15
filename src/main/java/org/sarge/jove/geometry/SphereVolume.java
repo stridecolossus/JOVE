@@ -10,12 +10,12 @@ import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>sphere volume</i> is defined by a simple sphere.
+ * A <i>sphere volume</i> is defined by a simple radius about a centre-point.
  * @author Sarge
  */
 public class SphereVolume implements Volume {
 	/**
-	 * Helper - Creates a sphere volume that encloses the given bounds.
+	 * Creates a sphere volume enclosing the given bounds.
 	 * @param bounds Bounds
 	 * @return Sphere volume
 	 */

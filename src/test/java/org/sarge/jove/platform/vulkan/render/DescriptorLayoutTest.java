@@ -26,17 +26,12 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertEquals(new Handle(new Pointer(1)), layout.handle());
-		assertEquals(Map.of(1, binding), layout.bindings());
+		assertEquals(Set.of(binding), layout.bindings());
 	}
 
 	@Test
 	void constructorEmptyBindings() {
 		assertThrows(IllegalArgumentException.class, () -> new DescriptorLayout(new Pointer(1), dev, List.of()));
-	}
-
-	@Test
-	void constructorDuplicateBindingIndex() {
-		assertThrows(IllegalStateException.class, () -> new DescriptorLayout(new Pointer(1), dev, List.of(binding, binding)));
 	}
 
 	@Test
@@ -64,6 +59,11 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 
 		// Check API
 		verify(lib).vkCreateDescriptorSetLayout(dev, expected, null, factory.pointer());
+	}
+
+	@Test
+	void duplicate() {
+		assertThrows(IllegalArgumentException.class, () -> DescriptorLayout.create(dev, List.of(binding, binding)));
 	}
 
 	@Nested

@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 import java.util.stream.*;
 
@@ -74,24 +73,11 @@ class BoundsTest {
 	}
 
 	@Test
-	void invert() {
-		final Bounds inverse = bounds.invert();
-		assertNotNull(inverse);
-		assertEquals(min, inverse.min());
-		assertEquals(max, inverse.max());
-		assertEquals(centre, inverse.centre());
-		assertEquals(false, inverse.contains(min));
-		assertEquals(false, inverse.contains(max));
-		assertEquals(false, inverse.contains(centre));
-		assertEquals(true, inverse.contains(Point.ORIGIN));
-	}
-
-	@Test
 	void equals() {
 		assertEquals(true, bounds.equals(bounds));
 		assertEquals(true, bounds.equals(new Bounds(min, max)));
 		assertEquals(false, bounds.equals(null));
-		assertEquals(false, bounds.equals(mock(Bounds.class)));
+		assertEquals(false, bounds.equals(new Bounds(max, min)));
 	}
 
 	@Nested

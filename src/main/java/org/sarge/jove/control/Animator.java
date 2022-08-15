@@ -26,8 +26,9 @@ public class Animator extends Playable implements FrameListener {
 	private final long duration;
 	private final Animation animation;
 
-	private long time;
 	private float speed = 1;
+	private long time;
+	private float pos;
 
 	/**
 	 * Constructor.
@@ -54,11 +55,10 @@ public class Animator extends Playable implements FrameListener {
 	}
 
 	/**
-	 * Helper - Calculates the animation <i>position</i> as a floating-point value.
-	 * @return Animation position (0..1)
+	 * @return Animation <i>position</i> as a floating-point value in the range 0..1
 	 */
 	public float position() {
-		return time / (float) duration;
+		return pos;
 	}
 
 	/**
@@ -101,6 +101,7 @@ public class Animator extends Playable implements FrameListener {
 		}
 
 		// Update animation
+		pos = time / (float) duration;
 		animation.update(this);
 	}
 

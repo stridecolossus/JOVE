@@ -22,8 +22,7 @@ public enum VkShaderStage implements IntegerEnumeration {
  	INTERSECTION_NV(4096),
  	CALLABLE_NV(8192),
  	TASK_NV(64),
- 	MESH_NV(128),
- 	FLAGS_MAX_ENUM(2147483647);
+ 	MESH_NV(128);
 
 	private final int value;
 

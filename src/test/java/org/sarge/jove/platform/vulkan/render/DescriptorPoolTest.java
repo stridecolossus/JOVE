@@ -43,7 +43,7 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 	@Test
 	void allocate() {
 		// Allocate some sets
-		final var sets = pool.allocate(1, List.of(layout));
+		final Collection<DescriptorSet> sets = pool.allocate(layout);
 		assertNotNull(sets);
 		assertEquals(1, sets.size());
 
@@ -63,9 +63,18 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 		assertNotNull(info.pSetLayouts);
 	}
 
+	@DisplayName("Multiple descriptor sets with a common layout can be allocated from the pool")
+	@Test
+	void multiple() {
+		final Collection<DescriptorSet> sets = pool.allocate(2, layout);
+		assertNotNull(sets);
+		assertEquals(2, sets.size());
+		assertEquals(layout, sets.iterator().next().layout());
+	}
+
 	@Test
 	void free() {
-		final Collection<DescriptorSet> sets = pool.allocate(1, List.of(layout));
+		final Collection<DescriptorSet> sets = pool.allocate(layout);
 		pool.free(sets);
 		verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.array(sets));
 		assertEquals(1, pool.maximum());

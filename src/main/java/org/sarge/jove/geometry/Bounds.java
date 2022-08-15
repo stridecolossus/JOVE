@@ -1,42 +1,24 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-
-import java.util.*;
+import java.util.Arrays;
 import java.util.stream.Collector;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>bounds</i> defines an axis-aligned rectilinear volume specified by min/max points.
  * @author Sarge
  */
-public class Bounds {
-	private final Point min, max;
-
+public record Bounds(Point min, Point max) {
 	/**
 	 * Constructor.
 	 * @param min Minimum bound
 	 * @param max Maximum bound
 	 */
-	public Bounds(Point min, Point max) {
-		this.min = notNull(min);
-		this.max = notNull(max);
-	}
-
-	/**
-	 * @return Minimum extent
-	 */
-	public Point min() {
-		return min;
-	}
-
-	/**
-	 * @return Maximum extent
-	 */
-	public Point max() {
-		return max;
+	public Bounds {
+		Check.notNull(min);
+		Check.notNull(max);
 	}
 
 	/**
@@ -122,37 +104,6 @@ public class Bounds {
 				(min.x <= that.max.x) && (max.x >= that.min.x) &&
 				(min.y <= that.max.y) && (max.y >= that.min.y) &&
 				(min.z <= that.max.z) && (max.z >= that.min.z);
-	}
-
-	/**
-	 * Inverts this bounds.
-	 * @return Inverted bounds
-	 */
-	public Bounds invert() {
-		return new Bounds(min, max) {
-			@Override
-			public boolean contains(Point pt) {
-				return !super.contains(pt);
-			}
-		};
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(min, max);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Bounds that) &&
-				min.equals(that.min) && max.equals(that.max);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(min).append(max).build();
 	}
 
 	/**

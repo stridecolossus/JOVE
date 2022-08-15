@@ -48,7 +48,7 @@ The layout is tackled first:
 
 ```java
 public static class Layout extends AbstractVulkanObject {
-    private final Map<Integer, Binding> bindings;
+    private final Collection<Binding> bindings;
 
     @Override
     protected Destructor<Layout> destructor(VulkanLibrary lib) {
@@ -111,11 +111,12 @@ public static class Pool extends AbstractVulkanObject {
 Descriptor sets are requested from the pool as follows:
 
 ```java
-public Collection<DescriptorSet> allocate(int count, List<Layout> layouts) {
+public Collection<DescriptorSet> allocate(List<Layout> layouts) {
     // Build allocation descriptor
+    int count = layouts.size();
     var info = new VkDescriptorSetAllocateInfo();
     info.descriptorPool = this.handle();
-    info.descriptorSetCount = oneOrMore(count);
+    info.descriptorSetCount = count;
     info.pSetLayouts = NativeObject.toArray(layouts);
 
     // Allocate descriptors sets
@@ -131,7 +132,7 @@ The returned handles are transformed to the domain object:
 
 ```java
 List<DescriptorSet> allocated = IntStream
-    .range(0, handles.length)
+    .range(0, count)
     .mapToObj(n -> new DescriptorSet(handles[n], layouts.get(n)))
     .toList();
 ```
@@ -286,13 +287,12 @@ public class DescriptorSet implements NativeObject {
 }
 ```
 
-All bindings are initialised as modified:
+All bindings are initialised as _modified_ in the constructor:
 
 ```java
-private void init() {
-    for(Binding binding : layout.bindings().values()) {
-        modified.add(binding);
-    }
+public DescriptorSet(...) {
+    ...
+    modified.addAll(layout.bindings());
 }
 ```
 

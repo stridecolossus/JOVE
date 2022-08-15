@@ -177,7 +177,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param dest Destination buffer
 	 * @return New copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small
-	 * @throws IllegalStateException if this buffer is not a source or {@link #destAccess} is not a valid destination
+	 * @throws IllegalStateException if this buffer is not a source or the given buffer is not a valid destination
 	 */
 	public BufferCopyCommand copy(VulkanBuffer dest) {
 		return BufferCopyCommand.of(this, dest);

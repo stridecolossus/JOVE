@@ -34,7 +34,7 @@ public record Ray(Point origin, Vector direction) {
 	 */
 	public static interface Intersection {
 		/**
-		 * @return Intersection points expressed as distance from the ray origin
+		 * @return Intersection points expressed as distances from the ray origin
 		 * @see Ray#point(float)
 		 */
 		float[] distances();
@@ -45,14 +45,14 @@ public record Ray(Point origin, Vector direction) {
 		Intersection NONE = Intersection.of();
 
 		/**
-		 * Intersection consisting of distance zero.
+		 * Intersection consisting of a single intersection at the origin of this ray.
 		 */
 		Intersection ZERO = () -> new float[]{0};
 
 		/**
-		 * Creates an intersection result for a literal array of intersections.
+		 * Creates an intersection for a literal array of results.
 		 * @param intersections Intersection distances
-		 * @return Literal intersection
+		 * @return New intersection
 		 */
 		static Intersection of(float... dist) {
 			return new Intersection() {

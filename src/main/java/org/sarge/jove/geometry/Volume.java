@@ -21,7 +21,7 @@ public interface Volume {
 	 * <br>
 	 * Implementations should perform class-specific intersection tests or delegate to the supplied volume.
 	 * <br>
-	 * Note that {@link #intersects(Volume)} throws an exception by default.
+	 * Note that this method throws an exception by default.
 	 * <p>
 	 * Example implementation:
 	 * <pre>
@@ -85,11 +85,6 @@ public interface Volume {
 		@Override
 		public boolean equals(Object obj) {
 			return obj == this;
-		}
-
-		@Override
-		public String toString() {
-			return "Empty";
 		}
 	};
 }

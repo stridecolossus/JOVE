@@ -31,23 +31,23 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * Creates a frame buffer.
 	 * @param pass				Render pass
 	 * @param extents			Image extents
-	 * @param views				Attachments
+	 * @param attachments		Attachments
 	 * @return New frame buffer
-	 * @throws IllegalArgumentException if the number of images is not the same as the number of attachments in the render pass
-	 * @throws IllegalArgumentException if an image is not of the expected format of the corresponding attachment
-	 * @throws IllegalArgumentException if an image is smaller than the given extents
+	 * @throws IllegalArgumentException if the number of attachments is not the same as the render pass
+	 * @throws IllegalArgumentException if an attachment is not of the expected format
+	 * @throws IllegalArgumentException if an attachment is smaller than the given extents
 	 */
-	public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> views) {
+	public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> attachments) {
 		// Validate attachments
-		final List<Attachment> attachments = pass.attachments();
-		final int size = attachments.size();
-		if(views.size() != size) {
-			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", views.size(), attachments.size()));
+		final List<Attachment> expected = pass.attachments();
+		final int size = expected.size();
+		if(attachments.size() != size) {
+			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", attachments.size(), expected.size()));
 		}
 		for(int n = 0; n < size; ++n) {
 			// Validate matching format
-			final Attachment attachment = attachments.get(n);
-			final View view = views.get(n);
+			final Attachment attachment = expected.get(n);
+			final View view = attachments.get(n);
 			final Descriptor descriptor = view.image().descriptor();
 			if(attachment.format() != descriptor.format()) {
 				throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
@@ -63,8 +63,8 @@ public class FrameBuffer extends AbstractVulkanObject {
 		// Build descriptor
 		final var info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
-		info.attachmentCount = views.size();
-		info.pAttachments = NativeObject.array(views);
+		info.attachmentCount = attachments.size();
+		info.pAttachments = NativeObject.array(attachments);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO - layers?
@@ -76,7 +76,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		check(lib.vkCreateFramebuffer(dev, info, null, buffer));
 
 		// Create frame buffer
-		return new FrameBuffer(buffer.getValue(), dev, pass, views, extents);
+		return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
 	}
 
 	private final RenderPass pass;

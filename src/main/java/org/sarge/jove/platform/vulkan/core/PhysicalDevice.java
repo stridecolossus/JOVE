@@ -340,7 +340,7 @@ public class PhysicalDevice implements NativeObject {
 		/**
 		 * Retrieves the properties of the given physical device.
 		 * @param device		Device handle
-		 * @param props			Properties
+		 * @param props			Returned device properties
 		 */
 		void vkGetPhysicalDeviceProperties(PhysicalDevice device, VkPhysicalDeviceProperties props);
 
@@ -352,9 +352,9 @@ public class PhysicalDevice implements NativeObject {
 		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, VkPhysicalDeviceMemoryProperties pMemoryProperties);
 
 		/**
-		 * Retrieves the features of the given physical device.
+		 * Retrieves the supported features of the given physical device.
 		 * @param device		Device handle
-		 * @param features		Features
+		 * @param features		Returned features
 		 */
 		void vkGetPhysicalDeviceFeatures(Pointer device, VkPhysicalDeviceFeatures features);
 
@@ -393,7 +393,7 @@ public class PhysicalDevice implements NativeObject {
 		 * Retrieves supported properties of the given format.
 		 * @param device		Physical device handle
 		 * @param format		Format
-		 * @param props			Format properties
+		 * @param props			Returned format properties
 		 */
 		void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, VkFormatProperties props);
 	}

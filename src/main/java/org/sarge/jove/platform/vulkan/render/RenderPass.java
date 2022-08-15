@@ -62,7 +62,7 @@ public class RenderPass extends AbstractVulkanObject {
 		private int ref;
 
 		/**
-		 * @return New subpass builder
+		 * @return New subpass
 		 */
 		public Subpass subpass() {
 			final Subpass subpass = new Subpass(subpasses.size()) {

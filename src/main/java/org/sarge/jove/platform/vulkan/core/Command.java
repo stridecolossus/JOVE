@@ -17,7 +17,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>command</i> defines an operation to be performed on the hardware.
+ * A <i>command</i> defines an operation performed on a work queue.
  * @author Sarge
  */
 @FunctionalInterface
