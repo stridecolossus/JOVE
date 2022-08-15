@@ -3,9 +3,9 @@ package org.sarge.jove.platform.vulkan.util;
 import com.sun.jna.*;
 
 /**
- * A <i>Vulkan boolean</i> is a custom JNA type wrapper for boolean values used in the Vulkan API.
+ * A <i>Vulkan boolean</i> is a custom wrapper for boolean values used in the Vulkan API.
  * <p>
- * An instance of this class is mapped to a native {@code int} with a value that is <i>explicitly</i> integer one for {@code true} and zero for {@code false}.
+ * An instance of this class is marshalled as a native {@code int} with a value that is <i>explicitly</i> integer one for {@code true} and zero for {@code false}.
  * This circumvents the default JNA mapping which is an <i>arbitrary non-zero</i> value for {@code true}.
  * <p>
  * @author Sarge

@@ -41,6 +41,9 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		return descriptor;
 	}
 
+	/**
+	 * @return Device memory for this image
+	 */
 	DeviceMemory memory() {
 		return mem;
 	}
@@ -61,8 +64,8 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append("descriptor", descriptor)
-				.append("mem", mem)
+				.append(descriptor)
+				.append(mem)
 				.build();
 	}
 
@@ -105,7 +108,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		}
 
 		/**
-		 * Sets this image as a cube-map.
+		 * Helper - Sets this image as a cube-map.
 		 * @see VkImageCreateFlag#CUBE_COMPATIBLE
 		 */
 		public Builder cubemap() {
@@ -113,7 +116,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		}
 
 		/**
-		 * Sets the number of samples (default is {@code 1}).
+		 * Sets the number of samples (default is one).
 		 * @param samples Samples-per-texel
 		 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 		 */

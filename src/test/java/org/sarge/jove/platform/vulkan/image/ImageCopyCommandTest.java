@@ -65,8 +65,8 @@ public class ImageCopyCommandTest {
 
 		@Test
 		void constructorInvalidRowLength() {
-			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, 1, 0, image.descriptor(), offset, image.descriptor().extents()));
-			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, 0, 1, image.descriptor(), offset, image.descriptor().extents()));
+			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(1, 0), image.descriptor(), offset, image.descriptor().extents()));
+			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(0, 1), image.descriptor(), offset, image.descriptor().extents()));
 		}
 
 		@Test
@@ -77,7 +77,7 @@ public class ImageCopyCommandTest {
 					.aspect(VkImageAspect.DEPTH)
 					.aspect(VkImageAspect.STENCIL)
 					.build();
-			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, 0, 0, descriptor, offset, descriptor.extents()));
+			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(0, 0), descriptor, offset, descriptor.extents()));
 		}
 
 		@Test
@@ -87,14 +87,14 @@ public class ImageCopyCommandTest {
 					.extents(image.descriptor().extents())
 					.subresource(image.descriptor())
 					.build();
-			final CopyRegion expected = new CopyRegion(0, 0, 0, image.descriptor(), offset, image.descriptor().extents());
+			final CopyRegion expected = new CopyRegion(0, new Dimensions(0, 0), image.descriptor(), offset, image.descriptor().extents());
 			assertEquals(expected, region);
 		}
 
 		@Test
 		void of() {
 			final Descriptor descriptor = image.descriptor();
-			final CopyRegion expected = new CopyRegion(0, 0, 0, descriptor, offset, descriptor.extents());
+			final CopyRegion expected = new CopyRegion(0, new Dimensions(0, 0), descriptor, offset, descriptor.extents());
 			assertEquals(expected, CopyRegion.of(descriptor));
 		}
 	}

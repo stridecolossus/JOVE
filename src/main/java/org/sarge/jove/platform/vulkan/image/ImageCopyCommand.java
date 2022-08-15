@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 
-import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
@@ -67,7 +67,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	/**
 	 * A <i>copy region</i> specifies a portion of the image to be copied.
 	 */
-	public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
+	public record CopyRegion(long offset, Dimensions row, SubResource res, VkOffset3D imageOffset, Extents extents) {
 		/**
 		 * Creates a copy region for the whole of the given image.
 		 * @param descriptor Image descriptor
@@ -83,30 +83,21 @@ public class ImageCopyCommand extends ImmediateCommand {
 		/**
 		 * Constructor.
 		 * @param offset			Buffer offset
-		 * @param length			Row length
-		 * @param height			Row height
+		 * @param row				Row length/height (texels) or {@code zero} to use the same dimensions as the image
 		 * @param res				Sub-resource
 		 * @param imageOffset		Image offset
 		 * @param extents			Image extents
-		 * @throws IllegalArgumentException if the length/height is non-zero but smaller than the given extents
+		 * @throws IllegalArgumentException if {@code row} is non-zero but smaller than the given extents
 		 * @throws IllegalArgumentException if the sub-resource has more than one aspect
 		 */
 		public CopyRegion {
 			Check.zeroOrMore(offset);
-			Check.zeroOrMore(length);
-			Check.zeroOrMore(height);
+			Check.notNull(row);
 			Check.notNull(res);
 			Check.notNull(imageOffset);
 			Check.notNull(extents);
-			validate(length, extents.size().width());
-			validate(height, extents.size().height());
 			if(res.aspects().size() != 1) throw new IllegalArgumentException("Sub-resource must have a single aspect: " + res);
-		}
-
-		private static void validate(int value, int min) {
-			if((value > 0) && (value < min)) {
-				throw new IllegalArgumentException(String.format("Invalid length/height: value=%d min=%d", value, min));
-			}
+			if(row.compareTo(extents.size()) < 0) throw new IllegalArgumentException(String.format("Row length/height cannot be smaller than image extents: row=%s extents=%s", row, extents));
 		}
 
 		/**
@@ -114,8 +105,8 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 */
 		private void populate(VkBufferImageCopy copy) {
 			copy.bufferOffset = offset;
-			copy.bufferRowLength = length;
-			copy.bufferImageHeight = height;
+			copy.bufferRowLength = row.width();
+			copy.bufferImageHeight = row.height();
 			copy.imageSubresource = res.toLayers();
 			copy.imageOffset = imageOffset;
 			copy.imageExtent = extents.toExtent();
@@ -202,7 +193,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 			 * @return New copy region
 			 */
 			public CopyRegion build() {
-				return new CopyRegion(offset, length, height, subresource, imageOffset, extents);
+				return new CopyRegion(offset, new Dimensions(length, height), subresource, imageOffset, extents);
 			}
 		}
 	}

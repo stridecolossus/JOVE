@@ -10,10 +10,10 @@ import com.sun.jna.ptr.IntByReference;
 /**
  * A <i>Vulkan function</i> abstracts an API method used to retrieve data from Vulkan via the <i>two-stage invocation</i> approach.
  * <p>
- * The function is of the following form:
+ * The function is of the form:
  * <p>
- * <pre>  int function(IntByReference count, T data)</pre>
- * where:
+ * <pre>int function(IntByReference count, T data)</pre>
+ * Where:
  * <ul>
  * <li><i>count</i> is the size of the data</li>
  * <li><i>data</i> is a pre-allocated container (often an array) to be populated by the function</li>
@@ -44,21 +44,21 @@ public interface VulkanFunction<T> {
 	 * Example to retrieve an array of pointers:
 	 * <pre>
 	 * VulkanLibrary lib = ...
-	 * VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array, ...);
-	 * Pointer[] array = func.enumerate(new IntegerByReference(), Pointer[]::new);</pre>
+	 * VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array);
+	 * Pointer[] array = func.invoke(new IntegerByReference(), Pointer[]::new);</pre>
 	 * This method is equivalent to the following:
 	 * <pre>
 	 * // Count number of results
 	 * IntegerByReference count = new IntegerByReference();
-	 * lib.someFunction(count, null, ...);
+	 * lib.someFunction(count, null);
 	 *
 	 * // Allocate data
 	 * Pointer[] array = new Pointer[count.getValue()];
 	 *
 	 * // Populate array
-	 * lib.someFunction(count, array, ...);</pre>
+	 * lib.someFunction(count, array);</pre>
 	 * @param <T> Data type
-	 * @param count			Count
+	 * @param count			Size of the data
 	 * @param factory		Creates the resultant data object
 	 * @return Function result
 	 */
@@ -91,22 +91,22 @@ public interface VulkanFunction<T> {
 		 * Usage:
 		 * <pre>
 		 * VulkanLibrary lib = ...
-		 * VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array, ...);
-		 * SomeStructure[] array = func.enumerate(new IntegerByReference(), SomeStructure::new);</pre>
+		 * VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array);
+		 * SomeStructure[] array = func.invoke(new IntegerByReference(), SomeStructure::new);</pre>
 		 * This adapter is equivalent to the following:
 		 * <pre>
 		 * // Count number of results
 		 * IntegerByReference count = new IntegerByReference();
-		 * lib.someFunction(count, null, ...);
+		 * lib.someFunction(count, null);
 		 *
 		 * // Allocate JNA array
 		 * SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
 		 *
 		 * // Populate array (note passes first element)
-		 * lib.someFunction(count, array[0], ...);</pre>
+		 * lib.someFunction(count, array[0]);</pre>
 		 * <p>
 		 * @param <T> Structure type
-		 * @param count			Count
+		 * @param count			Array size
 		 * @param identity		Identity structure
 		 * @return JNA structure array
 		 */
