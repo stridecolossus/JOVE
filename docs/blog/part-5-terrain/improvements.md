@@ -357,17 +357,9 @@ Finally the update command is added to the render sequence before starting the r
 
 ### Overview
 
-The wireframe terrain model is useful for visually testing the tesselation shader but we would like to be able to toggle between filled and wireframe modes.  The _polygon mode_ is a property of the rasterizer pipeline stage which implies the demo needs _two_ pipelines to switch between modes.
+The wireframe terrain model is useful for visually testing the tesselation shader but we would like to be able to toggle between filled and wireframe modes.  The _polygon mode_ is a property of the rasterizer pipeline stage which implies the demo needs _two_ pipelines to switch between modes.  As things stand we _could_ use the same builder to create two pipelines with the second overriding the polygon mode.
 
-As things stand we could configure two separate pipeline builders which would be identical except for the polygon mode, but this would require the common configuration to be replicated.  To avoid code duplication a _single_ builder could be used to create each pipeline in two separate operations, where the second pipeline _overrides_ the polygon mode.
-
-However we note the following: 
-
-1. The API method allows multiple pipelines to be created in one operation but the current implementation is limited to a single instance.
-
-2. Vulkan supports _derivative_ pipelines which provide a hint to the hardware that a derived (or child) pipeline shares common properties with its parent, potentially improving performance when the pipelines are instantiated and when switching bindings in the render sequence.
-
-To support all these use cases functionality will be added to the pipeline builder to support derivative pipelines and to allow configuration to be overridden.
+However Vulkan supports _derivative_ pipelines which provide a hint to the hardware that a derived (or child) pipeline shares common properties with its parent, potentially improving performance when the pipelines are instantiated and when switching bindings in the render sequence.
 
 ### Derivative Pipelines
 
@@ -376,7 +368,7 @@ A pipeline that allows derivatives (i.e. the parent) is identified by a flag at 
 ```java
 public static class Builder {
     private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
-    private Handle baseHandle;
+    private Handle base;
 
     ...
 
@@ -385,84 +377,136 @@ public static class Builder {
         return this;
     }
     
-    public Builder allowDerivatives() {
+    public Builder parent() {
         return flag(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
     }
 }
 ```
 
+Where `parent` configures a pipeline that can be derived from.
+
 Note that the set of `flags` is also added to the pipeline domain object.
 
-Vulkan offers two methods to derive pipelines:
+Vulkan offers two mutually exclusive methods to derive pipelines:
 
 1. Derive from an _existing_ pipeline instance.
 
-2. Create an array of pipelines where derived pipelines specify the parent by _index_ within the array.
-
-Note that these two mechanisms are mutually exclusive.
+2. Create an array of pipelines where derivative _peer_ pipelines are specified by index with the array.
 
 A pipeline derived from an existing parent instance is specified by the following new method on the builder:
 
 ```java
 public Builder derive(Pipeline base) {
-    if(!base.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) {
-        throw new IllegalArgumentException(...);
-    }
-    baseHandle = base.handle();
-    derivative(this);
+    check(base.flags());
+    this.base = base.handle();
     return this;
 }
 ```
 
-Where `derivative` is a trivial helper:
+Where the local `derive` helper validates that the parent supports derivatives and marks the pipeline as a derivative:
 
 ```java
-private static void derivative(Builder builder) {
-    builder.flags.add(VkPipelineCreateFlag.DERIVATIVE);
+private void derive(Set<VkPipelineCreateFlag> flags) {
+    if(!flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) throw new IllegalStateException(...);
+    this.flags.add(VkPipelineCreateFlag.DERIVATIVE);
 }
 ```
 
 The base pipeline is populated in the `build` method:
 
 ```java
-info.basePipelineHandle = baseHandle;
+info.basePipelineHandle = base;
 ```
 
 ### Pipeline Peers
 
-TODO
+To support peer derivatives the pipeline builder is refactored to create an array of pipelines:
+
+```java
+public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
+    // Build array of descriptors
+    VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(builders, VkGraphicsPipelineCreateInfo::new, Builder::populate);
+
+    // Allocate pipelines
+    VulkanLibrary lib = dev.library();
+    Pointer[] handles = new Pointer[array.length];
+    check(lib.vkCreateGraphicsPipelines(dev, cache, array.length, array, null, handles));
+
+    // Create pipelines
+    Pipeline[] pipelines = new Pipeline[array.length];
+    for(int n = 0; n < array.length; ++n) {
+        Builder builder = builders.get(n);
+        pipelines[n] = new Pipeline(handles[n], dev, builder.layout, builder.flags);
+    }
+    return Arrays.asList(pipelines);
+}
+```
+
+And the existing `build` method becomes a helper to instantiate a single pipeline.
+
+A derivative peer pipeline can now be configured by a second `derive` overload:
+
+```java
+public Builder derive(Builder parent) {
+    if(parent == this) throw new IllegalStateException();
+    derive(parent.flags);
+    this.parent = notNull(parent);
+    return this;
+}
+```
+
+The peer index is patched in the `build` method after the array has been populated:
+
+```java
+for(int n = 0; n < array.length; ++n) {
+    Builder parent = builders.get(n).parent;
+    if(parent == null) {
+        continue;
+    }
+    int index = builders.indexOf(parent);
+    if(index == -1) throw new IllegalArgumentException();
+    array[n].basePipelineIndex = index;
+}
+```
+
+Note that this second derivative approach currently does __not__ clone the pipeline builder configuration implying there may still be a large amount of code duplication (pipeline layout, the various stages, etc).  This may be something for future consideration.
 
 ### Integration
 
-For the demo we now have several alternatives available to create the pipelines.  We opt to derive the wireframe pipeline and exercise the code that instantiates multiple pipelines:
+In the demo we now have several alternatives to switch between polygon modes, the configuration is modified to derive the wire-frame alternative from the existing pipeline:
 
 ```java
 @Bean
 public List<Pipeline> pipelines(...) {
     // Init main pipeline
-    var pipeline = new Pipeline.Builder()
-    ...
+    Pipeline pipeline = new Pipeline.Builder()
+        ...
+        .build();
 
     // Derive wireframe pipeline
-    var wireframe = pipeline
-        .derive()
+    Pipeline wireframe = pipeline
+        ...
+        .derive(pipeline)
         .rasterizer()
             .polygon(VkPolygonMode.LINE)
-            .build();
-
-    // Build pipelines
-    return Pipeline.Builder.build(List.of(pipeline, wireframe), dev);
+            .build()
+        .build();
 }
 ```
 
-The configuration class for the render sequence is next modified as follows:
-* Inject the _list_ of pipelines.
-* Add an index member.
-* Add a toggle handler that flips the index.
-* Expose the handler as a bean.
-* Bind it to the space bar.
+In the render configuration the beans for the pipeline and command sequence are modified to generate new instances on each invocation rather than the previous singleton:
 
-Since the render sequence is recorded per frame we can now switch the pipeline at runtime.  Cool.
+```java
+private final AtomicInteger index = new AtomicInteger();
+
+@Bean()
+public RenderSequence(Pipeline[] pipelines) {
+}
+```
+
+TODO 
+
+And a toggle handler is bound to the space bar to allow the application to switch between the pipelines at runtime. Cool.
 
 ---
 

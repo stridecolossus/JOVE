@@ -9,13 +9,13 @@ title: Input Handling
 - [Overview](#overview)
 - [InputEvents](#input-events)
 - [Action Bindings](#action-bindings)
-- [Cameras](#cameras)
+- [Camera Controller](#camera-controller)
 
 ---
 
 ## Overview
 
-In this chapter we will design a framework for input event handling and implement an orbital camera controller.
+In this chapter we will design a framework for input event handling and implement an orbital camera controller to better view the model.
 
 Note there is no new Vulkan functionality introduced in this chapter.
 
@@ -970,207 +970,13 @@ There are still further use-cases that will be implemented in later chapters:
 
 ---
 
-## Cameras
+## Camera Controller
 
-### Overview
+### Default Controller
 
-One of the main use cases for the input handling framework is to implement a _camera_ that can be controlled by the keyboard and mouse.
+The camera class is a simple model class, to implement richer functionality a _camera controller_ is introduced that can be bound to input actions.
 
-We will first implement a _camera model_ that represents the viewers position and orientation, replacing the current static view-transform matrix.  This will be managed by a _camera controller_ that implements free-look and orbital modes.
-
-### Vector
-
-We start with new functionality in the `Vector` class to support the camera model.
-
-A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible.  Additionally many algorithms work irrespective of whether the distance is squared or not.
-
-Therefore we treat the magnitude as the __squared__ length of the vector (which is highlighted in the documentation):
-
-```java
-/**
- * @return Magnitude (or length) <b>squared</b> of this vector
- */
-public float magnitude() {
-    return x * x + y * y + z * z;
-}
-```
-
-Many operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
-
-```java
-public Vector normalize() {
-    float len = magnitude();
-    if(MathsUtil.isEqual(1, len)) {
-        return this;
-    }
-    else {
-        float f = MathsUtil.inverseRoot(len);
-        return multiply(f);
-    }
-}
-```
-
-Where `multiply` scales a vector by a given value:
-
-```java
-public Vector multiply(float f) {
-    return new Vector(x * f, y * f, z * f);
-}
-```
-
-The camera class will also use the _cross product_ to yield the vector perpendicular to two other vectors (using the right-hand rule):
-
-```java
-public Vector cross(Vector vec) {
-    float x = this.y * vec.z - this.z * vec.y;
-    float y = this.z * vec.x - this.x * vec.z;
-    float z = this.x * vec.y - this.y * vec.x;
-    return new Vector(x, y, z);
-}
-```
-
-Finally we add a convenience method to generate the vector between two points:
-
-```java
-public static Vector between(Point start, Point end) {
-    float dx = end.x - start.x;
-    float dy = end.y - start.y;
-    float dz = end.z - start.z;
-    return new Vector(dx, dy, dz);
-}
-```
-
-Note that the vector class is immutable and all 'mutator' methods create a new instance.
-
-### Camera Model
-
-The camera is a model class representing the position and orientation of the viewer:
-
-```java
-public class Camera {
-    private Point pos = Point.ORIGIN;
-    private Vector dir = Vector.Z;
-    private Vector up = Vector.Y;
-}
-```
-
-Note that under the hood the camera direction is the inverse of the view direction, i.e. the camera points _out_ of the screen whereas the view is obviously into the screen.
-
-Various mutator methods are provided to move the camera:
-
-```java
-public void move(Point pos) {
-    this.pos = notNull(pos);
-}
-
-public void move(Vector vec) {
-    pos = pos.add(vec);
-}
-
-public void move(float dist) {
-    move(dir.multiply(dist));
-}
-
-public void strafe(float dist) {
-    move(right.multiply(dist));
-}
-```
-
-And a convenience method to point the camera at a given target location:
-
-```java
-public void look(Point pt) {
-    if(pos.equals(pt)) throw new IllegalArgumentException(...);
-    Vector look = Vector.between(pt, pos).normalize();
-    direction(look);
-}
-```
-
-Note that this camera model is subject to gimbal locking, e.g. if the direction is set to the _up_ axis.  Validation is added (not shown) to the relevant setters to prevent this occurring.  Later on we will replace the _direction_ property with a more advanced implementation for the camera orientation to mitigate this problem.
-
-Next the following transient members are added to the camera class to support the view transform:
-
-```java
-public class Camera {
-    ...
-    private Vector right = Vector.X;
-    private Matrix matrix;
-    private boolean dirty = true;
-}
-```
-
-Where:
-
-* The `dirty` flag is signalled in the various mutator methods (not shown) when any of the camera properties are modified.
-
-* The `right` vector is the horizontal axis of the viewport (also used in the `strafe` method above).
-
-The view transform matrix for the camera is then constructed on demand:
-
-```java
-public Matrix matrix() {
-    if(dirty) {
-        update();
-        dirty = false;
-    }
-    return matrix;
-}
-```
-
-The `update` method first determines the viewport axes based on the camera axes:
-
-```java
-private void update() {
-    // Determine right axis
-    right = up.cross(dir).normalize();
-
-    // Determine up axis
-    Vector y = dir.cross(right).normalize();
-}
-```
-
-From the three axes we can now build the view transform matrix as before:
-
-```java
-// Build translation component
-Matrix trans = Matrix.translation(new Vector(pos));
-
-// Build rotation component
-Matrix rot = new Matrix.Builder()
-    .identity()
-    .row(0, right)
-    .row(1, y)
-    .row(2, dir)
-    .build();
-
-// Create camera matrix
-matrix = rot.multiply(trans);
-```
-
-A camera model is added to the demo configuration class:
-
-```java
-public class CameraConfiguration {
-    @Bean
-    public static Camera camera() {
-        Camera cam = new Camera();
-        cam.move(new Point(0, -0.5f, -2));
-        return cam;
-    }
-}
-```
-
-And finally the old view transform code is replaced by the camera to construct the final projection matrix:
-
-```java
-return projection.multiply(cam.matrix()).multiply(model);
-```
-
-### Camera Controller
-
-The camera class is a simple model class, to implement richer functionality we introduce a _camera controller_ that can be bound to input actions.
-
-We first implement a basic _free-look_ controller that rotates the scene about the cameras position:
+A basic _free-look_ controller is first implemented that rotates the scene about the cameras position:
 
 ```java
 public class DefaultCameraController {

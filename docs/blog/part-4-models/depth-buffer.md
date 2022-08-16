@@ -7,7 +7,7 @@ title: Depth Buffers
 ## Contents
 
 - [Overview](#overview)
-- [Rendering](#rendering-the-model)
+- [Camera](#camera)
 - [Depth Buffer](#depth-buffer)
 - [Improvements](#improvements)
 
@@ -15,107 +15,182 @@ title: Depth Buffers
 
 ## Overview
 
-In this chapter we will render the OBJ model constructed previously and resolve various visual problems that arise.
+In this chapter we will render the chalet model constructed previously and resolve various visual problems that arise.
 
-This will include the introduction of a _depth test_ requiring the following new functionality:
+First we introduce a _camera_ model and a builder for the drawing command.
 
-* Implementation of the depth-stencil pipeline stage.
-
-* Attachment clear values.
-
-Finally we will introduce various improvements to the existing code to simplify configuration of the presentation logic.
+Finally various improvements are made to simplify configuration of the presentation process.
 
 ---
 
-## Rendering the Model
+## Framework
 
-### Configuration
+### Camera
 
-A new `ModelDemo` project is started based on the previous rotating cube demo, minus the rotation animation.
+Since we are now dealing with a model that has a specific orientation, the current view-transform matrix is encapsulated into a new _camera_ model that allows the application to more easily configure the view.  This will be extended in the next chapter to allow the camera to be dynamically controlled by the keyboard and mouse.
 
-The previous VBO configuration is replaced with a new class that loads the persisted model:
+The camera is a model class representing the position and orientation of the viewer:
 
 ```java
-@Configuration
-public class ModelConfiguration {
-    @Autowired private LogicalDevice dev;
-    @Autowired private AllocationService allocator;
-    @Autowired private Pool graphics;
+public class Camera {
+    private Point pos = Point.ORIGIN;
+    private Vector dir = Vector.Z;
+    private Vector up = Vector.Y;
+}
+```
 
-    @Bean
-    public static Model model(DataSource src) {
-        var loader = new ResourceLoaderAdapter<>(src, new ModelLoader());
-        return loader.load("chalet.model");
+Note that under the hood the camera direction is the inverse of the view direction, i.e. the camera points _out_ of the screen whereas the view is obviously into the screen.
+
+Various mutators are provided to move the camera:
+
+```java
+public void move(Point pos) {
+    this.pos = notNull(pos);
+}
+
+public void move(Vector vec) {
+    pos = pos.add(vec);
+}
+
+public void move(float dist) {
+    move(dir.multiply(dist));
+}
+```
+
+And a convenience method points the camera at a given target:
+
+```java
+public void look(Point pt) {
+    if(pos.equals(pt)) throw new IllegalArgumentException();
+    Vector look = Vector.between(pt, pos).normalize();
+    direction(look);
+}
+```
+
+Where `between` is a new factory method on the vector class:
+
+```java
+public static Vector between(Point start, Point end) {
+    float dx = end.x - start.x;
+    float dy = end.y - start.y;
+    float dz = end.z - start.z;
+    return new Vector(dx, dy, dz);
+}
+```
+
+Note that this camera model is subject to gimbal locking, e.g. if the direction is set to the _up_ axis.  Validation is added (not shown) to the relevant setters to prevent this occurring.  Later on we will replace the _direction_ property with a more advanced implementation for the camera orientation to mitigate this problem.
+
+Next the following transient members are added to the camera class to support the view transform:
+
+```java
+public class Camera {
+    ...
+    private Vector right = Vector.X;
+    private Matrix matrix;
+    private boolean dirty = true;
+}
+```
+
+Where:
+
+* The `dirty` flag is signalled in the various mutator methods (not shown) when any of the camera properties are modified.
+
+* The `right` vector is the horizontal axis of the viewport (also used in the `strafe` method).
+
+The view transform matrix for the camera is constructed on demand:
+
+```java
+public Matrix matrix() {
+    if(dirty) {
+        update();
+        dirty = false;
+    }
+    return matrix;
+}
+```
+
+The `update` method first determines the viewport axes based on the camera axes:
+
+```java
+private void update() {
+    // Determine right axis
+    right = up.cross(dir).normalize();
+
+    // Determine up axis
+    Vector y = dir.cross(right).normalize();
+}
+```
+
+And finally the matrix is constructed from the translation and rotation components as before:
+
+```java
+// Build translation component
+Matrix trans = Matrix.translation(new Vector(pos));
+
+// Build rotation component
+Matrix rot = new Matrix.Builder()
+    .identity()
+    .row(0, right)
+    .row(1, y)
+    .row(2, dir)
+    .build();
+
+// Create camera matrix
+matrix = rot.multiply(trans);
+```
+
+The _cross product_ yield the vector perpendicular to two other vectors (using the right-hand rule):
+
+```java
+public Vector cross(Vector vec) {
+    float x = this.y * vec.z - this.z * vec.y;
+    float y = this.z * vec.x - this.x * vec.z;
+    float z = this.x * vec.y - this.y * vec.x;
+    return new Vector(x, y, z);
+}
+```
+
+Many operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
+
+```java
+public Vector normalize() {
+    float len = magnitude();
+    if(MathsUtil.isEqual(1, len)) {
+        return this;
+    }
+    else {
+        float f = MathsUtil.inverseRoot(len);
+        return multiply(f);
     }
 }
 ```
 
-Then the VBO and index buffer objects are created for the model:
+Where `multiply` scales a vector by a given value:
 
 ```java
-@Bean
-public VertexBuffer vbo(Model model) {
-    VulkanBuffer buffer = buffer(model.vertices(), VkBufferUsage.VERTEX_BUFFER);
-    return new VertexBuffer(buffer);
-}
-
-@Bean
-public IndexBuffer index(Model model) {
-    VulkanBuffer buffer = buffer(model.index().get(), VkBufferUsage.INDEX_BUFFER);
-    return new IndexBuffer(buffer, VkIndexType.UINT32);
+public Vector multiply(float f) {
+    return new Vector(x * f, y * f, z * f);
 }
 ```
 
-Which both delegate to the following helper:
+A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible.  Additionally many algorithms work irrespective of whether the distance is squared or not.
+
+Therefore the `magnitude` is expressed as the __squared__ length of the vector (which is highlighted in the documentation):
 
 ```java
-private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
-    // Create staging buffer
-    VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
-
-    // Init buffer memory properties
-    MemoryProperties<VkBufferUsage> props = new MemoryProperties.Builder<VkBufferUsage>()
-        .usage(VkBufferUsage.TRANSFER_DST)
-        .usage(usage)
-        .required(VkMemoryProperty.DEVICE_LOCAL)
-        .copy()
-        .build();
-
-    // Create buffer
-    VulkanBuffer buffer = VulkanBuffer.create(dev, allocator, staging.length(), props);
-
-    // Copy staging to buffer
-    staging.copy(buffer).submit(graphics);
-
-    // Release staging
-    staging.destroy();
-
-    return buffer;
+/**
+ * @return Magnitude (or length) <b>squared</b> of this vector
+ */
+public float magnitude() {
+    return x * x + y * y + z * z;
 }
 ```
 
-And the index is bound in the render configuration:
+Note that the vector class is immutable and all 'mutator' methods create a new instance.
 
-```java
-@Bean("index.bind")
-static Command index(IndexBuffer index) {
-    return index.bind(0);
-}
-```
+### Draw Command
 
-The following temporary code is added to initialise the projection matrix:
-
-```java
-@Component
-static class ApplicationLoop implements CommandLineRunner {
-    @Autowired
-    public void init(Matrix matrix, ResourceBuffer uniform) {
-        uniform.load(matrix);
-    }
-}
-```
-
-Finally the drawing command must be updated for the indexed model, we take the opportunity to implement a convenience builder on the `DrawCommand` class:
+The draw command will need to be updated for the indexed model, we take the opportunity to implement a convenience builder on the `DrawCommand` class:
 
 ```java
 public static class Builder {
@@ -173,45 +248,132 @@ The hard-coded draw command can now be replaced in the render sequence:
 Command draw = DrawCommand.of(model);
 ```
 
-Finally, the previous view transform means we are looking at the model from above, a temporary static rotation is added to get a better viewing angle:
+---
+
+## Depth Buffer
+
+### Integration #1
+
+A new `ModelDemo` project is started based on the previous rotating cube demo, minus the rotation animation.
+
+The existing view-transform code is replaced with a camera:
 
 ```java
-public static Matrix matrix(Swapchain swapchain) {
-    ...
-    
-    // Construct view transform
-    Matrix trans = new Matrix.Builder()
-        .identity()
-        .column(3, new Point(0, -0.5f, -2))
-        .build();
-
-    ...
-
-    // TODO - temporary
-    Matrix x = Matrix.rotation(Vector.X, MathsUtil.toRadians(90));
-    Matrix y = Matrix.rotation(Vector.Y, MathsUtil.toRadians(-120));
-    Matrix model = y.multiply(x);
-
-    // Create matrix
-    return projection.multiply(view).multiply(model);
+public class CameraConfiguration {
+    @Bean
+    public static Camera camera() {
+        Camera cam = new Camera();
+        cam.move(new Point(0, -0.5f, -2));
+        return cam;
+    }
 }
 ```
 
-Where:
+And the matrix bean is refactored accordingly:
 
-* The translation component of the view transform moves the camera back a bit and slightly above 'ground' level.
+```java
+return projection.multiply(cam.matrix()).multiply(model);
+```
 
-* The _x_ rotation tilts the model so we are looking at it from the side.
+The previous VBO configuration is replaced with a new class that loads the persisted model:
 
-* And _y_ rotates vertically so the camera is facing the corner of the chalet with the door.
+```java
+@Configuration
+public class ModelConfiguration {
+    @Autowired private LogicalDevice dev;
+    @Autowired private AllocationService allocator;
+    @Autowired private Pool graphics;
 
-We run the new demo to see what we get, which is a bit of a mess!
+    @Bean
+    public static Model model(DataSource src) {
+        var loader = new ResourceLoaderAdapter<>(src, new ModelLoader());
+        return loader.load("chalet.model");
+    }
+}
+```
+
+Then the VBO and index buffer objects are created for the model:
+
+```java
+@Bean
+public VertexBuffer vbo(Model model) {
+    VulkanBuffer buffer = buffer(model.vertices(), VkBufferUsage.VERTEX_BUFFER);
+    return new VertexBuffer(buffer);
+}
+
+@Bean
+public IndexBuffer index(Model model) {
+    VulkanBuffer buffer = buffer(model.index().get(), VkBufferUsage.INDEX_BUFFER);
+    return new IndexBuffer(buffer, VkIndexType.UINT32);
+}
+```
+
+Which both delegate to the following helper:
+
+```java
+private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
+    // Create staging buffer
+    VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
+
+    // Init buffer memory properties
+    var props = new MemoryProperties.Builder<VkBufferUsage>()
+        .usage(VkBufferUsage.TRANSFER_DST)
+        .usage(usage)
+        .required(VkMemoryProperty.DEVICE_LOCAL)
+        .build();
+
+    // Create buffer
+    VulkanBuffer buffer = VulkanBuffer.create(dev, allocator, staging.length(), props);
+
+    // Copy staging to buffer
+    staging.copy(buffer).submit(graphics);
+
+    // Release staging
+    staging.destroy();
+
+    return buffer;
+}
+```
+
+And the index is bound in the render configuration:
+
+```java
+@Bean("index.bind")
+static Command index(IndexBuffer index) {
+    return index.bind(0);
+}
+```
+
+Finally the `update` method is refactored as follows:
+
+```java
+@Bean
+public FrameListener update(ResourceBuffer uniform) {
+    return (start, end) -> {
+        Matrix tilt = Rotation.of(Vector.X, MathsUtil.toRadians(-90)).matrix();
+        Matrix rot = Rotation.of(Vector.Y, MathsUtil.toRadians(120)).matrix();
+        Matrix model = rot.multiply(tilt);
+        Matrix matrix = projection.multiply(cam.matrix()).multiply(model);
+        matrix.buffer(uniform.buffer());
+    };
+}
+```
+
+The default camera configuration means we are looking at the model from above, therefore the `model` component of the matrix is introduced where:
+
+* The _tilt_ set the orientation of the model relative to the 'ground'.
+
+* And _rot_ rotates vertically so the camera is facing the corner of the chalet with the door.
+
+Note that the camera was also moved slightly above 'ground' level.
+
+When we run the demo it's a bit of a mess:
 
 ![Broken Chalet Model](mess.png)
 
 There are a couple of issues here:
 
-* The texture looks upside down, the grass is on the roof and vice-versa.
+* The texture looks to be upside down, the grass is obviously on the roof and vice-versa.
 
 * Fragments are being rendered arbitrarily overlapping each other.
 
@@ -238,15 +400,13 @@ add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, model.coordina
 
 We assume that this will apply to all OBJ models, it can always be made an optional feature if that assumption turns out to be incorrect.
 
-The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so the model is not being rendered inside-out for example).
+The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so the model is not being rendered inside-out for example):
 
----
+![Less Broken Chalet Model](mess2.png)
 
-## Depth Buffer
+### Depth-Stencil Pipeline Stage
 
-### Pipeline Stage
-
-To resolve the issue of overlapping fragments, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are not rendered.  The depth test uses the _depth buffer_ which is a special attachment that records the depth of each rendered fragment, discarding subsequent fragments that are closer to the camera.
+To resolve the issue of the overlapping fragments, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are not rendered.  The depth test uses the _depth buffer_ which is a special attachment that records the distance of each rendered fragment, discarding subsequent fragments that are closer to the camera.
 
 The depth test is configured by a new pipeline stage:
 
@@ -347,7 +507,7 @@ info.clearValueCount = clear.size();
 info.pClearValues = StructureHelper.pointer(clear, VkClearValue::new, ClearValue::populate);
 ```
 
-### Integration
+### Integration #2
 
 To use the depth test in the demo a new depth-stencil attachment is added to the render-pass configuration:
 
