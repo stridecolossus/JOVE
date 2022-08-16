@@ -8,7 +8,7 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
@@ -153,7 +153,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		 * @return New image
 		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
 		 */
-		public DefaultImage build(LogicalDevice dev, AllocationService allocator) {
+		public DefaultImage build(DeviceContext dev, AllocationService allocator) {
 			// Validate
 			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");

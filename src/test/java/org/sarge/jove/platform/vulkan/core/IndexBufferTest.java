@@ -51,7 +51,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	@Test
 	void bind() {
 		// Init maximum index length
-		limit("maxDrawIndexedIndexValue", 1L);
+		limit("maxDrawIndexedIndexValue", 1);
 
 		// Create bind command
 		final Command bind = index.bind(0);
@@ -73,7 +73,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void bindInvalidLength() {
-		limit("maxDrawIndexedIndexValue", 0L);
+		limit("maxDrawIndexedIndexValue", 0);
 		assertThrows(IllegalStateException.class, () -> index.bind(0));
 	}
 

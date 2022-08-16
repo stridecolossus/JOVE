@@ -65,8 +65,7 @@ public class ImageCopyCommandTest {
 
 		@Test
 		void constructorInvalidRowLength() {
-			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(1, 0), image.descriptor(), offset, image.descriptor().extents()));
-			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(0, 1), image.descriptor(), offset, image.descriptor().extents()));
+			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(1, 1), image.descriptor(), offset, image.descriptor().extents()));
 		}
 
 		@Test

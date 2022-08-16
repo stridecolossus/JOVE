@@ -361,8 +361,8 @@ Attachment depth = new Attachment.Builder()
     .build();
 
 Subpass subpass = new Subpass.Builder()
-    .colour(new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL))
-    .depth(new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL))
+    .colour(colour)
+    .depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
     ...
 ```
 
@@ -392,10 +392,9 @@ public View depth(Swapchain swapchain, AllocationService allocator) {
 Next the image for the depth attachment is instantiated:
 
 ```java
-var props = new MemoryProperties.Builder<VkImageUsage>()
-    .usage(VkImageUsage.DEPTH_STENCIL_ATTACHMENT)
+var props = new MemoryProperties.Builder<VkImageUsageFlag>()
+    .usage(VkImageUsageFlag.DEPTH_STENCIL_ATTACHMENT)
     .required(VkMemoryProperty.DEVICE_LOCAL)
-    .copy()
     .build();
 
 Image image = new Image.Builder()
@@ -408,9 +407,7 @@ Image image = new Image.Builder()
 And a view is created with a depth clear value:
 
 ```java
-new View.Builder(image)
-    .clear(DepthClearValue.DEFAULT)
-    .build();
+return View.of(image).clear(DepthClearValue.DEFAULT);
 ```
 
 The depth buffer is then added to each frame buffer along with the colour attachment:
@@ -565,7 +562,7 @@ public Swapchain swapchain(Surface surface, ApplicationConfiguration cfg) {
     VkPresentModeKHR mode = surface.mode(VkPresentModeKHR.MAILBOX_KHR);
 
     // Select SRGB surface format
-    VkSurfaceFormatKHR format = surface.format(VkFormat.B8G8R8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
+    VkSurfaceFormatKHR format = surface.format(VkFormat.B8G8R8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR, null);
 
     // Create swapchain
     return new Swapchain.Builder(dev, surface)

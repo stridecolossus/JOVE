@@ -96,8 +96,21 @@ public class ImageCopyCommand extends ImmediateCommand {
 			Check.notNull(res);
 			Check.notNull(imageOffset);
 			Check.notNull(extents);
-			if(res.aspects().size() != 1) throw new IllegalArgumentException("Sub-resource must have a single aspect: " + res);
-			if(row.compareTo(extents.size()) < 0) throw new IllegalArgumentException(String.format("Row length/height cannot be smaller than image extents: row=%s extents=%s", row, extents));
+			if(res.aspects().size() != 1) {
+				throw new IllegalArgumentException("Sub-resource must have a single aspect: " + res);
+			}
+			if(!validate(row, extents.size())) {
+				throw new IllegalArgumentException(String.format("Row length/height cannot be smaller than image extents: row=%s extents=%s", row, extents));
+			}
+		}
+
+		private static boolean validate(Dimensions row, Dimensions size) {
+			if((row.width() == 0) || (row.height() == 0)) {
+				return true;
+			}
+			else {
+				return row.compareTo(size) >= 0;
+			}
 		}
 
 		/**
