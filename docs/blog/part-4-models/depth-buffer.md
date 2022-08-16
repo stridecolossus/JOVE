@@ -139,7 +139,7 @@ Matrix rot = new Matrix.Builder()
 matrix = rot.multiply(trans);
 ```
 
-The _cross product_ yield the vector perpendicular to two other vectors (using the right-hand rule):
+The _cross product_ yields the vector perpendicular to two other vectors (using the right-hand rule):
 
 ```java
 public Vector cross(Vector vec) {
@@ -233,7 +233,7 @@ Finally a further helper is implemented to create a draw command for a given mod
 ```java
 static DrawCommand of(Model model) {
     int count = model.header().count();
-    if(model.isIndexed()) {
+    if(model.index().isPresent()) {
         return indexed(count);
     }
     else {
@@ -361,11 +361,11 @@ public FrameListener update(ResourceBuffer uniform) {
 
 The default camera configuration means we are looking at the model from above, therefore the `model` component of the matrix is introduced where:
 
-* The _tilt_ set the orientation of the model relative to the 'ground'.
+* The _tilt_ sets the orientation of the model so we are looking at it from the side.
 
 * And _rot_ rotates vertically so the camera is facing the corner of the chalet with the door.
 
-Note that the camera was also moved slightly above 'ground' level.
+* Note that the camera was also moved above 'ground' level.
 
 When we run the demo it's a bit of a mess:
 
@@ -400,7 +400,7 @@ add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, model.coordina
 
 We assume that this will apply to all OBJ models, it can always be made an optional feature if that assumption turns out to be incorrect.
 
-The model now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so the model is not being rendered inside-out for example):
+After regenerating the model it now looks to be textured correctly, in particular the signs on the front of the chalet are the right way round (so the model is not being rendered inside-out for example):
 
 ![Less Broken Chalet Model](mess2.png)
 
@@ -426,7 +426,7 @@ In the previous demos the clear value for the colour attachments was hard-coded,
 
 Introducing clear values should have been easy, however there was a nasty surprise when adding the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
 
-Thankfully JNA supports unions out-of-the-box, the generated code was manually modified as unions.  As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
+Thankfully JNA supports unions out-of-the-box, the generated code was manually modified as unions.
 
 A clear value is defined by the following abstraction:
 
@@ -472,6 +472,8 @@ record DepthClearValue(Percentile depth) implements ClearValue {
     }
 }
 ```
+
+As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
 
 The clear value now becomes a mutable property of the image view:
 
@@ -800,11 +802,13 @@ Therefore the _flip_ setting is disabled by default and we just accept that the 
 
 In this chapter we implemented:
 
+- The camera model.
+
+- A builder for draw commands.
+
 - The depth-stencil pipeline stage.
 
 - A mechanism to clear colour and depth-stencil attachments.
 
-- A builder for draw commands.
-
-- Texture coordinate inversion for an OBJ model.
+- Texture coordinate inversion for OBJ models.
 

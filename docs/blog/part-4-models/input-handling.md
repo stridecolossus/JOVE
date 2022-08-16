@@ -1227,7 +1227,5 @@ In this chapter we implemented:
 
 * The action bindings class that aids separation of concerns for input events and application action handlers.
 
-* The camera model.
-
 * Free-look and orbital camera controllers.
 
