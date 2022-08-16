@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -154,7 +154,10 @@ public class Pipeline extends AbstractVulkanObject {
 		private RenderPass pass;
 		private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
 		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
-		private Pipeline base;
+
+		// Derivative pipelines
+		private Handle base;
+		private Builder parent;
 
 		// Fixed function stages
 		private final VertexInputPipelineStageBuilder input = new VertexInputPipelineStageBuilder();
@@ -212,33 +215,55 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Helper - Sets this as a derivative pipeline.
+		 * Sets this as a parent from which pipelines can be derived.
 		 * This is a synonym for {@link #flag(VkPipelineCreateFlag)} with a {@link VkPipelineCreateFlag#ALLOW_DERIVATIVES} flag.
 		 * @see #derive(Pipeline)
+		 * @see #derive(Builder)
 		 */
-		public Builder allowDerivatives() {
+		public Builder parent() {
 			return flag(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
-		}
-
-		/**
-		 * @throws IllegalArgumentException if a pipeline does not allow derivatives
-		 */
-		protected static void checkAllowDerivatives(Set<VkPipelineCreateFlag> flags) {
-			if(!flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) {
-				throw new IllegalArgumentException("Cannot derive from pipeline");
-			}
 		}
 
 		/**
 		 * Derives this pipeline from an existing base pipeline.
 		 * @param base Base pipeline
-		 * @throws IllegalArgumentException if the given pipeline does not allow derivatives
+		 * @throws IllegalArgumentException if the parent pipeline does not allow derivatives or this pipeline is already derived
+		 * @see #parent()
 		 */
 		public Builder derive(Pipeline base) {
-			checkAllowDerivatives(base.flags());
-			this.base = base;
-			flags.add(VkPipelineCreateFlag.DERIVATIVE);
+			derive(base.flags());
+			this.base = base.handle();
 			return this;
+		}
+
+		/**
+		 * Derives this pipeline from the given builder.
+		 * @param parent Parent pipeline builder
+		 * @throws IllegalArgumentException if the parent pipeline does not allow derivatives or this pipeline is already derived
+		 * @throws IllegalStateException if the given parent is this builder
+		 * @see #parent()
+		 */
+		public Builder derive(Builder parent) {
+			if(parent == this) throw new IllegalStateException("Cannot derive from self");
+			derive(parent.flags);
+			this.parent = notNull(parent);
+			return this;
+		}
+
+		/**
+		 * @throws IllegalArgumentException if the parent pipeline does not allow derivatives or this pipeline is already derived
+		 */
+		private void derive(Set<VkPipelineCreateFlag> flags) {
+			// Check pipeline can be derived
+			if(!flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) {
+				throw new IllegalArgumentException("Invalid parent pipeline");
+			}
+
+			// Mark as derivative
+			if(this.flags.contains(VkPipelineCreateFlag.DERIVATIVE)) {
+				throw new IllegalArgumentException("Pipeline is already a derivative");
+			}
+			this.flags.add(VkPipelineCreateFlag.DERIVATIVE);
 		}
 
 		/**
@@ -370,10 +395,8 @@ public class Pipeline extends AbstractVulkanObject {
 			info.pColorBlendState = blend.get();			// TODO - check number of blend attachments = framebuffers
 			info.pDynamicState = dynamic.get();
 
-			// Init derivative pipeline
-			if(base != null) {
-				info.basePipelineHandle = base.handle();
-			}
+			// Init derivative pipelines
+			info.basePipelineHandle = base;
 			info.basePipelineIndex = -1;
 		}
 
@@ -392,15 +415,25 @@ public class Pipeline extends AbstractVulkanObject {
 
 		/**
 		 * Constructs multiple pipelines.
-		 * TODO - peer derivatives
 		 * @param builders		Pipeline builders
 		 * @param cache			Optional pipeline cache
 		 * @param dev 			Logical device
 		 * @return New pipelines
 		 */
-		private static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
+		public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
 			// Build array of descriptors
 			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(builders, VkGraphicsPipelineCreateInfo::new, Builder::populate);
+
+			// Patch derived pipeline indices
+			for(int n = 0; n < array.length; ++n) {
+				final Builder parent = builders.get(n).parent;
+				if(parent == null) {
+					continue;
+				}
+				final int index = builders.indexOf(parent);
+				if(index == -1) throw new IllegalArgumentException("Parent pipeline not present in array: index=" + n);
+				array[n].basePipelineIndex = index;
+			}
 
 			// Allocate pipelines
 			final VulkanLibrary lib = dev.library();
