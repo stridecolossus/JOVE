@@ -591,7 +591,7 @@ To service an allocation request the pool tries the following in order:
 This is implemented as follows:
 
 ```java
-private synchronized DeviceMemory allocate(long size) {
+private DeviceMemory allocate(long size) {
     // Short cut to allocate a new block if pool has insufficient free memory
     if(free() < size) {
         return allocateNewBlock(size);
@@ -702,7 +702,7 @@ public DeviceMemory allocate(MemoryType type, long size) throws AllocationExcept
 The allocator provides methods to release all allocated memory back to the pool:
 
 ```java
-public synchronized void release() {
+public void release() {
     pools.values().forEach(MemoryPool::release);
     assert free() == size();
 }
@@ -711,7 +711,7 @@ public synchronized void release() {
 And to destroy all allocated memory:
 
 ```java
-public synchronized void destroy() {
+public void destroy() {
     pools.values().forEach(MemoryPool::close);
     count = 0;
     assert size() == 0;

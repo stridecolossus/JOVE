@@ -392,7 +392,7 @@ public View depth(Swapchain swapchain, AllocationService allocator) {
 Next the image for the depth attachment is instantiated:
 
 ```java
-MemoryProperties<VkImageUsage> props = new MemoryProperties.Builder<VkImageUsage>()
+var props = new MemoryProperties.Builder<VkImageUsage>()
     .usage(VkImageUsage.DEPTH_STENCIL_ATTACHMENT)
     .required(VkMemoryProperty.DEVICE_LOCAL)
     .copy()

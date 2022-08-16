@@ -290,19 +290,13 @@ public static class Builder {
 The relevant fields of the instance descriptor are populated in the `build` method, which were left as defaults in the previous iteration:
 
 ```java
-public Instance build(VulkanLibrary lib) {
-    ...
-    
-    // Populate required extensions
-    info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
-    info.enabledExtensionCount = extensions.size();
-    
-    // Populate required layers
-    info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
-    info.enabledLayerCount = layers.size();
-    
-    ...
-}
+// Populate required extensions
+info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
+info.enabledExtensionCount = extensions.size();
+
+// Populate required layers
+info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
+info.enabledLayerCount = layers.size();
 ```
 
 Note the use of the JNA `StringArray` helper class that maps a Java array-of-strings to a native pointer-to-pointers (more specifically a `const char* const*` type).

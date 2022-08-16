@@ -210,8 +210,7 @@ public class Window {
 The _window descriptor_ wraps up the properties of the window in a simple record:
 
 ```java
-public record Descriptor(String title, Dimensions size, Set<Hint> hints) {
-}
+public record Descriptor(String title, Dimensions size, Set<Hint> hints)
 ```
 
 The visual properties of a window (_hints_ in GLFW parlance) are copied from the header and wrapped into the following enumeration:
@@ -225,10 +224,6 @@ public enum Hint {
     DISABLE_OPENGL(0x00022001);
 
     private final int hint;
-
-    private Hint(int hint) {
-        this.hint = hint;
-    }
 }
 ```
 
@@ -357,12 +352,10 @@ public static class Selector implements Predicate<PhysicalDevice> {
 }
 ```
 
-The local `find` method applies the predicate and caches the results:
+The `find` method applies the predicate and caches the results:
 
 ```java
 private final Map<PhysicalDevice, Optional<Family>> results = new HashMap<>();
-
-...
 
 private Optional<Family> find(PhysicalDevice dev) {
     return results.computeIfAbsent(dev, this::findLocal);

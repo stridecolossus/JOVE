@@ -1,4 +1,4 @@
-    ---
+---
 title: Improvements
 ---
 
@@ -581,7 +581,7 @@ Note that the constant also has a default value if it is not explicitly configur
 The descriptor for a set of specialisation constants is constructed via a new factory method:
 
 ```java
-public static VkSpecializationInfo build(Map<Integer, Object> constants) {
+public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
     // Skip if empty
     if(constants.isEmpty()) {
         return null;
@@ -605,7 +605,7 @@ var populate = new BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry>(
     private int len = 0;
 
     @Override
-    public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry out) {
+    public void accept(...) {
         ...
     }
 };
@@ -691,7 +691,7 @@ The set of constants used in both tesselation shaders is initialised in the pipe
 
 ```java
 class PipelineConfiguration {
-    private final VkSpecializationInfo constants = Shader.build(Map.of(0, 20f, 1, 2.5f));
+    private final VkSpecializationInfo constants = Shader.constants(Map.of(0, 20f, 1, 2.5f));
 }
 ```
 

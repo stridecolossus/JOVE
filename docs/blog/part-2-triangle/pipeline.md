@@ -148,7 +148,7 @@ abstract class AbstractPipelineStageBuilder<T> {
      * Constructs this object.
      * @return Parent pipeline builder
      */
-    public Builder build() {
+    public final Builder build() {
         return parent;
     }
 }
@@ -268,7 +268,7 @@ Note there are separate fields for the number of viewports and scissors but they
 
 ### Shader Module
 
-The other component that must be implemented to render the triangle is a programmable pipeline stage to support the _vertex_ and _fragement_ shaders:
+The other component that must be implemented to render the triangle is a programmable pipeline stage to support the _vertex_ and _fragment_ shaders:
 
 ```java
 public class Shader extends AbstractVulkanObject {
