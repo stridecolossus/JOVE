@@ -209,7 +209,7 @@ Next the Vulkan descriptor for the pool is configured:
 var info = new VkDescriptorPoolCreateInfo();
 info.flags = IntegerEnumeration.reduce(flags);
 info.poolSizeCount = entries.size();
-info.pPoolSizes = StructureCollector.toPointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
+info.pPoolSizes = StructureHelper.pointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 info.maxSets = max;
 ```
 
@@ -502,7 +502,7 @@ Finally the descriptor set is allocated and populated with the sampler resource:
 ```java
 @Bean
 public DescriptorSet descriptor(Pool pool, Layout layout, Sampler sampler, View texture) {
-    DescriptorSet descriptor = pool.allocate(layout, 1);
+    DescriptorSet descriptor = pool.allocate(layout);
     Resource res = sampler.resource(texture);
     descriptor.set(binding, res);
     return descriptor;

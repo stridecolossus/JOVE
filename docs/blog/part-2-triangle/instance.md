@@ -261,9 +261,9 @@ public class VulkanException extends RuntimeException {
 
 There are two other pieces of information to be supplied when creating the instance: extensions and validation layers.
 
-An _extension_ is a platform-specific addition to the Vulkan API, e.g. swapchain support, native window surfaces, etc.
+An _extension_ is a platform or vendor-specific addition to the Vulkan API, e.g. swapchain support, GPU-specific functions, etc.
 
-A _validation layer_ is a hook or interceptor for API methods providing additional functionality, usually diagnostics such as parameter validation, resource leak detection, etc.
+A _validation layer_ is a hook or interceptor for API methods providing additional functionality, e.g. diagnostics, Steam overlay, etc.
 
 These new properties are added to the builder:
 
@@ -322,7 +322,9 @@ Generally platform-specific extensions are required to actually perform renderin
 
 - and a platform specific implementation, e.g. `VK_KHR_xcb_surface` for Linux or `VK_KHR_win32_surface` for Windows.
 
-This is where a new package and JNA library for GLFW is introduced:
+To determine the extensions required for the local hardware we will take advantage of the platform-independant Vulkan support provided by the GLFW library.
+
+First a new package and JNA library are implemented:
 
 ```java
 interface DesktopLibrary extends Library {
@@ -405,6 +407,8 @@ Notes:
 * The new package is called `desktop` rather than using an ugly GLFW acronym.
 
 * In reality the new GLFW framework was already in place before this stage of the tutorial, but we will continue to introduce functionality as it becomes relevant.
+
+* The pros and cons of leveraging the GLFW-Vulkan integration are discussed in the next chapter.
 
 Finally we can create our first demo application to instantiate a Vulkan instance for the local hardware:
 

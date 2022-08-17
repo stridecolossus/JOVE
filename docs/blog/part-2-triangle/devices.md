@@ -8,7 +8,6 @@ title: Vulkan Devices
 
 - [Overview](#overview)
 - [Physical Devices](#physical-devices)
-- [Device Selection](#device-selection)
 - [Logical Device](#logical-device)
 - [Improvements](#improvements)
 
@@ -187,10 +186,6 @@ PhysicalDevice
     .forEach(System.out::println);
 ```
 
----
-
-## Device Selection
-
 ### Application Window
 
 To select the physical device that supports presentation a Vulkan surface is needed, which is dependant on a native window created using GLFW:
@@ -227,7 +222,7 @@ public enum Hint {
 }
 ```
 
-By default GLFW creates an OpenGL surface for a new window which can be disabled using the `DISABLE_OPENGL` hint.  However the argument for this hint is irritatingly the opposite of what one would expect (and all the other hints), therefore the argument is over-ridden in this case:
+By default GLFW creates an OpenGL surface for a new window which needs to be disabled for a Vulkan-based application.  However the argument for the `DISABLE_OPENGL` hint is irritatingly the opposite of what one would expect (and all the others), therefore the argument is over-ridden in this case:
 
 ```java
 public enum Hint {

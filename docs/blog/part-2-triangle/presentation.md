@@ -163,7 +163,7 @@ public abstract class AbstractTransientNativeObject implements TransientNativeOb
     }
 
     @Override
-    public synchronized void destroy() {
+    public void destroy() {
         if(destroyed) throw new IllegalStateException(...);
         release();
         destroyed = true;
@@ -224,7 +224,7 @@ Which is used in the overridden `destroy` method:
 
 ```java
 @Override
-public synchronized void destroy() {
+public void destroy() {
     // Destroy this object
     Destructor destructor = destructor(dev.library());
     destructor.destroy(dev, this, null);

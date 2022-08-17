@@ -1,9 +1,11 @@
 package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.control.Axis;
 import org.sarge.jove.geometry.*;
 
 public class OrbitalCameraControllerTest {
@@ -93,6 +95,16 @@ public class OrbitalCameraControllerTest {
 			controller.zoom(-999);
 			assertEquals(3, controller.radius());
 			assertEquals(new Point(0, 0, 3), cam.position());
+		}
+
+		@Test
+		void axis() {
+			final Axis axis = mock(Axis.class);
+			when(axis.value()).thenReturn(-1f);
+			controller.zoom(axis);
+			assertEquals(2, controller.radius());
+			assertEquals(new Point(0, 0, 2), cam.position());
+			assertEquals(Vector.Z, cam.direction());
 		}
 	}
 }

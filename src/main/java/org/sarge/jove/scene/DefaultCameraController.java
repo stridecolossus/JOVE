@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.control.PositionEvent;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
 
@@ -40,6 +41,14 @@ public class DefaultCameraController {
 		final float pitch = vertical.interpolate(y / dim.height());
 		final Vector vec = SphereVolume.vector(yaw, pitch);
 		update(vec);
+	}
+
+	/**
+	 * Updates the camera for the given position.
+	 * @param pos Position
+	 */
+	public void update(PositionEvent pos) {
+		update(pos.x(), pos.y());
 	}
 
 	/**

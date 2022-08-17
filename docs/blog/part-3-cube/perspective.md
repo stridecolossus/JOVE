@@ -395,7 +395,7 @@ Notes:
 
 * The view-transform will be wrapped into a camera class in a future chapter.
 
-When running the demo the triangle should now be rendered to the right of the screen.
+When running the demo the quad should now be rendered to the right of the screen.
 
 ### Perspective Projection
 

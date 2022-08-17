@@ -2,6 +2,7 @@ package org.sarge.jove.scene;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.control.Axis;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -121,6 +122,14 @@ public class OrbitalCameraController extends DefaultCameraController {
 	public void zoom(float inc) {
 		this.radius = MathsUtil.clamp(radius - inc * scale, min, max);
 		init();
+	}
+
+	/**
+	 * Zooms according to the given axis.
+	 * @param axis Axis
+	 */
+	public void zoom(Axis axis) {
+		zoom(axis.value());
 	}
 
 	@Override

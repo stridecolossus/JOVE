@@ -365,7 +365,7 @@ The default camera configuration means we are looking at the model from above, t
 
 * And _rot_ rotates vertically so the camera is facing the corner of the chalet with the door.
 
-* Note that the camera was also moved above 'ground' level.
+* Note that the camera was also moved slightly above 'ground' level.
 
 When we run the demo it's a bit of a mess:
 
@@ -381,7 +381,7 @@ There are a couple of issues here:
 
 The upside-down texture is due to the fact that OBJ texture coordinates (and OpenGL) assume an origin at the bottom-left of the image, whereas for Vulkan the 'start' of the texture image is the top-left corner.
 
-We _could_ fiddle the texture coordinates in the shader, or flip the texture using an editor application, or invert it programatically at load time.  However none of these resolve the actual root problem, flipping the image would just add extra effort, and inverting at load-time would only make loading slower.  Instead the vertical texture coordinate is flipped _once_ when the OBJ model is first loaded.
+We _could_ fiddle the texture coordinates in the shader, or flip the texture using an editor application, or invert it programatically at load time.  However none of these resolve the actual root problem, flipping the image would just add extra effort, and inverting at runtime would only make loading slower.  Instead the vertical texture coordinate is flipped _once_ when the OBJ model is first loaded.
 
 The following adapter method flips the vertical component of each texture coordinate:
 
@@ -620,7 +620,7 @@ public class FormatSelector {
 }
 ```
 
-The `matches` method looks up the format properties from the device and applies the filter test:
+The `matches` method looks up the properties of each candidate from the device and applies the predicate:
 
 ```java
 private boolean matches(VkFormat format) {

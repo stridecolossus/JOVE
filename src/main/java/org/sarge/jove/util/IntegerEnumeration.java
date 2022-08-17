@@ -97,12 +97,11 @@ public interface IntegerEnumeration {
 
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
-			if(value == null) {
-				return 0;
+			if(value instanceof IntegerEnumeration e) {
+				return e.value();
 			}
 			else {
-				final IntegerEnumeration e = (IntegerEnumeration) value;
-				return e.value();
+				return 0;
 			}
 		}
 
