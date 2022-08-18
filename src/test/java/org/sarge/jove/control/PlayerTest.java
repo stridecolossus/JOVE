@@ -2,7 +2,7 @@ package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
-import static org.sarge.jove.control.Playable.State.PLAY;
+import static org.sarge.jove.control.Playable.State.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Player.Listener;
@@ -17,8 +17,7 @@ class PlayerTest {
 
 	@Test
 	void constructor() {
-		assertEquals(false, player.isPlaying());
-		assertEquals(false, player.isRepeating());
+		assertEquals(STOP, player.state());
 	}
 
 	@DisplayName("A playable object...")
@@ -36,10 +35,8 @@ class PlayerTest {
 		@Test
 		void add() {
 			player.state(PLAY);
-			player.repeat(true);
 			assertEquals(PLAY, player.state());
 			assertEquals(PLAY, playable.state());
-			assertEquals(true, playable.isRepeating());
 		}
 
 		@DisplayName("can be removed from a player")

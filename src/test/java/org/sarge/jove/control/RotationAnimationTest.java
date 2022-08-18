@@ -18,8 +18,8 @@ class RotationAnimationTest {
 	@Test
 	void constructor() {
 		assertNotNull(animation.rotation());
-		assertEquals(Vector.Y, animation.rotation().axis());
-		assertEquals(0, animation.rotation().angle());
+		assertEquals(Vector.Y, animation.rotation().rotation().axis());
+		assertEquals(0, animation.rotation().rotation().angle());
 	}
 
 	@Test
@@ -27,6 +27,6 @@ class RotationAnimationTest {
 		final Animator animator = mock(Animator.class);
 		when(animator.position()).thenReturn(MathsUtil.HALF);
 		animation.update(animator);
-		assertEquals(MathsUtil.PI, animation.rotation().angle());
+		assertEquals(MathsUtil.PI, animation.rotation().rotation().angle());
 	}
 }

@@ -96,7 +96,7 @@ public class Animator extends Playable implements FrameListener {
 			}
 			else {
 				time = duration;
-				state(Player.State.STOP);
+				state(Playable.State.STOP);
 			}
 		}
 

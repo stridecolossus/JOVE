@@ -30,7 +30,6 @@ other possible features
 - shader storage buffer (SSBO)
 
 features todo
-- object tracker
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - screenshots, how? render to off-screen attachment?
 - degenerate triangles for strip?

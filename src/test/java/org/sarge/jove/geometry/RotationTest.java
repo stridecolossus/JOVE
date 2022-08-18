@@ -4,10 +4,34 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.util.MathsUtil.PI;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.Rotation.AxisAngle;
 
 class RotationTest {
 	@Nested
-	class RotationMatrixTests {
+	class AxisAngleTests {
+		private AxisAngle rot;
+
+		@BeforeEach
+		void before() {
+			rot = new AxisAngle(Vector.Y, PI);
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(Vector.Y, rot.axis());
+			assertEquals(PI, rot.angle());
+			assertNotNull(rot.matrix());
+			assertEquals(rot, rot.rotation());
+		}
+
+		@Test
+		void equals() {
+			assertEquals(rot, rot);
+			assertEquals(rot, new AxisAngle(Vector.Y, PI));
+			assertNotEquals(rot, null);
+			assertNotEquals(rot, new AxisAngle(Vector.Y, 0));
+		}
+
 		@Test
 		void x() {
 			final Matrix expected = new Matrix.Builder()
@@ -16,7 +40,7 @@ class RotationTest {
 					.set(2, 2, -1)
 					.build();
 
-			assertEquals(expected, Rotation.of(Vector.X, PI).matrix());
+			assertEquals(expected, new AxisAngle(Vector.X, PI).matrix());
 		}
 
 		@Test
@@ -27,7 +51,7 @@ class RotationTest {
 					.set(2, 2, -1)
 					.build();
 
-			assertEquals(expected, Rotation.of(Vector.Y, PI).matrix());
+			assertEquals(expected, new AxisAngle(Vector.Y, PI).matrix());
 		}
 
 		@Test
@@ -38,37 +62,12 @@ class RotationTest {
 					.set(1, 1, -1)
 					.build();
 
-			assertEquals(expected, Rotation.of(Vector.Z, PI).matrix());
+			assertEquals(expected, new AxisAngle(Vector.Z, PI).matrix());
 		}
 
 		@Test
-		void matrixInvalidArbitraryAxis() {
-			assertThrows(UnsupportedOperationException.class, () -> Rotation.of(new Vector(1, 2, 3), PI).matrix());
-		}
-	}
-
-	@Nested
-	class DefaultRotationTests {
-		private Rotation rot;
-
-		@BeforeEach
-		void before() {
-			rot = Rotation.of(Vector.Y, PI);
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(Vector.Y, rot.axis());
-			assertEquals(PI, rot.angle());
-			assertNotNull(rot.matrix());
-		}
-
-		@Test
-		void equals() {
-			assertEquals(rot, rot);
-			assertEquals(rot, Rotation.of(Vector.Y, PI));
-			assertNotEquals(rot, null);
-			assertNotEquals(rot, Rotation.of(Vector.Y, 0));
+		void arbitrary() {
+			assertThrows(UnsupportedOperationException.class, () -> new AxisAngle(new Vector(1, 2, 3), PI).matrix());
 		}
 	}
 }

@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -203,13 +203,14 @@ public class DescriptorSet implements NativeObject {
 	 * @return New bind command
 	 */
 	public static Command bind(PipelineLayout layout, Collection<DescriptorSet> sets) {
+		final PointerArray array = NativeObject.array(sets);
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
 				VkPipelineBindPoint.GRAPHICS,
 				layout,
 				0,					// First set
 				sets.size(),
-				NativeObject.array(sets),
+				array,
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);

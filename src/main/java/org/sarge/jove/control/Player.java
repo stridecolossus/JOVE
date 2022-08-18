@@ -5,12 +5,13 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.control.Playable.State;
 
 /**
  * A <i>player</i> is a controller for playable media and animations.
  * @author Sarge
  */
-public class Player extends Playable {
+public class Player {
 	/**
 	 * Listener for player state changes.
 	 */
@@ -25,6 +26,8 @@ public class Player extends Playable {
 
 	private final Collection<Playable> playing = new ArrayList<>();
 	private final Collection<Listener> listeners = new HashSet<>();
+
+	private State state = State.STOP;
 
 	/**
 	 * Adds a playable to this player.
@@ -58,10 +61,22 @@ public class Player extends Playable {
 		listeners.remove(listener);
 	}
 
-	@Override
+	/**
+	 * @return State of this player
+	 */
+	public State state() {
+		return state;
+	}
+
+	/**
+	 * Sets the state of this player.
+	 * @param state Player state
+	 */
 	public void state(State state) {
 		// Change state
-		super.state(state);
+		this.state = notNull(state);
+
+		// Delegate
 		for(Playable p : playing) {
 			p.state(state);
 		}
@@ -73,16 +88,10 @@ public class Player extends Playable {
 	}
 
 	@Override
-	public void repeat(boolean repeat) {
-		for(Playable p : playing) {
-			p.repeat(repeat);
-		}
-	}
-
-	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
+				.append(state)
+				.append("playing", playing.size())
 				.append("listeners", listeners.size())
 				.build();
 	}

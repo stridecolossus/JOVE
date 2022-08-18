@@ -367,15 +367,11 @@ The default camera configuration means we are looking at the model from above, t
 
 * Note that the camera was also moved slightly above 'ground' level.
 
-When we run the demo it's a bit of a mess:
+When we run the demo the results are a bit of a mess:
 
 ![Broken Chalet Model](mess.png)
 
-There are a couple of issues here:
-
-* The texture looks to be upside down, the grass is obviously on the roof and vice-versa.
-
-* Fragments are being rendered arbitrarily overlapping each other.
+There are a couple of issues here but the most obvious is that the texture appears to be upside down, the grass is obviously on the roof and vice-versa.
 
 ### Texture Coordinate Invert
 
@@ -406,7 +402,7 @@ After regenerating the model it now looks to be textured correctly, in particula
 
 ### Depth-Stencil Pipeline Stage
 
-To resolve the issue of the overlapping fragments, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are not rendered.  The depth test uses the _depth buffer_ which is a special attachment that records the distance of each rendered fragment, discarding subsequent fragments that are closer to the camera.
+The second problem is that fragments are being rendered arbitrarily overlapping, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are ignored.  The depth test uses the _depth buffer_ which is a special attachment that records the distance of each rendered fragment, discarding subsequent fragments that are closer to the camera.
 
 The depth test is configured by a new pipeline stage:
 

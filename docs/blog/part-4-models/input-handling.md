@@ -974,7 +974,7 @@ There are still further use-cases that will be implemented in later chapters:
 
 ### Default Controller
 
-The camera class is a simple model class, to implement richer functionality a _camera controller_ is introduced that can be bound to input actions.
+The camera is a simple model class, to implement richer functionality a _camera controller_ is introduced that can be bound to input actions.
 
 A basic _free-look_ controller is first implemented that rotates the scene about the cameras position:
 
@@ -1084,7 +1084,7 @@ The axes are transposed by a swizzle of the resultant coordinates:
 return new Vector(x, z, y);
 ```
 
-Finally we can implement the controller update method to point the camera at the calculated point on the sphere:
+Finally the camera is pointed at the calculated point on the sphere:
 
 ```java
 public void update(float x, float y) {
@@ -1092,6 +1092,14 @@ public void update(float x, float y) {
     float pitch = vertical.interpolate(y / dim.height());
     Vector vec = sphere.vector(yaw, pitch);
     cam.direction(vec);
+}
+```
+
+A convenience `update` overload is also added to accept a position event (used below):
+
+```java
+public void update(PositionEvent pos) {
+    update(pos.x(), pos.y());
 }
 ```
 
@@ -1149,6 +1157,8 @@ public void zoom(float inc) {
     cam.move(target.add(pos));
 }
 ```
+
+And a `zoom` overload variant is added for an axis event.
 
 Note that the camera controllers will still be subject to gimbal locking at the extreme edges of the viewport (see the previous chapter).
 
