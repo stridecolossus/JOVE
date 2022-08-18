@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
+import org.sarge.jove.platform.vulkan.render.FrameBuffer.Group;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -114,22 +115,22 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		verify(lib).vkCmdEndRenderPass(cmd);
 	}
 
+	private void init(VkFormat format, Dimensions extents) {
+		// Init image
+		final Descriptor descriptor = new Descriptor.Builder()
+				.format(format)
+				.extents(extents)
+				.aspect(VkImageAspect.COLOR)
+				.build();
+
+		// Create image
+		final Image image = mock(Image.class);
+		when(view.image()).thenReturn(image);
+		when(image.descriptor()).thenReturn(descriptor);
+	}
+
 	@Nested
 	class CreateTests {
-		private void init(VkFormat format, Dimensions extents) {
-			// Init image
-			final Descriptor descriptor = new Descriptor.Builder()
-					.format(format)
-					.extents(extents)
-					.aspect(VkImageAspect.COLOR)
-					.build();
-
-			// Create image
-			final Image image = mock(Image.class);
-			when(view.image()).thenReturn(image);
-			when(image.descriptor()).thenReturn(descriptor);
-		}
-
 		@BeforeEach
 		void before() {
 			init(FORMAT, EXTENTS);
@@ -188,6 +189,37 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		void createInvalidExtents() {
 			init(FORMAT, new Dimensions(1, 2));
 			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, EXTENTS, List.of(view)));
+		}
+	}
+
+	@Nested
+	class FrameSetTests {
+		private Group group;
+		private Swapchain swapchain;
+
+		@BeforeEach
+		void before() {
+			init(FORMAT, EXTENTS);
+			swapchain = mock(Swapchain.class);
+			when(swapchain.extents()).thenReturn(EXTENTS);
+			when(swapchain.attachments()).thenReturn(List.of(view));
+			group = new Group(swapchain, pass, List.of());
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(swapchain, group.swapchain());
+			assertEquals(false, group.isDestroyed());
+		}
+
+		@Test
+		void buffer() {
+			assertNotNull(group.buffer(0));
+		}
+
+		@Test
+		void destroy() {
+			group.destroy();
 		}
 	}
 }
