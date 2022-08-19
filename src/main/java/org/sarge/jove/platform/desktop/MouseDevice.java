@@ -43,7 +43,7 @@ public class MouseDevice implements Device {
 	/**
 	 * @return Mouse pointer
 	 */
-	public Source<PositionEvent> pointer() {
+	public Source<Position> pointer() {
 		return ptr;
 	}
 
@@ -64,7 +64,7 @@ public class MouseDevice implements Device {
 	/**
 	 * Mouse pointer event source.
 	 */
-	private class MousePointer implements DesktopSource<MouseListener, PositionEvent> {
+	private class MousePointer implements DesktopSource<MouseListener, Position> {
 		@Override
 		public String name() {
 			return "MousePointer";
@@ -76,9 +76,9 @@ public class MouseDevice implements Device {
 		}
 
 		@Override
-		public MouseListener listener(Consumer<PositionEvent> handler) {
+		public MouseListener listener(Consumer<Position> handler) {
 			return (ptr, x, y) -> {
-				final PositionEvent pos = new PositionEvent(this, (float) x, (float) y);
+				final Position pos = new Position((float) x, (float) y);
 				handler.accept(pos);
 			};
 		}
@@ -111,7 +111,7 @@ public class MouseDevice implements Device {
 		@Override
 		public MouseButtonListener listener(Consumer<Button<Action>> handler) {
 			return (ptr, index, action, mods) -> {
-				final Button<Action> button = new Button<>(MouseButtonSource.this, id[index], Action.map(action));
+				final Button<Action> button = new Button<>(id[index], Action.map(action));
 				// TODO - modifiers
 				handler.accept(button);
 			};
@@ -126,22 +126,10 @@ public class MouseDevice implements Device {
 	/**
 	 * Mouse scroll-wheel source.
 	 */
-	private class MouseWheel implements Axis, DesktopSource<MouseListener, Axis> {
-		private float value;
-
+	private class MouseWheel extends Axis implements DesktopSource<MouseListener, Axis> {
 		@Override
 		public String name() {
 			return "MouseWheel";
-		}
-
-		@Override
-		public Source<?> source() {
-			return this;
-		}
-
-		@Override
-		public float value() {
-			return value;
 		}
 
 		@Override
@@ -152,7 +140,7 @@ public class MouseDevice implements Device {
 		@Override
 		public MouseListener listener(Consumer<Axis> handler) {
 			return (ptr, x, y) -> {
-				this.value = (float) y;
+				update((float) y);
 				handler.accept(MouseWheel.this);
 			};
 		}

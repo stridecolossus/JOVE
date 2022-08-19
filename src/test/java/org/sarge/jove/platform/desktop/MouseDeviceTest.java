@@ -31,11 +31,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MousePointerTests {
-		private DesktopSource<MouseListener, PositionEvent> ptr;
+		private DesktopSource<MouseListener, Position> ptr;
 
 		@BeforeEach
 		void before() {
-			ptr = (DesktopSource<MouseListener, PositionEvent>) mouse.pointer();
+			ptr = (DesktopSource<MouseListener, Position>) mouse.pointer();
 		}
 
 		@Test

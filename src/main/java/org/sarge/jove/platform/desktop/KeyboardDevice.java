@@ -62,7 +62,7 @@ public class KeyboardDevice implements Device {
 		public KeyListener listener(Consumer<Button<Action>> handler) {
 			return (ptr, key, scancode, action, mods) -> {
 				final String name = table.name(key);
-				final Button<Action> button = new Button<>(KeyboardSource.this, name, Action.map(action));
+				final Button<Action> button = new Button<>(name, Action.map(action));
 				// TODO - modifiers
 				handler.accept(button);
 			};

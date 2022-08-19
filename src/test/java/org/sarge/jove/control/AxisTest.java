@@ -1,26 +1,39 @@
 package org.sarge.jove.control;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.function.Consumer;
-
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Axis.Handler;
 
-public class AxisTest {
+class AxisTest {
 	private Axis axis;
 
 	@BeforeEach
 	void before() {
-		axis = mock(Axis.class);
-		when(axis.value()).thenReturn(3f);
+		axis = spy(Axis.class);
 	}
 
 	@Test
-	void adapter() {
-		final Handler handler = mock(Handler.class);
-		final Consumer<Axis> adapter = Handler.adapter(handler);
-		adapter.accept(axis);
-		verify(handler).handle(3f);
+	void constructor() {
+		assertEquals(0, axis.value());
+	}
+
+	@Test
+	void value() {
+		axis.update(42);
+		assertEquals(42, axis.value());
+	}
+
+	@Test
+	void matches() {
+		assertEquals(true, axis.matches(axis));
+		assertEquals(false, axis.matches(mock(Axis.class)));
+	}
+
+	@Test
+	void equals() {
+		assertEquals(axis, axis);
+		assertNotEquals(axis, null);
+		assertNotEquals(axis, mock(Axis.class));
 	}
 }

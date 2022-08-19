@@ -118,9 +118,10 @@ public class IntegerEnumerationTest {
 			assertEquals(MockEnum.B, IntegerEnumeration.CONVERTER.fromNative(2, context));
 		}
 
-		@DisplayName("An undefined native value is converted to the 'zero' constant")
+		@DisplayName("An undefined native value is converted to the 'default' constant")
 		@Test
 		void fromNativeZero() {
+			assertEquals(MockEnum.A, IntegerEnumeration.CONVERTER.fromNative(null, context));
 			assertEquals(MockEnum.A, IntegerEnumeration.CONVERTER.fromNative(0, context));
 		}
 

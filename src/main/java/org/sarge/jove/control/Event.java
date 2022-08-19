@@ -11,9 +11,11 @@ import java.util.function.Consumer;
  */
 public interface Event {
 	/**
-	 * @return Source that generated this event
+	 * Tests whether this event matches the given template event.
+	 * @param e Matching event
+	 * @return Whether this event is matched
 	 */
-	Source<?> source();
+	boolean matches(Event e);
 
 	/**
 	 * An <i>event source</i> generates events and is the <i>binding point</i> for event handlers.
@@ -49,11 +51,6 @@ public interface Event {
 	}
 
 	/**
-	 * Event name delimiter.
-	 */
-	String DELIMITER = "-";
-
-	/**
 	 * Builds a human-readable, hyphen-delimited name from the given tokens.
 	 * @param tokens Tokens
 	 * @return Event name
@@ -62,6 +59,6 @@ public interface Event {
 		return Arrays
 				.stream(tokens)
 				.map(String::valueOf)
-				.collect(joining(DELIMITER));
+				.collect(joining("-"));
 	}
 }

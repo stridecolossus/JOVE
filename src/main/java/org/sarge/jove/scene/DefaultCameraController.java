@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.control.PositionEvent;
+import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
 
@@ -47,9 +47,10 @@ public class DefaultCameraController {
 	 * Updates the camera for the given position.
 	 * @param pos Position
 	 */
-	public void update(PositionEvent pos) {
+	public void update(Position pos) {
 		update(pos.x(), pos.y());
 	}
+	// TODO - remove to bindings
 
 	/**
 	 * Updates the camera.

@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Axis;
 import org.sarge.jove.util.MathsUtil;
 
@@ -12,9 +11,8 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>joystick axis</i> is a controller for a ranged value such as a HOTAS throttle.
  * @author Sarge
  */
-class JoystickAxis implements Axis {
+class JoystickAxis extends Axis {
 	private final int index;
-	private float value;
 	private Consumer<Axis> handler;
 
 	/**
@@ -24,7 +22,7 @@ class JoystickAxis implements Axis {
 	 */
 	JoystickAxis(int index, float value) {
 		this.index = zeroOrMore(index);
-		this.value = value;
+		update(value);
 	}
 
 	@Override
@@ -33,54 +31,27 @@ class JoystickAxis implements Axis {
 	}
 
 	@Override
-	public Source<?> source() {
-		return this;
-	}
-
-	@Override
-	public float value() {
-		return value;
-	}
-
-	@Override
 	public Object bind(Consumer<Axis> handler) {
 		this.handler = handler;
 		return null;
 	}
 
-	/**
-	 * Updates this axis and generates events accordingly.
-	 * @param value Axis position
-	 */
-	void update(float value) {
+	@Override
+	public void update(float value) {
 		// Ignore if not modified
-		if(MathsUtil.isEqual(this.value, value)) {
+		if(MathsUtil.isEqual(this.value(), value)) {
 			return;
 		}
 
 		// Record modified value
-		this.value = value;
+		super.update(value);
 
 		// Generate event
-//		if(handler != null) {
-//			return;
-//		}
-//		final AxisEvent event = new AxisEvent(this, value);
 		handler.accept(this);
 	}
 
 	@Override
 	public int hashCode() {
 		return index;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return (obj == this);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(value).build();
 	}
 }

@@ -79,6 +79,7 @@ public abstract class Playable {
 
 	/**
 	 * A <i>playable media</i> is a base-class for a playable resource that may stop in the background.
+	 * Note that {@link #isPlaying()} must be implemented to test when the media has finished.
 	 */
 	public static abstract class Media extends Playable {
 		@Override
@@ -92,6 +93,9 @@ public abstract class Playable {
 			update();
 			super.state(state);
 		}
+
+		@Override
+		public abstract boolean isPlaying();
 
 		/**
 		 * Checks whether this media has stopped playing.

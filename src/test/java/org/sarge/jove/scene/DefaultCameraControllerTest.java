@@ -1,11 +1,10 @@
 package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.control.*;
+import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.*;
 
 public class DefaultCameraControllerTest {
@@ -27,9 +26,7 @@ public class DefaultCameraControllerTest {
 
 	@Test
 	void position() {
-		@SuppressWarnings("unchecked")
-		final Event.Source<PositionEvent> src = mock(Event.Source.class);
-		controller.update(new PositionEvent(src, 1, 1));
+		controller.update(new Position(1, 1));
 		assertEquals(Vector.Z, cam.direction());
 		assertEquals(Point.ORIGIN, cam.position());
 	}

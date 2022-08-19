@@ -113,12 +113,17 @@ public interface IntegerEnumeration {
 
 			// Map native value
 			final ReverseMapping<?> mapping = ReverseMapping.get(type);
-			final int value = (int) nativeValue;
-			if(value == 0) {
+			if(nativeValue == null) {
 				return mapping.def;
 			}
 			else {
-				return mapping.map(value);
+				final int num = (int) nativeValue;
+				if(num == 0) {
+					return mapping.def;
+				}
+				else {
+					return mapping.map(num);
+				}
 			}
 		}
 	};

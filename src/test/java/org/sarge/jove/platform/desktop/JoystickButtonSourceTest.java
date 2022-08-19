@@ -21,7 +21,7 @@ public class JoystickButtonSourceTest extends AbstractJoystickTest {
 	void before() {
 		src = new JoystickButtonSource(1, desktop);
 		handler = mock(Consumer.class);
-		button = new Button<>(src, "Button-0", Action.RELEASE);
+		button = new Button<>("Button-0", Action.RELEASE);
 //		hat = new Hat("Hat-0");
 	}
 

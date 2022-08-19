@@ -3,7 +3,6 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * A <i>button</i> is an event for a keyboard, mouse, or joystick button.
@@ -32,30 +31,17 @@ public class Button<T> implements Event {
 		}
 	}
 
-	// TODO
-	public static Consumer<Button<Action>> handler(Runnable action) {
-		return ignored -> action.run();
-	}
-
-	private final Source<Button<T>> source;
 	private final String id;
 	private final T action;
 
 	/**
 	 * Constructor.
-	 * @param source		Event source for this button
 	 * @param id			Button identifier
 	 * @param action		Button action
 	 */
-	public Button(Source<Button<T>> source, String id, T action) {
-		this.source = notNull(source);
+	public Button(String id, T action) {
 		this.id = notEmpty(id);
 		this.action = notNull(action);
-	}
-
-	@Override
-	public Source<Button<T>> source() {
-		return source;
 	}
 
 	/**
@@ -69,7 +55,7 @@ public class Button<T> implements Event {
 	 * @return Hyphen-delimited name of this button event
 	 */
 	public String name() {
-		return Event.name(source.name(), id, action);
+		return Event.name(id, action);
 	}
 
 	/**
@@ -80,8 +66,14 @@ public class Button<T> implements Event {
 	}
 
 	@Override
+	public boolean matches(Event e) {
+		// TODO
+		return false;
+	}
+
+	@Override
 	public int hashCode() {
-		return Objects.hash(source, id, action);
+		return Objects.hash(id, action);
 	}
 
 	@Override
@@ -90,8 +82,7 @@ public class Button<T> implements Event {
 				(obj == this) ||
 				(obj instanceof Button<?> that) &&
 				this.id.equals(that.id) &&
-				this.action.equals(that.action) &&
-				this.source.equals(that.source);
+				this.action.equals(that.action);
 	}
 
 	@Override

@@ -47,7 +47,7 @@ public class KeyboardDeviceTest {
 		final KeyListener listener = (KeyListener) source.bind(handler);
 		assertNotNull(listener);
 		listener.key(null, 256, 0, 1, 2);
-		verify(handler).accept(new Button<>(source, "ESCAPE", Action.PRESS));
+		verify(handler).accept(new Button<>("ESCAPE", Action.PRESS));
 		// TODO - modifiers
 	}
 }
