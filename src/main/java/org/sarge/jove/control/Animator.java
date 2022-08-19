@@ -2,15 +2,13 @@ package org.sarge.jove.control;
 
 import static org.sarge.lib.util.Check.*;
 
-import java.time.*;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated per frame.
  * @author Sarge
  */
-public class Animator extends Playable implements FrameListener {
+public class Animator extends Playable implements Frame.Listener {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */
@@ -79,15 +77,14 @@ public class Animator extends Playable implements FrameListener {
 	}
 
 	@Override
-	public void frame(Instant start, Instant end) {
+	public void completed(Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
 		// Update time position
-		final long elapsed = Duration.between(start, end).toMillis();
-		time += speed * elapsed;
+		time += speed * frame.elapsed().toMillis();
 
 		// Check for completed animation
 		if(time > duration) {

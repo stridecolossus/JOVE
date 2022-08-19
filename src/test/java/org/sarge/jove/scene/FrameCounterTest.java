@@ -2,9 +2,10 @@ package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.time.Instant;
+import java.time.Duration;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.Frame;
 
 public class FrameCounterTest {
 	private FrameCounter counter;
@@ -16,16 +17,21 @@ public class FrameCounterTest {
 
 	@Test
 	void frame() {
-		counter.frame(Instant.ofEpochMilli(0), Instant.ofEpochMilli(1));
+		final Frame frame = new Frame();
+		frame.end(Duration.ofMillis(1));
+		counter.completed(frame);
 		assertEquals(1, counter.count());
-		assertEquals(0, counter.fps());
+		assertEquals(1, counter.fps());
 	}
 
 	@Test
 	void fps() {
-		counter.frame(Instant.ofEpochMilli(0), Instant.ofEpochMilli(1));
-		counter.frame(Instant.ofEpochMilli(1001), Instant.ofEpochMilli(1002));
-		assertEquals(1, counter.count());
-		assertEquals(2, counter.fps());
+		for(int n = 0; n < 3; ++n) {
+			final Frame frame = new Frame();
+			frame.end(Duration.ofMillis(1));
+			counter.completed(frame);
+		}
+		assertEquals(3, counter.count());
+		assertEquals(1, counter.fps());
 	}
 }

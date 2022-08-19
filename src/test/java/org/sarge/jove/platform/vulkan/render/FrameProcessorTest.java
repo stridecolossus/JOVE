@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.control.FrameListener;
+import org.sarge.jove.control.Frame;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
@@ -71,7 +71,7 @@ class FrameProcessorTest extends AbstractVulkanTest {
 		final RenderSequence seq = mock(RenderSequence.class);
 		when(builder.build(0, seq)).thenReturn(buffer);
 
-		final FrameListener listener = mock(FrameListener.class);
+		final Frame.Listener listener = mock(Frame.Listener.class);
 		proc.add(listener);
 
 		// Render frame

@@ -2,11 +2,11 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.time.Instant;
 import java.util.*;
 
 import org.sarge.jove.common.TransientObject;
-import org.sarge.jove.control.FrameListener;
+import org.sarge.jove.control.Frame;
+import org.sarge.jove.control.Frame.Listener;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
@@ -36,14 +36,14 @@ import org.sarge.lib.util.Check;
  * </ul>
  * Note however that this method does <b>not</b> block after the frame has been presented.
  * <p>
- * @see FrameListener
+ * @see Frame
  * @author Sarge
  */
 public class FrameProcessor implements TransientObject {
 	private final Swapchain swapchain;
 	private final FrameBuilder builder;
-	private final Set<FrameListener> listeners = new HashSet<>();
-	private final Frame[] frames;
+	private final Set<Listener> listeners = new HashSet<>();
+	private final VulkanFrame[] frames;
 	private int next;
 
 	/**
@@ -56,7 +56,7 @@ public class FrameProcessor implements TransientObject {
 		Check.oneOrMore(frames);
 		this.swapchain = notNull(swapchain);
 		this.builder = notNull(builder);
-		this.frames = new Frame[frames];
+		this.frames = new VulkanFrame[frames];
 		init();
 	}
 
@@ -65,14 +65,14 @@ public class FrameProcessor implements TransientObject {
 	 */
 	private void init() {
 		final DeviceContext dev = swapchain.device();
-		Arrays.setAll(frames, n -> new Frame(dev));
+		Arrays.setAll(frames, n -> new VulkanFrame(dev));
 	}
 
 	/**
 	 * Register a frame completion listener.
 	 * @param listener Listener to add
 	 */
-	public void add(FrameListener listener) {
+	public void add(Listener listener) {
 		listeners.add(notNull(listener));
 	}
 
@@ -83,34 +83,34 @@ public class FrameProcessor implements TransientObject {
 	public void render(RenderSequence seq) {
 		// Select next in-flight frame
 		final int index = next++ % frames.length;
-		final Frame frame = frames[index];
+		final VulkanFrame frame = frames[index];
 
 		// Render frame
-		final Instant start = Instant.now();
+		final Frame timer = new Frame();
 		frame.render(seq);
+		timer.end();
 
 		// Notify frame completion
-		final Instant end = Instant.now();
-		for(FrameListener listener : listeners) {
-			listener.frame(start, end);
+		for(Listener listener : listeners) {
+			listener.completed(timer);
 		}
 	}
 
 	@Override
 	public void destroy() {
-		for(Frame frame : frames) {
+		for(VulkanFrame frame : frames) {
 			frame.destroy();
 		}
 	}
 
 	/**
-	 * Default synchronised implementation.
+	 * In-flight frame.
 	 */
-	private class Frame {
+	private class VulkanFrame {
 		private final Semaphore available, ready;
 		private final Fence fence;
 
-		private Frame(DeviceContext dev) {
+		private VulkanFrame(DeviceContext dev) {
 			this.available = Semaphore.create(dev);
 			this.ready = Semaphore.create(dev);
 			this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);

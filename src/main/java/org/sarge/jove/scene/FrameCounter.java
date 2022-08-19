@@ -3,13 +3,13 @@ package org.sarge.jove.scene;
 import java.time.Instant;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.FrameListener;
+import org.sarge.jove.control.Frame;
 
 /**
  * A <i>frame counter</i> is an adapter for a render task that also tracks frame completion events and FPS.
  * @author Sarge
  */
-public class FrameCounter implements FrameListener {
+public class FrameCounter implements Frame.Listener {
 	private Instant next = Instant.EPOCH;
 	private int count;
 	private int fps;
@@ -29,12 +29,13 @@ public class FrameCounter implements FrameListener {
 	}
 
 	@Override
-	public void frame(Instant start, Instant end) {
+	public void completed(Frame frame) {
 		++count;
-		if(start.isAfter(next)) {
+		final Instant time = frame.start();
+		if(time.isAfter(next)) {
 			fps = count;
 			count = 1;
-			next = start.plusSeconds(1);
+			next = time.plusSeconds(1);
 		}
 	}
 

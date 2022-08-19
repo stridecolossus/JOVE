@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.sarge.jove.control.Playable.State.*;
 
-import java.time.Instant;
+import java.time.Duration;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator.Animation;
@@ -14,9 +14,11 @@ import org.sarge.jove.util.MathsUtil;
 class AnimatorTest {
 	private Animator animator;
 	private Animation animation;
+	private Frame frame;
 
 	@BeforeEach
 	void before() {
+		frame = new Frame();
 		animation = mock(Animation.class);
 		animator = new Animator(2000, animation);
 	}
@@ -37,7 +39,8 @@ class AnimatorTest {
 		@DisplayName("is not updated on frame completion")
 		@Test
 		void update() {
-			animator.frame(Instant.EPOCH, Instant.EPOCH);
+			frame.end();
+			animator.completed(frame);
 			verifyNoMoreInteractions(animation);
 		}
 
@@ -61,7 +64,8 @@ class AnimatorTest {
 		@DisplayName("is updated on frame completion")
 		@Test
 		void update() {
-			animator.frame(Instant.EPOCH, Instant.ofEpochSecond(1));
+			frame.end(Duration.ofSeconds(1));
+			animator.completed(frame);
 			verify(animation).update(animator);
 			assertEquals(1000, animator.time());
 			assertEquals(MathsUtil.HALF, animator.position());
@@ -71,7 +75,8 @@ class AnimatorTest {
 		@Test
 		void stop() {
 			animator.state(State.STOP);
-			animator.frame(Instant.EPOCH, Instant.ofEpochSecond(1));
+			frame.end(Duration.ofSeconds(1));
+			animator.completed(frame);
 			assertEquals(false, animator.isPlaying());
 			verifyNoMoreInteractions(animation);
 		}
@@ -83,7 +88,8 @@ class AnimatorTest {
 		@BeforeEach
 		void before() {
 			animator.state(State.PLAY);
-			animator.frame(Instant.EPOCH, Instant.ofEpochSecond(3));
+			frame.end(Duration.ofSeconds(3));
+			animator.completed(frame);
 		}
 
 		@DisplayName("has a position at the end of the animation")
@@ -105,9 +111,10 @@ class AnimatorTest {
 	@DisplayName("A repeating animation cycles the animation position")
 	@Test
 	void repeat() {
+		frame.end(Duration.ofSeconds(3));
 		animator.repeat(true);
 		animator.state(State.PLAY);
-		animator.frame(Instant.EPOCH, Instant.ofEpochSecond(3));
+		animator.completed(frame);
 		assertEquals(true, animator.isPlaying());
 		assertEquals(1000, animator.time());
 		assertEquals(MathsUtil.HALF, animator.position());
@@ -116,9 +123,10 @@ class AnimatorTest {
 	@DisplayName("An animation can be run at different speeds")
 	@Test
 	void speed() {
+		frame.end(Duration.ofSeconds(2));
 		animator.speed(MathsUtil.HALF);
 		animator.state(State.PLAY);
-		animator.frame(Instant.EPOCH, Instant.ofEpochSecond(2));
+		animator.completed(frame);
 		assertEquals(true, animator.isPlaying());
 		assertEquals(1000, animator.time());
 		assertEquals(MathsUtil.HALF, animator.position());
