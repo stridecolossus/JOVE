@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.platform.vulkan.VkClearValue;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.lib.util.Percentile;
 
@@ -26,6 +26,7 @@ public class ClearValueTest {
 		assertEquals(clear, new ColourClearValue(Colour.WHITE));
 		assertNotEquals(clear, null);
 		assertNotEquals(clear, new ColourClearValue(Colour.BLACK));
+		assertEquals(VkImageAspect.COLOR, clear.aspect());
 	}
 
 	@Test
@@ -39,6 +40,7 @@ public class ClearValueTest {
 		assertEquals(clear, new DepthClearValue(Percentile.HALF));
 		assertNotEquals(clear, null);
 		assertNotEquals(clear, DepthClearValue.DEFAULT);
+		assertEquals(VkImageAspect.DEPTH, clear.aspect());
 	}
 
 	@Test

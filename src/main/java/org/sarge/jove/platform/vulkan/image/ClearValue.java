@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.platform.vulkan.VkClearValue;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.lib.util.*;
 
@@ -10,6 +10,11 @@ import org.sarge.lib.util.*;
  * @author Sarge
  */
 public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
+	/**
+	 * @return Expected image aspect
+	 */
+	VkImageAspect aspect();
+
 	/**
 	 * Populates the given clear value descriptor.
 	 * @param value Descriptor
@@ -26,6 +31,11 @@ public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
 		 */
 		public ColourClearValue {
 			Check.notNull(col);
+		}
+
+		@Override
+		public VkImageAspect aspect() {
+			return VkImageAspect.COLOR;
 		}
 
 		@Override
@@ -51,6 +61,11 @@ public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
 		 */
 		public DepthClearValue {
 			Check.notNull(depth);
+		}
+
+		@Override
+		public VkImageAspect aspect() {
+			return VkImageAspect.DEPTH;
 		}
 
 		@Override

@@ -10,7 +10,6 @@ import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer;
 
 import com.sun.jna.Pointer;
@@ -67,11 +66,8 @@ public class View extends AbstractVulkanObject {
 	 */
 	public View clear(ClearValue clear) {
 		if(clear != null) {
-			final VkImageAspect expected = switch(clear) {
-				case ColourClearValue col -> VkImageAspect.COLOR;
-				case DepthClearValue depth -> VkImageAspect.DEPTH;
-			};
-			if(!image.descriptor().aspects().contains(expected)) {
+			final boolean matched = image.descriptor().aspects().contains(clear.aspect());
+			if(!matched) {
 				throw new IllegalArgumentException(String.format("Invalid clear value for this view: clear=%s view=%s", clear, this));
 			}
 		}
