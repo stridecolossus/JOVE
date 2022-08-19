@@ -6,8 +6,8 @@ package org.sarge.jove.control;
  */
 public record Position(float x, float y) implements Event {
 	@Override
-	public boolean matches(Event e) {
-		return e instanceof Position;
+	public Object type() {
+		return Position.class;
 	}
 
 	@Override

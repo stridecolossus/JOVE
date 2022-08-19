@@ -17,9 +17,4 @@ public class PositionTest {
 		assertEquals(2, event.x());
 		assertEquals(3, event.y());
 	}
-
-	@Test
-	void matches() {
-		assertEquals(true, event.matches(event));
-	}
 }

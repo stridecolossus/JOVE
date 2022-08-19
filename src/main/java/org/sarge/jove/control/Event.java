@@ -10,12 +10,8 @@ import java.util.function.Consumer;
  * @author Sarge
  */
 public interface Event {
-	/**
-	 * Tests whether this event matches the given template event.
-	 * @param e Matching event
-	 * @return Whether this event is matched
-	 */
-	boolean matches(Event e);
+
+	Object type();
 
 	/**
 	 * An <i>event source</i> generates events and is the <i>binding point</i> for event handlers.

@@ -25,12 +25,6 @@ class AxisTest {
 	}
 
 	@Test
-	void matches() {
-		assertEquals(true, axis.matches(axis));
-		assertEquals(false, axis.matches(mock(Axis.class)));
-	}
-
-	@Test
 	void equals() {
 		assertEquals(axis, axis);
 		assertNotEquals(axis, null);

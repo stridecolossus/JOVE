@@ -66,7 +66,11 @@ public class Button<T> implements Event {
 	}
 
 	@Override
-	public boolean matches(Event e) {
+	public Object type() {
+		return id;
+	}
+
+	public boolean matches(Button<?> template) {
 		// TODO
 		return false;
 	}

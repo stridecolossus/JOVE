@@ -9,6 +9,11 @@ import org.sarge.jove.control.Event.Source;
 public abstract class Axis implements Event, Source<Axis> {
 	private float value;
 
+	@Override
+	public Object type() {
+		return this;
+	}
+
 	/**
 	 * @return Current axis position
 	 */
@@ -22,11 +27,6 @@ public abstract class Axis implements Event, Source<Axis> {
 	 */
 	protected void update(float value) {
 		this.value = value;
-	}
-
-	@Override
-	public boolean matches(Event e) {
-		return e == this;
 	}
 
 	@Override
