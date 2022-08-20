@@ -74,6 +74,7 @@ public class Player {
 	 */
 	public void state(State state) {
 		// Change state
+		this.state.validate(state);
 		this.state = notNull(state);
 
 		// Delegate

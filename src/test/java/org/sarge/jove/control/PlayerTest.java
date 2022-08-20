@@ -1,6 +1,6 @@
 package org.sarge.jove.control;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.sarge.jove.control.Playable.State.*;
 
@@ -20,7 +20,95 @@ class PlayerTest {
 		assertEquals(STOP, player.state());
 	}
 
-	@DisplayName("A playable object...")
+	@DisplayName("A new player...")
+	@Nested
+	class New {
+		@DisplayName("is initially stopped")
+		@Test
+		void isPlaying() {
+			assertEquals(STOP, player.state());
+		}
+
+		@DisplayName("can be played")
+		@Test
+		void play() {
+			player.state(PLAY);
+			assertEquals(PLAY, player.state());
+		}
+
+		@DisplayName("cannot be paused")
+		@Test
+		void pause() {
+			assertThrows(IllegalStateException.class, () -> player.state(PAUSE));
+		}
+
+		@DisplayName("cannot be stopped")
+		@Test
+		void stop() {
+			assertThrows(IllegalStateException.class, () -> player.state(STOP));
+		}
+	}
+
+	@DisplayName("A player that is currently playing...")
+	@Nested
+	class Playing {
+		@BeforeEach
+		void before() {
+			player.state(PLAY);
+		}
+
+		@DisplayName("cannot be played")
+		@Test
+		void play() {
+			assertThrows(IllegalStateException.class, () -> player.state(PLAY));
+		}
+
+		@DisplayName("can be paused")
+		@Test
+		void pause() {
+			player.state(PAUSE);
+			assertEquals(PAUSE, player.state());
+		}
+
+		@DisplayName("can be stopped")
+		@Test
+		void stop() {
+			player.state(STOP);
+			assertEquals(STOP, player.state());
+		}
+	}
+
+	@DisplayName("A playable that is paused...")
+	@Nested
+	class Paused {
+		@BeforeEach
+		void before() {
+			player.state(PLAY);
+			player.state(PAUSE);
+		}
+
+		@DisplayName("can be unpaused")
+		@Test
+		void play() {
+			player.state(PLAY);
+			assertEquals(PLAY, player.state());
+		}
+
+		@DisplayName("cannot be paused")
+		@Test
+		void pause() {
+			assertThrows(IllegalStateException.class, () -> player.state(PAUSE));
+		}
+
+		@DisplayName("can be stopped")
+		@Test
+		void stop() {
+			player.state(STOP);
+			assertEquals(STOP, player.state());
+		}
+	}
+
+	@DisplayName("A playable object controlled by a player...")
 	@Nested
 	class PlayableTests {
 		private Playable playable;
@@ -31,15 +119,14 @@ class PlayerTest {
 			player.add(playable);
 		}
 
-		@DisplayName("can be added to a player")
+		@DisplayName("has state changes delegated to it")
 		@Test
 		void add() {
 			player.state(PLAY);
-			assertEquals(PLAY, player.state());
 			assertEquals(PLAY, playable.state());
 		}
 
-		@DisplayName("can be removed from a player")
+		@DisplayName("can be removed from the player")
 		@Test
 		void remove() {
 			player.remove(playable);
@@ -48,7 +135,7 @@ class PlayerTest {
 		}
 	}
 
-	@DisplayName("A player listener...")
+	@DisplayName("A listener attached to a player...")
 	@Nested
 	class ListenerTests {
 		private Listener listener;

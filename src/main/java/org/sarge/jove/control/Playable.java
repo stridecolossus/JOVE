@@ -17,12 +17,16 @@ public abstract class Playable {
 		PAUSE,
 		STOP;
 
-		private void validate(State prev) {
-			if(this == prev) {
+		/**
+		 * @param next Next state
+		 * @throws IllegalStateException for an invalid state transition
+		 */
+		void validate(State next) {
+			if(this == next) {
 				throw new IllegalStateException("Duplicate player state: " + this);
 			}
-			if((this == PAUSE) && (prev != PLAY)) {
-				throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", prev, this));
+			if((next == PAUSE) && (this != PLAY)) {
+				throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", this, next));
 			}
 		}
 	}
@@ -50,7 +54,6 @@ public abstract class Playable {
 	 * @throws IllegalStateException for an illegal state transition
 	 */
 	protected void state(State state) {
-		state.validate(this.state);
 		this.state = notNull(state);
 	}
 

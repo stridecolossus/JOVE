@@ -62,7 +62,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @param vec Translation vector
 	 * @return Translation matrix
 	 */
-	public static Matrix translation(Vector vec) {
+	public static Matrix translation(Tuple vec) {
 		return new Builder()
 				.identity()
 				.column(3, vec)
@@ -292,7 +292,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @param vec 		Vector
 		 * @throws ArrayIndexOutOfBoundsException if the row is out-of-bounds
 		 */
-		public Builder row(int row, Vector vec) {
+		public Builder row(int row, Tuple vec) {
 			set(row, 0, vec.x);
 			set(row, 1, vec.y);
 			set(row, 2, vec.z);
@@ -305,7 +305,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @param vec		Vector
 		 * @throws ArrayIndexOutOfBoundsException if the column is out-of-bounds
 		 */
-		public Builder column(int col, Vector vec) {
+		public Builder column(int col, Tuple vec) {
 			set(0, col, vec.x);
 			set(1, col, vec.y);
 			set(2, col, vec.z);

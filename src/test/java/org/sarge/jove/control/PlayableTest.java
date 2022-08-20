@@ -5,7 +5,9 @@ import static org.mockito.Mockito.*;
 import static org.sarge.jove.control.Playable.State.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Playable.Media;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.sarge.jove.control.Playable.*;
 
 public class PlayableTest {
 	private Playable playable;
@@ -15,111 +17,68 @@ public class PlayableTest {
 		playable = spy(Playable.class);
 	}
 
-	@DisplayName("A new playable...")
-	@Nested
-	class New {
-		@DisplayName("is initially stopped")
-		@Test
-		void isPlaying() {
-			assertEquals(false, playable.isPlaying());
-			assertEquals(STOP, playable.state());
-		}
-
-		@DisplayName("can be played")
-		@Test
-		void play() {
-			playable.state(PLAY);
-			assertEquals(true, playable.isPlaying());
-		}
-
-		@DisplayName("cannot be paused")
-		@Test
-		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.state(PAUSE));
-		}
-
-		@DisplayName("cannot be stopped")
-		@Test
-		void stop() {
-			assertThrows(IllegalStateException.class, () -> playable.state(STOP));
-		}
-	}
-
-	@DisplayName("A playable that is currently playing...")
-	@Nested
-	class Playing {
-		@BeforeEach
-		void before() {
-			playable.state(PLAY);
-			assertEquals(true, playable.isPlaying());
-		}
-
-		@DisplayName("cannot be played")
-		@Test
-		void play() {
-			assertThrows(IllegalStateException.class, () -> playable.state(PLAY));
-		}
-
-		@DisplayName("can be paused")
-		@Test
-		void pause() {
-			playable.state(PAUSE);
-			assertEquals(false, playable.isPlaying());
-			assertEquals(PAUSE, playable.state());
-		}
-
-		@DisplayName("can be stopped")
-		@Test
-		void stop() {
-			playable.state(STOP);
-			assertEquals(false, playable.isPlaying());
-			assertEquals(STOP, playable.state());
-		}
-	}
-
-	@DisplayName("A playable that is paused...")
-	@Nested
-	class Paused {
-		@BeforeEach
-		void before() {
-			playable.state(PLAY);
-			playable.state(PAUSE);
-			assertEquals(false, playable.isPlaying());
-		}
-
-		@DisplayName("can be unpaused")
-		@Test
-		void play() {
-			playable.state(PLAY);
-			assertEquals(true, playable.isPlaying());
-		}
-
-		@DisplayName("cannot be paused")
-		@Test
-		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.state(PAUSE));
-		}
-
-		@DisplayName("can be stopped")
-		@Test
-		void stop() {
-			playable.state(STOP);
-			assertEquals(false, playable.isPlaying());
-			assertEquals(STOP, playable.state());
-		}
-	}
-
-	@DisplayName("A playable is not repeating by default")
 	@Test
-	void isRepeating() {
+	void constructor() {
+		assertEquals(STOP, playable.state());
+		assertEquals(false, playable.isPlaying());
 		assertEquals(false, playable.isRepeating());
 	}
 
-	@DisplayName("A playable can be set to repeat")
+	@DisplayName("A playable can be played")
+	@Test
+	void state() {
+		playable.state(PLAY);
+		assertEquals(PLAY, playable.state());
+		assertEquals(true, playable.isPlaying());
+	}
+
+	@DisplayName("A playable can be repeating")
 	@Test
 	void repeat() {
 		playable.repeat(true);
 		assertEquals(true, playable.isRepeating());
+	}
+
+	@DisplayName("A playable...")
+	@Nested
+	class StateTests {
+		@DisplayName("can be played")
+		@Test
+		void play() {
+			STOP.validate(PLAY);
+		}
+
+		@DisplayName("that is playing can be paused")
+		@Test
+		void pause() {
+			PLAY.validate(PAUSE);
+		}
+
+		@DisplayName("that is paused can be played")
+		@Test
+		void unpause() {
+			PAUSE.validate(PLAY);
+		}
+
+		@DisplayName("can be stopped")
+		@Test
+		void stop() {
+			PLAY.validate(STOP);
+			PAUSE.validate(STOP);
+		}
+
+		@DisplayName("cannot be transitioned to the same state")
+		@ParameterizedTest
+		@EnumSource(State.class)
+		void duplicate(State state) {
+			assertThrows(IllegalStateException.class, () -> state.validate(state));
+		}
+
+		@DisplayName("cannot be paused unless it is playing")
+		@Test
+		void invalid() {
+			assertThrows(IllegalStateException.class, () -> STOP.validate(PAUSE));
+		}
 	}
 
 	@DisplayName("A playable media...")
