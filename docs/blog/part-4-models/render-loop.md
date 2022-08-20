@@ -845,7 +845,7 @@ public class Properties {
 }
 ```
 
-The subpass domain class is modified to include the list of dependencies:
+The subpass domain class is modified to include an index and the list of dependencies:
 
 ```java
 public class Subpass {
@@ -863,13 +863,12 @@ The subpass _index_ is allocated by the builder of the parent render pass:
 
 ```java
 public Subpass subpass() {
-    Subpass subpass = new Subpass(subpasses.size()) {
-        ...
-    };
+    Subpass subpass = new Subpass(subpasses.size());
+    ...
 }
 ```
 
-The dependant subpass can be configured:
+The dependant subpass can be specified in the dependency:
 
 ```java
 public Dependency dependency(Subpass subpass) {
@@ -1025,7 +1024,7 @@ public abstract class Playable {
 A playable resource is managed by the _player_ controller:
 
 ```java
-public class Player extends Playable {
+public class Player {
     @FunctionalInterface
     public interface Listener {
         /**
@@ -1037,23 +1036,26 @@ public class Player extends Playable {
 
     private final Collection<Playable> playing = new ArrayList<>();
     private final Collection<Listener> listeners = new HashSet<>();
+    private State state = State.STOP;
 }
 ```
 
-Note that a player is itself a playable object that delegates state changes and notifies attached listeners:
+The player delegates state changes and notifies interested listeners:
 
 ```java
 @Override
 public void state(State state) {
     // Change state
-    super.state(state);
+    this.state = notNull(state);
+
+    // Delegate
     for(Playable p : playing) {
         p.state(state);
     }
 
     // Notify listeners
     for(Listener listener : listeners) {
-        listener.update(state);
+        listener.update(this);
     }
 }
 ```
@@ -1138,34 +1140,35 @@ A rotation is a transform specified by an axis-angle:
 ```java
 public interface Rotation extends Transform {
     /**
-     * @return Rotation axis
+     * @return This rotation as an axis-angle
      */
-    Vector axis();
+    AxisAngle rotation();
+}
+```
 
-    /**
-     * @return Counter-clockwise rotation angle (radians)
-     */
-    float angle();
+The existing factory method for the rotation `matrix` is moved to this new class where it logically belongs:
+
+```java
+record AxisAngle(Vector axis, float angle) implements Rotation {
+    @Override
+    public AxisAngle rotation() {
+        return this;
+    }
 
     @Override
-    default Matrix matrix() {
+    public Matrix matrix() {
         ...
     }
 }
 ```
 
-The existing factory method for the rotation `matrix` is moved to this new class where it logically belongs.
-
-A skeleton template class for rotations is implemented and sub-classed by the following mutable implementation:
+We also provide a mutable implementation (the `matrix` method is covered below):
 
 ```java
-public class MutableRotation extends AbstractRotation {
+public class MutableRotation implements Rotation {
+    private final Vector axis;
     private float angle;
     private boolean dirty = true;
-
-    public MutableRotation(Vector axis) {
-        super(axis);
-    }
 
     public void angle(float angle) {
         this.angle = angle;
@@ -1179,9 +1182,7 @@ public class MutableRotation extends AbstractRotation {
 }
 ```
 
-The implementation of the `matrix` method is covered below.
-
-A rotation animation can now be implemented by composing a mutable rotation:
+A rotation animation can now be implemented composing a mutable rotation:
 
 ```java
 public class RotationAnimation implements Animation {
@@ -1208,7 +1209,7 @@ See [Wikipedia](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation).
 Generally quaternions are used to represent a rotation about an _arbitrary_ axis or where multiple rotations are frequently composed, e.g. skeletal animation.
 
 ```java
-public final class Quaternion implements Transform {
+public final class Quaternion implements Rotation {
     public final float w, x, y, z;
 
     /**
@@ -1224,24 +1225,25 @@ public final class Quaternion implements Transform {
 }
 ```
 
-A quaternion can be constructed from an axis-angle rotation using the following factory:
+A quaternion can be constructed using the following factory:
 
 ```java
-public static Quaternion of(Rotation rot) {
-    float half = rot.angle() * MathsUtil.HALF;
-    Vector vec = rot.axis().multiply(MathsUtil.sin(half));
+public static Quaternion of(Vector axis, float angle) {
+    float half = angle * MathsUtil.HALF;
+    Vector vec = axis.multiply(MathsUtil.sin(half));
     return new Quaternion(MathsUtil.cos(half), vec.x, vec.y, vec.z);
 }
 ```
 
-And converted to a rotation in the inverse operation:
+And converted to an axis-angle in the inverse operation:
 
 ```java
-public Rotation rotation() {
+@Override
+public AxisAngle rotation() {
     float scale = MathsUtil.inverseRoot(1 - w * w);
     float angle = 2 * MathsUtil.acos(w);
     Vector axis = new Vector(x, y, z).multiply(scale);
-    return Rotation.of(axis, angle);
+    return new AxisAngle(axis, angle);
 }
 ```
 

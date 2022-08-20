@@ -161,83 +161,58 @@ And is constructed via a builder:
 ```java
 public static class Builder {
     private final List<Subpass> subpasses = new ArrayList<>();
+    private final List<Attachment> attachments = new ArrayList<>();
+}
+```
 
-    /**
-     * @return New subpass builder
-     */
-    public Subpass subpass() {
-        Subpass subpass = ...
-        subpasses.add(subpass);
-        return subpass;
-    }
+A subpass is a mutable type comprised of the attachments used in that stage of rendering:
+
+```java
+public class Subpass {
+    private final List<Reference> colour = new ArrayList<>();
+    private Reference depth;
+}
+```
+
+And is allocated from the parent render pass builder:
+
+```java
+public Subpass subpass() {
+    Subpass subpass = new Subpass();
+    subpasses.add(subpass);
+    return subpass;
 }
 ```
 
 We prefer to specify the render pass by an object graph of the sub-passes and attachments, whereas the underlying Vulkan descriptors use indices to refer to attachments (and later on sub-pass dependencies).  However all of these are transient objects that have no relevance once the render pass has been instantiated.  Additionally the application does not care about the attachment indices, unlike (for example) vertex attributes which are dependant on the shader layout.
 
-Therefore the render pass builder _allocates_ attachment indices by the introduction of the over-ridden `allocate` method:
+Therefore an _index_ is added to the reference class which can then be _allocated_ on demand by the following factory:
 
 ```java
-public static class Builder {
-    ...
-    private int ref;
-
-    public Subpass subpass() {
-        Subpass subpass = new Subpass() {
-            @Override
-            protected int allocate() {
-                return ref++;
-            }
-        
-            @Override
-            public Builder build() {
-                return Builder.this;
-            }
-        };
-        ...
+private Reference reference(Attachment attachment, VkImageLayout layout) {
+    int prev = attachments.indexOf(attachment);
+    int index;
+    if(prev == -1) {
+        index = attachments.size();
+        attachments.add(attachment);
     }
+    else {
+        index = prev;
+    }
+    return new Reference(index, attachment, layout);
 }
 ```
 
-An `index` member is added to the attachment `Reference` and initialised accordingly:
+The methods to add attachments are modified accordingly, for example:
 
 ```java
 public Subpass colour(Attachment colour, VkImageLayout layout) {
-    int index = allocate();
-    this.colour.add(new Reference(index, colour, layout));
+    this.colour.add(reference(colour, layout));
     return this;
 }
 ```
 
-This makes the render pass and subpass slightly inter-dependant but effectively hides the indices whilst allowing both classes to be tested in isolation.
-
-In the render pass builder the overall set of attachments is first aggregated from the sub-passes:
-
-```java
-public RenderPass build(DeviceContext dev) {
-    List<Attachment> attachments = subpasses
-        .stream()
-        .flatMap(Subpass::references)
-        .distinct()
-        .map(Reference::attachment)
-        .toList();
-}
-```
-
-Where each subpass enumerates the attachments that it uses:
-
-```java
-Stream<Reference> references() {
-    if(depth == null) {
-        return colour.stream();
-    }
-    else {
-        return Stream.concat(colour.stream(), Stream.of(depth));
-    }
-}
-```
-
-Next the attachments are populated in the create descriptor for the render pass:
+In the `build` method for the parent render pass the overall set of attachments is populated in the create descriptor:
 
 ```java
 var info = new VkRenderPassCreateInfo();
