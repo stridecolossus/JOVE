@@ -36,35 +36,16 @@ public interface Command {
 		/**
 		 * Submits this as a <i>one time</i> command to the given pool and waits for completion.
 		 * @param pool Command pool
-		 * @return Submitted command buffer
-		 * @see Work#submit(Fence)
+		 * @see Buffer#submit()
 		 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
 		 */
 		public Buffer submit(Pool pool) {
-			// Init synchronisation
-			final Fence fence = Fence.create(pool.device());
-
-			// Allocate and record one-time command
-			final Buffer buffer = pool
+			return pool
 					.allocate()
 					.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 					.add(this)
-					.end();
-
-			// Submit work
-			new Work.Builder(pool)
-					.add(buffer)
-					.build()
-					.submit(fence);
-
-			// Wait for completion
-			fence.waitReady();
-
-			// Release resources
-			fence.destroy();
-			buffer.free();
-
-			return buffer;
+					.end()
+					.submit();
 		}
 	}
 
@@ -191,6 +172,33 @@ public interface Command {
 			final VulkanLibrary lib = pool.device().library();
 			check(lib.vkEndCommandBuffer(this));
 			state = State.EXECUTABLE;
+			return this;
+		}
+
+		/**
+		 * Helper - Submits this buffer and blocks until completion.
+		 * @see Work#submit(Fence)
+		 */
+		public Buffer submit() {
+			// Init synchronisation
+			final Fence fence = Fence.create(pool.device());
+
+			try {
+				// Submit work
+				new Work.Builder(pool)
+						.add(this)
+						.build()
+						.submit(fence);
+
+				// Wait for completion
+				fence.waitReady();
+			}
+			finally {
+				// Release resources
+				fence.destroy();
+				free();
+			}
+
 			return this;
 		}
 

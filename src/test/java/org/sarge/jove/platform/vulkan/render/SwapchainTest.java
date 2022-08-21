@@ -137,9 +137,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 			builder.image(swapchain, 4);
 			assertThrows(IllegalArgumentException.class, () -> builder.image(swapchain, 4));
 		}
-	}
 
-	// TODO - wait ready?
+		@Test
+		void latest() {
+//			when(lib.vkQueuePresentKHR(queue, expected)).thenReturn(VkResult.SUCCESS);
+//			swapchain.present(queue, 1, semaphore);
+			assertEquals(view, swapchain.latest());
+		}
+	}
 
 	@Nested
 	class BuilderTests {
@@ -219,7 +224,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 					assertEquals(format.colorSpace, info.imageColorSpace);
 					assertEquals(1, info.imageArrayLayers);
 					assertEquals(VkSharingMode.EXCLUSIVE, info.imageSharingMode);
-					assertEquals(VkImageUsageFlag.COLOR_ATTACHMENT, info.imageUsage);
+					assertEquals(VkImageUsageFlag.COLOR_ATTACHMENT.value(), info.imageUsage);
 					assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, info.compositeAlpha);
 					assertEquals(VkPresentModeKHR.FIFO_KHR, info.presentMode);
 					assertEquals(VulkanBoolean.TRUE, info.clipped);

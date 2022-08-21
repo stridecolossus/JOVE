@@ -47,8 +47,20 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	int vkBindImageMemory(DeviceContext device, Pointer image, DeviceMemory memory, long memoryOffset);
 
 	/**
+	 * Copies an image.
+	 * @param commandBuffer		Command buffer
+	 * @param srcImage			Source image
+	 * @param srcImageLayout	Source layout
+	 * @param dstImage			Destination image
+	 * @param dstImageLayou		Destination layout
+	 * @param regionCount		Number of regions
+	 * @param pRegions			Regions
+	 */
+	void vkCmdCopyImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayou, int regionCount, VkImageCopy[] pRegions);
+
+	/**
 	 * Copies a buffer to an image.
-	 * @param commandBuffer		Command
+	 * @param commandBuffer		Command buffer
 	 * @param srcBuffer			Buffer
 	 * @param dstImage			Image
 	 * @param dstImageLayout	Image layout
@@ -59,7 +71,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 
 	/**
 	 * Copies an image to a buffer.
-	 * @param commandBuffer		Command
+	 * @param commandBuffer		Command buffer
 	 * @param srcImage			Image
 	 * @param srcImageLayout	Image layout
 	 * @param dstBuffer			Buffer
@@ -70,7 +82,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 
 	/**
 	 * Performs an image blit operation.
-	 * @param commandBuffer		Command
+	 * @param commandBuffer		Command buffer
 	 * @param srcImage			Source image
 	 * @param srcImageLayout	Source image layout
 	 * @param dstImage			Destination image

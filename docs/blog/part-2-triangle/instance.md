@@ -92,7 +92,7 @@ Notes:
 
 * The handle to the newly created instance is returned as a JNA `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
 
-* The `pAllocator` parameter in the API methods is out-of-scope for JOVE and is always set to `null`.
+* The `allocator` parameter in the API methods is out-of-scope for JOVE and is always set to `null`.
 
 To instantiate the API itself the following factory method is added to the library:
 
@@ -199,7 +199,7 @@ public interface VulkanLibrary {
 }
 ```
 
-Next the instance descriptor is populated, which consists only of the application details for the moment:
+Next the instance descriptor is populated, which for the moment is just the application details:
 
 ```java
 var info = new VkInstanceCreateInfo();
@@ -212,8 +212,6 @@ The relevant API method is invoked to create the instance:
 PointerByReference handle = new PointerByReference();
 check(lib.vkCreateInstance(info, null, handle));
 ```
-
-Note that the `handle` to the new instance is returned _by-reference_ using the JNA `PointerByReference` helper type, corresponding to the native `VkInstance* pInstance` parameter.
 
 Finally the domain object is created to wrap the handle and the library:
 
@@ -316,11 +314,11 @@ The purpose of the standard validation layer is discussed below.
 
 ### Required Extensions
 
-Generally platform-specific extensions are required to actually perform rendering, which usually comprises two extensions:
+Generally two extensions are required to actually perform rendering:
 
 - the general surface: `VK_KHR_surface` 
 
-- and a platform specific implementation, e.g. `VK_KHR_xcb_surface` for Linux or `VK_KHR_win32_surface` for Windows.
+- and a platform-specific implementation, e.g. `VK_KHR_xcb_surface` for Linux or `VK_KHR_win32_surface` for Windows.
 
 To determine the extensions required for the local hardware we will take advantage of the platform-independant Vulkan support provided by the GLFW library.
 
@@ -445,7 +443,7 @@ A convenience method is also added to the instance builder to add the array of e
 
 Vulkan implements the `STANDARD_VALIDATION` layer that provides an excellent error and diagnostics reporting mechanism, offering comprehensive logging as well as identifying common problems such as orphaned object handles, invalid parameters, performance warnings, etc.  This functionality is not mandatory but its safe to say it is _highly_ recommended during development, so we will address it now before we progress any further.
 
-However there is a complication: the reporting mechanism is not a core part of the API but is itself an extension.  The relevant function pointers must be looked up from the instance and the associated data structures must be determined from the Vulkan documentation.
+However there is a complication: the reporting mechanism is not a core part of the API but is itself an extension.  The relevant function pointers must be looked up from the instance and the associated data structures can only determined from the Vulkan documentation.
 
 Registering a diagnostics handler consists of the following steps:
 
@@ -475,7 +473,7 @@ The following new components are required:
 
 * A `Message` record that aggregates the diagnostics report.
 
-Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors at source.  Although this means the code is often essentially replicating the validation layer the development overhead is usually worth the effort, it is considerably easier to diagnose an exception at the root of a problem, rather than an error message with limited context that may occur later in the application (e.g. during rendering).
+Note that we will still attempt to implement comprehensive argument and logic validation throughout JOVE to trap errors at source.  Although this means the code is often essentially replicating the validation layer the development overhead is usually worth the effort, it is considerably easier to diagnose an exception at the root of a problem, rather than an error message with limited context that may occur later in the application (particularly during rendering).
 
 ### Handler
 

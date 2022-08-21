@@ -3,8 +3,6 @@ demo
 - instancing, cubes then tree model
 - lighting, materials
 - solar system, scene graph
-- geometry shader, normals, bounding volumes (spheres as x2 circles)
-- galaxy demo using point cloud
 
 scene
 - is Ray.Intersection what we actually need? would need ray + volume in intersection record to be useful in stream processing?
@@ -25,22 +23,26 @@ sphere builder
 - extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
 
 other possible features
-- texture fonts, atlas based, or TT font -> builder, 3D, etc
 - OpenAL audio
 - shader storage buffer (SSBO)
+
+text
+- atlas?
+- TT fonts?
+- per character?
+- or render using Java text -> draw to Java image -> VK image? 
+- https://snorristurluson.github.io/TextRenderingWithFreetype/
 
 features todo
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - screenshots, how? render to off-screen attachment?
 - degenerate triangles for strip?
+- re-build swapchain and pipeline after window viewport/focus change
+- normals via geometry shader
 
 blog
 - pipeline cache
 - check out old blog
-- index of VK/JOVE objects by chapter
-
-framework
-- re-build swapchain and pipeline after window viewport/focus change
 
 improvements
 - pipeline cache could use Java prefs? and/or user home folder?

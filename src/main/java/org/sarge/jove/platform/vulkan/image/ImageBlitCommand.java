@@ -5,7 +5,6 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -55,9 +54,13 @@ public class ImageBlitCommand extends ImmediateCommand {
 		 */
 		public record BlitRegion(SubResource subresource, Extents min, Extents max) {
 			/**
-			 * Minimum blit offset.
+			 * Creates a blit region for the whole of the given image.
+			 * @param image Image
+			 * @return Whole image blit region
 			 */
-			public static final Extents MIN_OFFSET = new Extents(new Dimensions(0, 0));
+			public static BlitRegion of(Image image) {
+				return new BlitRegion(image.descriptor(), Extents.ZERO, image.descriptor().extents());
+			}
 
 			/**
 			 * Constructor.
@@ -106,6 +109,14 @@ public class ImageBlitCommand extends ImmediateCommand {
 			Check.notNull(dest);
 			regions.put(src, dest);
 			return this;
+		}
+
+		/**
+		 * Adds a blit copy region for the whole of the configured source and destination images.
+		 * @throws NullPointerException if the source and destination image have not been configured
+		 */
+		public Builder region() {
+			return region(BlitRegion.of(src), BlitRegion.of(dest));
 		}
 
 		/**

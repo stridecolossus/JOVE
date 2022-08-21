@@ -1,213 +1,88 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.*;
 import org.sarge.jove.util.StructureHelper;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>image copy command</i> is used to copy an image to/from a Vulkan buffer.
+ * An <i>image copy command</i> is used to copy between images.
  * @author Sarge
  */
 public class ImageCopyCommand extends ImmediateCommand {
-	private final Image image;
-	private final VulkanBuffer buffer;
-	private final boolean inverse;
-	private final VkBufferImageCopy[] regions;
-	private final VkImageLayout layout;
+	/**
+	 * Creates a copy command for the whole of the image.
+	 * @param src		Source
+	 * @param dest		Destination
+	 * @return Copy command
+	 */
+	public static ImageCopyCommand of(Image src, Image dest) {
+		final Descriptor descriptor = src.descriptor();
+		// TODO - check same extents?
+		final CopyRegion region = new CopyRegion(descriptor, Extents.ZERO, descriptor, Extents.ZERO, descriptor.extents());
+		return new ImageCopyCommand.Builder(src, dest).region(region).build();
+	}
+
+	private final Image src, dest;
+	private final VkImageLayout srcLayout, destLayout;
+	private final VkImageCopy[] regions;
 
 	/**
 	 * Constructor.
-	 * @param image				Image
-	 * @param buffer			Buffer
-	 * @param inverse			Whether copy direction is inverted
-	 * @param regions			Copy region(s)
-	 * @param layout			Image layout
-	 * @throws IllegalStateException if the buffer cannot be used for copy operations
+	 * @param src			Source image
+	 * @param dest			Destination image
+	 * @param srcLayout		source layout
+	 * @param destLayout	Destination layout
+	 * @param regions		Copy regions
 	 */
-	private ImageCopyCommand(Image image, VulkanBuffer buffer, boolean inverse, VkBufferImageCopy[] regions, VkImageLayout layout) {
-		this.image = notNull(image);
-		this.buffer = notNull(buffer);
-		this.inverse = inverse;
-		this.regions = Arrays.copyOf(regions, regions.length);
-		this.layout = notNull(layout);
-		validate();
+	private ImageCopyCommand(Image src, Image dest, VkImageLayout srcLayout, VkImageLayout destLayout, VkImageCopy[] regions) {
+		this.src = notNull(src);
+		this.dest = notNull(dest);
+		this.srcLayout = notNull(srcLayout);
+		this.destLayout = notNull(destLayout);
+		this.regions = regions.clone();
 	}
-
-	private void validate() {
-		buffer.require(inverse ? VkBufferUsageFlag.TRANSFER_DST : VkBufferUsageFlag.TRANSFER_SRC);
-	}
-	// TODO - validation
-	// dstImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
-	// srcImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
 
 	@Override
-	public void execute(VulkanLibrary lib, Command.Buffer cb) {
-		lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
+	public void execute(VulkanLibrary lib, Buffer buffer) {
+		lib.vkCmdCopyImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions);
 	}
 
 	/**
-	 * Inverts this command to copy <i>from</i> the buffer <i>to</i> the image.
-	 * @return Inverse copy command
+	 * Transient copy region.
 	 */
-	public Command invert() {
-		buffer.require(VkBufferUsageFlag.TRANSFER_DST);
-		return (lib, cmd) -> lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
-	}
-
-	/**
-	 * A <i>copy region</i> specifies a portion of the image to be copied.
-	 */
-	public record CopyRegion(long offset, Dimensions row, SubResource res, VkOffset3D imageOffset, Extents extents) {
-		/**
-		 * Creates a copy region for the whole of the given image.
-		 * @param descriptor Image descriptor
-		 * @return New copy region
-		 */
-		public static CopyRegion of(Descriptor descriptor) {
-			return new CopyRegion.Builder()
-					.subresource(descriptor)
-					.extents(descriptor.extents())
-					.build();
-		}
-
+	public record CopyRegion(SubResource src, Extents srcOffset, SubResource dest, Extents destOffset, Extents extents) {
 		/**
 		 * Constructor.
-		 * @param offset			Buffer offset
-		 * @param row				Row length/height (texels) or {@code zero} to use the same dimensions as the image
-		 * @param res				Sub-resource
-		 * @param imageOffset		Image offset
-		 * @param extents			Image extents
-		 * @throws IllegalArgumentException if {@code row} is non-zero but smaller than the given extents
-		 * @throws IllegalArgumentException if the sub-resource has more than one aspect
+		 * @param src				Source sub-resource
+		 * @param srcOffset			Source offsets
+		 * @param dest				Destination sub-resource
+		 * @param destOffset		Destination offsets
+		 * @param extents			Copy extents
 		 */
 		public CopyRegion {
-			Check.zeroOrMore(offset);
-			Check.notNull(row);
-			Check.notNull(res);
-			Check.notNull(imageOffset);
+			Check.notNull(src);
+			Check.notNull(srcOffset);
+			Check.notNull(dest);
+			Check.notNull(destOffset);
 			Check.notNull(extents);
-			if(res.aspects().size() != 1) {
-				throw new IllegalArgumentException("Sub-resource must have a single aspect: " + res);
-			}
-			if(!validate(row, extents.size())) {
-				throw new IllegalArgumentException(String.format("Row length/height cannot be smaller than image extents: row=%s extents=%s", row, extents));
-			}
-		}
-
-		private static boolean validate(Dimensions row, Dimensions size) {
-			if((row.width() == 0) || (row.height() == 0)) {
-				return true;
-			}
-			else {
-				return row.compareTo(size) >= 0;
-			}
 		}
 
 		/**
-		 * Populates the copy descriptor.
+		 * Populates the copy region descriptor.
 		 */
-		private void populate(VkBufferImageCopy copy) {
-			copy.bufferOffset = offset;
-			copy.bufferRowLength = row.width();
-			copy.bufferImageHeight = row.height();
-			copy.imageSubresource = res.toLayers();
-			copy.imageOffset = imageOffset;
-			copy.imageExtent = extents.toExtent();
-		}
-
-		/**
-		 * Builder for a copy region.
-		 */
-		public static class Builder {
-			private long offset;
-			private int length;
-			private int height;
-			private SubResource subresource;
-			private VkOffset3D imageOffset = new VkOffset3D();
-			private Extents extents;
-
-			/**
-			 * Sets the buffer offset.
-			 * @param offset Buffer offset (bytes)
-			 */
-			public Builder offset(long offset) {
-				this.offset = zeroOrMore(offset);
-				return this;
-			}
-
-			/**
-			 * Sets the buffer row length.
-			 * @param length Row length (texels)
-			 */
-			public Builder length(int length) {
-				this.length = zeroOrMore(length);
-				return this;
-			}
-
-			/**
-			 * Sets the image height.
-			 * @param height Image height (texels)
-			 */
-			public Builder height(int height) {
-				this.height = zeroOrMore(height);
-				return this;
-			}
-
-			/**
-			 * Sets the image offset (default is no offset).
-			 * @param offset Image offset
-			 */
-			public Builder offset(VkOffset3D offset) {
-				this.imageOffset = notNull(offset);
-				return this;
-			}
-
-			/**
-			 * Sets the image extents.
-			 * @param extents Image extents
-			 */
-			public Builder extents(Extents extents) {
-				this.extents = notNull(extents);
-				return this;
-			}
-
-			/**
-			 * Convenience method to set the image offset and extent to the given rectangle.
-			 * @param rect Copy rectangle
-			 */
-			public Builder region(Rectangle rect) {
-				imageOffset.x = rect.x();
-				imageOffset.y = rect.y();
-				extents(new Extents(rect.dimensions()));
-				return this;
-			}
-
-			/**
-			 * Sets the sub-resource for this copy command.
-			 * @param subresource Sub-resource
-			 */
-			public Builder subresource(SubResource subresource) {
-				this.subresource = notNull(subresource);
-				return this;
-			}
-
-			/**
-			 * Constructs this copy region.
-			 * @return New copy region
-			 */
-			public CopyRegion build() {
-				return new CopyRegion(offset, new Dimensions(length, height), subresource, imageOffset, extents);
-			}
+		private void populate(VkImageCopy copy) {
+			copy.srcSubresource = src.toLayers();
+			copy.dstSubresource = dest.toLayers();
+			copy.srcOffset = srcOffset.toOffset();
+			copy.dstOffset = destOffset.toOffset();
+			copy.extent = extents.toExtent();
 		}
 	}
 
@@ -215,44 +90,41 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 * Builder for an image copy command.
 	 */
 	public static class Builder {
-		private VulkanBuffer buffer;
-		private Image image;
-		private boolean inverse;
-		private VkImageLayout layout;
+		private final Image src, dest;
+		private VkImageLayout srcLayout = VkImageLayout.TRANSFER_SRC_OPTIMAL;
+		private VkImageLayout destLayout = VkImageLayout.TRANSFER_DST_OPTIMAL;
 		private final List<CopyRegion> regions = new ArrayList<>();
 
 		/**
-		 * Sets the source/destination buffer.
-		 * @param buffer Buffer
+		 * Constructor.
+		 * @param src		Source image
+		 * @param dest		Destination image
 		 */
-		public Builder buffer(VulkanBuffer buffer) {
-			this.buffer = notNull(buffer);
+		public Builder(Image src, Image dest) {
+			if(src == dest) throw new IllegalArgumentException("Cannot copy to self");
+			this.src = notNull(src);
+			this.dest = notNull(dest);
+		}
+
+		/**
+		 * Sets the layout of the source image.
+		 * @param srcLayout Source layout
+		 */
+		public Builder source(VkImageLayout srcLayout) {
+			this.srcLayout = notNull(srcLayout);
+			// TODO - TRANSFER_SRC_OPTIMAL | GENERAL | SHARED_PRESENT
+			// TODO - check format features?
 			return this;
 		}
 
 		/**
-		 * Sets the image.
-		 * @param image Image
+		 * Sets the layout of the destination image.
+		 * @param destayout Destination layout
 		 */
-		public Builder image(Image image) {
-			this.image = notNull(image);
-			return this;
-		}
-
-		/**
-		 * Inverts the direction of this builder.
-		 */
-		public Builder invert() {
-			inverse = !inverse;
-			return this;
-		}
-
-		/**
-		 * Sets the image layout.
-		 * @param layout Image layout
-		 */
-		public Builder layout(VkImageLayout layout) {
-			this.layout = notNull(layout);
+		public Builder destination(VkImageLayout destLayout) {
+			this.destLayout = notNull(destLayout);
+			// TODO - TRANSFER_DST_OPTIMAL | GENERAL | SHARED_PRESENT
+			// TODO - check format features?
 			return this;
 		}
 
@@ -266,62 +138,14 @@ public class ImageCopyCommand extends ImmediateCommand {
 		}
 
 		/**
-		 * Helper - Adds copy regions for <b>all</b> layers and MIP levels of the given image.
-		 * @param image Image
-		 * @throws NullPointerException if the image texture has not been populated
-		 */
-		public Builder region(ImageData image) {
-			final Descriptor descriptor = this.image.descriptor();
-			final int count = descriptor.layerCount();
-			final Level[] levels = image.levels().toArray(Level[]::new);
-			for(int level = 0; level < levels.length; ++level) {
-				// Determine extents for this MIP level
-				final Extents extents = descriptor.extents().mip(level);
-
-				// Load layers for this MIP level
-				for(int layer = 0; layer < count; ++layer) {
-					// Build sub-resource
-					final SubResource res = new SubResource.Builder(descriptor)
-							.baseArrayLayer(layer)
-							.mipLevel(level)
-							.build();
-
-					// Determine layer offset within this level
-					final int offset = levels[level].offset(layer, count);
-
-					// Create copy region
-					final CopyRegion region = new CopyRegion.Builder()
-							.offset(offset)
-							.subresource(res)
-							.extents(extents)
-							.build();
-
-					// Add region
-					region(region);
-				}
-			}
-
-			return this;
-		}
-
-		/**
 		 * Constructs this copy command.
-		 * If no regions are specified the resultant command copies the <b>whole</b> of the image.
 		 * @return New copy command
-		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated, or if no copy regions have been specified
+		 * @throws IllegalArgumentException if no copy regions have been configured
 		 */
 		public ImageCopyCommand build() {
-			// Validate
-			Check.notNull(image);
-			Check.notNull(buffer);
-			Check.notNull(layout);
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
-
-			// Populate copy regions
-			final VkBufferImageCopy[] array = StructureHelper.array(regions, VkBufferImageCopy::new, CopyRegion::populate);
-
-			// Create copy command
-			return new ImageCopyCommand(image, buffer, inverse, array, layout);
+			final VkImageCopy[] array = StructureHelper.array(regions, VkImageCopy::new, CopyRegion::populate);
+			return new ImageCopyCommand(src, dest, srcLayout, destLayout, array);
 		}
 	}
 }

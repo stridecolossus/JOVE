@@ -34,13 +34,18 @@ public interface Image extends NativeObject {
 	 */
 	record Extents(Dimensions size, int depth) {
 		/**
+		 * Extents with zero dimensions.
+		 */
+		public static final Extents ZERO = new Extents(new Dimensions(0, 0), 0);
+
+		/**
 		 * Constructor.
 		 * @param dim		Image dimensions
 		 * @param depth		Depth
 		 */
 		public Extents {
 			Check.notNull(size);
-			Check.oneOrMore(depth);
+			Check.zeroOrMore(depth);
 		}
 
 		/**

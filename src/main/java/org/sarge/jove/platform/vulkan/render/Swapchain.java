@@ -39,6 +39,7 @@ public class Swapchain extends AbstractVulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> attachments;
+	private int latest;
 
 	/**
 	 * Constructor.
@@ -77,6 +78,13 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
+	 * @return Last rendered swapchain image
+	 */
+	public View latest() {
+		return attachments.get(latest);
+	}
+
+	/**
 	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame, generally when the window is resized or minimised.
 	 */
 	public static final class SwapchainInvalidated extends VulkanException {
@@ -110,7 +118,6 @@ public class Swapchain extends AbstractVulkanObject {
 			default -> throw new VulkanException(result);
 		};
 	}
-	// TODO - return Frame(index, fence), + waitReady() for frame completion? => move present() and modify PresentTaskBuilder
 
 	/**
 	 * Presents the next frame to this swapchain.
@@ -164,6 +171,7 @@ public class Swapchain extends AbstractVulkanObject {
 		public PresentTaskBuilder image(Swapchain swapchain, int index) {
 			if(images.containsKey(swapchain)) throw new IllegalArgumentException("Duplicate swapchain: " + swapchain);
 			images.put(swapchain, index);
+			swapchain.latest = index;
 			return this;
 		}
 
@@ -227,6 +235,7 @@ public class Swapchain extends AbstractVulkanObject {
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private final Surface surface;
 		private final VkSurfaceCapabilitiesKHR caps;
+		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private ClearValue clear;
 
 		/**
@@ -328,7 +337,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 */
 		public Builder usage(VkImageUsageFlag usage) {
 			validate(caps.supportedUsageFlags, usage);
-			info.imageUsage = notNull(usage);
+			this.usage.add(usage);
 			return this;
 		}
 
@@ -402,6 +411,7 @@ public class Swapchain extends AbstractVulkanObject {
 		public Swapchain build(DeviceContext dev) {
 			// Init swapchain descriptor
 			info.surface = surface.handle();
+			info.imageUsage = IntegerEnumeration.reduce(usage);
 			info.oldSwapchain = null; // TODO
 
 			// TODO

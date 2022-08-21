@@ -44,7 +44,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 	/**
 	 * @return Device memory for this image
 	 */
-	DeviceMemory memory() {
+	public DeviceMemory memory() {
 		return mem;
 	}
 

@@ -133,5 +133,10 @@ class ImageTest extends AbstractVulkanTest {
 			assertEquals(extents, extents.mip(0));
 			assertEquals(new Extents(new Dimensions(1, 2), 3), extents.mip(1));
 		}
+
+		@Test
+		void zero() {
+			assertEquals(new Extents(new Dimensions(0, 0), 0), Extents.ZERO);
+		}
 	}
 }
