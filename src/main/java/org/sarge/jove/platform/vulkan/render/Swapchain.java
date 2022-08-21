@@ -112,11 +112,13 @@ public class Swapchain extends AbstractVulkanObject {
 		final VkResult result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
 
 		// Check result
-		return switch(result) {
-			case SUCCESS, SUBOPTIMAL_KHR -> index.getValue();
+		switch(result) {
+			case SUCCESS, SUBOPTIMAL_KHR -> latest = index.getValue();
 			case ERROR_OUT_OF_DATE_KHR -> throw new SwapchainInvalidated(result);
 			default -> throw new VulkanException(result);
-		};
+		}
+
+		return latest;
 	}
 
 	/**
@@ -171,7 +173,6 @@ public class Swapchain extends AbstractVulkanObject {
 		public PresentTaskBuilder image(Swapchain swapchain, int index) {
 			if(images.containsKey(swapchain)) throw new IllegalArgumentException("Duplicate swapchain: " + swapchain);
 			images.put(swapchain, index);
-			swapchain.latest = index;
 			return this;
 		}
 

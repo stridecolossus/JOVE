@@ -74,7 +74,7 @@ public class ImageBlitCommandTest extends AbstractVulkanTest {
 					assertEquals(2, offsets.length);
 					assertEquals(0, offsets[0].x);
 					assertEquals(0, offsets[0].y);
-					assertEquals(1, offsets[0].z);
+					assertEquals(0, offsets[0].z);
 					assertEquals(2, offsets[1].x);
 					assertEquals(3, offsets[1].y);
 					assertEquals(1, offsets[1].z);

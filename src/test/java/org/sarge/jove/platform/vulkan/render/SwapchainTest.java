@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntegerArray;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 
 public class SwapchainTest extends AbstractVulkanTest {
 	private Swapchain swapchain;
@@ -53,13 +54,15 @@ public class SwapchainTest extends AbstractVulkanTest {
 		void before() {
 			semaphore = mock(Semaphore.class);
 			fence = mock(Fence.class);
+			when(factory.integer()).thenReturn(new IntByReference(0));
 		}
 
 		@DisplayName("The next image to be rendered can be acquired from the swapchain")
 		@Test
 		void acquire() {
 			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, factory.integer())).thenReturn(VkResult.SUCCESS);
-			assertEquals(1, swapchain.acquire(semaphore, fence));
+			assertEquals(0, swapchain.acquire(semaphore, fence));
+			assertEquals(view, swapchain.latest());
 		}
 
 		@DisplayName("Acquiring the next image requires at least one synchronisation argument")
@@ -136,13 +139,6 @@ public class SwapchainTest extends AbstractVulkanTest {
 			final var builder = new PresentTaskBuilder();
 			builder.image(swapchain, 4);
 			assertThrows(IllegalArgumentException.class, () -> builder.image(swapchain, 4));
-		}
-
-		@Test
-		void latest() {
-//			when(lib.vkQueuePresentKHR(queue, expected)).thenReturn(VkResult.SUCCESS);
-//			swapchain.present(queue, 1, semaphore);
-			assertEquals(view, swapchain.latest());
 		}
 	}
 

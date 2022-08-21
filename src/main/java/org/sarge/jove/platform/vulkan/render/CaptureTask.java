@@ -13,6 +13,13 @@ import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 
 /**
  * The <i>capture task</i> is used to capture a screenshot from the swapchain.
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>Assumes swapchain images have been created with {@link VkImageUsageFlag#TRANSFER_SRC}</li>
+ * <li>The resultant image has a {@link VkFormat#R8G8B8A8_UNORM} format</li>
+ * <li>Screenshot capture is a blocking operation</li>
+ * </ul>
  * @author Sarge
  */
 public class CaptureTask {
@@ -31,12 +38,6 @@ public class CaptureTask {
 
 	/**
 	 * Captures a screenshot from the given swapchain.
-	 * <p>
-	 * Notes:
-	 * <ul>
-	 * <li>The resultant image has a {@link VkFormat#R8G8B8A8_UNORM} format</li>
-	 * <li>This is a blocking operation</li>
-	 * </ul>
 	 * @param swapchain Swapchain to capture
 	 * @return Screenshot
 	 */
@@ -66,28 +67,7 @@ public class CaptureTask {
 		return screenshot;
 	}
 
-/*
-		// TODO
-		try {
-			final ByteBuffer bb = screenshot.memory().map().buffer();
-			final byte[] bytes = BufferHelper.array(bb);
-
-			final Dimensions size = screenshot.descriptor().extents().size();
-		    final DataBufferByte data = new DataBufferByte(bytes, bytes.length);
-		    final WritableRaster raster = Raster.createInterleavedRaster(data, size.width(), size.height(), size.width() * 4, 4, new int[]{2, 1, 0}, null);
-
-		    final ColorModel cm = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8}, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
-		    final var img = new BufferedImage(cm, raster, false, null);
-
-		    System.out.println(img);
-
-		    final boolean done = ImageIO.write(img, "jpg", new File("output.jpg"));
-		    System.out.println("done="+done);
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-	*/
+	// TODO - factor out target image helper and overload? but screenshot ~ swapchain image
 
 	/**
 	 * Creates a screenshot image.

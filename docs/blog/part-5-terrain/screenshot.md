@@ -81,7 +81,7 @@ Notes:
 
 * The screenshot image has `LINEAR` tiling.
 
-* The `latest` rendered image is updated by the swapchain on presentation.
+* The `latest` rendered image is updated by the swapchain in the `acquire` method.
 
 * This approach assumes that the swapchain images are configured as `VkImageUsageFlag.TRANSFER_SRC` on creation.
 
@@ -202,3 +202,19 @@ private static Barrier restore(Image image) {
 
 TODO
 
+```java
+            final ByteBuffer bb = screenshot.memory().map().buffer();
+            final byte[] bytes = BufferHelper.array(bb);
+
+            final Dimensions size = screenshot.descriptor().extents().size();
+            final DataBufferByte data = new DataBufferByte(bytes, bytes.length);
+            final WritableRaster raster = Raster.createInterleavedRaster(data, size.width(), size.height(), size.width() * 4, 4, new int[]{2, 1, 0}, null);
+
+            final ColorModel cm = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8}, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+            final var img = new BufferedImage(cm, raster, false, null);
+
+            System.out.println(img);
+
+            final boolean done = ImageIO.write(img, "jpg", new File("output.jpg"));
+            System.out.println("done="+done);
+```
