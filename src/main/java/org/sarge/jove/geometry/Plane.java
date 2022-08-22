@@ -20,7 +20,8 @@ import org.sarge.lib.util.Check;
  */
 public record Plane(Vector normal, float distance) {
 	/**
-	 * The half-space defines the <i>sides</i> of this plane with respect to the normal (which points to the <i>positive</i> half-space).
+	 * The half-space defines the <i>sides</i> of this plane with respect to the normal.
+	 * The {@link #POSITIVE} half-space is in <i>front</i> of the plane and {@link #NEGATIVE} is <i>behind</i>.
 	 */
 	public enum HalfSpace {
 		POSITIVE,

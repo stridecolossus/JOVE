@@ -3,14 +3,13 @@ package org.sarge.jove.particle;
 import org.sarge.jove.geometry.*;
 
 /**
- * Collision surface.
+ * A <i>collision surface</i> is used to bound a particle system.
  * @author Sarge
  */
 @FunctionalInterface
-public interface Surface {
+public interface CollisionSurface {
 	/**
 	 * Action on particles that intersect this surface.
-	 * @author Sarge
 	 */
 	enum Action {
 		/**
@@ -39,23 +38,23 @@ public interface Surface {
 
 	/**
 	 * Creates a collision surface defined by a plane.
-	 * Particles that are not in <i>front</i> of the plane are considered as intersecting.
+	 * Particles that are <i>behind</i> the plane (i.e. not {@link HalfSpace#POSITIVE) are considered as intersecting this surface.
 	 * @param plane Plane
 	 * @return Plane collision surface
 	 * @see Plane#halfspace(Point)
 	 */
-	static Surface plane(Plane plane) {
+	static CollisionSurface of(Plane plane) {
 		return pos -> plane.halfspace(pos) != Plane.HalfSpace.POSITIVE;
 	}
 
 	/**
 	 * Creates a collision surface from a bounding volume.
+	 * Particles that are <i>outside</i> the volume (according to {@link Volume#contains(Point)}) are considered as intersecting this surface.
 	 * @param vol Bounding volume
 	 * @return Bounding volume surface
+	 * @see InverseVolume
 	 */
-	static Surface volume(Volume vol) {
-		// TODO
-		// return pos -> vol.intersect(null);
-		return pos -> false;
+	static CollisionSurface of(Volume vol) {
+		return vol::contains;
 	}
 }

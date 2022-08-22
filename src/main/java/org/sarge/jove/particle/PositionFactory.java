@@ -22,47 +22,45 @@ public interface PositionFactory {
 
 	/**
 	 * Creates a position factory at the given point.
-	 * @param pt Point
-	 * @return Point position factory
+	 * @param pos Position
+	 * @return Literal position factory
 	 */
-	static PositionFactory of(Point pt) {
-		return () -> pt;
+	static PositionFactory of(Point pos) {
+		return () -> pos;
 	}
 
 	/**
-	 * Creates a position factory that generates points on a sphere.
+	 * Creates a position factory that generates points on a sphere about the origin.
 	 * @param radius 		Sphere radius
-	 * @param random 		Random vector factory
+	 * @param random		Randomiser
 	 * @return Spherical position factory
 	 */
-	static PositionFactory sphere(float radius, Random random) {
-		// TODO - or use sphere point function?
+	static PositionFactory sphere(SphereVolume sphere, Random random) {
+		final float[] array = new float[3];
 		return () -> {
-			final Vector vec = new Vector(random.nextFloat(), random.nextFloat(), random.nextFloat());
-			return new Point(vec.normalize()).scale(radius);
+			for(int n = 0; n < array.length; ++n) {
+				array[n] = random.nextFloat();
+			}
+			final Vector vec = new Vector(array).normalize().multiply(sphere.radius());
+			return sphere.centre().add(vec);
 		};
 	}
 
 	/**
-	 * Creates a position factory that generates points within the given bounds.
-	 * @param bounds 		Bounds
-	 * @param random		Random vector factory
+	 * Creates a position factory that generates points within a box volume.
+	 * @param bounds 		Box bounds
+	 * @param random		Randomiser
 	 * @return Position factory
 	 */
-	static PositionFactory extents(Bounds bounds, Random random) {
+	static PositionFactory box(Bounds bounds, Random random) {
+		final Point min = bounds.min();
+		final Vector range = Vector.between(min, bounds.max());
+		final float[] array = new float[3];
 		return () -> {
-			final Point min = bounds.min();
-			final Vector range = Vector.between(min, bounds.max());
-			// TODO - use component/indices?
-			return new Point(
-					random(min.x, range.x, random),
-					random(min.y, range.y, random),
-					random(min.z, range.z, random)
-			);
+			for(int n = 0; n < array.length; ++n) {
+				array[n] = min.get(n) + random.nextFloat() * range.get(n);
+			}
+			return new Point(array);
 		};
-	}
-
-	private static float random(float min, float max, Random random) {
-		return min + random.nextFloat() * (max - min);
 	}
 }

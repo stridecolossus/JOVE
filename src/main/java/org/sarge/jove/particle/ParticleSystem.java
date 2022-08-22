@@ -1,142 +1,263 @@
 package org.sarge.jove.particle;
 
 import static org.sarge.lib.util.Check.notNull;
-import static org.sarge.lib.util.Check.oneOrMore;
-import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.particle.CollisionSurface.Action;
+import org.sarge.lib.util.Check;
 
 /**
- * Model for a particle system.
+ * A <i>particle system</i> is a controller for a set of animated particles.
+ * <p>
+ * The {@link #policy(Policy)} configures the number of new particles to be generated on each frame.
+ * Alternatively particles can be pre-allocated using the {@link #add(int)} method.
+ * <p>
+ * New particles are initialised according to the configured {@link #position(PositionFactory)} and {@link #vector(VectorFactory)} factories.
+ * The {@link #particle(Point, Vector)} method should be overridden to implement custom particles or to implement pooling of particle instances.
+ * <p>
+ * On each frame the particles are updated as follows:
+ * <ol>
+ * <li>move each particle by its current vector</li>
+ * <li>apply influences specified by {@link #add(Influence)}</li>
+ * <li>test for collisions with surfaces according to {@link #add(CollisionSurface, Action)}</li>
+ * <li>generate new particles according to the configured growth policy</li>
+ * </ol>
+ * Note that stopped particles are <b>not</b> subject to the above.
+ * <p>
+ * TODO - age cull
  * @author Sarge
  */
-public class ParticleSystem {
-	private final PositionFactory pos;
-	private final VectorFactory vec;
-	private final float rate;
-	private final int max;
-	private final List<Particle> particles = new ArrayList<>();
+public class ParticleSystem implements Frame.Listener {
+	private static final Predicate<Particle> MOVING = Predicate.not(Particle::isStopped);
 
 	/**
-	 * Constructor.
-	 * @param pos		Position factory
-	 * @param vec		Vector factory
-	 * @param rate		Generation rate
-	 * @param max		Maximum number of particles
+	 * A <i>particle system policy</i> specifies the number of particles to be generated on each frame.
 	 */
-	public ParticleSystem(PositionFactory pos, VectorFactory vec, float rate, int max) {
-		this.pos = notNull(pos);
-		this.vec = notNull(vec);
-		this.rate = zeroOrMore(rate);
-		this.max = oneOrMore(max);
+	public interface Policy {
+		/**
+		 * Determines the number of particles to add on each frame.
+		 * @param current Current number of particles
+		 * @return New particles to generate
+		 */
+		int count(int current);
+
+		/**
+		 * Policy for a particle system that does not generate new particles.
+		 */
+		Policy NONE = ignored -> 0;
+
+		/**
+		 * Creates a policy that increments the number of particles (disregarding the current number of particles).
+		 * @param inc Number of particles to generate
+		 * @return Incremental policy
+		 */
+		static Policy increment(int inc) {
+			return ignored -> inc;
+		}
+
+		/**
+		 * Creates a policy adapter that caps the maximum number of particles.
+		 * @param max Maximum number of particles
+		 * @return New capped policy
+		 */
+		default Policy max(int max) {
+			return current -> {
+				final int count = Policy.this.count(current);
+				return Math.min(max, count);
+			};
+		}
 	}
+
+	private PositionFactory pos = PositionFactory.ORIGIN;
+	private VectorFactory vec = VectorFactory.of(Vector.Y);
+	private Policy policy = Policy.NONE;
+	private final Map<CollisionSurface, Action> surfaces = new HashMap<>();
+	private final List<Influence> influences = new ArrayList<>();
+	private final List<Particle> particles = new ArrayList<>();
 
 	/**
 	 * @return Particles
 	 */
 	public Stream<Particle> particles() {
-		return particles.stream();
+		return particles(false);
 	}
 
 	/**
-	 * Adds a new particle to this system.
+	 * @param moving Whether to exclude stopped particles
+	 * @return Particles
 	 */
-	void add() {
-		final Point start = pos.position();
-		final Particle p = new Particle(start);
-		p.add(vec.vector(start));
-		particles.add(p);
+	private Stream<Particle> particles(boolean moving) {
+		if(moving) {
+			return particles.stream().filter(MOVING);
+		}
+		else {
+			return particles.stream();
+		}
 	}
 
 	/**
-	 * Updates all particles in this system.
+	 * Adds new particles to this system.
+	 * @param num Number of particles to add
 	 */
-	void update() {
-		particles.forEach(Particle::update);
+	public void add(int num) {
+		for(int n = 0; n < num; ++n) {
+			final Point p = pos.position();
+			final Vector v = vec.vector(p);
+			final Particle particle = particle(p, v);
+			particles.add(particle);
+		}
+	}
+
+	/**
+	 * Creates a new particle.
+	 * Override for a custom particle implementation.
+	 * @param pos Starting position
+	 * @param vec Initial vector
+	 * @return New particle
+	 */
+	protected Particle particle(Point pos, Vector vec) {
+		return new Particle(pos, vec);
+	}
+
+	/**
+	 * Sets the starting position for new particles (default is the origin).
+	 * @param pos Starting position factory
+	 */
+	public ParticleSystem position(PositionFactory pos) {
+		this.pos = notNull(pos);
+		return this;
+	}
+
+	/**
+	 * Sets the initial vector for new particles (default is <i>up</i>).
+	 * @param vec Initial vector factory
+	 */
+	public ParticleSystem vector(VectorFactory vec) {
+		this.vec = notNull(vec);
+		return this;
+	}
+
+	/**
+	 * Sets the policy for the number of new particles on each frame (default is {@link Policy#NONE}).
+	 * @param policy Growth policy
+	 */
+	public ParticleSystem policy(Policy policy) {
+		this.policy = notNull(policy);
+		return this;
+	}
+
+	/**
+	 * Adds a particle influence.
+	 * @param influence Particle influence
+	 */
+	public ParticleSystem add(Influence influence) {
+		influences.add(notNull(influence));
+		return this;
+	}
+
+	/**
+	 * Removes a particle influence.
+	 * @param influence Particle influence to remove
+	 */
+	public ParticleSystem remove(Influence influence) {
+		influences.remove(influence);
+		return this;
+	}
+
+	/**
+	 * Adds a collision surface.
+	 * @param surface		Surface
+	 * @param action		Action for collided particles
+	 */
+	public ParticleSystem add(CollisionSurface surface, Action action) {
+		Check.notNull(surface);
+		Check.notNull(action);
+		surfaces.put(surface, action);
+		return this;
+	}
+
+	/**
+	 * Removes a collision surface.
+	 * @param surface Surface to remove
+	 */
+	public ParticleSystem remove(CollisionSurface surface) {
+		surfaces.remove(surface);
+		return this;
+	}
+
+	@Override
+	public void completed(Frame frame) {
+		// TODO - this is wrong, we don't care how the frame took to render, but the elapsed time the LAST time update() was invoked => back to start time member?
+		//final long elapsed = frame.elapsed().toMillis();
+		influence();
+		move();
+		collide();
+		generate();
+	}
+
+	/**
+	 * Applies particle influences.
+	 */
+	private void influence() {
+		for(Influence inf : influences) {
+			final boolean moving = inf.ignoreStopped();
+			particles(moving).forEach(inf::apply);
+		}
+	}
+
+	/**
+	 * Moves each particle.
+	 */
+	private void move() {
+		particles(true).forEach(Particle::update);
+	}
+
+	/**
+	 * Applies collision surfaces.
+	 */
+	private void collide() {
+		for(var entry : surfaces.entrySet()) {
+			// Enumerate intersected particles
+			final CollisionSurface surface = entry.getKey();
+			final List<Particle> intersected = particles(true)
+					.filter(p -> surface.intersects(p.position()))
+					.toList();
+
+			// Apply action
+			switch(entry.getValue()) {
+				case DESTROY -> particles.removeAll(intersected);
+				case STOP -> intersected.forEach(Particle::stop);
+				case REFLECT -> {
+					// TODO
+				}
+			}
+		}
+	}
+
+	/**
+	 * Generates new particles.
+	 */
+	private void generate() {
+		final int count = policy.count(particles.size());
+		if(count > 0) {
+			add(count);
+		}
 	}
 
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
-	}
-
-	/**
-	 * Builder for a particle system.
-	 * TODO
-	 * - vector influences
-	 * - others?
-	 * - collision surfaces
-	 * - lifetimes?
-	 * - colours?
-	 */
-	public static class Builder {
-		private PositionFactory pos = PositionFactory.ORIGIN;
-		private VectorFactory vec = VectorFactory.literal(Vector.Y);
-		private float rate = 1;
-		private int num;
-		private int max = Integer.MAX_VALUE;
-
-		/**
-		 * Sets the position factory for new particles generated by this system.
-		 * @param pos Position factory
-		 */
-		public Builder position(PositionFactory pos) {
-			this.pos = notNull(pos);
-			return this;
-		}
-
-		/**
-		 * Sets the vector factory for new particles generated by this system.
-		 * @param vec Vector factory
-		 */
-		public Builder vector(VectorFactory vec) {
-			this.vec = notNull(vec);
-			return this;
-		}
-
-		/**
-		 * Sets the rate at which new particles are generated by this system.
-		 * @param rate Particle generation rate (per second) or zero to suppress particle generation
-		 */
-		public Builder rate(float rate) {
-			this.rate = zeroOrMore(rate);
-			return this;
-		}
-
-		/**
-		 * Sets the initial number of particles in this system (default is zero).
-		 * @param num Initial number of particles
-		 * @see #max(int)
-		 */
-		public Builder initial(int num) {
-			this.num = zeroOrMore(num);
-			return this;
-		}
-
-		/**
-		 * Sets the maximum number of particles in this system (default is unlimited).
-		 * @param max Maximum number of particles
-		 */
-		public Builder max(int max) {
-			this.max = zeroOrMore(max);
-			return this;
-		}
-
-		/**
-		 * Constructs this particle system.
-		 * @return New particle system
-		 * @throws IllegalArgumentException if the configured initial number of particles is larger than the configured maximum
-		 */
-		public ParticleSystem build() {
-			final ParticleSystem sys = new ParticleSystem(pos, vec, rate, max);
-			// TODO - initial
-			return sys;
-		}
+		return new ToStringBuilder(this)
+				.append(pos)
+				.append(vec)
+				.append(policy)
+				.append("count", particles.size())
+				.build();
 	}
 }

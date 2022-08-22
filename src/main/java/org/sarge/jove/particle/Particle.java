@@ -2,29 +2,29 @@ package org.sarge.jove.particle;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.nio.ByteBuffer;
+import java.util.Objects;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.geometry.*;
 
 /**
- * Particle instance.
+ * A <i>particle</i> is a model for an element of a particle system.
  * @author Sarge
- * TODO
- * - reflect
- * - is-a vertex?
  */
-public class Particle {
-	private static final Vector IDLE = new Vector(0, 0, 0);
-
+public class Particle implements Bufferable {
 	private Point pos;
-	private Vector vec = IDLE;
+	private Vector vec;
 
 	/**
 	 * Constructor.
-	 * @param pos Initial particle position
+	 * @param pos Starting position
+	 * @param vec Initial vector
 	 */
-	public Particle(Point pos) {
+	public Particle(Point pos, Vector vec) {
 		this.pos = notNull(pos);
+		this.vec = notNull(vec);
 	}
 
 	/**
@@ -37,34 +37,79 @@ public class Particle {
 	/**
 	 * @return Particle movement vector
 	 */
-	public Vector vector() {
+	Vector vector() {
 		return vec;
 	}
 
 	/**
-	 * Adds to this particles movement vector.
-	 * @param vec Additional vector
+	 * @return Whether this particle has been stopped
+	 * @see #stop()
 	 */
-	void add(Vector vec) {
-		this.vec = this.vec.add(vec);
+	public boolean isStopped() {
+		return vec == null;
+	}
+
+	/**
+	 * Adds to this particles movement vector.
+	 * @param v Additional vector
+	 * @throws IllegalStateException if this particle has been stopped
+	 */
+	public void add(Vector v) {
+		check();
+		vec = vec.add(v);
 	}
 
 	/**
 	 * Stops this particle.
+	 * @see CollisionSurface.Action#STOP
+	 * @throws IllegalStateException if this particle has already been stopped
 	 */
-	void stop() {
-		vec = IDLE;
+	public void stop() {
+		check();
+		vec = null;
 	}
 
 	/**
 	 * Updates the position of this particle.
+	 * @throws NullPointerException if this particle has been stopped
 	 */
 	void update() {
 		pos = pos.add(vec);
 	}
 
 	@Override
+	public int length() {
+		return Point.LAYOUT.length();
+	}
+
+	@Override
+	public void buffer(ByteBuffer bb) {
+		pos.buffer(bb);
+	}
+
+	private void check() {
+		if(isStopped()) throw new IllegalStateException();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(pos, vec);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Particle that) &&
+				this.pos.equals(that.pos) &&
+				Objects.equals(this.vec, that.vec);
+	}
+
+	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return new ToStringBuilder(this)
+				.append("pos", pos)
+				.append("vec", vec)
+				.build();
 	}
 }

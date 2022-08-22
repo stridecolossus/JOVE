@@ -10,10 +10,10 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
 
 /**
- * The <i>default camera controller</i> (or free-look mouse) rotates the scene about the camera position.
+ * The <i>camera controller</i> rotates the scene about the camera position, i.e. a free-look controller.
  * @author Sarge
  */
-public class DefaultCameraController {
+public class CameraController {
 	protected final Camera cam;
 	private final Dimensions dim;
 	private final Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
@@ -25,7 +25,7 @@ public class DefaultCameraController {
 	 * @param cam 	Camera
 	 * @param dim 	View dimensions
 	 */
-	public DefaultCameraController(Camera cam, Dimensions dim) {
+	public CameraController(Camera cam, Dimensions dim) {
 		this.cam = notNull(cam);
 		this.dim = notNull(dim);
 	}
@@ -37,6 +37,7 @@ public class DefaultCameraController {
 	 * @see #update(Vector)
 	 */
 	public void update(float x, float y) {
+		// TODO - prepare inverse and multiply, move to helper?
 		final float yaw = horizontal.interpolate(x / dim.width());
 		final float pitch = vertical.interpolate(y / dim.height());
 		final Vector vec = SphereVolume.vector(yaw, pitch);

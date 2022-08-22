@@ -377,7 +377,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * Sets the presentation mode.
 		 * @param mode Presentation mode
 		 * @throws IllegalArgumentException if the mode is not supported by the surface
-		 * @see Surface.Properties#modes()
+		 * @see Surface#modes()
 		 */
 		public Builder presentation(VkPresentModeKHR mode) {
 			if(!surface.modes().contains(mode)) throw new IllegalArgumentException("Unsupported presentation mode: " + mode);

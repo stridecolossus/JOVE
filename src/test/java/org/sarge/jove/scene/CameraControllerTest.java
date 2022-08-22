@@ -7,14 +7,14 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.*;
 
-public class DefaultCameraControllerTest {
+public class CameraControllerTest {
 	private Camera cam;
-	private DefaultCameraController controller;
+	private CameraController controller;
 
 	@BeforeEach
 	void before() {
 		cam = new Camera();
-		controller = new DefaultCameraController(cam, new Dimensions(2, 2));
+		controller = new CameraController(cam, new Dimensions(2, 2));
 	}
 
 	@Test

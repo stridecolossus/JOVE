@@ -30,7 +30,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class OrbitalCameraController extends DefaultCameraController {
+public class OrbitalCameraController extends CameraController {
 	private Point target = Point.ORIGIN;
 	private float min = 1;
 	private float max = Integer.MAX_VALUE;
