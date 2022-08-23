@@ -7,7 +7,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.Frame;
+import org.sarge.jove.control.Animator;
+import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.particle.CollisionSurface.Action;
@@ -22,19 +23,18 @@ import org.sarge.lib.util.Check;
  * New particles are initialised according to the configured {@link #position(PositionFactory)} and {@link #vector(VectorFactory)} factories.
  * The {@link #particle(Point, Vector)} method should be overridden to implement custom particles or to implement pooling of particle instances.
  * <p>
- * On each frame the particles are updated as follows:
+ * On each frame all particles that are not {@link Particle#isStopped()} are updated as follows:
  * <ol>
  * <li>move each particle by its current vector</li>
  * <li>apply influences specified by {@link #add(Influence)}</li>
  * <li>test for collisions with surfaces according to {@link #add(CollisionSurface, Action)}</li>
  * <li>generate new particles according to the configured growth policy</li>
  * </ol>
- * Note that stopped particles are <b>not</b> subject to the above.
  * <p>
  * TODO - age cull
  * @author Sarge
  */
-public class ParticleSystem implements Frame.Listener {
+public class ParticleSystem implements Animation {
 	private static final Predicate<Particle> MOVING = Predicate.not(Particle::isStopped);
 
 	/**
@@ -193,9 +193,8 @@ public class ParticleSystem implements Frame.Listener {
 	}
 
 	@Override
-	public void completed(Frame frame) {
-		// TODO - this is wrong, we don't care how the frame took to render, but the elapsed time the LAST time update() was invoked => back to start time member?
-		//final long elapsed = frame.elapsed().toMillis();
+	public void update(Animator animator) {
+		final float elapsed = animator.position();
 		influence();
 		move();
 		collide();

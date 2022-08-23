@@ -1,6 +1,6 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated per frame.
  * @author Sarge
  */
-public class Animator extends Playable implements Frame.Listener {
+public class Animator extends AbstractPlayable implements Frame.Listener {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */
@@ -21,42 +21,26 @@ public class Animator extends Playable implements Frame.Listener {
 		void update(Animator animator);
 	}
 
-	private final long duration;
 	private final Animation animation;
+	private final Frame frame = new Frame();
 
 	private float speed = 1;
-	private long time;
-	private float pos;
+	private long elapsed;
+	private boolean repeat;
 
 	/**
 	 * Constructor.
-	 * @param duration		Duration (ms)
-	 * @param animation		Animation
+	 * @param animation Animation
 	 */
-	public Animator(long duration, Animation animation) {
-		this.duration = oneOrMore(duration);
+	public Animator(Animation animation) {
 		this.animation = notNull(animation);
 	}
 
 	/**
-	 * @return Duration of this animation (ms)
-	 */
-	public long duration() {
-		return duration;
-	}
-
-	/**
-	 * @return Current time position within the animation duration (ms)
-	 */
-	public long time() {
-		return time;
-	}
-
-	/**
-	 * @return Animation <i>position</i> as a floating-point value in the range 0..1
+	 * @return Animation position
 	 */
 	public float position() {
-		return pos;
+		return elapsed;
 	}
 
 	/**
@@ -77,37 +61,61 @@ public class Animator extends Playable implements Frame.Listener {
 	}
 
 	@Override
-	public void completed(Frame frame) {
+	public boolean isRepeating() {
+		return repeat;
+	}
+
+	/**
+	 * Sets whether this animator should repeat.
+	 * @param repeat Whether repeating
+	 */
+	public void repeat(boolean repeat) {
+		this.repeat = repeat;
+	}
+
+	@Override
+	public void state(State state) {
+		super.state(state);
+		if(state == State.PLAY) {
+			frame.start();
+		}
+	}
+
+	@Override
+	public void frame() {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
-		// Update time position
-		time += speed * frame.elapsed().toMillis();
-
-		// Check for completed animation
-		if(time > duration) {
-			if(isRepeating()) {
-				time = time % duration;
-			}
-			else {
-				time = duration;
-				state(Playable.State.STOP);
-			}
-		}
+		// Determine elapsed duration since start of frame
+		elapsed = frame.end().toMillis(); // * speed;
+		update(elapsed);
 
 		// Update animation
-		pos = time / (float) duration;
 		animation.update(this);
+
+		// Start next frame
+		if(isPlaying()) {
+			frame.start();
+		}
+	}
+
+	/**
+	 * Updates this animator.
+	 * @param elapsed Elapsed duration
+	 */
+	protected void update(long elapsed) {
+		// Does nowt
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append(String.format("%d/%d", time, duration))
 				.append(animation)
+				.append("speed", speed)
+				.append("repeat", repeat)
 				.build();
 	}
 }

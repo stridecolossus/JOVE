@@ -74,7 +74,7 @@ public class Player {
 	 */
 	public void state(State state) {
 		// Change state
-		this.state.validate(state);
+		validate(state);
 		this.state = notNull(state);
 
 		// Delegate
@@ -85,6 +85,19 @@ public class Player {
 		// Notify listeners
 		for(Listener listener : listeners) {
 			listener.update(this);
+		}
+	}
+
+	/**
+	 * @param next Next state
+	 * @throws IllegalStateException for an invalid state transition
+	 */
+	private void validate(State next) {
+		if(state == next) {
+			throw new IllegalStateException(String.format("Duplicate player state: player=%s next=%s", this, next));
+		}
+		if((next == State.PAUSE) && (state != State.PLAY)) {
+			throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", this, next));
 		}
 	}
 

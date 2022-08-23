@@ -18,18 +18,18 @@ public class Frame {
 	public interface Listener {
 		/**
 		 * Notifies a completed frame.
-		 * @param frame Completed frame
 		 */
-		void completed(Frame frame);
+		void frame();
 	}
 
-	private final Instant start = Instant.now();
+	private Instant start;
 	private Duration elapsed;
+	private boolean running;
 
 	/**
-	 * @return Frame start time
+	 * @return Start time
 	 */
-	public Instant start() {
+	public Instant time() {
 		return start;
 	}
 
@@ -41,27 +41,70 @@ public class Frame {
 	}
 
 	/**
+	 * Starts a new frame.
+	 * @throws IllegalStateException if this frame has already been started
+	 */
+	public void start() {
+		if(running) throw new IllegalStateException();
+		start = Instant.now();
+		running = true;
+	}
+
+	/**
 	 * Ends this frame.
+	 * @return Elapsed duration
 	 * @throws IllegalStateException if this frame has not been started
 	 */
-	public void end() {
+	public Duration end() {
 		end(Duration.between(start, Instant.now()));
+		return elapsed;
 	}
 
 	/**
 	 * Ends this frame.
 	 * @param elapsed Elapsed duration
 	 * @throws IllegalStateException if this frame has not been started
-	 * @throws IllegalArgumentException if the given duration is negative
 	 */
-	public void end(Duration elapsed) {
-		if(this.elapsed != null) throw new IllegalStateException("Frame already completed: " + this);
-		if(elapsed.isNegative()) throw new IllegalArgumentException("Elapsed time cannot be negative");
+	protected void end(Duration elapsed) {
+		if(!running) throw new IllegalStateException();
 		this.elapsed = notNull(elapsed);
+		this.running = false;
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this).append(start).append(elapsed).toString();
+	}
+
+	/**
+	 * A <i>frame counter</i> tracks FPS (frames per second).
+	 */
+	public static class Counter implements Frame.Listener {
+		private Instant next = Instant.EPOCH;
+		private int count;
+
+		/**
+		 * @return Frames-per-second
+		 */
+		public int fps() {
+			return count;
+		}
+
+		@Override
+		public void frame() {
+			final Instant now = Instant.now();
+			if(now.isAfter(next)) {
+				count = 1;
+				next = now.plusSeconds(1);
+			}
+			else {
+				++count;
+			}
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this).append("count", count).build();
+		}
 	}
 }

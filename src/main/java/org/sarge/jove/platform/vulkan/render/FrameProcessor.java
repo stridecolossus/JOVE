@@ -86,13 +86,11 @@ public class FrameProcessor implements TransientObject {
 		final VulkanFrame frame = frames[index];
 
 		// Render frame
-		final Frame timer = new Frame();
 		frame.render(seq);
-		timer.end();
 
 		// Notify frame completion
 		for(Listener listener : listeners) {
-			listener.completed(timer);
+			listener.frame();
 		}
 	}
 

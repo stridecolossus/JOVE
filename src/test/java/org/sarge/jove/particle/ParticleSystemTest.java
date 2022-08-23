@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.Animator;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.particle.CollisionSurface.Action;
 import org.sarge.jove.particle.ParticleSystem.Policy;
@@ -12,6 +13,7 @@ import org.sarge.jove.particle.ParticleSystem.Policy;
 class ParticleSystemTest {
 	private ParticleSystem sys;
 	private Particle particle;
+	private Animator animator;
 
 	@BeforeEach
 	void before() {
@@ -22,6 +24,7 @@ class ParticleSystemTest {
 				return particle;
 			}
 		};
+		animator = new Animator(sys);
 	}
 
 	@DisplayName("An empty particle system...")
@@ -35,7 +38,7 @@ class ParticleSystemTest {
 		@DisplayName("does nothing on a frame update")
 		@Test
 		void update() {
-			sys.completed(null);
+			sys.update(animator);
 			assertEquals(0, sys.particles().count());
 		}
 
@@ -77,7 +80,7 @@ class ParticleSystemTest {
 		@DisplayName("moves each particle by its current vector")
 		@Test
 		void move() {
-			sys.completed(null);
+			sys.update(animator);
 			assertEquals(new Point(Vector.Y), particle.position());
 		}
 
@@ -86,7 +89,7 @@ class ParticleSystemTest {
 		void influence() {
 			final Influence inf = mock(Influence.class);
 			sys.add(inf);
-			sys.completed(null);
+			sys.update(animator);
 			verify(inf).apply(particle);
 		}
 
@@ -95,7 +98,7 @@ class ParticleSystemTest {
 		void collision() {
 			final CollisionSurface surface = mock(CollisionSurface.class);
 			sys.add(surface, Action.DESTROY);
-			sys.completed(null);
+			sys.update(animator);
 			verify(surface).intersects(particle.position());
 		}
 
@@ -103,7 +106,7 @@ class ParticleSystemTest {
 		@Test
 		void generate() {
 			sys.policy(Policy.increment(1));
-			sys.completed(null);
+			sys.update(animator);
 			assertEquals(2, sys.particles().count());
 		}
 	}
@@ -124,7 +127,7 @@ class ParticleSystemTest {
 		@Test
 		void destroy() {
 			sys.add(surface, Action.DESTROY);
-			sys.completed(null);
+			sys.update(animator);
 			assertEquals(0, sys.particles().count());
 		}
 
@@ -132,7 +135,7 @@ class ParticleSystemTest {
 		@Test
 		void stop() {
 			sys.add(surface, Action.STOP);
-			sys.completed(null);
+			sys.update(animator);
 			assertEquals(true, particle.isStopped());
 		}
 
@@ -140,7 +143,7 @@ class ParticleSystemTest {
 		@Test
 		void reflect() {
 			sys.add(surface, Action.REFLECT);
-			sys.completed(null);
+			sys.update(animator);
 			// TODO
 		}
 	}
@@ -157,7 +160,7 @@ class ParticleSystemTest {
 		@DisplayName("is not updated by the particle system")
 		@Test
 		void move() {
-			sys.completed(null);
+			sys.update(animator);
 			assertEquals(Point.ORIGIN, particle.position());
 		}
 
@@ -166,7 +169,7 @@ class ParticleSystemTest {
 		void stopped() {
 			final Influence inf = spy(Influence.class);
 			sys.add(inf);
-			sys.completed(null);
+			sys.update(animator);
 			verify(inf, never()).apply(particle);
 		}
 
@@ -175,7 +178,7 @@ class ParticleSystemTest {
 		void collide() {
 			final CollisionSurface surface = mock(CollisionSurface.class);
 			sys.add(surface, Action.DESTROY);
-			sys.completed(null);
+			sys.update(animator);
 			verifyNoInteractions(surface);
 		}
 	}

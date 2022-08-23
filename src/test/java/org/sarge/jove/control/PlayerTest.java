@@ -123,7 +123,7 @@ class PlayerTest {
 		@Test
 		void add() {
 			player.state(PLAY);
-			assertEquals(PLAY, playable.state());
+			verify(playable).state(PLAY);
 		}
 
 		@DisplayName("can be removed from the player")
