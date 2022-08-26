@@ -1,12 +1,14 @@
 package org.sarge.jove.particle;
 
+import java.util.Iterator;
+
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
  * A <i>collision surface</i> is used to bound a particle system.
  * @author Sarge
  */
-@FunctionalInterface
 public interface CollisionSurface {
 	/**
 	 * Action on particles that intersect this surface.
@@ -37,6 +39,13 @@ public interface CollisionSurface {
 	boolean intersects(Point pos);
 
 	/**
+	 * Determines the intersection point(s) of the given particle ray.
+	 * @param ray Particle ray
+	 * @return Intersection(s)
+	 */
+	Iterator<Intersection> intersections(Ray ray);
+
+	/**
 	 * Creates a collision surface defined by a plane.
 	 * Particles that are <i>behind</i> the plane (i.e. not {@link HalfSpace#POSITIVE) are considered as intersecting this surface.
 	 * @param plane Plane
@@ -44,7 +53,17 @@ public interface CollisionSurface {
 	 * @see Plane#halfspace(Point)
 	 */
 	static CollisionSurface of(Plane plane) {
-		return pos -> plane.halfspace(pos) != Plane.HalfSpace.POSITIVE;
+		return new CollisionSurface() {
+			@Override
+			public boolean intersects(Point pos) {
+				return plane.halfspace(pos) != Plane.HalfSpace.POSITIVE;
+			}
+
+			@Override
+			public Iterator<Intersection> intersections(Ray ray) {
+				return plane.intersect(ray);
+			}
+		};
 	}
 
 	/**
@@ -55,6 +74,16 @@ public interface CollisionSurface {
 	 * @see InverseVolume
 	 */
 	static CollisionSurface of(Volume vol) {
-		return vol::contains;
+		return new CollisionSurface() {
+			@Override
+			public boolean intersects(Point pos) {
+				return vol.contains(pos);
+			}
+
+			@Override
+			public Iterator<Intersection> intersections(Ray ray) {
+				return vol.intersect(ray);
+			}
+		};
 	}
 }

@@ -3,7 +3,8 @@ package org.sarge.jove.geometry;
 import static org.sarge.jove.util.MathsUtil.*;
 import static org.sarge.lib.util.Check.*;
 
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -82,7 +83,7 @@ public class SphereVolume implements Volume {
 	}
 
 	@Override
-	public Intersection intersect(Ray ray) {
+	public Iterator<Intersection> intersect(Ray ray) {
 		// Determine length of the nearest point on the ray to the centre of the sphere
 		final Vector vec = Vector.between(ray.origin(), centre);
 		final float nearest = ray.direction().dot(vec);
@@ -103,22 +104,23 @@ public class SphereVolume implements Volume {
 		}
 
 		// Create lazy intersection record
-		return () -> {
+		final Supplier<List<Intersection>> supplier = () -> {
 			// Calculate offset from nearest point to intersection(s)
 			final float offset = MathsUtil.sqrt(r - dist);
 
 			// Build intersection results
-			final float b = nearest + offset;
+			final float a = nearest + offset;
 			if(len < r) {
 				// Ray origin is inside the sphere
-				return new float[]{b};
+				return List.of(new Intersection(a, null));
 			}
 			else {
 				// Ray is outside the sphere (two intersections)
-				final float a = nearest - offset;
-				return new float[]{a, b};
+				final float b = nearest - offset;
+				return List.of(new Intersection(a, null), new Intersection(b, null));
 			}
 		};
+		return Intersection.iterator(supplier);
 	}
 
 	/**
@@ -127,7 +129,7 @@ public class SphereVolume implements Volume {
 	 * @param len			Distance from the ray origin to the centre of the sphere
 	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
-	private Intersection intersectBehind(Ray ray, float len, float nearest) {
+	private Iterator<Intersection> intersectBehind(Ray ray, float len, float nearest) {
 		// Stop if ray is outside of the sphere
 		final float r = radius * radius;
 		if(len > r) {
@@ -136,15 +138,16 @@ public class SphereVolume implements Volume {
 
 		// Otherwise calc intersection point
 		if(len < r) {
-			return () -> {
+			final Supplier<List<Intersection>> supplier = () -> {
 				final float dist = len - nearest * nearest;
 				final float offset = MathsUtil.sqrt(r - dist);
-				return new float[]{offset + nearest};
+				return List.of(new Intersection(offset + nearest, null));
 			};
+			return Intersection.iterator(supplier);
 		}
 		else {
 			// Ray originates on the sphere surface
-			return Intersection.ZERO;
+			return List.of(new Intersection(0, null)).iterator();
 		}
 	}
 

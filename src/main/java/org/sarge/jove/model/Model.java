@@ -9,6 +9,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
@@ -16,16 +17,32 @@ import org.sarge.lib.util.Check;
  * A <i>model</i> is a renderable object comprised vertex data and an optional index.
  * @author Sarge
  */
-public class Model {
+@SuppressWarnings("unused")
+public interface Model {
+	/**
+	 * @return Model header
+	 */
+	Header header();
+
+	/**
+	 * @return Vertex data
+	 */
+	Bufferable vertices();
+
+	/**
+	 * @return Index
+	 */
+	Optional<Bufferable> index();
+
 	/**
 	 * Vertex normal layout.
 	 */
-	public static final Layout NORMALS = Layout.floats(3);
+	Layout NORMALS = Layout.floats(3);
 
 	/**
 	 * Descriptor for this model.
 	 */
-	public record Header(Primitive primitive, int count, CompoundLayout layout) {
+	record Header(Primitive primitive, int count, CompoundLayout layout) {
 		/**
 		 * Maximum length of a {@code short} index buffer.
 		 */
@@ -66,56 +83,45 @@ public class Model {
 		}
 	}
 
-	private final Header header;
-	private final Bufferable vertices;
-	private final Bufferable index;
-
 	/**
-	 * Constructor.
-	 * @param header		Model header
-	 * @param vertices		Vertex data
-	 * @param index			Optional index
+	 * Default implementation for a static model.
 	 */
-	public Model(Header header, Bufferable vertices, Bufferable index) {
-		this.header = notNull(header);
-		this.vertices = notNull(vertices);
-		this.index = index;
-	}
+	class DefaultModel implements Model {
+		private final Header header;
+		private final Bufferable vertices;
+		private final Bufferable index;
 
-	/**
-	 * @return Model header
-	 */
-	public Header header() {
-		return header;
-	}
+		/**
+		 * Constructor.
+		 * @param header		Model header
+		 * @param vertices		Vertex data
+		 * @param index			Optional index
+		 */
+		public DefaultModel(Header header, Bufferable vertices, Bufferable index) {
+			this.header = notNull(header);
+			this.vertices = notNull(vertices);
+			this.index = index;
+		}
 
-	/**
-	 * @return Vertex data
-	 */
-	public Bufferable vertices() {
-		return vertices;
-	}
+		@Override
+		public Header header() {
+			return header;
+		}
 
-	/**
-	 * @return Index
-	 */
-	public Optional<Bufferable> index() {
-		return Optional.ofNullable(index);
-	}
+		@Override
+		public Bufferable vertices() {
+			return vertices;
+		}
 
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Model that) &&
-				this.header.equals(that.header()) &&
-				this.vertices.equals(that.vertices()) &&
-				this.index().equals(that.index());
-	}
+		@Override
+		public Optional<Bufferable> index() {
+			return Optional.ofNullable(index);
+		}
 
-	@Override
-	public String toString() {
-		return header.toString();
+		@Override
+		public String toString() {
+			return header.toString();
+		}
 	}
 
 	/**
@@ -211,17 +217,11 @@ public class Model {
 				indices = index();
 			}
 
-			// Create model
+			// Init model
 			final Header header = new Header(primitive, count, new CompoundLayout(layout));
-			final Bufferable data = vertices(header);
-			return new Model(header, data, indices);
-		}
 
-		/**
-		 * Constructs the vertex buffer.
-		 */
-		private Bufferable vertices(final Header header) {
-			return new Bufferable() {
+			// Create vertices
+			final var data = new Bufferable() {
 				@Override
 				public int length() {
 					return header.layout().stride() * vertices.size();
@@ -234,6 +234,9 @@ public class Model {
 					}
 				}
 			};
+
+			// Create model
+			return new DefaultModel(header, data, indices);
 		}
 
 		/**

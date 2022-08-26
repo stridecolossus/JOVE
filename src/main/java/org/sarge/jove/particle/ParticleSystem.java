@@ -4,12 +4,12 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Animator;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.particle.CollisionSurface.Action;
 import org.sarge.lib.util.Check;
@@ -21,11 +21,12 @@ import org.sarge.lib.util.Check;
  * Alternatively particles can be pre-allocated using the {@link #add(int)} method.
  * <p>
  * New particles are initialised according to the configured {@link #position(PositionFactory)} and {@link #vector(VectorFactory)} factories.
- * The {@link #particle(Point, Vector)} method should be overridden to implement custom particles or to implement pooling of particle instances.
+ * TODO
  * <p>
  * On each frame all particles that are not {@link Particle#isStopped()} are updated as follows:
  * <ol>
- * <li>move each particle by its current vector</li>
+ * <li>TODO
+ * move each particle by its current vector</li>
  * <li>apply influences specified by {@link #add(Influence)}</li>
  * <li>test for collisions with surfaces according to {@link #add(CollisionSurface, Action)}</li>
  * <li>generate new particles according to the configured growth policy</li>
@@ -35,7 +36,7 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ParticleSystem implements Animation {
-	private static final Predicate<Particle> MOVING = Predicate.not(Particle::isStopped);
+	private static final Predicate<Particle> MOVING = Predicate.not(Particle::isIdle);
 
 	/**
 	 * A <i>particle system policy</i> specifies the number of particles to be generated on each frame.
@@ -70,7 +71,7 @@ public class ParticleSystem implements Animation {
 		default Policy max(int max) {
 			return current -> {
 				final int count = Policy.this.count(current);
-				return Math.min(max, count);
+				return Math.min(count, max - current);
 			};
 		}
 	}
@@ -78,28 +79,22 @@ public class ParticleSystem implements Animation {
 	private PositionFactory pos = PositionFactory.ORIGIN;
 	private VectorFactory vec = VectorFactory.of(Vector.Y);
 	private Policy policy = Policy.NONE;
-	private final Map<CollisionSurface, Action> surfaces = new HashMap<>();
 	private final List<Influence> influences = new ArrayList<>();
+	private final Map<CollisionSurface, Action> surfaces = new HashMap<>();
 	private final List<Particle> particles = new ArrayList<>();
 
 	/**
-	 * @return Particles
+	 * @return Number of particles
 	 */
-	public Stream<Particle> particles() {
-		return particles(false);
+	public int size() {
+		return particles.size();
 	}
 
 	/**
-	 * @param moving Whether to exclude stopped particles
 	 * @return Particles
 	 */
-	private Stream<Particle> particles(boolean moving) {
-		if(moving) {
-			return particles.stream().filter(MOVING);
-		}
-		else {
-			return particles.stream();
-		}
+	List<Particle> particles() {
+		return particles;
 	}
 
 	/**
@@ -108,22 +103,11 @@ public class ParticleSystem implements Animation {
 	 */
 	public void add(int num) {
 		for(int n = 0; n < num; ++n) {
-			final Point p = pos.position();
-			final Vector v = vec.vector(p);
-			final Particle particle = particle(p, v);
+			final Point start = pos.position();
+			final Vector dir = vec.vector(start);
+			final Particle particle = new Particle(start, dir);
 			particles.add(particle);
 		}
-	}
-
-	/**
-	 * Creates a new particle.
-	 * Override for a custom particle implementation.
-	 * @param pos Starting position
-	 * @param vec Initial vector
-	 * @return New particle
-	 */
-	protected Particle particle(Point pos, Vector vec) {
-		return new Particle(pos, vec);
 	}
 
 	/**
@@ -136,8 +120,8 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Sets the initial vector for new particles (default is <i>up</i>).
-	 * @param vec Initial vector factory
+	 * Sets the initial movement vector for new particle (default is <i>up</i>).
+	 * @param vec Movement vector factory
 	 */
 	public ParticleSystem vector(VectorFactory vec) {
 		this.vec = notNull(vec);
@@ -145,7 +129,7 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Sets the policy for the number of new particles on each frame (default is {@link Policy#NONE}).
+	 * Sets the policy for the number of new particles to be generated on each frame (default is {@link Policy#NONE}).
 	 * @param policy Growth policy
 	 */
 	public ParticleSystem policy(Policy policy) {
@@ -194,8 +178,8 @@ public class ParticleSystem implements Animation {
 
 	@Override
 	public void update(Animator animator) {
-		final float elapsed = animator.position();
-		influence();
+		final long elapsed = animator.elapsed();
+		influence(elapsed);
 		move();
 		collide();
 		generate();
@@ -204,10 +188,9 @@ public class ParticleSystem implements Animation {
 	/**
 	 * Applies particle influences.
 	 */
-	private void influence() {
+	private void influence(long elapsed) {
 		for(Influence inf : influences) {
-			final boolean moving = inf.ignoreStopped();
-			particles(moving).forEach(inf::apply);
+			particles.stream().forEach(p -> inf.apply(p, elapsed));
 		}
 	}
 
@@ -215,7 +198,7 @@ public class ParticleSystem implements Animation {
 	 * Moves each particle.
 	 */
 	private void move() {
-		particles(true).forEach(Particle::update);
+		particles.stream().filter(MOVING).forEach(Particle::update);
 	}
 
 	/**
@@ -223,25 +206,33 @@ public class ParticleSystem implements Animation {
 	 */
 	private void collide() {
 		for(var entry : surfaces.entrySet()) {
-			// Enumerate intersected particles
 			final CollisionSurface surface = entry.getKey();
-			final List<Particle> intersected = particles(true)
-					.filter(p -> surface.intersects(p.position()))
-					.toList();
+			final Action action = entry.getValue();
+			final Iterator<Particle> itr = particles.iterator();
+			while(itr.hasNext()) {
+				// Ignore stopped particles
+				final Particle p = itr.next();
+				if(p.isIdle()) {
+					continue;
+				}
 
-			// Apply action
-			switch(entry.getValue()) {
-				case DESTROY -> particles.removeAll(intersected);
-				case STOP -> intersected.forEach(Particle::stop);
-				case REFLECT -> {
-					// TODO
+				// Apply action for intersecting particles
+				if(surface.intersects(p.origin())) {
+					switch(action) {
+						case DESTROY -> itr.remove();
+						case STOP -> p.stop();
+						case REFLECT -> {
+							final Intersection pt = surface.intersections(p).next();
+							p.reflect(pt);
+						}
+					}
 				}
 			}
 		}
 	}
 
 	/**
-	 * Generates new particles.
+	 * Generates new particles according to the configured policy.
 	 */
 	private void generate() {
 		final int count = policy.count(particles.size());
@@ -253,9 +244,9 @@ public class ParticleSystem implements Animation {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
+				.append(policy)
 				.append(pos)
 				.append(vec)
-				.append(policy)
 				.append("count", particles.size())
 				.build();
 	}

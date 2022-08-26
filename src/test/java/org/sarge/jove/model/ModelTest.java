@@ -9,10 +9,9 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.model.Model.*;
 
 class ModelTest {
-	private Model model;
 	private Header header;
 	private Bufferable data;
 	private Vertex vertex;
@@ -55,52 +54,22 @@ class ModelTest {
 		}
 	}
 
-	@Nested
-	class BasicModelTests {
-		@BeforeEach
-		void before() {
-			model = new Model(header, data, null);
-		}
-
-		@DisplayName("An unindexed model does not have an index buffer")
-		@Test
-		void constructor() {
-			assertEquals(header, model.header());
-			assertEquals(data, model.vertices());
-			assertEquals(Optional.empty(), model.index());
-		}
-
-		@Test
-		void equals() {
-			assertEquals(model, model);
-			assertEquals(model, new Model(header, data, null));
-			assertNotEquals(model, null);
-			assertNotEquals(model, mock(Model.class));
-		}
+	@DisplayName("An unindexed model does not have an index buffer")
+	@Test
+	void unindexed() {
+		final Model model = new DefaultModel(header, data, null);
+		assertEquals(header, model.header());
+		assertEquals(data, model.vertices());
+		assertEquals(Optional.empty(), model.index());
 	}
 
-	@Nested
-	class IndexedModelTests {
-		@BeforeEach
-		void before() {
-			model = new Model(header, data, data);
-		}
-
-		@DisplayName("An indexed model also contains an index buffer")
-		@Test
-		void constructor() {
-			assertEquals(header, model.header());
-			assertEquals(data, model.vertices());
-			assertEquals(Optional.of(data), model.index());
-		}
-
-		@Test
-		void equals() {
-			assertEquals(model, model);
-			assertEquals(model, new Model(header, data, data));
-			assertNotEquals(model, null);
-			assertNotEquals(model, mock(Model.class));
-		}
+	@DisplayName("An indexed model also contains an index buffer")
+	@Test
+	void indexed() {
+		final Model model = new DefaultModel(header, data, data);
+		assertEquals(header, model.header());
+		assertEquals(data, model.vertices());
+		assertEquals(Optional.of(data), model.index());
 	}
 
 	@Nested
@@ -115,7 +84,7 @@ class ModelTest {
 		@Test
 		void build() {
 			// Build unindexed model
-			model = builder
+			final Model model = builder
 					.primitive(Primitive.TRIANGLE_STRIP)
 					.layout(Point.LAYOUT)
 					.add(vertex)
@@ -137,7 +106,7 @@ class ModelTest {
 		@Test
 		void indexed() {
 			// Build indexed model
-			model = builder
+			final Model model = builder
 					.layout(Point.LAYOUT)
 					.add(vertex)
 					.add(0)

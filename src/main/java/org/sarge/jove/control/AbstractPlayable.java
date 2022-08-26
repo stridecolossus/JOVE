@@ -22,15 +22,9 @@ public abstract class AbstractPlayable implements Playable {
 	}
 
 	@Override
-	public boolean isRepeating() {
-		return false;
-	}
-
-	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append(state)
-				.append("repeat", isRepeating())
 				.build();
 	}
 }

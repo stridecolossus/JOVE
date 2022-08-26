@@ -22,58 +22,48 @@ public class Frame {
 		void frame();
 	}
 
-	private Instant start;
-	private Duration elapsed;
+	private Instant start = Instant.EPOCH;
+	private Instant end = Instant.EPOCH;
 	private boolean running;
 
 	/**
-	 * @return Start time
+	 * @return Time of last frame completion
 	 */
 	public Instant time() {
-		return start;
+		return end;
 	}
 
 	/**
 	 * @return Elapsed duration
 	 */
 	public Duration elapsed() {
-		return elapsed;
+		return Duration.between(start, end);
 	}
 
 	/**
 	 * Starts a new frame.
 	 * @throws IllegalStateException if this frame has already been started
 	 */
-	public void start() {
+	public Instant start() {
 		if(running) throw new IllegalStateException();
 		start = Instant.now();
 		running = true;
+		return start;
 	}
 
 	/**
 	 * Ends this frame.
-	 * @return Elapsed duration
 	 * @throws IllegalStateException if this frame has not been started
 	 */
-	public Duration end() {
-		end(Duration.between(start, Instant.now()));
-		return elapsed;
-	}
-
-	/**
-	 * Ends this frame.
-	 * @param elapsed Elapsed duration
-	 * @throws IllegalStateException if this frame has not been started
-	 */
-	protected void end(Duration elapsed) {
+	public void end() {
 		if(!running) throw new IllegalStateException();
-		this.elapsed = notNull(elapsed);
+		this.end = notNull(end);
 		this.running = false;
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(start).append(elapsed).toString();
+		return String.format("%s -> %s", start, end);
 	}
 
 	/**

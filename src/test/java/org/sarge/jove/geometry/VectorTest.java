@@ -1,13 +1,9 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.sarge.jove.geometry.Vector.X;
-import static org.sarge.jove.geometry.Vector.Y;
-import static org.sarge.jove.geometry.Vector.Z;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.geometry.Vector.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.util.MathsUtil;
 
 class VectorTest {
@@ -129,10 +125,9 @@ class VectorTest {
 
 	@Test
 	public void equals() {
-		assertEquals(true, vec.equals(vec));
-		assertEquals(true, vec.equals(new Vector(1, 2, 3)));
-		assertEquals(false, vec.equals(null));
-		assertEquals(false, vec.equals(new Vector(4, 5, 6)));
-		assertEquals(false, vec.equals(new Point(1, 2, 3)));
+		assertEquals(vec, vec);
+		assertEquals(vec, new Vector(1, 2, 3));
+		assertNotEquals(vec, null);
+		assertNotEquals(vec, Vector.X);
 	}
 }

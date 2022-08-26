@@ -5,7 +5,6 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.sarge.jove.common.TransientObject;
-import org.sarge.jove.control.Frame;
 import org.sarge.jove.control.Frame.Listener;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -36,7 +35,6 @@ import org.sarge.lib.util.Check;
  * </ul>
  * Note however that this method does <b>not</b> block after the frame has been presented.
  * <p>
- * @see Frame
  * @author Sarge
  */
 public class FrameProcessor implements TransientObject {

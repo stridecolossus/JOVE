@@ -25,9 +25,4 @@ public interface Playable {
 	 * @throws IllegalStateException for an illegal state transition
 	 */
 	void state(State state);
-
-	/**
-	 * @return Whether this playable is repeating
-	 */
-	boolean isRepeating();
 }

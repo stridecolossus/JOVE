@@ -17,7 +17,6 @@ public class AbstractPlayableTest {
 	@Test
 	void constructor() {
 		assertEquals(false, playable.isPlaying());
-		assertEquals(false, playable.isRepeating());
 	}
 
 	@DisplayName("A playable can be played")
@@ -50,11 +49,5 @@ public class AbstractPlayableTest {
 		playable.state(PLAY);
 		playable.state(STOP);
 		assertEquals(false, playable.isPlaying());
-	}
-
-	@DisplayName("A playable does not repeat by default")
-	@Test
-	void isRepeating() {
-		assertEquals(false, playable.isRepeating());
 	}
 }

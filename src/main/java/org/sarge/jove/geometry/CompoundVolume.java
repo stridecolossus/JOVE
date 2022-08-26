@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -58,14 +57,13 @@ public class CompoundVolume implements Volume {
 	}
 
 	@Override
-	public Intersection intersect(Ray ray) {
-		// TODO
-		final Optional<Intersection> intersection = volumes
-				.stream()
-				.map(v -> v.intersect(ray))
-				.filter(Predicate.not(Intersection.NONE::equals))
-				.findAny();
-
+	public Iterator<Intersection> intersect(Ray ray) {
+//		// TODO
+//		final Optional<Intersection> intersection = volumes
+//				.stream()
+//				.map(v -> v.intersect(ray))
+//				.filter(Predicate.not(Intersection.NONE::equals))
+//				.findAny();
 		return null;
 	}
 

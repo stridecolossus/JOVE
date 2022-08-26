@@ -5,8 +5,10 @@ import static org.mockito.Mockito.*;
 import static org.sarge.jove.geometry.Vector.*;
 import static org.sarge.jove.util.MathsUtil.*;
 
+import java.util.Iterator;
+
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
 
 class SphereVolumeTest {
@@ -149,60 +151,76 @@ class SphereVolumeTest {
 
 	@Nested
 	class SphereRayIntersectionTests {
-		/**
-		 * @param origin			Ray origin
-		 * @param expected			Expected intersection points (X axis only, relative to ray origin)
-		 */
-		private void test(Point origin, float... expected) {
-//			// Calc expected distances relative to ray origin
-//			final var list = Arrays.stream(expected).map(n -> n - origin.x).toList();
-
-			// Check intersection results
-			final Intersection result = sphere.intersect(new Ray(origin, X));
-			assertNotNull(result);
-			assertArrayEquals(expected, result.distances());
-		}
+//		/**
+//		 * @param origin			Ray origin
+//		 * @param expected			Expected intersection points (X axis only, relative to ray origin)
+//		 */
+//		private void test(Point origin, float... expected) {
+////			// Calc expected distances relative to ray origin
+////			final var list = Arrays.stream(expected).map(n -> n - origin.x).toList();
+//
+//			// Check intersection results
+//			final Intersection result = sphere.intersect(new Ray(origin, X));
+//			assertNotNull(result);
+//			assertArrayEquals(expected, result.distances());
+//		}
 
 		@DisplayName("Sphere behind, does not intersect")
 		@Test
 		void behindNotIntersecting() {
-			test(new Point(OUTSIDE, 0, 0));
+			assertEquals(Intersection.NONE, sphere.intersect(new DefaultRay(new Point(OUTSIDE, 0, 0), X)));
 		}
 
 		@DisplayName("Sphere behind, ray originates inside the sphere")
 		@Test
 		void behindInside() {
-			test(new Point(1, 0, 0), 2);
+			final Iterator<Intersection> itr = sphere.intersect(new DefaultRay(new Point(1, 0, 0), X));
+			assertEquals(new Intersection(2, null), itr.next());
+			assertEquals(false, itr.hasNext());
+//			test(new Point(1, 0, 0), 2);
 		}
 
 		@DisplayName("Sphere behind, ray originates on the sphere surface")
 		@Test
 		void behindTouching() {
-			test(new Point(RADIUS, 0, 0), 0);
+			assertEquals(Intersection.NONE, sphere.intersect(new DefaultRay(new Point(RADIUS, 0, 0), X)));
+//			test(new Point(RADIUS, 0, 0), 0);
 		}
 
 		@DisplayName("Sphere ahead, does not intersect")
 		@Test
 		void outside() {
-			test(new Point(-OUTSIDE, OUTSIDE, 0));
+			assertEquals(Intersection.NONE, sphere.intersect(new DefaultRay(new Point(-OUTSIDE, +OUTSIDE, 0), X)));
+//			test(new Point(-OUTSIDE, OUTSIDE, 0));
 		}
 
 		@DisplayName("Sphere ahead, ray originates inside the sphere")
 		@Test
 		void inside() {
-			test(new Point(-1, 0, 0), 4);
+			final Iterator<Intersection> itr = sphere.intersect(new DefaultRay(new Point(-1, 0, 0), X));
+			assertEquals(new Intersection(4, null), itr.next());
+			assertEquals(false, itr.hasNext());
+			//test(new Point(-1, 0, 0), 4);
 		}
 
 		@DisplayName("Sphere ahead, intersects twice")
 		@Test
 		void intersects() {
-			test(new Point(-OUTSIDE, 0, 0), 1, 7);
+			final Iterator<Intersection> itr = sphere.intersect(new DefaultRay(new Point(-OUTSIDE, 0, 0), X));
+			assertEquals(new Intersection(1, null), itr.next());
+			assertEquals(new Intersection(7, null), itr.next());
+			assertEquals(false, itr.hasNext());
+//			test(new Point(-OUTSIDE, 0, 0), 1, 7);
 		}
 
 		@DisplayName("Sphere ahead, ray originates on the sphere surface")
 		@Test
 		void touching() {
-			test(new Point(-RADIUS, 0, 0), 0, 6);
+			final Iterator<Intersection> itr = sphere.intersect(new DefaultRay(new Point(-RADIUS, 0, 0), X));
+			assertEquals(new Intersection(0, null), itr.next());
+			assertEquals(new Intersection(6, null), itr.next());
+			assertEquals(false, itr.hasNext());
+//			test(new Point(-RADIUS, 0, 0), 0, 6);
 		}
 	}
 
@@ -228,9 +246,9 @@ class SphereVolumeTest {
 
 	@Test
 	void equals() {
-		assertEquals(true, sphere.equals(sphere));
-		assertEquals(true, sphere.equals(new SphereVolume(Point.ORIGIN, RADIUS)));
-		assertEquals(false, sphere.equals(null));
-		assertEquals(false, sphere.equals(new SphereVolume(Point.ORIGIN, 42)));
+		assertEquals(sphere, sphere);
+		assertEquals(sphere, new SphereVolume(Point.ORIGIN, RADIUS));
+		assertNotEquals(sphere, null);
+		assertNotEquals(sphere, new SphereVolume(Point.ORIGIN, 42));
 	}
 }

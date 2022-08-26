@@ -2,7 +2,7 @@ package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.Duration;
+import java.time.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Frame.Counter;
@@ -32,7 +32,7 @@ class FrameTest {
 		@DisplayName("can be ended")
 		@Test
 		void end() {
-			assertNotNull(frame.end());
+			frame.end();
 		}
 
 		@DisplayName("cannot be started again")
@@ -45,20 +45,20 @@ class FrameTest {
 	@DisplayName("A frame that has ended...")
 	@Nested
 	class Ended {
-		private Duration elapsed;
-
+		private Instant start;
+		
 		@BeforeEach
 		void before() {
-			elapsed = Duration.ofSeconds(1);
-			frame.start();
-			frame.end(elapsed);
+			start = frame.start();
+			frame.end();
 		}
 
 		@DisplayName("has an elapsed duration")
 		@Test
 		void elapsed() {
-			assertNotNull(frame.time());
-			assertEquals(elapsed, frame.elapsed());
+			final Instant end = frame.time();
+			assertNotNull(end);
+			assertEquals(Duration.between(start, end), frame.elapsed());
 		}
 
 		@DisplayName("can be restarted")
@@ -92,11 +92,12 @@ class FrameTest {
 			assertEquals(3, counter.fps());
 		}
 
+		@Disabled("nasty sleep")
 		@DisplayName("A frame counter is reset after a second")
 		@Test
 		void reset() throws InterruptedException {
 			counter.frame();
-			Thread.sleep(1000);
+			//Thread.sleep(1000);
 			counter.frame();
 			assertEquals(1, counter.fps());
 		}

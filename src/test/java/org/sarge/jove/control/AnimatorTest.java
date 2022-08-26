@@ -1,6 +1,6 @@
 package org.sarge.jove.control;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.sarge.jove.control.Playable.State.PLAY;
 
@@ -21,8 +21,6 @@ class AnimatorTest {
 	@Test
 	void constructor() {
 		assertEquals(false, animator.isPlaying());
-		assertEquals(false, animator.isRepeating());
-		assertEquals(0, animator.position());
 		assertEquals(1, animator.speed());
 	}
 
@@ -55,11 +53,9 @@ class AnimatorTest {
 
 		@DisplayName("is updated on frame completion")
 		@Test
-		void update() throws InterruptedException {
-			Thread.sleep(50);
+		void update() {
 			animator.frame();
 			verify(animation).update(animator);
-			assertTrue(animator.position() > 0);
 		}
 
 		@DisplayName("can be stopped")

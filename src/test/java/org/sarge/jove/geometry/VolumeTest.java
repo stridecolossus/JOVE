@@ -38,16 +38,14 @@ class VolumeTest {
 
 		@Test
 		void intersectsRay() {
-			final Intersection intersection = Volume.EMPTY.intersect(null);
-			assertNotNull(intersection);
-			assertArrayEquals(new float[0], intersection.distances());
+			assertEquals(Intersection.NONE, Volume.EMPTY.intersect(null));
 		}
 
 		@Test
 		void equals() {
-			assertEquals(true, Volume.EMPTY.equals(Volume.EMPTY));
-			assertEquals(false, Volume.EMPTY.equals(null));
-			assertEquals(false, Volume.EMPTY.equals(vol));
+			assertEquals(Volume.EMPTY, Volume.EMPTY);
+			assertNotEquals(Volume.EMPTY, null);
+			assertNotEquals(Volume.EMPTY, vol);
 		}
 	}
 }

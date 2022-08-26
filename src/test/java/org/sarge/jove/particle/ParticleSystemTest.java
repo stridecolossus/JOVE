@@ -1,8 +1,10 @@
 package org.sarge.jove.particle;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator;
@@ -12,102 +14,93 @@ import org.sarge.jove.particle.ParticleSystem.Policy;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
-	private Particle particle;
 	private Animator animator;
 
 	@BeforeEach
 	void before() {
-		sys = new ParticleSystem() {
-			@Override
-			protected Particle particle(Point pos, Vector vec) {
-				particle = super.particle(pos, vec);
-				return particle;
-			}
-		};
-		animator = new Animator(sys);
+		sys = new ParticleSystem();
+		animator = mock(Animator.class);
 	}
 
-	@DisplayName("An empty particle system...")
-	class Empty {
+	/**
+	 * Adds a particle to the system.
+	 */
+	private Particle create() {
+		sys.add(1);
+		return sys.particles().iterator().next();
+	}
+
+	@DisplayName("A new particle system...")
+	class New {
 		@DisplayName("does not contain any particles")
 		@Test
 		void empty() {
-			assertEquals(0, sys.particles().count());
+			assertEquals(0, sys.size());
+			assertEquals(List.of(), sys.particles());
 		}
 
 		@DisplayName("does nothing on a frame update")
 		@Test
 		void update() {
 			sys.update(animator);
-			assertEquals(0, sys.particles().count());
+			assertEquals(0, sys.size());
 		}
 
-		@DisplayName("can generate new particles")
+		@DisplayName("can have new particles added")
 		@Test
 		void add() {
 			sys.add(1);
-			assertNotNull(particle);
-			assertEquals(1, sys.particles().count());
-			assertEquals(Point.ORIGIN, particle.position());
+			assertEquals(1, sys.size());
 		}
 
-		@DisplayName("can initialise the position of new particles")
-		@Test
-		void position() {
-			final Point pos = new Point(1, 2, 3);
-			sys.position(PositionFactory.of(pos));
-			sys.add(1);
-			assertEquals(pos, particle.position());
-		}
-
-		@DisplayName("can initialise the initial movement vector of new particles")
-		@Test
-		void vector() {
-			sys.vector(VectorFactory.of(Vector.X));
-			sys.add(1);
-			assertEquals(new Point(1, 0, 0), particle.vector());
-		}
-	}
-
-	@DisplayName("On each frame a particle system...")
-	@Nested
-	class Updated {
-		@BeforeEach
-		void before() {
-			sys.add(1);
-		}
-
-		@DisplayName("moves each particle by its current vector")
-		@Test
-		void move() {
-			sys.update(animator);
-			assertEquals(new Point(Vector.Y), particle.position());
-		}
-
-		@DisplayName("applies influences to each particle")
-		@Test
-		void influence() {
-			final Influence inf = mock(Influence.class);
-			sys.add(inf);
-			sys.update(animator);
-			verify(inf).apply(particle);
-		}
-
-		@DisplayName("checks for particle collisions")
-		@Test
-		void collision() {
-			final CollisionSurface surface = mock(CollisionSurface.class);
-			sys.add(surface, Action.DESTROY);
-			sys.update(animator);
-			verify(surface).intersects(particle.position());
-		}
-
-		@DisplayName("generates new particles according to the configured policy")
+		@DisplayName("can be configured to generate new particles on each frame")
 		@Test
 		void generate() {
 			sys.policy(Policy.increment(1));
 			sys.update(animator);
-			assertEquals(2, sys.particles().count());
+			assertEquals(1, sys.size());
+		}
+
+		@DisplayName("has a default position and direction for new particles")
+		@Test
+		void defaults() {
+			final Particle p = create();
+			assertEquals(Point.ORIGIN, p.origin());
+			assertEquals(Vector.Y, p.direction());
+		}
+	}
+
+	@DisplayName("A particle in a system...")
+	@Nested
+	class ParticleTests {
+		@DisplayName("has an initial position and direction according to the configured factories")
+		@Test
+		void position() {
+			final Point pos = new Point(1, 2, 3);
+			sys.position(PositionFactory.of(pos));
+			sys.vector(VectorFactory.of(Vector.X));
+
+			final Particle p = create();
+			assertEquals(pos, p.origin());
+			assertEquals(Vector.X, p.direction());
+		}
+
+		@DisplayName("is moved by its current direction on each frame")
+		@Test
+		void update() {
+			final Particle p = create();
+			sys.update(animator);
+			assertEquals(new Point(Vector.Y), p.origin());
+		}
+
+		@DisplayName("is modified by the configured influences on each frame")
+		@Test
+		void influence() {
+			final Particle p = create();
+			final Influence inf = mock(Influence.class);
+			sys.add(inf);
+			sys.update(animator);
+			verify(inf).apply(p, 0);
 		}
 	}
 
@@ -115,10 +108,11 @@ class ParticleSystemTest {
 	@Nested
 	class Collisions {
 		private CollisionSurface surface;
+		private Particle p;
 
 		@BeforeEach
 		void before() {
-			sys.add(1);
+			p = create();
 			surface = mock(CollisionSurface.class);
 			when(surface.intersects(any())).thenReturn(true);
 		}
@@ -128,7 +122,7 @@ class ParticleSystemTest {
 		void destroy() {
 			sys.add(surface, Action.DESTROY);
 			sys.update(animator);
-			assertEquals(0, sys.particles().count());
+			assertEquals(0, sys.size());
 		}
 
 		@DisplayName("can be stopped")
@@ -136,7 +130,7 @@ class ParticleSystemTest {
 		void stop() {
 			sys.add(surface, Action.STOP);
 			sys.update(animator);
-			assertEquals(true, particle.isStopped());
+			assertEquals(true, p.isIdle());
 		}
 
 		@DisplayName("can be reflected by the surface")
@@ -151,26 +145,19 @@ class ParticleSystemTest {
 	@DisplayName("A stopped particle...")
 	@Nested
 	class Stopped {
+		private Particle p;
+
 		@BeforeEach
 		void before() {
-			sys.add(1);
-			particle.stop();
+			p = create();
+			p.stop();
 		}
 
 		@DisplayName("is not updated by the particle system")
 		@Test
 		void move() {
 			sys.update(animator);
-			assertEquals(Point.ORIGIN, particle.position());
-		}
-
-		@DisplayName("is not affected by influences by default")
-		@Test
-		void stopped() {
-			final Influence inf = spy(Influence.class);
-			sys.add(inf);
-			sys.update(animator);
-			verify(inf, never()).apply(particle);
+			assertEquals(Point.ORIGIN, p.origin());
 		}
 
 		@DisplayName("is not tested for collisions")

@@ -1,17 +1,12 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Point.ORIGIN;
-import static org.sarge.jove.geometry.Vector.X;
-import static org.sarge.jove.geometry.Vector.Y;
-import static org.sarge.jove.geometry.Vector.Z;
+import static org.sarge.jove.geometry.Vector.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 
 class PlaneTest {
 	private static final int DIST = 3; // Plane lies at (3,0,0) but note distance is -3
@@ -80,20 +75,20 @@ class PlaneTest {
 	class PlaneRayIntersectionTests {
 		@Test
 		void intersect() {
-			assertEquals(Intersection.of(3f),  plane.intersect(new Ray(ORIGIN, X)));
-			assertEquals(Intersection.of(-0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X)));
-			assertEquals(Intersection.of(+0f), plane.intersect(new Ray(new Point(DIST, 0, 0), X.invert())));
+			assertEquals(new Intersection(3f,  X), plane.intersect(new DefaultRay(ORIGIN, X)));
+			assertEquals(new Intersection(-0f, X), plane.intersect(new DefaultRay(new Point(DIST, 0, 0), X)));
+			assertEquals(new Intersection(+0f, X), plane.intersect(new DefaultRay(new Point(DIST, 0, 0), X.invert())));
 		}
 
 		@Test
 		void miss() {
-			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Y)));
-			assertEquals(Intersection.NONE, plane.intersect(new Ray(ORIGIN, Z)));
+			assertEquals(Intersection.NONE, plane.intersect(new DefaultRay(ORIGIN, Y)));
+			assertEquals(Intersection.NONE, plane.intersect(new DefaultRay(ORIGIN, Z)));
 		}
 
 		@Test
 		void behind() {
-			assertEquals(Intersection.NONE, plane.intersect(new Ray(new Point(4, 0, 0), X)));
+			assertEquals(Intersection.NONE, plane.intersect(new DefaultRay(new Point(4, 0, 0), X)));
 		}
 	}
 }

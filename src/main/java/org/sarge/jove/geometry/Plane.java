@@ -1,5 +1,7 @@
 package org.sarge.jove.geometry;
 
+import java.util.*;
+
 import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -116,7 +118,7 @@ public record Plane(Vector normal, float distance) {
 	 * @param ray Ray
 	 * @return Intersection
 	 */
-	public Intersection intersect(Ray ray) {
+	public Iterator<Intersection> intersect(Ray ray) {
 		// Calc denominator
 		final float denom = normal.dot(ray.direction());
 
@@ -132,6 +134,6 @@ public record Plane(Vector normal, float distance) {
 		}
 
 		// Build intersection
-		return Intersection.of(t);
+		return List.of(new Intersection(t, normal)).iterator();
 	}
 }

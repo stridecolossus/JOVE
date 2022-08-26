@@ -1,13 +1,15 @@
 package org.sarge.jove.particle;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Ray.Intersection;
 
-class ParticleTest {
+public class ParticleTest {
 	private Particle particle;
 
 	@BeforeEach
@@ -16,73 +18,62 @@ class ParticleTest {
 	}
 
 	@Test
-	void length() {
-		final ByteBuffer bb = ByteBuffer.allocate(3 * 4);
-		assertEquals(3 * Float.BYTES, particle.length());
-		particle.buffer(bb);
-		assertEquals(0, bb.remaining());
+	void constructor() {
+		assertEquals(Point.ORIGIN, particle.origin());
+		assertEquals(Vector.Y, particle.direction());
+		assertEquals(false, particle.isIdle());
 	}
 
 	@Test
-	void equals() {
-		assertEquals(particle, particle);
-		assertEquals(particle, new Particle(Point.ORIGIN, Vector.Y));
-		assertNotEquals(particle, null);
-		assertNotEquals(particle, new Particle(Point.ORIGIN, Vector.Z));
+	void move() {
+		particle.move(Vector.X);
+		assertEquals(new Point(1, 0, 0), particle.origin());
 	}
 
-	@DisplayName("A new particle...")
-	@Nested
-	class New {
-		@DisplayName("has an initial position and vector")
-		@Test
-		void constructor() {
-			assertEquals(Point.ORIGIN, particle.position());
-			assertEquals(false, particle.isStopped());
-		}
-
-		@DisplayName("can have its vector modified")
-		@Test
-		void add() {
-			particle.add(Vector.X);
-			particle.update();
-			assertEquals(new Point(1, 1, 0), particle.position());
-		}
-
-		@DisplayName("can update its position")
-		@Test
-		void update() {
-			particle.update();
-			assertEquals(new Point(Vector.Y), particle.position());
-		}
-
-		@DisplayName("can be stopped")
-		@Test
-		void stop() {
-			particle.stop();
-			assertEquals(true, particle.isStopped());
-		}
+	@Test
+	void vector() {
+		particle.add(Vector.X);
+		assertEquals(Vector.Y.add(Vector.X), particle.direction());
 	}
 
-	@DisplayName("A stopped particle...")
-	@Nested
-	class Stopped {
-		@BeforeEach
-		void before() {
-			particle.stop();
-		}
+	@Test
+	void velocity() {
+		particle.velocity(2);
+		assertEquals(Vector.Y.multiply(2), particle.direction());
+	}
 
-		@DisplayName("cannot be modified")
-		@Test
-		void modify() {
-			assertThrows(IllegalStateException.class, () -> particle.add(null));
-			assertThrows(NullPointerException.class, () -> particle.update());
-		}
+	@Test
+	void update() {
+		particle.update();
+		assertEquals(new Point(Vector.Y), particle.origin());
+	}
 
-		@DisplayName("cannot be stopped more than once")
-		@Test
-		void stop() {
-			assertThrows(IllegalStateException.class, () -> particle.stop());
-		}
+	@Test
+	void stop() {
+		particle.stop();
+		assertEquals(true, particle.isIdle());
+	}
+
+	@Test
+	void stopped() {
+		particle.stop();
+		assertThrows(IllegalStateException.class, () -> particle.stop());
+	}
+
+	@Test
+	void reflect() {
+		final Intersection intersection = new Intersection(2, Vector.X);
+		particle.update();
+		particle.reflect(intersection);
+		System.out.println(particle);
+		// TODO
+	}
+
+	@Test
+	void buffer() {
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		when(bb.putFloat(0)).thenReturn(bb);
+		particle.buffer(bb);
+		verify(bb, times(3)).putFloat(0);
 	}
 }

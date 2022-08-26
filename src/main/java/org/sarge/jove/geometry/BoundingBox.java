@@ -2,6 +2,8 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.*;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -60,7 +62,7 @@ public class BoundingBox implements Volume {
 	}
 
 	@Override
-	public Intersection intersect(Ray ray) {
+	public Iterator<Intersection> intersect(Ray ray) {
 		// Init intersections
 		float near = Float.NEGATIVE_INFINITY;
 		float far = Float.POSITIVE_INFINITY;
@@ -101,7 +103,7 @@ public class BoundingBox implements Volume {
 		}
 
 		// Ray intersects twice
-		return Intersection.of(near, far);
+		return List.of(new Intersection(near, null), new Intersection(far, null)).iterator();
 	}
 
 	@Override

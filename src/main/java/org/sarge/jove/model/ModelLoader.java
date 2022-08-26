@@ -6,7 +6,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.io.*;
-import org.sarge.jove.model.Model.Header;
+import org.sarge.jove.model.Model.*;
 
 /**
  * The <i>model loader</i> persists a JOVE model.
@@ -43,7 +43,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 
 		// Create model
 		final Header header = new Header(primitive, count, new CompoundLayout(layouts));
-		return new Model(header, vertices, index);
+		return new DefaultModel(header, vertices, index);
 	}
 
 	/**

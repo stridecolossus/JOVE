@@ -1,29 +1,29 @@
 package org.sarge.jove.particle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 
 public class InfluenceTest {
 	private Particle particle;
 
 	@BeforeEach
 	void before() {
-		particle = mock(Particle.class);
+		particle = new Particle(Point.ORIGIN, Vector.Y);
 	}
 
 	@Test
-	void ignore() {
-		final Influence inf = spy(Influence.class);
-		assertEquals(true, inf.ignoreStopped());
+	void vector() {
+		final Influence inf = Influence.of(Vector.X);
+		inf.apply(particle, 1);
+		assertEquals(Vector.X.add(Vector.Y), particle.direction());
 	}
 
 	@Test
-	void literal() {
-		final Influence inf = Influence.of(Vector.Y);
-		inf.apply(particle);
-		verify(particle).add(Vector.Y);
+	void velocity() {
+		final Influence inf = Influence.velocity(2);
+		inf.apply(particle, 1);
+		assertEquals(Vector.Y.multiply(2) , particle.direction());
 	}
 }
