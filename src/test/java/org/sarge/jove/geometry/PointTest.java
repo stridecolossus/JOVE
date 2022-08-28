@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
@@ -61,10 +61,9 @@ class PointTest {
 
 	@Test
 	public void equals() {
-		assertEquals(true, pos.equals(pos));
-		assertEquals(true, pos.equals(new Point(1, 2, 3)));
-		assertEquals(false, pos.equals(null));
-		assertEquals(false, pos.equals(Point.ORIGIN));
-		assertEquals(false, pos.equals(new Point(3, 4, 5)));
+		assertEquals(pos, pos);
+		assertEquals(pos, new Point(1, 2, 3));
+		assertNotEquals(pos, null);
+		assertNotEquals(pos, Point.ORIGIN);
 	}
 }

@@ -4,7 +4,6 @@ import static org.sarge.jove.util.MathsUtil.*;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -104,23 +103,25 @@ public class SphereVolume implements Volume {
 		}
 
 		// Create lazy intersection record
-		final Supplier<List<Intersection>> supplier = () -> {
-			// Calculate offset from nearest point to intersection(s)
-			final float offset = MathsUtil.sqrt(r - dist);
+		return new SphereIntersectionIterator(ray) {
+			@Override
+			protected float[] intersections() {
+				// Calculate offset from nearest point to intersection(s)
+				final float offset = MathsUtil.sqrt(r - dist);
 
-			// Build intersection results
-			final float a = nearest + offset;
-			if(len < r) {
-				// Ray origin is inside the sphere
-				return List.of(new Intersection(a, null));
-			}
-			else {
-				// Ray is outside the sphere (two intersections)
-				final float b = nearest - offset;
-				return List.of(new Intersection(a, null), new Intersection(b, null));
+				// Build intersection results
+				final float a = nearest + offset;
+				if(len < r) {
+					// Ray origin is inside the sphere
+					return new float[]{a};
+				}
+				else {
+					// Ray is outside the sphere (two intersections)
+					final float b = nearest - offset;
+					return new float[]{b, a};
+				}
 			}
 		};
-		return Intersection.iterator(supplier);
 	}
 
 	/**
@@ -138,16 +139,74 @@ public class SphereVolume implements Volume {
 
 		// Otherwise calc intersection point
 		if(len < r) {
-			final Supplier<List<Intersection>> supplier = () -> {
-				final float dist = len - nearest * nearest;
-				final float offset = MathsUtil.sqrt(r - dist);
-				return List.of(new Intersection(offset + nearest, null));
+			return new SphereIntersectionIterator(ray) {
+				@Override
+				protected float[] intersections() {
+					final float dist = len - nearest * nearest;
+					final float offset = MathsUtil.sqrt(r - dist);
+					return new float[]{offset + nearest};
+				}
 			};
-			return Intersection.iterator(supplier);
 		}
 		else {
 			// Ray originates on the sphere surface
-			return List.of(new Intersection(0, null)).iterator();
+			return new SphereIntersectionIterator(ray) {
+				@Override
+				protected float[] intersections() {
+					return new float[]{0};
+				}
+			};
+		}
+	}
+
+	/**
+	 * Lazily evaluated intersections iterator.
+	 */
+	private abstract class SphereIntersectionIterator implements Iterator<Intersection> {
+		private final Ray ray;
+		private float[] distances;
+		private int index;
+
+		protected SphereIntersectionIterator(Ray ray) {
+			this.ray = notNull(ray);
+		}
+
+		/**
+		 * @return Intersections
+		 */
+		protected abstract float[] intersections();
+
+		/**
+		 * Evaluates intersection distances.
+		 */
+		private void init() {
+			if(distances == null) {
+				distances = intersections();
+			}
+		}
+
+		@Override
+		public boolean hasNext() {
+			init();
+			return index < distances.length;
+		}
+
+		@Override
+		public Intersection next() {
+			// Get next intersection
+			init();
+			if(index >= distances.length) throw new NoSuchElementException();
+			final float dist = distances[index++];
+
+			// Build intersection with lazily evaluated surface normal
+			return new Intersection(dist) {
+				@Override
+				public Vector normal() {
+					final Vector vec = ray.direction().multiply(dist);
+					final Point pt = ray.origin().add(vec);
+					return Vector.between(centre, pt).normalize();
+				}
+			};
 		}
 	}
 

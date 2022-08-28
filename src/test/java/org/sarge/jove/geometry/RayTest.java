@@ -1,8 +1,7 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.*;
@@ -28,28 +27,19 @@ class RayTest {
 		assertEquals(new Point(2, 0, 0), ray.point(2));
 	}
 
-	@Nested
-	class IntersectionTests {
-		@Test
-		void none() {
-			assertEquals(false, Intersection.NONE.hasNext());
-		}
+	@Test
+	void none() {
+		assertEquals(false, Intersection.NONE.hasNext());
+	}
 
-		@Test
-		void constructor() {
-			final Intersection intersection = new Intersection(3, Vector.X);
-			assertEquals(3, intersection.distance());
-			assertEquals(Vector.X, intersection.normal());
-		}
-
-		@Test
-		void iterator() {
-			final Intersection intersection = new Intersection(3, Vector.X);
-			final Iterator<Intersection> itr = Intersection.iterator(() -> List.of(intersection, intersection));
-			assertEquals(true, itr.hasNext());
-			assertEquals(intersection, itr.next());
-			assertEquals(intersection, itr.next());
-			assertEquals(false, itr.hasNext());
-		}
+	@Test
+	void intersection() {
+		final Intersection intersection = Intersection.of(3, Vector.Y);
+		assertEquals(3, intersection.distance());
+		assertEquals(Vector.Y, intersection.normal());
+		assertEquals(intersection, intersection);
+		assertEquals(intersection, Intersection.of(3, Vector.Y));
+		assertNotEquals(intersection, null);
+		assertNotEquals(intersection, mock(Intersection.class));
 	}
 }

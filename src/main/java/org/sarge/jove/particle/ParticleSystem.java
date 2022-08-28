@@ -120,7 +120,7 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Sets the initial movement vector for new particle (default is <i>up</i>).
+	 * Sets the initial movement vector for new particles (default is <i>up</i>).
 	 * @param vec Movement vector factory
 	 */
 	public ParticleSystem vector(VectorFactory vec) {

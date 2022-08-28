@@ -62,11 +62,11 @@ public class ParticleTest {
 
 	@Test
 	void reflect() {
-		final Intersection intersection = new Intersection(2, Vector.X);
+		final Intersection intersection = Intersection.of(0, Vector.Y);
 		particle.update();
 		particle.reflect(intersection);
-		System.out.println(particle);
-		// TODO
+		assertEquals(Point.ORIGIN, particle.origin());
+		assertEquals(Vector.Y.invert(), particle.direction());
 	}
 
 	@Test

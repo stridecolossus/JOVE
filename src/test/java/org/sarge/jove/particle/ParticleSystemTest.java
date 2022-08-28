@@ -1,7 +1,6 @@
 package org.sarge.jove.particle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
@@ -113,8 +112,7 @@ class ParticleSystemTest {
 		@BeforeEach
 		void before() {
 			p = create();
-			surface = mock(CollisionSurface.class);
-			when(surface.intersects(any())).thenReturn(true);
+			surface = CollisionSurface.of(new Plane(Vector.Y, -1));
 		}
 
 		@DisplayName("can be destroyed")
@@ -138,7 +136,8 @@ class ParticleSystemTest {
 		void reflect() {
 			sys.add(surface, Action.REFLECT);
 			sys.update(animator);
-			// TODO
+			assertEquals(Point.ORIGIN, p.origin());
+			assertEquals(Vector.Y.invert(), p.direction());
 		}
 	}
 

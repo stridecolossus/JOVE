@@ -134,6 +134,6 @@ public record Plane(Vector normal, float distance) {
 		}
 
 		// Build intersection
-		return List.of(new Intersection(t, normal)).iterator();
+		return List.of(Intersection.of(t, normal)).iterator();
 	}
 }

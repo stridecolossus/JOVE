@@ -1,8 +1,8 @@
 package org.sarge.jove.geometry;
 
 import java.util.*;
-import java.util.function.Supplier;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -28,7 +28,7 @@ public interface Ray {
 		/**
 		 * Constructor.
 		 * @param origin			Ray origin
-		 * @param direction			Direction
+		 * @param direction			Direction (assumes normalised)
 		 */
 		public DefaultRay {
 			Check.notNull(origin);
@@ -48,61 +48,81 @@ public interface Ray {
 	/**
 	 * A <i>ray intersection</i> is defined by a distance along this ray.
 	 */
-	public record Intersection(float distance, Vector normal) {
+	public class Intersection {
 		/**
 		 * Empty intersection(s).
 		 */
 		public static final Iterator<Intersection> NONE = new Iterator<>() {
 			@Override
-			public Intersection next() {
-				throw new NoSuchElementException();
+			public boolean hasNext() {
+				return false;
 			}
 
 			@Override
-			public boolean hasNext() {
-				return false;
+			public Intersection next() {
+				throw new NoSuchElementException();
 			}
 		};
 
 		/**
-		 * Constructor.
-		 * @param distance		Intersection distance along this ray
-		 * @param normal		Normal at this intersection point
+		 * Creates a static intersection result.
+		 * @param dist			Intersection distance
+		 * @param normal		Surface normal
+		 * @return New intersection
 		 */
-		public Intersection {
+		public static Intersection of(float dist, Vector normal) {
 			Check.notNull(normal);
+
+			return new Intersection(dist) {
+				@Override
+				public Vector normal() {
+					return normal;
+				}
+			};
+		}
+
+		private final float dist;
+
+		/**
+		 * Constructor.
+		 * @param dist Intersection distance
+		 */
+		public Intersection(float dist) {
+			this.dist = dist;
+		}
+
+		/**
+		 * @return Distance of this intersection along the ray
+		 */
+		public float distance() {
+			return dist;
+		}
+
+		/**
+		 * @return Surface normal at this intersection
+		 * @throws UnsupportedOperationException by default
+		 */
+		public Vector normal() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(dist, normal());
 		}
 
 		@Override
 		public boolean equals(Object obj) {
 			return
-				(obj == this) ||
-				(obj instanceof Intersection that) &&
-				MathsUtil.isEqual(this.distance, that.distance) &&
-				this.normal.equals(that.normal);
+					(obj == this) ||
+					(obj instanceof Intersection that) &&
+					MathsUtil.isEqual(this.distance(), that.distance()) &&
+					this.normal().equals(that.normal());
 		}
 
-		/**
-		 * Creates an iterator for a set of lazily-evaluated intersections.
-		 * @param intersections Intersection(s) generator
-		 */
-		public static Iterator<Intersection> iterator(Supplier<List<Intersection>> intersections) {
-			return new Iterator<>() {
-				private Iterator<Intersection> itr;
-
-				@Override
-				public boolean hasNext() {
-					if(itr == null) {
-						itr = intersections.get().iterator();
-					}
-					return itr.hasNext();
-				}
-
-				@Override
-				public Intersection next() {
-					return itr.next();
-				}
-			};
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this).append(dist).append(normal()).build();
 		}
 	}
 }

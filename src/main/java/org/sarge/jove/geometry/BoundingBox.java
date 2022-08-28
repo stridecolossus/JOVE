@@ -14,6 +14,8 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public class BoundingBox implements Volume {
+	private static final Vector[] AXES = {Vector.X, Vector.Y, Vector.Z};
+
 	private final Bounds bounds;
 
 	/**
@@ -66,17 +68,19 @@ public class BoundingBox implements Volume {
 		// Init intersections
 		float near = Float.NEGATIVE_INFINITY;
 		float far = Float.POSITIVE_INFINITY;
+		Vector nearNormal = null;
+		Vector farNormal = null;
 
 		// Test intersection on each pair of planes
-		for(int n = 0; n < Vector.SIZE; ++n) {
+		for(int p = 0; p < Vector.SIZE; ++p) {
 			// Tests are performed component-wise
-			final float origin = ray.origin().get(n);
-			final float dir = ray.direction().get(n);
-			final float min = bounds.min().get(n);
-			final float max = bounds.max().get(n);
+			final float origin = ray.origin().get(p);
+			final float dir = ray.direction().get(p);
+			final float min = bounds.min().get(p);
+			final float max = bounds.max().get(p);
 
 			if(MathsUtil.isZero(dir)) {
-				// Stop if parallel ray misses the box
+				// Parallel ray misses the box
 				if((origin < min) || (origin > max)) {
 					return Intersection.NONE;
 				}
@@ -86,9 +90,22 @@ public class BoundingBox implements Volume {
 				final float a = (min - origin) / dir;
 				final float b = (max - origin) / dir;
 
-				// Update near/far distances
-				near = Math.max(near, Math.min(a, b));
-				far = Math.min(far, Math.max(a, b));
+				// Update near intersection
+				final float n = Math.min(a, b);
+				if(n > near) {
+					near = n;
+					nearNormal = AXES[p].invert();
+				}
+
+				// Update far intersection
+				final float f = Math.max(a, b);
+				if(f < far) {
+					far = f;
+					farNormal = AXES[p];
+				}
+
+	//			near = Math.max(near, Math.min(a, b));
+	//			far = Math.min(far, Math.max(a, b));
 
 				// Ray does not intersect
 				if(near > far) {
@@ -101,9 +118,14 @@ public class BoundingBox implements Volume {
 				}
 			}
 		}
+		assert near < far;
+		assert nearNormal != null;
+		assert farNormal != null;
 
 		// Ray intersects twice
-		return List.of(new Intersection(near, null), new Intersection(far, null)).iterator();
+		final Intersection n = Intersection.of(near, nearNormal);
+		final Intersection f = Intersection.of(far, farNormal);
+		return List.of(n, f).iterator();
 	}
 
 	@Override

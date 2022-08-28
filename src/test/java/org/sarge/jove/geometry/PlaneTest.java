@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Point.ORIGIN;
 import static org.sarge.jove.geometry.Vector.*;
 
+import java.util.Iterator;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.*;
@@ -75,9 +77,16 @@ class PlaneTest {
 	class PlaneRayIntersectionTests {
 		@Test
 		void intersect() {
-			assertEquals(new Intersection(3f,  X), plane.intersect(new DefaultRay(ORIGIN, X)));
-			assertEquals(new Intersection(-0f, X), plane.intersect(new DefaultRay(new Point(DIST, 0, 0), X)));
-			assertEquals(new Intersection(+0f, X), plane.intersect(new DefaultRay(new Point(DIST, 0, 0), X.invert())));
+			final Iterator<Intersection> itr = plane.intersect(new DefaultRay(ORIGIN, X));
+			assertEquals(Intersection.of(3f,  X), itr.next());
+			assertEquals(false, itr.hasNext());
+		}
+
+		@Test
+		void touching() {
+			final Iterator<Intersection> itr = plane.intersect(new DefaultRay(new Point(DIST, 0, 0), X));
+			assertEquals(Intersection.of(0,  X), itr.next());
+			assertEquals(false, itr.hasNext());
 		}
 
 		@Test
