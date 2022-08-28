@@ -70,7 +70,7 @@ class VectorTest {
 	}
 
 	@Test
-	void normalizeSelf() {
+	void normalized() {
 		final Vector result = vec.normalize();
 		assertSame(result, result.normalize());
 	}
@@ -99,16 +99,14 @@ class VectorTest {
 
 	@Test
 	void project() {
-		assertEquals(new Vector(1, 2, 3), vec.project(X));
-		assertEquals(new Vector(2, 4, 6), vec.project(Y));
-		assertEquals(new Vector(3, 6, 9), vec.project(Z));
+		assertEquals(new Vector(1, 0, 0), vec.project(X));
+		assertEquals(new Vector(0, 2, 0), vec.project(Y));
+		assertEquals(new Vector(0, 0, 3), vec.project(Z));
 	}
 
 	@Test
-	void projectAxes() {
-		assertEquals(new Vector(1, 0, 0), X.project(vec));
-		assertEquals(new Vector(0, 2, 0), Y.project(vec));
-		assertEquals(new Vector(0, 0, 3), Z.project(vec));
+	void projectSelf() {
+		assertEquals(vec, vec.project(vec.normalize()));
 	}
 
 	@Test
@@ -116,6 +114,13 @@ class VectorTest {
 		assertEquals(new Vector(-1, 2, 3), vec.reflect(X));
 		assertEquals(new Vector(1, -2, 3), vec.reflect(Y));
 		assertEquals(new Vector(1, 2, -3), vec.reflect(Z));
+	}
+
+	@Test
+	void reflectInverse() {
+		assertEquals(new Vector(-1, 2, 3), vec.reflect(X.invert()));
+		assertEquals(new Vector(1, -2, 3), vec.reflect(Y.invert()));
+		assertEquals(new Vector(1, 2, -3), vec.reflect(Z.invert()));
 	}
 
 	@Test

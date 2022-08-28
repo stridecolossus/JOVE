@@ -148,7 +148,7 @@ public final class Vector extends Tuple {
 	 * <li>by convention the direction of the resultant vector is determined by the <i>right-hand rule</i></li>
 	 * </ul>
 	 * <p>
-	 * @param vec Vector
+	 * @param vec Vector (assumes normalized)
 	 * @return Cross product
 	 * @see <a href="https://en.wikipedia.org/wiki/Cross_product">Wikipedia</a>
 	 */
@@ -160,21 +160,36 @@ public final class Vector extends Tuple {
 	}
 
 	/**
-	 * Projects the given vector onto this vector.
-	 * @param vec Vector to project
+	 * Projects this vector onto a given vector.
+	 * <p>
+	 * The vector projection of a vector V onto U is: <pre>projU(V) = (U.V) U / mag</pre>
+	 * where:
+	 * <ul>
+	 * <li>V is <b>this</b> vector</li>
+	 * <li>U is assumed to be normalised</li>
+	 * <li><i>mag</i> is the magnitude of U squared (and therefore is ignored by this implementation)</li>
+	 * </ul>
+	 * <p>
+	 * @param vec Vector to project onto (assumes normalised)
 	 * @return Projected vector
+	 * @see <a href="https://en.wikipedia.org/wiki/Vector_projection">Wikipedia</a>
 	 */
 	public Vector project(Vector vec) {
-		return multiply(dot(vec));
+		return vec.multiply(dot(vec));
 	}
 
 	/**
 	 * Reflects this vector about the given normal.
-	 * @param normal Normal
+	 * <p>
+	 * The reflection R of vector V onto a surface with normal N is:
+	 * <pre>R = -2(V.N)N + V</pre>
+	 * <p>
+	 * @param normal Normal (assumes normalized)
 	 * @return Reflected vector
+	 * @see <a href="http://www.3dkingdoms.com/weekly/weekly.php?a=2">Reflection</a>
 	 */
 	public Vector reflect(Vector normal) {
-		final float f = dot(normal) * -2f;
+		final float f = -2f * dot(normal);
 		return normal.multiply(f).add(this);
 	}
 
