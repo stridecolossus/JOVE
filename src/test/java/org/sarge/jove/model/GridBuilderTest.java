@@ -11,7 +11,6 @@ import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
-import org.sarge.jove.model.Model.Header;
 
 class GridBuilderTest {
 	private GridBuilder builder;
@@ -25,9 +24,10 @@ class GridBuilderTest {
 	@Test
 	void buildQuadStrip() {
 		final Model model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
-		assertNotNull(model);
-		assertEquals(new Header(Primitive.PATCH, (3 * 3) * 4, CompoundLayout.of(Point.LAYOUT, Coordinate2D.LAYOUT)), model.header());
-		assertTrue(model.index().isPresent());
+		assertEquals(Primitive.PATCH, model.primitive());
+		assertEquals((3 * 3) * 4, model.count());
+		assertEquals(CompoundLayout.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
+		assertEquals(true, model.isIndexed());
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")

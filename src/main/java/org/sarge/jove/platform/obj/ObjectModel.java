@@ -17,7 +17,7 @@ class ObjectModel {
 	private final VertexComponentList<Vector> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
-	private Model.Builder builder = new DuplicateModelBuilder();
+	private DefaultModel.Builder builder = new DuplicateModelBuilder();
 	private boolean empty = true;
 
 	/**

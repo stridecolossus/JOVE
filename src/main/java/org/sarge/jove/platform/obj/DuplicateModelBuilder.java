@@ -8,7 +8,7 @@ import org.sarge.jove.model.*;
  * Adapter for an OBJ model builder that performs vertex de-duplication.
  * @author Sarge
  */
-class DuplicateModelBuilder extends Model.Builder {
+class DuplicateModelBuilder extends DefaultModel.Builder {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
 	public DuplicateModelBuilder() {

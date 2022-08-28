@@ -10,7 +10,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Model.Header;
 
 class ModelLoaderTest {
 	private ModelLoader loader;
@@ -20,7 +19,7 @@ class ModelLoaderTest {
 	@BeforeEach
 	void before() {
 		// Create a model to persist
-		model = new Model.Builder()
+		model = new DefaultModel.Builder()
 				.primitive(Primitive.TRIANGLES)
 				.layout(Point.LAYOUT)
 				.add(Vertex.of(Point.ORIGIN))
@@ -56,7 +55,10 @@ class ModelLoaderTest {
 		assertNotNull(result);
 
 		// Check header
-		assertEquals(new Header(Primitive.TRIANGLES, 3, CompoundLayout.of(Point.LAYOUT)), result.header());
+		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(3, model.count());
+		assertEquals(CompoundLayout.of(Point.LAYOUT), result.layout());
+		assertEquals(true, result.isIndexed());
 
 		// Check vertices
 		final Bufferable vertices = result.vertices();

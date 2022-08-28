@@ -9,11 +9,9 @@ import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
-import org.sarge.jove.model.Model.*;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.render.DrawCommand.Builder;
-import org.sarge.jove.platform.vulkan.render.DrawCommand.IndirectBuilder;
+import org.sarge.jove.platform.vulkan.render.DrawCommand.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class DrawCommandTest extends AbstractVulkanTest {
@@ -46,7 +44,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 	@Test
 	void model() {
 		final Bufferable data = mock(Bufferable.class);
-		final Model model = new DefaultModel(new Header(Primitive.TRIANGLES, 3, CompoundLayout.of(Point.LAYOUT)), data, data);
+		final Model model = new DefaultModel(Primitive.TRIANGLES, 3, CompoundLayout.of(Point.LAYOUT), data, data);
 		final DrawCommand draw = DrawCommand.of(model);
 		draw.execute(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);

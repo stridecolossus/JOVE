@@ -149,7 +149,7 @@ public class GridBuilder {
 	 */
 	public Model build() {
 		// Init model
-		final var model = new Model.Builder()
+		final var model = new DefaultModel.Builder()
 				.primitive(primitive)
 				.layout(Point.LAYOUT)
 				.layout(Coordinate2D.LAYOUT);

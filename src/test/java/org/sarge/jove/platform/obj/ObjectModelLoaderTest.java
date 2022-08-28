@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.obj;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.io.*;
@@ -13,7 +13,6 @@ import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
-import org.sarge.jove.model.Model.Header;
 
 public class ObjectModelLoaderTest {
 	private ObjectModelLoader loader;
@@ -58,10 +57,12 @@ public class ObjectModelLoaderTest {
 
 		// Check header
 		final var layout = CompoundLayout.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
-		assertEquals(new Header(Primitive.TRIANGLES, 3, layout), model.header());
+		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(3, model.count());
+		assertEquals(layout, model.layout());
+		assertEquals(true, model.isIndexed());
 
 		// Check model data
-		assertTrue(model.index().isPresent());
 		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().length());
 		assertEquals(3 * Short.BYTES, model.index().get().length());
 	}

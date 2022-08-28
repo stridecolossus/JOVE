@@ -38,7 +38,7 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @see Model.Header#isIntegerIndex(int)
 	 */
 	public IndexBuffer(VulkanBuffer buffer, int count) {
-		this(buffer, Model.Header.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);
+		this(buffer, Model.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);
 	}
 
 	/**

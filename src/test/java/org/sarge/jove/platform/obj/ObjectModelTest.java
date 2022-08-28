@@ -9,7 +9,6 @@ import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
-import org.sarge.jove.model.Model.Header;
 
 public class ObjectModelTest {
 	private ObjectModel model;
@@ -84,7 +83,10 @@ public class ObjectModelTest {
 
 			// Check model header
 			final var layout = CompoundLayout.of(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
-			assertEquals(new Header(Primitive.TRIANGLES, 3, layout), result.header());
+			assertEquals(Primitive.TRIANGLES, result.primitive());
+			assertEquals(3, result.count());
+			assertEquals(layout, result.layout());
+			assertEquals(true, result.isIndexed());
 
 			// Check model data
 			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertices().length());

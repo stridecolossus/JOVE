@@ -74,7 +74,7 @@ public class CubeBuilder {
 	 * @return New cube model
 	 */
 	public Model build() {
-		final var builder = new Model.Builder()
+		final var builder = new DefaultModel.Builder()
 				.primitive(Primitive.TRIANGLES)
 				.layout(Point.LAYOUT)
 				.layout(Coordinate2D.LAYOUT);
@@ -89,7 +89,7 @@ public class CubeBuilder {
 	 * @param builder Model builder
 	 * @see #vertex(Point, Vector, Coordinate, Colour)
 	 */
-	public void build(Model.Builder builder) {
+	public void build(DefaultModel.Builder builder) {
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face

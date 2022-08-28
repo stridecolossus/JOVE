@@ -10,7 +10,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.model.Primitive;
 
 public class ParticleModelTest {
@@ -26,7 +25,10 @@ public class ParticleModelTest {
 
 	@Test
 	void header() {
-		assertEquals(new Header(Primitive.POINTS, 2, CompoundLayout.of(Point.LAYOUT)), model.header());
+		assertEquals(Primitive.POINTS, model.primitive());
+		assertEquals(2, model.count());
+		assertEquals(CompoundLayout.of(Point.LAYOUT), model.layout());
+		assertEquals(false, model.isIndexed());
 	}
 
 	@Test
