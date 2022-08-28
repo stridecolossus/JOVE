@@ -2,13 +2,13 @@ package org.sarge.jove.geometry;
 
 import java.util.Iterator;
 
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 
 /**
  * A <i>bounding volume</i> defines an abstract volume of space used for frustum culling, intersection tests and ray-picking.
  * @author Sarge
  */
-public interface Volume {
+public interface Volume extends Intersects {
 	/**
 	 * Tests whether the given point lies within this volume.
 	 * @param pt Point
@@ -54,13 +54,6 @@ public interface Volume {
 	boolean intersects(Plane plane);
 
 	/**
-	 * Determines the intersection(s) of this volume and the given ray.
-	 * @param ray Ray
-	 * @return Intersections
-	 */
-	Iterator<Intersection> intersect(Ray ray);
-
-	/**
 	 * Empty bounding volume.
 	 */
 	Volume EMPTY = new Volume() {
@@ -80,7 +73,7 @@ public interface Volume {
 		}
 
 		@Override
-		public Iterator<Intersection> intersect(Ray ray) {
+		public Iterator<Intersection> intersections(Ray ray) {
 			return Intersection.NONE;
 		}
 

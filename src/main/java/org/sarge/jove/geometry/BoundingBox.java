@@ -64,7 +64,7 @@ public class BoundingBox implements Volume {
 	}
 
 	@Override
-	public Iterator<Intersection> intersect(Ray ray) {
+	public Iterator<Intersection> intersections(Ray ray) {
 		// Init intersections
 		float near = Float.NEGATIVE_INFINITY;
 		float far = Float.POSITIVE_INFINITY;

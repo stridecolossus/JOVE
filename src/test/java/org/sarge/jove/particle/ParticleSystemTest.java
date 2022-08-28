@@ -8,8 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.particle.CollisionSurface.Action;
-import org.sarge.jove.particle.ParticleSystem.Policy;
+import org.sarge.jove.geometry.Ray.Intersects;
+import org.sarge.jove.particle.ParticleSystem.*;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
@@ -106,19 +106,19 @@ class ParticleSystemTest {
 	@DisplayName("A particle that intersects a collision surface...")
 	@Nested
 	class Collisions {
-		private CollisionSurface surface;
+		private Intersects surface;
 		private Particle p;
 
 		@BeforeEach
 		void before() {
 			p = create();
-			surface = CollisionSurface.of(new Plane(Vector.Y, -1));
+			surface = new Plane(Vector.Y, -1);
 		}
 
 		@DisplayName("can be destroyed")
 		@Test
 		void destroy() {
-			sys.add(surface, Action.DESTROY);
+			sys.add(surface, CollisionAction.DESTROY);
 			sys.update(animator);
 			assertEquals(0, sys.size());
 		}
@@ -126,7 +126,7 @@ class ParticleSystemTest {
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			sys.add(surface, Action.STOP);
+			sys.add(surface, CollisionAction.STOP);
 			sys.update(animator);
 			assertEquals(true, p.isIdle());
 		}
@@ -134,7 +134,7 @@ class ParticleSystemTest {
 		@DisplayName("can be reflected by the surface")
 		@Test
 		void reflect() {
-			sys.add(surface, Action.REFLECT);
+			sys.add(surface, CollisionAction.REFLECT);
 			sys.update(animator);
 			assertEquals(Point.ORIGIN, p.origin());
 			assertEquals(Vector.Y.invert(), p.direction());
@@ -162,8 +162,8 @@ class ParticleSystemTest {
 		@DisplayName("is not tested for collisions")
 		@Test
 		void collide() {
-			final CollisionSurface surface = mock(CollisionSurface.class);
-			sys.add(surface, Action.DESTROY);
+			final Intersects surface = mock(Intersects.class);
+			sys.add(surface, CollisionAction.DESTROY);
 			sys.update(animator);
 			verifyNoInteractions(surface);
 		}

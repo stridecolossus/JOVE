@@ -38,8 +38,8 @@ public class InverseVolume implements Volume {
 	}
 
 	@Override
-	public Iterator<Intersection> intersect(Ray ray) {
-		return vol.intersect(ray);
+	public Iterator<Intersection> intersections(Ray ray) {
+		return vol.intersections(ray);
 	}
 
 	@Override

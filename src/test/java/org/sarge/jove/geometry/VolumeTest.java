@@ -38,7 +38,7 @@ class VolumeTest {
 
 		@Test
 		void intersectsRay() {
-			assertEquals(Intersection.NONE, Volume.EMPTY.intersect(null));
+			assertEquals(Intersection.NONE, Volume.EMPTY.intersections(null));
 		}
 
 		@Test

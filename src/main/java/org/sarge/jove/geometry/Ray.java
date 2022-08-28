@@ -46,7 +46,19 @@ public interface Ray {
 	}
 
 	/**
-	 * A <i>ray intersection</i> is defined by a distance along this ray.
+	 * Defines a surface that can be tested for intersections with a ray.
+	 */
+	interface Intersects {
+		/**
+		 * Determines the intersections of this surface with the given ray.
+		 * @param ray Ray
+		 * @return Intersections
+		 */
+		Iterator<Intersection> intersections(Ray ray);
+	}
+
+	/**
+	 * A <i>ray intersection</i> is defined by a distance along the ray.
 	 */
 	public class Intersection {
 		/**

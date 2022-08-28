@@ -82,7 +82,7 @@ public class SphereVolume implements Volume {
 	}
 
 	@Override
-	public Iterator<Intersection> intersect(Ray ray) {
+	public Iterator<Intersection> intersections(Ray ray) {
 		// Determine length of the nearest point on the ray to the centre of the sphere
 		final Vector vec = Vector.between(ray.origin(), centre);
 		final float nearest = ray.direction().dot(vec);

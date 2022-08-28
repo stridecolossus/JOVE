@@ -9,9 +9,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Animator;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.particle.CollisionSurface.Action;
 import org.sarge.lib.util.Check;
 
 /**
@@ -28,7 +27,7 @@ import org.sarge.lib.util.Check;
  * <li>TODO
  * move each particle by its current vector</li>
  * <li>apply influences specified by {@link #add(Influence)}</li>
- * <li>test for collisions with surfaces according to {@link #add(CollisionSurface, Action)}</li>
+ * <li>test for collisions with surfaces according to {@link #add(Intersects, CollisionAction)}</li>
  * <li>generate new particles according to the configured growth policy</li>
  * </ol>
  * <p>
@@ -38,49 +37,11 @@ import org.sarge.lib.util.Check;
 public class ParticleSystem implements Animation {
 	private static final Predicate<Particle> MOVING = Predicate.not(Particle::isIdle);
 
-	/**
-	 * A <i>particle system policy</i> specifies the number of particles to be generated on each frame.
-	 */
-	public interface Policy {
-		/**
-		 * Determines the number of particles to add on each frame.
-		 * @param current Current number of particles
-		 * @return New particles to generate
-		 */
-		int count(int current);
-
-		/**
-		 * Policy for a particle system that does not generate new particles.
-		 */
-		Policy NONE = ignored -> 0;
-
-		/**
-		 * Creates a policy that increments the number of particles (disregarding the current number of particles).
-		 * @param inc Number of particles to generate
-		 * @return Incremental policy
-		 */
-		static Policy increment(int inc) {
-			return ignored -> inc;
-		}
-
-		/**
-		 * Creates a policy adapter that caps the maximum number of particles.
-		 * @param max Maximum number of particles
-		 * @return New capped policy
-		 */
-		default Policy max(int max) {
-			return current -> {
-				final int count = Policy.this.count(current);
-				return Math.min(count, max - current);
-			};
-		}
-	}
-
 	private PositionFactory pos = PositionFactory.ORIGIN;
 	private VectorFactory vec = VectorFactory.of(Vector.Y);
 	private Policy policy = Policy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
-	private final Map<CollisionSurface, Action> surfaces = new HashMap<>();
+	private final Map<Intersects, CollisionAction> surfaces = new HashMap<>();
 	private final List<Particle> particles = new ArrayList<>();
 
 	/**
@@ -129,6 +90,44 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
+	 * A <i>particle system policy</i> specifies the number of particles to be generated on each frame.
+	 */
+	public interface Policy {
+		/**
+		 * Determines the number of particles to add on each frame.
+		 * @param current Current number of particles
+		 * @return New particles to generate
+		 */
+		int count(int current);
+
+		/**
+		 * Policy for a particle system that does not generate new particles.
+		 */
+		Policy NONE = ignored -> 0;
+
+		/**
+		 * Creates a policy that increments the number of particles (disregarding the current number of particles).
+		 * @param inc Number of particles to generate
+		 * @return Incremental policy
+		 */
+		static Policy increment(int inc) {
+			return ignored -> inc;
+		}
+
+		/**
+		 * Creates a policy adapter that caps the maximum number of particles.
+		 * @param max Maximum number of particles
+		 * @return New capped policy
+		 */
+		default Policy max(int max) {
+			return current -> {
+				final int count = Policy.this.count(current);
+				return Math.min(count, max - current);
+			};
+		}
+	}
+
+	/**
 	 * Sets the policy for the number of new particles to be generated on each frame (default is {@link Policy#NONE}).
 	 * @param policy Growth policy
 	 */
@@ -156,11 +155,33 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
+	 * Action on particles that intersect this surface.
+	 */
+	public enum CollisionAction {
+		/**
+		 * Particle is destroyed.
+		 */
+		DESTROY,
+
+		/**
+		 * Particle stops, i.e. sticks to the surface.
+		 * @see Particle#stop()
+		 */
+		STOP,
+
+		/**
+		 * Particle is reflected.
+		 * @see Particle#reflect(Intersection)
+		 */
+		REFLECT
+	}
+
+	/**
 	 * Adds a collision surface.
 	 * @param surface		Surface
 	 * @param action		Action for collided particles
 	 */
-	public ParticleSystem add(CollisionSurface surface, Action action) {
+	public ParticleSystem add(Intersects surface, CollisionAction action) {
 		Check.notNull(surface);
 		Check.notNull(action);
 		surfaces.put(surface, action);
@@ -171,7 +192,7 @@ public class ParticleSystem implements Animation {
 	 * Removes a collision surface.
 	 * @param surface Surface to remove
 	 */
-	public ParticleSystem remove(CollisionSurface surface) {
+	public ParticleSystem remove(Intersects surface) {
 		surfaces.remove(surface);
 		return this;
 	}
@@ -206,8 +227,8 @@ public class ParticleSystem implements Animation {
 	 */
 	private void collide() {
 		for(var entry : surfaces.entrySet()) {
-			final CollisionSurface surface = entry.getKey();
-			final Action action = entry.getValue();
+			final Intersects surface = entry.getKey();
+			final CollisionAction action = entry.getValue();
 			final Iterator<Particle> itr = particles.iterator();
 			while(itr.hasNext()) {
 				// Ignore stopped particles
@@ -216,15 +237,19 @@ public class ParticleSystem implements Animation {
 					continue;
 				}
 
-				// Apply action for intersecting particles
-				if(surface.intersects(p.origin())) {
-					switch(action) {
-						case DESTROY -> itr.remove();
-						case STOP -> p.stop();
-						case REFLECT -> {
-							final Intersection pt = surface.intersections(p).next();
-							p.reflect(pt);
-						}
+				// Check for intersection(s)
+				final Iterator<Intersection> intersections = surface.intersections(p);
+				if(!intersections.hasNext()) {
+					continue;
+				}
+
+				// Apply action for intersected particles
+				switch(action) {
+					case DESTROY -> itr.remove();
+					case STOP -> p.stop();
+					case REFLECT -> {
+						final Intersection pt = surface.intersections(p).next();
+						p.reflect(pt);
 					}
 				}
 			}
