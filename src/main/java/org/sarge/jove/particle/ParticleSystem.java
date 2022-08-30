@@ -39,7 +39,7 @@ public class ParticleSystem implements Animation {
 	private Policy policy = Policy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersects, CollisionAction> surfaces = new HashMap<>();
-	private List<Particle> particles = new ArrayList<>();
+	private List<Particle> particles = List.of();
 	private long lifetime = Long.MAX_VALUE;
 
 	/**
