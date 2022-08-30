@@ -172,7 +172,7 @@ public class SphereVolume implements Volume {
 		}
 
 		/**
-		 * @return Intersections
+		 * @return Intersection distances
 		 */
 		protected abstract float[] intersections();
 

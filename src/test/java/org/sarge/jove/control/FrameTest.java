@@ -23,12 +23,6 @@ class FrameTest {
 			frame.start();
 		}
 
-		@DisplayName("has a start time")
-		@Test
-		void time() {
-			assertNotNull(frame.time());
-		}
-
 		@DisplayName("can be ended")
 		@Test
 		void end() {
@@ -46,11 +40,17 @@ class FrameTest {
 	@Nested
 	class Ended {
 		private Instant start;
-		
+
 		@BeforeEach
 		void before() {
 			start = frame.start();
 			frame.end();
+		}
+
+		@DisplayName("has a completion time")
+		@Test
+		void time() {
+			assertNotNull(frame.time());
 		}
 
 		@DisplayName("has an elapsed duration")

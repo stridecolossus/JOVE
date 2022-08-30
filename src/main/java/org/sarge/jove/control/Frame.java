@@ -1,7 +1,5 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.time.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -22,8 +20,8 @@ public class Frame {
 		void frame();
 	}
 
-	private Instant start = Instant.EPOCH;
-	private Instant end = Instant.EPOCH;
+	private Instant start;
+	private Instant end;
 	private boolean running;
 
 	/**
@@ -57,7 +55,7 @@ public class Frame {
 	 */
 	public void end() {
 		if(!running) throw new IllegalStateException();
-		this.end = notNull(end);
+		this.end = Instant.now();
 		this.running = false;
 	}
 

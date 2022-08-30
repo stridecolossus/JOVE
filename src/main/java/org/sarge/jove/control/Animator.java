@@ -17,8 +17,9 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		/**
 		 * Updates this animation.
 		 * @param animator Animator
+		 * @return Whether this animation has finished
 		 */
-		void update(Animator animator);
+		boolean update(Animator animator);
 	}
 
 	private final Animation animation;
@@ -45,13 +46,6 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	 */
 	public long elapsed() {
 		return (long) (frame.elapsed().toMillis() * speed);
-	}
-
-	/**
-	 * @return Animation position
-	 */
-	public float position() {
-		return frame.time().toEpochMilli();
 	}
 
 	/**
@@ -94,22 +88,15 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 
 		// Update animation
 		frame.end();
-		update();
+		final boolean stop = animation.update(this);
 
 		// Start next frame
-		if(isPlaying()) {
-			frame.start();
-		}
-		else {
+		if(stop) {
 			super.state(State.STOP);
 		}
-	}
-
-	/**
-	 * Updates the animation.
-	 */
-	protected void update() {
-		animation.update(this);
+		else {
+			frame.start();
+		}
 	}
 
 	@Override

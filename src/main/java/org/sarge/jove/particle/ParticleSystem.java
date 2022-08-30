@@ -206,11 +206,12 @@ public class ParticleSystem implements Animation {
 	}
 
 	@Override
-	public void update(Animator animator) {
+	public boolean update(Animator animator) {
 		final Helper helper = new Helper(animator);
 		helper.cull();
 		helper.update();
 		helper.generate();
+		return false;
 	}
 
 	/**
