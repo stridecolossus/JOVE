@@ -35,11 +35,6 @@ The pipeline domain class itself is relatively trivial:
 public class Pipeline extends AbstractVulkanObject {
     private final PipelineLayout layout;
 
-    Pipeline(Pointer handle, LogicalDevice dev, PipelineLayout layout) {
-        super(handle, dev);
-        this.layout = notNull(layout);
-    }
-
     @Override
     protected Destructor<Pipeline> destructor(VulkanLibrary lib) {
         return lib::vkDestroyPipeline;
@@ -53,10 +48,6 @@ A bare-bones implementation is created to support this stage of development:
 
 ```java
 public class PipelineLayout extends AbstractVulkanObject {
-    private PipelineLayout(Pointer handle, LogicalDevice dev) {
-        super(handle, dev);
-    }
-
     @Override
     protected Destructor<PipelineLayout> destructor(VulkanLibrary lib) {
         return lib::vkDestroyPipelineLayout;
@@ -171,7 +162,7 @@ This is a slightly ropey implementation but is relatively simple, achieves the g
 
 To avoid making this chapter overly long only the implementation of the mandatory pipeline stages required for the triangle demo are detailed, with the other stages introduced as they become relevant in future chapters.
 
-The only fixed-function that __must__ be configured is the _viewport pipeline stage_ which defines the drawing regions of the rasterizer:
+The one fixed-function that __must__ be configured is the _viewport pipeline stage_ which defines the drawing regions of the rasterizer:
 
 ```java
 public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {

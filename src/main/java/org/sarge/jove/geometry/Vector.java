@@ -74,6 +74,26 @@ public final class Vector extends Tuple {
 	}
 
 	/**
+	 * Converts this vector to a <i>divisor</i>, i.e. one over each component.
+	 * @return Divisor
+	 */
+	public Vector divisor() {
+		final float dx = divisor(x);
+		final float dy = divisor(y);
+		final float dz = divisor(z);
+		return new Vector(dx, dy, dz);
+	}
+
+	private static float divisor(float value) {
+		if(MathsUtil.isZero(value)) {
+			return 0;
+		}
+		else {
+			return 1 / value;
+		}
+	}
+
+	/**
 	 * Adds the given vector to this vector.
 	 * @param vec Vector to add
 	 * @return Added vector
@@ -85,10 +105,19 @@ public final class Vector extends Tuple {
 	/**
 	 * Multiplies this vector by the given scalar.
 	 * @param f Scalar
-	 * @return Multiplied vector
+	 * @return Scaled vector
 	 */
 	public Vector multiply(float f) {
 		return new Vector(x * f, y * f, z * f);
+	}
+
+	/**
+	 * Multiplies this vector by the components of the given vector.
+	 * @param vec Vector
+	 * @return Multiplied vector
+	 */
+	public Vector multiply(Vector vec) {
+		return new Vector(x * vec.x, y * vec.y, z * vec.z);
 	}
 
 	/**
@@ -195,6 +224,9 @@ public final class Vector extends Tuple {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Vector) && super.equals(obj);
+		return
+				(obj == this) ||
+				(obj instanceof Vector that) &&
+				isEqual(that);
 	}
 }

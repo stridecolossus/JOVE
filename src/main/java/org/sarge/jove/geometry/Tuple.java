@@ -10,7 +10,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>tuple</i> is the base-class for 3-component floating-point values.
  * @author Sarge
  */
-public abstract class Tuple implements Bufferable {
+public class Tuple implements Bufferable {
 	/**
 	 * Size of a tuple.
 	 */
@@ -89,6 +89,42 @@ public abstract class Tuple implements Bufferable {
 		return x * t.x + y * t.y + z * t.z;
 	}
 
+	/**
+	 * @return Minimum component of this tuple
+	 */
+	public final float min() {
+		return Math.min(Math.min(x, y), z);
+	}
+
+	/**
+	 * @return Maximum component of this tuple
+	 */
+	public final float max() {
+		return Math.max(Math.max(x, y), z);
+	}
+
+	/**
+	 * Determines the component-wise minimum of the given tuples.
+	 * @return Minimum
+	 */
+	public static Tuple min(Tuple a, Tuple b) {
+		final float x = Math.min(a.x, b.x);
+		final float y = Math.min(a.y, b.y);
+		final float z = Math.min(a.z, b.z);
+		return new Tuple(x, y, z);
+	}
+
+	/**
+	 * Determines the component-wise maximum of the given tuples.
+	 * @return Maximum
+	 */
+	public static Tuple max(Tuple a, Tuple b) {
+		final float x = Math.max(a.x, b.x);
+		final float y = Math.max(a.y, b.y);
+		final float z = Math.max(a.z, b.z);
+		return new Tuple(x, y, z);
+	}
+
 	@Override
 	public final int length() {
 		return SIZE * Float.BYTES;
@@ -109,6 +145,15 @@ public abstract class Tuple implements Bufferable {
 		return
 				(obj == this) ||
 				(obj instanceof Tuple that) &&
+				isEqual(that);
+	}
+
+	/**
+	 * @param that Tuple
+	 * @return Whether this and the given tuple is equal
+	 */
+	protected final boolean isEqual(Tuple that) {
+		return
 				MathsUtil.isEqual(this.x, that.x) &&
 				MathsUtil.isEqual(this.y, that.y) &&
 				MathsUtil.isEqual(this.z, that.z);

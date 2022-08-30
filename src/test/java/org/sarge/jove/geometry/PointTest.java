@@ -48,8 +48,13 @@ class PointTest {
 	}
 
 	@Test
-	void scale() {
-		assertEquals(new Point(2, 4, 6), pos.scale(2));
+	void subtract() {
+		assertEquals(Point.ORIGIN, pos.subtract(pos));
+	}
+
+	@Test
+	void multiply() {
+		assertEquals(new Point(2, 4, 6), pos.multiply(2));
 	}
 
 	@Test

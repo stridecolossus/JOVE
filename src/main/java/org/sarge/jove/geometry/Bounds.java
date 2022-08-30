@@ -25,7 +25,7 @@ public record Bounds(Point min, Point max) {
 	 * @return Centre point of this bounds
 	 */
 	public Point centre() {
-		return min.add(max).scale(MathsUtil.HALF);
+		return min.add(max).multiply(MathsUtil.HALF);
 	}
 
 	/**

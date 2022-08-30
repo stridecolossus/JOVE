@@ -19,13 +19,14 @@ class ParticleSystemTest {
 	void before() {
 		sys = new ParticleSystem();
 		animator = mock(Animator.class);
+		when(animator.elapsed()).thenReturn(1000L);
 	}
 
 	/**
 	 * Adds a particle to the system.
 	 */
 	private Particle create() {
-		sys.add(1);
+		sys.add(1, animator.time());
 		return sys.particles().iterator().next();
 	}
 
@@ -48,8 +49,9 @@ class ParticleSystemTest {
 		@DisplayName("can have new particles added")
 		@Test
 		void add() {
-			sys.add(1);
+			sys.add(1, 0);
 			assertEquals(1, sys.size());
+			assertEquals(1, sys.particles().size());
 		}
 
 		@DisplayName("can be configured to generate new particles on each frame")
@@ -82,6 +84,15 @@ class ParticleSystemTest {
 			final Particle p = create();
 			assertEquals(pos, p.origin());
 			assertEquals(Vector.X, p.direction());
+			assertEquals(0, p.time());
+		}
+
+		@DisplayName("has a creation timestamp")
+		@Test
+		void creation() {
+			when(animator.time()).thenReturn(3L);
+			final Particle p = create();
+			assertEquals(3L, p.time());
 		}
 
 		@DisplayName("is moved by its current direction on each frame")
@@ -99,7 +110,17 @@ class ParticleSystemTest {
 			final Influence inf = mock(Influence.class);
 			sys.add(inf);
 			sys.update(animator);
-			verify(inf).apply(p, 0);
+			verify(inf).apply(p, 1f);
+		}
+
+		@DisplayName("is destroyed when its lifetime has expired")
+		@Test
+		void expired() {
+			sys.lifetime(2L);
+			create();
+			when(animator.time()).thenReturn(3L);
+			sys.update(animator);
+			assertEquals(0, sys.size());
 		}
 	}
 
@@ -129,6 +150,7 @@ class ParticleSystemTest {
 			sys.add(surface, CollisionAction.STOP);
 			sys.update(animator);
 			assertEquals(true, p.isIdle());
+			assertEquals(List.of(p), sys.particles());
 		}
 
 		@DisplayName("can be reflected by the surface")
@@ -136,8 +158,9 @@ class ParticleSystemTest {
 		void reflect() {
 			sys.add(surface, CollisionAction.REFLECT);
 			sys.update(animator);
-			assertEquals(Point.ORIGIN, p.origin());
+			assertEquals(new Point(0, 1, 0), p.origin());
 			assertEquals(Vector.Y.invert(), p.direction());
+			assertEquals(List.of(p), sys.particles());
 		}
 	}
 

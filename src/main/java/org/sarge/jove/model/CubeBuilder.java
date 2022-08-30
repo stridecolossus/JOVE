@@ -96,7 +96,7 @@ public class CubeBuilder {
 				final int index = FACES[face][corner];
 
 				// Lookup vertex components
-				final Point pos = VERTICES[index].scale(size);
+				final Point pos = VERTICES[index].multiply(size);
 				final Vector normal = NORMALS[face];
 				final Coordinate coord = Coordinate2D.QUAD.get(corner);
 				final Colour col = COLOURS[face];

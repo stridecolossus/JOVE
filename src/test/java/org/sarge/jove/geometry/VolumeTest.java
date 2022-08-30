@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.spy;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.Intersects;
 
 class VolumeTest {
 	private Volume vol;
@@ -38,7 +38,7 @@ class VolumeTest {
 
 		@Test
 		void intersectsRay() {
-			assertEquals(Intersection.NONE, Volume.EMPTY.intersections(null));
+			assertEquals(Intersects.NONE, Volume.EMPTY.intersections(null));
 		}
 
 		@Test

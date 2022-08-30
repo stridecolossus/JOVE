@@ -7,7 +7,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.*;
 
 class RayTest {
-	private DefaultRay ray;
+	private Ray ray;
 
 	@BeforeEach
 	void before() {
@@ -24,22 +24,28 @@ class RayTest {
 	void point() {
 		assertEquals(Point.ORIGIN, ray.point(0));
 		assertEquals(new Point(1, 0, 0), ray.point(1));
-		assertEquals(new Point(2, 0, 0), ray.point(2));
 	}
 
 	@Test
-	void none() {
-		assertEquals(false, Intersection.NONE.hasNext());
+	void equals() {
+		assertEquals(ray, ray);
+		assertEquals(ray, new DefaultRay(Point.ORIGIN, Vector.X));
+		assertNotEquals(ray, null);
+		assertNotEquals(ray, mock(Ray.class));
 	}
 
-	@Test
-	void intersection() {
-		final Intersection intersection = Intersection.of(3, Vector.Y);
-		assertEquals(3, intersection.distance());
-		assertEquals(Vector.Y, intersection.normal());
-		assertEquals(intersection, intersection);
-		assertEquals(intersection, Intersection.of(3, Vector.Y));
-		assertNotEquals(intersection, null);
-		assertNotEquals(intersection, mock(Intersection.class));
+	@Nested
+	class IntersectionTests {
+		@Test
+		void none() {
+			assertEquals(false, Intersects.NONE.hasNext());
+		}
+
+		@Test
+		void intersection() {
+			final var intersection = new Intersection(ray, 3, Vector.Y);
+			assertEquals(new Point(3, 0, 0), intersection.point());
+			assertEquals(Vector.Y, intersection.normal());
+		}
 	}
 }

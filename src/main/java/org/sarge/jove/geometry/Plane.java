@@ -120,16 +120,16 @@ public record Plane(Vector normal, float distance) implements Intersects {
 
 		// Stop if parallel
 		if(MathsUtil.isZero(denom)) {
-			return Intersection.NONE; // TODO - should this be zero?
+			return NONE; // TODO - should this be zero?
 		}
 
 		// Calc intersection (note negative sign in equation)
 		final float t = -distance(ray.origin()) / denom;
 		if(t < 0) {
-			return Intersection.NONE;
+			return NONE;
 		}
 
 		// Build intersection
-		return List.of(Intersection.of(t, normal)).iterator();
+		return List.of(new Intersection(ray, t, normal)).iterator();
 	}
 }

@@ -20,7 +20,7 @@ public class ParticleModelTest {
 	void before() {
 		sys = new ParticleSystem();
 		model = new ParticleModel(sys);
-		sys.add(2);
+		sys.add(2, 0L);
 	}
 
 	@Test

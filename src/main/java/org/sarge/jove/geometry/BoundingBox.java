@@ -14,8 +14,6 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public class BoundingBox implements Volume {
-	private static final Vector[] AXES = {Vector.X, Vector.Y, Vector.Z};
-
 	private final Bounds bounds;
 
 	/**
@@ -63,69 +61,78 @@ public class BoundingBox implements Volume {
 		return true;
 	}
 
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
+
 	@Override
 	public Iterator<Intersection> intersections(Ray ray) {
-		// Init intersections
-		float near = Float.NEGATIVE_INFINITY;
-		float far = Float.POSITIVE_INFINITY;
-		Vector nearNormal = null;
-		Vector farNormal = null;
-
-		// Test intersection on each pair of planes
-		for(int p = 0; p < Vector.SIZE; ++p) {
-			// Tests are performed component-wise
-			final float origin = ray.origin().get(p);
-			final float dir = ray.direction().get(p);
-			final float min = bounds.min().get(p);
-			final float max = bounds.max().get(p);
-
+		// Determine intersection distances
+		float n = Float.NEGATIVE_INFINITY;
+		float f = Float.POSITIVE_INFINITY;
+		for(int c = 0; c < Vector.SIZE; ++c) {
+			final float origin = ray.origin().get(c);
+			final float dir = ray.direction().get(c);
+			final float min = bounds.min().get(c);
+			final float max = bounds.max().get(c);
 			if(MathsUtil.isZero(dir)) {
-				// Parallel ray misses the box
+				// Check for parallel ray
 				if((origin < min) || (origin > max)) {
-					return Intersection.NONE;
+					return NONE;
 				}
 			}
 			else {
-				// Calc intersection points
-				final float a = (min - origin) / dir;
-				final float b = (max - origin) / dir;
+				// Calc intersection distances
+				final float a = intersect(min, origin, dir);
+				final float b = intersect(max, origin, dir);
 
-				// Update near intersection
-				final float n = Math.min(a, b);
-				if(n > near) {
-					near = n;
-					nearNormal = AXES[p].invert();
+				// Update intersections
+				n = Math.max(n, Math.min(a, b));
+				f = Math.min(f, Math.max(a, b));
+
+				// Check for ray missing the box
+				if(n > f) {
+					return NONE;
 				}
 
-				// Update far intersection
-				final float f = Math.max(a, b);
-				if(f < far) {
-					far = f;
-					farNormal = AXES[p];
-				}
-
-	//			near = Math.max(near, Math.min(a, b));
-	//			far = Math.min(far, Math.max(a, b));
-
-				// Ray does not intersect
-				if(near > far) {
-					return Intersection.NONE;
-				}
-
-				// Volume is behind the ray
-				if(far < 0) {
-					return Intersection.NONE;
+				// Check for box behind ray
+				if(f < 0) {
+					return NONE;
 				}
 			}
 		}
-		assert near < far;
-		assert nearNormal != null;
-		assert farNormal != null;
 
-		// Ray intersects twice
-		final Intersection n = Intersection.of(near, nearNormal);
-		final Intersection f = Intersection.of(far, farNormal);
-		return List.of(n, f).iterator();
+		// Build results
+		final var far = new Intersection(ray, f, this::normal);
+		if((n < 0) || MathsUtil.isEqual(n, f)) {
+			// Touching, inside or corner
+			return List.of(far).iterator();
+		}
+		else {
+			// Two intersections
+			final var near = new Intersection(ray, n, this::normal);
+			return List.of(near, far).iterator();
+		}
+	}
+
+	/**
+	 * Calculates the intersection of the given ray component.
+	 * @param value			Ray component
+	 * @param origin		Origin
+	 * @param dir			Direction
+	 * @return Intersection distance
+	 */
+	private static float intersect(float value, float origin, float dir) {
+		return (value - origin) / dir;
+	}
+
+	/**
+	 * Calculates the box normal for the given intersection point.
+	 * Note that corner normals will be diagonal.
+	 * @param pt Intersection point
+	 * @return Normal
+	 */
+	private Vector normal(Point pt) {
+		final Point pos = pt.subtract(bounds.centre());
+		return new Vector(pos).normalize();
 	}
 
 	@Override
@@ -135,7 +142,10 @@ public class BoundingBox implements Volume {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj == this) || (obj instanceof BoundingBox that) && this.bounds.equals(that.bounds);
+		return
+				(obj == this) ||
+				(obj instanceof BoundingBox that) &&
+				this.bounds.equals(that.bounds);
 	}
 
 	@Override

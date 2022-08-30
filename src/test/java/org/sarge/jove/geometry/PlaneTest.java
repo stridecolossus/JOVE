@@ -77,27 +77,29 @@ class PlaneTest {
 	class PlaneRayIntersectionTests {
 		@Test
 		void intersect() {
-			final Iterator<Intersection> itr = plane.intersections(new DefaultRay(ORIGIN, X));
-			assertEquals(Intersection.of(3f,  X), itr.next());
+			final Ray ray = new DefaultRay(ORIGIN, X);
+			final Iterator<Intersection> itr = plane.intersections(ray);
+			assertEquals(new Intersection(ray, 3f, X), itr.next());
 			assertEquals(false, itr.hasNext());
 		}
 
 		@Test
 		void touching() {
-			final Iterator<Intersection> itr = plane.intersections(new DefaultRay(new Point(DIST, 0, 0), X));
-			assertEquals(Intersection.of(0,  X), itr.next());
+			final Ray ray = new DefaultRay(new Point(DIST, 0, 0), X);
+			final Iterator<Intersection> itr = plane.intersections(ray);
+			assertEquals(new Intersection(ray, 0, X), itr.next());
 			assertEquals(false, itr.hasNext());
 		}
 
 		@Test
 		void miss() {
-			assertEquals(Intersection.NONE, plane.intersections(new DefaultRay(ORIGIN, Y)));
-			assertEquals(Intersection.NONE, plane.intersections(new DefaultRay(ORIGIN, Z)));
+			assertEquals(Intersects.NONE, plane.intersections(new DefaultRay(ORIGIN, Y)));
+			assertEquals(Intersects.NONE, plane.intersections(new DefaultRay(ORIGIN, Z)));
 		}
 
 		@Test
 		void behind() {
-			assertEquals(Intersection.NONE, plane.intersections(new DefaultRay(new Point(4, 0, 0), X)));
+			assertEquals(Intersects.NONE, plane.intersections(new DefaultRay(new Point(4, 0, 0), X)));
 		}
 	}
 }

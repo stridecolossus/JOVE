@@ -134,7 +134,7 @@ public class OrbitalCameraController extends CameraController {
 
 	@Override
 	protected void update(Vector vec) {
-		final Point pos = new Point(vec).scale(radius).add(target);
+		final Point pos = new Point(vec).multiply(radius).add(target);
 		cam.move(pos);
 		cam.direction(vec);
 	}

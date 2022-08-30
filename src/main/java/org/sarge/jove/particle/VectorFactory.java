@@ -1,7 +1,5 @@
 package org.sarge.jove.particle;
 
-import java.util.Random;
-
 import org.sarge.jove.geometry.*;
 
 /**
@@ -33,15 +31,11 @@ public interface VectorFactory {
 	}
 
 	/**
-	 * Creates a randomised vector factory.
+	 * Creates a vector factory as an adapter for the given randomiser.
+	 * @param randomiser Vector randomiser
+	 * @return Random vector factory (normalised)
 	 */
-	static VectorFactory random(Random random) {
-		final float[] array = new float[3];
-		return ignored -> {
-			for(int n = 0; n < array.length; ++n) {
-				array[n] = random.nextFloat();
-			}
-			return new Vector(array).normalize();
-		};
+	static VectorFactory random(VectorRandomiser randomiser) {
+		return ignored -> randomiser.randomise().normalize();
 	}
 }

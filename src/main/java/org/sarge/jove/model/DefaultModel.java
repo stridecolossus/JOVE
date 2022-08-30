@@ -53,6 +53,8 @@ public class DefaultModel extends AbstractModel {
 		return Optional.ofNullable(index);
 	}
 
+	// TODO - extract bounds from model/builder?
+
 	/**
 	 * Builder for a model.
 	 */

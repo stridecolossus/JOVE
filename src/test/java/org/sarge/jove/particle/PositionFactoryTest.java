@@ -1,14 +1,20 @@
 package org.sarge.jove.particle;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.Random;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.MathsUtil;
 
 class PositionFactoryTest {
+	private VectorRandomiser randomiser;
+
+	@BeforeEach
+	void before() {
+		randomiser = mock(VectorRandomiser.class);
+		when(randomiser.randomise()).thenReturn(Vector.X);
+	}
+
 	@DisplayName("The origin factory positions particles at the origin")
 	@Test
 	void origin() {
@@ -26,16 +32,15 @@ class PositionFactoryTest {
 	@DisplayName("The box factory positions particles randomly within the given bounds")
 	@Test
 	void box() {
-		final var factory = PositionFactory.box(new Bounds(Point.ORIGIN, Point.ORIGIN), new Random());
-		assertEquals(Point.ORIGIN, factory.position());
+		final var factory = PositionFactory.box(new Bounds(Point.ORIGIN, new Point(1, 2, 3)), randomiser);
+		assertEquals(new Point(1, 0, 0), factory.position());
 	}
 
 	@DisplayName("The sphere factory positions particles randomly on the surface of a sphere")
 	@Test
 	void spherical() {
 		final var vol = new SphereVolume(Point.ORIGIN, 3);
-		final var factory = PositionFactory.sphere(vol, new Random());
-		final Point pos = factory.position();
-		assertTrue(MathsUtil.isEqual(3 * 3, pos.dot(pos)));
+		final var factory = PositionFactory.sphere(vol, randomiser);
+		assertEquals(new Point(3, 0, 0), factory.position());
 	}
 }

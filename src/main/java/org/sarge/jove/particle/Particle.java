@@ -1,6 +1,6 @@
 package org.sarge.jove.particle;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -13,25 +13,27 @@ import org.sarge.jove.geometry.*;
  * @author Sarge
  */
 public class Particle implements Ray {
+	private final long time;
 	private Point pos;
 	private Vector vec;
 
 	/**
 	 * Constructor.
-	 * @param pos Starting position
-	 * @param vec Initial movement vector
+	 * @param time		Creation time
+	 * @param pos 		Starting position
+	 * @param vec 		Initial movement vector
 	 */
-	protected Particle(Point pos, Vector vec) {
+	protected Particle(long time, Point pos, Vector vec) {
+		this.time = zeroOrMore(time);
 		this.pos = notNull(pos);
 		this.vec = notNull(vec);
 	}
 
 	/**
-	 * Copy constructor.
-	 * @param p Particle to copy
+	 * @return Creation time
 	 */
-	protected Particle(Particle p) {
-		this(p.pos, p.vec);
+	public long time() {
+		return time;
 	}
 
 	@Override
@@ -50,6 +52,34 @@ public class Particle implements Ray {
 	 */
 	public boolean isIdle() {
 		return vec == null;
+	}
+
+	/**
+	 * Stops this particle.
+	 * @throws IllegalStateException if this particle has already been stopped
+	 * @see #isIdle()
+	 */
+	void stop() {
+		if(isIdle()) throw new IllegalStateException();
+		vec = null;
+	}
+
+	/**
+	 * @return Whether this particle is still alive
+	 * @see #destroy()
+	 */
+	public boolean isAlive() {
+		return pos != null;
+	}
+
+	/**
+	 * Kills this particle.
+	 * @throws IllegalStateException if this particle has already been killed
+	 * @see #isAlive()
+	 */
+	void destroy() {
+		if(!isAlive()) throw new IllegalStateException();
+		pos = null;
 	}
 
 	/**
@@ -77,35 +107,12 @@ public class Particle implements Ray {
 	}
 
 	/**
-	 * Updates the position of this particle by its direction.
-	 */
-	void update() {
-		pos = pos.add(vec);
-	}
-
-	/**
-	 * Stops this particle.
-	 * @throws IllegalStateException if this particle has already been stopped
-	 * @see #isIdle()
-	 */
-	void stop() {
-		if(isIdle()) throw new IllegalStateException();
-		vec = null;
-	}
-
-	/**
-	 * Reflects this particle at the given surface intersection.
+	 * Reflects this particle at the given intersection.
 	 * @param intersection Surface intersection
 	 */
 	void reflect(Intersection intersection) {
-		// Move back to previous position
-		final Point prev = pos.add(vec.invert());
-
-		// Calculate intersection point
-		final Vector inc = vec.multiply(intersection.distance());
-		pos = prev.add(inc);
-
-		// Reflect about normal
+		// TODO - will be inaccurate?
+		pos = intersection.point();
 		vec = vec.reflect(intersection.normal());
 	}
 
@@ -119,7 +126,7 @@ public class Particle implements Ray {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(pos, vec);
+		return Objects.hash(time, pos, vec);
 	}
 
 	@Override
@@ -127,6 +134,7 @@ public class Particle implements Ray {
 		return
 				(obj == this) ||
 				(obj instanceof Particle that) &&
+				(this.time == that.time) &&
 				this.pos.equals(that.pos) &&
 				this.vec.equals(that.vec);
 	}

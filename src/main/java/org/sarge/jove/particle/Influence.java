@@ -10,9 +10,9 @@ public interface Influence {
 	/**
 	 * Applies this influence to the given particle.
 	 * @param p 			Particle to influence
-	 * @param elapsed		Elapsed time since previous update (ms)
+	 * @param elapsed		Elapsed scalar
 	 */
-	void apply(Particle p, long elapsed);
+	void apply(Particle p, float elapsed);
 
 	/**
 	 * Creates an acceleration influence by incrementing the particle direction by the given vector.

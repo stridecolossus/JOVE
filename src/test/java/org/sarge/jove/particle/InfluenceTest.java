@@ -10,7 +10,7 @@ public class InfluenceTest {
 
 	@BeforeEach
 	void before() {
-		particle = new Particle(Point.ORIGIN, Vector.Y);
+		particle = new Particle(0, Point.ORIGIN, Vector.Y);
 	}
 
 	@Test

@@ -1,7 +1,5 @@
 package org.sarge.jove.particle;
 
-import java.util.Random;
-
 import org.sarge.jove.geometry.*;
 
 /**
@@ -32,16 +30,12 @@ public interface PositionFactory {
 	/**
 	 * Creates a position factory that generates points on a sphere about the origin.
 	 * @param radius 		Sphere radius
-	 * @param random		Randomiser
+	 * @param randomiser	Randomiser
 	 * @return Spherical position factory
 	 */
-	static PositionFactory sphere(SphereVolume sphere, Random random) {
-		final float[] array = new float[3];
+	static PositionFactory sphere(SphereVolume sphere, VectorRandomiser randomiser) {
 		return () -> {
-			for(int n = 0; n < array.length; ++n) {
-				array[n] = random.nextFloat();
-			}
-			final Vector vec = new Vector(array).normalize().multiply(sphere.radius());
+			final Vector vec = randomiser.randomise().normalize().multiply(sphere.radius());
 			return sphere.centre().add(vec);
 		};
 	}
@@ -49,18 +43,15 @@ public interface PositionFactory {
 	/**
 	 * Creates a position factory that generates points within a box volume.
 	 * @param bounds 		Box bounds
-	 * @param random		Randomiser
-	 * @return Position factory
+	 * @param randomiser	Vector randomiser
+	 * @return Box position factory
 	 */
-	static PositionFactory box(Bounds bounds, Random random) {
+	static PositionFactory box(Bounds bounds, VectorRandomiser randomiser) {
 		final Point min = bounds.min();
 		final Vector range = Vector.between(min, bounds.max());
-		final float[] array = new float[3];
 		return () -> {
-			for(int n = 0; n < array.length; ++n) {
-				array[n] = min.get(n) + random.nextFloat() * range.get(n);
-			}
-			return new Point(array);
+			final Vector vec = randomiser.randomise().multiply(range);
+			return new Point(vec).add(min);
 		};
 	}
 }

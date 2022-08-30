@@ -59,8 +59,23 @@ class VectorTest {
 	}
 
 	@Test
-	void multiply() {
+	void scalar() {
 		assertEquals(new Vector(2, 4, 6), vec.multiply(2));
+	}
+
+	@Test
+	void multiply() {
+		assertEquals(new Vector(1, 4, 9), vec.multiply(vec));
+	}
+
+	@Test
+	void divisor() {
+		assertEquals(new Vector(1, 1 / 2f, 1 / 3f), vec.divisor());
+	}
+
+	@Test
+	void divisorZero() {
+		assertEquals(Vector.X, Vector.X.divisor());
 	}
 
 	@Test

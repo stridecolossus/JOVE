@@ -14,61 +14,79 @@ public class ParticleTest {
 
 	@BeforeEach
 	void before() {
-		particle = new Particle(Point.ORIGIN, Vector.Y);
+		particle = new Particle(1, Point.ORIGIN, Vector.Y);
 	}
 
+	@DisplayName("A new particle has an initial position and movement vector")
 	@Test
 	void constructor() {
+		assertEquals(1, particle.time());
 		assertEquals(Point.ORIGIN, particle.origin());
 		assertEquals(Vector.Y, particle.direction());
+		assertEquals(true, particle.isAlive());
 		assertEquals(false, particle.isIdle());
 	}
 
+	@DisplayName("A particle can be moved")
 	@Test
 	void move() {
 		particle.move(Vector.X);
 		assertEquals(new Point(1, 0, 0), particle.origin());
 	}
 
+	@DisplayName("The movement vector of a particle can be combined")
 	@Test
 	void vector() {
 		particle.add(Vector.X);
 		assertEquals(Vector.Y.add(Vector.X), particle.direction());
 	}
 
+	@DisplayName("The velocity of a particle can be modified")
 	@Test
 	void velocity() {
 		particle.velocity(2);
 		assertEquals(Vector.Y.multiply(2), particle.direction());
 	}
 
-	@Test
-	void update() {
-		particle.update();
-		assertEquals(new Point(Vector.Y), particle.origin());
-	}
-
+	@DisplayName("A moving particle can be stopped")
 	@Test
 	void stop() {
 		particle.stop();
 		assertEquals(true, particle.isIdle());
 	}
 
+	@DisplayName("A particle cannot be stopped more than once")
 	@Test
 	void stopped() {
 		particle.stop();
 		assertThrows(IllegalStateException.class, () -> particle.stop());
 	}
 
+	@DisplayName("An active particle can be destroyed")
+	@Test
+	void kill() {
+		particle.destroy();
+		assertEquals(false, particle.isAlive());
+	}
+
+	@DisplayName("A particle cannot be destroyed more than once")
+	@Test
+	void destroyed() {
+		particle.destroy();
+		assertThrows(IllegalStateException.class, () -> particle.destroy());
+	}
+
+
+	@DisplayName("A particle can be reflected about an intersection")
 	@Test
 	void reflect() {
-		final Intersection intersection = Intersection.of(0, Vector.Y);
-		particle.update();
+		final Intersection intersection = new Intersection(particle, 0, Vector.Y);
 		particle.reflect(intersection);
 		assertEquals(Point.ORIGIN, particle.origin());
 		assertEquals(Vector.Y.invert(), particle.direction());
 	}
 
+	@DisplayName("A particle can be written to a vertex buffer")
 	@Test
 	void buffer() {
 		final ByteBuffer bb = mock(ByteBuffer.class);

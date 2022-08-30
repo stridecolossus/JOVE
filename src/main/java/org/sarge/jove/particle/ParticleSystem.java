@@ -1,8 +1,9 @@
 package org.sarge.jove.particle;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -14,35 +15,32 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>particle system</i> is a controller for a set of animated particles.
+ * A <i>particle system</i> is a controller for a particle animation.
  * <p>
  * The {@link #policy(Policy)} configures the number of new particles to be generated on each frame.
- * Alternatively particles can be pre-allocated using the {@link #add(int)} method.
+ * Alternatively particles can be pre-allocated using the {@link #add(int, long)} method.
  * <p>
  * New particles are initialised according to the configured {@link #position(PositionFactory)} and {@link #vector(VectorFactory)} factories.
- * TODO
+ * The maximum lifetime of a particle can be configured via {@link #lifetime(long)}.
  * <p>
- * On each frame all particles that are not {@link Particle#isStopped()} are updated as follows:
+ * On each frame all particles that are not {@link Particle#isIdle()} are updated as follows:
  * <ol>
- * <li>TODO
- * move each particle by its current vector</li>
  * <li>apply influences specified by {@link #add(Influence)}</li>
+ * <li>move each particle by its current vector</li>
  * <li>test for collisions with surfaces according to {@link #add(Intersects, CollisionAction)}</li>
  * <li>generate new particles according to the configured growth policy</li>
  * </ol>
  * <p>
- * TODO - age cull
  * @author Sarge
  */
 public class ParticleSystem implements Animation {
-	private static final Predicate<Particle> MOVING = Predicate.not(Particle::isIdle);
-
 	private PositionFactory pos = PositionFactory.ORIGIN;
 	private VectorFactory vec = VectorFactory.of(Vector.Y);
 	private Policy policy = Policy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersects, CollisionAction> surfaces = new HashMap<>();
-	private final List<Particle> particles = new ArrayList<>();
+	private List<Particle> particles = new ArrayList<>();
+	private long lifetime = Long.MAX_VALUE;
 
 	/**
 	 * @return Number of particles
@@ -56,19 +54,6 @@ public class ParticleSystem implements Animation {
 	 */
 	List<Particle> particles() {
 		return particles;
-	}
-
-	/**
-	 * Adds new particles to this system.
-	 * @param num Number of particles to add
-	 */
-	public void add(int num) {
-		for(int n = 0; n < num; ++n) {
-			final Point start = pos.position();
-			final Vector dir = vec.vector(start);
-			final Particle particle = new Particle(start, dir);
-			particles.add(particle);
-		}
 	}
 
 	/**
@@ -87,6 +72,20 @@ public class ParticleSystem implements Animation {
 	public ParticleSystem vector(VectorFactory vec) {
 		this.vec = notNull(vec);
 		return this;
+	}
+
+	/**
+	 * Adds new particles to this system.
+	 * @param num 		Number of particles to add
+	 * @param time		Current time
+	 */
+	public void add(int num, long time) {
+		for(int n = 0; n < num; ++n) {
+			final Point start = pos.position();
+			final Vector dir = vec.vector(start);
+			final Particle p = new Particle(time, start, dir);
+			particles.add(p);
+		}
 	}
 
 	/**
@@ -137,6 +136,15 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
+	 * Sets the particle lifetime (default is forever).
+	 * @param lifetime Lifetime (ms)
+	 */
+	public ParticleSystem lifetime(long lifetime) {
+		this.lifetime = oneOrMore(lifetime);
+		return this;
+	}
+
+	/**
 	 * Adds a particle influence.
 	 * @param influence Particle influence
 	 */
@@ -155,7 +163,7 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Action on particles that intersect this surface.
+	 * Action for particles that intersect a collision surface.
 	 */
 	public enum CollisionAction {
 		/**
@@ -199,53 +207,83 @@ public class ParticleSystem implements Animation {
 
 	@Override
 	public void update(Animator animator) {
-		final long elapsed = animator.elapsed();
-		influence(elapsed);
-		move();
-		collide();
-		generate();
+		final Helper helper = new Helper(animator);
+		helper.cull();
+		helper.update();
+		helper.generate();
 	}
 
 	/**
-	 * Applies particle influences.
+	 * Update helper.
 	 */
-	private void influence(long elapsed) {
-		for(Influence inf : influences) {
-			particles.stream().forEach(p -> inf.apply(p, elapsed));
+	private class Helper {
+		private static final float SECONDS = 1f / TimeUnit.SECONDS.toMillis(1);
+
+		private final long time;
+		private final long expired;
+		private final float elapsed;
+
+		private Helper(Animator animator) {
+			this.time = animator.time();
+			this.expired = time - lifetime;
+			this.elapsed = animator.elapsed() * SECONDS;
 		}
-	}
 
-	/**
-	 * Moves each particle.
-	 */
-	private void move() {
-		particles.stream().filter(MOVING).forEach(Particle::update);
-	}
+		/**
+		 * Culls expired particles.
+		 */
+		void cull() {
+			particles = particles
+					.parallelStream()
+					.filter(p -> p.time() > expired)
+					.toList();
+		}
 
-	/**
-	 * Applies collision surfaces.
-	 */
-	private void collide() {
-		for(var entry : surfaces.entrySet()) {
-			final Intersects surface = entry.getKey();
-			final CollisionAction action = entry.getValue();
-			final Iterator<Particle> itr = particles.iterator();
-			while(itr.hasNext()) {
-				// Ignore stopped particles
-				final Particle p = itr.next();
-				if(p.isIdle()) {
-					continue;
-				}
+		/**
+		 * Updates particles and removes any destroyed by collisions.
+		 */
+		void update() {
+			particles = particles
+					.parallelStream()
+					.filter(Predicate.not(Particle::isIdle))
+					.peek(this::influence)
+					.peek(this::move)
+					.peek(this::collide)
+					.filter(Particle::isAlive)
+					.toList();
+		}
 
-				// Check for intersection(s)
+		/**
+		 * Applies particle influences.
+		 */
+		private void influence(Particle p) {
+			for(Influence inf : influences) {
+				inf.apply(p, elapsed);
+			}
+		}
+
+		/**
+		 * Moves each particle.
+		 */
+		private void move(Particle p) {
+			final Vector vec = p.direction().multiply(elapsed);
+			p.move(vec);
+		}
+
+		/**
+		 * Applies collision surfaces.
+		 */
+		private void collide(Particle p) {
+			for(var entry : surfaces.entrySet()) {
+				final Intersects surface = entry.getKey();
 				final Iterator<Intersection> intersections = surface.intersections(p);
 				if(!intersections.hasNext()) {
 					continue;
 				}
 
 				// Apply action for intersected particles
-				switch(action) {
-					case DESTROY -> itr.remove();
+				switch(entry.getValue()) {
+					case DESTROY -> p.destroy();
 					case STOP -> p.stop();
 					case REFLECT -> {
 						final Intersection pt = surface.intersections(p).next();
@@ -254,15 +292,15 @@ public class ParticleSystem implements Animation {
 				}
 			}
 		}
-	}
 
-	/**
-	 * Generates new particles according to the configured policy.
-	 */
-	private void generate() {
-		final int count = policy.count(particles.size());
-		if(count > 0) {
-			add(count);
+		/**
+		 * Generates new particles according to the configured policy.
+		 */
+		void generate() {
+			final float num = policy.count(size()) * elapsed;
+			if(num > 0) {
+				add((int) num, time);
+			}
 		}
 	}
 
@@ -272,7 +310,7 @@ public class ParticleSystem implements Animation {
 				.append(policy)
 				.append(pos)
 				.append(vec)
-				.append("count", particles.size())
+				.append("count", size())
 				.build();
 	}
 }

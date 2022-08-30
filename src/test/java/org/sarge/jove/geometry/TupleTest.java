@@ -8,17 +8,11 @@ import java.util.Objects;
 import org.junit.jupiter.api.*;
 
 public class TupleTest {
-	private static class MockTuple extends Tuple {
-		private MockTuple(float x, float y, float z) {
-			super(x, y, z);
-		}
-	}
-
 	private Tuple tuple;
 
 	@BeforeEach
 	void before() {
-		tuple = new MockTuple(1, 2, 3);
+		tuple = new Tuple(1, 2, 3);
 	}
 
 	@DisplayName("A tuple is comprised of XYZ components")
@@ -32,34 +26,20 @@ public class TupleTest {
 	@DisplayName("A tuple can be copied from an existing tuple")
 	@Test
 	void copy() {
-		tuple = new Tuple(tuple) {
-			// Empty
-		};
-		assertEquals(1, tuple.x);
-		assertEquals(2, tuple.y);
-		assertEquals(3, tuple.z);
-	}
-
-	private void create(float[] array) {
-		tuple = new Tuple(array) {
-			// Empty
-		};
+		assertEquals(tuple, new Tuple(tuple));
 	}
 
 	@DisplayName("A tuple can be created from an array")
 	@Test
 	void array() {
-		create(new float[]{1, 2, 3});
-		assertEquals(1, tuple.x);
-		assertEquals(2, tuple.y);
-		assertEquals(3, tuple.z);
+		assertEquals(tuple, new Tuple(new float[]{1, 2, 3}));
 	}
 
 	@DisplayName("A tuple cannot be created from an array that does not comprise XYZ components")
 	@Test
 	void arrayInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> create(new float[0]));
-		assertThrows(IllegalArgumentException.class, () -> create(new float[]{1, 2, 3, 4}));
+		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[0]));
+		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[]{1, 2, 3, 4}));
 	}
 
 	@DisplayName("The components of a tuple can be retrieved by index")
@@ -79,6 +59,32 @@ public class TupleTest {
 	@Test
 	void dot() {
 		assertEquals(1 * 1 + 2 * 2 + 3 * 3, tuple.dot(tuple));
+	}
+
+	@DisplayName("The minimum component can be extracted from the tuple")
+	@Test
+	void min() {
+		assertEquals(1, tuple.min());
+	}
+
+	@DisplayName("The maximum component can be extracted from the tuple")
+	@Test
+	void max() {
+		assertEquals(3, tuple.max());
+	}
+
+	@DisplayName("The minimum components of two tuples can be calculated")
+	@Test
+	void minimum() {
+		assertEquals(tuple, Tuple.min(tuple, tuple));
+		assertEquals(tuple, Tuple.min(tuple, new Tuple(4, 5, 6)));
+	}
+
+	@DisplayName("The maximum components of two tuples can be calculated")
+	@Test
+	void maximum() {
+		assertEquals(tuple, Tuple.max(tuple, tuple));
+		assertEquals(tuple, Tuple.max(tuple, new Tuple(0, 0, 0)));
 	}
 
 	@DisplayName("A tuple has a length in bytes")
@@ -106,8 +112,8 @@ public class TupleTest {
 	@Test
 	void equals() {
 		assertEquals(tuple, tuple);
-		assertEquals(tuple, new MockTuple(1, 2, 3));
+		assertEquals(tuple, new Tuple(1, 2, 3));
 		assertNotEquals(tuple, null);
-		assertNotEquals(tuple, new MockTuple(4, 5, 6));
+		assertNotEquals(tuple, new Tuple(4, 5, 6));
 	}
 }

@@ -54,25 +54,37 @@ public final class Point extends Tuple {
 	}
 
 	/**
-	 * Moves this point by the given vector.
-	 * @param vec Vector
-	 * @return Moved point
+	 * Adds the given tuple to this point.
+	 * @param t Tuple
+	 * @return Added point
 	 */
-	public Point add(Tuple vec) {
-		return new Point(x + vec.x, y + vec.y, z + vec.z);
+	public Point add(Tuple t) {
+		return new Point(x + t.x, y + t.y, z + t.z);
 	}
 
 	/**
-	 * Scales this point.
-	 * @param scale Scale
-	 * @return Scaled point
+	 * Subtracts the given tuple from this point.
+	 * @param t Tuple
+	 * @return Subtracted point
 	 */
-	public Point scale(float scale) {
-		return new Point(x * scale, y * scale, z * scale);
+	public Point subtract(Tuple t) {
+		return new Point(x - t.x, y - t.y, z - t.z);
+	}
+
+	/**
+	 * Multiplies this point.
+	 * @param f Scalar
+	 * @return Multiplied point
+	 */
+	public Point multiply(float f) {
+		return new Point(x * f, y * f, z * f);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Point) && super.equals(obj);
+		return
+				(obj == this) ||
+				(obj instanceof Tuple that) &&
+				isEqual(that);
 	}
 }

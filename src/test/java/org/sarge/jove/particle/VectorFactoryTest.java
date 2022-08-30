@@ -1,8 +1,7 @@
 package org.sarge.jove.particle;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.Random;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
@@ -25,7 +24,9 @@ class VectorFactoryTest {
 	@DisplayName("The random factory initialises particles movement vectors to a random direction")
 	@Test
 	void random() {
-		final var factory = VectorFactory.random(new Random());
-		assertNotNull(factory.vector(null));
+		final var randomiser = mock(VectorRandomiser.class);
+		final var factory = VectorFactory.random(randomiser);
+		when(randomiser.randomise()).thenReturn(Vector.Y);
+		assertEquals(Vector.Y, factory.vector(null));
 	}
 }

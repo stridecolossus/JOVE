@@ -99,7 +99,7 @@ public class SphereVolume implements Volume {
 		// Stop if ray does not intersect
 		final float r = radius * radius;
 		if(Math.abs(dist) > r) {
-			return Intersection.NONE;
+			return NONE;
 		}
 
 		// Create lazy intersection record
@@ -134,7 +134,7 @@ public class SphereVolume implements Volume {
 		// Stop if ray is outside of the sphere
 		final float r = radius * radius;
 		if(len > r) {
-			return Intersection.NONE;
+			return NONE;
 		}
 
 		// Otherwise calc intersection point
@@ -193,20 +193,17 @@ public class SphereVolume implements Volume {
 
 		@Override
 		public Intersection next() {
-			// Get next intersection
 			init();
 			if(index >= distances.length) throw new NoSuchElementException();
 			final float dist = distances[index++];
+			return new Intersection(ray, dist, this::normal);
+		}
 
-			// Build intersection with lazily evaluated surface normal
-			return new Intersection(dist) {
-				@Override
-				public Vector normal() {
-					final Vector vec = ray.direction().multiply(dist);
-					final Point pt = ray.origin().add(vec);
-					return Vector.between(centre, pt).normalize();
-				}
-			};
+		/**
+		 * Calculates the normal at the given intersection point on this sphere.
+		 */
+		private Vector normal(Point pt) {
+			return Vector.between(centre, pt).normalize();
 		}
 	}
 

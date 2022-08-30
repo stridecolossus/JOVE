@@ -74,7 +74,7 @@ public interface Volume extends Intersects {
 
 		@Override
 		public Iterator<Intersection> intersections(Ray ray) {
-			return Intersection.NONE;
+			return NONE;
 		}
 
 		@Override
