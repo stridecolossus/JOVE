@@ -234,20 +234,26 @@ public class ParticleSystem implements Animation {
 		}
 
 		/**
+		 * @return Whether this particle system has a particle lifetime
+		 */
+		private boolean isLifetimeBound() {
+			return lifetime < Long.MAX_VALUE;
+		}
+
+		/**
 		 * Removes expired particles.
 		 */
 		void expire() {
-			if(lifetime == Long.MAX_VALUE) {
-				// TODO - also culling ~ lifetime? i.e. filter !isAlive in update() and expired are removed in cull()?
+			if(!isLifetimeBound()) {
 				return;
 			}
 
 			final long expired = time - lifetime;
 
-			particles = particles
+			particles
 					.parallelStream()
-					.filter(p -> p.time() > expired)
-					.collect(toCollection(ArrayList::new));
+					.filter(p -> p.time() < expired)
+					.forEach(Particle::destroy);
 		}
 
 		/**
@@ -256,6 +262,7 @@ public class ParticleSystem implements Animation {
 		void update() {
 			particles
 					.parallelStream()
+					.filter(Particle::isAlive)
 					.filter(Predicate.not(Particle::isIdle))
 					.forEach(this::update);
 		}
@@ -291,6 +298,7 @@ public class ParticleSystem implements Animation {
 		 */
 		private void collide(Particle p) {
 			for(var entry : surfaces.entrySet()) {
+				// Test for collision
 				final Intersects surface = entry.getKey();
 				final Iterator<Intersection> intersections = surface.intersections(p);
 				if(!intersections.hasNext()) {
@@ -306,14 +314,17 @@ public class ParticleSystem implements Animation {
 						p.reflect(intersection.point(), intersection.normal());
 					}
 				}
+
+				// Assume only a single collision is logical
+				break;
 			}
 		}
 
 		/**
-		 * Culls destroyed particles.
+		 * Culls expired or destroyed particles.
 		 */
 		void cull() {
-			if(!culling) {
+			if(!culling && !isLifetimeBound()) {
 				return;
 			}
 

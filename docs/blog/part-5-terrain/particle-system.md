@@ -12,17 +12,72 @@ title: Particle System
 
 ---
 
-## Overview
+## Introduction
 
-particle system
-examples
-influence vs trajectory approach
-software vs hardware
+### Overview
 
-sparks demo
-walkthrough
-initially crude
-then add functionality
+In this chapter we will implement a _particle system_ that can be configured to support multiple scenarios, such as falling snow, smoke, explosions, etc.
+This will build on the point-cloud and geometry shader functionality introduced in the previous chapter.
+
+TODO - software vs hardware
+
+### Requirements
+
+To determine some requirements and constraints for what is considered to be a particle system we sketched the properties of a few scenarios:
+
+scenario    | generation    | emitter   | trajectory    | forces        | bounds        | rendering         |
+--------    | ----------    | -------   | ----------    | ----------    | ------        | ---------         |
+snow        | constant      | box       | down          | breeze        | ground        | texture           |
+fountain    | constant      | cone      | up            | gravity       | ground        | blue              |
+sparks      | periodic      | point     | ballistic     | gravity       | ground        | colour fade       |
+smoke       | constant      | cone      | up            | n/a           | time          | colour fade       |
+explosion   | once          | sphere    | expanding     | n/a           | time          | colour fade       |
+fireworks   | periodic      | point     | ballistic     | gravity       | time          | colour            |
+balls       | once          | box       | constant      | n/a           | bounding box  | random colour     |
+
+Where:
+
+* A _ballistic_ trajectory implies the particle is 'fired' (and generally implies a gravitational influence).
+
+* The _bounds_ specifies whether particles have a finite lifetime or are constrained by some geometric surface.
+
+* A _colour fade_ indicates that the particle colour would fade over time, e.g. smoke particles would perhaps start as grey and fade to black.
+
+* The bouncing _balls_ scenario is something of special case where a group of particles are continually reflected off the inside of an enclosing bounding box.
+
+From the above the following requirements can be derived for particles:
+
+* Generated according to a configurable policy, either a one-off allocation or replenished per-frame.
+
+* Initialised according to the _emitter_ and _trajectory_ properties.
+
+* Optionally has a finite lifetime.
+
+* Can collide with a geometric surface or terrain where the particle either stops, is destroyed, or is reflected (e.g. sparks would bounce a bit).
+
+* Has a colour which is either a constant or fades over time.
+
+### Design
+
+For the particle system design we considered two approaches (there are almost certainly others) for how the _trajectory_ of a particle could be specified:
+
+* A particle has a movement vector which is a mutable property applied to its position on each frame.
+
+* A particle has a trajectory _function_ that calculates the position of the particle at a given instant.
+
+There are pros and cons to either of these approaches: A trajectory function is appealing in that it encapsulates all the information about how that particle moves over time, and is therefore largely immutable, simpler to comprehend, and more easily tested.  However the iterative, mutable approach is probably simpler to implement, if a little more complex to configure.
+
+After some trials we opted for the iterative approach where the configuration of the particle trajectory is comprised of:
+
+* An _emitter_ for the initial position of the particle.
+
+* A factory for the initial movement vector.
+
+* One-or-more influences that mutate the particle on each frame.
+
+Note that the particle colour will be determined in the fragment shader, implying that particles have a creation timestamp used to calculate the colour based on age.
+
+We will progressively build up particle system functionality using the _sparks_ scenario as a test case as this covers all the requirements.
 
 ---
 
@@ -30,10 +85,11 @@ then add functionality
 
 ### Framework
 
-The logical starting point is the definition of a _particle_ comprising a mutable position and movement direction:
+The logical starting point is the definition of a _particle_ comprising a trajectory and creation timestamp:
 
 ```java
 public class Particle {
+    private final long time;
     private Point pos;
     private Vector dir;
 
@@ -61,9 +117,7 @@ public class ParticleSystem implements Animation {
 }
 ```
 
-The particle _emitter_ is specified by the two configurable factories.
-
-The _position factory_ initialises the starting position of new particles:
+The two configurable factories specify the _emitter_ of the particle system, where the _position factory_ initialises the starting position of new particles:
 
 ```java
 @FunctionalInterface
@@ -89,7 +143,7 @@ public interface PositionFactory {
 }
 ```
 
-And the _vector factory_ initialises the movement vector of each particle:
+And the _vector factory_ initialises the movement vector:
 
 ```java
 @FunctionalInterface
@@ -117,11 +171,11 @@ These interfaces provide factory methods for literal positions and vectors, more
 New particles can now be programatically added to the system:
 
 ```java
-public void add(int num) {
+public void add(int num, long time) {
     for(int n = 0; n < num; ++n) {
         Point start = pos.position();
         Vector dir = vec.vector(start);
-        Particle p = new Particle(start, dir);
+        Particle p = new Particle(time, start, dir);
         particles.add(p);
     }
 }
@@ -199,11 +253,9 @@ private final Bufferable vertices = new Bufferable() {
 Note that the original model `Header` is now composed into the model class since the draw `count` is no longer a static property (and a separate header record provided little benefit anyway).
 A skeleton implementation is also introduced with an empty index buffer.
 
-### Additional functionality
+### Influences
 
 With a basic framework in place we can now introduce further functionality for the various particle system use-cases outlined above.
-
-#### Influences
 
 An _influence_ modifies some property of the particles on each frame: 
 
@@ -236,11 +288,9 @@ private void influence(Particle p, float elapsed) {
 }
 ```
 
-#### Culling
+### Generation
 
-To bound a particle system a creation timestamp is added to the particle class and an optional `lifetime` property is added to the particle system.
-
-Expired particles are then removed at the start of the `update` method:
+To bound a particle system an optional `lifetime` property is added and expired particles are removed at the start of the `update` method:
 
 ```java
 if(lifetime < Long.MAX_VALUE) {
@@ -248,8 +298,6 @@ if(lifetime < Long.MAX_VALUE) {
     particles.removeIf(p -> p.time() < expired);
 }
 ```
-
-#### Generation
 
 In most cases the particle system will be required to generate new particles on each frame, which is configured by the following policy:
 
@@ -299,7 +347,7 @@ void generate(float elapsed) {
 }
 ```
 
-#### Box Emitter
+### Box Emitter
 
 Several scenarios require an emitter defined as a box (or rectangle) which is implemented by a new type specified by min-max extents:
 
@@ -342,9 +390,9 @@ public class VectorRandomiser {
 
 Note that in this case `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
 
-#### Cone Emitter
+### Cone Emitter
 
-Scenarios that involve ballistic trajectories (e.g. fountain or fireworks) require an emitter that randomises the initial movement vector:
+Scenarios that involve ballistic trajectories require an emitter that randomises the initial movement vector:
 
 ```java
 public class ConeVectorFactory implements VectorFactory {
@@ -363,7 +411,6 @@ point origin
 cone
 gravity influence
 simple age cull
-
 
 ---
 
@@ -410,7 +457,7 @@ public interface Intersects {
 }
 ```
 
-Note that the results are returned as an _iterator_ as opposed to a stream or list, this allows intersections to be lazily evaluated as required.  For example, picking only requires knowing _whether_ an intersection has occurred, calculating the actual intersection points (and particularly the surface normals) would just be overhead.
+Note that the results are returned as an _iterator_ as opposed to a stream or list, this allows intersections to be lazily evaluated as required.  For example, picking only requires knowing _whether_ an intersection has occurred, calculating the actual intersection points (and particularly the surface normals) would be an unnecessary overhead.
 
 An _intersection_ records the distance of the result on a given ray:
 
@@ -687,7 +734,7 @@ public boolean update(Animator animator) {
 }
 ```
 
-Expired particles are now removed as a parallel stream operation:
+Expired particles are now destroyed as a parallel stream operation:
 
 ```java
 void expire() {
@@ -695,12 +742,12 @@ void expire() {
         return;
     }
 
-    long expired = time - lifetime;
+    long expiry = time - lifetime;
 
-    particles = particles
+    particles
         .parallelStream()
-        .filter(p -> p.time() > expired)
-        .collect(toCollection(ArrayList::new));
+        .filter(p -> p.time() < expiry)
+        .forEach(Particle::destroy);
 }
 ```
 
@@ -715,7 +762,7 @@ void update() {
 }
 ```
 
-Which invokes the following method comprising the update steps for each particle:
+Which invokes the following method comprising the existing code for each particle:
 
 ```java
 private void update(Particle p) {
@@ -736,7 +783,7 @@ void cull() {
 }
 ```
 
-Note that the reference to the `particles` collection is now mutable and is over-written when particles are expired or culled.
+Note that the reference to the `particles` collection is now mutable and is over-written when destroyed particles are culled.
 
 ### Integration
 

@@ -39,6 +39,7 @@ public interface PositionFactory {
 			return sphere.centre().add(vec);
 		};
 	}
+	// TODO - should be centre/radius, no point in volume
 
 	/**
 	 * Creates a position factory that generates points within a box volume.
