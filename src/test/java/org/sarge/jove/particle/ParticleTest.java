@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersection;
 
 public class ParticleTest {
 	private Particle particle;
@@ -80,9 +79,9 @@ public class ParticleTest {
 	@DisplayName("A particle can be reflected about an intersection")
 	@Test
 	void reflect() {
-		final Intersection intersection = new Intersection(particle, 0, Vector.Y);
-		particle.reflect(intersection);
-		assertEquals(Point.ORIGIN, particle.origin());
+		final Point pt = new Point(1, 2, 3);
+		particle.reflect(pt, Vector.Y);
+		assertEquals(pt, particle.origin());
 		assertEquals(Vector.Y.invert(), particle.direction());
 	}
 

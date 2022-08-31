@@ -1,5 +1,6 @@
 package org.sarge.jove.particle;
 
+import static java.util.stream.Collectors.toCollection;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
@@ -39,8 +40,9 @@ public class ParticleSystem implements Animation {
 	private Policy policy = Policy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersects, CollisionAction> surfaces = new HashMap<>();
-	private List<Particle> particles = List.of();
+	private List<Particle> particles = new ArrayList<>();
 	private long lifetime = Long.MAX_VALUE;
+	private boolean culling;
 
 	/**
 	 * @return Number of particles
@@ -193,6 +195,7 @@ public class ParticleSystem implements Animation {
 		Check.notNull(surface);
 		Check.notNull(action);
 		surfaces.put(surface, action);
+		culling = action == CollisionAction.DESTROY;
 		return this;
 	}
 
@@ -202,14 +205,16 @@ public class ParticleSystem implements Animation {
 	 */
 	public ParticleSystem remove(Intersects surface) {
 		surfaces.remove(surface);
+		culling = surfaces.containsValue(CollisionAction.DESTROY);
 		return this;
 	}
 
 	@Override
 	public boolean update(Animator animator) {
 		final Helper helper = new Helper(animator);
-		helper.cull();
+		helper.expire();
 		helper.update();
+		helper.cull();
 		helper.generate();
 		return false;
 	}
@@ -221,37 +226,47 @@ public class ParticleSystem implements Animation {
 		private static final float SECONDS = 1f / TimeUnit.SECONDS.toMillis(1);
 
 		private final long time;
-		private final long expired;
 		private final float elapsed;
 
 		private Helper(Animator animator) {
 			this.time = animator.time();
-			this.expired = time - lifetime;
 			this.elapsed = animator.elapsed() * SECONDS;
 		}
 
 		/**
-		 * Culls expired particles.
+		 * Removes expired particles.
 		 */
-		void cull() {
+		void expire() {
+			if(lifetime == Long.MAX_VALUE) {
+				// TODO - also culling ~ lifetime? i.e. filter !isAlive in update() and expired are removed in cull()?
+				return;
+			}
+
+			final long expired = time - lifetime;
+
 			particles = particles
 					.parallelStream()
 					.filter(p -> p.time() > expired)
-					.toList();
+					.collect(toCollection(ArrayList::new));
 		}
 
 		/**
-		 * Updates particles and removes any destroyed by collisions.
+		 * Updates moving particles.
 		 */
 		void update() {
-			particles = particles
+			particles
 					.parallelStream()
 					.filter(Predicate.not(Particle::isIdle))
-					.peek(this::influence)
-					.peek(this::move)
-					.peek(this::collide)
-					.filter(Particle::isAlive)
-					.toList();
+					.forEach(this::update);
+		}
+
+		/**
+		 * Updates each particle.
+		 */
+		private void update(Particle p) {
+			influence(p);
+			move(p);
+			collide(p);
 		}
 
 		/**
@@ -287,11 +302,25 @@ public class ParticleSystem implements Animation {
 					case DESTROY -> p.destroy();
 					case STOP -> p.stop();
 					case REFLECT -> {
-						final Intersection pt = surface.intersections(p).next();
-						p.reflect(pt);
+						final Intersection intersection = surface.intersections(p).next();
+						p.reflect(intersection.point(), intersection.normal());
 					}
 				}
 			}
+		}
+
+		/**
+		 * Culls destroyed particles.
+		 */
+		void cull() {
+			if(!culling) {
+				return;
+			}
+
+			particles = particles
+					.parallelStream()
+					.filter(Particle::isAlive)
+					.collect(toCollection(ArrayList::new));
 		}
 
 		/**
@@ -308,10 +337,13 @@ public class ParticleSystem implements Animation {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
+				.append("count", size())
 				.append(policy)
+				.append("lifetime", lifetime)
 				.append(pos)
 				.append(vec)
-				.append("count", size())
+				.append("influences", influences.size())
+				.append("surfaces", surfaces.size())
 				.build();
 	}
 }

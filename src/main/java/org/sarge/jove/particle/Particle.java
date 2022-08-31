@@ -110,10 +110,10 @@ public class Particle implements Ray {
 	 * Reflects this particle at the given intersection.
 	 * @param intersection Surface intersection
 	 */
-	void reflect(Intersection intersection) {
+	void reflect(Point intersection, Vector normal) {
 		// TODO - will be inaccurate?
-		pos = intersection.point();
-		vec = vec.reflect(intersection.normal());
+		pos = notNull(intersection);
+		vec = vec.reflect(normal);
 	}
 
 	/**
