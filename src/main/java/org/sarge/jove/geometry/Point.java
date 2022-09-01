@@ -63,9 +63,10 @@ public final class Point extends Tuple {
 	}
 
 	/**
-	 * Subtracts the given tuple from this point.
+	 * Convenience method: Subtracts the given tuple from this point.
 	 * @param t Tuple
 	 * @return Subtracted point
+	 * @see #add(Tuple)
 	 */
 	public Point subtract(Tuple t) {
 		return new Point(x - t.x, y - t.y, z - t.z);
