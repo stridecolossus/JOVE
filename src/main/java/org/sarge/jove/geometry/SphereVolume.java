@@ -33,7 +33,7 @@ public class SphereVolume implements Volume {
 	 */
 	public SphereVolume(Point centre, float radius) {
 		this.centre = notNull(centre);
-		this.radius = positive(radius);
+		this.radius = zeroOrMore(radius);
 	}
 
 	/**
@@ -131,14 +131,14 @@ public class SphereVolume implements Volume {
 	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
 	private Iterator<Intersection> intersectBehind(Ray ray, float len, float nearest) {
-		// Stop if ray is outside of the sphere
 		final float r = radius * radius;
 		if(len > r) {
+			// Ray originates outside the sphere
 			return NONE;
 		}
-
-		// Otherwise calc intersection point
+		else
 		if(len < r) {
+			// Ray originates inside the sphere
 			return new SphereIntersectionIterator(ray) {
 				@Override
 				protected float[] intersections() {

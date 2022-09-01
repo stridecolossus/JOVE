@@ -53,7 +53,7 @@ public interface Ray {
 	/**
 	 * Defines a surface that can be tested for intersections with a ray.
 	 */
-	public interface Intersects {
+	public interface Intersected {
 		/**
 		 * Determines the intersections of this surface with the given ray.
 		 * @param ray Ray
@@ -78,7 +78,7 @@ public interface Ray {
 	}
 
 	/**
-	 * An <i>intersection</i> defines the position and normal at an intersection of this ray with a given surface.
+	 * An <i>intersection</i> defines the position and normal where this ray intersects an {@link Intersected} surface.
 	 */
 	public class Intersection {
 		private final Ray ray;

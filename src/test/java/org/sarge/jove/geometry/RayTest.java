@@ -38,7 +38,7 @@ class RayTest {
 	class IntersectionTests {
 		@Test
 		void none() {
-			assertEquals(false, Intersects.NONE.hasNext());
+			assertEquals(false, Intersected.NONE.hasNext());
 		}
 
 		@Test

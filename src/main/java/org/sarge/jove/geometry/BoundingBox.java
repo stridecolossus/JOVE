@@ -61,8 +61,10 @@ public class BoundingBox implements Volume {
 		return true;
 	}
 
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
-
+	/**
+	 * Determines ray intersections using the component-wise slab method.
+	 * @see <a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection">Ray-box intersection</a>
+	 */
 	@Override
 	public Iterator<Intersection> intersections(Ray ray) {
 		// Determine intersection distances

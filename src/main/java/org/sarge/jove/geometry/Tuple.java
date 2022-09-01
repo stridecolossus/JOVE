@@ -89,41 +89,42 @@ public class Tuple implements Bufferable {
 		return x * t.x + y * t.y + z * t.z;
 	}
 
-	/**
-	 * @return Minimum component of this tuple
-	 */
-	public final float min() {
-		return Math.min(Math.min(x, y), z);
-	}
-
-	/**
-	 * @return Maximum component of this tuple
-	 */
-	public final float max() {
-		return Math.max(Math.max(x, y), z);
-	}
-
-	/**
-	 * Determines the component-wise minimum of the given tuples.
-	 * @return Minimum
-	 */
-	public static Tuple min(Tuple a, Tuple b) {
-		final float x = Math.min(a.x, b.x);
-		final float y = Math.min(a.y, b.y);
-		final float z = Math.min(a.z, b.z);
-		return new Tuple(x, y, z);
-	}
-
-	/**
-	 * Determines the component-wise maximum of the given tuples.
-	 * @return Maximum
-	 */
-	public static Tuple max(Tuple a, Tuple b) {
-		final float x = Math.max(a.x, b.x);
-		final float y = Math.max(a.y, b.y);
-		final float z = Math.max(a.z, b.z);
-		return new Tuple(x, y, z);
-	}
+// TODO - unused?
+//	/**
+//	 * @return Minimum component of this tuple
+//	 */
+//	public final float min() {
+//		return Math.min(Math.min(x, y), z);
+//	}
+//
+//	/**
+//	 * @return Maximum component of this tuple
+//	 */
+//	public final float max() {
+//		return Math.max(Math.max(x, y), z);
+//	}
+//
+//	/**
+//	 * Determines the component-wise minimum of the given tuples.
+//	 * @return Minimum
+//	 */
+//	public static Tuple min(Tuple a, Tuple b) {
+//		final float x = Math.min(a.x, b.x);
+//		final float y = Math.min(a.y, b.y);
+//		final float z = Math.min(a.z, b.z);
+//		return new Tuple(x, y, z);
+//	}
+//
+//	/**
+//	 * Determines the component-wise maximum of the given tuples.
+//	 * @return Maximum
+//	 */
+//	public static Tuple max(Tuple a, Tuple b) {
+//		final float x = Math.max(a.x, b.x);
+//		final float y = Math.max(a.y, b.y);
+//		final float z = Math.max(a.z, b.z);
+//		return new Tuple(x, y, z);
+//	}
 
 	@Override
 	public final int length() {
@@ -150,7 +151,7 @@ public class Tuple implements Bufferable {
 
 	/**
 	 * @param that Tuple
-	 * @return Whether this and the given tuple is equal
+	 * @return Whether this and the given tuple are equal
 	 */
 	protected final boolean isEqual(Tuple that) {
 		return

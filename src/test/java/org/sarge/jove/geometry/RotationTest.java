@@ -33,6 +33,13 @@ class RotationTest {
 		}
 
 		@Test
+		void rotate() {
+			final Vector vec = new Vector(1, 1, 0).normalize();
+			assertEquals(new Vector(-1, 1, 0).normalize(), rot.rotate(vec));
+			assertEquals(Vector.X.invert().normalize(), rot.rotate(Vector.X));
+		}
+
+		@Test
 		void x() {
 			final Matrix expected = new Matrix.Builder()
 					.identity()

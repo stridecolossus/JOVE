@@ -154,7 +154,7 @@ class SphereVolumeTest {
 		@DisplayName("Sphere behind, does not intersect")
 		@Test
 		void behindNotIntersecting() {
-			assertEquals(Intersects.NONE, sphere.intersections(new DefaultRay(new Point(OUTSIDE, 0, 0), X)));
+			assertEquals(Intersected.NONE, sphere.intersections(new DefaultRay(new Point(OUTSIDE, 0, 0), X)));
 		}
 
 		@DisplayName("Sphere behind, ray originates inside the sphere")
@@ -178,7 +178,7 @@ class SphereVolumeTest {
 		@DisplayName("Sphere ahead, does not intersect")
 		@Test
 		void outside() {
-			assertEquals(Intersects.NONE, sphere.intersections(new DefaultRay(new Point(-OUTSIDE, +OUTSIDE, 0), X)));
+			assertEquals(Intersected.NONE, sphere.intersections(new DefaultRay(new Point(-OUTSIDE, +OUTSIDE, 0), X)));
 		}
 
 		@DisplayName("Sphere ahead, ray originates inside the sphere")

@@ -28,7 +28,7 @@ import org.sarge.lib.util.Check;
  * <ol>
  * <li>apply influences specified by {@link #add(Influence)}</li>
  * <li>move each particle by its current vector</li>
- * <li>test for collisions with surfaces according to {@link #add(Intersects, CollisionAction)}</li>
+ * <li>test for collisions with surfaces according to {@link #add(Intersected, CollisionAction)}</li>
  * <li>generate new particles according to the configured growth policy</li>
  * </ol>
  * <p>
@@ -39,7 +39,7 @@ public class ParticleSystem implements Animation {
 	private VectorFactory vec = VectorFactory.of(Vector.Y);
 	private Policy policy = Policy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
-	private final Map<Intersects, CollisionAction> surfaces = new HashMap<>();
+	private final Map<Intersected, CollisionAction> surfaces = new HashMap<>();
 	private List<Particle> particles = new ArrayList<>();
 	private long lifetime = Long.MAX_VALUE;
 	private boolean culling;
@@ -191,7 +191,7 @@ public class ParticleSystem implements Animation {
 	 * @param surface		Surface
 	 * @param action		Action for collided particles
 	 */
-	public ParticleSystem add(Intersects surface, CollisionAction action) {
+	public ParticleSystem add(Intersected surface, CollisionAction action) {
 		Check.notNull(surface);
 		Check.notNull(action);
 		surfaces.put(surface, action);
@@ -203,7 +203,7 @@ public class ParticleSystem implements Animation {
 	 * Removes a collision surface.
 	 * @param surface Surface to remove
 	 */
-	public ParticleSystem remove(Intersects surface) {
+	public ParticleSystem remove(Intersected surface) {
 		surfaces.remove(surface);
 		culling = surfaces.containsValue(CollisionAction.DESTROY);
 		return this;
@@ -299,7 +299,7 @@ public class ParticleSystem implements Animation {
 		private void collide(Particle p) {
 			for(var entry : surfaces.entrySet()) {
 				// Test for collision
-				final Intersects surface = entry.getKey();
+				final Intersected surface = entry.getKey();
 				final Iterator<Intersection> intersections = surface.intersections(p);
 				if(!intersections.hasNext()) {
 					continue;

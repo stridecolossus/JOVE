@@ -93,13 +93,13 @@ class PlaneTest {
 
 		@Test
 		void miss() {
-			assertEquals(Intersects.NONE, plane.intersections(new DefaultRay(ORIGIN, Y)));
-			assertEquals(Intersects.NONE, plane.intersections(new DefaultRay(ORIGIN, Z)));
+			assertEquals(Intersected.NONE, plane.intersections(new DefaultRay(ORIGIN, Y)));
+			assertEquals(Intersected.NONE, plane.intersections(new DefaultRay(ORIGIN, Z)));
 		}
 
 		@Test
 		void behind() {
-			assertEquals(Intersects.NONE, plane.intersections(new DefaultRay(new Point(4, 0, 0), X)));
+			assertEquals(Intersected.NONE, plane.intersections(new DefaultRay(new Point(4, 0, 0), X)));
 		}
 	}
 }

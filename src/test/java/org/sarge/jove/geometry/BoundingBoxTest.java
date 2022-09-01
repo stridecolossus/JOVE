@@ -143,22 +143,22 @@ class BoundingBoxTest {
 		@DisplayName("A ray that points away from the box has no intersections")
 		@Test
 		void miss() {
-			assertEquals(Intersects.NONE, box.intersections(new DefaultRay(new Point(0, 3, 0), Vector.X.invert())));
+			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 3, 0), Vector.X.invert())));
 		}
 
 		@DisplayName("A ray does not intersect a bounding box if it is behind the ray origin")
 		@Test
 		void behind() {
-			assertEquals(Intersects.NONE, box.intersections(new DefaultRay(new Point(4, 3, 0), Vector.X)));
+			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(4, 3, 0), Vector.X)));
 		}
 
 		@DisplayName("A ray does not intersect a bounding box if the direction is parallel to that box")
 		@Test
 		void parallel() {
-			assertEquals(Intersects.NONE, box.intersections(new DefaultRay(new Point(0, 1, 0), Vector.X)));
-			assertEquals(Intersects.NONE, box.intersections(new DefaultRay(new Point(0, 5, 0), Vector.X)));
-			assertEquals(Intersects.NONE, box.intersections(new DefaultRay(new Point(0, 0, 0), Vector.Y)));
-			assertEquals(Intersects.NONE, box.intersections(new DefaultRay(new Point(4, 0, 0), Vector.Y)));
+			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 1, 0), Vector.X)));
+			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 5, 0), Vector.X)));
+			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 0, 0), Vector.Y)));
+			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(4, 0, 0), Vector.Y)));
 		}
 	}
 }

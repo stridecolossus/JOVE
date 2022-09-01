@@ -20,7 +20,7 @@ import org.sarge.lib.util.Check;
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
  */
-public record Plane(Vector normal, float distance) implements Intersects {
+public record Plane(Vector normal, float distance) implements Intersected {
 	/**
 	 * The half-space defines the <i>sides</i> of this plane with respect to the normal.
 	 * The {@link #POSITIVE} half-space is in <i>front</i> of the plane and {@link #NEGATIVE} is <i>behind</i>.

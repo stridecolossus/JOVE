@@ -61,31 +61,31 @@ public class TupleTest {
 		assertEquals(1 * 1 + 2 * 2 + 3 * 3, tuple.dot(tuple));
 	}
 
-	@DisplayName("The minimum component can be extracted from the tuple")
-	@Test
-	void min() {
-		assertEquals(1, tuple.min());
-	}
-
-	@DisplayName("The maximum component can be extracted from the tuple")
-	@Test
-	void max() {
-		assertEquals(3, tuple.max());
-	}
-
-	@DisplayName("The minimum components of two tuples can be calculated")
-	@Test
-	void minimum() {
-		assertEquals(tuple, Tuple.min(tuple, tuple));
-		assertEquals(tuple, Tuple.min(tuple, new Tuple(4, 5, 6)));
-	}
-
-	@DisplayName("The maximum components of two tuples can be calculated")
-	@Test
-	void maximum() {
-		assertEquals(tuple, Tuple.max(tuple, tuple));
-		assertEquals(tuple, Tuple.max(tuple, new Tuple(0, 0, 0)));
-	}
+//	@DisplayName("The minimum component can be extracted from the tuple")
+//	@Test
+//	void min() {
+//		assertEquals(1, tuple.min());
+//	}
+//
+//	@DisplayName("The maximum component can be extracted from the tuple")
+//	@Test
+//	void max() {
+//		assertEquals(3, tuple.max());
+//	}
+//
+//	@DisplayName("The minimum components of two tuples can be calculated")
+//	@Test
+//	void minimum() {
+//		assertEquals(tuple, Tuple.min(tuple, tuple));
+//		assertEquals(tuple, Tuple.min(tuple, new Tuple(4, 5, 6)));
+//	}
+//
+//	@DisplayName("The maximum components of two tuples can be calculated")
+//	@Test
+//	void maximum() {
+//		assertEquals(tuple, Tuple.max(tuple, tuple));
+//		assertEquals(tuple, Tuple.max(tuple, new Tuple(0, 0, 0)));
+//	}
 
 	@DisplayName("A tuple has a length in bytes")
 	@Test

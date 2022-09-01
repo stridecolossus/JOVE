@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersects;
+import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.particle.ParticleSystem.*;
 
 class ParticleSystemTest {
@@ -127,7 +127,7 @@ class ParticleSystemTest {
 	@DisplayName("A particle that intersects a collision surface...")
 	@Nested
 	class Collisions {
-		private Intersects surface;
+		private Intersected surface;
 		private Particle p;
 
 		@BeforeEach
@@ -185,7 +185,7 @@ class ParticleSystemTest {
 		@DisplayName("is not tested for collisions")
 		@Test
 		void collide() {
-			final Intersects surface = mock(Intersects.class);
+			final Intersected surface = mock(Intersected.class);
 			sys.add(surface, CollisionAction.DESTROY);
 			sys.update(animator);
 			verifyNoInteractions(surface);

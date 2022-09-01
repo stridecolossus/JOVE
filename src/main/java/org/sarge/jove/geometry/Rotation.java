@@ -15,6 +15,7 @@ public interface Rotation extends Transform {
 
 	/**
 	 * An <i>axis-angle</i> is a simple fixed rotation about an axis.
+	 * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
 	 */
 	record AxisAngle(Vector axis, float angle) implements Rotation {
 		@Override
@@ -51,6 +52,19 @@ public interface Rotation extends Transform {
 				throw new UnsupportedOperationException("Arbitrary axis not supported (use quaternion)");
 			}
 			return matrix.build();
+		}
+
+		/**
+		 * Rotates the given vector by this axis-angle using Rodrigues' Rotation Formula.
+		 * @param vec Vector to rotate
+		 * @return Rotated vector
+		 */
+		public Vector rotate(Vector vec) {
+			final float cos = MathsUtil.cos(angle);
+			final Vector a = vec.multiply(cos);
+			final Vector b = axis.cross(vec).multiply(MathsUtil.sin(angle));
+			final Vector c = axis.multiply((1 - cos) * axis.dot(vec));
+			return a.add(b).add(c);
 		}
 	}
 }
