@@ -1,9 +1,6 @@
 package org.sarge.jove.particle;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
@@ -83,14 +80,5 @@ public class ParticleTest {
 		particle.reflect(pt, Vector.Y);
 		assertEquals(pt, particle.origin());
 		assertEquals(Vector.Y.invert(), particle.direction());
-	}
-
-	@DisplayName("A particle can be written to a vertex buffer")
-	@Test
-	void buffer() {
-		final ByteBuffer bb = mock(ByteBuffer.class);
-		when(bb.putFloat(0)).thenReturn(bb);
-		particle.buffer(bb);
-		verify(bb, times(3)).putFloat(0);
 	}
 }

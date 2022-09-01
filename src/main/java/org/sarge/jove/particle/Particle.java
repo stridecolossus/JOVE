@@ -2,7 +2,6 @@ package org.sarge.jove.particle;
 
 import static org.sarge.lib.util.Check.*;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -35,6 +34,7 @@ public class Particle implements Ray {
 	public long time() {
 		return time;
 	}
+	// TODO - if not culling or using colour then time is redundant, could have sub-class?
 
 	@Override
 	public Point origin() {
@@ -114,14 +114,6 @@ public class Particle implements Ray {
 		// TODO - will be inaccurate?
 		pos = notNull(intersection);
 		vec = vec.reflect(normal);
-	}
-
-	/**
-	 * Writes this particle to the given vertex buffer.
-	 * @param bb Vertex buffer
-	 */
-	void buffer(ByteBuffer bb) {
-		pos.buffer(bb);
 	}
 
 	@Override

@@ -138,6 +138,13 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
+	 * @return Whether this particle system has a particle lifetime
+	 */
+	private boolean isLifetimeBound() {
+		return lifetime < Long.MAX_VALUE;
+	}
+
+	/**
 	 * Sets the particle lifetime (default is forever).
 	 * @param lifetime Lifetime (ms)
 	 */
@@ -231,13 +238,6 @@ public class ParticleSystem implements Animation {
 		private Helper(Animator animator) {
 			this.time = animator.time();
 			this.elapsed = animator.elapsed() * SECONDS;
-		}
-
-		/**
-		 * @return Whether this particle system has a particle lifetime
-		 */
-		private boolean isLifetimeBound() {
-			return lifetime < Long.MAX_VALUE;
 		}
 
 		/**

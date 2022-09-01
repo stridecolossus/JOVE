@@ -55,7 +55,19 @@ public interface Rotation extends Transform {
 		}
 
 		/**
-		 * Rotates the given vector by this axis-angle using Rodrigues' Rotation Formula.
+		 * Rotates the given vector by this axis-angle.
+		 * <p>
+		 * This method is implemented using <i>Rodrigues' rotation formula</i> expressed as:
+		 * <pre>rot = cos(a)v + sin(a)(n x v) + (1 - cos(a))(n.v)n</pre>
+		 * Where:
+		 * <ul>
+		 * <li><i>a</i> is the rotation angle</li>
+		 * <li><i>n</i> is the axis (or normal)</li>
+		 * <li>and <i>v</i> is the vector to be rotated</li>
+		 * </ul>
+		 * <p>
+		 * This approach may be more efficient than constructing a rotation matrix or quaternion.
+		 * <p>
 		 * @param vec Vector to rotate
 		 * @return Rotated vector
 		 */

@@ -44,6 +44,7 @@ public class ParticleModelTest {
 		when(bb.putFloat(0)).thenReturn(bb);
 		vertices.buffer(bb);
 		verify(bb, times(2 * 3)).putFloat(0);
+		verifyNoMoreInteractions(bb);
 	}
 
 	@Test

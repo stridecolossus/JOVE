@@ -149,7 +149,7 @@ private static Barrier destination(Image screenshot) {
 
 Next the swapchain image is transitioned to a copy source:
 
-```
+```java
 private static Barrier source(Image image) {
     return new Barrier.Builder()
         .source(VkPipelineStage.TRANSFER)

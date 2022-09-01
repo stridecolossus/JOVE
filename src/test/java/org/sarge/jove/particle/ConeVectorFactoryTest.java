@@ -1,32 +1,32 @@
 package org.sarge.jove.particle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.Random;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 
 public class ConeVectorFactoryTest {
 	private VectorFactory factory;
-	private Random random;
-	private float angle;
+	private FloatSupplier random;
 
 	@BeforeEach
 	void before() {
-		// TODO - random -> float supplier, easier to mock
-		random = new Random() {
-			@Override
-			public float nextFloat(float bound) {
-				return angle;
-			}
-		};
+		random = mock(FloatSupplier.class);
 		factory = new ConeVectorFactory(Vector.Y, MathsUtil.HALF_PI, random);
 	}
 
 	@Test
-	void vector() {
-		assertEquals(Vector.Z.invert(), factory.vector(null));
+	void zero() {
+		when(random.get()).thenReturn(0f);
+		assertEquals(Vector.Y, factory.vector(null));
+	}
+
+	@Test
+	void one() {
+		final Vector expected = new Vector(1, 0, -1).normalize();
+		when(random.get()).thenReturn(1f);
+		assertEquals(expected, factory.vector(null));
 	}
 }
