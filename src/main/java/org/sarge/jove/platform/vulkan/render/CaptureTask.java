@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.platform.vulkan.memory.*;
+import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 
 /**
@@ -23,16 +23,13 @@ import org.sarge.jove.platform.vulkan.pipeline.Barrier;
  * @author Sarge
  */
 public class CaptureTask {
-	private final AllocationService allocator;
 	private final Pool pool;
 
 	/**
 	 * Constructor.
-	 * @param allocator 	Memory allocator
-	 * @param pool			Transfer command pool
+	 * @param pool Transfer command pool
 	 */
-	public CaptureTask(AllocationService allocator, Pool pool) {
-		this.allocator = notNull(allocator);
+	public CaptureTask(Pool pool) {
 		this.pool = notNull(pool);
 	}
 
@@ -74,7 +71,7 @@ public class CaptureTask {
 	 * @param dev			Logical device
 	 * @param target		Target image descriptor
 	 */
-	private DefaultImage screenshot(DeviceContext dev, Descriptor target) {
+	private static DefaultImage screenshot(DeviceContext dev, Descriptor target) {
 		// Create descriptor
 		final Descriptor descriptor = new Descriptor.Builder()
 				.type(VkImageType.TWO_D)
@@ -95,7 +92,7 @@ public class CaptureTask {
 				.descriptor(descriptor)
 				.properties(props)
 				.tiling(VkImageTiling.LINEAR)
-				.build(dev, allocator);
+				.build(dev);
 	}
 
 	/**

@@ -64,7 +64,6 @@ class DefaultImageTest extends AbstractVulkanTest {
 	@Nested
 	class BuilderTests {
 		private DefaultImage.Builder builder;
-		private AllocationService allocator;
 		private MemoryProperties<VkImageUsageFlag> props;
 
 		@BeforeEach
@@ -76,7 +75,6 @@ class DefaultImageTest extends AbstractVulkanTest {
 					.build();
 
 			// Init memory allocator
-			allocator = mock(AllocationService.class);
 			when(allocator.allocate(isA(VkMemoryRequirements.class), eq(props))).thenReturn(mem);
 
 			// Create builder
@@ -93,7 +91,7 @@ class DefaultImageTest extends AbstractVulkanTest {
 					.tiling(VkImageTiling.LINEAR)
 					.initialLayout(VkImageLayout.PREINITIALIZED)
 					.cubemap()
-					.build(dev, allocator);
+					.build(dev);
 
 			// Check image
 			assertNotNull(image);
@@ -131,14 +129,14 @@ class DefaultImageTest extends AbstractVulkanTest {
 		@Test
 		void properties() {
 			builder.descriptor(descriptor);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev, allocator));
+			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 		}
 
 		@DisplayName("A default image must have an image descriptor")
 		@Test
 		void descriptor() {
 			builder.properties(props);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev, allocator));
+			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 		}
 
 		@DisplayName("A default image must have a valid initial layout")

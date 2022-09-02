@@ -1,31 +1,19 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.INDEX_BUFFER;
-import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.TRANSFER_SRC;
-import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.VERTEX_BUFFER;
+import static org.mockito.Mockito.*;
+import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.*;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
-import org.sarge.jove.platform.vulkan.VkSharingMode;
-import org.sarge.jove.platform.vulkan.memory.AllocationService;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -38,7 +26,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	private DeviceMemory mem;
 	private Region region;
 	private ByteBuffer bb;
-	private AllocationService allocator;
 
 	@BeforeEach
 	void before() {
@@ -54,7 +41,6 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(region.buffer()).thenReturn(bb);
 
 		// Init memory allocator
-		allocator = mock(AllocationService.class);
 		when(allocator.allocate(isA(VkMemoryRequirements.class), isA(MemoryProperties.class))).thenReturn(mem);
 
 		// Create buffer
@@ -110,7 +96,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	@Test
 	void create() {
 		final MemoryProperties<VkBufferUsageFlag> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
-		buffer = VulkanBuffer.create(dev, allocator, SIZE, props);
+		buffer = VulkanBuffer.create(dev, SIZE, props);
 		assertNotNull(buffer);
 		assertEquals(FLAGS, buffer.usage());
 	}
@@ -122,7 +108,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(data.length()).thenReturn((int) SIZE);
 
 		// Create staging buffer
-		final VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
+		final VulkanBuffer staging = VulkanBuffer.staging(dev, data);
 		assertNotNull(staging);
 		assertEquals(Set.of(TRANSFER_SRC), staging.usage());
 		assertEquals(SIZE, staging.length());

@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.lib.util.Check;
 
@@ -11,18 +12,21 @@ import org.sarge.lib.util.Check;
  * A set of <i>memory properties</i> specifies the purpose and requirements of a memory request.
  * <p>
  * In general the client requests memory for the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
- * <br>
- * Note that this implementation does not apply any assumptions or constraints on the relationship between the optimal and required memory properties.
+ * Note that this implementation assumes that <i>optimal</i> is a super-set of the <i>required</i> properties.
  * <p>
- * Example for the properties of an image:
+ * Example for the properties of a uniform buffer which would ideally be GPU resident but also visible to the application:
  * <pre>
- * var props = new MemoryProperties.Builder&lt;VkImageUsageFlag&gt;()
- *     .usage(VkImageUsageFlag.COLOR_ATTACHMENT)
+ * var props = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
+ *     .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
  *     .mode(VkSharingMode.CONCURRENT)
- *     .optimal(VkMemoryProperty.HOST_COHERENT)
+ *     .required(VkMemoryProperty.HOST_COHERENT)
+ *     .required(VkMemoryProperty.HOST_VISIBLE)
+ *     .optimal(VkMemoryProperty.DEVICE_LOCAL)
  *     .build()</pre>
  * <p>
  * @param <T> Usage enumeration
+ * @see VkBufferUsageFlag
+ * @see VkImageUsageFlag
  * @author Sarge
  */
 public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryProperty> required, Set<VkMemoryProperty> optimal) {
@@ -39,7 +43,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		usage = Set.copyOf(usage);
 		mode = Check.notNull(mode);
 		required = Set.copyOf(required);
-		optimal = Set.copyOf(optimal);
+		optimal = Set.copyOf(CollectionUtils.union(required, optimal));
 	}
 
 	/**
@@ -67,16 +71,6 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 */
 		public Builder<T> optimal(VkMemoryProperty prop) {
 			optimal.add(notNull(prop));
-			return this;
-		}
-
-		/**
-		 * Convenience helper to initialise the <i>optimal</i> properties to the configured <i>required</i> set.
-		 * @throws IllegalStateException if the required properties are empty
-		 */
-		public Builder<T> copy() {
-			if(required.isEmpty()) throw new IllegalStateException("No required properties specified");
-			optimal.addAll(required);
 			return this;
 		}
 

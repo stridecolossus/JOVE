@@ -33,7 +33,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @return New buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
-	public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {
+	public static VulkanBuffer create(DeviceContext dev, long len, MemoryProperties<VkBufferUsageFlag> props) {
 		// TODO
 		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
 		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
@@ -57,7 +57,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		lib.vkGetBufferMemoryRequirements(dev, ref.getValue(), reqs);
 
 		// Allocate buffer memory
-		final DeviceMemory mem = allocator.allocate(reqs, props);
+		final DeviceMemory mem = dev.allocator().allocate(reqs, props);
 
 		// Bind memory
 		check(lib.vkBindBufferMemory(dev, ref.getValue(), mem, 0L));
@@ -70,11 +70,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * Helper - Creates and initialises a staging buffer containing the given data.
 	 * @param dev			Logical device
-	 * @param allocator		Memory allocator
 	 * @param data			Data to write
 	 * @return New staging buffer containing the given data
 	 */
-	public static VulkanBuffer staging(LogicalDevice dev, AllocationService allocator, Bufferable data) {
+	public static VulkanBuffer staging(DeviceContext dev, Bufferable data) {
 		// Init memory properties
 		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
@@ -84,7 +83,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 		// Create staging buffer
 		final int len = data.length();
-		final VulkanBuffer buffer = create(dev, allocator, len, props);
+		final VulkanBuffer buffer = create(dev, len, props);
 
 		// Write data to buffer
 		final ByteBuffer bb = buffer.buffer();
@@ -228,7 +227,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pBuffer			Returned buffer
 		 * @return Result
 		 */
-		int vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
+		int vkCreateBuffer(DeviceContext device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
 
 		/**
 		 * Destroys a buffer.
@@ -244,7 +243,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pBuffer					Buffer
 		 * @param pMemoryRequirements		Returned memory requirements
 		 */
-		void vkGetBufferMemoryRequirements(LogicalDevice device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
+		void vkGetBufferMemoryRequirements(DeviceContext device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds the memory for the given buffer.
@@ -254,7 +253,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param memoryOffset		Offset
 		 * @return Result
 		 */
-		int vkBindBufferMemory(LogicalDevice device, Pointer buffer, DeviceMemory memory, long memoryOffset);
+		int vkBindBufferMemory(DeviceContext device, Pointer buffer, DeviceMemory memory, long memoryOffset);
 
 		/**
 		 * Binds a vertex buffer.

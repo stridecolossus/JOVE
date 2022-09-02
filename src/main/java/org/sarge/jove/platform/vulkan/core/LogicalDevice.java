@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -15,6 +16,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.*;
@@ -31,6 +33,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	private final DeviceFeatures features;
 	private final Supplier<DeviceLimits> limits = new LazySupplier<>(this::loadLimits);
 	private final Map<Family, List<Queue>> queues;
+	private AllocationService allocator;
 
 	/**
 	 * Constructor.
@@ -102,6 +105,15 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			throw new IllegalArgumentException(String.format("Queue not present: required=%s available=%s", family, queues.keySet()));
 		}
 		return list.get(0);
+	}
+
+	@Override
+	public AllocationService allocator() {
+		return allocator;
+	}
+
+	public void allocator(AllocationService allocator) {
+		this.allocator = notNull(allocator);
 	}
 
 	/**
@@ -205,6 +217,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		private final Set<String> layers = new HashSet<>();
 		private final Map<Family, RequiredQueue> queues = new HashMap<>();
 		private DeviceFeatures required = DeviceFeatures.EMPTY;
+		private AllocationService allocator;
 
 		/**
 		 * Constructor.
@@ -259,6 +272,15 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		}
 
 		/**
+		 * Sets a custom memory allocation service.
+		 * @param allocator Allocation service
+		 */
+		public Builder allocator(AllocationService allocator) {
+			this.allocator = notNull(allocator);
+			return this;
+		}
+
+		/**
 		 * Constructs this logical device.
 		 * @return New logical device
 		 * @throws ServiceException if the device cannot be created or the required features are not supported by the physical device
@@ -297,7 +319,15 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 					.collect(groupingBy(Queue::family));
 
 			// Create logical device
-			return new LogicalDevice(handle.getValue(), parent, required, map);
+			final var dev = new LogicalDevice(handle.getValue(), parent, required, map);
+
+			// Init memory allocator
+			if(allocator == null) {
+				allocator = new AllocationService(MemorySelector.create(parent), new DefaultAllocator(dev));
+			}
+			dev.allocator(allocator);
+
+			return dev;
 		}
 
 //		TODO - implement local by-ref classes?

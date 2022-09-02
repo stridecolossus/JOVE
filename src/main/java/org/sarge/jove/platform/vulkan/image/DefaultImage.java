@@ -148,12 +148,11 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 
 		/**
 		 * Constructs this image.
-		 * @param dev 			Logical device
-		 * @param allocator		Memory allocator
+		 * @param dev Logical device
 		 * @return New image
 		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
 		 */
-		public DefaultImage build(DeviceContext dev, AllocationService allocator) {
+		public DefaultImage build(DeviceContext dev) {
 			// Validate
 			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");
@@ -183,7 +182,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 			lib.vkGetImageMemoryRequirements(dev, handle.getValue(), reqs);
 
 			// Allocate image memory
-			final DeviceMemory mem = allocator.allocate(reqs, props);
+			final DeviceMemory mem = dev.allocator().allocate(reqs, props);
 
 			// Bind memory to image
 			check(lib.vkBindImageMemory(dev, handle.getValue(), mem, 0));

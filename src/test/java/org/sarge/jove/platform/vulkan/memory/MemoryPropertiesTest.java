@@ -7,26 +7,22 @@ import static org.sarge.jove.platform.vulkan.VkSharingMode.CONCURRENT;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 
 public class MemoryPropertiesTest {
-	private static final Set<VkImageUsageFlag> USAGE = Set.of(VkImageUsageFlag.COLOR_ATTACHMENT);
-	private static final Set<VkMemoryProperty> REQUIRED = Set.of(HOST_VISIBLE);
-	private static final Set<VkMemoryProperty> OPTIMAL = Set.of(HOST_VISIBLE, HOST_CACHED);
-
-	private MemoryProperties<VkImageUsageFlag> props;
+	private MemoryProperties<VkBufferUsageFlag> props;
 
 	@BeforeEach
 	void before() {
-		props = new MemoryProperties<>(USAGE, CONCURRENT, REQUIRED, OPTIMAL);
+		props = new MemoryProperties<>(Set.of(VkBufferUsageFlag.UNIFORM_BUFFER), CONCURRENT, Set.of(HOST_VISIBLE, HOST_COHERENT), Set.of(DEVICE_LOCAL));
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(USAGE, props.usage());
+		assertEquals(Set.of(VkBufferUsageFlag.UNIFORM_BUFFER), props.usage());
 		assertEquals(CONCURRENT, props.mode());
-		assertEquals(REQUIRED, props.required());
-		assertEquals(OPTIMAL, props.optimal());
+		assertEquals(Set.of(HOST_VISIBLE, HOST_COHERENT), props.required());
+		assertEquals(Set.of(HOST_VISIBLE, HOST_COHERENT, DEVICE_LOCAL), props.optimal());
 	}
 
 	@Test
@@ -37,7 +33,7 @@ public class MemoryPropertiesTest {
 
 	@Nested
 	class BuilderTests {
-		private MemoryProperties.Builder<VkImageUsageFlag> builder;
+		private MemoryProperties.Builder<VkBufferUsageFlag> builder;
 
 		@BeforeEach
 		void before() {
@@ -48,11 +44,11 @@ public class MemoryPropertiesTest {
 		@Test
 		void build() {
 			builder
-					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
+					.usage(VkBufferUsageFlag.UNIFORM_BUFFER)
 					.mode(CONCURRENT)
 					.required(HOST_VISIBLE)
-					.optimal(HOST_VISIBLE)
-					.optimal(HOST_CACHED)
+					.required(HOST_COHERENT)
+					.optimal(DEVICE_LOCAL)
 					.build();
 
 			assertEquals(props, builder.build());
@@ -62,20 +58,6 @@ public class MemoryPropertiesTest {
 		@Test
 		void empty() {
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@DisplayName("The optimal properties can be copied from the required properties")
-		@Test
-		void copy() {
-			builder
-					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
-					.mode(CONCURRENT)
-					.required(HOST_VISIBLE)
-					.optimal(HOST_CACHED)
-					.copy()
-					.build();
-
-			assertEquals(props, builder.build());
 		}
 	}
 }

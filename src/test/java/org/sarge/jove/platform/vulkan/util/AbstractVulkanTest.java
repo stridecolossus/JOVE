@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.memory.AllocationService;
 import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -24,6 +25,7 @@ public abstract class AbstractVulkanTest {
 	protected LogicalDevice dev;
 	protected VulkanLibrary lib;
 	protected ReferenceFactory factory;
+	protected AllocationService allocator;
 
 	@BeforeEach
 	private final void beforeVulkanTest() {
@@ -38,12 +40,16 @@ public abstract class AbstractVulkanTest {
 		// Init device limits
 		final DeviceLimits limits = mock(DeviceLimits.class);
 
+		// Init memory allocator
+		allocator = mock(AllocationService.class);
+
 		// Create logical device
 		dev = mock(LogicalDevice.class);
 		when(dev.handle()).thenReturn(new Handle(3));
 		when(dev.library()).thenReturn(lib);
 		when(dev.factory()).thenReturn(factory);
 		when(dev.limits()).thenReturn(limits);
+		when(dev.allocator()).thenReturn(allocator);
 	}
 
 	/**

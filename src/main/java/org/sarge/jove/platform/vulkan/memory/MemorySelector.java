@@ -18,15 +18,15 @@ import org.sarge.jove.util.Mask;
 public class MemorySelector {
 	/**
 	 * Creates a memory selector for the given device.
-	 * @param dev Logical device
+	 * @param dev Physical device
 	 * @return New memory selector
 	 * @see MemoryType#enumerate(VkPhysicalDeviceMemoryProperties)
 	 */
-	public static MemorySelector create(LogicalDevice dev) {
+	public static MemorySelector create(PhysicalDevice dev) {
 		// Retrieve supported memory types
 		final var props = new VkPhysicalDeviceMemoryProperties();
-		final VulkanLibrary lib = dev.library();
-		lib.vkGetPhysicalDeviceMemoryProperties(dev.parent(), props);
+		final VulkanLibrary lib = dev.instance().library();
+		lib.vkGetPhysicalDeviceMemoryProperties(dev, props);
 
 		// Enumerate memory types
 		final MemoryType[] types = MemoryType.enumerate(props);

@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.platform.vulkan.memory.*;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class CaptureTaskTest extends AbstractVulkanTest {
@@ -45,7 +45,6 @@ class CaptureTaskTest extends AbstractVulkanTest {
 		when(swapchain.device()).thenReturn(dev);
 
 		// Create allocator
-		final AllocationService allocator = mock(AllocationService.class);
 		mem = mock(DeviceMemory.class);
 		when(allocator.allocate(any(), any())).thenReturn(mem);
 
@@ -58,7 +57,7 @@ class CaptureTaskTest extends AbstractVulkanTest {
 		when(buffer.add(any(Command.class))).thenReturn(buffer);
 
 		// Create capture task
-		task = new CaptureTask(allocator, pool);
+		task = new CaptureTask(pool);
 	}
 
 	@Test
