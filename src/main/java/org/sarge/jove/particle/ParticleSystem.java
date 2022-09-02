@@ -35,26 +35,30 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ParticleSystem implements Animation {
+	// Configuration
 	private PositionFactory pos = PositionFactory.ORIGIN;
 	private VectorFactory vec = VectorFactory.of(Vector.Y);
 	private Policy policy = Policy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, CollisionAction> surfaces = new HashMap<>();
+
+	// State
 	private List<Particle> particles = new ArrayList<>();
+	private float count;
 	private long lifetime = Long.MAX_VALUE;
 	private boolean culling;
 
 	/**
 	 * @return Number of particles
 	 */
-	public int size() {
+	public synchronized int size() {
 		return particles.size();
 	}
 
 	/**
 	 * @return Particles
 	 */
-	List<Particle> particles() {
+	protected synchronized List<Particle> particles() {
 		return particles;
 	}
 
@@ -81,7 +85,7 @@ public class ParticleSystem implements Animation {
 	 * @param num 		Number of particles to add
 	 * @param time		Current time
 	 */
-	public void add(int num, long time) {
+	public synchronized void add(int num, long time) {
 		for(int n = 0; n < num; ++n) {
 			final Point start = pos.position();
 			final Vector dir = vec.vector(start);
@@ -217,12 +221,14 @@ public class ParticleSystem implements Animation {
 	}
 
 	@Override
-	public boolean update(Animator animator) {
+	public synchronized boolean update(Animator animator) {
+		System.out.println("update " + Thread.currentThread().getName());
 		final Helper helper = new Helper(animator);
 		helper.expire();
 		helper.update();
 		helper.cull();
 		helper.generate();
+		System.out.println("done update " + Thread.currentThread().getName());
 		return false;
 	}
 
@@ -338,9 +344,13 @@ public class ParticleSystem implements Animation {
 		 * Generates new particles according to the configured policy.
 		 */
 		void generate() {
-			final float num = policy.count(size()) * elapsed;
+			// Accumulate number of new particles
+			count += policy.count(particles.size()) * elapsed;
+
+			// Generate new particles
+			final int num = (int) count;
 			if(num > 0) {
-				add((int) num, time);
+				add(num, time);
 			}
 		}
 	}

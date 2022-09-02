@@ -854,6 +854,147 @@ significantly faster, can see multiple cores
 
 ---
 
+## Colour Blending
+
+TODO - move to galaxy demo chapter
+
+To enable colour blending in the demo a new pipeline stage is introduced:
+
+```java
+public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
+    private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
+
+    public ColourBlendPipelineStageBuilder() {
+        Arrays.fill(info.blendConstants, 1);
+    }
+
+    public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
+        info.logicOp = notNull(op);
+        return this;
+    }
+
+    public ColourBlendPipelineStageBuilder constants(float[] constants) {
+        System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
+        return this;
+    }
+
+    public AttachmentBuilder attachment() {
+        return new AttachmentBuilder();
+    }
+}
+```
+
+In addition to the global blending properties, the blend stage can also configure the logical operation between a fragment and the existing value in the framebuffer attachment(s).
+This is implemented as a nested builder:
+
+```java
+public class AttachmentBuilder {
+    private boolean enabled = true;
+    private int mask = IntegerEnumeration.reduce(VkColorComponent.values());
+    private final BlendOperationBuilder colour = new BlendOperationBuilder();
+    private final BlendOperationBuilder alpha = new BlendOperationBuilder();
+
+    private AttachmentBuilder() {
+        colour.source(VkBlendFactor.SRC_ALPHA);
+        colour.destination(VkBlendFactor.ONE_MINUS_SRC_ALPHA);
+        alpha.source(VkBlendFactor.ONE);
+        alpha.destination(VkBlendFactor.ZERO);
+        attachments.add(this);
+    }
+}
+```
+
+The colour mask is used to specify which colour channels are subject to the blend operation expressed as a simple string:
+
+```java
+public AttachmentBuilder mask(String mask) {
+    this.mask = mask
+        .chars()
+        .mapToObj(Character::toString)
+        .map(VkColorComponent::valueOf)
+        .collect(collectingAndThen(toList(), IntegerEnumeration::reduce));
+
+    return this;
+}
+```
+
+The properties for the colour and alpha components are identical so a further nested builder configures both values:
+
+```java
+public class BlendOperationBuilder {
+    private VkBlendFactor src;
+    private VkBlendFactor dest;
+    private VkBlendOp blend = VkBlendOp.ADD;
+
+    private BlendOperationBuilder() {
+    }
+
+    public AttachmentBuilder build() {
+        return AttachmentBuilder.this;
+    }
+}
+```
+
+The descriptor for the attachment is generated in the nested builder as follows:
+
+```java
+private void populate(VkPipelineColorBlendAttachmentState info) {
+    // Init descriptor
+    info.blendEnable = VulkanBoolean.of(enabled);
+    info.colorWriteMask = mask;
+
+    // Init colour blending operation
+    info.srcColorBlendFactor = colour.src;
+    info.dstColorBlendFactor = colour.dest;
+    info.colorBlendOp = colour.blend;
+
+    // Init alpha blending operation
+    info.srcAlphaBlendFactor = alpha.src;
+    info.dstAlphaBlendFactor = alpha.dest;
+    info.alphaBlendOp = alpha.blend;
+}
+```
+
+And finally the descriptor for the pipeline stage can be constructed:
+
+```java
+@Override
+VkPipelineColorBlendStateCreateInfo get() {
+    // Check whether disabled
+    if(info.logicOp == null) {
+        info.logicOpEnable = VulkanBoolean.FALSE;
+        info.logicOp = VkLogicOp.NO_OP;
+        return info;
+    }
+
+    // Enable blending
+    info.logicOpEnable = VulkanBoolean.TRUE;
+
+    // Add attachment descriptors
+    info.attachmentCount = attachments.size();
+    info.pAttachments = StructureHelper.pointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
+    
+    return info;
+}
+```
+
+Note that blending is disabled by default, the builder assumes that setting a blend operation implies it is enabled.
+
+The pipeline configuration can now be updated to apply an additive blending operation in the demo:
+
+```java
+.blend()
+    .operation(VkLogicOp.COPY)
+    .attachment()
+        .colour()
+            .destination(VkBlendFactor.ONE)
+            .build()
+        .build()
+    .get();
+```
+
+---
+
 ## Summary
 
 In this chapter a configurable particle system was implemented with support for planes and ray intersections.

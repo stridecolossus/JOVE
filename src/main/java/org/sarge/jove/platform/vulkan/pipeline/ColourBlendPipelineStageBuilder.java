@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.stream.Collectors.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
@@ -13,11 +14,12 @@ import org.sarge.jove.util.*;
  * @author Sarge
  */
 public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
-	private static final int DEFAULT_COLOUR_MASK = IntegerEnumeration.reduce(VkColorComponent.values());
-
+	private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
-	private final float[] constants = new float[4];
-	private VkLogicOp op;
+
+	public ColourBlendPipelineStageBuilder() {
+		Arrays.fill(info.blendConstants, 1);
+	}
 
 	/**
 	 * Starts a new attachment.
@@ -32,7 +34,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param op Colour-blending operation
 	 */
 	public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
-		this.op = notNull(op);
+		info.logicOp = notNull(op);
 		return this;
 	}
 
@@ -42,15 +44,22 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @throws IllegalArgumentException if the given array does not contain <b>four</b> values
 	 */
 	public ColourBlendPipelineStageBuilder constants(float[] constants) {
-		if(constants.length != this.constants.length) throw new IllegalArgumentException(String.format("Expected exactly %d blend constants", this.constants.length));
-		System.arraycopy(constants, 0, this.constants, 0, constants.length);
+		if(constants.length != info.blendConstants.length) throw new IllegalArgumentException(String.format("Expected exactly %d blend constants", info.blendConstants.length));
+		System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
 		return this;
 	}
 
 	@Override
 	VkPipelineColorBlendStateCreateInfo get() {
-		// Create descriptor
-		final var info = new VkPipelineColorBlendStateCreateInfo();
+		// Check whether disabled
+		if(info.logicOp == null) {
+			info.logicOpEnable = VulkanBoolean.FALSE;
+			info.logicOp = VkLogicOp.NO_OP;
+			return info;
+		}
+
+		// Enable blending
+		info.logicOpEnable = VulkanBoolean.TRUE;
 
 		// Init default attachment if none specified
 		if(attachments.isEmpty()) {
@@ -60,17 +69,6 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 		// Add attachment descriptors
 		info.attachmentCount = attachments.size();
 		info.pAttachments = StructureHelper.pointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
-
-		// Init global colour blending settings
-		if(op == null) {
-			info.logicOpEnable = VulkanBoolean.FALSE;
-			info.logicOp = VkLogicOp.NO_OP;
-		}
-		else {
-			info.logicOpEnable = VulkanBoolean.TRUE;
-			info.logicOp = op;
-			info.blendConstants = constants;
-		}
 
 		return info;
 	}
@@ -94,34 +92,39 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 			 * Sets the source colour blend factor.
 			 * @param src Source colour blend factor
 			 */
-			public AttachmentBuilder source(VkBlendFactor src) {
+			public BlendOperationBuilder source(VkBlendFactor src) {
 				this.src = notNull(src);
-				return AttachmentBuilder.this;
+				return this;
 			}
 
 			/**
 			 * Sets the destination colour blend factor.
 			 * @param dest Destination colour blend factor
 			 */
-			public AttachmentBuilder destination(VkBlendFactor dest) {
+			public BlendOperationBuilder destination(VkBlendFactor dest) {
 				this.dest = notNull(dest);
-				return AttachmentBuilder.this;
+				return this;
 			}
 
 			/**
 			 * Sets the colour blend operation.
 			 * @param blend Colour blend operation
 			 */
-			public AttachmentBuilder operation(VkBlendOp blend) {
+			public BlendOperationBuilder operation(VkBlendOp blend) {
 				this.blend = notNull(blend);
-				return AttachmentBuilder.this;
+				return this;
 			}
 
-			// TODO - build() to return to AttachmentBuilder.this? i.e. not really a builder?
+			/**
+			 * @return Parent attachment builder
+			 */
+			public AttachmentBuilder build() {
+				return AttachmentBuilder.this;
+			}
 		}
 
-		private boolean enabled;
-		private int mask = DEFAULT_COLOUR_MASK;
+		private boolean enabled = true;
+		private int mask = IntegerEnumeration.reduce(VkColorComponent.values());
 		private final BlendOperationBuilder colour = new BlendOperationBuilder();
 		private final BlendOperationBuilder alpha = new BlendOperationBuilder();
 
@@ -129,12 +132,12 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 			colour.source(VkBlendFactor.SRC_ALPHA);
 			colour.destination(VkBlendFactor.ONE_MINUS_SRC_ALPHA);
 			alpha.source(VkBlendFactor.ONE);
-			alpha.destination(VkBlendFactor.ZERO);
+			alpha.destination(VkBlendFactor.ONE);
 			attachments.add(this);
 		}
 
 		/**
-		 * Sets whether blending is enabled for the current attachment.
+		 * Sets whether blending is enabled for the colour attachment (default is {@code true}).
 		 * @param enabled Whether blending is enabled
 		 */
 		public AttachmentBuilder enabled(boolean enabled) {
@@ -146,17 +149,14 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 		 * Sets the colour write mask (default is {@code RGBA}).
 		 * @param mask Colour write mask
 		 * @throws IllegalArgumentException if the mask contains an invalid colour component character
+		 * @see VkColorComponent
 		 */
 		public AttachmentBuilder mask(String mask) {
-			// Convert mask to enumeration
-			final Collection<VkColorComponent> components = mask
+			this.mask = mask
 					.chars()
 					.mapToObj(Character::toString)
 					.map(VkColorComponent::valueOf)
-					.toList();
-
-			// Convert to bit-field mask
-			this.mask = IntegerEnumeration.reduce(components);
+					.collect(collectingAndThen(toList(), IntegerEnumeration::reduce));
 
 			return this;
 		}
