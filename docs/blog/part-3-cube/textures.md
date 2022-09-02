@@ -947,7 +947,6 @@ var props = new MemoryProperties.Builder<VkImageUsage>()
     .usage(VkImageUsage.TRANSFER_DST)
     .usage(VkImageUsage.SAMPLED)
     .required(VkMemoryProperty.DEVICE_LOCAL)
-    .copy()
     .build();
 ```
 

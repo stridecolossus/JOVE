@@ -498,8 +498,6 @@ public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
     var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
         .usage(VkBufferUsageFlag.TRANSFER_SRC)
         .required(VkMemoryProperty.HOST_VISIBLE)
-        .required(VkMemoryProperty.HOST_COHERENT)
-        .copy()
         .build();
 
     int len = data.length();
@@ -531,7 +529,6 @@ var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
     .usage(VkBufferUsageFlag.TRANSFER_DST)
     .usage(VkBufferUsageFlag.VERTEX_BUFFER)
     .required(VkMemoryProperty.DEVICE_LOCAL)
-    .copy()
     .build();
 
 VulkanBuffer vbo = VulkanBuffer.create(dev, allocator, staging.length(), props);

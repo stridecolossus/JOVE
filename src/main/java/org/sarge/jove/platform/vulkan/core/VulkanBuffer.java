@@ -78,7 +78,6 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 				.required(VkMemoryProperty.HOST_VISIBLE)
-				.required(VkMemoryProperty.HOST_COHERENT)
 				.build();
 
 		// Create staging buffer

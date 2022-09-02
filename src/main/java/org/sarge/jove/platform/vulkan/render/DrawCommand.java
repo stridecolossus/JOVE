@@ -80,7 +80,7 @@ public interface DrawCommand extends Command {
 		 * @see #indexed()
 		 */
 		public Builder count(int count) {
-			this.count = oneOrMore(count);
+			this.count = zeroOrMore(count);
 			return this;
 		}
 

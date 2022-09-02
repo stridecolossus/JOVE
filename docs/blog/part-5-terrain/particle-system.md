@@ -36,7 +36,7 @@ fireworks   | periodic      | point     | ballistic     | gravity       | time  
 
 Where:
 
-* A _ballistic_ trajectory implies the particle is 'fired' (and generally implies a gravitational influence).
+* A _ballistic_ trajectory is for particles that are 'fired' and implies a gravitational influence.
 
 * The _bounds_ specifies whether particles have a finite lifetime or are constrained by some geometric surface.
 
@@ -58,17 +58,25 @@ From the above the following requirements can be derived:
 
 ### Design
 
-For the particle system design we considered two approaches (there are almost certainly others) for how the _trajectory_ of a particle could be specified:
+For the particle system design we considered several alternative approaches (there are almost certainly others) for how the _trajectory_ of a particle could be specified:
 
-* A particle has a movement vector which is a mutable property applied to its position on each frame.
+* A particle has a trajectory _function_ that calculates the position of the particle at a given instant (including any influences such as gravity, wind resistance, etc).
 
-* A particle has a trajectory _function_ that calculates the position of the particle at a given instant.
+* The trajectory is computing in the shader.
 
-There are pros and cons to either of these approaches: A trajectory function is appealing in that it encapsulates all the information about how that particle moves over time, is therefore largely immutable, simpler to comprehend, and easier to test in isolation.
+* A particle comprises an initial position and movement vector, both of which are mutable.  The movement vector is applied to the particle position on each frame to simulate a trajectory.
 
-However we have opted for the iterative approach which is probably simpler to implement, if a little more complex to configure.  Particles are therefore a mutable record comprising a position and direction.
+There are pros and cons to all of these approaches:
 
-Calculation of the particle colour is deferred to the fragment shader, implying particles additionally have a creation timestamp used to calculate the colour based on age.
+* A trajectory function is appealing in that it encapsulates all the information about how that particle moves over time.  It is therefore simpler to comprehend, reusable, largely immutable, and easier to test in isolation.
+
+* Delegating the trajectory to the shader is logical and almost certainly much more efficient, however this would be very difficult to test or to diagnose.  Additionally GLSL code would have to cut-and-pasted rather than comprised of coherent, tested components (unless we employed some clever shader generator).
+
+* Mutable particles and movement vectors is probably simpler to implement but slightly more complex to configure.
+
+* A configurable particle system lends itself to being specified later by some configuration file (e.g. an XML document).
+
+After some trials we opted for the simplest approach using mutable particles.  However calculation of the particle colour _is_ deferred to the fragment shader, implying particles additionally have a creation timestamp used to calculate the colour based on age.
 
 We will progressively build up the particle system functionality using the _sparks_ scenario as a test case since this covers the majority of the identified requirements.
 
@@ -177,22 +185,14 @@ On a frame update the position of each particle is moved by its current directio
 public boolean update(Animator animator) {
     float elapsed = animator.elapsed() / 1000f; // TODO
     for(Particle p : particles) {
-        move(p, elapsed);
+        Vector vec = p.direction().multiply(elapsed);
+        p.move(vec);
     }
     return false;
 }
 ```
 
-Which delegates to the following helper method:
-
-```java
-private void move(Particle p, float elapsed) {
-    Vector vec = p.direction().multiply(elapsed);
-    p.move(vec);
-}
-```
-
-Note that the _elapsed_ duration is scaled to milliseconds-per-second, i.e. the movement vector is assumed to be expressed as a velocity in seconds.
+Note that the _elapsed_ duration is scaled to milliseconds-per-second, i.e. the movement vector is assumed to be expressed as a _velocity_ in seconds.
 
 ### Model
 
@@ -221,7 +221,7 @@ public class ParticleModel extends AbstractModel {
 }
 ```
 
-Where the vertex buffer delegates to the `buffer` method of the particles:
+Where the vertex buffer comprises the particles positions:
 
 ```java
 private final Bufferable vertices = new Bufferable() {

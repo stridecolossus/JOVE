@@ -205,24 +205,22 @@ public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
 }
 ```
 
-Finally the following new type specifies the usage properties for a memory request:
+Finally the following new type and specifies the usage properties for a memory request:
 
 ```java
 public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryProperty> required, Set<VkMemoryProperty> optimal) {
+    public MemoryProperties {
+        ...
+        optimal = Set.copyOf(CollectionUtils.union(required, optimal));
+    }
 }
 ```
 
-Note that this type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
+Notes:
 
-A companion builder is implemented to construct the new type with the following convenience method to copy the _required_ properties to the _optimal_ set:
+* This type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
 
-```java
-public Builder<T> copy() {
-    if(required.isEmpty()) throw new IllegalStateException(...);
-    optimal.addAll(required);
-    return this;
-}
-```
+* The constructor enforces the _optimal_ properties to be a super-set of the _required_ properties.
 
 ### Memory Selection
 

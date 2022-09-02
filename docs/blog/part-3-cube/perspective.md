@@ -198,7 +198,7 @@ public static VulkanBuffer uniform(LogicalDevice dev, AllocationService allocato
         .usage(VkBufferUsage.UNIFORM_BUFFER)
         .required(VkMemoryProperty.HOST_VISIBLE)
         .required(VkMemoryProperty.HOST_COHERENT)
-        .copy()
+        .optimal(VkMemoryProperty.DEVICE_LOCAL)
         .build();
 
     VulkanBuffer uniform = VulkanBuffer.create(dev, allocator, matrix.length(), props);
@@ -218,7 +218,7 @@ public void load(Bufferable data) {
 }
 ```
 
-Note that in this case the uniform buffer is visible to the host (i.e. the application) which is less performant than device-local memory.
+Note that in this case the buffer is also visible to the host (i.e. the application), which is generally less performant than device-only memory, and usually allocated from a smaller heap.
 However this allows the application to update the matrix per frame without the overhead of copying via an intermediate staging buffer.
 
 A second binding is required in the descriptor set layout for the uniform buffer:
