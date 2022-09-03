@@ -15,7 +15,9 @@ title: Memory Allocation
 
 ## Overview
 
-The following chapters will implement vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  Device memory resides on the host (visible to the application and the GPU) or on the graphics hardware (visible only to the GPU).
+The following chapters will implement vertex buffers and textures, both of which are dependant on _device memory_ allocated by Vulkan.  
+
+Device memory is available to the hardware but can also be visible to the host (i.e. the application) and may reside on the GPU or the host depending on the requirements.
 
 A Vulkan implementation specifies a set of _memory types_ from which an application can select depending on the usage scenario.  The documentation suggests implementing a _fallback strategy_ when selecting the memory type: the application specifies _optimal_ and _minimal_ properties for the requested memory, with the algorithm falling back to the minimal properties if the optimal memory type is not available.
 
@@ -205,22 +207,27 @@ public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
 }
 ```
 
-Finally the following new type and specifies the usage properties for a memory request:
+Finally the following new type specifies the requirements of a memory request:
 
 ```java
-public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryProperty> required, Set<VkMemoryProperty> optimal) {
-    public MemoryProperties {
-        ...
-        optimal = Set.copyOf(CollectionUtils.union(required, optimal));
-    }
-}
+public record MemoryProperties<T>(
+    Set<T> usage,
+    VkSharingMode mode,
+    Set<VkMemoryProperty> required,
+    Set<VkMemoryProperty> optimal
+)
 ```
 
-Notes:
+Note that this type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
 
-* This type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
+The constructor enforces the _optimal_ properties to be a super-set of the _required_ properties.
 
-* The constructor enforces the _optimal_ properties to be a super-set of the _required_ properties.
+```java
+public MemoryProperties {
+    ...
+    optimal = Set.copyOf(CollectionUtils.union(required, optimal));
+}
+```
 
 ### Memory Selection
 

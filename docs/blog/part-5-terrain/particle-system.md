@@ -808,6 +808,7 @@ And the update step is refactored similarly to the following cleaner and paralle
 void update() {
     particles
         .parallelStream()
+        .filter(Particle::isAlive)
         .filter(Predicate.not(Particle::isIdle))
         .forEach(this::update);
 }
