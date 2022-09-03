@@ -38,13 +38,12 @@ public class ParticleSystem implements Animation {
 	// Configuration
 	private PositionFactory pos = PositionFactory.ORIGIN;
 	private VectorFactory vec = VectorFactory.of(Vector.Y);
-	private Policy policy = Policy.NONE;
+	private GrowthPolicy policy = GrowthPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, CollisionAction> surfaces = new HashMap<>();
 
 	// State
 	private List<Particle> particles = new ArrayList<>();
-	private float count;
 	private long lifetime = Long.MAX_VALUE;
 	private boolean culling;
 
@@ -95,48 +94,10 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * A <i>particle system policy</i> specifies the number of particles to be generated on each frame.
-	 */
-	public interface Policy {
-		/**
-		 * Determines the number of particles to add on each frame.
-		 * @param current Current number of particles
-		 * @return New particles to generate
-		 */
-		int count(int current);
-
-		/**
-		 * Policy for a particle system that does not generate new particles.
-		 */
-		Policy NONE = ignored -> 0;
-
-		/**
-		 * Creates a policy that increments the number of particles (disregarding the current number of particles).
-		 * @param inc Number of particles to generate
-		 * @return Incremental policy
-		 */
-		static Policy increment(int inc) {
-			return ignored -> inc;
-		}
-
-		/**
-		 * Creates a policy adapter that caps the maximum number of particles.
-		 * @param max Maximum number of particles
-		 * @return New capped policy
-		 */
-		default Policy max(int max) {
-			return current -> {
-				final int count = Policy.this.count(current);
-				return Math.min(count, max - current);
-			};
-		}
-	}
-
-	/**
-	 * Sets the policy for the number of new particles to be generated on each frame (default is {@link Policy#NONE}).
+	 * Sets the policy for the number of new particles to be generated on each frame (default is {@link GrowthPolicy#NONE}).
 	 * @param policy Growth policy
 	 */
-	public ParticleSystem policy(Policy policy) {
+	public ParticleSystem policy(GrowthPolicy policy) {
 		this.policy = notNull(policy);
 		return this;
 	}
@@ -222,13 +183,11 @@ public class ParticleSystem implements Animation {
 
 	@Override
 	public synchronized boolean update(Animator animator) {
-		System.out.println("update " + Thread.currentThread().getName());
 		final Helper helper = new Helper(animator);
 		helper.expire();
 		helper.update();
 		helper.cull();
 		helper.generate();
-		System.out.println("done update " + Thread.currentThread().getName());
 		return false;
 	}
 
@@ -344,11 +303,7 @@ public class ParticleSystem implements Animation {
 		 * Generates new particles according to the configured policy.
 		 */
 		void generate() {
-			// Accumulate number of new particles
-			count += policy.count(particles.size()) * elapsed;
-
-			// Generate new particles
-			final int num = (int) count;
+			final int num = policy.count(particles.size(), elapsed);
 			if(num > 0) {
 				add(num, time);
 			}

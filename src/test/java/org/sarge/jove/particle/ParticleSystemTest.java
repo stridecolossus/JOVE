@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
-import org.sarge.jove.particle.ParticleSystem.*;
+import org.sarge.jove.particle.ParticleSystem.CollisionAction;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
@@ -57,7 +57,7 @@ class ParticleSystemTest {
 		@DisplayName("can be configured to generate new particles on each frame")
 		@Test
 		void generate() {
-			sys.policy(Policy.increment(1));
+			sys.policy(GrowthPolicy.increment(1));
 			sys.update(animator);
 			assertEquals(1, sys.size());
 		}
@@ -189,30 +189,6 @@ class ParticleSystemTest {
 			sys.add(surface, CollisionAction.DESTROY);
 			sys.update(animator);
 			verifyNoInteractions(surface);
-		}
-	}
-
-	@Nested
-	class PolicyTests {
-		@DisplayName("The NONE policy does not generate particles")
-		@Test
-		void none() {
-			assertEquals(0, Policy.NONE.count(0));
-		}
-
-		@DisplayName("An incremental growth policy adds a constant number of particles")
-		@Test
-		void increment() {
-			final Policy policy = Policy.increment(1);
-			assertEquals(1, policy.count(0));
-			assertEquals(1, policy.count(1));
-		}
-
-		@DisplayName("A maximum growth policy caps the number of particles")
-		@Test
-		void max() {
-			final Policy policy = Policy.increment(3).max(2);
-			assertEquals(2, policy.count(0));
 		}
 	}
 }
