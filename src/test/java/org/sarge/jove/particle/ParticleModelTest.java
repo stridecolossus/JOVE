@@ -32,12 +32,6 @@ public class ParticleModelTest {
 	}
 
 	@Test
-	void length() {
-		final Bufferable vertices = model.vertices();
-		assertEquals(2 * Point.LAYOUT.length(), vertices.length());
-	}
-
-	@Test
 	void buffer() {
 		final Bufferable vertices = model.vertices();
 		final ByteBuffer bb = mock(ByteBuffer.class);

@@ -21,7 +21,8 @@ public class ParticleModel extends AbstractModel {
 	private final Bufferable vertices = new Bufferable() {
 		@Override
 		public int length() {
-			return sys.size() * layout().stride();
+			//return sys.size() * layout().stride();
+			throw new RuntimeException();
 		}
 
 		@Override
@@ -31,14 +32,14 @@ public class ParticleModel extends AbstractModel {
 				p.origin().buffer(bb);
 			}
 
-			// Write creation timestamps
-			if(times) {
-				for(Particle p : sys.particles()) {
-					bb.putLong(p.time());
-				}
-			}
-			// TODO - not interleaved!
-			// TODO - requires current time -> fragment shader (uniform?)
+//			// Write creation timestamps
+//			if(times) {
+//				for(Particle p : sys.particles()) {
+//					bb.putLong(p.time());
+//				}
+//			}
+//			// TODO - not interleaved!
+//			// TODO - requires current time -> fragment shader (uniform?)
 		}
 	};
 
@@ -71,12 +72,12 @@ public class ParticleModel extends AbstractModel {
 	}
 
 	@Override
-	public int count() {
+	public synchronized int count() {
 		return sys.size();
 	}
 
 	@Override
-	public Bufferable vertices() {
+	public synchronized Bufferable vertices() {
 		return vertices;
 	}
 }

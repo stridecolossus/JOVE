@@ -14,18 +14,18 @@ import org.sarge.jove.geometry.*;
 public class Particle implements Ray {
 	private final long time;
 	private Point pos;
-	private Vector vec;
+	private Vector dir;
 
 	/**
 	 * Constructor.
 	 * @param time		Creation time
 	 * @param pos 		Starting position
-	 * @param vec 		Initial movement vector
+	 * @param dir		Initial direction
 	 */
-	protected Particle(long time, Point pos, Vector vec) {
+	protected Particle(long time, Point pos, Vector dir) {
 		this.time = zeroOrMore(time);
 		this.pos = notNull(pos);
-		this.vec = notNull(vec);
+		this.dir = notNull(dir);
 	}
 
 	/**
@@ -43,7 +43,7 @@ public class Particle implements Ray {
 
 	@Override
 	public Vector direction() {
-		return vec;
+		return dir;
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class Particle implements Ray {
 	 * @see #stop()
 	 */
 	public boolean isIdle() {
-		return vec == null;
+		return dir == null;
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class Particle implements Ray {
 	 */
 	void stop() {
 		if(isIdle()) throw new IllegalStateException();
-		vec = null;
+		dir = null;
 	}
 
 	/**
@@ -95,7 +95,7 @@ public class Particle implements Ray {
 	 * @param vec Direction modifier
 	 */
 	public void add(Vector vec) {
-		this.vec = this.vec.add(vec);
+		dir = dir.add(vec);
 	}
 
 	/**
@@ -103,22 +103,22 @@ public class Particle implements Ray {
 	 * @param v Velocity modifier
 	 */
 	public void velocity(float v) {
-		this.vec = vec.multiply(v);
+		dir = dir.multiply(v);
 	}
 
 	/**
 	 * Reflects this particle at the given intersection.
+	 * Note that this method does not take into account the distance travelled (or remaining) at the intersection.
 	 * @param intersection Surface intersection
 	 */
 	void reflect(Point intersection, Vector normal) {
-		// TODO - will be inaccurate?
 		pos = notNull(intersection);
-		vec = vec.reflect(normal);
+		dir = dir.reflect(normal);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(time, pos, vec);
+		return Objects.hash(time, pos, dir);
 	}
 
 	@Override
@@ -128,11 +128,11 @@ public class Particle implements Ray {
 				(obj instanceof Particle that) &&
 				(this.time == that.time) &&
 				this.pos.equals(that.pos) &&
-				this.vec.equals(that.vec);
+				this.dir.equals(that.dir);
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(pos).append(vec).build();
+		return new ToStringBuilder(this).append(pos).append(dir).build();
 	}
 }

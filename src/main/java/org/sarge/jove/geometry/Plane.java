@@ -62,12 +62,12 @@ public record Plane(Vector normal, float distance) implements Intersected {
 
 	/**
 	 * Creates a plane given a normal and a point on the plane.
-	 * @param normal		Plane normal
-	 * @param pt			Point on the plane
+	 * @param n Plane normal
+	 * @param p Point on the plane
 	 * @return New plane
 	 */
-	public static Plane of(Vector normal, Point pt) {
-		return new Plane(normal, -pt.dot(normal));
+	public static Plane of(Vector n, Point p) {
+		return new Plane(n, -p.dot(n));
 	}
 
 	/**
@@ -96,11 +96,11 @@ public record Plane(Vector normal, float distance) implements Intersected {
 
 	/**
 	 * Determines the distance of the given point from this plane.
-	 * @param pt Point
+	 * @param p Point
 	 * @return Distance to the given point
 	 */
-	public float distance(Point pt) {
-		return normal.dot(pt) + distance;
+	public float distance(Point p) {
+		return normal.dot(p) + distance;
 	}
 
 	/**
@@ -115,21 +115,43 @@ public record Plane(Vector normal, float distance) implements Intersected {
 
 	@Override
 	public Iterator<Intersection> intersections(Ray ray) {
-		// Calc denominator
+		// Determine angle between ray and normal
 		final float denom = normal.dot(ray.direction());
 
-		// Stop if parallel
+		// Orthogonal ray does not intersect
 		if(MathsUtil.isZero(denom)) {
-			return NONE; // TODO - should this be zero?
-		}
-
-		// Calc intersection (note negative sign in equation)
-		final float t = -distance(ray.origin()) / denom;
-		if(t < 0) {
 			return NONE;
 		}
 
-		// Build intersection
-		return List.of(new Intersection(ray, t, normal)).iterator();
+		// Calc intersection distance
+		final float d = -distance(ray.origin()) / denom;
+		if(d < 0) {
+			return NONE;
+		}
+
+		// Build intersection result
+		return intersection(ray, d);
+	}
+
+	/**
+	 * Builds an intersection result.
+	 */
+	private Iterator<Intersection> intersection(Ray ray, float d) {
+		return List.of(new Intersection(ray, d, normal)).iterator();
+	}
+
+	/**
+	 * Creates an adapter for this plane that considers rays in <i>front</i> this plane as <b>not</b> intersecting, i.e. is in the {@link HalfSpace#POSITIVE} half-space.
+	 * @return Intersection test for a ray behind this plane
+	 */
+	public Intersected behind() {
+		return ray -> {
+			if(halfspace(ray.origin()) == HalfSpace.POSITIVE) {
+				return Intersected.NONE;
+			}
+			else {
+				return intersection(ray, 0);
+			}
+		};
 	}
 }

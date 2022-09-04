@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Rotation.AxisAngle;
-import org.sarge.jove.util.FloatSupplier;
+import org.sarge.jove.util.Randomiser;
 
 /**
  * A <i>cone vector factory</i> generates randomised vectors within a cone.
@@ -22,19 +22,21 @@ import org.sarge.jove.util.FloatSupplier;
 public class ConeVectorFactory implements VectorFactory {
 	private final Vector normal;
 	private final Vector x, y;
+//	private final Interpolator radius;
 	private final float radius;
-	private final FloatSupplier random;
+	private final Randomiser random;
 
 	/**
 	 * Constructor.
 	 * @param normal	Cone normal
 	 * @param radius	Radius
-	 * @param random	Randomiser in the range 0..1
+	 * @param random	Randomiser
 	 */
-	public ConeVectorFactory(Vector normal, float radius, FloatSupplier random) {
+	public ConeVectorFactory(Vector normal, float radius, Randomiser random) {
 		this.normal = notNull(normal);
 		this.x = right(normal);
 		this.y = x.cross(normal);
+//		this.radius = Interpolator.linear(-radius/2, radius/2);
 		this.radius = radius;
 		this.random = notNull(random);
 	}
@@ -74,13 +76,18 @@ public class ConeVectorFactory implements VectorFactory {
 	 * @return Normal rotated about the given vector
 	 */
 	protected Vector rotate(Vector axis) {
-		final float angle = (1 - random.get()) * radius - radius;
+//		final float angle = radius.interpolate(random.next());
+		final float angle = 2 * (1 - random.next()) * radius - radius;
 		final var rot = new AxisAngle(axis, angle);
 		return rot.rotate(normal);
 	}
+	// TODO - interpolator
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(normal).append("radius", radius).build();
+		return new ToStringBuilder(this)
+				.append("normal", normal)
+				.append("radius", radius)
+				.build();
 	}
 }

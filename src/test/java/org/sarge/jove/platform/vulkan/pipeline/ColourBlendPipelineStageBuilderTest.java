@@ -59,10 +59,7 @@ public class ColourBlendPipelineStageBuilderTest {
 	void disabled() {
 		final var info = builder.get();
 		assertEquals(VulkanBoolean.FALSE, info.logicOpEnable);
-		assertEquals(VkLogicOp.NO_OP, info.logicOp);
-		assertArrayEquals(new float[]{1, 1, 1, 1}, info.blendConstants);
-		assertEquals(0, info.attachmentCount);
-		assertEquals(null, info.pAttachments);
+		assertEquals(1, info.attachmentCount);
 	}
 
 	@Test

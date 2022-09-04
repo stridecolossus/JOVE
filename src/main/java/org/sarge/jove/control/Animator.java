@@ -38,7 +38,7 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	 * @return Current time (epoch)
 	 */
 	public long time() {
-		return (long) (frame.time().toEpochMilli() * speed);
+		return frame.time().toEpochMilli();
 	}
 
 	/**

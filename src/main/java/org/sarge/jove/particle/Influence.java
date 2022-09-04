@@ -21,7 +21,7 @@ public interface Influence {
 	 * @see Particle#add(Vector)
 	 */
 	static Influence of(Vector vec) {
-		return (p, elapsed) -> p.add(vec);
+		return (p, elapsed) -> p.add(vec.multiply(elapsed));
 	}
 
 	/**
@@ -31,6 +31,6 @@ public interface Influence {
 	 * @see Particle#velocity(float)
 	 */
 	static Influence velocity(float v) {
-		return (p, elapsed) -> p.velocity(v);
+		return (p, elapsed) -> p.velocity(v * elapsed);
 	}
 }

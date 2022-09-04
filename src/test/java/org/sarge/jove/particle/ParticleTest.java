@@ -34,7 +34,7 @@ public class ParticleTest {
 	@Test
 	void vector() {
 		particle.add(Vector.X);
-		assertEquals(Vector.Y.add(Vector.X), particle.direction());
+		assertEquals(Vector.X.add(Vector.Y), particle.direction());
 	}
 
 	@DisplayName("The velocity of a particle can be modified")

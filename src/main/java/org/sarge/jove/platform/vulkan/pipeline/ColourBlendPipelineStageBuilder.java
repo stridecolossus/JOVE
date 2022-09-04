@@ -18,6 +18,8 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 
 	public ColourBlendPipelineStageBuilder() {
+		info.logicOpEnable = VulkanBoolean.FALSE;
+		info.logicOp = VkLogicOp.COPY;
 		Arrays.fill(info.blendConstants, 1);
 	}
 
@@ -34,6 +36,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param op Colour-blending operation
 	 */
 	public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
+		info.logicOpEnable = VulkanBoolean.TRUE;
 		info.logicOp = notNull(op);
 		return this;
 	}
@@ -51,16 +54,6 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 
 	@Override
 	VkPipelineColorBlendStateCreateInfo get() {
-		// Check whether disabled
-		if(info.logicOp == null) {
-			info.logicOpEnable = VulkanBoolean.FALSE;
-			info.logicOp = VkLogicOp.NO_OP;
-			return info;
-		}
-
-		// Enable blending
-		info.logicOpEnable = VulkanBoolean.TRUE;
-
 		// Init default attachment if none specified
 		if(attachments.isEmpty()) {
 			new AttachmentBuilder().build();

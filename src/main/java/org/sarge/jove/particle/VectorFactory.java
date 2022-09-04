@@ -1,6 +1,7 @@
 package org.sarge.jove.particle;
 
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.util.Randomiser;
 
 /**
  * A <i>vector factory</i> generates the initial movement vector of a {@link Particle}.
@@ -35,7 +36,7 @@ public interface VectorFactory {
 	 * @param randomiser Vector randomiser
 	 * @return Random vector factory (normalised)
 	 */
-	static VectorFactory random(VectorRandomiser randomiser) {
-		return ignored -> randomiser.randomise().normalize();
+	static VectorFactory random(Randomiser randomiser) {
+		return ignored -> randomiser.vector().normalize();
 	}
 }

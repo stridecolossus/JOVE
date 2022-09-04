@@ -5,14 +5,15 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.util.Randomiser;
 
 class PositionFactoryTest {
-	private VectorRandomiser randomiser;
+	private Randomiser randomiser;
 
 	@BeforeEach
 	void before() {
-		randomiser = mock(VectorRandomiser.class);
-		when(randomiser.randomise()).thenReturn(Vector.X);
+		randomiser = mock(Randomiser.class);
+		when(randomiser.vector()).thenReturn(Vector.X);
 	}
 
 	@DisplayName("The origin factory positions particles at the origin")
