@@ -1,7 +1,5 @@
 package org.sarge.jove.geometry;
 
-import java.util.*;
-
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -52,10 +50,12 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	/**
 	 * Creates a plane containing the given triangle of points.
 	 * @return New plane
+	 * @throws IllegalArgumentException if the triangle is degenerate
 	 */
 	public static Plane of(Point a, Point b, Point c) {
-		final Vector u = Vector.between(a, b);
+		final Vector u = Vector.between(a, c);
 		final Vector v = Vector.between(b, c);
+		if(u.equals(v)) throw new IllegalArgumentException("Triangle points cannot be degenerate");
 		final Vector normal = u.cross(v).normalize();
 		return of(normal, a);
 	}
@@ -114,7 +114,17 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	}
 
 	@Override
-	public Iterator<Intersection> intersections(Ray ray) {
+	public Intersection intersection(Ray ray) {
+		return intersections(ray, true);
+	}
+
+	/**
+	 * TODO
+	 * @param ray Ray
+	 * @param pos Whether rays originating in the {@link HalfSpace#POSITIVE} half-space are subject to the intersection test
+	 * @return Intersections
+	 */
+	private Intersection intersections(Ray ray, boolean pos) {
 		// Determine angle between ray and normal
 		final float denom = normal.dot(ray.direction());
 
@@ -124,34 +134,61 @@ public record Plane(Vector normal, float distance) implements Intersected {
 		}
 
 		// Calc intersection distance
-		final float d = -distance(ray.origin()) / denom;
-		if(d < 0) {
-			return NONE;
+		final float d = distance(ray.origin());
+		final float t = -d / denom;
+
+		// Check for intersection
+		if(pos) {
+			if(t < 0) {
+				return NONE;
+			}
+		}
+		else {
+			if(d > 0) {
+				return NONE;
+			}
 		}
 
 		// Build intersection result
-		return intersection(ray, d);
+		return Intersection.of(t, normal);
 	}
 
 	/**
-	 * Builds an intersection result.
-	 */
-	private Iterator<Intersection> intersection(Ray ray, float d) {
-		return List.of(new Intersection(ray, d, normal)).iterator();
-	}
-
-	/**
-	 * Creates an adapter for this plane that considers rays in <i>front</i> this plane as <b>not</b> intersecting, i.e. is in the {@link HalfSpace#POSITIVE} half-space.
-	 * @return Intersection test for a ray behind this plane
+	 * Creates an adapter for this plane that only applies the intersection test to rays <i>behind</i> this plane, i.e. in the {@link HalfSpace#NEGATIVE} half-space.
+	 * @return Intersecting surface for rays behind this plane
+	 * @see #negative()
 	 */
 	public Intersected behind() {
+		return ray -> intersections(ray, false);
+	}
+
+	/**
+	 * Creates an intersection adapter for this plane that considers <b>all</b> rays <i>behind</i> the plane to be intersecting, i.e. in the {@link HalfSpace#NEGATIVE} half-space.
+	 * <p>
+	 * This implementation may offer better performance when the actual intersection point and surface normal are not relevant.
+	 * Note that the intersection results are undefined and only indicate <i>whether</i> a ray originates in the negative half-space.
+	 * <p>
+	 * @return Negative half-space intersection surface
+	 * @throws UnsupportedOperationException if the undefined intersection point or surface normal are queried
+	 * @see #behind()
+	 */
+	public Intersected negative() {
 		return ray -> {
 			if(halfspace(ray.origin()) == HalfSpace.POSITIVE) {
-				return Intersected.NONE;
+				return NONE;
 			}
 			else {
-				return intersection(ray, 0);
+				return UNDEFINED;
 			}
 		};
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Plane that) &&
+				this.normal.equals(that.normal) &&
+				MathsUtil.isEqual(this.distance, that.distance);
 	}
 }

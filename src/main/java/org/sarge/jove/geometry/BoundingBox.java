@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.*;
+import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Plane.HalfSpace;
@@ -66,7 +66,7 @@ public class BoundingBox implements Volume {
 	 * @see <a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection">Ray-box intersection</a>
 	 */
 	@Override
-	public Iterator<Intersection> intersections(Ray ray) {
+	public Intersection intersection(Ray ray) {
 		// Determine intersection distances
 		float n = Float.NEGATIVE_INFINITY;
 		float f = Float.POSITIVE_INFINITY;
@@ -103,16 +103,19 @@ public class BoundingBox implements Volume {
 		}
 
 		// Build results
-		final var far = new Intersection(ray, f, this::normal);
-		if((n < 0) || MathsUtil.isEqual(n, f)) {
-			// Touching, inside or corner
-			return List.of(far).iterator();
-		}
-		else {
-			// Two intersections
-			final var near = new Intersection(ray, n, this::normal);
-			return List.of(near, far).iterator();
-		}
+		final List<Float> distances = distances(n, f);
+		return new Intersection() {
+			@Override
+			public List<Float> distances() {
+				return distances;
+			}
+
+			@Override
+			public Vector normal(Point p) {
+				final Point pos = p.subtract(bounds.centre());
+				return new Vector(pos).normalize();
+			}
+		};
 	}
 
 	/**
@@ -127,14 +130,15 @@ public class BoundingBox implements Volume {
 	}
 
 	/**
-	 * Calculates the box normal for the given intersection point.
-	 * Note that corner normals will be diagonal.
-	 * @param pt Intersection point
-	 * @return Normal
+	 * Builds intersection distances.
 	 */
-	private Vector normal(Point pt) {
-		final Point pos = pt.subtract(bounds.centre());
-		return new Vector(pos).normalize();
+	private static List<Float> distances(float n, float f) {
+		if((n < 0) || MathsUtil.isEqual(n, f)) {
+			return List.of(f);
+		}
+		else {
+			return List.of(n, f);
+		}
 	}
 
 	@Override

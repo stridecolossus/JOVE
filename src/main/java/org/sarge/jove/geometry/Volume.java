@@ -1,7 +1,5 @@
 package org.sarge.jove.geometry;
 
-import java.util.Iterator;
-
 import org.sarge.jove.geometry.Ray.*;
 
 /**
@@ -73,7 +71,7 @@ public interface Volume extends Intersected {
 		}
 
 		@Override
-		public Iterator<Intersection> intersections(Ray ray) {
+		public Intersection intersection(Ray ray) {
 			return NONE;
 		}
 

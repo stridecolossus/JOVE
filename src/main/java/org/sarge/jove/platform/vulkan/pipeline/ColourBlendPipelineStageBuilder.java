@@ -32,11 +32,19 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	}
 
 	/**
+	 * Enables colour blending.
+	 * @param enabled Whether enabled (default is {@code false})
+	 */
+	public ColourBlendPipelineStageBuilder enable(boolean enabled) {
+		info.logicOpEnable = VulkanBoolean.of(enabled);
+		return this;
+	}
+
+	/**
 	 * Sets the global colour blending operation.
 	 * @param op Colour-blending operation
 	 */
 	public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
-		info.logicOpEnable = VulkanBoolean.TRUE;
 		info.logicOp = notNull(op);
 		return this;
 	}

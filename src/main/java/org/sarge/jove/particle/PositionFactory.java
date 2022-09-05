@@ -45,7 +45,7 @@ public interface PositionFactory {
 	/**
 	 * Creates a position factory that generates points within a box volume.
 	 * @param bounds 		Box bounds
-	 * @param randomiser	Vector randomiser
+	 * @param randomiser	Randomiser
 	 * @return Box position factory
 	 */
 	static PositionFactory box(Bounds bounds, Randomiser randomiser) {

@@ -57,7 +57,7 @@ public class CompoundVolume implements Volume {
 	}
 
 	@Override
-	public Iterator<Intersection> intersections(Ray ray) {
+	public Intersection intersection(Ray ray) {
 //		// TODO
 //		final Optional<Intersection> intersection = volumes
 //				.stream()

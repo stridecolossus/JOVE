@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 
 public class IncrementalPolicyTest {
-	private GrowthPolicy policy;
+	private GenerationPolicy policy;
 
 	@BeforeEach
 	void before() {
-		policy = new IncrementalPolicy(1, 2);
+		policy = new IncrementGenerationPolicy(1, 2);
 	}
 
 	@DisplayName("The number of new particles is generated for each frame")

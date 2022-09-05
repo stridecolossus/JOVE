@@ -5,11 +5,11 @@ import static org.sarge.lib.util.Check.oneOrMore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * An <i>incremental policy</i> increases the number of particles up to a given maximum.
+ * An <i>incremental generation policy</i> increases the number of particles up to a given maximum.
  * Note that fractional results are accumulated by this policy.
  * @author Sarge
  */
-public class IncrementalPolicy implements GrowthPolicy {
+public class IncrementGenerationPolicy implements GenerationPolicy {
 	private final float inc;
 	private final int max;
 
@@ -21,7 +21,7 @@ public class IncrementalPolicy implements GrowthPolicy {
 	 * @param max Maximum number of particles
 	 * @throws IllegalArgumentException if {@link #inc} is not positive or is larger than {@link max}
 	 */
-	public IncrementalPolicy(int inc, int max) {
+	public IncrementGenerationPolicy(int inc, int max) {
 		if(inc <= 0) throw new IllegalArgumentException("Increment must be positive");
 		if(inc > max) throw new IllegalArgumentException("Increment cannot be larger than the maximum");
 		this.inc = inc;
@@ -30,8 +30,9 @@ public class IncrementalPolicy implements GrowthPolicy {
 
 	@Override
 	public int count(int current, float elapsed) {
-		// Accumulate particles to generate and apply cap
-		pending = Math.min(max - current, pending + inc * elapsed);
+		// Accumulate particles to generate and clamp
+		pending += inc * elapsed;
+		pending = Math.min(max - current, pending);
 
 		// Determine actual number of particles to generate
 		final int actual = (int) pending;

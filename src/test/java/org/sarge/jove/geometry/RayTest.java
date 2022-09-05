@@ -3,6 +3,8 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
+import java.util.List;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.*;
 
@@ -38,14 +40,18 @@ class RayTest {
 	class IntersectionTests {
 		@Test
 		void none() {
-			assertEquals(false, Intersected.NONE.hasNext());
+			assertEquals(true, Intersected.NONE.isEmpty());
+			assertEquals(List.of(), Intersected.NONE.distances());
+			assertThrows(UnsupportedOperationException.class, () -> Intersected.NONE.normal(null));
 		}
 
 		@Test
-		void intersection() {
-			final var intersection = new Intersection(ray, 3, Vector.Y);
-			assertEquals(new Point(3, 0, 0), intersection.point());
-			assertEquals(Vector.Y, intersection.normal());
+		void of() {
+			final var intersection = Intersection.of(3, Vector.Y);
+			assertEquals(false, intersection.isEmpty());
+			assertEquals(List.of(3f), intersection.distances());
+			assertEquals(new Point(3, 0, 0), intersection.point(ray));
+			assertEquals(Vector.Y, intersection.normal(null));
 		}
 	}
 }

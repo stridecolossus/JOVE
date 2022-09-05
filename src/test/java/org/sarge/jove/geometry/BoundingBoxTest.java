@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Iterator;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.*;
@@ -104,61 +104,64 @@ class BoundingBoxTest {
 		@Test
 		void intersect() {
 			final Ray ray = new DefaultRay(new Point(0, 2, 0), new Vector(1, 1, 0).normalize());
-			final Iterator<Intersection> itr = box.intersections(ray);
 			final float expected = (float) Math.sqrt(2);
-			assertEquals(new Intersection(ray, expected, Vector.X.invert()), itr.next());
-			assertEquals(new Intersection(ray, 2 * expected, Vector.Y), itr.next());
-			assertEquals(false, itr.hasNext());
+			final Intersection intersection = box.intersection(ray);
+			assertEquals(false, intersection.isEmpty());
+			assertEquals(List.of(expected, 2 * expected), intersection.distances());
+			assertEquals(Vector.X.invert(), intersection.normal(ray.point(expected)));
+			assertEquals(Vector.Y, intersection.normal(ray.point(2 * expected)));
 		}
 
 		@DisplayName("A ray has a single intersection with a bounding box that it is touching")
 		@Test
 		void touching() {
 			final Ray ray = new DefaultRay(new Point(3, 3, 0), Vector.X);
-			final Iterator<Intersection> itr = box.intersections(ray);
-			assertEquals(new Intersection(ray, 0, Vector.X), itr.next());
-			assertEquals(false, itr.hasNext());
+			final Intersection intersection = box.intersection(ray);
+			assertEquals(false, intersection.isEmpty());
+			assertEquals(List.of(0f), intersection.distances());
+			assertEquals(Vector.X, intersection.normal(ray.point(0)));
 		}
 
 		@DisplayName("A ray has a single intersection if it inside the box")
 		@Test
 		void inside() {
 			final Ray ray = new DefaultRay(new Point(2, 3, 0), Vector.X);
-			final Iterator<Intersection> itr = box.intersections(ray);
-			assertEquals(new Intersection(ray, 1, Vector.X), itr.next());
-			assertEquals(false, itr.hasNext());
+			final Intersection intersection = box.intersection(ray);
+			assertEquals(false, intersection.isEmpty());
+			assertEquals(List.of(1f), intersection.distances());
+			assertEquals(Vector.X, intersection.normal(ray.point(1)));
 		}
 
 		@DisplayName("A ray can intersect a corner of a bounding box")
 		@Test
 		void corner() {
 			final Ray ray = new DefaultRay(new Point(0, 3, 0), new Vector(1, 1, 0).normalize());
-			final Iterator<Intersection> itr = box.intersections(ray);
-			final Intersection intersection = itr.next();
-			assertEquals(new Point(1, 4, 0), intersection.point());
-			assertNotNull(intersection.normal(), "Expected undefined normal");
-			assertEquals(false, itr.hasNext());
+			final Intersection intersection = box.intersection(ray);
+			final Point corner = new Point(1, 4, 0);
+			assertEquals(false, intersection.isEmpty());
+			assertEquals(corner, intersection.point(ray));
+			assertNotNull(intersection.normal(corner), "Expected undefined normal");
 		}
 
 		@DisplayName("A ray that points away from the box has no intersections")
 		@Test
 		void miss() {
-			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 3, 0), Vector.X.invert())));
+			assertEquals(Intersected.NONE, box.intersection(new DefaultRay(new Point(0, 3, 0), Vector.X.invert())));
 		}
 
 		@DisplayName("A ray does not intersect a bounding box if it is behind the ray origin")
 		@Test
 		void behind() {
-			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(4, 3, 0), Vector.X)));
+			assertEquals(Intersected.NONE, box.intersection(new DefaultRay(new Point(4, 3, 0), Vector.X)));
 		}
 
 		@DisplayName("A ray does not intersect a bounding box if the direction is parallel to that box")
 		@Test
 		void parallel() {
-			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 1, 0), Vector.X)));
-			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 5, 0), Vector.X)));
-			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(0, 0, 0), Vector.Y)));
-			assertEquals(Intersected.NONE, box.intersections(new DefaultRay(new Point(4, 0, 0), Vector.Y)));
+			assertEquals(Intersected.NONE, box.intersection(new DefaultRay(new Point(0, 1, 0), Vector.X)));
+			assertEquals(Intersected.NONE, box.intersection(new DefaultRay(new Point(0, 5, 0), Vector.X)));
+			assertEquals(Intersected.NONE, box.intersection(new DefaultRay(new Point(0, 0, 0), Vector.Y)));
+			assertEquals(Intersected.NONE, box.intersection(new DefaultRay(new Point(4, 0, 0), Vector.Y)));
 		}
 	}
 }

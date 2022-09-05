@@ -131,6 +131,7 @@ class VectorTest {
 		assertEquals(new Vector(1, 2, -3), vec.reflect(Z));
 	}
 
+	@DisplayName("A vector is reflected in the same direction for the inverse normal")
 	@Test
 	void reflectInverse() {
 		assertEquals(new Vector(-1, 2, 3), vec.reflect(X.invert()));

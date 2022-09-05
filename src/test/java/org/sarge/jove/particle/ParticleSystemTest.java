@@ -9,7 +9,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
-import org.sarge.jove.particle.ParticleSystem.CollisionAction;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
@@ -57,7 +56,7 @@ class ParticleSystemTest {
 		@DisplayName("can be configured to generate new particles on each frame")
 		@Test
 		void generate() {
-			sys.policy(GrowthPolicy.increment(1));
+			sys.policy(GenerationPolicy.fixed(1));
 			sys.update(animator);
 			assertEquals(1, sys.size());
 		}
@@ -124,46 +123,6 @@ class ParticleSystemTest {
 		}
 	}
 
-	@DisplayName("A particle that intersects a collision surface...")
-	@Nested
-	class Collisions {
-		private Intersected surface;
-		private Particle p;
-
-		@BeforeEach
-		void before() {
-			p = create();
-			surface = new Plane(Vector.Y, -1);
-		}
-
-		@DisplayName("can be destroyed")
-		@Test
-		void destroy() {
-			sys.add(surface, CollisionAction.DESTROY);
-			sys.update(animator);
-			assertEquals(0, sys.size());
-		}
-
-		@DisplayName("can be stopped")
-		@Test
-		void stop() {
-			sys.add(surface, CollisionAction.STOP);
-			sys.update(animator);
-			assertEquals(true, p.isIdle());
-			assertEquals(List.of(p), sys.particles());
-		}
-
-		@DisplayName("can be reflected by the surface")
-		@Test
-		void reflect() {
-			sys.add(surface, CollisionAction.REFLECT);
-			sys.update(animator);
-			assertEquals(new Point(0, 1, 0), p.origin());
-			assertEquals(Vector.Y.invert(), p.direction());
-			assertEquals(List.of(p), sys.particles());
-		}
-	}
-
 	@DisplayName("A stopped particle...")
 	@Nested
 	class Stopped {
@@ -186,7 +145,7 @@ class ParticleSystemTest {
 		@Test
 		void collide() {
 			final Intersected surface = mock(Intersected.class);
-			sys.add(surface, CollisionAction.DESTROY);
+			sys.add(surface, Collision.DESTROY);
 			sys.update(animator);
 			verifyNoInteractions(surface);
 		}

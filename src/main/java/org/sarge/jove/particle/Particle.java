@@ -56,12 +56,24 @@ public class Particle implements Ray {
 
 	/**
 	 * Stops this particle.
+	 * @param pos Particle position
 	 * @throws IllegalStateException if this particle has already been stopped
 	 * @see #isIdle()
 	 */
-	void stop() {
+	public void stop() {
 		if(isIdle()) throw new IllegalStateException();
 		dir = null;
+	}
+
+	/**
+	 * Stops this particle at the given position.
+	 * @param pos Particle position
+	 * @throws IllegalStateException if this particle has already been stopped
+	 * @see #stop()
+	 */
+	public void stop(Point pos) {
+		stop();
+		this.pos = notNull(pos);
 	}
 
 	/**
@@ -77,7 +89,7 @@ public class Particle implements Ray {
 	 * @throws IllegalStateException if this particle has already been killed
 	 * @see #isAlive()
 	 */
-	void destroy() {
+	public void destroy() {
 		if(!isAlive()) throw new IllegalStateException();
 		pos = null;
 	}
@@ -108,12 +120,13 @@ public class Particle implements Ray {
 
 	/**
 	 * Reflects this particle at the given intersection.
-	 * Note that this method does not take into account the distance travelled (or remaining) at the intersection.
-	 * @param intersection Surface intersection
+	 * Note that this method does <b>not</b> take into account the distance travelled (or remaining) at the intersection.
+	 * @param pos		Intersection point
+	 * @param normal	Surface normal at this intersection
 	 */
-	void reflect(Point intersection, Vector normal) {
-		pos = notNull(intersection);
-		dir = dir.reflect(normal);
+	public void reflect(Point pos, Vector normal) {
+		this.pos = notNull(pos);
+		this.dir = dir.reflect(normal);
 	}
 
 	@Override

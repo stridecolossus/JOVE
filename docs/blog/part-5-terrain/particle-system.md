@@ -291,111 +291,125 @@ if(lifetime < Long.MAX_VALUE) {
 In most cases the particle system will be required to generate new particles on each frame, which is configured by the following policy:
 
 ```java
-public interface Policy {
+public interface GenerationPolicy {
     /**
      * Determines the number of particles to add on each frame.
-     * @param current Current number of particles
+     * @param current       Current number of particles
+     * @param elapsed       Elapsed modifier
      * @return New particles to generate
      */
-    int count(int current);
+    int count(int current, float elapsed);
 
     /**
      * Policy for a particle system that does not generate new particles.
      */
-    Policy NONE = ignored -> 0;
+    GenerationPolicy NONE = (current, elapsed) -> 0;
 }
 ```
 
-A basic incremental implementation is provided:
+A basic policy factory is provided for a fixed number of particles:
 
 ```java
-static Policy increment(int inc) {
-    return ignored -> inc;
+static GenerationPolicy fixed(int num) {
+    return (current, elapsed) -> num - current;
 }
 ```
 
-And an adapter that caps the maximum number of particles:
+The following more specialised implementation increments the number of particles in the system and applies a maximum cap:
 
 ```java
-default Policy max(int max) {
-    return current -> {
-        int count = Policy.this.count(current);
-        return Math.min(count, max - current);
-    };
+public class IncrementGenerationPolicy implements GenerationPolicy {
+    private final float inc;
+    private final int max;
+    private float pending;
 }
 ```
 
-A new step is added to the end of the `update` method to generate new particles according to the configured policy, scaled by the _elapsed_ modifier:
+Where `inc` is the number of particles to generate per-second.
+
+The `actual` number of particles to generate is integral and `pending` accumulates fractional results between each frame:
+
+```java
+public int count(int current, float elapsed) {
+    // Accumulate particles to generate and clamp
+    pending += inc * elapsed;
+    pending = Math.min(max - current, pending);
+
+    // Determine actual number of particles to generate
+    int actual = (int) pending;
+    pending -= actual;
+
+    return actual;
+}
+```
+
+A new step is added to the end of the `update` method to generate new particles according to the configured policy:
 
 ```java
 void generate(float elapsed) {
-    float num = policy.count(size()) * elapsed;
+    int num = policy.count(size(), elapsed);
     if(num > 0) {
-        add((int) num, time);
+        add(num, time);
     }
 }
 ```
 
-### Box Emitter
+### Cone Emitter
 
-Several scenarios require an emitter defined as a box (or rectangle) which is implemented by a new type specified by min-max extents:
+Scenarios that involve ballistic trajectories require an emitter that randomises a direction within a cone.
 
-```java
-public record Bounds(Point min, Point max) {
-    public Point centre() {
-        return min.add(max).multiply(MathsUtil.HALF);
-    }
-}
-```
-
-Particles can now be randomly generated within this volume:
+First a new utility class is introduced wraps a `Random` instance:
 
 ```java
-static PositionFactory box(Bounds bounds, VectorRandomiser randomiser) {
-    Point min = bounds.min();
-    Vector range = Vector.between(min, bounds.max());
-    return () -> {
-        Vector vec = randomiser.randomise().multiply(range);
-        return new Point(vec).add(min);
-    };
-}
-```
-
-Which uses a new utility class to generate a randomised vector:
-
-```java
-public class VectorRandomiser {
+public class Randomiser {
     private final Random random;
-    private final float[] array = new float[3];
 
-    public Vector randomise() {
+    public float next() {
+        return random.nextFloat();
+    }
+}
+```
+
+This allows code dependant on RNG to be more effectively unit-tested since the `Random` class cannot be easily mocked.
+
+A randomised vector is then generated as follows:
+
+```java
+public class Randomiser {
+    ...
+    private final float[] array = new float[3];
+    private final Interpolator interpolator = Interpolator.linear(-1, +1);
+
+    public Vector vector() {
         for(int n = 0; n < array.length; ++n) {
-            array[n] = random.nextFloat();
+            array[n] = interpolator.interpolate(next());
         }
         return new Vector(array);
     }
 }
 ```
 
-Note that in this case `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
-
-### Cone Emitter
-
-Scenarios that involve ballistic trajectories require an emitter that randomises a direction within a cone:
+The vector factory to generate a cone is specified as follows:
 
 ```java
 public class ConeVectorFactory implements VectorFactory {
     private final Vector normal;
-    private final float radius;
-    private final FloatSupplier random;
+    private final Vector x, y;
+    private final Interpolator radius;
+    private final Randomiser random;
 }
 ```
 
-Two class members are added to define a local coordinate system:
+The `x` and `y` class members define a local coordinate system that is initialised in the constructor:
 
 ```java
-this.x = right(normal);
-this.y = x.cross(normal);
+public ConeVectorFactory(Vector normal, float radius, Randomiser random) {
+    this.normal = notNull(normal);
+    this.x = right(normal);
+    this.y = x.cross(normal);
+    this.radius = Interpolator.linear(-radius, +radius);
+    this.random = notNull(random);
+}
 ```
 
 Where `right` calculates an arbitrary vector that is orthogonal the cone normal.
@@ -427,7 +441,7 @@ To generate vectors within the cone the normal is randomly rotated about each of
 
 ```java
 protected Vector rotate(Vector axis) {
-    float angle = (1 - random.get()) * radius - radius;
+    float angle = radius.interpolate(random.next());
     var rot = new AxisAngle(axis, angle);
     return rot.rotate(normal);
 }
@@ -455,15 +469,145 @@ public Vector rotate(Vector vec) {
 }
 ```
 
-Alternatively the rotation logic could have been implemented using matrices or quaternions.
+This formula offers an alternative to matrix or quaternion rotations and may be more efficient in certain use-cases.
+If we ever get round to performance analysis we may decide to replace this code with quaternions later for this scenario.
 
 ### Integration
 
-fountain
-point origin
-cone
-gravity influence
-simple age cull
+The demo application for the _sparks_ particle system is comprised of the following components:
+
+* A uniform buffer containing _two_ slots for the model-view and projection matrices.
+
+TODO - push constants from previous demo? did that have 3 matrices?
+
+* A fixed camera.
+
+* A pipeline with vertex and fragment shaders (the geometry shader is omitted for the moment).
+
+* And the usual presentation, rendering commands, and frame processor.
+
+A new configuration class is started for the particle system:
+
+```java
+@Configuration
+public class ParticleSystemConfiguration {
+    private final ApplicationConfiguration cfg;
+    private final ParticleSystem sys;
+    private final Model model;
+    private final Animator animator;
+
+    @Bean
+    public Animator animator() {
+        return animator;
+    }
+
+    @Bean
+    public Model model() {
+        return model;
+    }
+}
+```
+
+The various elements of the particle system are instantiated in the constructor:
+
+```java
+public ParticleSystemConfiguration(ApplicationConfiguration cfg) {
+    this.cfg = cfg;
+    this.sys = system();
+    this.animator = new Animator(sys);
+    this.model = new ParticleModel(sys);
+}
+```
+
+The particle system itself is initialised as follows:
+
+```java
+private ParticleSystem system() {
+    var sys = new ParticleSystem();
+    sys.policy(new IncrementGenerationPolicy(10, cfg.getMax()));
+    sys.lifetime(5000L);
+    sys.vector(new ConeVectorFactory(Vector.Y, 1, new Randomiser()));
+    sys.add(Influence.of(Vector.Y.invert()));
+    return sys;
+}
+```
+
+Here the sparks demo is configured by:
+
+* Periodically emitting a relatively small number of particles per second.
+
+* Particles are fired upwards in a randomised cone.
+
+* An influence that pulls particles downwards simulating gravity.
+
+Next the vertex buffer for the particles is created:
+
+```java
+@Bean
+public VertexBuffer vbo(LogicalDevice dev) {
+    var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+        .usage(VkBufferUsageFlag.VERTEX_BUFFER)
+        .required(VkMemoryProperty.HOST_VISIBLE)
+        .required(VkMemoryProperty.HOST_COHERENT)
+        .optimal(VkMemoryProperty.DEVICE_LOCAL)
+        .build();
+
+    int len = cfg.getMax() * Point.LAYOUT.length();
+    VulkanBuffer buffer = VulkanBuffer.create(dev, len, props);
+    return new VertexBuffer(buffer);
+}
+```
+
+Note that the buffer is sized to the maximum number of particles.
+
+The particle system is written to the VBO on each frame:
+
+```java
+@Bean
+public Frame.Listener update(VertexBuffer vbo) {
+    return () -> {
+        Region region = vbo.memory().map();
+        ByteBuffer bb = region.buffer();
+        model.vertices().buffer(bb);
+        region.unmap();
+    };
+}
+```
+
+And finally the animation is started:
+
+```java
+@PostConstruct
+void start() {
+    Player player = new Player();
+    player.add(animator);
+    player.state(State.PLAY);
+}
+```
+
+TODO - dynamic draw command
+
+```glsl
+#version 450
+
+layout(location=0) in vec3 pos;
+
+layout(binding=0) uniform UniformBuffer {
+    mat4 modelview;
+    mat4 projection;
+};
+
+void main() {
+    gl_PointSize = 10;
+    gl_Position = projection * modelview * vec4(pos, 1.0);
+}
+```
+
+The reason for separate matrices in the uniform buffer will become relevant later.
+
+For the moment the fragment shader outputs a flat yellow colour.
+
+TODO - pic
 
 ---
 
@@ -497,66 +641,72 @@ default Point point(float dist) {
 }
 ```
 
-Next a new abstraction defines some arbitrary geometry that can be intersected by a ray:
+Next a new abstraction defines some arbitrary geometry that can be _intersected_ by a ray:
 
 ```java
 public interface Intersected {
     /**
      * Determines the intersections of this surface with the given ray.
      * @param ray Ray
-     * @return Intersections
+     * @return Intersection(s)
      */
-    Iterator<Intersection> intersections(Ray ray);
+    Intersection intersection(Ray ray);
 }
 ```
 
-Note that the results are returned as an _iterator_ as opposed to a stream or list, this allows intersections to be lazily evaluated as required.  For example, picking only requires knowing _whether_ an intersection has occurred.  Pre-calculating the actual intersection points (and particularly the surface normals) would be an unnecessary overhead in many use cases.
-
-An _intersection_ records the distance of the result on a given ray:
+Where an _intersection_ specifies the distances of each intersection point along the ray and a function to determine the surface normal:
 
 ```java
-public class Intersection {
-    private final Ray ray;
-    private final float dist;
-    private final Function<Point, Vector> normal;
-    private Point pos;
-}
-```
+public interface Intersection {
+    /**
+     * @return Intersection distance(s)
+     */
+    List<Float> distances();
 
-Where the intersection point is calculated using the above helper method:
-
-```java
-public Point point() {
-    if(pos == null) {
-        pos = ray.point(dist);
+    /**
+     * @return Whether any intersections are present
+     */
+    default boolean isEmpty() {
+        return false;
     }
-    return pos;
-}
-```
 
-The surface `normal` is also lazily evaluated since it is only relevant for reflecting particles:
-
-```java
-public Vector normal() {
-    return normal.apply(point());
+    /**
+     * Determines the surface normal at the given intersection point on this ray.
+     * @param p Intersection point
+     * @return Surface normal
+     */
+    Vector normal(Point p);
 }
 ```
 
 Finally a convenience constant is added for the case of an empty set of results:
 
 ```java
-Iterator<Intersection> NONE = new Iterator<>() {
+Intersection NONE = new Intersection() {
     @Override
-    public boolean hasNext() {
-        return false;
+    public List<Float> distances() {
+        return List.of();
     }
 
     @Override
-    public Intersection next() {
-        throw new NoSuchElementException();
+    public boolean isEmpty() {
+        return true;
+    }
+
+    @Override
+    public Vector normal(Point p) {
+        throw new UnsupportedOperationException();
     }
 };
 ```
+
+The rationale for this rather elaborate API is to allow intersections, and particularly surface normals, to be lazily evaluated since they are not relevant in all use-cases.
+
+For example:
+
+* A collision surface defined to destroy intersected particles only needs to know _whether_ an intersection occurs and not where.
+
+* Surface normals are irrelevant for scene picking.
 
 ### Planes
 
@@ -582,7 +732,7 @@ Finally a plane can be constructed from a triangle of points lying in the plane:
 
 ```java
 public static Plane of(Point a, Point b, Point c) {
-    Vector u = Vector.between(a, b);
+    Vector u = Vector.between(a, c);
     Vector v = Vector.between(b, c);
     Vector normal = u.cross(v).normalize();
     return of(normal, a);
@@ -608,60 +758,35 @@ public Iterator<Intersection> intersections(Ray ray) {
     }
 
     // Build intersection
-    return List.of(new Intersection(ray, t, normal)).iterator();
+    return Intersection.of(t, normal);
 }
 ```
 
-Although not relevant for particle collisions the notion of a plane _half-space_ is also introduced here for completeness:
+Which creates a simple intersection result using a new factory method:
 
 ```java
-public enum HalfSpace {
-    POSITIVE,
-    NEGATIVE,
-    INTERSECT
-}
-```
+static Intersection of(float d, Vector normal) {
+    return new Intersection() {
+        @Override
+        public List<Float> distances() {
+            return List.of(d);
+        }
 
-The half-space defines the _sides_ of the plane with respect to the normal, where the positive half-space is in _front_ of the plane.
-
-The half-space for a given distance from the plane is determined by the following helper:
-
-```java
-public static HalfSpace of(float d) {
-    if(d < 0) {
-        return NEGATIVE;
-    }
-    else
-    if(d > 0) {
-        return POSITIVE;
-    }
-    else {
-        return INTERSECT;
-    }
-}
-```
-
-Which is used to determine the half-space for a given point:
-
-```java
-public HalfSpace halfspace(Point pt) {
-    return HalfSpace.of(distance(pt));
+        @Override
+        public Vector normal(Point p) {
+            return normal;
+        }
+    };
 }
 ```
 
 ### Collisions
 
-Particle collisions are configured by an intersecting surface and an associated action:
+Particle collisions are configured by an intersecting surface and an associated collision function:
 
 ```java
 public class ParticleSystem implements Animation {
-    private final Map<Intersected, CollisionAction> surfaces = new HashMap<>();
-
-    public enum CollisionAction {
-        DESTROY,
-        STOP,
-        REFLECT
-    }
+    private final Map<Intersected, Collision> surfaces = new HashMap<>();
 }
 ```
 
@@ -671,22 +796,36 @@ The particle class is modified to implement the new `Ray` abstraction and can no
 private void collide(Particle p) {
     for(var entry : surfaces.entrySet()) {
         Intersected surface = entry.getKey();
-        Iterator<Intersection> intersections = surface.intersections(p);
-        if(!intersections.hasNext()) {
-            continue;
+        Intersection intersection = surface.intersection(p);
+        if(!intersections.isEmpty()) {
+            Collision collision = entry.getValue();
+            collision.collide(p, intersections);
+            break;
         }
-        ...
     }
 }
 ```
 
-The destroy and stop actions delegate to new particle mutators:
+A `Collision` defines the operation to be performed on the intersected particle and provides default implementations:
 
 ```java
-switch(entry.getValue()) {
-    case DESTROY -> p.destroy();
-    case STOP -> p.stop();
-    case REFLECT -> ...
+public interface Collision {
+    /**
+     * Applies this collision to the given particle.
+     * @param p                 Particle
+     * @param intersection      Intersection(s)
+     */
+    void collide(Particle p, Intersection intersection);
+    
+    /**
+     * Destroys a collided particle.
+     */
+    Collision DESTROY = (p, ignored) -> p.destroy();
+
+    /**
+     * Stops a collided particle at the given intersection.
+     */
+    Collision STOP = (p, intersection) -> p.stop(intersection.point(p));
 }
 ```
 
@@ -706,35 +845,105 @@ And similarly for a particle that has been stopped:
 
 ```java
 public boolean isIdle() {
-    return vec == null;
+    return dir == null;
 }
 
-void stop() {
-    vec = null;
+void stop(Point pos) {
+    this.pos = notNull(pos);
+    this.dir = null;
 }
+```
+
+The `DESTROY` case does not require the actual intersection results, therefore here we can introduce a more efficient intersection test based on the _half space_ of the plane.
+
+The half-space defines the _sides_ of the plane with respect to the normal, where the `POSITIVE` half-space is in _front_ of the plane:
+
+```java
+public enum HalfSpace {
+    POSITIVE,
+    NEGATIVE,
+    INTERSECT
+}
+```
+
+The half-space for a given distance from the plane is determined by the following helper:
+
+```java
+public static HalfSpace of(float d) {
+    if(d < 0) {
+        return NEGATIVE;
+    }
+    else
+    if(d > 0) {
+        return POSITIVE;
+    }
+    else {
+        return INTERSECT;
+    }
+}
+```
+
+Which is also used to determine the half-space for a given point:
+
+```java
+public HalfSpace halfspace(Point pt) {
+    return HalfSpace.of(distance(pt));
+}
+```
+
+The following adapter on the plane defines a intersection test based on the half-space of the ray origin:
+
+```java
+public Intersected negative() {
+    return ray -> {
+        if(halfspace(ray.origin()) == HalfSpace.POSITIVE) {
+            return NONE;
+        }
+        else {
+            return UNDEFINED;
+        }
+    };
+}
+```
+
+Where `UNDEFINED` is another constant for an intersection with undefined results:
+
+```java
+Intersection UNDEFINED = new Intersection() {
+    @Override
+    public List<Float> distances() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Vector normal(Point p) {
+        throw new UnsupportedOperationException();
+    }
+};
 ```
 
 ### Reflection
 
-The reflection case is slightly more involved, here the particle is reflected about the first (arbitrarily selected) intersection:
+The reflection case is slightly more involved, the particle is reflected about the first (arbitrarily selected) intersection:
 
 ```java
-case REFLECT -> {
-    Intersection i = surface.intersections(p).next();
-    p.reflect(i.point(), i.normal());
-}
+Collision REFLECT = (p, intersection) -> {
+    Point pt = intersection.point(p);
+    Vector normal = intersection.normal(pt);
+    p.reflect(pt, normal);
+};
 ```
 
 Which delegates to the following new particle mutator:
 
 ```java
-void reflect(Point intersection, Vector normal) {
-    pos = notNull(intersection);
-    vec = vec.reflect(normal);
+public void reflect(Point pos, Vector normal) {
+    this.pos = notNull(pos);
+    this.dir = dir.reflect(normal);
 }
 ```
 
-Which in turn delegates to a new method on the vector class reflect it about a given normal:
+Which in turn delegates to a new method on the vector class to reflect about a given normal:
 
 ```java
 public Vector reflect(Vector normal) {
@@ -746,9 +955,71 @@ public Vector reflect(Vector normal) {
 Note that as things stand this approach simply moves the particle to the intersection point and reflects the movement vector.
 This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
 
+There is a complication here: if a reflecting surface is defined in terms of a plane then __all__ rays that cross that plane as considered as intersecting.  What is required is an intersection test that only considers rays in the negative half-space.  The `negative` adapter and the default ray-plane intersection test could be composed together but this means the distance logic is essentially being calculated twice which feels wrong.  Therefore the existing intersection test is modified to take into account the half-space:
+
+```java
+private Intersection intersections(Ray ray, boolean pos) {
+    ...
+    
+    // Calc intersection distance
+    float d = distance(ray.origin());
+    float t = -d / denom;
+
+    // Check for intersection
+    if(pos) {
+        if(t < 0) {
+            return NONE;
+        }
+    }
+    else {
+        if(d > 0) {
+            return NONE;
+        }
+    }
+
+    ...
+}
+```
+
+Where `pos` is a flag indicating whether to include rays in the positive half-space in the intersection test, which is `true` in the general case:
+
+```java
+@Override
+public Intersection intersection(Ray ray) {
+    return intersections(ray, true);
+}
+```
+
+We can now define a further adapter that only considers rays in the negative half-space:
+
+```java
+public Intersected behind() {
+    return ray -> intersections(ray, false);
+}
+```
+
+Which is what will be used in the demo application to reflect particles at the collision surface.
+
+
+### Integration
+
+
+
+* Definition of a collision surface simulating the 'ground' that reflects particles.
+colour fade
+
+
+TODO - multiple scenarios ~ Spring profile
+
+significantly faster, can see multiple cores
+
+---
+
+## Final Touches
+
 ### Parallel Refactor
 
-There are now several issues with the existing code:
+Before progressing any further there are now several issues with the existing code:
 
 * Particles that are destroyed by a collision are removed using `removeAll` which is extremely inefficient for this scenario, especially for large numbers of particles.
 
@@ -837,21 +1108,47 @@ void cull() {
 
 Note that the reference to the `particles` collection is now mutable and is over-written in this method.
 
+### Colour Fade
+
+The last requirement is calculation of the particle colour
+
+fragment shader
+
+### Box Emitter
+
+Several scenarios require an emitter defined as a box (or rectangle) which is implemented by a new type specified by min-max extents:
+
+```java
+public record Bounds(Point min, Point max) {
+    public Point centre() {
+        return min.add(max).multiply(MathsUtil.HALF);
+    }
+}
+```
+
+Particles can now be randomly generated within this volume:
+
+```java
+static PositionFactory box(Bounds bounds, Randomiser randomiser) {
+    Point min = bounds.min();
+    Vector range = Vector.between(min, bounds.max());
+    return () -> {
+        Vector vec = randomiser.vector().multiply(range);
+        return new Point(vec).add(min);
+    };
+}
+```
+
+Where `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
+
+
 ### Integration
 
-The existing demo is modified 
+geometry shader for billboards
+modified vertex shader
+load particle sprite?
+point size to one?
 
-by the introduction of a collision 
-
-the particle lifetime is left as the default (infinite lifetime) and replaced by a collision surface that
-
-sparks
-floor
-reflection
-
-TODO - multiple scenarios ~ Spring profile
-
-significantly faster, can see multiple cores
 
 ---
 
@@ -866,27 +1163,41 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
     private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
 
     public ColourBlendPipelineStageBuilder() {
+        info.logicOpEnable = VulkanBoolean.FALSE;
+        info.logicOp = VkLogicOp.COPY;
         Arrays.fill(info.blendConstants, 1);
-    }
-
-    public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
-        info.logicOp = notNull(op);
-        return this;
-    }
-
-    public ColourBlendPipelineStageBuilder constants(float[] constants) {
-        System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
-        return this;
-    }
-
-    public AttachmentBuilder attachment() {
-        return new AttachmentBuilder();
     }
 }
 ```
 
-In addition to the global blending properties, the blend stage can also configure the logical operation between a fragment and the existing value in the framebuffer attachment(s).
-This is implemented as a nested builder:
+The global blending properties are configured as follows:
+
+```java
+public ColourBlendPipelineStageBuilder enable(boolean enabled) {
+    info.logicOpEnable = VulkanBoolean.of(enabled);
+    return this;
+}
+
+public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
+    info.logicOp = notNull(op);
+    return this;
+}
+
+public ColourBlendPipelineStageBuilder constants(float[] constants) {
+    System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
+    return this;
+}
+```
+
+The blending configuration for each colour attachment is implemented as a nested builder:
+
+```java
+public AttachmentBuilder attachment() {
+    return new AttachmentBuilder();
+}
+```
+
+Which specifies the logical operation between a fragment and the existing colour in the framebuffer attachment(s).
 
 ```java
 public class AttachmentBuilder {
@@ -905,7 +1216,7 @@ public class AttachmentBuilder {
 }
 ```
 
-The colour mask is used to specify which colour channels are subject to the blend operation expressed as a simple string:
+The colour `mask` is used to specify which channels are subject to the blend operation, expressed as a simple string:
 
 ```java
 public AttachmentBuilder mask(String mask) {
@@ -961,30 +1272,26 @@ And finally the descriptor for the pipeline stage can be constructed:
 ```java
 @Override
 VkPipelineColorBlendStateCreateInfo get() {
-    // Check whether disabled
-    if(info.logicOp == null) {
-        info.logicOpEnable = VulkanBoolean.FALSE;
-        info.logicOp = VkLogicOp.NO_OP;
-        return info;
+    // Init default attachment if none specified
+    if(attachments.isEmpty()) {
+        new AttachmentBuilder().build();
     }
-
-    // Enable blending
-    info.logicOpEnable = VulkanBoolean.TRUE;
 
     // Add attachment descriptors
     info.attachmentCount = attachments.size();
     info.pAttachments = StructureHelper.pointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
-    
+
     return info;
 }
 ```
 
-Note that blending is disabled by default, the builder assumes that setting a blend operation implies it is enabled.
+Note that by convenience a single, default attachment is added if none are configured (at least one must be specified).
 
 The pipeline configuration can now be updated to apply an additive blending operation in the demo:
 
 ```java
 .blend()
+    .enable(true)
     .operation(VkLogicOp.COPY)
     .attachment()
         .colour()

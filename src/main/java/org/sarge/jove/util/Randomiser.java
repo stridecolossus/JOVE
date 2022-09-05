@@ -9,13 +9,14 @@ import org.sarge.jove.geometry.Vector;
 /**
  * Utility for generating randomised data.
  * <p>
- * This class wraps a {@link Random} instance to enable easier unit-testing, since the Java random utility cannot easily be mocked.
+ * This class wraps a {@link Random} instance to support unit-testing, since the Java random utility cannot easily be mocked.
  * <p>
  * @author Sarge
  */
 public class Randomiser {
 	private final Random random;
 	private final float[] array = new float[3];
+	private final Interpolator interpolator = Interpolator.linear(-1, +1);
 
 	/**
 	 * Constructor.
@@ -55,7 +56,7 @@ public class Randomiser {
 	 */
 	public Vector vector() {
 		for(int n = 0; n < array.length; ++n) {
-			array[n] = Interpolator.lerp(-1, +1, next());
+			array[n] = interpolator.interpolate(next());
 		}
 		return new Vector(array);
 	}

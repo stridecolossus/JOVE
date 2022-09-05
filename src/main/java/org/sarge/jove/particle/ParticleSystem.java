@@ -28,7 +28,7 @@ import org.sarge.lib.util.Check;
  * <ol>
  * <li>apply influences specified by {@link #add(Influence)}</li>
  * <li>move each particle by its current vector</li>
- * <li>test for collisions with surfaces according to {@link #add(Intersected, CollisionAction)}</li>
+ * <li>test for collisions with surfaces according to {@link #add(Intersected, Collision)}</li>
  * <li>generate new particles according to the configured growth policy</li>
  * </ol>
  * <p>
@@ -38,9 +38,9 @@ public class ParticleSystem implements Animation {
 	// Configuration
 	private PositionFactory pos = PositionFactory.ORIGIN;
 	private VectorFactory vec = VectorFactory.of(Vector.Y);
-	private GrowthPolicy policy = GrowthPolicy.NONE;
+	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
-	private final Map<Intersected, CollisionAction> surfaces = new HashMap<>();
+	private final Map<Intersected, Collision> surfaces = new HashMap<>();
 
 	// State
 	private List<Particle> particles = new ArrayList<>();
@@ -94,10 +94,10 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Sets the policy for the number of new particles to be generated on each frame (default is {@link GrowthPolicy#NONE}).
+	 * Sets the policy for the number of new particles to be generated on each frame (default is {@link GenerationPolicy#NONE}).
 	 * @param policy Growth policy
 	 */
-	public ParticleSystem policy(GrowthPolicy policy) {
+	public ParticleSystem policy(GenerationPolicy policy) {
 		this.policy = notNull(policy);
 		return this;
 	}
@@ -137,37 +137,15 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Action for particles that intersect a collision surface.
-	 */
-	public enum CollisionAction {
-		/**
-		 * Particle is destroyed.
-		 */
-		DESTROY,
-
-		/**
-		 * Particle stops, i.e. sticks to the surface.
-		 * @see Particle#stop()
-		 */
-		STOP,
-
-		/**
-		 * Particle is reflected.
-		 * @see Particle#reflect(Intersection)
-		 */
-		REFLECT
-	}
-
-	/**
 	 * Adds a collision surface.
 	 * @param surface		Surface
-	 * @param action		Action for collided particles
+	 * @param action		Collision action
 	 */
-	public ParticleSystem add(Intersected surface, CollisionAction action) {
+	public ParticleSystem add(Intersected surface, Collision action) {
 		Check.notNull(surface);
 		Check.notNull(action);
 		surfaces.put(surface, action);
-		culling = action == CollisionAction.DESTROY;
+		culling = action == Collision.DESTROY;
 		return this;
 	}
 
@@ -177,7 +155,7 @@ public class ParticleSystem implements Animation {
 	 */
 	public ParticleSystem remove(Intersected surface) {
 		surfaces.remove(surface);
-		culling = surfaces.containsValue(CollisionAction.DESTROY);
+		culling = surfaces.containsValue(Collision.DESTROY);
 		return this;
 	}
 
@@ -263,25 +241,13 @@ public class ParticleSystem implements Animation {
 		 */
 		private void collide(Particle p) {
 			for(var entry : surfaces.entrySet()) {
-				// Test for collision
 				final Intersected surface = entry.getKey();
-				final Iterator<Intersection> intersections = surface.intersections(p);
-				if(!intersections.hasNext()) {
-					continue;
+				final Intersection intersections = surface.intersection(p);
+				if(!intersections.isEmpty()) {
+					final Collision collision = entry.getValue();
+					collision.collide(p, intersections);
+					break;
 				}
-
-				// Apply action for intersected particles
-				switch(entry.getValue()) {
-					case DESTROY -> p.destroy();
-					case STOP -> p.stop();
-					case REFLECT -> {
-						final Intersection intersection = surface.intersections(p).next();
-						p.reflect(intersection.point(), intersection.normal());
-					}
-				}
-
-				// Assume only a single collision is logical
-				break;
 			}
 		}
 

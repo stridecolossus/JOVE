@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.*;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -38,8 +38,8 @@ public class InverseVolume implements Volume {
 	}
 
 	@Override
-	public Iterator<Intersection> intersections(Ray ray) {
-		return vol.intersections(ray);
+	public Intersection intersection(Ray ray) {
+		return vol.intersection(ray);
 	}
 
 	@Override

@@ -116,6 +116,7 @@ public interface Interpolator {
 	 * @return Interpolated value
 	 */
 	static float lerp(float start, float range, float value) {
+		assert (value >= 0) && (value <= 1);
 		return start + value * range;
 	}
 }

@@ -21,6 +21,7 @@ public class ColourBlendPipelineStageBuilderTest {
 	void create() {
 		// Build descriptor
 		final var info = builder
+				.enable(true)
 				.operation(VkLogicOp.COPY)
 				.constants(CONSTANTS)
 				.attachment()

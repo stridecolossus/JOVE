@@ -25,8 +25,8 @@ public class ConeVectorFactoryTest {
 
 	@Test
 	void max() {
-		final Vector x = new Vector(0, 1, -1);
-		final Vector y = new Vector(1, 1, 0);
+		final Vector x = new Vector(0, 1, 1);
+		final Vector y = new Vector(-1, 1, 0);
 		final Vector expected = x.add(y).normalize();
 		when(random.next()).thenReturn(1f);
 		assertEquals(expected, factory.vector(null));

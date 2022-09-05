@@ -1,16 +1,11 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.*;
+import java.util.List;
 
-import java.util.*;
-import java.util.function.Function;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>ray</i> is a vector relative to an originating position used for intersection tests, picking, etc.
+ * A <i>ray</i> is specified as a vector relative to an originating position, used for intersection tests, picking, etc.
  * @author Sarge
  */
 public interface Ray {
@@ -57,92 +52,121 @@ public interface Ray {
 		/**
 		 * Determines the intersections of this surface with the given ray.
 		 * @param ray Ray
-		 * @return Intersections
+		 * @return Intersection(s)
 		 */
-		Iterator<Intersection> intersections(Ray ray);
+		Intersection intersection(Ray ray);
 
 		/**
-		 * Empty intersection(s).
+		 * Empty intersections.
 		 */
-		Iterator<Intersection> NONE = new Iterator<>() {
+		Intersection NONE = new Intersection() {
 			@Override
-			public boolean hasNext() {
-				return false;
+			public List<Float> distances() {
+				return List.of();
 			}
 
 			@Override
-			public Intersection next() {
-				throw new NoSuchElementException();
+			public boolean isEmpty() {
+				return true;
+			}
+
+			@Override
+			public Vector normal(Point p) {
+				throw new UnsupportedOperationException();
+			}
+		};
+
+		/**
+		 * Intersection with undefined results.
+		 * @throws UnsupportedOperationException if the intersection point or normal is queried
+		 */
+		Intersection UNDEFINED = new Intersection() {
+			@Override
+			public List<Float> distances() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Vector normal(Point p) {
+				throw new UnsupportedOperationException();
 			}
 		};
 	}
 
 	/**
-	 * An <i>intersection</i> defines the position and normal where this ray intersects an {@link Intersected} surface.
+	 * An <i>intersection</i> defines the points and normals where this ray intersects an {@link Intersected} surface.
+	 * <p>
+	 * Usage:
+	 * <pre>
+	 * // Get intersection(s)
+	 * Intersection intersection = ...
+	 *
+	 * // Check for no intersections
+	 * if(intersection.isEmpty()) { ... }
+	 *
+	 * // Determine an intersection point
+	 * List distances = intersection.distances();
+	 * float d = distances.get(0);
+	 * Point pt = ray.point(d);
+	 *
+	 * // Or arbitrarily select the first intersection point
+	 * Point pt = intersection.point(ray);
+	 *
+	 * // Calculate the surface normal at this intersection point
+	 * Vector normal = intersection.normal(pt);
+	 * <p>
+	 * @see Intersected#NONE
 	 */
-	public class Intersection {
-		private final Ray ray;
-		private final float dist;
-		private final Function<Point, Vector> normal;
-		private Point pos;
+	public interface Intersection {
+		/**
+		 * @return Intersection distance(s)
+		 */
+		List<Float> distances();
 
 		/**
-		 * Constructor.
-		 * @param ray			Intersected ray
-		 * @param dist			Distance from origin
-		 * @param normal		Normal function
+		 * @return Whether any intersections are present
 		 */
-		public Intersection(Ray ray, float dist, Function<Point, Vector> normal) {
-			this.ray = notNull(ray);
-			this.dist = zeroOrMore(dist);
-			this.normal = notNull(normal);
+		default boolean isEmpty() {
+			return false;
 		}
 
 		/**
-		 * Convenience constructor for an intersection with a literal normal.
-		 * @param ray			Intersected ray
-		 * @param dist			Distance from origin
-		 * @param normal		Normal
-		 */
-		public Intersection(Ray ray, float dist, Vector normal) {
-			this(ray, dist, ignored -> normal);
-		}
-
-		/**
+		 * Helper - Arbitrarily determines the <i>first</i> intersection point on the given ray.
+		 * @param ray Ray
 		 * @return Intersection point
+		 * @throws IndexOutOfBoundsException if there are no intersections
+		 * @see Ray#point(float)
 		 */
-		public Point point() {
-			if(pos == null) {
-				pos = ray.point(dist);
-			}
-			return pos;
+		default Point point(Ray ray) {
+			final float d = distances().get(0);
+			return ray.point(d);
 		}
 
 		/**
-		 * @return Surface normal at the given intersection
+		 * Determines the surface normal at the given intersection point on this ray.
+		 * @param p Intersection point
+		 * @return Surface normal
 		 */
-		public Vector normal() {
-			return normal.apply(point());
-		}
+		Vector normal(Point p);
 
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof Intersection that) &&
-					(this.ray == that.ray) &&
-					MathsUtil.isEqual(this.dist, that.dist) &&
-					this.point().equals(that.point()) &&
-					this.normal().equals(that.normal());
-		}
+		/**
+		 * Creates an intersection.
+		 * @param d				Distance from ray origin
+		 * @param normal		Surface normal
+		 * @return New intersection
+		 */
+		static Intersection of(float d, Vector normal) {
+			return new Intersection() {
+				@Override
+				public List<Float> distances() {
+					return List.of(d);
+				}
 
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("dist", dist)
-					.append("pos", point())
-					.append("normal", normal())
-					.build();
+				@Override
+				public Vector normal(Point p) {
+					return normal;
+				}
+			};
 		}
 	}
 }
