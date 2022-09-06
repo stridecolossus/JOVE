@@ -128,6 +128,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 				.map(View::clear)
 				.flatMap(Optional::stream)
 				.toList();
+		// TODO - use collector with [0] adapter
 
 		// Init clear values
 		info.clearValueCount = clear.size();

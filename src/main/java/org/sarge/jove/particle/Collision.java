@@ -25,14 +25,17 @@ public interface Collision {
 	 * Stops a collided particle at the given intersection.
 	 * @see Particle#stop(Point)
 	 */
-	Collision STOP = (p, intersection) -> p.stop(intersection.point(p));
+	Collision STOP = (p, intersection) -> {
+		final Point pt = Intersection.point(p, intersection);
+		p.stop(pt);
+	};
 
 	/**
 	 * Reflects a collided particle about the surface normal at the intersection.
 	 * @see Particle#reflect(Point, Vector)
 	 */
 	Collision REFLECT = (p, intersection) -> {
-		final Point pt = intersection.point(p);
+		final Point pt = Intersection.point(p, intersection);
 		final Vector normal = intersection.normal(pt);
 		p.reflect(pt, normal);
 	};

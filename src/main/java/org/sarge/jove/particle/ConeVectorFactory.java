@@ -33,31 +33,22 @@ public class ConeVectorFactory implements VectorFactory {
 	 */
 	public ConeVectorFactory(Vector normal, float radius, Randomiser random) {
 		this.normal = notNull(normal);
-		this.x = right(normal);
+		this.x = normal.cross(cardinal(normal));
 		this.y = x.cross(normal);
 		this.radius = Interpolator.linear(-radius, +radius);
 		this.random = notNull(random);
 	}
 
 	/**
-	 * Determines an arbitrary vector that is orthogonal to the cone normal.
+	 * @return Cardinal axis corresponding to the minimal component of the given normal
 	 * @see <a href="https://math.stackexchange.com/questions/56784/generate-a-random-direction-within-a-cone">Random cone vector</a>
 	 */
-	private static Vector right(Vector normal) {
-		final int index = min(normal);
-		final Vector[] axes = {Vector.X, Vector.Y, Vector.Z};
-		return normal.cross(axes[index]);
-	}
-
-	/**
-	 * @return Index of the minimal component of the normal
-	 */
-	private static int min(Vector normal) {
+	private static Vector cardinal(Vector normal) {
 		if(normal.x < normal.y) {
-			return normal.x < normal.z ? 0 : 2;
+			return normal.x < normal.z ? Vector.X : Vector.Z;
 		}
 		else {
-			return normal.y < normal.z ? 1 : 2;
+			return normal.y < normal.z ? Vector.Y : Vector.Z;
 		}
 	}
 

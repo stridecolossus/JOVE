@@ -1,7 +1,5 @@
 package org.sarge.jove.geometry;
 
-import java.util.List;
-
 import org.sarge.lib.util.Check;
 
 /**
@@ -61,33 +59,22 @@ public interface Ray {
 		 */
 		Intersection NONE = new Intersection() {
 			@Override
-			public List<Float> distances() {
-				return List.of();
+			public float[] distances() {
+				return new float[0];
 			}
 
 			@Override
 			public boolean isEmpty() {
 				return true;
 			}
-
-			@Override
-			public Vector normal(Point p) {
-				throw new UnsupportedOperationException();
-			}
 		};
 
 		/**
 		 * Intersection with undefined results.
-		 * @throws UnsupportedOperationException if the intersection point or normal is queried
 		 */
 		Intersection UNDEFINED = new Intersection() {
 			@Override
-			public List<Float> distances() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public Vector normal(Point p) {
+			public float[] distances() {
 				throw new UnsupportedOperationException();
 			}
 		};
@@ -95,6 +82,9 @@ public interface Ray {
 
 	/**
 	 * An <i>intersection</i> defines the points and normals where this ray intersects an {@link Intersected} surface.
+	 * <p>
+	 * Generally implementations should return an array of intersection {@link #distances()} ordered nearest to the <i>surface</i> but this only assumed.
+	 * The {@link #normal(Point)} method can be overridden for use-cases that require a surface normal.
 	 * <p>
 	 * Usage:
 	 * <pre>
@@ -116,12 +106,14 @@ public interface Ray {
 	 * Vector normal = intersection.normal(pt);
 	 * <p>
 	 * @see Intersected#NONE
+	 * @see Intersected#UNDEFINED
 	 */
 	public interface Intersection {
 		/**
 		 * @return Intersection distance(s)
+		 * @throws UnsupportedOperationException if this intersection is undefined
 		 */
-		List<Float> distances();
+		float[] distances();
 
 		/**
 		 * @return Whether any intersections are present
@@ -131,23 +123,14 @@ public interface Ray {
 		}
 
 		/**
-		 * Helper - Arbitrarily determines the <i>first</i> intersection point on the given ray.
-		 * @param ray Ray
-		 * @return Intersection point
-		 * @throws IndexOutOfBoundsException if there are no intersections
-		 * @see Ray#point(float)
-		 */
-		default Point point(Ray ray) {
-			final float d = distances().get(0);
-			return ray.point(d);
-		}
-
-		/**
 		 * Determines the surface normal at the given intersection point on this ray.
 		 * @param p Intersection point
 		 * @return Surface normal
+		 * @throws UnsupportedOperationException if this intersection is undefined
 		 */
-		Vector normal(Point p);
+		default Vector normal(Point p) {
+			throw new UnsupportedOperationException();
+		}
 
 		/**
 		 * Creates an intersection.
@@ -158,8 +141,8 @@ public interface Ray {
 		static Intersection of(float d, Vector normal) {
 			return new Intersection() {
 				@Override
-				public List<Float> distances() {
-					return List.of(d);
+				public float[] distances() {
+					return new float[]{d};
 				}
 
 				@Override
@@ -167,6 +150,19 @@ public interface Ray {
 					return normal;
 				}
 			};
+		}
+
+		/**
+		 * Helper - Arbitrarily determines the <i>first</i> intersection point on the given ray.
+		 * @param ray Ray
+		 * @return Intersection point
+		 * @throws UnsupportedOperationException if the intersection is undefined
+		 * @throws ArrayIndexOutOfBoundsException if there are no intersections
+		 * @see Ray#point(float)
+		 */
+		static Point point(Ray ray, Intersection intersection) {
+			final float[] distances = intersection.distances();
+			return ray.point(distances[0]);
 		}
 	}
 }

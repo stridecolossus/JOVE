@@ -2,8 +2,6 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.*;
 
@@ -107,7 +105,7 @@ class BoundingBoxTest {
 			final float expected = (float) Math.sqrt(2);
 			final Intersection intersection = box.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(expected, 2 * expected), intersection.distances());
+			assertArrayEquals(new float[]{expected, 2 * expected}, intersection.distances());
 			assertEquals(Vector.X.invert(), intersection.normal(ray.point(expected)));
 			assertEquals(Vector.Y, intersection.normal(ray.point(2 * expected)));
 		}
@@ -118,7 +116,7 @@ class BoundingBoxTest {
 			final Ray ray = new DefaultRay(new Point(3, 3, 0), Vector.X);
 			final Intersection intersection = box.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(0f), intersection.distances());
+			assertArrayEquals(new float[]{0}, intersection.distances());
 			assertEquals(Vector.X, intersection.normal(ray.point(0)));
 		}
 
@@ -128,7 +126,7 @@ class BoundingBoxTest {
 			final Ray ray = new DefaultRay(new Point(2, 3, 0), Vector.X);
 			final Intersection intersection = box.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(1f), intersection.distances());
+			assertArrayEquals(new float[]{1}, intersection.distances());
 			assertEquals(Vector.X, intersection.normal(ray.point(1)));
 		}
 
@@ -139,7 +137,7 @@ class BoundingBoxTest {
 			final Intersection intersection = box.intersection(ray);
 			final Point corner = new Point(1, 4, 0);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(corner, intersection.point(ray));
+			assertEquals(corner, Intersection.point(ray, intersection));
 			assertNotNull(intersection.normal(corner), "Expected undefined normal");
 		}
 

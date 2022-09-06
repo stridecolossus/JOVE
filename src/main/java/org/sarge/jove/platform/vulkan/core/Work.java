@@ -130,6 +130,7 @@ public class Work {
 				throw new IllegalArgumentException(String.format("Work batch does not submit to the same queue family: pool=%s work=%s", pool, work));
 			}
 		}
+		// TODO - reduce?
 
 		// Submit batch
 		final VkSubmitInfo[] array = StructureHelper.array(batch, VkSubmitInfo::new, Work::populate);

@@ -5,8 +5,6 @@ import static org.mockito.Mockito.*;
 import static org.sarge.jove.geometry.Vector.*;
 import static org.sarge.jove.util.MathsUtil.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
@@ -163,7 +161,7 @@ class SphereVolumeTest {
 			final Ray ray = new DefaultRay(new Point(1, 0, 0), X);
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(2f), intersection.distances());
+			assertArrayEquals(new float[]{2}, intersection.distances());
 			assertEquals(Vector.X, intersection.normal(ray.point(2)));
 		}
 
@@ -173,7 +171,7 @@ class SphereVolumeTest {
 			final Ray ray = new DefaultRay(new Point(RADIUS, 0, 0), X);
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(0f), intersection.distances());
+			assertArrayEquals(new float[]{0}, intersection.distances());
 			assertEquals(Vector.X, intersection.normal(ray.point(0)));
 		}
 
@@ -189,7 +187,7 @@ class SphereVolumeTest {
 			final Ray ray = new DefaultRay(new Point(-1, 0, 0), X);
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(4f), intersection.distances());
+			assertArrayEquals(new float[]{4}, intersection.distances());
 			assertEquals(Vector.X, intersection.normal(ray.point(4)));
 		}
 
@@ -199,7 +197,7 @@ class SphereVolumeTest {
 			final Ray ray = new DefaultRay(new Point(-OUTSIDE, 0, 0), X);
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(1f, 7f), intersection.distances());
+			assertArrayEquals(new float[]{1, 7}, intersection.distances());
 			assertEquals(Vector.X.invert(), intersection.normal(ray.point(1)));
 			assertEquals(Vector.X, intersection.normal(ray.point(7)));
 		}
@@ -210,7 +208,7 @@ class SphereVolumeTest {
 			final Ray ray = new DefaultRay(new Point(-RADIUS, 0, 0), X);
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(0f, 6f), intersection.distances());
+			assertArrayEquals(new float[]{0, 6}, intersection.distances());
 			assertEquals(Vector.X.invert(), intersection.normal(ray.point(0)));
 			assertEquals(Vector.X, intersection.normal(ray.point(6)));
 		}

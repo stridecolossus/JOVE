@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import static org.sarge.jove.util.MathsUtil.*;
 import static org.sarge.lib.util.Check.*;
 
-import java.util.*;
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -105,7 +105,7 @@ public class SphereVolume implements Volume {
 		// Create lazy intersection record
 		return new SphereIntersections() {
 			@Override
-			public List<Float> distances() {
+			public float[] distances() {
 				// Calculate offset from nearest point to intersection(s)
 				final float offset = MathsUtil.sqrt(r - dist);
 
@@ -113,12 +113,12 @@ public class SphereVolume implements Volume {
 				final float a = nearest + offset;
 				if(len < r) {
 					// Ray origin is inside the sphere
-					return List.of(a);
+					return new float[]{a};
 				}
 				else {
 					// Ray is outside the sphere (two intersections)
 					final float b = nearest - offset;
-					return List.of(b, a);
+					return new float[]{b, a};
 				}
 			}
 		};
@@ -141,10 +141,10 @@ public class SphereVolume implements Volume {
 			// Ray originates inside the sphere
 			return new SphereIntersections() {
 				@Override
-				public List<Float> distances() {
+				public float[] distances() {
 					final float dist = len - nearest * nearest;
 					final float offset = MathsUtil.sqrt(r - dist);
-					return List.of(offset + nearest);
+					return new float[]{offset + nearest};
 				}
 			};
 		}
@@ -152,8 +152,8 @@ public class SphereVolume implements Volume {
 			// Ray originates on the sphere surface
 			return new SphereIntersections() {
 				@Override
-				public List<Float> distances() {
-					return List.of(0f);
+				public float[] distances() {
+					return new float[]{0};
 				}
 			};
 		}

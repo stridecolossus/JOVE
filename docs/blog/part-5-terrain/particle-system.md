@@ -9,6 +9,7 @@ title: Particle System
 - [Overview](#overview)
 - [Particle System](#particle-system)
 - [Intersections](#intersections)
+- [Final Touches](#final-touches)
 
 ---
 
@@ -28,9 +29,9 @@ To determine some requirements and constraints for what is considered to be a pa
 scenario    | generation    | emitter   | trajectory    | forces        | bounds        | rendering         |
 --------    | ----------    | -------   | ----------    | ----------    | ------        | ---------         |
 snow        | constant      | box       | down          | breeze        | ground        | texture           |
-fountain    | constant      | cone      | up            | gravity       | ground        | blue              |
+fountain    | constant      | point     | ballistic     | gravity       | ground        | blue              |
 sparks      | periodic      | point     | ballistic     | gravity       | ground        | colour fade       |
-smoke       | constant      | cone      | up            | n/a           | time          | colour fade       |
+smoke       | constant      | box       | up            | n/a           | time          | colour fade       |
 explosion   | once          | sphere    | expanding     | n/a           | time          | colour fade       |
 fireworks   | periodic      | point     | ballistic     | gravity       | time          | colour            |
 
@@ -358,7 +359,7 @@ void generate(float elapsed) {
 
 Scenarios that involve ballistic trajectories require an emitter that randomises a direction within a cone.
 
-First a new utility class is introduced wraps a `Random` instance:
+First a new utility class is introduced that wraps a `Random` instance:
 
 ```java
 public class Randomiser {
@@ -371,23 +372,6 @@ public class Randomiser {
 ```
 
 This allows code dependant on RNG to be more effectively unit-tested since the `Random` class cannot be easily mocked.
-
-A randomised vector is then generated as follows:
-
-```java
-public class Randomiser {
-    ...
-    private final float[] array = new float[3];
-    private final Interpolator interpolator = Interpolator.linear(-1, +1);
-
-    public Vector vector() {
-        for(int n = 0; n < array.length; ++n) {
-            array[n] = interpolator.interpolate(next());
-        }
-        return new Vector(array);
-    }
-}
-```
 
 The vector factory to generate a cone is specified as follows:
 
@@ -405,35 +389,23 @@ The `x` and `y` class members define a local coordinate system that is initialis
 ```java
 public ConeVectorFactory(Vector normal, float radius, Randomiser random) {
     this.normal = notNull(normal);
-    this.x = right(normal);
+    this.x = normal.cross(cardinal(normal));
     this.y = x.cross(normal);
     this.radius = Interpolator.linear(-radius, +radius);
     this.random = notNull(random);
 }
 ```
 
-Where `right` calculates an arbitrary vector that is orthogonal the cone normal.
-
-First the index of the minimum component of the normal is determined by the following helper:
+Where `cardinal` selects an axis corresponding to the _minimum component_ of the normal, which is used to generate a vector orthogonal to the cone:
 
 ```java
-private static int min(Vector normal) {
+private static Vector cardinal(Vector normal) {
     if(normal.x < normal.y) {
-        return normal.x < normal.z ? 0 : 2;
+        return normal.x < normal.z ? Vector.X : Vector.Z;
     }
     else {
-        return normal.y < normal.z ? 1 : 2;
+        return normal.y < normal.z ? Vector.Y : Vector.Z;
     }
-}
-```
-
-And then the selected cardinal axis is crossed with the cone normal to generate the orthogonal vector:
-
-```java
-private static Vector right(Vector normal) {
-    int index = min(normal);
-    Vector[] axes = {Vector.X, Vector.Y, Vector.Z};
-    return normal.cross(axes[index]);
 }
 ```
 
@@ -661,7 +633,7 @@ public interface Intersection {
     /**
      * @return Intersection distance(s)
      */
-    List<Float> distances();
+    float[] distances();
 
     /**
      * @return Whether any intersections are present
@@ -675,7 +647,9 @@ public interface Intersection {
      * @param p Intersection point
      * @return Surface normal
      */
-    Vector normal(Point p);
+    default Vector normal(Point p) {
+        throw new UnsupportedOperationException();
+    }
 }
 ```
 
@@ -684,18 +658,13 @@ Finally a convenience constant is added for the case of an empty set of results:
 ```java
 Intersection NONE = new Intersection() {
     @Override
-    public List<Float> distances() {
-        return List.of();
+    public float[] distances() {
+        return new float[0];
     }
 
     @Override
     public boolean isEmpty() {
         return true;
-    }
-
-    @Override
-    public Vector normal(Point p) {
-        throw new UnsupportedOperationException();
     }
 };
 ```
@@ -768,8 +737,8 @@ Which creates a simple intersection result using a new factory method:
 static Intersection of(float d, Vector normal) {
     return new Intersection() {
         @Override
-        public List<Float> distances() {
-            return List.of(d);
+        public float[] distances() {
+            return new float[]{d};
         }
 
         @Override
@@ -825,7 +794,10 @@ public interface Collision {
     /**
      * Stops a collided particle at the given intersection.
      */
-    Collision STOP = (p, intersection) -> p.stop(intersection.point(p));
+    Collision STOP = (p, intersection) -> {
+        Point pt = Intersection.point(p, intersection);
+        p.stop(pt);
+    };
 }
 ```
 
@@ -854,9 +826,9 @@ void stop(Point pos) {
 }
 ```
 
-The `DESTROY` case does not require the actual intersection results, therefore here we can introduce a more efficient intersection test based on the _half space_ of the plane.
+The `DESTROY` case does not require the actual intersection results, the ray intersection test is overkill in this case since we only need to know whether the ray is _behind_ the plane.
 
-The half-space defines the _sides_ of the plane with respect to the normal, where the `POSITIVE` half-space is in _front_ of the plane:
+The _half space_ defines the _sides_ of a plane with respect to the normal, where the `POSITIVE` half-space is in _front_ of the plane:
 
 ```java
 public enum HalfSpace {
@@ -891,7 +863,7 @@ public HalfSpace halfspace(Point pt) {
 }
 ```
 
-The following adapter on the plane defines a intersection test based on the half-space of the ray origin:
+The following adapter on the plane can now be implemented as an alternative and slightly more efficient intersection test based on the half-space of the ray:
 
 ```java
 public Intersected negative() {
@@ -914,11 +886,6 @@ Intersection UNDEFINED = new Intersection() {
     public List<Float> distances() {
         throw new UnsupportedOperationException();
     }
-
-    @Override
-    public Vector normal(Point p) {
-        throw new UnsupportedOperationException();
-    }
 };
 ```
 
@@ -928,7 +895,7 @@ The reflection case is slightly more involved, the particle is reflected about t
 
 ```java
 Collision REFLECT = (p, intersection) -> {
-    Point pt = intersection.point(p);
+    Point pt = Intersection.point(p, intersection);
     Vector normal = intersection.normal(pt);
     p.reflect(pt, normal);
 };
@@ -952,10 +919,10 @@ public Vector reflect(Vector normal) {
 }
 ```
 
-Note that as things stand this approach simply moves the particle to the intersection point and reflects the movement vector.
+Note that as things stand this approach simply sets the particle at the intersection point and reflects the movement vector.
 This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
 
-There is a complication here: if a reflecting surface is defined in terms of a plane then __all__ rays that cross that plane as considered as intersecting.  What is required is an intersection test that only considers rays in the negative half-space.  The `negative` adapter and the default ray-plane intersection test could be composed together but this means the distance logic is essentially being calculated twice which feels wrong.  Therefore the existing intersection test is modified to take into account the half-space:
+There is a further complication here: if a reflecting surface is defined in terms of a plane then __all__ rays that cross that plane are considered as intersecting.  What is required is an intersection test that only considers rays in the negative half-space.  The `negative` adapter and the default ray-plane intersection test could be composed together but this means the distance logic is essentially being calculated twice which feels wrong.  Therefore the existing intersection test is modified to optionally take into account the half-space:
 
 ```java
 private Intersection intersections(Ray ray, boolean pos) {
@@ -999,7 +966,6 @@ public Intersected behind() {
 ```
 
 Which is what will be used in the demo application to reflect particles at the collision surface.
-
 
 ### Integration
 
@@ -1139,8 +1105,24 @@ static PositionFactory box(Bounds bounds, Randomiser randomiser) {
 }
 ```
 
-Where `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
+Using using a new method on the `Randomiser` class:
 
+```java
+public class Randomiser {
+    ...
+    private final float[] array = new float[3];
+    private final Interpolator interpolator = Interpolator.linear(-1, +1);
+
+    public Vector vector() {
+        for(int n = 0; n < array.length; ++n) {
+            array[n] = interpolator.interpolate(next());
+        }
+        return new Vector(array);
+    }
+}
+```
+
+Where `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
 
 ### Integration
 

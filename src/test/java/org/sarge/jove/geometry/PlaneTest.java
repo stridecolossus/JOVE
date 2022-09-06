@@ -3,8 +3,6 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Vector.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.*;
@@ -84,7 +82,7 @@ class PlaneTest {
 			final Ray ray = new DefaultRay(Point.ORIGIN, Y);
 			final Intersection intersection = plane.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(1f), intersection.distances());
+			assertArrayEquals(new float[]{1}, intersection.distances());
 			assertEquals(Vector.Y, intersection.normal(null));
 		}
 
@@ -94,7 +92,7 @@ class PlaneTest {
 			final Ray ray = new DefaultRay(new Point(0, 1, 0), Y);
 			final Intersection intersection = plane.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(List.of(-0f), intersection.distances());
+			assertArrayEquals(new float[]{-0f}, intersection.distances());
 			assertEquals(Vector.Y, intersection.normal(null));
 		}
 

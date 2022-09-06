@@ -2,8 +2,6 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.List;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -103,10 +101,10 @@ public class BoundingBox implements Volume {
 		}
 
 		// Build results
-		final List<Float> distances = distances(n, f);
+		final float[] distances = distances(n, f);
 		return new Intersection() {
 			@Override
-			public List<Float> distances() {
+			public float[] distances() {
 				return distances;
 			}
 
@@ -132,12 +130,12 @@ public class BoundingBox implements Volume {
 	/**
 	 * Builds intersection distances.
 	 */
-	private static List<Float> distances(float n, float f) {
+	private static float[] distances(float n, float f) {
 		if((n < 0) || MathsUtil.isEqual(n, f)) {
-			return List.of(f);
+			return new float[]{f};
 		}
 		else {
-			return List.of(n, f);
+			return new float[]{n, f};
 		}
 	}
 
