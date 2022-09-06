@@ -165,16 +165,7 @@ public static class Builder {
 }
 ```
 
-A subpass is a mutable type comprised of the attachments used in that stage of rendering:
-
-```java
-public class Subpass {
-    private final List<Reference> colour = new ArrayList<>();
-    private Reference depth;
-}
-```
-
-And is allocated from the parent render pass builder:
+A subpass is allocated from the parent render pass builder:
 
 ```java
 public Subpass subpass() {

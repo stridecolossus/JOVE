@@ -1,7 +1,5 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
@@ -9,22 +7,36 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author Sarge
  */
 public abstract class AbstractPlayable implements Playable {
-	private State state = State.STOP;
-
-	@Override
-	public void state(State state) {
-		this.state = notNull(state);
-	}
+	private boolean playing;
 
 	@Override
 	public boolean isPlaying() {
-		return state == State.PLAY;
+		return playing;
+	}
+
+	@Override
+	public void play() {
+		if(playing) throw new IllegalStateException("Already playing: " + this);
+		playing = true;
+	}
+
+	@Override
+	public void pause() {
+		update();
+	}
+
+	@Override
+	public void stop() {
+		update();
+	}
+
+	private void update() {
+		if(!playing) throw new IllegalStateException("Not playing: " + this);
+		playing = false;
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this)
-				.append(state)
-				.build();
+		return new ToStringBuilder(this).append("playing", playing).build();
 	}
 }

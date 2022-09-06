@@ -6,23 +6,27 @@ package org.sarge.jove.control;
  */
 public interface Playable {
 	/**
-	 * Playable states.
-	 */
-	enum State {
-		PLAY,
-		PAUSE,
-		STOP
-	}
-
-	/**
 	 * @return Whether this playable is currently playing
 	 */
 	boolean isPlaying();
 
 	/**
-	 * Sets the state of this playable.
-	 * @param state New state
-	 * @throws IllegalStateException for an illegal state transition
+	 * Plays or un-pauses this playable.
+	 * @throws IllegalStateException if already playing
 	 */
-	void state(State state);
+	void play();
+
+	/**
+	 * Stops this playable.
+	 * @throws IllegalStateException if not playing
+	 */
+	void stop();
+
+	/**
+	 * Pauses this playable.
+	 * @throws IllegalStateException if not playing
+	 */
+	default void pause() {
+		stop();
+	}
 }

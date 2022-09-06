@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toCollection;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -35,17 +34,54 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ParticleSystem implements Animation {
-	// Configuration
-	private PositionFactory pos = PositionFactory.ORIGIN;
-	private VectorFactory vec = VectorFactory.of(Vector.Y);
+	/**
+	 * Characteristic hints for this particle system.
+	 */
+	public enum Characteristic {
+		/**
+		 * Whether particles should be culled.
+		 */
+		CULL,
+
+		/**
+		 * Whether particle creation timestamps are output to the vertex shader.
+		 */
+		TIMESTAMPS
+	}
+
+	private final Collection<Characteristic> chars;
+	private PositionFactory position = PositionFactory.ORIGIN;
+	private VectorFactory vector = VectorFactory.of(Vector.Y);
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, Collision> surfaces = new HashMap<>();
-
-	// State
 	private List<Particle> particles = new ArrayList<>();
 	private long lifetime = Long.MAX_VALUE;
-	private boolean culling;
+
+	/**
+	 * Constructor.
+	 * @param chars Particle system characteristics
+	 */
+	public ParticleSystem(Characteristic... chars) {
+		this.chars = Arrays.asList(chars);
+	}
+
+	/**
+	 * @return Characteristics of this particle system
+	 */
+	public Set<Characteristic> characteristics() {
+		return Set.copyOf(chars);
+	}
+
+	/**
+	 * Adds a particle system characteristic.
+	 * @param c
+	 * @return
+	 */
+	public ParticleSystem add(Characteristic c) {
+		chars.add(notNull(c));
+		return this;
+	}
 
 	/**
 	 * @return Number of particles
@@ -66,7 +102,7 @@ public class ParticleSystem implements Animation {
 	 * @param pos Starting position factory
 	 */
 	public ParticleSystem position(PositionFactory pos) {
-		this.pos = notNull(pos);
+		this.position = notNull(pos);
 		return this;
 	}
 
@@ -75,7 +111,7 @@ public class ParticleSystem implements Animation {
 	 * @param vec Movement vector factory
 	 */
 	public ParticleSystem vector(VectorFactory vec) {
-		this.vec = notNull(vec);
+		this.vector = notNull(vec);
 		return this;
 	}
 
@@ -86,8 +122,8 @@ public class ParticleSystem implements Animation {
 	 */
 	public synchronized void add(int num, long time) {
 		for(int n = 0; n < num; ++n) {
-			final Point start = pos.position();
-			final Vector dir = vec.vector(start);
+			final Point start = position.position();
+			final Vector dir = vector.vector(start);
 			final Particle p = new Particle(time, start, dir);
 			particles.add(p);
 		}
@@ -145,7 +181,6 @@ public class ParticleSystem implements Animation {
 		Check.notNull(surface);
 		Check.notNull(action);
 		surfaces.put(surface, action);
-		culling = action == Collision.DESTROY;
 		return this;
 	}
 
@@ -155,32 +190,28 @@ public class ParticleSystem implements Animation {
 	 */
 	public ParticleSystem remove(Intersected surface) {
 		surfaces.remove(surface);
-		culling = surfaces.containsValue(Collision.DESTROY);
 		return this;
 	}
 
 	@Override
-	public synchronized boolean update(Animator animator) {
+	public synchronized void update(Animator animator) {
 		final Helper helper = new Helper(animator);
 		helper.expire();
 		helper.update();
 		helper.cull();
 		helper.generate();
-		return false;
 	}
 
 	/**
 	 * Update helper.
 	 */
 	private class Helper {
-		private static final float SECONDS = 1f / TimeUnit.SECONDS.toMillis(1);
-
-		private final long time;
-		private final float elapsed;
+		private final Animator animator;
+		private final float pos;
 
 		private Helper(Animator animator) {
-			this.time = animator.time();
-			this.elapsed = animator.elapsed() * SECONDS;
+			this.animator = animator;
+			this.pos = animator.position();
 		}
 
 		/**
@@ -191,7 +222,7 @@ public class ParticleSystem implements Animation {
 				return;
 			}
 
-			final long expired = time - lifetime;
+			final long expired = animator.time() - lifetime;
 
 			particles
 					.parallelStream()
@@ -224,7 +255,7 @@ public class ParticleSystem implements Animation {
 		 */
 		private void influence(Particle p) {
 			for(Influence inf : influences) {
-				inf.apply(p, elapsed);
+				inf.apply(p, pos);
 			}
 		}
 
@@ -232,7 +263,7 @@ public class ParticleSystem implements Animation {
 		 * Moves each particle.
 		 */
 		private void move(Particle p) {
-			final Vector vec = p.direction().multiply(elapsed);
+			final Vector vec = p.direction().multiply(pos);
 			p.move(vec);
 		}
 
@@ -255,7 +286,7 @@ public class ParticleSystem implements Animation {
 		 * Culls expired or destroyed particles.
 		 */
 		void cull() {
-			if(!culling && !isLifetimeBound()) {
+			if(!chars.contains(Characteristic.CULL) && !isLifetimeBound()) {
 				return;
 			}
 
@@ -269,9 +300,9 @@ public class ParticleSystem implements Animation {
 		 * Generates new particles according to the configured policy.
 		 */
 		void generate() {
-			final int num = policy.count(particles.size(), elapsed);
+			final int num = policy.count(particles.size(), pos); // TODO - elapsed * speed???
 			if(num > 0) {
-				add(num, time);
+				add(num, animator.time());
 			}
 		}
 	}
@@ -282,8 +313,8 @@ public class ParticleSystem implements Animation {
 				.append("count", size())
 				.append(policy)
 				.append("lifetime", lifetime)
-				.append(pos)
-				.append(vec)
+				.append(position)
+				.append(vector)
 				.append("influences", influences.size())
 				.append("surfaces", surfaces.size())
 				.build();

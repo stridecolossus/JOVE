@@ -3,15 +3,15 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.Playable.State;
 
 /**
  * A <i>player</i> is a controller for playable media and animations.
  * @author Sarge
  */
-public class Player {
+public class Player extends AbstractPlayable {
 	/**
 	 * Listener for player state changes.
 	 */
@@ -26,8 +26,6 @@ public class Player {
 
 	private final Collection<Playable> playing = new ArrayList<>();
 	private final Collection<Listener> listeners = new HashSet<>();
-
-	private State state = State.STOP;
 
 	/**
 	 * Adds a playable to this player.
@@ -61,51 +59,34 @@ public class Player {
 		listeners.remove(listener);
 	}
 
-	/**
-	 * @return State of this player
-	 */
-	public State state() {
-		return state;
+	@Override
+	public void play() {
+		super.play();
+		delegate(Playable::play);
 	}
 
-	/**
-	 * Sets the state of this player.
-	 * @param state Player state
-	 */
-	public void state(State state) {
-		// Change state
-		validate(state);
-		this.state = notNull(state);
-
-		// Delegate
-		for(Playable p : playing) {
-			p.state(state);
-		}
-
-		// Notify listeners
-		for(Listener listener : listeners) {
-			listener.update(this);
-		}
+	@Override
+	public void pause() {
+		super.pause();
+		delegate(Playable::pause);
 	}
 
-	/**
-	 * @param next Next state
-	 * @throws IllegalStateException for an invalid state transition
-	 */
-	private void validate(State next) {
-		if(state == next) {
-			throw new IllegalStateException(String.format("Duplicate player state: player=%s next=%s", this, next));
-		}
-		if((next == State.PAUSE) && (state != State.PLAY)) {
-			throw new IllegalStateException(String.format("Illegal player state transition: prev=%s next=%s", this, next));
-		}
+	@Override
+	public void stop() {
+		super.stop();
+		delegate(Playable::stop);
+	}
+
+	private void delegate(Consumer<Playable> state) {
+		playing.forEach(state);
+		listeners.forEach(e -> e.update(this));
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append(state)
-				.append("playing", playing.size())
+				.appendSuper(super.toString())
+				.append("count", playing.size())
 				.append("listeners", listeners.size())
 				.build();
 	}

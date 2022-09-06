@@ -1,8 +1,7 @@
 package org.sarge.jove.control;
 
-import java.time.Duration;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtil;
 
@@ -10,16 +9,14 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>rotation animation</i> animates a rotation angle about an axis.
  * @author Sarge
  */
-public class RotationAnimation extends BoundedAnimation {
+public class RotationAnimation implements Animation {
 	private final MutableRotation rot;
 
 	/**
 	 * Constructor.
-	 * @param axis 			Rotation axis
-	 * @param period		Animation period
+	 * @param axis Rotation axis
 	 */
-	public RotationAnimation(Vector axis, Duration period) {
-		super(period);
+	public RotationAnimation(Vector axis) {
 		this.rot = new MutableRotation(axis);
 	}
 
@@ -31,8 +28,8 @@ public class RotationAnimation extends BoundedAnimation {
 	}
 
 	@Override
-	protected void update(float pos) {
-		final float angle = pos * MathsUtil.TWO_PI;
+	public void update(Animator animator) {
+		final float angle = animator.position() * MathsUtil.TWO_PI;
 		rot.angle(angle);
 	}
 

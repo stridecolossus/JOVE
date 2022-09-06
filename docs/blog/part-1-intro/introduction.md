@@ -67,7 +67,7 @@ Each chapter generally consists of:
 
 ## Design
 
-The general idea for the JOVE project is to provide a toolkit of Vulkan functionality, consisting of a set of reusable components that collaborate to implement higher level features and demo applications.  This library of components should satisfy the following requirements:
+The general idea for the JOVE project is to provide a toolkit of Vulkan and general 3D functionality, consisting of a set of reusable components that collaborate to implement higher level features and demo applications.  This library of components should satisfy the following requirements:
 
 * Avoid cut-and-paste code in demo applications.
 

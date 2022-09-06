@@ -211,23 +211,23 @@ Notes:
 
 * Enumeration values are represented here as a `long` value, which might seem surprising since C/C++ enumerations are sized to a native `int` (or shorter).  This reason for this will become clear shortly.
 
-Finally the parser delegates to a generator:
+Finally the parser delegates to a processor:
 
 ```java
 private void parse(IASTEnumerationSpecifier enumeration) {
     ...
-    generator.enumeration(name, values);
+    proc.enumeration(name, values);
 }
 ```
 
-The _generator_ is responsible for pre-processing the parsed enumeration before handing off to another component that creates the Java source file:
+The _processor_ is responsible for pre-processing the parsed enumeration before handing off to another component to generate the Java source file:
 
 ```java
-public class Generator {
-    private final TemplateProcessor proc;
+public class Processor {
+    private final Generator generator;
 
-    public Generator(TemplateProcessor proc) {
-        this.proc = proc;
+    public Generator(Generator generator) {
+        this.generator = generator;
     }
 
     public void enumeration(String name, Map<String, Long> values) {
@@ -246,7 +246,7 @@ public void enumeration(String name, Map<String, Long> values) {
 }
 ```
 
-For example `VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT` becomes the much more concise `RELEASE_RESOURCES`.
+For example `VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT` becomes the much more manageable `RELEASE_RESOURCES`.
 
 The generator then replaces the key names of the enumeration values as follows:
 
@@ -305,10 +305,10 @@ The leading numeric is replaced by the corresponding token, for example the `VK_
 
 To generate the source code we selected [Apache Velocity](https://velocity.apache.org/), an old but active template library ideal for this scenario, in particular providing support for collections.
 
-The _template processor_ is a wrapper for the Velocity engine:
+The _generator_ is a wrapper for the Velocity engine:
 
 ```java
-public class TemplateProcessor {
+public class Generator {
     private final VelocityEngine engine = new VelocityEngine();
 
     public String generate(String name, Map<String, ? extends Object> data) {
@@ -320,7 +320,7 @@ public class TemplateProcessor {
 The engine is configured in the constructor:
 
 ```java
-public TemplateProcessor() {
+public Generator() {
     Properties props = new Properties();
     props.setProperty("resource.loader", "file");
     props.setProperty("file.resource.loader.class", "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
@@ -348,7 +348,7 @@ public String generate(String name, Map<String, ? extends Object> data) {
 }
 ```
 
-In the generator the arguments for an enumeration are constructed as follows:
+In the pre-processor the template arguments for an enumeration are constructed as follows:
 
 ```java
 Map<String, Object> map = new HashMap<>();
@@ -357,7 +357,7 @@ map.put("name", name);
 map.put("values", transformed);
 ```
 
-And finally the template processor is invoked with the arguments:
+And finally the generator applies to template to generate the source file:
 
 ```java
 String source = proc.generate("enumeration.template.txt", map);

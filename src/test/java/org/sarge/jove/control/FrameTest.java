@@ -87,7 +87,7 @@ class FrameTest {
 		@Test
 		void fps() {
 			for(int n = 0; n < 3; ++n) {
-				counter.frame();
+				counter.update();
 			}
 			assertEquals(3, counter.fps());
 		}
@@ -96,9 +96,9 @@ class FrameTest {
 		@DisplayName("A frame counter is reset after a second")
 		@Test
 		void reset() throws InterruptedException {
-			counter.frame();
+			counter.update();
 			//Thread.sleep(1000);
-			counter.frame();
+			counter.update();
 			assertEquals(1, counter.fps());
 		}
 	}

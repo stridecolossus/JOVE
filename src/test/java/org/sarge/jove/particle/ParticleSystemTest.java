@@ -9,6 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
+import org.sarge.jove.particle.ParticleSystem.Characteristic;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
@@ -16,9 +17,9 @@ class ParticleSystemTest {
 
 	@BeforeEach
 	void before() {
-		sys = new ParticleSystem();
+		sys = new ParticleSystem(Characteristic.CULL);
 		animator = mock(Animator.class);
-		when(animator.elapsed()).thenReturn(1000L);
+		when(animator.position()).thenReturn(1f);
 	}
 
 	/**
@@ -136,7 +137,7 @@ class ParticleSystemTest {
 
 		@DisplayName("is not updated by the particle system")
 		@Test
-		void move() {
+		void update() {
 			sys.update(animator);
 			assertEquals(Point.ORIGIN, p.origin());
 		}
@@ -148,6 +149,34 @@ class ParticleSystemTest {
 			sys.add(surface, Collision.DESTROY);
 			sys.update(animator);
 			verifyNoInteractions(surface);
+		}
+	}
+
+	@DisplayName("A destroyed particle...")
+	@Nested
+	class Destroyed {
+		private Particle p;
+
+		@BeforeEach
+		void before() {
+			p = create();
+			p.destroy();
+		}
+
+		@DisplayName("is not updated by the particle system")
+		@Test
+		void update() {
+			final Intersected surface = mock(Intersected.class);
+			sys.add(surface, Collision.DESTROY);
+			sys.update(animator);
+			assertEquals(false, p.isAlive());
+		}
+
+		@DisplayName("is culled")
+		@Test
+		void culled() {
+			sys.update(animator);
+			assertEquals(0, sys.size());
 		}
 	}
 }

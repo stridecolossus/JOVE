@@ -17,11 +17,11 @@ public class Frame {
 		/**
 		 * Notifies a completed frame.
 		 */
-		void frame();
+		void update();
 	}
 
 	private Instant start;
-	private Instant end;
+	private Instant end = Instant.EPOCH;
 	private boolean running;
 
 	/**
@@ -79,7 +79,7 @@ public class Frame {
 		}
 
 		@Override
-		public void frame() {
+		public void update() {
 			final Instant now = Instant.now();
 			if(now.isAfter(next)) {
 				count = 1;

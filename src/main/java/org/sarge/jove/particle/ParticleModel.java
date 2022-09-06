@@ -9,6 +9,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
+import org.sarge.jove.particle.ParticleSystem.Characteristic;
 
 /**
  * A <i>particle model</i> is a dynamic, renderable model for a particle system.
@@ -21,8 +22,7 @@ public class ParticleModel extends AbstractModel {
 	private final Bufferable vertices = new Bufferable() {
 		@Override
 		public int length() {
-			//return sys.size() * layout().stride();
-			throw new RuntimeException();
+			return sys.size() * layout().stride();
 		}
 
 		@Override
@@ -32,12 +32,12 @@ public class ParticleModel extends AbstractModel {
 				p.origin().buffer(bb);
 			}
 
-//			// Write creation timestamps
-//			if(times) {
+			// Write creation timestamps
+			if(times) {
 //				for(Particle p : sys.particles()) {
 //					bb.putLong(p.time());
 //				}
-//			}
+			}
 //			// TODO - not interleaved!
 //			// TODO - requires current time -> fragment shader (uniform?)
 		}
@@ -59,7 +59,7 @@ public class ParticleModel extends AbstractModel {
 	public ParticleModel(ParticleSystem sys, boolean times) {
 		super(Primitive.POINTS, layout(times));
 		this.sys = notNull(sys);
-		this.times = times;
+		this.times = sys.characteristics().contains(Characteristic.TIMESTAMPS);
 	}
 
 	private static CompoundLayout layout(boolean times) {

@@ -3,8 +3,6 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.time.Duration;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
@@ -14,7 +12,7 @@ class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(Vector.Y, Duration.ofSeconds(1));
+		animation = new RotationAnimation(Vector.Y);
 	}
 
 	@Test
@@ -27,7 +25,7 @@ class RotationAnimationTest {
 	@Test
 	void update() {
 		final Animator animator = mock(Animator.class);
-		when(animator.elapsed()).thenReturn(500L);
+		when(animator.position()).thenReturn(0.5f);
 		animation.update(animator);
 		assertEquals(MathsUtil.PI, animation.rotation().rotation().angle());
 	}

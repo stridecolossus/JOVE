@@ -1002,21 +1002,44 @@ The final enhancement to the existing code is the implementation of a new framew
 First the following new abstraction defines something that can be played:
 
 ```java
-public abstract class Playable {
-    /**
-     * Playable states.
-     */
-    public enum State {
-        PLAY,
-        PAUSE,
-        STOP
+public interface Playable {
+    boolean isPlaying();
+    void play();
+    void pause();
+    void stop();
+}
+```
+
+Which is partially implemented in the following template class:
+
+```java
+public abstract class AbstractPlayable implements Playable {
+    private boolean playing;
+
+    @Override
+    public boolean isPlaying() {
+        return playing;
     }
 
-    private State state = State.STOP;
-    private boolean repeat;
+    @Override
+    public void play() {
+        if(playing) throw new IllegalStateException();
+        playing = true;
+    }
 
-    public boolean isPlaying() {
-        return state == State.PLAY;
+    @Override
+    public void pause() {
+        update();
+    }
+
+    @Override
+    public void stop() {
+        update();
+    }
+
+    private void update() {
+        if(!playing) throw new IllegalStateException();
+        playing = false;
     }
 }
 ```
@@ -1024,46 +1047,93 @@ public abstract class Playable {
 A playable resource is managed by the _player_ controller:
 
 ```java
-public class Player {
+public class Player extends AbstractPlayable {
+    /**
+     * Listener for player state changes.
+     */
     @FunctionalInterface
     public interface Listener {
         /**
          * Notifies a player state change.
-         * @param state New state
+         * @param player Player
          */
-        void update(State state);
+        void update(Player player);
     }
 
     private final Collection<Playable> playing = new ArrayList<>();
     private final Collection<Listener> listeners = new HashSet<>();
-    private State state = State.STOP;
 }
 ```
 
-The player delegates state changes and notifies interested listeners:
+The player delegates state changes and notifies interested listeners, for example:
 
 ```java
 @Override
-public void state(State state) {
-    // Change state
-    this.state = notNull(state);
+public void stop() {
+    super.stop();
+    delegate(Playable::stop);
+}
 
-    // Delegate
-    for(Playable p : playing) {
-        p.state(state);
+private void delegate(Consumer<Playable> state) {
+    playing.forEach(state);
+    listeners.forEach(e -> e.update(this));
+}
+```
+
+Next a simple timer utility is added that records an elapsed duration:
+
+```java
+public class Frame {
+    /**
+     * A <i>frame listener</li> notifies completion of a rendered frame.
+     */
+    @FunctionalInterface
+    public interface Listener {
+        /**
+         * Notifies a completed frame.
+         */
+        void update();
     }
 
-    // Notify listeners
-    for(Listener listener : listeners) {
-        listener.update(this);
+    private Instant start;
+    private Instant end = Instant.EPOCH;
+    private boolean running;
+
+    public Duration elapsed() {
+        return Duration.between(start, end);
     }
 }
 ```
 
-An _animator_ is a playable object that updates an animation on each frame:
+Note that the frame listener interface is moved to this new class.
+
+The _frame_ can be started:
 
 ```java
-public class Animator extends Playable implements FrameListener {
+public void start() {
+    if(running) throw new IllegalStateException();
+    start = Instant.now();
+    running = true;
+}
+```
+
+And stopped on completion of some activity:
+
+```java
+public void end() {
+    if(!running) throw new IllegalStateException();
+    this.end = Instant.now();
+    this.running = false;
+}
+```
+
+This timer is used by the _animator_ which is a playable that interpolates an _animation_ over a given duration:
+
+```java
+public class Animator extends AbstractPlayable implements Frame.Listener {
+    /**
+     * An <i>animation</i> is updated by this animator.
+     */
     @FunctionalInterface
     public interface Animation {
         /**
@@ -1073,44 +1143,63 @@ public class Animator extends Playable implements FrameListener {
         void update(Animator animator);
     }
 
-    private final long duration;
+    // Configuration
     private final Animation animation;
-    private long time;
+    private final long duration;
     private float speed = 1;
+    private boolean repeat = true;
+
+    // Animation state
+    private final Frame frame = new Frame();
+    private long time;
+    private float pos;
 }
 ```
 
 The animator ignores frame events if it has been stopped or paused:
 
 ```java
-@Override
-public void frame(Instant start, Instant end) {
+public void update() {
     if(!isPlaying()) {
         return;
     }
     ...
-    animation.update(this);
 }
 ```
 
-Next the _elapsed_ time is calculated to update the current _time_ position of the animation:
+Next the elapsed duration since the previous frame is calculated:
 
-```java
-long elapsed = Duration.between(start, end).toMillis();
-time += speed * elapsed;
+```
+frame.end();
+time += frame.elapsed().toMillis() * speed;
 ```
 
-The position is quantised to the duration or stops if the animation is not repeating:
+At the end of the duration the current time is quantised or the animation stops if it not repeating:
 
 ```java
 if(time > duration) {
-    if(isRepeating()) {
+    if(repeat) {
         time = time % duration;
     }
     else {
+        super.stop();
         time = duration;
-        state(Player.State.STOP);
     }
+}
+```
+
+The updated position is then applied to the animation:
+
+```java
+pos = time / (float) duration;
+animation.update(this);
+```
+
+And finally the timer is restarted for the next frame:
+
+```java
+if(isPlaying()) {
+    frame.start();
 }
 ```
 

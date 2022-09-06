@@ -88,7 +88,7 @@ public class FrameProcessor implements TransientObject {
 
 		// Notify frame completion
 		for(Listener listener : listeners) {
-			listener.frame();
+			listener.update();
 		}
 	}
 
