@@ -4,10 +4,11 @@ import static java.util.stream.Collectors.toCollection;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.Animator;
+import org.sarge.jove.control.*;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray.*;
@@ -34,6 +35,9 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ParticleSystem implements Animation {
+	private static final float SCALE = 1f / TimeUnit.SECONDS.toMillis(1);
+
+
 	/**
 	 * Characteristic hints for this particle system.
 	 */
@@ -195,115 +199,112 @@ public class ParticleSystem implements Animation {
 
 	@Override
 	public synchronized void update(Animator animator) {
-		final Helper helper = new Helper(animator);
-		helper.expire();
-		helper.update();
-		helper.cull();
-		helper.generate();
+		final Frame frame = animator.frame();
+		final long time = frame.time().toEpochMilli();
+		final float elapsed = frame.elapsed().toMillis() * SCALE;
+		expire(time);
+		update(elapsed);
+		cull();
+		generate(time, elapsed * animator.speed());
 	}
 
 	/**
-	 * Update helper.
+	 * Expire particles.
 	 */
-	private class Helper {
-		private final Animator animator;
-		private final float pos;
-
-		private Helper(Animator animator) {
-			this.animator = animator;
-			this.pos = animator.position();
+	private void expire(long time) {
+		if(!isLifetimeBound()) {
+			return;
 		}
 
+		final long expired = time - lifetime;
+
+		particles
+				.parallelStream()
+				.filter(p -> p.time() < expired)
+				.forEach(Particle::destroy);
+	}
+
+	/**
+	 * Update particles and apply collisions.
+	 */
+	private void update(float elapsed) {
 		/**
-		 * Removes expired particles.
+		 * Update instance.
 		 */
-		void expire() {
-			if(!isLifetimeBound()) {
-				return;
+		class Instance {
+			/**
+			 * Update each particle.
+			 */
+			private void update(Particle p) {
+				influence(p);
+				move(p);
+				collide(p);
 			}
 
-			final long expired = animator.time() - lifetime;
-
-			particles
-					.parallelStream()
-					.filter(p -> p.time() < expired)
-					.forEach(Particle::destroy);
-		}
-
-		/**
-		 * Updates moving particles.
-		 */
-		void update() {
-			particles
-					.parallelStream()
-					.filter(Particle::isAlive)
-					.filter(Predicate.not(Particle::isIdle))
-					.forEach(this::update);
-		}
-
-		/**
-		 * Updates each particle.
-		 */
-		private void update(Particle p) {
-			influence(p);
-			move(p);
-			collide(p);
-		}
-
-		/**
-		 * Applies particle influences.
-		 */
-		private void influence(Particle p) {
-			for(Influence inf : influences) {
-				inf.apply(p, pos);
-			}
-		}
-
-		/**
-		 * Moves each particle.
-		 */
-		private void move(Particle p) {
-			final Vector vec = p.direction().multiply(pos);
-			p.move(vec);
-		}
-
-		/**
-		 * Applies collision surfaces.
-		 */
-		private void collide(Particle p) {
-			for(var entry : surfaces.entrySet()) {
-				final Intersected surface = entry.getKey();
-				final Intersection intersections = surface.intersection(p);
-				if(!intersections.isEmpty()) {
-					final Collision collision = entry.getValue();
-					collision.collide(p, intersections);
-					break;
+			/**
+			 * Apply particle influences.
+			 * TODO - redundant if change to trajectory
+			 */
+			private void influence(Particle p) {
+				for(Influence inf : influences) {
+					inf.apply(p, elapsed);
 				}
 			}
+
+			/**
+			 * Move each particle.
+			 * TODO - move to particle if change to trajectory
+			 */
+			private void move(Particle p) {
+				final Vector vec = p.direction().multiply(elapsed);
+				p.move(vec);
+			}
 		}
 
-		/**
-		 * Culls expired or destroyed particles.
-		 */
-		void cull() {
-			if(!chars.contains(Characteristic.CULL) && !isLifetimeBound()) {
-				return;
-			}
+		final Instance instance = new Instance();
+		particles
+				.parallelStream()
+				.filter(Particle::isAlive)
+				.filter(Predicate.not(Particle::isIdle))
+				.forEach(instance::update);
+	}
 
-			particles = particles
-					.parallelStream()
-					.filter(Particle::isAlive)
-					.collect(toCollection(ArrayList::new));
+	/**
+	 * Apply collision surfaces.
+	 */
+	private void collide(Particle p) {
+		for(var entry : surfaces.entrySet()) {
+			final Intersected surface = entry.getKey();
+			final Intersection intersections = surface.intersection(p);
+			if(!intersections.isEmpty()) {
+				final Collision collision = entry.getValue();
+				collision.collide(p, intersections);
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Cull expired or destroyed particles
+	 */
+	private void cull() {
+		if(!chars.contains(Characteristic.CULL) && !isLifetimeBound()) {
+			return;
 		}
 
-		/**
-		 * Generates new particles according to the configured policy.
-		 */
-		void generate() {
-			final int num = policy.count(particles.size(), pos); // TODO - elapsed * speed???
-			if(num > 0) {
-				add(num, animator.time());
-			}
+		particles = particles
+				.parallelStream()
+				.filter(Particle::isAlive)
+				.collect(toCollection(ArrayList::new));
+	}
+
+	/**
+	 * Generate new particles according to the configured policy.
+	 */
+	private void generate(long time, float elapsed) {
+		final int num = policy.count(particles.size(), elapsed);
+		if(num > 0) {
+			add(num, time);
 		}
 	}
 

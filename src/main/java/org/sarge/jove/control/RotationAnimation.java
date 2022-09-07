@@ -29,7 +29,7 @@ public class RotationAnimation implements Animation {
 
 	@Override
 	public void update(Animator animator) {
-		final float angle = animator.position() * MathsUtil.TWO_PI;
+		final float angle = animator.elapsed() * MathsUtil.TWO_PI;
 		rot.angle(angle);
 	}
 

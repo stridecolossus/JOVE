@@ -25,7 +25,7 @@ class RotationAnimationTest {
 	@Test
 	void update() {
 		final Animator animator = mock(Animator.class);
-		when(animator.position()).thenReturn(0.5f);
+		when(animator.elapsed()).thenReturn(0.5f);
 		animation.update(animator);
 		assertEquals(MathsUtil.PI, animation.rotation().rotation().angle());
 	}

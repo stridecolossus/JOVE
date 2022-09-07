@@ -5,69 +5,81 @@ import java.time.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>frame</i> tracks rendering duration.
+ * A <i>frame</i>
+ * TODO
  * @author Sarge
  */
-public class Frame {
+public interface Frame {
 	/**
 	 * A <i>frame listener</li> notifies completion of a rendered frame.
 	 */
 	@FunctionalInterface
-	public interface Listener {
+	interface Listener {
 		/**
 		 * Notifies a completed frame.
 		 */
 		void update();
 	}
 
-	private Instant start;
-	private Instant end = Instant.EPOCH;
-	private boolean running;
-
 	/**
 	 * @return Time of last frame completion
 	 */
-	public Instant time() {
-		return end;
-	}
+	Instant time();
 
 	/**
-	 * @return Elapsed duration
+	 * @return Elapsed duration of this frame
 	 */
-	public Duration elapsed() {
-		return Duration.between(start, end);
-	}
+	Duration elapsed();
 
 	/**
-	 * Starts a new frame.
-	 * @throws IllegalStateException if this frame has already been started
+	 * A <i>frame tracker</i> is a simple stopwatch timer for a frame.
 	 */
-	public Instant start() {
-		if(running) throw new IllegalStateException();
-		start = Instant.now();
-		running = true;
-		return start;
-	}
+	class Tracker implements Frame {
+		private Instant start = Instant.EPOCH;
+		private Instant end = Instant.EPOCH;
+		private boolean running;
 
-	/**
-	 * Ends this frame.
-	 * @throws IllegalStateException if this frame has not been started
-	 */
-	public void end() {
-		if(!running) throw new IllegalStateException();
-		this.end = Instant.now();
-		this.running = false;
-	}
+		@Override
+		public Instant time() {
+			return end;
+		}
 
-	@Override
-	public String toString() {
-		return String.format("%s -> %s", start, end);
+		@Override
+		public Duration elapsed() {
+			return Duration.between(start, end);
+		}
+
+		/**
+		 * Starts a new frame.
+		 * @throws IllegalStateException if this frame has already been started
+		 */
+		public Instant start() {
+			if(running) throw new IllegalStateException();
+			start = Instant.now();
+			running = true;
+			return start;
+		}
+
+		/**
+		 * Ends this frame.
+		 * @throws IllegalStateException if this frame has not been started
+		 */
+		public void end() {
+			if(!running) throw new IllegalStateException();
+			this.end = Instant.now();
+			this.running = false;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("%s -> %s", start, end);
+		}
 	}
 
 	/**
 	 * A <i>frame counter</i> tracks FPS (frames per second).
 	 */
-	public static class Counter implements Frame.Listener {
+	class Counter implements Listener {
 		private Instant next = Instant.EPOCH;
 		private int count;
 

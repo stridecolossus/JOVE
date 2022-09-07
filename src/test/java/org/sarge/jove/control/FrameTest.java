@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Frame.Counter;
+import org.sarge.jove.control.Frame.*;
 
 class FrameTest {
-	private Frame frame;
+	private Tracker frame;
 
 	@BeforeEach
 	void before() {
-		frame = new Frame();
+		frame = new Tracker();
 	}
 
 	@DisplayName("A frame that has been started...")

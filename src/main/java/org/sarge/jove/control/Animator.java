@@ -2,12 +2,11 @@ package org.sarge.jove.control;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.time.Duration;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.control.Frame.Tracker;
 
 /**
- * An <i>animator</i> is a specialised playable for an {@link Animation} that is interpolated over a duration.
+ * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated per frame.
  * @author Sarge
  */
 public class Animator extends AbstractPlayable implements Frame.Listener {
@@ -23,43 +22,17 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		void update(Animator animator);
 	}
 
-	// Configuration
 	private final Animation animation;
-	private final long duration;
+	private final Tracker frame = new Tracker();
 	private float speed = 1;
 	private boolean repeat = true;
 
-	// Animation state
-	private final Frame frame;
-	private long time;
-	private float pos;
-
 	/**
 	 * Constructor.
-	 * @param duration		Duration
-	 * @param animation 	Animation
+	 * @param animation Animation
 	 */
-	public Animator(Duration duration, Animation animation) {
-		this(new Frame(), duration, animation);
-	}
-
-	/**
-	 * Test constructor.
-	 * @param frame			Frame tracker
-	 * @param duration		Duration
-	 * @param animation		Animation
-	 */
-	protected Animator(Frame frame, Duration duration, Animation animation) {
-		this.frame = notNull(frame);
+	public Animator(Animation animation) {
 		this.animation = notNull(animation);
-		this.duration = duration.toMillis();
-	}
-
-	/**
-	 * @return Duration of this animation
-	 */
-	public Duration duration() {
-		return Duration.ofMillis(duration);
 	}
 
 	/**
@@ -95,17 +68,17 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	/**
-	 * @return Current time (epoch)
+	 * @return Animation frame tracker
 	 */
-	public long time() {
-		return frame.time().toEpochMilli();
+	public Frame frame() {
+		return frame;
 	}
 
 	/**
-	 * @return Animation position (percentile)
+	 * @return Animation time (ms)
 	 */
-	public float position() {
-		return pos;
+	public float elapsed() {
+		return this.frame().elapsed().toMillis() * speed;
 	}
 
 	@Override
@@ -122,8 +95,10 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 
 	@Override
 	public void stop() {
+		if(isPlaying()) {
+			frame.end();
+		}
 		super.stop();
-		frame.end();
 	}
 
 	@Override
@@ -135,22 +110,7 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 
 		// Update animation time
 		frame.end();
-		time += frame.elapsed().toMillis() * speed;
-
-		// Cycle or stop animation
-		if(time > duration) {
-			if(repeat) {
-				time = time % duration;
-			}
-			else {
-				super.stop();
-				time = duration;
-			}
-		}
-
-		// Update animation
-		pos = time / (float) duration;
-		animation.update(this);
+		animate();
 
 		// Start next frame
 		if(isPlaying()) {
@@ -158,12 +118,18 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		}
 	}
 
+	/**
+	 * Updates the animation.
+	 */
+	protected void animate() {
+		animation.update(this);
+	}
+
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
 				.append(animation)
-				.append("duration", duration)
 				.append("speed", speed)
 				.append("repeat", repeat)
 				.build();

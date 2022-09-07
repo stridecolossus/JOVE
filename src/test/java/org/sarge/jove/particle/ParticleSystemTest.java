@@ -3,10 +3,11 @@ package org.sarge.jove.particle;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import java.time.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Animator;
+import org.sarge.jove.control.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.particle.ParticleSystem.Characteristic;
@@ -14,19 +15,29 @@ import org.sarge.jove.particle.ParticleSystem.Characteristic;
 class ParticleSystemTest {
 	private ParticleSystem sys;
 	private Animator animator;
+	private Frame frame;
 
 	@BeforeEach
 	void before() {
+		frame = mock(Frame.class);
+		when(frame.time()).thenReturn(Instant.ofEpochSecond(1));
+		when(frame.elapsed()).thenReturn(Duration.ofSeconds(2));
+
 		sys = new ParticleSystem(Characteristic.CULL);
-		animator = mock(Animator.class);
-		when(animator.position()).thenReturn(1f);
+
+		animator = new Animator(sys) {
+			@Override
+			public Frame frame() {
+				return frame;
+			}
+		};
 	}
 
 	/**
 	 * Adds a particle to the system.
 	 */
 	private Particle create() {
-		sys.add(1, animator.time());
+		sys.add(1, 3);
 		return sys.particles().iterator().next();
 	}
 
@@ -84,15 +95,13 @@ class ParticleSystemTest {
 			final Particle p = create();
 			assertEquals(pos, p.origin());
 			assertEquals(Vector.X, p.direction());
-			assertEquals(0, p.time());
 		}
 
 		@DisplayName("has a creation timestamp")
 		@Test
 		void creation() {
-			when(animator.time()).thenReturn(3L);
 			final Particle p = create();
-			assertEquals(3L, p.time());
+			assertEquals(3, p.time());
 		}
 
 		@DisplayName("is moved by its current direction on each frame")
@@ -100,7 +109,7 @@ class ParticleSystemTest {
 		void update() {
 			final Particle p = create();
 			sys.update(animator);
-			assertEquals(new Point(Vector.Y), p.origin());
+			assertEquals(new Point(0, 2, 0), p.origin());
 		}
 
 		@DisplayName("is modified by the configured influences on each frame")
@@ -110,7 +119,7 @@ class ParticleSystemTest {
 			final Influence inf = mock(Influence.class);
 			sys.add(inf);
 			sys.update(animator);
-			verify(inf).apply(p, 1f);
+			verify(inf).apply(p, 2f);
 		}
 
 		@DisplayName("is destroyed when its lifetime has expired")
@@ -118,7 +127,6 @@ class ParticleSystemTest {
 		void expired() {
 			sys.lifetime(2L);
 			create();
-			when(animator.time()).thenReturn(3L);
 			sys.update(animator);
 			assertEquals(0, sys.size());
 		}
