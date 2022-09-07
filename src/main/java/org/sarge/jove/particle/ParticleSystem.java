@@ -37,18 +37,18 @@ import org.sarge.lib.util.Check;
 public class ParticleSystem implements Animation {
 	private static final float SCALE = 1f / TimeUnit.SECONDS.toMillis(1);
 
-
 	/**
 	 * Characteristic hints for this particle system.
 	 */
 	public enum Characteristic {
 		/**
-		 * Whether particles should be culled.
+		 * Whether particles should be culled, i.e. the system has influences or collisions surfaces that {@link Particle#destroy()} particles.
+		 * Ignored if the particle system has a {@link ParticleSystem#lifetime(long)}.
 		 */
 		CULL,
 
 		/**
-		 * Whether particle creation timestamps are output to the vertex shader.
+		 * Whether particles output the creation {@link Particle#time()} to the vertex buffer.
 		 */
 		TIMESTAMPS
 	}
@@ -79,8 +79,7 @@ public class ParticleSystem implements Animation {
 
 	/**
 	 * Adds a particle system characteristic.
-	 * @param c
-	 * @return
+	 * @param c Characteristic
 	 */
 	public ParticleSystem add(Characteristic c) {
 		chars.add(notNull(c));
@@ -111,7 +110,7 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Sets the initial movement vector for new particles (default is <i>up</i>).
+	 * Sets the initial movement vector for new particles (default is {@link Vector#Y}).
 	 * @param vec Movement vector factory
 	 */
 	public ParticleSystem vector(VectorFactory vec) {
@@ -123,14 +122,27 @@ public class ParticleSystem implements Animation {
 	 * Adds new particles to this system.
 	 * @param num 		Number of particles to add
 	 * @param time		Current time
+	 * @see #factory(Factory)
 	 */
 	public synchronized void add(int num, long time) {
 		for(int n = 0; n < num; ++n) {
 			final Point start = position.position();
 			final Vector dir = vector.vector(start);
-			final Particle p = new Particle(time, start, dir);
+			final Particle p = particle(time, start, dir);
 			particles.add(p);
 		}
+	}
+
+	/**
+	 * Creates a new particle instance.
+	 * Override for custom particle sub-classes or to implement a particle pool.
+	 * @param time		Creation timestamp
+	 * @param pos		Starting position
+	 * @param dir		Initial movement direction
+	 * @return New particle
+	 */
+	protected Particle particle(long time, Point pos, Vector dir) {
+		return new Particle(time, pos, dir);
 	}
 
 	/**
@@ -150,8 +162,9 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Sets the particle lifetime (default is forever).
+	 * Sets the particle lifetime (default is indefinite).
 	 * @param lifetime Lifetime (ms)
+	 * @see Characteristic#CULL
 	 */
 	public ParticleSystem lifetime(long lifetime) {
 		this.lifetime = oneOrMore(lifetime);
@@ -180,6 +193,7 @@ public class ParticleSystem implements Animation {
 	 * Adds a collision surface.
 	 * @param surface		Surface
 	 * @param action		Collision action
+	 * @see Characteristic#CULL
 	 */
 	public ParticleSystem add(Intersected surface, Collision action) {
 		Check.notNull(surface);

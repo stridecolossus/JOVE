@@ -18,7 +18,7 @@ public class Particle implements Ray {
 
 	/**
 	 * Constructor.
-	 * @param time		Creation time
+	 * @param time		Creation timestamp
 	 * @param pos 		Starting position
 	 * @param dir		Initial direction
 	 */
@@ -29,12 +29,11 @@ public class Particle implements Ray {
 	}
 
 	/**
-	 * @return Creation time
+	 * @return Creation timestamp
 	 */
 	public long time() {
 		return time;
 	}
-	// TODO - if not culling or using colour then time is redundant, could have sub-class?
 
 	@Override
 	public Point origin() {
@@ -66,8 +65,8 @@ public class Particle implements Ray {
 	}
 
 	/**
-	 * Stops this particle at the given position.
-	 * @param pos Particle position
+	 * Stops this particle at the given position (usually an intersection point at a collision).
+	 * @param pos Stopped position
 	 * @throws IllegalStateException if this particle has already been stopped
 	 * @see #stop()
 	 */
@@ -146,6 +145,10 @@ public class Particle implements Ray {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(pos).append(dir).build();
+		return new ToStringBuilder(this)
+				.append(pos)
+				.append(dir)
+				.append("created", time)
+				.build();
 	}
 }

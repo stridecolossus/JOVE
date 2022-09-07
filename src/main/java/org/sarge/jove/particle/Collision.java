@@ -1,6 +1,6 @@
 package org.sarge.jove.particle;
 
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
@@ -28,15 +28,5 @@ public interface Collision {
 	Collision STOP = (p, intersection) -> {
 		final Point pt = Intersection.point(p, intersection);
 		p.stop(pt);
-	};
-
-	/**
-	 * Reflects a collided particle about the surface normal at the intersection.
-	 * @see Particle#reflect(Point, Vector)
-	 */
-	Collision REFLECT = (p, intersection) -> {
-		final Point pt = Intersection.point(p, intersection);
-		final Vector normal = intersection.normal(pt);
-		p.reflect(pt, normal);
 	};
 }

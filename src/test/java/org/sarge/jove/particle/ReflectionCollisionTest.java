@@ -6,25 +6,22 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
-public class CollisionTest {
+public class ReflectionCollisionTest {
+	private Collision collision;
 	private Particle p;
 	private Intersection intersection;
 
 	@BeforeEach
 	void before() {
+		collision = new ReflectionCollision(0.5f);
 		p = new Particle(0, Point.ORIGIN, new Vector(1, 1, 0));
 		intersection = Intersection.of(1, Vector.Y);
 	}
 
 	@Test
-	void destroy() {
-		Collision.DESTROY.collide(p, intersection);
-		assertEquals(false, p.isAlive());
-	}
-
-	@Test
-	void stop() {
-		Collision.STOP.collide(p, intersection);
-		assertEquals(true, p.isIdle());
+	void reflect() {
+		collision.collide(p, intersection);
+		assertEquals(new Point(1, 1, 0), p.origin());
+		assertEquals(new Vector(0.5f, -0.5f, 0), p.direction());
 	}
 }

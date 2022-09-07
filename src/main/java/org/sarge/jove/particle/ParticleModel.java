@@ -34,9 +34,9 @@ public class ParticleModel extends AbstractModel {
 
 			// Write creation timestamps
 			if(times) {
-//				for(Particle p : sys.particles()) {
-//					bb.putLong(p.time());
-//				}
+				for(Particle p : sys.particles()) {
+					bb.putLong(p.time());
+				}
 			}
 //			// TODO - not interleaved!
 //			// TODO - requires current time -> fragment shader (uniform?)
@@ -62,6 +62,7 @@ public class ParticleModel extends AbstractModel {
 		this.times = sys.characteristics().contains(Characteristic.TIMESTAMPS);
 	}
 
+	// TODO - non-interleaved
 	private static CompoundLayout layout(boolean times) {
 		final List<Layout> layout = new ArrayList<>();
 		layout.add(Point.LAYOUT);
