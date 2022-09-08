@@ -6,7 +6,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>normalized vector</i> is a unit vector with a magnitude of <b>one</b>.
  * @author Sarge
  */
-public sealed class NormalizedVector extends Vector permits Axis {
+public class NormalizedVector extends Vector {
 	/**
 	 * @param len Vector length
 	 * @return Whether the given vector length is normalised

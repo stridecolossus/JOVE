@@ -78,7 +78,7 @@ class ParticleSystemTest {
 		void defaults() {
 			final Particle p = create();
 			assertEquals(Point.ORIGIN, p.origin());
-			assertEquals(Vector.Y, p.direction());
+			assertEquals(Axis.Y, p.direction());
 		}
 	}
 
@@ -90,11 +90,11 @@ class ParticleSystemTest {
 		void position() {
 			final Point pos = new Point(1, 2, 3);
 			sys.position(PositionFactory.of(pos));
-			sys.vector(VectorFactory.of(Vector.X));
+			sys.vector(VectorFactory.of(Axis.X));
 
 			final Particle p = create();
 			assertEquals(pos, p.origin());
-			assertEquals(Vector.X, p.direction());
+			assertEquals(Axis.X, p.direction());
 		}
 
 		@DisplayName("has a creation timestamp")

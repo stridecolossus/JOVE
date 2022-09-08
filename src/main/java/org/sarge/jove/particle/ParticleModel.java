@@ -3,6 +3,7 @@ package org.sarge.jove.particle;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.*;
 
 import org.sarge.jove.common.*;
@@ -17,7 +18,6 @@ import org.sarge.jove.particle.ParticleSystem.Characteristic;
  */
 public class ParticleModel extends AbstractModel {
 	private final ParticleSystem sys;
-	private final boolean times;
 
 	private final Bufferable vertices = new Bufferable() {
 		@Override
@@ -28,18 +28,19 @@ public class ParticleModel extends AbstractModel {
 		@Override
 		public void buffer(ByteBuffer bb) {
 			// Write particles
+			final long now = Instant.now().toEpochMilli(); // TODO
 			for(Particle p : sys.particles()) {
 				p.origin().buffer(bb);
+				bb.putFloat((now - p.time()) / 5000f); // TODO - do this in shader, just pass timestamp => time push constant
 			}
 
 			// Write creation timestamps
-			if(times) {
-				for(Particle p : sys.particles()) {
-					bb.putLong(p.time());
-				}
+			if(times(sys)) {
+//				for(Particle p : sys.particles()) {
+//					bb.putLong(p.time() - now);
+//				}
 			}
 //			// TODO - not interleaved!
-//			// TODO - requires current time -> fragment shader (uniform?)
 		}
 	};
 
@@ -48,26 +49,21 @@ public class ParticleModel extends AbstractModel {
 	 * @param sys Particle system
 	 */
 	public ParticleModel(ParticleSystem sys) {
-		this(sys, false);
+		super(Primitive.POINTS, layout(sys));
+		this.sys = notNull(sys);
 	}
 
-	/**
-	 * Constructor.
-	 * @param sys		Particle system
-	 * @param times		Whether particles include creation timestamps
-	 */
-	public ParticleModel(ParticleSystem sys, boolean times) {
-		super(Primitive.POINTS, layout(times));
-		this.sys = notNull(sys);
-		this.times = sys.characteristics().contains(Characteristic.TIMESTAMPS);
+	// TODO - this sucks => doesn't pass layout to ctor?
+	private static boolean times(ParticleSystem sys) {
+		return sys.characteristics().contains(Characteristic.TIMESTAMPS);
 	}
 
 	// TODO - non-interleaved
-	private static CompoundLayout layout(boolean times) {
+	private static CompoundLayout layout(ParticleSystem sys) {
 		final List<Layout> layout = new ArrayList<>();
 		layout.add(Point.LAYOUT);
-		if(times) {
-			layout.add(new Layout(1, Layout.Type.INTEGER, true, 4));
+		if(times(sys)) {
+			layout.add(new Layout(1, Layout.Type.FLOAT, true, Float.BYTES)); // TODO - age -> integer (long)
 		}
 		return new CompoundLayout(layout);
 	}

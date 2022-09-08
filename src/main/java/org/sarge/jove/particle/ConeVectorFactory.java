@@ -17,6 +17,7 @@ import org.sarge.jove.util.*;
  * <li>The default implementation performs rotation using an {@link AxisAngle} in the {@link #rotate(Vector)} override method</li>
  * </ul>
  * <p>
+ * @see <a href="https://math.stackexchange.com/questions/56784/generate-a-random-direction-within-a-cone">Random cone vector</a>
  * @author Sarge
  */
 public class ConeVectorFactory implements VectorFactory {
@@ -33,23 +34,10 @@ public class ConeVectorFactory implements VectorFactory {
 	 */
 	public ConeVectorFactory(Vector normal, float radius, Randomiser random) {
 		this.normal = notNull(normal);
-		this.x = normal.cross(cardinal(normal));
+		this.x = normal.cross(Axis.minimal(normal));
 		this.y = x.cross(normal);
 		this.radius = Interpolator.linear(-radius, +radius);
 		this.random = notNull(random);
-	}
-
-	/**
-	 * @return Cardinal axis corresponding to the minimal component of the given normal
-	 * @see <a href="https://math.stackexchange.com/questions/56784/generate-a-random-direction-within-a-cone">Random cone vector</a>
-	 */
-	private static Vector cardinal(Vector normal) {
-		if(normal.x < normal.y) {
-			return normal.x < normal.z ? Axis.X : Axis.Z;
-		}
-		else {
-			return normal.y < normal.z ? Axis.Y : Axis.Z;
-		}
 	}
 
 	@Override

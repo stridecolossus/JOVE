@@ -6,7 +6,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public sealed class Vector extends Tuple permits NormalizedVector {
+public class Vector extends Tuple {
 	/**
 	 * Creates the vector between the given points, i.e. <code>end - start</code>.
 	 * @param start		Starting point

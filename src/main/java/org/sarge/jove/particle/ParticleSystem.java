@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.*;
 import org.sarge.jove.control.Animator.Animation;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
@@ -55,7 +55,7 @@ public class ParticleSystem implements Animation {
 
 	private final Collection<Characteristic> chars;
 	private PositionFactory position = PositionFactory.ORIGIN;
-	private VectorFactory vector = VectorFactory.of(Vector.Y);
+	private VectorFactory vector = VectorFactory.of(Axis.Y);
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, Collision> surfaces = new HashMap<>();

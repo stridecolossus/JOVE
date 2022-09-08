@@ -32,7 +32,7 @@ public interface Rotation extends Transform {
 		@Override
 		public Matrix matrix() {
 			if(axis instanceof Axis cardinal) {
-				return cardinal.matrix(angle);
+				return cardinal.rotation(angle);
 			}
 			else {
 				return Quaternion.of(axis, angle).matrix();
