@@ -3,10 +3,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Event.Source;
 
 /**
- * An <i>axis</i> generates events for an axial controller such as the mouse wheel or a HOTAS gauge.
+ * An <i>axis control</i> generates events for an axial controller such as the mouse wheel or a HOTAS gauge.
  * @author Sarge
  */
-public abstract class Axis implements Event, Source<Axis> {
+public abstract class AxisControl implements Event, Source<AxisControl> {
 	private float value;
 
 	@Override

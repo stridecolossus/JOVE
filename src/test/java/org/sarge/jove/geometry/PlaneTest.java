@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.geometry.Vector.*;
+import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
@@ -83,7 +83,7 @@ class PlaneTest {
 			final Intersection intersection = plane.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{1}, intersection.distances());
-			assertEquals(Vector.Y, intersection.normal(null));
+			assertEquals(Y, intersection.normal(null));
 		}
 
 		@DisplayName("A ray touching the plane is intersecting")
@@ -93,7 +93,7 @@ class PlaneTest {
 			final Intersection intersection = plane.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{-0f}, intersection.distances());
-			assertEquals(Vector.Y, intersection.normal(null));
+			assertEquals(Y, intersection.normal(null));
 		}
 
 		@DisplayName("A ray orthogonal to the plane is not intersecting")

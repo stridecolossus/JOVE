@@ -1,17 +1,12 @@
 package org.sarge.jove.scene;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.sarge.jove.geometry.Vector.X;
-import static org.sarge.jove.geometry.Vector.Y;
-import static org.sarge.jove.geometry.Vector.Z;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import static org.sarge.jove.geometry.Axis.*;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtil;

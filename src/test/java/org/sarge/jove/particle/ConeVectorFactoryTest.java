@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
 
 public class ConeVectorFactoryTest {
@@ -14,13 +14,13 @@ public class ConeVectorFactoryTest {
 	@BeforeEach
 	void before() {
 		random = mock(Randomiser.class);
-		factory = new ConeVectorFactory(Vector.Y, MathsUtil.toRadians(45), random);
+		factory = new ConeVectorFactory(Axis.Y, MathsUtil.toRadians(45), random);
 	}
 
 	@Test
 	void zero() {
 		when(random.next()).thenReturn(0.5f);
-		assertEquals(Vector.Y, factory.vector(null));
+		assertEquals(Axis.Y, factory.vector(null));
 	}
 
 	@Test

@@ -45,10 +45,10 @@ public class ConeVectorFactory implements VectorFactory {
 	 */
 	private static Vector cardinal(Vector normal) {
 		if(normal.x < normal.y) {
-			return normal.x < normal.z ? Vector.X : Vector.Z;
+			return normal.x < normal.z ? Axis.X : Axis.Z;
 		}
 		else {
-			return normal.y < normal.z ? Vector.Y : Vector.Z;
+			return normal.y < normal.z ? Axis.Y : Axis.Z;
 		}
 	}
 

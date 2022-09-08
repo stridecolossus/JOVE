@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.sarge.jove.geometry.Axis.Y;
 import static org.sarge.jove.util.MathsUtil.HALF;
 
 import org.junit.jupiter.api.*;
@@ -11,19 +12,19 @@ public class MutableRotationTest {
 
 	@BeforeEach
 	void before() {
-		rot = new MutableRotation(Vector.Y);
+		rot = new MutableRotation(Y);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(0, rot.angle());
 		assertEquals(true, rot.isDirty());
-		assertEquals(new AxisAngle(Vector.Y, 0), rot.rotation());
+		assertEquals(new AxisAngle(Y, 0), rot.rotation());
 	}
 
 	@Test
 	void matrix() {
-		assertEquals(Quaternion.of(Vector.Y, 0).matrix(), rot.matrix());
+		assertEquals(Quaternion.of(Y, 0).matrix(), rot.matrix());
 		assertEquals(false, rot.isDirty());
 	}
 
@@ -31,8 +32,8 @@ public class MutableRotationTest {
 	void angle() {
 		rot.angle(HALF);
 		assertEquals(HALF, rot.angle());
-		assertEquals(Quaternion.of(Vector.Y, HALF).matrix(), rot.matrix());
+		assertEquals(Quaternion.of(Y, HALF).matrix(), rot.matrix());
 		assertEquals(false, rot.isDirty());
-		assertEquals(new AxisAngle(Vector.Y, HALF), rot.rotation());
+		assertEquals(new AxisAngle(Y, HALF), rot.rotation());
 	}
 }

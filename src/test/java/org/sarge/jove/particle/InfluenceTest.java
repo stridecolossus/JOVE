@@ -10,20 +10,20 @@ public class InfluenceTest {
 
 	@BeforeEach
 	void before() {
-		particle = new Particle(0, Point.ORIGIN, Vector.Y);
+		particle = new Particle(0, Point.ORIGIN, Axis.Y);
 	}
 
 	@Test
 	void vector() {
-		final Influence inf = Influence.of(Vector.X);
+		final Influence inf = Influence.of(Axis.X);
 		inf.apply(particle, 1);
-		assertEquals(Vector.X.add(Vector.Y), particle.direction());
+		assertEquals(Axis.X.add(Axis.Y), particle.direction());
 	}
 
 	@Test
 	void velocity() {
 		final Influence inf = Influence.velocity(2);
 		inf.apply(particle, 1);
-		assertEquals(Vector.Y.multiply(2) , particle.direction());
+		assertEquals(Axis.Y.multiply(2) , particle.direction());
 	}
 }

@@ -11,8 +11,8 @@ class VectorFactoryTest {
 	@DisplayName("The movement vector of a particle can be initialised to a literal vector")
 	@Test
 	void literal() {
-		final VectorFactory factory = VectorFactory.of(Vector.X);
-		assertEquals(Vector.X, factory.vector(null));
+		final VectorFactory factory = VectorFactory.of(Axis.X);
+		assertEquals(Axis.X, factory.vector(null));
 	}
 
 	@DisplayName("The movement vector of a particle can be initialised to its position")
@@ -27,7 +27,7 @@ class VectorFactoryTest {
 	void random() {
 		final var randomiser = mock(Randomiser.class);
 		final var factory = VectorFactory.random(randomiser);
-		when(randomiser.vector()).thenReturn(Vector.Y);
-		assertEquals(Vector.Y, factory.vector(null));
+		when(randomiser.vector()).thenReturn(Axis.Y);
+		assertEquals(Axis.Y, factory.vector(null));
 	}
 }

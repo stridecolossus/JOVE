@@ -5,12 +5,12 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 
-class AxisTest {
-	private Axis axis;
+class AxisControlTest {
+	private AxisControl axis;
 
 	@BeforeEach
 	void before() {
-		axis = spy(Axis.class);
+		axis = spy(AxisControl.class);
 	}
 
 	@Test
@@ -28,6 +28,6 @@ class AxisTest {
 	void equals() {
 		assertEquals(axis, axis);
 		assertNotEquals(axis, null);
-		assertNotEquals(axis, mock(Axis.class));
+		assertNotEquals(axis, mock(AxisControl.class));
 	}
 }

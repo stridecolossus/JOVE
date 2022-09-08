@@ -1,6 +1,7 @@
 package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
@@ -16,9 +17,9 @@ class CameraTest {
 	@Test
 	void constructor() {
 		assertEquals(Point.ORIGIN, cam.position());
-		assertEquals(Vector.X, cam.right());
-		assertEquals(Vector.Y, cam.up());
-		assertEquals(Vector.Z, cam.direction());
+		assertEquals(X, cam.right());
+		assertEquals(Y, cam.up());
+		assertEquals(Z, cam.direction());
 		assertNotNull(cam.matrix());
 	}
 
@@ -27,9 +28,9 @@ class CameraTest {
 		final Point pos = new Point(1, 2, 3);
 		cam.move(pos);
 		assertEquals(pos, cam.position());
-		assertEquals(Vector.X, cam.right());
-		assertEquals(Vector.Y, cam.up());
-		assertEquals(Vector.Z, cam.direction());
+		assertEquals(X, cam.right());
+		assertEquals(Y, cam.up());
+		assertEquals(Z, cam.direction());
 	}
 
 	@Test
@@ -57,23 +58,23 @@ class CameraTest {
 		cam.direction(dir);
 		cam.update();
 		assertEquals(dir, cam.direction());
-		assertEquals(Vector.Y, cam.up());
-		assertEquals(Vector.Y.cross(dir).normalize(), cam.right());
+		assertEquals(Y, cam.up());
+		assertEquals(Y.cross(dir).normalize(), cam.right());
 	}
 
 	@Test
 	void directionLock() {
-		assertThrows(IllegalStateException.class, () -> cam.direction(Vector.Y));
-		assertThrows(IllegalStateException.class, () -> cam.direction(Vector.Y.invert()));
+		assertThrows(IllegalStateException.class, () -> cam.direction(Y));
+		assertThrows(IllegalStateException.class, () -> cam.direction(Y.invert()));
 	}
 
 	@Test
 	void look() {
 		cam.look(new Point(0, 0, -1));
 		cam.update();
-		assertEquals(Vector.X, cam.right());
-		assertEquals(Vector.Y, cam.up());
-		assertEquals(Vector.Z, cam.direction());
+		assertEquals(X, cam.right());
+		assertEquals(Y, cam.up());
+		assertEquals(Z, cam.direction());
 	}
 
 	@Test
@@ -83,14 +84,14 @@ class CameraTest {
 
 	@Test
 	void lookLock() {
-		assertThrows(IllegalStateException.class, () -> cam.look(new Point(Vector.Y)));
-		assertThrows(IllegalStateException.class, () -> cam.look(new Point(Vector.Y.invert())));
+		assertThrows(IllegalStateException.class, () -> cam.look(new Point(Y)));
+		assertThrows(IllegalStateException.class, () -> cam.look(new Point(Y.invert())));
 	}
 
 	@Test
 	void up() {
-		cam.up(Vector.X);
-		assertEquals(Vector.X, cam.up());
+		cam.up(X);
+		assertEquals(X, cam.up());
 	}
 
 	@Test
@@ -98,9 +99,9 @@ class CameraTest {
 		// Create camera rotation
 		final Matrix rot = new Matrix.Builder()
 				.identity()
-				.row(0, Vector.X)
-				.row(1, Vector.Y)
-				.row(2, Vector.Z)
+				.row(0, X)
+				.row(1, Y)
+				.row(2, Z)
 				.build();
 
 		// Create camera translation one unit out of the screen

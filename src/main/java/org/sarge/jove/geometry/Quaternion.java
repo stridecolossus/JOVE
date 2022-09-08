@@ -102,11 +102,7 @@ public final class Quaternion implements Rotation {
 		);
 	}
 
-	/**
-	 * Rotates the given vector by this quaternion.
-	 * @param vec Vector
-	 * @return Rotated vector
-	 */
+	@Override
 	public Vector rotate(Vector vec) {
 		final Quaternion q = new Quaternion(0, vec.x, vec.y, vec.z);
 		final Quaternion result = this.multiply(q).multiply(this.conjugate());

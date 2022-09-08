@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.geometry.Vector.*;
+import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.util.MathsUtil;
@@ -29,13 +29,6 @@ class VectorTest {
 	@Test
 	void array() {
 		assertEquals(vec, new Vector(new float[]{1, 2, 3}));
-	}
-
-	@Test
-	void axes() {
-		assertEquals(new Vector(1, 0, 0), X);
-		assertEquals(new Vector(0, 1, 0), Y);
-		assertEquals(new Vector(0, 0, 1), Z);
 	}
 
 	@Test
@@ -75,7 +68,7 @@ class VectorTest {
 
 	@Test
 	void divisorZero() {
-		assertEquals(Vector.X, Vector.X.divisor());
+		assertEquals(X, X.divisor());
 	}
 
 	@Test
@@ -86,7 +79,7 @@ class VectorTest {
 
 	@Test
 	void normalized() {
-		final Vector result = vec.normalize();
+		final NormalizedVector result = vec.normalize();
 		assertSame(result, result.normalize());
 	}
 
@@ -100,7 +93,8 @@ class VectorTest {
 
 	@Test
 	void angle() {
-		assertEquals(0f, X.angle(X));
+		assertEquals(1, vec.angle(vec));
+		assertEquals(-1, vec.angle(vec.invert()));
 		assertEquals(MathsUtil.PI, X.angle(X.invert()));
 		assertEquals(MathsUtil.HALF_PI, X.angle(Y));
 		assertEquals(MathsUtil.HALF_PI, X.angle(Z));
@@ -149,6 +143,6 @@ class VectorTest {
 		assertEquals(vec, vec);
 		assertEquals(vec, new Vector(1, 2, 3));
 		assertNotEquals(vec, null);
-		assertNotEquals(vec, Vector.X);
+		assertNotEquals(vec, new Vector(4, 5, 6));
 	}
 }

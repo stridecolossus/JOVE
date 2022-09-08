@@ -13,7 +13,7 @@ class PositionFactoryTest {
 	@BeforeEach
 	void before() {
 		randomiser = mock(Randomiser.class);
-		when(randomiser.vector()).thenReturn(Vector.X);
+		when(randomiser.vector()).thenReturn(Axis.X);
 	}
 
 	@DisplayName("The origin factory positions particles at the origin")

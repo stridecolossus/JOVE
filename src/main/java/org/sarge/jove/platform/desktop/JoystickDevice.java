@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.Axis;
+import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.control.Event.*;
 import org.sarge.lib.util.Check;
 
@@ -59,6 +59,7 @@ public class JoystickDevice implements Device {
 	/**
 	 * @return Name of this joystick
 	 */
+	@Override
 	public String name() {
 		return name;
 	}
@@ -66,7 +67,7 @@ public class JoystickDevice implements Device {
 	/**
 	 * @return Joystick axes
 	 */
-	public List<Axis> axes() {
+	public List<AxisControl> axes() {
 		return Arrays.asList(axes);
 	}
 

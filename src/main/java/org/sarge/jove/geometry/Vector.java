@@ -6,22 +6,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public final class Vector extends Tuple {
-	/**
-	 * X-axis vector.
-	 */
-	public static final Vector X = new Vector(1, 0, 0);
-
-	/**
-	 * Y-axis vector (note Vulkan positive Y axis is <b>down</b>).
-	 */
-	public static final Vector Y = new Vector(0, 1, 0);
-
-	/**
-	 * Z-axis vector (negative Z is <i>into</i> the screen).
-	 */
-	public static final Vector Z = new Vector(0, 0, 1);
-
+public sealed class Vector extends Tuple permits NormalizedVector {
 	/**
 	 * Creates the vector between the given points, i.e. <code>end - start</code>.
 	 * @param start		Starting point
@@ -122,18 +107,19 @@ public final class Vector extends Tuple {
 
 	/**
 	 * @return Normalized (or unit) vector
+	 * @see NormalizedVector
 	 */
-	public Vector normalize() {
+	public NormalizedVector normalize() {
 		final float len = magnitude();
-		if(MathsUtil.isEqual(1, len)) {
-			return this;
+		if(NormalizedVector.isNormalized(len)) {
+			return new NormalizedVector(this);
 		}
 		else {
 			final float f = MathsUtil.inverseRoot(len);
-			return multiply(f);
+			final Vector vec = multiply(f);
+			return new NormalizedVector(vec);
 		}
 	}
-	// TODO - normalized vector sub-class?
 
 	/**
 	 * Calculates the angle between this and the given vector.

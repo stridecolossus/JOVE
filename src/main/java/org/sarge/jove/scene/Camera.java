@@ -12,11 +12,11 @@ import org.sarge.jove.geometry.*;
 public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Vector.Z;
-	private Vector up = Vector.Y;
+	private Vector dir = Axis.Z;
+	private Vector up = Axis.Y;
 
 	// Transient view transform
-	private Vector right = Vector.X;
+	private Vector right = Axis.X;
 	private Matrix matrix;
 	private boolean dirty = true;
 

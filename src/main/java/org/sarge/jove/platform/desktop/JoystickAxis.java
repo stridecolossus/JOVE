@@ -4,16 +4,16 @@ import static org.sarge.lib.util.Check.zeroOrMore;
 
 import java.util.function.Consumer;
 
-import org.sarge.jove.control.Axis;
+import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>joystick axis</i> is a controller for a ranged value such as a HOTAS throttle.
  * @author Sarge
  */
-class JoystickAxis extends Axis {
+class JoystickAxis extends AxisControl {
 	private final int index;
-	private Consumer<Axis> handler;
+	private Consumer<AxisControl> handler;
 
 	/**
 	 * Constructor.
@@ -31,7 +31,7 @@ class JoystickAxis extends Axis {
 	}
 
 	@Override
-	public Object bind(Consumer<Axis> handler) {
+	public Object bind(Consumer<AxisControl> handler) {
 		this.handler = handler;
 		return null;
 	}

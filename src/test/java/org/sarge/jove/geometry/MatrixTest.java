@@ -116,8 +116,8 @@ class MatrixTest {
 	class FactoryMethodTests {
 		@Test
 		void translation() {
-			final Matrix expected = new Matrix.Builder().identity().column(3, Vector.X).build();
-			assertEquals(expected, Matrix.translation(Vector.X));
+			final Matrix expected = new Matrix.Builder().identity().column(3, Axis.X).build();
+			assertEquals(expected, Matrix.translation(Axis.X));
 		}
 
 		@Test

@@ -99,11 +99,11 @@ public class MouseDeviceTest {
 
 	@Nested
 	class MouseWheelTests {
-		private DesktopSource<MouseListener, Axis> wheel;
+		private DesktopSource<MouseListener, AxisControl> wheel;
 
 		@BeforeEach
 		void before() {
-			wheel = (DesktopSource<MouseListener, Axis>) mouse.wheel();
+			wheel = (DesktopSource<MouseListener, AxisControl>) mouse.wheel();
 		}
 
 		@Test
@@ -113,11 +113,11 @@ public class MouseDeviceTest {
 
 		@Test
 		void listener() {
-			final Consumer<Axis> handler = mock(Consumer.class);
+			final Consumer<AxisControl> handler = mock(Consumer.class);
 			final MouseListener listener = wheel.listener(handler);
 			assertNotNull(listener);
 			listener.event(null, 1, 2);
-			verify(handler).accept((Axis) wheel);
+			verify(handler).accept((AxisControl) wheel);
 		}
 
 		@Test

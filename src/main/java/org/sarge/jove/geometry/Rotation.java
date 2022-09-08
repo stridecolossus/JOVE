@@ -1,6 +1,5 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -14,6 +13,13 @@ public interface Rotation extends Transform {
 	AxisAngle rotation();
 
 	/**
+	 * Rotates the given vector by this rotation.
+	 * @param vec Vector
+	 * @return Rotated vector
+	 */
+	Vector rotate(Vector vec);
+
+	/**
 	 * An <i>axis-angle</i> is a simple fixed rotation about an axis.
 	 * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
 	 */
@@ -25,33 +31,12 @@ public interface Rotation extends Transform {
 
 		@Override
 		public Matrix matrix() {
-			final Builder matrix = new Matrix.Builder().identity();
-			final float sin = MathsUtil.sin(angle);
-			final float cos = MathsUtil.cos(angle);
-			if(Vector.X.equals(axis)) {
-				matrix.set(1, 1, cos);
-				matrix.set(1, 2, -sin);
-				matrix.set(2, 1, sin);
-				matrix.set(2, 2, cos);
-			}
-			else
-			if(Vector.Y.equals(axis)) {
-				matrix.set(0, 0, cos);
-				matrix.set(0, 2, sin);
-				matrix.set(2, 0, -sin);
-				matrix.set(2, 2, cos);
-			}
-			else
-			if(Vector.Z.equals(axis)) {
-				matrix.set(0, 0, cos);
-				matrix.set(0, 1, -sin);
-				matrix.set(1, 0, sin);
-				matrix.set(1, 1, cos);
+			if(axis instanceof Axis cardinal) {
+				return cardinal.matrix(angle);
 			}
 			else {
-				throw new UnsupportedOperationException("Arbitrary axis not supported (use quaternion)");
+				return Quaternion.of(axis, angle).matrix();
 			}
-			return matrix.build();
 		}
 
 		/**
@@ -66,11 +51,9 @@ public interface Rotation extends Transform {
 		 * <li>and <i>v</i> is the vector to be rotated</li>
 		 * </ul>
 		 * <p>
-		 * This approach may be more efficient than constructing a rotation matrix or quaternion.
-		 * <p>
-		 * @param vec Vector to rotate
-		 * @return Rotated vector
+		 * This approach may be more efficient than constructing a rotation matrix or quaternion for certain use-cases.
 		 */
+		@Override
 		public Vector rotate(Vector vec) {
 			final float cos = MathsUtil.cos(angle);
 			final Vector a = vec.multiply(cos);

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Axis;
+import org.sarge.jove.control.AxisControl;
 
 @Disabled
 class JoystickAxisTest {
@@ -31,7 +31,7 @@ class JoystickAxisTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	void events() {
-		final Consumer<Axis> handler = mock(Consumer.class);
+		final Consumer<AxisControl> handler = mock(Consumer.class);
 		axis.bind(handler);
 		axis.update(3);
 		verify(handler).accept(axis);

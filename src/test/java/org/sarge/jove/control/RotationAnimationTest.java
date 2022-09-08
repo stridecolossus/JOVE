@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.Axis;
 import org.sarge.jove.util.MathsUtil;
 
 class RotationAnimationTest {
@@ -12,13 +12,13 @@ class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(Vector.Y);
+		animation = new RotationAnimation(Axis.Y);
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(animation.rotation());
-		assertEquals(Vector.Y, animation.rotation().rotation().axis());
+		assertEquals(Axis.Y, animation.rotation().rotation().axis());
 		assertEquals(0, animation.rotation().rotation().angle());
 	}
 

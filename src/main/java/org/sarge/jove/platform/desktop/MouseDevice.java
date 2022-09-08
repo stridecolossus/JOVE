@@ -57,7 +57,7 @@ public class MouseDevice implements Device {
 	/**
 	 * @return Mouse scroll-wheel axis
 	 */
-	public Axis wheel() {
+	public AxisControl wheel() {
 		return wheel;
 	}
 
@@ -126,7 +126,7 @@ public class MouseDevice implements Device {
 	/**
 	 * Mouse scroll-wheel source.
 	 */
-	private class MouseWheel extends Axis implements DesktopSource<MouseListener, Axis> {
+	private class MouseWheel extends AxisControl implements DesktopSource<MouseListener, AxisControl> {
 		@Override
 		public String name() {
 			return "MouseWheel";
@@ -138,7 +138,7 @@ public class MouseDevice implements Device {
 		}
 
 		@Override
-		public MouseListener listener(Consumer<Axis> handler) {
+		public MouseListener listener(Consumer<AxisControl> handler) {
 			return (ptr, x, y) -> {
 				update((float) y);
 				handler.accept(MouseWheel.this);

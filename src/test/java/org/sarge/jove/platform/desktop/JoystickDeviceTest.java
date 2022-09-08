@@ -37,12 +37,12 @@ class JoystickDeviceTest extends AbstractJoystickTest {
 	@Test
 	void axes() {
 		// Retrieve axes
-		final List<Axis> axes = dev.axes();
+		final List<AxisControl> axes = dev.axes();
 		assertNotNull(axes);
 		assertEquals(1, axes.size());
 
 		// Check axis
-		final Axis axis = axes.get(0);
+		final AxisControl axis = axes.get(0);
 		assertNotNull(axis);
 
 		// Check initialised to current axis position

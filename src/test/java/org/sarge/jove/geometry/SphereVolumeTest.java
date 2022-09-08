@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.sarge.jove.geometry.Vector.*;
+import static org.sarge.jove.geometry.Axis.*;
 import static org.sarge.jove.util.MathsUtil.*;
 
 import org.junit.jupiter.api.*;
@@ -162,7 +162,7 @@ class SphereVolumeTest {
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{2}, intersection.distances());
-			assertEquals(Vector.X, intersection.normal(ray.point(2)));
+			assertEquals(X, intersection.normal(ray.point(2)));
 		}
 
 		@DisplayName("Sphere behind, ray originates on the sphere surface")
@@ -172,7 +172,7 @@ class SphereVolumeTest {
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{0}, intersection.distances());
-			assertEquals(Vector.X, intersection.normal(ray.point(0)));
+			assertEquals(X, intersection.normal(ray.point(0)));
 		}
 
 		@DisplayName("Sphere ahead, does not intersect")
@@ -188,7 +188,7 @@ class SphereVolumeTest {
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{4}, intersection.distances());
-			assertEquals(Vector.X, intersection.normal(ray.point(4)));
+			assertEquals(X, intersection.normal(ray.point(4)));
 		}
 
 		@DisplayName("Sphere ahead, intersects twice")
@@ -198,8 +198,8 @@ class SphereVolumeTest {
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{1, 7}, intersection.distances());
-			assertEquals(Vector.X.invert(), intersection.normal(ray.point(1)));
-			assertEquals(Vector.X, intersection.normal(ray.point(7)));
+			assertEquals(X.invert(), intersection.normal(ray.point(1)));
+			assertEquals(X, intersection.normal(ray.point(7)));
 		}
 
 		@DisplayName("Sphere ahead, ray originates on the sphere surface")
@@ -209,8 +209,8 @@ class SphereVolumeTest {
 			final Intersection intersection = sphere.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{0, 6}, intersection.distances());
-			assertEquals(Vector.X.invert(), intersection.normal(ray.point(0)));
-			assertEquals(Vector.X, intersection.normal(ray.point(6)));
+			assertEquals(X.invert(), intersection.normal(ray.point(0)));
+			assertEquals(X, intersection.normal(ray.point(6)));
 		}
 	}
 

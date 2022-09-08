@@ -55,6 +55,11 @@ public class MutableRotation implements Rotation {
 	}
 
 	@Override
+	public Vector rotate(Vector vec) {
+		return this.rotation().rotate(vec);
+	}
+
+	@Override
 	public String toString() {
 		return new ToStringBuilder(this).append(axis).append(angle).build();
 	}
