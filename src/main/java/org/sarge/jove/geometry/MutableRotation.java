@@ -1,37 +1,37 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * A <i>mutable rotation</i> specifies a counter-clockwise rotation about an axis.
- * @see Quaternion#of(Rotation)
+ * @see AxisAngle
  * @author Sarge
  */
 public class MutableRotation implements Rotation {
 	private final Vector axis;
 	private float angle;
-	private boolean dirty = true;
+	private AxisAngle rot;
 
 	/**
 	 * Constructor.
 	 * @param axis Rotation axis
 	 */
 	public MutableRotation(Vector axis) {
-		this.axis = notNull(axis);
+		this.axis = axis.normalize();
 	}
 
 	/**
-	 * @return Angle (radians)
+	 * @return Rotation axis
+	 */
+	public Vector axis() {
+		return axis;
+	}
+
+	/**
+	 * @return Rotation angle (radians)
 	 */
 	public float angle() {
 		return angle;
-	}
-
-	@Override
-	public AxisAngle rotation() {
-		return new AxisAngle(axis, angle);
 	}
 
 	/**
@@ -40,23 +40,34 @@ public class MutableRotation implements Rotation {
 	 */
 	public void angle(float angle) {
 		this.angle = angle;
-		dirty = true;
+		rot = null;
+	}
+
+	@Override
+	public AxisAngle toAxisAngle() {
+		update();
+		return rot;
 	}
 
 	@Override
 	public boolean isDirty() {
-		return dirty;
+		return rot == null;
 	}
 
 	@Override
 	public Matrix matrix() {
-		dirty = false;
-		return Quaternion.of(axis, angle).matrix();
+		update();
+		return rot.matrix();
 	}
 
 	@Override
 	public Vector rotate(Vector vec) {
-		return this.rotation().rotate(vec);
+		update();
+		return rot.rotate(vec);
+	}
+
+	private void update() {
+		rot = new AxisAngle(axis, angle);
 	}
 
 	@Override

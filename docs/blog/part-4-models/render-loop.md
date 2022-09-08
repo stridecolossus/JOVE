@@ -9,7 +9,7 @@ title: The Render Loop and Synchronisation
 - [Overview](#overview)
 - [Render Loop](#render-loop)
 - [Synchronisation](#synchronisation)
-- [Animation](#animation)
+- [Rotation and Animation](#rotation-and-animation)
 
 ---
 
@@ -993,11 +993,11 @@ Multiple frames can now be executed in parallel, the introduced synchronisation 
 
 ---
 
-## Animation
+## Rotation and Animation
 
 ### Animator
 
-The final enhancement to the existing code is the implementation of a new framework to support animation.
+The final enhancement to the existing code is the implementation of a new framework to support rotation animations.
 
 First the following new abstraction defines something that can be played:
 
@@ -1127,7 +1127,7 @@ public void end() {
 }
 ```
 
-This timer is used by the _animator_ which is a playable that interpolates an _animation_ over a given duration:
+This timer is used by an _animator_ which interpolates an _animation_ over a given duration:
 
 ```java
 public class Animator extends AbstractPlayable implements Frame.Listener {
@@ -1203,7 +1203,7 @@ if(isPlaying()) {
 }
 ```
 
-### Rotation Animation
+### Rotation
 
 Next a second new abstraction is introduced for a general matrix transformation:
 
@@ -1224,7 +1224,7 @@ public interface Transform {
 }
 ```
 
-A rotation is a transform specified by an axis-angle:
+Which is sub-classed by a specialised rotation transform:
 
 ```java
 public interface Rotation extends Transform {
@@ -1235,7 +1235,7 @@ public interface Rotation extends Transform {
 }
 ```
 
-The existing factory method for the rotation `matrix` is moved to this new class where it logically belongs:
+Where an axis-angle is a simple tuple type:
 
 ```java
 record AxisAngle(Vector axis, float angle) implements Rotation {
@@ -1251,43 +1251,8 @@ record AxisAngle(Vector axis, float angle) implements Rotation {
 }
 ```
 
-We also provide a mutable implementation (the `matrix` method is covered below):
 
-```java
-public class MutableRotation implements Rotation {
-    private final Vector axis;
-    private float angle;
-    private boolean dirty = true;
-
-    public void angle(float angle) {
-        this.angle = angle;
-        dirty = true;
-    }
-
-    @Override
-    public Matrix matrix() {
-        ...
-    }
-}
-```
-
-A rotation animation can now be implemented composing a mutable rotation:
-
-```java
-public class RotationAnimation implements Animation {
-    private final MutableRotation rot;
-
-    public RotationAnimation(Vector axis) {
-        this.rot = new MutableRotation(axis);
-    }
-
-    @Override
-    public void update(Animator animator) {
-        float angle = animator.position() * MathsUtil.TWO_PI;
-        rot.angle(angle);
-    }
-}
-```
+The implementation of the `matrix` method for the new types is covered below.
 
 ### Quaternions
 
@@ -1314,17 +1279,17 @@ public final class Quaternion implements Rotation {
 }
 ```
 
-A quaternion can be constructed using the following factory:
+A quaternion can be constructed from an axis-angle using the following factory:
 
 ```java
-public static Quaternion of(Vector axis, float angle) {
-    float half = angle * MathsUtil.HALF;
-    Vector vec = axis.multiply(MathsUtil.sin(half));
+public static Quaternion of(AxisAngle rot) {
+    float half = rot.angle() * MathsUtil.HALF;
+    Vector vec = rot.axis().multiply(MathsUtil.sin(half));
     return new Quaternion(MathsUtil.cos(half), vec.x, vec.y, vec.z);
 }
 ```
 
-And converted to an axis-angle in the inverse operation:
+And converted back to an axis-angle in the inverse operation:
 
 ```java
 @Override
@@ -1336,30 +1301,147 @@ public AxisAngle rotation() {
 }
 ```
 
-The `matrix` method of the mutable rotation can now be implemented in terms of a quaternion:
+The aim here is to use the existing code to construct a rotation matrix for the cardinal axes, but use a quaternion for the more general case of an arbitrary axis.  This is based on the following assumptions:
+
+* Constructing a rotation matrix for a cardinal axis is more efficient than generating it from a quaternion.
+
+* Many use-cases will rotate about a cardinal axis.
+
+* The existing matrix code disallows the case of an arbitrary axis forcing the application to decide which implementation to use (or requires an awkward test to differentiate between cardinal and arbitrary axes).
+
+Therefore a new vector implementation is introduced for cardinal axes which can then generate a rotation matrix.
+
+First we take the opportunity to introduce an intermediate type for a normalised vector:
 
 ```java
-public class MutableRotation extends AbstractRotation {
+public class NormalizedVector extends Vector {
+    /**
+     * @param len Vector length
+     * @return Whether the given vector length is normalised
+     */
+    protected static boolean isNormalized(float len) {
+        return MathsUtil.isEqual(1, len);
+    }
+
     @Override
-    public Matrix matrix() {
-        dirty = false;
+    public float magnitude() {
+        return 1;
+    }
+
+    @Override
+    public NormalizedVector normalize() {
+        return this;
+    }
+}
+```
+
+The `normalize` method of the vector class is refactored accordingly.
+
+Next the cardinal `Axis` is implemented and the existing constants are moved from the vector class:
+
+```java
+public abstract class Axis extends NormalizedVector {
+    public static final Axis X = ...
+    public static final Axis Y = ...
+    public static final Axis Z = ...
+    
+    /**
+     * Constructs the rotation matrix for this axis.
+     */
+    protected abstract void rotation(float sin, float cos, Matrix.Builder matrix);
+}
+```
+
+The existing matrix building code is moved to this new type:
+
+```java
+public Matrix rotation(float angle) {
+    var matrix = new Matrix.Builder().identity();
+    float sin = MathsUtil.sin(angle);
+    float cos = MathsUtil.cos(angle);
+    rotation(sin, cos, matrix);
+    return matrix.build();
+}
+```
+
+Which delegates to the specific implementation for each axis, for example:
+
+```java
+public static final Axis X = new Axis(new Vector(1, 0, 0)) {
+    @Override
+    protected void rotation(float sin, float cos, Builder matrix) {
+        matrix.set(1, 1, cos);
+        matrix.set(1, 2, -sin);
+        matrix.set(2, 1, sin);
+        matrix.set(2, 2, cos);
+    }
+};
+```
+
+Finally the `matrix` method in the axis-angle can now select the appropriate mechanism to build a rotation matrix based on type rather than the awkward switching logic used previously:
+
+```java
+public Matrix matrix() {
+    if(axis instanceof Axis cardinal) {
+        return cardinal.rotation(angle);
+    }
+    else {
         return Quaternion.of(this).matrix();
     }
 }
 ```
 
+Note that a quaternion also implements `Rotation` so an application now has the option of explicitly choosing an implementation or leaving the responsibility to the framework.
+
 ### Integration
+
+The final new type is an implementation for a mutable rotation:
+
+```java
+public class MutableRotation implements Rotation {
+    private final Vector axis;
+    private float angle;
+
+    public void angle(float angle) {
+        this.angle = angle;
+    }
+
+    @Override
+    public Matrix matrix() {
+        var rot = new AxisAngle(axis, angle);
+        return rot.matrix();
+    }
+}
+```
+
+Which is then adapted into a rotation animation:
+
+```java
+public class RotationAnimation implements Animation {
+    private final MutableRotation rot;
+
+    public RotationAnimation(Vector axis) {
+        this.rot = new MutableRotation(axis.normalize());
+    }
+
+    @Override
+    public void update(Animator animator) {
+        float angle = animator.position() * MathsUtil.TWO_PI;
+        rot.angle(angle);
+    }
+}
+```
+
+Note that the rotation axis is normalised in the constructor of the mutable rotation, otherwise the results will be interesting!
 
 In the cube demo the existing hand-crafted matrix code is replaced by a rotation animation:
 
 ```java
 @Bean
 static RotationAnimation rotation() {
-    return new RotationAnimation(new Vector(MathsUtil.HALF, 1, 0).normalize());
+    return new RotationAnimation(new Vector(MathsUtil.HALF, 1, 0));
 }
 ```
-
-Note that the rotation axis is normalised, otherwise the results will be interesting!
 
 The animation and timing logic is replaced by an animator:
 

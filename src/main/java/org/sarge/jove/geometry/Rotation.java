@@ -10,7 +10,7 @@ public interface Rotation extends Transform {
 	/**
 	 * @return This rotation as an axis-angle
 	 */
-	AxisAngle rotation();
+	AxisAngle toAxisAngle();
 
 	/**
 	 * Rotates the given vector by this rotation.
@@ -25,7 +25,7 @@ public interface Rotation extends Transform {
 	 */
 	record AxisAngle(Vector axis, float angle) implements Rotation {
 		@Override
-		public AxisAngle rotation() {
+		public AxisAngle toAxisAngle() {
 			return this;
 		}
 
@@ -35,7 +35,7 @@ public interface Rotation extends Transform {
 				return cardinal.rotation(angle);
 			}
 			else {
-				return Quaternion.of(axis, angle).matrix();
+				return Quaternion.of(this).matrix();
 			}
 		}
 
@@ -60,6 +60,15 @@ public interface Rotation extends Transform {
 			final Vector b = axis.cross(vec).multiply(MathsUtil.sin(angle));
 			final Vector c = axis.multiply((1 - cos) * axis.dot(vec));
 			return a.add(b).add(c);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof AxisAngle that) &&
+					this.axis.equals(that.axis()) &&
+					MathsUtil.isEqual(this.angle, that.angle());
 		}
 	}
 }

@@ -18,13 +18,12 @@ public final class Quaternion implements Rotation {
 
 	/**
 	 * Creates a quaternion from the given axis-angle rotation.
-	 * @param axis		Rotation axis
-	 * @param angle		Counter-clockwise angle (radians)
+	 * @param rot Axis-angle
 	 * @return New quaternion
 	 */
-	public static Quaternion of(Vector axis, float angle) {
-		final float half = angle * MathsUtil.HALF;
-		final Vector vec = axis.multiply(MathsUtil.sin(half));
+	public static Quaternion of(AxisAngle rot) {
+		final float half = rot.angle() * MathsUtil.HALF;
+		final Vector vec = rot.axis().multiply(MathsUtil.sin(half));
 		return new Quaternion(MathsUtil.cos(half), vec.x, vec.y, vec.z);
 	}
 
@@ -54,12 +53,8 @@ public final class Quaternion implements Rotation {
 		return new float[]{w, x, y, z};
 	}
 
-	/**
-	 * Converts this quaternion to an axis-angle rotation (assumes normalized).
-	 * @return Rotation
-	 */
 	@Override
-	public AxisAngle rotation() {
+	public AxisAngle toAxisAngle() {
 		final float scale = MathsUtil.inverseRoot(1 - w * w);
 		final float angle = 2 * MathsUtil.acos(w);
 		final Vector axis = new Vector(x, y, z).multiply(scale);

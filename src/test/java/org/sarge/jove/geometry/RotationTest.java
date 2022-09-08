@@ -22,7 +22,7 @@ class RotationTest {
 			assertEquals(Y, rot.axis());
 			assertEquals(PI, rot.angle());
 			assertNotNull(rot.matrix());
-			assertEquals(rot, rot.rotation());
+			assertSame(rot, rot.toAxisAngle());
 		}
 
 		@Test
@@ -40,10 +40,8 @@ class RotationTest {
 		}
 
 		@Test
-		void arbitrary() {
-			rot = new AxisAngle(new Vector(1, 2, 3), PI);
-			final Quaternion q = Quaternion.of(rot.axis(), PI);
-			assertEquals(q.matrix(), rot.matrix());
+		void matrix() {
+			assertEquals(Y.rotation(PI), rot.matrix());
 		}
 	}
 }
