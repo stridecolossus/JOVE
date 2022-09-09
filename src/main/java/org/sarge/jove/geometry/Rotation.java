@@ -1,5 +1,8 @@
 package org.sarge.jove.geometry;
 
+import java.util.Objects;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -23,7 +26,51 @@ public interface Rotation extends Transform {
 	 * An <i>axis-angle</i> is a simple fixed rotation about an axis.
 	 * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
 	 */
-	record AxisAngle(Vector axis, float angle) implements Rotation {
+	abstract class AxisAngle implements Rotation {
+		/**
+		 * Creates a fixed axis-angle rotation.
+		 * @param axis		Rotation axis
+		 * @param angle		Angle (radians)
+		 * @return New axis-angle
+		 */
+		public static AxisAngle of(Vector axis, float angle) {
+			return new AxisAngle(axis, angle) {
+				private final Matrix matrix = super.matrix();
+
+				@Override
+				public Matrix matrix() {
+					return matrix;
+				}
+			};
+		}
+
+		protected final Vector axis;
+		protected float angle;
+
+		/**
+		 * Constructor.
+		 * @param axis		Rotation axis
+		 * @param angle		Angle (radians)
+		 */
+		protected AxisAngle(Vector axis, float angle) {
+			this.axis = axis.normalize();
+			this.angle = angle;
+		}
+
+		/**
+		 * @return Rotation axis
+		 */
+		public Vector axis() {
+			return axis;
+		}
+
+		/**
+		 * @return Rotation angle (radians)
+		 */
+		public float angle() {
+			return angle;
+		}
+
 		@Override
 		public AxisAngle toAxisAngle() {
 			return this;
@@ -35,7 +82,8 @@ public interface Rotation extends Transform {
 				return cardinal.rotation(angle);
 			}
 			else {
-				return Quaternion.of(this).matrix();
+				final AxisAngle rot = toAxisAngle();
+				return Quaternion.of(rot).matrix();
 			}
 		}
 
@@ -63,12 +111,22 @@ public interface Rotation extends Transform {
 		}
 
 		@Override
+		public int hashCode() {
+			return Objects.hash(axis, angle);
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			return
 					(obj == this) ||
 					(obj instanceof AxisAngle that) &&
 					this.axis.equals(that.axis()) &&
 					MathsUtil.isEqual(this.angle, that.angle());
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this).append(axis).append(angle).build();
 		}
 	}
 }

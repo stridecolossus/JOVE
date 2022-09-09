@@ -54,7 +54,7 @@ public class ConeVectorFactory implements VectorFactory {
 	 */
 	protected Vector rotate(Vector axis) {
 		final float angle = radius.interpolate(random.next());
-		final var rot = new AxisAngle(axis, angle);
+		final var rot = AxisAngle.of(axis, angle);
 		return rot.rotate(normal);
 	}
 

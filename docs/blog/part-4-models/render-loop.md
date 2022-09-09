@@ -204,10 +204,8 @@ Next a new listener is introduced for frame completion events:
 public interface FrameListener {
     /**
      * Notifies a completed frame.
-     * @param start     Start time
-     * @param end       Completion time
      */
-    void frame(Instant start, Instant end);
+    void frame();
 }
 ```
 
@@ -289,12 +287,14 @@ public class FrameCounter implements FrameListener {
     private int fps;
 
     @Override
-    public void frame(Instant start, Instant end) {
-        ++count;
-        if(start.isAfter(next)) {
-            fps = count;
+    public void frame() {
+        Instant now = Instant.now();
+        if(now.isAfter(next)) {
             count = 1;
-            next = start.plusSeconds(1);
+            next = now.plusSeconds(1);
+        }
+        else {
+            ++count;
         }
     }
 }
@@ -363,8 +363,9 @@ Finally the animation logic is factored out into a frame listener:
 public static FrameListener animation(Matrix projection, Matrix view, ResourceBuffer uniform) {
     long period = 2500;
     ByteBuffer bb = uniform.buffer();
-    return (time, elapsed) -> {
+    return () -> {
         // Build rotation matrix
+        long time = System.currentTimeMillis();
         float angle = (time % period) * MathsUtil.TWO_PI / period;
         Matrix h = Rotation.matrix(Vector.Y, angle);
         Matrix v = Rotation.matrix(Vector.X, MathsUtil.toRadians(30));
@@ -1169,12 +1170,12 @@ public void update() {
 
 Next the elapsed duration since the previous frame is calculated:
 
-```
+```java
 frame.end();
 time += frame.elapsed().toMillis() * speed;
 ```
 
-At the end of the duration the current time is quantised or the animation stops if it not repeating:
+At the end of the duration the current time is quantised or the animation stops if it is not repeating:
 
 ```java
 if(time > duration) {
@@ -1231,16 +1232,24 @@ public interface Rotation extends Transform {
     /**
      * @return This rotation as an axis-angle
      */
-    AxisAngle rotation();
+    AxisAngle toAxisAngle();
 }
 ```
 
-Where an axis-angle is a simple tuple type:
+Where an axis-angle is a template implementation:
 
 ```java
-record AxisAngle(Vector axis, float angle) implements Rotation {
+abstract class AxisAngle implements Rotation {
+    protected final Vector axis;
+    protected float angle;
+
+    protected AxisAngle(Vector axis, float angle) {
+        this.axis = axis.normalize();
+        this.angle = angle;
+    }
+
     @Override
-    public AxisAngle rotation() {
+    public AxisAngle toAxisAngle() {
         return this;
     }
 
@@ -1251,8 +1260,9 @@ record AxisAngle(Vector axis, float angle) implements Rotation {
 }
 ```
 
+Note that the rotation axis is normalised in the constructor of the mutable rotation, otherwise the results will be interesting!
 
-The implementation of the `matrix` method for the new types is covered below.
+The implementation of the `matrix` method is covered below.
 
 ### Quaternions
 
@@ -1293,13 +1303,30 @@ And converted back to an axis-angle in the inverse operation:
 
 ```java
 @Override
-public AxisAngle rotation() {
+public AxisAngle toAxisAngle() {
     float scale = MathsUtil.inverseRoot(1 - w * w);
     float angle = 2 * MathsUtil.acos(w);
     Vector axis = new Vector(x, y, z).multiply(scale);
-    return new AxisAngle(axis, angle);
+    return AxisAngle.of(axis, angle);
 }
 ```
+
+Where a fixed axis-angle is constructed by a factory method which caches the rotation matrix:
+
+```java
+public static AxisAngle of(Vector axis, float angle) {
+    return new AxisAngle(axis, angle) {
+        private final Matrix matrix = super.matrix();
+
+        @Override
+        public Matrix matrix() {
+            return matrix;
+        }
+    };
+}
+```
+
+### Rotation Matrix
 
 The aim here is to use the existing code to construct a rotation matrix for the cardinal axes, but use a quaternion for the more general case of an arbitrary axis.  This is based on the following assumptions:
 
@@ -1378,7 +1405,7 @@ public static final Axis X = new Axis(new Vector(1, 0, 0)) {
 };
 ```
 
-Finally the `matrix` method in the axis-angle can now select the appropriate mechanism to build a rotation matrix based on type rather than the awkward switching logic used previously:
+Finally the `matrix` method in the axis-angle class can now select the appropriate mechanism to build a rotation matrix based on type rather than the awkward switching logic used previously:
 
 ```java
 public Matrix matrix() {
@@ -1393,23 +1420,29 @@ public Matrix matrix() {
 
 Note that a quaternion also implements `Rotation` so an application now has the option of explicitly choosing an implementation or leaving the responsibility to the framework.
 
-### Integration
-
 The final new type is an implementation for a mutable rotation:
 
 ```java
-public class MutableRotation implements Rotation {
-    private final Vector axis;
-    private float angle;
+public class MutableRotation extends AxisAngle {
+    private boolean dirty = true;
+
+    public MutableRotation(Vector axis) {
+        super(axis, 0);
+    }
 
     public void angle(float angle) {
         this.angle = angle;
     }
 
     @Override
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    @Override
     public Matrix matrix() {
-        var rot = new AxisAngle(axis, angle);
-        return rot.matrix();
+        dirty = false;
+        return super.matrix();
     }
 }
 ```
@@ -1432,7 +1465,7 @@ public class RotationAnimation implements Animation {
 }
 ```
 
-Note that the rotation axis is normalised in the constructor of the mutable rotation, otherwise the results will be interesting!
+### Integration
 
 In the cube demo the existing hand-crafted matrix code is replaced by a rotation animation:
 
@@ -1470,7 +1503,7 @@ And finally the code to update the uniform buffer is refactored accordingly:
 ```java
 public static FrameListener update(ResourceBuffer uniform, Matrix projection, Matrix view, RotationAnimation rot) {
     ByteBuffer bb = uniform.buffer();
-    return (time, elapsed) -> {
+    return () -> {
         Matrix model = rot.rotation().matrix();
         Matrix matrix = projection.multiply(view).multiply(model);
         matrix.buffer(bb);

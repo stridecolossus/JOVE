@@ -110,7 +110,7 @@ The _particle system_ is a controller implemented as an animation:
 ```java
 public class ParticleSystem implements Animation {
     private PositionFactory pos = PositionFactory.ORIGIN;
-    private VectorFactory vec = VectorFactory.of(Vector.Y);
+    private VectorFactory vec = VectorFactory.of(Axis.Y);
     private final List<Particle> particles = new ArrayList<>();
 }
 ```
@@ -401,10 +401,10 @@ Where `cardinal` selects an axis corresponding to the _minimum component_ of the
 ```java
 private static Vector cardinal(Vector normal) {
     if(normal.x < normal.y) {
-        return normal.x < normal.z ? Vector.X : Vector.Z;
+        return normal.x < normal.z ? Axis.X : Axis.Z;
     }
     else {
-        return normal.y < normal.z ? Vector.Y : Vector.Z;
+        return normal.y < normal.z ? Axis.Y : Axis.Z;
     }
 }
 ```
@@ -498,8 +498,8 @@ private ParticleSystem system() {
     var sys = new ParticleSystem();
     sys.policy(new IncrementGenerationPolicy(10, cfg.getMax()));
     sys.lifetime(5000L);
-    sys.vector(new ConeVectorFactory(Vector.Y, 1, new Randomiser()));
-    sys.add(Influence.of(Vector.Y.invert()));
+    sys.vector(new ConeVectorFactory(Axis.Y, 1, new Randomiser()));
+    sys.add(Influence.of(Axis.Y.invert()));
     return sys;
 }
 ```
@@ -701,8 +701,8 @@ Finally a plane can be constructed from a triangle of points lying in the plane:
 
 ```java
 public static Plane of(Point a, Point b, Point c) {
-    Vector u = Vector.between(a, c);
-    Vector v = Vector.between(b, c);
+    Vector u = Axis.between(a, c);
+    Vector v = Axis.between(b, c);
     Vector normal = u.cross(v).normalize();
     return of(normal, a);
 }
@@ -1097,7 +1097,7 @@ Particles can now be randomly generated within this volume:
 ```java
 static PositionFactory box(Bounds bounds, Randomiser randomiser) {
     Point min = bounds.min();
-    Vector range = Vector.between(min, bounds.max());
+    Vector range = Axis.between(min, bounds.max());
     return () -> {
         Vector vec = randomiser.vector().multiply(range);
         return new Point(vec).add(min);

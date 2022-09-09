@@ -226,8 +226,8 @@ This prevents an active listener from being garbage collected and de-registered 
 An _axis_ is an event source with a companion class for the associated events:
 
 ```java
-public interface Axis extends Source<AxisEvent> {
-    record AxisEvent(Axis axis, float value) implements Event {
+public interface AxisControl extends Source<AxisEvent> {
+    record AxisEvent(AxisControl axis, float value) implements Event {
         @Override
         public Object type() {
             return axis;
@@ -247,7 +247,7 @@ public class MouseDevice extends DesktopDevice {
         return Set.of(wheel);
     }
 
-    public Axis wheel() {
+    public AxisControl wheel() {
         return wheel;
     }
 }
@@ -256,7 +256,7 @@ public class MouseDevice extends DesktopDevice {
 The mouse wheel is a GLFW axis event source:
 
 ```java
-private class MouseWheel extends DesktopSource<MouseListener> implements Axis {
+private class MouseWheel extends DesktopSource<MouseListener> implements AxisControl {
     @Override
     protected MouseListener listener(Consumer<Event> handler) {
         return (ptr, x, y) -> {
@@ -1214,8 +1214,8 @@ Finally the matrix bean is modified to apply the local rotation to the chalet mo
 ```java
 @Bean
 public FrameListener matrix(ResourceBuffer uniform) {
-    Matrix x = Rotation.matrix(Vector.X, MathsUtil.toRadians(90));
-    Matrix y = Rotation.matrix(Vector.Y, MathsUtil.toRadians(-120));
+    Matrix x = Rotation.matrix(Axis.X, MathsUtil.toRadians(90));
+    Matrix y = Rotation.matrix(Axis.Y, MathsUtil.toRadians(-120));
     Matrix model = y.multiply(x);
 
     return (start, end) -> {

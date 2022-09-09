@@ -24,7 +24,7 @@ public class QuaternionTest {
 
 	@Test
 	void of() {
-		assertEquals(quaternion, Quaternion.of(new AxisAngle(Axis.Y, PI)));
+		assertEquals(quaternion, Quaternion.of(AxisAngle.of(Axis.Y, PI)));
 	}
 
 	@Test
@@ -39,7 +39,7 @@ public class QuaternionTest {
 
 	@Test
 	void matrix() {
-		final Rotation rot = new AxisAngle(Axis.Y, PI);
+		final Rotation rot = AxisAngle.of(Axis.Y, PI);
 		assertEquals(rot.matrix(), quaternion.matrix());
 	}
 
@@ -56,7 +56,7 @@ public class QuaternionTest {
 
 	@Test
 	void rotation() {
-		assertEquals(new AxisAngle(Axis.Y, PI), quaternion.toAxisAngle());
+		assertEquals(AxisAngle.of(Axis.Y, PI), quaternion.toAxisAngle());
 	}
 
 	@Test

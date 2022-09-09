@@ -34,8 +34,8 @@ The camera is a model class representing the position and orientation of the vie
 ```java
 public class Camera {
     private Point pos = Point.ORIGIN;
-    private Vector dir = Vector.Z;
-    private Vector up = Vector.Y;
+    private Vector dir = Axis.Z;
+    private Vector up = Axis.Y;
 }
 ```
 
@@ -62,7 +62,7 @@ And a convenience method points the camera at a given target:
 ```java
 public void look(Point pt) {
     if(pos.equals(pt)) throw new IllegalArgumentException();
-    Vector look = Vector.between(pt, pos).normalize();
+    Vector look = Axis.between(pt, pos).normalize();
     direction(look);
 }
 ```
@@ -85,7 +85,7 @@ Next the following transient members are added to the camera class to support th
 ```java
 public class Camera {
     ...
-    private Vector right = Vector.X;
+    private Vector right = Axis.X;
     private Matrix matrix;
     private boolean dirty = true;
 }
@@ -350,8 +350,8 @@ Finally the `update` method is refactored as follows:
 @Bean
 public FrameListener update(ResourceBuffer uniform) {
     return (start, end) -> {
-        Matrix tilt = Rotation.of(Vector.X, MathsUtil.toRadians(-90)).matrix();
-        Matrix rot = Rotation.of(Vector.Y, MathsUtil.toRadians(120)).matrix();
+        Matrix tilt = Rotation.of(Axis.X, MathsUtil.toRadians(-90)).matrix();
+        Matrix rot = Rotation.of(Axis.Y, MathsUtil.toRadians(120)).matrix();
         Matrix model = rot.multiply(tilt);
         Matrix matrix = projection.multiply(cam.matrix()).multiply(model);
         matrix.buffer(uniform.buffer());

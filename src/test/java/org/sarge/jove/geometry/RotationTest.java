@@ -14,7 +14,7 @@ class RotationTest {
 
 		@BeforeEach
 		void before() {
-			rot = new AxisAngle(Y, PI);
+			rot = AxisAngle.of(Y, PI);
 		}
 
 		@Test
@@ -28,9 +28,9 @@ class RotationTest {
 		@Test
 		void equals() {
 			assertEquals(rot, rot);
-			assertEquals(rot, new AxisAngle(Y, PI));
+			assertEquals(rot, AxisAngle.of(Y, PI));
 			assertNotEquals(rot, null);
-			assertNotEquals(rot, new AxisAngle(Y, 0));
+			assertNotEquals(rot, AxisAngle.of(Y, 0));
 		}
 
 		@Test
