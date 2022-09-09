@@ -29,7 +29,7 @@ public class ReflectionCollision implements Collision {
 
 	@Override
 	public void collide(Particle p, Intersection intersection) {
-		final Point pt = Intersection.point(p, intersection);
+		final Point pt = intersection.nearest(p);
 		final Vector normal = intersection.normal(pt);
 		p.reflect(pt, normal);
 		p.velocity(absorb);

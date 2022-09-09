@@ -18,10 +18,7 @@ public interface Volume extends Intersected {
 	 * Determines whether this volume intersects the given volume.
 	 * <p>
 	 * In general a bounding volume intersection is assumed to ultimately degenerate to a test against a sphere or a {@link Bounds}.
-	 * <br>
 	 * Implementations should perform class-specific intersection tests or delegate to the supplied volume.
-	 * <br>
-	 * Note that this method throws an exception by default.
 	 * <p>
 	 * Example implementation:
 	 * <pre>
@@ -36,6 +33,9 @@ public interface Volume extends Intersected {
 	 *     }
 	 * }
 	 * </pre>
+	 * <p>
+	 * Note that this method throws an exception by default.
+	 * <p>
 	 * @param vol Volume
 	 * @return Whether the volumes intersect
 	 * @throws UnsupportedOperationException by default

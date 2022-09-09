@@ -14,7 +14,7 @@ import org.sarge.lib.util.Check;
  * <ul>
  * <li>Matrices are constrained to be <i>square</i>, i.e. same width and height</li>
  * <li>The <i>order</i> specifies the dimensions of the matrix</li>
- * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> (the Vulkan default)</li>
+ * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> as expected by Vulkan</li>
  * </ul>
  * <p>
  * An order 4 matrix with the following structure is used for view and perspective transformation:
@@ -34,7 +34,6 @@ import org.sarge.lib.util.Check;
  * </ul>
  * Note that both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).
  * <p>
- * @see Rotation
  * @author Sarge
  */
 public final class Matrix implements Transform, Bufferable {

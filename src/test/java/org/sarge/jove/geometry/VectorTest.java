@@ -62,25 +62,13 @@ class VectorTest {
 	}
 
 	@Test
-	void divisor() {
-		assertEquals(new Vector(1, 1 / 2f, 1 / 3f), vec.divisor());
-	}
-
-	@Test
-	void divisorZero() {
-		assertEquals(X, X.divisor());
-	}
-
-	@Test
 	void normalize() {
 		final float f = 1 / (float) Math.sqrt(vec.magnitude());
-		assertEquals(new Vector(1 * f, 2 * f, 3 * f), vec.normalize());
-	}
-
-	@Test
-	void normalized() {
-		final NormalizedVector result = vec.normalize();
-		assertSame(result, result.normalize());
+		final Vector expected = new Vector(1 * f, 2 * f, 3 * f);
+		final Vector normalized = vec.normalize();
+		assertEquals(expected, normalized);
+		assertEquals(1, normalized.magnitude());
+		assertSame(normalized, normalized.normalize());
 	}
 
 	@Test

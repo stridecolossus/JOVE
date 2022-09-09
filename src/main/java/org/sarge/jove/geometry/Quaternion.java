@@ -7,7 +7,6 @@ import org.sarge.jove.util.MathsUtil;
 /**
  * A <i>quaternion</i> is a more compact and efficient representation of a rotation about an arbitrary axis.
  * @see <a href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">Wikipedia</a>
- * @see Rotation
  * @author Sarge
  */
 public final class Quaternion implements Rotation {

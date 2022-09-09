@@ -4,14 +4,14 @@ import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * An <i>axis</i> is a vector representing one of the cardinal axes.
+ * An <i>axis</i> is a vector representing one of the <i>cardinal</i> axes.
  * @author Sarge
  */
 public abstract class Axis extends NormalizedVector {
 	/**
-	 * X-axis vector.
+	 * Horizontal or <i>right</i> axis.
 	 */
-	public static final Axis X = new Axis(axis(0)) {
+	public static final Axis X = new Axis(0) {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
 			matrix.set(1, 1, cos);
@@ -22,9 +22,9 @@ public abstract class Axis extends NormalizedVector {
 	};
 
 	/**
-	 * Y-axis vector (note Vulkan positive Y axis is <b>down</b>).
+	 * Vulkan positive Y axis is <b>down</b>.
 	 */
-	public static final Axis Y = new Axis(axis(1)) {
+	public static final Axis Y = new Axis(1) {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
 			matrix.set(0, 0, cos);
@@ -35,9 +35,9 @@ public abstract class Axis extends NormalizedVector {
 	};
 
 	/**
-	 * Z-axis vector (negative Z is <i>into</i> the screen).
+	 * Negative Z is <b>into</b> the screen.
 	 */
-	public static final Axis Z = new Axis(axis(2)) {
+	public static final Axis Z = new Axis(2) {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
 			matrix.set(0, 0, cos);
@@ -46,6 +46,15 @@ public abstract class Axis extends NormalizedVector {
 			matrix.set(1, 1, cos);
 		}
 	};
+
+	private final Vector inv = super.invert();
+
+	/**
+	 * Constructor.
+	 */
+	private Axis(int index) {
+		super(axis(index));
+	}
 
 	/**
 	 * Builds the vector for an axis.
@@ -58,24 +67,9 @@ public abstract class Axis extends NormalizedVector {
 		return new Vector(axis);
 	}
 
-	private final Vector inv;
-
-	/**
-	 * Constructor.
-	 */
-	private Axis(Vector axis) {
-		super(axis);
-		inv = axis.invert();
-	}
-
 	@Override
 	public Vector invert() {
 		return inv;
-	}
-
-	@Override
-	public Vector divisor() {
-		return this;
 	}
 
 	/**
@@ -98,7 +92,7 @@ public abstract class Axis extends NormalizedVector {
 
 	/**
 	 * Selects the cardinal axis corresponding to the <i>minimal component</i> of the given vector.
-	 * For example the vector {@code 1, 2, 3} corresponds to the X axis.
+	 * For example the vector {@code 0, 1, 2} corresponds to the X axis.
 	 * @return Cardinal axis
 	 */
 	public static Vector minimal(Vector vec) {

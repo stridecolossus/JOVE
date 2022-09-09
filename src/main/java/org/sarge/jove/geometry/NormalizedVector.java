@@ -30,7 +30,7 @@ public class NormalizedVector extends Vector {
 	}
 
 	@Override
-	public NormalizedVector normalize() {
+	public Vector normalize() {
 		return this;
 	}
 }

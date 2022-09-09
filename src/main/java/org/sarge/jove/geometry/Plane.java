@@ -119,7 +119,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	}
 
 	/**
-	 * TODO
+	 * Determines the intersections of the given ray in the specified half-space of this plane.
 	 * @param ray Ray
 	 * @param pos Whether rays originating in the {@link HalfSpace#POSITIVE} half-space are subject to the intersection test
 	 * @return Intersections

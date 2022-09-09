@@ -44,7 +44,8 @@ public interface Rotation extends Transform {
 			};
 		}
 
-		protected final Vector axis;
+		private final Vector axis;
+
 		protected float angle;
 
 		/**

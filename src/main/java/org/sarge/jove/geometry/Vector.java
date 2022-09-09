@@ -14,10 +14,7 @@ public class Vector extends Tuple {
 	 * @return Vector between the given points
 	 */
 	public static Vector between(Point start, Point end) {
-		final float dx = end.x - start.x;
-		final float dy = end.y - start.y;
-		final float dz = end.z - start.z;
-		return new Vector(dx, dy, dz);
+		return new Vector(end.subtract(start));
 	}
 
 	/**
@@ -59,26 +56,6 @@ public class Vector extends Tuple {
 	}
 
 	/**
-	 * Converts this vector to a <i>divisor</i>, i.e. one over each component.
-	 * @return Divisor
-	 */
-	public Vector divisor() {
-		final float dx = divisor(x);
-		final float dy = divisor(y);
-		final float dz = divisor(z);
-		return new Vector(dx, dy, dz);
-	}
-
-	private static float divisor(float value) {
-		if(MathsUtil.isZero(value)) {
-			return 0;
-		}
-		else {
-			return 1 / value;
-		}
-	}
-
-	/**
 	 * Adds the given vector to this vector.
 	 * @param vec Vector to add
 	 * @return Added vector
@@ -107,9 +84,8 @@ public class Vector extends Tuple {
 
 	/**
 	 * @return Normalized (or unit) vector
-	 * @see NormalizedVector
 	 */
-	public NormalizedVector normalize() {
+	public Vector normalize() {
 		final float len = magnitude();
 		if(NormalizedVector.isNormalized(len)) {
 			return new NormalizedVector(this);

@@ -138,7 +138,7 @@ class BoundingBoxTest {
 			final Intersection intersection = box.intersection(ray);
 			final Point corner = new Point(1, 4, 0);
 			assertEquals(false, intersection.isEmpty());
-			assertEquals(corner, Intersection.point(ray, intersection));
+			assertEquals(corner, intersection.nearest(ray));
 			assertNotNull(intersection.normal(corner), "Expected undefined normal");
 		}
 

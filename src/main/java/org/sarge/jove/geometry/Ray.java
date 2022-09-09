@@ -83,8 +83,9 @@ public interface Ray {
 	/**
 	 * An <i>intersection</i> defines the points and normals where this ray intersects an {@link Intersected} surface.
 	 * <p>
-	 * Generally implementations should return an array of intersection {@link #distances()} ordered nearest to the <i>surface</i> but this only assumed.
-	 * The {@link #normal(Point)} method can be overridden for use-cases that require a surface normal.
+	 * The returned array of intersection {@link #distances()} are generally assumed to be ordered nearest to the surface.
+	 * <p>
+	 * The {@link #normal(Point)} method should be overridden for use-cases that require a surface normal.
 	 * <p>
 	 * Usage:
 	 * <pre>
@@ -94,13 +95,12 @@ public interface Ray {
 	 * // Check for no intersections
 	 * if(intersection.isEmpty()) { ... }
 	 *
-	 * // Determine an intersection point
-	 * List distances = intersection.distances();
-	 * float d = distances.get(0);
-	 * Point pt = ray.point(d);
+	 * // Determine nearest intersection point
+	 * float[] distances = intersection.distances();
+	 * Point pt = ray.point(distances[0]);
 	 *
 	 * // Or arbitrarily select the first intersection point
-	 * Point pt = intersection.point(ray);
+	 * Point pt = Intersection.point(ray, intersection);
 	 *
 	 * // Calculate the surface normal at this intersection point
 	 * Vector normal = intersection.normal(pt);
@@ -133,6 +133,19 @@ public interface Ray {
 		}
 
 		/**
+		 * Calculates the <i>nearest</i> intersection point to the surface.
+		 * @param ray Ray
+		 * @throws UnsupportedOperationException if the intersection is {@link Intersected#UNDEFINED}
+		 * @throws IllegalStateException if there are no intersections
+		 * @see Ray#point(float)
+		 */
+		default Point nearest(Ray ray) {
+			final float[] distances = distances();
+			if(distances.length == 0) throw new IllegalStateException("No intersections: " + this);
+			return ray.point(distances[0]);
+		}
+
+		/**
 		 * Creates an intersection.
 		 * @param d				Distance from ray origin
 		 * @param normal		Surface normal
@@ -150,19 +163,6 @@ public interface Ray {
 					return normal;
 				}
 			};
-		}
-
-		/**
-		 * Helper - Arbitrarily determines the <i>first</i> intersection point on the given ray.
-		 * @param ray Ray
-		 * @return Intersection point
-		 * @throws UnsupportedOperationException if the intersection is undefined
-		 * @throws ArrayIndexOutOfBoundsException if there are no intersections
-		 * @see Ray#point(float)
-		 */
-		static Point point(Ray ray, Intersection intersection) {
-			final float[] distances = intersection.distances();
-			return ray.point(distances[0]);
 		}
 	}
 }

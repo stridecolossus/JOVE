@@ -45,18 +45,12 @@ public class BoundingBox implements Volume {
 
 	@Override
 	public boolean intersects(Plane plane) {
-		final Vector normal = plane.normal();
-		final Point neg = bounds.negative(normal);
-		if(plane.halfspace(neg) == HalfSpace.NEGATIVE) {
-			return false;
-		}
+		final Vector n = plane.normal();
+		return intersects(plane, bounds.negative(n)) || intersects(plane, bounds.positive(n));
+	}
 
-		final Point pos = bounds.positive(normal);
-		if(plane.halfspace(pos) == HalfSpace.NEGATIVE) {
-			return false;
-		}
-
-		return true;
+	private static boolean intersects(Plane plane, Point pt) {
+		return plane.halfspace(pt) != HalfSpace.NEGATIVE;
 	}
 
 	/**
