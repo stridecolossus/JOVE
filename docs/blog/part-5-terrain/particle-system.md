@@ -201,12 +201,10 @@ To render the particles the following model implementation is essentially an ada
 
 ```java
 public class ParticleModel extends AbstractModel {
-    private static final CompoundLayout LAYOUT = CompoundLayout.of(Point.LAYOUT);
-
     private final ParticleSystem sys;
 
     public ParticleModel(ParticleSystem sys) {
-        super(Primitive.POINTS, LAYOUT);
+        super(Primitive.POINTS, CompoundLayout.of(Point.LAYOUT));
         this.sys = notNull(sys);
     }
 
@@ -446,19 +444,7 @@ If we ever get round to performance analysis we may decide to replace this code 
 
 ### Integration
 
-The demo application for the _sparks_ particle system is comprised of the following components:
-
-* A uniform buffer containing _two_ slots for the model-view and projection matrices.
-
-TODO - push constants from previous demo? did that have 3 matrices?
-
-* A fixed camera.
-
-* A pipeline with vertex and fragment shaders (the geometry shader is omitted for the moment).
-
-* And the usual presentation, rendering commands, and frame processor.
-
-A new configuration class is started for the particle system:
+The application for the _sparks_ demo is cloned from the previous project and a new configuration class is added to initialise the particle system:
 
 ```java
 @Configuration
@@ -480,22 +466,21 @@ public class ParticleSystemConfiguration {
 }
 ```
 
-The various elements of the particle system are instantiated in the constructor:
+The particle system, model and animator are instantiated in the constructor:
 
 ```java
-public ParticleSystemConfiguration(ApplicationConfiguration cfg) {
-    this.cfg = cfg;
-    this.sys = system();
+public ParticleSystemConfiguration() {
+    this.sys = system(cfg);
     this.animator = new Animator(sys);
     this.model = new ParticleModel(sys);
 }
 ```
 
-The particle system itself is initialised as follows:
+The particle system periodically emits a relatively small number of particles per second in a randomised cone:
 
 ```java
-private ParticleSystem system() {
-    var sys = new ParticleSystem();
+private static ParticleSystem system(ApplicationConfiguration cfg) {
+    final var sys = new ParticleSystem();
     sys.policy(new IncrementGenerationPolicy(10, cfg.getMax()));
     sys.lifetime(5000L);
     sys.vector(new ConeVectorFactory(Axis.Y, 1, new Randomiser()));
@@ -504,19 +489,11 @@ private ParticleSystem system() {
 }
 ```
 
-Here the sparks demo is configured by:
-
-* Periodically emitting a relatively small number of particles per second.
-
-* Particles are fired upwards in a randomised cone.
-
-* An influence that pulls particles downwards simulating gravity.
-
 Next the vertex buffer for the particles is created:
 
 ```java
 @Bean
-public VertexBuffer vbo(LogicalDevice dev) {
+public VertexBuffer vbo(LogicalDevice dev, ApplicationConfiguration cfg) {
     var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
         .usage(VkBufferUsageFlag.VERTEX_BUFFER)
         .required(VkMemoryProperty.HOST_VISIBLE)
@@ -553,33 +530,52 @@ And finally the animation is started:
 void start() {
     Player player = new Player();
     player.add(animator);
-    player.state(State.PLAY);
+    player.play();
 }
 ```
 
-TODO - dynamic draw command
+The only other modification is in the render configuration where the draw command is created on __each__ frame since the model is now dynamic:
+
+```java
+TODO
+```
+
+The vertex shader outputs each particle as a point:
 
 ```glsl
 #version 450
 
-layout(location=0) in vec3 pos;
-
-layout(binding=0) uniform UniformBuffer {
+layout(push_constant) uniform Matrix {
     mat4 modelview;
-    mat4 projection;
 };
 
+layout(location=0) in vec3 pos;
+
 void main() {
-    gl_PointSize = 10;
-    gl_Position = projection * modelview * vec4(pos, 1.0);
+    gl_PointSize = 1;
+    gl_Position = modelview * vec4(pos, 1.0);
 }
 ```
 
-The reason for separate matrices in the uniform buffer will become relevant later.
+The geometry shader (unchanged from the previous demo) generates a billboard quad for each point.
 
-For the moment the fragment shader outputs a flat yellow colour.
+For the moment the fragment shader ignores the generated quad and outputs a flat yellow colour:
 
-TODO - pic
+```glsl
+#version 450
+
+layout(location=0) in vec2 coords;
+
+layout(location=0) out vec4 col;
+
+void main() {
+    col = vec4(1, 1, 0, 1);
+}
+```
+
+If all goes well we should see a fountain of yellow quads when running the particle system:
+
+![Basic particle system](particle.quads.png)
 
 ---
 
@@ -689,7 +685,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 }
 ```
 
-In addition to the canonical constructor a plane can be specified by the normal and a point on the plane:
+In addition to the compact constructor a plane can be specified by the normal and a point on the plane:
 
 ```java
 public static Plane of(Vector normal, Point pt) {
@@ -703,7 +699,7 @@ Finally a plane can be constructed from a triangle of points lying in the plane:
 public static Plane of(Point a, Point b, Point c) {
     Vector u = Axis.between(a, c);
     Vector v = Axis.between(b, c);
-    Vector normal = u.cross(v).normalize();
+    Vector normal = u.cross(v);
     return of(normal, a);
 }
 ```
@@ -795,13 +791,33 @@ public interface Collision {
      * Stops a collided particle at the given intersection.
      */
     Collision STOP = (p, intersection) -> {
-        Point pt = Intersection.point(p, intersection);
+        Point pt = intersection.nearest(p);
         p.stop(pt);
     };
 }
 ```
 
-Where a destroyed particle is signalled by a `null` position:
+Where `nearest` selects the _first_ intersection point:
+
+```java
+default Point nearest(Ray ray) {
+    float[] distances = distances();
+    if(distances.length == 0) throw new IllegalStateException();
+    return ray.point(distances[0]);
+}
+```
+
+And the `point` method calculates a point along the ray, i.e. solves the line equation:
+
+```java
+default Point point(float dist) {
+    Point origin = this.origin();
+    Vector dir = this.direction();
+    return origin.add(dir.multiply(dist));
+}
+```
+
+A destroyed particle is signalled by a `null` position:
 
 ```java
 public boolean isAlive() {
@@ -891,17 +907,29 @@ Intersection UNDEFINED = new Intersection() {
 
 ### Reflection
 
-The reflection case is slightly more involved, the particle is reflected about the first (arbitrarily selected) intersection:
+The slightly more involved reflection case is factored out to a new collision implementation:
 
 ```java
-Collision REFLECT = (p, intersection) -> {
-    Point pt = Intersection.point(p, intersection);
-    Vector normal = intersection.normal(pt);
-    p.reflect(pt, normal);
-};
+public class ReflectionCollision implements Collision {
+    private final float absorb;
+}
 ```
 
-Which delegates to the following new particle mutator:
+Where `absorb` is an optional absorption factor applied on a collision, e.g. to _dampen_ the velocity in the sparks demo.
+
+The particle is reflected about the first intersection point and the absorption factor is applied to the reflected direction:
+
+```java
+@Override
+public void collide(Particle p, Intersection intersection) {
+    Point pt = intersection.nearest(p);
+    Vector normal = intersection.normal(pt);
+    p.reflect(pt, normal);
+    p.velocity(absorb);
+}
+```
+
+This method delegates to a new particle mutator:
 
 ```java
 public void reflect(Point pos, Vector normal) {
@@ -914,13 +942,13 @@ Which in turn delegates to a new method on the vector class to reflect about a g
 
 ```java
 public Vector reflect(Vector normal) {
-    float f = -2f * dot(normal);
-    return normal.multiply(f).add(this);
+    Vector n = normal.normalize();
+    float f = -2f * dot(n);
+    return n.multiply(f).add(this);
 }
 ```
 
-Note that as things stand this approach simply sets the particle at the intersection point and reflects the movement vector.
-This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
+Note that as things stand this approach simply sets the particle at the intersection point and reflects the movement vector.  This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
 
 There is a further complication here: if a reflecting surface is defined in terms of a plane then __all__ rays that cross that plane are considered as intersecting.  What is required is an intersection test that only considers rays in the negative half-space.  The `negative` adapter and the default ray-plane intersection test could be composed together but this means the distance logic is essentially being calculated twice which feels wrong.  Therefore the existing intersection test is modified to optionally take into account the half-space:
 
@@ -957,7 +985,7 @@ public Intersection intersection(Ray ray) {
 }
 ```
 
-We can now define a further adapter that only considers rays in the negative half-space:
+A further adapter can now be defined that only considers rays in the negative half-space:
 
 ```java
 public Intersected behind() {
@@ -965,27 +993,34 @@ public Intersected behind() {
 }
 ```
 
-Which is what will be used in the demo application to reflect particles at the collision surface.
+The demo is modified by the introduction of an influence to simulate gravity and a collision surface representing the ground:
 
-### Integration
+```java
+private static ParticleSystem system(ApplicationConfiguration cfg) {
+    ...
+    sys.add(Influence.of(Axis.Y.invert()));
+    sys.add(new Plane(Axis.Y, 0).behind(), Collision.STOP);
+    return sys;
+}
+```
 
+The particles should now stick to the ground:
 
+![Particle system collisions](particle.ground.png)
 
-* Definition of a collision surface simulating the 'ground' that reflects particles.
-colour fade
+Finally the collision surface is modified to reflect particles with a dampening absorption factor on each 'bounce':
 
-
-TODO - multiple scenarios ~ Spring profile
-
-significantly faster, can see multiple cores
+```java
+sys.add(new Plane(Axis.Y, 0).behind(), new ReflectionCollision(0.3f));
+```
 
 ---
 
 ## Final Touches
 
-### Parallel Refactor
+### Optimisation
 
-Before progressing any further there are now several issues with the existing code:
+Before progressing any further there are several issues with the existing code:
 
 * Particles that are destroyed by a collision are removed using `removeAll` which is extremely inefficient for this scenario, especially for large numbers of particles.
 
@@ -993,78 +1028,83 @@ Before progressing any further there are now several issues with the existing co
 
 * Ideally the process would employ parallel streams rather than imperative, single-threaded loops.
 
-Therefore a new local helper class is implemented that encapsulates the update process:
+* Some of the steps are optional, e.g. not all particle systems have a lifetime.
+
+First the `update` method is refactored making the steps and dependencies more explicit:
 
 ```java
-private class Helper {
-    private static final float SECONDS = 1f / TimeUnit.SECONDS.toMillis(1);
-
-    private final long time;
-    private final float elapsed;
-
-    private Helper(Animator animator) {
-        this.time = animator.time();
-        this.elapsed = animator.elapsed() * SECONDS;
-    }
+@Override
+public void update(Animator animator) {
+    Frame frame = animator.frame();
+    long time = frame.time().toEpochMilli();
+    float elapsed = frame.elapsed().toMillis() * animator.speed() * SCALE;
+    expire(time);
+    update(elapsed);
+    cull();
+    generate(time, elapsed);
 }
 ```
 
-An instance is created on each frame and the code is simplified to the main steps:
+Where `SCALE` modifies the elapsed duration to seconds-per-frame:
 
 ```java
-public boolean update(Animator animator) {
-    Helper helper = new Helper(animator);
-    helper.expire();
-    helper.update();
-    helper.cull();
-    helper.generate();
-    return false;
-}
+private static final float SCALE = 1f / TimeUnit.SECONDS.toMillis(1);
 ```
 
-Expired particles are now destroyed as a parallel stream operation:
+Expired particles are _marked_ as destroyed as a parallel stream operation:
 
 ```java
-void expire() {
-    if(lifetime == Long.MAX_VALUE) {
+private void expire(long time) {
+    if(!isLifetimeBound()) {
         return;
     }
 
-    long expiry = time - lifetime;
+    long expired = time - lifetime;
 
     particles
         .parallelStream()
-        .filter(p -> p.time() < expiry)
+        .filter(p -> p.time() < expired)
         .forEach(Particle::destroy);
 }
 ```
 
-And the update step is refactored similarly to the following cleaner and parallelised code:
+Where `isLifetimeBound` skips this step if the particle system does not specify a particle lifetime.
+
+The update step is also refactored as a parallel operation:
 
 ```java
-void update() {
+private void update(float elapsed) {
+    Instance instance = new Instance();
     particles
         .parallelStream()
         .filter(Particle::isAlive)
         .filter(Predicate.not(Particle::isIdle))
-        .forEach(this::update);
+        .forEach(instance::update);
+}                
+```
+
+Where `Instance` is a local class that wraps up the existing update logic and captures the `elapsed` duration parameter simplifying the code:
+
+```java
+class Instance {
+    private void update(Particle p) {
+        influence(p);
+        move(p);
+        collide(p);
+    }
+
+    ...
 }
 ```
 
-Which invokes the following method comprising the existing code for each particle:
+Finally particles that have been destroyed (either by lifetime expiration or a collision) are culled:
 
 ```java
-private void update(Particle p) {
-    influence(p);
-    move(p);
-    collide(p);
-}
-```
+private void cull() {
+    if(!chars.contains(Characteristic.CULL) && !isLifetimeBound()) {
+        return;
+    }
 
-Finally particles that have expired or been destroyed by a collision are culled:
-
-```java
-void cull() {
     particles = particles
         .parallelStream()
         .filter(Particle::isAlive)
@@ -1072,13 +1112,13 @@ void cull() {
 }
 ```
 
-Note that the reference to the `particles` collection is now mutable and is over-written in this method.
+Notes:
 
-### Colour Fade
+* The `Characteristic` enumeration is introduced where `CULL` is a hint that the system contains a collision surface that destroys particles.
 
-The last requirement is calculation of the particle colour
+* The reference to the `particles` collection is now mutable and is over-written by the `cull` method.
 
-fragment shader
+The code is now much cleaner and employs multiple processor cores.
 
 ### Box Emitter
 
@@ -1105,7 +1145,7 @@ static PositionFactory box(Bounds bounds, Randomiser randomiser) {
 }
 ```
 
-Using using a new method on the `Randomiser` class:
+Using a new method on the `Randomiser` class:
 
 ```java
 public class Randomiser {
@@ -1124,13 +1164,88 @@ public class Randomiser {
 
 Where `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
 
-### Integration
+### Colour Fade
 
-geometry shader for billboards
-modified vertex shader
-load particle sprite?
-point size to one?
+The final outstanding requirement is to apply a colour to the particles.
 
+```java
+private static ParticleSystem system(ApplicationConfiguration cfg) {
+    var sys = new ParticleSystem(Characteristic.TIMESTAMPS);
+    ...
+}
+```
+
+
+The _age_ of each particle is calculated in the vertex shader, the current time is passed as a new push constant:
+
+```glsl
+layout(push_constant) uniform Matrix {
+    float time;
+    mat4 modelview;
+};
+```
+
+A second vertex attribute is added for the creation timestamp and the particle age is a new output variable:
+
+```glsl
+layout(location=1) in float created;
+layout(location=0) out float age;
+```
+
+The age is scaled by the particle lifetime which requires another shader constant:
+
+```glsl
+layout(constant_id=2) const float lifetime = 1000;
+
+void main() {
+    ...
+    age = (time - created) / lifetime;
+}
+```
+
+Unfortunately the age has to be passed through the geometry shader:
+
+```glsl
+layout(location=0) in float[] ages;
+layout(location=1) out float age;
+```
+
+Note that the input age has to be defined as an _array_ (with one element in this case) which sets the output 'age' for each quad vertex:
+
+```glsl
+void vertex(vec4 pos, float x, float y) {
+    ...
+    age = ages[0];
+    EmitVertex();
+}
+```
+
+Finally the fragment fades the colour depending on the particle age:
+
+```glsl
+#version 450
+
+layout(location=0) in vec2 coords;
+layout(location=1) in float age;
+
+layout(location=0) out vec4 col;
+
+void main() {
+    col = vec4(1, age, age / 2, age);
+}
+```
+
+Particles should now start off bright white-yellow and fade through red to black:
+
+![Particle system colour fade](particle.fade.png)
+
+Note that this assumes the pipeline has the same colour and alpha blending configuration from the previous demo.
+
+TODO - multiple demos + XML config + texture ~ Spring profile (?)
+
+The final aesthetic touch is to apply a _spark_ texture to each quad:
+
+![Particle system colour fade](particle.texture.png)
 
 ---
 
