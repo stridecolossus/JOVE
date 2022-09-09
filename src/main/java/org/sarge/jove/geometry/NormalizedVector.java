@@ -1,20 +1,10 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.MathsUtil;
-
 /**
  * A <i>normalized vector</i> is a unit vector with a magnitude of <b>one</b>.
  * @author Sarge
  */
 public class NormalizedVector extends Vector {
-	/**
-	 * @param len Vector length
-	 * @return Whether the given vector length is normalised
-	 */
-	protected static boolean isNormalized(float len) {
-		return MathsUtil.isEqual(1, len);
-	}
-
 	/**
 	 * Constructor.
 	 * @param vec Normalized vector

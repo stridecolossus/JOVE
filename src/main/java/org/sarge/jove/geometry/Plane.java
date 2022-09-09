@@ -2,7 +2,6 @@ package org.sarge.jove.geometry;
 
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>plane</i> defines a flat surface in 3D space.
@@ -56,7 +55,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 		final Vector u = Vector.between(a, c);
 		final Vector v = Vector.between(b, c);
 		if(u.equals(v)) throw new IllegalArgumentException("Triangle points cannot be degenerate");
-		final Vector normal = u.cross(v).normalize();
+		final Vector normal = u.cross(v);
 		return of(normal, a);
 	}
 
@@ -76,7 +75,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	 * @param dist			Distance of the plane from the origin
 	 */
 	public Plane {
-		Check.notNull(normal);
+		normal = normal.normalize();
 	}
 
 	/**
