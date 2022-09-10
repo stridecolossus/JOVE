@@ -40,7 +40,7 @@ public class CameraController {
 		// TODO - prepare inverse and multiply, move to helper?
 		final float yaw = horizontal.interpolate(x / dim.width());
 		final float pitch = vertical.interpolate(y / dim.height());
-		final Vector vec = SphereVolume.vector(yaw, pitch);
+		final Vector vec = Sphere.vector(yaw, pitch);
 		update(vec);
 	}
 

@@ -29,18 +29,17 @@ public interface PositionFactory {
 	}
 
 	/**
-	 * Creates a position factory that generates points on a sphere about the origin.
-	 * @param radius 		Sphere radius
+	 * Creates a position factory that generates points on the surface of the given sphere.
+	 * @param sphere		Sphere
 	 * @param randomiser	Randomiser
 	 * @return Spherical position factory
 	 */
-	static PositionFactory sphere(SphereVolume sphere, Randomiser randomiser) {
+	static PositionFactory sphere(Sphere sphere, Randomiser randomiser) {
 		return () -> {
 			final Vector vec = randomiser.vector().normalize().multiply(sphere.radius());
 			return sphere.centre().add(vec);
 		};
 	}
-	// TODO - should be centre/radius, no point in volume
 
 	/**
 	 * Creates a position factory that generates points within a box volume.

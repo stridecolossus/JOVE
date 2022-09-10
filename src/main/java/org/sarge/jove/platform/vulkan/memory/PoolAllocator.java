@@ -62,7 +62,7 @@ public class PoolAllocator implements Allocator {
 	 * @return Pool
 	 */
 	public MemoryPool pool(MemoryType type) {
-		return pools.computeIfAbsent(type, ignored -> new MemoryPool(type, allocator));
+		return pools.computeIfAbsent(type, __ -> new MemoryPool(type, allocator));
 	}
 
 	/**

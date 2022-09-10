@@ -39,7 +39,7 @@ Where:
 
 * A _ballistic_ trajectory is for particles that are 'fired' and implies a gravitational influence.
 
-* The _bounds_ specifies whether particles have a finite lifetime or are constrained by some geometric surface.
+* The _bounds_ specifies whether particles have a finite lifetime and/or are constrained by some geometric surface.
 
 * A _colour fade_ indicates that the particle colour would fade over time, e.g. smoke particles would perhaps start as grey and fade to black.
 
@@ -71,9 +71,9 @@ There are pros and cons to all of these approaches:
 
 * A trajectory function is appealing in that it encapsulates all the information about how that particle moves over time.  It is therefore simpler to comprehend, reusable, largely immutable, and easier to test in isolation.
 
-* Delegating the trajectory to the shader is logical and almost certainly much more efficient, however this would be very difficult to test or to diagnose.  Additionally GLSL code would have to cut-and-pasted rather than comprised of coherent, tested components (unless we employed some clever shader generator).
+* Delegating the trajectory to the shader is logical and almost certainly much more efficient, however this would be very difficult to test or to diagnose.  Additionally GLSL code would have to be cut-and-pasted rather than comprised of coherent, tested components (unless we employed some clever shader generator).
 
-* Mutable particles and movement vectors is probably simpler to implement but slightly more complex to configure.
+* Mutable particles and movement vectors are probably simpler to implement but slightly more complex to configure.
 
 * A configurable particle system lends itself to being specified later by some configuration file (e.g. an XML document).
 
@@ -676,7 +676,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 }
 ```
 
-In addition to the compact constructor a plane can be specified by the normal and a point on the plane:
+In addition to the canonical constructor a plane can be specified by the normal and a point on the plane:
 
 ```java
 public static Plane of(Vector normal, Point pt) {
@@ -776,7 +776,7 @@ public interface Collision {
     /**
      * Destroys a collided particle.
      */
-    Collision DESTROY = (p, ignored) -> p.destroy();
+    Collision DESTROY = (p, __) -> p.destroy();
 
     /**
      * Stops a collided particle at the given intersection.
@@ -833,7 +833,7 @@ void stop(Point pos) {
 }
 ```
 
-The `DESTROY` case does not require the actual intersection results, the ray intersection test is overkill in this case since we only need to know whether the ray is _behind_ the plane.
+Since the `DESTROY` case does not require the actual intersection results the existing ray intersection test is overkill, we only need to know whether the ray is _behind_ the plane.
 
 The _half space_ defines the _sides_ of a plane with respect to the normal, where the `POSITIVE` half-space is in _front_ of the plane:
 
@@ -1111,7 +1111,7 @@ Notes:
 
 The code is now much cleaner and employs multiple processor cores.
 
-### Box Emitter
+### Emitters
 
 Several scenarios require an emitter defined as a box (or rectangle) which is implemented by a new type specified by min-max extents:
 
@@ -1123,7 +1123,7 @@ public record Bounds(Point min, Point max) {
 }
 ```
 
-Particles can now be randomly generated within this volume:
+Particles can now be randomly generated within the given bounds:
 
 ```java
 static PositionFactory box(Bounds bounds, Randomiser randomiser) {
@@ -1155,6 +1155,19 @@ public class Randomiser {
 
 Where `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
 
+The final emitter implementation generates particles on the surface of a sphere:
+
+```java
+static PositionFactory sphere(Sphere sphere, Randomiser randomiser) {
+    return () -> {
+        Vector vec = randomiser.vector().normalize().multiply(sphere.radius());
+        return sphere.centre().add(vec);
+    };
+}
+```
+
+Where `Sphere` is a simple tuple for a centre point and a radius.
+
 ### Colour Fade
 
 The final outstanding requirement is to apply a colour to the particles which is calculated in the shader based on particle age.
@@ -1179,7 +1192,7 @@ layout(location=0) out float age;
 The age is scaled by the particle lifetime which requires another shader constant:
 
 ```glsl
-layout(constant_id=2) const float lifetime = 1000;
+layout(constant_id=2) const int lifetime = 1000;
 
 void main() {
     ...

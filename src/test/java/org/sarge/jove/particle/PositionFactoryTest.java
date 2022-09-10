@@ -40,8 +40,7 @@ class PositionFactoryTest {
 	@DisplayName("The sphere factory positions particles randomly on the surface of a sphere")
 	@Test
 	void spherical() {
-		final var vol = new SphereVolume(Point.ORIGIN, 3);
-		final var factory = PositionFactory.sphere(vol, randomiser);
+		final var factory = PositionFactory.sphere(new Sphere(Point.ORIGIN, 3), randomiser);
 		assertEquals(new Point(3, 0, 0), factory.position());
 	}
 }

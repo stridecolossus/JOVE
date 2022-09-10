@@ -143,7 +143,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 			case "sphere" -> {
 				final Point centre = root.child("centre").text().transform(this::point);
 				final float radius = root.child("radius").text().toFloat();
-				final var sphere = new SphereVolume(centre, radius);
+				final var sphere = new Sphere(centre, radius);
 				yield PositionFactory.sphere(sphere, randomiser);
 			}
 
