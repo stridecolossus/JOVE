@@ -387,17 +387,17 @@ The `x` and `y` class members define a local coordinate system that is initialis
 ```java
 public ConeVectorFactory(Vector normal, float radius, Randomiser random) {
     this.normal = notNull(normal);
-    this.x = normal.cross(cardinal(normal));
+    this.x = normal.cross(Axis.minimal(normal));
     this.y = x.cross(normal);
     this.radius = Interpolator.linear(-radius, +radius);
     this.random = notNull(random);
 }
 ```
 
-Where `cardinal` selects an axis corresponding to the _minimum component_ of the normal, which is used to generate a vector orthogonal to the cone:
+Where `minimal` selects an axis corresponding to the _minimum component_ of the normal, which is used to generate a vector orthogonal to the cone:
 
 ```java
-private static Vector cardinal(Vector normal) {
+private static Axis minimal(Vector normal) {
     if(normal.x < normal.y) {
         return normal.x < normal.z ? Axis.X : Axis.Z;
     }
@@ -427,9 +427,10 @@ public Vector vector(Point pos) {
 }
 ```
 
-The new `rotate` method on the axis-angle class implements _Rodrigues' rotation formula_ as follows:
+The `rotate` method is added to the `Rotation` interface and implemented in the axis-angle class using _Rodrigues' rotation formula_ as follows:
 
 ```java
+@Override
 public Vector rotate(Vector vec) {
     float cos = MathsUtil.cos(angle);
     Vector a = vec.multiply(cos);
@@ -439,8 +440,7 @@ public Vector rotate(Vector vec) {
 }
 ```
 
-This formula offers an alternative to matrix or quaternion rotations and may be more efficient in certain use-cases.
-If we ever get round to performance analysis we may decide to replace this code with quaternions later for this scenario.
+This algorithm offers an alternative to matrix or quaternion rotations and may be more efficient in certain use-cases.
 
 ### Integration
 
@@ -484,7 +484,6 @@ private static ParticleSystem system(ApplicationConfiguration cfg) {
     sys.policy(new IncrementGenerationPolicy(10, cfg.getMax()));
     sys.lifetime(5000L);
     sys.vector(new ConeVectorFactory(Axis.Y, 1, new Randomiser()));
-    sys.add(Influence.of(Axis.Y.invert()));
     return sys;
 }
 ```
@@ -542,6 +541,8 @@ TODO
 
 The vertex shader outputs each particle as a point:
 
+TODO - same as prev?
+
 ```glsl
 #version 450
 
@@ -596,16 +597,6 @@ public interface Ray {
      * @return Ray direction
      */
     Vector direction();
-}
-```
-
-The following helper is used to determine a point on the ray at a given distance from the origin, i.e. solves the line equation:
-
-```java
-default Point point(float dist) {
-    Point origin = this.origin();
-    Vector dir = this.direction();
-    return origin.add(dir.multiply(dist));
 }
 ```
 
@@ -807,7 +798,7 @@ default Point nearest(Ray ray) {
 }
 ```
 
-And the `point` method calculates a point along the ray, i.e. solves the line equation:
+And `point` calculates a point along the ray, i.e. solves the line equation:
 
 ```java
 default Point point(float dist) {
@@ -1022,7 +1013,7 @@ sys.add(new Plane(Axis.Y, 0).behind(), new ReflectionCollision(0.3f));
 
 Before progressing any further there are several issues with the existing code:
 
-* Particles that are destroyed by a collision are removed using `removeAll` which is extremely inefficient for this scenario, especially for large numbers of particles.
+* Destroyed particles are removed using `removeAll` which is extremely inefficient for this scenario, especially for large numbers of particles.
 
 * The time and elapsed parameters have to be passed around the various methods and lambdas, making the code somewhat messy.
 
@@ -1083,7 +1074,7 @@ private void update(float elapsed) {
 }                
 ```
 
-Where `Instance` is a local class that wraps up the existing update logic and captures the `elapsed` duration parameter simplifying the code:
+Where `Instance` is a local class comprising the existing update logic that also captures the `elapsed` duration parameter to simplify the code:
 
 ```java
 class Instance {
@@ -1166,7 +1157,8 @@ Where `multiply` is a new method on the the vector class that performs a compone
 
 ### Colour Fade
 
-The final outstanding requirement is to apply a colour to the particles.
+The final outstanding requirement is to apply a colour to the particles which is calculated in the shader based on particle age.
+First a second `TIMESTAMPS` characteristic is defined to output particle timestamps to the vertex buffer, which is configured in the constructor of the particle system:
 
 ```java
 private static ParticleSystem system(ApplicationConfiguration cfg) {
@@ -1175,15 +1167,7 @@ private static ParticleSystem system(ApplicationConfiguration cfg) {
 }
 ```
 
-
-The _age_ of each particle is calculated in the vertex shader, the current time is passed as a new push constant:
-
-```glsl
-layout(push_constant) uniform Matrix {
-    float time;
-    mat4 modelview;
-};
-```
+TODO - non interleaved layout?
 
 A second vertex attribute is added for the creation timestamp and the particle age is a new output variable:
 
@@ -1203,6 +1187,15 @@ void main() {
 }
 ```
 
+Where the current `time` is a new push constant:
+
+```glsl
+layout(push_constant) uniform Matrix {
+    float time;
+    mat4 modelview;
+};
+```
+
 Unfortunately the age has to be passed through the geometry shader:
 
 ```glsl
@@ -1220,7 +1213,7 @@ void vertex(vec4 pos, float x, float y) {
 }
 ```
 
-Finally the fragment fades the colour depending on the particle age:
+Finally the fragment shader fades the colour depending on the particle age:
 
 ```glsl
 #version 450
@@ -1241,11 +1234,151 @@ Particles should now start off bright white-yellow and fade through red to black
 
 Note that this assumes the pipeline has the same colour and alpha blending configuration from the previous demo.
 
-TODO - multiple demos + XML config + texture ~ Spring profile (?)
+### Configuration
 
-The final aesthetic touch is to apply a _spark_ texture to each quad:
+Ideally we would like to demonstrate the various particle system scenarios by parameterising the project rather than creating multiple applications, i.e. specify the particle system and shader parameters via configuration files and implement some sort of switch at run-time.
 
-![Particle system colour fade](particle.texture.png)
+First a new loader is implemented to specify a particle system via a configuration file:
+
+```java
+public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSystem> {
+    private final ElementLoader loader = new ElementLoader();
+    private final Randomiser randomiser;
+
+    @Override
+    public Element map(InputStream in) throws IOException {
+        return loader.load(new InputStreamReader(in));
+    }
+
+    @Override
+    public ParticleSystem load(Element root) throws IOException {
+        ...
+    }
+}
+```
+
+An `Element` is a custom library type representing a node in a nested configuration file such as an XML, JSON or YAML document.  This class is largely out-of-scope for this blog, but in summary an element is used to:
+
+* Process a document by recursively walking the node tree.
+
+* Extract text and attributes from an element.
+
+* Transform element content to Java primitives.
+
+For example, the generation policy is loaded by the following method:
+
+```java
+private GenerationPolicy policy(Element root) {
+    return switch(root.name()) {
+        case "none" -> GenerationPolicy.NONE;
+
+        case "fixed" -> {
+            int num = root.child("num").text().toInteger();
+            yield GenerationPolicy.fixed(num);
+        }
+
+        case "incremental" -> {
+            int inc = root.child("increment").text().toInteger();
+            int max = root.child("max").text().toInteger();
+            yield new IncrementGenerationPolicy(inc, max);
+        }
+
+        default -> throw root.exception(...);
+    };
+}
+```
+
+In this case an XML document seems the most appropriate format to configure the particle system:
+
+```xml
+<sparks>
+    <characteristic>TIMESTAMPS</characteristic>
+    <policy>
+        <incremental>
+            <increment>10</increment>
+            <max>50</max>
+        </incremental>
+    </policy>
+    <lifetime>5s</lifetime>
+    <position>
+        <origin />
+    </position>
+    <vector>
+        <cone>
+            <normal>Y</normal>
+            <radius>1</radius>
+        </cone>
+    </vector>
+    <influences>
+        <literal>-Y</literal>
+    </influences>
+    <surfaces>
+        <reflect>
+            <behind>
+                <normal>Y</normal>
+                <distance>0</distance>
+            </behind>
+            <absorb>0.3</absorb>
+        </reflect>
+    </surfaces>
+</sparks>
+```
+
+A Spring _profile_ is used to switch between scenarios configured by a JVM argument:
+
+```java
+-Dspring.profiles.active=sparks
+```
+
+TODO - Generally a Spring profile is used to parameterise the configuration of bean components but this feature is not relevant for the current demo.
+switch texture,sampler ~ profile
+
+The profile is injected into the loader to select the scenario-specific configuration file for the particle system:
+
+```java
+public ParticleSystemConfiguration(@Value("${spring.profiles.active}") String profile, ...) {
+    this.sys = loader.load(profile + ".xml");
+    ...
+}
+```
+
+The `application.properties` is modified to separate the configuration for each scenario as appropriate, as illustrated in the following fragment:
+
+```java
+dataDirectory: workspace/Demo/Data
+frameCount: 2
+features: geometryShader
+size: 0.025
+shader: particle
+
+#---
+spring.config.activate.on-profile=sparks
+title: Particle System - Sparks
+max: 100
+
+#---
+spring.config.activate.on-profile=smoke
+title: Particle System - Smoke
+max: 250
+size: 1
+shader: circle
+```
+
+Note that the first section specifies properties that are common to all profiles.
+
+The _size_ property and the particle lifetime are injected into the relevant shaders as specialisation constants.
+
+Finally a new configuration property is added to specify the fragment shader:
+
+```java
+@Bean
+Shader fragment(ApplicationConfiguration cfg) {
+    return shader(String.format("%s.frag", cfg.getShader()));
+}
+```
+
+The demo can now be used to run all the scenarios switched by the application argument.
+Sweet.
 
 ---
 

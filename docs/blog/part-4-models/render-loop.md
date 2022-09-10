@@ -1492,8 +1492,7 @@ Which is controlled by a player:
 public static Player player(Animator animator) {
     Player player = new Player();
     player.add(animator);
-    player.state(Playable.State.PLAY);
-    player.repeat(true);
+    player.play();
     return player;
 }
 ```

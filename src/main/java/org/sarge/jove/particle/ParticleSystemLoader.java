@@ -3,6 +3,7 @@ package org.sarge.jove.particle;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.io.*;
+import java.time.Duration;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
@@ -10,6 +11,7 @@ import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.particle.ParticleSystem.Characteristic;
 import org.sarge.jove.util.Randomiser;
 import org.sarge.lib.util.*;
+import org.sarge.lib.util.Element.Content;
 
 /**
  * Loader for a particle system.
@@ -37,26 +39,39 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 		// Init particle system
 		final Characteristic[] chars = characteristics(root);
 		final ParticleSystem sys = new ParticleSystem(chars);
-		root.child("policy").map(Element::first).map(this::policy).ifPresent(sys::policy);
-		root.child("lifetime").map(Element::text).map(Integer::parseInt).ifPresent(sys::lifetime);
+
+		// Load generation policy
+		root
+				.optional("policy")
+				.map(Element::child)
+				.map(this::policy)
+				.ifPresent(sys::policy);
+
+		// Load particle lifetime
+		root
+				.optional("lifetime")
+				.map(Element::text)
+				.map(c -> c.transform(Converter.DURATION))
+				.map(Duration::toMillis)
+				.ifPresent(sys::lifetime);
 
 		// Load emitter position
 		root
-				.child("position")
-				.map(Element::first)
+				.optional("position")
+				.map(Element::child)
 				.map(this::position)
 				.ifPresent(sys::position);
 
 		// Load emitter direction
 		root
-				.child("vector")
-				.map(Element::first)
+				.optional("vector")
+				.map(Element::child)
 				.map(this::direction)
 				.ifPresent(sys::vector);
 
 		// Load influences
 		root
-				.child("influences")
+				.optional("influences")
 				.stream()
 				.flatMap(Element::children)
 				.map(this::influence)
@@ -64,7 +79,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 
 		// Load collision surfaces
 		root
-				.child("surfaces")
+				.optional("surfaces")
 				.stream()
 				.flatMap(Element::children)
 				.forEach(e -> surface(e, sys));
@@ -79,6 +94,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 		return root
 				.children("characteristic")
 				.map(Element::text)
+				.map(Content::toString)
 				.map(Characteristic::valueOf)
 				.toArray(Characteristic[]::new);
 	}
@@ -90,11 +106,14 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 		return switch(root.name()) {
 			case "none" -> GenerationPolicy.NONE;
 
-			case "fixed" -> GenerationPolicy.fixed(integer(root, "num"));
+			case "fixed" -> {
+				final int num = root.child("num").text().toInteger();
+				yield GenerationPolicy.fixed(num);
+			}
 
 			case "incremental" -> {
-				final int inc = integer(root, "increment");
-				final int max = integer(root, "max");
+				final int inc = root.child("increment").text().toInteger();
+				final int max = root.child("max").text().toInteger();
 				yield new IncrementGenerationPolicy(inc, max);
 			}
 
@@ -110,20 +129,20 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 			case "origin" -> PositionFactory.ORIGIN;
 
 			case "literal" -> {
-				final Point p = point(root, null);
+				final Point p = root.text().transform(this::point);
 				yield PositionFactory.of(p);
 			}
 
 			case "box" -> {
-				final Point min = point(root, "min");
-				final Point max = point(root, "max");
+				final Point min = root.child("min").text().transform(this::point);
+				final Point max = root.child("max").text().transform(this::point);
 				final Bounds bounds = new Bounds(min, max);
 				yield PositionFactory.box(bounds, randomiser);
 			}
 
 			case "sphere" -> {
-				final Point centre = point(root, "centre");
-				final float radius = value(root, "radius");
+				final Point centre = root.child("centre").text().transform(this::point);
+				final float radius = root.child("radius").text().toFloat();
 				final var sphere = new SphereVolume(centre, radius);
 				yield PositionFactory.sphere(sphere, randomiser);
 			}
@@ -137,13 +156,13 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	 */
 	private VectorFactory direction(Element root) {
 		return switch(root.name()) {
-			case "literal" -> VectorFactory.of(vector(root, null));
+			case "literal" -> VectorFactory.of(root.text().transform(this::vector));
 
 			case "random" -> VectorFactory.random(randomiser);
 
 			case "cone" -> {
-				final Vector normal = vector(root, "normal");
-				final float radius = value(root, "radius");
+				final Vector normal = root.child("normal").text().transform(this::vector);
+				final float radius = root.child("radius").text().toFloat();
 				yield new ConeVectorFactory(normal, radius, randomiser);
 			}
 
@@ -156,15 +175,15 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	 */
 	private Influence influence(Element root) {
 		return switch(root.name()) {
-			case "literal" -> Influence.of(vector(root, null));
-			case "velocity" -> Influence.velocity(value(root, null));
+			case "literal" -> Influence.of(root.text().transform(this::vector));
+			case "velocity" -> Influence.velocity(root.child("velocity").text().toFloat());
 			default -> throw root.exception("Unknown influence");
 		};
 	}
 
 	private void surface(Element root, ParticleSystem sys) {
 		final Collision collision = collision(root);
-		final Intersected surface = surface(root.first());
+		final Intersected surface = surface(root.child());
 		sys.add(surface, collision);
 	}
 
@@ -175,14 +194,11 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 			case "negative" -> plane(root).negative();
 			default -> throw root.exception("Unknown collision surface");
 		};
-//
-//		// .behind()
-//		return new Plane(Axis.Y, 0).behind();
 	}
 
-	private static Plane plane(Element root) {
-		final Vector normal = vector(root, "normal");
-		final float dist = value(root, "distance");
+	private Plane plane(Element root) {
+		final Vector normal = root.child("normal").text().transform(this::vector);
+		final float dist = root.child("distance").text().toFloat();
 		return new Plane(normal, dist);
 	}
 
@@ -191,67 +207,58 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 			case "destroy" -> Collision.DESTROY;
 			case "stop" -> Collision.STOP;
 			case "reflect" -> {
-				final float absorb = root.child("absorb").map(Element::text).map(Float::parseFloat).orElse(1f);
+				final float absorb = root.optional("absorb").map(Element::text).map(Content::toFloat).orElse(1f);
 				yield new ReflectionCollision(absorb);
 			}
 			default -> throw root.exception("Unknown collision action");
 		};
 	}
 
-	/**
-	 * Loads an integer attribute.
-	 */
-	private static int integer(Element root, String name) {
-		try {
-			return Integer.parseInt(root.first(name).text().trim());
-		}
-		catch(NumberFormatException e) {
-			throw root.exception(e.getMessage());
-		}
-	}
-
-	/**
-	 * Loads a floating-point attribute.
-	 */
-	private static float value(Element root, String name) {
-		try {
-			return Float.parseFloat(root.first(name).text().trim());
-		}
-		catch(NumberFormatException e) {
-			throw root.exception(e.getMessage());
-		}
-	}
-
-	/**
-	 * Loads a comma-delimited literal vector.
-	 */
-	private static Vector vector(Element root, String name) {
-		// Load text or attribute value
-		final String text = name == null ? root.text() : root.first(name).text();
-
+	private static float[] tuple(String text) {
 		// Tokenize
-		final String[] parts = text.trim().split(",");
-		if(parts.length != 3) throw root.exception("Invalid tuple");
+		final String[] parts = text.split(",");
+		if(parts.length != 3) throw new IllegalArgumentException("Expected tuple");
 
 		// Convert to XYZ floats
 		final float[] array = new float[3];
-		try {
-			for(int n = 0; n < array.length; ++n) {
-				array[n] = Integer.parseInt(parts[n].trim());
-			}
-		}
-		catch(NumberFormatException e) {
-			throw root.exception(e.getMessage());
+		for(int n = 0; n < array.length; ++n) {
+			array[n] = Integer.parseInt(parts[n].trim());
 		}
 
-		// Create tuple
-		return new Vector(array);
+		return array;
+	}
+
+
+	/**
+	 * Loads a comma-delimited literal vector.
+	 * @throws IllegalArgumentException if the vector is not a valid tuple
+	 */
+	private Vector vector(String text) {
+		if(text.length() > 2) {
+			return new Vector(tuple(text));
+		}
+		else
+		if(text.startsWith("-")) {
+			return axis(text.substring(1)).invert();
+		}
+		else {
+			return axis(text);
+		}
+	}
+
+	private static Axis axis(String axis) {
+		return switch(axis) {
+			case "X" -> Axis.X;
+			case "Y" -> Axis.Y;
+			case "Z" -> Axis.Z;
+			default -> throw new IllegalArgumentException("Invalid axis: " + axis);
+		};
 	}
 
 	/**
 	 * Loads a literal point.
 	 */
-	private static Point point(Element root, String name) {
-		return new Point(vector(root, name));
+	private Point point(String text) {
+		return new Point(tuple(text));
 	}
 }

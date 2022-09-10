@@ -155,6 +155,13 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
+	 * @return Particle lifetime
+	 */
+	public long lifetime() {
+		return lifetime;
+	}
+
+	/**
 	 * @return Whether this particle system has a particle lifetime
 	 */
 	private boolean isLifetimeBound() {

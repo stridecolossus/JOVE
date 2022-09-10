@@ -92,7 +92,7 @@ public class Shader extends AbstractVulkanObject {
 	 * <ul>
 	 * <li>Integer</li>
 	 * <li>Float</li>
-	 * <li>{@link VulkanBoolean}</li>
+	 * <li>Boolean</li>
 	 * </ul>
 	 * Note that numeric constants must be a wrapper type.
 	 * <p>
@@ -114,26 +114,22 @@ public class Shader extends AbstractVulkanObject {
 
 			@Override
 			public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry out) {
-				// Init constant
-				final int size = size(entry.getValue());
-				out.size = size;
-				out.constantID = entry.getKey();
-
-				// Update buffer offset
-				out.offset = len;
-				len += size;
-			}
-
-			/**
-			 * Determines the size of a constant.
-			 */
-			private static int size(Object value) {
-				return switch(value) {
-					case Integer n -> Integer.BYTES;
+				// Determine size of this constant
+				final Object value = entry.getValue();
+				final int size = switch(value) {
 					case Float f -> Float.BYTES;
+					case Integer n -> Integer.BYTES;
 					case Boolean b -> Integer.BYTES;
 					default -> throw new UnsupportedOperationException("Unsupported constant type: " + value.getClass());
 				};
+
+				// Init constant
+				out.constantID = entry.getKey();
+				out.size = size;
+				out.offset = len;
+
+				// Update buffer offset
+				len += size;
 			}
 		};
 
@@ -144,10 +140,10 @@ public class Shader extends AbstractVulkanObject {
 
 		// Build constants data buffer
 		final ByteBuffer buffer = BufferHelper.allocate(populate.len);
-		for(Object value : constants.values()) {
-			switch(value) {
-				case Integer n -> buffer.putInt(n);
+		for(var entry : constants.entrySet()) {		// TODO - check same order as above
+			switch(entry.getValue()) {
 				case Float f -> buffer.putFloat(f);
+				case Integer n -> buffer.putInt(n);
 				case Boolean b -> {
 					final int bool = VulkanBoolean.of(b).toInteger();
 					buffer.putInt(bool);
