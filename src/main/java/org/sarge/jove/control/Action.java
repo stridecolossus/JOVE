@@ -41,7 +41,7 @@ public interface Action<E extends Event> {
 		 * @param action Action
 		 */
 		public void add(Action<?> action) {
-			bindings.computeIfAbsent(action, ignored -> new HashSet<>());
+			bindings.computeIfAbsent(action, __ -> new HashSet<>());
 		}
 
 		/**

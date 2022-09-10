@@ -19,7 +19,7 @@ public interface Collision {
 	 * Destroys a collided particle.
 	 * @see Particle#destroy()
 	 */
-	Collision DESTROY = (p, ignored) -> p.destroy();
+	Collision DESTROY = (p, __) -> p.destroy();
 
 	/**
 	 * Stops a collided particle at the given intersection.

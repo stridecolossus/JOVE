@@ -95,7 +95,7 @@ public abstract class Axis extends NormalizedVector {
 	 * For example the vector {@code 0, 1, 2} corresponds to the X axis.
 	 * @return Cardinal axis
 	 */
-	public static Vector minimal(Vector vec) {
+	public static Axis minimal(Vector vec) {
 		if(vec.x < vec.y) {
 			return vec.x < vec.z ? X : Z;
 		}

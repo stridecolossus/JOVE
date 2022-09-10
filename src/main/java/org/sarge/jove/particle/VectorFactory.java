@@ -28,7 +28,7 @@ public interface VectorFactory {
 	 * @return Literal vector factory
 	 */
 	static VectorFactory of(Vector vec) {
-		return ignored -> vec;
+		return __ -> vec;
 	}
 
 	/**
@@ -37,6 +37,6 @@ public interface VectorFactory {
 	 * @return Random vector factory (normalised)
 	 */
 	static VectorFactory random(Randomiser randomiser) {
-		return ignored -> randomiser.vector().normalize();
+		return __ -> randomiser.vector().normalize();
 	}
 }

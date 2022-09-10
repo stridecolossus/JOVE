@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.jove.util.MathsUtil.*;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Objects;
 
@@ -10,65 +9,54 @@ import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>sphere volume</i> is defined by a radius about a centre-point.
+ * A <i>sphere volume</i> is a volume adapter for a {@link Sphere}.
  * @author Sarge
  */
 public class SphereVolume implements Volume {
-	/**
-	 * Creates a sphere volume enclosing the given bounds.
-	 * @param bounds Bounds
-	 * @return Sphere volume
-	 */
-	public static SphereVolume of(Bounds bounds) {
-		return new SphereVolume(bounds.centre(), bounds.largest() / 2);
-	}
-
-	private final Point centre;
-	private final float radius;
+	private final Sphere sphere;
 
 	/**
 	 * Constructor.
 	 * @param centre Sphere centre
 	 * @param radius Radius
 	 */
-	public SphereVolume(Point centre, float radius) {
-		this.centre = notNull(centre);
-		this.radius = zeroOrMore(radius);
+	public SphereVolume(Sphere sphere) {
+		this.sphere = notNull(sphere);
 	}
 
 	/**
-	 * @return Sphere centre
+	 * @return Sphere
 	 */
-	public Point centre() {
-		return centre;
-	}
-
-	/**
-	 * @return Radius
-	 */
-	public float radius() {
-		return radius;
+	public Sphere sphere() {
+		return sphere;
 	}
 
 	@Override
 	public boolean contains(Point pt) {
-		return centre.distance(pt) <= radius * radius;
+		return contains(pt, sphere.radius());
 	}
 
 	@Override
 	public boolean intersects(Volume vol) {
-		if(vol instanceof SphereVolume sphere) {
-			final float r = radius + sphere.radius;
-			return centre.distance(sphere.centre) <= r * r;
+		if(vol instanceof SphereVolume that) {
+			final float r = this.sphere.radius() + that.sphere.radius();
+			return contains(that.sphere.centre(), r);
 		}
 		else {
 			return vol.intersects(this);
 		}
 	}
 
+	/**
+	 * @return Whether this sphere contains the given point
+	 */
+	private boolean contains(Point pt, float r) {
+		return sphere.centre().distance(pt) <= r * r;
+	}
+
 	@Override
 	public boolean intersects(Plane plane) {
-		return Math.abs(plane.distance(centre)) <= radius;
+		return Math.abs(plane.distance(sphere.centre())) <= sphere.radius();
 	}
 
 	/**
@@ -77,14 +65,14 @@ public class SphereVolume implements Volume {
 	 * @return Whether intersected
 	 */
 	public boolean intersects(Bounds bounds) {
-		final Point pt = bounds.nearest(centre);
+		final Point pt = bounds.nearest(sphere.centre());
 		return contains(pt);
 	}
 
 	@Override
 	public Intersection intersection(Ray ray) {
 		// Determine length of the nearest point on the ray to the centre of the sphere
-		final Vector vec = Vector.between(ray.origin(), centre);
+		final Vector vec = Vector.between(ray.origin(), sphere.centre());
 		final float nearest = ray.direction().dot(vec);
 		final float len = vec.magnitude();
 
@@ -97,7 +85,7 @@ public class SphereVolume implements Volume {
 		final float dist = nearest * nearest - len;
 
 		// Stop if ray does not intersect
-		final float r = radius * radius;
+		final float r = sphere.radius() * sphere.radius();
 		if(Math.abs(dist) > r) {
 			return NONE;
 		}
@@ -131,7 +119,7 @@ public class SphereVolume implements Volume {
 	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
 	private Intersection intersectBehind(Ray ray, float len, float nearest) {
-		final float r = radius * radius;
+		final float r = sphere.radius() * sphere.radius();
 		if(len > r) {
 			// Ray originates outside the sphere
 			return NONE;
@@ -165,28 +153,8 @@ public class SphereVolume implements Volume {
 	private abstract class SphereIntersections implements Intersection {
 		@Override
 		public Vector normal(Point p) {
-			return Vector.between(centre, p).normalize();
+			return Vector.between(sphere.centre(), p).normalize();
 		}
-	}
-
-	/**
-	 * Calculates the vector to the point on the unit-sphere for the given rotation angles (in radians).
-	 * @param theta		Horizontal angle (or <i>yaw</i>) in the range zero to {@link MathsUtil#TWO_PI}
-	 * @param phi		Vertical angle (or <i>pitch</i>) in the range +/- {@link MathsUtil#HALF_PI}
-	 * @return Unit-sphere surface vector
-	 */
-	public static Vector vector(float theta, float phi) {
-		// Apply 90 degree clockwise rotation to align with the -Z axis
-		final float angle = theta - MathsUtil.HALF_PI;
-
-		// Calculate unit-sphere coordinates
-		final float cos = cos(phi);
-		final float x = cos(angle) * cos;
-		final float y = sin(angle) * cos;
-		final float z = sin(phi);
-
-		// Swizzle the coordinates to default space
-		return new Vector(x, z, y);
 	}
 
 	// https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection#bounding_spheres
@@ -195,7 +163,7 @@ public class SphereVolume implements Volume {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(centre, radius);
+		return Objects.hash(sphere);
 	}
 
 	@Override
@@ -203,12 +171,11 @@ public class SphereVolume implements Volume {
 		return
 				(obj == this) ||
 				(obj instanceof SphereVolume that) &&
-				this.centre.equals(that.centre) &&
-				MathsUtil.isEqual(this.radius, that.radius);
+				this.sphere.equals(that.sphere);
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(centre).append("r", radius).build();
+		return new ToStringBuilder(this).append(sphere).build();
 	}
 }

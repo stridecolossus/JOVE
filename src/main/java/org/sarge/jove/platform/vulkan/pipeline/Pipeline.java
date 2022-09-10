@@ -110,15 +110,11 @@ public class Pipeline extends AbstractVulkanObject {
 
 			/**
 			 * Adds specialisation constants to parameterise this shader.
-			 * <p>
-			 * Note that supported types are integer, float and boolean values.
-			 * <p>
-			 * @param constants Specialisation constants indexed by ID
-			 * @throws IllegalArgumentException for a duplicate constant ID
-			 * @throws IllegalArgumentException for an invalid or {@code null} constant
+			 * @param constants Specialisation constants or {@code null} to use default values
+			 * @see Shader#constants(Map)
 			 */
 			public ShaderStageBuilder constants(VkSpecializationInfo constants) {
-				this.constants = notNull(constants);
+				this.constants = constants;
 				return this;
 			}
 

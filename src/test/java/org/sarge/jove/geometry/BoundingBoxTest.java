@@ -41,26 +41,26 @@ class BoundingBoxTest {
 		@DisplayName("A bounding box intersects a sphere that it encloses")
 		@Test
 		void intersects() {
-			assertEquals(true, box.intersects(new SphereVolume(bounds.centre(), 1)));
-			assertEquals(true, box.intersects(new SphereVolume(bounds.centre(), 4)));
+			assertEquals(true, box.intersects(new SphereVolume(new Sphere(bounds.centre(), 1))));
+			assertEquals(true, box.intersects(new SphereVolume(new Sphere(bounds.centre(), 4))));
 		}
 
 		@DisplayName("A bounding box is intersected by a sphere that encloses its bounds")
 		@Test
 		void enclosed() {
-			assertEquals(true, box.intersects(new SphereVolume(Point.ORIGIN, Float.MAX_VALUE)));
+			assertEquals(true, box.intersects(new SphereVolume(new Sphere(Point.ORIGIN, Float.MAX_VALUE))));
 		}
 
 		@DisplayName("A bounding box intersects a sphere that is touching the box")
 		@Test
 		void touching() {
-			assertEquals(true, box.intersects(new SphereVolume(new Point(1, 2, 2), 1)));
+			assertEquals(true, box.intersects(new SphereVolume(new Sphere(new Point(1, 2, 2), 1))));
 		}
 
 		@DisplayName("A bounding box does not intersect a sphere that is outside of its bounds")
 		@Test
 		void outside() {
-			assertEquals(false, box.intersects(new SphereVolume(Point.ORIGIN, 3)));
+			assertEquals(false, box.intersects(new SphereVolume(new Sphere(Point.ORIGIN, 3))));
 		}
 	}
 
