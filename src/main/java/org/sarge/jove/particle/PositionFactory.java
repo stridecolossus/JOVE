@@ -1,7 +1,7 @@
 package org.sarge.jove.particle;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.Randomiser;
+import org.sarge.jove.util.*;
 
 /**
  * A <i>position factory</i> generates the starting position of a {@link Particle}.
@@ -42,17 +42,17 @@ public interface PositionFactory {
 	}
 
 	/**
-	 * Creates a position factory that generates points within a box volume.
-	 * @param bounds 		Box bounds
+	 * Creates a position factory that generates points within the given box.
+	 * @param box 			Box
 	 * @param randomiser	Randomiser
 	 * @return Box position factory
 	 */
-	static PositionFactory box(Bounds bounds, Randomiser randomiser) {
-		final Point min = bounds.min();
-		final Vector range = Vector.between(min, bounds.max());
+	static PositionFactory box(Bounds box, Randomiser randomiser) {
+		final Point centre = box.centre();
+		final Vector range = Vector.between(box.min(), box.max()).multiply(MathsUtil.HALF);
 		return () -> {
 			final Vector vec = randomiser.vector().multiply(range);
-			return new Point(vec).add(min);
+			return new Point(vec).add(centre);
 		};
 	}
 }

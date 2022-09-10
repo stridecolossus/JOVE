@@ -43,33 +43,31 @@ public final class Point extends Tuple {
 
 	/**
 	 * Calculates the distance <b>squared</b> to the given point.
-	 * @param point Destination point
+	 * @param pt Destination point
 	 * @return Distance <b>squared</b>
 	 */
-	public float distance(Point point) {
-		final float dx = point.x - x;
-		final float dy = point.y - y;
-		final float dz = point.z - z;
-		return dx * dx + dy * dy + dz * dz;
+	public float distance(Point pt) {
+		final Point p = subtract(pt);
+		return p.dot(p);
 	}
 
 	/**
 	 * Adds the given tuple to this point.
-	 * @param t Tuple
+	 * @param that Tuple
 	 * @return Added point
 	 */
-	public Point add(Tuple t) {
-		return new Point(x + t.x, y + t.y, z + t.z);
+	public Point add(Tuple that) {
+		return new Point(x + that.x, y + that.y, z + that.z);
 	}
 
 	/**
 	 * Convenience method: Subtracts the given tuple from this point.
-	 * @param t Tuple
+	 * @param that Tuple
 	 * @return Subtracted point
 	 * @see #add(Tuple)
 	 */
-	public Point subtract(Tuple t) {
-		return new Point(x - t.x, y - t.y, z - t.z);
+	public Point subtract(Tuple that) {
+		return new Point(x - that.x, y - that.y, z - that.z);
 	}
 
 	/**

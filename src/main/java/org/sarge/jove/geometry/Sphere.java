@@ -49,10 +49,6 @@ public record Sphere(Point centre, float radius) {
 		return new Vector(x, z, y);
 	}
 
-	// https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection#bounding_spheres
-	// http://www.lighthouse3d.com/tutorials/maths/ray-sphere-intersection/
-	// http://kylehalladay.com/blog/tutorial/math/2013/12/24/Ray-Sphere-Intersection.html
-
 	@Override
 	public boolean equals(Object obj) {
 		return
