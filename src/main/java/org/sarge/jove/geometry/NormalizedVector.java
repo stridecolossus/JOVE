@@ -15,12 +15,12 @@ public class NormalizedVector extends Vector {
 	}
 
 	@Override
-	public float magnitude() {
+	public final float magnitude() {
 		return 1;
 	}
 
 	@Override
-	public Vector normalize() {
+	public final Vector normalize() {
 		return this;
 	}
 }

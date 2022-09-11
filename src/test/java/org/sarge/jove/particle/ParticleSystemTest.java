@@ -65,6 +65,15 @@ class ParticleSystemTest {
 			assertEquals(1, sys.particles().size());
 		}
 
+		@DisplayName("cannot add more particles than the configured maximum")
+		@Test
+		void max() {
+			sys.max(1);
+			sys.add(2, 0);
+			assertEquals(1, sys.max());
+			assertEquals(1, sys.size());
+		}
+
 		@DisplayName("can be configured to generate new particles on each frame")
 		@Test
 		void generate() {

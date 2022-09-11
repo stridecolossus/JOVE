@@ -314,25 +314,21 @@ static GenerationPolicy fixed(int num) {
 }
 ```
 
-The following more specialised implementation increments the number of particles in the system and applies a maximum cap:
+The following more specialised implementation increments the number of particles:
 
 ```java
 public class IncrementGenerationPolicy implements GenerationPolicy {
     private final float inc;
-    private final int max;
     private float pending;
 }
 ```
-
-Where `inc` is the number of particles to generate per-second.
 
 The `actual` number of particles to generate is integral and `pending` accumulates fractional results between each frame:
 
 ```java
 public int count(int current, float elapsed) {
-    // Accumulate particles to generate and clamp
+    // Accumulate particles to generate
     pending += inc * elapsed;
-    pending = Math.min(max - current, pending);
 
     // Determine actual number of particles to generate
     int actual = (int) pending;
@@ -539,40 +535,7 @@ The only other modification is in the render configuration where the draw comman
 TODO
 ```
 
-The vertex shader outputs each particle as a point:
-
-TODO - same as prev?
-
-```glsl
-#version 450
-
-layout(push_constant) uniform Matrix {
-    mat4 modelview;
-};
-
-layout(location=0) in vec3 pos;
-
-void main() {
-    gl_PointSize = 1;
-    gl_Position = modelview * vec4(pos, 1.0);
-}
-```
-
-The geometry shader (unchanged from the previous demo) generates a billboard quad for each point.
-
-For the moment the fragment shader ignores the generated quad and outputs a flat yellow colour:
-
-```glsl
-#version 450
-
-layout(location=0) in vec2 coords;
-
-layout(location=0) out vec4 col;
-
-void main() {
-    col = vec4(1, 1, 0, 1);
-}
-```
+For the moment the fragment shader outputs a flat yellow colour, the vertex and geometry shaders are unchanged from the previous project.
 
 If all goes well we should see a fountain of yellow quads when running the particle system:
 
@@ -939,9 +902,9 @@ public Vector reflect(Vector normal) {
 }
 ```
 
-Note that as things stand this approach simply sets the particle at the intersection point and reflects the movement vector.  This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
+Note that as things stand this approach simply moves the particle to the intersection point and reflects the movement vector.  This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
 
-There is a further complication here: if a reflecting surface is defined in terms of a plane then __all__ rays that cross that plane are considered as intersecting.  What is required is an intersection test that only considers rays in the negative half-space.  The `negative` adapter and the default ray-plane intersection test could be composed together but this means the distance logic is essentially being calculated twice which feels wrong.  Therefore the existing intersection test is modified to optionally take into account the half-space:
+There is a further problem when using planes as a reflecting surface, since __all__ rays that cross that plane are considered as intersecting.  In this instance what is really required is an intersection test that only considers rays that have moved behind the plane, and a modification to allow the intersection point to be calculated backwards from the origin.  Therefore the existing code is modified to optionally take this case into account:
 
 ```java
 private Intersection intersections(Ray ray, boolean pos) {
@@ -1123,15 +1086,15 @@ public record Bounds(Point min, Point max) {
 }
 ```
 
-Particles can now be randomly generated within the given bounds:
+Particles can now be randomly generated within a given box:
 
 ```java
-static PositionFactory box(Bounds bounds, Randomiser randomiser) {
-    Point min = bounds.min();
-    Vector range = Axis.between(min, bounds.max());
+static PositionFactory box(Bounds box, Randomiser randomiser) {
+    Point centre = box.centre();
+    Vector range = Vector.between(box.min(), box.max()).multiply(MathsUtil.HALF);
     return () -> {
         Vector vec = randomiser.vector().multiply(range);
-        return new Point(vec).add(min);
+        return new Point(vec).add(centre);
     };
 }
 ```
@@ -1153,7 +1116,7 @@ public class Randomiser {
 }
 ```
 
-Where `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
+Where `multiply` is a new method on the the vector class that performs a component-wise multiplication.
 
 The final emitter implementation generates particles on the surface of a sphere:
 
@@ -1170,77 +1133,22 @@ Where `Sphere` is a simple tuple for a centre point and a radius.
 
 ### Colour Fade
 
-The final outstanding requirement is to apply a colour to the particles which is calculated in the shader based on particle age.
-First a second `TIMESTAMPS` characteristic is defined to output particle timestamps to the vertex buffer, which is configured in the constructor of the particle system:
+The final outstanding requirements for the sparks demo are a texture for the particles and animation of the colour.
+
+TODO
+note about timestamps
+add to buffer()
 
 ```java
-private static ParticleSystem system(ApplicationConfiguration cfg) {
-    var sys = new ParticleSystem(Characteristic.TIMESTAMPS);
-    ...
-}
 ```
 
-TODO - non interleaved layout?
-
-A second vertex attribute is added for the creation timestamp and the particle age is a new output variable:
+TODO - texture, atlas, random/iterate
+And finally the colour is output by the fragment shader:
 
 ```glsl
-layout(location=1) in float created;
-layout(location=0) out float age;
 ```
 
-The age is scaled by the particle lifetime which requires another shader constant:
-
-```glsl
-layout(constant_id=2) const int lifetime = 1000;
-
-void main() {
-    ...
-    age = (time - created) / lifetime;
-}
-```
-
-Where the current `time` is a new push constant:
-
-```glsl
-layout(push_constant) uniform Matrix {
-    float time;
-    mat4 modelview;
-};
-```
-
-Unfortunately the age has to be passed through the geometry shader:
-
-```glsl
-layout(location=0) in float[] ages;
-layout(location=1) out float age;
-```
-
-Note that the input age has to be defined as an _array_ (with one element in this case) which sets the output 'age' for each quad vertex:
-
-```glsl
-void vertex(vec4 pos, float x, float y) {
-    ...
-    age = ages[0];
-    EmitVertex();
-}
-```
-
-Finally the fragment shader fades the colour depending on the particle age:
-
-```glsl
-#version 450
-
-layout(location=0) in vec2 coords;
-layout(location=1) in float age;
-
-layout(location=0) out vec4 col;
-
-void main() {
-    col = vec4(1, age, age / 2, age);
-}
-```
-
+TODO
 Particles should now start off bright white-yellow and fade through red to black:
 
 ![Particle system colour fade](particle.fade.png)
@@ -1542,6 +1450,46 @@ The pipeline configuration can now be updated to apply an additive blending oper
             .build()
         .build()
     .get();
+```
+
+---
+
+A second vertex attribute is added for the particle colour:
+
+```glsl
+layout(location=1) in vec4 inColour;
+layout(location=0) out vec4 outColour;
+```
+
+Which unfortunately has to be passed through the geometry shader:
+
+```glsl
+layout(location=0) in vec4[] inColour;
+layout(location=1) out vec4 outColour;
+```
+
+Note that the input variable has to be defined as an _array_ (with one element in this case) which sets the colour of each quad vertex:
+
+```glsl
+void vertex(vec4 pos, float x, float y) {
+    ...
+    outColour = inColour[0];
+    EmitVertex();
+}
+```
+
+And finally the colour is output by the fragment shader:
+
+```glsl
+#version 450
+
+layout(location=0) in vec4 inColour;
+
+layout(location=0) out vec4 outColour;
+
+void main() {
+    outColour = inColour;
+}
 ```
 
 ---

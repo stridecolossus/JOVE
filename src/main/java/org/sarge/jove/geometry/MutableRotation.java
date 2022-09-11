@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.geometry.Rotation.AxisAngle;
 
 /**
- * A <i>mutable rotation</i> specifies a counter-clockwise rotation about an axis.
+ * Mutable implementation.
  * @author Sarge
  */
 public class MutableRotation extends AxisAngle {

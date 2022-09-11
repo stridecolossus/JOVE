@@ -61,7 +61,7 @@ public final class Point extends Tuple {
 	}
 
 	/**
-	 * Convenience method: Subtracts the given tuple from this point.
+	 * Convenience method - Subtracts the given tuple from this point.
 	 * @param that Tuple
 	 * @return Subtracted point
 	 * @see #add(Tuple)

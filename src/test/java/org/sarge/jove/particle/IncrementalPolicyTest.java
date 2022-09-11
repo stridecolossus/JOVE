@@ -9,7 +9,7 @@ public class IncrementalPolicyTest {
 
 	@BeforeEach
 	void before() {
-		policy = new IncrementGenerationPolicy(1, 2);
+		policy = new IncrementGenerationPolicy(1);
 	}
 
 	@DisplayName("The number of new particles is generated for each frame")
@@ -18,23 +18,10 @@ public class IncrementalPolicyTest {
 		assertEquals(1, policy.count(0, 1));
 	}
 
-	@DisplayName("The number of new particles is capped by the configured maximum")
-	@Test
-	void maximum() {
-		assertEquals(2, policy.count(0, 3));
-	}
-
 	@DisplayName("The number of new particles is accumulated as a fraction")
 	@Test
 	void accumulate() {
 		assertEquals(0, policy.count(0, 0.5f));
 		assertEquals(1, policy.count(0, 0.5f));
-	}
-
-	@DisplayName("An accumulated number of particles is capped by the configured maximum")
-	@Test
-	void capped() {
-		assertEquals(0, policy.count(0, 0.5f));
-		assertEquals(2, policy.count(0, 3));
 	}
 }

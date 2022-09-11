@@ -6,6 +6,7 @@ import java.io.*;
 import java.time.Duration;
 
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.particle.ParticleSystem.Characteristic;
@@ -39,6 +40,9 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 		// Init particle system
 		final Characteristic[] chars = characteristics(root);
 		final ParticleSystem sys = new ParticleSystem(chars);
+
+		// Load maximum number of particles
+		root.optional("max").map(Element::text).map(Content::toInteger).ifPresent(sys::max);
 
 		// Load generation policy
 		root
@@ -113,8 +117,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 
 			case "incremental" -> {
 				final int inc = root.child("increment").text().toInteger();
-				final int max = root.child("max").text().toInteger();
-				yield new IncrementGenerationPolicy(inc, max);
+				yield new IncrementGenerationPolicy(inc);
 			}
 
 			default -> throw root.exception("Unknown generation policy");
@@ -191,7 +194,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 		return switch(root.name()) {
 			case "plane" -> plane(root);
 			case "behind" -> plane(root).behind();
-			case "negative" -> plane(root).negative();
+			case "negative" -> plane(root).halfspace(HalfSpace.NEGATIVE);
 			default -> throw root.exception("Unknown collision surface");
 		};
 	}

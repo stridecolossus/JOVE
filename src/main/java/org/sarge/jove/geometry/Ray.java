@@ -3,7 +3,8 @@ package org.sarge.jove.geometry;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>ray</i> is specified as a vector relative to an originating position, used for intersection tests, picking, etc.
+ * A <i>ray</i> is specified as a vector relative to an originating position.
+ * Rays are used for intersection tests, picking, etc.
  * @author Sarge
  */
 public interface Ray {
@@ -85,7 +86,7 @@ public interface Ray {
 	 * <p>
 	 * The returned array of intersection {@link #distances()} are generally assumed to be ordered nearest to the surface.
 	 * <p>
-	 * The {@link #normal(Point)} method should be overridden for use-cases that require a surface normal.
+	 * The {@link #normal(Point)} method should be implemented for use-cases that require a surface normal.
 	 * <p>
 	 * Usage:
 	 * <pre>
@@ -99,10 +100,10 @@ public interface Ray {
 	 * float[] distances = intersection.distances();
 	 * Point pt = ray.point(distances[0]);
 	 *
-	 * // Or arbitrarily select the first intersection point
-	 * Point pt = Intersection.point(ray, intersection);
+	 * // Or arbitrarily select the intersection point nearest the surface
+	 * Point pt = intersection.nearest(ray);
 	 *
-	 * // Calculate the surface normal at this intersection point
+	 * // Calculate the surface normal at an intersection point
 	 * Vector normal = intersection.normal(pt);
 	 * <p>
 	 * @see Intersected#NONE

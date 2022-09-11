@@ -104,12 +104,12 @@ public record Plane(Vector normal, float distance) implements Intersected {
 
 	/**
 	 * Helper - Determines the half-space of the given point with respect to this plane.
-	 * @param pt Point
+	 * @param p Point
 	 * @return Half-space
 	 * @see HalfSpace#of(float)
 	 */
-	public HalfSpace halfspace(Point pt) {
-		return HalfSpace.of(distance(pt));
+	public HalfSpace halfspace(Point p) {
+		return HalfSpace.of(distance(p));
 	}
 
 	@Override
@@ -155,29 +155,28 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	/**
 	 * Creates an adapter for this plane that only applies the intersection test to rays <i>behind</i> this plane, i.e. in the {@link HalfSpace#NEGATIVE} half-space.
 	 * @return Intersecting surface for rays behind this plane
-	 * @see #negative()
+	 * @see #halfspace(HalfSpace)
 	 */
 	public Intersected behind() {
 		return ray -> intersections(ray, false);
 	}
 
 	/**
-	 * Creates an intersection adapter for this plane that considers <b>all</b> rays <i>behind</i> the plane to be intersecting, i.e. in the {@link HalfSpace#NEGATIVE} half-space.
+	 * Creates an adapter for this plane that considers <b>all</b> rays in the given half-space as intersecting.
 	 * <p>
-	 * This implementation may offer better performance when the actual intersection point and surface normal are not relevant.
-	 * Note that the intersection results are undefined and only indicate <i>whether</i> a ray originates in the negative half-space.
+	 * This implementation offers better performance when the actual intersection point and surface normal are not relevant.
+	 * Note that the intersection results are {@link Intersected#UNDEFINED}.
 	 * <p>
-	 * @return Negative half-space intersection surface
-	 * @throws UnsupportedOperationException if the undefined intersection point or surface normal are queried
+	 * @return Half-space intersection test
 	 * @see #behind()
 	 */
-	public Intersected negative() {
+	public Intersected halfspace(HalfSpace space) {
 		return ray -> {
-			if(halfspace(ray.origin()) == HalfSpace.POSITIVE) {
-				return NONE;
+			if(halfspace(ray.origin()) == space) {
+				return UNDEFINED;
 			}
 			else {
-				return UNDEFINED;
+				return NONE;
 			}
 		};
 	}

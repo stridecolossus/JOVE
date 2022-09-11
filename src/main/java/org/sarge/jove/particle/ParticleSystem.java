@@ -45,12 +45,7 @@ public class ParticleSystem implements Animation {
 		 * Whether particles should be culled, i.e. the system has influences or collisions surfaces that {@link Particle#destroy()} particles.
 		 * Ignored if the particle system has a {@link ParticleSystem#lifetime(long)}.
 		 */
-		CULL,
-
-		/**
-		 * Whether particles output the creation {@link Particle#time()} to the vertex buffer.
-		 */
-		TIMESTAMPS
+		CULL
 	}
 
 	private final Collection<Characteristic> chars;
@@ -60,6 +55,7 @@ public class ParticleSystem implements Animation {
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, Collision> surfaces = new HashMap<>();
 	private List<Particle> particles = new ArrayList<>();
+	private int max = Integer.MAX_VALUE;
 	private long lifetime = Long.MAX_VALUE;
 
 	/**
@@ -75,15 +71,6 @@ public class ParticleSystem implements Animation {
 	 */
 	public Set<Characteristic> characteristics() {
 		return Set.copyOf(chars);
-	}
-
-	/**
-	 * Adds a particle system characteristic.
-	 * @param c Characteristic
-	 */
-	public ParticleSystem add(Characteristic c) {
-		chars.add(notNull(c));
-		return this;
 	}
 
 	/**
@@ -119,13 +106,29 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Adds new particles to this system.
+	 * @return Maximum number of particles
+	 */
+	public int max() {
+		return max;
+	}
+
+	/**
+	 * Sets the maximum number of particles (default is {@link Integer#MAX_VALUE}).
+	 * @param max Maximum number of particles
+	 */
+	public ParticleSystem max(int max) {
+		this.max = oneOrMore(max);
+		return this;
+	}
+
+	/**
+	 * Adds new particles to this system clamped by {@link #max(int)}.
 	 * @param num 		Number of particles to add
 	 * @param time		Current time
-	 * @see #factory(Factory)
 	 */
 	public synchronized void add(int num, long time) {
-		for(int n = 0; n < num; ++n) {
+		final int actual = Math.min(num, max - size());
+		for(int n = 0; n < actual; ++n) {
 			final Point start = position.position();
 			final Vector dir = vector.vector(start);
 			final Particle p = particle(time, start, dir);
