@@ -238,6 +238,10 @@ private final Bufferable vertices = new Bufferable() {
 };
 ```
 
+TODO
+- note all scenarios output timestamps but inn practice would omit if unused
+or custom impls to optimise
+
 Note that the original model `Header` is now composed into the model class since the draw `count` is no longer a static property (and a separate header record provided little benefit anyway).
 A skeleton implementation is also introduced with an empty index buffer.
 
@@ -725,7 +729,7 @@ private void collide(Particle p) {
 }
 ```
 
-A `Collision` defines the operation to be performed on the intersected particle and provides default implementations:
+A `Collision` defines the operation to be performed on the intersected particle:
 
 ```java
 public interface Collision {
@@ -1300,197 +1304,6 @@ Shader fragment(ApplicationConfiguration cfg) {
 
 The demo can now be used to run all the scenarios switched by the application argument.
 Sweet.
-
----
-
-## Colour Blending
-
-TODO - move to galaxy demo chapter
-
-To enable colour blending in the demo a new pipeline stage is introduced:
-
-```java
-public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
-    private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
-
-    public ColourBlendPipelineStageBuilder() {
-        info.logicOpEnable = VulkanBoolean.FALSE;
-        info.logicOp = VkLogicOp.COPY;
-        Arrays.fill(info.blendConstants, 1);
-    }
-}
-```
-
-The global blending properties are configured as follows:
-
-```java
-public ColourBlendPipelineStageBuilder enable(boolean enabled) {
-    info.logicOpEnable = VulkanBoolean.of(enabled);
-    return this;
-}
-
-public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
-    info.logicOp = notNull(op);
-    return this;
-}
-
-public ColourBlendPipelineStageBuilder constants(float[] constants) {
-    System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
-    return this;
-}
-```
-
-The blending configuration for each colour attachment is implemented as a nested builder:
-
-```java
-public AttachmentBuilder attachment() {
-    return new AttachmentBuilder();
-}
-```
-
-Which specifies the logical operation between a fragment and the existing colour in the framebuffer attachment(s).
-
-```java
-public class AttachmentBuilder {
-    private boolean enabled = true;
-    private int mask = IntegerEnumeration.reduce(VkColorComponent.values());
-    private final BlendOperationBuilder colour = new BlendOperationBuilder();
-    private final BlendOperationBuilder alpha = new BlendOperationBuilder();
-
-    private AttachmentBuilder() {
-        colour.source(VkBlendFactor.SRC_ALPHA);
-        colour.destination(VkBlendFactor.ONE_MINUS_SRC_ALPHA);
-        alpha.source(VkBlendFactor.ONE);
-        alpha.destination(VkBlendFactor.ZERO);
-        attachments.add(this);
-    }
-}
-```
-
-The colour `mask` is used to specify which channels are subject to the blend operation, expressed as a simple string:
-
-```java
-public AttachmentBuilder mask(String mask) {
-    this.mask = mask
-        .chars()
-        .mapToObj(Character::toString)
-        .map(VkColorComponent::valueOf)
-        .collect(collectingAndThen(toList(), IntegerEnumeration::reduce));
-
-    return this;
-}
-```
-
-The properties for the colour and alpha components are identical so a further nested builder configures both values:
-
-```java
-public class BlendOperationBuilder {
-    private VkBlendFactor src;
-    private VkBlendFactor dest;
-    private VkBlendOp blend = VkBlendOp.ADD;
-
-    private BlendOperationBuilder() {
-    }
-
-    public AttachmentBuilder build() {
-        return AttachmentBuilder.this;
-    }
-}
-```
-
-The descriptor for the attachment is generated in the nested builder as follows:
-
-```java
-private void populate(VkPipelineColorBlendAttachmentState info) {
-    // Init descriptor
-    info.blendEnable = VulkanBoolean.of(enabled);
-    info.colorWriteMask = mask;
-
-    // Init colour blending operation
-    info.srcColorBlendFactor = colour.src;
-    info.dstColorBlendFactor = colour.dest;
-    info.colorBlendOp = colour.blend;
-
-    // Init alpha blending operation
-    info.srcAlphaBlendFactor = alpha.src;
-    info.dstAlphaBlendFactor = alpha.dest;
-    info.alphaBlendOp = alpha.blend;
-}
-```
-
-And finally the descriptor for the pipeline stage can be constructed:
-
-```java
-@Override
-VkPipelineColorBlendStateCreateInfo get() {
-    // Init default attachment if none specified
-    if(attachments.isEmpty()) {
-        new AttachmentBuilder().build();
-    }
-
-    // Add attachment descriptors
-    info.attachmentCount = attachments.size();
-    info.pAttachments = StructureHelper.pointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
-
-    return info;
-}
-```
-
-Note that by convenience a single, default attachment is added if none are configured (at least one must be specified).
-
-The pipeline configuration can now be updated to apply an additive blending operation in the demo:
-
-```java
-.blend()
-    .enable(true)
-    .operation(VkLogicOp.COPY)
-    .attachment()
-        .colour()
-            .destination(VkBlendFactor.ONE)
-            .build()
-        .build()
-    .get();
-```
-
----
-
-A second vertex attribute is added for the particle colour:
-
-```glsl
-layout(location=1) in vec4 inColour;
-layout(location=0) out vec4 outColour;
-```
-
-Which unfortunately has to be passed through the geometry shader:
-
-```glsl
-layout(location=0) in vec4[] inColour;
-layout(location=1) out vec4 outColour;
-```
-
-Note that the input variable has to be defined as an _array_ (with one element in this case) which sets the colour of each quad vertex:
-
-```glsl
-void vertex(vec4 pos, float x, float y) {
-    ...
-    outColour = inColour[0];
-    EmitVertex();
-}
-```
-
-And finally the colour is output by the fragment shader:
-
-```glsl
-#version 450
-
-layout(location=0) in vec4 inColour;
-
-layout(location=0) out vec4 outColour;
-
-void main() {
-    outColour = inColour;
-}
-```
 
 ---
 
