@@ -59,7 +59,7 @@ From the above the following requirements can be derived:
 
 ### Design
 
-For the particle system design we considered several alternative approaches (there are almost certainly others) for how the _trajectory_ of a particle could be specified:
+For the particle system design we considered several alternative approaches (and there are almost certainly others) for how the _trajectory_ of a particle could be specified:
 
 * A particle has a trajectory _function_ that calculates the position of the particle at a given instant (including any influences such as gravity, wind resistance, etc).
 
@@ -87,7 +87,7 @@ We will progressively build up the particle system functionality using the _spar
 
 ### Framework
 
-The logical starting point is the definition of a _particle_ comprising a trajectory and creation timestamp:
+The logical starting point is the definition of a _particle_ which is a mutable type:
 
 ```java
 public class Particle {
@@ -112,6 +112,7 @@ public class ParticleSystem implements Animation {
     private PositionFactory pos = PositionFactory.ORIGIN;
     private VectorFactory vec = VectorFactory.of(Axis.Y);
     private final List<Particle> particles = new ArrayList<>();
+    private int max = 1;
 }
 ```
 
@@ -170,7 +171,8 @@ New particles can now be programatically added to the system:
 
 ```java
 public void add(int num, long time) {
-    for(int n = 0; n < num; ++n) {
+    int actual = Math.min(num, max - size());
+    for(int n = 0; n < actual; ++n) {
         Point start = pos.position();
         Vector dir = vec.vector(start);
         Particle p = new Particle(time, start, dir);
@@ -232,14 +234,20 @@ private final Bufferable vertices = new Bufferable() {
     @Override
     public void buffer(ByteBuffer bb) {
         for(Particle p : sys.particles()) {
-            p.position().buffer(bb);
+            p.buffer(bb);
         }
     }
 };
 ```
 
-Note that the original model `Header` is now composed into the model class since the draw `count` is no longer a static property (and a separate header record provided little benefit anyway).
-A skeleton implementation is also introduced with an empty index buffer.
+Where the `buffer` method of the particle outputs the position and colour:
+
+```java
+void buffer(ByteBuffer bb) {
+    pos.buffer(bb);
+    col.buffer(bb);
+}
+```
 
 ### Influences
 
@@ -314,25 +322,21 @@ static GenerationPolicy fixed(int num) {
 }
 ```
 
-The following more specialised implementation increments the number of particles in the system and applies a maximum cap:
+The following more specialised implementation increments the number of particles:
 
 ```java
 public class IncrementGenerationPolicy implements GenerationPolicy {
     private final float inc;
-    private final int max;
     private float pending;
 }
 ```
-
-Where `inc` is the number of particles to generate per-second.
 
 The `actual` number of particles to generate is integral and `pending` accumulates fractional results between each frame:
 
 ```java
 public int count(int current, float elapsed) {
-    // Accumulate particles to generate and clamp
+    // Accumulate particles to generate
     pending += inc * elapsed;
-    pending = Math.min(max - current, pending);
 
     // Determine actual number of particles to generate
     int actual = (int) pending;
@@ -470,7 +474,7 @@ The particle system, model and animator are instantiated in the constructor:
 
 ```java
 public ParticleSystemConfiguration() {
-    this.sys = system(cfg);
+    this.sys = system();
     this.animator = new Animator(sys);
     this.model = new ParticleModel(sys);
 }
@@ -479,9 +483,9 @@ public ParticleSystemConfiguration() {
 The particle system periodically emits a relatively small number of particles per second in a randomised cone:
 
 ```java
-private static ParticleSystem system(ApplicationConfiguration cfg) {
-    final var sys = new ParticleSystem();
-    sys.policy(new IncrementGenerationPolicy(10, cfg.getMax()));
+private static ParticleSystem system() {
+    var sys = new ParticleSystem();
+    sys.policy(new IncrementGenerationPolicy(10, 100));
     sys.lifetime(5000L);
     sys.vector(new ConeVectorFactory(Axis.Y, 1, new Randomiser()));
     return sys;
@@ -492,7 +496,7 @@ Next the vertex buffer for the particles is created:
 
 ```java
 @Bean
-public VertexBuffer vbo(LogicalDevice dev, ApplicationConfiguration cfg) {
+public VertexBuffer vbo(LogicalDevice dev) {
     var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
         .usage(VkBufferUsageFlag.VERTEX_BUFFER)
         .required(VkMemoryProperty.HOST_VISIBLE)
@@ -500,7 +504,7 @@ public VertexBuffer vbo(LogicalDevice dev, ApplicationConfiguration cfg) {
         .optimal(VkMemoryProperty.DEVICE_LOCAL)
         .build();
 
-    int len = cfg.getMax() * Point.LAYOUT.length();
+    int len = sys.max() * Point.LAYOUT.length();
     VulkanBuffer buffer = VulkanBuffer.create(dev, len, props);
     return new VertexBuffer(buffer);
 }
@@ -539,40 +543,26 @@ The only other modification is in the render configuration where the draw comman
 TODO
 ```
 
-The vertex shader outputs each particle as a point:
-
-TODO - same as prev?
+For the moment the fragment shader is a simple pass-through implementation that ignores the generated texture coordinates:
 
 ```glsl
 #version 450
 
-layout(push_constant) uniform Matrix {
-    mat4 modelview;
-};
+layout(location=0) in vec2 inCoords;
+layout(location=1) in vec4 inColour;
 
-layout(location=0) in vec3 pos;
+layout(location=0) out vec4 outColour;
 
 void main() {
-    gl_PointSize = 1;
-    gl_Position = modelview * vec4(pos, 1.0);
+    outColour = inColour;
 }
 ```
 
-The geometry shader (unchanged from the previous demo) generates a billboard quad for each point.
+Notes:
 
-For the moment the fragment shader ignores the generated quad and outputs a flat yellow colour:
+* The particle colour is hard-coded to a flat yellow colour.
 
-```glsl
-#version 450
-
-layout(location=0) in vec2 coords;
-
-layout(location=0) out vec4 col;
-
-void main() {
-    col = vec4(1, 1, 0, 1);
-}
-```
+* The vertex and geometry shaders are unchanged from the previous project.
 
 If all goes well we should see a fountain of yellow quads when running the particle system:
 
@@ -762,7 +752,7 @@ private void collide(Particle p) {
 }
 ```
 
-A `Collision` defines the operation to be performed on the intersected particle and provides default implementations:
+A `Collision` defines the operation to be performed on the intersected particle:
 
 ```java
 public interface Collision {
@@ -939,9 +929,9 @@ public Vector reflect(Vector normal) {
 }
 ```
 
-Note that as things stand this approach simply sets the particle at the intersection point and reflects the movement vector.  This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
+Note that as things stand this approach simply moves the particle to the intersection point and reflects the movement vector.  This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
 
-There is a further complication here: if a reflecting surface is defined in terms of a plane then __all__ rays that cross that plane are considered as intersecting.  What is required is an intersection test that only considers rays in the negative half-space.  The `negative` adapter and the default ray-plane intersection test could be composed together but this means the distance logic is essentially being calculated twice which feels wrong.  Therefore the existing intersection test is modified to optionally take into account the half-space:
+There is a further problem when using planes as a reflecting surface, since __all__ rays that cross that plane are considered as intersecting.  In this instance what is really required is an intersection test that only considers rays that have moved behind the plane, and a modification to allow the intersection point to be calculated backwards from the origin.  Therefore the existing code is modified to optionally take this case into account:
 
 ```java
 private Intersection intersections(Ray ray, boolean pos) {
@@ -1092,7 +1082,7 @@ Finally particles that have been destroyed (either by lifetime expiration or a c
 
 ```java
 private void cull() {
-    if(!chars.contains(Characteristic.CULL) && !isLifetimeBound()) {
+    if(chars.contains(Characteristic.DISABLE_CULLING)) {
         return;
     }
 
@@ -1105,7 +1095,7 @@ private void cull() {
 
 Notes:
 
-* The `Characteristic` enumeration is introduced where `CULL` is a hint that the system contains a collision surface that destroys particles.
+* The `Characteristic` enumeration is introduced where `DISABLE_CULLING` is a hint for a particle system that does not expire or destroy particles.
 
 * The reference to the `particles` collection is now mutable and is over-written by the `cull` method.
 
@@ -1123,15 +1113,15 @@ public record Bounds(Point min, Point max) {
 }
 ```
 
-Particles can now be randomly generated within the given bounds:
+Particles can now be randomly generated within a given box:
 
 ```java
-static PositionFactory box(Bounds bounds, Randomiser randomiser) {
-    Point min = bounds.min();
-    Vector range = Axis.between(min, bounds.max());
+static PositionFactory box(Bounds box, Randomiser randomiser) {
+    Point centre = box.centre();
+    Vector range = Vector.between(box.min(), box.max()).multiply(MathsUtil.HALF);
     return () -> {
         Vector vec = randomiser.vector().multiply(range);
-        return new Point(vec).add(min);
+        return new Point(vec).add(centre);
     };
 }
 ```
@@ -1153,7 +1143,7 @@ public class Randomiser {
 }
 ```
 
-Where `multiply` is a new method on the the vector class that performs a component-wise multiplication operation.
+Where `multiply` is a new method on the the vector class that performs a component-wise multiplication.
 
 The final emitter implementation generates particles on the surface of a sphere:
 
@@ -1170,82 +1160,110 @@ Where `Sphere` is a simple tuple for a centre point and a radius.
 
 ### Colour Fade
 
-The final outstanding requirement is to apply a colour to the particles which is calculated in the shader based on particle age.
-First a second `TIMESTAMPS` characteristic is defined to output particle timestamps to the vertex buffer, which is configured in the constructor of the particle system:
+The final outstanding requirements for the sparks demo is animation of the colour and particle textures.
+
+First a further configurable property is added to the particle system to determine the colour of a particle depending on its age:
 
 ```java
-private static ParticleSystem system(ApplicationConfiguration cfg) {
-    var sys = new ParticleSystem(Characteristic.TIMESTAMPS);
-    ...
+@FunctionalInterface
+public interface ColourFactory {
+    /**
+     * Determines the colour of a particle.
+     * @param t Elapsed scalar
+     * @return Particle colour
+     */
+    Colour colour(float t);
+
+    /**
+     * @return Whether the particle colour is modified on each frame
+     */
+    default boolean isModified() {
+        return true;
+    }
 }
 ```
 
-TODO - non interleaved layout?
+A constant colour is specified via a factory method:
 
-A second vertex attribute is added for the creation timestamp and the particle age is a new output variable:
+```java
+static ColourFactory of(Colour col) {
+    return new ColourFactory() {
+        @Override
+        public Colour colour(float __) {
+            return col;
+        }
 
-```glsl
-layout(location=1) in float created;
-layout(location=0) out float age;
-```
-
-The age is scaled by the particle lifetime which requires another shader constant:
-
-```glsl
-layout(constant_id=2) const int lifetime = 1000;
-
-void main() {
-    ...
-    age = (time - created) / lifetime;
+        @Override
+        public boolean isModified() {
+            return false;
+        }
+    };
 }
 ```
 
-Where the current `time` is a new push constant:
+Which is applied once when particles are generated in the `add` method of the particle system:
 
-```glsl
-layout(push_constant) uniform Matrix {
-    float time;
-    mat4 modelview;
-};
-```
-
-Unfortunately the age has to be passed through the geometry shader:
-
-```glsl
-layout(location=0) in float[] ages;
-layout(location=1) out float age;
-```
-
-Note that the input age has to be defined as an _array_ (with one element in this case) which sets the output 'age' for each quad vertex:
-
-```glsl
-void vertex(vec4 pos, float x, float y) {
-    ...
-    age = ages[0];
-    EmitVertex();
+```java
+if(!colour.isModified()) {
+    Colour col = colour.colour(0);
+    for(Particle p : added) {
+        p.colour(col);
+    }
 }
 ```
 
-Finally the fragment shader fades the colour depending on the particle age:
+A second implementation interpolates a colour over the lifetime of the particle:
 
-```glsl
-#version 450
-
-layout(location=0) in vec2 coords;
-layout(location=1) in float age;
-
-layout(location=0) out vec4 col;
-
-void main() {
-    col = vec4(1, age, age / 2, age);
+```java
+static ColourFactory interpolated(Colour start, Colour end) {
+    return t -> start.interpolate(end, t);
 }
+```
+
+Which delegates to a new interpolator in the colour class:
+
+```java
+public Colour interpolate(Colour col, float t) {
+    float[] start = this.toArray();
+    float[] end = col.toArray();
+    for(int n = 0; n < start.length; ++n) {
+        start[n] = Interpolator.interpolate(t, start[n], end[n]);
+    }
+    return of(start);
+}
+```
+
+The colour factory is configured as follows in the demo:
+
+```java
+sys.colour(ColourFactory.interpolated(new Colour(1, 1, 0.5f, 1), new Colour(0.5f, 0, 0, 0)));
 ```
 
 Particles should now start off bright white-yellow and fade through red to black:
 
 ![Particle system colour fade](particle.fade.png)
 
-Note that this assumes the pipeline has the same colour and alpha blending configuration from the previous demo.
+Note that colour blending is disabled in the pipeline.
+
+TODO - texture, atlas, random/iterate
+
+And finally the particle colour is mixed with the texture in the fragment shader:
+
+```glsl
+#version 450
+
+layout(location=0) in vec2 inCoords;
+layout(location=1) in vec4 inColour;
+
+layout(location=0) out vec4 outColour;
+
+void main() {
+    // TODO - sampler
+    outColour = inColour;
+}
+```
+
+TODO - pic + texture
 
 ### Configuration
 
@@ -1286,14 +1304,13 @@ private GenerationPolicy policy(Element root) {
         case "none" -> GenerationPolicy.NONE;
 
         case "fixed" -> {
-            int num = root.child("num").text().toInteger();
+            int num = root.text().toInteger();
             yield GenerationPolicy.fixed(num);
         }
 
-        case "incremental" -> {
-            int inc = root.child("increment").text().toInteger();
-            int max = root.child("max").text().toInteger();
-            yield new IncrementGenerationPolicy(inc, max);
+        case "increment" -> {
+            int inc = root.text().toInteger();
+            yield new IncrementGenerationPolicy(inc);
         }
 
         default -> throw root.exception(...);
@@ -1305,12 +1322,9 @@ In this case an XML document seems the most appropriate format to configure the 
 
 ```xml
 <sparks>
-    <characteristic>TIMESTAMPS</characteristic>
+    <max>50</max>
     <policy>
-        <incremental>
-            <increment>10</increment>
-            <max>50</max>
-        </incremental>
+        <increment>10</increment>
     </policy>
     <lifetime>5s</lifetime>
     <position>
@@ -1322,6 +1336,12 @@ In this case an XML document seems the most appropriate format to configure the 
             <radius>1</radius>
         </cone>
     </vector>
+    <colour>
+        <interpolated>
+            <start>1, 1, 0.5, 1</start>
+            <end>0.5, 0, 0, 0</end>
+        </interpolated>
+    </colour>
     <influences>
         <literal>-Y</literal>
     </influences>
@@ -1367,19 +1387,19 @@ shader: particle
 #---
 spring.config.activate.on-profile=sparks
 title: Particle System - Sparks
-max: 100
 
 #---
 spring.config.activate.on-profile=smoke
 title: Particle System - Smoke
-max: 250
 size: 1
 shader: circle
 ```
 
-Note that the first section specifies properties that are common to all profiles.
+Notes:
 
-The _size_ property and the particle lifetime are injected into the relevant shaders as specialisation constants.
+* The first section specifies properties that are common to all profiles.
+
+* The _size_ property is injected into the relevant shaders as a specialisation constant.
 
 Finally a new configuration property is added to specify the fragment shader:
 
@@ -1392,157 +1412,6 @@ Shader fragment(ApplicationConfiguration cfg) {
 
 The demo can now be used to run all the scenarios switched by the application argument.
 Sweet.
-
----
-
-## Colour Blending
-
-TODO - move to galaxy demo chapter
-
-To enable colour blending in the demo a new pipeline stage is introduced:
-
-```java
-public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
-    private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
-
-    public ColourBlendPipelineStageBuilder() {
-        info.logicOpEnable = VulkanBoolean.FALSE;
-        info.logicOp = VkLogicOp.COPY;
-        Arrays.fill(info.blendConstants, 1);
-    }
-}
-```
-
-The global blending properties are configured as follows:
-
-```java
-public ColourBlendPipelineStageBuilder enable(boolean enabled) {
-    info.logicOpEnable = VulkanBoolean.of(enabled);
-    return this;
-}
-
-public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
-    info.logicOp = notNull(op);
-    return this;
-}
-
-public ColourBlendPipelineStageBuilder constants(float[] constants) {
-    System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
-    return this;
-}
-```
-
-The blending configuration for each colour attachment is implemented as a nested builder:
-
-```java
-public AttachmentBuilder attachment() {
-    return new AttachmentBuilder();
-}
-```
-
-Which specifies the logical operation between a fragment and the existing colour in the framebuffer attachment(s).
-
-```java
-public class AttachmentBuilder {
-    private boolean enabled = true;
-    private int mask = IntegerEnumeration.reduce(VkColorComponent.values());
-    private final BlendOperationBuilder colour = new BlendOperationBuilder();
-    private final BlendOperationBuilder alpha = new BlendOperationBuilder();
-
-    private AttachmentBuilder() {
-        colour.source(VkBlendFactor.SRC_ALPHA);
-        colour.destination(VkBlendFactor.ONE_MINUS_SRC_ALPHA);
-        alpha.source(VkBlendFactor.ONE);
-        alpha.destination(VkBlendFactor.ZERO);
-        attachments.add(this);
-    }
-}
-```
-
-The colour `mask` is used to specify which channels are subject to the blend operation, expressed as a simple string:
-
-```java
-public AttachmentBuilder mask(String mask) {
-    this.mask = mask
-        .chars()
-        .mapToObj(Character::toString)
-        .map(VkColorComponent::valueOf)
-        .collect(collectingAndThen(toList(), IntegerEnumeration::reduce));
-
-    return this;
-}
-```
-
-The properties for the colour and alpha components are identical so a further nested builder configures both values:
-
-```java
-public class BlendOperationBuilder {
-    private VkBlendFactor src;
-    private VkBlendFactor dest;
-    private VkBlendOp blend = VkBlendOp.ADD;
-
-    private BlendOperationBuilder() {
-    }
-
-    public AttachmentBuilder build() {
-        return AttachmentBuilder.this;
-    }
-}
-```
-
-The descriptor for the attachment is generated in the nested builder as follows:
-
-```java
-private void populate(VkPipelineColorBlendAttachmentState info) {
-    // Init descriptor
-    info.blendEnable = VulkanBoolean.of(enabled);
-    info.colorWriteMask = mask;
-
-    // Init colour blending operation
-    info.srcColorBlendFactor = colour.src;
-    info.dstColorBlendFactor = colour.dest;
-    info.colorBlendOp = colour.blend;
-
-    // Init alpha blending operation
-    info.srcAlphaBlendFactor = alpha.src;
-    info.dstAlphaBlendFactor = alpha.dest;
-    info.alphaBlendOp = alpha.blend;
-}
-```
-
-And finally the descriptor for the pipeline stage can be constructed:
-
-```java
-@Override
-VkPipelineColorBlendStateCreateInfo get() {
-    // Init default attachment if none specified
-    if(attachments.isEmpty()) {
-        new AttachmentBuilder().build();
-    }
-
-    // Add attachment descriptors
-    info.attachmentCount = attachments.size();
-    info.pAttachments = StructureHelper.pointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
-
-    return info;
-}
-```
-
-Note that by convenience a single, default attachment is added if none are configured (at least one must be specified).
-
-The pipeline configuration can now be updated to apply an additive blending operation in the demo:
-
-```java
-.blend()
-    .enable(true)
-    .operation(VkLogicOp.COPY)
-    .attachment()
-        .colour()
-            .destination(VkBlendFactor.ONE)
-            .build()
-        .build()
-    .get();
-```
 
 ---
 

@@ -78,7 +78,7 @@ public abstract class Axis extends NormalizedVector {
 	protected abstract void rotation(float sin, float cos, Matrix.Builder matrix);
 
 	/**
-	 * Creates a rotation matrix about this axis.
+	 * Creates a counter-clockwise rotation matrix about this axis.
 	 * @param angle Rotation angle (radians)
 	 * @return Rotation matrix
 	 */

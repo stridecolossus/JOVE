@@ -12,8 +12,8 @@ class PositionFactoryTest {
 
 	@BeforeEach
 	void before() {
-		randomiser = mock(Randomiser.class);
-		when(randomiser.vector()).thenReturn(Axis.X);
+		randomiser = spy(Randomiser.class);
+		when(randomiser.next()).thenReturn(1f);
 	}
 
 	@DisplayName("The origin factory positions particles at the origin")
@@ -33,14 +33,16 @@ class PositionFactoryTest {
 	@DisplayName("The box factory positions particles randomly within the given bounds")
 	@Test
 	void box() {
-		final var factory = PositionFactory.box(new Bounds(Point.ORIGIN, new Point(1, 2, 3)), randomiser);
-		assertEquals(new Point(1, 0, 0), factory.position());
+		final Point max = new Point(1, 2, 3);
+		final var factory = PositionFactory.box(new Bounds(Point.ORIGIN, max), randomiser);
+		assertEquals(max, factory.position());
 	}
 
 	@DisplayName("The sphere factory positions particles randomly on the surface of a sphere")
 	@Test
 	void spherical() {
 		final var factory = PositionFactory.sphere(new Sphere(Point.ORIGIN, 3), randomiser);
-		assertEquals(new Point(3, 0, 0), factory.position());
+		final Vector expected = new Vector(1, 1, 1).normalize().multiply(3);
+		assertEquals(new Point(expected), factory.position());
 	}
 }

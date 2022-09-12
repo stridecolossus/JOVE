@@ -81,12 +81,12 @@ public class Tuple implements Bufferable {
 	 * <li>is the <i>magnitude</i> of a vector when applied to itself</li>
 	 * </ul>
 	 * <p>
-	 * @param t Tuple
+	 * @param that Tuple
 	 * @return Dot product
 	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
 	 */
-	public final float dot(Tuple t) {
-		return x * t.x + y * t.y + z * t.z;
+	public final float dot(Tuple that) {
+		return x * that.x + y * that.y + z * that.z;
 	}
 
 	@Override

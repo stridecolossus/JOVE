@@ -136,25 +136,25 @@ class PlaneTest {
 	}
 
 	@Nested
-	class NegativeHalfSpaceIntersectionTests {
-		private Intersected neg;
+	class HalfSpaceIntersectionTests {
+		private Intersected surface;
 
 		@BeforeEach
 		void before() {
-			neg = plane.negative();
-			assertNotNull(neg);
+			surface = plane.halfspace(HalfSpace.NEGATIVE);
+			assertNotNull(surface);
 		}
 
 		@DisplayName("A ray that crosses the plane in front is not intersecting")
 		@Test
 		void positive() {
-			assertEquals(Intersected.NONE, neg.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
+			assertEquals(Intersected.NONE, surface.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
 		}
 
 		@DisplayName("A ray behind the plane has undefined intersection results")
 		@Test
 		void behind() {
-			final Intersection intersection = neg.intersection(new DefaultRay(Point.ORIGIN, Y));
+			final Intersection intersection = surface.intersection(new DefaultRay(Point.ORIGIN, Y));
 			assertEquals(false, intersection.isEmpty());
 			assertThrows(UnsupportedOperationException.class, () -> intersection.distances());
 			assertThrows(UnsupportedOperationException.class, () -> intersection.normal(null));
@@ -163,7 +163,7 @@ class PlaneTest {
 		@DisplayName("A ray behind the plane intersects even if it does not cross the plane")
 		@Test
 		void negative() {
-			final Intersection intersection = neg.intersection(new DefaultRay(Point.ORIGIN, Y.invert()));
+			final Intersection intersection = surface.intersection(new DefaultRay(Point.ORIGIN, Y.invert()));
 			assertEquals(false, intersection.isEmpty());
 		}
 	}

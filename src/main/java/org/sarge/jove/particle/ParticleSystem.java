@@ -3,11 +3,12 @@ package org.sarge.jove.particle;
 import static java.util.stream.Collectors.toCollection;
 import static org.sarge.lib.util.Check.*;
 
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.control.*;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.*;
@@ -35,32 +36,41 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class ParticleSystem implements Animation {
-	private static final float SCALE = 1f / TimeUnit.SECONDS.toMillis(1);
+	private static final float SCALE = 1f / Frame.MILLISECONDS_PER_SECOND;
 
 	/**
 	 * Characteristic hints for this particle system.
 	 */
 	public enum Characteristic {
 		/**
-		 * Whether particles should be culled, i.e. the system has influences or collisions surfaces that {@link Particle#destroy()} particles.
-		 * Ignored if the particle system has a {@link ParticleSystem#lifetime(long)}.
+		 * Hint that particles in this system exist indefinitely, i.e. Particles are not automatically expired after the configured {@link ParticleSystem#lifetime()}.
+		 * Assumes particles are <b>not</b> destroyed by any configured collision surfaces.
 		 */
-		CULL,
-
-		/**
-		 * Whether particles output the creation {@link Particle#time()} to the vertex buffer.
-		 */
-		TIMESTAMPS
+		DISABLE_CULLING
 	}
 
 	private final Collection<Characteristic> chars;
 	private PositionFactory position = PositionFactory.ORIGIN;
 	private VectorFactory vector = VectorFactory.of(Axis.Y);
+	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, Collision> surfaces = new HashMap<>();
 	private List<Particle> particles = new ArrayList<>();
-	private long lifetime = Long.MAX_VALUE;
+	private int max = 1;
+	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
+
+	/**
+	 *
+	 * TODO - particle modifier
+	 * colour: literal/interpolated/select from list
+	 * start/end colour
+	 * start/end size => another vertex attribute!
+	 * low/high fade
+	 *
+	 * texture: none/random/iterate
+	 *
+	 */
 
 	/**
 	 * Constructor.
@@ -75,15 +85,6 @@ public class ParticleSystem implements Animation {
 	 */
 	public Set<Characteristic> characteristics() {
 		return Set.copyOf(chars);
-	}
-
-	/**
-	 * Adds a particle system characteristic.
-	 * @param c Characteristic
-	 */
-	public ParticleSystem add(Characteristic c) {
-		chars.add(notNull(c));
-		return this;
 	}
 
 	/**
@@ -119,18 +120,56 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Adds new particles to this system.
+	 * Sets the colour factory for new particles (default is {@link Colour#WHITE}).
+	 * @param colour Colour factory
+	 */
+	public ParticleSystem colour(ColourFactory colour) {
+		this.colour = notNull(colour);
+		return this;
+	}
+
+	/**
+	 * @return Maximum number of particles
+	 */
+	public int max() {
+		return max;
+	}
+
+	/**
+	 * Sets the maximum number of particles (default is one particle).
+	 * @param max Maximum number of particles
+	 */
+	public ParticleSystem max(int max) {
+		this.max = oneOrMore(max);
+		return this;
+	}
+
+	/**
+	 * Adds new particles to this system clamped by {@link #max(int)}.
 	 * @param num 		Number of particles to add
 	 * @param time		Current time
-	 * @see #factory(Factory)
 	 */
 	public synchronized void add(int num, long time) {
-		for(int n = 0; n < num; ++n) {
+		// Generate particles
+		final int actual = Math.min(num, max - size());
+		final List<Particle> added = new ArrayList<>(actual);
+		for(int n = 0; n < actual; ++n) {
 			final Point start = position.position();
 			final Vector dir = vector.vector(start);
 			final Particle p = particle(time, start, dir);
-			particles.add(p);
+			added.add(p);
 		}
+
+		// Init particle colour if constant
+		if(!colour.isModified()) {
+			final Colour col = colour.colour(0);
+			for(Particle p : added) {
+				p.colour(col);
+			}
+		}
+
+		// Add to system
+		particles.addAll(added);
 	}
 
 	/**
@@ -162,19 +201,11 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * @return Whether this particle system has a particle lifetime
+	 * Sets the particle lifetime (default is one second).
+	 * @param lifetime Lifetime
 	 */
-	private boolean isLifetimeBound() {
-		return lifetime < Long.MAX_VALUE;
-	}
-
-	/**
-	 * Sets the particle lifetime (default is indefinite).
-	 * @param lifetime Lifetime (ms)
-	 * @see Characteristic#CULL
-	 */
-	public ParticleSystem lifetime(long lifetime) {
-		this.lifetime = oneOrMore(lifetime);
+	public ParticleSystem lifetime(Duration lifetime) {
+		this.lifetime = oneOrMore(lifetime.toMillis());
 		return this;
 	}
 
@@ -224,7 +255,7 @@ public class ParticleSystem implements Animation {
 		final long time = frame.time().toEpochMilli();
 		final float elapsed = frame.elapsed().toMillis() * SCALE;
 		expire(time);
-		update(elapsed);
+		update(time, elapsed);
 		cull();
 		generate(time, elapsed * animator.speed());
 	}
@@ -233,22 +264,22 @@ public class ParticleSystem implements Animation {
 	 * Expire particles.
 	 */
 	private void expire(long time) {
-		if(!isLifetimeBound()) {
+		if(chars.contains(Characteristic.DISABLE_CULLING)) {
 			return;
 		}
 
-		final long expired = time - lifetime;
+		final long expiry = time - lifetime;
 
 		particles
 				.parallelStream()
-				.filter(p -> p.time() < expired)
+				.filter(p -> p.created() < expiry)
 				.forEach(Particle::destroy);
 	}
 
 	/**
 	 * Update particles and apply collisions.
 	 */
-	private void update(float elapsed) {
+	private void update(long time, float elapsed) {
 		/**
 		 * Update instance.
 		 */
@@ -257,14 +288,26 @@ public class ParticleSystem implements Animation {
 			 * Update each particle.
 			 */
 			private void update(Particle p) {
+				if(colour.isModified()) {
+					colour(p);
+				}
 				influence(p);
 				move(p);
 				collide(p);
 			}
 
 			/**
+			 * Update the particle colour.
+			 */
+			private void colour(Particle p) {
+				// TODO - means must have lifetime?
+				final float t = (time - p.created()) / (float) lifetime;
+				final Colour col = colour.colour(t);
+				p.colour(col);
+			}
+
+			/**
 			 * Apply particle influences.
-			 * TODO - redundant if change to trajectory
 			 */
 			private void influence(Particle p) {
 				for(Influence inf : influences) {
@@ -274,7 +317,6 @@ public class ParticleSystem implements Animation {
 
 			/**
 			 * Move each particle.
-			 * TODO - move to particle if change to trajectory
 			 */
 			private void move(Particle p) {
 				final Vector vec = p.direction().multiply(elapsed);
@@ -309,7 +351,7 @@ public class ParticleSystem implements Animation {
 	 * Cull expired or destroyed particles
 	 */
 	private void cull() {
-		if(!chars.contains(Characteristic.CULL) && !isLifetimeBound()) {
+		if(chars.contains(Characteristic.DISABLE_CULLING)) {
 			return;
 		}
 
@@ -332,11 +374,13 @@ public class ParticleSystem implements Animation {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("count", size())
+				.append("count", String.format("%d/%d", size(), max))
 				.append(policy)
 				.append("lifetime", lifetime)
 				.append(position)
 				.append(vector)
+				.append(colour)
+				.append("characteristics", chars)
 				.append("influences", influences.size())
 				.append("surfaces", surfaces.size())
 				.build();

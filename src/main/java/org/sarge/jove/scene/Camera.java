@@ -72,12 +72,12 @@ public class Camera {
 
 	/**
 	 * Sets the camera view direction.
-	 * @param dir View direction (assumes normalized)
+	 * @param dir View direction
 	 * @throws IllegalStateException if the direction would result in gimbal lock
 	 */
 	public void direction(Vector dir) {
 		validate(dir, up);
-		this.dir = notNull(dir);
+		this.dir = dir.normalize();
 		dirty();
 	}
 
@@ -89,18 +89,18 @@ public class Camera {
 	 */
 	public void look(Point pt) {
 		if(pos.equals(pt)) throw new IllegalArgumentException("Cannot point camera at its current position");
-		final Vector look = Vector.between(pt, pos).normalize();
+		final Vector look = Vector.between(pt, pos);
 		direction(look);
 	}
 
 	/**
-	 * Sets the up axis of this camera (default is {@link Vector#Y}).
-	 * @param up Camera up axis (assumes normalized)
+	 * Sets the up axis of this camera (default is {@link Axis#Y}).
+	 * @param up Camera up axis
 	 * @throws IllegalStateException if the up vector would result in gimbal lock
 	 */
 	public void up(Vector up) {
 		validate(dir, up);
-		this.up = notNull(up);
+		this.up = up.normalize();
 		dirty();
 	}
 
@@ -139,9 +139,9 @@ public class Camera {
 	/**
 	 * @throws IllegalStateException if the camera would be gimbal locked
 	 */
-	private static void validate(Vector dir, Vector up) {
+	private void validate(Vector dir, Vector up) {
 		if(dir.equals(up) || dir.equals(up.invert())) {
-			throw new IllegalStateException("Camera gimbal lock: dir=%s up=%s this=%s");
+			throw new IllegalStateException("Camera gimbal lock: dir=%s up=%s this=%s".formatted(dir, up, this));
 		}
 	}
 

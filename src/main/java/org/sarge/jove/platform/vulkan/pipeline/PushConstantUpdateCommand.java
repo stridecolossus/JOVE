@@ -120,7 +120,7 @@ public class PushConstantUpdateCommand implements Command {
 	 * <pre>
 	 * PipelineLayout layout = ...
 	 * ByteBuffer buffer = ...
-	 * PushUpdateCommand update = new Builder()
+	 * var update = new PushConstantUpdateCommand.Builder()
 	 *     .data(buffer)
 	 *     .stage(VkPipelineStage.FRAGMENT_SHADER)
 	 *     .build(layout);</pre>

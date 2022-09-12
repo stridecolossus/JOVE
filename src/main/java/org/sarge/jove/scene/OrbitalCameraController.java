@@ -12,20 +12,18 @@ import org.sarge.lib.util.Check;
  * <p>
  * Usage:
  * <pre>
- * 	// Init controller
- * 	Camera Camera = ...
- * 	Dimensions viewport = ...
- * 	OrbitalCameraController controller = new OrbitalCameraController(cam, viewport);
- * 	controller.radius(3);
- * 	controller.scale(0.25f);
+ * // Init controller
+ * Camera Camera = ...
+ * Dimensions viewport = ...
+ * var controller = new OrbitalCameraController(cam, viewport);
+ * controller.radius(3);
+ * controller.scale(0.25f);
  *
- * 	...
+ * // Zoom
+ * controller.zoom(1);
  *
- * 	// Zoom
- * 	controller.zoom(1);
- *
- * 	// Update on mouse move
- * 	controller.update(x, y);
+ * // Update on mouse move
+ * controller.update(x, y);
  * </pre>
  * <p>
  * @author Sarge

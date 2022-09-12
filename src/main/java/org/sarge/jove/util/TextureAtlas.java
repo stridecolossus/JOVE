@@ -1,20 +1,14 @@
 package org.sarge.jove.util;
 
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.StreamSupport;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONTokener;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Rectangle;
+import org.json.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ResourceLoader;
 
 /**
@@ -55,6 +49,8 @@ public class TextureAtlas extends LinkedHashMap<String, Rectangle> {
 	// TODO - contiguous cube-map image?
 	// TODO - factor out to separate helper?
 	// TODO - do we need to expose the names?
+
+	// TODO - grid atlas - Dimensions
 
 	/**
 	 * Helper - Builds a cube-map rectangle at the given X-Y location.

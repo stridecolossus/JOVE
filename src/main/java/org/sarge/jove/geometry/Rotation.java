@@ -23,7 +23,7 @@ public interface Rotation extends Transform {
 	Vector rotate(Vector vec);
 
 	/**
-	 * An <i>axis-angle</i> is a simple fixed rotation about an axis.
+	 * An <i>axis-angle</i> defines a counter-clockwise rotation about an axis.
 	 * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
 	 */
 	abstract class AxisAngle implements Rotation {
@@ -91,7 +91,7 @@ public interface Rotation extends Transform {
 		/**
 		 * Rotates the given vector by this axis-angle.
 		 * <p>
-		 * This method is implemented using <i>Rodrigues' rotation formula</i> expressed as:
+		 * This method uses <i>Rodrigues' rotation formula</i> which is expressed as:
 		 * <pre>rot = cos(a)v + sin(a)(n x v) + (1 - cos(a))(n.v)n</pre>
 		 * Where:
 		 * <ul>

@@ -2,9 +2,11 @@ package org.sarge.jove.particle;
 
 import static org.sarge.lib.util.Check.*;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.*;
 
 /**
@@ -12,18 +14,19 @@ import org.sarge.jove.geometry.*;
  * @author Sarge
  */
 public class Particle implements Ray {
-	private final long time;
+	private final long created;
 	private Point pos;
 	private Vector dir;
+	private Colour col = Colour.WHITE;
 
 	/**
 	 * Constructor.
-	 * @param time		Creation timestamp
-	 * @param pos 		Starting position
-	 * @param dir		Initial direction
+	 * @param created		Creation timestamp
+	 * @param pos 			Starting position
+	 * @param dir			Initial direction
 	 */
-	protected Particle(long time, Point pos, Vector dir) {
-		this.time = zeroOrMore(time);
+	protected Particle(long created, Point pos, Vector dir) {
+		this.created = zeroOrMore(created);
 		this.pos = notNull(pos);
 		this.dir = notNull(dir);
 	}
@@ -31,8 +34,8 @@ public class Particle implements Ray {
 	/**
 	 * @return Creation timestamp
 	 */
-	public long time() {
-		return time;
+	public long created() {
+		return created;
 	}
 
 	@Override
@@ -128,9 +131,27 @@ public class Particle implements Ray {
 		this.dir = dir.reflect(normal);
 	}
 
+	/**
+	 * Sets the colour of this particle.
+	 * @param col Particle colour
+	 */
+	public void colour(Colour col) {
+		this.col = notNull(col);
+	}
+
+	/**
+	 * Writes this particle to the given buffer.
+	 * @param bb Buffer
+	 */
+	void buffer(ByteBuffer bb) {
+		// TODO - depends on layout, optionally also timestamp => function?
+		pos.buffer(bb);
+		col.buffer(bb);
+	}
+
 	@Override
 	public int hashCode() {
-		return Objects.hash(time, pos, dir);
+		return Objects.hash(created, pos, dir, col);
 	}
 
 	@Override
@@ -138,17 +159,19 @@ public class Particle implements Ray {
 		return
 				(obj == this) ||
 				(obj instanceof Particle that) &&
-				(this.time == that.time) &&
+				(this.created == that.created) &&
 				this.pos.equals(that.pos) &&
-				this.dir.equals(that.dir);
+				this.dir.equals(that.dir) &&
+				this.col.equals(that.col);
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append(pos)
-				.append(dir)
-				.append("created", time)
+				.append("pos", pos)
+				.append("dir", dir)
+				.append("col", col)
+				.append("created", created)
 				.build();
 	}
 }

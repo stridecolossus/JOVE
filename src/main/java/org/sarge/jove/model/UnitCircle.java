@@ -1,7 +1,6 @@
 package org.sarge.jove.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.MathsUtil;
@@ -46,3 +45,4 @@ public final class UnitCircle {
 	}
 }
 // TODO - refactor with sphere
+// TODO - unused?

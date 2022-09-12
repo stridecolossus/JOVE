@@ -97,26 +97,24 @@ public interface Interpolator {
 	}
 
 	/**
-	 * Helper - Creates a linear floating-point interpolator.
+	 * Helper - Creates a linear interpolator.
 	 * @param start		Start value
 	 * @param end		End value
 	 * @return Linear interpolator
-	 * @see #lerp(float, float, float)
+	 * @see #interpolate(float)
 	 */
 	static Interpolator linear(float start, float end) {
-		final float range = end - start;
-		return t -> lerp(start, range, t);
+		return t -> interpolate(t, start, end);
 	}
 
 	/**
-	 * Helper - Performs a one-off linear floating-point interpolation.
+	 * Helper - Performs a one-off linear interpolation.
+	 * @param t			Interpolator value
 	 * @param start		Start value
-	 * @param range		Interpolation range
-	 * @param value		Interpolator value
+	 * @param end		End value
 	 * @return Interpolated value
 	 */
-	static float lerp(float start, float range, float value) {
-		assert (value >= 0) && (value <= 1);
-		return start + value * range;
+	static float interpolate(float t, float start, float end) {
+		return (1 - t) * start + t * end;
 	}
 }

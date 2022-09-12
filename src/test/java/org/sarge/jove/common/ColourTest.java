@@ -57,6 +57,13 @@ class ColourTest {
 		}
 	}
 
+	@Test
+	void interpolate() {
+		assertEquals(new Colour(0.5f, 0.5f, 0.5f, 1), Colour.BLACK.interpolate(Colour.WHITE, 0.5f));
+		assertEquals(Colour.BLACK, Colour.BLACK.interpolate(Colour.WHITE, 0));
+		assertEquals(Colour.WHITE, Colour.BLACK.interpolate(Colour.WHITE, 1));
+	}
+
 	@DisplayName("A colour has a length in bytes")
 	@Test
 	void length() {

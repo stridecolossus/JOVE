@@ -1,6 +1,7 @@
 package org.sarge.jove.control;
 
 import java.time.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -10,6 +11,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author Sarge
  */
 public interface Frame {
+	/**
+	 * Number of milliseconds per second.
+	 */
+	long MILLISECONDS_PER_SECOND = TimeUnit.SECONDS.toMillis(1);
+
 	/**
 	 * A <i>frame listener</li> notifies completion of a rendered frame.
 	 */
@@ -95,7 +101,7 @@ public interface Frame {
 			final Instant now = Instant.now();
 			if(now.isAfter(next)) {
 				count = 1;
-				next = now.plusSeconds(1);
+				next = now.plusMillis(MILLISECONDS_PER_SECOND);
 			}
 			else {
 				++count;
