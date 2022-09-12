@@ -19,7 +19,7 @@ TODO
 
 In this chapter we will create a new project to render a model of a galaxy.
 
-Rather than attempting to generate a convincing galaxy from first principles (which would be a blog in itself) the model will be derived from an image.  The general approach is:
+Rather than attempting to generate a convincing galaxy from first principles (which would be a project in itself) the model will be derived from an image.  The general approach is:
 
 1. Load a galaxy image.
 
@@ -176,7 +176,7 @@ Push constants are an alternative and more efficient mechanism for transferring 
 
 * Push constants are updated and stored within the command buffer.
 
-* Push constants have alignment restrictions.
+* Alignment restrictions on the size and offset of each element.
 
 See [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
 

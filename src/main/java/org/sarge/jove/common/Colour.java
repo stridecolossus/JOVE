@@ -3,6 +3,7 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.sarge.jove.util.Interpolator;
 import org.sarge.lib.util.Check;
 
 /**
@@ -62,6 +63,21 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 */
 	public Colour(float red, float green, float blue) {
 		this(red, green, blue, 1);
+	}
+
+	/**
+	 * Interpolates a colour between this and the given colour.
+	 * @param col		Colour
+	 * @param t			Amount
+	 * @return Interpolated colour
+	 */
+	public Colour interpolate(Colour col, float t) {
+		final float[] start = this.toArray();
+		final float[] end = col.toArray();
+		for(int n = 0; n < start.length; ++n) {
+			start[n] = Interpolator.interpolate(t, start[n], end[n]);
+		}
+		return of(start);
 	}
 
 	@Override

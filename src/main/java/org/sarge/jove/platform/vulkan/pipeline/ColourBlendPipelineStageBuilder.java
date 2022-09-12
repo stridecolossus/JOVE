@@ -141,7 +141,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 		 * Sets whether blending is enabled for the colour attachment (default is {@code true}).
 		 * @param enabled Whether blending is enabled
 		 */
-		public AttachmentBuilder enabled(boolean enabled) {
+		public AttachmentBuilder enable(boolean enabled) {
 			this.enabled = enabled;
 			return this;
 		}

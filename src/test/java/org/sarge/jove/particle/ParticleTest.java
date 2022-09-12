@@ -3,6 +3,7 @@ package org.sarge.jove.particle;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.*;
 
 public class ParticleTest {
@@ -16,7 +17,7 @@ public class ParticleTest {
 	@DisplayName("A new particle has an initial position and movement vector")
 	@Test
 	void constructor() {
-		assertEquals(1, particle.time());
+		assertEquals(1, particle.created());
 		assertEquals(Point.ORIGIN, particle.origin());
 		assertEquals(Axis.Y, particle.direction());
 		assertEquals(true, particle.isAlive());
@@ -72,7 +73,6 @@ public class ParticleTest {
 		assertThrows(IllegalStateException.class, () -> particle.destroy());
 	}
 
-
 	@DisplayName("A particle can be reflected about an intersection")
 	@Test
 	void reflect() {
@@ -80,5 +80,18 @@ public class ParticleTest {
 		particle.reflect(pt, Axis.Y);
 		assertEquals(pt, particle.origin());
 		assertEquals(Axis.Y.invert(), particle.direction());
+	}
+
+	@DisplayName("TODO")
+	@Test
+	void colour() {
+		particle.colour(Colour.BLACK);
+	}
+
+	@DisplayName("TODO")
+	@Test
+	void buffer() {
+		// TODO
+		//particle.buffer(mock)
 	}
 }

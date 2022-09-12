@@ -3,8 +3,8 @@ package org.sarge.jove.particle;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.io.*;
-import java.time.Duration;
 
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.Intersected;
@@ -56,7 +56,6 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 				.optional("lifetime")
 				.map(Element::text)
 				.map(c -> c.transform(Converter.DURATION))
-				.map(Duration::toMillis)
 				.ifPresent(sys::lifetime);
 
 		// Load emitter position
@@ -72,6 +71,13 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 				.map(Element::child)
 				.map(this::direction)
 				.ifPresent(sys::vector);
+
+		// Load particle colour
+		root
+				.optional("colour")
+				.map(Element::child)
+				.map(this::colour)
+				.ifPresent(sys::colour);
 
 		// Load influences
 		root
@@ -111,12 +117,12 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 			case "none" -> GenerationPolicy.NONE;
 
 			case "fixed" -> {
-				final int num = root.child("num").text().toInteger();
+				final int num = root.text().toInteger();
 				yield GenerationPolicy.fixed(num);
 			}
 
-			case "incremental" -> {
-				final int inc = root.child("increment").text().toInteger();
+			case "increment" -> {
+				final int inc = root.text().toInteger();
 				yield new IncrementGenerationPolicy(inc);
 			}
 
@@ -173,6 +179,23 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 		};
 	}
 
+	private ColourFactory colour(Element root) {
+		return switch(root.name()) {
+			case "constant" -> {
+				final float[] col = tuple(root.text().toString(), 4);
+				yield ColourFactory.of(Colour.of(col));
+			}
+
+			case "interpolated" -> {
+				final float[] start = tuple(root.child("start").text().toString(), 4);
+				final float[] end = tuple(root.child("end").text().toString(), 4);
+				yield ColourFactory.interpolated(Colour.of(start), Colour.of(end));
+			}
+
+			default -> throw root.exception("Unknown colour factory");
+		};
+	}
+
 	/**
 	 * Loads an influence.
 	 */
@@ -217,15 +240,15 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 		};
 	}
 
-	private static float[] tuple(String text) {
+	private static float[] tuple(String text, int size) {
 		// Tokenize
 		final String[] parts = text.split(",");
-		if(parts.length != 3) throw new IllegalArgumentException("Expected tuple");
+		if(parts.length != size) throw new IllegalArgumentException("Expected tuple");
 
 		// Convert to XYZ floats
-		final float[] array = new float[3];
-		for(int n = 0; n < array.length; ++n) {
-			array[n] = Integer.parseInt(parts[n].trim());
+		final float[] array = new float[size];
+		for(int n = 0; n < size; ++n) {
+			array[n] = Float.parseFloat(parts[n].trim());
 		}
 
 		return array;
@@ -238,7 +261,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	 */
 	private Vector vector(String text) {
 		if(text.length() > 2) {
-			return new Vector(tuple(text));
+			return new Vector(tuple(text, 3));
 		}
 		else
 		if(text.startsWith("-")) {
@@ -262,6 +285,6 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	 * Loads a literal point.
 	 */
 	private Point point(String text) {
-		return new Point(tuple(text));
+		return new Point(tuple(text, 3));
 	}
 }

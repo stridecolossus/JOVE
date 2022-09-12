@@ -59,7 +59,7 @@ From the above the following requirements can be derived:
 
 ### Design
 
-For the particle system design we considered several alternative approaches (there are almost certainly others) for how the _trajectory_ of a particle could be specified:
+For the particle system design we considered several alternative approaches (and there are almost certainly others) for how the _trajectory_ of a particle could be specified:
 
 * A particle has a trajectory _function_ that calculates the position of the particle at a given instant (including any influences such as gravity, wind resistance, etc).
 
@@ -87,7 +87,7 @@ We will progressively build up the particle system functionality using the _spar
 
 ### Framework
 
-The logical starting point is the definition of a _particle_ comprising a trajectory and creation timestamp:
+The logical starting point is the definition of a _particle_ which is a mutable type:
 
 ```java
 public class Particle {
@@ -112,6 +112,7 @@ public class ParticleSystem implements Animation {
     private PositionFactory pos = PositionFactory.ORIGIN;
     private VectorFactory vec = VectorFactory.of(Axis.Y);
     private final List<Particle> particles = new ArrayList<>();
+    private int max = 1;
 }
 ```
 
@@ -170,7 +171,8 @@ New particles can now be programatically added to the system:
 
 ```java
 public void add(int num, long time) {
-    for(int n = 0; n < num; ++n) {
+    int actual = Math.min(num, max - size());
+    for(int n = 0; n < actual; ++n) {
         Point start = pos.position();
         Vector dir = vec.vector(start);
         Particle p = new Particle(time, start, dir);
@@ -232,18 +234,20 @@ private final Bufferable vertices = new Bufferable() {
     @Override
     public void buffer(ByteBuffer bb) {
         for(Particle p : sys.particles()) {
-            p.position().buffer(bb);
+            p.buffer(bb);
         }
     }
 };
 ```
 
-TODO
-- note all scenarios output timestamps but inn practice would omit if unused
-or custom impls to optimise
+Where the `buffer` method of the particle outputs the position and colour:
 
-Note that the original model `Header` is now composed into the model class since the draw `count` is no longer a static property (and a separate header record provided little benefit anyway).
-A skeleton implementation is also introduced with an empty index buffer.
+```java
+void buffer(ByteBuffer bb) {
+    pos.buffer(bb);
+    col.buffer(bb);
+}
+```
 
 ### Influences
 
@@ -470,7 +474,7 @@ The particle system, model and animator are instantiated in the constructor:
 
 ```java
 public ParticleSystemConfiguration() {
-    this.sys = system(cfg);
+    this.sys = system();
     this.animator = new Animator(sys);
     this.model = new ParticleModel(sys);
 }
@@ -479,9 +483,9 @@ public ParticleSystemConfiguration() {
 The particle system periodically emits a relatively small number of particles per second in a randomised cone:
 
 ```java
-private static ParticleSystem system(ApplicationConfiguration cfg) {
-    final var sys = new ParticleSystem();
-    sys.policy(new IncrementGenerationPolicy(10, cfg.getMax()));
+private static ParticleSystem system() {
+    var sys = new ParticleSystem();
+    sys.policy(new IncrementGenerationPolicy(10, 100));
     sys.lifetime(5000L);
     sys.vector(new ConeVectorFactory(Axis.Y, 1, new Randomiser()));
     return sys;
@@ -492,7 +496,7 @@ Next the vertex buffer for the particles is created:
 
 ```java
 @Bean
-public VertexBuffer vbo(LogicalDevice dev, ApplicationConfiguration cfg) {
+public VertexBuffer vbo(LogicalDevice dev) {
     var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
         .usage(VkBufferUsageFlag.VERTEX_BUFFER)
         .required(VkMemoryProperty.HOST_VISIBLE)
@@ -500,7 +504,7 @@ public VertexBuffer vbo(LogicalDevice dev, ApplicationConfiguration cfg) {
         .optimal(VkMemoryProperty.DEVICE_LOCAL)
         .build();
 
-    int len = cfg.getMax() * Point.LAYOUT.length();
+    int len = sys.max() * Point.LAYOUT.length();
     VulkanBuffer buffer = VulkanBuffer.create(dev, len, props);
     return new VertexBuffer(buffer);
 }
@@ -539,7 +543,26 @@ The only other modification is in the render configuration where the draw comman
 TODO
 ```
 
-For the moment the fragment shader outputs a flat yellow colour, the vertex and geometry shaders are unchanged from the previous project.
+For the moment the fragment shader is a simple pass-through implementation that ignores the generated texture coordinates:
+
+```glsl
+#version 450
+
+layout(location=0) in vec2 inCoords;
+layout(location=1) in vec4 inColour;
+
+layout(location=0) out vec4 outColour;
+
+void main() {
+    outColour = inColour;
+}
+```
+
+Notes:
+
+* The particle colour is hard-coded to a flat yellow colour.
+
+* The vertex and geometry shaders are unchanged from the previous project.
 
 If all goes well we should see a fountain of yellow quads when running the particle system:
 
@@ -1059,7 +1082,7 @@ Finally particles that have been destroyed (either by lifetime expiration or a c
 
 ```java
 private void cull() {
-    if(!chars.contains(Characteristic.CULL) && !isLifetimeBound()) {
+    if(chars.contains(Characteristic.DISABLE_CULLING)) {
         return;
     }
 
@@ -1072,7 +1095,7 @@ private void cull() {
 
 Notes:
 
-* The `Characteristic` enumeration is introduced where `CULL` is a hint that the system contains a collision surface that destroys particles.
+* The `Characteristic` enumeration is introduced where `DISABLE_CULLING` is a hint for a particle system that does not expire or destroy particles.
 
 * The reference to the `particles` collection is now mutable and is over-written by the `cull` method.
 
@@ -1137,27 +1160,110 @@ Where `Sphere` is a simple tuple for a centre point and a radius.
 
 ### Colour Fade
 
-The final outstanding requirements for the sparks demo are a texture for the particles and animation of the colour.
+The final outstanding requirements for the sparks demo is animation of the colour and particle textures.
 
-TODO
-note about timestamps
-add to buffer()
+First a further configurable property is added to the particle system to determine the colour of a particle depending on its age:
 
 ```java
+@FunctionalInterface
+public interface ColourFactory {
+    /**
+     * Determines the colour of a particle.
+     * @param t Elapsed scalar
+     * @return Particle colour
+     */
+    Colour colour(float t);
+
+    /**
+     * @return Whether the particle colour is modified on each frame
+     */
+    default boolean isModified() {
+        return true;
+    }
+}
 ```
 
-TODO - texture, atlas, random/iterate
-And finally the colour is output by the fragment shader:
+A constant colour is specified via a factory method:
 
-```glsl
+```java
+static ColourFactory of(Colour col) {
+    return new ColourFactory() {
+        @Override
+        public Colour colour(float __) {
+            return col;
+        }
+
+        @Override
+        public boolean isModified() {
+            return false;
+        }
+    };
+}
 ```
 
-TODO
+Which is applied once when particles are generated in the `add` method of the particle system:
+
+```java
+if(!colour.isModified()) {
+    Colour col = colour.colour(0);
+    for(Particle p : added) {
+        p.colour(col);
+    }
+}
+```
+
+A second implementation interpolates a colour over the lifetime of the particle:
+
+```java
+static ColourFactory interpolated(Colour start, Colour end) {
+    return t -> start.interpolate(end, t);
+}
+```
+
+Which delegates to a new interpolator in the colour class:
+
+```java
+public Colour interpolate(Colour col, float t) {
+    float[] start = this.toArray();
+    float[] end = col.toArray();
+    for(int n = 0; n < start.length; ++n) {
+        start[n] = Interpolator.interpolate(t, start[n], end[n]);
+    }
+    return of(start);
+}
+```
+
+The colour factory is configured as follows in the demo:
+
+```java
+sys.colour(ColourFactory.interpolated(new Colour(1, 1, 0.5f, 1), new Colour(0.5f, 0, 0, 0)));
+```
+
 Particles should now start off bright white-yellow and fade through red to black:
 
 ![Particle system colour fade](particle.fade.png)
 
-Note that this assumes the pipeline has the same colour and alpha blending configuration from the previous demo.
+Note that colour blending is disabled in the pipeline.
+
+TODO - texture, atlas, random/iterate
+
+And finally the particle colour is mixed with the texture in the fragment shader:
+
+```glsl
+#version 450
+
+layout(location=0) in vec2 inCoords;
+layout(location=1) in vec4 inColour;
+
+layout(location=0) out vec4 outColour;
+
+void main() {
+    // TODO - sampler
+    outColour = inColour;
+}
+```
+
+TODO - pic + texture
 
 ### Configuration
 
@@ -1198,14 +1304,13 @@ private GenerationPolicy policy(Element root) {
         case "none" -> GenerationPolicy.NONE;
 
         case "fixed" -> {
-            int num = root.child("num").text().toInteger();
+            int num = root.text().toInteger();
             yield GenerationPolicy.fixed(num);
         }
 
-        case "incremental" -> {
-            int inc = root.child("increment").text().toInteger();
-            int max = root.child("max").text().toInteger();
-            yield new IncrementGenerationPolicy(inc, max);
+        case "increment" -> {
+            int inc = root.text().toInteger();
+            yield new IncrementGenerationPolicy(inc);
         }
 
         default -> throw root.exception(...);
@@ -1217,12 +1322,9 @@ In this case an XML document seems the most appropriate format to configure the 
 
 ```xml
 <sparks>
-    <characteristic>TIMESTAMPS</characteristic>
+    <max>50</max>
     <policy>
-        <incremental>
-            <increment>10</increment>
-            <max>50</max>
-        </incremental>
+        <increment>10</increment>
     </policy>
     <lifetime>5s</lifetime>
     <position>
@@ -1234,6 +1336,12 @@ In this case an XML document seems the most appropriate format to configure the 
             <radius>1</radius>
         </cone>
     </vector>
+    <colour>
+        <interpolated>
+            <start>1, 1, 0.5, 1</start>
+            <end>0.5, 0, 0, 0</end>
+        </interpolated>
+    </colour>
     <influences>
         <literal>-Y</literal>
     </influences>
@@ -1279,19 +1387,19 @@ shader: particle
 #---
 spring.config.activate.on-profile=sparks
 title: Particle System - Sparks
-max: 100
 
 #---
 spring.config.activate.on-profile=smoke
 title: Particle System - Smoke
-max: 250
 size: 1
 shader: circle
 ```
 
-Note that the first section specifies properties that are common to all profiles.
+Notes:
 
-The _size_ property and the particle lifetime are injected into the relevant shaders as specialisation constants.
+* The first section specifies properties that are common to all profiles.
+
+* The _size_ property is injected into the relevant shaders as a specialisation constant.
 
 Finally a new configuration property is added to specify the fragment shader:
 

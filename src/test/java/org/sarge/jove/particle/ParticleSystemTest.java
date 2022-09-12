@@ -10,7 +10,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.control.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
-import org.sarge.jove.particle.ParticleSystem.Characteristic;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
@@ -23,7 +22,7 @@ class ParticleSystemTest {
 		when(frame.time()).thenReturn(Instant.ofEpochSecond(1));
 		when(frame.elapsed()).thenReturn(Duration.ofSeconds(2));
 
-		sys = new ParticleSystem(Characteristic.CULL);
+		sys = new ParticleSystem();
 
 		animator = new Animator(sys) {
 			@Override
@@ -110,7 +109,7 @@ class ParticleSystemTest {
 		@Test
 		void creation() {
 			final Particle p = create();
-			assertEquals(3, p.time());
+			assertEquals(3, p.created());
 		}
 
 		@DisplayName("is moved by its current direction on each frame")
@@ -134,7 +133,7 @@ class ParticleSystemTest {
 		@DisplayName("is destroyed when its lifetime has expired")
 		@Test
 		void expired() {
-			sys.lifetime(2L);
+			sys.lifetime(Duration.ofMillis(2));
 			create();
 			sys.update(animator);
 			assertEquals(0, sys.size());
