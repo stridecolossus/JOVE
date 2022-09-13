@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.io.*;
 
 /**
@@ -30,9 +29,9 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 
 		// Load vertex layout
 		final int num = in.readInt();
-		final List<Layout> layouts = new ArrayList<>();
+		final List<Component> layouts = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
-			final Layout layout = helper.layout(in);
+			final Component layout = helper.layout(in);
 			layouts.add(layout);
 		}
 
@@ -41,7 +40,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		final Bufferable index = helper.buffer(in);
 
 		// Create model
-		return new DefaultModel(primitive, count, new CompoundLayout(layouts), vertices, index);
+		return new DefaultModel(primitive, count, new Layout(layouts), vertices, index);
 	}
 
 	/**
@@ -57,9 +56,9 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		out.writeInt(model.count());
 
 		// Write vertex layout
-		final List<Layout> layouts = model.layout().layouts();
+		final List<Component> layouts = model.layout().components();
 		out.writeInt(layouts.size());
-		for(Layout c : layouts) {
+		for(Component c : layouts) {
 			helper.write(c, out);
 		}
 

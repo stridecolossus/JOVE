@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 import java.util.Optional;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.util.Mask;
 
 /**
@@ -24,7 +23,7 @@ public interface Model {
 	/**
 	 * @return Vertex layout
 	 */
-	CompoundLayout layout();
+	Layout layout();
 
 	/**
 	 * @return Vertex data
@@ -46,7 +45,7 @@ public interface Model {
 	/**
 	 * Vertex normal layout.
 	 */
-	Layout NORMALS = Layout.floats(3);
+	Component NORMALS = Component.floats(3);
 
 	/**
 	 * Determines whether the given draw count requires an {@code int} or {@code short} index.

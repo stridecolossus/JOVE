@@ -6,8 +6,7 @@ import static org.mockito.Mockito.mock;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 
 class DefaultModelTest {
@@ -17,14 +16,14 @@ class DefaultModelTest {
 	@BeforeEach
 	void before() {
 		vertices = mock(Bufferable.class);
-		model = new DefaultModel(Primitive.TRIANGLE_STRIP, 3, CompoundLayout.of(Point.LAYOUT), vertices, null);
+		model = new DefaultModel(Primitive.TRIANGLE_STRIP, 3, new Layout(Point.LAYOUT), vertices, null);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 		assertEquals(3, model.count());
-		assertEquals(CompoundLayout.of(Point.LAYOUT), model.layout());
+		assertEquals(new Layout(Point.LAYOUT), model.layout());
 		assertEquals(vertices, model.vertices());
 		assertEquals(false, model.isIndexed());
 		assertEquals(Optional.empty(), model.index());
@@ -33,13 +32,13 @@ class DefaultModelTest {
 	@DisplayName("A model cannot contain normals if unsupported by the drawing primitive")
 	@Test
 	void normals() {
-		assertThrows(IllegalArgumentException.class, () -> new DefaultModel(Primitive.LINES, 2, CompoundLayout.of(Point.LAYOUT, Model.NORMALS), vertices, null));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultModel(Primitive.LINES, 2, new Layout(Point.LAYOUT, Model.NORMALS), vertices, null));
 	}
 
 	@DisplayName("An indexed model also contains an index buffer")
 	@Test
 	void indexed() {
-		final Model model = new DefaultModel(Primitive.TRIANGLE_STRIP, 3, CompoundLayout.of(Point.LAYOUT), vertices, vertices);
+		final Model model = new DefaultModel(Primitive.TRIANGLE_STRIP, 3, new Layout(Point.LAYOUT), vertices, vertices);
 		assertEquals(true, model.isIndexed());
 		assertEquals(Optional.of(vertices), model.index());
 	}
@@ -69,7 +68,7 @@ class DefaultModelTest {
 			// Check model
 			assertEquals(Primitive.TRIANGLE_STRIP, model.primitive());
 			assertEquals(3, model.count());
-			assertEquals(CompoundLayout.of(Point.LAYOUT), model.layout());
+			assertEquals(new Layout(Point.LAYOUT), model.layout());
 			assertNotNull(model.vertices());
 			assertEquals(false, model.isIndexed());
 			assertEquals(Optional.empty(), model.index());
@@ -77,7 +76,7 @@ class DefaultModelTest {
 			// Check vertices
 			final Bufferable vertices = model.vertices();
 			assertNotNull(vertices);
-			assertEquals(3 * Point.LAYOUT.length(), vertices.length());
+			assertEquals(3 * Point.LAYOUT.stride(), vertices.length());
 		}
 
 		@Test

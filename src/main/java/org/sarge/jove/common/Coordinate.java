@@ -33,11 +33,11 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 		/**
 		 * Layout of a 1D texture coordinate.
 		 */
-		public static final Layout LAYOUT = Layout.floats(1);
+		public static final Component LAYOUT = Component.floats(1);
 
 		@Override
 		public int length() {
-			return Float.BYTES;
+			return LAYOUT.stride();
 		}
 
 		@Override
@@ -61,7 +61,7 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 		/**
 		 * Layout of a 2D texture coordinate.
 		 */
-		public static final Layout LAYOUT = Layout.floats(2);
+		public static final Component LAYOUT = Component.floats(2);
 
 		/**
 		 * Quad coordinates.
@@ -79,7 +79,7 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 
 		@Override
 		public int length() {
-			return 2 * Float.BYTES;
+			return LAYOUT.stride();
 		}
 
 		@Override
@@ -104,11 +104,11 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 		/**
 		 * Layout of a 3D texture coordinate.
 		 */
-		public static final Layout LAYOUT = Layout.floats(3);
+		public static final Component LAYOUT = Component.floats(3);
 
 		@Override
 		public int length() {
-			return 3 * Float.BYTES;
+			return LAYOUT.stride();
 		}
 
 		@Override

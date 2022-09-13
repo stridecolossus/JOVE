@@ -29,7 +29,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	/**
 	 * Layout of a colour.
 	 */
-	public static final Layout LAYOUT = Layout.floats(4);
+	public static final Component LAYOUT = Component.floats(4);
 
 	/**
 	 * Creates a colour from the given floating-point array representing an RGBA value <b>or</b> a 3-element RGB array with the alpha value initialised to <b>one</b>.
@@ -82,7 +82,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 	@Override
 	public int length() {
-		return LAYOUT.length();
+		return LAYOUT.stride();
 	}
 
 	@Override

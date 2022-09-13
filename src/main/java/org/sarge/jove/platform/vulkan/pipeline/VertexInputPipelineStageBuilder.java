@@ -4,8 +4,7 @@ import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
 import org.sarge.jove.util.StructureHelper;
@@ -38,7 +37,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * <p>
 	 * @param layouts Vertex layout
 	 */
-	public VertexInputPipelineStageBuilder add(CompoundLayout layout) {
+	public VertexInputPipelineStageBuilder add(Layout layout) {
 		// Add binding
 		final BindingBuilder binding = new BindingBuilder();
 
@@ -48,9 +47,9 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 
 		// Add attribute for each layout component
 		int offset = 0;
-		for(Layout e : layout.layouts()) {
+		for(Component c : layout.components()) {
 			// Determine component format
-			final VkFormat format = FormatBuilder.format(e);
+			final VkFormat format = FormatBuilder.format(c);
 
 			// Add attribute for component
 			new AttributeBuilder(binding)
@@ -59,7 +58,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 					.build();
 
 			// Increment offset to the start of the next attribute
-			offset += e.length();
+			offset += c.stride();
 		}
 		assert offset == stride;
 
