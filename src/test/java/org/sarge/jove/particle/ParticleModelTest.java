@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Primitive;
 
@@ -27,7 +26,7 @@ public class ParticleModelTest {
 	void header() {
 		assertEquals(Primitive.POINTS, model.primitive());
 		assertEquals(1, model.count());
-		assertEquals(CompoundLayout.of(Point.LAYOUT, Colour.LAYOUT), model.layout());
+		assertEquals(new Layout(Point.LAYOUT, Colour.LAYOUT), model.layout());
 		assertEquals(false, model.isIndexed());
 	}
 

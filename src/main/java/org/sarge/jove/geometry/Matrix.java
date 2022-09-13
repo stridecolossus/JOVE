@@ -36,17 +36,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public final class Matrix implements Transform, Bufferable {
-	/**
-	 * Order for a 4x4 matrix.
-	 */
-	public static final int DEFAULT_ORDER = 4;
-
-	/**
-	 * 4x4 identity matrix.
-	 */
-	public static final Matrix IDENTITY = identity(DEFAULT_ORDER);
-
+public class Matrix implements Transform, Bufferable {
 	/**
 	 * Creates an identity matrix.
 	 * @param order Matrix order
@@ -81,24 +71,15 @@ public final class Matrix implements Transform, Bufferable {
 				.build();
 	}
 
-	/**
-	 * Creates a new matrix.
-	 * @param order Matrix order
-	 * @return Matrix
-	 */
-	private static float[][] matrix(int order) {
-		Check.oneOrMore(order);
-		return new float[order][order];
-	}
-
 	private final float[][] matrix;
 
 	/**
 	 * Constructor.
 	 * @param order Matrix order
 	 */
-	private Matrix(float[][] matrix) {
-		this.matrix = matrix;
+	protected Matrix(int order) {
+		Check.oneOrMore(order);
+		this.matrix = new float[order][order];
 	}
 
 	/**
@@ -170,13 +151,13 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix transpose() {
 		final int order = order();
-		final float[][] trans = matrix(order);
+		final Matrix trans = new Matrix(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				trans[r][c] = this.matrix[c][r];
+				trans.matrix[r][c] = this.matrix[c][r];
 			}
 		}
-		return new Matrix(trans);
+		return trans;
 	}
 
 	/**
@@ -195,18 +176,18 @@ public final class Matrix implements Transform, Bufferable {
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
 
 		// Multiply matrices
-		final float[][] result = matrix(order);
+		final Matrix result = new Matrix(order());
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
 					total += this.matrix[r][n] * m.matrix[n][c];
 				}
-				result[r][c] = total;
+				result.matrix[r][c] = total;
 			}
 		}
 
-		return new Matrix(result);
+		return result;
 	}
 
 	@Override
@@ -242,16 +223,50 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	/**
+	 * Standard 4x4 matrix used for transformation and projection.
+	 */
+	public static class Matrix4 extends Matrix {
+		/**
+		 * Order of a 4x4 matrix.
+		 */
+		public static final int ORDER = 4;
+
+		/**
+		 * 4x4 identity matrix.
+		 */
+		public static final Matrix IDENTITY = identity(ORDER);
+
+		/**
+		 * Length of a 4x4 matrix (bytes)
+		 */
+		public static final int LENGTH = ORDER * ORDER * Float.BYTES;
+
+		private Matrix4() {
+			super(ORDER);
+		}
+
+		@Override
+		public int order() {
+			return ORDER;
+		}
+
+		@Override
+		public int length() {
+			return LENGTH;
+		}
+	}
+
+	/**
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private float[][] matrix;
+		private Matrix matrix;
 
 		/**
-		 * Default constructor for a 4x4 matrix.
+		 * Default constructor for a {@link Matrix4}.
 		 */
 		public Builder() {
-			this(DEFAULT_ORDER);
+			matrix = new Matrix4();
 		}
 
 		/**
@@ -260,14 +275,14 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
 		public Builder(int order) {
-			matrix = matrix(order);
+			matrix = order == Matrix4.ORDER ? new Matrix4() : new Matrix(order);
 		}
 
 		/**
 		 * Initialises this matrix to identity.
 		 */
 		public Builder identity() {
-			for(int n = 0; n < matrix.length; ++n) {
+			for(int n = 0; n < matrix.matrix.length; ++n) {
 				set(n, n, 1);
 			}
 			return this;
@@ -281,7 +296,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			matrix[row][col] = value;
+			matrix.matrix[row][col] = value;
 			return this;
 		}
 
@@ -317,7 +332,7 @@ public final class Matrix implements Transform, Bufferable {
 		 */
 		public Matrix build() {
 			try {
-				return new Matrix(matrix);
+				return matrix;
 			}
 			finally {
 				matrix = null;

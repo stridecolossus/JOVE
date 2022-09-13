@@ -2,6 +2,8 @@ package org.sarge.jove.geometry;
 
 import java.util.List;
 
+import org.sarge.jove.geometry.Matrix.Matrix4;
+
 /**
  * A <i>transform</i> generates a {@link Matrix} for a model transformation.
  * @author Sarge
@@ -36,7 +38,7 @@ public interface Transform {
 
 			@Override
 			public Matrix matrix() {
-				return list.stream().map(Transform::matrix).reduce(Matrix.IDENTITY, Matrix::multiply);
+				return list.stream().map(Transform::matrix).reduce(Matrix4.IDENTITY, Matrix::multiply);
 			}
 		};
 	}
