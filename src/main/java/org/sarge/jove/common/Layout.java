@@ -6,7 +6,7 @@ import java.util.*;
  * A <i>layout</i> specifies the structure of a compound data type comprised of {@link Component}.
  * @author Sarge
  */
-public final class Layout implements Stride {
+public final class Layout implements ByteSized {
 	private final List<Component> components;
 	private final int stride;
 

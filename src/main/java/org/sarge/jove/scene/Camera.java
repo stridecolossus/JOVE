@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Matrix.Matrix4;
 
 /**
  * A <i>camera</i> is a model of the viewers position and orientation, used to generate the <i>view transform</i> matrix.
@@ -156,7 +157,7 @@ public class Camera {
 		final Vector y = dir.cross(right).normalize();
 
 		// Build translation component
-		final Matrix trans = Matrix.translation(new Vector(pos).invert());
+		final Matrix trans = Matrix4.translation(new Vector(pos).invert());
 
 		// Build rotation component
 		final Matrix rot = new Matrix.Builder()

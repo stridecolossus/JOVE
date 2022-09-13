@@ -12,6 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 
@@ -53,16 +54,16 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			final DescriptorLayout set = mock(DescriptorLayout.class);
 			when(set.handle()).thenReturn(new Handle(1));
 
-			// Create push constants range
-			final PushConstantRange range = new PushConstantRange(0, 4, Set.of(VkShaderStage.VERTEX));
-
 			// Init push constants max size
-			limit("maxPushConstantsSize", 4);
+			limit("maxPushConstantsSize", 8);
+
+			// Init push constant data
+			final Component data = Component.floats(2);
 
 			// Create layout
 			final PipelineLayout layout = builder
 					.add(set)
-					.add(range)
+					.push(data, VkShaderStage.VERTEX, VkShaderStage.FRAGMENT)
 					.build(dev);
 
 			// Check layout
@@ -84,7 +85,9 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 					// Check push constants
 					assertEquals(1, actual.pushConstantRangeCount);
-					assertNotNull(actual.pPushConstantRanges);
+					assertEquals(0, actual.pPushConstantRanges.offset);
+					assertEquals(2 * Float.BYTES, actual.pPushConstantRanges.size);
+					assertEquals(IntegerEnumeration.reduce(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT), actual.pPushConstantRanges.stageFlags);
 
 					return true;
 				}

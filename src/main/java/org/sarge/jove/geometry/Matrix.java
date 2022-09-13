@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.*;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -36,7 +36,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class Matrix implements Transform, Bufferable {
+public class Matrix implements Transform, Bufferable, ByteSized {
 	/**
 	 * Creates an identity matrix.
 	 * @param order Matrix order
@@ -44,31 +44,6 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public static Matrix identity(int order) {
 		return new Builder(order).identity().build();
-	}
-
-	/**
-	 * Creates a 4x4 translation matrix by populating the top-right column of the matrix.
-	 * @param vec Translation vector
-	 * @return Translation matrix
-	 */
-	public static Matrix translation(Tuple vec) {
-		return new Builder()
-				.identity()
-				.column(3, vec)
-				.build();
-	}
-
-	/**
-	 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix.
-	 * @return Scaling matrix
-	 */
-	public static Matrix scale(float x, float y, float z) {
-		return new Builder()
-				.set(0, 0, x)
-				.set(1, 1, y)
-				.set(2, 2, z)
-				.set(3, 3, 1)
-				.build();
 	}
 
 	private final float[][] matrix;
@@ -144,6 +119,11 @@ public class Matrix implements Transform, Bufferable {
 	@Override
 	public int length() {
 		return matrix.length * matrix.length * Float.BYTES;
+	}
+
+	@Override
+	public int stride() {
+		return length();
 	}
 
 	/**
@@ -224,6 +204,7 @@ public class Matrix implements Transform, Bufferable {
 
 	/**
 	 * Standard 4x4 matrix used for transformation and projection.
+	 * This class provides convenience constants and helper methods for transformation matrices.
 	 */
 	public static class Matrix4 extends Matrix {
 		/**
@@ -237,9 +218,39 @@ public class Matrix implements Transform, Bufferable {
 		public static final Matrix IDENTITY = identity(ORDER);
 
 		/**
+		 * Layout of a 4X4 matrix.
+		 */
+		public static final Component LAYOUT = Component.floats(ORDER * ORDER);
+
+		/**
 		 * Length of a 4x4 matrix (bytes)
 		 */
-		public static final int LENGTH = ORDER * ORDER * Float.BYTES;
+		public static final int LENGTH = LAYOUT.stride();
+
+		/**
+		 * Creates a 4x4 translation matrix by populating the top-right column of the matrix.
+		 * @param vec Translation vector
+		 * @return Translation matrix
+		 */
+		public static Matrix translation(Tuple vec) {
+			return new Builder()
+					.identity()
+					.column(3, vec)
+					.build();
+		}
+
+		/**
+		 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix.
+		 * @return Scaling matrix
+		 */
+		public static Matrix scale(float x, float y, float z) {
+			return new Builder()
+					.set(0, 0, x)
+					.set(1, 1, y)
+					.set(2, 2, z)
+					.set(3, 3, 1)
+					.build();
+		}
 
 		private Matrix4() {
 			super(ORDER);
@@ -252,6 +263,11 @@ public class Matrix implements Transform, Bufferable {
 
 		@Override
 		public int length() {
+			return LENGTH;
+		}
+
+		@Override
+		public int stride() {
 			return LENGTH;
 		}
 	}

@@ -37,6 +37,8 @@ public class BoundAnimator extends Animator {
 		return time / (float) duration;
 	}
 
+	// TODO - optional interpolator?
+
 	@Override
 	public void update() {
 		// Update animation position

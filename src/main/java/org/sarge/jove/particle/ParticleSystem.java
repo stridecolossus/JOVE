@@ -43,34 +43,25 @@ public class ParticleSystem implements Animation {
 	 */
 	public enum Characteristic {
 		/**
-		 * Hint that particles in this system exist indefinitely, i.e. Particles are not automatically expired after the configured {@link ParticleSystem#lifetime()}.
+		 * Hint that particles in this system exist indefinitely, i.e. particles are not automatically expired after the configured {@link ParticleSystem#lifetime()}.
 		 * Assumes particles are <b>not</b> destroyed by any configured collision surfaces.
 		 */
 		DISABLE_CULLING
 	}
 
+	// Particle properties
 	private final Collection<Characteristic> chars;
 	private PositionFactory position = PositionFactory.ORIGIN;
 	private VectorFactory vector = VectorFactory.of(Axis.Y);
 	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
+	private int max = 1;
+	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
+	private List<Particle> particles = new ArrayList<>();
+
+	// Controller
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, Collision> surfaces = new HashMap<>();
-	private List<Particle> particles = new ArrayList<>();
-	private int max = 1;
-	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
-
-	/**
-	 *
-	 * TODO - particle modifier
-	 * colour: literal/interpolated/select from list
-	 * start/end colour
-	 * start/end size => another vertex attribute!
-	 * low/high fade
-	 *
-	 * texture: none/random/iterate
-	 *
-	 */
 
 	/**
 	 * Constructor.

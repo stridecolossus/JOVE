@@ -8,7 +8,7 @@ import org.sarge.lib.util.Check;
  * A component is comprised of:
  * <ul>
  * <li>The {@link #size} number of elements in the component, e.g. 3 for a vertex normal</li>
- * <li>The {@link #type} of the component, e.g. {@link Stride.Type#FLOAT}</li>
+ * <li>The {@link #type} of the component, e.g. {@link ByteSized.Type#FLOAT}</li>
  * <li>Whether the data is {@link #signed}</li>
  * <li>The number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
  * </ul>
@@ -19,7 +19,7 @@ import org.sarge.lib.util.Check;
  * For example the above layout is represented as {@code 3-FLOAT4}.
  * <p>
  */
-public record Component(int size, Component.Type type, boolean signed, int bytes) implements Stride {
+public record Component(int size, Component.Type type, boolean signed, int bytes) implements ByteSized {
 	/**
 	 * Component types.
 	 */
