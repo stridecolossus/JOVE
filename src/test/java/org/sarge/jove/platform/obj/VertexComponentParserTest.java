@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.util.FloatSupport.ArrayConverter;
 
 public class VertexComponentParserTest {
 	private Parser parser;
@@ -14,19 +16,18 @@ public class VertexComponentParserTest {
 	@BeforeEach
 	void before() {
 		model = new ObjectModel();
-		parser = new VertexComponentParser<>(3, Point::new, model.positions());
+		parser = new VertexComponentParser<>(new ArrayConverter<>(Point.SIZE, Point::new), model.positions());
 	}
 
 	@Test
 	void parse() {
-		parser.parse(new String[]{"command", "1", "2", "3"}, model);
+		parser.parse("1 2 3", model);
 		assertEquals(List.of(new Point(1, 2, 3)), model.positions());
 	}
 
 	@Test
 	void parseInvalidArrayLength() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"command"}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"command", "2", "3", "4", "5"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(StringUtils.EMPTY, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 2", model));
 	}
 }

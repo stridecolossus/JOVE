@@ -88,28 +88,13 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	@Override
-	public void pause() {
-		super.pause();
-		frame.end();
-	}
-
-	@Override
-	public void stop() {
-		if(isPlaying()) {
-			frame.end();
-		}
-		super.stop();
-	}
-
-	@Override
 	public void update() {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
-		// Update animation time
-		frame.end();
+		// Update animation
 		animate();
 
 		// Start next frame

@@ -2,14 +2,9 @@ package org.sarge.jove.io;
 
 import static org.sarge.lib.util.Check.zeroOrMore;
 
-import java.io.IOException;
-import java.io.LineNumberReader;
-import java.io.Reader;
+import java.io.*;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-
-import org.apache.commons.lang3.StringUtils;
+import java.util.function.*;
 
 /**
  * A <i>text loader</i> is a helper class that loads the lines from a file and delegates to a loader function.
@@ -77,14 +72,5 @@ public class TextLoader {
 		catch(Exception e) {
 			throw new IOException(String.format("%s at line %d", e.getMessage(), wrapper.getLineNumber()), e);
 		}
-	}
-
-	/**
-	 * Helper - Tokenizes a white-space delimited array of strings.
-	 * @param line Line
-	 * @return String array
-	 */
-	public static String[] tokenize(String line) {
-		return StringUtils.split(line);
 	}
 }

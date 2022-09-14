@@ -52,29 +52,33 @@ public interface Frame {
 
 		@Override
 		public Duration elapsed() {
+			if(running) {
+				end = Instant.now();
+				running = false;
+			}
 			return Duration.between(start, end);
 		}
 
 		/**
 		 * Starts a new frame.
-		 * @throws IllegalStateException if this frame has already been started
+//		 * @throws IllegalStateException if this frame has already been started
 		 */
 		public Instant start() {
-			if(running) throw new IllegalStateException();
+//			if(running) throw new IllegalStateException("Already started");
 			start = Instant.now();
 			running = true;
 			return start;
 		}
 
-		/**
-		 * Ends this frame.
-		 * @throws IllegalStateException if this frame has not been started
-		 */
-		public void end() {
-			if(!running) throw new IllegalStateException();
-			this.end = Instant.now();
-			this.running = false;
-		}
+//		/**
+//		 * Ends this frame.
+//		 * @throws IllegalStateException if this frame has not been started
+//		 */
+//		public void end() {
+//			if(!running) throw new IllegalStateException();
+//			this.end = Instant.now();
+//			this.running = false;
+//		}
 
 		@Override
 		public String toString() {

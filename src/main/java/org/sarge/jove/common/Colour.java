@@ -3,8 +3,9 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.sarge.jove.util.FloatSupport.ArrayConverter;
 import org.sarge.jove.util.Interpolator;
-import org.sarge.lib.util.Check;
+import org.sarge.lib.util.*;
 
 /**
  * RGBA colour.
@@ -30,6 +31,11 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * Layout of a colour.
 	 */
 	public static final Component LAYOUT = Component.floats(4);
+
+	/**
+	 * Colour converter.
+	 */
+	public static final Converter<Colour> CONVERTER = new ArrayConverter<>(4, false, Colour::of);
 
 	/**
 	 * Creates a colour from the given floating-point array representing an RGBA value <b>or</b> a 3-element RGB array with the alpha value initialised to <b>one</b>.

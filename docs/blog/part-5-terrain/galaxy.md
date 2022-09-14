@@ -51,10 +51,21 @@ Several further improvements will also be introduced during the course of this c
 
 ## Galaxy Model
 
-summary of project? orbital controller
-galaxy builder
-show image
+The galaxy model is created by a quick-and-dirty builder:
 
+```java
+class ModelBuilder {
+    private final Random random = new Random();
+
+    private int size = 64;
+    private int threshold = 100;
+    private float bulge = 0.1f;
+    private float disc = 0.005f;
+    private float scale = 1;
+}
+```
+
+Which will create a point-cloud model with colours:
 
 ```java
 public Model build(InputStream in) throws IOException {
@@ -174,9 +185,9 @@ Push constants are an alternative and more efficient mechanism for transferring 
 
 * The maximum amount of data is usually relatively small.
 
-* Push constants are updated and stored within the command buffer.
+* The data is stored within a command buffer _instance_, i.e. push constants are generally updated per frame.
 
-* Alignment restrictions on the size and offset of each element.
+* Push constants have alignment restrictions on the size and offset of each element.
 
 See [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
 
@@ -184,7 +195,7 @@ Note that the vertex shader does not use the projection matrix as this will now 
 
 ### Push Constant Range
 
-We start with a _push constant range_ which specifies a portion of the push constants and the shader stages where that data can be used:
+A _push constant range_ specifies a portion of the push constants and the shader stages where that data can be used:
 
 ```java
 public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages) {
@@ -240,18 +251,6 @@ public PipelineLayout build(DeviceContext dev) {
 ```
 
 Note that multiple ranges can be specified which allows the application to update some or all of the push constants at different shader stages and also enables the hardware to perform optimisations.
-
-In the `build` method for the pipeline layout we determine the _maximum_ length of the push ranges:
-
-```java
-int max = ranges
-    .stream()
-    .mapToInt(PushConstantRange::length)
-    .max()
-    .orElse(0);
-```
-
-This is validated (not shown) against the hardware limit specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure, this value is usually quite small (256 bytes on our development environment).
 
 Finally the set of shader stages is aggregated and added to the pipeline layout:
 
@@ -312,7 +311,7 @@ public static class Builder {
 }
 ```
 
-We provide builder methods to update all the push constants or an arbitrary _slice_ of the backing data buffer:
+The builder can update all the push constants or an arbitrary _slice_ of the backing data buffer:
 
 ```java
 public Builder data(ByteBuffer data, int offset, int size) {
@@ -321,7 +320,7 @@ public Builder data(ByteBuffer data, int offset, int size) {
 }
 ```
 
-And the following convenience method to update a slice specified by a corresponding range:
+The following convenience method update a slice of the buffer specified by a corresponding range:
 
 ```java
 public Builder data(ByteBuffer data, PushConstantRange range) {
@@ -661,7 +660,7 @@ info.pData = buffer;
 
 Notes:
 
-* Only scalar and boolean values are supported.
+* Only scalar (int, float) and boolean values are supported.
 
 * Booleans are represented as integer values.
 
@@ -877,6 +876,23 @@ The pipeline configuration can now be updated to apply an additive blending oper
 ## Further Improvements
 
 ### Device Limits
+
+
+
+In the `build` method for the pipeline layout we determine the _maximum_ length of the push ranges:
+
+```java
+int max = ranges
+    .stream()
+    .mapToInt(PushConstantRange::length)
+    .max()
+    .orElse(0);
+```
+
+This is validated (not shown) against the hardware limit specified by the `maxPushConstantsSize` of the `VkPhysicalDeviceLimits` structure, this value is usually quite small (256 bytes on our development environment).
+
+
+
 
 The `VkPhysicalDeviceLimits` structure specifies various limits supported by the hardware, this is wrapped by a new helper class:
 

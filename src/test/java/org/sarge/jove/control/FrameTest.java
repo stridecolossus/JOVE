@@ -2,7 +2,7 @@ package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.*;
+import java.time.Duration;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Frame.*;
@@ -23,28 +23,19 @@ class FrameTest {
 			frame.start();
 		}
 
-		@DisplayName("can be ended")
-		@Test
-		void end() {
-			frame.end();
-		}
-
-		@DisplayName("cannot be started again")
+		@DisplayName("can be restarted")
 		@Test
 		void running() {
-			assertThrows(IllegalStateException.class, () -> frame.start());
+			frame.start();
 		}
 	}
 
 	@DisplayName("A frame that has ended...")
 	@Nested
 	class Ended {
-		private Instant start;
-
 		@BeforeEach
 		void before() {
-			start = frame.start();
-			frame.end();
+			frame.start();
 		}
 
 		@DisplayName("has a completion time")
@@ -56,21 +47,9 @@ class FrameTest {
 		@DisplayName("has an elapsed duration")
 		@Test
 		void elapsed() {
-			final Instant end = frame.time();
-			assertNotNull(end);
-			assertEquals(Duration.between(start, end), frame.elapsed());
-		}
-
-		@DisplayName("can be restarted")
-		@Test
-		void restart() {
-			frame.start();
-		}
-
-		@DisplayName("cannot be ended again")
-		@Test
-		void end() {
-			assertThrows(IllegalStateException.class, () -> frame.end());
+			final Duration elapsed = frame.elapsed();
+			assertNotNull(elapsed);
+			assertEquals(elapsed, frame.elapsed());
 		}
 	}
 

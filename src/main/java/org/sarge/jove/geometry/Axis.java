@@ -1,7 +1,9 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.geometry.Matrix.Builder;
+import org.sarge.jove.util.FloatSupport.ArrayConverter;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Converter;
 
 /**
  * An <i>axis</i> is a vector representing one of the <i>cardinal</i> axes.
@@ -44,6 +46,43 @@ public abstract class Axis extends NormalizedVector {
 			matrix.set(0, 1, -sin);
 			matrix.set(1, 0, sin);
 			matrix.set(1, 1, cos);
+		}
+	};
+
+	/**
+	 * Axis/vector converter.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>Converts axis tokens, e.g. {@code X} maps to {@link #X}</li>
+	 * <li>Also handles inverse axes prefixed with the negative symbol, e.g. {@code -X}</li>
+	 * <li>Otherwise the string is assumed to be an arbitrary vector</li>
+	 * </ul>
+	 */
+	public static final Converter<Vector> CONVERTER = new Converter<>() {
+		private final Converter<Vector> converter = new ArrayConverter<>(SIZE, Vector::new);
+
+		@Override
+		public Vector apply(String str) throws NumberFormatException {
+			if(str.length() > 2) {
+				return converter.apply(str);
+			}
+			else
+			if(str.startsWith("-")) {
+				return of(str.substring(1)).invert();
+			}
+			else {
+				return of(str);
+			}
+		}
+
+		private static Axis of(String axis) {
+			return switch(axis) {
+				case "X" -> Axis.X;
+				case "Y" -> Axis.Y;
+				case "Z" -> Axis.Z;
+				default -> throw new IllegalArgumentException("Invalid axis: " + axis);
+			};
 		}
 	};
 
@@ -101,6 +140,13 @@ public abstract class Axis extends NormalizedVector {
 		}
 		else {
 			return vec.y < vec.z ? Y : Z;
+		}
+	}
+
+	public static class AxisConverter implements Converter<Vector> {
+		@Override
+		public Vector apply(String str) throws NumberFormatException {
+			return null;
 		}
 	}
 }

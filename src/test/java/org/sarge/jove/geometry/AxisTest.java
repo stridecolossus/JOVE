@@ -63,4 +63,29 @@ public class AxisTest {
 			assertEquals(expected, Z.rotation(PI));
 		}
 	}
+
+	@Nested
+	class ConverterTests {
+		@Test
+		void axis() {
+			assertEquals(X, Axis.CONVERTER.apply("X"));
+			assertEquals(Y, Axis.CONVERTER.apply("Y"));
+			assertEquals(Z, Axis.CONVERTER.apply("Z"));
+		}
+
+		@Test
+		void invert() {
+			assertEquals(X.invert(), Axis.CONVERTER.apply("-X"));
+			assertEquals(Y.invert(), Axis.CONVERTER.apply("-Y"));
+			assertEquals(Z.invert(), Axis.CONVERTER.apply("-Z"));
+		}
+
+		@Test
+		void vector() {
+			assertEquals(X, Axis.CONVERTER.apply("1 0 0"));
+			assertEquals(Y, Axis.CONVERTER.apply("0 1 0"));
+			assertEquals(Z, Axis.CONVERTER.apply("0 0 1"));
+			assertEquals(new Vector(1, 2, 3), Axis.CONVERTER.apply("1 2 3"));
+		}
+	}
 }

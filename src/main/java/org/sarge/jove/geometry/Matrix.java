@@ -36,7 +36,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class Matrix implements Transform, Bufferable, ByteSized {
+public class Matrix implements Transform, Bufferable {
 	/**
 	 * Creates an identity matrix.
 	 * @param order Matrix order
@@ -119,11 +119,6 @@ public class Matrix implements Transform, Bufferable, ByteSized {
 	@Override
 	public int length() {
 		return matrix.length * matrix.length * Float.BYTES;
-	}
-
-	@Override
-	public int stride() {
-		return length();
 	}
 
 	/**
@@ -263,11 +258,6 @@ public class Matrix implements Transform, Bufferable, ByteSized {
 
 		@Override
 		public int length() {
-			return LENGTH;
-		}
-
-		@Override
-		public int stride() {
 			return LENGTH;
 		}
 	}

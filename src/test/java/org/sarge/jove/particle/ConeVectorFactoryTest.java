@@ -31,4 +31,9 @@ public class ConeVectorFactoryTest {
 		when(random.next()).thenReturn(1f);
 		assertEquals(expected, factory.vector(null));
 	}
+
+	@Test
+	void load() {
+		// TODO
+	}
 }

@@ -183,7 +183,6 @@ class MatrixTest {
 		void layout() {
 			final int len = 4 * 4 * Float.BYTES;
 			assertEquals(Component.floats(4 * 4), Matrix4.LAYOUT);
-			assertEquals(len, matrix.stride());
 			assertEquals(len, Matrix4.LENGTH);
 		}
 

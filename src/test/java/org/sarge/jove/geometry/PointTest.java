@@ -65,6 +65,11 @@ class PointTest {
 	}
 
 	@Test
+	void converter() {
+		assertEquals(pos, Point.CONVERTER.apply("1, 2, 3"));
+	}
+
+	@Test
 	public void equals() {
 		assertEquals(pos, pos);
 		assertEquals(pos, new Point(1, 2, 3));

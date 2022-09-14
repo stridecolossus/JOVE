@@ -1,11 +1,8 @@
 package org.sarge.jove.platform.obj;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class ParserTest {
 	private ObjectModel model;
@@ -24,14 +21,14 @@ public class ParserTest {
 	@Test
 	void group() {
 		final String name = "name";
-		Parser.GROUP.parse(new String[]{name}, model);
+		Parser.GROUP.parse(name, model);
 		verify(model).start();
 //		verify(model).name(name);
 	}
 
 	@Test
 	void groupAnonymous() {
-		Parser.GROUP.parse(new String[]{}, model);
+		Parser.GROUP.parse(null, model);
 		verify(model).start();
 		verifyNoMoreInteractions(model);
 	}

@@ -94,6 +94,7 @@ public class Particle {
     private final long time;
     private Point pos;
     private Vector dir;
+    private Colour col = Colour.WHITE:
 
     public void move(Vector vec) {
         pos = pos.add(vec);
@@ -1245,26 +1246,6 @@ Particles should now start off bright white-yellow and fade through red to black
 
 Note that colour blending is disabled in the pipeline.
 
-TODO - texture, atlas, random/iterate
-
-And finally the particle colour is mixed with the texture in the fragment shader:
-
-```glsl
-#version 450
-
-layout(location=0) in vec2 inCoords;
-layout(location=1) in vec4 inColour;
-
-layout(location=0) out vec4 outColour;
-
-void main() {
-    // TODO - sampler
-    outColour = inColour;
-}
-```
-
-TODO - pic + texture
-
 ### Configuration
 
 Ideally we would like to demonstrate the various particle system scenarios by parameterising the project rather than creating multiple applications, i.e. specify the particle system and shader parameters via configuration files and implement some sort of switch at run-time.
@@ -1363,9 +1344,6 @@ A Spring _profile_ is used to switch between scenarios configured by a JVM argum
 -Dspring.profiles.active=sparks
 ```
 
-TODO - Generally a Spring profile is used to parameterise the configuration of bean components but this feature is not relevant for the current demo.
-switch texture,sampler ~ profile
-
 The profile is injected into the loader to select the scenario-specific configuration file for the particle system:
 
 ```java
@@ -1383,16 +1361,18 @@ frameCount: 2
 features: geometryShader
 size: 0.025
 shader: particle
+texture: particle.png
 
 #---
 spring.config.activate.on-profile=sparks
 title: Particle System - Sparks
+texture: spark.png
 
 #---
-spring.config.activate.on-profile=smoke
-title: Particle System - Smoke
-size: 1
-shader: circle
+spring.config.activate.on-profile=snow
+title: Particle System - Snow
+size: 0.5
+texture: snow.png
 ```
 
 Notes:
@@ -1401,7 +1381,7 @@ Notes:
 
 * The _size_ property is injected into the relevant shaders as a specialisation constant.
 
-Finally a new configuration property is added to specify the fragment shader:
+A new configuration property is added to specify the fragment shader:
 
 ```java
 @Bean
@@ -1410,8 +1390,26 @@ Shader fragment(ApplicationConfiguration cfg) {
 }
 ```
 
-The demo can now be used to run all the scenarios switched by the application argument.
-Sweet.
+And finally the specified texture is loaded and mixed with the particle colour in the fragment shader:
+
+```glsl
+#version 450
+
+layout(binding=1) uniform sampler2D Sampler;
+
+layout(location=0) in vec2 inCoords;
+layout(location=1) in vec4 inColour;
+
+layout(location=0) out vec4 outColour;
+
+void main() {
+    outColour = inColour * texture(Sampler, inCoords);
+}
+```
+
+The demo can now be used to run all the scenarios switched by the application argument.  Sweet.
+
+Generally a Spring profile is used to parameterise the configuration of bean components.  The profile could (for example) only load the texture and create a sampler for certain scenarios, but this is not particularly relevant for this demo.
 
 ---
 

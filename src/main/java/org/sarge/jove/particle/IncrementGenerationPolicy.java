@@ -1,6 +1,7 @@
 package org.sarge.jove.particle;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.lib.util.Element;
 
 /**
  * An <i>incremental generation policy</i> increases the number of particles with fractional results accumulated on each frame.
@@ -37,5 +38,15 @@ public class IncrementGenerationPolicy implements GenerationPolicy {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this).append("inc", inc).build();
+	}
+
+	/**
+	 * Loads an incremental policy from the given element.
+	 * @param e Element
+	 * @return Incremental policy
+	 */
+	public static IncrementGenerationPolicy load(Element e) {
+		final int inc = e.text().toInteger();
+		return new IncrementGenerationPolicy(inc);
 	}
 }
