@@ -6,6 +6,7 @@ import java.io.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.util.Randomiser;
+import org.sarge.lib.element.*;
 import org.sarge.lib.util.*;
 
 public class ParticleSystemLoaderTest {

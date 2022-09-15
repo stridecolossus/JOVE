@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.util.Interpolator;
-import org.sarge.lib.util.Element;
+import org.sarge.lib.element.Element;
 
 /**
  * The <i>interpolated colour factory</i> generates colours by interpolating over a range.

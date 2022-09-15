@@ -6,7 +6,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Rotation.AxisAngle;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Element;
+import org.sarge.lib.element.Element;
 
 /**
  * A <i>cone vector factory</i> generates randomised vectors within a cone.

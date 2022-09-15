@@ -67,6 +67,13 @@ public class AxisTest {
 	@Nested
 	class ConverterTests {
 		@Test
+		void of() {
+			assertEquals(X, Axis.of("X"));
+			assertEquals(Y, Axis.of("Y"));
+			assertEquals(Z, Axis.of("Z"));
+		}
+
+		@Test
 		void axis() {
 			assertEquals(X, Axis.CONVERTER.apply("X"));
 			assertEquals(Y, Axis.CONVERTER.apply("Y"));

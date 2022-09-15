@@ -1,7 +1,7 @@
 package org.sarge.jove.particle;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.lib.util.Element;
+import org.sarge.lib.element.Element;
 
 /**
  * An <i>incremental generation policy</i> increases the number of particles with fractional results accumulated on each frame.

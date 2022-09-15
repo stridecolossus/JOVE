@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
 
 import org.junit.jupiter.api.*;
-import org.sarge.lib.util.Element;
+import org.sarge.lib.element.Element;
 
 public class IncrementGenerationPolicyTest {
 	private GenerationPolicy policy;

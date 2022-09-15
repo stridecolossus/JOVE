@@ -11,8 +11,9 @@ import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.particle.ParticleSystem.Characteristic;
 import org.sarge.jove.util.Randomiser;
+import org.sarge.lib.element.*;
+import org.sarge.lib.element.Element.Content;
 import org.sarge.lib.util.*;
-import org.sarge.lib.util.Element.Content;
 
 /**
  * Loader for a particle system.

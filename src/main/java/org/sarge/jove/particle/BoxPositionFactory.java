@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Element;
+import org.sarge.lib.element.Element;
 
 /**
  * The <i>box position factory</i> generates particles randomly within a box (or rectangle).

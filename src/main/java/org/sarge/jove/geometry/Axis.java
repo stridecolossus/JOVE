@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.geometry.Matrix.Builder;
-import org.sarge.jove.util.FloatSupport.ArrayConverter;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Converter;
 
@@ -56,16 +55,15 @@ public abstract class Axis extends NormalizedVector {
 	 * <ul>
 	 * <li>Converts axis tokens, e.g. {@code X} maps to {@link #X}</li>
 	 * <li>Also handles inverse axes prefixed with the negative symbol, e.g. {@code -X}</li>
-	 * <li>Otherwise the string is assumed to be an arbitrary vector</li>
+	 * <li>Otherwise the string is assumed to be an arbitrary vector, i.e. delegates to {@link Vector#CONVERTER}</li>
 	 * </ul>
 	 */
+	@SuppressWarnings("hiding")
 	public static final Converter<Vector> CONVERTER = new Converter<>() {
-		private final Converter<Vector> converter = new ArrayConverter<>(SIZE, Vector::new);
-
 		@Override
 		public Vector apply(String str) throws NumberFormatException {
 			if(str.length() > 2) {
-				return converter.apply(str);
+				return Vector.CONVERTER.apply(str);
 			}
 			else
 			if(str.startsWith("-")) {
@@ -75,16 +73,22 @@ public abstract class Axis extends NormalizedVector {
 				return of(str);
 			}
 		}
-
-		private static Axis of(String axis) {
-			return switch(axis) {
-				case "X" -> Axis.X;
-				case "Y" -> Axis.Y;
-				case "Z" -> Axis.Z;
-				default -> throw new IllegalArgumentException("Invalid axis: " + axis);
-			};
-		}
 	};
+
+	/**
+	 * Converts the given string to an axis.
+	 * @param axis Axis name
+	 * @return Axis
+	 * @throws IllegalArgumentException for an invalid axis
+	 */
+	public static Axis of(String axis) {
+		return switch(axis) {
+			case "X" -> Axis.X;
+			case "Y" -> Axis.Y;
+			case "Z" -> Axis.Z;
+			default -> throw new IllegalArgumentException("Invalid axis: " + axis);
+		};
+	}
 
 	private final Vector inv = super.invert();
 
@@ -97,13 +101,13 @@ public abstract class Axis extends NormalizedVector {
 
 	/**
 	 * Builds the vector for an axis.
-	 * @param index Axis index
+	 * @param axis Axis index
 	 * @return New axis
 	 */
-	private static Vector axis(int index) {
-		final float[] axis = new float[3];
-		axis[index] = 1;
-		return new Vector(axis);
+	private static Vector axis(int axis) {
+		final float[] array = new float[3];
+		array[axis] = 1;
+		return new Vector(array);
 	}
 
 	@Override
@@ -140,13 +144,6 @@ public abstract class Axis extends NormalizedVector {
 		}
 		else {
 			return vec.y < vec.z ? Y : Z;
-		}
-	}
-
-	public static class AxisConverter implements Converter<Vector> {
-		@Override
-		public Vector apply(String str) throws NumberFormatException {
-			return null;
 		}
 	}
 }

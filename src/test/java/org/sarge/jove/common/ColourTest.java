@@ -92,6 +92,7 @@ class ColourTest {
 	@Test
 	void converter() {
 		assertEquals(col, Colour.CONVERTER.apply("0.1, 0.2, 0.3, 1"));
+		assertEquals(col, Colour.CONVERTER.apply("0.1, 0.2, 0.3"));
 	}
 
 	@Test

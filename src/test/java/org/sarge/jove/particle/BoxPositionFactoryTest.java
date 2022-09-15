@@ -1,11 +1,12 @@
 package org.sarge.jove.particle;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Randomiser;
+import org.sarge.lib.element.Element;
 
 public class BoxPositionFactoryTest {
 	private Randomiser randomiser;
@@ -26,6 +27,13 @@ public class BoxPositionFactoryTest {
 
 	@Test
 	void load() {
-		// TODO
+		final String origin = "0 0 0";
+		final Element e = new Element.Builder()
+				.child("min", origin)
+				.child("max", origin)
+				.build();
+		final PositionFactory factory = BoxPositionFactory.load(e, randomiser);
+		assertNotNull(factory);
+		assertEquals(Point.ORIGIN, factory.position());
 	}
 }

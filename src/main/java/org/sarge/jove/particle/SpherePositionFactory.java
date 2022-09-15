@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Randomiser;
-import org.sarge.lib.util.Element;
+import org.sarge.lib.element.Element;
 
 /**
  * The <i>sphere position factory</i> generates particles on the surface of a sphere.
