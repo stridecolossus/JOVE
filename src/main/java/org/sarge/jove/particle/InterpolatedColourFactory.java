@@ -26,8 +26,13 @@ public class InterpolatedColourFactory implements ColourFactory {
 		this.interpolator = notNull(interpolator);
 	}
 
+	/**
+	 * Constructor for a linearly interpolated colour.
+	 * @param start				Starting colour
+	 * @param end				End colour
+	 */
 	public InterpolatedColourFactory(Colour start, Colour end) {
-		this(start, end, Interpolator.LINEAR); // TODO - identity
+		this(start, end, Interpolator.IDENTITY);
 	}
 
 	@Override
@@ -43,6 +48,7 @@ public class InterpolatedColourFactory implements ColourFactory {
 	public static ColourFactory load(Element e) {
 		final Colour start = e.child("start").text().transform(Colour.CONVERTER);
 		final Colour end = e.child("end").text().transform(Colour.CONVERTER);
-		return new InterpolatedColourFactory(start, end); // TODO - interpolator
+		final Interpolator interpolator = e.optional("interpolator").map(Element::child).map(Interpolator::load).orElse(Interpolator.IDENTITY);
+		return new InterpolatedColourFactory(start, end, interpolator);
 	}
 }

@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.Duration;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Frame.*;
+import org.sarge.jove.control.Frame.Counter;
 
 class FrameTest {
-	private Tracker frame;
+	private Frame frame;
 
 	@BeforeEach
 	void before() {
-		frame = new Tracker();
+		frame = new Frame();
 	}
 
 	@DisplayName("A frame that has been started...")
@@ -36,6 +36,7 @@ class FrameTest {
 		@BeforeEach
 		void before() {
 			frame.start();
+			frame.elapsed();
 		}
 
 		@DisplayName("has a completion time")
@@ -49,7 +50,7 @@ class FrameTest {
 		void elapsed() {
 			final Duration elapsed = frame.elapsed();
 			assertNotNull(elapsed);
-			assertEquals(elapsed, frame.elapsed());
+			assertSame(elapsed, frame.elapsed());
 		}
 	}
 

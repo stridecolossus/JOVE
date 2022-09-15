@@ -39,6 +39,45 @@ public class ComponentTest {
 		assertEquals(new Component(3, Type.FLOAT, true, Float.BYTES), Component.floats(3));
 	}
 
+	@Nested
+	class TypeTests {
+		@Test
+		void floats() {
+			assertEquals(new Component(1, Type.FLOAT, true, Float.BYTES), Component.of(Float.class));
+			assertEquals(new Component(1, Type.FLOAT, true, Float.BYTES), Component.of(float.class));
+		}
+
+		@Test
+		void longs() {
+			assertEquals(new Component(1, Type.INTEGER, true, Long.BYTES), Component.of(Long.class));
+			assertEquals(new Component(1, Type.INTEGER, true, Long.BYTES), Component.of(long.class));
+		}
+
+		@Test
+		void integers() {
+			assertEquals(new Component(1, Type.INTEGER, true, Integer.BYTES), Component.of(Integer.class));
+			assertEquals(new Component(1, Type.INTEGER, true, Integer.BYTES), Component.of(int.class));
+		}
+
+		@Test
+		void shorts() {
+			assertEquals(new Component(1, Type.INTEGER, true, Short.BYTES), Component.of(Short.class));
+			assertEquals(new Component(1, Type.INTEGER, true, Short.BYTES), Component.of(short.class));
+		}
+
+		@Test
+		void bytes() {
+			assertEquals(new Component(1, Type.INTEGER, true, 1), Component.of(Byte.class));
+			assertEquals(new Component(1, Type.INTEGER, true, 1), Component.of(byte.class));
+		}
+
+		@Test
+		void booleans() {
+			assertEquals(new Component(1, Type.INTEGER, false, 1), Component.of(Boolean.class));
+			assertEquals(new Component(1, Type.INTEGER, false, 1), Component.of(boolean.class));
+		}
+	}
+
 	@Test
 	void equals() {
 		assertEquals(component, component);

@@ -13,7 +13,7 @@ import org.sarge.jove.particle.ParticleSystem.Characteristic;
 import org.sarge.jove.util.Randomiser;
 import org.sarge.lib.element.*;
 import org.sarge.lib.element.Element.Content;
-import org.sarge.lib.util.*;
+import org.sarge.lib.util.Converter;
 
 /**
  * Loader for a particle system.
@@ -76,7 +76,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	public ParticleSystem load(Element root) throws IOException {
 		// Init particle system
 		final Characteristic[] chars = characteristics(root);
-		final ParticleSystem sys = new ParticleSystem(randomiser, chars);
+		final ParticleSystem sys = new ParticleSystem(chars);
 
 		// Load maximum number of particles
 		root

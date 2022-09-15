@@ -14,7 +14,6 @@ import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.util.Randomiser;
 import org.sarge.lib.util.Check;
 
 /**
@@ -60,7 +59,6 @@ public class ParticleSystem implements Animation {
 	private List<Particle> particles = new ArrayList<>();
 
 	// Controller
-	private final Randomiser randomiser;
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
 	private final Map<Intersected, Collision> surfaces = new HashMap<>();
@@ -69,13 +67,8 @@ public class ParticleSystem implements Animation {
 	 * Constructor.
 	 * @param chars Particle system characteristics
 	 */
-	public ParticleSystem(Randomiser randomiser, Characteristic... chars) {
-		this.randomiser = notNull(randomiser);
-		this.chars = Arrays.asList(chars);
-	}
-
 	public ParticleSystem(Characteristic... chars) {
-		this(new Randomiser(), chars);
+		this.chars = Arrays.asList(chars);
 	}
 
 	/**
@@ -242,9 +235,8 @@ public class ParticleSystem implements Animation {
 
 	@Override
 	public synchronized void update(Animator animator) {
-		final Frame frame = animator.frame();
-		final long time = frame.time().toEpochMilli();
-		final float elapsed = frame.elapsed().toMillis() * SCALE;
+		final long time = animator.frame().time().toEpochMilli();
+		final float elapsed = animator.elapsed() * SCALE;
 		expire(time);
 		update(time, elapsed);
 		cull();

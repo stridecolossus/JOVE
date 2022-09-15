@@ -1,8 +1,10 @@
 package org.sarge.jove.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.sarge.lib.element.Element;
+import org.sarge.lib.element.Element.ElementException;
 
 public class InterpolatorTest {
 	@Test
@@ -10,6 +12,32 @@ public class InterpolatorTest {
 		assertEquals(1, Interpolator.interpolate(0, 1, 3));
 		assertEquals(2, Interpolator.interpolate(0.5f, 1, 3));
 		assertEquals(3, Interpolator.interpolate(1, 1, 3));
+	}
+
+	@Nested
+	class LoaderTests {
+		@Test
+		void identity() {
+			assertEquals(Interpolator.IDENTITY, Interpolator.load(new Element("identity")));
+		}
+
+		@Test
+		void linear() {
+			final Element e = new Element.Builder()
+					.name("linear")
+					.child("start", "1")
+					.child("end", "2")
+					.build();
+
+			final Interpolator linear = Interpolator.load(e);
+			assertEquals(1, linear.interpolate(0));
+			assertEquals(2, linear.interpolate(1));
+		}
+
+		@Test
+		void unknown() {
+			assertThrows(ElementException.class, () -> Interpolator.load(new Element("cobblers")));
+		}
 	}
 }
 

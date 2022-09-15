@@ -1,5 +1,7 @@
 package org.sarge.jove.util;
 
+import org.sarge.lib.element.Element;
+
 /**
  * An <i>interpolator</i>
  * TODO
@@ -46,7 +48,7 @@ public interface Interpolator {
 	/**
 	 * Linear interpolation, i.e. does nothing.
 	 */
-	Interpolator LINEAR = t -> t;
+	Interpolator IDENTITY = t -> t;
 
 	/**
 	 * Quadratic (or squared) function.
@@ -116,5 +118,26 @@ public interface Interpolator {
 	 */
 	static float interpolate(float t, float start, float end) {
 		return (1 - t) * start + t * end;
+	}
+
+	/**
+	 * Loads an interpolator from the given element.
+	 * @param e Element
+	 * @return Interpolator
+	 */
+	static Interpolator load(Element e) {
+		return switch(e.name()) {
+			case "identity" -> Interpolator.IDENTITY;
+
+			case "linear" -> {
+				final float start = e.child("start").text().toFloat();
+				final float end = e.child("end").text().toFloat();
+				yield linear(start, end);
+			}
+
+			// TODO
+
+			default -> throw e.exception("Unknown interpolator: " + e.name());
+		};
 	}
 }

@@ -77,9 +77,9 @@ There are pros and cons to all of these approaches:
 
 * A configurable particle system lends itself to being specified later by some configuration file (e.g. an XML document).
 
-After some trials we opted for the simplest approach using mutable particles.  However calculation of the particle colour _is_ deferred to the fragment shader, implying particles additionally have a creation timestamp used to calculate the colour based on age.
+After some trials we opted for the simplest approach using mutable particles and influence vectors.
 
-We will progressively build up the particle system functionality using the _sparks_ scenario as a test case since this covers the majority of the identified requirements.
+Particle system functionality will be progressively built using the _sparks_ scenario as a test case as this covers the majority of the identified requirements.
 
 ---
 
@@ -207,7 +207,7 @@ public class ParticleModel extends AbstractModel {
     private final ParticleSystem sys;
 
     public ParticleModel(ParticleSystem sys) {
-        super(Primitive.POINTS, CompoundLayout.of(Point.LAYOUT));
+        super(Primitive.POINTS, new Layout(Point.LAYOUT, Colour.LAYOUT));
         this.sys = notNull(sys);
     }
 
@@ -864,13 +864,13 @@ public HalfSpace halfspace(Point pt) {
 The following adapter on the plane can now be implemented as an alternative and slightly more efficient intersection test based on the half-space of the ray:
 
 ```java
-public Intersected negative() {
+public Intersected halfspace(HalfSpace space) {
     return ray -> {
-        if(halfspace(ray.origin()) == HalfSpace.POSITIVE) {
-            return NONE;
+        if(halfspace(ray.origin()) == space) {
+            return UNDEFINED;
         }
         else {
-            return UNDEFINED;
+            return NONE;
         }
     };
 }
@@ -1017,11 +1017,10 @@ First the `update` method is refactored making the steps and dependencies more e
 ```java
 @Override
 public void update(Animator animator) {
-    Frame frame = animator.frame();
-    long time = frame.time().toEpochMilli();
-    float elapsed = frame.elapsed().toMillis() * animator.speed() * SCALE;
+    long time = animator.frame().time().toEpochMilli();
+    float elapsed = animator.elapsed() * SCALE;
     expire(time);
-    update(elapsed);
+    update(time, elapsed);
     cull();
     generate(time, elapsed);
 }
@@ -1037,10 +1036,6 @@ Expired particles are _marked_ as destroyed as a parallel stream operation:
 
 ```java
 private void expire(long time) {
-    if(!isLifetimeBound()) {
-        return;
-    }
-
     long expired = time - lifetime;
 
     particles
@@ -1049,8 +1044,6 @@ private void expire(long time) {
         .forEach(Particle::destroy);
 }
 ```
-
-Where `isLifetimeBound` skips this step if the particle system does not specify a particle lifetime.
 
 The update step is also refactored as a parallel operation:
 
@@ -1079,14 +1072,10 @@ class Instance {
 }
 ```
 
-Finally particles that have been destroyed (either by lifetime expiration or a collision) are culled:
+Particles that have been destroyed (either by lifetime expiration or a collision) are culled in the final step:
 
 ```java
 private void cull() {
-    if(chars.contains(Characteristic.DISABLE_CULLING)) {
-        return;
-    }
-
     particles = particles
         .parallelStream()
         .filter(Particle::isAlive)
@@ -1094,13 +1083,11 @@ private void cull() {
 }
 ```
 
-Notes:
+Note that the reference to the `particles` collection is now mutable and is over-written by the `cull` method.
 
-* The `Characteristic` enumeration is introduced where `DISABLE_CULLING` is a hint for a particle system that does not expire or destroy particles.
+A final enhancement is the introduction of the the `Characteristic` enumeration that allows the application to provide hints to the particle system.  The `DISABLE_CULLING` characteristic skips the `expire` and `cull` steps (not shown) for a particle system where particles exist indefinitely.
 
-* The reference to the `particles` collection is now mutable and is over-written by the `cull` method.
-
-The code is now much cleaner and employs multiple processor cores.
+The particle system is now much cleaner and employs multiple processor cores.
 
 ### Emitters
 
@@ -1277,27 +1264,20 @@ An `Element` is a custom library type representing a node in a nested configurat
 
 * Transform element content to Java primitives.
 
-For example, the generation policy is loaded by the following method:
+Converters are introduced for common data types (point, vector, colour, etc) and a specialised implementation is added to the `Axis` class (not shown) that allows a vector to be specified as a comma-delimited tuple or a cardinal axis, e.g. `X` or `-X`.
+
+Loaders are implemented for the built-in types used in the particle system, for example:
 
 ```java
-private GenerationPolicy policy(Element root) {
-    return switch(root.name()) {
-        case "none" -> GenerationPolicy.NONE;
-
-        case "fixed" -> {
-            int num = root.text().toInteger();
-            yield GenerationPolicy.fixed(num);
-        }
-
-        case "increment" -> {
-            int inc = root.text().toInteger();
-            yield new IncrementGenerationPolicy(inc);
-        }
-
-        default -> throw root.exception(...);
-    };
+public static SpherePositionFactory load(Element e, Randomiser randomiser) {
+    Point centre = e.child("centre").text().transform(Point.CONVERTER);
+    float radius = e.child("radius").text().toFloat();
+    var sphere = new Sphere(centre, radius);
+    return new SpherePositionFactory(sphere, randomiser);
 }
 ```
+
+These methods are registered with the `ParticleSystemLoader` class to support the various emitters, colour factories, etc. which also allows custom implementations to be plugged in if required.
 
 In this case an XML document seems the most appropriate format to configure the particle system:
 
