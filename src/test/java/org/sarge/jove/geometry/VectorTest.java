@@ -127,6 +127,11 @@ class VectorTest {
 	}
 
 	@Test
+	void converter() {
+		assertEquals(vec, Vector.CONVERTER.apply("1 2 3"));
+	}
+
+	@Test
 	public void equals() {
 		assertEquals(vec, vec);
 		assertEquals(vec, new Vector(1, 2, 3));

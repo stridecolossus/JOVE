@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Component;
 
 class PointTest {
 	private Point pos;
@@ -60,8 +60,13 @@ class PointTest {
 	@Test
 	void layout() {
 		assertEquals(3, Point.LAYOUT.size());
-		assertEquals(Layout.Type.FLOAT, Point.LAYOUT.type());
+		assertEquals(Component.Type.FLOAT, Point.LAYOUT.type());
 		assertEquals(Float.BYTES, Point.LAYOUT.bytes());
+	}
+
+	@Test
+	void converter() {
+		assertEquals(pos, Point.CONVERTER.apply("1, 2, 3"));
 	}
 
 	@Test

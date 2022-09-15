@@ -7,11 +7,11 @@ package org.sarge.jove.platform.obj;
 interface Parser {
 	/**
 	 * Parses the given command.
-	 * @param args 		Arguments (including the command token)
+	 * @param args 		Arguments
 	 * @param model		OBJ model
 	 * @throws NumberFormatException if the data cannot be parsed
 	 */
-	void parse(String[] args, ObjectModel model);
+	void parse(String args, ObjectModel model);
 
 	/**
 	 * Parser that ignores a command.

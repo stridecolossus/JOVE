@@ -3,8 +3,9 @@ package org.sarge.jove.common;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.sarge.jove.util.Interpolator;
-import org.sarge.lib.util.Check;
+import org.sarge.jove.util.*;
+import org.sarge.jove.util.FloatSupport.FloatFunction;
+import org.sarge.lib.util.*;
 
 /**
  * RGBA colour.
@@ -27,9 +28,19 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	public static final Colour BLACK = new Colour(0, 0, 0);
 
 	/**
+	 * Size of a colour.
+	 */
+	public static final int SIZE = 4;
+
+	/**
 	 * Layout of a colour.
 	 */
-	public static final Layout LAYOUT = Layout.floats(4);
+	public static final Component LAYOUT = Component.floats(SIZE);
+
+	/**
+	 * Colour converter.
+	 */
+	public static final Converter<Colour> CONVERTER = new FloatArrayConverter<>(SIZE, false, Colour::of);
 
 	/**
 	 * Creates a colour from the given floating-point array representing an RGBA value <b>or</b> a 3-element RGB array with the alpha value initialised to <b>one</b>.
@@ -66,23 +77,33 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	/**
-	 * Interpolates a colour between this and the given colour.
-	 * @param col		Colour
-	 * @param t			Amount
-	 * @return Interpolated colour
+	 * Creates a colour interpolator.
+	 * @param start				Start colour
+	 * @param end				End colour
+	 * @param interpolator		Interpolator function
+	 * @return Colour interpolator
 	 */
-	public Colour interpolate(Colour col, float t) {
-		final float[] start = this.toArray();
-		final float[] end = col.toArray();
-		for(int n = 0; n < start.length; ++n) {
-			start[n] = Interpolator.interpolate(t, start[n], end[n]);
-		}
-		return of(start);
+	public static FloatFunction<Colour> interpolator(Colour start, Colour end, Interpolator interpolator) {
+		// Create an interpolator for each channel
+		final float[] a = start.toArray();
+		final float[] b = end.toArray();
+		final Interpolator[] array = new Interpolator[SIZE];
+		Arrays.setAll(array, n -> interpolator.range(a[n], b[n]));
+
+		// Create colour interpolator
+		return t -> {
+			final float[] result = new float[SIZE];
+			for(int n = 0; n < SIZE; ++n) {
+				result[n] = array[n].apply(t);
+			}
+			return Colour.of(result);
+		};
 	}
+	// TODO - move to separate class + loader?  see particle system loader
 
 	@Override
 	public int length() {
-		return LAYOUT.length();
+		return LAYOUT.stride();
 	}
 
 	@Override

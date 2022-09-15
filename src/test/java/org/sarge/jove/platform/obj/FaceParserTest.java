@@ -1,12 +1,10 @@
 package org.sarge.jove.platform.obj;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.*;
 
 public class FaceParserTest {
 	private FaceParser parser;
@@ -20,38 +18,37 @@ public class FaceParserTest {
 
 	@Test
 	void parsePosition() {
-		parser.parse(new String[]{"f", "1", "1", "1"}, model);
+		parser.parse("1 1 1", model);
 		verify(model, times(3)).vertex(1, null, null);
 	}
 
 	@Test
 	void parsePositionTexture() {
-		parser.parse(new String[]{"f", "1/1", "1/1", "1/1"}, model);
+		parser.parse("1/1 1/1 1/1", model);
 		verify(model, times(3)).vertex(1, null, 1);
 	}
 
 	@Test
 	void parsePositionTextureNormal() {
-		parser.parse(new String[]{"f", "1/1/1", "1/1/1", "1/1/1"}, model);
+		parser.parse("1/1/1 1/1/1 1/1/1", model);
 		verify(model, times(3)).vertex(1, 1, 1);
 	}
 
 	@Test
 	void parsePositionNormal() {
-		parser.parse(new String[]{"f", "1//1", "1//1", "1//1"}, model);
+		parser.parse("1//1 1//1 1//1", model);
 		verify(model, times(3)).vertex(1, 1, null);
 	}
 
 	@Test
 	void parseInvalidFaceLength() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f"}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f", "1", "2", "3", "4"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(StringUtils.EMPTY, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 2", model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 2 3 4", model));
 	}
 
 	@Test
 	void parseInvalidFaceComponents() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f", "", "1", "1"}, model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{"f", "1/2/3/4", "1", "1"}, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse("1/2/3/4 1 2", model));
 	}
 }

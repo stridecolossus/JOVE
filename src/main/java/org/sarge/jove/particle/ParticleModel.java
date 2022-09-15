@@ -3,10 +3,8 @@ package org.sarge.jove.particle;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
-import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 
@@ -36,26 +34,11 @@ public class ParticleModel extends AbstractModel {
 	 * @param sys Particle system
 	 */
 	public ParticleModel(ParticleSystem sys) {
-		super(Primitive.POINTS, build());
+		super(Primitive.POINTS, new Layout(Point.LAYOUT, Colour.LAYOUT));
 		this.sys = notNull(sys);
 	}
 
-//	// TODO - this sucks => doesn't pass layout to ctor?
-//	private static boolean times(ParticleSystem sys) {
-//		return sys.characteristics().contains(Characteristic.TIMESTAMPS);
-//	}
-
-	// TODO - non-interleaved
-	private static CompoundLayout build() {
-		final List<Layout> layout = new ArrayList<>();
-		// TODO - configured
-		layout.add(Point.LAYOUT);
-		layout.add(Colour.LAYOUT);
-//		if(times(sys)) {
-//			layout.add(new Layout(1, Layout.Type.FLOAT, true, Float.BYTES)); // TODO - age -> integer (long)
-//		}
-		return new CompoundLayout(layout);
-	}
+	// TODO - layout should be dynamic? e.g. optional component: position, direction, colour, timestamp, etc => particle ~ vertex
 
 	@Override
 	public synchronized int count() {

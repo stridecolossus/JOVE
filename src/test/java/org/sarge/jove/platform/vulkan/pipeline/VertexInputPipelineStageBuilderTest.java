@@ -5,8 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 
 public class VertexInputPipelineStageBuilderTest {
@@ -69,7 +68,7 @@ public class VertexInputPipelineStageBuilderTest {
 
 	@Test
 	void buildAddVertexLayout() {
-		final var layout = CompoundLayout.of(Layout.floats(1), Layout.floats(2));
+		final var layout = new Layout(Component.floats(1), Component.floats(2));
 		final var descriptor = builder.add(layout).get();
 		assertNotNull(descriptor);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);

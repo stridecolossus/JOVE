@@ -37,7 +37,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 
 		// Init image properties
 		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
-		final Layout layout = new Layout(components.length(), Layout.Type.NORMALIZED, false, 1);
+		final Component layout = new Component(components.length(), Component.Type.NORMALIZED, false, 1);
 		// TODO - should be INTEGER? but VK format needs to be UNORM
 
 		// Inject alpha channel as required
@@ -45,7 +45,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 			case TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> alpha(bytes, size.area());
 			default -> bytes;
 		};
-		assert data.length == size.area() * layout.length();
+		assert data.length == size.area() * layout.stride();
 
 		// Create image
 		return new ImageData(size, components, layout, data);

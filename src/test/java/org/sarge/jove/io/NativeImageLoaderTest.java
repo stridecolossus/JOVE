@@ -30,13 +30,13 @@ public class NativeImageLoaderTest {
 
 		// Check layout
 		final int num = image.components().length();
-		final Layout layout = image.layout();
+		final Component layout = image.layout();
 		assertNotNull(layout);
 		assertEquals(num, layout.size());
-		assertEquals(Layout.Type.NORMALIZED, layout.type());
+		assertEquals(Component.Type.NORMALIZED, layout.type());
 		assertEquals(Byte.BYTES, layout.bytes());
 		assertEquals(false, layout.signed());
-		assertEquals(num, layout.length());
+		assertEquals(num, layout.stride());
 
 		// Check MIP level
 		final int len = 2 * 3 * num;

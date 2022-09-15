@@ -5,8 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.common.*;
 
 /**
  * Skeleton implementation.
@@ -14,7 +13,7 @@ import org.sarge.jove.common.Layout.CompoundLayout;
  */
 public abstract class AbstractModel implements Model {
 	private final Primitive primitive;
-	private final CompoundLayout layout;
+	private final Layout layout;
 
 	/**
 	 * Constructor.
@@ -23,14 +22,14 @@ public abstract class AbstractModel implements Model {
 	 * @throws IllegalArgumentException if the layout contains {@link Model#NORMALS} but normals are not supported by the given {@link #primitive}
 	 * @see Primitive#isNormalSupported()
 	 */
-	protected AbstractModel(Primitive primitive, CompoundLayout layout) {
+	protected AbstractModel(Primitive primitive, Layout layout) {
 		this.primitive = notNull(primitive);
 		this.layout = notNull(layout);
 		validate();
 	}
 
 	private void validate() {
-		final boolean normals = layout.layouts().stream().anyMatch(e -> e == NORMALS);
+		final boolean normals = layout.components().stream().anyMatch(e -> e == NORMALS);
 		if(normals && !primitive.isNormalSupported()) {
 			throw new IllegalArgumentException("Vertex normals are not supported by primitive: " + primitive);
 		}
@@ -52,7 +51,7 @@ public abstract class AbstractModel implements Model {
 	}
 
 	@Override
-	public CompoundLayout layout() {
+	public Layout layout() {
 		return layout;
 	}
 

@@ -31,7 +31,7 @@ class DuplicateModelBuilderTest {
 		// Verify the de-duplicated model
 		assertNotNull(model);
 		assertEquals(3, model.count());
-		assertEquals(2 * Point.LAYOUT.length(), model.vertices().length());
+		assertEquals(2 * Point.LAYOUT.stride(), model.vertices().length());
 		assertEquals(3 * Short.BYTES, model.index().get().length());
 	}
 }

@@ -1,12 +1,18 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
+import org.sarge.lib.util.Converter;
 
 /**
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
 public class Vector extends Tuple {
+	/**
+	 * Converter for a vector.
+	 */
+	public static final Converter<Vector> CONVERTER = new FloatArrayConverter<>(SIZE, Vector::new);
+
 	/**
 	 * Creates the vector between the given points, i.e. <code>end - start</code>.
 	 * @param start		Starting point

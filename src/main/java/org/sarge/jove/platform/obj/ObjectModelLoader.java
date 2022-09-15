@@ -6,11 +6,13 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.io.*;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Check;
 
 /**
@@ -34,9 +36,9 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, model.positions()));
-		add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, model.coordinates()));
-		add("vn", new VertexComponentParser<>(Vector.SIZE, Vector::new, model.normals()));
+		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), model.positions()));
+		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), model.coordinates()));
+		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Vector.SIZE, Vector::new), model.normals()));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);
@@ -87,8 +89,8 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * @throws IllegalArgumentException if the command is unsupported
 	 */
 	private void parse(String line) {
-		// Tokenize line
-		final String[] parts = tokenize(line);
+		// Tokenize to command and arguments
+		final String[] parts = StringUtils.split(line, null, 2);
 
 		// Lookup command parser
 		final Parser parser = parsers.get(parts[0]);
@@ -98,6 +100,11 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 		}
 
 		// Delegate
-		parser.parse(parts, model);
+		if(parts.length == 1) {
+			parser.parse(null, model);
+		}
+		else {
+			parser.parse(parts[1], model);
+		}
 	}
 }

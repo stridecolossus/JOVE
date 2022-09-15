@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Rotation.AxisAngle;
 import org.sarge.jove.util.*;
+import org.sarge.lib.element.Element;
 
 /**
  * A <i>cone vector factory</i> generates randomised vectors within a cone.
@@ -24,7 +25,7 @@ public class ConeVectorFactory implements VectorFactory {
 	private final Vector normal;
 	private final Vector x, y;
 	private final Interpolator radius;
-	private final Randomiser random;
+	private final Randomiser randomiser;
 
 	/**
 	 * Constructor.
@@ -37,7 +38,7 @@ public class ConeVectorFactory implements VectorFactory {
 		this.x = normal.cross(Axis.minimal(normal));
 		this.y = x.cross(normal);
 		this.radius = Interpolator.linear(-radius, +radius);
-		this.random = notNull(random);
+		this.randomiser = notNull(random);
 	}
 
 	@Override
@@ -53,7 +54,7 @@ public class ConeVectorFactory implements VectorFactory {
 	 * @return Normal rotated about the given vector
 	 */
 	protected Vector rotate(Vector axis) {
-		final float angle = radius.interpolate(random.next());
+		final float angle = radius.apply(randomiser.next());
 		final var rot = AxisAngle.of(axis, angle);
 		return rot.rotate(normal);
 	}
@@ -64,5 +65,17 @@ public class ConeVectorFactory implements VectorFactory {
 				.append("normal", normal)
 				.append("radius", radius)
 				.build();
+	}
+
+	/**
+	 * Loads a cone vector factory from the given element.
+	 * @param e					Element
+	 * @param randomiser		Randomiser
+	 * @return Cone vector factory
+	 */
+	public static VectorFactory load(Element e, Randomiser randomiser) {
+		final Vector normal = e.child("normal").text().transform(Axis.CONVERTER);
+		final float radius = e.child("radius").text().toFloat();
+		return new ConeVectorFactory(normal, radius, randomiser);
 	}
 }

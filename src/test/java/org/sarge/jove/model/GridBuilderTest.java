@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
@@ -26,7 +25,7 @@ class GridBuilderTest {
 		final Model model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals((3 * 3) * 4, model.count());
-		assertEquals(CompoundLayout.of(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
+		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
 		assertEquals(true, model.isIndexed());
 	}
 
@@ -51,7 +50,7 @@ class GridBuilderTest {
 			final ImageData image = mock(ImageData.class);
 			when(image.size()).thenReturn(new Dimensions(8, 8));
 			when(image.components()).thenReturn("RGBA");
-			when(image.layout()).thenReturn(new Layout(1, Layout.Type.INTEGER, false, 2));
+			when(image.layout()).thenReturn(new Component(1, Component.Type.INTEGER, false, 2));
 			when(image.pixel(2, 2, 1)).thenReturn(65535);
 
 			// Create height-map function

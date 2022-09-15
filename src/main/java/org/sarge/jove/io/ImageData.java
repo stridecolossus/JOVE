@@ -59,7 +59,7 @@ public class ImageData {
 
 	private final Dimensions size;
 	private final String components;
-	private final Layout layout;
+	private final Component layout;
 	private final byte[] data;
 
 	/**
@@ -71,7 +71,7 @@ public class ImageData {
 	 * @throws IllegalArgumentException if the size of the components and layout do not match
 	 * @throws IllegalArgumentException if the image data does not match the number of MIP levels and array layers
 	 */
-	protected ImageData(Dimensions size, String components, Layout layout, byte[] data) {
+	protected ImageData(Dimensions size, String components, Component layout, byte[] data) {
 		this.size = notNull(size);
 		this.components = notEmpty(components);
 		this.layout = notNull(layout);
@@ -116,7 +116,7 @@ public class ImageData {
 	/**
 	 * @return Pixel layout
 	 */
-	public Layout layout() {
+	public Component layout() {
 		return layout;
 	}
 
@@ -159,7 +159,7 @@ public class ImageData {
 	public int pixel(int x, int y, int component) {
 		Check.range(component, 0, components.length() - 1);
 		final int offset = levels().get(0).offset;
-		final int start = (x + y * size.width()) * layout.length();
+		final int start = (x + y * size.width()) * layout.stride();
 		final int index = offset + start + (component * layout.bytes());
 		return pixel(index);
 	}

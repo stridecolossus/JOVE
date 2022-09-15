@@ -3,7 +3,6 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.control.Frame.Tracker;
 
 /**
  * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated per frame.
@@ -22,8 +21,8 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		void update(Animator animator);
 	}
 
-	private final Animation animation;
-	private final Tracker frame = new Tracker();
+	protected final Animation animation;
+	private final Frame frame = new Frame();
 	private float speed = 1;
 	private boolean repeat = true;
 
@@ -88,41 +87,19 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	@Override
-	public void pause() {
-		super.pause();
-		frame.end();
-	}
-
-	@Override
-	public void stop() {
-		if(isPlaying()) {
-			frame.end();
-		}
-		super.stop();
-	}
-
-	@Override
 	public void update() {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
-		// Update animation time
-		frame.end();
-		animate();
+		// Update animation
+		animation.update(this);
 
 		// Start next frame
 		if(isPlaying()) {
 			frame.start();
 		}
-	}
-
-	/**
-	 * Updates the animation.
-	 */
-	protected void animate() {
-		animation.update(this);
 	}
 
 	@Override

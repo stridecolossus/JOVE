@@ -1,5 +1,7 @@
 package org.sarge.jove.util;
 
+import org.sarge.jove.util.FloatSupport.FloatUnaryOperator;
+
 /**
  *
  * @author Sarge

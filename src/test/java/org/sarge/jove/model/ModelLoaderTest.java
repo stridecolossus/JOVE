@@ -7,8 +7,7 @@ import java.io.*;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.common.Layout.CompoundLayout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 
 class ModelLoaderTest {
@@ -57,7 +56,7 @@ class ModelLoaderTest {
 		// Check header
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(3, model.count());
-		assertEquals(CompoundLayout.of(Point.LAYOUT), result.layout());
+		assertEquals(new Layout(Point.LAYOUT), result.layout());
 		assertEquals(true, result.isIndexed());
 
 		// Check vertices

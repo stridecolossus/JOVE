@@ -36,7 +36,7 @@ public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages)
 	}
 
 	/**
-	 * @return Length of this push constant range, i.e. offset + size
+	 * @return Length of this push constant range, i.e. {@code offset + size}
 	 */
 	public int length() {
 		return offset + size;

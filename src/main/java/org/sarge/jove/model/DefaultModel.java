@@ -7,7 +7,6 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
-import org.sarge.jove.common.Layout.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 
 /**
@@ -30,7 +29,7 @@ public class DefaultModel extends AbstractModel {
 	 * @throws IllegalArgumentException if {@link #count} is invalid for the drawing primitive of this model
 	 * @see Primitive#isValidVertexCount(int)
 	 */
-	public DefaultModel(Primitive primitive, int count, CompoundLayout layout, Bufferable vertices, Bufferable index) {
+	public DefaultModel(Primitive primitive, int count, Layout layout, Bufferable vertices, Bufferable index) {
 		super(primitive, layout);
 		validate(count);
 		this.count = zeroOrMore(count);
@@ -60,7 +59,7 @@ public class DefaultModel extends AbstractModel {
 	 */
 	public static class Builder {
 		private Primitive primitive = Primitive.TRIANGLE_STRIP;
-		private final List<Layout> layout = new ArrayList<>();
+		private final List<Component> layout = new ArrayList<>();
 		private final List<Vertex> vertices = new ArrayList<>();
 		private final List<Integer> index = new ArrayList<>();
 
@@ -77,7 +76,7 @@ public class DefaultModel extends AbstractModel {
 		 * Adds a vertex component layout.
 		 * @param layout Vertex component layout
 		 */
-		public Builder layout(Layout layout) {
+		public Builder layout(Component layout) {
 			this.layout.add(notNull(layout));
 			return this;
 		}
@@ -87,7 +86,7 @@ public class DefaultModel extends AbstractModel {
 		 * @return
 		 */
 		public List<?> filter() {
-			final Map<Layout, Class<?>> filter = Map.of(
+			final Map<Component, Class<?>> filter = Map.of(
 					Point.LAYOUT,			Point.class,
 //					NORMALS,				Vector.class,
 					Coordinate2D.LAYOUT,	Coordinate2D.class,
@@ -148,7 +147,7 @@ public class DefaultModel extends AbstractModel {
 				indices = index();
 			}
 
-			final CompoundLayout compound = new CompoundLayout(layout);
+			final Layout compound = new Layout(layout);
 
 			// Create vertices
 			final var data = new Bufferable() {

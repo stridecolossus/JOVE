@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Matrix.Matrix4;
 import org.sarge.jove.util.MathsUtil;
 
 class FrustumTest {
@@ -75,7 +76,7 @@ class FrustumTest {
 		assertEquals(expected, frustum.planes());
 
 		// Frustum from view matrix should be same as identity
-		assertEquals(frustum, Frustum.of(Matrix.IDENTITY));
+		assertEquals(frustum, Frustum.of(Matrix4.IDENTITY));
 	}
 
 	@Test

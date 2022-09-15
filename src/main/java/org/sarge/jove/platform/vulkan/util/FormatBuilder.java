@@ -28,7 +28,7 @@ import org.sarge.lib.util.Check;
  *     .type(Type.NORM)     // NORM
  *     .build();            // B16G16R16A16_UNORM</pre>
  * <p>
- * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex layout:
+ * The {@link #format(ByteSized)} convenience method can also be used to determine the format from a vertex layout:
  * <pre>
  * VkFormat point = FormatBuilder.format(Point.LAYOUT); // R32G32B32_SFLOAT</pre>
  * <p>
@@ -42,7 +42,7 @@ public class FormatBuilder {
 	/**
 	 * Vulkan numeric formats.
 	 * <p>
-	 * The Vulkan numeric formats correspond the general {@link Layout.Type} equivalents with the following special cases:
+	 * The Vulkan numeric formats correspond the general {@link ByteSized.Type} equivalents with the following special cases:
 	 * <ul>
 	 * <li>{@link #SCALED} are integer values converted to floating-point</li>
 	 * <li>{@link #RGB} uses the {@code sRGB} nonlinear encoding</li>
@@ -61,7 +61,7 @@ public class FormatBuilder {
 		 * @return Vulkan numeric format
 		 * @throws UnsupportedOperationException if the given type is not supported
 		 */
-		public static NumericFormat of(Layout.Type type) {
+		public static NumericFormat of(Component.Type type) {
 			return switch(type) {
 				case INTEGER -> INT;
 				case FLOAT -> FLOAT;
@@ -76,7 +76,7 @@ public class FormatBuilder {
 	 * @param layout Layout
 	 * @return Format for the given layout
 	 */
-	public static VkFormat format(Layout layout) {
+	public static VkFormat format(Component layout) {
 		return new FormatBuilder()
 				.count(layout.size())
 				.bytes(layout.bytes())
@@ -91,7 +91,7 @@ public class FormatBuilder {
 	 * The image format is determined as follows:
 	 * <ol>
 	 * <li>Use the {@link ImageData#format()} hint unless this value is {@link VkFormat#UNDEFINED}</li>
-	 * <li>Otherwise delegate to {@link #format(Layout)} using the image layout</li>
+	 * <li>Otherwise delegate to {@link #format(Component)} using the image layout</li>
 	 * </ol>
 	 * <p>
 	 * @param image Image

@@ -1,7 +1,6 @@
 package org.sarge.jove.particle;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.util.Interpolator;
 
 /**
  * A <i>colour factory</i> determines the colour of a particle.
@@ -40,19 +39,5 @@ public interface ColourFactory {
 				return false;
 			}
 		};
-	}
-
-	/**
-	 * Creates a colour factory that interpolates between the given colours.
-	 * @param start		Starting colour
-	 * @param end		End colour
-	 * @return Interpolated colour factory
-	 */
-	static ColourFactory interpolated(Colour start, Colour end) {
-		return t -> start.interpolate(end, t);
-	}
-
-	static ColourFactory interpolated(Colour start, Colour end, Interpolator interpolator) {
-		return t -> start.interpolate(end, interpolator.interpolate(t));
 	}
 }

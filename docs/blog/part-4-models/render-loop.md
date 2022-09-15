@@ -1081,13 +1081,10 @@ private void delegate(Consumer<Playable> state) {
 }
 ```
 
-Next a simple timer utility is added that records an elapsed duration:
+Next a simple stopwatch utility is implemented that records an elapsed duration:
 
 ```java
 public class Frame {
-    /**
-     * A <i>frame listener</li> notifies completion of a rendered frame.
-     */
     @FunctionalInterface
     public interface Listener {
         /**
@@ -1096,35 +1093,33 @@ public class Frame {
         void update();
     }
 
-    private Instant start;
+    private Instant start = Instant.EPOCH;
     private Instant end = Instant.EPOCH;
-    private boolean running;
-
-    public Duration elapsed() {
-        return Duration.between(start, end);
-    }
+    private Duration elapsed;
 }
 ```
 
 Note that the frame listener interface is moved to this new class.
 
-The _frame_ can be started:
+The _frame_ is started at the beginning of some activity.
 
 ```java
-public void start() {
-    if(running) throw new IllegalStateException();
+public Instant start() {
     start = Instant.now();
-    running = true;
+    elapsed = null;
+    return start;
 }
 ```
 
-And stopped on completion of some activity:
+And can be queried for the elapsed duration:
 
 ```java
-public void end() {
-    if(!running) throw new IllegalStateException();
-    this.end = Instant.now();
-    this.running = false;
+public Duration elapsed() {
+    if(elapsed == null) {
+        end = Instant.now();
+        elapsed = Duration.between(start, end);
+    }
+    return elapsed;
 }
 ```
 

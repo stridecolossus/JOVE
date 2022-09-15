@@ -37,16 +37,17 @@ import org.apache.commons.lang3.StringUtils;
  */
 class FaceParser implements Parser {
 	@Override
-	public void parse(String[] args, ObjectModel model) {
-		// Validate face
-		if(args.length != 4) {
+	public void parse(String args, ObjectModel model) {
+		// Tokenize
+		final String[] faces = StringUtils.split(args);
+		if(faces.length != 3) {
 			throw new IllegalArgumentException("Expected triangle face");
 		}
 
 		// Parse vertices for this face
 		for(int n = 0; n < 3; ++n) {
 			// Tokenize face
-			final String face = args[n + 1];
+			final String face = faces[n];
 			final String[] parts = StringUtils.splitPreserveAllTokens(face, '/');
 			if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
 

@@ -183,7 +183,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 		/**
 		 * Sets the layout for this pipeline.
-		 * @param layout Pipeline layout (default is {@link PipelineLayout#IDENTITY})
+		 * @param layout Pipeline layout
 		 */
 		public Builder layout(PipelineLayout layout) {
 			this.layout = notNull(layout);
