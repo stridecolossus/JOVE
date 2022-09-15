@@ -40,7 +40,18 @@ public class InterpolatorTest {
 		final Interpolator inv = Interpolator.LINEAR.invert();
 		assertNotNull(inv);
 		assertEquals(1, inv.apply(0));
+		assertEquals(0.5f, inv.apply(0.5f));
 		assertEquals(0, inv.apply(1));
+	}
+
+	@DisplayName("A mirror interpolator reflects the function about time axis")
+	@Test
+	void mirror() {
+		final Interpolator mirror = Interpolator.LINEAR.mirror();
+		assertNotNull(mirror);
+		assertEquals(0, mirror.apply(0));
+		assertEquals(1, mirror.apply(0.5f));
+		assertEquals(0, mirror.apply(1));
 	}
 
 	@Test

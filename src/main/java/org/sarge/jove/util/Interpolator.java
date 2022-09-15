@@ -7,18 +7,24 @@ import org.sarge.lib.element.Element;
 import org.sarge.lib.element.Element.Content;
 
 /**
- * An <i>interpolator</i>
- * TODO
+ * An <i>interpolator</i> is a floating-point function applied to a percentile value, used for animation, easing, etc.
+ * <p>
+ * Usage:
+ * <pre>
+ * // Perform a one-off linear interpolation over a range
+ * float result = Interpolator.lerp(value, 1, 2);
  *
- * P(0) = 0
- * P(1) = 1
- * P(t) = ???
+ * // Create an interpolator instance for the same purpose
+ * Interpolator linear = Interpolator.linear(1, 2);
  *
-	// TODO
-	//* @see <a href="https://en.wikipedia.org/wiki/Smoothstep">Wikipedia</a>
-////https://www.febucci.com/2018/08/easing-functions/
-//	Interpolator COSINE = value -> (1 - MathsUtil.cos(value * MathsUtil.PI)) / 2f;
+ * // Create an easing functions
+ * Interpolator in = Interpolator.QUADRATIC.range(1, 2);
+ * Interpolator out = Interpolator.QUADRATIC.invert().range(1, 2);
  *
+ * // Mix
+ * Interpolator inout = Interpolator.mix(in, out);
+ * </pre>
+ * <p>
  * @author Sarge
  */
 @FunctionalInterface
@@ -53,6 +59,21 @@ public interface Interpolator extends FloatUnaryOperator {
 	 */
 	default Interpolator invert() {
 		return t -> 1 - apply(t);
+	}
+
+	/**
+	 * Mirrors this interpolator.
+	 * @return Mirror interpolator
+	 */
+	default Interpolator mirror() {
+		return t -> {
+			if(t <= MathsUtil.HALF) {
+				return apply(t * 2);
+			}
+			else {
+				return apply((1 - t) * 2);
+			}
+		};
 	}
 
 	/**
