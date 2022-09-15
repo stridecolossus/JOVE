@@ -34,7 +34,7 @@ public class BoundAnimator extends Animator {
 	 * @param duration 			Duration
 	 */
 	public BoundAnimator(Animation animation, Duration duration) {
-		this(animation, duration, Interpolator.IDENTITY);
+		this(animation, duration, Interpolator.LINEAR);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class BoundAnimator extends Animator {
 
 	@Override
 	public float elapsed() {
-		return interpolator.interpolate(time / (float) duration);
+		return interpolator.apply(time / (float) duration);
 	}
 
 	@Override

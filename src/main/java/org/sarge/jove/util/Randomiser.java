@@ -56,7 +56,7 @@ public class Randomiser {
 	 */
 	public Vector vector() {
 		for(int n = 0; n < array.length; ++n) {
-			array[n] = interpolator.interpolate(next());
+			array[n] = interpolator.apply(next());
 		}
 		return new Vector(array);
 	}

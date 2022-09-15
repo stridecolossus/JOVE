@@ -3,7 +3,7 @@ package org.sarge.jove.platform.obj;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.FloatSupport.ArrayConverter;
+import org.sarge.jove.util.FloatArrayConverter;
 
 /**
  * A <i>vertex component parser</i> parses an OBJ vertex component (vertices, normals, texture coordinates).
@@ -11,7 +11,7 @@ import org.sarge.jove.util.FloatSupport.ArrayConverter;
  * @author Sarge
  */
 class VertexComponentParser<T extends Bufferable> implements Parser {
-	private final ArrayConverter<T> converter;
+	private final FloatArrayConverter<T> converter;
 	private final VertexComponentList<T> list;
 
 	/**
@@ -19,7 +19,7 @@ class VertexComponentParser<T extends Bufferable> implements Parser {
 	 * @param converter		Array converter
 	 * @param list			Vertex components
 	 */
-	public VertexComponentParser(ArrayConverter<T> converter, VertexComponentList<T> list) {
+	public VertexComponentParser(FloatArrayConverter<T> converter, VertexComponentList<T> list) {
 		this.converter = notNull(converter);
 		this.list = notNull(list);
 	}

@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.util.FloatSupport.FloatFunction;
+import org.sarge.jove.util.Interpolator;
 
 class ColourTest {
 	private Colour col;
@@ -57,11 +59,13 @@ class ColourTest {
 		}
 	}
 
+	@DisplayName("A colour can be interpolated between two colours")
 	@Test
-	void interpolate() {
-		assertEquals(new Colour(0.5f, 0.5f, 0.5f, 1), Colour.BLACK.interpolate(Colour.WHITE, 0.5f));
-		assertEquals(Colour.BLACK, Colour.BLACK.interpolate(Colour.WHITE, 0));
-		assertEquals(Colour.WHITE, Colour.BLACK.interpolate(Colour.WHITE, 1));
+	void interpolator() {
+		final FloatFunction<Colour> interpolator = Colour.interpolator(Colour.WHITE, Colour.BLACK, Interpolator.LINEAR);
+		assertNotNull(interpolator);
+		assertEquals(Colour.WHITE, interpolator.apply(0));
+		assertEquals(Colour.BLACK, interpolator.apply(1));
 	}
 
 	@DisplayName("A colour has a length in bytes")

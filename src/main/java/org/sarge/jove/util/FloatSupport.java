@@ -1,14 +1,9 @@
 package org.sarge.jove.util;
 
-import static org.sarge.lib.util.Check.*;
-
-import java.util.function.Function;
-
-import org.apache.commons.lang3.StringUtils;
-import org.sarge.lib.util.Converter;
+import java.util.Objects;
 
 /**
- *
+ * Utility class for floating-point implementations of common function stereotypes.
  * @author Sarge
  */
 public final class FloatSupport {
@@ -16,63 +11,77 @@ public final class FloatSupport {
 	}
 
 	/**
-	 * Converter for a floating-point tuple specified as a whitespace or comma-delimited string.
-	 * @param <T> Result type
+	 * Supplier for a floating-point value.
 	 */
-	public static class ArrayConverter<T> implements Converter<T> {
-		private final int size;
-		private final boolean exact;
-		private final Function<float[], T> ctor;
+	@FunctionalInterface
+	public interface FloatSupplier {
+	    /**
+	     * @return Floating-point value
+	     */
+		float get();
+	}
 
+	/**
+	 * Consumer of a floating-point value.
+	 */
+	@FunctionalInterface
+	public interface FloatConsumer {
+	    /**
+	     * Consumes the given value.
+	     * @param f Floating-point value to consume
+	     */
+		void accept(float f);
+	}
+
+	/**
+	 * Floating-point function.
+	 * @param <R> Result type
+	 */
+	@FunctionalInterface
+	public interface FloatFunction<R> {
 		/**
-		 * Constructor.
-		 * @param size			Expected array length
-		 * @param exact			Whether the array length <b>must</b> exactly match {@link #size}
-		 * @param ctor			Constructor
+		 * Applies this function to the given floating-point argument.
+		 * @param f Argument
+		 * @return Result
 		 */
-		public ArrayConverter(int size, boolean exact, Function<float[], T> ctor) {
-			this.size = oneOrMore(size);
-			this.exact = exact;
-			this.ctor = notNull(ctor);
-		}
+		R apply(float f);
+	}
 
+	/**
+	 * Floating-point unary function.
+	 */
+	@FunctionalInterface
+	public interface FloatUnaryOperator {
 		/**
-		 * Constructor.
-		 * @param size			Expected array length
-		 * @param ctor			Constructor
+		 * Applies this operator to the given floating-point value.
+		 * @param f Value
+		 * @return Result
 		 */
-		public ArrayConverter(int size, Function<float[], T> ctor) {
-			this(size, true, ctor);
-		}
+	    float apply(float f);
 
-		@Override
-		public T apply(String str) throws NumberFormatException {
-			// Tokenize
-			final String[] parts = StringUtils.split(str.trim(), " ,");
-			if(!isValidLength(parts.length)) {
-				throw new IllegalArgumentException("Expected tuple: actual=%d expected=%d exact=%b".formatted(parts.length, size, exact));
-			}
+	    /**
+	     * Identity operator.
+	     */
+	    FloatUnaryOperator IDENTITY = f -> f;
 
-			// Convert to array
-			final float[] array = new float[parts.length];
-			for(int n = 0; n < parts.length; ++n) {
-				array[n] = Float.parseFloat(parts[n].trim());
-			}
+	    /**
+	     * Applies the given operator <i>before</i> this operator.
+	     * @param before Operator to apply before
+	     * @return Compound operator
+	     */
+	    default FloatUnaryOperator compose(FloatUnaryOperator before) {
+	    	Objects.requireNonNull(before);
+	    	return f -> apply(before.apply(f));
+	    }
 
-			// Create tuple
-			return ctor.apply(array);
-		}
-
-		/**
-		 * @return Whether the given array length is valid for this converter
-		 */
-		private boolean isValidLength(int len) {
-			if(exact) {
-				return len == size;
-			}
-			else {
-				return len <= size;
-			}
-		}
+	    /**
+	     * Applies the given operator <i>after</i> this operator.
+	     * @param after Operator to apply after
+	     * @return Compound operator
+	     */
+	    default FloatUnaryOperator then(FloatUnaryOperator after) {
+	    	Objects.requireNonNull(after);
+	    	return f -> after.apply(apply(f));
+	    }
 	}
 }

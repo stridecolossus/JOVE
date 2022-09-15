@@ -12,7 +12,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.io.*;
 import org.sarge.jove.model.Model;
-import org.sarge.jove.util.FloatSupport.ArrayConverter;
+import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Check;
 
 /**
@@ -36,9 +36,9 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v",  new VertexComponentParser<>(new ArrayConverter<>(Point.SIZE, Point::new), model.positions()));
-		add("vt", new VertexComponentParser<>(new ArrayConverter<>(2, ObjectModelLoader::flip), model.coordinates()));
-		add("vn", new VertexComponentParser<>(new ArrayConverter<>(Vector.SIZE, Vector::new), model.normals()));
+		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), model.positions()));
+		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), model.coordinates()));
+		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Vector.SIZE, Vector::new), model.normals()));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

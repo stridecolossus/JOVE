@@ -138,7 +138,7 @@ public class View extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the component mapping for the view (default is {@link ComponentMapping#IDENTITY}).
+		 * Sets the component mapping for the view (default is {@link ComponentMapping#identity()}).
 		 * @param mapping Component mapping
 		 * @see ComponentMapping
 		 */

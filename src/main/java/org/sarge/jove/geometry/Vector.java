@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.FloatSupport.ArrayConverter;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Converter;
 
 /**
@@ -12,7 +11,7 @@ public class Vector extends Tuple {
 	/**
 	 * Converter for a vector.
 	 */
-	public static final Converter<Vector> CONVERTER = new ArrayConverter<>(SIZE, Vector::new);
+	public static final Converter<Vector> CONVERTER = new FloatArrayConverter<>(SIZE, Vector::new);
 
 	/**
 	 * Creates the vector between the given points, i.e. <code>end - start</code>.

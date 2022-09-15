@@ -10,7 +10,7 @@ import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.particle.ParticleSystem.Characteristic;
-import org.sarge.jove.util.Randomiser;
+import org.sarge.jove.util.*;
 import org.sarge.lib.element.*;
 import org.sarge.lib.element.Element.Content;
 import org.sarge.lib.util.Converter;
@@ -64,7 +64,16 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	protected LoaderRegistry<ColourFactory> colour() {
 		return new LoaderRegistry<ColourFactory>()
 				.register("literal", Colour.CONVERTER, ColourFactory::of)
-				.register("interpolated", InterpolatedColourFactory::load);
+				.register("interpolated", this::interpolated);
+	}
+
+	// TODO - move to custom ColourInterpolator?
+	private ColourFactory interpolated(Element e) {
+		final Colour start = e.child("start").text().transform(Colour.CONVERTER);
+		final Colour end = e.child("end").text().transform(Colour.CONVERTER);
+		final Interpolator interpolator = e.optional("interpolator").map(Element::child).map(Interpolator::load).orElse(Interpolator.LINEAR);
+		final var func = Colour.interpolator(start, end, interpolator);
+		return func::apply;
 	}
 
 	@Override

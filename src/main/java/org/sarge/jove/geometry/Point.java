@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Component;
-import org.sarge.jove.util.FloatSupport.ArrayConverter;
+import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Converter;
 
 /**
@@ -22,7 +22,7 @@ public final class Point extends Tuple {
 	/**
 	 * Point converter.
 	 */
-	public static final Converter<Point> CONVERTER = new ArrayConverter<>(Point.SIZE, Point::new);
+	public static final Converter<Point> CONVERTER = new FloatArrayConverter<>(Point.SIZE, Point::new);
 
 	/**
 	 * Constructor.
