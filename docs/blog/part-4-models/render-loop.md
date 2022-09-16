@@ -1327,7 +1327,7 @@ The aim here is to use the existing code to construct a rotation matrix for the 
 
 * Constructing a rotation matrix for a cardinal axis is more efficient than generating it from a quaternion.
 
-* Many use-cases will rotate about a cardinal axis.
+* Many use-cases will rotate about the cardinal axes.
 
 * The existing matrix code disallows the case of an arbitrary axis forcing the application to decide which implementation to use (or requires an awkward test to differentiate between cardinal and arbitrary axes).
 

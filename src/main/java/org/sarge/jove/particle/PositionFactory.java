@@ -26,4 +26,14 @@ public interface PositionFactory {
 	static PositionFactory of(Point pos) {
 		return () -> pos;
 	}
+
+	/**
+	 * Creates a position factory that generates random positions on a disc about the given origin.
+	 * @param origin	Origin
+	 * @param disc 		Disc
+	 * @return Disc position factory
+	 */
+	static PositionFactory circle(Point origin, Disc disc) {
+		return () -> origin.add(disc.point());
+	}
 }

@@ -26,20 +26,20 @@ TODO - software vs hardware
 
 To determine some requirements and constraints for what is considered to be a particle system we sketched a few scenarios and tried to identify some common properties:
 
-scenario    | generation    | emitter   | trajectory    | forces        | bounds        | rendering         |
---------    | ----------    | -------   | ----------    | ----------    | ------        | ---------         |
-snow        | constant      | box       | down          | breeze        | ground        | texture           |
-fountain    | constant      | point     | ballistic     | gravity       | ground        | blue              |
-sparks      | periodic      | point     | ballistic     | gravity       | ground        | colour fade       |
-smoke       | constant      | box       | up            | n/a           | time          | colour fade       |
-explosion   | once          | sphere    | expanding     | n/a           | time          | colour fade       |
-fireworks   | periodic      | point     | ballistic     | gravity       | time          | colour            |
+scenario    | generation    | emitter   | trajectory    | forces        | bounds            | rendering         |
+--------    | ----------    | -------   | ----------    | ----------    | ------            | ---------         |
+snow        | constant      | box       | down          | breeze        | stick, time       | texture           |
+fountain    | constant      | point     | ballistic     | gravity       | time              | blue              |
+sparks      | periodic      | point     | ballistic     | gravity       | bounces, time     | colour fade       |
+smoke       | constant      | box       | up            | n/a           | time              | colour fade       |
+explosion   | once          | sphere    | expanding     | n/a           | time              | colour fade       |
+fireworks   | periodic      | point     | ballistic     | gravity       | time              | colour            |
 
 Where:
 
-* A _ballistic_ trajectory is for particles that are 'fired' and implies a gravitational influence.
+* A _ballistic_ trajectory is for particles that are 'fired' from a cone and generally implies a gravitational influence.
 
-* The _bounds_ specifies whether particles have a finite lifetime and/or are constrained by some geometric surface.
+* The _bounds_ column specifies whether particles have a finite lifetime and/or are constrained by some geometric surface.
 
 * A _colour fade_ indicates that the particle colour would fade over time, e.g. smoke particles would perhaps start as grey and fade to black.
 
@@ -150,10 +150,9 @@ And the _vector factory_ initialises the movement vector:
 public interface VectorFactory {
     /**
      * Generates the initial particle movement vector.
-     * @param pos Initial particle position
      * @return Movement vector
      */
-    Vector vector(Point pos);
+    Vector vector();
 
     /**
      * Creates a factory with a fixed initial vector.
@@ -161,7 +160,7 @@ public interface VectorFactory {
      * @return Literal vector factory
      */
     static VectorFactory of(Vector vec) {
-        return ignored -> vec;
+        return () -> vec;
     }
 }
 ```
@@ -175,7 +174,7 @@ public void add(int num, long time) {
     int actual = Math.min(num, max - size());
     for(int n = 0; n < actual; ++n) {
         Point start = pos.position();
-        Vector dir = vec.vector(start);
+        Vector dir = vec.vector();
         Particle p = new Particle(time, start, dir);
         particles.add(p);
     }
@@ -425,7 +424,7 @@ protected Vector rotate(Vector axis) {
 And the results are combined:
 
 ```java
-public Vector vector(Point pos) {
+public Vector vector() {
     Vector dx = rotate(x);
     Vector dy = rotate(y);
     return dx.add(dy).normalize();
@@ -679,8 +678,8 @@ Finally a plane can be constructed from a triangle of points lying in the plane:
 
 ```java
 public static Plane of(Point a, Point b, Point c) {
-    Vector u = Axis.between(a, c);
-    Vector v = Axis.between(b, c);
+    Vector u = Vector.between(a, c);
+    Vector v = Vector.between(b, c);
     Vector normal = u.cross(v);
     return of(normal, a);
 }

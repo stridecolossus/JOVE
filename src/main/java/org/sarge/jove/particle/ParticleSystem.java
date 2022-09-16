@@ -139,7 +139,7 @@ public class ParticleSystem implements Animation {
 		final List<Particle> added = new ArrayList<>(actual);
 		for(int n = 0; n < actual; ++n) {
 			final Point start = position.position();
-			final Vector dir = vector.vector(start);
+			final Vector dir = vector.vector();
 			final Particle p = particle(time, start, dir);
 			added.add(p);
 		}
