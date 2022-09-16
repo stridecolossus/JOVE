@@ -1,6 +1,6 @@
 package org.sarge.jove.particle;
 
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.Randomiser;
 
 /**
@@ -11,16 +11,9 @@ import org.sarge.jove.util.Randomiser;
 public interface VectorFactory {
 	/**
 	 * Generates the initial particle movement vector.
-	 * @param pos Initial particle position
 	 * @return Movement vector
 	 */
-	Vector vector(Point pos);
-
-	/**
-	 * Vector factory with the initial movement vector based on the starting position of the particle (relative to the origin).
-	 * TODO - sphere
-	 */
-	VectorFactory POSITION = Vector::new;
+	Vector vector();
 
 	/**
 	 * Creates a factory with a fixed initial vector.
@@ -28,7 +21,7 @@ public interface VectorFactory {
 	 * @return Literal vector factory
 	 */
 	static VectorFactory of(Vector vec) {
-		return __ -> vec;
+		return () -> vec;
 	}
 
 	/**
@@ -37,6 +30,15 @@ public interface VectorFactory {
 	 * @return Random vector factory (normalised)
 	 */
 	static VectorFactory random(Randomiser randomiser) {
-		return __ -> randomiser.vector().normalize();
+		return () -> randomiser.vector().normalize();
+	}
+
+	/**
+	 * Creates a cone vector factor defined by the given disc.
+	 * @param disc Disc
+	 * @return Cone vector factory
+	 */
+	static VectorFactory cone(Disc disc) {
+		return () -> disc.vector();
 	}
 }

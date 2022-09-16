@@ -51,14 +51,15 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 				.literal("origin", PositionFactory.ORIGIN)
 				.register("literal", Point.CONVERTER, PositionFactory::of)
 				.register("sphere", e -> SpherePositionFactory.load(e, randomiser))
-				.register("box", e -> BoxPositionFactory.load(e, randomiser));
+				.register("box", e -> BoxPositionFactory.load(e, randomiser))
+				.register("circle", e -> PositionFactory.circle(Point.ORIGIN, Disc.load(e, randomiser)));
 	}
 
 	protected LoaderRegistry<VectorFactory> vector() {
 		return new LoaderRegistry<VectorFactory>()
 				.register("literal", Axis.CONVERTER, VectorFactory::of)
 				.register("random", __ -> VectorFactory.random(randomiser))
-				.register("cone", e -> ConeVectorFactory.load(e, randomiser));
+				.register("cone", e -> VectorFactory.cone(Disc.load(e, randomiser)));
 	}
 
 	protected LoaderRegistry<ColourFactory> colour() {

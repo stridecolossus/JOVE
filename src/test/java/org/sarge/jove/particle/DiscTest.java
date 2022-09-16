@@ -8,29 +8,36 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
 import org.sarge.lib.element.Element;
 
-public class ConeVectorFactoryTest {
-	private VectorFactory factory;
+public class DiscTest {
+	private Disc disc;
 	private Randomiser randomiser;
 
 	@BeforeEach
 	void before() {
 		randomiser = mock(Randomiser.class);
-		factory = new ConeVectorFactory(Axis.Y, MathsUtil.toRadians(45), randomiser);
+		disc = new Disc(Axis.Y, 1, randomiser);
 	}
 
 	@Test
-	void zero() {
+	void origin() {
 		when(randomiser.next()).thenReturn(0.5f);
-		assertEquals(Axis.Y, factory.vector(null));
+		assertEquals(Point.ORIGIN, disc.point());
+		assertEquals(Axis.Y, disc.vector());
 	}
 
 	@Test
-	void max() {
+	void radius() {
 		final Vector x = new Vector(0, 1, 1);
 		final Vector y = new Vector(-1, 1, 0);
 		final Vector expected = x.add(y).normalize();
+
+		// TODO - this feels nasty
+		disc = new Disc(Axis.Y, MathsUtil.toRadians(45), randomiser);
+
 		when(randomiser.next()).thenReturn(1f);
-		assertEquals(expected, factory.vector(null));
+		//assertEquals(new Point(1, 0, 1), disc.point());
+
+		assertEquals(expected, disc.vector());
 	}
 
 	@Test
@@ -39,8 +46,11 @@ public class ConeVectorFactoryTest {
 				.child("normal", "0 1 0")
 				.child("radius", "0")
 				.build();
-		final VectorFactory factory = ConeVectorFactory.load(e, randomiser);
-		assertNotNull(factory);
-		assertEquals(Axis.Y, factory.vector(null));
+
+		disc = Disc.load(e, randomiser);
+		assertNotNull(disc);
+
+		when(randomiser.next()).thenReturn(0.5f);
+		assertEquals(Axis.Y, disc.vector());
 	}
 }
