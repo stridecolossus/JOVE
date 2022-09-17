@@ -11,6 +11,11 @@ import org.sarge.jove.geometry.Matrix.Matrix4;
 @FunctionalInterface
 public interface Transform {
 	/**
+	 * Identity transform.
+	 */
+	Transform IDENTITY = Matrix4.IDENTITY;
+
+	/**
 	 * @return Transformation matrix
 	 */
 	Matrix matrix();

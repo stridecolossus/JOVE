@@ -1,8 +1,20 @@
 package org.sarge.jove.scene;
 
-public class Material {
+/**
+ * A <i>material</i> defines the visual characteristics for a set of renderable geometry.
+ * <p>
+ * Generally a material is used to {@link #bind()} a rendering pipeline.
+ * <p>
+ * @author Sarge
+ */
+public interface Material {
+	/**
+	 * @return Render queue for geometry using this material
+	 */
+	RenderQueue queue();
 
-	public String name() {
-		return "TODO";
-	}
+	/**
+	 * Binds this material.
+	 */
+	void bind();
 }

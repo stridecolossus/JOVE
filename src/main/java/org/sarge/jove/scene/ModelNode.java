@@ -9,10 +9,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.model.Model;
 
 /**
- *
+ * A <i>model node</i> represents a renderable model within the scene.
  * @author Sarge
  */
-public class ModelNode extends Node implements Renderable {
+public class ModelNode extends AbstractNode implements Renderable {
 	private final Model model;
 	private Material mat;
 

@@ -26,7 +26,7 @@ public class ModelNodeTest {
 
 	@Test
 	void material() {
-		final Material mat = new Material();
+		final Material mat = mock(Material.class);
 		node.material(mat);
 		assertEquals(Optional.of(mat), node.material());
 	}
