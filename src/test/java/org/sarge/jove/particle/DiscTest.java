@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.Randomiser;
 import org.sarge.lib.element.Element;
 
 public class DiscTest {
@@ -27,17 +27,9 @@ public class DiscTest {
 
 	@Test
 	void radius() {
-		final Vector x = new Vector(0, 1, 1);
-		final Vector y = new Vector(-1, 1, 0);
-		final Vector expected = x.add(y).normalize();
-
-		// TODO - this feels nasty
-		disc = new Disc(Axis.Y, MathsUtil.toRadians(45), randomiser);
-
 		when(randomiser.next()).thenReturn(1f);
-		//assertEquals(new Point(1, 0, 1), disc.point());
-
-		assertEquals(expected, disc.vector());
+		assertEquals(new Point(1, 0, 1), disc.point());
+		assertEquals(new Vector(1, 1, 1).normalize(), disc.vector());
 	}
 
 	@Test

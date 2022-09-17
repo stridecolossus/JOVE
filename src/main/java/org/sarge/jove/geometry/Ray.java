@@ -54,31 +54,6 @@ public interface Ray {
 		 * @return Intersection(s)
 		 */
 		Intersection intersection(Ray ray);
-
-		/**
-		 * Empty intersections.
-		 */
-		Intersection NONE = new Intersection() {
-			@Override
-			public float[] distances() {
-				return new float[0];
-			}
-
-			@Override
-			public boolean isEmpty() {
-				return true;
-			}
-		};
-
-		/**
-		 * Intersection with undefined results.
-		 */
-		Intersection UNDEFINED = new Intersection() {
-			@Override
-			public float[] distances() {
-				throw new UnsupportedOperationException();
-			}
-		};
 	}
 
 	/**
@@ -110,6 +85,31 @@ public interface Ray {
 	 * @see Intersected#UNDEFINED
 	 */
 	public interface Intersection {
+		/**
+		 * Empty intersections.
+		 */
+		Intersection NONE = new Intersection() {
+			@Override
+			public float[] distances() {
+				return new float[0];
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return true;
+			}
+		};
+
+		/**
+		 * Intersection with undefined results.
+		 */
+		Intersection UNDEFINED = new Intersection() {
+			@Override
+			public float[] distances() {
+				throw new UnsupportedOperationException();
+			}
+		};
+
 		/**
 		 * @return Intersection distance(s)
 		 * @throws UnsupportedOperationException if this intersection is undefined

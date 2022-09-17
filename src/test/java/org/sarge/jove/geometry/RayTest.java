@@ -38,9 +38,9 @@ class RayTest {
 	class IntersectionTests {
 		@Test
 		void none() {
-			assertEquals(true, Intersected.NONE.isEmpty());
-			assertArrayEquals(new float[0], Intersected.NONE.distances());
-			assertThrows(UnsupportedOperationException.class, () -> Intersected.NONE.normal(null));
+			assertEquals(true, Intersection.NONE.isEmpty());
+			assertArrayEquals(new float[0], Intersection.NONE.distances());
+			assertThrows(UnsupportedOperationException.class, () -> Intersection.NONE.normal(null));
 		}
 
 		@Test

@@ -99,15 +99,15 @@ class PlaneTest {
 		@DisplayName("A ray orthogonal to the plane is not intersecting")
 		@Test
 		void orthogonal() {
-			assertEquals(Intersected.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, X)));
-			assertEquals(Intersected.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Z)));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, X)));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Z)));
 		}
 
 		@DisplayName("A ray pointing away from the plane is not intersecting")
 		@Test
 		void missing() {
-			assertEquals(Intersected.NONE, plane.intersection(new DefaultRay(new Point(0, 2, 0), Y)));
-			assertEquals(Intersected.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Y.invert())));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(new Point(0, 2, 0), Y)));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Y.invert())));
 		}
 	}
 
@@ -124,7 +124,7 @@ class PlaneTest {
 		@DisplayName("A ray that crosses the plane in front is not intersecting")
 		@Test
 		void behind() {
-			assertEquals(Intersected.NONE, behind.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
+			assertEquals(Intersection.NONE, behind.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
 		}
 
 		@DisplayName("A ray behind the plane intersects even if it does not cross the plane")
@@ -148,7 +148,7 @@ class PlaneTest {
 		@DisplayName("A ray that crosses the plane in front is not intersecting")
 		@Test
 		void positive() {
-			assertEquals(Intersected.NONE, surface.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
+			assertEquals(Intersection.NONE, surface.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
 		}
 
 		@DisplayName("A ray behind the plane has undefined intersection results")

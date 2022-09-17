@@ -70,7 +70,7 @@ public class BoundingBox implements Volume {
 			if(MathsUtil.isZero(dir)) {
 				// Check for parallel ray
 				if((origin < min) || (origin > max)) {
-					return NONE;
+					return Intersection.NONE;
 				}
 			}
 			else {
@@ -84,12 +84,12 @@ public class BoundingBox implements Volume {
 
 				// Check for ray missing the box
 				if(n > f) {
-					return NONE;
+					return Intersection.NONE;
 				}
 
 				// Check for box behind ray
 				if(f < 0) {
-					return NONE;
+					return Intersection.NONE;
 				}
 			}
 		}

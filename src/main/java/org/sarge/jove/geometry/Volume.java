@@ -72,7 +72,7 @@ public interface Volume extends Intersected {
 
 		@Override
 		public Intersection intersection(Ray ray) {
-			return NONE;
+			return Intersection.NONE;
 		}
 
 		@Override

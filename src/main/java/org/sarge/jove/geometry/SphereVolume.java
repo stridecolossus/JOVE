@@ -87,7 +87,7 @@ public class SphereVolume implements Volume {
 		// Stop if ray does not intersect
 		final float r = sphere.radius() * sphere.radius();
 		if(Math.abs(dist) > r) {
-			return NONE;
+			return Intersection.NONE;
 		}
 
 		// Create lazy intersection record
@@ -122,7 +122,7 @@ public class SphereVolume implements Volume {
 		final float r = sphere.radius() * sphere.radius();
 		if(len > r) {
 			// Ray originates outside the sphere
-			return NONE;
+			return Intersection.NONE;
 		}
 		else
 		if(len < r) {

@@ -129,7 +129,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 
 		// Orthogonal ray does not intersect
 		if(MathsUtil.isZero(denom)) {
-			return NONE;
+			return Intersection.NONE;
 		}
 
 		// Calc intersection distance
@@ -139,12 +139,12 @@ public record Plane(Vector normal, float distance) implements Intersected {
 		// Check for intersection
 		if(pos) {
 			if(t < 0) {
-				return NONE;
+				return Intersection.NONE;
 			}
 		}
 		else {
 			if(d > 0) {
-				return NONE;
+				return Intersection.NONE;
 			}
 		}
 
@@ -173,10 +173,10 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	public Intersected halfspace(HalfSpace space) {
 		return ray -> {
 			if(halfspace(ray.origin()) == space) {
-				return UNDEFINED;
+				return Intersection.UNDEFINED;
 			}
 			else {
-				return NONE;
+				return Intersection.NONE;
 			}
 		};
 	}
