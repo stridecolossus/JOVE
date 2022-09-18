@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,9 +19,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"persistentContent"
 })
 public class VkDisplayPropertiesKHR extends VulkanStructure {
-	public static class ByValue extends VkDisplayPropertiesKHR implements Structure.ByValue { }
-	public static class ByReference extends VkDisplayPropertiesKHR implements Structure.ByReference { }
-
 	public long display;
 	public String displayName;
 	public VkExtent2D physicalDimensions;

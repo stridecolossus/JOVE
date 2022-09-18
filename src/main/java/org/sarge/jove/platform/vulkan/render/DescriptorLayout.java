@@ -121,7 +121,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 		// Init layout descriptor
 		final var info = new VkDescriptorSetLayoutCreateInfo();
 		info.bindingCount = bindings.size();
-		info.pBindings = StructureHelper.pointer(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
+		info.pBindings = StructureCollector.pointer(bindings, new VkDescriptorSetLayoutBinding(), Binding::populate);
 
 		// Allocate layout
 		final VulkanLibrary lib = dev.library();

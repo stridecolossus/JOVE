@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"swapchain"
 })
 public class VkImageSwapchainCreateInfoKHR extends VulkanStructure {
-	public static class ByValue extends VkImageSwapchainCreateInfoKHR implements Structure.ByValue { }
-	public static class ByReference extends VkImageSwapchainCreateInfoKHR implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.IMAGE_SWAPCHAIN_CREATE_INFO_KHR;
 	public Pointer pNext;
 	public long swapchain;

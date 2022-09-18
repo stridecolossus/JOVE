@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,9 +19,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pDeviceIndices"
 })
 public class VkBindAccelerationStructureMemoryInfoNV extends VulkanStructure {
-	public static class ByValue extends VkBindAccelerationStructureMemoryInfoNV implements Structure.ByValue { }
-	public static class ByReference extends VkBindAccelerationStructureMemoryInfoNV implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_NV;
 	public Pointer pNext;
 	public long accelerationStructure;

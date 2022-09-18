@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"refreshRate"
 })
 public class VkDisplayModeParametersKHR extends VulkanStructure {
-	public static class ByValue extends VkDisplayModeParametersKHR implements Structure.ByValue { }
-	public static class ByReference extends VkDisplayModeParametersKHR implements Structure.ByReference { }
-	
 	public VkExtent2D visibleRegion;
 	public int refreshRate;
 }

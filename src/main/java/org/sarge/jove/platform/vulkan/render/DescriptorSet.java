@@ -174,7 +174,7 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		// Apply update
-		final VkWriteDescriptorSet[] writes = StructureHelper.array(modified, VkWriteDescriptorSet::new, Modified::populate);
+		final VkWriteDescriptorSet[] writes = StructureCollector.array(modified, new VkWriteDescriptorSet(), Modified::populate);
 		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
 
 		// Reset updated sets

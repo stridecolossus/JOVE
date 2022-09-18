@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"aabbs"
 })
 public class VkGeometryDataNV extends VulkanStructure {
-	public static class ByValue extends VkGeometryDataNV implements Structure.ByValue { }
-	public static class ByReference extends VkGeometryDataNV implements Structure.ByReference { }
-	
 	public VkGeometryTrianglesNV triangles;
 	public VkGeometryAABBNV aabbs;
 }

@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -15,9 +14,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"layerCount"
 })
 public class VkClearRect extends VulkanStructure {
-	public static class ByValue extends VkClearRect implements Structure.ByValue { }
-	public static class ByReference extends VkClearRect implements Structure.ByReference { }
-	
 	public VkRect2D rect;
 	public int baseArrayLayer;
 	public int layerCount;

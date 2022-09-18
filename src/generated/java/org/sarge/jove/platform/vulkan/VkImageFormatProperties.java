@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"maxResourceSize"
 })
 public class VkImageFormatProperties extends VulkanStructure {
-	public static class ByValue extends VkImageFormatProperties implements Structure.ByValue { }
-	public static class ByReference extends VkImageFormatProperties implements Structure.ByReference { }
-
 	public VkExtent3D maxExtent;
 	public int maxMipLevels;
 	public int maxArrayLayers;

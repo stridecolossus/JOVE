@@ -7,7 +7,7 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 /**
@@ -149,7 +149,7 @@ public class BufferCopyCommand extends ImmediateCommand {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Create copy command
-			final VkBufferCopy[] array = StructureHelper.array(regions, VkBufferCopy::new, CopyRegion::populate);
+			final VkBufferCopy[] array = StructureCollector.array(regions, new VkBufferCopy(), CopyRegion::populate);
 			return new BufferCopyCommand(src, dest, array);
 		}
 	}

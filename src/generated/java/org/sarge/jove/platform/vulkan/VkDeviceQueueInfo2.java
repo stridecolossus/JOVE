@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -18,9 +17,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"queueIndex"
 })
 public class VkDeviceQueueInfo2 extends VulkanStructure {
-	public static class ByValue extends VkDeviceQueueInfo2 implements Structure.ByValue { }
-	public static class ByReference extends VkDeviceQueueInfo2 implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DEVICE_QUEUE_INFO_2;
 	public Pointer pNext;
 	public int flags;

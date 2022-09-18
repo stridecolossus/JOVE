@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"accelerationStructure"
 })
 public class VkAccelerationStructureMemoryRequirementsInfoNV extends VulkanStructure {
-	public static class ByValue extends VkAccelerationStructureMemoryRequirementsInfoNV implements Structure.ByValue { }
-	public static class ByReference extends VkAccelerationStructureMemoryRequirementsInfoNV implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
 	public Pointer pNext;
 	public VkAccelerationStructureMemoryRequirementsTypeNV type;

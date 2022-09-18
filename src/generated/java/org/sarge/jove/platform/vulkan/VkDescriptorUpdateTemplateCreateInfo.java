@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,9 +22,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"set"
 })
 public class VkDescriptorUpdateTemplateCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkDescriptorUpdateTemplateCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkDescriptorUpdateTemplateCreateInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;

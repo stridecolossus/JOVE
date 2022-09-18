@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -18,9 +17,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pInitialData"
 })
 public class VkValidationCacheCreateInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkValidationCacheCreateInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkValidationCacheCreateInfoEXT implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.VALIDATION_CACHE_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;

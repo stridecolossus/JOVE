@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"sampleLocationsInfo"
 })
 public class VkAttachmentSampleLocationsEXT extends VulkanStructure {
-	public static class ByValue extends VkAttachmentSampleLocationsEXT implements Structure.ByValue { }
-	public static class ByReference extends VkAttachmentSampleLocationsEXT implements Structure.ByReference { }
-	
 	public int attachmentIndex;
 	public VkSampleLocationsInfoEXT sampleLocationsInfo;
 }

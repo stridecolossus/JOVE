@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pViewFormats"
 })
 public class VkImageFormatListCreateInfoKHR extends VulkanStructure {
-	public static class ByValue extends VkImageFormatListCreateInfoKHR implements Structure.ByValue { }
-	public static class ByReference extends VkImageFormatListCreateInfoKHR implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.IMAGE_FORMAT_LIST_CREATE_INFO_KHR;
 	public Pointer pNext;
 	public int viewFormatCount;

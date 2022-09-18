@@ -164,9 +164,9 @@ public class Barrier extends ImmediateCommand {
 		 * @return New barrier
 		 */
 		public Barrier build() {
-			final var memoryArray = StructureHelper.array(memory, VkMemoryBarrier::new, MemoryBarrierBuilder::populate);
-			final var bufferArray = StructureHelper.array(buffers, VkBufferMemoryBarrier::new, BufferBarrierBuilder::populate);
-			final var imagesArray = StructureHelper.array(images, VkImageMemoryBarrier::new, ImageBarrierBuilder::populate);
+			final var memoryArray = StructureCollector.array(memory, new VkMemoryBarrier(), MemoryBarrierBuilder::populate);
+			final var bufferArray = StructureCollector.array(buffers, new VkBufferMemoryBarrier(), BufferBarrierBuilder::populate);
+			final var imagesArray = StructureCollector.array(images, new VkImageMemoryBarrier(), ImageBarrierBuilder::populate);
 			return new Barrier(srcStages, destStages, flags, memoryArray, bufferArray, imagesArray);
 		}
 

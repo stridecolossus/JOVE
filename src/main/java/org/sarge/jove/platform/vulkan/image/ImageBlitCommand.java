@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.Extents;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 /**
@@ -165,7 +165,7 @@ public class ImageBlitCommand extends ImmediateCommand {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Create copy regions array
-			final VkImageBlit[] array = StructureHelper.array(regions.entrySet(), VkImageBlit::new, this::populate);
+			final VkImageBlit[] array = StructureCollector.array(regions.entrySet(), new VkImageBlit(), this::populate);
 
 			// Create command
 			return new ImageBlitCommand(src, srcLayout, dest, destLayout, array, filter);

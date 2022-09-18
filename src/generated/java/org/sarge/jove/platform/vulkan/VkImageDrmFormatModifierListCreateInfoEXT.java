@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pDrmFormatModifiers"
 })
 public class VkImageDrmFormatModifierListCreateInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkImageDrmFormatModifierListCreateInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkImageDrmFormatModifierListCreateInfoEXT implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int drmFormatModifierCount;

@@ -378,7 +378,7 @@ public class Pipeline extends AbstractVulkanObject {
 			// Init shader pipeline stages
 			if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 			info.stageCount = shaders.size();
-			info.pStages = StructureHelper.pointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
+			info.pStages = StructureCollector.pointer(shaders.values(), new VkPipelineShaderStageCreateInfo(), ShaderStageBuilder::populate);
 
 			// Init fixed function stages
 			info.pVertexInputState = input.get();
@@ -418,7 +418,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
 			// Build array of descriptors
-			final VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(builders, VkGraphicsPipelineCreateInfo::new, Builder::populate);
+			final VkGraphicsPipelineCreateInfo[] array = StructureCollector.array(builders, new VkGraphicsPipelineCreateInfo(), Builder::populate);
 
 			// Patch derived pipeline indices
 			for(int n = 0; n < array.length; ++n) {

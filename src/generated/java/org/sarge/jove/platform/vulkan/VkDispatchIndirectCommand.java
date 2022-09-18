@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -15,9 +14,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"z"
 })
 public class VkDispatchIndirectCommand extends VulkanStructure {
-	public static class ByValue extends VkDispatchIndirectCommand implements Structure.ByValue { }
-	public static class ByReference extends VkDispatchIndirectCommand implements Structure.ByReference { }
-	
 	public int x;
 	public int y;
 	public int z;

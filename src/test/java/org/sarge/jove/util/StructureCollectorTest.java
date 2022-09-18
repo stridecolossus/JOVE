@@ -8,8 +8,9 @@ import java.util.function.BiConsumer;
 import java.util.stream.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.VkImageCopy;
 
-public class StructureHelperTest {
+public class StructureCollectorTest {
 	private Object obj;
 	private BiConsumer<Object, MockStructure> populate;
 
@@ -22,7 +23,7 @@ public class StructureHelperTest {
 
 	@Test
 	void array() {
-		final MockStructure[] array = StructureHelper.array(List.of(obj, obj), MockStructure::new, populate);
+		final MockStructure[] array = StructureCollector.array(List.of(obj, obj), new MockStructure(), populate);
 		assertNotNull(array);
 		assertEquals(2, array.length);
 		verify(populate).accept(obj, array[0]);
@@ -32,7 +33,7 @@ public class StructureHelperTest {
 	@Test
 	void pointer() {
 		final MockStructure[] array = new MockStructure[2];
-		final MockStructure ptr = StructureHelper.pointer(List.of(obj, obj), MockStructure.ByReference::new, populate);
+		final MockStructure ptr = StructureCollector.pointer(List.of(obj, obj), new MockStructure(), populate);
 		assertNotNull(ptr);
 		ptr.toArray(array);
 		verify(populate).accept(obj, array[0]);
@@ -41,13 +42,15 @@ public class StructureHelperTest {
 
 	@Test
 	void pointerNotReference() {
-		assertThrows(IllegalArgumentException.class, () -> StructureHelper.pointer(List.of(obj), MockStructure::new, populate));
+		@SuppressWarnings("unchecked")
+		final BiConsumer<Object, VkImageCopy> invalid = mock(BiConsumer.class);
+		assertThrows(IllegalArgumentException.class, () -> StructureCollector.pointer(List.of(obj), new VkImageCopy(), invalid));
 	}
 
 	@Test
 	void collector() {
 		// Create structure collector
-		final Collector<Object, ?, MockStructure[]> collector = StructureHelper.collector(MockStructure::new, populate);
+		final Collector<Object, ?, MockStructure[]> collector = StructureCollector.collector(new MockStructure(), populate);
 		assertNotNull(collector);
 
 		// Check collected array

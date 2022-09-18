@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,9 +22,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"imageExtent"
 })
 public class VkDisplaySurfaceCreateInfoKHR extends VulkanStructure {
-	public static class ByValue extends VkDisplaySurfaceCreateInfoKHR implements Structure.ByValue { }
-	public static class ByReference extends VkDisplaySurfaceCreateInfoKHR implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DISPLAY_SURFACE_CREATE_INFO_KHR;
 	public Pointer pNext;
 	public int flags;

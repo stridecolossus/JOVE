@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"firstInstance"
 })
 public class VkDrawIndirectCommand extends VulkanStructure {
-	public static class ByValue extends VkDrawIndirectCommand implements Structure.ByValue { }
-	public static class ByReference extends VkDrawIndirectCommand implements Structure.ByReference { }
-	
 	public int vertexCount;
 	public int instanceCount;
 	public int firstVertex;

@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 /**
@@ -318,7 +318,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Populate copy regions
-			final VkBufferImageCopy[] array = StructureHelper.array(regions, VkBufferImageCopy::new, CopyRegion::populate);
+			final VkBufferImageCopy[] array = StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
 
 			// Create copy command
 			return new ImageTransferCommand(image, buffer, inverse, array, layout);

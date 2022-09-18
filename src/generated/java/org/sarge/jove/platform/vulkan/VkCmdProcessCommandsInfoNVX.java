@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -25,9 +24,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"sequencesIndexOffset"
 })
 public class VkCmdProcessCommandsInfoNVX extends VulkanStructure {
-	public static class ByValue extends VkCmdProcessCommandsInfoNVX implements Structure.ByValue { }
-	public static class ByReference extends VkCmdProcessCommandsInfoNVX implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.CMD_PROCESS_COMMANDS_INFO_NVX;
 	public Pointer pNext;
 	public long objectTable;

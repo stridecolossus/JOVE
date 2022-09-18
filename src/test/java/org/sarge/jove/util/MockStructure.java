@@ -3,8 +3,7 @@ package org.sarge.jove.util;
 import org.sarge.jove.platform.vulkan.VkStructureType;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Mock JNA structure.
@@ -12,9 +11,6 @@ import com.sun.jna.Structure.FieldOrder;
  * @author Sarge
  */
 @FieldOrder("sType")
-public class MockStructure extends VulkanStructure {
-	public static class ByReference extends MockStructure implements Structure.ByReference {
-	}
-
+public class MockStructure extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.APPLICATION_INFO;
 }

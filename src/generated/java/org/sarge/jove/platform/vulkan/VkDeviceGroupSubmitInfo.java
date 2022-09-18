@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -21,9 +20,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pSignalSemaphoreDeviceIndices"
 })
 public class VkDeviceGroupSubmitInfo extends VulkanStructure {
-	public static class ByValue extends VkDeviceGroupSubmitInfo implements Structure.ByValue { }
-	public static class ByReference extends VkDeviceGroupSubmitInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DEVICE_GROUP_SUBMIT_INFO;
 	public Pointer pNext;
 	public int waitSemaphoreCount;

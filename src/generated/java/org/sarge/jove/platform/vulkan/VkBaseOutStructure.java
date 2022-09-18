@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -15,9 +14,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pNext"
 })
 public class VkBaseOutStructure extends VulkanStructure {
-	public static class ByValue extends VkBaseOutStructure implements Structure.ByValue { }
-	public static class ByReference extends VkBaseOutStructure implements Structure.ByReference { }
-
 	//public VkStructureType sType = VkStructureType.BASE_OUT_STRUCTURE;
 	public Pointer pNext;
 }

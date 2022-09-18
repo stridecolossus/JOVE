@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -24,9 +23,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"finalLayout"
 })
 public class VkAttachmentDescription2KHR extends VulkanStructure {
-	public static class ByValue extends VkAttachmentDescription2KHR implements Structure.ByValue { }
-	public static class ByReference extends VkAttachmentDescription2KHR implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.ATTACHMENT_DESCRIPTION_2_KHR;
 	public Pointer pNext;
 	public int flags;

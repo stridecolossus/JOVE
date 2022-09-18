@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -22,9 +21,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"descriptorCount"
 })
 public class VkCopyDescriptorSet extends VulkanStructure {
-	public static class ByValue extends VkCopyDescriptorSet implements Structure.ByValue { }
-	public static class ByReference extends VkCopyDescriptorSet implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.COPY_DESCRIPTOR_SET;
 	public Pointer pNext;
 	public Pointer srcSet;

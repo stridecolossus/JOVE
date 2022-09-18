@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -25,9 +24,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pObjects"
 })
 public class VkDebugUtilsMessengerCallbackData extends VulkanStructure {
-	public static class ByValue extends VkDebugUtilsMessengerCallbackData implements Structure.ByValue { }
-	public static class ByReference extends VkDebugUtilsMessengerCallbackData implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
 	public Pointer pNext;
 	public int flags;

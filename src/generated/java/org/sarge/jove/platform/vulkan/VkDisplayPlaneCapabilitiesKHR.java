@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -21,9 +20,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"maxDstExtent"
 })
 public class VkDisplayPlaneCapabilitiesKHR extends VulkanStructure {
-	public static class ByValue extends VkDisplayPlaneCapabilitiesKHR implements Structure.ByValue { }
-	public static class ByReference extends VkDisplayPlaneCapabilitiesKHR implements Structure.ByReference { }
-
 	public VkDisplayPlaneAlphaFlagKHR supportedAlpha;
 	public VkOffset2D minSrcPosition;
 	public VkOffset2D maxSrcPosition;

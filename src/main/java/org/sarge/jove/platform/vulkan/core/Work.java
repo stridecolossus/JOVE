@@ -133,7 +133,7 @@ public class Work {
 		// TODO - reduce?
 
 		// Submit batch
-		final VkSubmitInfo[] array = StructureHelper.array(batch, VkSubmitInfo::new, Work::populate);
+		final VkSubmitInfo[] array = StructureCollector.array(batch, new VkSubmitInfo(), Work::populate);
 		final VulkanLibrary lib = pool.device().library();
 		check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
 	}

@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"maxInlineUniformBlockBindings"
 })
 public class VkDescriptorPoolInlineUniformBlockCreateInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkDescriptorPoolInlineUniformBlockCreateInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkDescriptorPoolInlineUniformBlockCreateInfoEXT implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DESCRIPTOR_POOL_INLINE_UNIFORM_BLOCK_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int maxInlineUniformBlockBindings;

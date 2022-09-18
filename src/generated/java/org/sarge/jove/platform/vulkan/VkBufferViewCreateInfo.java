@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,9 +19,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"range"
 })
 public class VkBufferViewCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkBufferViewCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkBufferViewCreateInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.BUFFER_VIEW_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;

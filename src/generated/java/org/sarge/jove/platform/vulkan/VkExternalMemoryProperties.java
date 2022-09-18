@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -15,9 +14,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"compatibleHandleTypes"
 })
 public class VkExternalMemoryProperties extends VulkanStructure {
-	public static class ByValue extends VkExternalMemoryProperties implements Structure.ByValue { }
-	public static class ByReference extends VkExternalMemoryProperties implements Structure.ByReference { }
-
 	public VkExternalMemoryFeatureFlag externalMemoryFeatures;
 	public VkExternalMemoryHandleTypeFlag exportFromImportedHandleTypes;
 	public VkExternalMemoryHandleTypeFlag compatibleHandleTypes;

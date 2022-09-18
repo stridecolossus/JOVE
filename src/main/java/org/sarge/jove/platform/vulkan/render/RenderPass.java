@@ -99,16 +99,16 @@ public class RenderPass extends AbstractVulkanObject {
 
 			// Add attachments
 			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureHelper.pointer(attachments, VkAttachmentDescription::new, Attachment::populate);
+			info.pAttachments = StructureCollector.pointer(attachments, new VkAttachmentDescription(), Attachment::populate);
 
 			// Add sub-passes
 			info.subpassCount = subpasses.size();
-			info.pSubpasses = StructureHelper.pointer(subpasses, VkSubpassDescription::new, Subpass::populate);
+			info.pSubpasses = StructureCollector.pointer(subpasses, new VkSubpassDescription(), Subpass::populate);
 
 			// Add dependencies
 			final List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
 			info.dependencyCount = dependencies.size();
-			info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, Dependency::populate);
+			info.pDependencies = StructureCollector.pointer(dependencies, new VkSubpassDependency(), Dependency::populate);
 
 			// Allocate render pass
 			final VulkanLibrary lib = dev.library();
@@ -152,7 +152,7 @@ public class RenderPass extends AbstractVulkanObject {
 
 				// Populate colour attachments
 				descriptor.colorAttachmentCount = colour.size();
-				descriptor.pColorAttachments = StructureHelper.pointer(colour, VkAttachmentReference::new, Reference::populate);
+				descriptor.pColorAttachments = StructureCollector.pointer(colour, new VkAttachmentReference(), Reference::populate);
 
 				// Populate depth attachment
 				if(depth != null) {

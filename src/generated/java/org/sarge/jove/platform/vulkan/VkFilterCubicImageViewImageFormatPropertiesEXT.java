@@ -4,7 +4,6 @@ import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -18,9 +17,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"filterCubicMinmax"
 })
 public class VkFilterCubicImageViewImageFormatPropertiesEXT extends VulkanStructure {
-	public static class ByValue extends VkFilterCubicImageViewImageFormatPropertiesEXT implements Structure.ByValue { }
-	public static class ByReference extends VkFilterCubicImageViewImageFormatPropertiesEXT implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT;
 	public Pointer pNext;
 	public VulkanBoolean filterCubic;

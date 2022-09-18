@@ -4,7 +4,6 @@ import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"conditionalRenderingEnable"
 })
 public class VkCommandBufferInheritanceConditionalRenderingInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkCommandBufferInheritanceConditionalRenderingInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkCommandBufferInheritanceConditionalRenderingInfoEXT implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT;
 	public Pointer pNext;
 	public VulkanBoolean conditionalRenderingEnable;

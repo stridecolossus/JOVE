@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pCheckpointMarker"
 })
 public class VkCheckpointDataNV extends VulkanStructure {
-	public static class ByValue extends VkCheckpointDataNV implements Structure.ByValue { }
-	public static class ByReference extends VkCheckpointDataNV implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.CHECKPOINT_DATA_NV;
 	public Pointer pNext;
 	public VkPipelineStage stage;

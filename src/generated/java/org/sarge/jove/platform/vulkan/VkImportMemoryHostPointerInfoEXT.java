@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pHostPointer"
 })
 public class VkImportMemoryHostPointerInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkImportMemoryHostPointerInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkImportMemoryHostPointerInfoEXT implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.IMPORT_MEMORY_HOST_POINTER_INFO_EXT;
 	public Pointer pNext;
 	public VkExternalMemoryHandleTypeFlag handleType;

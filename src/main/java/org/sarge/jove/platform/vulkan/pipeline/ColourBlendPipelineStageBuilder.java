@@ -69,7 +69,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 
 		// Add attachment descriptors
 		info.attachmentCount = attachments.size();
-		info.pAttachments = StructureHelper.pointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
+		info.pAttachments = StructureCollector.pointer(attachments, new VkPipelineColorBlendAttachmentState(), AttachmentBuilder::populate);
 
 		return info;
 	}

@@ -136,7 +136,7 @@ public class Shader extends AbstractVulkanObject {
 		// Populate map entries
 		final var info = new VkSpecializationInfo();
 		info.mapEntryCount = constants.size();
-		info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
+		info.pMapEntries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate);
 
 		// Build constants data buffer
 		final ByteBuffer buffer = BufferHelper.allocate(populate.len);

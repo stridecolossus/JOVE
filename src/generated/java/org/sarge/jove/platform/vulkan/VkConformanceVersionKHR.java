@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"patch"
 })
 public class VkConformanceVersionKHR extends VulkanStructure {
-	public static class ByValue extends VkConformanceVersionKHR implements Structure.ByValue { }
-	public static class ByReference extends VkConformanceVersionKHR implements Structure.ByReference { }
-	
 	public byte major;
 	public byte minor;
 	public byte subminor;

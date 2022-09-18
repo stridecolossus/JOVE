@@ -4,7 +4,6 @@ import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -22,9 +21,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"pipelineStatistics"
 })
 public class VkCommandBufferInheritanceInfo extends VulkanStructure {
-	public static class ByValue extends VkCommandBufferInheritanceInfo implements Structure.ByValue { }
-	public static class ByReference extends VkCommandBufferInheritanceInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.COMMAND_BUFFER_INHERITANCE_INFO;
 	public Pointer pNext;
 	public Pointer renderPass;

@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"ycoeff"
 })
 public class VkViewportWScalingNV extends VulkanStructure {
-	public static class ByValue extends VkViewportWScalingNV implements Structure.ByValue { }
-	public static class ByReference extends VkViewportWScalingNV implements Structure.ByReference { }
-	
 	public float xcoeff;
 	public float ycoeff;
 }

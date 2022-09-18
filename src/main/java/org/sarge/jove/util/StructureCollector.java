@@ -1,13 +1,7 @@
 package org.sarge.jove.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.function.*;
 import java.util.stream.Collector;
 import java.util.stream.Collector.Characteristics;
 
@@ -31,21 +25,21 @@ import com.sun.jna.Structure.ByReference;
  * <p>
  * Examples:
  * <pre>
- *  // Define a population function
- *  BiConsumer&lt;SomeData, SomeStructure&gt; populate = (data, struct) -> { ... };
+ * // Define a population function
+ * BiConsumer&lt;SomeData, SomeStructure&gt; populate = (data, struct) -> { ... };
  *
- *  // Transform a collection to an array
- *  List&lt;SomeData&gt; data = ...
- *  SomeStructure[] array = StructureHelper.array(list, SomeStructure::new, populate);
+ * // Transform a collection to an array
+ * List&lt;SomeData&gt; data = ...
+ * SomeStructure[] array = StructureCollector.array(list, new SomeStructure(), populate);
  *
- *  // Transform to a pointer-to-array
- *  SomeStructure first = StructureHelper.pointer(list, SomeStructure::new, populate);
+ * // Transform to a pointer-to-array
+ * SomeStructure first = StructureCollector.pointer(list, new SomeStructure(), populate);
  * </pre>
  * <p>
  * @author Sarge
  */
-public final class StructureHelper {
-	private StructureHelper() {
+public final class StructureCollector {
+	private StructureCollector() {
 	}
 
 	/**
@@ -53,11 +47,11 @@ public final class StructureHelper {
 	 * @param <T> Data type
 	 * @param <R> Resultant structure type
 	 * @param data			Data collection
-	 * @param identity		Identity constructor
+	 * @param identity		Identity instance
 	 * @param populate		Population function
 	 * @return Contiguous array or {@code null} if the data is empty
 	 */
-	public static <T, R extends Structure> R[] array(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+	public static <T, R extends Structure> R[] array(Collection<T> data, R identity, BiConsumer<T, R> populate) {
 		// Check for empty data
 		if(data.isEmpty()) {
 			return null;
@@ -65,7 +59,7 @@ public final class StructureHelper {
 
 		// Allocate contiguous array
 		@SuppressWarnings("unchecked")
-		final R[] array = (R[]) identity.get().toArray(data.size());
+		final R[] array = (R[]) identity.toArray(data.size());
 
 		// Populate array (use iterator since cannot easily convert collection to generic array using Array#newInstance)
 		final Iterator<T> itr = data.iterator();
@@ -80,45 +74,42 @@ public final class StructureHelper {
 	/**
 	 * Converts the given collection to a contiguous <i>pointer-to-array</i> referenced by the <b>first</b> element.
 	 * @param <T> Data type
-	 * @param <R> Resultant JNA structure type
+	 * @param <R> Resultant JNA {@link ByReference} structure type
 	 * @param data			Data collection
-	 * @param identity		Identity constructor
+	 * @param identity		Identity instance
 	 * @param populate		Population function
 	 * @return Pointer-to-array or {@code null} if the data is empty
 	 * @throws IllegalArgumentException if the type is not a {@link ByReference} structure
 	 */
-	public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+	public static <T, R extends Structure> R pointer(Collection<T> data, R identity, BiConsumer<T, R> populate) {
+		// Check valid structure
+		if(!(identity instanceof ByReference)) {
+			throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + identity.getClass());
+		}
+
 		// Construct array
 		final R[] array = array(data, identity, populate);
 
-		// Handle empty case
+		// Convert to pointer-to-array
 		if(array == null) {
 			return null;
 		}
-
-		// Convert to pointer-to-array
-		final R ptr = array[0];
-
-		// Check valid structure
-		if(!(ptr instanceof ByReference)) {
-			throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + ptr.getClass());
+		else {
+			return array[0];
 		}
-
-		return ptr;
 	}
-	// TODO - currently requires manually fiddled by-reference for pointer-to-array of structures
 
 	/**
 	 * Helper - Creates a collector that constructs a contiguous array of JNA structures.
 	 * @param <T> Data type
 	 * @param <R> Resultant structure type
-	 * @param identity		Identity constructor
+	 * @param identity		Identity instance
 	 * @param populate		Population function
 	 * @param chars			Collector characteristics
 	 * @return Structure collector
 	 * @see #array(Collection, Supplier, BiConsumer)
 	 */
-	public static <T, R extends Structure> Collector<T, ?, R[]> collector(Supplier<R> identity, BiConsumer<T, R> populate, Characteristics... chars) {
+	public static <T, R extends Structure> Collector<T, ?, R[]> collector(R identity, BiConsumer<T, R> populate, Characteristics... chars) {
 		final BinaryOperator<List<T>> combiner = (left, right) -> {
 			left.addAll(right);
 			return left;
@@ -126,4 +117,5 @@ public final class StructureHelper {
 		final Function<List<T>, R[]> finisher = list -> array(list, identity, populate);
 		return Collector.of(ArrayList::new, List::add, combiner, finisher, chars);
 	}
+	// TODO - unused?
 }

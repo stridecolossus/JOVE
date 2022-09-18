@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"planeAspect"
 })
 public class VkBindImagePlaneMemoryInfo extends VulkanStructure {
-	public static class ByValue extends VkBindImagePlaneMemoryInfo implements Structure.ByValue { }
-	public static class ByReference extends VkBindImagePlaneMemoryInfo implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.BIND_IMAGE_PLANE_MEMORY_INFO;
 	public Pointer pNext;
 	public VkImageAspect planeAspect;

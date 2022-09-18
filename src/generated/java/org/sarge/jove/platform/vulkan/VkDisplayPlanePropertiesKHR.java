@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -14,9 +13,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"currentStackIndex"
 })
 public class VkDisplayPlanePropertiesKHR extends VulkanStructure {
-	public static class ByValue extends VkDisplayPlanePropertiesKHR implements Structure.ByValue { }
-	public static class ByReference extends VkDisplayPlanePropertiesKHR implements Structure.ByReference { }
-	
 	public long currentDisplay;
 	public int currentStackIndex;
 }

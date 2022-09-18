@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,9 +19,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"minCommandsTokenBufferOffsetAlignment"
 })
 public class VkDeviceGeneratedCommandsLimitsNVX extends VulkanStructure {
-	public static class ByValue extends VkDeviceGeneratedCommandsLimitsNVX implements Structure.ByValue { }
-	public static class ByReference extends VkDeviceGeneratedCommandsLimitsNVX implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DEVICE_GENERATED_COMMANDS_LIMITS_NVX;
 	public Pointer pNext;
 	public int maxIndirectCommandsLayoutTokenCount;

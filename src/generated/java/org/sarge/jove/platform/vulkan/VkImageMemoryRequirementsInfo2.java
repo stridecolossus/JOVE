@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"image"
 })
 public class VkImageMemoryRequirementsInfo2 extends VulkanStructure {
-	public static class ByValue extends VkImageMemoryRequirementsInfo2 implements Structure.ByValue { }
-	public static class ByReference extends VkImageMemoryRequirementsInfo2 implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.IMAGE_MEMORY_REQUIREMENTS_INFO_2;
 	public Pointer pNext;
 	public Pointer image;

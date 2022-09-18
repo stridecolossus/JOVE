@@ -4,7 +4,6 @@ import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -17,9 +16,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"supportsTextureGatherLODBiasAMD"
 })
 public class VkTextureLODGatherFormatPropertiesAMD extends VulkanStructure {
-	public static class ByValue extends VkTextureLODGatherFormatPropertiesAMD implements Structure.ByValue { }
-	public static class ByReference extends VkTextureLODGatherFormatPropertiesAMD implements Structure.ByReference { }
-	
 	public VkStructureType sType = VkStructureType.TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD;
 	public Pointer pNext;
 	public VulkanBoolean supportsTextureGatherLODBiasAMD;

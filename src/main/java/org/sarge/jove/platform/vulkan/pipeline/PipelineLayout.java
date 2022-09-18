@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -119,7 +119,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Add push constant ranges
 			info.pushConstantRangeCount = ranges.size();
-			info.pPushConstantRanges = StructureHelper.pointer(ranges, VkPushConstantRange::new, PushConstantRange::populate);
+			info.pPushConstantRanges = StructureCollector.pointer(ranges, new VkPushConstantRange(), PushConstantRange::populate);
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();

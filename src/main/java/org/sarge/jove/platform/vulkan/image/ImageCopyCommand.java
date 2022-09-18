@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 /**
@@ -144,7 +144,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 */
 		public ImageCopyCommand build() {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
-			final VkImageCopy[] array = StructureHelper.array(regions, VkImageCopy::new, CopyRegion::populate);
+			final VkImageCopy[] array = StructureCollector.array(regions, new VkImageCopy(), CopyRegion::populate);
 			return new ImageCopyCommand(src, dest, srcLayout, destLayout, array);
 		}
 	}

@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.*;
 
 /**
@@ -116,11 +116,11 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		// Add viewports
 		final var info = new VkPipelineViewportStateCreateInfo();
 		info.viewportCount = count;
-		info.pViewports = StructureHelper.pointer(viewports, VkViewport::new, this::populate);
+		info.pViewports = StructureCollector.pointer(viewports, new VkViewport(), this::populate);
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = StructureHelper.pointer(scissors, VkRect2D.ByReference::new, ViewportPipelineStageBuilder::populate);
+		info.pScissors = StructureCollector.pointer(scissors, new VkRect2D.ByReference(), ViewportPipelineStageBuilder::populate);
 
 		return info;
 	}

@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.StructureHelper;
+import org.sarge.jove.util.StructureCollector;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -132,7 +132,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 
 		// Init clear values
 		info.clearValueCount = clear.size();
-		info.pClearValues = StructureHelper.pointer(clear, VkClearValue::new, ClearValue::populate);
+		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
 
 		// Create command
 		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, VkSubpassContents.INLINE);

@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -16,9 +15,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"maxVariableDescriptorCount"
 })
 public class VkDescriptorSetVariableDescriptorCountLayoutSupportEXT extends VulkanStructure {
-	public static class ByValue extends VkDescriptorSetVariableDescriptorCountLayoutSupportEXT implements Structure.ByValue { }
-	public static class ByReference extends VkDescriptorSetVariableDescriptorCountLayoutSupportEXT implements Structure.ByReference { }
-
 	public VkStructureType sType = VkStructureType.DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_LAYOUT_SUPPORT_EXT;
 	public Pointer pNext;
 	public int maxVariableDescriptorCount;
