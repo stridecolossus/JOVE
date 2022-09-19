@@ -793,18 +793,29 @@ The following alternative is provided for the case where the API method requires
 
 ```java
 public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+    // Check valid structure
+    if(!(identity instanceof ByReference)) {
+        throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + identity.getClass());
+    }
+
     // Construct array
     R[] array = array(data, identity, populate);
 
-    // Handle empty case
+    // Convert to pointer-to-array
     if(array == null) {
         return null;
     }
-
-    // Convert to pointer-to-array
-    return array[0];
+    else {
+        return array[0];
+    }
 }
 ```
+
+Note that the `pointer` variant checks that the structure is a JNA `ByReference` type, otherwise an exception is thrown when the structure array is marshalled.
+
+A structure that is accessed _by reference_ is bizarrely identified by JNA via a marker interface, as opposed to (say) a flag on the structure itself.  This forces the developer to implement an entirely new class that provides no additional public functionality, and yet the code is _still_ required to determine whether the structure is being passed by value or by reference.
+
+Therefore the code generator is modified to identify whether each structure is used by reference (i.e. it is used as a structure field with a pointer) and implements the marker interface accordingly, working on the assumption that a given structure will _always_ be used similarly.  The only instance where this assumption breaks down is the `VkRect2D` structure which is used both as a value __and__ a reference type, so unfortunately we are forced to manually implement a separate class to support both use-cases.
 
 In the logical device the new helper class is used to build the array of required queue descriptors:
 

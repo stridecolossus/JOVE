@@ -43,7 +43,6 @@ improvements
 - interpolator revamp
 - joystick from desktop service
 - code gen type mapper sucks, should be declarative but not using nasty switches? table driven somehow (we already have the table!), functional?
-- manually fiddled by-reference for pointer-to-array of structure
 
 particles
 - particle class ~ use case? position, timestamp(?), colour, size?
