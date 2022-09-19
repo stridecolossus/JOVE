@@ -2,7 +2,7 @@ package org.sarge.jove.scene;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.*;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -24,14 +24,20 @@ public class ModelNode extends AbstractNode implements Renderable {
 		this.model = notNull(model);
 	}
 
-	@Override
+	/**
+	 * @return Renderable model
+	 */
 	public Model model() {
 		return model;
 	}
 
-	@Override
-	public Optional<Material> material() {
-		return Optional.ofNullable(mat);
+	/**
+	 * @return Material
+	 */
+	public Material material() {
+		// TODO - walk ancestors
+		//if(mat == null) throw new IllegalStateException();
+		return mat;
 	}
 
 	/**
@@ -43,7 +49,7 @@ public class ModelNode extends AbstractNode implements Renderable {
 	}
 
 	@Override
-	public Stream<Renderable> render() {
+	public Stream<SceneGraph> nodes() {
 		return Stream.of(this);
 	}
 
@@ -58,7 +64,7 @@ public class ModelNode extends AbstractNode implements Renderable {
 				(obj == this) ||
 				(obj instanceof ModelNode that) &&
 				(this.model == that.model) &&
-				Objects.equals(this.mat, that.mat) &&
+				Objects.equals(this.mat, that.mat) &&		// TODO
 				super.isEqual(that);
 	}
 

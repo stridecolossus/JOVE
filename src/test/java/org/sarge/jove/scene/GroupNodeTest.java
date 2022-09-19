@@ -22,14 +22,15 @@ public class GroupNodeTest {
 		@DisplayName("has no children")
 		@Test
 		void empty() {
+			assertEquals(0, group.stream().count());
 			assertEquals(0, group.nodes().count());
-			assertEquals(0, group.render().count());
 		}
 
 		@DisplayName("can add a child node")
 		@Test
 		void add() {
 			group.add(node);
+			assertArrayEquals(new Node[]{node}, group.stream().toArray());
 			assertArrayEquals(new Node[]{node}, group.nodes().toArray());
 			assertEquals(group, node.parent());
 		}
@@ -62,13 +63,13 @@ public class GroupNodeTest {
 		@DisplayName("can enumerate its children")
 		@Test
 		void nodes() {
-			assertArrayEquals(new Node[]{child, node}, group.nodes().toArray());
+			assertArrayEquals(new Node[]{child, node}, group.stream().toArray());
 		}
 
 		@DisplayName("can enumerate its renderable children")
 		@Test
 		void render() {
-			assertArrayEquals(new Node[]{node}, group.render().toArray());
+			assertArrayEquals(new Node[]{node}, group.nodes().toArray());
 		}
 
 		@DisplayName("cannot add a node that is already attached")
@@ -90,8 +91,8 @@ public class GroupNodeTest {
 		@Test
 		void clear() {
 			group.clear();
+			assertEquals(0, group.stream().count());
 			assertEquals(0, group.nodes().count());
-			assertEquals(0, group.render().count());
 			assertEquals(null, node.parent());
 		}
 	}

@@ -7,14 +7,9 @@ package org.sarge.jove.scene;
  * <p>
  * @author Sarge
  */
-public interface Material {
+public interface Material extends Renderable {
 	/**
 	 * @return Render queue for geometry using this material
 	 */
 	RenderQueue queue();
-
-	/**
-	 * Binds this material.
-	 */
-	void bind();
 }

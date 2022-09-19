@@ -2,6 +2,8 @@ package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Matrix.Matrix4;
@@ -12,7 +14,12 @@ public class AbstractNodeTest {
 
 	@BeforeEach
 	void before() {
-		node = new AbstractNode();
+		node = new AbstractNode() {
+			@Override
+			public Stream<SceneGraph> nodes() {
+				throw new UnsupportedOperationException();
+			}
+		};
 		transform = Matrix4.translation(Axis.X);
 	}
 

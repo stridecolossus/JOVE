@@ -1,7 +1,5 @@
 package org.sarge.jove.scene;
 
-import java.util.stream.Stream;
-
 import org.sarge.jove.geometry.*;
 
 /**
@@ -23,10 +21,4 @@ public interface Node {
 	 * @return Bounding volume of this node
 	 */
 	Volume volume();
-
-	/**
-	 * Flattens this node to the renderable objects.
-	 * @return Renderable objects
-	 */
-	Stream<Renderable> render();
 }

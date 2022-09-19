@@ -3,7 +3,6 @@ package org.sarge.jove.scene;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
@@ -12,7 +11,7 @@ import org.sarge.jove.geometry.*;
  * Skeleton implementation.
  * @author Sarge
  */
-public class AbstractNode implements Node {
+public abstract class AbstractNode implements SceneGraph, Node {
 	private AbstractNode parent;
 	private Volume vol = Volume.EMPTY;
 	private Transform transform = Transform.IDENTITY;
@@ -111,11 +110,6 @@ public class AbstractNode implements Node {
 	 */
 	public void volume(Volume vol) {
 		this.vol = notNull(vol);
-	}
-
-	@Override
-	public Stream<Renderable> render() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

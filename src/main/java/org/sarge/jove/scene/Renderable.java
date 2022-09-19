@@ -1,32 +1,9 @@
 package org.sarge.jove.scene;
 
-import java.util.Optional;
-
-import org.sarge.jove.geometry.*;
-import org.sarge.jove.model.Model;
-
 /**
- * A <i>renderable</i> defines an object that can be rendered.
+ * A <i>renderable</i> defines a scene graph object that can be rendered, i.e. bound to a render sequence.
  * @author Sarge
  */
 public interface Renderable {
-	/**
-	 * @return Renderable model
-	 */
-	Model model();
-
-	/**
-	 * @return Material
-	 */
-	Optional<Material> material();
-
-	/**
-	 * @return World matrix
-	 */
-	Matrix matrix();
-
-	/**
-	 * @return Bounding volume
-	 */
-	Volume volume();
+	// TODO
 }

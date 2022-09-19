@@ -3,8 +3,6 @@ package org.sarge.jove.scene;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.model.Model;
 
@@ -21,19 +19,19 @@ public class ModelNodeTest {
 	@Test
 	void constructor() {
 		assertEquals(model, node.model());
-		assertEquals(Optional.empty(), node.material());
+		assertEquals(null, node.material());
 	}
 
 	@Test
 	void material() {
 		final Material mat = mock(Material.class);
 		node.material(mat);
-		assertEquals(Optional.of(mat), node.material());
+		assertEquals(mat, node.material());
 	}
 
 	@Test
 	void render() {
-		assertArrayEquals(new Node[]{node}, node.render().toArray());
+		assertArrayEquals(new Node[]{node}, node.nodes().toArray());
 	}
 
 	@Test

@@ -7,7 +7,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>group node</i> is a container for a set of nodes, i.e. a sub-tree of the scene.
+ * A <i>group node</i> is a collection of nodes.
  * @author Sarge
  */
 public class GroupNode extends AbstractNode {
@@ -16,8 +16,13 @@ public class GroupNode extends AbstractNode {
 	/**
 	 * @return Child nodes of this group
 	 */
-	public Stream<? extends Node> nodes() {
+	public Stream<? extends Node> stream() {
 		return nodes.stream();
+	}
+
+	@Override
+	public Stream<SceneGraph> nodes() {
+		return nodes.stream().flatMap(SceneGraph::nodes);
 	}
 
 	/**
@@ -52,11 +57,6 @@ public class GroupNode extends AbstractNode {
 			n.detach();
 		}
 		nodes.clear();
-	}
-
-	@Override
-	public Stream<Renderable> render() {
-		return nodes.stream().flatMap(Node::render);
 	}
 
 	@Override
