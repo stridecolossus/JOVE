@@ -1,9 +1,11 @@
 package org.sarge.jove.scene;
 
 /**
- * A <i>renderable</i> defines a scene graph object that can be rendered, i.e. bound to a render sequence.
+ * A <i>renderable</i> is an element of a scene that can be rendered.
  * @author Sarge
  */
 public interface Renderable {
-	// TODO
+// TODO
+//public sealed interface Renderable permits ModelNode, Material {
+	// Marker interface
 }

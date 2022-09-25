@@ -1,31 +1,90 @@
 package org.sarge.jove.scene;
 
+import java.util.*;
+import java.util.function.Consumer;
+
 /**
- * A <i>render queue</i> defines the render order for a set of geometry.
+ * A <i>render queue</i>
+ * TODO
+ * defines the render order for a set of geometry.
+ *
+ * flattened representation of a scene
+ * mutable
+ * {@link GroupNode#add(AbstractNode)}
+ *
+ *
  * @author Sarge
  */
-public record RenderQueue(int order, boolean reverse) implements Comparable<RenderQueue> {
-	/**
-	 * Default render queue for opaque geometry.
-	 */
-	public static final RenderQueue OPAQUE = new RenderQueue(0, false);
+public class RenderQueue {
+	private final Map<Material, TextureGroup> groups = new HashMap<>();
 
 	/**
-	 * Render queue for translucent objects that are rendered in reverse distance order after all other geometry.
+	 * Renders nodes in this queue.
+	 * @param renderer Renderer
 	 */
-	public static final RenderQueue TRANSLUCENT = new RenderQueue(Integer.MAX_VALUE, true);
-
-	/**
-	 * Constructor.
-	 * @param order			Queue order
-	 * @param reverse		Whether geometry should be reverse ordered by distance, i.e. for a translucent queue
-	 */
-	public RenderQueue {
-		// Empty
+	public void render(Consumer<Renderable> renderer) {
+		for(var entry : groups.entrySet()) {
+			final Material mat = entry.getKey();
+			final TextureGroup g = entry.getValue();
+			renderer.accept(mat);
+			g.render(renderer);
+		}
 	}
 
-	@Override
-	public int compareTo(RenderQueue that) {
-		return this.order - that.order;
+	/**
+	 * Adds a node to this queue.
+	 * @param node Node to add
+	 */
+	void add(ModelNode node) {
+		final Material mat = node.material();
+		final TextureGroup g = groups.computeIfAbsent(mat, __ -> new TextureGroup());
+		g.add(node);
+	}
+
+	/**
+	 * Removes a node from this queue.
+	 * @param node Node to remove
+	 */
+	void remove(ModelNode node) {
+		final Material mat = node.material();
+		final TextureGroup g = groups.get(mat);
+		g.remove(node);
+		if(g.groups.isEmpty()) {
+			groups.remove(mat);
+		}
+	}
+
+	/**
+	 *
+	 */
+	private static class TextureGroup {
+		private final Map<String, List<Renderable>> groups = new HashMap<>();
+
+		private void render(Consumer<Renderable> renderer) {
+			for(var entry : groups.entrySet()) {
+				final String texture = entry.getKey();
+				// TODO - texture
+				for(Renderable n : entry.getValue()) {
+					renderer.accept(n);
+				}
+			}
+		}
+
+		private void add(ModelNode node) {
+			final String key = "texture"; // TODO
+			final List<Renderable> list = groups.computeIfAbsent(key, __ -> new ArrayList<>());
+			assert !list.contains(node);
+			list.add(node);
+		}
+
+		private void remove(ModelNode node) {
+			final String key = "texture"; // TODO
+			final List<Renderable> list = groups.get(key);
+			assert list.contains(node);
+			list.remove(node);
+			if(list.isEmpty()) {
+				groups.remove(key);
+			}
+		}
 	}
 }

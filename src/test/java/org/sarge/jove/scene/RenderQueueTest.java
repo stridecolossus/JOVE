@@ -1,34 +1,48 @@
 package org.sarge.jove.scene;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.model.Model;
 
 public class RenderQueueTest {
 	private RenderQueue queue;
+	private ModelNode node;
+	private Material mat;
+	private Consumer<Renderable> consumer;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		queue = new RenderQueue(1, false);
+		queue = new RenderQueue();
+
+		mat = mock(Material.class);
+		when(mat.queue()).thenReturn(queue);
+
+		node = new ModelNode(mock(Model.class));
+		node.material(mat);
+
+		consumer = mock(Consumer.class);
 	}
 
+	@DisplayName("A node can be added to the queue")
 	@Test
-	void constructor() {
-		assertEquals(1, queue.order());
-		assertEquals(false, queue.reverse());
+	void add() {
+		queue.add(node);
+		queue.render(consumer);
+		verify(consumer).accept(mat);
+		verify(consumer).accept(node);
+		verifyNoMoreInteractions(consumer);
 	}
 
+	@DisplayName("A previously added node can be removed from the queue")
 	@Test
-	void compare() {
-		assertEquals(0, queue.compareTo(queue));
-		assertEquals(1, queue.compareTo(RenderQueue.OPAQUE));
-	}
-
-	@Test
-	void equals() {
-		assertEquals(queue, queue);
-		assertEquals(queue, new RenderQueue(1, false));
-		assertNotEquals(queue, null);
-		assertNotEquals(queue, RenderQueue.TRANSLUCENT);
+	void remove() {
+		queue.add(node);
+		queue.remove(node);
+		queue.render(consumer);
+		verifyNoInteractions(consumer);
 	}
 }

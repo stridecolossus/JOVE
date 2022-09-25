@@ -7,15 +7,15 @@ import org.sarge.jove.geometry.*;
  * @author Sarge
  */
 public interface Node {
-	/**
-	 * @return Local transform of this node
-	 */
-	Transform transform();
+//	/**
+//	 * @return World matrix of this node
+//	 */
+//	Matrix matrix();
 
 	/**
-	 * @return World matrix of this node
+	 * @return Transform of this node
 	 */
-	Matrix matrix();
+	Transform transform();
 
 	/**
 	 * @return Bounding volume of this node

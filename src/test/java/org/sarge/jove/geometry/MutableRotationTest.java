@@ -18,13 +18,12 @@ public class MutableRotationTest {
 	@Test
 	void constructor() {
 		assertEquals(0, rot.angle());
-		assertEquals(true, rot.isDirty());
+		assertEquals(true, rot.isMutable());
 	}
 
 	@Test
 	void matrix() {
 		assertEquals(Y.rotation(0), rot.matrix());
-		assertEquals(false, rot.isDirty());
 	}
 
 	@Test
@@ -32,7 +31,6 @@ public class MutableRotationTest {
 		rot.angle(HALF);
 		assertEquals(HALF, rot.angle());
 		assertEquals(Y.rotation(HALF), rot.matrix());
-		assertEquals(false, rot.isDirty());
 		assertEquals(AxisAngle.of(Y, HALF), rot.toAxisAngle());
 	}
 

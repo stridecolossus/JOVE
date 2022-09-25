@@ -22,7 +22,6 @@ public class GroupNodeTest {
 		@DisplayName("has no children")
 		@Test
 		void empty() {
-			assertEquals(0, group.stream().count());
 			assertEquals(0, group.nodes().count());
 		}
 
@@ -30,7 +29,6 @@ public class GroupNodeTest {
 		@Test
 		void add() {
 			group.add(node);
-			assertArrayEquals(new Node[]{node}, group.stream().toArray());
 			assertArrayEquals(new Node[]{node}, group.nodes().toArray());
 			assertEquals(group, node.parent());
 		}
@@ -63,20 +61,14 @@ public class GroupNodeTest {
 		@DisplayName("can enumerate its children")
 		@Test
 		void nodes() {
-			assertArrayEquals(new Node[]{child, node}, group.stream().toArray());
-		}
-
-		@DisplayName("can enumerate its renderable children")
-		@Test
-		void render() {
-			assertArrayEquals(new Node[]{node}, group.nodes().toArray());
+			assertArrayEquals(new Node[]{child, node}, group.nodes().toArray());
 		}
 
 		@DisplayName("cannot add a node that is already attached")
 		@Test
 		void added() {
-			assertThrows(IllegalStateException.class, () -> group.add(node));
-			assertThrows(IllegalStateException.class, () -> group.add(child));
+			assertThrows(AssertionError.class, () -> group.add(node));
+			assertThrows(AssertionError.class, () -> group.add(child));
 		}
 
 		@DisplayName("can remove attached nodes")
@@ -91,7 +83,6 @@ public class GroupNodeTest {
 		@Test
 		void clear() {
 			group.clear();
-			assertEquals(0, group.stream().count());
 			assertEquals(0, group.nodes().count());
 			assertEquals(null, node.parent());
 		}
@@ -100,8 +91,7 @@ public class GroupNodeTest {
 	@Test
 	void equals() {
 		assertEquals(group, group);
-		assertEquals(group, new GroupNode());
 		assertNotEquals(group, null);
-		assertNotEquals(group, mock(GroupNode.class));
+		assertNotEquals(group, new GroupNode());
 	}
 }

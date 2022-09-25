@@ -260,6 +260,16 @@ public class Matrix implements Transform, Bufferable {
 		public int length() {
 			return LENGTH;
 		}
+
+		@Override
+		public String toString() {
+			if(this == IDENTITY) {
+				return "IDENTITY";
+			}
+			else {
+				return super.toString();
+			}
+		}
 	}
 
 	/**

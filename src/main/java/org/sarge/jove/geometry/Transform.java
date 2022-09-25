@@ -11,19 +11,14 @@ import org.sarge.jove.geometry.Matrix.Matrix4;
 @FunctionalInterface
 public interface Transform {
 	/**
-	 * Identity transform.
-	 */
-	Transform IDENTITY = Matrix4.IDENTITY;
-
-	/**
 	 * @return Transformation matrix
 	 */
 	Matrix matrix();
 
 	/**
-	 * @return Whether this transform has changed (default is {@code false})
+	 * @return Whether this is a mutable transformation
 	 */
-	default boolean isDirty() {
+	default boolean isMutable() {
 		return false;
 	}
 
@@ -35,11 +30,6 @@ public interface Transform {
 	static Transform of(List<Transform> transforms) {
 		return new Transform() {
 			private final List<Transform> list = List.copyOf(transforms);
-
-			@Override
-			public boolean isDirty() {
-				return list.stream().anyMatch(Transform::isDirty);
-			}
 
 			@Override
 			public Matrix matrix() {

@@ -1,12 +1,14 @@
 package org.sarge.jove.scene;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Matrix.Matrix4;
+import org.sarge.jove.scene.AbstractNode.Visitor;
 
 public class AbstractNodeTest {
 	private AbstractNode node;
@@ -16,97 +18,59 @@ public class AbstractNodeTest {
 	void before() {
 		node = new AbstractNode() {
 			@Override
-			public Stream<SceneGraph> nodes() {
-				throw new UnsupportedOperationException();
+			public Stream<AbstractNode> nodes() {
+				return Stream.empty();
 			}
 		};
 		transform = Matrix4.translation(Axis.X);
 	}
 
-	@DisplayName("A new node...")
-	@Nested
-	class New {
-		@DisplayName("does not have a parent")
-		@Test
-		void parent() {
-			assertEquals(null, node.parent());
-		}
-
-		@DisplayName("has a default local transform")
-		@Test
-		void identity() {
-			assertEquals(Transform.IDENTITY, node.transform());
-		}
-
-		@DisplayName("has a default world matrix")
-		@Test
-		void matrix() {
-			assertEquals(Transform.IDENTITY, node.matrix());
-		}
-
-		@DisplayName("can have a local transform applied")
-		@Test
-		void transform() {
-			node.transform(transform);
-			assertEquals(transform, node.transform());
-		}
-
-		@DisplayName("does not have a bounding volume")
-		@Test
-		void volume() {
-			assertEquals(Volume.EMPTY, node.volume());
-		}
+	@DisplayName("A new node does not have a parent")
+	@Test
+	void parent() {
+		assertEquals(null, node.parent());
+		assertEquals(true, node.isRoot());
 	}
 
-	@DisplayName("A child node...")
-	@Nested
-	class Child {
-		private GroupNode parent;
+	@DisplayName("A node has a default local transform")
+	@Test
+	void identity() {
+		final LocalTransform transform = node.transform();
+		assertNotNull(transform);
+		transform.update(null);
+		assertEquals(Matrix4.IDENTITY, node.transform().matrix());
+	}
 
-		@BeforeEach
-		void before() {
-			parent = new GroupNode();
-			parent.add(node);
-		}
+	@DisplayName("can have a local transform applied")
+	@Test
+	void transform() {
+		node.transform(transform);
+		node.transform().update(null);
+		assertEquals(transform, node.transform().matrix());
+	}
 
-		@DisplayName("has a parent")
-		@Test
-		void parent() {
-			assertEquals(parent, node.parent());
-		}
+	// TODO
+	// - materials
+	// - set volume
 
-		@DisplayName("has a world matrix")
-		@Test
-		void identity() {
-			assertEquals(Transform.IDENTITY, node.matrix());
-		}
+	@DisplayName("does not have a bounding volume")
+	@Test
+	void volume() {
+		assertEquals(Volume.EMPTY, node.volume());
+	}
 
-		@DisplayName("inherits the transform of its parent")
-		@Test
-		void inherits() {
-			parent.transform(transform);
-			assertEquals(transform, node.matrix());
-		}
-
-		@DisplayName("combines its local transform with that of its parent")
-		@Test
-		void multiplied() {
-			parent.transform(transform);
-			node.transform(transform);
-			assertEquals(Matrix4.translation(Axis.X.multiply(2)), node.matrix());
-		}
-
-		@DisplayName("has its world matrix updated if the transform of any ancestor is modified")
-		@Test
-		void ancestor() {
-			node.matrix();
-			parent.transform(transform);
-			assertEquals(transform, node.matrix());
-		}
+	@DisplayName("A node can be visited")
+	@Test
+	void visitor() {
+		final Visitor visitor = mock(Visitor.class);
+		node.accept(visitor);
+		verify(visitor).visit(node);
 	}
 
 	@Test
-	void isEqual() {
-		assertEquals(true, node.isEqual(node));
+	void equals() {
+		assertEquals(true, node.equals(node));
+		assertEquals(false, node.equals(null));
+		assertEquals(false, node.equals(mock(AbstractNode.class)));
 	}
 }

@@ -12,9 +12,8 @@ import org.sarge.jove.model.Model;
  * A <i>model node</i> represents a renderable model within the scene.
  * @author Sarge
  */
-public class ModelNode extends AbstractNode implements Renderable {
+public final class ModelNode extends AbstractNode implements Renderable {
 	private final Model model;
-	private Material mat;
 
 	/**
 	 * Constructor.
@@ -25,47 +24,37 @@ public class ModelNode extends AbstractNode implements Renderable {
 	}
 
 	/**
-	 * @return Renderable model
+	 * @return Model
 	 */
 	public Model model() {
 		return model;
 	}
 
-	/**
-	 * @return Material
-	 */
-	public Material material() {
-		// TODO - walk ancestors
-		//if(mat == null) throw new IllegalStateException();
-		return mat;
-	}
-
-	/**
-	 * Sets the material for this node.
-	 * @param mat Material or {@code null} for none
-	 */
-	public void material(Material mat) {
-		this.mat = mat;
-	}
-
 	@Override
-	public Stream<SceneGraph> nodes() {
+	public Stream<AbstractNode> nodes() {
 		return Stream.of(this);
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(super.hashCode(), model, mat);
+	public void accept(Visitor visitor) {
+		visitor.visit(this);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof ModelNode that) &&
-				(this.model == that.model) &&
-				Objects.equals(this.mat, that.mat) &&		// TODO
-				super.isEqual(that);
+	protected void attach(AbstractNode parent) {
+		super.attach(parent);
+		// TODO - add material/DS
+	}
+
+	@Override
+	protected void detach() {
+		super.detach();
+		material().queue().remove(this);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), model);
 	}
 
 	@Override

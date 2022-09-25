@@ -32,7 +32,7 @@ import com.sun.jna.Structure.ByReference;
  * List&lt;SomeData&gt; data = ...
  * SomeStructure[] array = StructureCollector.array(list, new SomeStructure(), populate);
  *
- * // Transform to a pointer-to-array
+ * // Transform to a pointer-to-array (assumes by-reference)
  * SomeStructure first = StructureCollector.pointer(list, new SomeStructure(), populate);
  * </pre>
  * <p>
@@ -73,20 +73,15 @@ public final class StructureCollector {
 
 	/**
 	 * Converts the given collection to a contiguous <i>pointer-to-array</i> referenced by the <b>first</b> element.
+	 * Note that the resultant structure <b>must</b> be a JNA {@link ByReference} type.
 	 * @param <T> Data type
-	 * @param <R> Resultant JNA {@link ByReference} structure type
+	 * @param <R> Resultant JNA structure type
 	 * @param data			Data collection
 	 * @param identity		Identity instance
 	 * @param populate		Population function
 	 * @return Pointer-to-array or {@code null} if the data is empty
-	 * @throws IllegalArgumentException if the type is not a {@link ByReference} structure
 	 */
-	public static <T, R extends Structure> R pointer(Collection<T> data, R identity, BiConsumer<T, R> populate) {
-		// Check valid structure
-		if(!(identity instanceof ByReference)) {
-			throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + identity.getClass());
-		}
-
+	public static <T, R extends Structure & ByReference> R pointer(Collection<T> data, R identity, BiConsumer<T, R> populate) {
 		// Construct array
 		final R[] array = array(data, identity, populate);
 

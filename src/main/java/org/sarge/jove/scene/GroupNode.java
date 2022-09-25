@@ -13,16 +13,9 @@ import org.sarge.lib.util.Check;
 public class GroupNode extends AbstractNode {
 	private final List<AbstractNode> nodes = new ArrayList<>();
 
-	/**
-	 * @return Child nodes of this group
-	 */
-	public Stream<? extends Node> stream() {
-		return nodes.stream();
-	}
-
 	@Override
-	public Stream<SceneGraph> nodes() {
-		return nodes.stream().flatMap(SceneGraph::nodes);
+	public Stream<AbstractNode> nodes() {
+		return nodes.stream();
 	}
 
 	/**
@@ -62,15 +55,6 @@ public class GroupNode extends AbstractNode {
 	@Override
 	public int hashCode() {
 		return Objects.hash(super.hashCode(), nodes);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof GroupNode that) &&
-				super.isEqual(that) &&
-				this.nodes.equals(that.nodes);
 	}
 
 	@Override

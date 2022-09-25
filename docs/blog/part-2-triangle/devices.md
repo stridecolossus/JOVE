@@ -785,19 +785,12 @@ Where:
 
 * And _identity_ provides an instance of the structure used to allocate the array.
 
-The `populate` method 'fills' an element of the array from the corresponding domain object (generally implemented as a hidden helper method on the domain class).
-
-Note that this implementation uses an iterator over the incoming data since there is no simple means of instantiating a generic array and using a simpler loop to walk both.
+The `populate` method 'fills' an element of the array from the corresponding domain object (generally implemented as a hidden helper method on the domain class).  Note that this implementation uses an iterator over the incoming data since there is no simple means of instantiating a generic array and using a simpler loop to walk both.
 
 The following alternative is provided for the case where the API method requires a pointer-to-array argument:
 
 ```java
 public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
-    // Check valid structure
-    if(!(identity instanceof ByReference)) {
-        throw new IllegalArgumentException("Pointer-to-array must be a by-reference structure: " + identity.getClass());
-    }
-
     // Construct array
     R[] array = array(data, identity, populate);
 
@@ -811,7 +804,7 @@ public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R>
 }
 ```
 
-Note that the `pointer` variant checks that the structure is a JNA `ByReference` type, otherwise an exception is thrown when the structure array is marshalled.
+Note that the `pointer` variant requires the structure to be a JNA `ByReference` type, otherwise an exception is thrown when the structure array is marshalled.
 
 A structure that is accessed _by reference_ is bizarrely identified by JNA via a marker interface, as opposed to (say) a flag on the structure itself.  This forces the developer to implement an entirely new class that provides no additional public functionality, and yet the code is _still_ required to determine whether the structure is being passed by value or by reference.
 

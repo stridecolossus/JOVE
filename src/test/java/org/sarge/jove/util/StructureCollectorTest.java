@@ -8,7 +8,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.VkImageCopy;
 
 public class StructureCollectorTest {
 	private Object obj;
@@ -38,13 +37,6 @@ public class StructureCollectorTest {
 		ptr.toArray(array);
 		verify(populate).accept(obj, array[0]);
 		verify(populate).accept(obj, array[1]);
-	}
-
-	@Test
-	void pointerNotReference() {
-		@SuppressWarnings("unchecked")
-		final BiConsumer<Object, VkImageCopy> invalid = mock(BiConsumer.class);
-		assertThrows(IllegalArgumentException.class, () -> StructureCollector.pointer(List.of(obj), new VkImageCopy(), invalid));
 	}
 
 	@Test

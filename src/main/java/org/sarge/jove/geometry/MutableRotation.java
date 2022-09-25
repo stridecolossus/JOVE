@@ -7,7 +7,7 @@ import org.sarge.jove.geometry.Rotation.AxisAngle;
  * @author Sarge
  */
 public class MutableRotation extends AxisAngle {
-	private boolean dirty = true;
+//	private boolean dirty = true;
 
 	/**
 	 * Constructor.
@@ -23,17 +23,22 @@ public class MutableRotation extends AxisAngle {
 	 */
 	public void angle(float angle) {
 		this.angle = angle;
-		dirty = true;
+//		dirty = true;
 	}
 
+//	@Override
+//	public boolean isDirty() {
+//		return dirty;
+//	}
+
 	@Override
-	public boolean isDirty() {
-		return dirty;
+	public boolean isMutable() {
+		return true;
 	}
 
 	@Override
 	public Matrix matrix() {
-		dirty = false;
+//		dirty = false;
 		return super.matrix();
 	}
 }
