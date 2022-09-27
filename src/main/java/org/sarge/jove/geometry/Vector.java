@@ -80,7 +80,7 @@ public class Vector extends Tuple {
 	}
 
 	/**
-	 * Multiplies this vector by the components of the given vector.
+	 * Multiplies this vector <i>component wise</i> by the given vector.
 	 * @param vec Vector
 	 * @return Multiplied vector
 	 */

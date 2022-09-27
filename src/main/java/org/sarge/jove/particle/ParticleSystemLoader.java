@@ -57,7 +57,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 
 	protected LoaderRegistry<VectorFactory> vector() {
 		return new LoaderRegistry<VectorFactory>()
-				.register("literal", Axis.CONVERTER, VectorFactory::of)
+				.register("literal", Axis::parse, VectorFactory::of)
 				.register("random", __ -> VectorFactory.random(randomiser))
 				.register("cone", e -> VectorFactory.cone(Disc.load(e, randomiser)));
 	}
@@ -166,7 +166,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	 */
 	private Influence influence(Element root) {
 		return switch(root.name()) {
-			case "literal" -> Influence.of(root.text().transform(Axis.CONVERTER));
+			case "literal" -> Influence.of(root.text().transform(Axis::parse));
 			case "velocity" -> Influence.velocity(root.child("velocity").text().toFloat());
 			default -> throw root.exception("Unknown influence");
 		};
@@ -190,7 +190,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	// TODO - factor out for extension
 
 	private Plane plane(Element root) {
-		final Vector normal = root.child("normal").text().transform(Axis.CONVERTER);
+		final Vector normal = root.child("normal").text().transform(Axis::parse);
 		final float dist = root.child("distance").text().toFloat();
 		return new Plane(normal, dist);
 	}

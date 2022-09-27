@@ -65,7 +65,7 @@ public class AxisTest {
 	}
 
 	@Nested
-	class ConverterTests {
+	class ParseTests {
 		@Test
 		void of() {
 			assertEquals(X, Axis.of("X"));
@@ -75,24 +75,24 @@ public class AxisTest {
 
 		@Test
 		void axis() {
-			assertEquals(X, Axis.CONVERTER.apply("X"));
-			assertEquals(Y, Axis.CONVERTER.apply("Y"));
-			assertEquals(Z, Axis.CONVERTER.apply("Z"));
+			assertEquals(X, Axis.parse("X"));
+			assertEquals(Y, Axis.parse("Y"));
+			assertEquals(Z, Axis.parse("Z"));
 		}
 
 		@Test
 		void invert() {
-			assertEquals(X.invert(), Axis.CONVERTER.apply("-X"));
-			assertEquals(Y.invert(), Axis.CONVERTER.apply("-Y"));
-			assertEquals(Z.invert(), Axis.CONVERTER.apply("-Z"));
+			assertEquals(X.invert(), Axis.parse("-X"));
+			assertEquals(Y.invert(), Axis.parse("-Y"));
+			assertEquals(Z.invert(), Axis.parse("-Z"));
 		}
 
 		@Test
 		void vector() {
-			assertEquals(X, Axis.CONVERTER.apply("1 0 0"));
-			assertEquals(Y, Axis.CONVERTER.apply("0 1 0"));
-			assertEquals(Z, Axis.CONVERTER.apply("0 0 1"));
-			assertEquals(new Vector(1, 2, 3), Axis.CONVERTER.apply("1 2 3"));
+			assertEquals(X, Axis.parse("1 0 0"));
+			assertEquals(Y, Axis.parse("0 1 0"));
+			assertEquals(Z, Axis.parse("0 0 1"));
+			assertEquals(new Vector(1, 2, 3), Axis.parse("1 2 3"));
 		}
 	}
 }

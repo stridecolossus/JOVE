@@ -40,7 +40,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	/**
 	 * Colour converter.
 	 */
-	public static final Converter<Colour> CONVERTER = new FloatArrayConverter<>(SIZE, false, Colour::of);
+	public static final Converter<Colour> CONVERTER = new FloatArrayConverter<>(SIZE, Colour::of);
 
 	/**
 	 * Creates a colour from the given floating-point array representing an RGBA value <b>or</b> a 3-element RGB array with the alpha value initialised to <b>one</b>.

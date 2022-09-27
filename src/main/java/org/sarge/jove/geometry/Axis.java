@@ -2,7 +2,6 @@ package org.sarge.jove.geometry;
 
 import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Converter;
 
 /**
  * An <i>axis</i> is a vector representing one of the <i>cardinal</i> axes.
@@ -49,31 +48,32 @@ public abstract class Axis extends NormalizedVector {
 	};
 
 	/**
-	 * Axis/vector converter.
+	 * Parses an axis or vector from the given string.
 	 * <p>
-	 * Notes:
+	 * The string is one of:
 	 * <ul>
-	 * <li>Converts axis tokens, e.g. {@code X} maps to {@link #X}</li>
-	 * <li>Also handles inverse axes prefixed with the negative symbol, e.g. {@code -X}</li>
-	 * <li>Otherwise the string is assumed to be an arbitrary vector, i.e. delegates to {@link Vector#CONVERTER}</li>
+	 * <li>An axis token, e.g. {@code X}</li>
+	 * <li>An inverse axis prefixed with the negation symbol, e.g. {@code -X}</li>
+	 * <li>Otherwise an arbitrary vector</li>
 	 * </ul>
+	 * @param str String to parse
+	 * @return Parsed vector
+	 * @throws IllegalArgumentException for an invalid axis token
+	 * @throws NumberFormatException for an invalid vector
+	 * @see Vector#CONVERTER
 	 */
-	@SuppressWarnings("hiding")
-	public static final Converter<Vector> CONVERTER = new Converter<>() {
-		@Override
-		public Vector apply(String str) throws NumberFormatException {
-			if(str.length() > 2) {
-				return Vector.CONVERTER.apply(str);
-			}
-			else
-			if(str.startsWith("-")) {
-				return of(str.substring(1)).invert();
-			}
-			else {
-				return of(str);
-			}
+	public static Vector parse(String str) {
+		if(str.length() > 2) {
+			return Vector.CONVERTER.apply(str);
 		}
-	};
+		else
+		if(str.startsWith("-")) {
+			return of(str.substring(1)).invert();
+		}
+		else {
+			return of(str);
+		}
+	}
 
 	/**
 	 * Converts the given string to an axis.

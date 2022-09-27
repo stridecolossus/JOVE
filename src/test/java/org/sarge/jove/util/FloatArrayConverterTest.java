@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Coordinate.*;
+import org.sarge.jove.common.Coordinate.Coordinate2D;
 
 class FloatArrayConverterTest {
 	private FloatArrayConverter<Coordinate> converter;
@@ -24,13 +24,6 @@ class FloatArrayConverterTest {
 	void exact() {
 		assertThrows(IllegalArgumentException.class, () -> converter.apply("1"));
 		assertThrows(IllegalArgumentException.class, () -> converter.apply("0,1,2"));
-	}
-
-	@Test
-	void minimum() {
-		converter = new FloatArrayConverter<>(2, false, Coordinate::of);
-		assertEquals(Coordinate2D.BOTTOM_LEFT, converter.apply("0, 1"));
-		assertEquals(new Coordinate1D(1), converter.apply("1"));
 	}
 
 	@Test
