@@ -21,7 +21,6 @@ public class ModelNodeTest {
 	@Test
 	void constructor() {
 		assertEquals(model, node.model());
-		assertEquals(null, node.material());
 		assertEquals(Volume.EMPTY, node.volume());
 	}
 

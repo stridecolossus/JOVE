@@ -49,7 +49,7 @@ public final class ModelNode extends AbstractNode implements Renderable {
 	@Override
 	protected void detach() {
 		super.detach();
-		material().queue().remove(this);
+		material().material().queue().remove(this);
 	}
 
 	@Override

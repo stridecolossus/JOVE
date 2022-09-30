@@ -647,7 +647,7 @@ void main() {
 }
 ```
 
-Remember that the modified vertex shader will need to recompiled (the fragment shader is unchanged).
+Remember that the modified vertex shader will need to be recompiled (the fragment shader is unchanged).
 
 If all goes well we should still see the same triangle.
 

@@ -5,42 +5,70 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Matrix.Matrix4;
+import org.sarge.jove.scene.LocalTransform.WorldMatrixVisitor;
 
 public class LocalTransformTest {
-	private LocalTransform local;
-	private Matrix x;
+	private LocalTransform transform;
+	private Matrix matrix;
 
 	@BeforeEach
 	void before() {
-		x = Matrix4.translation(Axis.X);
-		local = new LocalTransform(x);
+		matrix = Matrix4.translation(Axis.X);
+		transform = new LocalTransform(); //matrix);
 	}
 
 	@DisplayName("The world matrix for a new local transform is initially undefined")
 	@Test
 	void constructor() {
-		assertEquals(x, local.transform());
-		assertEquals(true, local.isDirty());
-		assertEquals(null, local.matrix());
-		assertEquals(false, local.isMutable());
+		assertEquals(matrix, transform.transform());
+		assertEquals(true, transform.isDirty());
+		assertEquals(null, transform.matrix());
+		assertEquals(false, transform.isMutable());
 	}
 
 	@DisplayName("The world matrix of a local transform can be initialised")
 	@Test
 	void update() {
-		local.update(null);
-		assertEquals(false, local.isDirty());
-		assertEquals(x, local.matrix());
+		transform.update(null);
+		assertEquals(false, transform.isDirty());
+		assertEquals(matrix, transform.matrix());
 	}
 
 	@DisplayName("The local transform can be composed with a parent transform")
 	@Test
 	void compose() {
-		final Matrix y = Matrix4.translation(Axis.Y);
-		final LocalTransform parent = new LocalTransform(y);
+		final LocalTransform parent = new LocalTransform(); //matrix);
 		parent.update(null);
-		local.update(parent);
-		assertEquals(false, local.isDirty());
-		assertEquals(y.multiply(x), local.matrix());
+		transform.update(parent);
+		assertEquals(false, transform.isDirty());
+		assertEquals(matrix.multiply(matrix), transform.matrix());
+	}
+
+	@Nested
+	class VisitorTests {
+		private WorldMatrixVisitor visitor;
+
+		@BeforeEach
+		void before() {
+			visitor = new WorldMatrixVisitor();
+		}
+
+		@DisplayName("The world matrix of a node is evaluated if it has not been initialised")
+		@Test
+		void update() {
+			visitor.update(transform);
+			assertEquals(false, transform.isDirty());
+			assertEquals(matrix, transform.matrix());
+		}
+
+		@DisplayName("The world matrix of a node is composed with its ancestors")
+		@Test
+		void dirty() {
+			transform.update(null);
+			visitor.update(new LocalTransform()); //matrix));
+			visitor.update(transform);
+			assertEquals(false, transform.isDirty());
+			assertEquals(matrix.multiply(matrix), transform.matrix());
+		}
 	}
 }

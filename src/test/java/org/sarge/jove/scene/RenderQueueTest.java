@@ -22,7 +22,7 @@ public class RenderQueueTest {
 		when(mat.queue()).thenReturn(queue);
 
 		node = new ModelNode(mock(Model.class));
-		node.material(mat);
+//		node.material(mat);
 
 		consumer = mock(Consumer.class);
 	}

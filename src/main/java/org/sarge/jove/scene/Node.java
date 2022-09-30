@@ -7,11 +7,6 @@ import org.sarge.jove.geometry.*;
  * @author Sarge
  */
 public interface Node {
-//	/**
-//	 * @return World matrix of this node
-//	 */
-//	Matrix matrix();
-
 	/**
 	 * @return Transform of this node
 	 */

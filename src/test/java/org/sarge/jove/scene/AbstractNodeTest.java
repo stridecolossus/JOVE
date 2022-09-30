@@ -44,7 +44,7 @@ public class AbstractNodeTest {
 	@DisplayName("can have a local transform applied")
 	@Test
 	void transform() {
-		node.transform(transform);
+//		node.transform(transform);
 		node.transform().update(null);
 		assertEquals(transform, node.transform().matrix());
 	}

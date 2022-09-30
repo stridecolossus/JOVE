@@ -36,7 +36,7 @@ public class RenderQueue {
 	 * @param node Node to add
 	 */
 	void add(ModelNode node) {
-		final Material mat = node.material();
+		final Material mat = node.material().material();
 		final TextureGroup g = groups.computeIfAbsent(mat, __ -> new TextureGroup());
 		g.add(node);
 	}
@@ -46,7 +46,7 @@ public class RenderQueue {
 	 * @param node Node to remove
 	 */
 	void remove(ModelNode node) {
-		final Material mat = node.material();
+		final Material mat = node.material().material();
 		final TextureGroup g = groups.get(mat);
 		g.remove(node);
 		if(g.groups.isEmpty()) {

@@ -6,8 +6,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Matrix.Matrix4;
+import org.sarge.jove.geometry.Volume;
 import org.sarge.lib.util.Utility;
 
 /**
@@ -17,7 +16,7 @@ import org.sarge.lib.util.Utility;
 public abstract class AbstractNode implements Node {
 	private AbstractNode parent;
 	private Volume vol = Volume.EMPTY;
-	private LocalTransform transform = new LocalTransform(Matrix4.IDENTITY);
+	private LocalTransform transform = new LocalTransform();
 	private LocalMaterial mat = new LocalMaterial();
 
 	/**
@@ -61,31 +60,17 @@ public abstract class AbstractNode implements Node {
 	/**
 	 * @return Material for this node
 	 */
-	public Material material() {
-		//return mat.getRight();
-		return null;
+	public LocalMaterial material() {
+		return mat;
 	}
 
-	/**
-	 * Sets the material for this node.
-	 * @param mat Material or {@code null} to inherit from parent
-	 */
-	public void material(Material mat) {
-		// TODO
-	}
-
+	// TODO - change in Node interface?
 	@Override
 	public LocalTransform transform() {
 		return transform;
 	}
 
-	/**
-	 * Sets the local transform of this node.
-	 * @param transform Local transform
-	 */
-	public void transform(Transform transform) {
-		this.transform = new LocalTransform(transform);
-	}
+	// TODO...
 
 	@Override
 	public Volume volume() {
@@ -99,6 +84,8 @@ public abstract class AbstractNode implements Node {
 	public void volume(Volume vol) {
 		this.vol = notNull(vol);
 	}
+
+	// ...TODO
 
 	/**
 	 * A <i>node visitor</i> is used to apply some recursive operation to a scene graph.
@@ -133,8 +120,8 @@ public abstract class AbstractNode implements Node {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append(transform)
-				.append(vol)
 				.append(mat)
+				.append(vol)
 				.build();
 	}
 }

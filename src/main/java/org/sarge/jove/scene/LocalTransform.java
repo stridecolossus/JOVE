@@ -4,22 +4,15 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Matrix.Matrix4;
 
 /**
  * A <i>local transform</i> composes the world matrix of a node with its ancestors.
  * @author Sarge
  */
-class LocalTransform implements Transform {
-	private final Transform transform;
+public class LocalTransform implements Transform {
+	private Transform transform = Matrix4.IDENTITY;
 	private transient Matrix matrix;
-
-	/**
-	 * Constructor.
-	 * @param transform Local transform
-	 */
-	LocalTransform(Transform transform) {
-		this.transform = notNull(transform);
-	}
 
 	/**
 	 * @return Local transform
@@ -28,13 +21,21 @@ class LocalTransform implements Transform {
 		return transform;
 	}
 
+	/**
+	 * Sets that local transform.
+	 * @param transform Local transform
+	 */
+	public void set(Transform transform) {
+		this.transform = notNull(transform);
+	}
+
 	@Override
 	public boolean isMutable() {
 		return transform.isMutable();
 	}
 
 	/**
-	 * @return Whether this transform has been modified
+	 * @return Whether this local transform has been initialised
 	 */
 	boolean isDirty() {
 		return matrix == null;
@@ -75,5 +76,31 @@ class LocalTransform implements Transform {
 				.append("dirty", isDirty())
 				.append(transform)
 				.build();
+	}
+
+	/**
+	 * The <i>world matrix visitor</i> updates the world matrix of a scene graph.
+	 * @see AbstractNode#transform(Transform)
+	 */
+	public static class WorldMatrixVisitor {
+		private LocalTransform parent;
+		private boolean dirty;
+
+		/**
+		 * Updates the given local transform.
+		 * @param transform Local transform to update
+		 */
+		public void update(LocalTransform transform) {
+			// Compose transform with parent
+			if(dirty || transform.isDirty()) {
+				transform.update(parent);
+				dirty = true;
+			}
+
+			// Record latest transform
+			if(transform.transform != Matrix4.IDENTITY) {
+				parent = transform;
+			}
+		}
 	}
 }
