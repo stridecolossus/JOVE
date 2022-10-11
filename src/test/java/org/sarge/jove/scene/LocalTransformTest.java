@@ -1,11 +1,10 @@
 package org.sarge.jove.scene;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Matrix.Matrix4;
-import org.sarge.jove.scene.LocalTransform.WorldMatrixVisitor;
 
 public class LocalTransformTest {
 	private LocalTransform transform;
@@ -14,61 +13,85 @@ public class LocalTransformTest {
 	@BeforeEach
 	void before() {
 		matrix = Matrix4.translation(Axis.X);
-		transform = new LocalTransform(); //matrix);
+		transform = new LocalTransform();
 	}
 
-	@DisplayName("The world matrix for a new local transform is initially undefined")
-	@Test
-	void constructor() {
-		assertEquals(matrix, transform.transform());
-		assertEquals(true, transform.isDirty());
-		assertEquals(null, transform.matrix());
-		assertEquals(false, transform.isMutable());
-	}
-
-	@DisplayName("The world matrix of a local transform can be initialised")
-	@Test
-	void update() {
-		transform.update(null);
-		assertEquals(false, transform.isDirty());
-		assertEquals(matrix, transform.matrix());
-	}
-
-	@DisplayName("The local transform can be composed with a parent transform")
-	@Test
-	void compose() {
-		final LocalTransform parent = new LocalTransform(); //matrix);
-		parent.update(null);
-		transform.update(parent);
-		assertEquals(false, transform.isDirty());
-		assertEquals(matrix.multiply(matrix), transform.matrix());
-	}
-
+	@DisplayName("A new local transform...")
 	@Nested
-	class VisitorTests {
-		private WorldMatrixVisitor visitor;
-
-		@BeforeEach
-		void before() {
-			visitor = new WorldMatrixVisitor();
+	class New {
+		@DisplayName("is initialised to the identity matrix")
+		@Test
+		void constructor() {
+			assertEquals(Matrix4.IDENTITY, transform.transform());
 		}
 
-		@DisplayName("The world matrix of a node is evaluated if it has not been initialised")
+		@DisplayName("can override the local transform")
+		@Test
+		void set() {
+			transform.set(matrix);
+			assertEquals(matrix, transform.transform());
+		}
+
+		@DisplayName("has an undefined world matrix")
+		@Test
+		void undefined() {
+			assertEquals(true, transform.isDirty());
+			assertThrows(IllegalStateException.class, () -> transform.matrix());
+		}
+	}
+
+	@DisplayName("The world matrix of a new local transform...")
+	@Nested
+	class Undefined {
+		@DisplayName("can be updated")
 		@Test
 		void update() {
-			visitor.update(transform);
+			transform.set(matrix);
+			transform.update(null);
 			assertEquals(false, transform.isDirty());
 			assertEquals(matrix, transform.matrix());
 		}
 
-		@DisplayName("The world matrix of a node is composed with its ancestors")
+		@DisplayName("can be composed with its parent")
 		@Test
-		void dirty() {
-			transform.update(null);
-			visitor.update(new LocalTransform()); //matrix));
-			visitor.update(transform);
+		void compose() {
+			final LocalTransform parent = new LocalTransform();
+			parent.set(matrix);
+			parent.update(null);
+			transform.update(parent);
 			assertEquals(false, transform.isDirty());
-			assertEquals(matrix.multiply(matrix), transform.matrix());
+			assertEquals(matrix, transform.matrix());
+		}
+
+		@DisplayName("silently ignores resets")
+		@Test
+		void reset() {
+			transform.reset();
+			assertEquals(true, transform.isDirty());
+		}
+	}
+
+	@DisplayName("The world matrix of an updated local transform...")
+	@Nested
+	class Updated {
+		@BeforeEach
+		void before() {
+			transform.update(null);
+		}
+
+		@DisplayName("can be modified")
+		@Test
+		void set() {
+			transform.set(matrix);
+			assertEquals(true, transform.isDirty());
+		}
+
+		@DisplayName("can be reset to the undefined state")
+		@Test
+		void reset() {
+			transform.reset();
+			assertEquals(true, transform.isDirty());
+			assertThrows(IllegalStateException.class, () -> transform.matrix());
 		}
 	}
 }

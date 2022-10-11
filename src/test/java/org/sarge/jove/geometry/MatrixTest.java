@@ -239,8 +239,7 @@ class MatrixTest {
 
 		@Test
 		void invalidOrder() {
-			assertThrows(IllegalArgumentException.class, () -> new Builder(0));
-			assertThrows(IllegalArgumentException.class, () -> new Builder(-1));
+			assertThrows(IllegalArgumentException.class, () -> new Matrix(new float[0][0]));
 		}
 	}
 }

@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.*;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>matrix</i> is a 2-dimensional floating-point array used for geometry transformation and projection.
@@ -37,24 +36,15 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class Matrix implements Transform, Bufferable {
-	/**
-	 * Creates an identity matrix.
-	 * @param order Matrix order
-	 * @return Identity matrix
-	 */
-	public static Matrix identity(int order) {
-		return new Builder(order).identity().build();
-	}
-
 	private final float[][] matrix;
 
 	/**
 	 * Constructor.
-	 * @param order Matrix order
+	 * @param matrix Matrix
 	 */
-	protected Matrix(int order) {
-		Check.oneOrMore(order);
-		this.matrix = new float[order][order];
+	protected Matrix(float[][] matrix) {
+		if(matrix.length == 0) throw new IllegalArgumentException();
+		this.matrix = matrix;
 	}
 
 	/**
@@ -65,7 +55,7 @@ public class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public Matrix matrix() {
+	public final Matrix matrix() {
 		return this;
 	}
 
@@ -126,20 +116,20 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix transpose() {
 		final int order = order();
-		final Matrix trans = new Matrix(order);
+		final var trans = new Matrix.Builder(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				trans.matrix[r][c] = this.matrix[c][r];
+				trans.set(r, c, matrix[c][r]);
 			}
 		}
-		return trans;
+		return trans.build();
 	}
 
 	/**
 	 * Multiplies this and the given matrix.
 	 * <p>
 	 * Note that matrix multiplication is <b>non-commutative</b>.
-	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A x B</code> applies B then A.
+	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A * B</code> applies B then A.
 	 * <p>
 	 * @param m Matrix
 	 * @return New matrix
@@ -151,18 +141,18 @@ public class Matrix implements Transform, Bufferable {
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
 
 		// Multiply matrices
-		final Matrix result = new Matrix(order());
+		final var result = new Matrix.Builder(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
 					total += this.matrix[r][n] * m.matrix[n][c];
 				}
-				result.matrix[r][c] = total;
+				result.set(r, c, total);
 			}
 		}
 
-		return result;
+		return result.build();
 	}
 
 	@Override
@@ -196,10 +186,11 @@ public class Matrix implements Transform, Bufferable {
 		}
 		return sb.toString();
 	}
+	// TODO - move to separate dump() helper, no default to-string?
 
 	/**
 	 * Standard 4x4 matrix used for transformation and projection.
-	 * This class provides convenience constants and helper methods for transformation matrices.
+	 * This class provides convenience constants and helper methods for common transformations.
 	 */
 	public static class Matrix4 extends Matrix {
 		/**
@@ -210,7 +201,7 @@ public class Matrix implements Transform, Bufferable {
 		/**
 		 * 4x4 identity matrix.
 		 */
-		public static final Matrix IDENTITY = identity(ORDER);
+		public static final Matrix IDENTITY = new Matrix.Builder().identity().build();
 
 		/**
 		 * Layout of a 4X4 matrix.
@@ -247,8 +238,8 @@ public class Matrix implements Transform, Bufferable {
 					.build();
 		}
 
-		private Matrix4() {
-			super(ORDER);
+		protected Matrix4(float[][] matrix) {
+			super(matrix);
 		}
 
 		@Override
@@ -276,13 +267,13 @@ public class Matrix implements Transform, Bufferable {
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private Matrix matrix;
+		private float[][] matrix;
 
 		/**
 		 * Default constructor for a {@link Matrix4}.
 		 */
 		public Builder() {
-			matrix = new Matrix4();
+			this(Matrix4.ORDER);
 		}
 
 		/**
@@ -291,14 +282,14 @@ public class Matrix implements Transform, Bufferable {
 		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
 		public Builder(int order) {
-			matrix = order == Matrix4.ORDER ? new Matrix4() : new Matrix(order);
+			matrix = new float[order][order];
 		}
 
 		/**
 		 * Initialises this matrix to identity.
 		 */
 		public Builder identity() {
-			for(int n = 0; n < matrix.matrix.length; ++n) {
+			for(int n = 0; n < matrix.length; ++n) {
 				set(n, n, 1);
 			}
 			return this;
@@ -312,7 +303,7 @@ public class Matrix implements Transform, Bufferable {
 		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			matrix.matrix[row][col] = value;
+			matrix[row][col] = value;
 			return this;
 		}
 
@@ -348,7 +339,12 @@ public class Matrix implements Transform, Bufferable {
 		 */
 		public Matrix build() {
 			try {
-				return matrix;
+				if(matrix.length == Matrix4.ORDER) {
+					return new Matrix4(matrix);
+				}
+				else {
+					return new Matrix(matrix);
+				}
 			}
 			finally {
 				matrix = null;

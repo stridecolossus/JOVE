@@ -1,72 +1,109 @@
 package org.sarge.jove.scene;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.scene.LocalMaterial.MaterialVisitor;
 
 public class LocalMaterialTest {
 	private LocalMaterial local;
 	private Material mat;
-	private MaterialVisitor visitor;
 
 	@BeforeEach
 	void before() {
+		local = new LocalMaterial();
 		mat = mock(Material.class);
-		visitor = new MaterialVisitor();
 	}
 
+	@DisplayName("A new local material...")
 	@Nested
 	class Inherited {
-		@BeforeEach
-		void before() {
-			local = new LocalMaterial();
+		@DisplayName("inherits from its parent by default")
+		@Test
+		void inherited() {
+			assertEquals(true, local.isInherited());
 		}
 
+		@DisplayName("is in an undefined state")
 		@Test
-		void constructor() {
-			assertEquals(null, local.material());
+		void undefined() {
+			assertEquals(true, local.isDirty());
+			assertThrows(IllegalStateException.class, () -> local.material());
 		}
 
+		@DisplayName("can be overridden with a given material")
 		@Test
-		void inherit() {
-			final var parent = new LocalMaterial(mat);
-			visitor.update(parent);
-			visitor.update(local);
+		void set() {
+			local.set(mat);
+			assertEquals(false, local.isDirty());
+			assertEquals(false, local.isInherited());
 			assertEquals(mat, local.material());
 		}
 
+		@DisplayName("can be updated to inherit from its parent")
 		@Test
-		void none() {
-			visitor.update(local);
-			assertEquals(null, local.material());
+		void update() {
+			final LocalMaterial parent = new LocalMaterial();
+			parent.set(mat);
+			local.update(parent);
+			assertEquals(false, local.isDirty());
+			assertEquals(true, local.isInherited());
+			assertEquals(mat, local.material());
+		}
+
+		@DisplayName("cannot inherit from an empty parent")
+		@Test
+		void empty() {
+			assertThrows(IllegalStateException.class, () -> local.update(null));
+		}
+
+		@DisplayName("cannot inherit from an undefined parent")
+		@Test
+		void invalid() {
+			final LocalMaterial parent = new LocalMaterial();
+			assertThrows(IllegalStateException.class, () -> local.update(parent));
 		}
 	}
 
+	@DisplayName("An overridden local material...")
 	@Nested
-	class Local {
+	class Overidden {
 		@BeforeEach
 		void before() {
-			local = new LocalMaterial(mat);
+			local.set(mat);
 		}
 
+		@DisplayName("is in a defined state")
 		@Test
-		void constructor() {
+		void material() {
 			assertEquals(mat, local.material());
 		}
 
+		@DisplayName("can be set to a different material")
 		@Test
-		void ignored() {
-			visitor.update(new LocalMaterial(mock(Material.class)));
-			visitor.update(local);
-			assertEquals(mat, local.material());
+		void change() {
+			final Material other = mock(Material.class);
+			local.set(other);
+			assertEquals(false, local.isDirty());
+			assertEquals(false, local.isInherited());
+			assertEquals(other, local.material());
 		}
 
+		@DisplayName("can be modified to inherit its material")
 		@Test
-		void none() {
-			visitor.update(local);
-			assertEquals(mat, local.material());
+		void inherit() {
+			local.inherit();
+			assertEquals(true, local.isDirty());
+			assertEquals(true, local.isInherited());
+		}
+
+		@DisplayName("cannot be updated")
+		@Test
+		void update() {
+			final LocalMaterial parent = new LocalMaterial();
+			parent.set(mat);
+			assertThrows(AssertionError.class, () -> local.update(parent));
+			assertThrows(AssertionError.class, () -> local.update(null));
 		}
 	}
 }

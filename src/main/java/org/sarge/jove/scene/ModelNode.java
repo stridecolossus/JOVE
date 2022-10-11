@@ -3,7 +3,6 @@ package org.sarge.jove.scene;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.model.Model;
@@ -12,15 +11,24 @@ import org.sarge.jove.model.Model;
  * A <i>model node</i> represents a renderable model within the scene.
  * @author Sarge
  */
-public final class ModelNode extends AbstractNode implements Renderable {
-	private final Model model;
+public final class ModelNode extends LeafNode {
+	private final RenderQueue queue;
+	private final Model model; // TODO - geometry (?)
 
 	/**
 	 * Constructor.
 	 * @param model Model
 	 */
-	public ModelNode(Model model) {
+	public ModelNode(RenderQueue queue, Model model) {
+		this.queue = notNull(queue);
 		this.model = notNull(model);
+	}
+
+	/**
+	 * @return Render queue for this node
+	 */
+	public RenderQueue queue() {
+		return queue;
 	}
 
 	/**
@@ -31,17 +39,7 @@ public final class ModelNode extends AbstractNode implements Renderable {
 	}
 
 	@Override
-	public Stream<AbstractNode> nodes() {
-		return Stream.of(this);
-	}
-
-	@Override
-	public void accept(Visitor visitor) {
-		visitor.visit(this);
-	}
-
-	@Override
-	protected void attach(AbstractNode parent) {
+	protected void attach(Node parent) {
 		super.attach(parent);
 		// TODO - add material/DS
 	}
@@ -49,7 +47,7 @@ public final class ModelNode extends AbstractNode implements Renderable {
 	@Override
 	protected void detach() {
 		super.detach();
-		material().material().queue().remove(this);
+//		this.queue().queue().remove(this);
 	}
 
 	@Override
@@ -61,6 +59,7 @@ public final class ModelNode extends AbstractNode implements Renderable {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
+				.append(queue)
 				.append(model)
 				.append(material())
 				.build();

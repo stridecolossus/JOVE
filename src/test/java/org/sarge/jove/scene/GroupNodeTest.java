@@ -1,19 +1,19 @@
 package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.scene.Node.Visitor;
 
 public class GroupNodeTest {
 	private GroupNode group;
-	private ModelNode node;
+	private Node node;
 
 	@BeforeEach
 	void before() {
 		group = new GroupNode();
-		node = new ModelNode(mock(Model.class));
+		node = new Node();
 	}
 
 	@DisplayName("A new empty group node...")
@@ -49,26 +49,30 @@ public class GroupNodeTest {
 	@DisplayName("A group containing child nodes...")
 	@Nested
 	class Children {
-		private GroupNode child;
-
 		@BeforeEach
 		void before() {
-			child = new GroupNode();
-			group.add(child);
 			group.add(node);
 		}
 
 		@DisplayName("can enumerate its children")
 		@Test
 		void nodes() {
-			assertArrayEquals(new Node[]{child, node}, group.nodes().toArray());
+			assertArrayEquals(new Node[]{node}, group.nodes().toArray());
+		}
+
+		@DisplayName("is visited recursively")
+		@Test
+		void visitor() {
+			final Visitor visitor = mock(Visitor.class);
+			group.accept(visitor);
+			verify(visitor).visit(group);
+			verify(visitor).visit(node);
 		}
 
 		@DisplayName("cannot add a node that is already attached")
 		@Test
 		void added() {
-			assertThrows(AssertionError.class, () -> group.add(node));
-			assertThrows(AssertionError.class, () -> group.add(child));
+			assertThrows(IllegalStateException.class, () -> group.add(node));
 		}
 
 		@DisplayName("can remove attached nodes")

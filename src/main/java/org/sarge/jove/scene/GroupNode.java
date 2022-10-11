@@ -10,11 +10,13 @@ import org.sarge.lib.util.Check;
  * A <i>group node</i> is a collection of nodes.
  * @author Sarge
  */
-public class GroupNode extends AbstractNode {
-	private final List<AbstractNode> nodes = new ArrayList<>();
+public class GroupNode extends Node {
+	private final List<Node> nodes = new ArrayList<>();
 
-	@Override
-	public Stream<AbstractNode> nodes() {
+	/**
+	 * @return Children of this node
+	 */
+	public Stream<Node> nodes() {
 		return nodes.stream();
 	}
 
@@ -24,7 +26,7 @@ public class GroupNode extends AbstractNode {
 	 * @throws IllegalStateException if the given node is already attached
 	 * @throws IllegalArgumentException if the given node is this node
 	 */
-	public void add(AbstractNode node) {
+	public void add(Node node) {
 		Check.notNull(node);
 		if(node == this) throw new IllegalArgumentException("Cannot attach a node to itself");
 		nodes.add(node);
@@ -36,25 +38,31 @@ public class GroupNode extends AbstractNode {
 	 * @param node Node to remove
 	 * @throws IllegalStateException if the given node is not attached to this group
 	 */
-	public void remove(AbstractNode node) {
+	public void remove(Node node) {
 		final boolean removed = nodes.remove(node);
 		if(!removed) throw new IllegalStateException("Not a child of this node");
 		node.detach();
+	}
+
+	@Override
+	public void accept(Visitor visitor) {
+		// Visit this node
+		visitor.visit(this);
+
+		// Recurse to children
+		for(Node n : nodes) {
+			n.accept(visitor);
+		}
 	}
 
 	/**
 	 * Detaches all children from this group.
 	 */
 	public void clear() {
-		for(AbstractNode n : nodes) {
+		for(Node n : nodes) {
 			n.detach();
 		}
 		nodes.clear();
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(super.hashCode(), nodes);
 	}
 
 	@Override

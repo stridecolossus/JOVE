@@ -10,9 +10,12 @@ import org.sarge.jove.geometry.Matrix.Matrix4;
  * A <i>local transform</i> composes the world matrix of a node with its ancestors.
  * @author Sarge
  */
-public class LocalTransform implements Transform {
+public class LocalTransform extends InheritedProperty<LocalTransform> {
 	private Transform transform = Matrix4.IDENTITY;
 	private transient Matrix matrix;
+
+	LocalTransform() {
+	}
 
 	/**
 	 * @return Local transform
@@ -21,43 +24,46 @@ public class LocalTransform implements Transform {
 		return transform;
 	}
 
+	@Override
+	public boolean isDirty() {
+		return matrix == null;
+	}
+
 	/**
-	 * Sets that local transform.
+	 * Sets the local transform at this node.
 	 * @param transform Local transform
 	 */
 	public void set(Transform transform) {
 		this.transform = notNull(transform);
-	}
-
-	@Override
-	public boolean isMutable() {
-		return transform.isMutable();
+		reset();
 	}
 
 	/**
-	 * @return Whether this local transform has been initialised
+	 * Resets this local transform to the <i>dirty</i> state.
 	 */
-	boolean isDirty() {
-		return matrix == null;
+	void reset() {
+		matrix = null;
 	}
 
-	@Override
-	public Matrix matrix() {
+	/**
+	 * @return World matrix at this node
+	 * @throws IllegalStateException if this local transform has not been updated
+	 */
+	Matrix matrix() {
+		if(isDirty()) throw new IllegalStateException("Local transform has not been updated: " + this);
 		// TODO - special case for ancestor that can become dirty
 		// => ref to the most distant mutable transform
 		// => needs to propagate down from it
 		return matrix;
 	}
 
-	/**
-	 * Updates this transform.
-	 * @param parent Parent transform
-	 */
+	@Override
 	void update(LocalTransform parent) {
 		this.matrix = evaluate(parent);
 	}
 
 	/**
+	 * Composes the world matrix with the given parent.
 	 * @return World matrix for this transform
 	 */
 	private Matrix evaluate(LocalTransform parent) {
@@ -66,7 +72,13 @@ public class LocalTransform implements Transform {
 			return m;
 		}
 		else {
-			return parent.matrix().multiply(m);
+			final Matrix p = parent.matrix();
+			if(m == Matrix4.IDENTITY) {
+				return p;
+			}
+			else {
+				return p.multiply(m);
+			}
 		}
 	}
 
@@ -76,31 +88,5 @@ public class LocalTransform implements Transform {
 				.append("dirty", isDirty())
 				.append(transform)
 				.build();
-	}
-
-	/**
-	 * The <i>world matrix visitor</i> updates the world matrix of a scene graph.
-	 * @see AbstractNode#transform(Transform)
-	 */
-	public static class WorldMatrixVisitor {
-		private LocalTransform parent;
-		private boolean dirty;
-
-		/**
-		 * Updates the given local transform.
-		 * @param transform Local transform to update
-		 */
-		public void update(LocalTransform transform) {
-			// Compose transform with parent
-			if(dirty || transform.isDirty()) {
-				transform.update(parent);
-				dirty = true;
-			}
-
-			// Record latest transform
-			if(transform.transform != Matrix4.IDENTITY) {
-				parent = transform;
-			}
-		}
 	}
 }
