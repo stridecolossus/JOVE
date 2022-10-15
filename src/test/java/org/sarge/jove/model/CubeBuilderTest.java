@@ -3,8 +3,8 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 
 public class CubeBuilderTest {
@@ -24,6 +24,6 @@ public class CubeBuilderTest {
 		assertEquals(count, model.count());
 		assertEquals(layout, model.layout());
 		assertEquals(false, model.isIndexed());
-		assertEquals(count * layout.stride() , model.vertices().length());
+		assertEquals(count * layout.stride() , model.mesh().vertices().length());
 	}
 }

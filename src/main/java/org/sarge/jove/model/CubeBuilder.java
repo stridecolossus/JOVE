@@ -74,14 +74,11 @@ public class CubeBuilder {
 	 * @return New cube model
 	 */
 	public Model build() {
-		final var builder = new DefaultModel.Builder()
-				.primitive(Primitive.TRIANGLES)
-				.layout(Point.LAYOUT)
-				.layout(Coordinate2D.LAYOUT);
-
-		build(builder);
-
-		return builder.build();
+		final Model model = new Model(Primitive.TRIANGLES);
+		model.layout(Point.LAYOUT);
+		model.layout(Coordinate2D.LAYOUT);
+		build(model);
+		return model;
 	}
 
 	/**
@@ -89,7 +86,7 @@ public class CubeBuilder {
 	 * @param builder Model builder
 	 * @see #vertex(Point, Vector, Coordinate, Colour)
 	 */
-	public void build(DefaultModel.Builder builder) {
+	public void build(Model model) {
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -103,7 +100,7 @@ public class CubeBuilder {
 
 				// Build vertex
 				final Vertex vertex = vertex(pos, normal, coord, col);
-				builder.add(vertex);
+				model.add(vertex);
 			}
 		}
 	}
@@ -119,6 +116,7 @@ public class CubeBuilder {
 	 * @see Vertex#of(Bufferable...)
 	 */
 	protected Vertex vertex(Point pos, Vector normal, Coordinate coord, Colour col) {
+		// TODO - vertex layout filter
 		return Vertex.of(pos, coord);
 	}
 }

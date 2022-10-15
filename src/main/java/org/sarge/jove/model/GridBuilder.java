@@ -149,10 +149,9 @@ public class GridBuilder {
 	 */
 	public Model build() {
 		// Init model
-		final var model = new DefaultModel.Builder()
-				.primitive(primitive)
-				.layout(Point.LAYOUT)
-				.layout(Coordinate2D.LAYOUT);
+		final var model = new Model(primitive);
+		model.layout(Point.LAYOUT);
+		model.layout(Coordinate2D.LAYOUT);
 
 		// Calculate half distance in both directions
 		final int w = size.width();
@@ -188,6 +187,6 @@ public class GridBuilder {
 				.forEach(model::add);
 
 		// Construct grid
-		return model.build();
+		return model;
 	}
 }

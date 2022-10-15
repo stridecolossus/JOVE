@@ -19,12 +19,6 @@ class SphereTest {
 		assertEquals(1, sphere.radius());
 	}
 
-	@Test
-	@DisplayName("Create a sphere containing the given bounds")
-	void of() {
-		assertEquals(sphere, Sphere.of(new Bounds(new Point(-1, -1, -1), new Point(1, 1, 1))));
-	}
-
 	@Nested
 	class UnitSphereTests {
 		@Test

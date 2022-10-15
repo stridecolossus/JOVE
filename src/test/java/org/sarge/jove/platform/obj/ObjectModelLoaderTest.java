@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 
@@ -63,8 +63,9 @@ public class ObjectModelLoaderTest {
 		assertEquals(true, model.isIndexed());
 
 		// Check model data
-		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, model.vertices().length());
-		assertEquals(3 * Short.BYTES, model.index().get().length());
+		final Mesh mesh = model.mesh();
+		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, mesh.vertices().length());
+		assertEquals(3 * Short.BYTES, mesh.index().get().length());
 	}
 
 	@Test

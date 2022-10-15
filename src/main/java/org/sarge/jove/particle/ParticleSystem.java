@@ -3,17 +3,19 @@ package org.sarge.jove.particle;
 import static java.util.stream.Collectors.toCollection;
 import static org.sarge.lib.util.Check.*;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.*;
 import org.sarge.jove.control.*;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.model.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -352,6 +354,71 @@ public class ParticleSystem implements Animation {
 		if(num > 0) {
 			add(num, time);
 		}
+	}
+
+	/**
+	 * Creates a renderable mesh for this particle system.
+	 * @return Particle mesh
+	 */
+	public Mesh mesh() {
+		// Init vertex layout
+		final Layout layout = new Layout(Point.LAYOUT, Colour.LAYOUT);
+
+		// Init model header
+		final Header header = new Header() {
+			@Override
+			public Primitive primitive() {
+				return Primitive.POINTS;
+			}
+
+			@Override
+			public Layout layout() {
+				return layout;
+			}
+
+			@Override
+			public int count() {
+				return particles.size();
+			}
+
+			@Override
+			public boolean isIndexed() {
+				return false;
+			}
+		};
+
+		// Create vertex buffer
+		final Bufferable vertices = new Bufferable() {
+			@Override
+			public int length() {
+				return layout.stride() * header.count();
+			}
+
+			@Override
+			public void buffer(ByteBuffer bb) {
+				for(Particle p : particles) {
+					p.buffer(bb);
+				}
+			}
+		};
+
+		// Create mesh
+		return new Mesh() {
+			@Override
+			public Header header() {
+				return header;
+			}
+
+			@Override
+			public Bufferable vertices() {
+				return vertices;
+			}
+
+			@Override
+			public Optional<Bufferable> index() {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 
 	@Override

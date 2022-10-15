@@ -7,10 +7,10 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
 
 /**
- * The <i>model loader</i> persists a JOVE model.
+ * The <i>model loader</i> persists a JOVE model as a renderable {@link Mesh}.
  * @author Sarge
  */
-public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
+public class ModelLoader implements ResourceLoader<DataInputStream, Mesh> {
 	private final DataHelper helper = new DataHelper();
 
 	@Override
@@ -19,7 +19,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 	}
 
 	@Override
-	public Model load(DataInputStream in) throws IOException {
+	public Mesh load(DataInputStream in) throws IOException {
 		// Load and verify file format version
 		helper.version(in);
 
@@ -29,18 +29,56 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 
 		// Load vertex layout
 		final int num = in.readInt();
-		final List<Component> layouts = new ArrayList<>();
+		final List<Component> layout = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
-			final Component layout = helper.layout(in);
-			layouts.add(layout);
+			final Component c = helper.layout(in);
+			layout.add(c);
 		}
 
 		// Load data
 		final Bufferable vertices = helper.buffer(in);
 		final Bufferable index = helper.buffer(in);
 
-		// Create model
-		return new DefaultModel(primitive, count, new Layout(layouts), vertices, index);
+		// Create model header
+		final Header header = new Header() {
+			@Override
+			public Primitive primitive() {
+				return primitive;
+			}
+
+			@Override
+			public Layout layout() {
+				return new Layout(layout);
+			}
+
+			@Override
+			public int count() {
+				return count;
+			}
+
+			@Override
+			public boolean isIndexed() {
+				return index != null;
+			}
+		};
+
+		// Create mesh
+		return new Mesh() {
+			@Override
+			public Header header() {
+				return header;
+			}
+
+			@Override
+			public Bufferable vertices() {
+				return vertices;
+			}
+
+			@Override
+			public Optional<Bufferable> index() {
+				return Optional.ofNullable(index);
+			}
+		};
 	}
 
 	/**
@@ -48,6 +86,8 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 	 * @param model		Model
 	 * @param out		Output stream
 	 * @throws IOException if the model cannot be written
+	 * @throws IllegalStateException if the model is undefined
+	 * @see Model#mesh()
 	 */
 	public void save(Model model, DataOutputStream out) throws IOException {
 		// Write model header
@@ -56,17 +96,18 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Model> {
 		out.writeInt(model.count());
 
 		// Write vertex layout
-		final List<Component> layouts = model.layout().components();
-		out.writeInt(layouts.size());
-		for(Component c : layouts) {
+		final List<Component> layout = model.layout().components();
+		out.writeInt(layout.size());
+		for(Component c : layout) {
 			helper.write(c, out);
 		}
 
 		// Write vertices
-		helper.write(model.vertices(), out);
+		final Mesh mesh = model.mesh();
+		helper.write(mesh.vertices(), out);
 
 		// Write index
-		final Optional<Bufferable> index = model.index();
+		final Optional<Bufferable> index = mesh.index();
 		if(index.isPresent()) {
 			helper.write(index.get(), out);
 		}

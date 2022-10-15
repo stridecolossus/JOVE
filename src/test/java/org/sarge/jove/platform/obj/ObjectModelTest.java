@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 
@@ -78,8 +78,7 @@ public class ObjectModelTest {
 
 			// Check model
 			final Model result = models.get(0);
-			assertNotNull(result);
-			assertTrue(result.index().isPresent());
+			assertTrue(result.isIndexed());
 
 			// Check model header
 			final var layout = new Layout(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
@@ -89,8 +88,9 @@ public class ObjectModelTest {
 			assertEquals(true, result.isIndexed());
 
 			// Check model data
-			assertEquals((3 + 3 + 2) * Float.BYTES, result.vertices().length());
-			assertEquals(3 * Short.BYTES, result.index().get().length());
+			final Mesh mesh = result.mesh();
+			assertEquals((3 + 3 + 2) * Float.BYTES, mesh.vertices().length());
+			assertEquals(3 * Short.BYTES, mesh.index().get().length());
 		}
 
 		@Test

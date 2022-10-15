@@ -5,9 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.*;
+import org.sarge.jove.model.Header;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.DrawCommand.*;
@@ -42,9 +40,11 @@ class DrawCommandTest extends AbstractVulkanTest {
 	@DisplayName("Create a draw command for a model")
 	@Test
 	void model() {
-		final Bufferable data = mock(Bufferable.class);
-		final Model model = new DefaultModel(Primitive.TRIANGLES, 3, new Layout(Point.LAYOUT), data, data);
-		final DrawCommand draw = DrawCommand.of(model);
+		final Header header = mock(Header.class);
+		when(header.count()).thenReturn(3);
+		when(header.isIndexed()).thenReturn(true);
+
+		final DrawCommand draw = DrawCommand.of(header);
 		draw.execute(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
 	}

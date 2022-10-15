@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.*;
 
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Header;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.DeviceLimits;
@@ -51,12 +51,12 @@ public interface DrawCommand extends Command {
 
 	/**
 	 * Helper - Creates a draw command for the given model.
-	 * @param model Model
+	 * @param header Model header
 	 * @return New draw command
 	 */
-	static DrawCommand of(Model model) {
-		final int count = model.count();
-		if(model.isIndexed()) {
+	static DrawCommand of(Header header) {
+		final int count = header.count();
+		if(header.isIndexed()) {
 			return indexed(count);
 		}
 		else {

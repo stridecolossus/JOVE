@@ -1,17 +1,17 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 
-class DuplicateModelBuilderTest {
-	private DuplicateModelBuilder builder;
+class DuplicateModelTest {
+	private DuplicateModel builder;
 
 	@BeforeEach
 	void before() {
-		builder = new DuplicateModelBuilder();
+		builder = new DuplicateModel();
 	}
 
 	@Test
@@ -25,13 +25,11 @@ class DuplicateModelBuilderTest {
 				.layout(Point.LAYOUT)
 				.add(vertex)
 				.add(other)
-				.add(vertex)
-				.build();
+				.add(vertex);
 
 		// Verify the de-duplicated model
-		assertNotNull(model);
 		assertEquals(3, model.count());
-		assertEquals(2 * Point.LAYOUT.stride(), model.vertices().length());
-		assertEquals(3 * Short.BYTES, model.index().get().length());
+		assertEquals(2, model.vertices().count());
+		assertEquals(3, model.index().count());
 	}
 }

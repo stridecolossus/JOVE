@@ -12,25 +12,11 @@ import org.sarge.jove.geometry.Point;
 
 class ModelLoaderTest {
 	private ModelLoader loader;
-	private Model model;
 	private ByteArrayOutputStream out;
 
 	@BeforeEach
 	void before() {
-		// Create a model to persist
-		model = new DefaultModel.Builder()
-				.primitive(Primitive.TRIANGLES)
-				.layout(Point.LAYOUT)
-				.add(Vertex.of(Point.ORIGIN))
-				.add(0)
-				.add(0)
-				.add(0)
-				.build();
-
-		// Init persistence store
 		out = new ByteArrayOutputStream();
-
-		// Create loader
 		loader = new ModelLoader();
 	}
 
@@ -40,32 +26,41 @@ class ModelLoaderTest {
 		assertNotNull(loader.map(mock(InputStream.class)));
 	}
 
-	private Model read() throws IOException {
+	private Mesh read() throws IOException {
 		return loader.load(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
 	}
 
 	@Test
 	void load() throws IOException {
+		// Create an indexed model to persist
+		final Model model = new Model(Primitive.TRIANGLES)
+				.layout(Point.LAYOUT)
+				.add(Vertex.of(Point.ORIGIN))
+				.add(0)
+				.add(0)
+				.add(0);
+
 		// Write model to stream
 		loader.save(model, new DataOutputStream(out));
 
 		// Re-load and check header
-		final Model result = read();
-		assertNotNull(result);
+		final Mesh mesh = read();
+		assertNotNull(mesh);
 
 		// Check header
-		assertEquals(Primitive.TRIANGLES, model.primitive());
-		assertEquals(3, model.count());
-		assertEquals(new Layout(Point.LAYOUT), result.layout());
-		assertEquals(true, result.isIndexed());
+		final Header header = mesh.header();
+		assertEquals(Primitive.TRIANGLES, header.primitive());
+		assertEquals(3, header.count());
+		assertEquals(new Layout(Point.LAYOUT), header.layout());
+		assertEquals(true, header.isIndexed());
 
 		// Check vertices
-		final Bufferable vertices = result.vertices();
+		final Bufferable vertices = mesh.vertices();
 		assertNotNull(vertices);
 		assertEquals(3 * Float.BYTES, vertices.length());
 
 		// Check index
-		final Optional<Bufferable> index = result.index();
+		final Optional<Bufferable> index = mesh.index();
 		assertNotNull(index);
 		assertTrue(index.isPresent());
 		assertEquals(3 * Short.BYTES, index.get().length());

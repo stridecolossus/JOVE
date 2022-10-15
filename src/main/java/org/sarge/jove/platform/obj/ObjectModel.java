@@ -17,7 +17,7 @@ class ObjectModel {
 	private final VertexComponentList<Vector> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
-	private DefaultModel.Builder builder = new DuplicateModelBuilder();
+	private Model model = new DuplicateModel();
 	private boolean empty = true;
 
 	/**
@@ -44,19 +44,19 @@ class ObjectModel {
 	 */
 	private void build() {
 		// Init model layout
-		builder.layout(Point.LAYOUT);
+		model.layout(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			builder.layout(Model.NORMALS);
+			model.layout(Model.NORMALS);
 		}
 		if(!coords.isEmpty()) {
-			builder.layout(Coordinate2D.LAYOUT);
+			model.layout(Coordinate2D.LAYOUT);
 		}
 
 		// Add model
-		models.add(builder.build());
+		models.add(model);
 
 		// Start new model
-		builder = new DuplicateModelBuilder();
+		model = new DuplicateModel();
 	}
 
 	/**
@@ -109,7 +109,7 @@ class ObjectModel {
 		}
 
 		// Add vertex to model
-		builder.add(new Vertex(components));
+		model.add(new Vertex(components));
 		empty = false;
 	}
 
