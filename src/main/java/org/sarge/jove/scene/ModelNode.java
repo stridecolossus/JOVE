@@ -41,13 +41,13 @@ public final class ModelNode extends LeafNode {
 	@Override
 	protected void attach(Node parent) {
 		super.attach(parent);
-		// TODO - add material/DS
+		queue.add(this);
 	}
 
 	@Override
 	protected void detach() {
 		super.detach();
-//		this.queue().queue().remove(this);
+		queue.remove(this);
 	}
 
 	@Override
@@ -61,7 +61,6 @@ public final class ModelNode extends LeafNode {
 				.appendSuper(super.toString())
 				.append(queue)
 				.append(model)
-				.append(material())
 				.build();
 	}
 }

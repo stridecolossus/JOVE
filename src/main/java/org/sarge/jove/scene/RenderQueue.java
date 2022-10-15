@@ -12,6 +12,34 @@ package org.sarge.jove.scene;
  * @author Sarge
  */
 public class RenderQueue {
+	/**
+	 * Adds a node to this queue.
+	 * @param node Node to add
+	 */
+	void add(ModelNode node) {
+
+	}
+
+	/**
+	 * Removes a node from this queue.
+	 * @param node Node to remove
+	 */
+	void remove(ModelNode node) {
+
+	}
+
+	/**
+	 * Renders this queue.
+	 */
+	public void render() {
+		// TODO - Consumer<Renderable>
+		// - grouped by pipeline state changes:
+		// - material
+		// - pipeline
+		// - descriptor set?
+		// - texture? => Texture interface?
+		// - others?
+	}
 }
 
 //

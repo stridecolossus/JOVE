@@ -13,12 +13,21 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public class SphereVolume implements Volume {
+	/**
+	 * Creates a sphere volume enclosing the given bounds.
+	 * @param bounds Bounds
+	 * @return Sphere volume
+	 */
+	public static SphereVolume of(Bounds bounds) {
+		final Sphere sphere = new Sphere(bounds.centre(), bounds.largest() / 2);
+		return new SphereVolume(sphere);
+	}
+
 	private final Sphere sphere;
 
 	/**
 	 * Constructor.
-	 * @param centre Sphere centre
-	 * @param radius Radius
+	 * @param sphere Sphere
 	 */
 	public SphereVolume(Sphere sphere) {
 		this.sphere = notNull(sphere);
@@ -29,6 +38,14 @@ public class SphereVolume implements Volume {
 	 */
 	public Sphere sphere() {
 		return sphere;
+	}
+
+	@Override
+	public Bounds bounds() {
+		final float r = sphere.radius();
+		final Point min = new Point(-r, -r, -r);
+		final Point max = new Point(r, r, r);
+		return new Bounds(min, max);
 	}
 
 	@Override

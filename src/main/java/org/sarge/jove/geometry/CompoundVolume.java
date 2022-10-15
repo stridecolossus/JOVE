@@ -42,6 +42,12 @@ public class CompoundVolume implements Volume {
 	}
 
 	@Override
+	public Bounds bounds() {
+		// TODO
+		return null;
+	}
+
+	@Override
 	public boolean contains(Point pt) {
 		return volumes.stream().allMatch(v -> v.contains(pt));
 	}

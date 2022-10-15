@@ -23,6 +23,11 @@ public class InverseVolume implements Volume {
 	}
 
 	@Override
+	public Bounds bounds() {
+		return vol.bounds();
+	}
+
+	@Override
 	public boolean contains(Point pt) {
 		return !vol.contains(pt);
 	}

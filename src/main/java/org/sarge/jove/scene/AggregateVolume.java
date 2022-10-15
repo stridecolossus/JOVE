@@ -2,8 +2,6 @@ package org.sarge.jove.scene;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Collection;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
@@ -27,17 +25,22 @@ public class AggregateVolume implements Volume {
 		this.clazz = notNull(clazz);
 	}
 
-	/**
-	 * Calculates this volume as the aggregate of the given contained volumes.
-	 * @param volumes Contained volumes
-	 */
-	public void aggregate(Collection<Volume> volumes) {
-		// TODO
-		// - convert to bounds
-		// - determine min/max
-		// - create volume
-		// Q - how to get constructor???
+	@Override
+	public Bounds bounds() {
+		return vol.bounds();
 	}
+
+//	/**
+//	 * Calculates this volume as the aggregate of the given contained volumes.
+//	 * @param volumes Contained volumes
+//	 */
+//	public void aggregate(Collection<Volume> volumes) {
+//		// TODO
+//		// - convert to bounds
+//		// - determine min/max
+//		// - create volume
+//		// Q - how to get constructor???
+//	}
 
 	@Override
 	public Intersection intersection(Ray ray) {

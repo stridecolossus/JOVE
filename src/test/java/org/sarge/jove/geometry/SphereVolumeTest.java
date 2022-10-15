@@ -25,6 +25,13 @@ class SphereVolumeTest {
 	}
 
 	@Test
+	@DisplayName("A sphere volume can be created that enclosed a given bounds")
+	void of() {
+		final Bounds bounds = new Bounds(new Point(-RADIUS, -RADIUS, -RADIUS), new Point(RADIUS, RADIUS, RADIUS));
+		assertEquals(sphere, SphereVolume.of(bounds));
+	}
+
+	@Test
 	void contains() {
 		assertEquals(true, sphere.contains(Point.ORIGIN));
 		assertEquals(true, sphere.contains(new Point(RADIUS, 0, 0)));

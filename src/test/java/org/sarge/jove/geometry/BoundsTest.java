@@ -1,8 +1,8 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.stream.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 
@@ -80,6 +80,14 @@ class BoundsTest {
 		assertEquals(false, bounds.equals(new Bounds(max, min)));
 	}
 
+	@Test
+	void empty() {
+		assertEquals(Point.ORIGIN, Bounds.EMPTY.min());
+		assertEquals(Point.ORIGIN, Bounds.EMPTY.max());
+		assertEquals(Point.ORIGIN, Bounds.EMPTY.centre());
+		assertEquals(0, Bounds.EMPTY.largest());
+	}
+
 	@Nested
 	class IntersectionTests {
 		@Test
@@ -105,48 +113,49 @@ class BoundsTest {
 		}
 	}
 
-	@Nested
-	class BuilderTests {
-		@Test
-		void build() {
-			final Bounds result = new Bounds.Builder().add(min).add(max).build();
-			assertEquals(bounds, result);
-		}
-
-		@Test
-		void buildEmpty() {
-			bounds = new Bounds.Builder().build();
-			assertNotNull(bounds);
-			assertEquals(Float.MAX_VALUE, Math.abs(bounds.largest()));
-		}
+	@DisplayName("A bounds can be created as an aggregate of a collection of bounds")
+	@Test
+	void sum() {
+		assertEquals(bounds, Bounds.sum(List.of(bounds, bounds)));
 	}
 
+	@DisplayName("A bounds builder...")
 	@Nested
-	class CollectorTests {
-		private Collector<Point, ?, Bounds> collector;
+	class BuilderTests {
+		private Bounds.Builder builder;
 
 		@BeforeEach
 		void before() {
-			collector = Bounds.collector();
+			builder = new Bounds.Builder();
 		}
 
+		@DisplayName("creates an infinite bounds by default")
 		@Test
-		void constructor() {
-			assertNotNull(collector);
+		void infinite() {
+			final Bounds result = builder.build();
+			assertEquals(new Point(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE), result.min());
+			assertEquals(new Point(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE), result.max());
 		}
 
+		@DisplayName("can add points to the bounds")
 		@Test
-		void collect() {
-			assertEquals(bounds, Stream.of(min, max).collect(Bounds.collector()));
+		void add() {
+			builder.add(min).add(max);
+			assertEquals(bounds, builder.build());
 		}
 
+		@DisplayName("can construct an empty bounds about the origin")
 		@Test
-		void combiner() {
-			final Bounds.Builder left = new Bounds.Builder().add(min);
-			final Bounds.Builder right = new Bounds.Builder().add(max);
-			final Bounds.Builder combined = Bounds.Builder.combine(left, right);
-			assertNotNull(combined);
-			assertEquals(bounds, combined.build());
+		void empty() {
+			builder.add(Point.ORIGIN);
+			assertEquals(Bounds.EMPTY, builder.build());
+		}
+
+		@DisplayName("can add other bounds")
+		@Test
+		void bounds() {
+			builder.add(bounds);
+			assertEquals(bounds, builder.build());
 		}
 	}
 }

@@ -3,10 +3,15 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.geometry.Ray.*;
 
 /**
- * A <i>bounding volume</i> defines an abstract volume of space used for frustum culling, intersection tests and ray-picking.
+ * A <i>bounding volume</i> defines an abstract space used for frustum culling, intersection tests and ray-picking.
  * @author Sarge
  */
 public interface Volume extends Intersected {
+	/**
+	 * @return Bounds of this volume
+	 */
+	Bounds bounds();
+
 	/**
 	 * Tests whether the given point lies within this volume.
 	 * @param pt Point
@@ -55,6 +60,11 @@ public interface Volume extends Intersected {
 	 * Empty bounding volume.
 	 */
 	Volume EMPTY = new Volume() {
+		@Override
+		public Bounds bounds() {
+			return new Bounds(Point.ORIGIN, Point.ORIGIN);
+		}
+
 		@Override
 		public boolean contains(Point pt) {
 			return false;

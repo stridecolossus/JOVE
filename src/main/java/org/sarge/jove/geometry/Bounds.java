@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
-import java.util.Arrays;
-import java.util.stream.Collector;
+import java.util.*;
 
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
@@ -11,6 +10,11 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public record Bounds(Point min, Point max) {
+	/**
+	 * Empty bounds.
+	 */
+	public static final Bounds EMPTY = new Bounds(Point.ORIGIN, Point.ORIGIN);
+
 	/**
 	 * Constructor.
 	 * @param min Minimum bound
@@ -107,11 +111,17 @@ public record Bounds(Point min, Point max) {
 	}
 
 	/**
-	 * Helper - Creates a collector that constructs bounds from a stream of points.
-	 * @return New bounds collector
+	 * Calculates the sum of a set of bounds, i.e. the aggregated bounds enclosing the given set.
+	 * @param bounds Bounds to sum
+	 * @return Aggregated bounds
+	 * @see Builder#add(Bounds)
 	 */
-	public static Collector<Point, ?, Bounds> collector() {
-		return Collector.of(Builder::new, Builder::add, Builder::combine, Builder::build);
+	public static Bounds sum(Collection<Bounds> bounds) {
+		final Builder builder = new Builder();
+		for(Bounds b : bounds) {
+			builder.add(b);
+		}
+		return builder.build();
 	}
 
 	/**
@@ -138,34 +148,25 @@ public record Bounds(Point min, Point max) {
 
 		/**
 		 * Adds a point to this bounds.
-		 * @param pt Point to add
+		 * @param p Point to add
 		 */
-		public Builder add(Point pt) {
+		public Builder add(Point p) {
 			for(int n = 0; n < Point.SIZE; ++n) {
-				update(pt.get(n), n);
+				final float value = p.get(n);
+				min[n] = Math.min(value, min[n]);
+				max[n] = Math.max(value, max[n]);
 			}
 			return this;
 		}
 
 		/**
-		 * Updates min/max bounds.
-		 * @param value Coordinate
-		 * @param index Array index
+		 * Adds the given bounds to this bounds.
+		 * @param bounds Bounds to add
 		 */
-		private void update(float value, int index) {
-			min[index] = Math.min(value, min[index]);
-			max[index] = Math.max(value, max[index]);
-		}
-
-		/**
-		 * Combiner function for this builder when used as a collector.
-		 */
-		protected static Builder combine(Builder left, Builder right) {
-			for(int n = 0; n < Point.SIZE; ++n) {
-				left.update(right.min[n], n);
-				left.update(right.max[n], n);
-			}
-			return left;
+		public Builder add(Bounds bounds) {
+			add(bounds.min);
+			add(bounds.max);
+			return this;
 		}
 
 		/**
@@ -173,7 +174,9 @@ public record Bounds(Point min, Point max) {
 		 * @return New bounds
 		 */
 		public Bounds build() {
-			return new Bounds(new Point(min), new Point(max));
+			final Point a = new Point(min);
+			final Point b = new Point(max);
+			return new Bounds(a, b);
 		}
 	}
 }

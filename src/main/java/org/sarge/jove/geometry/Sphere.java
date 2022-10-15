@@ -11,15 +11,6 @@ import org.sarge.lib.util.Check;
  */
 public record Sphere(Point centre, float radius) {
 	/**
-	 * Creates a sphere volume enclosing the given bounds.
-	 * @param bounds Bounds
-	 * @return Sphere volume
-	 */
-	public static Sphere of(Bounds bounds) {
-		return new Sphere(bounds.centre(), bounds.largest() / 2);
-	}
-
-	/**
 	 * Constructor.
 	 * @param centre Sphere centre
 	 * @param radius Radius
