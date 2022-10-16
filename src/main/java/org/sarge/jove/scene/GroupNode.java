@@ -14,6 +14,24 @@ public class GroupNode extends Node {
 	private final List<Node> nodes = new ArrayList<>();
 
 	/**
+	 * Constructor.
+	 */
+	public GroupNode() {
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param group Group node to copy
+	 */
+	protected GroupNode(GroupNode group) {
+		super(group);
+		for(Node n : group.nodes) {
+			final Node clone = n.copy();
+			nodes.add(clone);
+		}
+	}
+
+	/**
 	 * @return Children of this node
 	 */
 	public Stream<Node> nodes() {
@@ -53,6 +71,11 @@ public class GroupNode extends Node {
 		for(Node n : nodes) {
 			n.accept(visitor);
 		}
+	}
+
+	@Override
+	public GroupNode copy() {
+		return new GroupNode(this);
 	}
 
 	/**

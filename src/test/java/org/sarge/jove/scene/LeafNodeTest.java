@@ -10,7 +10,9 @@ public class LeafNodeTest {
 
 	@BeforeEach
 	void before() {
-		node = new LeafNode();
+		node = new LeafNode() {
+			// Empty
+		};
 	}
 
 	@DisplayName("A leaf node cannot have an aggregated bounding volume")
@@ -18,5 +20,10 @@ public class LeafNodeTest {
 	void aggregate() {
 		final Volume vol = new AggregateVolume(SphereVolume.class);
 		assertThrows(IllegalArgumentException.class, () -> node.set(vol));
+	}
+
+	@Test
+	void copy() {
+		// TODO
 	}
 }

@@ -13,7 +13,13 @@ public class GroupNodeTest {
 	@BeforeEach
 	void before() {
 		group = new GroupNode();
-		node = new Node();
+
+		node = new Node() {
+			@Override
+			public Node copy() {
+				return new Node();
+			}
+		};
 	}
 
 	@DisplayName("A new empty group node...")
@@ -89,6 +95,14 @@ public class GroupNodeTest {
 			group.clear();
 			assertEquals(0, group.nodes().count());
 			assertEquals(null, node.parent());
+		}
+
+		@DisplayName("creates a new sub-tree when it is copied")
+		@Test
+		void copy() {
+			group.material().set(mock(Material.class)); // TODO
+			final GroupNode copy = group.copy();
+			assertEquals(1, copy.nodes().count());
 		}
 	}
 

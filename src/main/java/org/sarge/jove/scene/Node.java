@@ -17,7 +17,10 @@ public class Node {
 	private LocalMaterial mat = new LocalMaterial();
 	private Volume vol = Volume.EMPTY;
 
-	protected Node() {
+	/**
+	 * Constructor.
+	 */
+	Node() {
 	}
 
 	/**
@@ -28,7 +31,6 @@ public class Node {
 		transform.set(node.transform.transform());
 		mat.set(node.mat.material());
 	}
-	// TODO - separate helper?
 
 	/**
 	 * @return Parent of this node
@@ -117,6 +119,15 @@ public class Node {
 	 */
 	public void accept(Visitor visitor) {
 		visitor.visit(this);
+	}
+
+	/**
+	 * Clones this node.
+	 * @return Cloned node
+	 * @throws UnsupportedOperationException if a node cannot be cloned
+	 */
+	public Node copy() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

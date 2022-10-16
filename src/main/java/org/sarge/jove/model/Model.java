@@ -8,11 +8,44 @@ import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>model</i> is a renderable object comprised vertex data and an optional index.
+ * A <i>model</i> is a mutable representation of a renderable object comprising vertices and an optional index.
+ * <p>
+ * The structure of the model vertices is specified by the {@link #layout(Component)}.
+ * TODO - does not check?
+ * <p>
+ * A model can optionally be indexed using {@link #add(int)}.
+ * The data type of the index is {@code short} is the index is small and {@link #compact(boolean)} is set, otherwise it is comprised of {@code int} values.
+ * <p>
+ * The {@link #mesh()} method is used to generate the renderable mesh.
+ * Note that changes to the model are reflected in the resultant mesh.
+ * <p>
+ * Usage:
+ * <p>
+ * <pre>
+ * // Create model for a triangle with vertex positions and normals
+ * Model model = new Model(Primitive.TRIANGLES);
+ * model.layout(Point.LAYOUT);
+ * model.layout(Model.NORMALS);
+ *
+ * // Add vertices
+ * model.add(Vertex.of(new Point(...)));
+ * ...
+ *
+ * // Add index
+ * model.add(0);
+ * model.add(1);
+ * ...
+ *
+ * // Generate mesh and bounds
+ * Mesh mesh = model.mesh();
+ * Bounds bounds = model.bounds();
+ * </pre>
+ * <p>
  * @author Sarge
  */
 public class Model implements Header {
@@ -140,6 +173,7 @@ public class Model implements Header {
 	 * <p>
 	 * If {@link #compact} is set, the data type of the index buffer is {@code short} if the index is small enough.
 	 * Otherwise the index is comprised of {@code int} values.
+	 * TODO - revise doc, restart precludes, note still stored as integers
 	 * <p>
 	 * @param compact Whether to use compact indices
 	 * @see #isIntegerIndex(int)
@@ -182,6 +216,7 @@ public class Model implements Header {
 				return true;
 			}
 		}
+		// TODO - move compact to parameter of mesh factory?
 
 		@Override
 		public int length() {
@@ -192,15 +227,17 @@ public class Model implements Header {
 		@Override
 		public void buffer(ByteBuffer bb) {
 			if(isIntegral())  {
-//				if(bb.isDirect()) {
+				if(bb.isDirect()) {
 					for(int n : index) {
 						bb.putInt(n);
 					}
-//				}
-//				else {
-//					final int[] indices = index().toArray();
-//					bb.asIntBuffer().put(indices);
-//				}
+				}
+				else {
+					final int[] indices = index().toArray();
+					bb.asIntBuffer().put(indices);
+// TODO - does not update the position!!!
+//					bb.position(bb.position() + indices.length * Integer.BYTES);
+				}
 			}
 			else {
 				for(int n : index) {
@@ -242,6 +279,26 @@ public class Model implements Header {
 	 */
 	public Mesh mesh() {
 		return new DefaultMesh();
+	}
+
+	/**
+	 * Calculates the bounds of this model.
+	 * @return Model bounds
+	 * @throws IllegalStateException if the model layout does not contain a {@link Point#LAYOUT} component
+	 * @throws ArrayIndexOutOfBoundsException if any vertex does not contain a vertex position
+	 */
+	public Bounds bounds() {
+		// Determine vertex position from layout
+		final int pos = components.indexOf(Point.LAYOUT);
+		if(pos == -1) throw new IllegalStateException("Model layout does not contain a vertex position: " + this);
+
+		// Construct bounds
+		final var bounds = new Bounds.Builder();
+		for(Vertex v : vertices) {
+			final Point p = v.component(pos);
+			bounds.add(p);
+		}
+		return bounds.build();
 	}
 
 	/**

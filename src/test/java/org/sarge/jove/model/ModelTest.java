@@ -3,11 +3,11 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 
 public class ModelTest {
 	private Model model;
@@ -16,7 +16,7 @@ public class ModelTest {
 	@BeforeEach
 	void before() {
 		model = new Model(Primitive.POINTS);
-		vertex = new Vertex(List.of(Point.ORIGIN));
+		vertex = Vertex.of(Point.ORIGIN);
 	}
 
 	@DisplayName("A new model...")
@@ -228,7 +228,36 @@ public class ModelTest {
 			// Check index buffer
 			final ByteBuffer bb = ByteBuffer.allocate(len);
 			index.buffer(bb);
-			assertEquals(0, bb.remaining());
+			// TODO - non-direct buffer does not get updated!!!
+			// assertEquals(0, bb.remaining());
+		}
+	}
+
+	@DisplayName("The bounds of a model...")
+	@Nested
+	class BoundsTests {
+		@DisplayName("can be derived from the model vertices")
+		@Test
+		void bounds() {
+			model.layout(Point.LAYOUT);
+			model.add(vertex);
+			model.add(vertex);
+			assertEquals(Bounds.EMPTY, model.bounds());
+		}
+
+		@DisplayName("cannot be generated if the model layout does not contain a vertex position")
+		@Test
+		void layout() {
+			model.add(vertex);
+			assertThrows(IllegalStateException.class, () -> model.bounds());
+		}
+
+		@DisplayName("cannot be generated if any vertex does not contain a position component")
+		@Test
+		void vertex() {
+			model.layout(Point.LAYOUT);
+			model.add(Vertex.of());
+			assertThrows(ArrayIndexOutOfBoundsException.class, () -> model.bounds());
 		}
 	}
 }

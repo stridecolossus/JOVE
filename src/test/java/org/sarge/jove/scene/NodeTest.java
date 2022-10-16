@@ -106,5 +106,26 @@ class NodeTest {
 			assertEquals(null, node.parent());
 			assertEquals(true, node.isRoot());
 		}
+
+		@DisplayName("that is copied is a root node")
+		@Test
+		void copy() {
+			node.material().set(mock(Material.class)); // TODO
+			final Node copy = new Node(node);
+			assertEquals(true, copy.isRoot());
+		}
+	}
+
+	@Test
+	void copy() {
+		assertThrows(UnsupportedOperationException.class, () -> node.copy());
+	}
+
+	@Test
+	void equals() {
+		node.material().set(mock(Material.class)); // TODO
+		assertEquals(node, node);
+		assertNotEquals(node, null);
+		assertNotEquals(node, new Node(node));
 	}
 }

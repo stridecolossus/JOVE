@@ -5,23 +5,34 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Mesh;
 
 /**
- * A <i>model node</i> represents a renderable model within the scene.
+ * A <i>model node</i> is used to render a {@link Mesh} in the scene.
  * @author Sarge
  */
 public final class ModelNode extends LeafNode {
 	private final RenderQueue queue;
-	private final Model model; // TODO - geometry (?)
+	private final Mesh mesh;
 
 	/**
 	 * Constructor.
-	 * @param model Model
+	 * @param queue		Render queue for this node
+	 * @param mesh 		Renderable mesh
 	 */
-	public ModelNode(RenderQueue queue, Model model) {
+	public ModelNode(RenderQueue queue, Mesh mesh) {
 		this.queue = notNull(queue);
-		this.model = notNull(model);
+		this.mesh = notNull(mesh);
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param node Model node to copy
+	 */
+	protected ModelNode(ModelNode node) {
+		super(node);
+		this.queue = node.queue;
+		this.mesh = node.mesh;
 	}
 
 	/**
@@ -30,12 +41,13 @@ public final class ModelNode extends LeafNode {
 	public RenderQueue queue() {
 		return queue;
 	}
+	// TODO - should be property of material?
 
 	/**
-	 * @return Model
+	 * @return Renderable mesh
 	 */
-	public Model model() {
-		return model;
+	public Mesh mesh() {
+		return mesh;
 	}
 
 	@Override
@@ -51,8 +63,13 @@ public final class ModelNode extends LeafNode {
 	}
 
 	@Override
+	public ModelNode copy() {
+		return new ModelNode(this);
+	}
+
+	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), model);
+		return Objects.hash(super.hashCode(), mesh);
 	}
 
 	@Override
@@ -60,7 +77,7 @@ public final class ModelNode extends LeafNode {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
 				.append(queue)
-				.append(model)
+				.append(mesh)
 				.build();
 	}
 }
