@@ -1,14 +1,10 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.geometry.Rotation.AxisAngle;
-
 /**
  * Mutable implementation.
  * @author Sarge
  */
 public class MutableRotation extends AxisAngle {
-//	private boolean dirty = true;
-
 	/**
 	 * Constructor.
 	 * @param axis Rotation axis
@@ -23,22 +19,11 @@ public class MutableRotation extends AxisAngle {
 	 */
 	public void angle(float angle) {
 		this.angle = angle;
-//		dirty = true;
 	}
-
-//	@Override
-//	public boolean isDirty() {
-//		return dirty;
-//	}
 
 	@Override
 	public boolean isMutable() {
 		return true;
 	}
-
-	@Override
-	public Matrix matrix() {
-//		dirty = false;
-		return super.matrix();
-	}
 }
+// TODO - factory method on rotation?

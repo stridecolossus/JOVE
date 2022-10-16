@@ -22,7 +22,7 @@ public interface Volume extends Intersected {
 	/**
 	 * Determines whether this volume intersects the given volume.
 	 * <p>
-	 * In general a bounding volume intersection is assumed to ultimately degenerate to a test against a sphere or a {@link Bounds}.
+	 * In general bounding volume intersections are assumed to degenerate to a test against a sphere or a {@link Bounds}.
 	 * Implementations should perform class-specific intersection tests or delegate to the supplied volume.
 	 * <p>
 	 * Example implementation:

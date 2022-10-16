@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.util.MathsUtil.PI;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Rotation.AxisAngle;
 
 public class QuaternionTest {
 	private Quaternion quaternion;

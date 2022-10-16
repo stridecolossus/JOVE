@@ -22,7 +22,7 @@ public abstract class Axis extends NormalizedVector {
 	};
 
 	/**
-	 * Vulkan positive Y axis is <b>down</b>.
+	 * The Vulkan positive Y axis is <b>down</b>.
 	 */
 	public static final Axis Y = new Axis(1) {
 		@Override
@@ -53,7 +53,7 @@ public abstract class Axis extends NormalizedVector {
 	 * The string is one of:
 	 * <ul>
 	 * <li>An axis token, e.g. {@code X}</li>
-	 * <li>An inverse axis prefixed with the negation symbol, e.g. {@code -X}</li>
+	 * <li>An inverse axis prefixed with the minus sign, e.g. {@code -X}</li>
 	 * <li>Otherwise an arbitrary vector</li>
 	 * </ul>
 	 * @param str String to parse
@@ -135,7 +135,8 @@ public abstract class Axis extends NormalizedVector {
 
 	/**
 	 * Selects the cardinal axis corresponding to the <i>minimal component</i> of the given vector.
-	 * For example the vector {@code 0, 1, 2} corresponds to the X axis.
+	 * For example the vector {@code 1, 0, 2} corresponds to the Y axis.
+	 * This operation is generally used to determine an arbitrary local coordinate system about a given vector.
 	 * @return Cardinal axis
 	 */
 	public static Axis minimal(Vector vec) {

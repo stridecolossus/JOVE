@@ -16,7 +16,7 @@ import org.sarge.jove.util.MathsUtil;
  * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> as expected by Vulkan</li>
  * </ul>
  * <p>
- * An order 4 matrix with the following structure is used for view and perspective transformation:
+ * A {@link Matrix4} with the following structure is used for view and perspective transformation:
  * <p>
  * <table border=0>
  * <tr><td>Rx</td><td>Ry</td><td>Rz</td><td>Tx</td></tr>
@@ -42,7 +42,7 @@ public class Matrix implements Transform, Bufferable {
 	 * Constructor.
 	 * @param matrix Matrix
 	 */
-	protected Matrix(float[][] matrix) {
+	Matrix(float[][] matrix) {
 		if(matrix.length == 0) throw new IllegalArgumentException();
 		this.matrix = matrix;
 	}
@@ -154,6 +154,7 @@ public class Matrix implements Transform, Bufferable {
 
 		return result.build();
 	}
+	// TODO - vector API for multiply?
 
 	@Override
 	public boolean equals(Object obj) {
@@ -204,7 +205,7 @@ public class Matrix implements Transform, Bufferable {
 		public static final Matrix IDENTITY = new Matrix.Builder().identity().build();
 
 		/**
-		 * Layout of a 4X4 matrix.
+		 * Layout of a 4x4 matrix.
 		 */
 		public static final Component LAYOUT = Component.floats(ORDER * ORDER);
 
@@ -238,7 +239,7 @@ public class Matrix implements Transform, Bufferable {
 					.build();
 		}
 
-		protected Matrix4(float[][] matrix) {
+		Matrix4(float[][] matrix) {
 			super(matrix);
 		}
 

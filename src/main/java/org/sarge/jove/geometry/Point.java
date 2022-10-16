@@ -50,12 +50,12 @@ public final class Point extends Tuple {
 
 	/**
 	 * Calculates the distance <b>squared</b> to the given point.
-	 * @param pt Destination point
+	 * @param p Destination point
 	 * @return Distance <b>squared</b>
 	 */
-	public float distance(Point pt) {
-		final Point p = subtract(pt);
-		return p.dot(p);
+	public float distance(Point p) {
+		final Point pt = subtract(p);
+		return pt.dot(pt);
 	}
 
 	/**
@@ -90,7 +90,7 @@ public final class Point extends Tuple {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof Tuple that) &&
+				(obj instanceof Point that) &&
 				isEqual(that);
 	}
 }

@@ -5,7 +5,6 @@ import static org.sarge.jove.geometry.Axis.Y;
 import static org.sarge.jove.util.MathsUtil.HALF;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Rotation.AxisAngle;
 
 public class MutableRotationTest {
 	private MutableRotation rot;

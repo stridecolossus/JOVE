@@ -92,6 +92,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 			return new Plane(normal.multiply(inv), distance * inv);
 		}
 	}
+	// TODO - what is this actually doing? need references, is it used anyway?
 
 	/**
 	 * Determines the distance of the given point from this plane.
@@ -164,8 +165,8 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	/**
 	 * Creates an adapter for this plane that considers <b>all</b> rays in the given half-space as intersecting.
 	 * <p>
-	 * This implementation offers better performance when the actual intersection point and surface normal are not relevant.
-	 * Note that the intersection results are {@link Intersected#UNDEFINED}.
+	 * This implementation may offer better performance where the actual intersection point and surface normal are not relevant.
+	 * Note that the intersection results are either {@link Intersection#NONE} or {@link Intersection#UNDEFINED}.
 	 * <p>
 	 * @return Half-space intersection test
 	 * @see #behind()

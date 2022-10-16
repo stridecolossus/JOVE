@@ -3,8 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>ray</i> is specified as a vector relative to an originating position.
- * Rays are used for intersection tests, picking, etc.
+ * A <i>ray</i> is a vector relative to an originating point, used for intersection tests, picking, etc.
  * @author Sarge
  */
 public interface Ray {
@@ -75,18 +74,16 @@ public interface Ray {
 	 * float[] distances = intersection.distances();
 	 * Point pt = ray.point(distances[0]);
 	 *
-	 * // Or arbitrarily select the intersection point nearest the surface
-	 * Point pt = intersection.nearest(ray);
+	 * // Or arbitrarily select the nearest intersection to the surface
+	 * Point nearest = intersection.nearest(ray);
 	 *
-	 * // Calculate the surface normal at an intersection point
+	 * // Determine the surface normal at the intersection
 	 * Vector normal = intersection.normal(pt);
 	 * <p>
-	 * @see Intersected#NONE
-	 * @see Intersected#UNDEFINED
 	 */
 	public interface Intersection {
 		/**
-		 * Empty intersections.
+		 * Empty result for no intersections.
 		 */
 		Intersection NONE = new Intersection() {
 			@Override
@@ -101,7 +98,7 @@ public interface Ray {
 		};
 
 		/**
-		 * Intersection with undefined results.
+		 * Intersection with undefined results, e.g. for uses cases where the actual intersections (and normals) are not relevant.
 		 */
 		Intersection UNDEFINED = new Intersection() {
 			@Override
@@ -127,7 +124,7 @@ public interface Ray {
 		 * Determines the surface normal at the given intersection point on this ray.
 		 * @param p Intersection point
 		 * @return Surface normal
-		 * @throws UnsupportedOperationException if this intersection is undefined
+		 * @throws UnsupportedOperationException if this intersection is {@link Intersection#UNDEFINED}
 		 */
 		default Vector normal(Point p) {
 			throw new UnsupportedOperationException();
@@ -136,7 +133,7 @@ public interface Ray {
 		/**
 		 * Calculates the <i>nearest</i> intersection point to the surface.
 		 * @param ray Ray
-		 * @throws UnsupportedOperationException if the intersection is {@link Intersected#UNDEFINED}
+		 * @throws UnsupportedOperationException if the intersection is {@link Intersection#UNDEFINED}
 		 * @throws IllegalStateException if there are no intersections
 		 * @see Ray#point(float)
 		 */

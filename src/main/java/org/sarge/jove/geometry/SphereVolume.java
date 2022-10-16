@@ -19,7 +19,7 @@ public class SphereVolume implements Volume {
 	 * @return Sphere volume
 	 */
 	public static SphereVolume of(Bounds bounds) {
-		final Sphere sphere = new Sphere(bounds.centre(), bounds.largest() / 2);
+		final Sphere sphere = new Sphere(bounds.centre(), bounds.largest() / 2f);
 		return new SphereVolume(sphere);
 	}
 
@@ -102,8 +102,9 @@ public class SphereVolume implements Volume {
 		final float dist = nearest * nearest - len;
 
 		// Stop if ray does not intersect
-		final float r = sphere.radius() * sphere.radius();
-		if(Math.abs(dist) > r) {
+		final float r = sphere.radius();
+		final float radius = r * r;
+		if(Math.abs(dist) > radius) {
 			return Intersection.NONE;
 		}
 
@@ -112,11 +113,11 @@ public class SphereVolume implements Volume {
 			@Override
 			public float[] distances() {
 				// Calculate offset from nearest point to intersection(s)
-				final float offset = MathsUtil.sqrt(r - dist);
+				final float offset = MathsUtil.sqrt(radius - dist);
 
 				// Build intersection results
 				final float a = nearest + offset;
-				if(len < r) {
+				if(len < radius) {
 					// Ray origin is inside the sphere
 					return new float[]{a};
 				}
@@ -136,19 +137,20 @@ public class SphereVolume implements Volume {
 	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
 	private Intersection intersectBehind(Ray ray, float len, float nearest) {
-		final float r = sphere.radius() * sphere.radius();
-		if(len > r) {
+		final float r = sphere.radius();
+		final float radius = r * r;
+		if(len > radius) {
 			// Ray originates outside the sphere
 			return Intersection.NONE;
 		}
 		else
-		if(len < r) {
+		if(len < radius) {
 			// Ray originates inside the sphere
 			return new SphereIntersections() {
 				@Override
 				public float[] distances() {
 					final float dist = len - nearest * nearest;
-					final float offset = MathsUtil.sqrt(r - dist);
+					final float offset = MathsUtil.sqrt(radius - dist);
 					return new float[]{offset + nearest};
 				}
 			};

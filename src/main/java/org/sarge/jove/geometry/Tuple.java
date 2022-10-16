@@ -71,7 +71,7 @@ public class Tuple implements Bufferable {
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>
-	 * The dot product is:
+	 * Some properties of the dot product:
 	 * <ul>
 	 * <li>zero if the vectors are orthogonal (i.e. perpendicular, or at right angles)</li>
 	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
