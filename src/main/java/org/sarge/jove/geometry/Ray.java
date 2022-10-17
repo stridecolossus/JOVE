@@ -72,13 +72,13 @@ public interface Ray {
 	 *
 	 * // Determine nearest intersection point
 	 * float[] distances = intersection.distances();
-	 * Point pt = ray.point(distances[0]);
+	 * Point p = ray.point(distances[0]);
 	 *
 	 * // Or arbitrarily select the nearest intersection to the surface
 	 * Point nearest = intersection.nearest(ray);
 	 *
 	 * // Determine the surface normal at the intersection
-	 * Vector normal = intersection.normal(pt);
+	 * Vector normal = intersection.normal(p);
 	 * <p>
 	 */
 	public interface Intersection {
@@ -98,7 +98,7 @@ public interface Ray {
 		};
 
 		/**
-		 * Intersection with undefined results, e.g. for uses cases where the actual intersections (and normals) are not relevant.
+		 * Intersection with undefined results, e.g. for use cases where the actual intersections (and normals) are not relevant.
 		 */
 		Intersection UNDEFINED = new Intersection() {
 			@Override
@@ -138,22 +138,22 @@ public interface Ray {
 		 * @see Ray#point(float)
 		 */
 		default Point nearest(Ray ray) {
+			if(isEmpty()) throw new IllegalStateException("No intersections: " + this);
 			final float[] distances = distances();
-			if(distances.length == 0) throw new IllegalStateException("No intersections: " + this);
 			return ray.point(distances[0]);
 		}
 
 		/**
 		 * Creates an intersection.
-		 * @param d				Distance from ray origin
-		 * @param normal		Surface normal
+		 * @param dist		Distance from ray origin
+		 * @param normal	Surface normal
 		 * @return New intersection
 		 */
-		static Intersection of(float d, Vector normal) {
+		static Intersection of(float dist, Vector normal) {
 			return new Intersection() {
 				@Override
 				public float[] distances() {
-					return new float[]{d};
+					return new float[]{dist};
 				}
 
 				@Override

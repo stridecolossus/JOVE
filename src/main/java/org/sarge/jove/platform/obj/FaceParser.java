@@ -45,7 +45,7 @@ class FaceParser implements Parser {
 		}
 
 		// Parse vertices for this face
-		for(int n = 0; n < 3; ++n) {
+		for(int n = 0; n < faces.length; ++n) {
 			// Tokenize face
 			final String face = faces[n];
 			final String[] parts = StringUtils.splitPreserveAllTokens(face, '/');

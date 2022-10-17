@@ -56,7 +56,7 @@ public class Camera {
 	}
 
 	/**
-	 * Moves the camera by the given distance in the current right axis.
+	 * Moves the camera by the given distance along the current right axis.
 	 * @param dist Distance to strafe
 	 * @see #right()
 	 */
@@ -84,20 +84,20 @@ public class Camera {
 
 	/**
 	 * Helper - Points the camera at the given location.
-	 * @param pt Camera point-of-interest
-	 * @throws IllegalArgumentException if the location is the same as the current position of the camera
-	 * @throws IllegalStateException if the direction would result in gimbal lock
+	 * @param target Target position
+	 * @throws IllegalArgumentException if {@link #target} is the same as the current position of the camera
+	 * @throws IllegalStateException if the resultant direction would result in gimbal lock
 	 */
-	public void look(Point pt) {
-		if(pos.equals(pt)) throw new IllegalArgumentException("Cannot point camera at its current position");
-		final Vector look = Vector.between(pt, pos);
+	public void look(Point target) {
+		if(pos.equals(target)) throw new IllegalArgumentException("Cannot point camera at its current position");
+		final Vector look = Vector.between(target, pos);
 		direction(look);
 	}
 
 	/**
 	 * Sets the up axis of this camera (default is {@link Axis#Y}).
 	 * @param up Camera up axis
-	 * @throws IllegalStateException if the up vector would result in gimbal lock
+	 * @throws IllegalStateException if {@link #up} would result in gimbal lock
 	 */
 	public void up(Vector up) {
 		validate(dir, up);

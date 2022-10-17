@@ -44,7 +44,7 @@ public abstract class AxisAngle implements Rotation {
 	/**
 	 * @return Rotation axis
 	 */
-	public Vector axis() {
+	public final Vector axis() {
 		return axis;
 	}
 
@@ -56,7 +56,7 @@ public abstract class AxisAngle implements Rotation {
 	}
 
 	@Override
-	public AxisAngle toAxisAngle() {
+	public final AxisAngle toAxisAngle() {
 		return this;
 	}
 
@@ -66,8 +66,7 @@ public abstract class AxisAngle implements Rotation {
 			return cardinal.rotation(angle);
 		}
 		else {
-			final AxisAngle rot = toAxisAngle();
-			return Quaternion.of(rot).matrix();
+			return Quaternion.of(this).matrix();
 		}
 	}
 

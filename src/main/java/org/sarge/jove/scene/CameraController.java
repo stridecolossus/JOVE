@@ -32,8 +32,6 @@ public class CameraController {
 
 	/**
 	 * Updates the camera for the given view coordinates.
-	 * @param x
-	 * @param y
 	 * @see #update(Vector)
 	 */
 	public void update(float x, float y) {

@@ -228,7 +228,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 				}
 			};
 			verify(lib).vkCreateSwapchainKHR(dev, expected, null, factory.pointer());
-			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle().toPointer(), factory.integer(), new Pointer[1]);
+			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle().pointer(), factory.integer(), new Pointer[1]);
 		}
 
 		@DisplayName("The swapchain format must be supported by the surface")

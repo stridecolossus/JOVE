@@ -19,7 +19,7 @@ import org.sarge.jove.util.MathsUtil;
  */
 public record Plane(Vector normal, float distance) implements Intersected {
 	/**
-	 * The half-space defines the <i>sides</i> of this plane with respect to the normal.
+	 * The <i>half space</i> defines the <i>sides</i> of this plane with respect to the normal.
 	 * The {@link #POSITIVE} half-space is in <i>front</i> of the plane and {@link #NEGATIVE} is <i>behind</i>.
 	 */
 	public enum HalfSpace {
@@ -66,7 +66,8 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	 * @return New plane
 	 */
 	public static Plane of(Vector n, Point p) {
-		return new Plane(n, -p.dot(n));
+		final float d = -p.dot(n);
+		return new Plane(n, d);
 	}
 
 	/**
@@ -104,9 +105,9 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	}
 
 	/**
-	 * Helper - Determines the half-space of the given point with respect to this plane.
+	 * Helper - Determines the half space of the given point with respect to this plane.
 	 * @param p Point
-	 * @return Half-space
+	 * @return Half space
 	 * @see HalfSpace#of(float)
 	 */
 	public HalfSpace halfspace(Point p) {
@@ -119,9 +120,9 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	}
 
 	/**
-	 * Determines the intersections of the given ray in the specified half-space of this plane.
+	 * Determines the intersections of the given ray in the specified half space of this plane.
 	 * @param ray Ray
-	 * @param pos Whether rays originating in the {@link HalfSpace#POSITIVE} half-space are subject to the intersection test
+	 * @param pos Whether rays originating in the {@link HalfSpace#POSITIVE} half space are subject to the intersection test
 	 * @return Intersections
 	 */
 	private Intersection intersections(Ray ray, boolean pos) {
@@ -154,7 +155,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	}
 
 	/**
-	 * Creates an adapter for this plane that only applies the intersection test to rays <i>behind</i> this plane, i.e. in the {@link HalfSpace#NEGATIVE} half-space.
+	 * Creates an adapter for this plane that only applies the intersection test to rays <i>behind</i> this plane, i.e. in the {@link HalfSpace#NEGATIVE} half space.
 	 * @return Intersecting surface for rays behind this plane
 	 * @see #halfspace(HalfSpace)
 	 */
@@ -163,12 +164,12 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	}
 
 	/**
-	 * Creates an adapter for this plane that considers <b>all</b> rays in the given half-space as intersecting.
+	 * Creates an adapter for this plane that considers <b>all</b> rays in the given half space as intersecting.
 	 * <p>
 	 * This implementation may offer better performance where the actual intersection point and surface normal are not relevant.
 	 * Note that the intersection results are either {@link Intersection#NONE} or {@link Intersection#UNDEFINED}.
 	 * <p>
-	 * @return Half-space intersection test
+	 * @return Half space intersection test
 	 * @see #behind()
 	 */
 	public Intersected halfspace(HalfSpace space) {

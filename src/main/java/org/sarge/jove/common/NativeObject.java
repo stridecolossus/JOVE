@@ -4,10 +4,7 @@ import java.util.Collection;
 
 import org.sarge.jove.util.PointerArray;
 
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.Pointer;
-import com.sun.jna.ToNativeContext;
-import com.sun.jna.TypeConverter;
+import com.sun.jna.*;
 
 /**
  * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
@@ -34,7 +31,7 @@ public interface NativeObject {
 		final Pointer[] pointers = objects
 				.stream()
 				.map(NativeObject::handle)
-				.map(Handle::toPointer)
+				.map(Handle::pointer)
 				.toArray(Pointer[]::new);
 
 		// Create pointer array
@@ -53,7 +50,7 @@ public interface NativeObject {
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
 			if(value instanceof NativeObject obj) {
-				return obj.handle().toPointer();
+				return obj.handle().pointer();
 			}
 			else {
 				return null;

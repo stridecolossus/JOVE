@@ -14,10 +14,11 @@ public abstract class Axis extends NormalizedVector {
 	public static final Axis X = new Axis(0) {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
-			matrix.set(1, 1, cos);
-			matrix.set(1, 2, -sin);
-			matrix.set(2, 1, sin);
-			matrix.set(2, 2, cos);
+			matrix
+					.set(1, 1, cos)
+					.set(1, 2, -sin)
+					.set(2, 1, sin)
+					.set(2, 2, cos);
 		}
 	};
 
@@ -27,10 +28,11 @@ public abstract class Axis extends NormalizedVector {
 	public static final Axis Y = new Axis(1) {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
-			matrix.set(0, 0, cos);
-			matrix.set(0, 2, sin);
-			matrix.set(2, 0, -sin);
-			matrix.set(2, 2, cos);
+			matrix
+					.set(0, 0, cos)
+					.set(0, 2, sin)
+					.set(2, 0, -sin)
+					.set(2, 2, cos);
 		}
 	};
 
@@ -40,10 +42,11 @@ public abstract class Axis extends NormalizedVector {
 	public static final Axis Z = new Axis(2) {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
-			matrix.set(0, 0, cos);
-			matrix.set(0, 1, -sin);
-			matrix.set(1, 0, sin);
-			matrix.set(1, 1, cos);
+			matrix
+					.set(0, 0, cos)
+					.set(0, 1, -sin)
+					.set(1, 0, sin)
+					.set(1, 1, cos);
 		}
 	};
 

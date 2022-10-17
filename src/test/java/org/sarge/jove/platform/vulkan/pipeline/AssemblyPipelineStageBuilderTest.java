@@ -3,11 +3,11 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.model.Primitive;
-import org.sarge.jove.platform.vulkan.VkPipelineInputAssemblyStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 class AssemblyPipelineStageBuilderTest {
@@ -39,5 +39,11 @@ class AssemblyPipelineStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(VkPrimitiveTopology.TRIANGLE_STRIP, info.topology);
 		assertEquals(VulkanBoolean.FALSE, info.primitiveRestartEnable);
+	}
+
+	@ParameterizedTest
+	@EnumSource(Primitive.class)
+	void primitives(Primitive primitive) {
+		builder.topology(primitive);
 	}
 }

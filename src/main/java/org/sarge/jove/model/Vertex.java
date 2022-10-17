@@ -1,7 +1,5 @@
 package org.sarge.jove.model;
 
-import static java.util.stream.Collectors.joining;
-
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -71,9 +69,6 @@ public class Vertex implements Bufferable {
 
 	@Override
 	public String toString() {
-		return components
-				.stream()
-				.map(Bufferable::toString)
-				.collect(joining(","));
+		return components.toString();
 	}
 }

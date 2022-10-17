@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 /**
  * Custom list implementation for OBJ vertex components.
- *
  * @author Sarge
  */
 class VertexComponentList<T> extends ArrayList<T> {

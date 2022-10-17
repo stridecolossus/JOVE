@@ -37,8 +37,8 @@ public class Handler extends AbstractTransientNativeObject {
 	@Override
 	protected void release() {
 		final Function destroy = instance.function("vkDestroyDebugUtilsMessengerEXT");
-		final Pointer parent = instance.handle().toPointer();
-		final Object[] args = {parent, handle.toPointer(), null};
+		final Pointer parent = instance.handle().pointer();
+		final Object[] args = {parent, handle.pointer(), null};
 		destroy.invoke(args);
 	}
 
@@ -220,7 +220,7 @@ public class Handler extends AbstractTransientNativeObject {
 			final Function create = instance.function("vkCreateDebugUtilsMessengerEXT");
 
 			// Register handler with instance
-			final Pointer parent = instance.handle().toPointer();
+			final Pointer parent = instance.handle().pointer();
 			final PointerByReference ref = instance.factory().pointer();
 			final Object[] args = {parent, info, null, ref};
 			check(create.invokeInt(args));

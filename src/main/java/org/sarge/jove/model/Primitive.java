@@ -1,61 +1,28 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.*;
-
-import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
+import static org.sarge.lib.util.Check.zeroOrMore;
 
 /**
  * Drawing primitives.
- * @see VkPrimitiveTopology
  * @author Sarge
  */
 public enum Primitive {
-	/**
-	 * Points.
-	 */
-	POINTS(1, VkPrimitiveTopology.POINT_LIST),
-
-	/**
-	 * Lines.
-	 */
-	LINES(2, VkPrimitiveTopology.LINE_LIST),
-
-	/**
-	 * Strip of lines.
-	 */
-	LINE_STRIP(2, VkPrimitiveTopology.LINE_STRIP),
-
-	/**
-	 * Triangles.
-	 */
-	TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST),
-
-	/**
-	 * Strip of triangles.
-	 */
-	TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP),
-
-	/**
-	 * Triangle fan.
-	 */
-	TRIANGLE_FAN(3, VkPrimitiveTopology.TRIANGLE_FAN),
-
-	/**
-	 * Tesselation patch list.
-	 */
-	PATCH(1, VkPrimitiveTopology.PATCH_LIST);
+	POINTS(1),
+	LINES(2),
+	LINE_STRIP(2),
+	TRIANGLES(3),
+	TRIANGLE_STRIP(3),
+	TRIANGLE_FAN(3),
+	PATCH(1);
 
 	private final int size;
-	private final VkPrimitiveTopology topology;
 
 	/**
 	 * Constructor.
-	 * @param size 			Number of vertices per primitive
-	 * @param topology		Vulkan topology
+	 * @param size Number of vertices per primitive
 	 */
-	private Primitive(int size, VkPrimitiveTopology topology) {
+	private Primitive(int size) {
 		this.size = zeroOrMore(size);
-		this.topology = notNull(topology);
 	}
 
 	/**
@@ -63,13 +30,6 @@ public enum Primitive {
 	 */
 	public int size() {
 		return size;
-	}
-
-	/**
-	 * @return Vulkan primitive topology
-	 */
-	public VkPrimitiveTopology topology() {
-		return topology;
 	}
 
 	/**

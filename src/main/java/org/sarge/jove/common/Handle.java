@@ -11,7 +11,7 @@ public final class Handle {
 
 	/**
 	 * Constructor.
-	 * @param handle Pointer handle
+	 * @param ptr Native pointer
 	 */
 	public Handle(Pointer ptr) {
 		this(Pointer.nativeValue(ptr));
@@ -28,7 +28,7 @@ public final class Handle {
 	/**
 	 * @return Copy of the underlying pointer
 	 */
-	public Pointer toPointer() {
+	public Pointer pointer() {
 		return new Pointer(Pointer.nativeValue(ptr));
 	}
 

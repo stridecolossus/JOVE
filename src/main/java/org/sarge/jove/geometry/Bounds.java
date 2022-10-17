@@ -17,8 +17,6 @@ public record Bounds(Point min, Point max) {
 
 	/**
 	 * Constructor.
-	 * @param min Minimum bound
-	 * @param max Maximum bound
 	 */
 	public Bounds {
 		Check.notNull(min);

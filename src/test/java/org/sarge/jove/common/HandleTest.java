@@ -2,9 +2,7 @@ package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import com.sun.jna.Pointer;
 
@@ -21,7 +19,7 @@ public class HandleTest {
 	@Test
 	void constructor() {
 		assertEquals(ptr.hashCode(), handle.hashCode());
-		assertEquals(ptr, handle.toPointer());
+		assertEquals(ptr, handle.pointer());
 	}
 
 	@Test

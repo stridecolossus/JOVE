@@ -2,8 +2,6 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Objects;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.util.MathsUtil;
@@ -67,13 +65,14 @@ public class SphereVolume implements Volume {
 	/**
 	 * @return Whether this sphere contains the given point
 	 */
-	private boolean contains(Point pt, float r) {
-		return sphere.centre().distance(pt) <= r * r;
+	private boolean contains(Point p, float r) {
+		return sphere.centre().distance(p) <= r * r;
 	}
 
 	@Override
 	public boolean intersects(Plane plane) {
-		return Math.abs(plane.distance(sphere.centre())) <= sphere.radius();
+		final float d = plane.distance(sphere.centre());
+		return Math.abs(d) <= sphere.radius();
 	}
 
 	/**
@@ -82,8 +81,8 @@ public class SphereVolume implements Volume {
 	 * @return Whether intersected
 	 */
 	public boolean intersects(Bounds bounds) {
-		final Point pt = bounds.nearest(sphere.centre());
-		return contains(pt);
+		final Point p = bounds.nearest(sphere.centre());
+		return contains(p);
 	}
 
 	@Override
@@ -182,7 +181,7 @@ public class SphereVolume implements Volume {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(sphere);
+		return sphere.hashCode();
 	}
 
 	@Override

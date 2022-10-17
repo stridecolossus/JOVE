@@ -12,9 +12,10 @@ import java.util.function.*;
  * Example:
  * <p>
  * <pre>
- * 	Function<Stream<String>, Integer> mapper = stream -> stream.mapToInt(Integer::parseInt).sum();
- * 	TextLoader loader = new TextLoader();
- * 	int total = loader.load(in, mapper);
+ * Reader in = ...
+ * TextLoader loader = new TextLoader();
+ * Consumer&lt;String&gt; parser = str -> { ... };
+ * loader.load(in, parser);
  * </pre>
  * <p>
  * @author Sarge
@@ -42,8 +43,8 @@ public class TextLoader {
 	}
 
 	/**
-	 * Sets the number of header lines to skip.
-	 * @param skip Number of lines to skip (default is none)
+	 * Sets the number of header lines to skip (default is none).
+	 * @param skip Number of lines to skip
 	 */
 	public void setSkipHeaderLines(int skip) {
 		this.skip = zeroOrMore(skip);

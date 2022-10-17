@@ -75,7 +75,7 @@ public class HandlerTest {
 		assertEquals(true, handler.isDestroyed());
 
 		// Check API
-		final Object[] args = {instance.handle().toPointer(), new Pointer(1), null};
+		final Object[] args = {instance.handle().pointer(), new Pointer(1), null};
 		verify(function).invoke(args);
 	}
 
@@ -116,7 +116,7 @@ public class HandlerTest {
 			};
 
 			// Check API
-			final Object[] args = {instance.handle().toPointer(), expected, null, instance.factory().pointer()};
+			final Object[] args = {instance.handle().pointer(), expected, null, instance.factory().pointer()};
 			verify(function).invokeInt(args);
 		}
 

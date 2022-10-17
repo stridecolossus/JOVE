@@ -8,7 +8,7 @@ import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>orbital camera controller</i> rotates the camera about a <i>target</i> location at a specified <i>radius</i>.
+ * An <i>orbital camera controller</i> rotates the camera about a <i>target</i> position at a specified <i>radius</i>.
  * <p>
  * Usage:
  * <pre>
@@ -63,6 +63,7 @@ public class OrbitalCameraController extends CameraController {
 
 	/**
 	 * Sets the orbit target.
+	 * @param target Target position
 	 * @throws IllegalArgumentException if the target is the same as the camera position
 	 */
 	public void target(Point target) {
@@ -93,8 +94,6 @@ public class OrbitalCameraController extends CameraController {
 
 	/**
 	 * Sets the range of the orbit radius.
-	 * @param min
-	 * @param max
 	 * @throws IllegalArgumentException if the minimum is zero or greater-than the maximum
 	 */
 	public void range(float min, float max) {
@@ -107,6 +106,7 @@ public class OrbitalCameraController extends CameraController {
 	/**
 	 * Sets the zoom scalar.
 	 * @param scale Zoom scalar
+	 * @see #zoom(float)
 	 */
 	public void scale(float scale) {
 		this.scale = Check.positive(scale);
@@ -116,6 +116,7 @@ public class OrbitalCameraController extends CameraController {
 	 * Zooms by the given increment.
 	 * Note that a positive value moves the view towards the target, i.e. decrements the orbital radius.
 	 * @param inc Zoom increment
+	 * @see #scale(float)
 	 */
 	public void zoom(float inc) {
 		this.radius = MathsUtil.clamp(radius - inc * scale, min, max);
@@ -123,12 +124,13 @@ public class OrbitalCameraController extends CameraController {
 	}
 
 	/**
-	 * Zooms according to the given axis.
+	 * Zooms according to the given axis event.
 	 * @param axis Axis
 	 */
 	public void zoom(AxisControl axis) {
 		zoom(axis.value());
 	}
+	// TODO
 
 	@Override
 	protected void update(Vector vec) {

@@ -1,10 +1,9 @@
 package org.sarge.jove.util;
 
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.ptr.*;
 
 /**
- * The <i>reference factory</i> is used to generate pass-by-reference arguments for Vulkan API methods.
+ * The <i>reference factory</i> is used to generate pass-by-reference arguments for native API methods.
  * @author Sarge
  */
 public interface ReferenceFactory {

@@ -138,7 +138,7 @@ public class Matrix implements Transform, Bufferable {
 	public Matrix multiply(Matrix m) {
 		// Check same sized matrices
 		final int order = order();
-		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different sizes");
+		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different orders");
 
 		// Multiply matrices
 		final var result = new Matrix.Builder(order);
@@ -175,8 +175,10 @@ public class Matrix implements Transform, Bufferable {
 		return true;
 	}
 
-	@Override
-	public String toString() {
+	/**
+	 * @return String representation of this matrix
+	 */
+	public String dump() {
 		final StringBuilder sb = new StringBuilder();
 		final int order = this.order();
 		for(int r = 0; r < order; ++r) {
@@ -187,7 +189,6 @@ public class Matrix implements Transform, Bufferable {
 		}
 		return sb.toString();
 	}
-	// TODO - move to separate dump() helper, no default to-string?
 
 	/**
 	 * Standard 4x4 matrix used for transformation and projection.

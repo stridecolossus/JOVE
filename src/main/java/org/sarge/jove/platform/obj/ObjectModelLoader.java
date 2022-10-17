@@ -65,7 +65,8 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	}
 
 	/**
-	 * Sets the callback handler for unknown commands (default is {@link #HANDLER_THROW}).
+	 * Sets the callback handler for unknown OBJ commands.
+	 * The default handler silently ignores unknown commands.
 	 * @param handler Unknown command handler
 	 */
 	public void setUnknownCommandHandler(Consumer<String> handler) {
@@ -86,7 +87,6 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	/**
 	 * Parses a line of the model.
 	 * @param line Line
-	 * @throws IllegalArgumentException if the command is unsupported
 	 */
 	private void parse(String line) {
 		// Tokenize to command and arguments

@@ -9,9 +9,9 @@ import java.util.function.Function;
 import com.sun.jna.*;
 
 /**
- * An <i>integer enumeration</i> is the base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
+ * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
  * <p>
- * An integer enumeration has a {@link ReverseMapping} which is used to map integer literals to the corresponding enumeration constants.
+ * An integer enumeration has a {@link ReverseMapping} which maps integer literals to the corresponding enumeration constants.
  * <p>
  * Integer enumerations can be used in JNA methods and structures by registering the custom {@link #CONVERTER} with the relevant JNA library.
  * <p>
@@ -39,7 +39,7 @@ import com.sun.jna.*;
  * int bits = IntegerEnumeration.reduce(Thing.ONE, ...);
  *
  * // Enumerate constants from integer bit-field
- * Set&lt;Thing&gt; set = mapping.enumerate(bits);
+ * Set set = mapping.enumerate(bits);
  * </pre>
  * <p>
  * @author Sarge

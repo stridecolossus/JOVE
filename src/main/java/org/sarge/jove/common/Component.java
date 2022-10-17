@@ -41,13 +41,12 @@ public record Component(int size, Component.Type type, boolean signed, int bytes
 	/**
 	 * Creates a component layout for the given Java type.
 	 * <p>
-	 * The following types are supported:
+	 * The following primitive and wrapper types are supported:
 	 * <ul>
 	 * <li>floating-point</li>
 	 * <li>integral numbers: long, integer, short, byte</li>
 	 * <li>boolean (represented as an unsigned byte)</li>
 	 * </ul>
-	 * Both primitive and wrappers types are valid.
 	 * <p>
 	 * @param type Type
 	 * @return Component layout

@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 /**
- * A <i>normalized vector</i> is a unit vector with a magnitude of <b>one</b>.
+ * A <i>normalized vector</i> is a unit vector (magnitude of <b>one</b>).
  * @author Sarge
  */
 public class NormalizedVector extends Vector {

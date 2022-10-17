@@ -30,8 +30,8 @@ public class BoundingBox implements Volume {
 	}
 
 	@Override
-	public boolean contains(Point pt) {
-		return bounds.contains(pt);
+	public boolean contains(Point p) {
+		return bounds.contains(p);
 	}
 
 	@Override
@@ -49,8 +49,8 @@ public class BoundingBox implements Volume {
 		return intersects(plane, bounds.negative(n)) || intersects(plane, bounds.positive(n));
 	}
 
-	private static boolean intersects(Plane plane, Point pt) {
-		return plane.halfspace(pt) != HalfSpace.NEGATIVE;
+	private static boolean intersects(Plane plane, Point p) {
+		return plane.halfspace(p) != HalfSpace.NEGATIVE;
 	}
 
 	/**

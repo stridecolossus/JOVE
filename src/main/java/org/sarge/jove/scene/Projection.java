@@ -8,7 +8,6 @@ import org.sarge.jove.util.MathsUtil;
  * View projection.
  * @author Sarge
  */
-@FunctionalInterface
 public interface Projection {
 	/**
 	 * Builds the matrix for this projection.
