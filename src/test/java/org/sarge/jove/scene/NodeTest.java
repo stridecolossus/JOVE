@@ -106,24 +106,28 @@ class NodeTest {
 			assertEquals(null, node.parent());
 			assertEquals(true, node.isRoot());
 		}
+	}
 
-		@DisplayName("that is copied is a root node")
+	@Nested
+	class CopyTests {
+		@Test
+		void constructor() {
+			final Node copy = new Node(node);
+			assertEquals(Matrix4.IDENTITY, copy.transform().transform());
+			assertEquals(true, copy.transform().isDirty());
+			assertEquals(true, copy.material().isDirty());
+			assertEquals(Volume.EMPTY, copy.volume());
+			assertEquals(true, copy.isRoot());
+		}
+
 		@Test
 		void copy() {
-			node.material().set(mock(Material.class)); // TODO
-			final Node copy = new Node(node);
-			assertEquals(true, copy.isRoot());
+			assertThrows(UnsupportedOperationException.class, () -> node.copy());
 		}
 	}
 
 	@Test
-	void copy() {
-		assertThrows(UnsupportedOperationException.class, () -> node.copy());
-	}
-
-	@Test
 	void equals() {
-		node.material().set(mock(Material.class)); // TODO
 		assertEquals(node, node);
 		assertNotEquals(node, null);
 		assertNotEquals(node, new Node(node));

@@ -14,7 +14,18 @@ public class LocalTransform extends InheritedProperty<LocalTransform> {
 	private Transform transform = Matrix4.IDENTITY;
 	private transient Matrix matrix;
 
+	/**
+	 * Constructor.
+	 */
 	LocalTransform() {
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param that Local transform to copy
+	 */
+	LocalTransform(LocalTransform that) {
+		this.transform = that.transform;
 	}
 
 	/**

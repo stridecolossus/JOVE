@@ -44,7 +44,6 @@ public class ModelNodeTest {
 
 	@Test
 	void copy() {
-		node.material().set(mock(Material.class)); // TODO
 		final ModelNode copy = node.copy();
 		assertEquals(queue, copy.queue());
 		assertEquals(mesh, copy.mesh());

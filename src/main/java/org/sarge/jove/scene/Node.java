@@ -28,8 +28,9 @@ public class Node {
 	 * @param node Node to copy
 	 */
 	protected Node(Node node) {
-		transform.set(node.transform.transform());
-		mat.set(node.mat.material());
+		this.transform = node.transform;
+		this.mat = node.mat;
+		this.vol = node.vol;
 	}
 
 	/**

@@ -17,7 +17,7 @@ public class DefaultVisitorTest {
 
 	@Test
 	void visit() {
-		node.material().set(mock(Material.class));
+		node.material().set(mock(Material.class)); // TODO
 		visitor.visit(node);
 		assertEquals(false, node.transform().isDirty());
 		assertEquals(false, node.material().isDirty());

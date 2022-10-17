@@ -1,8 +1,7 @@
 package org.sarge.jove.scene;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.lib.util.Check;
 
 /**
  *
@@ -12,7 +11,19 @@ public class LocalMaterial extends InheritedProperty<LocalMaterial> {
 	private Material local;
 	private transient Material mat;
 
+	/**
+	 * Constructor.
+	 */
 	LocalMaterial() {
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param that Local material to copy
+	 */
+	LocalMaterial(LocalMaterial that) {
+		this.local = that.local;
+		this.mat = that.mat;
 	}
 
 	@Override
@@ -42,7 +53,8 @@ public class LocalMaterial extends InheritedProperty<LocalMaterial> {
 	 * @param mat Material
 	 */
 	public void set(Material mat) {
-		this.local = notNull(mat);
+		Check.notNull(mat);
+		this.local = mat;
 		this.mat = mat;
 	}
 

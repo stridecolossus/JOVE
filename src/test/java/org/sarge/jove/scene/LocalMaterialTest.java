@@ -63,6 +63,13 @@ public class LocalMaterialTest {
 			final LocalMaterial parent = new LocalMaterial();
 			assertThrows(IllegalStateException.class, () -> local.update(parent));
 		}
+
+		@DisplayName("can be cloned")
+		@Test
+		void copy() {
+			final LocalMaterial copy = new LocalMaterial(local);
+			assertEquals(true, copy.isDirty());
+		}
 	}
 
 	@DisplayName("An overridden local material...")
@@ -104,6 +111,14 @@ public class LocalMaterialTest {
 			parent.set(mat);
 			assertThrows(AssertionError.class, () -> local.update(parent));
 			assertThrows(AssertionError.class, () -> local.update(null));
+		}
+
+		@DisplayName("can be cloned")
+		@Test
+		void copy() {
+			final LocalMaterial copy = new LocalMaterial(local);
+			assertEquals(false, copy.isDirty());
+			assertEquals(mat, copy.material());
 		}
 	}
 }

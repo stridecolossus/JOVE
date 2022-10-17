@@ -94,4 +94,12 @@ public class LocalTransformTest {
 			assertThrows(IllegalStateException.class, () -> transform.matrix());
 		}
 	}
+
+	@DisplayName("A local transform can be cloned")
+	@Test
+	void copy() {
+		final LocalTransform copy = new LocalTransform(transform);
+		assertEquals(true, copy.isDirty());
+		assertEquals(Matrix4.IDENTITY, copy.transform());
+	}
 }

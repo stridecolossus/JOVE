@@ -100,7 +100,7 @@ public class GroupNodeTest {
 		@DisplayName("creates a new sub-tree when it is copied")
 		@Test
 		void copy() {
-			group.material().set(mock(Material.class)); // TODO
+//			group.material().set(mock(Material.class)); // TODO
 			final GroupNode copy = group.copy();
 			assertEquals(1, copy.nodes().count());
 		}
