@@ -164,6 +164,17 @@ public class Vector extends Tuple {
 	}
 
 	/**
+	 * Determines the nearest point on this vector to the given point.
+	 * @param p Point
+	 * @return Nearest point on this vector
+	 */
+	public Point nearest(Point p) {
+		final Vector v = new Vector(p);
+		final Vector n = v.project(this);
+		return new Point(n);
+	}
+
+	/**
 	 * Projects this vector onto a given vector.
 	 * <p>
 	 * The vector projection of a vector V onto U is: <pre>projU(V) = (U.V) U / mag</pre>

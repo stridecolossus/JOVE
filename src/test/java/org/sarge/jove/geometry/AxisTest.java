@@ -15,12 +15,27 @@ public class AxisTest {
 	}
 
 	@Test
+	void dot() {
+		assertEquals(1f, X.dot(X));
+		assertEquals(-1f, X.dot(X.invert()));
+		assertEquals(0f, X.dot(Y));
+		assertEquals(0f, X.dot(Z));
+	}
+
+	@Test
+	void cross() {
+		assertEquals(Z, X.cross(Y));
+		assertEquals(Z.invert(), Y.cross(X));
+	}
+
+	@Test
 	void invert() {
 		assertEquals(new Vector(-1, 0, 0), X.invert());
 		assertEquals(new Vector(0, -1, 0), Y.invert());
 		assertEquals(new Vector(0, 0, -1), Z.invert());
 	}
 
+	@DisplayName("The axis corresponding to the minimal component of a vector can be determined")
 	@Test
 	void minimal() {
 		assertEquals(X, Axis.minimal(new Vector(0, 1, 1)));
@@ -28,6 +43,7 @@ public class AxisTest {
 		assertEquals(Z, Axis.minimal(new Vector(1, 1, 0)));
 	}
 
+	@DisplayName("A rotation matrix about an axis can be constructed")
 	@Nested
 	class RotationTests {
 		@Test
@@ -64,15 +80,10 @@ public class AxisTest {
 		}
 	}
 
+	@DisplayName("An axis can be parsed...")
 	@Nested
 	class ParseTests {
-		@Test
-		void of() {
-			assertEquals(X, Axis.of("X"));
-			assertEquals(Y, Axis.of("Y"));
-			assertEquals(Z, Axis.of("Z"));
-		}
-
+		@DisplayName("from a token representing that axis")
 		@Test
 		void axis() {
 			assertEquals(X, Axis.parse("X"));
@@ -80,6 +91,7 @@ public class AxisTest {
 			assertEquals(Z, Axis.parse("Z"));
 		}
 
+		@DisplayName("from a token prefixed with the minus sign representing that inverted axis")
 		@Test
 		void invert() {
 			assertEquals(X.invert(), Axis.parse("-X"));
@@ -87,6 +99,7 @@ public class AxisTest {
 			assertEquals(Z.invert(), Axis.parse("-Z"));
 		}
 
+		@DisplayName("from a vector tuple")
 		@Test
 		void vector() {
 			assertEquals(X, Axis.parse("1 0 0"));
