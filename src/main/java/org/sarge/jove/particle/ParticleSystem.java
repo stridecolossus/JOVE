@@ -357,10 +357,11 @@ public class ParticleSystem implements Animation {
 	}
 
 	/**
-	 * Creates a renderable mesh for this particle system.
-	 * @return Particle mesh
+	 * Creates a buffered model for this particle system.
+	 * Note that changes to the particle system are reflected in the returned model.
+	 * @return Buffered model
 	 */
-	public Mesh mesh() {
+	public BufferedModel model() {
 		// Init vertex layout
 		final Layout layout = new Layout(Point.LAYOUT, Colour.LAYOUT);
 
@@ -402,8 +403,8 @@ public class ParticleSystem implements Animation {
 			}
 		};
 
-		// Create mesh
-		return new Mesh() {
+		// Create model
+		return new BufferedModel() {
 			@Override
 			public Header header() {
 				return header;
