@@ -63,9 +63,9 @@ public class ObjectModelLoaderTest {
 		assertEquals(true, model.isIndexed());
 
 		// Check model data
-		final Mesh mesh = model.mesh();
-		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, mesh.vertices().length());
-		assertEquals(3 * Short.BYTES, mesh.index().get().length());
+		final BufferedModel buffer = model.buffer();
+		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, buffer.vertices().length());
+		assertEquals(3 * Short.BYTES, buffer.index().get().length());
 	}
 
 	@Test

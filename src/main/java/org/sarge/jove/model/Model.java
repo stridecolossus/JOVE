@@ -248,37 +248,36 @@ public class Model implements Header {
 	}
 
 	/**
-	 * Mesh implementation.
+	 * Creates a buffered instance of this model.
+	 * @return This buffered model
 	 */
-	private class DefaultMesh implements Mesh {
-		@Override
-		public Header header() {
-			return Model.this;
-		}
-
-		@Override
-		public Bufferable vertices() {
-			validate();
-			return new VertexBuffer();
-		}
-
-		@Override
-		public Optional<Bufferable> index() {
-			validate();
-			if(isIndexed()) {
-				return Optional.of(new IndexBuffer());
+	public BufferedModel buffer() {
+		return new BufferedModel() {
+			@Override
+			public Header header() {
+				return Model.this;
 			}
-			else {
-				return Optional.empty();
-			}
-		}
-	}
 
-	/**
-	 * @return This model as a renderable mesh
-	 */
-	public Mesh mesh() {
-		return new DefaultMesh();
+			@Override
+			public Bufferable vertices() {
+				validate();
+				return new VertexBuffer();
+			}
+
+			/**
+			 * @return Index
+			 */
+			@Override
+			public Optional<Bufferable> index() {
+				validate();
+				if(isIndexed()) {
+					return Optional.of(new IndexBuffer());
+				}
+				else {
+					return Optional.empty();
+				}
+			}
+		};
 	}
 
 	/**

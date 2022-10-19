@@ -24,6 +24,6 @@ public class CubeBuilderTest {
 		assertEquals(count, model.count());
 		assertEquals(layout, model.layout());
 		assertEquals(false, model.isIndexed());
-		assertEquals(count * layout.stride() , model.mesh().vertices().length());
+		assertEquals(count * layout.stride() , model.buffer().vertices().length());
 	}
 }

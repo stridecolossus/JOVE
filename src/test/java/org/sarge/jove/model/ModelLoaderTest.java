@@ -26,7 +26,7 @@ class ModelLoaderTest {
 		assertNotNull(loader.map(mock(InputStream.class)));
 	}
 
-	private Mesh read() throws IOException {
+	private BufferedModel read() throws IOException {
 		return loader.load(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
 	}
 
@@ -44,23 +44,23 @@ class ModelLoaderTest {
 		loader.save(model, new DataOutputStream(out));
 
 		// Re-load and check header
-		final Mesh mesh = read();
-		assertNotNull(mesh);
+		final BufferedModel buffer = read();
+		assertNotNull(buffer);
 
 		// Check header
-		final Header header = mesh.header();
+		final Header header = buffer.header();
 		assertEquals(Primitive.TRIANGLES, header.primitive());
 		assertEquals(3, header.count());
 		assertEquals(new Layout(Point.LAYOUT), header.layout());
 		assertEquals(true, header.isIndexed());
 
 		// Check vertices
-		final Bufferable vertices = mesh.vertices();
+		final Bufferable vertices = buffer.vertices();
 		assertNotNull(vertices);
 		assertEquals(3 * Float.BYTES, vertices.length());
 
 		// Check index
-		final Optional<Bufferable> index = mesh.index();
+		final Optional<Bufferable> index = buffer.index();
 		assertNotNull(index);
 		assertTrue(index.isPresent());
 		assertEquals(3 * Short.BYTES, index.get().length());

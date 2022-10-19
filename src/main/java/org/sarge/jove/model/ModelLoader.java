@@ -7,10 +7,10 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
 
 /**
- * The <i>model loader</i> persists a JOVE model as a renderable {@link Mesh}.
+ * The <i>model loader</i> is used to persist and load a JOVE model.
  * @author Sarge
  */
-public class ModelLoader implements ResourceLoader<DataInputStream, Mesh> {
+public class ModelLoader implements ResourceLoader<DataInputStream, BufferedModel> {
 	private final DataHelper helper = new DataHelper();
 
 	@Override
@@ -19,7 +19,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Mesh> {
 	}
 
 	@Override
-	public Mesh load(DataInputStream in) throws IOException {
+	public BufferedModel load(DataInputStream in) throws IOException {
 		// Load and verify file format version
 		helper.version(in);
 
@@ -63,7 +63,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Mesh> {
 		};
 
 		// Create mesh
-		return new Mesh() {
+		return new BufferedModel() {
 			@Override
 			public Header header() {
 				return header;
@@ -103,7 +103,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, Mesh> {
 		}
 
 		// Write vertices
-		final Mesh mesh = model.mesh();
+		final BufferedModel mesh = model.buffer();
 		helper.write(mesh.vertices(), out);
 
 		// Write index

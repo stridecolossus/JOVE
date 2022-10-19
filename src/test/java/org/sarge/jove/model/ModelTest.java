@@ -128,19 +128,19 @@ public class ModelTest {
 		}
 	}
 
-	@DisplayName("A model converted to a mesh...")
+	@DisplayName("A buffered model...")
 	@Nested
-	class MeshTests {
-		private Mesh mesh;
+	class BufferedModelTests {
+		private BufferedModel buffer;
 
 		@BeforeEach
 		void before() {
-			mesh = model.mesh();
+			buffer = model.buffer();
 		}
 
 		@Test
 		void constructor() {
-			assertEquals(model, mesh.header());
+			assertEquals(model, buffer.header());
 		}
 
 		@DisplayName("has a vertex buffer")
@@ -155,17 +155,16 @@ public class ModelTest {
 			// Check vertices
 			final int len = 3 * 3 * 4;
 			final ByteBuffer bb = ByteBuffer.allocate(len);
-			final Mesh mesh = model.mesh();
-			assertEquals(len, mesh.vertices().length());
-			mesh.vertices().buffer(bb);
+			assertEquals(len, buffer.vertices().length());
+			buffer.vertices().buffer(bb);
 			assertEquals(0, bb.remaining());
 		}
 
 		@DisplayName("is invalid if the model layout is undefined")
 		@Test
 		void invalid() {
-			assertThrows(IllegalStateException.class, () -> mesh.vertices());
-			assertThrows(IllegalStateException.class, () -> mesh.index());
+			assertThrows(IllegalStateException.class, () -> buffer.vertices());
+			assertThrows(IllegalStateException.class, () -> buffer.index());
 		}
 
 		@DisplayName("is invalid if the vertex count does not match the drawing primitive")
@@ -174,15 +173,15 @@ public class ModelTest {
 			model = new Model(Primitive.LINES);
 			model.layout(Point.LAYOUT);
 			model.add(vertex);
-			assertThrows(IllegalStateException.class, () -> mesh.vertices());
-			assertThrows(IllegalStateException.class, () -> mesh.index());
+			assertThrows(IllegalStateException.class, () -> buffer.vertices());
+			assertThrows(IllegalStateException.class, () -> buffer.index());
 		}
 
 		@DisplayName("does not have an index buffer if the model is unindexed")
 		@Test
 		void unindexed() {
 			model.layout(Point.LAYOUT);
-			assertEquals(Optional.empty(), mesh.index());
+			assertEquals(Optional.empty(), buffer.index());
 		}
 
 		@DisplayName("has a short index buffer is the model is indexed and the index is small")
@@ -197,7 +196,7 @@ public class ModelTest {
 
 			// Check index buffer
 			final int len = 3 * Short.BYTES;
-			final Bufferable index = mesh.index().orElseThrow();
+			final Bufferable index = buffer.index().orElseThrow();
 			final ByteBuffer bb = ByteBuffer.allocate(len);
 			assertEquals(len, index.length());
 			index.buffer(bb);
@@ -222,7 +221,7 @@ public class ModelTest {
 
 			// Check index is integral
 			final int len = size * Integer.BYTES;
-			final Bufferable index = mesh.index().orElseThrow();
+			final Bufferable index = buffer.index().orElseThrow();
 			assertEquals(len, index.length());
 
 			// Check index buffer
