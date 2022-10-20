@@ -9,19 +9,16 @@ import org.sarge.jove.model.Mesh;
 
 public class ModelNodeTest {
 	private ModelNode node;
-	private RenderQueue queue;
 	private Mesh mesh;
 
 	@BeforeEach
 	void before() {
-		queue = new RenderQueue();
 		mesh = mock(Mesh.class);
-		node = new ModelNode(queue, mesh);
+		node = new ModelNode(mesh);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(queue, node.queue());
 		assertEquals(mesh, node.mesh());
 		assertEquals(Volume.EMPTY, node.volume());
 	}
@@ -45,7 +42,6 @@ public class ModelNodeTest {
 	@Test
 	void copy() {
 		final ModelNode copy = node.copy();
-		assertEquals(queue, copy.queue());
 		assertEquals(mesh, copy.mesh());
 	}
 
@@ -53,6 +49,6 @@ public class ModelNodeTest {
 	void equals() {
 		assertEquals(node, node);
 		assertNotEquals(node, null);
-		assertNotEquals(node, new ModelNode(queue, mesh));
+		assertNotEquals(node, new ModelNode(mesh));
 	}
 }

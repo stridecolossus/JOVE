@@ -4,12 +4,13 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.util.Check;
 
 /**
- *
+ * A <i>local material</i> specifies the material for a node and its descendants that inherit this property.
+ * @see Material#NONE
  * @author Sarge
  */
 public class LocalMaterial extends InheritedProperty<LocalMaterial> {
 	private Material local;
-	private transient Material mat;
+	private transient Material mat = Material.NONE;
 
 	/**
 	 * Constructor.
@@ -28,7 +29,7 @@ public class LocalMaterial extends InheritedProperty<LocalMaterial> {
 
 	@Override
 	public boolean isDirty() {
-		return mat == null;
+		return mat == Material.NONE;
 	}
 
 	/**
@@ -42,6 +43,7 @@ public class LocalMaterial extends InheritedProperty<LocalMaterial> {
 	/**
 	 * @return Actual material at this node
 	 * @throws IllegalStateException if this material is {@link #isInherited()} but has not been updated
+	 * @see #update(LocalMaterial)
 	 */
 	public Material material() {
 		if(isDirty()) throw new IllegalStateException("Local material has not been updated: " + this);
@@ -49,7 +51,7 @@ public class LocalMaterial extends InheritedProperty<LocalMaterial> {
 	}
 
 	/**
-	 * Sets the explicit material at this node.
+	 * Sets the material at this node.
 	 * @param mat Material
 	 */
 	public void set(Material mat) {
@@ -63,7 +65,7 @@ public class LocalMaterial extends InheritedProperty<LocalMaterial> {
 	 */
 	public void inherit() {
 		this.local = null;
-		this.mat = null;
+		this.mat = Material.NONE;
 	}
 
 	/**

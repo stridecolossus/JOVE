@@ -1,43 +1,41 @@
 package org.sarge.jove.scene;
 
-public class RenderQueueTest {
-}
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
-//	private RenderQueue queue;
-//	private ModelNode node;
-//	private Material mat;
-//	private Consumer<Renderable> consumer;
-//
-//	@SuppressWarnings("unchecked")
-//	@BeforeEach
-//	void before() {
-//		queue = new RenderQueue();
-//
-//		mat = mock(Material.class);
-//		when(mat.queue()).thenReturn(queue);
-//
-//		node = new ModelNode(mock(Model.class));
-////		node.material(mat);
-//
-//		consumer = mock(Consumer.class);
-//	}
-//
-//	@DisplayName("A node can be added to the queue")
-//	@Test
-//	void add() {
-//		queue.add(node);
-//		queue.render(consumer);
-//		verify(consumer).accept(mat);
-//		verify(consumer).accept(node);
-//		verifyNoMoreInteractions(consumer);
-//	}
-//
-//	@DisplayName("A previously added node can be removed from the queue")
-//	@Test
-//	void remove() {
-//		queue.add(node);
-//		queue.remove(node);
-//		queue.render(consumer);
-//		verifyNoInteractions(consumer);
-//	}
-//}
+import java.util.function.Consumer;
+
+import org.junit.jupiter.api.*;
+import org.sarge.jove.model.Mesh;
+
+public class RenderQueueTest {
+	private RenderQueue queue;
+	private Consumer<Renderable> consumer;
+	private ModelNode node;
+
+	@SuppressWarnings("unchecked")
+	@BeforeEach
+	void before() {
+		queue = new RenderQueue();
+		consumer = mock(Consumer.class);
+		node = new ModelNode(mock(Mesh.class));
+	}
+
+	@Test
+	void add() {
+		final Material mat = mock(Material.class);
+		final Renderable texture = mock(Renderable.class);
+		when(mat.texture()).thenReturn(texture);
+		node.material().set(mat);
+		queue.add(node);
+		queue.render(consumer);
+		verify(consumer).accept(mat);
+		verify(consumer).accept(texture);
+		verify(consumer).accept(node.mesh());
+	}
+
+	@Test
+	void undefined() {
+		assertThrows(IllegalStateException.class, () -> queue.add(node));
+	}
+}

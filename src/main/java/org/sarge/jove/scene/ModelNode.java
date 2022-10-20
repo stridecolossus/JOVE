@@ -9,19 +9,17 @@ import org.sarge.jove.model.Mesh;
 
 /**
  * A <i>model node</i> is used to render a {@link Mesh} in the scene.
+ * TODO - doc linear data structure
  * @author Sarge
  */
 public final class ModelNode extends LeafNode {
-	private final RenderQueue queue;
 	private final Mesh mesh;
 
 	/**
 	 * Constructor.
-	 * @param queue		Render queue for this node
-	 * @param mesh 		Renderable mesh
+	 * @param mesh Renderable mesh
 	 */
-	public ModelNode(RenderQueue queue, Mesh mesh) {
-		this.queue = notNull(queue);
+	public ModelNode(Mesh mesh) {
 		this.mesh = notNull(mesh);
 	}
 
@@ -31,17 +29,8 @@ public final class ModelNode extends LeafNode {
 	 */
 	protected ModelNode(ModelNode node) {
 		super(node);
-		this.queue = node.queue;
 		this.mesh = node.mesh;
 	}
-
-	/**
-	 * @return Render queue for this node
-	 */
-	public RenderQueue queue() {
-		return queue;
-	}
-	// TODO - should be property of material?
 
 	/**
 	 * @return Renderable mesh
@@ -53,13 +42,13 @@ public final class ModelNode extends LeafNode {
 	@Override
 	protected void attach(Node parent) {
 		super.attach(parent);
-		queue.add(this);
+//		queue.add(this);
 	}
 
 	@Override
 	protected void detach() {
 		super.detach();
-		queue.remove(this);
+//		queue.remove(this);
 	}
 
 	@Override
@@ -76,7 +65,6 @@ public final class ModelNode extends LeafNode {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append(queue)
 				.append(mesh)
 				.build();
 	}

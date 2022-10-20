@@ -16,5 +16,6 @@ public class DefaultVisitor implements Visitor {
 	public void visit(Node node) {
 		transform.visit(node);
 		material.visit(node);
+		// TODO - update queues if material was dirty
 	}
 }
