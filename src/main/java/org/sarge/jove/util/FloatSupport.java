@@ -1,9 +1,9 @@
 package org.sarge.jove.util;
 
-import java.util.Objects;
+import java.util.*;
 
 /**
- * Utility class for floating-point implementations of common function stereotypes.
+ * Support for floating-point utilities and implementations of common function stereotypes.
  * @author Sarge
  */
 public final class FloatSupport {
@@ -54,7 +54,7 @@ public final class FloatSupport {
 	public interface FloatUnaryOperator {
 		/**
 		 * Applies this operator to the given floating-point value.
-		 * @param f Value
+		 * @param f Argument
 		 * @return Result
 		 */
 	    float apply(float f);
@@ -82,6 +82,32 @@ public final class FloatSupport {
 	    default FloatUnaryOperator then(FloatUnaryOperator after) {
 	    	Objects.requireNonNull(after);
 	    	return f -> after.apply(apply(f));
+	    }
+	}
+
+	/**
+	 * Floating-point generator function.
+	 */
+	@FunctionalInterface
+	public interface IntToFloatFunction {
+		/**
+		 * Applies this function to the given argument.
+		 * @param value Argument
+		 * @return Result
+		 */
+		float apply(int value);
+
+		/**
+		 * Set all elements of the specified floating-point array, using the provided generator function to compute each element.
+		 * @param array			Array to fill
+		 * @param generator		Generator function
+		 * @see Arrays#setAll(Object[], java.util.function.IntFunction)
+		 */
+		static void setAll(float[] array, IntToFloatFunction generator) {
+	        Objects.requireNonNull(generator);
+	        for(int n = 0; n < array.length; n++) {
+	            array[n] = generator.apply(n);
+	        }
 	    }
 	}
 }
