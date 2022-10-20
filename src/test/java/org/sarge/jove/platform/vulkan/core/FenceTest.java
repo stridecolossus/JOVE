@@ -67,7 +67,7 @@ public class FenceTest extends AbstractVulkanTest {
 		@Test
 		void waitReady() {
 			fence.waitReady();
-			verify(lib).vkWaitForFences(dev, 1, NativeObject.array(List.of(fence)), VulkanBoolean.TRUE, Long.MAX_VALUE);
+			verify(lib).vkWaitForFences(dev, 1, NativeObject.array(List.of(fence)), true, Long.MAX_VALUE);
 		}
 	}
 

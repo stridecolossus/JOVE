@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Percentile;
 
@@ -49,7 +48,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param sampleShadingEnable Whether sample shading is enabled
 	 */
 	public MultiSamplePipelineStageBuilder sampleShadingEnable(boolean sampleShadingEnable) {
-		info.sampleShadingEnable = VulkanBoolean.of(sampleShadingEnable);
+		info.sampleShadingEnable = sampleShadingEnable;
 		return this;
 	}
 
@@ -77,7 +76,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param alphaToCoverageEnable Whether <i>alpha to coverage</i> is enabled
 	 */
 	public MultiSamplePipelineStageBuilder alphaToCoverageEnable(boolean alphaToCoverageEnable) {
-		info.alphaToCoverageEnable = VulkanBoolean.of(alphaToCoverageEnable);
+		info.alphaToCoverageEnable = alphaToCoverageEnable;
 		return this;
 	}
 
@@ -86,7 +85,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param alphaToOneEnable Whether <i>alpha to one</i> is enabled
 	 */
 	public MultiSamplePipelineStageBuilder alphaToOneEnable(boolean alphaToOneEnable) {
-		info.alphaToOneEnable = VulkanBoolean.of(alphaToOneEnable);
+		info.alphaToOneEnable = alphaToOneEnable;
 		return this;
 	}
 

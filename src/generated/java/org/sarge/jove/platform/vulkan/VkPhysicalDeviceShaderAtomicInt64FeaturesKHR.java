@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,6 +21,6 @@ public class VkPhysicalDeviceShaderAtomicInt64FeaturesKHR extends VulkanStructur
 
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES_KHR;
 	public Pointer pNext;
-	public VulkanBoolean shaderBufferInt64Atomics;
-	public VulkanBoolean shaderSharedInt64Atomics;
+	public boolean shaderBufferInt64Atomics;
+	public boolean shaderSharedInt64Atomics;
 }

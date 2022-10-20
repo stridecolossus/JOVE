@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -27,6 +25,6 @@ public class VkPhysicalDeviceDepthStencilResolvePropertiesKHR extends VulkanStru
 	public Pointer pNext;
 	public VkResolveModeFlagKHR supportedDepthResolveModes;
 	public VkResolveModeFlagKHR supportedStencilResolveModes;
-	public VulkanBoolean independentResolveNone;
-	public VulkanBoolean independentResolve;
+	public boolean independentResolveNone;
+	public boolean independentResolve;
 }

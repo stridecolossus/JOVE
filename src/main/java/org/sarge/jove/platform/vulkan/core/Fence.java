@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
@@ -91,7 +91,7 @@ public class Fence extends AbstractVulkanObject {
 	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
 		final Pointer array = NativeObject.array(fences);
 		final VulkanLibrary lib = dev.library();
-		check(lib.vkWaitForFences(dev, fences.size(), array, VulkanBoolean.of(all), timeout));
+		check(lib.vkWaitForFences(dev, fences.size(), array, all, timeout));
 	}
 
 	/**
@@ -155,6 +155,6 @@ public class Fence extends AbstractVulkanObject {
 		 * @param timeout			Timeout or {@link Long#MAX_VALUE} (nanoseconds)
 		 * @return Result
 		 */
-		int vkWaitForFences(DeviceContext device, int fenceCount, Pointer pFences, VulkanBoolean waitAll, long timeout);
+		int vkWaitForFences(DeviceContext device, int fenceCount, Pointer pFences, boolean waitAll, long timeout);
 	}
 }

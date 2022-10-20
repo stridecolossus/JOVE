@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,6 +21,6 @@ public class VkPhysicalDeviceFloat16Int8FeaturesKHR extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR;
 	public Pointer pNext;
-	public VulkanBoolean shaderFloat16;
-	public VulkanBoolean shaderInt8;
+	public boolean shaderFloat16;
+	public boolean shaderInt8;
 }

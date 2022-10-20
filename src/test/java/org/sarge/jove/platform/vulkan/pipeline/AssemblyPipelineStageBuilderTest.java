@@ -8,7 +8,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 class AssemblyPipelineStageBuilderTest {
 	private AssemblyPipelineStageBuilder builder;
@@ -30,7 +29,7 @@ class AssemblyPipelineStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(VkPrimitiveTopology.LINE_LIST, info.topology);
-		assertEquals(VulkanBoolean.TRUE, info.primitiveRestartEnable);
+		assertEquals(true, info.primitiveRestartEnable);
 	}
 
 	@Test
@@ -38,7 +37,7 @@ class AssemblyPipelineStageBuilderTest {
 		final VkPipelineInputAssemblyStateCreateInfo info = builder.get();
 		assertNotNull(info);
 		assertEquals(VkPrimitiveTopology.TRIANGLE_STRIP, info.topology);
-		assertEquals(VulkanBoolean.FALSE, info.primitiveRestartEnable);
+		assertEquals(false, info.primitiveRestartEnable);
 	}
 
 	@ParameterizedTest

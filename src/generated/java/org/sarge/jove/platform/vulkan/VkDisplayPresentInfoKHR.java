@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -22,5 +21,5 @@ public class VkDisplayPresentInfoKHR extends VulkanStructure {
 	public Pointer pNext;
 	public VkRect2D srcRect;
 	public VkRect2D dstRect;
-	public VulkanBoolean persistent;
+	public boolean persistent;
 }

@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerArray;
 
 import com.sun.jna.Pointer;
@@ -223,7 +223,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 					assertEquals(VkImageUsageFlag.COLOR_ATTACHMENT.value(), info.imageUsage);
 					assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, info.compositeAlpha);
 					assertEquals(VkPresentModeKHR.FIFO_KHR, info.presentMode);
-					assertEquals(VulkanBoolean.TRUE, info.clipped);
+					assertEquals(true, info.clipped);
 					return true;
 				}
 			};

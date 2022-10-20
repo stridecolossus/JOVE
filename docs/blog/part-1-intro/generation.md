@@ -667,11 +667,11 @@ Where an arbitrary pointer is implemented by the JNA type:
 public static final String POINTER = "com.sun.jna.Pointer";
 ```
 
-There are special case mappings for boolean values (the reason for `VulkanBoolean` is detailed in a later chapter):
+There are special case mappings for boolean values:
 
 ```java
 if(type.equals("VkBool32")) {
-    return "org.sarge.jove.platform.vulkan.util.VulkanBoolean";
+    return "boolean";
 }
 ```
 
@@ -716,7 +716,7 @@ The following table summarises the type mappings:
 | char              | 0         | byte                  |
 | char              | 1         | String                |
 | char              | > 1       | Pointer               |
-| VkBool32          | 0         | VulkanBoolean         |
+| VkBool32          | 0         | boolean               |
 | *Flags            | 0         | int                   |
 | uint32_t (etc)    | 0         | int                   |
 

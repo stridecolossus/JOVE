@@ -642,10 +642,7 @@ for(Object value : constants.values()) {
     switch(value) {
         case Integer n -> buffer.putInt(n);
         case Float f -> buffer.putFloat(f);
-        case Boolean b -> {
-            int bool = VulkanBoolean.of(b).toInteger();
-            buffer.putInt(bool);
-        }
+        case Boolean b -> converter.toNative(b, null);
         default -> throw new RuntimeException();
     }
 }
@@ -731,7 +728,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
     private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
 
     public ColourBlendPipelineStageBuilder() {
-        info.logicOpEnable = VulkanBoolean.FALSE;
+        info.logicOpEnable = false;
         info.logicOp = VkLogicOp.COPY;
         Arrays.fill(info.blendConstants, 1);
     }
@@ -742,7 +739,7 @@ The global blending properties are configured as follows:
 
 ```java
 public ColourBlendPipelineStageBuilder enable(boolean enabled) {
-    info.logicOpEnable = VulkanBoolean.of(enabled);
+    info.logicOpEnable = enabled;
     return this;
 }
 
@@ -820,7 +817,7 @@ The descriptor for the attachment is generated in the nested builder as follows:
 ```java
 private void populate(VkPipelineColorBlendAttachmentState info) {
     // Init descriptor
-    info.blendEnable = VulkanBoolean.of(enabled);
+    info.blendEnable = enabled;
     info.colorWriteMask = mask;
 
     // Init colour blending operation

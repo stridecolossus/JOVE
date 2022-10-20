@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -19,8 +17,8 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceSamplerYcbcrConversionFeatures extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceSamplerYcbcrConversionFeatures implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceSamplerYcbcrConversionFeatures implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES;
 	public Pointer pNext;
-	public VulkanBoolean samplerYcbcrConversion;
+	public boolean samplerYcbcrConversion;
 }

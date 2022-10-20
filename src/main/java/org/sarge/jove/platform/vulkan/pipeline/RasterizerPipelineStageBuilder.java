@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 
 /**
  * Builder for the rasterizer pipeline stage.
@@ -26,7 +26,7 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	 * @param depthClampEnable Whether to clamp depth values
 	 */
 	public RasterizerPipelineStageBuilder depthClamp(boolean depthClampEnable) {
-		info.depthClampEnable = VulkanBoolean.of(depthClampEnable);
+		info.depthClampEnable = depthClampEnable;
 		return this;
 	}
 
@@ -35,7 +35,7 @@ public class RasterizerPipelineStageBuilder extends AbstractPipelineStageBuilder
 	 * @param rasterizerDiscardEnable Whether to discard geometry
 	 */
 	public RasterizerPipelineStageBuilder discard(boolean rasterizerDiscardEnable) {
-		info.rasterizerDiscardEnable = VulkanBoolean.of(rasterizerDiscardEnable);
+		info.rasterizerDiscardEnable = rasterizerDiscardEnable;
 		return this;
 	}
 

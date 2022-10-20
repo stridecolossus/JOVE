@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -30,12 +28,12 @@ public class VkPipelineRasterizationStateCreateInfo extends VulkanStructure impl
 	public VkStructureType sType = VkStructureType.PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
-	public VulkanBoolean depthClampEnable;
-	public VulkanBoolean rasterizerDiscardEnable;
+	public boolean depthClampEnable;
+	public boolean rasterizerDiscardEnable;
 	public VkPolygonMode polygonMode;
 	public VkCullMode cullMode;
 	public VkFrontFace frontFace;
-	public VulkanBoolean depthBiasEnable;
+	public boolean depthBiasEnable;
 	public float depthBiasConstantFactor;
 	public float depthBiasClamp;
 	public float depthBiasSlopeFactor;

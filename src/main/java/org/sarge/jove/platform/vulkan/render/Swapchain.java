@@ -390,7 +390,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param clipped Whether clipped
 		 */
 		public Builder clipped(boolean clipped) {
-			info.clipped = VulkanBoolean.of(clipped);
+			info.clipped = clipped;
 			return this;
 		}
 

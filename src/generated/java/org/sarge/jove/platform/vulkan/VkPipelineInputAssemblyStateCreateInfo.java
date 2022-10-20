@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -23,5 +21,5 @@ public class VkPipelineInputAssemblyStateCreateInfo extends VulkanStructure impl
 	public Pointer pNext;
 	public int flags;
 	public VkPrimitiveTopology topology;
-	public VulkanBoolean primitiveRestartEnable;
+	public boolean primitiveRestartEnable;
 }

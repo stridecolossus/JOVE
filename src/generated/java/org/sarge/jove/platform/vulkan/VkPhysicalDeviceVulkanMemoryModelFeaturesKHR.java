@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -21,10 +19,10 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceVulkanMemoryModelFeaturesKHR extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceVulkanMemoryModelFeaturesKHR implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceVulkanMemoryModelFeaturesKHR implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES_KHR;
 	public Pointer pNext;
-	public VulkanBoolean vulkanMemoryModel;
-	public VulkanBoolean vulkanMemoryModelDeviceScope;
-	public VulkanBoolean vulkanMemoryModelAvailabilityVisibilityChains;
+	public boolean vulkanMemoryModel;
+	public boolean vulkanMemoryModelDeviceScope;
+	public boolean vulkanMemoryModelAvailabilityVisibilityChains;
 }

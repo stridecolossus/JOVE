@@ -9,7 +9,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
@@ -120,11 +120,11 @@ public class SamplerTest extends AbstractVulkanTest {
 					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeV);
 					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeW);
 					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
-					assertEquals(VulkanBoolean.TRUE, info.anisotropyEnable);
+					assertEquals(true, info.anisotropyEnable);
 					assertEquals(4f, info.maxAnisotropy);
-					assertEquals(VulkanBoolean.TRUE, info.compareEnable);
+					assertEquals(true, info.compareEnable);
 					assertEquals(VkCompareOp.GREATER, info.compareOp);
-					assertEquals(VulkanBoolean.TRUE, info.unnormalizedCoordinates);
+					assertEquals(true, info.unnormalizedCoordinates);
 					return true;
 				}
 			};
@@ -151,11 +151,11 @@ public class SamplerTest extends AbstractVulkanTest {
 					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeV);
 					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeW);
 					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
-					assertEquals(VulkanBoolean.FALSE, info.anisotropyEnable);
+					assertEquals(false, info.anisotropyEnable);
 					assertEquals(1f, info.maxAnisotropy);
-					assertEquals(null, info.compareEnable);
+					assertEquals(false, info.compareEnable);
 					assertEquals(null, info.compareOp);
-					assertEquals(VulkanBoolean.FALSE, info.unnormalizedCoordinates);
+					assertEquals(false, info.unnormalizedCoordinates);
 					return true;
 				}
 			};

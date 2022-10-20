@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -27,9 +25,9 @@ public class VkPipelineMultisampleStateCreateInfo extends VulkanStructure implem
 	public Pointer pNext;
 	public int flags;
 	public VkSampleCount rasterizationSamples;
-	public VulkanBoolean sampleShadingEnable;
+	public boolean sampleShadingEnable;
 	public float minSampleShading;
 	public Pointer pSampleMask;
-	public VulkanBoolean alphaToCoverageEnable;
-	public VulkanBoolean alphaToOneEnable;
+	public boolean alphaToCoverageEnable;
+	public boolean alphaToOneEnable;
 }

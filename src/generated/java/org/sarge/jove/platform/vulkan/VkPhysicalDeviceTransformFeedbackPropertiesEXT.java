@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -28,7 +26,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceTransformFeedbackPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceTransformFeedbackPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceTransformFeedbackPropertiesEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
 	public Pointer pNext;
 	public int maxTransformFeedbackStreams;
@@ -37,8 +35,8 @@ public class VkPhysicalDeviceTransformFeedbackPropertiesEXT extends VulkanStruct
 	public int maxTransformFeedbackStreamDataSize;
 	public int maxTransformFeedbackBufferDataSize;
 	public int maxTransformFeedbackBufferDataStride;
-	public VulkanBoolean transformFeedbackQueries;
-	public VulkanBoolean transformFeedbackStreamsLinesTriangles;
-	public VulkanBoolean transformFeedbackRasterizationStreamSelect;
-	public VulkanBoolean transformFeedbackDraw;
+	public boolean transformFeedbackQueries;
+	public boolean transformFeedbackStreamsLinesTriangles;
+	public boolean transformFeedbackRasterizationStreamSelect;
+	public boolean transformFeedbackDraw;
 }

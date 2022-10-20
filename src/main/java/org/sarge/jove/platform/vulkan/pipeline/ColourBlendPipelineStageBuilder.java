@@ -6,7 +6,6 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 import org.sarge.jove.util.*;
 
 /**
@@ -18,7 +17,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 
 	public ColourBlendPipelineStageBuilder() {
-		info.logicOpEnable = VulkanBoolean.FALSE;
+		info.logicOpEnable = false;
 		info.logicOp = VkLogicOp.COPY;
 		Arrays.fill(info.blendConstants, 1);
 	}
@@ -36,7 +35,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param enabled Whether enabled (default is {@code false})
 	 */
 	public ColourBlendPipelineStageBuilder enable(boolean enabled) {
-		info.logicOpEnable = VulkanBoolean.of(enabled);
+		info.logicOpEnable = enabled;
 		return this;
 	}
 
@@ -181,7 +180,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 		 */
 		private void populate(VkPipelineColorBlendAttachmentState info) {
 			// Init descriptor
-			info.blendEnable = VulkanBoolean.of(enabled);
+			info.blendEnable = enabled;
 
 			// Init colour blending operation
 			info.srcColorBlendFactor = colour.src;

@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -24,13 +22,13 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT;
 	public Pointer pNext;
 	public int advancedBlendMaxColorAttachments;
-	public VulkanBoolean advancedBlendIndependentBlend;
-	public VulkanBoolean advancedBlendNonPremultipliedSrcColor;
-	public VulkanBoolean advancedBlendNonPremultipliedDstColor;
-	public VulkanBoolean advancedBlendCorrelatedOverlap;
-	public VulkanBoolean advancedBlendAllOperations;
+	public boolean advancedBlendIndependentBlend;
+	public boolean advancedBlendNonPremultipliedSrcColor;
+	public boolean advancedBlendNonPremultipliedDstColor;
+	public boolean advancedBlendCorrelatedOverlap;
+	public boolean advancedBlendAllOperations;
 }

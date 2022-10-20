@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -26,7 +25,7 @@ public class VkCommandBufferInheritanceInfo extends VulkanStructure {
 	public Pointer renderPass;
 	public int subpass;
 	public Pointer framebuffer;
-	public VulkanBoolean occlusionQueryEnable;
+	public boolean occlusionQueryEnable;
 	public VkQueryControlFlag queryFlags;
 	public VkQueryPipelineStatisticFlag pipelineStatistics;
 }

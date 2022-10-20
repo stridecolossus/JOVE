@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,9 +18,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceComputeShaderDerivativesFeaturesNV extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceComputeShaderDerivativesFeaturesNV implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceComputeShaderDerivativesFeaturesNV implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV;
 	public Pointer pNext;
-	public VulkanBoolean computeDerivativeGroupQuads;
-	public VulkanBoolean computeDerivativeGroupLinear;
+	public boolean computeDerivativeGroupQuads;
+	public boolean computeDerivativeGroupLinear;
 }

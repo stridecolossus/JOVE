@@ -33,7 +33,7 @@ import java.util.stream.Stream;
  * <p>
  * The following field types <b>only</b> are supported:
  * <ul>
- * <li>boolean flags implemented as a {@link VulkanBoolean}</li>
+ * <li>boolean flags</li>
  * <li>numeric values (int, long, float)</li>
  * </ul>
  * <p>
@@ -89,7 +89,7 @@ public @interface RequiredFeature {
 				// Test whether device feature is required
 				return switch(value) {
 					case null -> false;
-					case VulkanBoolean bool -> bool.toBoolean();
+					case Boolean b -> b;
 					case Number num -> num.floatValue() > annotation.predicate();
 					default -> throw new UnsupportedOperationException(String.format("Unsupported required feature: object=%s feature=%s", obj, annotation));
 				};

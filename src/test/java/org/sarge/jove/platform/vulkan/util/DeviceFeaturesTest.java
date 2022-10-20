@@ -1,15 +1,11 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 public class DeviceFeaturesTest {
@@ -20,7 +16,7 @@ public class DeviceFeaturesTest {
 	@BeforeEach
 	void before() {
 		struct = new VkPhysicalDeviceFeatures();
-		struct.samplerAnisotropy = VulkanBoolean.TRUE;
+		struct.samplerAnisotropy = true;
 	}
 
 	@Nested
@@ -60,7 +56,7 @@ public class DeviceFeaturesTest {
 		void descriptor() {
 			final VkPhysicalDeviceFeatures descriptor = required.descriptor();
 			assertNotNull(descriptor);
-			assertEquals(VulkanBoolean.TRUE, descriptor.samplerAnisotropy);
+			assertEquals(true, descriptor.samplerAnisotropy);
 		}
 
 		@Test
@@ -76,12 +72,9 @@ public class DeviceFeaturesTest {
 	@Nested
 	class SupportedFeaturesTest {
 		private DeviceFeatures supported;
-		private VkPhysicalDeviceFeatures struct;
 
 		@BeforeEach
 		void before() {
-			struct = new VkPhysicalDeviceFeatures();
-			struct.samplerAnisotropy = VulkanBoolean.TRUE;
 			supported = DeviceFeatures.of(struct);
 		}
 
@@ -94,7 +87,7 @@ public class DeviceFeaturesTest {
 		void descriptor() {
 			final VkPhysicalDeviceFeatures descriptor = supported.descriptor();
 			assertNotNull(descriptor);
-			assertEquals(VulkanBoolean.TRUE, descriptor.samplerAnisotropy);
+			assertEquals(true, descriptor.samplerAnisotropy);
 		}
 
 		@Test

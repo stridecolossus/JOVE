@@ -1,11 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -25,7 +23,7 @@ public class VkPipelineColorBlendStateCreateInfo extends VulkanStructure impleme
 	public VkStructureType sType = VkStructureType.PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	public Pointer pNext;
 	public int flags;
-	public VulkanBoolean logicOpEnable;
+	public boolean logicOpEnable;
 	public VkLogicOp logicOp;
 	public int attachmentCount;
 	public VkPipelineColorBlendAttachmentState pAttachments;

@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -222,7 +222,7 @@ public class Sampler extends AbstractVulkanObject {
 		@RequiredFeature(field="maxAnisotropy", feature="samplerAnisotropy")
 		public Builder anisotropy(float anisotropy) {
 			info.maxAnisotropy = oneOrMore(anisotropy);
-			info.anisotropyEnable = VulkanBoolean.of(anisotropy > 1);
+			info.anisotropyEnable = anisotropy > 1;
 			return this;
 		}
 
@@ -232,7 +232,7 @@ public class Sampler extends AbstractVulkanObject {
 		 */
 		public Builder compare(VkCompareOp op) {
 			info.compareOp = notNull(op);
-			info.compareEnable = VulkanBoolean.TRUE;
+			info.compareEnable = true;
 			return this;
 		}
 
@@ -241,7 +241,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * @param unnormalizedCoordinates Whether to use un-normalized coordinates
 		 */
 		public Builder unnormalizedCoordinates(boolean unnormalizedCoordinates) {
-			info.unnormalizedCoordinates = VulkanBoolean.of(unnormalizedCoordinates);
+			info.unnormalizedCoordinates = unnormalizedCoordinates;
 			return this;
 		}
 

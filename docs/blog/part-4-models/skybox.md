@@ -956,7 +956,7 @@ public VkPhysicalDeviceFeatures descriptor() {
 
     // Build descriptor
     var struct = new VkPhysicalDeviceFeatures();
-    required.forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
+    required.forEach(field -> struct.writeField(field, true));
 
     return struct;
 }
@@ -989,7 +989,7 @@ static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
         }
 
         private boolean isEnabled(String field) {
-            return features.readField(field) == VulkanBoolean.TRUE;
+            return features.readField(field) == true;
         }
     };
 }

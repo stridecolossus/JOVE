@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -41,12 +40,12 @@ public class VkSamplerCreateInfo extends VulkanStructure {
 	public VkSamplerAddressMode addressModeV;
 	public VkSamplerAddressMode addressModeW;
 	public float mipLodBias;
-	public VulkanBoolean anisotropyEnable;
+	public boolean anisotropyEnable;
 	public float maxAnisotropy;
-	public VulkanBoolean compareEnable;
+	public boolean compareEnable;
 	public VkCompareOp compareOp;
 	public float minLod;
 	public float maxLod;
 	public VkBorderColor borderColor;
-	public VulkanBoolean unnormalizedCoordinates;
+	public boolean unnormalizedCoordinates;
 }

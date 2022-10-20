@@ -3,11 +3,8 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkPipelineMultisampleStateCreateInfo;
-import org.sarge.jove.platform.vulkan.VkSampleCount;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerArray;
 import org.sarge.lib.util.Percentile;
 
@@ -33,11 +30,11 @@ public class MultiSamplePipelineStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(VkSampleCount.COUNT_8, info.rasterizationSamples);
-		assertEquals(VulkanBoolean.TRUE, info.sampleShadingEnable);
+		assertEquals(true, info.sampleShadingEnable);
 		assertEquals(0.5f, info.minSampleShading);
 		assertEquals(new IntegerArray(new int[1]), info.pSampleMask);
-		assertEquals(VulkanBoolean.TRUE, info.alphaToCoverageEnable);
-		assertEquals(VulkanBoolean.TRUE, info.alphaToOneEnable);
+		assertEquals(true, info.alphaToCoverageEnable);
+		assertEquals(true, info.alphaToOneEnable);
 	}
 
 	@Test
@@ -46,10 +43,10 @@ public class MultiSamplePipelineStageBuilderTest {
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(VkSampleCount.COUNT_1, info.rasterizationSamples);
-		assertEquals(VulkanBoolean.FALSE, info.sampleShadingEnable);
+		assertEquals(false, info.sampleShadingEnable);
 		assertEquals(1, info.minSampleShading);
 		assertEquals(null, info.pSampleMask);
-		assertEquals(VulkanBoolean.FALSE, info.alphaToCoverageEnable);
-		assertEquals(VulkanBoolean.FALSE, info.alphaToOneEnable);
+		assertEquals(false, info.alphaToCoverageEnable);
+		assertEquals(false, info.alphaToOneEnable);
 	}
 }

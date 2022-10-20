@@ -144,7 +144,7 @@ public class LogicalDeviceTest {
 		void build() {
 			// Init a required device feature
 			final var required = new VkPhysicalDeviceFeatures();
-			required.samplerAnisotropy = VulkanBoolean.TRUE;
+			required.samplerAnisotropy = true;
 
 			// Create device
 			device = builder
@@ -171,7 +171,7 @@ public class LogicalDeviceTest {
 
 					// Check device features
 					assertNotNull(actual.pEnabledFeatures);
-					assertEquals(VulkanBoolean.TRUE, actual.pEnabledFeatures.samplerAnisotropy);
+					assertEquals(true, actual.pEnabledFeatures.samplerAnisotropy);
 
 					// Check extensions
 					assertEquals(1, actual.enabledExtensionCount);

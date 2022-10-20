@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Structure.FieldOrder;
 
@@ -209,7 +208,7 @@ public class VkPhysicalDeviceLimits extends VulkanStructure {
 	public int sampledImageStencilSampleCounts;
 	public int storageImageSampleCounts;
 	public int maxSampleMaskWords;
-	public VulkanBoolean timestampComputeAndGraphics;
+	public boolean timestampComputeAndGraphics;
 	public float timestampPeriod;
 	public int maxClipDistances;
 	public int maxCullDistances;
@@ -219,8 +218,8 @@ public class VkPhysicalDeviceLimits extends VulkanStructure {
 	public float[] lineWidthRange = new float[2];
 	public float pointSizeGranularity;
 	public float lineWidthGranularity;
-	public VulkanBoolean strictLines;
-	public VulkanBoolean standardSampleLocations;
+	public boolean strictLines;
+	public boolean standardSampleLocations;
 	public long optimalBufferCopyOffsetAlignment;
 	public long optimalBufferCopyRowPitchAlignment;
 	public long nonCoherentAtomSize;

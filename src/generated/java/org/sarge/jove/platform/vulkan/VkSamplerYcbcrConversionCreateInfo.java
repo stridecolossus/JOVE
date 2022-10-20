@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -26,7 +24,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSamplerYcbcrConversionCreateInfo extends VulkanStructure {
 	public static class ByValue extends VkSamplerYcbcrConversionCreateInfo implements Structure.ByValue { }
 	public static class ByReference extends VkSamplerYcbcrConversionCreateInfo implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.SAMPLER_YCBCR_CONVERSION_CREATE_INFO;
 	public Pointer pNext;
 	public VkFormat format;
@@ -36,5 +34,5 @@ public class VkSamplerYcbcrConversionCreateInfo extends VulkanStructure {
 	public VkChromaLocation xChromaOffset;
 	public VkChromaLocation yChromaOffset;
 	public VkFilter chromaFilter;
-	public VulkanBoolean forceExplicitReconstruction;
+	public boolean forceExplicitReconstruction;
 }

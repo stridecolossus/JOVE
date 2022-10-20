@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -41,17 +39,17 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceDescriptorIndexingPropertiesEXT extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceDescriptorIndexingPropertiesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceDescriptorIndexingPropertiesEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
 	public Pointer pNext;
 	public int maxUpdateAfterBindDescriptorsInAllPools;
-	public VulkanBoolean shaderUniformBufferArrayNonUniformIndexingNative;
-	public VulkanBoolean shaderSampledImageArrayNonUniformIndexingNative;
-	public VulkanBoolean shaderStorageBufferArrayNonUniformIndexingNative;
-	public VulkanBoolean shaderStorageImageArrayNonUniformIndexingNative;
-	public VulkanBoolean shaderInputAttachmentArrayNonUniformIndexingNative;
-	public VulkanBoolean robustBufferAccessUpdateAfterBind;
-	public VulkanBoolean quadDivergentImplicitLod;
+	public boolean shaderUniformBufferArrayNonUniformIndexingNative;
+	public boolean shaderSampledImageArrayNonUniformIndexingNative;
+	public boolean shaderStorageBufferArrayNonUniformIndexingNative;
+	public boolean shaderStorageImageArrayNonUniformIndexingNative;
+	public boolean shaderInputAttachmentArrayNonUniformIndexingNative;
+	public boolean robustBufferAccessUpdateAfterBind;
+	public boolean quadDivergentImplicitLod;
 	public int maxPerStageDescriptorUpdateAfterBindSamplers;
 	public int maxPerStageDescriptorUpdateAfterBindUniformBuffers;
 	public int maxPerStageDescriptorUpdateAfterBindStorageBuffers;

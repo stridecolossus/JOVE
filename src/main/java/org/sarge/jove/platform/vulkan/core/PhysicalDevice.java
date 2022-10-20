@@ -110,10 +110,14 @@ public class PhysicalDevice implements NativeObject {
 	 * @see Selector#of(Surface)
 	 */
 	public boolean isPresentationSupported(Handle surface, Family family) {
+		// Retrieve supported flag
 		final VulkanLibrary lib = instance.library();
 		final IntByReference supported = instance.factory().integer();
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
-		return VulkanBoolean.of(supported.getValue()).toBoolean();
+
+		// Convert native integer to boolean
+		final VulkanBooleanConverter converter = new VulkanBooleanConverter();
+		return converter.fromNative(supported.getValue(), null);
 	}
 
 	/**

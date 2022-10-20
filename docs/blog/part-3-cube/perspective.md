@@ -699,7 +699,7 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
     VkPipelineInputAssemblyStateCreateInfo get() {
         var info = new VkPipelineInputAssemblyStateCreateInfo();
         info.topology = topology;
-        info.primitiveRestartEnable = VulkanBoolean.of(restart);
+        info.primitiveRestartEnable = restart;
         return info;
     }
 }

@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -20,9 +18,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceInlineUniformBlockFeaturesEXT extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceInlineUniformBlockFeaturesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceInlineUniformBlockFeaturesEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES_EXT;
 	public Pointer pNext;
-	public VulkanBoolean inlineUniformBlock;
-	public VulkanBoolean descriptorBindingInlineUniformBlockUpdateAfterBind;
+	public boolean inlineUniformBlock;
+	public boolean descriptorBindingInlineUniformBlockUpdateAfterBind;
 }

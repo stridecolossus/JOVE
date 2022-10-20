@@ -83,7 +83,7 @@ public interface DeviceFeatures {
 
 				// Build descriptor
 				final var struct = new VkPhysicalDeviceFeatures();
-				required.forEach(field -> struct.writeField(field, VulkanBoolean.TRUE));
+				required.forEach(field -> struct.writeField(field, true));
 
 				return struct;
 			}
@@ -132,7 +132,8 @@ public interface DeviceFeatures {
 			}
 
 			private boolean isEnabled(String field) {
-				return features.readField(field) == VulkanBoolean.TRUE;
+				// TODO - need to check for primitives as well?
+				return features.readField(field) == Boolean.TRUE;
 			}
 
 			@Override

@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 
 /**
  * Builder for the depth-stencil pipeline stage.
@@ -29,7 +29,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 */
 	@RequiredFeature(field="depthTestEnable", feature="depthBounds")
 	public DepthStencilPipelineStageBuilder enable(boolean depthTestEnable) {
-		info.depthTestEnable = VulkanBoolean.of(depthTestEnable);
+		info.depthTestEnable = depthTestEnable;
 		return this;
 	}
 
@@ -38,7 +38,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * @param depthWriteEnable Whether to write to the depth buffer
 	 */
 	public DepthStencilPipelineStageBuilder write(boolean depthWriteEnable) {
-		info.depthWriteEnable = VulkanBoolean.of(depthWriteEnable);
+		info.depthWriteEnable = depthWriteEnable;
 		return this;
 	}
 

@@ -13,7 +13,7 @@ import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
+import org.sarge.jove.platform.vulkan.util.VulkanBooleanConverter;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
@@ -139,15 +139,13 @@ public class Shader extends AbstractVulkanObject {
 		info.pMapEntries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate);
 
 		// Build constants data buffer
+		final VulkanBooleanConverter converter = new VulkanBooleanConverter();
 		final ByteBuffer buffer = BufferHelper.allocate(populate.len);
 		for(var entry : constants.entrySet()) {		// TODO - check same order as above
 			switch(entry.getValue()) {
 				case Float f -> buffer.putFloat(f);
 				case Integer n -> buffer.putInt(n);
-				case Boolean b -> {
-					final int bool = VulkanBoolean.of(b).toInteger();
-					buffer.putInt(bool);
-				}
+				case Boolean b -> buffer.putInt(converter.toNative(b, null));
 				default -> throw new RuntimeException();
 			}
 		}

@@ -36,14 +36,14 @@ class RequiredFeatureTest {
 		@DisplayName("A device feature is not required for FALSE values")
 		@Test
 		void bool() {
-			obj.method(VulkanBoolean.FALSE);
+			obj.method(false);
 			assertEquals(0, proc.enumerate(obj).count());
 		}
 
 		@DisplayName("A device feature is required for TRUE values")
 		@Test
 		void booleanRequired() {
-			obj.method(VulkanBoolean.TRUE);
+			obj.method(true);
 			assertArrayEquals(new String[]{"feature"}, proc.enumerate(obj).toArray());
 		}
 

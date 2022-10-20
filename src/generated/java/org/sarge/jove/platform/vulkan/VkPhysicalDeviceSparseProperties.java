@@ -1,9 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -18,12 +16,9 @@ import com.sun.jna.Structure.FieldOrder;
 	"residencyNonResidentStrict"
 })
 public class VkPhysicalDeviceSparseProperties extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceSparseProperties implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceSparseProperties implements Structure.ByReference { }
-	
-	public VulkanBoolean residencyStandard2DBlockShape;
-	public VulkanBoolean residencyStandard2DMultisampleBlockShape;
-	public VulkanBoolean residencyStandard3DBlockShape;
-	public VulkanBoolean residencyAlignedMipSize;
-	public VulkanBoolean residencyNonResidentStrict;
+	public boolean residencyStandard2DBlockShape;
+	public boolean residencyStandard2DMultisampleBlockShape;
+	public boolean residencyStandard3DBlockShape;
+	public boolean residencyAlignedMipSize;
+	public boolean residencyNonResidentStrict;
 }

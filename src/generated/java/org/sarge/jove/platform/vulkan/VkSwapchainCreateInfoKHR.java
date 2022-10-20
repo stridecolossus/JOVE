@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -48,6 +47,6 @@ public class VkSwapchainCreateInfoKHR extends VulkanStructure {
 	public VkSurfaceTransformFlagKHR preTransform;
 	public VkCompositeAlphaFlagKHR compositeAlpha;
 	public VkPresentModeKHR presentMode;
-	public VulkanBoolean clipped;
+	public boolean clipped;
 	public Pointer oldSwapchain;
 }

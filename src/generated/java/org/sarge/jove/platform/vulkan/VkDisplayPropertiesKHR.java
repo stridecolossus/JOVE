@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 import com.sun.jna.Structure.FieldOrder;
 
@@ -24,6 +23,6 @@ public class VkDisplayPropertiesKHR extends VulkanStructure {
 	public VkExtent2D physicalDimensions;
 	public VkExtent2D physicalResolution;
 	public VkSurfaceTransformFlagKHR supportedTransforms;
-	public VulkanBoolean planeReorderPossible;
-	public VulkanBoolean persistentContent;
+	public boolean planeReorderPossible;
+	public boolean persistentContent;
 }

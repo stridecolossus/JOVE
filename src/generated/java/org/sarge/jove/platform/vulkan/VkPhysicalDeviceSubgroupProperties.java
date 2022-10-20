@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -28,5 +26,5 @@ public class VkPhysicalDeviceSubgroupProperties extends VulkanStructure {
 	public int subgroupSize;
 	public VkShaderStage supportedStages;
 	public VkSubgroupFeatureFlag supportedOperations;
-	public VulkanBoolean quadOperationsInAllStages;
+	public boolean quadOperationsInAllStages;
 }

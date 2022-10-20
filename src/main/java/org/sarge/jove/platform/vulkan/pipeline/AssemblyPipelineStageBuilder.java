@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 
 /**
  * Builder for the input assembly pipeline stage.
@@ -44,7 +44,7 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 */
 	@RequiredFeature(field="primitiveRestartEnable", feature="primitiveTopologyListRestart")
 	public AssemblyPipelineStageBuilder restart(boolean restart) {
-		info.primitiveRestartEnable = VulkanBoolean.of(restart);
+		info.primitiveRestartEnable = restart;
 		return this;
 	}
 

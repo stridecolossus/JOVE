@@ -733,7 +733,7 @@ Fences are signalled in the same manner as semaphores but can also be explicitly
 public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
     Pointer array = NativeObject.toArray(fences);
     VulkanLibrary lib = dev.library();
-    check(lib.vkWaitForFences(dev, fences.size(), array, VulkanBoolean.of(all), timeout));
+    check(lib.vkWaitForFences(dev, fences.size(), array, all, timeout));
 }
 ```
 

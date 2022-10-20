@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -38,27 +36,27 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPhysicalDeviceDescriptorIndexingFeaturesEXT extends VulkanStructure {
 	public static class ByValue extends VkPhysicalDeviceDescriptorIndexingFeaturesEXT implements Structure.ByValue { }
 	public static class ByReference extends VkPhysicalDeviceDescriptorIndexingFeaturesEXT implements Structure.ByReference { }
-	
+
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 	public Pointer pNext;
-	public VulkanBoolean shaderInputAttachmentArrayDynamicIndexing;
-	public VulkanBoolean shaderUniformTexelBufferArrayDynamicIndexing;
-	public VulkanBoolean shaderStorageTexelBufferArrayDynamicIndexing;
-	public VulkanBoolean shaderUniformBufferArrayNonUniformIndexing;
-	public VulkanBoolean shaderSampledImageArrayNonUniformIndexing;
-	public VulkanBoolean shaderStorageBufferArrayNonUniformIndexing;
-	public VulkanBoolean shaderStorageImageArrayNonUniformIndexing;
-	public VulkanBoolean shaderInputAttachmentArrayNonUniformIndexing;
-	public VulkanBoolean shaderUniformTexelBufferArrayNonUniformIndexing;
-	public VulkanBoolean shaderStorageTexelBufferArrayNonUniformIndexing;
-	public VulkanBoolean descriptorBindingUniformBufferUpdateAfterBind;
-	public VulkanBoolean descriptorBindingSampledImageUpdateAfterBind;
-	public VulkanBoolean descriptorBindingStorageImageUpdateAfterBind;
-	public VulkanBoolean descriptorBindingStorageBufferUpdateAfterBind;
-	public VulkanBoolean descriptorBindingUniformTexelBufferUpdateAfterBind;
-	public VulkanBoolean descriptorBindingStorageTexelBufferUpdateAfterBind;
-	public VulkanBoolean descriptorBindingUpdateUnusedWhilePending;
-	public VulkanBoolean descriptorBindingPartiallyBound;
-	public VulkanBoolean descriptorBindingVariableDescriptorCount;
-	public VulkanBoolean runtimeDescriptorArray;
+	public boolean shaderInputAttachmentArrayDynamicIndexing;
+	public boolean shaderUniformTexelBufferArrayDynamicIndexing;
+	public boolean shaderStorageTexelBufferArrayDynamicIndexing;
+	public boolean shaderUniformBufferArrayNonUniformIndexing;
+	public boolean shaderSampledImageArrayNonUniformIndexing;
+	public boolean shaderStorageBufferArrayNonUniformIndexing;
+	public boolean shaderStorageImageArrayNonUniformIndexing;
+	public boolean shaderInputAttachmentArrayNonUniformIndexing;
+	public boolean shaderUniformTexelBufferArrayNonUniformIndexing;
+	public boolean shaderStorageTexelBufferArrayNonUniformIndexing;
+	public boolean descriptorBindingUniformBufferUpdateAfterBind;
+	public boolean descriptorBindingSampledImageUpdateAfterBind;
+	public boolean descriptorBindingStorageImageUpdateAfterBind;
+	public boolean descriptorBindingStorageBufferUpdateAfterBind;
+	public boolean descriptorBindingUniformTexelBufferUpdateAfterBind;
+	public boolean descriptorBindingStorageTexelBufferUpdateAfterBind;
+	public boolean descriptorBindingUpdateUnusedWhilePending;
+	public boolean descriptorBindingPartiallyBound;
+	public boolean descriptorBindingVariableDescriptorCount;
+	public boolean runtimeDescriptorArray;
 }

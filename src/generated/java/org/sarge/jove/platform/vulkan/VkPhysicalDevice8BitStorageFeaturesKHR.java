@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -24,7 +22,7 @@ public class VkPhysicalDevice8BitStorageFeaturesKHR extends VulkanStructure {
 
 	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR;
 	public Pointer pNext;
-	public VulkanBoolean storageBuffer8BitAccess;
-	public VulkanBoolean uniformAndStorageBuffer8BitAccess;
-	public VulkanBoolean storagePushConstant8;
+	public boolean storageBuffer8BitAccess;
+	public boolean uniformAndStorageBuffer8BitAccess;
+	public boolean storagePushConstant8;
 }

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanBoolean;
 
 public class ColourBlendPipelineStageBuilderTest {
 	private static final float[] CONSTANTS = {1, 2, 3, 4};
@@ -39,14 +38,14 @@ public class ColourBlendPipelineStageBuilderTest {
 
 		// Check descriptor
 		assertEquals(0, info.flags);
-		assertEquals(VulkanBoolean.TRUE, info.logicOpEnable);
+		assertEquals(true, info.logicOpEnable);
 		assertEquals(VkLogicOp.COPY, info.logicOp);
 		assertArrayEquals(CONSTANTS, info.blendConstants);
 		assertEquals(1, info.attachmentCount);
 		assertNotNull(info.pAttachments);
 
 		final VkPipelineColorBlendAttachmentState attachment = info.pAttachments;
-		assertEquals(VulkanBoolean.TRUE, attachment.blendEnable);
+		assertEquals(true, attachment.blendEnable);
 		assertEquals(15, attachment.colorWriteMask);
 		assertEquals(VkBlendOp.SUBTRACT, attachment.colorBlendOp);
 		assertEquals(VkBlendFactor.SRC_ALPHA, attachment.srcColorBlendFactor);
@@ -59,7 +58,7 @@ public class ColourBlendPipelineStageBuilderTest {
 	@Test
 	void disabled() {
 		final var info = builder.get();
-		assertEquals(VulkanBoolean.FALSE, info.logicOpEnable);
+		assertEquals(false, info.logicOpEnable);
 		assertEquals(1, info.attachmentCount);
 	}
 
