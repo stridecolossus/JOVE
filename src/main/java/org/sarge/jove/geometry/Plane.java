@@ -12,7 +12,7 @@ import org.sarge.jove.util.MathsUtil;
  * <p>
  * Note that the distance increases in the <i>opposite</i> direction to the normal vector.
  * <br>
- * For example <code>new Plane(Vector.Y_AXIS), 1)</code> creates the plane in X-Z at Y = <b>minus</b> one.
+ * For example <code>new Plane(Axis.Y, 1)</code> creates the plane in X-Z at Y = <b>minus</b> one.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge

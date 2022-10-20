@@ -45,8 +45,8 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 	 */
 	public Attachment {
 		if(format == null) throw new IllegalArgumentException("No format specified for attachment");
+		if(after == null) throw new IllegalArgumentException("No final layout specified");
 		switch(after) {
-			case null -> throw new IllegalArgumentException("No final layout specified");
 			case UNDEFINED, PREINITIALIZED -> throw new IllegalArgumentException("Invalid final layout: " + after);
 		}
 		Check.notNull(samples);

@@ -18,7 +18,7 @@ import com.sun.jna.ptr.PointerByReference;
  * Default implementation for memory allocated by the hardware.
  * @author Sarge
  */
-public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
+public final class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 	private final long size;
 
 	private DefaultRegion region;
@@ -73,7 +73,7 @@ public class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceM
 		public ByteBuffer buffer(long offset, long size) {
 			checkAlive();
 			checkMapped();
-			if(offset + size > this.segment) {
+			if(offset + size > segment) {
 				throw new IllegalArgumentException(String.format("Buffer offset/length is larger than region: offset=%d size=%d region=%s", offset, size, this));
 			}
 			return ptr.getByteBuffer(offset, size);

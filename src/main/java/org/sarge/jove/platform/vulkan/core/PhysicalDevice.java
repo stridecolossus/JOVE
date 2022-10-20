@@ -9,6 +9,7 @@ import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
+import org.sarge.jove.platform.util.NativeBooleanConverter;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.render.Surface;
@@ -116,7 +117,7 @@ public class PhysicalDevice implements NativeObject {
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
 
 		// Convert native integer to boolean
-		final VulkanBooleanConverter converter = new VulkanBooleanConverter();
+		final NativeBooleanConverter converter = new NativeBooleanConverter();
 		return converter.fromNative(supported.getValue(), null);
 	}
 

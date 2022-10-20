@@ -46,7 +46,7 @@ public interface Ray {
 	/**
 	 * Defines a surface that can be tested for intersections with a ray.
 	 */
-	public interface Intersected {
+	interface Intersected {
 		/**
 		 * Determines the intersections of this surface with the given ray.
 		 * @param ray Ray
@@ -81,7 +81,7 @@ public interface Ray {
 	 * Vector normal = intersection.normal(p);
 	 * <p>
 	 */
-	public interface Intersection {
+	interface Intersection {
 		/**
 		 * Empty result for no intersections.
 		 */
@@ -124,7 +124,7 @@ public interface Ray {
 		 * Determines the surface normal at the given intersection point on this ray.
 		 * @param p Intersection point
 		 * @return Surface normal
-		 * @throws UnsupportedOperationException if this intersection is {@link Intersection#UNDEFINED}
+		 * @throws UnsupportedOperationException if this intersection is {@link #UNDEFINED}
 		 */
 		default Vector normal(Point p) {
 			throw new UnsupportedOperationException();
@@ -133,8 +133,8 @@ public interface Ray {
 		/**
 		 * Calculates the <i>nearest</i> intersection point to the surface.
 		 * @param ray Ray
-		 * @throws UnsupportedOperationException if the intersection is {@link Intersection#UNDEFINED}
 		 * @throws IllegalStateException if there are no intersections
+		 * @throws UnsupportedOperationException if this intersection is {@link #UNDEFINED}
 		 * @see Ray#point(float)
 		 */
 		default Point nearest(Ray ray) {

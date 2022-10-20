@@ -14,7 +14,6 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
-import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

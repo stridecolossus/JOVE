@@ -19,7 +19,6 @@ import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.util.*;
 import org.sarge.lib.util.*;
 
 import com.sun.jna.*;

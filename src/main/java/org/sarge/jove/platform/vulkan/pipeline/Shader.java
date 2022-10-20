@@ -10,12 +10,10 @@ import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
 import org.sarge.jove.io.*;
-import org.sarge.jove.platform.util.StructureCollector;
+import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.VulkanBooleanConverter;
-import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -140,7 +138,7 @@ public class Shader extends AbstractVulkanObject {
 		info.pMapEntries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate);
 
 		// Build constants data buffer
-		final VulkanBooleanConverter converter = new VulkanBooleanConverter();
+		final NativeBooleanConverter converter = new NativeBooleanConverter();
 		final ByteBuffer buffer = BufferHelper.allocate(populate.len);
 		for(var entry : constants.entrySet()) {		// TODO - check same order as above
 			switch(entry.getValue()) {

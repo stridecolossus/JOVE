@@ -10,7 +10,6 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Structure;

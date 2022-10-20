@@ -29,11 +29,10 @@ public interface Volume extends Intersected {
 	 * <pre>
 	 * class CustomVolume implements Volume {
 	 *     public boolean intersects(Volume vol) {
-	 *         if(obj instanceof SphereVolume sphere) {
-	 *             return ...
-	 *         }
-	 *         else {
-	 *             return vol.intersects(this);
+	 *         return switch(vol) {
+	 *             case SphereVolume sphere -> ...
+	 *             case BoundingBox box -> ...
+	 *             default -> vol.intersects(this);
 	 *         }
 	 *     }
 	 * }

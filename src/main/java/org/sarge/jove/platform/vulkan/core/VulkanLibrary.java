@@ -5,7 +5,7 @@ import static java.util.stream.Collectors.toSet;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
+import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
@@ -53,7 +53,7 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	 */
 	private static TypeMapper mapper() {
 		final var mapper = new DefaultTypeMapper();
-		mapper.addTypeConverter(Boolean.class, new VulkanBooleanConverter());
+		mapper.addTypeConverter(Boolean.class, new NativeBooleanConverter());
 		mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
 		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
 		mapper.addTypeConverter(NativeObject.class, NativeObject.CONVERTER);

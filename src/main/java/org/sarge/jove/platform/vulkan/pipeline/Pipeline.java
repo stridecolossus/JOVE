@@ -13,7 +13,6 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
-import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 

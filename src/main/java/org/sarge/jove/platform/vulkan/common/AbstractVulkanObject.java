@@ -37,6 +37,7 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	protected AbstractVulkanObject(Pointer handle, DeviceContext dev) {
 		this(new Handle(handle), dev);
 	}
+	// TODO - messy to have 2 ctors, but is actually used throughout
 
 	/**
 	 * Constructor.

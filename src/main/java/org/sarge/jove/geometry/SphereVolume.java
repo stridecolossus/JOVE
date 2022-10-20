@@ -38,9 +38,16 @@ public class SphereVolume implements Volume {
 		return sphere;
 	}
 
+	/**
+	 * @return Radius of this volume
+	 */
+	private float radius() {
+		return sphere.radius();
+	}
+
 	@Override
 	public Bounds bounds() {
-		final float r = sphere.radius();
+		final float r = radius();
 		final Point min = new Point(-r, -r, -r);
 		final Point max = new Point(r, r, r);
 		return new Bounds(min, max);
@@ -48,14 +55,15 @@ public class SphereVolume implements Volume {
 
 	@Override
 	public boolean contains(Point pt) {
-		return contains(pt, sphere.radius());
+		return contains(pt, radius());
 	}
 
 	@Override
 	public boolean intersects(Volume vol) {
 		if(vol instanceof SphereVolume that) {
-			final float r = this.sphere.radius() + that.sphere.radius();
-			return contains(that.sphere.centre(), r);
+			final Point centre = that.sphere.centre();
+			final float r = this.radius() + that.radius();
+			return contains(centre, r);
 		}
 		else {
 			return vol.intersects(this);
@@ -72,7 +80,7 @@ public class SphereVolume implements Volume {
 	@Override
 	public boolean intersects(Plane plane) {
 		final float d = plane.distance(sphere.centre());
-		return Math.abs(d) <= sphere.radius();
+		return Math.abs(d) <= radius();
 	}
 
 	/**
@@ -101,7 +109,7 @@ public class SphereVolume implements Volume {
 		final float dist = nearest * nearest - len;
 
 		// Stop if ray does not intersect
-		final float r = sphere.radius();
+		final float r = radius();
 		final float radius = r * r;
 		if(Math.abs(dist) > radius) {
 			return Intersection.NONE;

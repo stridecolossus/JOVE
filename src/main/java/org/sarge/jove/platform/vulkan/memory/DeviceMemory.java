@@ -24,7 +24,7 @@ import org.sarge.jove.common.*;
  * DeviceMemory mem = ...
  *
  * // Map accessible region
- * Region region = mem.region(0, size);
+ * Region region = mem.map();
  *
  * // Write to memory
  * ByteBuffer buffer = region.buffer();
@@ -36,13 +36,14 @@ import org.sarge.jove.common.*;
  * // Release memory
  * mem.destroy();
  * </pre>
+ * <p>
  * @author Sarge
  */
 public interface DeviceMemory extends NativeObject, TransientObject {
 	/**
 	 * A <i>region</i> is a mapped area of device memory.
 	 */
-	public interface Region {
+	interface Region {
 		/**
 		 * @return Size of this region (bytes)
 		 */

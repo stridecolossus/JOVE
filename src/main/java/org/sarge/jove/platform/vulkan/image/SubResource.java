@@ -72,7 +72,7 @@ public interface SubResource {
 	/**
 	 * Builder for an image sub-resource.
 	 */
-	public static class Builder {
+	class Builder {
 		private final Descriptor descriptor;
 		private Set<VkImageAspect> aspects = new HashSet<>();
 		private int mipLevel;

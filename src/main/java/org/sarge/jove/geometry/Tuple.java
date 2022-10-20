@@ -63,7 +63,7 @@ public class Tuple implements Bufferable {
 	}
 
 	/**
-	 * Calculates the <i>dot</i> product of this and the given tuple.
+	 * Calculates the <i>dot</i> product of two tuples.
 	 * <p>
 	 * The dot product is also known as the <i>inner</i> or <i>scalar</i> product.
 	 * <p>
@@ -88,6 +88,7 @@ public class Tuple implements Bufferable {
 	public final float dot(Tuple that) {
 		return x * that.x + y * that.y + z * that.z;
 	}
+	// TODO - move to vector? => a couple of instances where dot() is used on points
 
 	@Override
 	public final int length() {

@@ -1,15 +1,15 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.platform.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 
-class VulkanBooleanConverterTest {
-	private VulkanBooleanConverter converter;
+class NativeBooleanConverterTest {
+	private NativeBooleanConverter converter;
 
 	@BeforeEach
 	void before() {
-		converter = new VulkanBooleanConverter();
+		converter = new NativeBooleanConverter();
 	}
 
 	@Test

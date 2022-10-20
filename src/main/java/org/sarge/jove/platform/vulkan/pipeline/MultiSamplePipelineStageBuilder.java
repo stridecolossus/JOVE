@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.*;
 import org.sarge.lib.util.Percentile;
 
 /**

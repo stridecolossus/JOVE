@@ -14,7 +14,7 @@ import org.sarge.lib.util.Check;
  * In general the client requests memory for the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
  * Note that this implementation assumes that <i>optimal</i> is a super-set of the <i>required</i> properties.
  * <p>
- * Example for the properties of a uniform buffer which would ideally be GPU resident but also visible to the application:
+ * Example for the properties of a uniform buffer visible to the application and ideally GPU resident:
  * <pre>
  * var props = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
  *     .usage(VkBufferUsageFlag.UNIFORM_BUFFER)

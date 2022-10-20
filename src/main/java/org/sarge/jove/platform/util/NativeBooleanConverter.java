@@ -1,16 +1,16 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.platform.util;
 
 import com.sun.jna.*;
 
 /**
- * The <i>Vulkan boolean converter</i> is a custom JNA type converter for boolean values used in the Vulkan API.
+ * The <i>native boolean converter</i> is a custom JNA type converter for boolean values used the native layer.
  * <p>
  * This converter marshals a boolean value as a native integer that is <i>explicitly</i> integer one for {@code true} and zero for {@code false}.
  * This overrides the default JNA mapping which assumes an <i>arbitrary non-zero</i> value for {@code true}.
  * <p>
  * @author Sarge
  */
-public class VulkanBooleanConverter implements TypeConverter {
+public class NativeBooleanConverter implements TypeConverter {
 	private static final int TRUE = 1;
 	private static final int FALSE = 0;
 
