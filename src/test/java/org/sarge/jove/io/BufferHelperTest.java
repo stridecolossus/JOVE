@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.io;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -7,6 +7,8 @@ import java.nio.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.util.MockStructure;
 
 class BufferHelperTest {
 	private static final byte[] BYTES = {1, 2, 3};

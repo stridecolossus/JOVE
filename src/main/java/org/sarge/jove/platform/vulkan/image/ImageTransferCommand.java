@@ -7,11 +7,11 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.Level;
+import org.sarge.jove.platform.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 /**

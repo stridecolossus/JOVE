@@ -9,7 +9,6 @@ import java.util.stream.IntStream;
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
 import org.sarge.jove.io.ImageData.Level;
-import org.sarge.jove.util.LittleEndianDataInputStream;
 
 /**
  * Loader for a KTX image.

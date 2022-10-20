@@ -4,11 +4,11 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 
+import org.sarge.jove.platform.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 /**

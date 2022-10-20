@@ -5,9 +5,9 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.platform.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.util.StructureCollector;
 
 /**
  * Builder for the vertex input pipeline stage descriptor.

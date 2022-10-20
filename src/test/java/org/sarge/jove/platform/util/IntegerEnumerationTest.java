@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.platform.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -6,7 +6,8 @@ import static org.mockito.Mockito.*;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
+import org.sarge.jove.platform.util.IntegerEnumeration;
+import org.sarge.jove.platform.util.IntegerEnumeration.ReverseMapping;
 
 import com.sun.jna.FromNativeContext;
 

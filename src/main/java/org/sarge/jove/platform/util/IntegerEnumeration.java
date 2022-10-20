@@ -1,10 +1,12 @@
-package org.sarge.jove.util;
+package org.sarge.jove.platform.util;
 
 import static java.util.stream.Collectors.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
+import org.sarge.jove.util.Mask;
 
 import com.sun.jna.*;
 

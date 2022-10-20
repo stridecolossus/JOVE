@@ -5,11 +5,11 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.sarge.jove.platform.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.Extents;
-import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 /**

@@ -6,6 +6,7 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;

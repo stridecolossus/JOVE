@@ -7,12 +7,12 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
+import org.sarge.jove.platform.util.IntegerArray;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.IntegerArray;
 
 import com.sun.jna.Structure;
 

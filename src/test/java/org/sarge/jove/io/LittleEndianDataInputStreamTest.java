@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.io;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.io.LittleEndianDataInputStream;
 
 class LittleEndianDataInputStreamTest {
 	private static final byte BYTE = 42;

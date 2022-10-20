@@ -1,4 +1,4 @@
-package org.sarge.jove.util;
+package org.sarge.jove.platform.util;
 
 import com.sun.jna.ptr.*;
 

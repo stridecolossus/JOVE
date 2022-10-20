@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 import java.util.function.Predicate;
 
+import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.*;

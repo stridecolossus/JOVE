@@ -7,12 +7,12 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
 
 import com.sun.jna.Pointer;

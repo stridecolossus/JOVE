@@ -6,7 +6,6 @@ import java.io.*;
 import java.nio.ByteBuffer;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.util.BufferHelper;
 
 /**
  * Data resource loader utilities.

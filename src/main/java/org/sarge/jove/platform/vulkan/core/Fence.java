@@ -5,10 +5,10 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import java.util.*;
 
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

@@ -4,8 +4,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.util.IntegerArray;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntegerArray;
 import org.sarge.lib.util.Percentile;
 
 public class MultiSamplePipelineStageBuilderTest {

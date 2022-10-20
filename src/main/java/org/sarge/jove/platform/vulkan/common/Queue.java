@@ -5,9 +5,9 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import java.util.Set;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 /**

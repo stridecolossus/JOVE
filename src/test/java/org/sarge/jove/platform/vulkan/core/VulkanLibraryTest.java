@@ -6,9 +6,9 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
+import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.ptr.IntByReference;
 

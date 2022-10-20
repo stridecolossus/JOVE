@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.mockito.AdditionalAnswers;
 import org.sarge.jove.common.*;
-import org.sarge.jove.util.BufferHelper;
 
 public class DataHelperTest {
 	private DataHelper helper;

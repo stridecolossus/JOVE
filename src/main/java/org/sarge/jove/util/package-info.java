@@ -1,4 +1,4 @@
 /**
- * JOVE and JNA utilities.
+ * JOVE utilities.
  */
 package org.sarge.jove.util;

@@ -5,9 +5,9 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.IntegerEnumeration;
 
 /**
  * An <i>image sub-resource</i> defines a subset of the aspects, mip levels and array layers of an image.

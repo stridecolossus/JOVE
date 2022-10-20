@@ -14,7 +14,6 @@ import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-import org.sarge.jove.util.BufferHelper;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.*;

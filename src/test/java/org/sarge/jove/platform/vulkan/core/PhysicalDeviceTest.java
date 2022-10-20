@@ -9,11 +9,11 @@ import java.util.function.*;
 import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.*;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

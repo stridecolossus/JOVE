@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.util.BufferHelper;
 import org.sarge.lib.util.Check;
 
 /**

@@ -6,11 +6,11 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntegerEnumeration;
 
 @SuppressWarnings("static-method")
 class PushConstantRangeTest {

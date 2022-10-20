@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
-import org.sarge.jove.io.ResourceLoader;
+import org.sarge.jove.io.*;
+import org.sarge.jove.platform.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
