@@ -1,9 +1,10 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
@@ -34,6 +35,7 @@ public class HandlerTest {
 
 		// Init create/destroy API method
 		function = mock(Function.class);
+		when(function.invoke(any(), any(), any())).thenReturn(0); // TODO - nasty
 		when(instance.function("vkDestroyDebugUtilsMessengerEXT")).thenReturn(function);
 		when(instance.function("vkCreateDebugUtilsMessengerEXT")).thenReturn(function);
 
@@ -43,7 +45,6 @@ public class HandlerTest {
 
 	@DisplayName("A diagnostics message has a human-readable description")
 	@Test
-	@SuppressWarnings("static-method")
 	void message() {
 		// Init callback
 		final var data = new VkDebugUtilsMessengerCallbackData();
@@ -75,8 +76,9 @@ public class HandlerTest {
 		assertEquals(true, handler.isDestroyed());
 
 		// Check API
-		final Object[] args = {instance.handle().pointer(), new Pointer(1), null};
-		verify(function).invoke(args);
+		final Object[] args = {instance, handler, null};
+		final var options = Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
+		verify(function).invoke(Void.class, args, options);
 	}
 
 	@Nested
@@ -116,8 +118,9 @@ public class HandlerTest {
 			};
 
 			// Check API
-			final Object[] args = {instance.handle().pointer(), expected, null, instance.factory().pointer()};
-			verify(function).invokeInt(args);
+			final Object[] args = {instance, expected, null, instance.factory().pointer()};
+			final var options = Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
+			verify(function).invoke(Integer.class, args, options);
 		}
 
 		@Test

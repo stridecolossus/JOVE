@@ -26,10 +26,10 @@ public final class Handle {
 	}
 
 	/**
-	 * @return Copy of the underlying pointer
+	 * @return Underlying pointer
 	 */
-	public Pointer pointer() {
-		return new Pointer(Pointer.nativeValue(ptr));
+	Pointer pointer() {
+		return ptr;
 	}
 
 	@Override
@@ -39,7 +39,10 @@ public final class Handle {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj == this) || (obj instanceof Handle that) && this.ptr.equals(that.ptr);
+		return
+				(obj == this) ||
+				(obj instanceof Handle that) &&
+				this.ptr.equals(that.ptr);
 	}
 
 	@Override

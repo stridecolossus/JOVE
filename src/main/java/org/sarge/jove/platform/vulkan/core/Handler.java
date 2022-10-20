@@ -37,9 +37,13 @@ public class Handler extends AbstractTransientNativeObject {
 	@Override
 	protected void release() {
 		final Function destroy = instance.function("vkDestroyDebugUtilsMessengerEXT");
-		final Pointer parent = instance.handle().pointer();
-		final Object[] args = {parent, handle.pointer(), null};
-		destroy.invoke(args);
+		final Object[] args = {instance, this, null};
+		invoke(destroy, Void.class, args);
+	}
+
+	private static Object invoke(Function func, Class<?> returnType, Object[] args) {
+		final var options = Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
+		return func.invoke(returnType, args, options);
 	}
 
 	/**
@@ -220,10 +224,10 @@ public class Handler extends AbstractTransientNativeObject {
 			final Function create = instance.function("vkCreateDebugUtilsMessengerEXT");
 
 			// Register handler with instance
-			final Pointer parent = instance.handle().pointer();
 			final PointerByReference ref = instance.factory().pointer();
-			final Object[] args = {parent, info, null, ref};
-			check(create.invokeInt(args));
+			final Object[] args = {instance, info, null, ref};
+			final int result = (int) invoke(create, Integer.class, args);
+			check(result);
 
 			// Create handler
 			return new Handler(ref.getValue(), instance);
