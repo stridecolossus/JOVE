@@ -125,7 +125,7 @@ class PhysicalDeviceTest {
 				props.queueFlags = VkQueueFlag.GRAPHICS.value();
 				return 0;
 			};
-			doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Pointer(1), count, arg);
+			doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Handle(1), count, arg);
 
 			// Enumerate devices
 			final List<PhysicalDevice> devices = enumerator.devices().toList();

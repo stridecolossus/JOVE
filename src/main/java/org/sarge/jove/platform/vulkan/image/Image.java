@@ -140,7 +140,7 @@ public interface Image extends NativeObject {
 			Check.notNull(type);
 			Check.notNull(format);
 			Check.notNull(extents);
-			aspects = Set.copyOf(notEmpty(aspects));
+			aspects = Set.copyOf(aspects);
 			Check.oneOrMore(levelCount);
 			Check.oneOrMore(layerCount);
 

@@ -22,7 +22,7 @@ import com.sun.jna.ptr.IntByReference;
  * @see <a href="https://www.glfw.org/docs/latest/intro.html#thread_safety">Thread Constraints</a>
  * @author Sarge
  */
-public class Desktop {
+public class Desktop implements TransientObject {
 	/**
 	 * Creates the desktop service.
 	 * @return New desktop service
@@ -125,9 +125,7 @@ public class Desktop {
 		lib.glfwSetErrorCallback(callback);
 	}
 
-	/**
-	 * Destroys this desktop.
-	 */
+	@Override
 	public void destroy() {
 		lib.glfwTerminate();
 	}

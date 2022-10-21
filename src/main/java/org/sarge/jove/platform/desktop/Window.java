@@ -80,12 +80,12 @@ public class Window extends AbstractTransientNativeObject {
 		 * Constructor.
 		 * @param title			Window title
 		 * @param size			Dimensions
-		 * @param hints			Window hints
+		 * @param hints			Creation hints
 		 */
 		public Descriptor {
 			Check.notEmpty(title);
 			Check.notNull(size);
-			hints = Check.notNull(hints);
+			hints = Set.copyOf(hints);
 		}
 	}
 
@@ -101,8 +101,8 @@ public class Window extends AbstractTransientNativeObject {
 	 * @param desktop			Desktop service
 	 * @param descriptor		Window descriptor
 	 */
-	Window(Pointer window, Desktop desktop, Descriptor descriptor) {
-		super(new Handle(window));
+	Window(Handle window, Desktop desktop, Descriptor descriptor) {
+		super(window);
 		this.desktop = notNull(desktop);
 		this.descriptor = notNull(descriptor);
 	}
@@ -291,7 +291,7 @@ public class Window extends AbstractTransientNativeObject {
 			}
 
 			// Create window domain object
-			return new Window(window, desktop, descriptor);
+			return new Window(new Handle(window), desktop, descriptor);
 		}
 	}
 }

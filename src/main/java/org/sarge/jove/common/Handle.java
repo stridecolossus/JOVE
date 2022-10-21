@@ -71,21 +71,22 @@ public final class Handle {
 
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
-			if(value instanceof Handle handle) {
-				return handle.ptr;
+			if(value == null) {
+				return null;
 			}
 			else {
-				return null;
+				final Handle handle = (Handle) value;
+				return handle.ptr;
 			}
 		}
 
 		@Override
 		public Object fromNative(Object value, FromNativeContext context) {
-			if(value instanceof Pointer ptr) {
-				return new Handle(ptr);
+			if(value == null) {
+				return null;
 			}
 			else {
-				return null;
+				return new Handle((Pointer) value);
 			}
 		}
 	};

@@ -176,7 +176,7 @@ public class PhysicalDevice implements NativeObject {
 			final VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
 			final IntByReference count = instance.factory().integer();
 			final Pointer[] handles = func.invoke(count, Pointer[]::new);
-			return Arrays.stream(handles).map(this::create);
+			return Arrays.stream(handles).map(Handle::new).map(this::create);
 		}
 
 		/**
@@ -184,7 +184,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param handle Device handle
 		 * @return New physical device
 		 */
-		private PhysicalDevice create(Pointer handle) {
+		private PhysicalDevice create(Handle handle) {
 			// Enumerate queue families for this device (for some reason the return type is void)
 			final StructureVulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
 				instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
@@ -204,7 +204,7 @@ public class PhysicalDevice implements NativeObject {
 			instance.library().vkGetPhysicalDeviceFeatures(handle, features);
 
 			// Create device
-			return new PhysicalDevice(new Handle(handle), instance, families, DeviceFeatures.of(features));
+			return new PhysicalDevice(handle, instance, families, DeviceFeatures.of(features));
 		}
 
 		/**
@@ -362,7 +362,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param device		Device handle
 		 * @param features		Returned features
 		 */
-		void vkGetPhysicalDeviceFeatures(Pointer device, VkPhysicalDeviceFeatures features);
+		void vkGetPhysicalDeviceFeatures(Handle device, VkPhysicalDeviceFeatures features);
 
 		/**
 		 * Enumerates the queue families of a device.
@@ -370,7 +370,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param count			Number of properties
 		 * @param props			Queue family properties (pointer-to-array)
 		 */
-		void vkGetPhysicalDeviceQueueFamilyProperties(Pointer device, IntByReference count, VkQueueFamilyProperties props);
+		void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, IntByReference count, VkQueueFamilyProperties props);
 
 		/**
 		 * Enumerates device-specific extension properties.

@@ -53,17 +53,17 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		check(lib.vkCreateBuffer(dev, info, null, ref));
 
 		// Query memory requirements
+		final Handle handle = Handle.of(ref);
 		final var reqs = new VkMemoryRequirements();
-		lib.vkGetBufferMemoryRequirements(dev, ref.getValue(), reqs);
+		lib.vkGetBufferMemoryRequirements(dev, handle, reqs);
 
 		// Allocate buffer memory
 		final DeviceMemory mem = dev.allocator().allocate(reqs, props);
 
 		// Bind memory
-		check(lib.vkBindBufferMemory(dev, ref.getValue(), mem, 0L));
+		check(lib.vkBindBufferMemory(dev, handle, mem, 0L));
 
 		// Create buffer
-		final Handle handle = new Handle(ref.getValue());
 		return new VulkanBuffer(handle, dev, props.usage(), mem, len);
 	}
 
@@ -234,7 +234,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pBuffer			Buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyBuffer(DeviceContext device, VulkanBuffer buffer, Pointer pAllocator);
+		void vkDestroyBuffer(DeviceContext device, VulkanBuffer pBuffer, Pointer pAllocator);
 
 		/**
 		 * Queries the memory requirements of the given buffer.
@@ -242,7 +242,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pBuffer					Buffer
 		 * @param pMemoryRequirements		Returned memory requirements
 		 */
-		void vkGetBufferMemoryRequirements(DeviceContext device, Pointer buffer, VkMemoryRequirements pMemoryRequirements);
+		void vkGetBufferMemoryRequirements(DeviceContext device, Handle pBuffer, VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds the memory for the given buffer.
@@ -252,7 +252,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param memoryOffset		Offset
 		 * @return Result
 		 */
-		int vkBindBufferMemory(DeviceContext device, Pointer buffer, DeviceMemory memory, long memoryOffset);
+		int vkBindBufferMemory(DeviceContext device, Handle pBuffer, DeviceMemory memory, long memoryOffset);
 
 		/**
 		 * Binds a vertex buffer.

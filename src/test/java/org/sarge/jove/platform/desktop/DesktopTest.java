@@ -77,6 +77,7 @@ public class DesktopTest {
 
 	@Test
 	void destroy() {
+		assertEquals(false, desktop.isDestroyed());
 		desktop.destroy();
 		verify(lib).glfwTerminate();
 	}

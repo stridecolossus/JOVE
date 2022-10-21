@@ -312,14 +312,15 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			check(lib.vkCreateDevice(parent, info, null, ref));
 
 			// Retrieve required queues
+			final Handle handle = Handle.of(ref);
 			final Map<Family, List<Queue>> map = queues
 					.values()
 					.stream()
-					.flatMap(required -> queues(ref.getValue(), required))
+					.flatMap(required -> queues(handle, required))
 					.collect(groupingBy(Queue::family));
 
 			// Create logical device
-			final var dev = new LogicalDevice(Handle.of(ref), parent, required, map);
+			final var dev = new LogicalDevice(handle, parent, required, map);
 
 			// Init memory allocator
 			if(allocator == null) {
@@ -340,7 +341,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param required		Required queue descriptor
 		 * @return Work queues
 		 */
-		private Stream<Queue> queues(Pointer dev, RequiredQueue required) {
+		private Stream<Queue> queues(Handle dev, RequiredQueue required) {
 			// Init library
 			final Instance instance = parent.instance();
 			final Library lib = instance.library();
@@ -393,7 +394,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param queueIndex			Queue index
 		 * @param pQueue				Returned queue handle
 		 */
-		void vkGetDeviceQueue(Pointer device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
+		void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, PointerByReference pQueue);
 
 		/**
 		 * Submits work to a queue.

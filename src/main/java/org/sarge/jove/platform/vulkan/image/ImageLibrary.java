@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
@@ -34,7 +35,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param image					Image
 	 * @param pMemoryRequirements	Returned memory requirements
 	 */
-	void vkGetImageMemoryRequirements(DeviceContext device, Pointer image, VkMemoryRequirements pMemoryRequirements);
+	void vkGetImageMemoryRequirements(DeviceContext device, Handle image, VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds image memory.
@@ -44,7 +45,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param memoryOffset		Offset
 	 * @return Result
 	 */
-	int vkBindImageMemory(DeviceContext device, Pointer image, DeviceMemory memory, long memoryOffset);
+	int vkBindImageMemory(DeviceContext device, Handle image, DeviceMemory memory, long memoryOffset);
 
 	/**
 	 * Copies an image.

@@ -14,13 +14,12 @@ import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 class DefaultImageTest extends AbstractVulkanTest {
 	private static final Dimensions EXTENTS = new Dimensions(3, 4);
 
 	private DefaultImage image;
-	private Handle handle;
 	private Descriptor descriptor;
 	private DeviceMemory mem;
 
@@ -37,16 +36,14 @@ class DefaultImageTest extends AbstractVulkanTest {
 
 		// Init image memory
 		mem = mock(DeviceMemory.class);
-		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
+		when(mem.handle()).thenReturn(new Handle(1));
 
 		// Create image
-		handle = new Handle(2);
-		image = new DefaultImage(handle, dev, descriptor, mem);
+		image = new DefaultImage(new Handle(2), dev, descriptor, mem);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(handle, image.handle());
 		assertEquals(dev, image.device());
 		assertEquals(false, image.isDestroyed());
 		assertEquals(descriptor, image.descriptor());
@@ -119,10 +116,11 @@ class DefaultImageTest extends AbstractVulkanTest {
 			info.sharingMode = props.mode();
 
 			// Check API
-			final Pointer ptr = factory.pointer().getValue();
-			verify(lib).vkCreateImage(dev, info, null, factory.pointer());
-			verify(lib).vkGetImageMemoryRequirements(eq(dev), eq(ptr), any(VkMemoryRequirements.class));
-			verify(lib).vkBindImageMemory(dev, ptr, mem, 0L);
+			final PointerByReference ref = factory.pointer();
+			final Handle handle = Handle.of(ref);
+			verify(lib).vkCreateImage(dev, info, null, ref);
+			verify(lib).vkGetImageMemoryRequirements(eq(dev), eq(handle), any(VkMemoryRequirements.class));
+			verify(lib).vkBindImageMemory(dev, handle, mem, 0L);
 		}
 
 		@DisplayName("A default image must have memory properties")
