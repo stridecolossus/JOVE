@@ -4,7 +4,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.*;
 
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -31,11 +31,11 @@ public class Fence extends AbstractVulkanObject {
 
 		// Create fence
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference handle = dev.factory().pointer();
-		check(lib.vkCreateFence(dev, info, null, handle));
+		final PointerByReference ref = dev.factory().pointer();
+		check(lib.vkCreateFence(dev, info, null, ref));
 
 		// Create domain object
-		return new Fence(handle.getValue(), dev);
+		return new Fence(Handle.of(ref), dev);
 	}
 
 	/**
@@ -43,7 +43,7 @@ public class Fence extends AbstractVulkanObject {
 	 * @param handle		Handle
 	 * @param dev			Logical device
 	 */
-	Fence(Pointer handle, DeviceContext dev) {
+	Fence(Handle handle, DeviceContext dev) {
 		super(handle, dev);
 	}
 

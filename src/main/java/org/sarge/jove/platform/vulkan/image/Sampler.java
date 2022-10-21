@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -22,7 +23,7 @@ public class Sampler extends AbstractVulkanObject {
 	 * @param handle		Sampler handle
 	 * @param dev			Logical device
 	 */
-	Sampler(Pointer handle, DeviceContext dev) {
+	Sampler(Handle handle, DeviceContext dev) {
 		super(handle, dev);
 	}
 
@@ -259,11 +260,11 @@ public class Sampler extends AbstractVulkanObject {
 
 			// Instantiate sampler
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference handle = dev.factory().pointer();
-			check(lib.vkCreateSampler(dev, info, null, handle));
+			final PointerByReference ref = dev.factory().pointer();
+			check(lib.vkCreateSampler(dev, info, null, ref));
 
 			// Create domain object
-			return new Sampler(handle.getValue(), dev);
+			return new Sampler(Handle.of(ref), dev);
 		}
 	}
 

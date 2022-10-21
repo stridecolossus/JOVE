@@ -20,7 +20,7 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
-		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
+		layout = new DescriptorLayout(new Handle(1), dev, List.of(binding));
 	}
 
 	@Test
@@ -31,7 +31,7 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 
 	@Test
 	void constructorEmptyBindings() {
-		assertThrows(IllegalArgumentException.class, () -> new DescriptorLayout(new Pointer(1), dev, List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new DescriptorLayout(new Handle(1), dev, List.of()));
 	}
 
 	@Test

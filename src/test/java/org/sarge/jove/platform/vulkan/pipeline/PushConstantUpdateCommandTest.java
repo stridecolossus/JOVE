@@ -7,15 +7,13 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkShaderStage;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstantUpdateCommand.Builder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
 
 class PushConstantUpdateCommandTest extends AbstractVulkanTest {
 	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
@@ -27,7 +25,7 @@ class PushConstantUpdateCommandTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		data = BufferHelper.allocate(4);
-		layout = new PipelineLayout(new Pointer(1), dev, 8, STAGES);
+		layout = new PipelineLayout(new Handle(1), dev, 8, STAGES);
 		update = new PushConstantUpdateCommand(layout, 4, data, STAGES);
 	}
 

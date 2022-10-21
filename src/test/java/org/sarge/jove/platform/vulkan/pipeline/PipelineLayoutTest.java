@@ -14,8 +14,6 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-
 class PipelineLayoutTest extends AbstractVulkanTest {
 	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
 
@@ -23,7 +21,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		layout = new PipelineLayout(new Pointer(1), dev, 4, STAGES);
+		layout = new PipelineLayout(new Handle(1), dev, 4, STAGES);
 	}
 
 	@Test

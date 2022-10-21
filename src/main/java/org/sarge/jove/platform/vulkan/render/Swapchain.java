@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -50,7 +50,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param extents			Image extents
 	 * @param attachments		Attachments
 	 */
-	Swapchain(Pointer handle, DeviceContext dev, VkFormat format, Dimensions extents, List<View> attachments) {
+	Swapchain(Handle handle, DeviceContext dev, VkFormat format, Dimensions extents, List<View> attachments) {
 		super(handle, dev);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
@@ -455,7 +455,7 @@ public class Swapchain extends AbstractVulkanObject {
 			}
 
 			// Create swapchain
-			return new Swapchain(chain.getValue(), dev, info.imageFormat, extents, views);
+			return new Swapchain(Handle.of(chain), dev, info.imageFormat, extents, views);
 		}
 
 		/**

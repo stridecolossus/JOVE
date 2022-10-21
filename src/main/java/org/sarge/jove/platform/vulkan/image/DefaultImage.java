@@ -6,6 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -30,7 +31,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 	 * @param descriptor	Descriptor for this image
 	 * @param mem			Device memory
 	 */
-	protected DefaultImage(Pointer handle, DeviceContext dev, Descriptor descriptor, DeviceMemory mem) {
+	protected DefaultImage(Handle handle, DeviceContext dev, Descriptor descriptor, DeviceMemory mem) {
 		super(handle, dev);
 		this.descriptor = notNull(descriptor);
 		this.mem = notNull(mem);
@@ -174,21 +175,21 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 
 			// Allocate image
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference handle = dev.factory().pointer();
-			check(lib.vkCreateImage(dev, info, null, handle));
+			final PointerByReference ref = dev.factory().pointer();
+			check(lib.vkCreateImage(dev, info, null, ref));
 
 			// Retrieve image memory requirements
 			final var reqs = new VkMemoryRequirements();
-			lib.vkGetImageMemoryRequirements(dev, handle.getValue(), reqs);
+			lib.vkGetImageMemoryRequirements(dev, ref.getValue(), reqs);
 
 			// Allocate image memory
 			final DeviceMemory mem = dev.allocator().allocate(reqs, props);
 
 			// Bind memory to image
-			check(lib.vkBindImageMemory(dev, handle.getValue(), mem, 0));
+			check(lib.vkBindImageMemory(dev, ref.getValue(), mem, 0));
 
 			// Create image
-			return new DefaultImage(handle.getValue(), dev, descriptor, mem);
+			return new DefaultImage(Handle.of(ref), dev, descriptor, mem);
 		}
 	}
 }

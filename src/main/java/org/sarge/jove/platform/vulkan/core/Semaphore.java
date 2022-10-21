@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
 
@@ -18,12 +19,12 @@ public class Semaphore extends AbstractVulkanObject {
 	public static Semaphore create(DeviceContext dev) {
 		final var info = new VkSemaphoreCreateInfo();
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference handle = dev.factory().pointer();
-		VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, handle));
-		return new Semaphore(handle.getValue(), dev);
+		final PointerByReference ref = dev.factory().pointer();
+		VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, ref));
+		return new Semaphore(Handle.of(ref), dev);
 	}
 
-	private Semaphore(Pointer handle, DeviceContext dev) {
+	private Semaphore(Handle handle, DeviceContext dev) {
 		super(handle, dev);
 	}
 

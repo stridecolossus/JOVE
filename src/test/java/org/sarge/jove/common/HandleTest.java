@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 public class HandleTest {
 	private Handle handle;
@@ -20,6 +21,12 @@ public class HandleTest {
 	void constructor() {
 		assertEquals(ptr.hashCode(), handle.hashCode());
 		assertEquals(ptr, handle.pointer());
+	}
+
+	@Test
+	void of() {
+		final var ref = new PointerByReference(new Pointer(42));
+		assertEquals(handle, Handle.of(ref));
 	}
 
 	@Test

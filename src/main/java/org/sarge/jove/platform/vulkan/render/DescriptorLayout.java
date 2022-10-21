@@ -6,13 +6,13 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.lib.util.Check;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -125,11 +125,11 @@ public class DescriptorLayout extends AbstractVulkanObject {
 
 		// Allocate layout
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference handle = dev.factory().pointer();
-		check(lib.vkCreateDescriptorSetLayout(dev, info, null, handle));
+		final PointerByReference ref = dev.factory().pointer();
+		check(lib.vkCreateDescriptorSetLayout(dev, info, null, ref));
 
 		// Create layout
-		return new DescriptorLayout(handle.getValue(), dev, bindings);
+		return new DescriptorLayout(Handle.of(ref), dev, bindings);
 	}
 
 	private final Collection<Binding> bindings;
@@ -140,7 +140,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param bindings		Bindings
 	 */
-	DescriptorLayout(Pointer handle, DeviceContext dev, Collection<Binding> bindings) {
+	DescriptorLayout(Handle handle, DeviceContext dev, Collection<Binding> bindings) {
 		super(handle, dev);
 		Check.notEmpty(bindings);
 		this.bindings = Set.copyOf(bindings);

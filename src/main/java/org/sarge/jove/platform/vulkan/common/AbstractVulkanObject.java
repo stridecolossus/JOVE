@@ -34,16 +34,6 @@ public abstract class AbstractVulkanObject extends AbstractTransientNativeObject
 	 * @param handle		Object handle
 	 * @param dev			Logical device
 	 */
-	protected AbstractVulkanObject(Pointer handle, DeviceContext dev) {
-		this(new Handle(handle), dev);
-	}
-	// TODO - messy to have 2 ctors, but is actually used throughout
-
-	/**
-	 * Constructor.
-	 * @param handle		Object handle
-	 * @param dev			Logical device
-	 */
 	protected AbstractVulkanObject(Handle handle, DeviceContext dev) {
 		super(handle);
 		this.dev = notNull(dev);

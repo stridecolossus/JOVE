@@ -14,8 +14,6 @@ import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer.Group;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-
 public class FrameBufferTest extends AbstractVulkanTest {
 	private static final Dimensions EXTENTS = new Dimensions(2, 3);
 
@@ -44,7 +42,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		when(pass.device()).thenReturn(dev);
 
 		// Create frame buffer
-		buffer = new FrameBuffer(new Pointer(1), dev, pass, List.of(view), EXTENTS);
+		buffer = new FrameBuffer(new Handle(1), dev, pass, List.of(view), EXTENTS);
 	}
 
 	@DisplayName("A frame buffer is comprised of the swapchain image and additional attachments")

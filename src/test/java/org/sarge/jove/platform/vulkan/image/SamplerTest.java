@@ -19,7 +19,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		sampler = new Sampler(new Pointer(1), dev);
+		sampler = new Sampler(new Handle(1), dev);
 	}
 
 	@Test

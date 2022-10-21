@@ -42,7 +42,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * @param features		Features enabled on this device
 	 * @param queues 		Work queues
 	 */
-	LogicalDevice(Pointer handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues) {
+	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues) {
 		super(handle);
 		this.parent = requireNonNull(parent);
 		this.features = requireNonNull(features);
@@ -308,18 +308,18 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			final Instance instance = parent.instance();
 			final VulkanLibrary lib = instance.library();
 			final ReferenceFactory factory = instance.factory();
-			final PointerByReference handle = factory.pointer();
-			check(lib.vkCreateDevice(parent, info, null, handle));
+			final PointerByReference ref = factory.pointer();
+			check(lib.vkCreateDevice(parent, info, null, ref));
 
 			// Retrieve required queues
 			final Map<Family, List<Queue>> map = queues
 					.values()
 					.stream()
-					.flatMap(required -> queues(handle.getValue(), required))
+					.flatMap(required -> queues(ref.getValue(), required))
 					.collect(groupingBy(Queue::family));
 
 			// Create logical device
-			final var dev = new LogicalDevice(handle.getValue(), parent, required, map);
+			final var dev = new LogicalDevice(Handle.of(ref), parent, required, map);
 
 			// Init memory allocator
 			if(allocator == null) {

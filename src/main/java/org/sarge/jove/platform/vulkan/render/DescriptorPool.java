@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -31,7 +31,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 * @param dev			Logical device
 	 * @param max			Maximum number of descriptor sets that can be allocated from this pool
 	 */
-	DescriptorPool(Pointer handle, DeviceContext dev, int max) {
+	DescriptorPool(Handle handle, DeviceContext dev, int max) {
 		super(handle, dev);
 		this.max = oneOrMore(max);
 	}
@@ -61,13 +61,13 @@ public class DescriptorPool extends AbstractVulkanObject {
 		// Allocate descriptors sets
 		final DeviceContext dev = this.device();
 		final VulkanLibrary lib = dev.library();
-		final Pointer[] handles = new Pointer[count];
-		check(lib.vkAllocateDescriptorSets(dev, info, handles));
+		final Pointer[] pointers = new Pointer[count];
+		check(lib.vkAllocateDescriptorSets(dev, info, pointers));
 
 		// Create descriptor sets
 		return IntStream
 				.range(0, count)
-				.mapToObj(n -> new DescriptorSet(handles[n], layouts.get(n)))
+				.mapToObj(n -> new DescriptorSet(new Handle(pointers[n]), layouts.get(n)))
 				.toList();
 	}
 
@@ -189,11 +189,11 @@ public class DescriptorPool extends AbstractVulkanObject {
 
 			// Allocate pool
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference handle = dev.factory().pointer();
-			check(lib.vkCreateDescriptorPool(dev, info, null, handle));
+			final PointerByReference ref = dev.factory().pointer();
+			check(lib.vkCreateDescriptorPool(dev, info, null, ref));
 
 			// Create pool
-			return new DescriptorPool(handle.getValue(), dev, max);
+			return new DescriptorPool(Handle.of(ref), dev, max);
 		}
 
 		/**

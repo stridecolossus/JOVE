@@ -29,7 +29,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 	void before() {
 		view = mock(View.class);
 		extents = new Dimensions(2, 3);
-		swapchain = new Swapchain(new Pointer(1), dev, FORMAT, extents, List.of(view));
+		swapchain = new Swapchain(new Handle(1), dev, FORMAT, extents, List.of(view));
 	}
 
 	@Test

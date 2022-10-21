@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.lib.util.Check;
@@ -29,7 +30,7 @@ public final class DefaultDeviceMemory extends AbstractVulkanObject implements D
 	 * @param dev			Logical device
 	 * @param len			Size of this memory (bytes)
 	 */
-	public DefaultDeviceMemory(Pointer handle, DeviceContext dev, long len) {
+	public DefaultDeviceMemory(Handle handle, DeviceContext dev, long len) {
 		super(handle, dev);
 		this.size = oneOrMore(len);
 	}

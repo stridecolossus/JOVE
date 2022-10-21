@@ -61,7 +61,7 @@ public class LogicalDeviceTest {
 		queue = new Queue(new Handle(1), family);
 
 		// Create logical device
-		device = new LogicalDevice(new Pointer(1), parent, features, Map.of(family, List.of(queue, queue)));
+		device = new LogicalDevice(new Handle(1), parent, features, Map.of(family, List.of(queue, queue)));
 	}
 
 	@Test

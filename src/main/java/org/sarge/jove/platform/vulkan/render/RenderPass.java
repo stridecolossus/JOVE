@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -33,7 +34,7 @@ public class RenderPass extends AbstractVulkanObject {
 	 * @param dev				Logical device
 	 * @param attachments		Attachments
 	 */
-	RenderPass(Pointer handle, DeviceContext dev, List<Attachment> attachments) {
+	RenderPass(Handle handle, DeviceContext dev, List<Attachment> attachments) {
 		super(handle, dev);
 		this.attachments = List.copyOf(attachments);
 	}
@@ -112,11 +113,11 @@ public class RenderPass extends AbstractVulkanObject {
 
 			// Allocate render pass
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference pass = dev.factory().pointer();
-			check(lib.vkCreateRenderPass(dev, info, null, pass));
+			final PointerByReference ref = dev.factory().pointer();
+			check(lib.vkCreateRenderPass(dev, info, null, ref));
 
 			// Create render pass
-			return new RenderPass(pass.getValue(), dev, attachments);
+			return new RenderPass(Handle.of(ref), dev, attachments);
 		}
 
 		/**

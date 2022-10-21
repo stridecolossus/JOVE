@@ -1,33 +1,25 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject.Destructor;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-
-import com.sun.jna.Pointer;
+import org.sarge.jove.platform.vulkan.core.*;
 
 public class AbstractVulkanObjectTest {
 	private AbstractVulkanObject obj;
 	private DeviceContext dev;
 	private Destructor<AbstractVulkanObject> destructor;
-	private Pointer ptr;
+	private Handle handle;
 	private boolean released;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		// Create object handle
-		ptr = new Pointer(1);
+		handle = new Handle(1);
 
 		// Create context
 		dev = mock(LogicalDevice.class);
@@ -38,7 +30,7 @@ public class AbstractVulkanObjectTest {
 		released = false;
 
 		// Create object
-		obj = new AbstractVulkanObject(ptr, dev) {
+		obj = new AbstractVulkanObject(handle, dev) {
 			@Override
 			protected Destructor<AbstractVulkanObject> destructor(VulkanLibrary lib) {
 				return destructor;
@@ -54,7 +46,7 @@ public class AbstractVulkanObjectTest {
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(ptr), obj.handle());
+		assertEquals(handle, obj.handle());
 		assertEquals(dev, obj.device());
 		assertEquals(destructor, obj.destructor(null));
 		assertEquals(false, obj.isDestroyed());

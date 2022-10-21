@@ -15,8 +15,6 @@ import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-
 public class PipelineCacheTest extends AbstractVulkanTest {
 	private static final byte[] DATA = new byte[42];
 
@@ -24,7 +22,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		cache = new PipelineCache(new Pointer(1), dev);
+		cache = new PipelineCache(new Handle(1), dev);
 	}
 
 	@Test
@@ -76,7 +74,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 
 	@Test
 	void merge() {
-		final PipelineCache other = new PipelineCache(new Pointer(2), dev);
+		final PipelineCache other = new PipelineCache(new Handle(2), dev);
 		final List<PipelineCache> list = List.of(other, other);
 		cache.merge(list);
 		verify(lib).vkMergePipelineCaches(dev, cache, 2, NativeObject.array(list));

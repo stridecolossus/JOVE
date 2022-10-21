@@ -72,11 +72,11 @@ public class FrameBuffer extends AbstractVulkanObject {
 		// Allocate frame buffer
 		final DeviceContext dev = pass.device();
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference buffer = dev.factory().pointer();
-		check(lib.vkCreateFramebuffer(dev, info, null, buffer));
+		final PointerByReference ref = dev.factory().pointer();
+		check(lib.vkCreateFramebuffer(dev, info, null, ref));
 
 		// Create frame buffer
-		return new FrameBuffer(buffer.getValue(), dev, pass, attachments, extents);
+		return new FrameBuffer(Handle.of(ref), dev, pass, attachments, extents);
 	}
 
 	private final RenderPass pass;
@@ -91,7 +91,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @param attachments		Attachments
 	 * @param extents			Image extents
 	 */
-	FrameBuffer(Pointer handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
+	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
 		super(handle, dev);
 		this.extents = notNull(extents);
 		this.attachments = List.copyOf(notEmpty(attachments));

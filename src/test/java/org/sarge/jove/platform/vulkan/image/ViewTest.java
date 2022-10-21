@@ -12,8 +12,6 @@ import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-
 public class ViewTest extends AbstractVulkanTest {
 	private View view;
 	private DefaultImage image;
@@ -34,7 +32,7 @@ public class ViewTest extends AbstractVulkanTest {
 		when(image.handle()).thenReturn(new Handle(1));
 
 		// Create image view
-		view = new View(new Pointer(2), dev, image);
+		view = new View(new Handle(2), dev, image);
 
 		// Init clear value
 		clear = new ColourClearValue(Colour.WHITE);

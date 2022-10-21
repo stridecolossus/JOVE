@@ -42,7 +42,7 @@ class PhysicalDeviceTest {
 		family = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
 
 		// Create device
-		dev = new PhysicalDevice(new Pointer(1), instance, List.of(family), DeviceFeatures.EMPTY);
+		dev = new PhysicalDevice(new Handle(1), instance, List.of(family), DeviceFeatures.EMPTY);
 	}
 
 	@Test

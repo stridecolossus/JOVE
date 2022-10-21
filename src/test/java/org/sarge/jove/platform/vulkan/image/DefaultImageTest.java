@@ -20,7 +20,7 @@ class DefaultImageTest extends AbstractVulkanTest {
 	private static final Dimensions EXTENTS = new Dimensions(3, 4);
 
 	private DefaultImage image;
-	private Pointer handle;
+	private Handle handle;
 	private Descriptor descriptor;
 	private DeviceMemory mem;
 
@@ -40,13 +40,13 @@ class DefaultImageTest extends AbstractVulkanTest {
 		when(mem.handle()).thenReturn(new Handle(new Pointer(1)));
 
 		// Create image
-		handle = new Pointer(2);
+		handle = new Handle(2);
 		image = new DefaultImage(handle, dev, descriptor, mem);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(handle), image.handle());
+		assertEquals(handle, image.handle());
 		assertEquals(dev, image.device());
 		assertEquals(false, image.isDestroyed());
 		assertEquals(descriptor, image.descriptor());

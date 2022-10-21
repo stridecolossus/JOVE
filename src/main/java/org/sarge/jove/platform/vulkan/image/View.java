@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -39,7 +39,7 @@ public class View extends AbstractVulkanObject {
 	 * @param dev		Logical device
 	 * @param image		Underlying image
 	 */
-	View(Pointer handle, DeviceContext dev, Image image) {
+	View(Handle handle, DeviceContext dev, Image image) {
 		super(handle, dev);
 		this.image = notNull(image);
 	}
@@ -172,11 +172,11 @@ public class View extends AbstractVulkanObject {
 			// Allocate image view
 			final DeviceContext dev = image.device();
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference handle = dev.factory().pointer();
-			check(lib.vkCreateImageView(dev, info, null, handle));
+			final PointerByReference ref = dev.factory().pointer();
+			check(lib.vkCreateImageView(dev, info, null, ref));
 
 			// Create image view
-			return new View(handle.getValue(), dev, image);
+			return new View(Handle.of(ref), dev, image);
 		}
 	}
 

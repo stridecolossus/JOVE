@@ -7,7 +7,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 import java.util.function.Consumer;
 
-import org.sarge.jove.common.AbstractTransientNativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.util.IntegerEnumeration.ReverseMapping;
 import org.sarge.jove.platform.vulkan.*;
@@ -29,7 +29,7 @@ public class Handler extends AbstractTransientNativeObject {
 	 * @param handle 		Handle
 	 * @param instance		Parent instance
 	 */
-	private Handler(Pointer handle, Instance instance) {
+	private Handler(Handle handle, Instance instance) {
 		super(handle);
 		this.instance = notNull(instance);
 	}
@@ -230,7 +230,7 @@ public class Handler extends AbstractTransientNativeObject {
 			check(result);
 
 			// Create handler
-			return new Handler(ref.getValue(), instance);
+			return new Handler(Handle.of(ref), instance);
 		}
 	}
 }

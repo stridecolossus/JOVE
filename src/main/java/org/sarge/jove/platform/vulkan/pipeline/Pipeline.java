@@ -31,7 +31,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @param layout		Pipeline layout
 	 * @param flags			Pipeline flags
 	 */
-	Pipeline(Pointer handle, DeviceContext dev, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
+	Pipeline(Handle handle, DeviceContext dev, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
 		super(handle, dev);
 		this.layout = notNull(layout);
 		this.flags = Set.copyOf(flags);
@@ -433,14 +433,15 @@ public class Pipeline extends AbstractVulkanObject {
 
 			// Allocate pipelines
 			final VulkanLibrary lib = dev.library();
-			final Pointer[] handles = new Pointer[array.length];
-			check(lib.vkCreateGraphicsPipelines(dev, cache, array.length, array, null, handles));
+			final Pointer[] pointers = new Pointer[array.length];
+			check(lib.vkCreateGraphicsPipelines(dev, cache, array.length, array, null, pointers));
 
 			// Create pipelines
 			final Pipeline[] pipelines = new Pipeline[array.length];
 			for(int n = 0; n < array.length; ++n) {
 				final Builder builder = builders.get(n);
-				pipelines[n] = new Pipeline(handles[n], dev, builder.layout, builder.flags);
+				final Handle handle = new Handle(pointers[n]);
+				pipelines[n] = new Pipeline(handle, dev, builder.layout, builder.flags);
 			}
 			return Arrays.asList(pipelines);
 		}

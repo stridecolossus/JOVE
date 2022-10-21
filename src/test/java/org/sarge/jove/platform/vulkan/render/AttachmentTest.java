@@ -44,7 +44,7 @@ class AttachmentTest {
 
 	@Test
 	void finalLayout() {
-		assertThrows(NullPointerException.class, () -> new Attachment(FORMAT, null));
+		assertThrows(IllegalArgumentException.class, () -> new Attachment(FORMAT, null));
 		assertThrows(IllegalArgumentException.class, () -> new Attachment(FORMAT, VkImageLayout.UNDEFINED));
 		assertThrows(IllegalArgumentException.class, () -> new Attachment(FORMAT, VkImageLayout.PREINITIALIZED));
 	}

@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -37,6 +38,6 @@ public class DefaultAllocator implements Allocator {
 		check(lib.vkAllocateMemory(dev, info, null, ref));
 
 		// Create memory wrapper
-		return new DefaultDeviceMemory(ref.getValue(), dev, size);
+		return new DefaultDeviceMemory(Handle.of(ref), dev, size);
 	}
 }

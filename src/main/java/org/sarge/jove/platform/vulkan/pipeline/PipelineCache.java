@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.util.Collection;
 
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -46,7 +46,7 @@ public class PipelineCache extends AbstractVulkanObject {
 		check(lib.vkCreatePipelineCache(dev, info, null, ref));
 
 		// Create domain object
-		return new PipelineCache(ref.getValue(), dev);
+		return new PipelineCache(Handle.of(ref), dev);
 	}
 
 	/**
@@ -54,7 +54,7 @@ public class PipelineCache extends AbstractVulkanObject {
 	 * @param handle		Cache handle
 	 * @param dev			Logical device
 	 */
-	PipelineCache(Pointer handle, DeviceContext dev) {
+	PipelineCache(Handle handle, DeviceContext dev) {
 		super(handle, dev);
 	}
 

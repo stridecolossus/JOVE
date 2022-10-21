@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -115,7 +116,7 @@ public interface Query {
 			check(lib.vkCreateQueryPool(dev, info, null, ref));
 
 			// Create pool
-			return new Pool(ref.getValue(), dev, type, slots);
+			return new Pool(Handle.of(ref), dev, type, slots);
 		}
 
 		private final VkQueryType type;
@@ -128,7 +129,7 @@ public interface Query {
 		 * @param type			Query type
 		 * @param slots			Number of query slots
 		 */
-		Pool(Pointer handle, DeviceContext dev, VkQueryType type, int slots) {
+		Pool(Handle handle, DeviceContext dev, VkQueryType type, int slots) {
 			super(handle, dev);
 			this.type = notNull(type);
 			this.slots = oneOrMore(slots);

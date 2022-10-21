@@ -2,8 +2,6 @@ package org.sarge.jove.common;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import com.sun.jna.Pointer;
-
 /**
  * Template implementation for a native object managed by the application.
  * @author Sarge
@@ -19,14 +17,6 @@ public abstract class AbstractTransientNativeObject implements NativeObject, Tra
 	 */
 	protected AbstractTransientNativeObject(Handle handle) {
 		this.handle = notNull(handle);
-	}
-
-	/**
-	 * Constructor.
-	 * @param handle JNA pointer handle
-	 */
-	protected AbstractTransientNativeObject(Pointer handle) {
-		this(new Handle(handle));
 	}
 
 	@Override

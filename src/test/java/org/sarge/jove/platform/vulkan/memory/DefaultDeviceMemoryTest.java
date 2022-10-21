@@ -11,23 +11,21 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-
 public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	private static final int SIZE = 3;
 
 	private DefaultDeviceMemory mem;
-	private Pointer handle;
+	private Handle handle;
 
 	@BeforeEach
 	void before() {
-		handle = mock(Pointer.class);
+		handle = new Handle(1);
 		mem = new DefaultDeviceMemory(handle, dev, SIZE);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(handle), mem.handle());
+		assertEquals(handle, mem.handle());
 		assertEquals(false, mem.isDestroyed());
 		assertEquals(SIZE, mem.size());
 	}

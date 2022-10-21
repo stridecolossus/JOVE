@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
@@ -37,11 +38,11 @@ public class Shader extends AbstractVulkanObject {
 
 		// Allocate shader
 		final VulkanLibrary lib = dev.library();
-		final PointerByReference shader = dev.factory().pointer();
-		check(lib.vkCreateShaderModule(dev, info, null, shader));
+		final PointerByReference ref = dev.factory().pointer();
+		check(lib.vkCreateShaderModule(dev, info, null, ref));
 
 		// Create shader
-		return new Shader(shader.getValue(), dev);
+		return new Shader(Handle.of(ref), dev);
 	}
 
 	/**
@@ -49,7 +50,7 @@ public class Shader extends AbstractVulkanObject {
 	 * @param handle 		Shader module handle
 	 * @param dev			Logical device
 	 */
-	private Shader(Pointer handle, DeviceContext dev) {
+	private Shader(Handle handle, DeviceContext dev) {
 		super(handle, dev);
 	}
 

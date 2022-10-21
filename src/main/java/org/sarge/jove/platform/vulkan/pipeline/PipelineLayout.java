@@ -34,7 +34,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * @param push			Push constants buffer length
 	 * @param stages		Pipeline shader stages for push constants
 	 */
-	PipelineLayout(Pointer handle, DeviceContext dev, int push, Set<VkShaderStage> stages) {
+	PipelineLayout(Handle handle, DeviceContext dev, int push, Set<VkShaderStage> stages) {
 		super(handle, dev);
 		this.push = zeroOrMore(push);
 		this.stages = Set.copyOf(stages);
@@ -123,8 +123,8 @@ public class PipelineLayout extends AbstractVulkanObject {
 
 			// Allocate layout
 			final VulkanLibrary lib = dev.library();
-			final PointerByReference layout = dev.factory().pointer();
-			check(lib.vkCreatePipelineLayout(dev, info, null, layout));
+			final PointerByReference ref = dev.factory().pointer();
+			check(lib.vkCreatePipelineLayout(dev, info, null, ref));
 
 			// Check that overall size is supported by the hardware
 			final int max = dev.limits().value("maxPushConstantsSize");
@@ -138,7 +138,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 					.collect(toSet());
 
 			// Create layout
-			return new PipelineLayout(layout.getValue(), dev, size, stages);
+			return new PipelineLayout(Handle.of(ref), dev, size, stages);
 		}
 	}
 

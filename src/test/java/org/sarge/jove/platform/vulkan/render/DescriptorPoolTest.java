@@ -23,8 +23,8 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
-		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
-		pool = new DescriptorPool(new Pointer(2), dev, 1);
+		layout = new DescriptorLayout(new Handle(1), dev, List.of(binding));
+		pool = new DescriptorPool(new Handle(2), dev, 1);
 	}
 
 	@Test

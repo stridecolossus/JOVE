@@ -24,7 +24,7 @@ public class PipelineTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		layout = mock(PipelineLayout.class);
-		pipeline = new Pipeline(new Pointer(1), dev, layout, Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
+		pipeline = new Pipeline(new Handle(1), dev, layout, Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
 	}
 
 	@Test

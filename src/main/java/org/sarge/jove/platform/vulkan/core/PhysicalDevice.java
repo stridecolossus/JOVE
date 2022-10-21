@@ -36,8 +36,8 @@ public class PhysicalDevice implements NativeObject {
 	 * @param families		Queue families
 	 * @param features		Features supported by this device
 	 */
-	PhysicalDevice(Pointer handle, Instance instance, List<Family> families, DeviceFeatures features) {
-		this.handle = new Handle(handle);
+	PhysicalDevice(Handle handle, Instance instance, List<Family> families, DeviceFeatures features) {
+		this.handle = notNull(handle);
 		this.instance = notNull(instance);
 		this.families = List.copyOf(families);
 		this.features = notNull(features);
@@ -204,7 +204,7 @@ public class PhysicalDevice implements NativeObject {
 			instance.library().vkGetPhysicalDeviceFeatures(handle, features);
 
 			// Create device
-			return new PhysicalDevice(handle, instance, families, DeviceFeatures.of(features));
+			return new PhysicalDevice(new Handle(handle), instance, families, DeviceFeatures.of(features));
 		}
 
 		/**

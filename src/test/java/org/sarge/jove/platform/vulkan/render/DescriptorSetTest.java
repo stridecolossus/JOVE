@@ -14,8 +14,6 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Pointer;
-
 public class DescriptorSetTest extends AbstractVulkanTest {
 	private Binding binding;
 	private DescriptorLayout layout;
@@ -26,19 +24,19 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 	void before() {
 		// Create layout with a sampler binding
 		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
-		layout = new DescriptorLayout(new Pointer(1), dev, List.of(binding));
+		layout = new DescriptorLayout(new Handle(1), dev, List.of(binding));
 
 		// Create sampler resource
 		res = mock(DescriptorResource.class);
 		when(res.type()).thenReturn(VkDescriptorType.COMBINED_IMAGE_SAMPLER);
 
 		// Create descriptor set
-		descriptor = new DescriptorSet(new Pointer(2), layout);
+		descriptor = new DescriptorSet(new Handle(2), layout);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(new Pointer(2)), descriptor.handle());
+		assertEquals(new Handle(2), descriptor.handle());
 		assertEquals(layout, descriptor.layout());
 	}
 

@@ -64,8 +64,8 @@ public class DescriptorSet implements NativeObject {
 	 * @param handle Descriptor set handle
 	 * @param layout Layout
 	 */
-	DescriptorSet(Pointer handle, DescriptorLayout layout) {
-		this.handle = new Handle(handle);
+	DescriptorSet(Handle handle, DescriptorLayout layout) {
+		this.handle = notNull(handle);
 		this.layout = notNull(layout);
 		this.modified.addAll(layout.bindings());
 	}

@@ -4,18 +4,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 
-import com.sun.jna.Pointer;
-
 public class AbstractTransientNativeObjectTest {
 	private AbstractTransientNativeObject obj;
-	private Pointer ptr;
+	private Handle handle;
 	private boolean destroyed;
 
 	@BeforeEach
 	void before() {
-		ptr = new Pointer(42);
+		handle = new Handle(1);
 		destroyed = false;
-		obj = new AbstractTransientNativeObject(ptr) {
+		obj = new AbstractTransientNativeObject(handle) {
 			@Override
 			protected void release() {
 				destroyed = true;
@@ -26,7 +24,7 @@ public class AbstractTransientNativeObjectTest {
 	@DisplayName("A transient object has a native handle")
 	@Test
 	void constructor() {
-		assertEquals(new Handle(ptr), obj.handle());
+		assertEquals(handle, obj.handle());
 	}
 
 	@DisplayName("A new transient object is not destroyed")

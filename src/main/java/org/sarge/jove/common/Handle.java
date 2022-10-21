@@ -1,12 +1,22 @@
 package org.sarge.jove.common;
 
 import com.sun.jna.*;
+import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>handle</i> is an opaque wrapper for a JNA pointer.
  * @author Sarge
  */
 public final class Handle {
+	/**
+	 * Creates a handle from the given reference returned by the native layer.
+	 * @param ref Reference
+	 * @return New handle
+	 */
+	public static Handle of(PointerByReference ref) {
+		return new Handle(ref.getValue());
+	}
+
 	private final Pointer ptr;
 
 	/**

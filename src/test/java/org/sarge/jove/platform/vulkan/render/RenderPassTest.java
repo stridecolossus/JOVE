@@ -6,12 +6,11 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-
-import com.sun.jna.Pointer;
 
 class RenderPassTest extends AbstractVulkanTest {
 	private RenderPass pass;
@@ -29,7 +28,7 @@ class RenderPassTest extends AbstractVulkanTest {
 				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 				.build();
 
-		pass = new RenderPass(new Pointer(1), dev, List.of(one));
+		pass = new RenderPass(new Handle(1), dev, List.of(one));
 	}
 
 	@Test

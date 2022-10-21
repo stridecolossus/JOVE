@@ -275,7 +275,7 @@ public interface Command {
 			check(lib.vkCreateCommandPool(dev, info, null, pool));
 
 			// Create pool
-			return new Pool(pool.getValue(), dev, queue);
+			return new Pool(Handle.of(pool), dev, queue);
 		}
 
 		private final Queue queue;
@@ -286,7 +286,7 @@ public interface Command {
 		 * @param dev			Logical device
 		 * @param queue			Work queue
 		 */
-		private Pool(Pointer handle, DeviceContext dev, Queue queue) {
+		private Pool(Handle handle, DeviceContext dev, Queue queue) {
 			super(handle, dev);
 			this.queue = notNull(queue);
 		}
