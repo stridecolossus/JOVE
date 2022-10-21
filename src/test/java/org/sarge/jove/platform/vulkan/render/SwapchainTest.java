@@ -181,7 +181,6 @@ public class SwapchainTest extends AbstractVulkanTest {
 		void build() {
 			// Create swapchain
 			swapchain = builder.build(dev);
-			assertNotNull(swapchain);
 			assertNotNull(swapchain.handle());
 			assertEquals(false, swapchain.isDestroyed());
 			assertEquals(dev, swapchain.device());
@@ -194,7 +193,6 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 			// Check colour attachment
 			final View view = swapchain.attachments().get(0);
-			assertNotNull(view);
 			assertEquals(Optional.empty(), view.clear());
 			assertEquals(false, view.isDestroyed());
 
@@ -205,7 +203,6 @@ public class SwapchainTest extends AbstractVulkanTest {
 					.aspect(VkImageAspect.COLOR)
 					.build();
 			final Image image = view.image();
-			assertNotNull(image);
 			assertEquals(descriptor, image.descriptor());
 
 			// Check API
@@ -228,7 +225,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 				}
 			};
 			verify(lib).vkCreateSwapchainKHR(dev, expected, null, factory.pointer());
-			verify(lib).vkGetSwapchainImagesKHR(dev, factory.pointer().getValue(), factory.integer(), new Pointer[1]);
+			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle(), factory.integer(), new Pointer[1]);
 		}
 
 		@DisplayName("The swapchain format must be supported by the surface")

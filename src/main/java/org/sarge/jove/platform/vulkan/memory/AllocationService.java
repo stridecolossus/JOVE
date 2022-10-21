@@ -35,9 +35,18 @@ public class AllocationService {
 	protected Allocator allocator(MemoryProperties<?> props) {
 		return allocator;
 	}
+	// TODO - better if allocator accepted props as well, then can be adapter, no need for this override?
 
 	/**
 	 * Allocates device memory for the given request.
+	 * <p>
+	 * The allocation process is:
+	 * <ol>
+	 * <li>Select the appropriate memory type for the request via the {@link MemorySelector}</li>
+	 * <li>Determine the allocator for the request (see {@link #allocator(MemoryProperties)})</li>
+	 * <li>Delegate to the allocator</li>
+	 * </ol>
+	 * <p>
 	 * @param reqs			Memory requirements
 	 * @param props			Memory properties
 	 * @return New device memory

@@ -31,7 +31,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class AllocationRoutingService extends AllocationService {
+public class RoutingAllocationService extends AllocationService {
 	/**
 	 * Route descriptor.
 	 */
@@ -49,7 +49,7 @@ public class AllocationRoutingService extends AllocationService {
 	 * @param selector		Memory selector
 	 * @param allocator		Default memory allocator
 	 */
-	public AllocationRoutingService(MemorySelector selector, Allocator allocator) {
+	public RoutingAllocationService(MemorySelector selector, Allocator allocator) {
 		super(selector, allocator);
 	}
 

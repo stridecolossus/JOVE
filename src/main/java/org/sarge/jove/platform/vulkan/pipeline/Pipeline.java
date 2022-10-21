@@ -17,7 +17,7 @@ import org.sarge.jove.platform.vulkan.render.RenderPass;
 import com.sun.jna.Pointer;
 
 /**
- * A <i>pipeline</i> specifies the sequence of operations for graphics rendering.
+ * A <i>pipeline</i> specifies the configuration of the various stages for graphics rendering.
  * @author Sarge
  */
 public class Pipeline extends AbstractVulkanObject {
@@ -29,7 +29,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @param handle		Pipeline handle
 	 * @param dev			Device
 	 * @param layout		Pipeline layout
-	 * @param flags			Pipeline flags
+	 * @param flags			Creation flags
 	 */
 	Pipeline(Handle handle, DeviceContext dev, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
 		super(handle, dev);
@@ -77,74 +77,6 @@ public class Pipeline extends AbstractVulkanObject {
 	 * Builder for a pipeline.
 	 */
 	public static class Builder {
-		/**
-		 * A <i>shader stage builder</i> configures a programmable shader stage for this pipeline.
-		 */
-		public class ShaderStageBuilder {
-			private final VkShaderStage stage;
-			private Shader shader;
-			private String name = "main";
-			private VkSpecializationInfo constants;
-
-			private ShaderStageBuilder(VkShaderStage stage) {
-				this.stage = stage;
-			}
-
-			/**
-			 * Sets the shader module.
-			 * @param shader Shader module
-			 */
-			public ShaderStageBuilder shader(Shader shader) {
-				this.shader = notNull(shader);
-				return this;
-			}
-
-			/**
-			 * Sets the method name of this shader stage (default is {@code main}).
-			 * @param name Shader method name
-			 */
-			public ShaderStageBuilder name(String name) {
-				this.name = notEmpty(name);
-				return this;
-			}
-
-			/**
-			 * Adds specialisation constants to parameterise this shader.
-			 * @param constants Specialisation constants or {@code null} to use default values
-			 * @see Shader#constants(Map)
-			 */
-			public ShaderStageBuilder constants(VkSpecializationInfo constants) {
-				this.constants = constants;
-				return this;
-			}
-
-			/**
-			 * Constructs this shader pipeline stage.
-			 * @return Parent pipeline builder
-			 * @throws IllegalArgumentException if the shader module has not been configured
-			 */
-			public Builder build() {
-				validate();
-				return Builder.this;
-			}
-
-			/**
-			 * Populates the shader stage descriptor.
-			 */
-			void populate(VkPipelineShaderStageCreateInfo info) {
-				validate();
-				info.sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
-				info.stage = stage;
-				info.module = shader.handle();
-				info.pName = name;
-				info.pSpecializationInfo = constants;
-			}
-
-			private void validate() {
-				if(shader == null) throw new IllegalArgumentException("Shader module not populated");
-			}
-		}
-
 		// Properties
 		private PipelineLayout layout;
 		private RenderPass pass;
@@ -200,9 +132,10 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets a pipeline flag.
-		 * @param flag Pipeline flag
-		 * @throws IllegalArgumentException if the flag is {@link VkPipelineCreateFlag#DERIVATIVE} which cannot be used explicitly
+		 * Sets a pipeline creation flag.
+		 * @param flag Pipeline creation flag
+		 * @throws IllegalArgumentException if the flag is {@link VkPipelineCreateFlag#DERIVATIVE}
+		 * @see #derive(Pipeline)
 		 */
 		public Builder flag(VkPipelineCreateFlag flag) {
 			if(flag == VkPipelineCreateFlag.DERIVATIVE) throw new IllegalArgumentException("Cannot explicitly set pipeline as a derivative, use derive()");
@@ -336,6 +269,74 @@ public class Pipeline extends AbstractVulkanObject {
 		}
 
 		/**
+		 * A <i>shader stage builder</i> configures a programmable shader stage for this pipeline.
+		 */
+		public class ShaderStageBuilder {
+			private final VkShaderStage stage;
+			private Shader shader;
+			private String name = "main";
+			private VkSpecializationInfo constants;
+
+			private ShaderStageBuilder(VkShaderStage stage) {
+				this.stage = stage;
+			}
+
+			/**
+			 * Sets the shader module.
+			 * @param shader Shader module
+			 */
+			public ShaderStageBuilder shader(Shader shader) {
+				this.shader = notNull(shader);
+				return this;
+			}
+
+			/**
+			 * Sets the method name of this shader stage (default is {@code main}).
+			 * @param name Shader method name
+			 */
+			public ShaderStageBuilder name(String name) {
+				this.name = notEmpty(name);
+				return this;
+			}
+
+			/**
+			 * Adds specialisation constants to parameterise this shader.
+			 * @param constants Specialisation constants or {@code null} to use default values
+			 * @see Shader#constants(Map)
+			 */
+			public ShaderStageBuilder constants(VkSpecializationInfo constants) {
+				this.constants = notNull(constants);
+				return this;
+			}
+
+			/**
+			 * Constructs this shader pipeline stage.
+			 * @return Parent pipeline builder
+			 * @throws IllegalArgumentException if the shader module has not been configured
+			 */
+			public Builder build() {
+				validate();
+				return Builder.this;
+			}
+
+			/**
+			 * Populates the shader stage descriptor.
+			 */
+			void populate(VkPipelineShaderStageCreateInfo info) {
+				validate();
+				info.sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
+				info.stage = stage;
+				info.module = shader.handle();
+				info.pName = name;
+				info.pSpecializationInfo = constants;
+			}
+
+			private void validate() {
+				if(shader == null) throw new IllegalArgumentException("Shader module not populated");
+			}
+		}
+
+		/**
 		 * Starts a new programmable shader pipeline stage.
 		 * @param stage Shader stage
 		 * @return Builder for a shader stage
@@ -354,9 +355,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @param shader	Shader module
 		 */
 		public Builder shader(VkShaderStage stage, Shader shader) {
-			return shader(stage)
-					.shader(shader)
-					.build();
+			return shader(stage).shader(shader).build();
 		}
 
 		/**
@@ -450,7 +449,7 @@ public class Pipeline extends AbstractVulkanObject {
 	/**
 	 * Pipeline API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Creates a graphics pipeline.
 		 * @param device			Logical device

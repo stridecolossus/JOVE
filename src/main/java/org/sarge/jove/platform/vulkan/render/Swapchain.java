@@ -423,11 +423,12 @@ public class Swapchain extends AbstractVulkanObject {
 			// Create swapchain
 			final VulkanLibrary lib = dev.library();
 			final ReferenceFactory factory = dev.factory();
-			final PointerByReference chain = factory.pointer();
-			check(lib.vkCreateSwapchainKHR(dev, info, null, chain));
+			final PointerByReference ref = factory.pointer();
+			check(lib.vkCreateSwapchainKHR(dev, info, null, ref));
 
 			// Retrieve swapchain images
-			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, chain.getValue(), count, array);
+			final Handle handle = Handle.of(ref);
+			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, handle, count, array);
 			final IntByReference count = factory.integer();
 			final Pointer[] handles = func.invoke(count, Pointer[]::new);
 
@@ -448,51 +449,18 @@ public class Swapchain extends AbstractVulkanObject {
 					.toList();
 
 			// Init clear operation
-			if(clear != null) {
-				for(View view : views) {
-					view.clear(clear);
-				}
+			for(View view : views) {
+				view.clear(clear);
 			}
 
 			// Create swapchain
-			return new Swapchain(Handle.of(chain), dev, info.imageFormat, extents, views);
+			return new Swapchain(handle, dev, info.imageFormat, extents, views);
 		}
 
 		/**
 		 * Implementation for a swapchain image.
 		 */
-		private static class SwapChainImage implements Image {
-			private final Handle handle;
-			private final DeviceContext dev;
-			private final Descriptor descriptor;
-
-			/**
-			 * Constructor.
-			 * @param handle			Swapchain image
-			 * @param dev				Logical device
-			 * @param descriptor		Image descriptor
-			 */
-			private SwapChainImage(Handle handle, DeviceContext dev, Descriptor descriptor) {
-				this.handle = notNull(handle);
-				this.dev = notNull(dev);
-				this.descriptor = notNull(descriptor);
-			}
-
-			@Override
-			public Handle handle() {
-				return handle;
-			}
-
-			@Override
-			public Descriptor descriptor() {
-				return descriptor;
-			}
-
-			@Override
-			public DeviceContext device() {
-				return dev;
-			}
-
+		private record SwapChainImage(Handle handle, DeviceContext device, Descriptor descriptor) implements Image {
 			@Override
 			public boolean equals(Object obj) {
 				return obj == this;
@@ -525,18 +493,18 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Retrieves swapchain image handles.
 		 * @param device					Logical device
-		 * @param swapchain					Swap-chain handle
+		 * @param swapchain					Swapchain handle
 		 * @param pSwapchainImageCount		Number of images
 		 * @param pSwapchainImages			Image handles
 		 * @return Result code
 		 */
-		int vkGetSwapchainImagesKHR(DeviceContext device, Pointer swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+		int vkGetSwapchainImagesKHR(DeviceContext device, Handle swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
 
 		/**
 		 * Acquires the next image in the swapchain.
 		 * @param device				Logical device
-		 * @param swapchain				Swap-chain
-		 * @param timeout				Timeout (ns) or {@link Long#MAX_VALUE} to disable
+		 * @param swapchain				Swapchain
+		 * @param timeout				Timeout (nanoseconds) or {@link Long#MAX_VALUE} to disable
 		 * @param semaphore				Optional semaphore
 		 * @param fence					Optional fence
 		 * @param pImageIndex			Returned image index

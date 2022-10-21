@@ -188,7 +188,7 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * Creates a pipeline bind command for this descriptor set.
+	 * Creates a bind command for this descriptor set.
 	 * @param layout Pipeline layout
 	 * @return New bind command
 	 */
@@ -197,7 +197,7 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * Creates a pipeline bind command for the given descriptor sets.
+	 * Creates a bind command for the given descriptor sets.
 	 * @param layout		Pipeline layout
 	 * @param sets			Descriptor sets
 	 * @return New bind command

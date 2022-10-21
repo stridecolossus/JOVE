@@ -7,20 +7,20 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkImageUsageFlag;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class AllocationRoutingServiceTest extends AbstractVulkanTest {
-	private AllocationRoutingService service;
-	private Allocator allocator;
+public class RoutingAllocationServiceTest extends AbstractVulkanTest {
+	private RoutingAllocationService service;
+	private Allocator def;
 
 	@BeforeEach
 	void before() {
-		allocator = mock(Allocator.class);
-		service = new AllocationRoutingService(mock(MemorySelector.class), allocator);
+		def = mock(Allocator.class);
+		service = new RoutingAllocationService(mock(MemorySelector.class), def);
 	}
 
 	@DisplayName("An unmatched request is routed to the default allocator")
 	@Test
 	void unmatched() {
-		assertEquals(allocator, service.allocator(null));
+		assertEquals(def, service.allocator(null));
 	}
 
 	@DisplayName("A matching request is routed to the specified allocator")
