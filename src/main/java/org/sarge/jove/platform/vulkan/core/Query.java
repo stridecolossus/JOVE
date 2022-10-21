@@ -12,6 +12,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -22,7 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
  * <p>
  * Generally a query is comprised of two commands that wrap a portion of a render sequence, e.g. to perform an {@link VkQueryType#OCCLUSION} query.
  * <p>
- * Queries are allocated as <i>slots</i> from a {@link Pool} create via the {@link Pool#create(DeviceContext, VkQueryType, int, VkQueryPipelineStatisticFlag...)} factory method.
+ * Queries are allocated as <i>slots</i> from a {@link Pool} created via the {@link Pool#create(DeviceContext, VkQueryType, int, VkQueryPipelineStatisticFlag...)} factory method.
  * Note that a query pool <b>must</b> be reset before each sample <b>outside</b> the render pass.
  * <p>
  * The {@link ResultBuilder} is used to configure the results of a query and to write the data to a destination buffer.
@@ -88,7 +89,7 @@ public interface Query {
 	/**
 	 * A <i>query pool</i> is comprised of a number of <i>slots</i> used to execute queries.
 	 */
-	public static class Pool extends AbstractVulkanObject {
+	class Pool extends AbstractVulkanObject {
 		/**
 		 * Creates a query pool.
 		 * @param dev		Device
@@ -245,7 +246,7 @@ public interface Query {
 	 * <p>
 	 * Note this builder provides <b>two</b> build methods variants:
 	 * <ul>
-	 * <li>{@link ResultBuilder#build(DeviceContext)} creates an accessor to retrieve query results to a buffer on-demand</li>
+	 * <li>{@link ResultBuilder#build()} creates an accessor to retrieve query results to an on-demand consumer</li>
 	 * <li>{@link ResultBuilder#build(VulkanBuffer, long)} creates a command that asynchronously writes the results to a destination Vulkan buffer</li>
 	 * </ul>
 	 * <p>
@@ -266,7 +267,7 @@ public interface Query {
 	 * accessor.accept(bb);
 	 * </pre>
 	 */
-	public static class ResultBuilder {
+	class ResultBuilder {
 		private final Pool pool;
 		private int start;
 		private int count;
@@ -369,7 +370,7 @@ public interface Query {
 			Check.notNull(buffer);
 			Check.zeroOrMore(offset);
 			buffer.require(VkBufferUsageFlag.TRANSFER_DST);
-			buffer.validate(offset + count * stride);
+			buffer.validate(offset - 1 + count * stride);
 
 			// Validate query result
 			final int mask = validate();
@@ -441,7 +442,7 @@ public interface Query {
 		 * @param firstQuery		Index of the first query slot
 		 * @param queryCount		Number of query slots to reset
 		 */
-		void vkCmdResetQueryPool(Command.Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount);
+		void vkCmdResetQueryPool(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount);
 
 		/**
 		 * Starts a query.
@@ -450,7 +451,7 @@ public interface Query {
 		 * @param query				Query slot
 		 * @param flags				Flags
 		 */
-		void vkCmdBeginQuery(Command.Buffer commandBuffer, Pool queryPool, int query, int flags);
+		void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, int flags);
 
 		/**
 		 * Ends a query.
@@ -458,7 +459,7 @@ public interface Query {
 		 * @param queryPool			Query pool
 		 * @param query				Query slot
 		 */
-		void vkCmdEndQuery(Command.Buffer commandBuffer, Pool queryPool, int query);
+		void vkCmdEndQuery(Buffer commandBuffer, Pool queryPool, int query);
 
 		/**
 		 * Writes the device timestamp at the given pipeline stage to the query results.
@@ -467,7 +468,7 @@ public interface Query {
 		 * @param queryPool			Query pool
 		 * @param query				Query slot
 		 */
-		void vkCmdWriteTimestamp(Command.Buffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
+		void vkCmdWriteTimestamp(Buffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
 
 		/**
 		 * Retrieves query results.
@@ -494,6 +495,6 @@ public interface Query {
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
 		 */
-		void vkCmdCopyQueryPoolResults(Command.Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, int flags);
+		void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, int flags);
 	}
 }

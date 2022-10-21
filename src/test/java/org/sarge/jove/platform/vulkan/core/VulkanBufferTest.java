@@ -12,6 +12,7 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -44,12 +45,16 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		when(allocator.allocate(isA(VkMemoryRequirements.class), isA(MemoryProperties.class))).thenReturn(mem);
 
 		// Create buffer
-		buffer = new VulkanBuffer(new Handle(2), dev, FLAGS, mem, SIZE);
+		buffer = create(dev, FLAGS, mem, SIZE);
+	}
+
+	public static VulkanBuffer create(DeviceContext dev, Set<VkBufferUsageFlag> usage, DeviceMemory mem, long size) {
+		return new VulkanBuffer(new Handle(1), dev, usage, mem, size);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(2), buffer.handle());
+		assertEquals(new Handle(1), buffer.handle());
 		assertEquals(dev, buffer.device());
 		assertEquals(FLAGS, buffer.usage());
 		assertEquals(mem, buffer.memory());
@@ -128,12 +133,11 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	@Test
 	void copy() {
 		// Create destination
-		final VulkanBuffer dest = mock(VulkanBuffer.class);
+		final VulkanBuffer dest = create(dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mem, SIZE);
 
 		// Create copy command
 		final Command copy = buffer.copy(dest);
 		assertNotNull(copy);
-		verify(dest).require(VkBufferUsageFlag.TRANSFER_DST);
 
 		// Init expected copy region descriptor
 		final var region = new VkBufferCopy() {
@@ -148,7 +152,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		};
 
 		// Copy buffer
-		final Command.Buffer cmd = mock(Command.Buffer.class);
+		final var cmd = mock(Command.Buffer.class);
 		copy.execute(lib, cmd);
 		verify(lib).vkCmdCopyBuffer(cmd, buffer, dest, 1, new VkBufferCopy[]{region});
 	}

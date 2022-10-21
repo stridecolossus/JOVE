@@ -2,16 +2,12 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.common.NativeObject;
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -27,7 +23,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		mem = mock(DeviceMemory.class);
-		buffer = new VulkanBuffer(new Handle(1), dev, FLAGS, mem, SIZE);
+		buffer = VulkanBufferTest.create(dev, FLAGS, mem, SIZE);
 		vbo = new VertexBuffer(buffer);
 	}
 
@@ -42,7 +38,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void bind() {
-		final Command.Buffer cmd = mock(Command.Buffer.class);
+		final var cmd = mock(Command.Buffer.class);
 		final Command bind = vbo.bind(2);
 		assertNotNull(bind);
 		bind.execute(lib, cmd);

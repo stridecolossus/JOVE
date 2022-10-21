@@ -8,10 +8,12 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 
 import com.sun.jna.Structure;
 
@@ -69,8 +71,7 @@ public class BarrierTest {
 
 		@BeforeEach
 		void before() {
-			buffer = mock(VulkanBuffer.class);
-			when(buffer.length()).thenReturn(3L);
+			buffer = VulkanBufferTest.create(mock(DeviceContext.class), Set.of(VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 3);
 		}
 
 		@DisplayName("can be executed to transition a buffer")

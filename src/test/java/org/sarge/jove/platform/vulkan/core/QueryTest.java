@@ -5,12 +5,14 @@ import static org.mockito.Mockito.*;
 import static org.sarge.jove.platform.vulkan.VkQueryResultFlag.WAIT;
 
 import java.nio.ByteBuffer;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Query.*;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Structure;
@@ -221,17 +223,8 @@ public class QueryTest extends AbstractVulkanTest {
 		@DisplayName("can be copied to a Vulkan buffer")
 		@Test
 		void copy() {
-			// Create buffer for results
-			final VulkanBuffer dest = mock(VulkanBuffer.class);
-			when(dest.length()).thenReturn(2 * 4L);
-
-			// Build copy command
+			final VulkanBuffer dest = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 2 * 4);
 			final Command copy = builder.build(dest, 0);
-			assertNotNull(copy);
-			verify(dest).require(VkBufferUsageFlag.TRANSFER_DST);
-			verify(dest).validate(8L);
-
-			// Execute command
 			copy.execute(lib, buffer);
 			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, 0);
 		}

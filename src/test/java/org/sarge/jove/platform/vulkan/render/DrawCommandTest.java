@@ -4,10 +4,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.model.Header;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.render.DrawCommand.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -108,8 +111,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@BeforeEach
 		void before() {
 			builder = new IndirectBuilder();
-			buffer = mock(VulkanBuffer.class);
-			when(buffer.device()).thenReturn(dev);
+			buffer = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.INDIRECT_BUFFER), mock(DeviceMemory.class), 5);
 		}
 
 		private void init(int size) {
@@ -132,8 +134,6 @@ class DrawCommandTest extends AbstractVulkanTest {
 
 			// Check API
 			verify(lib).vkCmdDrawIndirect(cmd, buffer, 2, 3, 4);
-			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
-			verify(buffer).validate(2);
 			verify(dev.limits()).require("multiDrawIndirect");
 		}
 
@@ -143,7 +143,6 @@ class DrawCommandTest extends AbstractVulkanTest {
 			init(1);
 			builder.indexed().build(buffer).execute(lib, cmd);
 			verify(lib).vkCmdDrawIndexedIndirect(cmd, buffer, 0, 1, 0);
-			verify(buffer).require(VkBufferUsageFlag.INDIRECT_BUFFER);
 		}
 
 		@DisplayName("Draw count cannot exceed the hardware limit")

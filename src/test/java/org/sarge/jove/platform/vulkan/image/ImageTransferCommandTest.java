@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
@@ -12,22 +12,19 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.image.ImageTransferCommand.CopyRegion;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Structure;
 
-public class ImageTransferCommandTest {
+public class ImageTransferCommandTest extends AbstractVulkanTest {
 	private Image image;
 	private VulkanBuffer buffer;
-	private VulkanLibrary lib;
 	private ImageTransferCommand.Builder builder;
 	private Command.Buffer cmd;
 
 	@BeforeEach
 	void before() {
-		// Create API
-		lib = mock(VulkanLibrary.class);
-
 		// Define image
 		final var descriptor = new Descriptor.Builder()
 				.extents(new Dimensions(2, 3))
@@ -40,7 +37,7 @@ public class ImageTransferCommandTest {
 		when(image.descriptor()).thenReturn(descriptor);
 
 		// Create data buffer
-		buffer = mock(VulkanBuffer.class);
+		buffer = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 2 * 3 * Float.BYTES);
 
 		// Create copy command builder
 		builder = new ImageTransferCommand.Builder();
@@ -118,9 +115,6 @@ public class ImageTransferCommandTest {
 					.region(data)
 					.build();
 
-			// Check buffer is validated
-			verify(buffer).require(VkBufferUsageFlag.TRANSFER_SRC);
-
 			// Init expected copy descriptor
 			final var expected = new VkBufferImageCopy() {
 				@Override
@@ -140,22 +134,19 @@ public class ImageTransferCommandTest {
 
 			// Perform reverse copy operation
 			copy.invert().execute(lib, cmd);
-			verify(buffer).require(VkBufferUsageFlag.TRANSFER_DST);
 			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 		}
 
 		@Test
 		void buildInvert() {
-			final ImageTransferCommand copy = builder
+			builder
 					.image(image)
 					.buffer(buffer)
 					.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
 					.region(data)
 					.invert()
-					.build();
-
-			verify(buffer).require(VkBufferUsageFlag.TRANSFER_DST);
-			copy.execute(lib, cmd);
+					.build()
+					.execute(lib, cmd);
 		}
 
 		@Test

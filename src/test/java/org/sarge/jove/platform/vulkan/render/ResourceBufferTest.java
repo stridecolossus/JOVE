@@ -1,14 +1,15 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.sarge.jove.platform.vulkan.VkDescriptorType.UNIFORM_BUFFER;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -20,19 +21,9 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		// Create underlying buffer
-		buffer = mock(VulkanBuffer.class);
-		when(buffer.handle()).thenReturn(new Handle(1));
-		when(buffer.device()).thenReturn(dev);
-		when(buffer.memory()).thenReturn(mock(DeviceMemory.class));
-		when(buffer.usage()).thenReturn(FLAGS);
-		when(buffer.length()).thenReturn(4L);
-
-		// Init limit
 		limit("maxUniformBufferRange", 4);
-
-		// Create resource buffer
-		res = new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 0);
+		buffer = VulkanBufferTest.create(dev, FLAGS, mock(DeviceMemory.class),  4);
+		res = new ResourceBuffer(buffer, UNIFORM_BUFFER, 0);
 	}
 
 	@Test
@@ -42,7 +33,7 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 		assertEquals(FLAGS, res.usage());
 		assertEquals(buffer.memory(), res.memory());
 		assertEquals(4L, res.length());
-		assertEquals(VkDescriptorType.UNIFORM_BUFFER, res.type());
+		assertEquals(UNIFORM_BUFFER, res.type());
 	}
 
 	@Test
@@ -57,12 +48,12 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void invalidBufferOffset() {
-		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 4));
+		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, UNIFORM_BUFFER, 4));
 	}
 
 	@Test
 	void invalidBufferLength() {
-		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 5));
+		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, UNIFORM_BUFFER, 5));
 	}
 
 	@Test
@@ -85,8 +76,8 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 	@Test
 	void equals() {
 		assertEquals(true, res.equals(res));
-		assertEquals(true, res.equals(new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 0)));
+		assertEquals(true, res.equals(new ResourceBuffer(buffer, UNIFORM_BUFFER, 0)));
 		assertEquals(false, res.equals(null));
-		assertEquals(false, res.equals(new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 1)));
+		assertEquals(false, res.equals(new ResourceBuffer(buffer, UNIFORM_BUFFER, 1)));
 	}
 }

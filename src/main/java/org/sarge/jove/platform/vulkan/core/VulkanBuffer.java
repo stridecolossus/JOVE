@@ -121,21 +121,21 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Usage flags for this buffer
 	 */
-	public Set<VkBufferUsageFlag> usage() {
+	public final Set<VkBufferUsageFlag> usage() {
 		return usage;
 	}
 
 	/**
 	 * @return Buffer memory
 	 */
-	public DeviceMemory memory() {
+	public final DeviceMemory memory() {
 		return mem;
 	}
 
 	/**
 	 * @return Length of this buffer
 	 */
-	public long length() {
+	public final long length() {
 		return len;
 	}
 
@@ -153,7 +153,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * Validates that this buffer supports the given usage flag(s).
 	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the given usage flags
 	 */
-	public void require(VkBufferUsageFlag... flags) {
+	public final void require(VkBufferUsageFlag... flags) {
 		final Collection<VkBufferUsageFlag> required = Arrays.asList(flags);
 		if(!usage.containsAll(required)) {
 			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
@@ -164,7 +164,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * Helper - Provides access to the underlying buffer (mapping the buffer memory as required).
 	 * @return Underlying buffer
 	 */
-	public ByteBuffer buffer() {
+	public final ByteBuffer buffer() {
 		final Region region = mem.region().orElseGet(mem::map);
 		return region.buffer();
 	}

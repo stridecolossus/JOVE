@@ -1,17 +1,14 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.VkBufferCopy;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import java.util.Set;
+
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.BufferCopyCommand.Builder;
+import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class BufferCopyCommandTest extends AbstractVulkanTest {
@@ -21,12 +18,10 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		// Create buffers
-		src = mock(VulkanBuffer.class);
-		dest = mock(VulkanBuffer.class);
-
-		// Init sizes
-		when(src.length()).thenReturn(2L);
-		when(dest.length()).thenReturn(3L);
+		final var usage = Set.of(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
+		final var mem = mock(DeviceMemory.class);
+		src = VulkanBufferTest.create(dev, usage, mem, 2);
+		dest = VulkanBufferTest.create(dev, usage, mem, 3);
 
 		// Create copy command
 		copy = new Builder()
@@ -34,14 +29,6 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 				.destination(dest)
 				.region(0, 1, 2)
 				.build();
-	}
-
-	@Test
-	void constructor() {
-		verify(src).require(VkBufferUsageFlag.TRANSFER_SRC);
-		verify(dest).require(VkBufferUsageFlag.TRANSFER_DST);
-		verify(src).validate(1);
-		verify(dest).validate(2);
 	}
 
 	@Test
@@ -72,9 +59,6 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 	@Test
 	void invert() {
 		final Command inverse = copy.invert();
-		assertNotNull(inverse);
-		verify(src).require(VkBufferUsageFlag.TRANSFER_DST);
-		verify(dest).require(VkBufferUsageFlag.TRANSFER_SRC);
 		inverse.execute(lib, mock(Command.Buffer.class));
 	}
 
