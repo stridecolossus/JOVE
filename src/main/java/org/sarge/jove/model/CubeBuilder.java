@@ -37,12 +37,12 @@ public class CubeBuilder {
 
 	// Face normals
 	private static final Vector[] NORMALS = {
-			Axis.Z,
-			Axis.Z.invert(),
-			Axis.X,
-			Axis.X.invert(),
-			Axis.Y,
-			Axis.Y.invert(),
+			Axis.Z.vector(),
+			Axis.Z.vector().invert(),
+			Axis.X.vector(),
+			Axis.X.vector().invert(),
+			Axis.Y.vector(),
+			Axis.Y.vector().invert(),
 	};
 
 	// Face colours

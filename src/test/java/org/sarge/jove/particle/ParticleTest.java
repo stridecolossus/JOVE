@@ -11,7 +11,7 @@ public class ParticleTest {
 
 	@BeforeEach
 	void before() {
-		particle = new Particle(1, Point.ORIGIN, Axis.Y);
+		particle = new Particle(1, Point.ORIGIN, Axis.Y.vector());
 	}
 
 	@DisplayName("A new particle has an initial position and movement vector")
@@ -19,7 +19,7 @@ public class ParticleTest {
 	void constructor() {
 		assertEquals(1, particle.created());
 		assertEquals(Point.ORIGIN, particle.origin());
-		assertEquals(Axis.Y, particle.direction());
+		assertEquals(Axis.Y.vector(), particle.direction());
 		assertEquals(true, particle.isAlive());
 		assertEquals(false, particle.isIdle());
 	}
@@ -27,22 +27,22 @@ public class ParticleTest {
 	@DisplayName("A particle can be moved")
 	@Test
 	void move() {
-		particle.move(Axis.X);
+		particle.move(Axis.X.vector());
 		assertEquals(new Point(1, 0, 0), particle.origin());
 	}
 
 	@DisplayName("The movement vector of a particle can be combined")
 	@Test
 	void vector() {
-		particle.add(Axis.X);
-		assertEquals(Axis.X.add(Axis.Y), particle.direction());
+		particle.add(Axis.X.vector());
+		assertEquals(Axis.X.vector().add(Axis.Y.vector()), particle.direction());
 	}
 
 	@DisplayName("The velocity of a particle can be modified")
 	@Test
 	void velocity() {
 		particle.velocity(2);
-		assertEquals(Axis.Y.multiply(2), particle.direction());
+		assertEquals(Axis.Y.vector().multiply(2), particle.direction());
 	}
 
 	@DisplayName("A moving particle can be stopped")
@@ -77,9 +77,9 @@ public class ParticleTest {
 	@Test
 	void reflect() {
 		final Point pt = new Point(1, 2, 3);
-		particle.reflect(pt, Axis.Y);
+		particle.reflect(pt, Axis.Y.vector());
 		assertEquals(pt, particle.origin());
-		assertEquals(Axis.Y.invert(), particle.direction());
+		assertEquals(Axis.Y.vector().invert(), particle.direction());
 	}
 
 	@DisplayName("TODO")

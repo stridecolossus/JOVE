@@ -26,15 +26,15 @@ public class MutableRotationTest {
 	}
 
 	@Test
-	void angle() {
-		rot.angle(HALF);
+	void set() {
+		rot.set(HALF);
 		assertEquals(HALF, rot.angle());
 		assertEquals(Y.rotation(HALF), rot.matrix());
-		assertEquals(AxisAngle.of(Y, HALF), rot.toAxisAngle());
+		assertEquals(AxisAngle.of(Y.vector(), HALF), rot.toAxisAngle());
 	}
 
 	@Test
 	void toAxisAngle() {
-		assertEquals(AxisAngle.of(Y, 0), rot.toAxisAngle());
+		assertEquals(AxisAngle.of(Y.vector(), 0), rot.toAxisAngle());
 	}
 }

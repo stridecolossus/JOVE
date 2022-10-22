@@ -53,23 +53,23 @@ class BoundsTest {
 
 	@Test
 	void positive() {
-		assertEquals(max, bounds.positive(Axis.X));
-		assertEquals(max, bounds.positive(Axis.Y));
-		assertEquals(max, bounds.positive(Axis.Z));
-		assertEquals(new Point(1, 6, 7), bounds.positive(Axis.X.invert()));
-		assertEquals(new Point(5, 2, 7), bounds.positive(Axis.Y.invert()));
-		assertEquals(new Point(5, 6, 3), bounds.positive(Axis.Z.invert()));
+		assertEquals(max, bounds.positive(Axis.X.vector()));
+		assertEquals(max, bounds.positive(Axis.Y.vector()));
+		assertEquals(max, bounds.positive(Axis.Z.vector()));
+		assertEquals(new Point(1, 6, 7), bounds.positive(Axis.X.vector().invert()));
+		assertEquals(new Point(5, 2, 7), bounds.positive(Axis.Y.vector().invert()));
+		assertEquals(new Point(5, 6, 3), bounds.positive(Axis.Z.vector().invert()));
 
 	}
 
 	@Test
 	void negative() {
-		assertEquals(new Point(1, 6, 7), bounds.negative(Axis.X));
-		assertEquals(new Point(5, 2, 7), bounds.negative(Axis.Y));
-		assertEquals(new Point(5, 6, 3), bounds.negative(Axis.Z));
-		assertEquals(max, bounds.negative(Axis.X.invert()));
-		assertEquals(max, bounds.negative(Axis.Y.invert()));
-		assertEquals(max, bounds.negative(Axis.Z.invert()));
+		assertEquals(new Point(1, 6, 7), bounds.negative(Axis.X.vector()));
+		assertEquals(new Point(5, 2, 7), bounds.negative(Axis.Y.vector()));
+		assertEquals(new Point(5, 6, 3), bounds.negative(Axis.Z.vector()));
+		assertEquals(max, bounds.negative(Axis.X.vector().invert()));
+		assertEquals(max, bounds.negative(Axis.Y.vector().invert()));
+		assertEquals(max, bounds.negative(Axis.Z.vector().invert()));
 	}
 
 	@Test

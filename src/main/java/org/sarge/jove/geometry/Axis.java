@@ -7,11 +7,11 @@ import org.sarge.jove.util.MathsUtil;
  * An <i>axis</i> is a vector representing one of the <i>cardinal</i> axes.
  * @author Sarge
  */
-public abstract class Axis extends NormalizedVector {
+public enum Axis {
 	/**
 	 * Horizontal or <i>right</i> axis.
 	 */
-	public static final Axis X = new Axis(0) {
+	X {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
 			matrix
@@ -20,12 +20,12 @@ public abstract class Axis extends NormalizedVector {
 					.set(2, 1, sin)
 					.set(2, 2, cos);
 		}
-	};
+	},
 
 	/**
 	 * The Vulkan positive Y axis is <b>down</b>.
 	 */
-	public static final Axis Y = new Axis(1) {
+	Y {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
 			matrix
@@ -34,12 +34,12 @@ public abstract class Axis extends NormalizedVector {
 					.set(2, 0, -sin)
 					.set(2, 2, cos);
 		}
-	};
+	},
 
 	/**
 	 * Negative Z is <b>into</b> the screen.
 	 */
-	public static final Axis Z = new Axis(2) {
+	Z {
 		@Override
 		protected void rotation(float sin, float cos, Builder matrix) {
 			matrix
@@ -78,44 +78,44 @@ public abstract class Axis extends NormalizedVector {
 		}
 	}
 
-	/**
-	 * Converts the given string to an axis.
-	 * @param axis Axis name
-	 * @return Axis
-	 * @throws IllegalArgumentException for an invalid axis
-	 */
-	public static Axis of(String axis) {
-		return switch(axis) {
-			case "X" -> Axis.X;
-			case "Y" -> Axis.Y;
-			case "Z" -> Axis.Z;
-			default -> throw new IllegalArgumentException("Invalid axis: " + axis);
-		};
+	private static Vector of(String str) {
+		final Axis axis = valueOf(str);
+		return axis.vec;
 	}
 
-	private final Vector inv = super.invert();
+	private final Vector vec;
 
 	/**
 	 * Constructor.
 	 */
-	private Axis(int index) {
-		super(axis(index));
+	private Axis() {
+		this.vec = axis(ordinal());
 	}
 
 	/**
-	 * Builds the vector for an axis.
-	 * @param axis Axis index
-	 * @return New axis
+	 * Initialises the vector for this axis.
 	 */
-	private static Vector axis(int axis) {
-		final float[] array = new float[3];
-		array[axis] = 1;
-		return new Vector(array);
+	private static Vector axis(int index) {
+		// Init axis vector as an array
+		final float[] axis = new float[3];
+		axis[index] = 1;
+
+		// Create axis vector
+		return new NormalizedVector(new Vector(axis)) {
+			private final Vector inv = super.invert();
+
+			@Override
+			public Vector invert() {
+				return inv;
+			}
+		};
 	}
 
-	@Override
-	public Vector invert() {
-		return inv;
+	/**
+	 * @return Vector of this axis
+	 */
+	public Vector vector() {
+		return vec;
 	}
 
 	/**

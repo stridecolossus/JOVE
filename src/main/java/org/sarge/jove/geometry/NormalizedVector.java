@@ -25,4 +25,9 @@ public class NormalizedVector extends Vector {
 	public final Vector normalize() {
 		return this;
 	}
+
+	@Override
+	public Vector invert() {
+		return new NormalizedVector(super.invert());
+	}
 }

@@ -18,7 +18,7 @@ class FrustumTest {
 
 	@BeforeEach
 	void before() {
-		plane = new Plane(X, -1);
+		plane = new Plane(X.vector(), -1);
 		frustum = new Frustum(new Plane[]{plane});
 	}
 
@@ -47,7 +47,7 @@ class FrustumTest {
 		assertEquals(true, frustum.equals(frustum));
 		assertEquals(true, frustum.equals(new Frustum(new Plane[]{plane})));
 		assertEquals(false, frustum.equals(null));
-		assertEquals(false, frustum.equals(new Frustum(new Plane[]{new Plane(Y, 1)})));
+		assertEquals(false, frustum.equals(new Frustum(new Plane[]{new Plane(Y.vector(), 1)})));
 	}
 
 	@Test
@@ -55,9 +55,9 @@ class FrustumTest {
 		// Construct a view matrix
 		final Matrix m = new Matrix.Builder()
 				.identity()
-				.row(0, X)
-				.row(1, Y)		// Note this test does not invert the Y axis
-				.row(2, Z)
+				.row(0, X.vector())
+				.row(1, Y.vector())		// Note this test does not invert the Y axis
+				.row(2, Z.vector())
 				.build();
 
 		// Create frustum
@@ -66,12 +66,12 @@ class FrustumTest {
 
 		// Check planes
 		final var expected = List.of(
-				new Plane(Z.invert(), 1),			// Near
-				new Plane(Z, 1),					// Far
-				new Plane(X, 1),					// Left
-				new Plane(X.invert(), 1),			// Right
-				new Plane(Y, 1),					// Top
-				new Plane(Y.invert(), 1)			// Bottom
+				new Plane(Z.vector().invert(), 1),			// Near
+				new Plane(Z.vector(), 1),					// Far
+				new Plane(X.vector(), 1),					// Left
+				new Plane(X.vector().invert(), 1),			// Right
+				new Plane(Y.vector(), 1),					// Top
+				new Plane(Y.vector().invert(), 1)			// Bottom
 		);
 		assertEquals(expected, frustum.planes());
 

@@ -15,7 +15,7 @@ public class ReflectionCollisionTest {
 	void before() {
 		collision = new ReflectionCollision(0.5f);
 		p = new Particle(0, Point.ORIGIN, new Vector(1, 1, 0));
-		intersection = Intersection.of(1, Axis.Y);
+		intersection = Intersection.of(1, Axis.Y.vector());
 	}
 
 	@Test

@@ -12,13 +12,13 @@ class RotationAnimationTest {
 
 	@BeforeEach
 	void before() {
-		animation = new RotationAnimation(Axis.Y);
+		animation = new RotationAnimation(Axis.Y.vector());
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(animation.rotation());
-		assertEquals(Axis.Y, animation.rotation().toAxisAngle().axis());
+		assertEquals(Axis.Y.vector(), animation.rotation().toAxisAngle().axis());
 		assertEquals(0, animation.rotation().toAxisAngle().angle());
 	}
 

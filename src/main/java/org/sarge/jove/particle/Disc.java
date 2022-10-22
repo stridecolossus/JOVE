@@ -28,7 +28,7 @@ class Disc {
 	 */
 	public Disc(Vector normal, float radius, Randomiser randomiser) {
 		this.normal = normal.normalize();
-		this.x = this.normal.cross(Axis.minimal(normal));
+		this.x = this.normal.cross(Axis.minimal(normal).vector());
 		this.y = x.cross(this.normal);
 		this.radius = Interpolator.linear(-radius, +radius);
 		this.randomiser = notNull(randomiser);

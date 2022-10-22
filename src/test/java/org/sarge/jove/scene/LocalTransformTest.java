@@ -12,7 +12,7 @@ public class LocalTransformTest {
 
 	@BeforeEach
 	void before() {
-		matrix = Matrix4.translation(Axis.X);
+		matrix = Matrix4.translation(Axis.X.vector());
 		transform = new LocalTransform();
 	}
 

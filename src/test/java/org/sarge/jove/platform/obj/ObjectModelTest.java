@@ -17,7 +17,7 @@ public class ObjectModelTest {
 	void before() {
 		model = new ObjectModel();
 		model.positions().add(Point.ORIGIN);
-		model.normals().add(Axis.X);
+		model.normals().add(Axis.X.vector());
 		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 	}
 

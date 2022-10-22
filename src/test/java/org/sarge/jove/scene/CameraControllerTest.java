@@ -20,14 +20,14 @@ public class CameraControllerTest {
 	@Test
 	void update() {
 		controller.update(1, 1);
-		assertEquals(Axis.Z, cam.direction());
+		assertEquals(Axis.Z.vector(), cam.direction());
 		assertEquals(Point.ORIGIN, cam.position());
 	}
 
 	@Test
 	void position() {
 		controller.update(new Position(1, 1));
-		assertEquals(Axis.Z, cam.direction());
+		assertEquals(Axis.Z.vector(), cam.direction());
 		assertEquals(Point.ORIGIN, cam.position());
 	}
 }

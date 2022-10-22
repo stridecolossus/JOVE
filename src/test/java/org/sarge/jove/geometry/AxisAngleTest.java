@@ -16,10 +16,15 @@ class AxisAngleTest {
 
 	@Test
 	void constructor() {
-		assertEquals(Y, rot.axis());
+		assertEquals(Y.vector(), rot.axis());
 		assertEquals(PI, rot.angle());
 		assertNotNull(rot.matrix());
 		assertSame(rot, rot.toAxisAngle());
+	}
+
+	@Test
+	void matrix() {
+		assertEquals(Y.rotation(PI), rot.matrix());
 	}
 
 	@Test
@@ -28,16 +33,5 @@ class AxisAngleTest {
 		assertEquals(rot, AxisAngle.of(Y, PI));
 		assertNotEquals(rot, null);
 		assertNotEquals(rot, AxisAngle.of(Y, 0));
-	}
-
-	@Test
-	void rotate() {
-		final Vector vec = new Vector(1, 1, 0).normalize();
-		assertEquals(new Vector(-1, 1, 0).normalize(), rot.rotate(vec));
-	}
-
-	@Test
-	void matrix() {
-		assertEquals(Y.rotation(PI), rot.matrix());
 	}
 }
