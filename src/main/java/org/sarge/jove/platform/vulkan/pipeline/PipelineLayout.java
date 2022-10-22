@@ -145,7 +145,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 	/**
 	 * Pipeline layout API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Creates a pipeline layout.
 		 * @param device			Logical device

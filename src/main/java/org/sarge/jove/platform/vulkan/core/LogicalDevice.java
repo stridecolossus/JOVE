@@ -33,7 +33,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	private final DeviceFeatures features;
 	private final Supplier<DeviceLimits> limits = new LazySupplier<>(this::loadLimits);
 	private final Map<Family, List<Queue>> queues;
-	private AllocationService allocator;
+	private final AllocationService allocator;
 
 	/**
 	 * Constructor.
@@ -41,12 +41,14 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * @param parent 		Parent physical device
 	 * @param features		Features enabled on this device
 	 * @param queues 		Work queues
+	 * @param allocator		Memory allocation service or {@code null} to create a default implementation
 	 */
-	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues) {
+	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues, AllocationService allocator) {
 		super(handle);
 		this.parent = requireNonNull(parent);
 		this.features = requireNonNull(features);
 		this.queues = Map.copyOf(queues);
+		this.allocator = init(allocator);
 	}
 
 	/**
@@ -112,8 +114,18 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		return allocator;
 	}
 
-	public void allocator(AllocationService allocator) {
-		this.allocator = notNull(allocator);
+	/**
+	 * Initialises the memory allocation service.
+	 * @param allocator Custom allocator
+	 * @return Allocation service
+	 */
+	private AllocationService init(AllocationService allocator) {
+		if(allocator == null) {
+			return new AllocationService(MemorySelector.create(parent), new DefaultAllocator(this));
+		}
+		else {
+			return allocator;
+		}
 	}
 
 	/**
@@ -320,20 +332,8 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 					.collect(groupingBy(Queue::family));
 
 			// Create logical device
-			final var dev = new LogicalDevice(handle, parent, required, map);
-
-			// Init memory allocator
-			if(allocator == null) {
-				allocator = new AllocationService(MemorySelector.create(parent), new DefaultAllocator(dev));
-			}
-			dev.allocator(allocator);
-
-			return dev;
+			return new LogicalDevice(handle, parent, required, map, allocator);
 		}
-
-//		TODO - implement local by-ref classes?
-//		private static class VkDeviceQueueCreateInfo2 extends VkDeviceQueueCreateInfo implements ByReference {
-//		}
 
 		/**
 		 * Retrieves the work queues.

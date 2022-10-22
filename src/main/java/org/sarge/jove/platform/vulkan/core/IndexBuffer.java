@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.model.*;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
@@ -35,7 +35,7 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @param buffer		Buffer
 	 * @param count			Index draw count
 	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
-	 * @see Header#isIntegerIndex(int)
+	 * @see Model#isIntegerIndex(int)
 	 */
 	public IndexBuffer(VulkanBuffer buffer, int count) {
 		this(buffer, Model.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);
@@ -96,6 +96,9 @@ public class IndexBuffer extends VulkanBuffer {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(type).build();
+		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
+				.append(type)
+				.build();
 	}
 }

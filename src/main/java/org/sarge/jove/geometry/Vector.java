@@ -89,19 +89,11 @@ public class Vector extends Tuple {
 	}
 
 	/**
-	 * @param len Vector length
-	 * @return Whether the given vector length is normalised
-	 */
-	protected static boolean isNormalized(float len) {
-		return MathsUtil.isEqual(1, len);
-	}
-
-	/**
 	 * @return Normalized (or unit) vector
 	 */
 	public Vector normalize() {
 		final float len = magnitude();
-		if(isNormalized(len)) {
+		if(MathsUtil.isEqual(1, len)) {
 			return new NormalizedVector(this);
 		}
 		else {

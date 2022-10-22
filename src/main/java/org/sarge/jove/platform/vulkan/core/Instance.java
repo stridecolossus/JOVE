@@ -120,9 +120,8 @@ public class Instance extends AbstractTransientNativeObject {
 		}
 
 		/**
-		 * Registers a set of extensions.
+		 * Helper - Registers an array of extensions.
 		 * @param extensions Extension names
-		 * @return
 		 */
 		public Builder extensions(String[] extensions) {
 			Arrays.stream(extensions).forEach(this::extension);
@@ -180,8 +179,7 @@ public class Instance extends AbstractTransientNativeObject {
 			check(lib.vkCreateInstance(info, null, ref));
 
 			// Create instance domain wrapper
-			final Handle handle = new Handle(ref.getValue());
-			return new Instance(handle, lib, factory);
+			return new Instance(Handle.of(ref), lib, factory);
 		}
 	}
 

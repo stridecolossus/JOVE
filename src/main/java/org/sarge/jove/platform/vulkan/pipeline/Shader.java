@@ -88,13 +88,12 @@ public class Shader extends AbstractVulkanObject {
 	/**
 	 * Constructs the descriptor for the given specialisation constants.
 	 * <p>
-	 * The following types are supported:
+	 * The following wrapper types are supported:
 	 * <ul>
 	 * <li>Integer</li>
 	 * <li>Float</li>
 	 * <li>Boolean</li>
 	 * </ul>
-	 * Note that numeric constants must be a wrapper type.
 	 * <p>
 	 * @param constants Specialisation constants indexed by identifier
 	 * @return Specialisation constants descriptor or {@code null} if empty
@@ -139,7 +138,7 @@ public class Shader extends AbstractVulkanObject {
 		info.pMapEntries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate);
 
 		// Build constants data buffer
-		final NativeBooleanConverter converter = new NativeBooleanConverter();
+		final var converter = new NativeBooleanConverter();
 		final ByteBuffer buffer = BufferHelper.allocate(populate.len);
 		for(var entry : constants.entrySet()) {		// TODO - check same order as above
 			switch(entry.getValue()) {

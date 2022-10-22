@@ -23,7 +23,7 @@ public class VertexBuffer extends VulkanBuffer {
 	}
 
 	/**
-	 * Creates a command to bind this buffer as a vertex buffer (VBO).
+	 * Creates a command to bind this buffer as a VBO.
 	 * @param binding Binding index
 	 * @return Command to bind this buffer
 	 * @see #bind(int, Collection)

@@ -142,7 +142,7 @@ public class PipelineCache extends AbstractVulkanObject {
 	/**
 	 * Pipeline cache API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Creates a pipeline cache.
 		 * @param device			Logical device

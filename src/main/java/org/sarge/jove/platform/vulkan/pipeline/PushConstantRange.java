@@ -16,6 +16,8 @@ public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages)
 	 * @param offset		Offset (bytes)
 	 * @param size			Size (bytes)
 	 * @param stages		Pipeline shader stage(s) that can access this range
+	 * @throws IllegalArgumentException if {@link #offset} or {@link #size} are not correctly aligned
+	 * @see TODO
 	 */
 	public PushConstantRange {
 		Check.zeroOrMore(offset);

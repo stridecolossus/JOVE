@@ -25,7 +25,7 @@ import com.sun.jna.Structure;
  * </ul>
  * The {@link Builder} provides sub-builders for each of these cases.
  * <p>
- * Example: Create a barrier to transition an image ready for sampling
+ * Example for a barrier used to transition an image to be ready for sampling:
  * <pre>
  * Image image = ...
  * Barrier barrier = new Barrier.Builder()

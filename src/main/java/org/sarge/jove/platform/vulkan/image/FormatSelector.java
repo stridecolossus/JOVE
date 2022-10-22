@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
 /**
@@ -43,6 +43,7 @@ public class FormatSelector {
 		};
 	}
 
+	// TODO - should be a function?
 	private final PhysicalDevice dev;
 	private final Predicate<VkFormatProperties> filter;
 

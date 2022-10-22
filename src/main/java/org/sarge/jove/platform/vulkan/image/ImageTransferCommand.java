@@ -29,7 +29,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 	 * Constructor.
 	 * @param image				Image
 	 * @param buffer			Buffer
-	 * @param inverse			Whether copy direction is inverted
+	 * @param inverse			Whether the copy direction is inverted
 	 * @param regions			Copy region(s)
 	 * @param layout			Image layout
 	 * @throws IllegalStateException if the buffer cannot be used for copy operations

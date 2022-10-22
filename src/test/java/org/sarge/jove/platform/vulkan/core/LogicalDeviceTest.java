@@ -61,7 +61,7 @@ public class LogicalDeviceTest {
 		queue = new Queue(new Handle(1), family);
 
 		// Create logical device
-		device = new LogicalDevice(new Handle(1), parent, features, Map.of(family, List.of(queue, queue)));
+		device = new LogicalDevice(new Handle(1), parent, features, Map.of(family, List.of(queue, queue)), null);
 	}
 
 	@Test
@@ -101,6 +101,12 @@ public class LogicalDeviceTest {
 	void queueWaitIdle() {
 		queue.waitIdle(lib);
 		verify(lib).vkQueueWaitIdle(queue);
+	}
+
+	@DisplayName("A logical device initialises a default memory allocation service if one is not configured")
+	@Test
+	void allocator() {
+		assertNotNull(device.allocator());
 	}
 
 	@DisplayName("Wait for all device queues to complete execution")

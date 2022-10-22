@@ -7,6 +7,7 @@ import org.sarge.lib.util.Check;
 
 /**
  * A <i>bounds</i> defines an axis-aligned rectilinear volume specified by min/max points.
+ * @see BoundingBox
  * @author Sarge
  */
 public record Bounds(Point min, Point max) {
@@ -109,7 +110,7 @@ public record Bounds(Point min, Point max) {
 	}
 
 	/**
-	 * Calculates the sum of a set of bounds, i.e. the aggregated bounds enclosing the given set.
+	 * Calculates the sum of the given bounds, i.e. the aggregate bounds enclosing the given set.
 	 * @param bounds Bounds to sum
 	 * @return Aggregated bounds
 	 * @see Builder#add(Bounds)

@@ -126,7 +126,7 @@ public class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * Multiplies this and the given matrix.
+	 * Multiplies two matrices together.
 	 * <p>
 	 * Note that matrix multiplication is <b>non-commutative</b>.
 	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A * B</code> applies B then A.

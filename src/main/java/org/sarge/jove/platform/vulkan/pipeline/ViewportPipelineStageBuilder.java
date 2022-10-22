@@ -31,7 +31,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	private boolean flip;
 
 	/**
-	 * Sets whether to flip viewport rectangles (default is {@code true}).
+	 * Sets whether to flip viewport rectangles (default is {@code false}).
 	 * <p>
 	 * This method is used to over-ride the default behaviour for Vulkan where the Y axis points <b>down</b> by default.
 	 * @see <a href="https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/">article</a>
@@ -54,6 +54,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 		viewports.add(new Viewport(rect, min, max));
 		return this;
 	}
+	// TODO - expose transient record?
 
 	/**
 	 * Adds a viewport rectangle with default min/max depth.
