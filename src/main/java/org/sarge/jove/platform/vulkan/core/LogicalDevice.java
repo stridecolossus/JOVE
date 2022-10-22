@@ -251,11 +251,11 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		/**
 		 * Adds an extension required for this device.
 		 * @param ext Extension name
-		 * @throws IllegalArgumentException for {@link VulkanLibrary#EXTENSION_DEBUG_UTILS}
+		 * @throws IllegalArgumentException for {@link Handler#EXTENSION_DEBUG_UTILS}
 		 */
 		public Builder extension(String ext) {
 			Check.notEmpty(ext);
-			if(VulkanLibrary.EXTENSION_DEBUG_UTILS.equals(ext)) throw new IllegalArgumentException("Invalid extension for logical device: " + ext);
+			if(Handler.EXTENSION.equals(ext)) throw new IllegalArgumentException("Invalid extension for logical device: " + ext);
 			extensions.add(ext);
 			return this;
 		}

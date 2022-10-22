@@ -37,6 +37,11 @@ import com.sun.jna.ptr.*;
  * @author Sarge
  */
 public class Swapchain extends AbstractVulkanObject {
+	/**
+	 * Swap-chain extension name.
+	 */
+	public static final String EXTENSION = "VK_KHR_swapchain";
+
 	private final VkFormat format;
 	private final Dimensions extents;
 	private final List<View> attachments;

@@ -22,6 +22,11 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public class Handler extends AbstractTransientNativeObject {
+	/**
+	 * Debug utility extension name.
+	 */
+	public static final String EXTENSION = "VK_EXT_debug_utils";
+
 	private final Instance instance;
 
 	/**
@@ -42,8 +47,7 @@ public class Handler extends AbstractTransientNativeObject {
 	}
 
 	private static Object invoke(Function func, Class<?> returnType, Object[] args) {
-		final var options = Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
-		return func.invoke(returnType, args, options);
+		return func.invoke(returnType, args, VulkanLibrary.options());
 	}
 
 	/**

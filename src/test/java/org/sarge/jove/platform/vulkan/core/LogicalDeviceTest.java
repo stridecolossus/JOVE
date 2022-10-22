@@ -212,7 +212,7 @@ public class LogicalDeviceTest {
 		@DisplayName("Cannot request an extension that is not available")
 		@Test
 		void invalidExtension() {
-			assertThrows(IllegalArgumentException.class, () -> builder.extension(VulkanLibrary.EXTENSION_DEBUG_UTILS));
+			assertThrows(IllegalArgumentException.class, () -> builder.extension(Handler.EXTENSION));
 		}
 	}
 }

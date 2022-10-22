@@ -34,16 +34,6 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	int SUCCESS = VkResult.SUCCESS.value();
 
 	/**
-	 * Debug utility extension.
-	 */
-	String EXTENSION_DEBUG_UTILS = "VK_EXT_debug_utils";
-
-	/**
-	 * Swap-chain extension.
-	 */
-	String EXTENSION_SWAP_CHAIN = "VK_KHR_swapchain";
-
-	/**
 	 * Type mapper for custom JOVE types.
 	 */
 	TypeMapper MAPPER = mapper();
@@ -70,8 +60,17 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 			case Platform.LINUX -> "libvulkan";
 			default -> throw new UnsupportedOperationException("Unsupported platform: " + Platform.getOSType());
 		};
+		return Native.load(name, VulkanLibrary.class, options());
+	}
 
-		return Native.load(name, VulkanLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, MAPPER));
+	/**
+	 * Helper - Creates a mutable JNA library options map including the Vulkan type {@link #MAPPER}.
+	 * @return Library options
+	 */
+	static Map<String, ?> options() {
+		final var options = new HashMap<String, Object>();
+		options.put(Library.OPTION_TYPE_MAPPER, MAPPER);
+		return options;
 	}
 
 	/**
@@ -79,7 +78,7 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	 * @param result Result code
 	 * @throws VulkanException if the given result is not {@link VkResult#SUCCESS}
 	 */
-	static void check(int result) {
+	static void check(int result) throws VulkanException {
 		if(result != SUCCESS) {
 			throw new VulkanException(result);
 		}

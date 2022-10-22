@@ -112,7 +112,7 @@ public enum Axis {
 	}
 
 	/**
-	 * @return Vector of this axis
+	 * @return This axis as a vector
 	 */
 	public Vector vector() {
 		return vec;

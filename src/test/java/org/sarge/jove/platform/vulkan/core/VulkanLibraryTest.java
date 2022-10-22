@@ -4,12 +4,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 
+import com.sun.jna.Library;
 import com.sun.jna.ptr.IntByReference;
 
 class VulkanLibraryTest {
@@ -25,6 +28,11 @@ class VulkanLibraryTest {
 		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(boolean.class));
 		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(Handle.class));
 		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(NativeObject.class));
+	}
+
+	@Test
+	void options() {
+		assertEquals(Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER), VulkanLibrary.options());
 	}
 
 	@Test
