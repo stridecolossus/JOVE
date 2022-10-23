@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 public class DeviceFeaturesTest {
-	private static final String SUPPORTED = "samplerAnisotropy";
+	private static final String FEATURE = "samplerAnisotropy";
 
 	private VkPhysicalDeviceFeatures struct;
 
@@ -44,12 +44,12 @@ public class DeviceFeaturesTest {
 
 		@BeforeEach
 		void before() {
-			required = DeviceFeatures.of(Set.of(SUPPORTED));
+			required = DeviceFeatures.required(Set.of(FEATURE));
 		}
 
 		@Test
 		void features() {
-			assertEquals(Set.of(SUPPORTED), required.features());
+			assertEquals(Set.of(FEATURE), required.features());
 		}
 
 		@Test
@@ -62,10 +62,10 @@ public class DeviceFeaturesTest {
 		@Test
 		void contains() {
 			assertEquals(true, required.contains(required));
-			assertEquals(true, required.contains(DeviceFeatures.of(Set.of(SUPPORTED))));
-			assertEquals(true, required.contains(DeviceFeatures.of(struct)));
-			assertEquals(true, required.contains(DeviceFeatures.of(Set.of())));
-			assertEquals(false, required.contains(DeviceFeatures.of(Set.of("wideLines"))));
+			assertEquals(true, required.contains(DeviceFeatures.required(Set.of(FEATURE))));
+			assertEquals(true, required.contains(DeviceFeatures.supported(struct)));
+			assertEquals(true, required.contains(DeviceFeatures.required(Set.of())));
+			assertEquals(false, required.contains(DeviceFeatures.required(Set.of("wideLines"))));
 		}
 	}
 
@@ -75,12 +75,12 @@ public class DeviceFeaturesTest {
 
 		@BeforeEach
 		void before() {
-			supported = DeviceFeatures.of(struct);
+			supported = DeviceFeatures.supported(struct);
 		}
 
 		@Test
 		void features() {
-			assertEquals(Set.of(SUPPORTED), supported.features());
+			assertEquals(Set.of(FEATURE), supported.features());
 		}
 
 		@Test
@@ -93,10 +93,10 @@ public class DeviceFeaturesTest {
 		@Test
 		void contains() {
 			assertEquals(true, supported.contains(supported));
-			assertEquals(true, supported.contains(DeviceFeatures.of(struct)));
-			assertEquals(true, supported.contains(DeviceFeatures.of(Set.of(SUPPORTED))));
-			assertEquals(true, supported.contains(DeviceFeatures.of(new VkPhysicalDeviceFeatures())));
-			assertEquals(false, supported.contains(DeviceFeatures.of(Set.of("wideLines"))));
+			assertEquals(true, supported.contains(DeviceFeatures.supported(struct)));
+			assertEquals(true, supported.contains(DeviceFeatures.required(Set.of(FEATURE))));
+			assertEquals(true, supported.contains(DeviceFeatures.supported(new VkPhysicalDeviceFeatures())));
+			assertEquals(false, supported.contains(DeviceFeatures.required(Set.of("wideLines"))));
 		}
 	}
 }

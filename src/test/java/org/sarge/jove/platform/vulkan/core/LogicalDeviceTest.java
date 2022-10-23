@@ -148,16 +148,12 @@ public class LogicalDeviceTest {
 
 		@Test
 		void build() {
-			// Init a required device feature
-			final var required = new VkPhysicalDeviceFeatures();
-			required.samplerAnisotropy = true;
-
 			// Create device
 			device = builder
 					.queue(new RequiredQueue(family, List.of(Percentile.HALF, Percentile.ONE)))
 					.extension("ext")
 					.layer(ValidationLayer.STANDARD_VALIDATION)
-					.features(DeviceFeatures.of(required))
+					.features(DeviceFeatures.required(Set.of("samplerAnisotropy")))
 					.build();
 
 			// Check device
@@ -166,6 +162,7 @@ public class LogicalDeviceTest {
 			assertEquals(false, device.isDestroyed());
 			assertEquals(parent, device.parent());
 			assertEquals(Map.of(family, List.of(queue, queue)), device.queues());
+			assertEquals(DeviceFeatures.required(Set.of("samplerAnisotropy")), device.features());
 
 			// Init expected descriptor
 			final var expected = new VkDeviceCreateInfo() {

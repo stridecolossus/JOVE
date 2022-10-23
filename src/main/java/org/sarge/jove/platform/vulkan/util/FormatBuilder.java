@@ -6,7 +6,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
 /**
@@ -18,7 +18,6 @@ import org.sarge.lib.util.Check;
  * Generally the identifier for a format is comprised of two elements: the <i>component format</i> and the <i>numeric format</i>.
  * The component format specifies the number of components (or channels) and the size of each in bytes.
  * The numeric format specifies the range of each value and whether it is signed.
- * <p>
  * <p>
  * Example:
  * <pre>

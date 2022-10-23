@@ -15,7 +15,7 @@ public class DeviceLimitsTest {
 	@BeforeEach
 	void before() {
 		struct = new VkPhysicalDeviceLimits();
-		features = DeviceFeatures.of(Set.of("feature"));
+		features = DeviceFeatures.required(Set.of("feature"));
 		limits = new DeviceLimits(struct, features);
 	}
 

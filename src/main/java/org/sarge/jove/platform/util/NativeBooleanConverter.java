@@ -21,21 +21,23 @@ public class NativeBooleanConverter implements TypeConverter {
 
 	@Override
 	public Boolean fromNative(Object nativeValue, FromNativeContext context) {
-		if(nativeValue instanceof Integer n) {
-			return n == TRUE;
+		if(nativeValue == null) {
+			return false;
 		}
 		else {
-			return false;
+			final int n = (int) nativeValue;
+			return n == TRUE;
 		}
 	}
 
 	@Override
 	public Integer toNative(Object value, ToNativeContext context) {
-		if(value instanceof Boolean b) {
-			return b ? TRUE : FALSE;
+		if(value == null) {
+			return FALSE;
 		}
 		else {
-			return FALSE;
+			final Boolean b = (Boolean) value;
+			return b.booleanValue() ? TRUE : FALSE;
 		}
 	}
 }

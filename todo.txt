@@ -29,7 +29,6 @@ text
 
 features todo
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
-- screenshots, how? render to off-screen attachment?
 - degenerate triangles for strip?
 - re-build swapchain and pipeline after window viewport/focus change
 - normals via geometry shader

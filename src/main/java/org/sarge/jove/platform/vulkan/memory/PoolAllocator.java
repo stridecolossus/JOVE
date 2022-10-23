@@ -12,7 +12,7 @@ import org.sarge.lib.util.Check;
  * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
  * <p>
  * This implementation creates a memory pool for <b>each</b> memory type on demand.
- * The pool grows as required according to a {@link AllocationPolicy} configured using the {@link #policy(AllocationPolicy)} method.
+ * The pool grows as required according to the {@link AllocationPolicy} specified in the constructor.
  * <p>
  * @author Sarge
  */

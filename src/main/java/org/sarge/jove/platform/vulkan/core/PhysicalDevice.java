@@ -204,7 +204,7 @@ public class PhysicalDevice implements NativeObject {
 			instance.library().vkGetPhysicalDeviceFeatures(handle, features);
 
 			// Create device
-			return new PhysicalDevice(handle, instance, families, DeviceFeatures.of(features));
+			return new PhysicalDevice(handle, instance, families, DeviceFeatures.supported(features));
 		}
 
 		/**

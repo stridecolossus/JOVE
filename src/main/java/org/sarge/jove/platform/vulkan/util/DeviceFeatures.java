@@ -67,7 +67,7 @@ public interface DeviceFeatures {
 	 * @param required Required feature names
 	 * @return Required device features
 	 */
-	static DeviceFeatures of(Collection<String> required) {
+	static DeviceFeatures required(Collection<String> required) {
 		return new AbstractDeviceFeatures() {
 			@Override
 			public Set<String> features() {
@@ -105,7 +105,7 @@ public interface DeviceFeatures {
 	 * @param features Supported features
 	 * @return Supported device features
 	 */
-	static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
+	static DeviceFeatures supported(VkPhysicalDeviceFeatures features) {
 		// Init structure
 		features.write();
 

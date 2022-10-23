@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
-import org.sarge.jove.platform.vulkan.render.*;
+import org.sarge.jove.platform.vulkan.render.RenderLibrary;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 
@@ -111,7 +111,7 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	}
 }
 
-interface GraphicsLibrary extends PipelineLibrary, ImageLibrary, RenderLibrary, Surface.Library {
+interface GraphicsLibrary extends PipelineLibrary, ImageLibrary, RenderLibrary {
 	// Aggregate library
 }
 

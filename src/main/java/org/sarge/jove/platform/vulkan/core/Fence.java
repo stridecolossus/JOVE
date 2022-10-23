@@ -26,7 +26,7 @@ public class Fence extends AbstractVulkanObject {
 	 */
 	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor
-		final VkFenceCreateInfo info = new VkFenceCreateInfo();
+		final var info = new VkFenceCreateInfo();
 		info.flags = IntegerEnumeration.reduce(flags);
 
 		// Create fence
