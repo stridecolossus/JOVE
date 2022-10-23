@@ -1,0 +1,169 @@
+package org.sarge.jove.platform.vulkan.pipeline;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.pipeline.PushConstant.*;
+import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+
+public class PushConstantTest extends AbstractVulkanTest {
+	private static final Set<VkShaderStage> VERTEX = Set.of(VkShaderStage.VERTEX);
+
+	private PushConstant constant;
+	private Range one, two;
+
+	@BeforeEach
+	void before() {
+		one = new Range(0, 4, VERTEX);
+		two = new Range(4, 8, Set.of(VkShaderStage.FRAGMENT));
+		constant = new PushConstant(List.of(one, two));
+	}
+
+	@Test
+	void constructor() {
+		assertEquals(4 + 8, constant.length());
+		assertEquals(List.of(one, two), constant.ranges());
+	}
+
+	@DisplayName("A push constant has a backing data buffer")
+	@Test
+	void buffer() {
+		final ByteBuffer buffer = constant.buffer();
+		assertEquals(4 + 8, buffer.capacity());
+	}
+
+	@DisplayName("A push constant cannot contain a range with duplicated shader stages")
+	@Test
+	void duplicate() {
+		final Range dup = new Range(4, 8, VERTEX);
+		assertThrows(IllegalArgumentException.class, () -> new PushConstant(List.of(one, dup)));
+		assertThrows(IllegalArgumentException.class, () -> new PushConstant(List.of(one, one)));
+	}
+
+	@DisplayName("A push constant must have a range covering every portion of the buffer")
+	@Test
+	void coverage() {
+		final Range three = new Range(8, 4, Set.of(VkShaderStage.FRAGMENT));
+		assertThrows(IllegalArgumentException.class, () -> new PushConstant(List.of(one, three)));
+	}
+
+	@DisplayName("A push constant range...")
+	@Nested
+	class RangeTests {
+		@Test
+		void constructor() {
+			assertEquals(0, one.offset());
+			assertEquals(4, one.size());
+			assertEquals(VERTEX, one.stages());
+		}
+
+		@DisplayName("cannot be empty")
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> new Range(0, VERTEX));
+		}
+
+		@DisplayName("must have at least one shader stage")
+		@Test
+		void stages() {
+			assertThrows(IllegalArgumentException.class, () -> new Range(4, Set.of()));
+		}
+
+		@DisplayName("must adhere to the alignment rules for the offset and size of the range")
+		@Test
+		void alignment() {
+			assertThrows(IllegalArgumentException.class, () -> new Range(0, 3, VERTEX));
+			assertThrows(IllegalArgumentException.class, () -> new Range(1, 4, VERTEX));
+		}
+
+		@DisplayName("can be sorted")
+		@Test
+		void order() {
+			assertEquals(-4, one.compareTo(two));
+			assertEquals(+4, two.compareTo(one));
+			assertEquals(0, one.compareTo(one));
+		}
+
+		@Test
+		void populate() {
+			final var struct = new VkPushConstantRange();
+			two.populate(struct);
+			assertEquals(4, struct.offset);
+			assertEquals(8, struct.size);
+			assertEquals(VkShaderStage.FRAGMENT.value(), struct.stageFlags);
+		}
+	}
+
+	@DisplayName("A push constant update command...")
+	@Nested
+	class UpdateTests {
+		private Command.Buffer cmd;
+		private PipelineLayout layout;
+		private Range range;
+
+		@BeforeEach
+		void before() {
+			cmd = mock(Command.Buffer.class);
+			range = new Range(0, 4, Set.of(VkShaderStage.FRAGMENT));
+			layout = mock(PipelineLayout.class);
+			when(layout.push()).thenReturn(constant);
+		}
+
+		@DisplayName("can be created for a given push constant range")
+		@Test
+		void update() {
+			final UpdateCommand update = constant.update(two, layout);
+			assertNotNull(update);
+		}
+
+		@DisplayName("can be created from a push constant with a single range")
+		@Test
+		void single() {
+			final PushConstant single = new PushConstant(List.of(one));
+			when(layout.push()).thenReturn(single);
+			single.update(layout);
+		}
+
+		@DisplayName("must specify the range for a constant with multiple ranges")
+		@Test
+		void multiple() {
+			assertThrows(IllegalStateException.class, () -> constant.update(layout));
+		}
+
+		@DisplayName("cannot be created from a push constant with a different pipeline layout")
+		@Test
+		void invalid() {
+			final PushConstant other = new PushConstant(List.of(range));
+			when(layout.push()).thenReturn(other);
+			assertThrows(IllegalStateException.class, () -> constant.update(layout));
+		}
+
+		@DisplayName("cannot be created for a push constant range that is not a member of the layout")
+		@Test
+		void member() {
+			assertThrows(IllegalStateException.class, () -> constant.update(range, layout));
+		}
+
+		@DisplayName("cannot be created for an empty push constant")
+		@Test
+		void empty() {
+			final PushConstant empty = new PushConstant(List.of());
+			when(layout.push()).thenReturn(empty);
+			assertThrows(IllegalStateException.class, () -> constant.update(layout));
+		}
+
+		@DisplayName("can be applied to a given push constant range")
+		@Test
+		void apply() {
+			final UpdateCommand update = constant.update(two, layout);
+			update.execute(lib, cmd);
+			verify(lib).vkCmdPushConstants(cmd, layout, VkShaderStage.FRAGMENT.value(), 4, 8, constant.buffer());
+		}
+	}
+}

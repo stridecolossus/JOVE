@@ -4,31 +4,28 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
+import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class PipelineLayoutTest extends AbstractVulkanTest {
-	private static final Set<VkShaderStage> STAGES = Set.of(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT);
-
 	private PipelineLayout layout;
 
 	@BeforeEach
 	void before() {
-		layout = new PipelineLayout(new Handle(1), dev, 4, STAGES);
+		layout = new PipelineLayout(new Handle(1), dev, new PushConstant(List.of()));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(false, layout.isDestroyed());
-		assertEquals(4, layout.pushConstantsSize());
-		assertEquals(STAGES, layout.stages());
+		assertNotNull(layout.push());
 	}
 
 	@Test
@@ -52,41 +49,34 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			final DescriptorLayout set = mock(DescriptorLayout.class);
 			when(set.handle()).thenReturn(new Handle(1));
 
-			// Init push constants max size
-			limit("maxPushConstantsSize", 8);
+			// Create push constant ranges
+			final Range one = new Range(0, 4, Set.of(VkShaderStage.VERTEX));
+			final Range two = new Range(4, 8, Set.of(VkShaderStage.FRAGMENT));
 
-			// Init push constant data
-			final Component data = Component.floats(2);
+			// Init push constants max size
+			limit("maxPushConstantsSize", 12);
 
 			// Create layout
 			final PipelineLayout layout = builder
 					.add(set)
-					.push(data, VkShaderStage.VERTEX, VkShaderStage.FRAGMENT)
+					.push(one)
+					.push(two)
 					.build(dev);
 
 			// Check layout
 			assertNotNull(layout);
 			assertNotNull(layout.handle());
+			assertNotNull(layout.push());
 
 			// Init expected create descriptor
 			final var expected = new VkPipelineLayoutCreateInfo() {
 				@Override
 				public boolean equals(Object obj) {
-					// Check descriptor
 					final var actual = (VkPipelineLayoutCreateInfo) obj;
-					assertNotNull(actual);
 					assertEquals(0, actual.flags);
-
-					// Check descriptor-set layouts
 					assertEquals(1, actual.setLayoutCount);
 					assertEquals(NativeObject.array(Set.of(set)), actual.pSetLayouts);
-
-					// Check push constants
-					assertEquals(1, actual.pushConstantRangeCount);
-					assertEquals(0, actual.pPushConstantRanges.offset);
-					assertEquals(2 * Float.BYTES, actual.pPushConstantRanges.size);
-					assertEquals(IntegerEnumeration.reduce(VkShaderStage.VERTEX, VkShaderStage.FRAGMENT), actual.pPushConstantRanges.stageFlags);
-
+					assertEquals(2, actual.pushConstantRangeCount);
 					return true;
 				}
 			};
@@ -96,7 +86,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 		}
 
 		@Test
-		void buildEmpty() {
+		void empty() {
 			limit("maxPushConstantsSize", 0);
 			assertNotNull(builder.build(dev));
 		}
