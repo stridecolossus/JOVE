@@ -82,14 +82,6 @@ public class PushConstantTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, () -> new Range(1, 4, VERTEX));
 		}
 
-		@DisplayName("can be sorted")
-		@Test
-		void order() {
-			assertEquals(-4, one.compareTo(two));
-			assertEquals(+4, two.compareTo(one));
-			assertEquals(0, one.compareTo(one));
-		}
-
 		@Test
 		void populate() {
 			final var struct = new VkPushConstantRange();

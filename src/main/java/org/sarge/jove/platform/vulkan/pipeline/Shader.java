@@ -106,13 +106,13 @@ public class Shader extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Generates the descriptor for each constant and calculates the total length as a side-effect.
+		 * Helper - Populates the descriptor for each constant and calculates the offsets and total length as side-effects.
 		 */
-		final var populate = new BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry>() {
+		class Populate implements BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry> {
 			private int len = 0;
 
 			@Override
-			public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry out) {
+			public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry struct) {
 				// Determine size of this constant
 				final Object value = entry.getValue();
 				final int size = switch(value) {
@@ -123,16 +123,17 @@ public class Shader extends AbstractVulkanObject {
 				};
 
 				// Init constant
-				out.constantID = entry.getKey();
-				out.size = size;
-				out.offset = len;
+				struct.constantID = entry.getKey();
+				struct.size = size;
+				struct.offset = len;
 
 				// Update buffer offset
 				len += size;
 			}
-		};
+		}
 
 		// Populate map entries
+		final Populate populate = new Populate();
 		final var info = new VkSpecializationInfo();
 		info.mapEntryCount = constants.size();
 		info.pMapEntries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate);

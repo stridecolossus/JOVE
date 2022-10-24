@@ -56,12 +56,16 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 	}
 
 	/**
-	 * Constructor using default configuration.
+	 * Creates an attachment with default configuration.
 	 * @param format		Attachment format
 	 * @param after			Final layout
+	 * @return New attachment
 	 */
-	public Attachment(VkFormat format, VkImageLayout after) {
-		this(format, VkSampleCount.COUNT_1, Operations.DONT_CARE, Operations.DONT_CARE, VkImageLayout.UNDEFINED, after);
+	public static Attachment of(VkFormat format, VkImageLayout after) {
+		return new Builder()
+				.format(format)
+				.finalLayout(after)
+				.build();
 	}
 
 	/**

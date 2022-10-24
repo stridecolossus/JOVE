@@ -120,6 +120,7 @@ public class SphereVolume implements Volume {
 			@Override
 			public float[] distances() {
 				// Calculate offset from nearest point to intersection(s)
+				// TODO - leave as squared?
 				final float offset = MathsUtil.sqrt(radius - dist);
 
 				// Build intersection results

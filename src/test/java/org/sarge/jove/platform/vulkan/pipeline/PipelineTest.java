@@ -12,6 +12,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder.ShaderStageBuilder;
+import org.sarge.jove.platform.vulkan.pipeline.ViewportPipelineStageBuilder.Viewport;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -171,7 +172,7 @@ public class PipelineTest extends AbstractVulkanTest {
 			// Add viewport stage, should now build successfully
 			builder
 				.viewport()
-					.viewport(viewport)
+					.viewport(new Viewport(viewport))
 					.scissor(viewport)
 					.build()
 				.build(null, dev);

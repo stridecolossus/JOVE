@@ -128,7 +128,6 @@ public class FrameBuffer extends AbstractVulkanObject {
 				.map(View::clear)
 				.flatMap(Optional::stream)
 				.toList();
-		// TODO - use collector with [0] adapter
 
 		// Init clear values
 		info.clearValueCount = clear.size();
@@ -154,7 +153,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * A <i>frame set</i> is a convenience aggregation of a group of frame buffers for a given swapchain.
+	 * A <i>frame buffer group</i> is a convenience aggregation for a set of frame buffers used by a given swapchain.
 	 */
 	public static class Group implements TransientObject {
 		private final Swapchain swapchain;
@@ -232,7 +231,5 @@ public class FrameBuffer extends AbstractVulkanObject {
 		 * @param pAllocator		Allocator
 		 */
 		void vkDestroyFramebuffer(DeviceContext device, FrameBuffer framebuffer, Pointer pAllocator);
-
-		//void vkCmdClearDepthStencilImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
 	}
 }

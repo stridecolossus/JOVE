@@ -8,7 +8,6 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 /**
  * Base-class for a nested pipeline stage builder.
  * @param <R> Return type
- * @param <T> Builder type
  * @author Sarge
  */
 abstract class AbstractPipelineStageBuilder<R extends VulkanStructure> {

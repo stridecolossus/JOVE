@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
+import java.nio.Buffer;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -205,5 +206,30 @@ public class View extends AbstractVulkanObject {
 		 * @param pAllocator		Allocator
 		 */
 		void vkDestroyImageView(DeviceContext device, View imageView, Pointer pAllocator);
+
+		/**
+		 * Clears a colour attachment.
+		 * @param commandBuffer		Command buffer
+		 * @param image				Image to clear
+		 * @param imageLayout		Image layout
+		 * @param pColor			Clear colour
+		 * @param rangeCount		Number of sub-resource ranges
+		 * @param pRanges			Sub-resource ranges
+		 */
+		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange pRanges);
+		// TODO
+		// TODO - these can only be done outside of a render pass? what are they for?
+
+		/**
+		 * Clears the depth-stencil attachment.
+		 * @param commandBuffer		Command buffer
+		 * @param image				Image to clear
+		 * @param imageLayout		Image layout
+		 * @param pDepthStencil		Depth clear value
+		 * @param rangeCount		Number of sub-resource ranges
+		 * @param pRanges			Sub-resource ranges
+		 */
+		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
+		// TODO
 	}
 }

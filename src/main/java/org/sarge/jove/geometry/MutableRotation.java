@@ -19,6 +19,10 @@ public class MutableRotation extends AbstractRotation {
 		this.factory = () -> Quaternion.of(this).matrix();
 	}
 
+	/**
+	 * Constructor for a rotation about a cardinal axis.
+	 * @param axis Rotation axis
+	 */
 	public MutableRotation(Axis axis) {
 		super(axis.vector());
 		this.factory = () -> axis.rotation(angle);

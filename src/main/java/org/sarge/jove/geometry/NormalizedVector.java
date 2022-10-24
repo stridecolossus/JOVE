@@ -22,12 +22,13 @@ public class NormalizedVector extends Vector {
 	}
 
 	@Override
-	public final Vector normalize() {
+	public final NormalizedVector normalize() {
 		return this;
 	}
 
 	@Override
-	public Vector invert() {
+	public NormalizedVector invert() {
+		// TODO - consider cached inverse vector => make vector sealed and this final (also then supports axis vector)
 		return new NormalizedVector(super.invert());
 	}
 }

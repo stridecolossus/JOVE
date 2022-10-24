@@ -133,7 +133,6 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 
 	/**
 	 * Loads the MIP index.
-	 * @param in
 	 * @param count Number of MIP levels
 	 * @return MIP index
 	 */
@@ -147,11 +146,16 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 			in.readLong();
 		}
 
-		// Truncate offsets relative to start of image and convert to MIP index
+		// Truncate offsets relative to start of image (note MIP index is in reverse order)
 		final int start = offset[count - 1];
+		for(int n = 0; n < count; ++n) {
+			offset[n] -= start;
+		}
+
+		// Create MIP index
 		return IntStream
 				.range(0, count)
-				.mapToObj(n -> new Level(offset[n] - start, length[n]))
+				.mapToObj(n -> new Level(offset[n], length[n]))
 				.toList();
 	}
 

@@ -9,7 +9,7 @@ import org.sarge.jove.util.MathsUtil;
  * Template implementation.
  * @author Sarge
  */
-public abstract class AbstractRotation implements AxisAngle {
+abstract class AbstractRotation implements AxisAngle {
 	private final Vector axis;
 
 	/**
@@ -70,6 +70,9 @@ public abstract class AbstractRotation implements AxisAngle {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(axis).append(angle()).build();
+		return new ToStringBuilder(this)
+				.append(axis)
+				.append(angle())
+				.build();
 	}
 }

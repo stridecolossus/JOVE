@@ -12,6 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.pipeline.ViewportPipelineStageBuilder.Viewport;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 
 import com.sun.jna.Pointer;
@@ -228,7 +229,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @param rect Viewport/scissor rectangle
 		 */
 		public Builder viewport(Rectangle rect) {
-			viewport.viewport(rect);
+			viewport.viewport(new Viewport(rect));
 			viewport.scissor(rect);
 			return this;
 		}

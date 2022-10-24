@@ -97,22 +97,22 @@ public enum Axis {
 	 */
 	private static Vector axis(int index) {
 		// Init axis vector as an array
-		final float[] axis = new float[3];
+		final float[] axis = new float[Vector.SIZE];
 		axis[index] = 1;
 
 		// Create axis vector
 		return new NormalizedVector(new Vector(axis)) {
-			private final Vector inv = super.invert();
+			private final NormalizedVector inv = super.invert();
 
 			@Override
-			public Vector invert() {
+			public NormalizedVector invert() {
 				return inv;
 			}
 		};
 	}
 
 	/**
-	 * @return This axis as a vector
+	 * @return Vector for this axis
 	 */
 	public Vector vector() {
 		return vec;

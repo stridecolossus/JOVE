@@ -10,6 +10,10 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
+/**
+ * Vulkan image API.
+ * @author Sarge
+ */
 public interface ImageLibrary extends View.Library, Sampler.Library {
 	/**
 	 * Creates an image.

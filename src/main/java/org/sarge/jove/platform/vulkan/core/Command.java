@@ -180,25 +180,15 @@ public interface Command {
 		 * @see Work#submit(Fence)
 		 */
 		public Buffer submit() {
-			// Init synchronisation
 			final Fence fence = Fence.create(pool.device());
-
 			try {
-				// Submit work
-				new Work.Builder(pool)
-						.add(this)
-						.build()
-						.submit(fence);
-
-				// Wait for completion
+				Work.of(this).submit(fence);
 				fence.waitReady();
 			}
 			finally {
-				// Release resources
 				fence.destroy();
 				free();
 			}
-
 			return this;
 		}
 

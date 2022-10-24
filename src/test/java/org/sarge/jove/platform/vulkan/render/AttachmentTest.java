@@ -44,16 +44,16 @@ class AttachmentTest {
 
 	@Test
 	void finalLayout() {
-		assertThrows(IllegalArgumentException.class, () -> new Attachment(FORMAT, null));
-		assertThrows(IllegalArgumentException.class, () -> new Attachment(FORMAT, VkImageLayout.UNDEFINED));
-		assertThrows(IllegalArgumentException.class, () -> new Attachment(FORMAT, VkImageLayout.PREINITIALIZED));
+		assertThrows(IllegalArgumentException.class, () -> Attachment.of(FORMAT, null));
+		assertThrows(IllegalArgumentException.class, () -> Attachment.of(FORMAT, VkImageLayout.UNDEFINED));
+		assertThrows(IllegalArgumentException.class, () -> Attachment.of(FORMAT, VkImageLayout.PREINITIALIZED));
 	}
 
 	@Test
 	void equals() {
 		assertEquals(attachment, attachment);
 		assertNotEquals(attachment, null);
-		assertNotEquals(attachment, new Attachment(FORMAT, VkImageLayout.PRESENT_SRC_KHR));
+		assertNotEquals(attachment, Attachment.of(FORMAT, VkImageLayout.PRESENT_SRC_KHR));
 	}
 
 	@Test

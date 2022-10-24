@@ -144,7 +144,7 @@ public interface Ray {
 		}
 
 		/**
-		 * Creates an intersection.
+		 * Helper - Creates a result for a single intersection.
 		 * @param dist		Distance from ray origin
 		 * @param normal	Surface normal
 		 * @return New intersection

@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>push constant</i> comprises the ranges and a backing data buffer for the push constants of a pipeline.
+ * A <i>push constant</i> comprises the ranges and backing data buffer for the push constants of a pipeline.
  * <p>
  * Notes:
  * <ul>
@@ -74,11 +74,11 @@ public class PushConstant {
 	 * Checks that the entire backing buffer is covered by the ranges of this constant.
 	 */
 	private void validateCoverage() {
-		// Order ranges by offset
+		// Order ranges by increasing offset
 		final List<Range> list = new ArrayList<>(ranges);
-		Collections.sort(list);
+		Collections.sort(list, Comparator.comparingInt(Range::offset));
 
-		// Check each range is overlapping or contiguous
+		// Check each range overlaps or is contiguous
 		int prev = 0;
 		for(Range r : list) {
 			if(r.offset > prev) throw new IllegalArgumentException("Push constant buffer not covered by ranges");
@@ -125,21 +125,21 @@ public class PushConstant {
 
 	/**
 	 * A <i>push constant range</i> specifies a segment of this push constant.
+	 * @see <A href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPushConstantRange.html">Push Constants</a>
 	 */
-	public record Range(int offset, int size, Set<VkShaderStage> stages) implements Comparable<Range> {
+	public record Range(int offset, int size, Set<VkShaderStage> stages) {
 		/**
 		 * Constructor.
 		 * @param offset		Offset (bytes)
 		 * @param size			Size of this range (bytes)
 		 * @param stages		Shader stages
 		 * @throws IllegalArgumentException if {@link #offset} or {@link #size} do not satisfy the alignment rules for push constants
-		 * @see TODO link
 		 */
 		public Range {
 			Check.zeroOrMore(offset);
 			Check.oneOrMore(size);
-			validate(offset);
-			validate(size);
+			checkAlignment(offset);
+			checkAlignment(size);
 			Check.notEmpty(stages);
 			stages = Set.copyOf(stages);
 		}
@@ -154,7 +154,7 @@ public class PushConstant {
 			this(0, size, stages);
 		}
 
-		private static void validate(int size) {
+		private static void checkAlignment(int size) {
 			if((size % 4) != 0) throw new IllegalArgumentException("Push constant offset/size must be a multiple of four bytes");
 		}
 
@@ -172,11 +172,6 @@ public class PushConstant {
 			range.stageFlags = IntegerEnumeration.reduce(stages);
 			range.size = size;
 			range.offset = offset;
-		}
-
-		@Override
-		public int compareTo(Range that) {
-			return this.offset - that.offset;
 		}
 	}
 

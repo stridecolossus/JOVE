@@ -9,11 +9,14 @@ import org.sarge.jove.platform.vulkan.util.RequiredFeature;
  * @author Sarge
  */
 public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
-	private VkPipelineInputAssemblyStateCreateInfo info = new VkPipelineInputAssemblyStateCreateInfo();
+	private VkPrimitiveTopology topology;
+	private boolean restart;
 
+	/**
+	 * Constructor.
+	 */
 	AssemblyPipelineStageBuilder() {
 		topology(Primitive.TRIANGLE_STRIP);
-		restart(false);
 	}
 
 	/**
@@ -21,12 +24,7 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * @param primitive Primitive
 	 */
 	public AssemblyPipelineStageBuilder topology(Primitive primitive) {
-		info.topology = map(primitive);
-		return this;
-	}
-
-	private static VkPrimitiveTopology map(Primitive primitive) {
-		return switch(primitive) {
+		this.topology = switch(primitive) {
 			case POINTS 		-> VkPrimitiveTopology.POINT_LIST;
 			case LINES 			-> VkPrimitiveTopology.LINE_LIST;
 			case LINE_STRIP 	-> VkPrimitiveTopology.LINE_STRIP;
@@ -36,6 +34,7 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 			case PATCH			-> VkPrimitiveTopology.PATCH_LIST;
 			default 			-> throw new RuntimeException();
 		};
+		return this;
 	}
 
 	/**
@@ -44,12 +43,15 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 */
 	@RequiredFeature(field="primitiveRestartEnable", feature="primitiveTopologyListRestart")
 	public AssemblyPipelineStageBuilder restart(boolean restart) {
-		info.primitiveRestartEnable = restart;
+		this.restart = restart;
 		return this;
 	}
 
 	@Override
 	VkPipelineInputAssemblyStateCreateInfo get() {
+		final var info = new VkPipelineInputAssemblyStateCreateInfo();
+		info.topology = topology;
+		info.primitiveRestartEnable = restart;
 		return info;
 	}
 }

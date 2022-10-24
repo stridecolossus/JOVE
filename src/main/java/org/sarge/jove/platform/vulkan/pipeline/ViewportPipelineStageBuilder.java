@@ -16,13 +16,27 @@ import org.sarge.lib.util.*;
  */
 public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
 	/**
-	 * Transient viewport descriptor.
+	 * Viewport descriptor.
 	 */
-	private record Viewport(Rectangle rect, Percentile min, Percentile max) {
-		private Viewport {
+	public record Viewport(Rectangle rect, Percentile min, Percentile max) {
+		/**
+		 * Constructor.
+		 * @param rect		Viewport rectangle
+		 * @param min		Minimum depth
+		 * @param max		Maximum depth
+		 */
+		public Viewport {
 			Check.notNull(rect);
 			Check.notNull(min);
 			Check.notNull(max);
+		}
+
+		/**
+		 * Constructor for a viewport with default depths.
+		 * @param rect Viewport rectangle
+		 */
+		public Viewport(Rectangle rect) {
+			this(rect, Percentile.ZERO, Percentile.ONE);
 		}
 	}
 
@@ -44,24 +58,16 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	}
 
 	/**
-	 * Adds a viewport rectangle.
+	 * Adds a viewport.
 	 * @param rect		Viewport rectangle
 	 * @param min		Minimum depth
 	 * @param max		Maximum depth
 	 */
 	@RequiredFeature(field="viewportCount", feature="multiViewport")
-	public ViewportPipelineStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
-		viewports.add(new Viewport(rect, min, max));
+	public ViewportPipelineStageBuilder viewport(Viewport viewport) {
+		Check.notNull(viewport);
+		viewports.add(viewport);
 		return this;
-	}
-	// TODO - expose transient record?
-
-	/**
-	 * Adds a viewport rectangle with default min/max depth.
-	 * @param rect Viewport rectangle
-	 */
-	public ViewportPipelineStageBuilder viewport(Rectangle rect) {
-		return viewport(rect, Percentile.ZERO, Percentile.ONE);
 	}
 
 	/**
@@ -97,14 +103,14 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 
 	/**
 	 * Populates a Vulkan rectangle.
-	 * @param in		Rectangle
-	 * @param out		Vulkan rectangle
+	 * @param rect			Rectangle
+	 * @param struct		Vulkan rectangle
 	 */
-	private static void populate(Rectangle in, VkRect2D out) {
-		out.offset.x = in.x();
-		out.offset.y = in.y();
-		out.extent.width = in.width();
-		out.extent.height = in.height();
+	private static void populate(Rectangle rect, VkRect2D struct) {
+		struct.offset.x = rect.x();
+		struct.offset.y = rect.y();
+		struct.extent.width = rect.width();
+		struct.extent.height = rect.height();
 	}
 
 	@Override

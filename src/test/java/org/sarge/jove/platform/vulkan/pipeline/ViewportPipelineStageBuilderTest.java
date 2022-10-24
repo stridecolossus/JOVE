@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.platform.vulkan.pipeline.ViewportPipelineStageBuilder.Viewport;
 import org.sarge.lib.util.Percentile;
 
 public class ViewportPipelineStageBuilderTest {
@@ -21,7 +22,7 @@ public class ViewportPipelineStageBuilderTest {
 		// Build descriptor
 		final var descriptor = builder
 				.flip(false)
-				.viewport(rect, new Percentile(0.1f), new Percentile(0.2f))
+				.viewport(new Viewport(rect, new Percentile(0.1f), new Percentile(0.2f)))
 				.scissor(rect)
 				.get();
 
@@ -52,7 +53,7 @@ public class ViewportPipelineStageBuilderTest {
 	void flip() {
 		final var descriptor = builder
 				.flip(true)
-				.viewport(rect)
+				.viewport(new Viewport(rect))
 				.scissor(rect)
 				.get();
 		assertEquals(1, descriptor.pViewports.x);
@@ -68,7 +69,7 @@ public class ViewportPipelineStageBuilderTest {
 
 	@Test
 	void createRequiresScissor() {
-		builder.viewport(rect);
+		builder.viewport(new Viewport(rect));
 		assertThrows(IllegalArgumentException.class, () -> builder.get());
 	}
 }
