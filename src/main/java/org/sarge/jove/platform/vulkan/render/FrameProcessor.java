@@ -140,8 +140,8 @@ public class FrameProcessor implements TransientObject {
 		 * Submits a render task.
 		 */
 		private void submit(Buffer buffer) {
-			new Work.Builder(buffer.pool())
-					.add(buffer)
+			Work.Builder
+					.of(buffer)
 					.wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
 					.signal(ready)
 					.build()

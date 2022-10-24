@@ -9,6 +9,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.lib.util.Check;
@@ -24,7 +25,7 @@ import org.sarge.lib.util.Check;
  * <li>a set of <i>signal</i> semaphores that are signalled when <b>all</b> the buffers have been executed</li>
  * </ul>
  * <p>
- * Note that <b>all</b> command buffers in a work submission <b>must</b> have been allocated from a pool created for the same queue family.
+ * Note that <b>all</b> command buffers in a work submission <b>must</b> be allocated from pools created with the same queue family.
  * <p>
  * Usage:
  * <pre>
@@ -70,17 +71,17 @@ public class Work {
 
 	/**
 	 * Constructor.
-	 * @param pool Command pool
+	 * @param pool Command pool for this submission
 	 */
 	private Work(Pool pool) {
 		this.pool = notNull(pool);
 	}
 
 	/**
-	 * @return Command pool for this work submission
+	 * @return Work queue for this submission
 	 */
-	public Pool pool() {
-		return pool;
+	public Queue queue() {
+		return pool.queue();
 	}
 
 	/**
@@ -124,18 +125,18 @@ public class Work {
 	 */
 	public static void submit(Collection<Work> batch, Fence fence) {
 		// Check batch submits to expected queue
-		final Pool pool = batch.iterator().next().pool();
+		final Work first = batch.iterator().next();
 		for(Work work : batch) {
-			if(!matches(pool, work.pool())) {
-				throw new IllegalArgumentException(String.format("Work batch does not submit to the same queue family: pool=%s work=%s", pool, work));
+			if(!matches(first.pool, work.pool)) {
+				throw new IllegalArgumentException(String.format("Work batch does not submit to the same queue family: queue=%s work=%s", first.pool.queue(), work));
 			}
 		}
-		// TODO - reduce?
 
 		// Submit batch
 		final VkSubmitInfo[] array = StructureCollector.array(batch, new VkSubmitInfo(), Work::populate);
-		final VulkanLibrary lib = pool.device().library();
-		check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
+		final VulkanLibrary lib = first.pool.device().library();
+		final Queue queue = first.pool.queue();
+		check(lib.vkQueueSubmit(queue, array.length, array, fence));
 	}
 
 	/**
@@ -152,7 +153,7 @@ public class Work {
 		return
 				(obj == this) ||
 				(obj instanceof Work that) &&
-				this.pool.equals(that.pool) &&
+				this.queue().equals(that.queue()) &&
 				this.buffers.equals(that.buffers) &&
 				this.wait.equals(that.wait) &&
 				this.signal.equals(that.signal);
@@ -161,7 +162,7 @@ public class Work {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("pool", pool)
+				.append("queue", queue())
 				.append("buffers", buffers.size())
 				.append("wait", wait.size())
 				.append("signal", signal.size())
@@ -185,7 +186,7 @@ public class Work {
 
 		/**
 		 * Constructor.
-		 * @param pool Command pool for this work
+		 * @param queue Work queue for this submission
 		 */
 		public Builder(Pool pool) {
 			this.work = new Work(pool);
@@ -203,7 +204,7 @@ public class Work {
 
 			// Check all work is submitted to the same queue family
 			if(!matches(work.pool, buffer.pool())) {
-				throw new IllegalArgumentException(String.format("Command buffer must submit to the queue family of this work: buffer=%s pool=%s", buffer, work.pool));
+				throw new IllegalArgumentException(String.format("Command buffer must submit to the queue family of this work: buffer=%s work=%s", buffer, work));
 			}
 
 			// Add buffer to this work

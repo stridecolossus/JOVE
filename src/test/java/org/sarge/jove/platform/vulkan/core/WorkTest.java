@@ -45,7 +45,7 @@ public class WorkTest extends AbstractVulkanTest {
 
 	@Test
 	void constructor() {
-		assertEquals(pool, work.pool());
+		assertEquals(queue, work.queue());
 	}
 
 	@DisplayName("Work can be submitted to a queue")
