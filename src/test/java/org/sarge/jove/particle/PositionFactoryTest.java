@@ -28,7 +28,7 @@ class PositionFactoryTest {
 	void disc() {
 		final Randomiser randomiser = mock(Randomiser.class);
 		when(randomiser.next()).thenReturn(0.5f);
-		final Disc disc = new Disc(Axis.Y.vector(), 0, randomiser);
+		final Disc disc = new Disc(Axis.Y, 0, randomiser);
 		final PositionFactory circle = PositionFactory.circle(Point.ORIGIN, disc);
 		assertNotNull(circle);
 		assertEquals(Point.ORIGIN, circle.position());

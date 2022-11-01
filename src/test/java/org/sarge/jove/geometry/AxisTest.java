@@ -9,16 +9,16 @@ import org.junit.jupiter.api.*;
 public class AxisTest {
 	@Test
 	void vectors() {
-		assertEquals(new Vector(1, 0, 0), X.vector());
-		assertEquals(new Vector(0, 1, 0), Y.vector());
-		assertEquals(new Vector(0, 0, 1), Z.vector());
+		assertEquals(new Vector(1, 0, 0), X);
+		assertEquals(new Vector(0, 1, 0), Y);
+		assertEquals(new Vector(0, 0, 1), Z);
 	}
 
 	@Test
 	void invert() {
-		assertEquals(new Vector(-1, 0, 0), X.vector().invert());
-		assertEquals(new Vector(0, -1, 0), Y.vector().invert());
-		assertEquals(new Vector(0, 0, -1), Z.vector().invert());
+		assertEquals(new Vector(-1, 0, 0), X.invert());
+		assertEquals(new Vector(0, -1, 0), Y.invert());
+		assertEquals(new Vector(0, 0, -1), Z.invert());
 	}
 
 	@DisplayName("The axis corresponding to the minimal component of a vector can be determined")
@@ -72,25 +72,25 @@ public class AxisTest {
 		@DisplayName("from a token representing that axis")
 		@Test
 		void axis() {
-			assertEquals(X.vector(), Axis.parse("X"));
-			assertEquals(Y.vector(), Axis.parse("Y"));
-			assertEquals(Z.vector(), Axis.parse("Z"));
+			assertEquals(X, Axis.parse("X"));
+			assertEquals(Y, Axis.parse("Y"));
+			assertEquals(Z, Axis.parse("Z"));
 		}
 
-		@DisplayName("from a token prefixed with the minus sign representing that inverted axis")
+		@DisplayName("from a token prefixed with the minus sign representing that axis inverted")
 		@Test
 		void invert() {
-			assertEquals(X.vector().invert(), Axis.parse("-X"));
-			assertEquals(Y.vector().invert(), Axis.parse("-Y"));
-			assertEquals(Z.vector().invert(), Axis.parse("-Z"));
+			assertEquals(X.invert(), Axis.parse("-X"));
+			assertEquals(Y.invert(), Axis.parse("-Y"));
+			assertEquals(Z.invert(), Axis.parse("-Z"));
 		}
 
 		@DisplayName("from a vector tuple")
 		@Test
 		void vector() {
-			assertEquals(X.vector(), Axis.parse("1 0 0"));
-			assertEquals(Y.vector(), Axis.parse("0 1 0"));
-			assertEquals(Z.vector(), Axis.parse("0 0 1"));
+			assertEquals(X, Axis.parse("1 0 0"));
+			assertEquals(Y, Axis.parse("0 1 0"));
+			assertEquals(Z, Axis.parse("0 0 1"));
 			assertEquals(new Vector(1, 2, 3), Axis.parse("1 2 3"));
 		}
 	}

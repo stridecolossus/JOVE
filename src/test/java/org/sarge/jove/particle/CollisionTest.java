@@ -13,7 +13,7 @@ public class CollisionTest {
 	@BeforeEach
 	void before() {
 		p = new Particle(0, Point.ORIGIN, new Vector(1, 1, 0));
-		intersection = Intersection.of(1, Axis.Y.vector());
+		intersection = Intersection.of(1, Axis.Y);
 	}
 
 	@Test

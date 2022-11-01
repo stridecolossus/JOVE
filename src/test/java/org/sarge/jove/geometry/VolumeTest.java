@@ -33,7 +33,7 @@ class VolumeTest {
 
 		@Test
 		void intersectsPlane() {
-			assertEquals(false, Volume.EMPTY.intersects(new Plane(Axis.Y.vector(), 1)));
+			assertEquals(false, Volume.EMPTY.intersects(new Plane(Axis.Y, 1)));
 		}
 
 		@Test

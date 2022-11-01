@@ -10,7 +10,7 @@ class AbstractRotationTest {
 
 	@BeforeEach
 	void before() {
-		rot = new AbstractRotation(Axis.Y.vector()) {
+		rot = new AbstractRotation(Axis.Y) {
 			@Override
 			public Matrix matrix() {
 				return null;
@@ -25,7 +25,7 @@ class AbstractRotationTest {
 
 	@Test
 	void constructor() {
-		assertEquals(Axis.Y.vector(), rot.axis());
+		assertEquals(Axis.Y, rot.axis());
 		assertSame(rot, rot.toAxisAngle());
 	}
 

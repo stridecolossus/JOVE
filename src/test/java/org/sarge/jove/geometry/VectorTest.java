@@ -74,7 +74,7 @@ class VectorTest {
 	@Test
 	void multiply() {
 		assertEquals(new Vector(1, 4, 9), vec.multiply(vec));
-		assertEquals(X.vector(), vec.multiply(X.vector()));
+		assertEquals(X, vec.multiply(X));
 	}
 
 	@DisplayName("A normalised vector...")
@@ -130,9 +130,9 @@ class VectorTest {
 			assertEquals(MathsUtil.cos(MathsUtil.TWO_PI), vec.angle(vec));
 			assertEquals(1, vec.angle(vec));
 			assertEquals(-1, vec.angle(vec.invert()));
-			assertEquals(MathsUtil.PI, X.vector().angle(X.vector().invert()));
-			assertEquals(MathsUtil.HALF_PI, X.vector().angle(Y.vector()));
-			assertEquals(MathsUtil.HALF_PI, X.vector().angle(Z.vector()));
+			assertEquals(MathsUtil.PI, X.angle(X.invert()));
+			assertEquals(MathsUtil.HALF_PI, X.angle(Y));
+			assertEquals(MathsUtil.HALF_PI, X.angle(Z));
 		}
 	}
 
@@ -183,9 +183,9 @@ class VectorTest {
 		@DisplayName("onto a cardinal axis extracts that component")
 		@Test
 		void cardinal() {
-			assertEquals(new Vector(1, 0, 0), vec.project(X.vector()));
-			assertEquals(new Vector(0, 2, 0), vec.project(Y.vector()));
-			assertEquals(new Vector(0, 0, 3), vec.project(Z.vector()));
+			assertEquals(new Vector(1, 0, 0), vec.project(X));
+			assertEquals(new Vector(0, 2, 0), vec.project(Y));
+			assertEquals(new Vector(0, 0, 3), vec.project(Z));
 		}
 
 		@DisplayName("onto itself is the same vector")
@@ -201,17 +201,17 @@ class VectorTest {
 		@DisplayName("the cardinal axes inverts that component")
 		@Test
 		void reflect() {
-			assertEquals(new Vector(-1, 2, 3), vec.reflect(X.vector()));
-			assertEquals(new Vector(1, -2, 3), vec.reflect(Y.vector()));
-			assertEquals(new Vector(1, 2, -3), vec.reflect(Z.vector()));
+			assertEquals(new Vector(-1, 2, 3), vec.reflect(X));
+			assertEquals(new Vector(1, -2, 3), vec.reflect(Y));
+			assertEquals(new Vector(1, 2, -3), vec.reflect(Z));
 		}
 
 		@DisplayName("the inverse of a vector is the same")
 		@Test
 		void inverse() {
-			assertEquals(new Vector(-1, 2, 3), vec.reflect(X.vector().invert()));
-			assertEquals(new Vector(1, -2, 3), vec.reflect(Y.vector().invert()));
-			assertEquals(new Vector(1, 2, -3), vec.reflect(Z.vector().invert()));
+			assertEquals(new Vector(-1, 2, 3), vec.reflect(X.invert()));
+			assertEquals(new Vector(1, -2, 3), vec.reflect(Y.invert()));
+			assertEquals(new Vector(1, 2, -3), vec.reflect(Z.invert()));
 		}
 
 		@DisplayName("itself is the inverse of that vector")

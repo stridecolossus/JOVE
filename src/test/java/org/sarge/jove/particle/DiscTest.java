@@ -15,14 +15,14 @@ public class DiscTest {
 	@BeforeEach
 	void before() {
 		randomiser = mock(Randomiser.class);
-		disc = new Disc(Axis.Y.vector(), 1, randomiser);
+		disc = new Disc(Axis.Y, 1, randomiser);
 	}
 
 	@Test
 	void origin() {
 		when(randomiser.next()).thenReturn(0.5f);
 		assertEquals(Point.ORIGIN, disc.point());
-		assertEquals(Axis.Y.vector(), disc.vector());
+		assertEquals(Axis.Y, disc.vector());
 	}
 
 	@Test
@@ -43,6 +43,6 @@ public class DiscTest {
 		assertNotNull(disc);
 
 		when(randomiser.next()).thenReturn(0.5f);
-		assertEquals(Axis.Y.vector(), disc.vector());
+		assertEquals(Axis.Y, disc.vector());
 	}
 }

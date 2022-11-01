@@ -188,8 +188,8 @@ class MatrixTest {
 
 		@Test
 		void translation() {
-			final Matrix expected = new Matrix.Builder().identity().column(3, Axis.X.vector()).build();
-			assertEquals(expected, Matrix4.translation(Axis.X.vector()));
+			final Matrix expected = new Matrix.Builder().identity().column(3, Axis.X).build();
+			assertEquals(expected, Matrix4.translation(Axis.X));
 		}
 
 		@Test

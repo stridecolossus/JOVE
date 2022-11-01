@@ -2,6 +2,8 @@ package org.sarge.jove.geometry;
 
 import java.util.function.Supplier;
 
+import org.sarge.jove.util.FloatSupport.FloatFunction;
+
 /**
  * Mutable implementation.
  * @author Sarge
@@ -24,8 +26,13 @@ public class MutableRotation extends AbstractRotation {
 	 * @param axis Rotation axis
 	 */
 	public MutableRotation(Axis axis) {
-		super(axis.vector());
-		this.factory = () -> axis.rotation(angle);
+		this(axis, axis::rotation);
+	}
+
+	// TODO
+	public MutableRotation(Vector axis, FloatFunction<Matrix> rot) {
+		super(axis);
+		this.factory = () -> rot.apply(angle);
 	}
 
 	@Override

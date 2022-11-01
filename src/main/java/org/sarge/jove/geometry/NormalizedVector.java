@@ -6,7 +6,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>normalized vector</i> is a unit vector (magnitude of <b>one</b>).
  * @author Sarge
  */
-public class NormalizedVector extends Vector {
+public sealed class NormalizedVector extends Vector permits Axis {
 	/**
 	 * Constructor.
 	 * @param vec Normalized vector
@@ -28,7 +28,6 @@ public class NormalizedVector extends Vector {
 
 	@Override
 	public NormalizedVector invert() {
-		// TODO - consider cached inverse vector => make vector sealed and this final (also then supports axis vector)
 		return new NormalizedVector(super.invert());
 	}
 }

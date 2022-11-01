@@ -13,11 +13,11 @@ import org.sarge.jove.geometry.Matrix.Matrix4;
 public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Axis.Z.vector();
-	private Vector up = Axis.Y.vector();
+	private Vector dir = Axis.Z;
+	private Vector up = Axis.Y;
 
 	// Transient view transform
-	private Vector right = Axis.X.vector();
+	private Vector right = Axis.X;
 	private Matrix matrix;
 	private boolean dirty = true;
 

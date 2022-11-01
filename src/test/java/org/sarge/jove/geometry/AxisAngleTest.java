@@ -16,7 +16,7 @@ class AxisAngleTest {
 
 	@Test
 	void constructor() {
-		assertEquals(Y.vector(), rot.axis());
+		assertEquals(Y, rot.axis());
 		assertEquals(PI, rot.angle());
 		assertNotNull(rot.matrix());
 		assertSame(rot, rot.toAxisAngle());

@@ -36,14 +36,4 @@ public interface AxisAngle extends Rotation {
 			}
 		};
 	}
-
-	/**
-	 * Creates a fixed axis-angle rotation about the given axis.
-	 * @param axis		Rotation axis
-	 * @param angle		Angle (radians)
-	 * @return New axis-angle
-	 */
-	static AxisAngle of(Axis axis, float angle) {
-		return of(axis.vector(), angle);
-	}
 }

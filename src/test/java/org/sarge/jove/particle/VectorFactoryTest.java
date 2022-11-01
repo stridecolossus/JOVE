@@ -18,26 +18,26 @@ class VectorFactoryTest {
 	@DisplayName("The movement vector of a particle can be initialised to a literal vector")
 	@Test
 	void literal() {
-		final VectorFactory factory = VectorFactory.of(Axis.X.vector());
-		assertEquals(Axis.X.vector(), factory.vector());
+		final VectorFactory factory = VectorFactory.of(Axis.X);
+		assertEquals(Axis.X, factory.vector());
 	}
 
 	@DisplayName("The random factory initialises particles movement vectors to a random direction")
 	@Test
 	void random() {
 		final var factory = VectorFactory.random(randomiser);
-		when(randomiser.vector()).thenReturn(Axis.Y.vector());
+		when(randomiser.vector()).thenReturn(Axis.Y);
 		assertNotNull(factory);
-		assertEquals(Axis.Y.vector(), factory.vector());
+		assertEquals(Axis.Y, factory.vector());
 	}
 
 	@DisplayName("The cone factory generates randomised vectors specified by a disc")
 	@Test
 	void disc() {
-		final Disc disc = new Disc(Axis.Y.vector(), 0, randomiser);
+		final Disc disc = new Disc(Axis.Y, 0, randomiser);
 		final var cone = VectorFactory.cone(disc);
 		when(randomiser.next()).thenReturn(0.5f);
 		assertNotNull(cone);
-		assertEquals(Axis.Y.vector(), cone.vector());
+		assertEquals(Axis.Y, cone.vector());
 	}
 }

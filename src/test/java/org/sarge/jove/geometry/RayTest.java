@@ -11,13 +11,13 @@ class RayTest {
 
 	@BeforeEach
 	void before() {
-		ray = new DefaultRay(Point.ORIGIN, Axis.X.vector());
+		ray = new DefaultRay(Point.ORIGIN, Axis.X);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(Point.ORIGIN, ray.origin());
-		assertEquals(Axis.X.vector(), ray.direction());
+		assertEquals(Axis.X, ray.direction());
 	}
 
 	@Test
@@ -29,7 +29,7 @@ class RayTest {
 	@Test
 	void equals() {
 		assertEquals(ray, ray);
-		assertEquals(ray, new DefaultRay(Point.ORIGIN, Axis.X.vector()));
+		assertEquals(ray, new DefaultRay(Point.ORIGIN, Axis.X));
 		assertNotEquals(ray, null);
 		assertNotEquals(ray, mock(Ray.class));
 	}
@@ -45,10 +45,10 @@ class RayTest {
 
 		@Test
 		void of() {
-			final var intersection = Intersection.of(3, Axis.Y.vector());
+			final var intersection = Intersection.of(3, Axis.Y);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{3}, intersection.distances());
-			assertEquals(Axis.Y.vector(), intersection.normal(null));
+			assertEquals(Axis.Y, intersection.normal(null));
 		}
 	}
 }

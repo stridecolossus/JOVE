@@ -7,7 +7,7 @@ import org.sarge.lib.util.Converter;
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public class Vector extends Tuple {
+public sealed class Vector extends Tuple permits NormalizedVector {
 	/**
 	 * Converter for a vector.
 	 */
@@ -80,9 +80,9 @@ public class Vector extends Tuple {
 	}
 
 	/**
-	 * Multiplies this vector <i>component wise</i> by the given vector.
+	 * Multiplies this vector by the given vector.
 	 * @param vec Vector
-	 * @return Multiplied vector
+	 * @return This vector multiplied <i>component wise</i> by the given vector
 	 */
 	public Vector multiply(Vector vec) {
 		return new Vector(x * vec.x, y * vec.y, z * vec.z);
@@ -174,7 +174,7 @@ public class Vector extends Tuple {
 	 * <ul>
 	 * <li>V is <b>this</b> vector</li>
 	 * <li>U is assumed to be normalised</li>
-	 * <li><i>mag</i> is the magnitude of U squared (and therefore is ignored by this implementation)</li>
+	 * <li><i>mag</i> is the magnitude of U squared (and is therefore ignored by this implementation)</li>
 	 * </ul>
 	 * <p>
 	 * @param vec Vector to project onto (assumes normalised)
@@ -189,8 +189,7 @@ public class Vector extends Tuple {
 	/**
 	 * Reflects this vector about the given normal.
 	 * <p>
-	 * The reflection R of vector V onto a surface with normal N is:
-	 * <pre>R = -2(V.N)N + V</pre>
+	 * The reflection R of vector V onto a surface with normal N is: <pre>R = -2(V.N)N + V</pre>
 	 * <p>
 	 * @param normal Normal
 	 * @return Reflected vector

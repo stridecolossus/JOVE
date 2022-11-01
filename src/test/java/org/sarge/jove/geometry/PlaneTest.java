@@ -12,18 +12,18 @@ class PlaneTest {
 
 	@BeforeEach
 	void before() {
-		plane = new Plane(Y.vector(), -1);
+		plane = new Plane(Y, -1);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Y.vector(), plane.normal());
+		assertEquals(Y, plane.normal());
 		assertEquals(-1, plane.distance());
 	}
 
 	@Test
 	void of() {
-		assertEquals(plane, Plane.of(Y.vector(), new Point(0, 1, 0)));
+		assertEquals(plane, Plane.of(Y, new Point(0, 1, 0)));
 	}
 
 	@Test
@@ -79,35 +79,35 @@ class PlaneTest {
 		@DisplayName("A ray crossing the plane is intersecting")
 		@Test
 		void intersect() {
-			final Ray ray = new DefaultRay(Point.ORIGIN, Y.vector());
+			final Ray ray = new DefaultRay(Point.ORIGIN, Y);
 			final Intersection intersection = plane.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{1}, intersection.distances());
-			assertEquals(Y.vector(), intersection.normal(null));
+			assertEquals(Y, intersection.normal(null));
 		}
 
 		@DisplayName("A ray touching the plane is intersecting")
 		@Test
 		void touching() {
-			final Ray ray = new DefaultRay(new Point(0, 1, 0), Y.vector());
+			final Ray ray = new DefaultRay(new Point(0, 1, 0), Y);
 			final Intersection intersection = plane.intersection(ray);
 			assertEquals(false, intersection.isEmpty());
 			assertArrayEquals(new float[]{-0f}, intersection.distances());
-			assertEquals(Y.vector(), intersection.normal(null));
+			assertEquals(Y, intersection.normal(null));
 		}
 
 		@DisplayName("A ray orthogonal to the plane is not intersecting")
 		@Test
 		void orthogonal() {
-			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, X.vector())));
-			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Z.vector())));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, X)));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Z)));
 		}
 
 		@DisplayName("A ray pointing away from the plane is not intersecting")
 		@Test
 		void missing() {
-			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(new Point(0, 2, 0), Y.vector())));
-			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Y.vector().invert())));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(new Point(0, 2, 0), Y)));
+			assertEquals(Intersection.NONE, plane.intersection(new DefaultRay(Point.ORIGIN, Y.invert())));
 		}
 	}
 
@@ -124,13 +124,13 @@ class PlaneTest {
 		@DisplayName("A ray that crosses the plane in front is not intersecting")
 		@Test
 		void behind() {
-			assertEquals(Intersection.NONE, behind.intersection(new DefaultRay(new Point(0, 2, 0), Y.vector().invert())));
+			assertEquals(Intersection.NONE, behind.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
 		}
 
 		@DisplayName("A ray behind the plane intersects even if it does not cross the plane")
 		@Test
 		void negative() {
-			final Intersection intersection = behind.intersection(new DefaultRay(Point.ORIGIN, Y.vector().invert()));
+			final Intersection intersection = behind.intersection(new DefaultRay(Point.ORIGIN, Y.invert()));
 			assertEquals(false, intersection.isEmpty());
 		}
 	}
@@ -148,13 +148,13 @@ class PlaneTest {
 		@DisplayName("A ray that crosses the plane in front is not intersecting")
 		@Test
 		void positive() {
-			assertEquals(Intersection.NONE, surface.intersection(new DefaultRay(new Point(0, 2, 0), Y.vector().invert())));
+			assertEquals(Intersection.NONE, surface.intersection(new DefaultRay(new Point(0, 2, 0), Y.invert())));
 		}
 
 		@DisplayName("A ray behind the plane has undefined intersection results")
 		@Test
 		void behind() {
-			final Intersection intersection = surface.intersection(new DefaultRay(Point.ORIGIN, Y.vector()));
+			final Intersection intersection = surface.intersection(new DefaultRay(Point.ORIGIN, Y));
 			assertEquals(false, intersection.isEmpty());
 			assertThrows(UnsupportedOperationException.class, () -> intersection.distances());
 			assertThrows(UnsupportedOperationException.class, () -> intersection.normal(null));
@@ -163,7 +163,7 @@ class PlaneTest {
 		@DisplayName("A ray behind the plane intersects even if it does not cross the plane")
 		@Test
 		void negative() {
-			final Intersection intersection = surface.intersection(new DefaultRay(Point.ORIGIN, Y.vector().invert()));
+			final Intersection intersection = surface.intersection(new DefaultRay(Point.ORIGIN, Y.invert()));
 			assertEquals(false, intersection.isEmpty());
 		}
 	}

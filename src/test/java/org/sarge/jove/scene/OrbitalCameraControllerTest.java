@@ -9,7 +9,7 @@ import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.geometry.*;
 
 public class OrbitalCameraControllerTest {
-	private static final Vector Z = Axis.Z.vector();
+	private static final Vector Z = Axis.Z;
 
 	private Camera cam;
 	private OrbitalCameraController controller;

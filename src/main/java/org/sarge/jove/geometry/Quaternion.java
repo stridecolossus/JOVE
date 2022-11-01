@@ -22,8 +22,9 @@ public final class Quaternion implements Rotation {
 	 */
 	public static Quaternion of(AxisAngle rot) {
 		final float half = rot.angle() * MathsUtil.HALF;
+		final float w = MathsUtil.cos(half);
 		final Vector vec = rot.axis().multiply(MathsUtil.sin(half));
-		return new Quaternion(MathsUtil.cos(half), vec.x, vec.y, vec.z);
+		return new Quaternion(w, vec);
 	}
 
 	public final float w, x, y, z;
@@ -36,6 +37,13 @@ public final class Quaternion implements Rotation {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+	}
+
+	/**
+	 * Constructor given an axis.
+	 */
+	public Quaternion(float w, Vector axis) {
+		this(w, axis.x, axis.y, axis.z);
 	}
 
 	/**
@@ -52,11 +60,18 @@ public final class Quaternion implements Rotation {
 		return new float[]{w, x, y, z};
 	}
 
+	/**
+	 * @return Axis components as a vector
+	 */
+	private Vector axis() {
+		return new Vector(x, y, z);
+	}
+
 	@Override
 	public AxisAngle toAxisAngle() {
 		final float scale = MathsUtil.inverseRoot(1 - w * w);
 		final float angle = 2 * MathsUtil.acos(w);
-		final Vector axis = new Vector(x, y, z).multiply(scale);
+		final Vector axis = this.axis().multiply(scale);
 		return AxisAngle.of(axis, angle);
 	}
 
@@ -71,7 +86,8 @@ public final class Quaternion implements Rotation {
 		}
 		else {
 			final float mag = MathsUtil.inverseRoot(magnitude);
-			return new Quaternion(w * mag, x * mag, y * mag, z * mag);
+			final Vector vec = this.axis().multiply(mag);
+			return new Quaternion(w * mag, vec);
 		}
 	}
 
@@ -79,7 +95,7 @@ public final class Quaternion implements Rotation {
 	 * @return Conjugate of this quaternion (assumes normalized)
 	 */
 	public Quaternion conjugate() {
-		return new Quaternion(w, -x, -y, -z);
+		return new Quaternion(w, this.axis().invert());
 	}
 
 	/**
@@ -98,9 +114,9 @@ public final class Quaternion implements Rotation {
 
 	@Override
 	public Vector rotate(Vector vec) {
-		final Quaternion q = new Quaternion(0, vec.x, vec.y, vec.z);
+		final Quaternion q = new Quaternion(0, vec);
 		final Quaternion result = this.multiply(q).multiply(this.conjugate());
-		return new Vector(result.x, result.y, result.z);
+		return result.axis();
 	}
 
 	// TODO - slerp

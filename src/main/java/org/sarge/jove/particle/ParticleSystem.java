@@ -54,7 +54,7 @@ public class ParticleSystem implements Animation {
 	// Particle properties
 	private final Collection<Characteristic> chars;
 	private PositionFactory position = PositionFactory.ORIGIN;
-	private VectorFactory vector = VectorFactory.of(Axis.Y.vector());
+	private VectorFactory vector = VectorFactory.of(Axis.Y);
 	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
 	private int max = 1;
 	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
