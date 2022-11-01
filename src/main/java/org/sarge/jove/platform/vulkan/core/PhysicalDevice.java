@@ -117,7 +117,7 @@ public class PhysicalDevice implements NativeObject {
 		check(lib.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported));
 
 		// Convert native integer to boolean
-		final NativeBooleanConverter converter = new NativeBooleanConverter();
+		final var converter = new NativeBooleanConverter();
 		return converter.fromNative(supported.getValue(), null);
 	}
 

@@ -165,6 +165,7 @@ public class Pipeline extends AbstractVulkanObject {
 			this.base = base.handle();
 			return this;
 		}
+		// TODO - wouldn't we want to clone the pipeline config as well? but how? pipeline/builder interdependent pointers?
 
 		/**
 		 * Derives this pipeline from the given builder.

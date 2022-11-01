@@ -14,6 +14,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class Semaphore extends AbstractVulkanObject {
 	/**
 	 * Creates a new semaphore.
+	 * @param dev Logical device
 	 * @return New semaphore
 	 */
 	public static Semaphore create(DeviceContext dev) {

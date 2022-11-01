@@ -79,6 +79,7 @@ public class InstanceTest {
 			instance = builder
 				.name("name")
 				.version(ver)
+				.api(new Version(1, 0, 1))
 				.extension("ext")
 				.layer(layer)
 				.factory(factory)
@@ -107,7 +108,7 @@ public class InstanceTest {
 					assertEquals(ver.toInteger(), app.applicationVersion);
 					assertEquals("JOVE", app.pEngineName);
 					assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
-					assertEquals(VulkanLibrary.VERSION.toInteger(), app.apiVersion);
+					assertEquals(new Version(1, 0, 1).toInteger(), app.apiVersion);
 
 					return true;
 				}
@@ -115,6 +116,11 @@ public class InstanceTest {
 
 			// Check API
 			verify(lib).vkCreateInstance(expected, null, factory.pointer());
+		}
+
+		@Test
+		void api() {
+			assertThrows(IllegalStateException.class, () -> builder.api(new Version(9, 0, 0)));
 		}
 	}
 }

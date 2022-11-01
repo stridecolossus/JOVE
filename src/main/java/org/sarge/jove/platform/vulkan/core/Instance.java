@@ -83,12 +83,13 @@ public class Instance extends AbstractTransientNativeObject {
 	 * Builder for an instance.
 	 */
 	public static class Builder {
-		private static final Version VERSION = new Version(1, 0, 0);
+		private static final Version VERSION = Version.DEFAULT;
 
 		private String name = "Unspecified";
-		private Version ver = VERSION;
+		private Version ver = Version.DEFAULT;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
+		private Version api = VulkanLibrary.VERSION;
 		private ReferenceFactory factory = ReferenceFactory.DEFAULT;
 
 		/**
@@ -101,11 +102,24 @@ public class Instance extends AbstractTransientNativeObject {
 		}
 
 		/**
-		 * Sets the application version.
+		 * Sets the application version (default is {@link Version#DEFAULT}).
 		 * @param ver Application version
 		 */
 		public Builder version(Version ver) {
 			this.ver = notNull(ver);
+			return this;
+		}
+
+		/**
+		 * Sets the required version of the Vulkan API (default is {@link VulkanLibrary#VERSION}).
+		 * @param api Required API version
+		 * @throws IllegalStateException if {@link #api} is not supported by this JOVE implementation
+		 */
+		public Builder api(Version api) {
+			if(api.compareTo(VulkanLibrary.VERSION) > 0) {
+				throw new IllegalStateException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, VulkanLibrary.VERSION));
+			}
+			this.api = notNull(api);
 			return this;
 		}
 
@@ -124,7 +138,9 @@ public class Instance extends AbstractTransientNativeObject {
 		 * @param extensions Extension names
 		 */
 		public Builder extensions(String[] extensions) {
-			Arrays.stream(extensions).forEach(this::extension);
+			for(String ext : extensions) {
+				extension(ext);
+			}
 			return this;
 		}
 
@@ -160,7 +176,7 @@ public class Instance extends AbstractTransientNativeObject {
 			app.applicationVersion = ver.toInteger();
 			app.pEngineName = "JOVE";
 			app.engineVersion = VERSION.toInteger();
-			app.apiVersion = VulkanLibrary.VERSION.toInteger();			// TODO - optional?
+			app.apiVersion = api.toInteger();
 
 			// Init instance descriptor
 			final var info = new VkInstanceCreateInfo();
