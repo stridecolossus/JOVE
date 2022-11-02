@@ -17,7 +17,7 @@ public class RotationAnimation implements Animation {
 	 * @param axis Rotation axis
 	 */
 	public RotationAnimation(Vector axis) {
-		this.rot = new MutableRotation(axis);
+		this.rot = MutableRotation.of(axis);
 	}
 
 	/**

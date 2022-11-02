@@ -22,7 +22,7 @@ public interface AxisAngle extends Rotation {
 	 * @return New axis-angle
 	 */
 	static AxisAngle of(Vector axis, float angle) {
-		return new AbstractRotation(axis) {
+		return new AbstractAxisAngle(axis) {
 			private final Matrix matrix = Quaternion.of(this).matrix();
 
 			@Override

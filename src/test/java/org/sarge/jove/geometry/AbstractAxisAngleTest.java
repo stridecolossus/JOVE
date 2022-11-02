@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.util.MathsUtil;
 
-class AbstractRotationTest {
-	private AbstractRotation rot;
+class AbstractAxisAngleTest {
+	private AbstractAxisAngle rot;
 
 	@BeforeEach
 	void before() {
-		rot = new AbstractRotation(Axis.Y) {
+		rot = new AbstractAxisAngle(Axis.Y) {
 			@Override
 			public Matrix matrix() {
 				return null;

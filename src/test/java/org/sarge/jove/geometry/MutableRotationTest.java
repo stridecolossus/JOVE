@@ -11,7 +11,7 @@ public class MutableRotationTest {
 
 	@BeforeEach
 	void before() {
-		rot = new MutableRotation(Y);
+		rot = MutableRotation.of(Y);
 	}
 
 	@Test

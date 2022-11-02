@@ -9,14 +9,14 @@ import org.sarge.jove.util.MathsUtil;
  * Template implementation.
  * @author Sarge
  */
-abstract class AbstractRotation implements AxisAngle {
+abstract class AbstractAxisAngle implements AxisAngle {
 	private final Vector axis;
 
 	/**
 	 * Constructor.
 	 * @param axis Rotation axis
 	 */
-	protected AbstractRotation(Vector axis) {
+	protected AbstractAxisAngle(Vector axis) {
 		this.axis = axis.normalize();
 	}
 
@@ -63,8 +63,8 @@ abstract class AbstractRotation implements AxisAngle {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof AbstractRotation that) &&
-				this.axis.equals(that.axis()) &&
+				(obj instanceof AbstractAxisAngle that) &&
+				this.axis.equals(that.axis) &&
 				MathsUtil.isEqual(this.angle(), that.angle());
 	}
 

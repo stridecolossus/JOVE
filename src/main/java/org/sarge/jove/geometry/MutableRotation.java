@@ -1,38 +1,42 @@
 package org.sarge.jove.geometry;
 
-import java.util.function.Supplier;
-
-import org.sarge.jove.util.FloatSupport.FloatFunction;
-
 /**
- * Mutable implementation.
+ * Template implementation for a mutable rotation about a given axis.
  * @author Sarge
  */
-public class MutableRotation extends AbstractRotation {
-	private final Supplier<Matrix> factory;
+public abstract class MutableRotation extends AbstractAxisAngle {
+	/**
+	 * Creates a mutable rotation with an implementation appropriate to the given axis.
+	 * @param vec Rotation axis
+	 * @return New mutable rotation
+	 */
+	public static MutableRotation of(Vector vec) {
+		if(vec instanceof Axis axis) {
+			return new MutableRotation(axis) {
+				@Override
+				public Matrix matrix() {
+					return axis.rotation(this.angle());
+				}
+			};
+		}
+		else {
+			return new MutableRotation(vec) {
+				@Override
+				public Matrix matrix() {
+					return Quaternion.of(this).matrix();
+				}
+			};
+		}
+	}
+
 	private float angle;
 
 	/**
 	 * Constructor.
 	 * @param axis Rotation axis
 	 */
-	public MutableRotation(Vector axis) {
+	protected MutableRotation(Vector axis) {
 		super(axis);
-		this.factory = () -> Quaternion.of(this).matrix();
-	}
-
-	/**
-	 * Constructor for a rotation about a cardinal axis.
-	 * @param axis Rotation axis
-	 */
-	public MutableRotation(Axis axis) {
-		this(axis, axis::rotation);
-	}
-
-	// TODO
-	public MutableRotation(Vector axis, FloatFunction<Matrix> rot) {
-		super(axis);
-		this.factory = () -> rot.apply(angle);
 	}
 
 	@Override
@@ -51,10 +55,5 @@ public class MutableRotation extends AbstractRotation {
 	@Override
 	public boolean isMutable() {
 		return true;
-	}
-
-	@Override
-	public Matrix matrix() {
-		return factory.get();
 	}
 }
