@@ -147,7 +147,7 @@ public class ImageBlitCommand extends ImmediateCommand {
 		 * Helper - Populates the blit offsets array.
 		 */
 		private static VkOffset3D[] offsets(BlitRegion region) {
-			final VkOffset3D[] offsets = new VkOffset3D[2];
+			final var offsets = new VkOffset3D[2];
 			offsets[0] = region.min.toOffset();
 			offsets[1] = region.max.toOffset();
 			return offsets;

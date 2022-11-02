@@ -49,7 +49,7 @@ public interface Image extends NativeObject {
 		}
 
 		/**
-		 * Constructor for a 2D image.
+		 * Convenience constructor for a 2D image.
 		 * @param size Image extents
 		 */
 		public Extents(Dimensions size) {
@@ -72,7 +72,7 @@ public interface Image extends NativeObject {
 		 * @return 3D extents
 		 */
 		public VkExtent3D toExtent() {
-			final VkExtent3D extent = new VkExtent3D();
+			final var extent = new VkExtent3D();
 			extent.width = size.width();
 			extent.height = size.height();
 			extent.depth = depth;
@@ -84,7 +84,7 @@ public interface Image extends NativeObject {
 		 * @return Offsets
 		 */
 		public VkOffset3D toOffset() {
-			final VkOffset3D offset = new VkOffset3D();
+			final var offset = new VkOffset3D();
 			offset.x = size.width();
 			offset.y = size.height();
 			offset.z = depth;

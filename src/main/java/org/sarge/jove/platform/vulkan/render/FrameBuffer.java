@@ -76,7 +76,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		check(lib.vkCreateFramebuffer(dev, info, null, ref));
 
 		// Create frame buffer
-		return new FrameBuffer(Handle.of(ref), dev, pass, attachments, extents);
+		return new FrameBuffer(new Handle(ref), dev, pass, attachments, extents);
 	}
 
 	private final RenderPass pass;

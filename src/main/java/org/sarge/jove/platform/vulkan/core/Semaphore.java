@@ -22,7 +22,7 @@ public class Semaphore extends AbstractVulkanObject {
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference ref = dev.factory().pointer();
 		VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, ref));
-		return new Semaphore(Handle.of(ref), dev);
+		return new Semaphore(new Handle(ref), dev);
 	}
 
 	private Semaphore(Handle handle, DeviceContext dev) {

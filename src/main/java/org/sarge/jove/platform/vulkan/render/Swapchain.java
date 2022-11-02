@@ -432,7 +432,7 @@ public class Swapchain extends AbstractVulkanObject {
 			check(lib.vkCreateSwapchainKHR(dev, info, null, ref));
 
 			// Retrieve swapchain images
-			final Handle handle = Handle.of(ref);
+			final Handle handle = new Handle(ref);
 			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, handle, count, array);
 			final IntByReference count = factory.integer();
 			final Pointer[] handles = func.invoke(count, Pointer[]::new);

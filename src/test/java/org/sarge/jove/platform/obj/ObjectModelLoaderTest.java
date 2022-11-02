@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 public class ObjectModelLoaderTest {
 	private ObjectModelLoader loader;

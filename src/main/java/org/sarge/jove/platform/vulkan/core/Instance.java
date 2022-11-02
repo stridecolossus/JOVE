@@ -195,7 +195,7 @@ public class Instance extends AbstractTransientNativeObject {
 			check(lib.vkCreateInstance(info, null, ref));
 
 			// Create instance domain wrapper
-			return new Instance(Handle.of(ref), lib, factory);
+			return new Instance(new Handle(ref), lib, factory);
 		}
 	}
 

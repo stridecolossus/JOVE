@@ -109,7 +109,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 			check(lib.vkCreatePipelineLayout(dev, info, null, ref));
 
 			// Create layout
-			return new PipelineLayout(Handle.of(ref), dev, push);
+			return new PipelineLayout(new Handle(ref), dev, push);
 		}
 	}
 

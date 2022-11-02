@@ -7,11 +7,11 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.io.*;
 import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Check;
 

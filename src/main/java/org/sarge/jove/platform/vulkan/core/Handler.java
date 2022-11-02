@@ -234,7 +234,7 @@ public class Handler extends AbstractTransientNativeObject {
 			check(result);
 
 			// Create handler
-			return new Handler(Handle.of(ref), instance);
+			return new Handler(new Handle(ref), instance);
 		}
 	}
 }

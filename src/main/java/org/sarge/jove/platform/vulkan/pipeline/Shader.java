@@ -42,7 +42,7 @@ public class Shader extends AbstractVulkanObject {
 		check(lib.vkCreateShaderModule(dev, info, null, ref));
 
 		// Create shader
-		return new Shader(Handle.of(ref), dev);
+		return new Shader(new Handle(ref), dev);
 	}
 
 	/**

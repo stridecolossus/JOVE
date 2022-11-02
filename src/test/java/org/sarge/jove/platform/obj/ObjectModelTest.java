@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 public class ObjectModelTest {
 	private ObjectModel model;

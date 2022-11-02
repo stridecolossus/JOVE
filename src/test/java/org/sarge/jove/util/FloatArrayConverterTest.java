@@ -3,8 +3,8 @@ package org.sarge.jove.util;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Coordinate;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Coordinate;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 class FloatArrayConverterTest {
 	private FloatArrayConverter<Coordinate> converter;

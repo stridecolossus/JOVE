@@ -324,7 +324,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			check(lib.vkCreateDevice(parent, info, null, ref));
 
 			// Retrieve required queues
-			final Handle handle = Handle.of(ref);
+			final Handle handle = new Handle(ref);
 			final Map<Family, List<Queue>> map = queues
 					.values()
 					.stream()

@@ -6,9 +6,9 @@ import static org.mockito.Mockito.*;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
 
 class GridBuilderTest {

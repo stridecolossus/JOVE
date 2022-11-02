@@ -117,7 +117,7 @@ public interface Query {
 			check(lib.vkCreateQueryPool(dev, info, null, ref));
 
 			// Create pool
-			return new Pool(Handle.of(ref), dev, type, slots);
+			return new Pool(new Handle(ref), dev, type, slots);
 		}
 
 		private final VkQueryType type;

@@ -8,15 +8,6 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public final class Handle {
-	/**
-	 * Creates a handle from the given reference returned by the native layer.
-	 * @param ref Reference
-	 * @return New handle
-	 */
-	public static Handle of(PointerByReference ref) {
-		return new Handle(ref.getValue());
-	}
-
 	private final Pointer ptr;
 
 	/**
@@ -28,7 +19,15 @@ public final class Handle {
 	}
 
 	/**
-	 * Constructor.
+	 * Convenience constructor given a pointer returned from the native layer.
+	 * @param ref Pointer reference
+	 */
+	public Handle(PointerByReference ref) {
+		this(ref.getValue());
+	}
+
+	/**
+	 * Test constructor.
 	 * @param peer Underlying peer
 	 */
 	public Handle(long peer) {

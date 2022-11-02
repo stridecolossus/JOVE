@@ -179,7 +179,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 			check(lib.vkCreateImage(dev, info, null, ref));
 
 			// Retrieve image memory requirements
-			final Handle handle = Handle.of(ref);
+			final Handle handle = new Handle(ref);
 			final var reqs = new VkMemoryRequirements();
 			lib.vkGetImageMemoryRequirements(dev, handle, reqs);
 

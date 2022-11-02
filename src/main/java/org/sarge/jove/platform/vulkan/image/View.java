@@ -87,6 +87,7 @@ public class View extends AbstractVulkanObject {
 
 	@Override
 	protected void release() {
+		// TODO - is this correct? would we always want to destroy the image? would mean cannot have multiple views of an image?
 		if(image instanceof TransientObject obj && !obj.isDestroyed()) {
 			obj.destroy();
 		}
@@ -181,7 +182,7 @@ public class View extends AbstractVulkanObject {
 			check(lib.vkCreateImageView(dev, info, null, ref));
 
 			// Create image view
-			return new View(Handle.of(ref), dev, image);
+			return new View(new Handle(ref), dev, image);
 		}
 	}
 

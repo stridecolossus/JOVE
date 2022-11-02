@@ -38,6 +38,6 @@ public class DefaultAllocator implements Allocator {
 		check(lib.vkAllocateMemory(dev, info, null, ref));
 
 		// Create memory wrapper
-		return new DefaultDeviceMemory(Handle.of(ref), dev, size);
+		return new DefaultDeviceMemory(new Handle(ref), dev, size);
 	}
 }

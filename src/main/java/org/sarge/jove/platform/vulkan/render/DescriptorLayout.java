@@ -129,7 +129,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 		check(lib.vkCreateDescriptorSetLayout(dev, info, null, ref));
 
 		// Create layout
-		return new DescriptorLayout(Handle.of(ref), dev, bindings);
+		return new DescriptorLayout(new Handle(ref), dev, bindings);
 	}
 
 	private final Collection<Binding> bindings;

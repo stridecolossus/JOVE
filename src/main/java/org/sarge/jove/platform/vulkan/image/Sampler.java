@@ -264,7 +264,7 @@ public class Sampler extends AbstractVulkanObject {
 			check(lib.vkCreateSampler(dev, info, null, ref));
 
 			// Create domain object
-			return new Sampler(Handle.of(ref), dev);
+			return new Sampler(new Handle(ref), dev);
 		}
 	}
 

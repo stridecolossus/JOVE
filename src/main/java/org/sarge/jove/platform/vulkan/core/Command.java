@@ -265,7 +265,7 @@ public interface Command {
 			check(lib.vkCreateCommandPool(dev, info, null, pool));
 
 			// Create pool
-			return new Pool(Handle.of(pool), dev, queue);
+			return new Pool(new Handle(pool), dev, queue);
 		}
 
 		private final Queue queue;

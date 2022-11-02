@@ -3,10 +3,10 @@ package org.sarge.jove.platform.obj;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
  * The <i>OBJ model</i> comprises the transient vertex data during parsing.

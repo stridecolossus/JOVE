@@ -117,7 +117,7 @@ class DefaultImageTest extends AbstractVulkanTest {
 
 			// Check API
 			final PointerByReference ref = factory.pointer();
-			final Handle handle = Handle.of(ref);
+			final Handle handle = new Handle(ref);
 			verify(lib).vkCreateImage(dev, info, null, ref);
 			verify(lib).vkGetImageMemoryRequirements(eq(dev), eq(handle), any(VkMemoryRequirements.class));
 			verify(lib).vkBindImageMemory(dev, handle, mem, 0L);

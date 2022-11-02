@@ -24,9 +24,9 @@ public class HandleTest {
 	}
 
 	@Test
-	void of() {
+	void reference() {
 		final var ref = new PointerByReference(new Pointer(42));
-		assertEquals(handle, Handle.of(ref));
+		assertEquals(handle, new Handle(ref));
 	}
 
 	@Test

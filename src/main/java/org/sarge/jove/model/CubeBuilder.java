@@ -1,8 +1,8 @@
 package org.sarge.jove.model;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Coordinate.Coordinate2D;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.util.MathsUtil;
 
 /**

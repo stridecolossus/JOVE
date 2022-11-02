@@ -53,7 +53,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		check(lib.vkCreateBuffer(dev, info, null, ref));
 
 		// Query memory requirements
-		final Handle handle = Handle.of(ref);
+		final Handle handle = new Handle(ref);
 		final var reqs = new VkMemoryRequirements();
 		lib.vkGetBufferMemoryRequirements(dev, handle, reqs);
 

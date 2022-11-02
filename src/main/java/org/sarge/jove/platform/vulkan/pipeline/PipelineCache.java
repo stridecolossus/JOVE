@@ -46,7 +46,7 @@ public class PipelineCache extends AbstractVulkanObject {
 		check(lib.vkCreatePipelineCache(dev, info, null, ref));
 
 		// Create domain object
-		return new PipelineCache(Handle.of(ref), dev);
+		return new PipelineCache(new Handle(ref), dev);
 	}
 
 	/**

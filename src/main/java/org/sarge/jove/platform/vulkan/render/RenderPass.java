@@ -117,7 +117,7 @@ public class RenderPass extends AbstractVulkanObject {
 			check(lib.vkCreateRenderPass(dev, info, null, ref));
 
 			// Create render pass
-			return new RenderPass(Handle.of(ref), dev, attachments);
+			return new RenderPass(new Handle(ref), dev, attachments);
 		}
 
 		/**

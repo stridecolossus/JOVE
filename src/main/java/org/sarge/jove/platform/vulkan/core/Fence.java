@@ -35,7 +35,7 @@ public class Fence extends AbstractVulkanObject {
 		check(lib.vkCreateFence(dev, info, null, ref));
 
 		// Create domain object
-		return new Fence(Handle.of(ref), dev);
+		return new Fence(new Handle(ref), dev);
 	}
 
 	/**

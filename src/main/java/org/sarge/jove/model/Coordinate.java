@@ -1,9 +1,10 @@
-package org.sarge.jove.common;
+package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.sarge.jove.common.Coordinate.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.model.Coordinate.*;
 import org.sarge.jove.util.MathsUtil;
 
 /**

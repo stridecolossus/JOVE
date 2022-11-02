@@ -193,7 +193,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 			check(lib.vkCreateDescriptorPool(dev, info, null, ref));
 
 			// Create pool
-			return new DescriptorPool(Handle.of(ref), dev, max);
+			return new DescriptorPool(new Handle(ref), dev, max);
 		}
 
 		/**
