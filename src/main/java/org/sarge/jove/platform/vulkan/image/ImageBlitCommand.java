@@ -134,12 +134,12 @@ public class ImageBlitCommand extends ImmediateCommand {
 		private void populate(Entry<BlitRegion, BlitRegion> entry, VkImageBlit blit) {
 			// Populate source region
 			final BlitRegion src = entry.getKey();
-			blit.srcSubresource = src.subresource.toLayers();
+			blit.srcSubresource = SubResource.toLayers(src.subresource);
 			blit.srcOffsets = offsets(src);
 
 			// Populate destination region
 			final BlitRegion dest = entry.getValue();
-			blit.dstSubresource = dest.subresource.toLayers();
+			blit.dstSubresource = SubResource.toLayers(dest.subresource);
 			blit.dstOffsets = offsets(dest);
 		}
 

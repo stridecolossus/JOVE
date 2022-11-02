@@ -120,7 +120,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 			copy.bufferOffset = offset;
 			copy.bufferRowLength = row.width();
 			copy.bufferImageHeight = row.height();
-			copy.imageSubresource = res.toLayers();
+			copy.imageSubresource = SubResource.toLayers(res);
 			copy.imageOffset = imageOffset;
 			copy.imageExtent = extents.toExtent();
 		}

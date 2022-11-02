@@ -78,8 +78,8 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 * Populates the copy region descriptor.
 		 */
 		private void populate(VkImageCopy copy) {
-			copy.srcSubresource = src.toLayers();
-			copy.dstSubresource = dest.toLayers();
+			copy.srcSubresource = SubResource.toLayers(src);
+			copy.dstSubresource = SubResource.toLayers(dest);
 			copy.srcOffset = srcOffset.toOffset();
 			copy.dstOffset = destOffset.toOffset();
 			copy.extent = extents.toExtent();

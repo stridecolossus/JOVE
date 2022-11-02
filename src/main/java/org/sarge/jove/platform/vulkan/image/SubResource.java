@@ -45,27 +45,31 @@ public interface SubResource {
 	int layerCount();
 
 	/**
-	 * @return New sub-resource range descriptor
+	 * Converts the given sub-resource to a Vulkan range descriptor.
+	 * @param res Sub-resource
+	 * @return Vulkan sub-resource range
 	 */
-	default VkImageSubresourceRange toRange() {
+	static VkImageSubresourceRange toRange(SubResource res) {
 		final var range = new VkImageSubresourceRange();
-		range.aspectMask = IntegerEnumeration.reduce(aspects());
-		range.baseMipLevel = mipLevel();
-		range.levelCount = levelCount();
-		range.baseArrayLayer = baseArrayLayer();
-		range.layerCount = layerCount();
+		range.aspectMask = IntegerEnumeration.reduce(res.aspects());
+		range.baseMipLevel = res.mipLevel();
+		range.levelCount = res.levelCount();
+		range.baseArrayLayer = res.baseArrayLayer();
+		range.layerCount = res.layerCount();
 		return range;
 	}
 
 	/**
-	 * @return New sub-resource layers descriptor
+	 * Converts the given sub-resource to a Vulkan layers descriptor.
+	 * @param res Sub-resource
+	 * @return Vulkan sub-resource layers
 	 */
-	default VkImageSubresourceLayers toLayers() {
+	static VkImageSubresourceLayers toLayers(SubResource res) {
 		final var layers = new VkImageSubresourceLayers();
-		layers.aspectMask = IntegerEnumeration.reduce(aspects());
-		layers.mipLevel = mipLevel();
-		layers.baseArrayLayer = baseArrayLayer();
-		layers.layerCount = layerCount();
+		layers.aspectMask = IntegerEnumeration.reduce(res.aspects());
+		layers.mipLevel = res.mipLevel();
+		layers.baseArrayLayer = res.baseArrayLayer();
+		layers.layerCount = res.layerCount();
 		return layers;
 	}
 

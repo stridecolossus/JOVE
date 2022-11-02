@@ -371,7 +371,7 @@ public class Barrier extends ImmediateCommand {
 				barrier.dstAccessMask = IntegerEnumeration.reduce(destAccess);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
-				barrier.subresourceRange = subresource.toRange();
+				barrier.subresourceRange = SubResource.toRange(subresource);
 				barrier.srcQueueFamilyIndex = srcFamily;
 				barrier.dstQueueFamilyIndex = destFamily;
 			}
