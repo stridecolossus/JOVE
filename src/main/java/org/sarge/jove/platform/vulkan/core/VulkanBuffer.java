@@ -128,7 +128,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Buffer memory
 	 */
-	public final DeviceMemory memory() {
+	final DeviceMemory memory() {
 		return mem;
 	}
 

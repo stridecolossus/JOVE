@@ -17,7 +17,7 @@ import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>handler</i> is a diagnostics message handler attached to the instance.
+ * A <i>handler</i> is a consumer for Vulkan diagnostic messages.
  * @see Instance#handler()
  * @author Sarge
  */

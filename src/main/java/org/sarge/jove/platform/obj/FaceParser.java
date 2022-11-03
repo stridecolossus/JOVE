@@ -36,11 +36,13 @@ import org.apache.commons.lang3.StringUtils;
  * @author Sarge
  */
 class FaceParser implements Parser {
+	private static final int SIZE = 3;
+
 	@Override
 	public void parse(String args, ObjectModel model) {
 		// Tokenize
 		final String[] faces = StringUtils.split(args);
-		if(faces.length != 3) {
+		if(faces.length != SIZE) {
 			throw new IllegalArgumentException("Expected triangle face");
 		}
 
@@ -49,7 +51,7 @@ class FaceParser implements Parser {
 			// Tokenize face
 			final String face = faces[n];
 			final String[] parts = StringUtils.splitPreserveAllTokens(face, '/');
-			if(parts.length > 3) throw new IllegalArgumentException("Invalid face: " + face);
+			if(parts.length > SIZE) throw new IllegalArgumentException("Invalid face: " + face);
 
 			// Parse mandatory vertex position
 			if((parts.length == 0) || parts[0].isEmpty()) throw new IllegalArgumentException("Missing mandatory vertex position: " + face);
@@ -63,7 +65,7 @@ class FaceParser implements Parser {
 
 			// Parse optional normal
 			Integer vn = null;
-			if(parts.length == 3) {
+			if(parts.length == SIZE) {
 				vn = Integer.parseInt(parts[2]);
 			}
 

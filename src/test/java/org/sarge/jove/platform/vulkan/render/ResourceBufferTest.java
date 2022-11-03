@@ -31,7 +31,6 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 		assertEquals(new Handle(1), res.handle());
 		assertEquals(dev, res.device());
 		assertEquals(FLAGS, res.usage());
-		assertEquals(buffer.memory(), res.memory());
 		assertEquals(4L, res.length());
 		assertEquals(UNIFORM_BUFFER, res.type());
 	}

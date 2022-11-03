@@ -54,7 +54,7 @@ public interface Command {
 	 */
 	class Buffer implements NativeObject {
 		/**
-		 * Buffer state.
+		 * Buffer recording states.
 		 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#commandbuffers-lifecycle">lifecycle</a>
 		 */
 		private enum State {
@@ -251,7 +251,7 @@ public interface Command {
 		 * Creates a command pool for the given queue.
 		 * @param dev		Logical device
 		 * @param queue		Work queue
-		 * @param flags		Flags
+		 * @param flags		Creation flags
 		 */
 		public static Pool create(DeviceContext dev, Queue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
@@ -297,7 +297,7 @@ public interface Command {
 		 */
 		private <T extends Buffer> List<T> allocate(int num, VkCommandBufferLevel level, BiFunction<Pointer, Pool, T> ctor) {
 			// Init descriptor
-			final VkCommandBufferAllocateInfo info = new VkCommandBufferAllocateInfo();
+			final var info = new VkCommandBufferAllocateInfo();
 			info.level = notNull(level);
 			info.commandBufferCount = oneOrMore(num);
 			info.commandPool = this.handle();

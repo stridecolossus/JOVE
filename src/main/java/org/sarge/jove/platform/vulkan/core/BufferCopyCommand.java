@@ -27,7 +27,7 @@ public class BufferCopyCommand extends ImmediateCommand {
 		return new Builder()
 				.source(src)
 				.destination(dest)
-				.region(0, 0, src.length())
+				.region(src.length())
 				.build();
 	}
 
@@ -134,6 +134,16 @@ public class BufferCopyCommand extends ImmediateCommand {
 			regions.add(new CopyRegion(srcOffset, destOffset, size));
 
 			return this;
+		}
+
+		/**
+		 * Adds a copy region with zero offsets in the buffers.
+		 * @param size Region length
+		 * @throws IllegalArgumentException if the copy region is invalid for either buffer
+		 * @see #region(long, long, long)
+		 */
+		public Builder region(long size) {
+			return region(0, 0, size);
 		}
 
 		/**

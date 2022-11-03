@@ -39,7 +39,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 */
 	public VertexInputPipelineStageBuilder add(Layout layout) {
 		// Add binding
-		final BindingBuilder binding = new BindingBuilder();
+		final var binding = new BindingBuilder();
 
 		// Init vertex stride
 		final int stride = layout.stride();

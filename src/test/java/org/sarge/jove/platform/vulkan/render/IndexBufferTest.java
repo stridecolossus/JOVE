@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -8,6 +8,7 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -15,15 +16,13 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	private static final long SIZE = 4;
 
 	private VulkanBuffer buffer;
-	private DeviceMemory mem;
 	private IndexBuffer index;
 	private Command.Buffer cmd;
 
 	@BeforeEach
 	void before() {
 		cmd = mock(Command.Buffer.class);
-		mem = mock(DeviceMemory.class);
-		buffer = new VulkanBuffer(new Handle(1), dev, Set.of(VkBufferUsageFlag.INDEX_BUFFER), mem, SIZE);
+		buffer = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.INDEX_BUFFER), mock(DeviceMemory.class), SIZE);
 		index = new IndexBuffer(buffer, VkIndexType.UINT32);
 	}
 
@@ -32,7 +31,6 @@ public class IndexBufferTest extends AbstractVulkanTest {
 		assertEquals(new Handle(1), index.handle());
 		assertEquals(dev, index.device());
 		assertEquals(Set.of(VkBufferUsageFlag.INDEX_BUFFER), index.usage());
-		assertEquals(mem, buffer.memory());
 		assertEquals(SIZE, buffer.length());
 		assertEquals(VkIndexType.UINT32, index.type());
 	}
