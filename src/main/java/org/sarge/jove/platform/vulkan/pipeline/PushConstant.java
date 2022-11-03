@@ -119,6 +119,7 @@ public class PushConstant {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
+				.append(data)
 				.append(ranges)
 				.build();
 	}

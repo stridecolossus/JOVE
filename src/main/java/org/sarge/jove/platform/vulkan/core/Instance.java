@@ -23,6 +23,7 @@ public class Instance extends AbstractTransientNativeObject {
 	private final VulkanLibrary lib;
 	private final ReferenceFactory factory;
 	private final Map<String, Function> functions = new HashMap<>();
+	private final Collection<Handler> handlers = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -67,15 +68,24 @@ public class Instance extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * Creates a builder for a new diagnostics handler for this instance.
-	 * @return Diagnostics handler builder
+	 * Attaches a diagnostic handler to this instance.
 	 */
-	public Handler.Builder handler() {
-		return new Handler.Builder(this);
+	void attach(Handler handler) {
+		Objects.requireNonNull(handler);
+		handlers.add(handler);
 	}
 
 	@Override
 	protected void release() {
+		// Release diagnostic handlers
+		for(Handler handler : handlers) {
+			if(!handler.isDestroyed()) {
+				handler.destroy();
+			}
+		}
+		handlers.clear();
+
+		// Release this instance
 		lib.vkDestroyInstance(this, null);
 	}
 

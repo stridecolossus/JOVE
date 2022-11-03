@@ -171,7 +171,7 @@ public class Handler extends AbstractTransientNativeObject {
 		 * Constructor.
 		 * @param instance Parent instance
 		 */
-		Builder(Instance instance) {
+		public Builder(Instance instance) {
 			this.instance = notNull(instance);
 		}
 

@@ -81,6 +81,14 @@ public class ViewTest extends AbstractVulkanTest {
 		verifyNoMoreInteractions(lib);
 	}
 
+	@DisplayName("The underlying image is also destroyed by default")
+	@Test
+	void auto() {
+		view.setDestroyImage(false);
+		view.destroy();
+		verify(image, never()).destroy();
+	}
+
 	@Nested
 	class BuilderTests {
 		private View.Builder builder;

@@ -33,6 +33,7 @@ public class View extends AbstractVulkanObject {
 
 	private final Image image;
 	private ClearValue clear;
+	private boolean auto = true;
 
 	/**
 	 * Constructor.
@@ -80,6 +81,14 @@ public class View extends AbstractVulkanObject {
 		}
 	}
 
+	/**
+	 * Sets whether the underlying image is automatically released when this view is destroyed (default is {@code true}).
+	 * @param auto Whether to automatically destroy the underlying image
+	 */
+	public void setDestroyImage(boolean auto) {
+		this.auto = auto;
+	}
+
 	@Override
 	protected Destructor<View> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyImageView;
@@ -87,8 +96,7 @@ public class View extends AbstractVulkanObject {
 
 	@Override
 	protected void release() {
-		// TODO - is this correct? would we always want to destroy the image? would mean cannot have multiple views of an image?
-		if(image instanceof TransientObject obj && !obj.isDestroyed()) {
+		if(auto && (image instanceof TransientObject obj) && !obj.isDestroyed()) {
 			obj.destroy();
 		}
 	}

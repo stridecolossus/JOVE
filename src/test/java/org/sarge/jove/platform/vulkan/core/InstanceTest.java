@@ -48,6 +48,14 @@ public class InstanceTest {
 	}
 
 	@Test
+	void attach() {
+		final Handler handler = mock(Handler.class);
+		instance.attach(handler);
+		instance.destroy();
+		verify(handler).destroy();
+	}
+
+	@Test
 	void function() {
 		final Pointer func = new Pointer(2);
 		final String name = "name";
