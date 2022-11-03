@@ -26,7 +26,7 @@ Progressing through the [tutorial](https://vulkan-tutorial.com/) we realised mor
 
 There were a variety of reasons for this:
 
-* The Vulkan API contains a huge number of enumerations __all__ of which are bundled by LWJGL as old school integer constants into a __single__ class, resulting in a God-class with several __thousand__ members.  Besides the likelihood of accidentally using the wrong enumeration and the obvious type safety issues, finding an enumeration constant is virtually impossible.
+* The Vulkan API contains a huge number of enumerations __all__ of which are bundled by LWJGL as old school integer constants into a __single__ class, resulting in a God-class with several __thousand__ members.  Besides the likelihood of accidentally using the wrong enumeration and the obvious type safety issues, finding an enumeration constant is virtually impossible and makes the IDE code assist feature practically redundant.
 
 * The API also makes heavy use of structures to configure Vulkan components which are implemented by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members, there are multiple setters for each field, and a slew of allocation methods implemented on __every__ structure.  Again finding the right method becomes an annoyance.  This is repeated for every field in every structure.
 
@@ -96,7 +96,7 @@ We needed a code generator.
 
 ### Overview
 
-Having decided that JNA was the way forward some mechanism was needed to actually generate the API.
+Having decided that JNA was the way forward some mechanism was needed to actually generate the API from the Vulkan header file.
 
 First some requirements and constraints were established for the scope of the generator:
 
@@ -744,7 +744,9 @@ Notes:
 
 * The structure field is a POJO with old-school getters which is required by the Velocity template engine.
 
-### Conclusion
+---
+
+## Conclusion
 
 Each generated source file is dumped out to a target folder:
 
@@ -763,13 +765,13 @@ Note that __all__ the generated components reside in a single package in a separ
 
 In the end we decided not to code generate the API methods for a variety of reasons:
 
-1. Although the structure type mapping logic could be reused it is anticipated that we _will_ want to manually fiddle with the signatures of the API methods, so they might as well be hand-crafted.
+1. Although the structure type mapping logic could be reused for API parameters it is anticipated that we _will_ want to manually fiddle with the signatures of the methods, so they might as well be hand-crafted.
 
-2. The number of API methods is relatively small in comparison to the number of enumerations and structures.
+2. Ideally we would like to group related API methods both for ease of finding a method and to break up the overall library.  Obviously the header file has no notion of packaging so this grouping would have to be done manually anyway.
 
-3. Ideally we would like to group related API methods both for ease of finding a method and to break up the overall library.  Obviously the header file has no notion of packaging so this grouping would have to be done manually anyway.
+3. We also intend to document each method as it is introduced to JOVE, partially for future reference, but also to better understand the API.
 
-4. Finally we also intend to document each method as we introduce it to JOVE, partially for future reference, but also to better understand the API.
+4. The number of API methods is relatively small in comparison to the number of enumerations and structures.
 
 The generator ran in a matter of milliseconds so the code could be iteratively modified until an acceptable level of results was achieved.  As it turned out there were only two structures that did not automatically compile, since these were for an extension we had never heard they were simply deleted.
 

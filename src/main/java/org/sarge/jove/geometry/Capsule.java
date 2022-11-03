@@ -8,6 +8,7 @@ import org.sarge.jove.geometry.Ray.Intersection;
 /**
  * A <i>capsule</i> is a <i>swept sphere</i> volume specified as a given radius about a line segment.
  * @author Sarge
+	https://wickedengine.net/2020/04/26/capsule-collision-detection/
  */
 public class Capsule implements Volume {
 	private final Point top, bottom;
