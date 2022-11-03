@@ -25,6 +25,7 @@ public class BoundingBox implements Volume {
 	/**
 	 * @return Bounds of this volume
 	 */
+	@Override
 	public Bounds bounds() {
 		return bounds;
 	}
@@ -104,8 +105,7 @@ public class BoundingBox implements Volume {
 
 			@Override
 			public Vector normal(Point p) {
-				final Point pos = p.subtract(bounds.centre());
-				return new Vector(pos).normalize();
+				return Vector.between(bounds.centre(), p).normalize();
 			}
 		};
 	}

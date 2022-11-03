@@ -42,7 +42,7 @@ public class Matrix implements Transform, Bufferable {
 	 * Constructor.
 	 * @param matrix Matrix
 	 */
-	Matrix(float[][] matrix) {
+	private Matrix(float[][] matrix) {
 		if(matrix.length == 0) throw new IllegalArgumentException();
 		this.matrix = matrix;
 	}

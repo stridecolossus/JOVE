@@ -109,7 +109,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
 		// Validate
-		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either semaphore or fence must be provided");
+		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either a semaphore or fence must be provided");
 
 		// Retrieve next image index
 		final DeviceContext dev = super.device();
@@ -259,7 +259,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * Initialises the swapchain descriptor.
 		 */
 		private void init() {
-			extent(caps.currentExtent.width, caps.currentExtent.height);
+			set(toDimensions(caps.currentExtent));
 			count(caps.minImageCount);
 			transform(caps.currentTransform);
 			format(Surface.defaultSurfaceFormat());
@@ -269,6 +269,10 @@ public class Swapchain extends AbstractVulkanObject {
 			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
 			presentation(Surface.DEFAULT_PRESENTATION_MODE);
 			clipped(true);
+		}
+
+		private static Dimensions toDimensions(VkExtent2D extents) {
+			return new Dimensions(extents.width, extents.height);
 		}
 
 		private static void validate(int bits, IntegerEnumeration e) {
@@ -303,27 +307,27 @@ public class Swapchain extends AbstractVulkanObject {
 
 		/**
 		 * Sets the image extent.
-		 * @param extent Image extent
+		 * @param extents Image extent
 		 */
-		public Builder extent(Dimensions extent) {
+		public Builder extent(Dimensions extents) {
 			// Check minimum extent
-			final Dimensions min = new Dimensions(caps.minImageExtent.width, caps.minImageExtent.height);
-			if(min.compareTo(extent) < 0) throw new IllegalArgumentException("Extent is smaller than the supported minimum");
+			final Dimensions min = toDimensions(caps.minImageExtent);
+			if(min.compareTo(extents) < 0) throw new IllegalArgumentException("Extent is smaller than the supported minimum");
 
 			// Check maximum extent
-			final Dimensions max = new Dimensions(caps.maxImageExtent.width, caps.maxImageExtent.height);
-			if(extent.compareTo(max) > 0) throw new IllegalArgumentException("Extent is larger than the supported maximum");
+			final Dimensions max = toDimensions(caps.maxImageExtent);
+			if(extents.compareTo(max) > 0) throw new IllegalArgumentException("Extent is larger than the supported maximum");
 
 			// Populate extents
-			extent(extent.width(), extent.height());
+			set(extents);
 			return this;
 		}
-		// TODO - constrain by actual resolution using glfwGetFramebufferSize()
 
-		private void extent(int w, int h) {
-			info.imageExtent.width = w;
-			info.imageExtent.height = h;
+		private void set(Dimensions extents) {
+			info.imageExtent.width = extents.width();
+			info.imageExtent.height = extents.height();
 		}
+		// TODO - constrain by actual resolution using glfwGetFramebufferSize()
 
 		/**
 		 * Sets the number of image array layers.

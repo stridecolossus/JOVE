@@ -26,7 +26,7 @@ public interface MemoryLibrary {
 	 * @param memory			Memory
 	 * @param pAllocator		Allocator
 	 */
-	void vkFreeMemory(DeviceContext device, DefaultDeviceMemory memory, Pointer pAllocator);
+	void vkFreeMemory(DeviceContext device, DeviceMemory memory, Pointer pAllocator);
 
 	/**
 	 * Maps buffer memory.
@@ -38,12 +38,12 @@ public interface MemoryLibrary {
 	 * @param ppData			Returned pointer to the memory buffer
 	 * @return Result
 	 */
-	int vkMapMemory(DeviceContext device, DefaultDeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
+	int vkMapMemory(DeviceContext device, DeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
 
 	/**
 	 * Un-maps buffer memory.
 	 * @param device			Logical device
 	 * @param memory			Buffer memory
 	 */
-	void vkUnmapMemory(DeviceContext device, DefaultDeviceMemory memory);
+	void vkUnmapMemory(DeviceContext device, DeviceMemory memory);
 }

@@ -53,6 +53,14 @@ public class PushConstantTest extends AbstractVulkanTest {
 		assertThrows(IllegalArgumentException.class, () -> new PushConstant(List.of(one, three)));
 	}
 
+	@Test
+	void equals() {
+		assertEquals(constant, constant);
+		assertEquals(constant, new PushConstant(List.of(one, two)));
+		assertNotEquals(constant, null);
+		assertNotEquals(constant, new PushConstant(List.of(one)));
+	}
+
 	@DisplayName("A push constant range...")
 	@Nested
 	class RangeTests {

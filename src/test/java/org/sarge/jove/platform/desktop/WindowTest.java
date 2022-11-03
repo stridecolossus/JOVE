@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.util.Set;
+import java.util.function.IntBinaryOperator;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,7 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
-import org.sarge.jove.platform.desktop.DesktopLibraryWindow.WindowStateListener;
+import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
 import org.sarge.jove.platform.util.ReferenceFactory;
 
 import com.sun.jna.Pointer;
@@ -59,7 +60,10 @@ public class WindowTest {
 
 	@Test
 	void failed() {
-		final var builder = new Window.Builder();
+		final var builder = new Window.Builder()
+				.title("title")
+				.size(new Dimensions(1, 2));
+
 		assertThrows(RuntimeException.class, () -> builder.build(desktop));
 	}
 
@@ -82,6 +86,22 @@ public class WindowTest {
 		final WindowStateListener adapter = captor.getValue();
 		adapter.state(null, 1);
 		verify(listener).state(type, true);
+	}
+
+	@Test
+	void resize() {
+		// Register resize listener
+		final var listener = mock(IntBinaryOperator.class);
+		window.resize(listener);
+
+		// Check API
+		final var captor = ArgumentCaptor.forClass(WindowResizeListener.class);
+		verify(lib).glfwSetWindowSizeCallback(eq(window), captor.capture());
+
+		// Check listener
+		final WindowResizeListener adapter = captor.getValue();
+		adapter.resize(null, 1, 2);
+		verify(listener).applyAsInt(1, 2);
 	}
 
 	@Test

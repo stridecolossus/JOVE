@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
 
 /**
  * Base-class for a nested pipeline stage builder.
@@ -11,7 +10,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder;
  * @author Sarge
  */
 abstract class AbstractPipelineStageBuilder<R extends VulkanStructure> {
-	private Builder parent;
+	private Pipeline.Builder parent;
 
 	/**
 	 * @return Result of this builder
@@ -22,7 +21,7 @@ abstract class AbstractPipelineStageBuilder<R extends VulkanStructure> {
 	 * Sets the parent of this builder.
 	 * @param parent Parent builder
 	 */
-	final void parent(Builder parent) {
+	final void parent(Pipeline.Builder parent) {
 		this.parent = notNull(parent);
 	}
 
@@ -30,7 +29,7 @@ abstract class AbstractPipelineStageBuilder<R extends VulkanStructure> {
 	 * Constructs this object.
 	 * @return Parent pipeline builder
 	 */
-	public final Builder build() {
+	public final Pipeline.Builder build() {
 		return parent;
 	}
 }

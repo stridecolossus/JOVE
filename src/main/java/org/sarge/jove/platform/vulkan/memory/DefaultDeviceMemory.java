@@ -16,23 +16,22 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * Default implementation for memory allocated by the hardware.
+ * Default implementation.
  * @author Sarge
  */
-public final class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
+class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 	private final long size;
-
-	private DefaultRegion region;
+	private Region region;
 
 	/**
 	 * Constructor.
 	 * @param handle		Memory pointer
 	 * @param dev			Logical device
-	 * @param len			Size of this memory (bytes)
+	 * @param size			Size of this memory (bytes)
 	 */
-	public DefaultDeviceMemory(Handle handle, DeviceContext dev, long len) {
+	DefaultDeviceMemory(Handle handle, DeviceContext dev, long size) {
 		super(handle, dev);
-		this.size = oneOrMore(len);
+		this.size = oneOrMore(size);
 	}
 
 	@Override

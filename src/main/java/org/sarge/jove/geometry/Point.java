@@ -54,8 +54,8 @@ public final class Point extends Tuple {
 	 * @return Distance <b>squared</b>
 	 */
 	public float distance(Point p) {
-		final Point result = p.subtract(this);
-		return result.dot(result);
+		final Point vec = p.subtract(this);
+		return vec.dot(vec);
 	}
 
 	/**
@@ -76,6 +76,7 @@ public final class Point extends Tuple {
 	public Point subtract(Tuple that) {
 		return new Point(x - that.x, y - that.y, z - that.z);
 	}
+	// TODO - do we REALLY need this?
 
 	/**
 	 * Multiplies this point.

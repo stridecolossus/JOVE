@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.util.RequiredFeature;
  * @author Sarge
  */
 public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
-	private VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
+	private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
 
 	DepthStencilPipelineStageBuilder() {
 		enable(false);

@@ -22,6 +22,14 @@ class BoundingBoxTest {
 		assertEquals(bounds, box.bounds());
 	}
 
+	@Test
+	void equals() {
+		assertEquals(box, box);
+		assertEquals(box, new BoundingBox(bounds));
+		assertNotEquals(box, null);
+		assertNotEquals(box, new BoundingBox(Bounds.EMPTY));
+	}
+
 	@DisplayName("A bounding box can determine whether a given point lies within the bounds")
 	@Test
 	void contains() {
@@ -161,6 +169,16 @@ class BoundingBoxTest {
 			assertEquals(Intersection.NONE, box.intersection(new DefaultRay(new Point(0, 5, 0), X)));
 			assertEquals(Intersection.NONE, box.intersection(new DefaultRay(new Point(0, 0, 0), Y)));
 			assertEquals(Intersection.NONE, box.intersection(new DefaultRay(new Point(4, 0, 0), Y)));
+		}
+	}
+
+	@Nested
+	class BoxPlaneIntersectionTests {
+		@Test
+		void intersects() {
+			final Point centre = bounds.centre();
+			assertEquals(true, box.intersects(Plane.of(Axis.Y, centre)));
+			assertEquals(true, box.intersects(Plane.of(Axis.Y.invert(), centre)));
 		}
 	}
 }

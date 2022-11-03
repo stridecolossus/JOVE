@@ -186,7 +186,7 @@ public class Work {
 
 		/**
 		 * Constructor.
-		 * @param queue Work queue for this submission
+		 * @param pool Command pool for this submission
 		 */
 		public Builder(Pool pool) {
 			this.work = new Work(pool);

@@ -35,13 +35,11 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * <li>Vertex data is assumed to be contiguous, i.e. the offset of each component is the end of the previous element</li>
 	 * </ul>
 	 * <p>
-	 * @param layouts Vertex layout
+	 * @param layout Vertex layout
 	 */
 	public VertexInputPipelineStageBuilder add(Layout layout) {
-		// Add binding
+		// Init binding
 		final var binding = new BindingBuilder();
-
-		// Init vertex stride
 		final int stride = layout.stride();
 		binding.stride(stride);
 

@@ -14,6 +14,7 @@ public class Capsule implements Volume {
 	private final Point top, bottom;
 	private final float radius;
 	// TODO - top/bottom should be the AB points?
+	// TODO - line segment class?
 
 	/**
 	 * Constructor.

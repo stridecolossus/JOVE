@@ -9,9 +9,9 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class PoolAllocatorTest extends AbstractVulkanTest {
+class PoolAllocatorTest extends AbstractVulkanTest {
 	private Allocator delegate;
-	private PoolAllocator allocator;
+	private PoolAllocator pool;
 	private MemoryType type;
 	private AllocationPolicy policy;
 	private DeviceMemory block;
@@ -31,70 +31,70 @@ public class PoolAllocatorTest extends AbstractVulkanTest {
 
 		// Create pool
 		delegate = new DefaultAllocator(dev);
-		allocator = new PoolAllocator(delegate, 1, policy);
+		pool = new PoolAllocator(delegate, 1, policy);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(0, allocator.count());
-		assertEquals(0, allocator.size());
-		assertEquals(0, allocator.free());
-		assertEquals(Map.of(), allocator.pools());
+		assertEquals(0, pool.count());
+		assertEquals(0, pool.size());
+		assertEquals(0, pool.free());
+		assertEquals(Map.of(), pool.pools());
 	}
 
 	@Test
 	void pool() {
-		final MemoryPool pool = allocator.pool(type);
-		assertNotNull(pool);
-		assertEquals(0, pool.count());
-		assertEquals(0, pool.size());
-		assertEquals(0, pool.free());
-		assertEquals(Map.of(type, pool), allocator.pools());
-		assertEquals(pool, allocator.pool(type));
+		final MemoryPool memoryPool = pool.pool(type);
+		assertNotNull(memoryPool);
+		assertEquals(0, memoryPool.count());
+		assertEquals(0, memoryPool.size());
+		assertEquals(0, memoryPool.free());
+		assertEquals(Map.of(type, memoryPool), pool.pools());
+		assertEquals(memoryPool, pool.pool(type));
 	}
 
 	@Test
 	void allocate() {
-		final DeviceMemory mem = allocator.allocate(type, 1);
+		final DeviceMemory mem = pool.allocate(type, 1);
 		assertNotNull(mem);
 		assertEquals(1, mem.size());
 		assertEquals(false, mem.isDestroyed());
-		assertEquals(1, allocator.count());
-		assertEquals(1, allocator.size());
-		assertEquals(0, allocator.free());
+		assertEquals(1, pool.count());
+		assertEquals(1, pool.size());
+		assertEquals(0, pool.free());
 		verify(policy).apply(1, 0);
 	}
 
 	@Test
 	void allocateMaximum() {
-		allocator.allocate(type, 1);
-		assertThrows(AllocationException.class, () -> allocator.allocate(type, 1));
+		pool.allocate(type, 1);
+		assertThrows(AllocationException.class, () -> pool.allocate(type, 1));
 	}
 
 	@Test
 	void allocatePolicy() {
 		when(policy.apply(1, 0)).thenReturn(0L);
-		allocator.allocate(type, 1);
+		pool.allocate(type, 1);
 	}
 
 	@Test
 	void release() {
-		final DeviceMemory mem = allocator.allocate(type, 1);
-		allocator.release();
+		final DeviceMemory mem = pool.allocate(type, 1);
+		pool.release();
 		assertEquals(true, mem.isDestroyed());
-		assertEquals(1, allocator.count());
-		assertEquals(1, allocator.size());
-		assertEquals(1, allocator.free());
-		assertEquals(1, allocator.pools().size());
+		assertEquals(1, pool.count());
+		assertEquals(1, pool.size());
+		assertEquals(1, pool.free());
+		assertEquals(1, pool.pools().size());
 	}
 
 	@Test
 	void destroy() {
-		allocator.allocate(type, 1);
-		allocator.destroy();
-		assertEquals(0, allocator.count());
-		assertEquals(0, allocator.size());
-		assertEquals(0, allocator.free());
-		assertEquals(1, allocator.pools().size());
+		pool.allocate(type, 1);
+		pool.destroy();
+		assertEquals(0, pool.count());
+		assertEquals(0, pool.size());
+		assertEquals(0, pool.free());
+		assertEquals(1, pool.pools().size());
 	}
 }

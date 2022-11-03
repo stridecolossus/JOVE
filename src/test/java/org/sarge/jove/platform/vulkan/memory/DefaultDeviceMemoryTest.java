@@ -11,10 +11,10 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class DefaultDeviceMemoryTest extends AbstractVulkanTest {
+class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	private static final int SIZE = 3;
 
-	private DefaultDeviceMemory mem;
+	private DeviceMemory mem;
 	private Handle handle;
 
 	@BeforeEach

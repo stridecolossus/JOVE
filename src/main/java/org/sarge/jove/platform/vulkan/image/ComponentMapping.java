@@ -40,7 +40,7 @@ public final class ComponentMapping {
 		// Validate
 		final int len = components.length();
 		if(len == 0) throw new IllegalArgumentException("Component mapping cannot be empty");
-		if(len > SIZE) throw new IllegalArgumentException("Invalid component mapping length:" + components);
+		if(len > SIZE) throw new IllegalArgumentException("Invalid component mapping length: " + components);
 
 		// Map component swizzles
 		final ComponentMapping mapping = new ComponentMapping();
@@ -50,12 +50,6 @@ public final class ComponentMapping {
 
 		// Create mapping
 		return mapping.build();
-	}
-
-	private final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
-
-	private ComponentMapping() {
-		Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
 	}
 
 	/**
@@ -75,6 +69,12 @@ public final class ComponentMapping {
 			case '0' -> VkComponentSwizzle.ZERO;
 			default -> throw new IllegalArgumentException("Unsupported swizzle mapping: " + mapping);
 		};
+	}
+
+	private final VkComponentSwizzle[] swizzle = new VkComponentSwizzle[SIZE];
+
+	private ComponentMapping() {
+		Arrays.fill(swizzle, VkComponentSwizzle.IDENTITY);
 	}
 
 	/**
