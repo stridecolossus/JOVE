@@ -1,10 +1,10 @@
 package org.sarge.jove.scene;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
+import org.sarge.jove.geometry.Vector;
 
 /**
  * A <i>frustum</i> is a clipping space specified as an array of planes.
@@ -126,19 +126,21 @@ public class Frustum {
 		final Vector dist = matrix.column(3);
 		final float d = matrix.get(3, 3);
 
+		// TODO - extracting planes is now a bit messy with all the normals stuff
+
 		// Calc near/far planes
 		final Vector wz = w.add(z);
-		final Plane near = new Plane(wz.invert(), d + dist.z);
-		final Plane far = new Plane(wz, d - dist.z);
+		final Plane near = new Plane(wz.invert().normalize(), d + dist.z);
+		final Plane far = new Plane(wz.normalize(), d - dist.z);
 
 		// Left/right
 		final Vector negw = w.invert();
-		final Plane left = new Plane(x.add(w), d + dist.x);
-		final Plane right = new Plane(x.add(negw).invert(), d - dist.x);
+		final Plane left = new Plane(x.add(w).normalize(), d + dist.x);
+		final Plane right = new Plane(x.add(negw).invert().normalize(), d - dist.x);
 
 		// Top/bottom
-		final Plane top = new Plane(y.add(w), d + dist.y);
-		final Plane bottom = new Plane(y.add(negw).invert(), d - dist.y);
+		final Plane top = new Plane(y.add(w).normalize(), d + dist.y);
+		final Plane bottom = new Plane(y.add(negw).invert().normalize(), d - dist.y);
 
 		// Create frustum array
 		final Plane[] planes = {near, far, left, right, top, bottom};

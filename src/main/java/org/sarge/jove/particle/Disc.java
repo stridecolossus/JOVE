@@ -26,8 +26,8 @@ class Disc {
 	 * @param radius			Radius
 	 * @param randomiser		Randomiser
 	 */
-	public Disc(Vector normal, float radius, Randomiser randomiser) {
-		this.normal = normal.normalize();
+	public Disc(Normal normal, float radius, Randomiser randomiser) {
+		this.normal = notNull(normal);
 		this.x = this.normal.cross(Axis.minimal(normal));
 		this.y = x.cross(this.normal);
 		this.radius = Interpolator.linear(-radius, +radius);
@@ -72,6 +72,6 @@ class Disc {
 	public static Disc load(Element e, Randomiser randomiser) {
 		final Vector normal = e.child("normal").text().transform(Axis::parse);
 		final float radius = e.child("radius").text().toFloat();
-		return new Disc(normal, radius, randomiser);
+		return new Disc(normal.normalize(), radius, randomiser);
 	}
 }

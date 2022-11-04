@@ -92,15 +92,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Normalized (or unit) vector
 	 */
 	public Normal normalize() {
-		final float len = magnitude();
-		if(MathsUtil.isEqual(1, len)) {
-			return new Normal(this);
-		}
-		else {
-			final float f = MathsUtil.inverseRoot(len);
-			final Vector vec = multiply(f);
-			return new Normal(vec);
-		}
+		return new Normal(this);
 	}
 
 	/**

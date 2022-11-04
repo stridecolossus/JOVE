@@ -46,7 +46,7 @@ public class Capsule implements Volume {
 		// TODO
 
 		final Vector segment = Vector.between(bottom, top);
-		final Normal normal = segment.normalize();
+		final Normal normal = new Normal(segment);
 
 		final Point a = bottom.add(normal);
 		final Point b = top.subtract(normal);

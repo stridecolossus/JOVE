@@ -1,5 +1,7 @@
 package org.sarge.jove.geometry;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -16,8 +18,8 @@ abstract class AbstractAxisAngle implements AxisAngle {
 	 * Constructor.
 	 * @param axis Rotation axis
 	 */
-	protected AbstractAxisAngle(Vector axis) {
-		this.axis = axis.normalize();
+	protected AbstractAxisAngle(Normal axis) {
+		this.axis = notNull(axis);
 	}
 
 	@Override

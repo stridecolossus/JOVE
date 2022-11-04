@@ -77,35 +77,14 @@ class VectorTest {
 		assertEquals(X, vec.multiply(X));
 	}
 
-	@DisplayName("A normalised vector...")
-	@Nested
-	class NormaliseTests {
-		private Vector unit;
-
-		@BeforeEach
-		void before() {
-			unit = vec.normalize();
-		}
-
-		@DisplayName("is the unit-vector in the same direction")
-		@Test
-		void normalize() {
-			final float f = 1 / (float) Math.sqrt(vec.magnitude());
-			final Vector expected = new Vector(1 * f, 2 * f, 3 * f);
-			assertEquals(expected, unit);
-		}
-
-		@DisplayName("is a unit-vector with a length of one")
-		@Test
-		void magnitude() {
-			assertEquals(1, unit.magnitude());
-		}
-
-		@DisplayName("is unchanged if it is normalised again")
-		@Test
-		void same() {
-			assertSame(unit, unit.normalize());
-		}
+	@DisplayName("A vector can be normalized to the unit-vector in the same direction")
+	@Test
+	void normalize() {
+		final float f = 1 / (float) Math.sqrt(vec.magnitude());
+		final Vector expected = new Vector(1 * f, 2 * f, 3 * f);
+		final Vector normal = vec.normalize();
+		assertEquals(expected, normal);
+		assertEquals(1, normal.magnitude());
 	}
 
 	@DisplayName("The dot product...")

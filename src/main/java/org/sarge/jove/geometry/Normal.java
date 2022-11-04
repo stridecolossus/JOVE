@@ -4,7 +4,7 @@ import org.sarge.jove.common.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>normal</i> is a unit vector (magnitude of <b>one</b>).
+ * A <i>normal</i> is a unit vector with a magnitude of <b>one</b>.
  * @author Sarge
  */
 public sealed class Normal extends Vector permits Axis {
@@ -14,22 +14,28 @@ public sealed class Normal extends Vector permits Axis {
 	public static final Component LAYOUT = Component.floats(3);
 
 	/**
-	 * Creates a normalized vector.
+	 * Constructor.
 	 * @param vec Vector
-	 * @return Normal
-	 * @see Vector#normalize()
 	 */
-	public static Normal of(Vector vec) {
-		return new Normal(vec.normalize());
+	public Normal(Vector vec) {
+		super(normalize(vec));
 	}
 
-	/**
-	 * Constructor.
-	 * @param normal Normal vector
-	 */
-	protected Normal(Vector normal) {
-		super(normal);
-		assert MathsUtil.isEqual(1, normal.magnitude());
+	private static Vector normalize(Vector vec) {
+		// Check for copy
+		if(vec instanceof Normal) {
+			return vec;
+		}
+
+		// Check for arbitrary unit-vector
+		final float len = vec.magnitude();
+		if(MathsUtil.isEqual(1, len)) {
+			return vec;
+		}
+
+		// Otherwise normalise vector
+		final float f = MathsUtil.inverseRoot(len);
+		return vec.multiply(f);
 	}
 
 	@Override

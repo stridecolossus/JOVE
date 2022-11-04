@@ -21,7 +21,7 @@ public interface AxisAngle extends Rotation {
 	 * @param angle		Angle (radians)
 	 * @return New axis-angle
 	 */
-	static AxisAngle of(Vector axis, float angle) {
+	static AxisAngle of(Normal axis, float angle) {
 		return new AbstractAxisAngle(axis) {
 			private final Matrix matrix = Quaternion.of(this).matrix();
 

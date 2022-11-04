@@ -1,5 +1,8 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static org.sarge.jove.platform.vulkan.VkAccess.*;
+import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
+import static org.sarge.jove.platform.vulkan.VkPipelineStage.TRANSFER;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
@@ -7,7 +10,6 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 
@@ -71,9 +73,9 @@ public class CaptureTask {
 	 * @param dev			Logical device
 	 * @param target		Target image descriptor
 	 */
-	private static DefaultImage screenshot(DeviceContext dev, Descriptor target) {
+	private static DefaultImage screenshot(DeviceContext dev, Image.Descriptor target) {
 		// Create descriptor
-		final Descriptor descriptor = new Descriptor.Builder()
+		final var descriptor = new Image.Descriptor.Builder()
 				.type(VkImageType.TWO_D)
 				.aspect(VkImageAspect.COLOR)
 				.extents(target.extents().size())
@@ -100,11 +102,11 @@ public class CaptureTask {
 	 */
 	private static Barrier destination(Image screenshot) {
 		return new Barrier.Builder()
-				.source(VkPipelineStage.TRANSFER)
-				.destination(VkPipelineStage.TRANSFER)
+				.source(TRANSFER)
+				.destination(TRANSFER)
 				.image(screenshot)
-					.newLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
-					.destination(VkAccess.TRANSFER_WRITE)
+					.newLayout(TRANSFER_DST_OPTIMAL)
+					.destination(TRANSFER_WRITE)
 					.build()
 				.build();
 	}
@@ -114,13 +116,13 @@ public class CaptureTask {
 	 */
 	private static Barrier source(Image image) {
 		return new Barrier.Builder()
-				.source(VkPipelineStage.TRANSFER)
-				.destination(VkPipelineStage.TRANSFER)
+				.source(TRANSFER)
+				.destination(TRANSFER)
 				.image(image)
-					.oldLayout(VkImageLayout.PRESENT_SRC_KHR)
-					.newLayout(VkImageLayout.TRANSFER_SRC_OPTIMAL)
-					.source(VkAccess.MEMORY_READ)
-					.destination(VkAccess.TRANSFER_READ)
+					.oldLayout(PRESENT_SRC_KHR)
+					.newLayout(TRANSFER_SRC_OPTIMAL)
+					.source(MEMORY_READ)
+					.destination(TRANSFER_READ)
 					.build()
 				.build();
 	}
@@ -130,13 +132,13 @@ public class CaptureTask {
 	 */
 	private static Barrier prepare(Image screenshot) {
 		return new Barrier.Builder()
-				.source(VkPipelineStage.TRANSFER)
-				.destination(VkPipelineStage.TRANSFER)
+				.source(TRANSFER)
+				.destination(TRANSFER)
 				.image(screenshot)
-					.oldLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
+					.oldLayout(TRANSFER_DST_OPTIMAL)
 					.newLayout(VkImageLayout.GENERAL)
-					.source(VkAccess.TRANSFER_WRITE)
-					.destination(VkAccess.MEMORY_READ)
+					.source(TRANSFER_WRITE)
+					.destination(MEMORY_READ)
 					.build()
 				.build();
 	}
@@ -146,13 +148,13 @@ public class CaptureTask {
 	 */
 	private static Barrier restore(Image image) {
 		return new Barrier.Builder()
-				.source(VkPipelineStage.TRANSFER)
-				.destination(VkPipelineStage.TRANSFER)
+				.source(TRANSFER)
+				.destination(TRANSFER)
 				.image(image)
-					.oldLayout(VkImageLayout.TRANSFER_SRC_OPTIMAL)
-					.newLayout(VkImageLayout.PRESENT_SRC_KHR)
-					.source(VkAccess.TRANSFER_READ)
-					.destination(VkAccess.MEMORY_READ)
+					.oldLayout(TRANSFER_SRC_OPTIMAL)
+					.newLayout(PRESENT_SRC_KHR)
+					.source(TRANSFER_READ)
+					.destination(MEMORY_READ)
 					.build()
 				.build();
 	}

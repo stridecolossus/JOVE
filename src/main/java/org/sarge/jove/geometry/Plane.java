@@ -1,5 +1,7 @@
 package org.sarge.jove.geometry;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -81,8 +83,8 @@ public class Plane implements Intersected {
 	 * @param normal		Plane normal
 	 * @param dist			Distance of the plane from the origin
 	 */
-	public Plane(Vector vec, float dist) {
-		this.normal = vec.normalize();
+	public Plane(Normal normal, float dist) {
+		this.normal = notNull(normal);
 		this.dist = dist;
 	}
 
@@ -111,7 +113,8 @@ public class Plane implements Intersected {
 		}
 		else {
 			final float inv = MathsUtil.inverseRoot(len);
-			return new Plane(normal.multiply(inv), dist * inv);
+			final Normal n = normal.multiply(inv).normalize();
+			return new Plane(n, dist * inv);
 		}
 	}
 	// TODO - what is this actually doing? need references, is it used anyway?

@@ -192,7 +192,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	private Plane plane(Element root) {
 		final Vector normal = root.child("normal").text().transform(Axis::parse);
 		final float dist = root.child("distance").text().toFloat();
-		return new Plane(normal, dist);
+		return new Plane(new Normal(normal), dist);
 	}
 	// TODO - factor out to plane?
 

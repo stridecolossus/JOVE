@@ -39,7 +39,7 @@ public class CameraController {
 		final float yaw = horizontal.apply(x / dim.width());
 		final float pitch = vertical.apply(y / dim.height());
 		final Vector vec = Sphere.vector(yaw, pitch);
-		update(vec.normalize());
+		update(new Normal(vec));
 	}
 
 	/**

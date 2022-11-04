@@ -7,20 +7,20 @@ package org.sarge.jove.geometry;
 public abstract class MutableRotation extends AbstractAxisAngle {
 	/**
 	 * Creates a mutable rotation with an implementation appropriate to the given axis.
-	 * @param vec Rotation axis
+	 * @param axis Rotation axis
 	 * @return New mutable rotation
 	 */
-	public static MutableRotation of(Vector vec) {
-		if(vec instanceof Axis axis) {
-			return new MutableRotation(axis) {
+	public static MutableRotation of(Normal axis) {
+		if(axis instanceof Axis cardinal) {
+			return new MutableRotation(cardinal) {
 				@Override
 				public Matrix matrix() {
-					return axis.rotation(this.angle());
+					return cardinal.rotation(this.angle());
 				}
 			};
 		}
 		else {
-			return new MutableRotation(vec) {
+			return new MutableRotation(axis) {
 				@Override
 				public Matrix matrix() {
 					return Quaternion.of(this).matrix();
@@ -35,7 +35,7 @@ public abstract class MutableRotation extends AbstractAxisAngle {
 	 * Constructor.
 	 * @param axis Rotation axis
 	 */
-	protected MutableRotation(Vector axis) {
+	protected MutableRotation(Normal axis) {
 		super(axis);
 	}
 

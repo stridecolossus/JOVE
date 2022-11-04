@@ -1,6 +1,5 @@
 package org.sarge.jove.model;
 
-import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.scene.Renderable;
 
 /**
@@ -11,5 +10,5 @@ public interface Mesh extends Renderable {
 	/**
 	 * @return Model header
 	 */
-	Header header();
+	Model.Header header();
 }
