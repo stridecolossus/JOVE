@@ -1,5 +1,6 @@
 package org.sarge.jove.model;
 
+import org.sarge.jove.model.Model.Header;
 import org.sarge.jove.scene.Renderable;
 
 /**

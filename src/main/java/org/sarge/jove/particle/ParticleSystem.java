@@ -16,6 +16,7 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
+import org.sarge.jove.model.Model.Header;
 import org.sarge.lib.util.Check;
 
 /**
@@ -366,12 +367,7 @@ public class ParticleSystem implements Animation {
 		final Layout layout = new Layout(Point.LAYOUT, Colour.LAYOUT);
 
 		// Init model header
-		final Header header = new Header() {
-			@Override
-			public Primitive primitive() {
-				return Primitive.POINTS;
-			}
-
+		final Header header = new AbstractModelHeader(Primitive.POINTS) {
 			@Override
 			public Layout layout() {
 				return layout;

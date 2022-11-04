@@ -4,14 +4,16 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 
 /**
  * A <i>device memory</i> instance is an area of device or host memory accessible to the hardware.
  * <p>
- * A <i>region</i> of the memory must be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write access.
+ * A <i>region</i> of {@link HostVisible} memory must be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations.
  * <p>
  * Notes:
  * <ul>
+ * <li>Memory created with the {@link VkMemoryProperty#HOST_VISIBLE} flag is {@link HostVisible}</li>
  * <li>Only <b>one</b> active mapping is permitted on a given instance at any one time</li>
  * <li>Memory mappings can be <i>persistent</i>, i.e. it is not required to explicitly un-map memory after a read/write access</li>
  * <li>Memory can be assumed to be automatically un-mapped when it is released</li>
@@ -40,6 +42,13 @@ import org.sarge.jove.common.*;
  * @author Sarge
  */
 public interface DeviceMemory extends NativeObject, TransientObject {
+	/**
+	 * Marker interface: Memory that is <i>host visible</i> can be mapped by the application using {@link DeviceMemory#map()}.
+	 */
+	interface HostVisible {
+		// Marker interface
+	}
+
 	/**
 	 * A <i>region</i> is a mapped area of device memory.
 	 */
@@ -91,7 +100,7 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	 * @param size			Size of the region to map
 	 * @return Mapped memory region
 	 * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this memory
-	 * @throws IllegalStateException if a mapping already exists or this memory has been destroyed
+	 * @throws IllegalStateException if a mapping already exists, the memory is not {@link HostVisible}, or has been destroyed
 	 */
 	Region map(long offset, long size);
 

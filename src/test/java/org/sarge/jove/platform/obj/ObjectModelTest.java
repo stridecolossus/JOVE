@@ -78,14 +78,14 @@ public class ObjectModelTest {
 
 			// Check model
 			final Model result = models.get(0);
-			assertTrue(result.isIndexed());
+			assertTrue(result.header().isIndexed());
 
 			// Check model header
 			final var layout = new Layout(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
-			assertEquals(Primitive.TRIANGLES, result.primitive());
-			assertEquals(3, result.count());
-			assertEquals(layout, result.layout());
-			assertEquals(true, result.isIndexed());
+			assertEquals(Primitive.TRIANGLES, result.header().primitive());
+			assertEquals(3, result.header().count());
+			assertEquals(layout, result.header().layout());
+			assertEquals(true, result.header().isIndexed());
 
 			// Check model data
 			final BufferedModel buffer = result.buffer();

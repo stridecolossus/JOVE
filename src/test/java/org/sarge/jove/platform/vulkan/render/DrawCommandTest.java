@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.model.Header;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -43,7 +43,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 	@DisplayName("Create a draw command for a model")
 	@Test
 	void model() {
-		final Header header = mock(Header.class);
+		final var header = mock(Model.Header.class);
 		when(header.count()).thenReturn(3);
 		when(header.isIndexed()).thenReturn(true);
 

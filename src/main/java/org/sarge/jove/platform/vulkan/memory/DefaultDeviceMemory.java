@@ -114,6 +114,13 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 		}
 	}
 
+	/**
+	 * @return Whether this memory can be mapped
+	 */
+	private boolean isHostVisible() {
+		return this instanceof HostVisible;
+	}
+
 	@Override
 	public Region map(long offset, long size) {
 		// Validate
@@ -126,7 +133,9 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 		if(offset + size > this.size) {
 			throw new IllegalArgumentException(String.format("Mapped region is larger than this device memory: offset=%d size=%d mem=%s", offset, size, this));
 		}
-		// TODO - check memory has VkMemoryPropertyFlag.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT when map()
+		if(!isHostVisible()) {
+			throw new IllegalStateException("Device memory is not host visible: " + this);
+		}
 
 		// Map memory
 		final DeviceContext dev = this.device();

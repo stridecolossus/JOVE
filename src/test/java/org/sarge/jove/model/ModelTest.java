@@ -25,20 +25,20 @@ public class ModelTest {
 		@DisplayName("has an undefined layout")
 		@Test
 		void constructor() {
-			assertEquals(Primitive.POINTS, model.primitive());
-			assertEquals(new Layout(), model.layout());
+			assertEquals(Primitive.POINTS, model.header().primitive());
+			assertEquals(new Layout(), model.header().layout());
 		}
 
 		@DisplayName("is not indexed")
 		@Test
 		void unindexed() {
-			assertEquals(false, model.isIndexed());
+			assertEquals(false, model.header().isIndexed());
 		}
 
 		@DisplayName("is initially empty")
 		@Test
 		void empty() {
-			assertEquals(0, model.count());
+			assertEquals(0, model.header().count());
 			assertEquals(0, model.vertices().count());
 			assertEquals(0, model.index().count());
 		}
@@ -47,7 +47,7 @@ public class ModelTest {
 		@Test
 		void layout() {
 			model.layout(Point.LAYOUT);
-			assertEquals(new Layout(Point.LAYOUT), model.layout());
+			assertEquals(new Layout(Point.LAYOUT), model.header().layout());
 		}
 
 		@DisplayName("cannot define a layout containing normals if they are not supported by the primitive")
@@ -72,14 +72,14 @@ public class ModelTest {
 		@DisplayName("has a draw count depending on the number of vertices")
 		@Test
 		void add() {
-			assertEquals(3, model.count());
+			assertEquals(3, model.header().count());
 		}
 
 		@DisplayName("can become indexed")
 		@Test
 		void index() {
 			model.add(0);
-			assertEquals(true, model.isIndexed());
+			assertEquals(true, model.header().isIndexed());
 		}
 
 		@DisplayName("cannot restart the index")
@@ -103,13 +103,13 @@ public class ModelTest {
 		@DisplayName("has a draw count depending on the size of the index")
 		@Test
 		void count() {
-			assertEquals(3, model.count());
+			assertEquals(3, model.header().count());
 		}
 
 		@DisplayName("has an index")
 		@Test
 		void indexed() {
-			assertEquals(true, model.isIndexed());
+			assertEquals(true, model.header().isIndexed());
 			assertArrayEquals(new int[]{0, 0, 0}, model.index().toArray());
 		}
 
@@ -124,7 +124,7 @@ public class ModelTest {
 		@Test
 		void restart() {
 			model.restart();
-			assertEquals(3, model.count());
+			assertEquals(3, model.header().count());
 		}
 	}
 
@@ -140,7 +140,7 @@ public class ModelTest {
 
 		@Test
 		void constructor() {
-			assertEquals(model, buffer.header());
+			assertEquals(model.header(), buffer.header());
 		}
 
 		@DisplayName("has a vertex buffer")

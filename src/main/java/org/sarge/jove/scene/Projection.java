@@ -5,9 +5,10 @@ import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * View projection.
+ * A <i>view projection</i> generates the projection matrix.
  * @author Sarge
  */
+@FunctionalInterface
 public interface Projection {
 	/**
 	 * Builds the matrix for this projection.

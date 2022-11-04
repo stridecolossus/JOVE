@@ -20,7 +20,7 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		handle = new Handle(1);
-		mem = new DefaultDeviceMemory(handle, dev, SIZE);
+		mem = new HostVisibleDeviceMemory(handle, dev, SIZE);
 	}
 
 	@Test
@@ -38,7 +38,6 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		assertNotEquals(mem, mock(DeviceMemory.class));
 	}
 
-
 	@DisplayName("A newly allocated device memory instance...")
 	@Nested
 	class Allocated {
@@ -52,6 +51,13 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		@Test
 		void map() {
 			assertNotNull(mem.map());
+		}
+
+		@DisplayName("cannot be mapped if it is not host visible")
+		@Test
+		void visible() {
+			mem = new DefaultDeviceMemory(handle, dev, SIZE);
+			assertThrows(IllegalStateException.class, () -> mem.map());
 		}
 
 		@DisplayName("cannot map a region larger than the memory")

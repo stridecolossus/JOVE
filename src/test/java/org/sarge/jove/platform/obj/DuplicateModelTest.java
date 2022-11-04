@@ -28,7 +28,7 @@ class DuplicateModelTest {
 				.add(vertex);
 
 		// Verify the de-duplicated model
-		assertEquals(3, model.count());
+		assertEquals(3, model.header().count());
 		assertEquals(2, model.vertices().count());
 		assertEquals(3, model.index().count());
 	}

@@ -48,7 +48,7 @@ class ModelLoaderTest {
 		assertNotNull(buffer);
 
 		// Check header
-		final Header header = buffer.header();
+		final Model.Header header = buffer.header();
 		assertEquals(Primitive.TRIANGLES, header.primitive());
 		assertEquals(3, header.count());
 		assertEquals(new Layout(Point.LAYOUT), header.layout());

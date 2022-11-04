@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
+import org.sarge.jove.model.Model.Header;
 
 /**
  * The <i>model loader</i> is used to persist and load a JOVE model.
@@ -40,12 +41,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		final Bufferable index = helper.buffer(in);
 
 		// Create model header
-		final Header header = new Header() {
-			@Override
-			public Primitive primitive() {
-				return primitive;
-			}
-
+		final Header header = new AbstractModelHeader(primitive) {
 			@Override
 			public Layout layout() {
 				return new Layout(layout);
@@ -90,13 +86,16 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 	 * @see Model#mesh()
 	 */
 	public void save(Model model, DataOutputStream out) throws IOException {
-		// Write model header
+		// Write file header
 		helper.writeVersion(out);
-		out.writeUTF(model.primitive().name());
-		out.writeInt(model.count());
+
+		// Write model header
+		final Header header = model.header();
+		out.writeUTF(header.primitive().name());
+		out.writeInt(header.count());
 
 		// Write vertex layout
-		final List<Component> layout = model.layout().components();
+		final List<Component> layout = header.layout().components();
 		out.writeInt(layout.size());
 		for(Component c : layout) {
 			helper.write(c, out);

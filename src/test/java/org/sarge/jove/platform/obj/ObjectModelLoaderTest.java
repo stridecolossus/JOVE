@@ -57,10 +57,10 @@ public class ObjectModelLoaderTest {
 
 		// Check header
 		final var layout = new Layout(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
-		assertEquals(Primitive.TRIANGLES, model.primitive());
-		assertEquals(3, model.count());
-		assertEquals(layout, model.layout());
-		assertEquals(true, model.isIndexed());
+		assertEquals(Primitive.TRIANGLES, model.header().primitive());
+		assertEquals(3, model.header().count());
+		assertEquals(layout, model.header().layout());
+		assertEquals(true, model.header().isIndexed());
 
 		// Check model data
 		final BufferedModel buffer = model.buffer();

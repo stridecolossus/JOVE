@@ -1,7 +1,5 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.notNull;
-
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.*;
@@ -48,7 +46,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class Model implements Header {
+public class Model {
 	/**
 	 * Vertex normal layout.
 	 */
@@ -68,8 +66,64 @@ public class Model implements Header {
 		return count >= SHORT_INDEX;
 	}
 
-	private final Primitive primitive;
-	private final List<Component> components = new ArrayList<>();
+	/**
+	 * A <i>model header</i> specifies the structure of a model.
+	 * @author Sarge
+	 */
+	public interface Header {
+		/**
+		 * @return Drawing primitive
+		 */
+		Primitive primitive();
+
+		/**
+		 * @return Draw count
+		 */
+		int count();
+
+		/**
+		 * @return Vertex layout
+		 */
+		Layout layout();
+
+		/**
+		 * @return Whether this model has an index
+		 */
+		boolean isIndexed();
+	}
+
+	/**
+	 * Header for this model.
+	 */
+	private class DefaultHeader extends AbstractModelHeader {
+		private final List<Component> components = new ArrayList<>();
+
+		private DefaultHeader(Primitive primitive) {
+			super(primitive);
+		}
+
+		@Override
+		public int count() {
+			if(isIndexed()) {
+				return index.size() - restart;
+			}
+			else {
+				return vertices.size();
+			}
+		}
+
+		@Override
+		public Layout layout() {
+			return new Layout(components);
+		}
+
+		@Override
+		public boolean isIndexed() {
+			return !index.isEmpty();
+		}
+	}
+
+	private final DefaultHeader header;
 	private final List<Vertex> vertices = new ArrayList<>();
 	private final List<Integer> index = new ArrayList<>();
 	private int restart;
@@ -80,27 +134,14 @@ public class Model implements Header {
 	 * @param primitive Drawing primitive
 	 */
 	public Model(Primitive primitive) {
-		this.primitive = notNull(primitive);
+		header = new DefaultHeader(primitive);
 	}
 
-	@Override
-	public Primitive primitive() {
-		return primitive;
-	}
-
-	@Override
-	public int count() {
-		if(isIndexed()) {
-			return index.size() - restart;
-		}
-		else {
-			return vertices.size();
-		}
-	}
-
-	@Override
-	public Layout layout() {
-		return new Layout(components);
+	/**
+	 * @return Header for this model
+	 */
+	public Header header() {
+		return header;
 	}
 
 	/**
@@ -110,10 +151,10 @@ public class Model implements Header {
 	 * @see Primitive#isNormalSupported()
 	 */
 	public Model layout(Component c) {
-		if((c == NORMALS) && !primitive.isNormalSupported()) {
+		if((c == NORMALS) && !header.primitive.isNormalSupported()) {
 			throw new IllegalArgumentException("Vertex normals are not supported by the drawing primitive: " + this);
 		}
-		components.add(c);
+		header.components.add(c);
 		return this;
 	}
 
@@ -132,11 +173,6 @@ public class Model implements Header {
 		Check.notNull(v);
 		vertices.add(v);
 		return this;
-	}
-
-	@Override
-	public boolean isIndexed() {
-		return !index.isEmpty();
 	}
 
 	/**
@@ -162,7 +198,7 @@ public class Model implements Header {
 	 * @throws IllegalStateException if this model is not {@link #isIndexed()}
 	 */
 	public Model restart() {
-		if(!isIndexed()) throw new IllegalStateException("Cannot restart an unindexed model");
+		if(!header.isIndexed()) throw new IllegalStateException("Cannot restart an unindexed model");
 		index.add(-1);
 		++restart;
 		return this;
@@ -189,7 +225,7 @@ public class Model implements Header {
 	private class VertexBuffer implements Bufferable {
 		@Override
 		public int length() {
-			final Layout layout = new Layout(components);
+			final Layout layout = new Layout(header.components);
 			return vertices.size() * layout.stride();
 		}
 
@@ -255,7 +291,7 @@ public class Model implements Header {
 		return new BufferedModel() {
 			@Override
 			public Header header() {
-				return Model.this;
+				return header;
 			}
 
 			@Override
@@ -270,7 +306,7 @@ public class Model implements Header {
 			@Override
 			public Optional<Bufferable> index() {
 				validate();
-				if(isIndexed()) {
+				if(header.isIndexed()) {
 					return Optional.of(new IndexBuffer());
 				}
 				else {
@@ -288,7 +324,7 @@ public class Model implements Header {
 	 */
 	public Bounds bounds() {
 		// Determine vertex position from layout
-		final int pos = components.indexOf(Point.LAYOUT);
+		final int pos = header.components.indexOf(Point.LAYOUT);
 		if(pos == -1) throw new IllegalStateException("Model layout does not contain a vertex position: " + this);
 
 		// Construct bounds
@@ -304,16 +340,15 @@ public class Model implements Header {
 	 * @throws IllegalStateException if the model cannot be rendered
 	 */
 	private void validate() {
-		if(components.isEmpty()) throw new IllegalStateException("Undefined model layout: " + this);
-		if(!primitive.isValidVertexCount(count())) throw new IllegalStateException("Invalid draw count for primitive: " + this);
+		if(header.components.isEmpty()) throw new IllegalStateException("Undefined model layout: " + this);
+		if(!header.primitive.isValidVertexCount(header.count())) throw new IllegalStateException("Invalid draw count for primitive: " + this);
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append(primitive)
-				.append("count", count())
-				.append(components)
+				.append(header)
+				.append("vertices", vertices.size())
 				.build();
 	}
 }

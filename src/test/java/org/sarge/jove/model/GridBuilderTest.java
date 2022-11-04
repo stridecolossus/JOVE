@@ -23,10 +23,10 @@ class GridBuilderTest {
 	@Test
 	void buildQuadStrip() {
 		final Model model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
-		assertEquals(Primitive.PATCH, model.primitive());
-		assertEquals((3 * 3) * 4, model.count());
-		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
-		assertEquals(true, model.isIndexed());
+		assertEquals(Primitive.PATCH, model.header().primitive());
+		assertEquals((3 * 3) * 4, model.header().count());
+		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), model.header().layout());
+		assertEquals(true, model.header().isIndexed());
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")
