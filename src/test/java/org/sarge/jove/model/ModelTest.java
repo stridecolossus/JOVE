@@ -53,7 +53,7 @@ public class ModelTest {
 		@DisplayName("cannot define a layout containing normals if they are not supported by the primitive")
 		@Test
 		void normals() {
-			assertThrows(IllegalArgumentException.class, () -> model.layout(Model.NORMALS));
+			assertThrows(IllegalArgumentException.class, () -> model.layout(Normal.LAYOUT));
 		}
 	}
 

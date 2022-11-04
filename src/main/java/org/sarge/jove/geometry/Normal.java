@@ -1,5 +1,6 @@
 package org.sarge.jove.geometry;
 
+import org.sarge.jove.common.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -7,6 +8,11 @@ import org.sarge.jove.util.MathsUtil;
  * @author Sarge
  */
 public sealed class Normal extends Vector permits Axis {
+	/**
+	 * Layout for a vertex normal.
+	 */
+	public static final Component LAYOUT = Component.floats(3);
+
 	/**
 	 * Creates a normalized vector.
 	 * @param vec Vector

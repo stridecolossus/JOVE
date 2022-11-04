@@ -81,7 +81,7 @@ public class ObjectModelTest {
 			assertTrue(result.header().isIndexed());
 
 			// Check model header
-			final var layout = new Layout(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
+			final var layout = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 			assertEquals(Primitive.TRIANGLES, result.header().primitive());
 			assertEquals(3, result.header().count());
 			assertEquals(layout, result.header().layout());

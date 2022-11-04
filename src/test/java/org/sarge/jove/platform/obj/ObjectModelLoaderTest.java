@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
@@ -56,7 +56,7 @@ public class ObjectModelLoaderTest {
 		assertNotNull(model);
 
 		// Check header
-		final var layout = new Layout(Point.LAYOUT, Model.NORMALS, Coordinate2D.LAYOUT);
+		final var layout = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 		assertEquals(Primitive.TRIANGLES, model.header().primitive());
 		assertEquals(3, model.header().count());
 		assertEquals(layout, model.header().layout());

@@ -48,11 +48,6 @@ import org.sarge.lib.util.Check;
  */
 public class Model {
 	/**
-	 * Vertex normal layout.
-	 */
-	public static final Component NORMALS = Component.floats(3);
-
-	/**
 	 * Size of a {@code short} index.
 	 */
 	private static final long SHORT_INDEX = Mask.unsignedMaximum(Short.SIZE);
@@ -151,7 +146,7 @@ public class Model {
 	 * @see Primitive#isNormalSupported()
 	 */
 	public Model layout(Component c) {
-		if((c == NORMALS) && !header.primitive.isNormalSupported()) {
+		if((c == Normal.LAYOUT) && !header.primitive.isNormalSupported()) {
 			throw new IllegalArgumentException("Vertex normals are not supported by the drawing primitive: " + this);
 		}
 		header.components.add(c);

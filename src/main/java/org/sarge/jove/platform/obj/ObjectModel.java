@@ -2,8 +2,8 @@ package org.sarge.jove.platform.obj;
 
 import java.util.*;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
@@ -46,7 +46,7 @@ class ObjectModel {
 		// Init model layout
 		model.layout(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			model.layout(Model.NORMALS);
+			model.layout(Normal.LAYOUT);
 		}
 		if(!coords.isEmpty()) {
 			model.layout(Coordinate2D.LAYOUT);
