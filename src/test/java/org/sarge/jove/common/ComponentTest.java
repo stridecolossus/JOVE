@@ -76,6 +76,11 @@ public class ComponentTest {
 			assertEquals(new Component(1, Type.INTEGER, false, 1), Component.of(Boolean.class));
 			assertEquals(new Component(1, Type.INTEGER, false, 1), Component.of(boolean.class));
 		}
+
+		@Test
+		void unsupported() {
+			assertThrows(IllegalArgumentException.class, () -> Component.of(String.class));
+		}
 	}
 
 	@Test

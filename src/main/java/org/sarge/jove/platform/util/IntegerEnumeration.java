@@ -84,7 +84,7 @@ public interface IntegerEnumeration {
 	 * @return Reverse mapping
 	 */
 	@SuppressWarnings("unchecked")
-	public static <E extends IntegerEnumeration> ReverseMapping<E> reverse(Class<E> clazz) {
+	static <E extends IntegerEnumeration> ReverseMapping<E> reverse(Class<E> clazz) {
 		return (ReverseMapping<E>) ReverseMapping.get(clazz);
 	}
 
