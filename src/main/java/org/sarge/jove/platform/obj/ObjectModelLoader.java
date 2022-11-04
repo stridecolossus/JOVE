@@ -7,11 +7,11 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.io.*;
-import org.sarge.jove.model.Model;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Model;
 import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Check;
 
@@ -38,7 +38,7 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	private void init() {
 		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), model.positions()));
 		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), model.coordinates()));
-		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Vector.SIZE, Vector::new), model.normals()));
+		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Vector.SIZE, Normal::new), model.normals()));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

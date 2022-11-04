@@ -33,18 +33,18 @@ public class Surface extends AbstractTransientNativeObject {
 	 */
 	public static VkSurfaceFormatKHR defaultSurfaceFormat() {
 		// Create surface format
-		final var format = new VkSurfaceFormatKHR();
-		format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
+		final var struct = new VkSurfaceFormatKHR();
+		struct.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
 
 		// Init default swapchain image format
-		format.format = new FormatBuilder()
+		struct.format = new FormatBuilder()
 				.components("BGRA")
 				.bytes(1)
 				.signed(false)
 				.type(FormatBuilder.NumericFormat.NORM)
 				.build();
 
-		return format;
+		return struct;
 	}
 
 	private final PhysicalDevice dev;
@@ -137,20 +137,20 @@ public class Surface extends AbstractTransientNativeObject {
 
 	/**
 	 * Helper - Selects a preferred presentation mode falling back to {@link #DEFAULT_PRESENTATION_MODE}.
-	 * @param modes Preferred presentation mode(s)
+	 * @param candidates Preferred presentation mode(s)
 	 * @return Selected presentation mode
 	 */
-	public VkPresentModeKHR mode(VkPresentModeKHR... modes) {
+	public VkPresentModeKHR mode(VkPresentModeKHR... candidates) {
 		final Set<VkPresentModeKHR> available = this.modes();
 		return Arrays
-				.stream(modes)
+				.stream(candidates)
 				.filter(available::contains)
 				.findAny()
 				.orElse(DEFAULT_PRESENTATION_MODE);
 	}
 
 	/**
-	 * Creates a cached instance of this surface to minimise calls to the API.
+	 * Creates a cached instance of this surface that minimises calls to the API.
 	 * @return Cached surface
 	 */
 	public Surface cached() {

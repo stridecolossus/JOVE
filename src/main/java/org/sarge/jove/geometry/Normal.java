@@ -21,6 +21,13 @@ public sealed class Normal extends Vector permits Axis {
 		super(normalize(vec));
 	}
 
+	/**
+	 * Array constructor.
+	 */
+	public Normal(float[] array) {
+		this(new Vector(array));
+	}
+
 	private static Vector normalize(Vector vec) {
 		// Check for copy
 		if(vec instanceof Normal) {

@@ -13,7 +13,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -128,7 +127,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Buffer memory
 	 */
-	final DeviceMemory memory() {
+	public final DeviceMemory memory() {
 		return mem;
 	}
 
@@ -165,13 +164,15 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @return Underlying buffer
 	 */
 	public final ByteBuffer buffer() {
-		final Region region = mem.region().orElseGet(mem::map);
-		return region.buffer();
+		return mem
+				.region()
+				.orElseGet(mem::map)
+				.buffer();
 	}
 
 	/**
 	 * Helper - Creates a command to copy this buffer to the given destination buffer.
-	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer (other than they must be a valid source and destination).
+	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer other than they must be a valid source and destination.
 	 * @param dest Destination buffer
 	 * @return New copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small

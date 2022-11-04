@@ -42,6 +42,7 @@ public interface Ray {
 			Check.notNull(direction);
 		}
 	}
+	// TODO - should be normal
 
 	/**
 	 * Defines a surface that can be tested for intersections with a ray.

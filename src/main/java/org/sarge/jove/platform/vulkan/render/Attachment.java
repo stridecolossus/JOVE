@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>attachment</i> defines a target for a render pass such as a colour or depth-stencil image.
+ * An <i>attachment</i> defines a target for a render pass such as colour or depth-stencil images.
  * @see VkAttachmentDescription
  * @author Sarge
  */
@@ -197,8 +197,10 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		public Attachment build() {
 			if(format == null) throw new IllegalArgumentException("No format specified for attachment");
 			if(after == null) throw new IllegalArgumentException("No final layout specified");
+
 			final Operations colour = new Operations(load, store);
 			final Operations stencil = new Operations(stencilLoad, stencilStore);
+
 			return new Attachment(format, samples, colour, stencil, before, after);
 		}
 	}

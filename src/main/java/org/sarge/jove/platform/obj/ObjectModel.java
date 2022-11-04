@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
@@ -14,7 +13,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
  */
 class ObjectModel {
 	private final VertexComponentList<Point> positions = new VertexComponentList<>();
-	private final VertexComponentList<Vector> normals = new VertexComponentList<>();
+	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate> coords = new VertexComponentList<>();
 	private final List<Model> models = new ArrayList<>();
 	private Model model = new DuplicateModel();
@@ -69,7 +68,7 @@ class ObjectModel {
 	/**
 	 * @return Normals
 	 */
-	VertexComponentList<Vector> normals() {
+	VertexComponentList<Normal> normals() {
 		return normals;
 	}
 
