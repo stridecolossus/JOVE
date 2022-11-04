@@ -126,7 +126,7 @@ public interface Ray {
 		 * @return Surface normal
 		 * @throws UnsupportedOperationException if this intersection is {@link #UNDEFINED}
 		 */
-		default Vector normal(Point p) {
+		default Normal normal(Point p) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -149,7 +149,7 @@ public interface Ray {
 		 * @param normal	Surface normal
 		 * @return New intersection
 		 */
-		static Intersection of(float dist, Vector normal) {
+		static Intersection of(float dist, Normal normal) {
 			return new Intersection() {
 				@Override
 				public float[] distances() {
@@ -157,7 +157,7 @@ public interface Ray {
 				}
 
 				@Override
-				public Vector normal(Point p) {
+				public Normal normal(Point p) {
 					return normal;
 				}
 			};

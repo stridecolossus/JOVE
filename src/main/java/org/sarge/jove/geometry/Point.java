@@ -76,7 +76,6 @@ public final class Point extends Tuple {
 	public Point subtract(Tuple that) {
 		return new Point(x - that.x, y - that.y, z - that.z);
 	}
-	// TODO - do we REALLY need this?
 
 	/**
 	 * Multiplies this point.

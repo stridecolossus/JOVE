@@ -13,11 +13,11 @@ import org.sarge.jove.geometry.Matrix.Matrix4;
 public class Camera {
 	// Camera state
 	private Point pos = Point.ORIGIN;
-	private Vector dir = Axis.Z;
-	private Vector up = Axis.Y;
+	private Normal dir = Axis.Z;
+	private Normal up = Axis.Y;
 
 	// Transient view transform
-	private Vector right = Axis.X;
+	private Normal right = Axis.X;
 	private Matrix matrix;
 	private boolean dirty = true;
 
@@ -76,9 +76,9 @@ public class Camera {
 	 * @param dir View direction
 	 * @throws IllegalStateException if the direction would result in gimbal lock
 	 */
-	public void direction(Vector dir) {
+	public void direction(Normal dir) {
 		validate(dir, up);
-		this.dir = dir.normalize();
+		this.dir = notNull(dir);
 		dirty();
 	}
 
@@ -91,7 +91,7 @@ public class Camera {
 	public void look(Point target) {
 		if(pos.equals(target)) throw new IllegalArgumentException("Cannot point camera at its current position");
 		final Vector look = Vector.between(target, pos);
-		direction(look);
+		direction(look.normalize());
 	}
 
 	/**
@@ -99,23 +99,23 @@ public class Camera {
 	 * @param up Camera up axis
 	 * @throws IllegalStateException if {@link #up} would result in gimbal lock
 	 */
-	public void up(Vector up) {
+	public void up(Normal up) {
 		validate(dir, up);
-		this.up = up.normalize();
+		this.up = notNull(up);
 		dirty();
 	}
 
 	/**
 	 * @return Camera up axis
 	 */
-	public Vector up() {
+	public Normal up() {
 		return up;
 	}
 
 	/**
 	 * @return Camera right axis
 	 */
-	public Vector right() {
+	public Normal right() {
 		return right;
 	}
 

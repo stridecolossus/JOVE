@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.geometry.Volume;
+import org.sarge.jove.geometry.*;
 
 /**
  * A <i>node</i> is an element of a scene graph.
@@ -15,7 +15,7 @@ public class Node {
 	private Node parent;
 	private LocalTransform transform = new LocalTransform();
 	private LocalMaterial mat = new LocalMaterial();
-	private Volume vol = Volume.EMPTY;
+	private Volume vol = EmptyVolume.INSTANCE;
 
 	/**
 	 * Constructor.

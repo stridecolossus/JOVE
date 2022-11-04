@@ -55,7 +55,7 @@ class CameraTest {
 
 	@Test
 	void direction() {
-		final Vector dir = new Vector(1, 1, 0).normalize();
+		final Normal dir = new Vector(1, 1, 0).normalize();
 		cam.direction(dir);
 		cam.update();
 		assertEquals(dir, cam.direction());

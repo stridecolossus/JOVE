@@ -15,7 +15,7 @@ import org.sarge.lib.element.Element;
  * @author Sarge
  */
 class Disc {
-	private final Vector normal;
+	private final Normal normal;
 	private final Vector x, y;
 	private final Interpolator radius;
 	private final Randomiser randomiser;

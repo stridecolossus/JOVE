@@ -1,5 +1,8 @@
 package org.sarge.jove.geometry;
 
+import java.util.Objects;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
 
@@ -17,7 +20,7 @@ import org.sarge.jove.util.MathsUtil;
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
  */
-public record Plane(Vector normal, float distance) implements Intersected {
+public class Plane implements Intersected {
 	/**
 	 * The <i>half space</i> defines the <i>sides</i> of this plane with respect to the normal.
 	 * The {@link #POSITIVE} half-space is in <i>front</i> of the plane and {@link #NEGATIVE} is <i>behind</i>.
@@ -55,7 +58,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 		final Vector u = Vector.between(a, c);
 		final Vector v = Vector.between(b, c);
 		if(u.equals(v)) throw new IllegalArgumentException("Triangle points cannot be degenerate");
-		final Vector normal = u.cross(v);
+		final Normal normal = u.cross(v).normalize();
 		return of(normal, a);
 	}
 
@@ -65,18 +68,36 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	 * @param p Point on the plane
 	 * @return New plane
 	 */
-	public static Plane of(Vector n, Point p) {
+	public static Plane of(Normal n, Point p) {
 		final float d = -p.dot(n);
 		return new Plane(n, d);
 	}
+
+	private final Normal normal;
+	private final float dist;
 
 	/**
 	 * Constructor.
 	 * @param normal		Plane normal
 	 * @param dist			Distance of the plane from the origin
 	 */
-	public Plane {
-		normal = normal.normalize();
+	public Plane(Vector vec, float dist) {
+		this.normal = vec.normalize();
+		this.dist = dist;
+	}
+
+	/**
+	 * @return Plane normal
+	 */
+	public Normal normal() {
+		return normal;
+	}
+
+	/**
+	 * @return Distance of this plane from the origin
+	 */
+	public float distance() {
+		return dist;
 	}
 
 	/**
@@ -90,7 +111,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 		}
 		else {
 			final float inv = MathsUtil.inverseRoot(len);
-			return new Plane(normal.multiply(inv), distance * inv);
+			return new Plane(normal.multiply(inv), dist * inv);
 		}
 	}
 	// TODO - what is this actually doing? need references, is it used anyway?
@@ -101,7 +122,7 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	 * @return Distance to the given point
 	 */
 	public float distance(Point p) {
-		return normal.dot(p) + distance;
+		return normal.dot(p) + dist;
 	}
 
 	/**
@@ -184,11 +205,24 @@ public record Plane(Vector normal, float distance) implements Intersected {
 	}
 
 	@Override
+	public int hashCode() {
+		return Objects.hash(normal, dist);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof Plane that) &&
 				this.normal.equals(that.normal) &&
-				MathsUtil.isEqual(this.distance, that.distance);
+				MathsUtil.isEqual(this.dist, that.dist);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append(normal)
+				.append("d", dist)
+				.build();
 	}
 }

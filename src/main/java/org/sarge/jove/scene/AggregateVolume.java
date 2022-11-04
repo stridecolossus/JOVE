@@ -13,7 +13,7 @@ import org.sarge.jove.geometry.Ray.Intersection;
 public class AggregateVolume implements Volume {
 //	private final Function<Bounds, Volume> ctor;
 	private final Class<? extends Volume> clazz;
-	private transient Volume vol = Volume.EMPTY;
+	private transient Volume vol = EmptyVolume.INSTANCE;
 
 	/**
 	 * Constructor.

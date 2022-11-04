@@ -179,7 +179,7 @@ public class SphereVolume implements Volume {
 	 */
 	private abstract class SphereIntersections implements Intersection {
 		@Override
-		public Vector normal(Point p) {
+		public Normal normal(Point p) {
 			return Vector.between(sphere.centre(), p).normalize();
 		}
 	}

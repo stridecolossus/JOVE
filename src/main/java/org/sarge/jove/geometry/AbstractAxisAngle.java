@@ -6,11 +6,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * Template implementation.
+ * Skeleton implementation.
  * @author Sarge
  */
 abstract class AbstractAxisAngle implements AxisAngle {
-	private final Vector axis;
+	private final Normal axis;
 
 	/**
 	 * Constructor.
@@ -21,7 +21,7 @@ abstract class AbstractAxisAngle implements AxisAngle {
 	}
 
 	@Override
-	public final Vector axis() {
+	public final Normal axis() {
 		return axis;
 	}
 

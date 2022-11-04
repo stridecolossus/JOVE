@@ -39,7 +39,7 @@ public class CameraController {
 		final float yaw = horizontal.apply(x / dim.width());
 		final float pitch = vertical.apply(y / dim.height());
 		final Vector vec = Sphere.vector(yaw, pitch);
-		update(vec);
+		update(vec.normalize());
 	}
 
 	/**
@@ -53,10 +53,10 @@ public class CameraController {
 
 	/**
 	 * Updates the camera.
-	 * @param vec Unit-sphere vector
+	 * @param dir View direction
 	 */
-	protected void update(Vector vec) {
-		cam.direction(vec);
+	protected void update(Normal dir) {
+		cam.direction(dir);
 	}
 
 	@Override

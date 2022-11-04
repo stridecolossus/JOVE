@@ -8,7 +8,7 @@ public interface AxisAngle extends Rotation {
 	/**
 	 * @return Rotation axis
 	 */
-	Vector axis();
+	Normal axis();
 
 	/**
 	 * @return Rotation angle (radians)

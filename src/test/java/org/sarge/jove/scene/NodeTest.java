@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Matrix.Matrix4;
-import org.sarge.jove.geometry.Volume;
 import org.sarge.jove.scene.Node.Visitor;
 
 class NodeTest {
@@ -44,7 +44,7 @@ class NodeTest {
 		@DisplayName("has a local bounding volume property")
 		@Test
 		void volume() {
-			assertEquals(Volume.EMPTY, node.volume());
+			assertEquals(EmptyVolume.INSTANCE, node.volume());
 		}
 
 		@DisplayName("cannot be detached")
@@ -116,7 +116,7 @@ class NodeTest {
 			assertEquals(Matrix4.IDENTITY, copy.transform().transform());
 			assertEquals(true, copy.transform().isDirty());
 			assertEquals(true, copy.material().isDirty());
-			assertEquals(Volume.EMPTY, copy.volume());
+			assertEquals(EmptyVolume.INSTANCE, copy.volume());
 			assertEquals(true, copy.isRoot());
 		}
 
