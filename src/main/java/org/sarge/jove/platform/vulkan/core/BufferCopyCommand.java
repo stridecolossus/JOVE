@@ -47,7 +47,7 @@ public class BufferCopyCommand extends ImmediateCommand {
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, Buffer buffer) {
+	public void record(VulkanLibrary lib, Buffer buffer) {
 		lib.vkCmdCopyBuffer(buffer, src, dest, regions.length, regions);
 	}
 

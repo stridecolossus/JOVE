@@ -51,7 +51,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 	// srcImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
 
 	@Override
-	public void execute(VulkanLibrary lib, Command.Buffer cb) {
+	public void record(VulkanLibrary lib, Command.Buffer cb) {
 		lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
 	}
 

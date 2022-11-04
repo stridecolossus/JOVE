@@ -43,7 +43,7 @@ public class QueryTest extends AbstractVulkanTest {
 		void begin() {
 			final Command begin = query.begin(VkQueryControlFlag.PRECISE);
 			assertNotNull(begin);
-			begin.execute(lib, buffer);
+			begin.record(lib, buffer);
 			verify(lib).vkCmdBeginQuery(buffer, pool, 0, VkQueryControlFlag.PRECISE.value());
 		}
 
@@ -52,7 +52,7 @@ public class QueryTest extends AbstractVulkanTest {
 		void end() {
 			final Command end = query.end();
 			assertNotNull(end);
-			end.execute(lib, buffer);
+			end.record(lib, buffer);
 			verify(lib).vkCmdEndQuery(buffer, pool, 0);
 		}
 	}
@@ -64,7 +64,7 @@ public class QueryTest extends AbstractVulkanTest {
 		final Timestamp timestamp = pool.timestamp(0);
 		final Command cmd = timestamp.timestamp(VkPipelineStage.VERTEX_SHADER);
 		assertNotNull(timestamp);
-		cmd.execute(lib, buffer);
+		cmd.record(lib, buffer);
 		verify(lib).vkCmdWriteTimestamp(buffer, VkPipelineStage.VERTEX_SHADER, pool, 0);
 	}
 
@@ -119,7 +119,7 @@ public class QueryTest extends AbstractVulkanTest {
 		void reset() {
 			final Command reset = pool.reset();
 			assertNotNull(reset);
-			reset.execute(lib, buffer);
+			reset.record(lib, buffer);
 			verify(lib).vkCmdResetQueryPool(buffer, pool, 0, 2);
 		}
 
@@ -225,7 +225,7 @@ public class QueryTest extends AbstractVulkanTest {
 		void copy() {
 			final VulkanBuffer dest = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 2 * 4);
 			final Command copy = builder.build(dest, 0);
-			copy.execute(lib, buffer);
+			copy.record(lib, buffer);
 			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, 0);
 		}
 	}

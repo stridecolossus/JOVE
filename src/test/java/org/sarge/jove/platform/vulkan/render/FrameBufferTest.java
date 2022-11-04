@@ -70,7 +70,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 
 		// Start render pass
 		final Command.Buffer cmd = mock(Command.Buffer.class);
-		begin.execute(lib, cmd);
+		begin.record(lib, cmd);
 
 		// Check API
 		final var expected = new VkRenderPassBeginInfo() {
@@ -109,7 +109,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 	@Test
 	void end() {
 		final Command.Buffer cmd = mock(Command.Buffer.class);
-		FrameBuffer.END.execute(lib, cmd);
+		FrameBuffer.END.record(lib, cmd);
 		verify(lib).vkCmdEndRenderPass(cmd);
 	}
 

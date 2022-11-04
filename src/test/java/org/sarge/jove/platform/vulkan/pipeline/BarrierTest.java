@@ -59,7 +59,7 @@ public class BarrierTest {
 
 			// Check API
 			assertNotNull(barrier);
-			barrier.execute(lib, cb);
+			barrier.record(lib, cb);
 			verify(lib).vkCmdPipelineBarrier(cb, VkPipelineStage.TRANSFER.value(), VkPipelineStage.FRAGMENT_SHADER.value(), VkDependencyFlag.VIEW_LOCAL.value(), 1, new VkMemoryBarrier[]{expected}, 0, null, 0, null);
 		}
 	}
@@ -108,7 +108,7 @@ public class BarrierTest {
 
 			// Check API
 			assertNotNull(barrier);
-			barrier.execute(lib, cb);
+			barrier.record(lib, cb);
 			verify(lib).vkCmdPipelineBarrier(cb, VkPipelineStage.TRANSFER.value(), VkPipelineStage.FRAGMENT_SHADER.value(), VkDependencyFlag.VIEW_LOCAL.value(), 0, null, 1, new VkBufferMemoryBarrier[]{expected}, 0, null);
 		}
 
@@ -187,7 +187,7 @@ public class BarrierTest {
 
 			// Check API
 			assertNotNull(barrier);
-			barrier.execute(lib, cb);
+			barrier.record(lib, cb);
 			verify(lib).vkCmdPipelineBarrier(cb, VkPipelineStage.TRANSFER.value(), VkPipelineStage.FRAGMENT_SHADER.value(), VkDependencyFlag.VIEW_LOCAL.value(), 0, null, 0, null, 1, new VkImageMemoryBarrier[]{expected});
 		}
 

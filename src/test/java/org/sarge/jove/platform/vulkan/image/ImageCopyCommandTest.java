@@ -31,7 +31,7 @@ public class ImageCopyCommandTest extends AbstractVulkanTest {
 				return true;
 			}
 		};
-		copy.execute(lib, buffer);
+		copy.record(lib, buffer);
 		verify(lib).vkCmdCopyImage(buffer, src, VkImageLayout.TRANSFER_SRC_OPTIMAL, dest, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkImageCopy[]{region});
 	}
 }

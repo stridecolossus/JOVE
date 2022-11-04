@@ -194,7 +194,7 @@ public class PushConstant {
 		}
 
 		@Override
-		public void execute(VulkanLibrary lib, Buffer buffer) {
+		public void record(VulkanLibrary lib, Buffer buffer) {
 			data.position(range.offset);
 			lib.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, data);
 		}

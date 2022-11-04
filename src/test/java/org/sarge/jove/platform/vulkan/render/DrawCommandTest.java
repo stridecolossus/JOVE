@@ -27,7 +27,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 	void draw() {
 		final DrawCommand draw = DrawCommand.draw(2);
 		assertNotNull(draw);
-		draw.execute(lib, cmd);
+		draw.record(lib, cmd);
 		verify(lib).vkCmdDraw(cmd, 2, 1, 0, 0);
 	}
 
@@ -36,7 +36,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 	void indexed() {
 		final DrawCommand draw = DrawCommand.indexed(2);
 		assertNotNull(draw);
-		draw.execute(lib, cmd);
+		draw.record(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 2, 1, 0, 0, 0);
 	}
 
@@ -48,7 +48,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 		when(header.isIndexed()).thenReturn(true);
 
 		final DrawCommand draw = DrawCommand.of(header);
-		draw.execute(lib, cmd);
+		draw.record(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
 	}
 
@@ -64,7 +64,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@DisplayName("Draw a number of vertices")
 		@Test
 		void simple() {
-			builder.count(2).build().execute(lib, cmd);
+			builder.count(2).build().record(lib, cmd);
 			verify(lib).vkCmdDraw(cmd, 2, 1, 0, 0);
 		}
 
@@ -75,7 +75,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 					.instances(1)
 					.firstInstance(2)
 					.build()
-					.execute(lib, cmd);
+					.record(lib, cmd);
 
 			verify(lib).vkCmdDraw(cmd, 0, 1, 0, 2);
 		}
@@ -83,7 +83,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@DisplayName("Draw indexed vertices")
 		@Test
 		void indexed() {
-			builder.indexed().build().execute(lib, cmd);
+			builder.indexed().build().record(lib, cmd);
 			verify(lib).vkCmdDrawIndexed(cmd, 0, 1, 0, 0, 0);
 		}
 
@@ -97,7 +97,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 					.firstVertex(4)
 					.firstInstance(5)
 					.build()
-					.execute(lib, cmd);
+					.record(lib, cmd);
 
 			verify(lib).vkCmdDrawIndexed(cmd, 1, 2, 3, 4, 5);
 		}
@@ -130,7 +130,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 					.count(3)
 					.stride(4)
 					.build(buffer)
-					.execute(lib, cmd);
+					.record(lib, cmd);
 
 			// Check API
 			verify(lib).vkCmdDrawIndirect(cmd, buffer, 2, 3, 4);
@@ -141,7 +141,7 @@ class DrawCommandTest extends AbstractVulkanTest {
 		@Test
 		void indexed() {
 			init(1);
-			builder.indexed().build(buffer).execute(lib, cmd);
+			builder.indexed().build(buffer).record(lib, cmd);
 			verify(lib).vkCmdDrawIndexedIndirect(cmd, buffer, 0, 1, 0);
 		}
 

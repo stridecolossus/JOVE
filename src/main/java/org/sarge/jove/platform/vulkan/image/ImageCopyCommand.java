@@ -50,7 +50,7 @@ public class ImageCopyCommand extends ImmediateCommand {
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, Buffer buffer) {
+	public void record(VulkanLibrary lib, Buffer buffer) {
 		lib.vkCmdCopyImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions);
 	}
 

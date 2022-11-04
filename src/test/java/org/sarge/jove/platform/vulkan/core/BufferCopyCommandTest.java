@@ -35,7 +35,7 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 	void execute() {
 		// Execute copy
 		final Command.Buffer cmd = mock(Command.Buffer.class);
-		copy.execute(lib, cmd);
+		copy.record(lib, cmd);
 
 		// Check API
 		final VkBufferCopy region = new VkBufferCopy() {
@@ -59,7 +59,7 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 	@Test
 	void invert() {
 		final Command inverse = copy.invert();
-		inverse.execute(lib, mock(Command.Buffer.class));
+		inverse.record(lib, mock(Command.Buffer.class));
 	}
 
 	@Nested

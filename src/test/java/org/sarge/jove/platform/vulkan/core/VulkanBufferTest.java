@@ -153,7 +153,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 		// Copy buffer
 		final var cmd = mock(Command.Buffer.class);
-		copy.execute(lib, cmd);
+		copy.record(lib, cmd);
 		verify(lib).vkCmdCopyBuffer(cmd, buffer, dest, 1, new VkBufferCopy[]{region});
 	}
 }

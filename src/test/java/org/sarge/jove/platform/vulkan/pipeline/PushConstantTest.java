@@ -162,7 +162,7 @@ public class PushConstantTest extends AbstractVulkanTest {
 		@Test
 		void apply() {
 			final UpdateCommand update = constant.update(two, layout);
-			update.execute(lib, cmd);
+			update.record(lib, cmd);
 			verify(lib).vkCmdPushConstants(cmd, layout, VkShaderStage.FRAGMENT.value(), 4, 8, constant.buffer());
 		}
 	}

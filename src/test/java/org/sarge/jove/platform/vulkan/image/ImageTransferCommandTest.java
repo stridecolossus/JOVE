@@ -129,11 +129,11 @@ public class ImageTransferCommandTest extends AbstractVulkanTest {
 			expected.imageExtent.height = 3;
 
 			// Perform copy operation
-			copy.execute(lib, cmd);
+			copy.record(lib, cmd);
 			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 
 			// Perform reverse copy operation
-			copy.invert().execute(lib, cmd);
+			copy.invert().record(lib, cmd);
 			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
 		}
 
@@ -146,7 +146,7 @@ public class ImageTransferCommandTest extends AbstractVulkanTest {
 					.region(data)
 					.invert()
 					.build()
-					.execute(lib, cmd);
+					.record(lib, cmd);
 		}
 
 		@Test

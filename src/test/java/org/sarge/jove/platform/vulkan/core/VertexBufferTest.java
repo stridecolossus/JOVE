@@ -41,7 +41,7 @@ public class VertexBufferTest extends AbstractVulkanTest {
 		final var cmd = mock(Command.Buffer.class);
 		final Command bind = vbo.bind(2);
 		assertNotNull(bind);
-		bind.execute(lib, cmd);
+		bind.record(lib, cmd);
 		verify(lib).vkCmdBindVertexBuffers(cmd, 2, 1, NativeObject.array(List.of(buffer)), new long[]{0});
 	}
 }

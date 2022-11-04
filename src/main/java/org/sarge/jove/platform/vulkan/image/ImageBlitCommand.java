@@ -41,7 +41,7 @@ public class ImageBlitCommand extends ImmediateCommand {
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, Buffer buffer) {
+	public void record(VulkanLibrary lib, Buffer buffer) {
 		lib.vkCmdBlitImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions, filter);
 	}
 

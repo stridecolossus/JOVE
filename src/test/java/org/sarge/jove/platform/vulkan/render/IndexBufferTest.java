@@ -56,7 +56,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 		assertNotNull(bind);
 
 		// Bind index
-		bind.execute(lib, cmd);
+		bind.record(lib, cmd);
 		verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT32);
 	}
 
@@ -65,7 +65,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 		index = new IndexBuffer(buffer, VkIndexType.UINT16);
 		final Command bind = index.bind(0);
 		assertNotNull(bind);
-		bind.execute(lib, cmd);
+		bind.record(lib, cmd);
 		verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT16);
 	}
 

@@ -43,7 +43,7 @@ public class PipelineTest extends AbstractVulkanTest {
 
 		// Check bind pipeline
 		final Command.Buffer cb = mock(Command.Buffer.class);
-		cmd.execute(lib, cb);
+		cmd.record(lib, cb);
 		verify(lib).vkCmdBindPipeline(cb, VkPipelineBindPoint.GRAPHICS, pipeline);
 	}
 

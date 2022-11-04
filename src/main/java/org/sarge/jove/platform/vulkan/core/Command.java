@@ -23,11 +23,11 @@ import com.sun.jna.ptr.PointerByReference;
 @FunctionalInterface
 public interface Command {
 	/**
-	 * Executes this command.
+	 * Records this command to the given buffer.
 	 * @param lib		Vulkan library
 	 * @param buffer 	Command buffer
 	 */
-	void execute(VulkanLibrary lib, Buffer buffer);
+	void record(VulkanLibrary lib, Buffer buffer);
 
 	/**
 	 * An <i>immediate command</i> is a convenience base-class for one-off commands such as transfer operations.
@@ -73,8 +73,8 @@ public interface Command {
 		 * @param handle 		Command buffer handle
 		 * @param pool			Parent pool
 		 */
-		Buffer(Pointer handle, Pool pool) {
-			this.handle = new Handle(handle);
+		Buffer(Handle handle, Pool pool) {
+			this.handle = notNull(handle);
 			this.pool = notNull(pool);
 		}
 
@@ -109,7 +109,7 @@ public interface Command {
 		 * @param expected Expected state
 		 * @throws IllegalStateException if this buffer is not in the expected state
 		 */
-		private void validate(State expected) {
+		protected void validate(State expected) {
 			if(state != expected) {
 				throw new IllegalStateException(String.format("Invalid buffer state: expected=%s actual=%s", expected, state));
 			}
@@ -139,23 +139,28 @@ public interface Command {
 		}
 
 		/**
-		 * Adds a command.
+		 * Records a command.
 		 * @param cmd Command
 		 * @throws IllegalStateException if this buffer is not recording
+		 * @see Command#record(VulkanLibrary, Buffer)
 		 */
 		public Buffer add(Command cmd) {
 			final VulkanLibrary lib = pool.device().library();
 			validate(State.RECORDING);
-			cmd.execute(lib, this);
+			cmd.record(lib, this);
 			return this;
 		}
 
 		/**
-		 * Adds secondary buffers.
+		 * Records secondary command buffers.
 		 * @param secondary Secondary buffers
+		 * @throws IllegalStateException if any of {@link #secondary} have not been recorded
 		 */
 		public Buffer add(List<SecondaryBuffer> secondary) {
 			validate(State.RECORDING);
+			for(var sec : secondary) {
+				sec.validate(State.EXECUTABLE);
+			}
 			final Pointer array = NativeObject.array(secondary);
 			final VulkanLibrary lib = pool.device().library();
 			lib.vkCmdExecuteCommands(this, secondary.size(), array);
@@ -165,7 +170,6 @@ public interface Command {
 		/**
 		 * Ends recording.
 		 * @throws IllegalStateException if this buffer is not recording
-		 * @throws IllegalArgumentException if no commands have been recorded
 		 */
 		public Buffer end() {
 			validate(State.RECORDING);
@@ -176,7 +180,7 @@ public interface Command {
 		}
 
 		/**
-		 * Helper - Submits this buffer and blocks until completion.
+		 * Helper - Submits this buffer and <b>blocks</b> until completion.
 		 * @see Work#submit(Fence)
 		 */
 		public Buffer submit() {
@@ -228,7 +232,7 @@ public interface Command {
 	 * Secondary command buffer.
 	 */
 	class SecondaryBuffer extends Buffer {
-		private SecondaryBuffer(Pointer handle, Pool pool) {
+		private SecondaryBuffer(Handle handle, Pool pool) {
 			super(handle, pool);
 		}
 
@@ -244,7 +248,7 @@ public interface Command {
 	}
 
 	/**
-	 * A <i>command pool</i> allocates command buffers that are used to perform work on a given {@link Queue}.
+	 * A <i>command pool</i> allocates command buffers used to perform work on a given {@link Queue}.
 	 */
 	class Pool extends AbstractVulkanObject {
 		/**
@@ -295,7 +299,7 @@ public interface Command {
 		 * @param ctor			Constructor
 		 * @return Allocated buffers
 		 */
-		private <T extends Buffer> List<T> allocate(int num, VkCommandBufferLevel level, BiFunction<Pointer, Pool, T> ctor) {
+		private <T extends Buffer> List<T> allocate(int num, VkCommandBufferLevel level, BiFunction<Handle, Pool, T> ctor) {
 			// Init descriptor
 			final var info = new VkCommandBufferAllocateInfo();
 			info.level = notNull(level);
@@ -311,7 +315,8 @@ public interface Command {
 			// Create buffers
 			return Arrays
 					.stream(handles)
-					.map(ptr -> ctor.apply(ptr, this))
+					.map(Handle::new)
+					.map(handle -> ctor.apply(handle, this))
 					.toList();
 		}
 

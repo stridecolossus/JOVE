@@ -17,7 +17,7 @@ public interface NativeObject {
 	Handle handle();
 
 	/**
-	 * Helper - Converts the given objects to an array of pointers.
+	 * Helper - Converts the given objects to a JNA pointer-array.
 	 * @param objects Native objects
 	 * @return Pointer array
 	 */

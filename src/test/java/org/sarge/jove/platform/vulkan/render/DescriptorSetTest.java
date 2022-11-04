@@ -66,7 +66,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
 		// Check API
 		final Command.Buffer cb = mock(Command.Buffer.class);
-		bind.execute(lib, cb);
+		bind.record(lib, cb);
 		verify(lib).vkCmdBindDescriptorSets(cb, VkPipelineBindPoint.GRAPHICS, pipelineLayout, 0, 1, NativeObject.array(List.of(descriptor)), 0, null);
 	}
 
