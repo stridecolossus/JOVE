@@ -15,20 +15,27 @@ public class MemoryTypeTest {
 	@BeforeEach
 	void before() {
 		heap = new Heap(1, Set.of(VkMemoryHeapFlag.DEVICE_LOCAL));
-		type = new MemoryType(0, heap, Set.of(VkMemoryProperty.DEVICE_LOCAL));
+		type = new MemoryType(0, heap, Set.of(VkMemoryProperty.HOST_VISIBLE));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(0, type.index());
 		assertEquals(heap, type.heap());
-		assertEquals(Set.of(VkMemoryProperty.DEVICE_LOCAL), type.properties());
+		assertEquals(Set.of(VkMemoryProperty.HOST_VISIBLE), type.properties());
+		assertEquals(true, type.isHostVisible());
+	}
+
+	@Test
+	void isHostVisible() {
+		type = new MemoryType(0, heap, Set.of(VkMemoryProperty.HOST_COHERENT));
+		assertEquals(false, type.isHostVisible());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(true, type.equals(type));
-		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryProperty.DEVICE_LOCAL))));
+		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryProperty.HOST_VISIBLE))));
 		assertEquals(false, type.equals(null));
 		assertEquals(false, type.equals(new MemoryType(0, heap, Set.of())));
 	}
@@ -59,7 +66,7 @@ public class MemoryTypeTest {
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = VkMemoryProperty.DEVICE_LOCAL.value();
+		info.propertyFlags = VkMemoryProperty.HOST_VISIBLE.value();
 
 		// Create memory properties
 		final var props = new VkPhysicalDeviceMemoryProperties();

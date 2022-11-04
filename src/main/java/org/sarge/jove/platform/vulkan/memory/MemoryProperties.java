@@ -39,9 +39,9 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
 	 */
 	public MemoryProperties {
+		Check.notNull(mode);
 		if(usage.isEmpty()) throw new IllegalArgumentException("At least one memory usage must be specified");
 		usage = Set.copyOf(usage);
-		mode = Check.notNull(mode);
 		required = Set.copyOf(required);
 		optimal = Set.copyOf(CollectionUtils.union(required, optimal));
 	}

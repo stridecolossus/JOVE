@@ -24,6 +24,14 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	}
 
 	/**
+	 * Helper.
+	 * @return Whether this memory type is {@link VkMemoryProperty#HOST_VISIBLE}
+	 */
+	public boolean isHostVisible() {
+		return properties.contains(VkMemoryProperty.HOST_VISIBLE);
+	}
+
+	/**
 	 * A <i>memory heap</i> specifies the properties of a group of memory types.
 	 */
 	public record Heap(long size, Set<VkMemoryHeapFlag> flags) {

@@ -4,7 +4,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
@@ -38,8 +38,7 @@ public class DefaultAllocator implements Allocator {
 		check(lib.vkAllocateMemory(dev, info, null, ref));
 
 		// Create memory wrapper
-		final boolean visible = type.properties().contains(VkMemoryProperty.HOST_VISIBLE);
-		if(visible) {
+		if(type.isHostVisible()) {
 			return new HostVisibleDeviceMemory(new Handle(ref), dev, size);
 		}
 		else {

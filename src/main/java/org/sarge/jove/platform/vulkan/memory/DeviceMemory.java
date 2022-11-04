@@ -44,6 +44,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 public interface DeviceMemory extends NativeObject, TransientObject {
 	/**
 	 * Marker interface: Memory that is <i>host visible</i> can be mapped by the application using {@link DeviceMemory#map()}.
+	 * @see MemoryType#isHostVisible()
 	 */
 	interface HostVisible {
 		// Marker interface
