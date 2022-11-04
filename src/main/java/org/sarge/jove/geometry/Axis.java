@@ -13,7 +13,7 @@ import org.sarge.jove.util.MathsUtil;
  * <p>
  * @author Sarge
  */
-public final class Axis extends NormalizedVector {
+public final class Axis extends Normal {
 	/**
 	 * Cardinal axes.
 	 */
@@ -67,7 +67,7 @@ public final class Axis extends NormalizedVector {
 	}
 
 	private final int index;
-	private final NormalizedVector inv = super.invert();
+	private final Normal inv = super.invert();
 
 	/**
 	 * Constructor.
@@ -85,7 +85,7 @@ public final class Axis extends NormalizedVector {
 	}
 
 	@Override
-	public NormalizedVector invert() {
+	public Normal invert() {
 		return inv;
 	}
 

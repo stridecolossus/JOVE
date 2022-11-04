@@ -10,7 +10,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>tuple</i> is the base-class for 3-component floating-point values.
  * @author Sarge
  */
-public class Tuple implements Bufferable {
+public sealed class Tuple implements Bufferable permits Point, Vector {
 	/**
 	 * Size of a tuple.
 	 */

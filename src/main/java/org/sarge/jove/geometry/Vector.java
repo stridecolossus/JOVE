@@ -7,7 +7,7 @@ import org.sarge.lib.util.Converter;
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public sealed class Vector extends Tuple permits NormalizedVector {
+public sealed class Vector extends Tuple permits Normal {
 	/**
 	 * Converter for a vector.
 	 */
@@ -91,15 +91,15 @@ public sealed class Vector extends Tuple permits NormalizedVector {
 	/**
 	 * @return Normalized (or unit) vector
 	 */
-	public Vector normalize() {
+	public Normal normalize() {
 		final float len = magnitude();
 		if(MathsUtil.isEqual(1, len)) {
-			return new NormalizedVector(this);
+			return new Normal(this);
 		}
 		else {
 			final float f = MathsUtil.inverseRoot(len);
 			final Vector vec = multiply(f);
-			return new NormalizedVector(vec);
+			return new Normal(vec);
 		}
 	}
 
