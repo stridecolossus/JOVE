@@ -1,8 +1,10 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.stream.Collectors.toMap;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -33,31 +35,86 @@ import com.sun.jna.ptr.PointerByReference;
  * // Create layout for a sampler
  * DescriptorLayout layout = DescriptorLayout.create(List.of(binding, ...));
  *
- * // Create descriptor pool for double-buffered swapchain
+ * // Create descriptor pool for a double-buffered swapchain
  * DescriptorPool pool = new DescriptorPool.Builder(dev)
  *  	.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
  *  	.max(2)
  *  	.build();
  *
- * // Create descriptor
- * DescriptorSet descriptor = pool.allocate(layout);
+ * // Create descriptor set
+ * DescriptorSet ds = pool.allocate(layout);
  *
  * // Create a sampler resource
  * Sampler sampler = ...
  * View view = ...
  * DescriptorResource res = sampler.resource(view);
  *
- * // Populate resource
- * descriptor.set(binding, res);
- * DescriptorSet.update(dev, Set.of(descriptor));
+ * // Populate the sampler
+ * ds.set(binding, res);
+ *
+ * // Apply updates
+ * DescriptorSet.update(dev, Set.of(ds));
+ *
+ * // Create a command to bind the descriptor set to the render sequence
+ * Command bind = ds.bind(pipelineLayout);
  * </pre>
  * @author Sarge
  */
 public class DescriptorSet implements NativeObject {
+	/**
+	 * Resource entry for a given binding.
+	 */
+	private class ResourceEntry {
+		private final Binding binding;
+		private DescriptorResource res;
+		private boolean dirty = true;
+
+		private ResourceEntry(Binding binding) {
+			this.binding = binding;
+		}
+
+		/**
+		 * Updates this entry and marks it as modified.
+		 * @param res Descriptor resource
+		 */
+		private void set(DescriptorResource res) {
+			// Check expected resource type
+			if(binding.type() != res.type()) {
+				throw new IllegalArgumentException(String.format("Invalid resource for this binding: expected=%s actual=%s", binding.type(), res.type()));
+			}
+
+			// Update entry
+			this.res = notNull(res);
+			this.dirty = true;
+		}
+
+		/**
+		 * Populates the Vulkan structure for this update.
+		 */
+		private void populate(VkWriteDescriptorSet write) {
+			// Validate
+			if(res == null) throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%s", DescriptorSet.this, binding));
+			assert dirty;
+
+			// Init write descriptor
+			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
+			write.dstBinding = binding.index();
+			write.descriptorType = binding.type();
+			write.dstSet = DescriptorSet.this.handle();
+			write.descriptorCount = 1;		// Number of elements in resource
+			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
+
+			// Init resource descriptor
+			res.populate(write);
+
+			// Mark as updated
+			dirty = false;
+		}
+	}
+
 	private final Handle handle;
 	private final DescriptorLayout layout;
-	private final Map<Binding, DescriptorResource> entries = new HashMap<>();
-	private final Set<Binding> modified = new HashSet<>();
+	private final Map<Binding, ResourceEntry> entries;
 
 	/**
 	 * Constructor.
@@ -67,7 +124,7 @@ public class DescriptorSet implements NativeObject {
 	DescriptorSet(Handle handle, DescriptorLayout layout) {
 		this.handle = notNull(handle);
 		this.layout = notNull(layout);
-		this.modified.addAll(layout.bindings());
+		this.entries = layout.bindings().stream().collect(toMap(Function.identity(), ResourceEntry::new));
 	}
 
 	@Override
@@ -88,29 +145,22 @@ public class DescriptorSet implements NativeObject {
 	 * @param res		Resource
 	 * @throws IllegalArgumentException if {@link #binding} does not belong to this descriptor set
 	 * @throws IllegalArgumentException if {@link #res} is not the expected type for the binding
+	 * @see #set(Collection, Binding, DescriptorResource)
 	 */
 	public void set(Binding binding, DescriptorResource res) {
-		// Check binding belongs to this set
-		if(!layout.bindings().contains(binding)) {
+		final ResourceEntry entry = entries.get(binding);
+		if(entry == null) {
 			throw new IllegalArgumentException(String.format("Invalid binding for this set: binding=%s this=%s", binding, this));
 		}
-
-		// Check expected resource type
-		if(binding.type() != res.type()) {
-			throw new IllegalArgumentException(String.format("Invalid resource for this binding: expected=%s actual=%s", binding.type(), res.type()));
-		}
-
-		// Update entry
-		entries.put(binding, res);
-		modified.add(binding);
+		entry.set(res);
 	}
 
 	/**
-	 * Bulk implementation to sets the resource in a group of descriptor sets for the given binding.
+	 * Bulk implementation to set a resource for a group of descriptor sets.
 	 * @param sets			Descriptor sets
 	 * @param binding		Binding
 	 * @param res			Resource
-	 * @see #set(ResourceBinding, DescriptorResource)
+	 * @see #set(Binding, DescriptorResource)
 	 */
 	public static void set(Collection<DescriptorSet> sets, Binding binding, DescriptorResource res) {
 		for(DescriptorSet ds : sets) {
@@ -119,51 +169,26 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * Transient modified descriptor set record.
+	 * @return Modified entries for this descriptor set
 	 */
-	private record Modified(DescriptorSet set, Binding binding, DescriptorResource res) {
-		/**
-		 * Constructor.
-		 */
-		private Modified {
-			if(res == null) throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%s", set, binding));
-		}
-
-		/**
-		 * Populates a modified descriptor set entry.
-		 */
-		void populate(VkWriteDescriptorSet write) {
-			// Init write descriptor
-			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
-			write.dstBinding = binding.index();
-			write.descriptorType = binding.type();
-			write.dstSet = set.handle();
-			write.descriptorCount = 1;		// Number of elements in resource
-			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
-
-			// Init resource descriptor
-			res.populate(write);
-		}
-	}
-
-	/**
-	 * @return Modified entries in this descriptor set
-	 */
-	private Stream<Modified> modified() {
-		return modified
+	private Stream<ResourceEntry> modified() {
+		return entries
+				.values()
 				.stream()
-				.map(e -> new Modified(this, e, entries.get(e)));
+				.filter(e -> e.dirty);
 	}
 
 	/**
-	 * Updates the resources for the given descriptor sets.
+	 * Updates the resources of the given descriptor sets.
 	 * @param dev				Logical device
 	 * @param descriptors		Descriptor sets to update
 	 * @return Number of updated descriptor sets
+	 * @throws IllegalStateException if any resource has not been populated
+	 * @see #set(Binding, DescriptorResource)
 	 */
 	public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
 		// Enumerate modified sets
-		final List<Modified> modified = descriptors
+		final var modified = descriptors
 				.stream()
 				.flatMap(DescriptorSet::modified)
 				.toList();
@@ -173,17 +198,9 @@ public class DescriptorSet implements NativeObject {
 			return 0;
 		}
 
-		// Apply update
-		final VkWriteDescriptorSet[] writes = StructureCollector.array(modified, new VkWriteDescriptorSet(), Modified::populate);
+		// Apply updates
+		final VkWriteDescriptorSet[] writes = StructureCollector.array(modified, new VkWriteDescriptorSet(), ResourceEntry::populate);
 		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
-
-		// Reset updated sets
-		modified
-				.stream()
-				.map(Modified::set)
-				.map(e -> e.modified)
-				.forEach(Set::clear);
-
 		return writes.length;
 	}
 
@@ -191,6 +208,7 @@ public class DescriptorSet implements NativeObject {
 	 * Creates a bind command for this descriptor set.
 	 * @param layout Pipeline layout
 	 * @return New bind command
+	 * @see #bind(PipelineLayout, Collection)
 	 */
 	public Command bind(PipelineLayout layout) {
 		return bind(layout, List.of(this));
@@ -220,13 +238,12 @@ public class DescriptorSet implements NativeObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append(handle)
-				.append(entries)
-				.append("modified", !modified.isEmpty())
+				.append(entries.values())
 				.build();
 	}
 
 	/**
-	 * Descriptor sets API.
+	 * Descriptor set API.
 	 */
 	interface Library {
 		/**
