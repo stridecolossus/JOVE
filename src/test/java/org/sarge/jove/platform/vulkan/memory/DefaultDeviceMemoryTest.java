@@ -164,7 +164,7 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 			assertThrows(IllegalStateException.class, () -> region.unmap());
 		}
 
-		@DisplayName("cannot no longer provide a buffer")
+		@DisplayName("cannot provide a buffer")
 		@Test
 		void buffer() {
 			assertThrows(IllegalStateException.class, () -> region.buffer());

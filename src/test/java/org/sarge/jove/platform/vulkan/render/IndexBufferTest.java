@@ -32,47 +32,60 @@ public class IndexBufferTest extends AbstractVulkanTest {
 		assertEquals(dev, index.device());
 		assertEquals(Set.of(VkBufferUsageFlag.INDEX_BUFFER), index.usage());
 		assertEquals(SIZE, buffer.length());
-		assertEquals(VkIndexType.UINT32, index.type());
 	}
 
 	@Test
-	void constructorShortIndex() {
-		index = new IndexBuffer(buffer, 1);
-		assertEquals(VkIndexType.UINT16, index.type());
-	}
-
-	@Test
-	void constructorInvalidType() {
+	void invalid() {
 		assertThrows(IllegalArgumentException.class, () -> new IndexBuffer(buffer, VkIndexType.NONE_NV));
 	}
 
 	@Test
-	void bind() {
-		// Init maximum index length
-		limit("maxDrawIndexedIndexValue", 1);
-
-		// Create bind command
-		final Command bind = index.bind(0);
-		assertNotNull(bind);
-
-		// Bind index
-		bind.record(lib, cmd);
-		verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT32);
-	}
-
-	@Test
-	void bindShort() {
-		index = new IndexBuffer(buffer, VkIndexType.UINT16);
-		final Command bind = index.bind(0);
-		assertNotNull(bind);
-		bind.record(lib, cmd);
-		verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT16);
-	}
-
-	@Test
-	void bindInvalidLength() {
+	void length() {
 		limit("maxDrawIndexedIndexValue", 0);
 		assertThrows(IllegalStateException.class, () -> index.bind(0));
+	}
+
+	@Nested
+	class IntegerIndex {
+		@BeforeEach
+		void before() {
+			limit("maxDrawIndexedIndexValue", 1);
+		}
+
+		@Test
+		void type() {
+			assertEquals(VkIndexType.UINT32, index.type());
+		}
+
+		@Test
+		void bind() {
+			final Command bind = index.bind(0);
+			bind.record(lib, cmd);
+			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT32);
+		}
+	}
+
+	@DisplayName("A short index...")
+	@Nested
+	class ShortIndex {
+		@BeforeEach
+		void before() {
+			index = new IndexBuffer(buffer, 1);
+		}
+
+		@DisplayName("has a short data type")
+		@Test
+		void type() {
+			assertEquals(VkIndexType.UINT16, index.type());
+		}
+
+		@DisplayName("is bound with a short data type")
+		@Test
+		void bind() {
+			final Command bind = index.bind(0);
+			bind.record(lib, cmd);
+			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT16);
+		}
 	}
 
 	@Test

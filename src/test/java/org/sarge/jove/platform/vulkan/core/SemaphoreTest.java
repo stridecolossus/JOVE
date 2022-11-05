@@ -2,9 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
@@ -30,5 +28,4 @@ public class SemaphoreTest extends AbstractVulkanTest {
 		assertNotNull(info);
 		assertEquals(0, info.flags);
 	}
-
 }

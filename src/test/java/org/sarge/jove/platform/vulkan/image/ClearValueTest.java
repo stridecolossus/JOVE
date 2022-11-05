@@ -16,35 +16,69 @@ public class ClearValueTest {
 		value = new VkClearValue();
 	}
 
-	@Test
-	void colour() {
-		final ClearValue clear = new ColourClearValue(Colour.WHITE);
-		clear.populate(value);
-		assertNotNull(value.color);
-		assertArrayEquals(Colour.WHITE.toArray(), value.color.float32);
-		assertEquals(clear, clear);
-		assertEquals(clear, new ColourClearValue(Colour.WHITE));
-		assertNotEquals(clear, null);
-		assertNotEquals(clear, new ColourClearValue(Colour.BLACK));
-		assertEquals(VkImageAspect.COLOR, clear.aspect());
+	@Nested
+	class ColourTests {
+		private ColourClearValue clear;
+
+		@BeforeEach
+		void before() {
+			clear = new ColourClearValue(Colour.WHITE);
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(Colour.WHITE, clear.colour());
+			assertEquals(VkImageAspect.COLOR, clear.aspect());
+		}
+
+		@Test
+		void populate() {
+			clear.populate(value);
+			assertArrayEquals(Colour.WHITE.toArray(), value.color.float32);
+		}
+
+		@Test
+		void equals() {
+			assertEquals(clear, clear);
+			assertEquals(clear, new ColourClearValue(Colour.WHITE));
+			assertNotEquals(clear, null);
+			assertNotEquals(clear, new ColourClearValue(Colour.BLACK));
+		}
 	}
 
-	@Test
-	void depth() {
-		final ClearValue clear = new DepthClearValue(Percentile.HALF);
-		clear.populate(value);
-		assertNotNull(value.depthStencil);
-		assertEquals(0.5f, value.depthStencil.depth);
-		assertEquals(0, value.depthStencil.stencil);
-		assertEquals(clear, clear);
-		assertEquals(clear, new DepthClearValue(Percentile.HALF));
-		assertNotEquals(clear, null);
-		assertNotEquals(clear, DepthClearValue.DEFAULT);
-		assertEquals(VkImageAspect.DEPTH, clear.aspect());
-	}
+	@Nested
+	class DepthStencilTests {
+		private DepthClearValue clear;
 
-	@Test
-	void def() {
-		assertEquals(new DepthClearValue(Percentile.ONE), DepthClearValue.DEFAULT);
+		@BeforeEach
+		void before() {
+			clear = new DepthClearValue(Percentile.HALF);
+		}
+
+		@Test
+		void constructor() {
+			assertEquals(Percentile.HALF, clear.depth());
+			assertEquals(VkImageAspect.DEPTH, clear.aspect());
+		}
+
+		@Test
+		void populate() {
+			clear.populate(value);
+			assertEquals(0.5f, value.depthStencil.depth);
+			assertEquals(0, value.depthStencil.stencil);
+		}
+
+		@Test
+		void equals() {
+			assertEquals(clear, clear);
+			assertEquals(clear, new DepthClearValue(Percentile.HALF));
+			assertNotEquals(clear, null);
+			assertNotEquals(clear, DepthClearValue.DEFAULT);
+		}
+
+		@Test
+		void def() {
+			assertEquals(new DepthClearValue(Percentile.ONE), DepthClearValue.DEFAULT);
+		}
 	}
 }

@@ -24,13 +24,13 @@ public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
 	/**
 	 * Clear value for a colour attachment.
 	 */
-	record ColourClearValue(Colour col) implements ClearValue {
+	record ColourClearValue(Colour colour) implements ClearValue {
 		/**
 		 * Constructor.
-		 * @param col Clear colour
+		 * @param colour Clear colour
 		 */
 		public ColourClearValue {
-			Check.notNull(col);
+			Check.notNull(colour);
 		}
 
 		@Override
@@ -42,7 +42,7 @@ public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
 		public void populate(VkClearValue value) {
 			value.setType("color");
 			value.color.setType("float32");
-			value.color.float32 = col.toArray();
+			value.color.float32 = colour.toArray();
 		}
 	}
 

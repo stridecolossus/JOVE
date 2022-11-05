@@ -7,6 +7,8 @@ import static org.mockito.Mockito.*;
 import java.util.Map;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -21,13 +23,10 @@ class VulkanLibraryTest {
 		assertEquals("1.1.0", VulkanLibrary.VERSION.toString());
 	}
 
-	@Test
-	void mapper() {
-		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(IntegerEnumeration.class));
-		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(Boolean.class));
-		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(boolean.class));
-		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(Handle.class));
-		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(NativeObject.class));
+	@ParameterizedTest
+	@ValueSource(classes={boolean.class, Boolean.class, IntegerEnumeration.class, Handle.class, NativeObject.class})
+	void mapper(Class<?> type) {
+		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(type));
 	}
 
 	@Test
@@ -37,7 +36,7 @@ class VulkanLibraryTest {
 
 	@Test
 	void create() {
-		assertNotNull(VulkanLibrary.create());
+		VulkanLibrary.create();
 	}
 
 	@Test
