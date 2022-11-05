@@ -72,11 +72,19 @@ public class LogicalDeviceTest {
 		assertEquals(false, device.isDestroyed());
 	}
 
+	@DisplayName("A logical device initialises a default memory allocation service if one is not configured")
+	@Test
+	void allocator() {
+		assertNotNull(device.allocator());
+	}
+
+	@DisplayName("A logical device has a set of enabled features")
 	@Test
 	void features() {
 		assertNotNull(device.features());
 	}
 
+	@DisplayName("A logical device has a set of hardware limits")
 	@Test
 	void limits() {
 		when(parent.properties()).thenReturn(new VkPhysicalDeviceProperties());
@@ -84,53 +92,49 @@ public class LogicalDeviceTest {
 		assertNotNull(limits);
 	}
 
-	@DisplayName("Query device for available queues")
+	@DisplayName("A logical device has a set of work queues")
 	@Test
 	void queues() {
 		assertEquals(Map.of(family, List.of(queue, queue)), device.queues());
 	}
 
-	@DisplayName("Query device for the first queue of the given family")
+	@DisplayName("A work queue for a given familt can be retrieved from the logical device")
 	@Test
 	void queue() {
 		assertEquals(queue, device.queue(family));
 	}
 
-	@DisplayName("Wait for queue to complete execution")
+	@DisplayName("A work queue can be blocked until all work has completed")
 	@Test
 	void queueWaitIdle() {
 		queue.waitIdle(lib);
 		verify(lib).vkQueueWaitIdle(queue);
 	}
 
-	@DisplayName("A logical device initialises a default memory allocation service if one is not configured")
-	@Test
-	void allocator() {
-		assertNotNull(device.allocator());
-	}
-
-	@DisplayName("Wait for all device queues to complete execution")
+	@DisplayName("A logical device can be blocked until all work has completed")
 	@Test
 	void waitIdle() {
 		device.waitIdle();
 		verify(lib).vkDeviceWaitIdle(device);
 	}
 
+	@DisplayName("A logical device can be destroyed")
 	@Test
 	void destroy() {
 		device.destroy();
 		verify(lib).vkDestroyDevice(device, null);
 	}
 
+	@DisplayName("A required queue...")
 	@Nested
 	class RequiredQueueTests {
-		@DisplayName("A required queue must have at least one queue priority")
+		@DisplayName("must have at least one queue priority")
 		@Test
 		void empty() {
 			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(family, List.of()));
 		}
 
-		@DisplayName("The number of queues cannot exceed the available number of queues in the family")
+		@DisplayName("cannot specify more queues than the available number in the family")
 		@Test
 		void exceeds() {
 			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(family, 3));
@@ -199,14 +203,14 @@ public class LogicalDeviceTest {
 			verify(lib).vkCreateDevice(parent, expected, null, ref);
 		}
 
-		@DisplayName("Cannot request a queue from a different device")
+		@DisplayName("A required queue must specify a family that belongs to the logical device")
 		@Test
 		void invalidQueueFamily() {
 			final Family other = new Family(3, 4, Set.of());
 			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(other)));
 		}
 
-		@DisplayName("Cannot request an extension that is not available")
+		@DisplayName("A required extension must be available to the logical device")
 		@Test
 		void invalidExtension() {
 			assertThrows(IllegalArgumentException.class, () -> builder.extension(Handler.EXTENSION));

@@ -41,12 +41,14 @@ public class InstanceTest {
 		assertEquals(false, instance.isDestroyed());
 	}
 
+	@DisplayName("An instance can be destroyed")
 	@Test
 	void destroy() {
 		instance.destroy();
 		verify(lib).vkDestroyInstance(instance, null);
 	}
 
+	@DisplayName("A diagnostics handler can be attached to the instance and is automatically destroyed when the instance is released")
 	@Test
 	void attach() {
 		final Handler handler = mock(Handler.class);
@@ -55,6 +57,7 @@ public class InstanceTest {
 		verify(handler).destroy();
 	}
 
+	@DisplayName("A function pointer can be looked up from the instance")
 	@Test
 	void function() {
 		final Pointer func = new Pointer(2);
@@ -63,8 +66,9 @@ public class InstanceTest {
 		assertEquals(func, instance.function(name));
 	}
 
+	@DisplayName("An unknown function pointer cannot be looked up from the instance")
 	@Test
-	void functionUnknown() {
+	void unknown() {
 		assertThrows(RuntimeException.class, () -> instance.function("cobblers"));
 	}
 

@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
@@ -24,7 +23,6 @@ public class DepthStencilPipelineStageBuilderTest {
 				.get();
 
 		// Check descriptor
-		assertNotNull(result);
 		assertEquals(0, result.flags);
 		assertEquals(true, result.depthTestEnable);
 		assertEquals(false, result.depthWriteEnable);
@@ -35,7 +33,6 @@ public class DepthStencilPipelineStageBuilderTest {
 	@Test
 	void buildDefaults() {
 		final var result = builder.get();
-		assertNotNull(result);
 		assertEquals(0, result.flags);
 		assertEquals(false, result.depthTestEnable);
 		assertEquals(true, result.depthWriteEnable);

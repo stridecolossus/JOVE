@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
@@ -26,7 +25,6 @@ class AssemblyPipelineStageBuilderTest {
 				.get();
 
 		// Check descriptor
-		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(VkPrimitiveTopology.LINE_LIST, info.topology);
 		assertEquals(true, info.primitiveRestartEnable);
@@ -35,7 +33,6 @@ class AssemblyPipelineStageBuilderTest {
 	@Test
 	void buildDefault() {
 		final VkPipelineInputAssemblyStateCreateInfo info = builder.get();
-		assertNotNull(info);
 		assertEquals(VkPrimitiveTopology.TRIANGLE_STRIP, info.topology);
 		assertEquals(false, info.primitiveRestartEnable);
 	}

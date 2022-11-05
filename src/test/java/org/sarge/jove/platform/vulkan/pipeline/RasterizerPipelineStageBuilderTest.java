@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
@@ -27,7 +26,6 @@ public class RasterizerPipelineStageBuilderTest {
 				.get();
 
 		// Check descriptor
-		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(true, info.depthClampEnable);
 		assertEquals(true, info.rasterizerDiscardEnable);
@@ -46,7 +44,6 @@ public class RasterizerPipelineStageBuilderTest {
 	@Test
 	void buildDefaults() {
 		final var info = builder.get();
-		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(false, info.depthClampEnable);
 		assertEquals(false, info.rasterizerDiscardEnable);

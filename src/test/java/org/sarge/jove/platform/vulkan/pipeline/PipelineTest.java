@@ -18,20 +18,19 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
 
-public class PipelineTest extends AbstractVulkanTest {
+class PipelineTest extends AbstractVulkanTest {
 	private Pipeline pipeline;
 	private PipelineLayout layout;
 
 	@BeforeEach
 	void before() {
 		layout = mock(PipelineLayout.class);
-		pipeline = new Pipeline(new Handle(1), dev, layout, Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
+		pipeline = new Pipeline(new Handle(1), dev, layout, Set.of());
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(layout, pipeline.layout());
-		assertEquals(Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES), pipeline.flags());
 		assertEquals(false, pipeline.isDestroyed());
 	}
 
@@ -66,18 +65,6 @@ public class PipelineTest extends AbstractVulkanTest {
 			viewport = new Rectangle(new Dimensions(3, 4));
 		}
 
-		@Test
-		void builders() {
-			assertNotNull(builder.input());
-			assertNotNull(builder.assembly());
-			assertNotNull(builder.tesselation());
-			assertNotNull(builder.viewport());
-			assertNotNull(builder.rasterizer());
-			assertNotNull(builder.depth());
-			assertNotNull(builder.blend());
-			assertNotNull(builder.dynamic());
-		}
-
 		private void init(Pipeline.Builder builder) {
 			builder
 					.layout(layout)
@@ -96,7 +83,6 @@ public class PipelineTest extends AbstractVulkanTest {
 			pipeline = builder.build(cache, dev);
 
 			// Check pipeline
-			assertNotNull(pipeline);
 			assertNotNull(pipeline.handle());
 			assertEquals(false, pipeline.isDestroyed());
 			assertEquals(layout, pipeline.layout());
@@ -107,7 +93,6 @@ public class PipelineTest extends AbstractVulkanTest {
 				public boolean equals(Object obj) {
 					// Check descriptor
 					final var info = (VkGraphicsPipelineCreateInfo) obj;
-					assertNotNull(info);
 					assertEquals(0, info.flags);
 
 					// Check derived pipelines
@@ -223,49 +208,56 @@ public class PipelineTest extends AbstractVulkanTest {
 			}
 		}
 
+		@DisplayName("A derivative pipeline...")
 		@Nested
 		class DerivativePipelineTests {
-			@DisplayName("A pipeline can be derived from an existing parent pipeline")
+			private Pipeline parent;
+
+			@BeforeEach
+			void before() {
+				parent = new Pipeline(new Handle(2), dev, layout, Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
+			}
+
+			@DisplayName("can be derived from an existing parent pipeline")
 			@Test
 			void derivative() {
 				init(builder);
-				final Pipeline derivative = builder.derive(pipeline).build(null, dev);
+				final Pipeline derivative = builder.derive(parent).build(null, dev);
 				assertTrue(derivative.flags().contains(VkPipelineCreateFlag.DERIVATIVE));
 			}
 
-			@DisplayName("A pipeline cannot be derived from an existing parent that does not allow derivatives")
+			@DisplayName("cannot be derived from an existing parent that does not allow derivatives")
 			@Test
 			void invalid() {
-				final Pipeline base = mock(Pipeline.class);
-				assertThrows(IllegalArgumentException.class, () -> builder.derive(base));
-			}
-
-			@DisplayName("A pipeline cannot be derived more than once")
-			@Test
-			void duplicate() {
-				builder.derive(pipeline);
 				assertThrows(IllegalArgumentException.class, () -> builder.derive(pipeline));
 			}
 
-			@DisplayName("A pipeline can be configured as a parent")
+			@DisplayName("cannot be derived more than once")
+			@Test
+			void duplicate() {
+				builder.derive(parent);
+				assertThrows(IllegalArgumentException.class, () -> builder.derive(parent));
+			}
+
+			@DisplayName("can be derived from a parent pipeline builder")
 			@Test
 			void parent() {
 				init(builder);
 				builder.parent();
-				pipeline = builder.build(null, dev);
-				assertTrue(pipeline.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
+				final Pipeline derivative = builder.build(null, dev);
+				assertTrue(derivative.flags().contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
 			}
 
-			@DisplayName("A pipeline cannot be derived from itself")
+			@DisplayName("cannot be derived from itself")
 			@Test
 			void self() {
 				assertThrows(IllegalStateException.class, () -> builder.derive(builder));
 			}
 
-			@DisplayName("A pipeline can be derived from another builder")
+			@DisplayName("can be derived from a peer")
 			@Test
 			void indexed() {
-				// Init parent builder
+				// Init peer builder
 				init(builder);
 				builder.parent();
 
@@ -278,7 +270,7 @@ public class PipelineTest extends AbstractVulkanTest {
 				Pipeline.Builder.build(List.of(child, builder), null, dev);
 			}
 
-			@DisplayName("A pipeline cannot be derived from another builder that is not present at instantiation")
+			@DisplayName("cannot be derived from a peer that is not present at instantiation time")
 			@Test
 			void missing() {
 				final var child = new Pipeline.Builder();

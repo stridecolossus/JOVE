@@ -42,6 +42,7 @@ public class ShaderTest extends AbstractVulkanTest {
 		verify(lib).vkCreateShaderModule(dev, expected, null, factory.pointer());
 	}
 
+	@DisplayName("A shader can be destroyed")
 	@Test
 	void destroy() {
 		shader.destroy();
@@ -71,9 +72,10 @@ public class ShaderTest extends AbstractVulkanTest {
 		}
 	}
 
+	@DisplayName("Shader specialisation constants...")
 	@Nested
 	class SpecialisationConstantTests {
-		@DisplayName("Shader specialisation constants can be constructed from an indexed map of values")
+		@DisplayName("can be constructed from an indexed map of values")
 		@Test
 		void constants() {
 			// Build constants table
@@ -98,13 +100,13 @@ public class ShaderTest extends AbstractVulkanTest {
 			assertEquals(bb, info.pData);
 		}
 
-		@DisplayName("Shader specialisation constants can be empty")
+		@DisplayName("can be empty")
 		@Test
 		void empty() {
 			assertEquals(null, Shader.constants(Map.of()));
 		}
 
-		@DisplayName("A specialisation constant must be a supported type")
+		@DisplayName("must have a supported data type")
 		@Test
 		void invalid() {
 			assertThrows(UnsupportedOperationException.class, () -> Shader.constants(Map.of(1, "doh")));

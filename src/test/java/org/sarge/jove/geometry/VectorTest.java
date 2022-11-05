@@ -21,70 +21,74 @@ class VectorTest {
 		assertEquals(3, vec.z);
 	}
 
-	@DisplayName("A vector can be copied")
-	@Test
-	void copy() {
-		assertEquals(vec, new Vector(vec));
-	}
+	@DisplayName("A vector...")
+	@Nested
+	class VectorTests {
+		@DisplayName("can be copied")
+		@Test
+		void copy() {
+			assertEquals(vec, new Vector(vec));
+		}
 
-	@DisplayName("A vector can be constructed from an array")
-	@Test
-	void array() {
-		assertEquals(vec, new Vector(new float[]{1, 2, 3}));
-	}
+		@DisplayName("can be constructed from an array")
+		@Test
+		void array() {
+			assertEquals(vec, new Vector(new float[]{1, 2, 3}));
+		}
 
-	@DisplayName("A vector can be constructed between two points")
-	@Test
-	void between() {
-		assertEquals(vec, Vector.between(new Point(1, 2, 3), new Point(2, 4, 6)));
-	}
+		@DisplayName("can be constructed between two points")
+		@Test
+		void between() {
+			assertEquals(vec, Vector.between(new Point(1, 2, 3), new Point(2, 4, 6)));
+		}
 
-	@DisplayName("A vector can be parsed from a delimited string")
-	@Test
-	void converter() {
-		assertEquals(vec, Vector.CONVERTER.apply("1 2 3"));
-		assertEquals(vec, Vector.CONVERTER.apply("1,2,3"));
-	}
+		@DisplayName("can be parsed from a delimited string")
+		@Test
+		void converter() {
+			assertEquals(vec, Vector.CONVERTER.apply("1 2 3"));
+			assertEquals(vec, Vector.CONVERTER.apply("1,2,3"));
+		}
 
-	@DisplayName("The magnitude of a vector is the length squared")
-	@Test
-	void magnitude() {
-		assertEquals(1 * 1 + 2 * 2 + 3 * 3, vec.magnitude());
-	}
+		@DisplayName("has a magnitude which is the squared length of the vector")
+		@Test
+		void magnitude() {
+			assertEquals(1 * 1 + 2 * 2 + 3 * 3, vec.magnitude());
+		}
 
-	@DisplayName("A vector can be inverted")
-	@Test
-	void invert() {
-		assertEquals(new Vector(-1, -2, -3), vec.invert());
-	}
+		@DisplayName("can be inverted")
+		@Test
+		void invert() {
+			assertEquals(new Vector(-1, -2, -3), vec.invert());
+		}
 
-	@DisplayName("A vector can be composed")
-	@Test
-	void add() {
-		assertEquals(new Vector(2, 4, 6), vec.add(vec));
-	}
+		@DisplayName("can be composed")
+		@Test
+		void add() {
+			assertEquals(new Vector(2, 4, 6), vec.add(vec));
+		}
 
-	@DisplayName("A vector can be scaled")
-	@Test
-	void scalar() {
-		assertEquals(new Vector(2, 4, 6), vec.multiply(2));
-	}
+		@DisplayName("can be scaled")
+		@Test
+		void scalar() {
+			assertEquals(new Vector(2, 4, 6), vec.multiply(2));
+		}
 
-	@DisplayName("A vector can be multiplied component-wise")
-	@Test
-	void multiply() {
-		assertEquals(new Vector(1, 4, 9), vec.multiply(vec));
-		assertEquals(X, vec.multiply(X));
-	}
+		@DisplayName("can be multiplied component-wise")
+		@Test
+		void multiply() {
+			assertEquals(new Vector(1, 4, 9), vec.multiply(vec));
+			assertEquals(X, vec.multiply(X));
+		}
 
-	@DisplayName("A vector can be normalized to the unit-vector in the same direction")
-	@Test
-	void normalize() {
-		final float f = 1 / (float) Math.sqrt(vec.magnitude());
-		final Vector expected = new Vector(1 * f, 2 * f, 3 * f);
-		final Vector normal = vec.normalize();
-		assertEquals(expected, normal);
-		assertEquals(1, normal.magnitude());
+		@DisplayName("can be normalized to the unit-vector in the same direction")
+		@Test
+		void normalize() {
+			final float f = 1 / (float) Math.sqrt(vec.magnitude());
+			final Vector expected = new Vector(1 * f, 2 * f, 3 * f);
+			final Vector normal = vec.normalize();
+			assertEquals(expected, normal);
+			assertEquals(1, normal.magnitude());
+		}
 	}
 
 	@DisplayName("The dot product...")

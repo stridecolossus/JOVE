@@ -2,9 +2,10 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -35,9 +36,14 @@ public class SubResourceTest {
 
 	@Test
 	void constructor() {
-		assertNotNull(res);
+		assertEquals(Set.of(VkImageAspect.DEPTH), res.aspects());
+		assertEquals(2, res.levelCount());
+		assertEquals(1, res.mipLevel());
+		assertEquals(3, res.layerCount());
+		assertEquals(2, res.baseArrayLayer());
 	}
 
+	@DisplayName("A sub-resource can be converted to a Vulkan layers structure")
 	@Test
 	void toLayers() {
 		final VkImageSubresourceLayers layers = SubResource.toLayers(res);
@@ -48,6 +54,7 @@ public class SubResourceTest {
 		assertEquals(3, layers.layerCount);
 	}
 
+	@DisplayName("A sub-resource can be converted to a Vulkan ranges structure")
 	@Test
 	void toRange() {
 		final VkImageSubresourceRange range = SubResource.toRange(res);
@@ -59,6 +66,7 @@ public class SubResourceTest {
 		assertEquals(3, range.layerCount);
 	}
 
+	@DisplayName("A derived sub-resource...")
 	@Nested
 	class BuilderTests {
 		private SubResource.Builder builder;
@@ -68,54 +76,52 @@ public class SubResourceTest {
 			builder = new SubResource.Builder(descriptor);
 		}
 
+		@DisplayName("can be constructed as a subset of the parent sub-resource or image")
 		@Test
 		void build() {
-			final VkImageSubresourceRange range = SubResource.toRange(builder.build());
-			assertNotNull(range);
-			assertEquals(IntegerEnumeration.reduce(VkImageAspect.DEPTH, VkImageAspect.STENCIL), range.aspectMask);
-			assertEquals(0, range.baseMipLevel);
-			assertEquals(1, range.levelCount);
-			assertEquals(0, range.baseArrayLayer);
-			assertEquals(1, range.layerCount);
+			final SubResource subset = builder
+					.aspect(VkImageAspect.DEPTH)
+					.mipLevel(2)
+					.levelCount(1)
+					.baseArrayLayer(1)
+					.layerCount(1)
+					.build();
+
+			assertEquals(Set.of(VkImageAspect.DEPTH), subset.aspects());
+			assertEquals(2, subset.mipLevel());
+			assertEquals(1, subset.levelCount());
+			assertEquals(1, subset.baseArrayLayer());
+			assertEquals(1, subset.layerCount());
 		}
 
-		@DisplayName("Specifying an explicit aspect should override the image mask")
+		@DisplayName("must have a subset of the aspects of the image")
 		@Test
-		void buildOverrideAspect() {
-			builder.aspect(VkImageAspect.DEPTH);
-			final VkImageSubresourceRange range = SubResource.toRange(builder.build());
-			assertNotNull(range);
-			assertEquals(VkImageAspect.DEPTH.value(), range.aspectMask);
-		}
-
-		@DisplayName("Aspect mask must be a subset of the image")
-		@Test
-		void buildInvalidAspect() {
+		void invalid() {
 			assertThrows(IllegalArgumentException.class, () -> builder.aspect(VkImageAspect.COLOR));
 		}
 
-		@DisplayName("Base MIP level must be a subset of the image")
+		@DisplayName("must have a base MIP level that is a subset of the image")
 		@Test
-		void buildInvalidLevel() {
+		void mip() {
 			assertThrows(IllegalArgumentException.class, () -> builder.mipLevel(3));
 		}
 
-		@DisplayName("Number of MIP levels must be a subset of the image")
+		@DisplayName("must have a number of MIP levels that are a subset of image")
 		@Test
-		void buildInvalidLevelCount() {
+		void levels() {
 			assertThrows(IllegalArgumentException.class, () -> builder.levelCount(0));
 			assertThrows(IllegalArgumentException.class, () -> builder.levelCount(4));
 		}
 
-		@DisplayName("Base array layer must be a subset of the image")
+		@DisplayName("must have a base array layer that is a subset of the image")
 		@Test
-		void buildInvalidLayer() {
+		void base() {
 			assertThrows(IllegalArgumentException.class, () -> builder.baseArrayLayer(4));
 		}
 
-		@DisplayName("Number of array layers must be a subset of the image")
+		@DisplayName("must have a number of array layers that is a subset of the image")
 		@Test
-		void buildInvalidLayerCount() {
+		void layers() {
 			assertThrows(IllegalArgumentException.class, () -> builder.layerCount(0));
 			assertThrows(IllegalArgumentException.class, () -> builder.layerCount(5));
 		}

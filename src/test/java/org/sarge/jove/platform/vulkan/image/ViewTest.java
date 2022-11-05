@@ -30,6 +30,7 @@ public class ViewTest extends AbstractVulkanTest {
 		image = mock(DefaultImage.class);
 		when(image.descriptor()).thenReturn(descriptor);
 		when(image.handle()).thenReturn(new Handle(1));
+		when(image.device()).thenReturn(dev);
 
 		// Create image view
 		view = new View(new Handle(2), dev, image);
@@ -40,39 +41,48 @@ public class ViewTest extends AbstractVulkanTest {
 
 	@Test
 	void constructor() {
-		assertNotNull(view.handle());
 		assertEquals(false, view.isDestroyed());
 		assertEquals(dev, view.device());
 		assertEquals(image, view.image());
-		assertEquals(Optional.empty(), view.clear());
 	}
 
+	@DisplayName("A default view can be constructed for a given image")
 	@Test
 	void of() {
-		when(image.device()).thenReturn(dev);
-		assertNotNull(View.of(image));
+		assertEquals(view, View.of(image));
 	}
 
+	@DisplayName("The clear value for a view...")
 	@Nested
 	class ClearTests {
+		@DisplayName("is empty be default")
+		@Test
+		void unspecified() {
+			assertEquals(Optional.empty(), view.clear());
+		}
+
+		@DisplayName("can be set to a new clear value")
 		@Test
 		void clear() {
 			view.clear(clear);
 			assertEquals(Optional.of(clear), view.clear());
 		}
 
+		@DisplayName("can be set to an empty clear value")
 		@Test
 		void none() {
 			view.clear(null);
 			assertEquals(Optional.empty(), view.clear());
 		}
 
+		@DisplayName("cannot be set to a clear value for a different type of attachment")
 		@Test
 		void invalid() {
 			assertThrows(IllegalArgumentException.class, () -> view.clear(DepthClearValue.DEFAULT));
 		}
 	}
 
+	@DisplayName("An image view can be destroyed")
 	@Test
 	void destroy() {
 		view.destroy();
@@ -81,7 +91,7 @@ public class ViewTest extends AbstractVulkanTest {
 		verifyNoMoreInteractions(lib);
 	}
 
-	@DisplayName("The underlying image is also destroyed by default")
+	@DisplayName("The underlying image of the view is destroyed by default")
 	@Test
 	void auto() {
 		view.setDestroyImage(false);

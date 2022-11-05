@@ -18,6 +18,7 @@ class ImageTest extends AbstractVulkanTest {
 		assertEquals(6, Image.CUBEMAP_ARRAY_LAYERS);
 	}
 
+	@DisplayName("An image descriptor...")
 	@Nested
 	class DescriptorTests {
 		private static final VkImageType TYPE = VkImageType.TWO_D;
@@ -43,33 +44,33 @@ class ImageTest extends AbstractVulkanTest {
 			assertEquals(3, descriptor.layerCount());
 		}
 
-		@DisplayName("An image must have at least one aspect")
+		@DisplayName("must have at least one aspect")
 		@Test
 		void emptyAspects() {
 			assertThrows(IllegalArgumentException.class, () -> new Descriptor(TYPE, FORMAT, EXTENTS, Set.of(), 1, 1));
 		}
 
-		@DisplayName("The image aspects must be a valid combination")
+		@DisplayName("must have a valid combination of image aspects")
 		@Test
 		void invalidAspects() {
 			final var aspects = Set.of(VkImageAspect.COLOR, VkImageAspect.DEPTH);
 			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(TYPE, FORMAT, EXTENTS, aspects, 1, 1));
 		}
 
-		@DisplayName("A 2D image must have a depth of one")
+		@DisplayName("for a 2D image must have a depth of one")
 		@Test
 		void invalidExtentsDepth() {
 			final Extents extents = new Extents(new Dimensions(2, 3), 4);
 			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(TYPE, FORMAT, extents, ASPECTS, 1, 1));
 		}
 
-		@DisplayName("A 1D image must have height and depth of one")
+		@DisplayName("for a 1D image must have height and depth of one")
 		@Test
 		void invalidExtentsHeightDepth() {
 			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.ONE_D, FORMAT, EXTENTS, ASPECTS, 1, 1));
 		}
 
-		@DisplayName("A 3D image can only contain a single array layer")
+		@DisplayName("for a 3D image can only contain a single array layer")
 		@Test
 		void invalidArrayLayers() {
 			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new Descriptor(VkImageType.THREE_D, FORMAT, EXTENTS, ASPECTS, 1, 2));

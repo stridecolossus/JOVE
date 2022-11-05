@@ -1,8 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.sarge.jove.util.TestHelper.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
@@ -19,16 +18,17 @@ public class VertexInputPipelineStageBuilderTest {
 		builder = new VertexInputPipelineStageBuilder();
 	}
 
+	@DisplayName("The vertex configuration can be empty")
 	@Test
-	void buildEmpty() {
+	void empty() {
 		final var descriptor = builder.get();
-		assertNotNull(descriptor);
 		assertEquals(0, descriptor.vertexBindingDescriptionCount);
 		assertEquals(0, descriptor.vertexAttributeDescriptionCount);
 		assertEquals(null, descriptor.pVertexBindingDescriptions);
 		assertEquals(null, descriptor.pVertexAttributeDescriptions);
 	}
 
+	@DisplayName("The vertex configuration can be explicitly constructed by a builder")
 	@Test
 	void build() {
 		// Build descriptor
@@ -46,78 +46,88 @@ public class VertexInputPipelineStageBuilderTest {
 
 		// Check descriptor
 		assertNotNull(descriptor);
-		assertEquals(0, descriptor.flags);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);
 		assertEquals(1, descriptor.vertexAttributeDescriptionCount);
 
 		// Check binding
 		final var binding = descriptor.pVertexBindingDescriptions;
-		assertNotNull(binding);
 		assertEquals(1, binding.binding);
 		assertEquals(2, binding.stride);
 		assertEquals(VkVertexInputRate.VERTEX, binding.inputRate);
 
 		// Check attribute
 		final var attr = descriptor.pVertexAttributeDescriptions;
-		assertNotNull(attr);
 		assertEquals(1, attr.binding);
 		assertEquals(3, attr.location);
 		assertEquals(1, attr.offset);
 		assertEquals(FORMAT, attr.format);
 	}
 
+	@DisplayName("The vertex configuration can be specified by a vertex layout")
 	@Test
-	void buildAddVertexLayout() {
+	void layout() {
 		final var layout = new Layout(Component.floats(1), Component.floats(2));
 		final var descriptor = builder.add(layout).get();
-		assertNotNull(descriptor);
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);
 		assertEquals(2, descriptor.vertexAttributeDescriptionCount);
 	}
 
-	@Test
-	void buildEmptyBinding() {
-		assertThrows(IllegalArgumentException.class, "No attributes specified", () -> builder.binding().build());
-	}
-
-	@Test
-	void bindingDuplicateIndex() {
-		builder
-				.binding()
-				.index(0)
-				.stride(STRIDE)
-				.attribute()
-					.format(FORMAT)
-					.build()
-				.build();
-
-		assertThrows(IllegalArgumentException.class, "Duplicate binding index", () -> builder.binding().index(0).build());
-	}
-
-	@Test
-	void attributeRequiresFormat() {
-		final var binding = builder.binding().stride(STRIDE);
-		assertThrows(IllegalArgumentException.class, "No format specified", () -> binding.attribute().build());
-	}
-
-	@Test
-	void attributeInvalidOffset() {
-		assertThrows(IllegalArgumentException.class, "Offset exceeds vertex stride", () -> builder.binding().attribute().offset(2).build());
-	}
-
-	@Test
-	void attributeDuplicateLocation() {
-		final var attribute = builder
-				.binding()
+	@DisplayName("A vertex binding...")
+	@Nested
+	class BindingTests {
+		@DisplayName("cannot duplicate the index of another binding")
+		@Test
+		void index() {
+			builder
+					.binding()
+					.index(0)
 					.stride(STRIDE)
 					.attribute()
-						.location(1)
 						.format(FORMAT)
 						.build()
-					.attribute()
-						.location(1)
-						.format(FORMAT);
+					.build();
 
-		assertThrows(IllegalArgumentException.class, "Duplicate location", () -> attribute.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.binding().index(0).build());
+		}
+
+		@DisplayName("implies at least one vertex attribute")
+		@Test
+		void bindings() {
+			assertThrows(IllegalArgumentException.class, () -> builder.binding().build());
+		}
+	}
+
+	@DisplayName("A vertex attribute...")
+	@Nested
+	class AttributeTests {
+		@DisplayName("must have a specified format")
+		@Test
+		void format() {
+			final var binding = builder.binding().stride(STRIDE);
+			assertThrows(IllegalArgumentException.class, () -> binding.attribute().build());
+		}
+
+		@DisplayName("cannot specify an offset larger than the vertex stride")
+		@Test
+		void offset() {
+			assertThrows(IllegalArgumentException.class, () -> builder.binding().attribute().offset(2).build());
+		}
+
+		@DisplayName("cannot duplicate the location of another attribute")
+		@Test
+		void location() {
+			final var attribute = builder
+					.binding()
+						.stride(STRIDE)
+						.attribute()
+							.location(1)
+							.format(FORMAT)
+							.build()
+						.attribute()
+							.location(1)
+							.format(FORMAT);
+
+			assertThrows(IllegalArgumentException.class, () -> attribute.build());
+		}
 	}
 }
