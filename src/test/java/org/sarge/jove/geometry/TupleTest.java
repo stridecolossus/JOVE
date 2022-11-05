@@ -55,12 +55,6 @@ public class TupleTest {
 		assertThrows(IndexOutOfBoundsException.class, () -> tuple.get(3));
 	}
 
-	@DisplayName("The dot product of a tuple is equivalent to the magnitude of a vector")
-	@Test
-	void dot() {
-		assertEquals(1 * 1 + 2 * 2 + 3 * 3, tuple.dot(tuple));
-	}
-
 	@DisplayName("A tuple has a length in bytes")
 	@Test
 	void length() {

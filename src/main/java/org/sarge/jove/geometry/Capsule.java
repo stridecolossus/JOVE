@@ -52,7 +52,8 @@ public class Capsule implements Volume {
 		final Point b = top.subtract(normal);
 		final Vector ab = Vector.between(a, b);
 
-		final float t = p.subtract(a).dot(ab) / ab.dot(ab);
+		final float t = Vector.between(a, p).dot(ab) / ab.dot(ab);
+//		p.subtract(a).dot(ab) / ab.dot(ab);
 		final Point n = a.add(ab.multiply(saturate(t)));
 
 		return n.distance(p) < radius * radius;

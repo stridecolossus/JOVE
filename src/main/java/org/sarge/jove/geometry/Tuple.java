@@ -62,34 +62,6 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 		};
 	}
 
-	/**
-	 * Calculates the <i>dot</i> product of two tuples.
-	 * <p>
-	 * The dot product is also known as the <i>inner</i> or <i>scalar</i> product.
-	 * <p>
-	 * The resultant value expresses the angular relationship between two vectors represented mathematically as:
-	 * <p>
-	 * <pre>A.B = |A| |B| cos(angle)</pre>
-	 * <p>
-	 * Some properties of the dot product:
-	 * <ul>
-	 * <li>zero if the vectors are orthogonal (i.e. perpendicular, or at right angles)</li>
-	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
-	 * <li>negative if the angle is greater than 90 degrees</li>
-	 * <li>commutative {@code a.b = b.a}</li>
-	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
-	 * <li>is the <i>magnitude</i> of a vector when applied to itself</li>
-	 * </ul>
-	 * <p>
-	 * @param that Tuple
-	 * @return Dot product
-	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
-	 */
-	public final float dot(Tuple that) {
-		return x * that.x + y * that.y + z * that.z;
-	}
-	// TODO - move to vector? => a couple of instances where dot() is used on points
-
 	@Override
 	public final int length() {
 		return SIZE * Float.BYTES;

@@ -49,9 +49,40 @@ public sealed class Vector extends Tuple permits Normal {
 
 	/**
 	 * @return Magnitude (or length) <b>squared</b> of this vector
+	 * @see #dot(Tuple)
 	 */
 	public float magnitude() {
 		return dot(this);
+	}
+
+	/**
+	 * Calculates the <i>dot</i> product of two vectors.
+	 * <p>
+	 * The dot product is also known as the <i>inner</i> or <i>scalar</i> vector product.
+	 * <p>
+	 * The resultant value expresses the angular relationship between two vectors represented mathematically as:
+	 * <p>
+	 * <pre>A.B = |A| |B| cos(angle)</pre>
+	 * <p>
+	 * Some properties of the dot product:
+	 * <ul>
+	 * <li>zero if the vectors are orthogonal (i.e. perpendicular, or at right angles)</li>
+	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
+	 * <li>negative if the angle is greater than 90 degrees</li>
+	 * <li>commutative {@code a.b = b.a}</li>
+	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
+	 * <li>is the <i>magnitude</i> of a vector when applied to itself</li>
+	 * </ul>
+	 * <p>
+	 * @param that Tuple
+	 * @return Dot product
+	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
+	 */
+	public final float dot(Tuple that) {
+		final float a = Math.fma(this.x, that.x, 0);
+		final float b = Math.fma(this.y, that.y, a);
+		final float c = Math.fma(this.z, that.z, b);
+		return c;
 	}
 
 	/**

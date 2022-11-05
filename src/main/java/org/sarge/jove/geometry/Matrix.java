@@ -154,7 +154,7 @@ public class Matrix implements Transform, Bufferable {
 
 		return result.build();
 	}
-	// TODO - vector API for multiply?
+	// TODO - vector API
 
 	@Override
 	public boolean equals(Object obj) {

@@ -94,9 +94,28 @@ class VectorTest {
 	@DisplayName("The dot product...")
 	@Nested
 	class DotProduct {
-		@DisplayName("of a vector with itself is equivalent to the length squared of the vector")
+		private Vector other;
+
+		@BeforeEach
+		void before() {
+			other = new Vector(2, 3, 4);
+		}
+
+		@DisplayName("is the scalar product of two vectors")
 		@Test
 		void dot() {
+			assertEquals(1 * 2 + 2 * 3 + 3 * 4, vec.dot(other));
+		}
+
+		@DisplayName("is commutative")
+		@Test
+		void commutative() {
+			assertEquals(vec.dot(other), other.dot(vec));
+		}
+
+		@DisplayName("of a vector with itself is equivalent to the length squared of the vector")
+		@Test
+		void magntude() {
 			assertEquals(vec.magnitude(), vec.dot(vec));
 		}
 

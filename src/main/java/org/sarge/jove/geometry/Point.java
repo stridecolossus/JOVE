@@ -49,13 +49,12 @@ public final class Point extends Tuple {
 	}
 
 	/**
-	 * Calculates the distance <b>squared</b> to the given point.
+	 * Calculates the distance <b>squared</b> between two points.
 	 * @param p Destination point
-	 * @return Distance <b>squared</b>
+	 * @return Distance <b>squared</b> to the given point
 	 */
 	public float distance(Point p) {
-		final Point vec = p.subtract(this);
-		return vec.dot(vec);
+		return Vector.between(this, p).magnitude();
 	}
 
 	/**

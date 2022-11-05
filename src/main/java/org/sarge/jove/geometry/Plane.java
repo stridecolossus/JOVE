@@ -71,7 +71,7 @@ public class Plane implements Intersected {
 	 * @return New plane
 	 */
 	public static Plane of(Normal n, Point p) {
-		final float d = -p.dot(n);
+		final float d = -n.dot(p);
 		return new Plane(n, d);
 	}
 
