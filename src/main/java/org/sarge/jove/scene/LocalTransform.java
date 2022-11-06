@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Matrix.Matrix4;
 
 /**
  * A <i>local transform</i> composes the world matrix of a node with its ancestors.

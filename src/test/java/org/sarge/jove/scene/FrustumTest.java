@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Matrix.Matrix4;
 import org.sarge.jove.util.MathsUtil;
 
 class FrustumTest {

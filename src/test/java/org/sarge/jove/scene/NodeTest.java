@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Matrix.Matrix4;
 import org.sarge.jove.scene.Node.Visitor;
 
 class NodeTest {

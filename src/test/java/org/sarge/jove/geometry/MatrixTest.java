@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Component;
-import org.sarge.jove.geometry.Matrix.*;
+import org.sarge.jove.geometry.Matrix.Builder;
+import org.sarge.jove.io.BufferHelper;
 
 class MatrixTest {
 	private static final int ORDER = 3;
@@ -24,7 +24,6 @@ class MatrixTest {
 			}
 		}
 		matrix = builder.build();
-		assertNotNull(matrix);
 	}
 
 	@DisplayName("A matrix has an order")
@@ -55,8 +54,8 @@ class MatrixTest {
 	@DisplayName("Out-of-bounds elements cannot be retrieved from a matrix")
 	@Test
 	void bounds() {
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> matrix.get(0, -1));
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> matrix.get(ORDER, 0));
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.get(0, -1));
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.get(ORDER, 0));
 	}
 
 	@DisplayName("A row of a matrix can be extracted by index")
@@ -75,14 +74,20 @@ class MatrixTest {
 		assertEquals(new Vector(3, 6, 9), matrix.column(2));
 	}
 
+	@DisplayName("A column of a matrix can be extracted by index")
+	@Test
+	void invalid() {
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.row(-1));
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.row(ORDER));
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.column(-1));
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.column(ORDER));
+	}
+
 	@DisplayName("A matrix can be transposed by swapping its rows and columns")
 	@Test
 	void transpose() {
-		// Transpose
 		final Matrix transpose = matrix.transpose();
 		assertEquals(ORDER, transpose.order());
-
-		// Check transposed matrix
 		int index = 1;
 		for(int r = 0; r < ORDER; ++r) {
 			for(int c = 0; c < ORDER; ++c) {
@@ -96,8 +101,15 @@ class MatrixTest {
 	@Test
 	void multiply() {
 		final Matrix result = matrix.multiply(matrix);
-		assertNotNull(result);
-		assertEquals(30, result.get(0, 0));
+		assertEquals(30,  result.get(0, 0));
+		assertEquals(66,  result.get(1, 0));
+		assertEquals(102, result.get(2, 0));
+		assertEquals(36,  result.get(0, 1));
+		assertEquals(81,  result.get(1, 1));
+		assertEquals(126, result.get(2, 1));
+		assertEquals(42,  result.get(0, 2));
+		assertEquals(96,  result.get(1, 2));
+		assertEquals(150, result.get(2, 2));
 	}
 
 	@DisplayName("A matrix cannot be multiplied by another matrix with a different order")
@@ -111,7 +123,7 @@ class MatrixTest {
 	void equals() {
 		assertEquals(matrix, matrix);
 		assertNotEquals(matrix, null);
-		assertNotEquals(matrix, Matrix4.IDENTITY);
+		assertNotEquals(matrix, new Matrix.Builder(ORDER).build());
 	}
 
 	@DisplayName("A matrix can be converted to a string")
@@ -128,7 +140,6 @@ class MatrixTest {
 		@BeforeEach
 		void before() {
 			identity = new Matrix.Builder(ORDER).identity().build();
-			assertNotNull(identity);
 		}
 
 		@DisplayName("has a populated diagonal")
@@ -166,45 +177,22 @@ class MatrixTest {
 	@DisplayName("A matrix can be written to an NIO buffer in column-major order")
 	@Test
 	void buffer() {
-		// Buffer matrix
 		final ByteBuffer buffer = ByteBuffer.allocate(ORDER * ORDER * Float.BYTES);
 		matrix.buffer(buffer);
-		assertEquals(0, buffer.remaining());
-
-		// Check matrix written in column-major order
-		buffer.rewind();
 		for(int r = 0; r < ORDER; ++r) {
 			for(int c = 0; c < ORDER; ++c) {
-				assertEquals(1 + r + c * ORDER, buffer.getFloat());
+				final float expected = r + c * ORDER;
+				assertEquals(expected + 1, buffer.getFloat());
 			}
 		}
 	}
 
-	@Nested
-	class TransformationMatrixTests {
-		@Test
-		void order() {
-			assertEquals(4, Matrix4.ORDER);
-		}
-
-		@Test
-		void layout() {
-			final int len = 4 * 4 * Float.BYTES;
-			assertEquals(Component.floats(4 * 4), Matrix4.LAYOUT);
-			assertEquals(len, Matrix4.LENGTH);
-		}
-
-		@Test
-		void translation() {
-			final Matrix expected = new Matrix.Builder().identity().column(3, Axis.X).build();
-			assertEquals(expected, Matrix4.translation(Axis.X));
-		}
-
-		@Test
-		void scale() {
-			final Matrix expected = new Matrix.Builder().identity().set(2, 2, 3).build();
-			assertEquals(expected, Matrix4.scale(1, 1, 3));
-		}
+	@DisplayName("A matrix can be written to a direct NIO buffer")
+	@Test
+	void direct() {
+		final ByteBuffer bb = BufferHelper.allocate(ORDER * ORDER * Float.BYTES);
+		matrix.buffer(bb);
+		assertEquals(0, bb.remaining());
 	}
 
 	@Nested
@@ -213,20 +201,43 @@ class MatrixTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Builder();
+			builder = new Builder(ORDER);
 		}
 
 		@Test
 		void build() {
 			final Matrix matrix = builder.build();
-			assertNotNull(matrix);
-			assertEquals(4, matrix.order());
+			assertEquals(ORDER, matrix.order());
+		}
+
+		@Test
+		void order() {
+			assertThrows(IllegalArgumentException.class, () -> new Builder(0).build());
+		}
+
+		@Test
+		void identity() {
+			matrix = builder.identity().build();
+			for(int r = 0; r < ORDER; ++r) {
+				for(int c = 0; c < ORDER; ++c) {
+					final float expected = r == c ? 1 : 0;
+					assertEquals(expected, matrix.get(r, c));
+				}
+			}
 		}
 
 		@Test
 		void set() {
 			matrix = builder.set(1, 2, 3).build();
 			assertEquals(3, matrix.get(1, 2));
+		}
+
+		@Test
+		void setBounds() {
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.set(-1, 0, 3));
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.set(0, -1, 3));
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.set(ORDER, 0, 3));
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.set(0, ORDER, 3));
 		}
 
 		@Test
@@ -238,6 +249,12 @@ class MatrixTest {
 		}
 
 		@Test
+		void rowBounds() {
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.row(-1, Axis.X));
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.row(ORDER, Axis.X));
+		}
+
+		@Test
 		void column() {
 			matrix = builder.column(1, new Vector(1, 2, 3)).build();
 			assertEquals(1, matrix.get(0, 1));
@@ -246,8 +263,9 @@ class MatrixTest {
 		}
 
 		@Test
-		void invalidOrder() {
-			assertThrows(IllegalArgumentException.class, () -> new Builder(0).build());
+		void columnBounds() {
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.column(-1, Axis.X));
+			assertThrows(IndexOutOfBoundsException.class, () -> builder.column(ORDER, Axis.X));
 		}
 	}
 }

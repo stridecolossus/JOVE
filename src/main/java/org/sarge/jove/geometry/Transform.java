@@ -2,8 +2,6 @@ package org.sarge.jove.geometry;
 
 import java.util.List;
 
-import org.sarge.jove.geometry.Matrix.Matrix4;
-
 /**
  * A <i>transform</i> generates a {@link Matrix} for a model transformation.
  * @author Sarge

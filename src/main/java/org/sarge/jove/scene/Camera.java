@@ -4,7 +4,6 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Matrix.Matrix4;
 
 /**
  * A <i>camera</i> is a model of the viewers position and orientation, used to generate the <i>view transform</i> matrix.

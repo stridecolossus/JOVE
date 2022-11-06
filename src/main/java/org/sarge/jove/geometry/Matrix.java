@@ -3,8 +3,10 @@ package org.sarge.jove.geometry;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.sarge.jove.common.*;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>matrix</i> is a 2-dimensional floating-point array used for geometry transformation and projection.
@@ -16,43 +18,43 @@ import org.sarge.jove.util.MathsUtil;
  * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> as expected by Vulkan</li>
  * </ul>
  * <p>
- * A {@link Matrix4} with the following structure is used for view and perspective transformation:
- * <p>
- * <table border=0>
- * <tr><td>Rx</td><td>Ry</td><td>Rz</td><td>Tx</td></tr>
- * <tr><td>Yx</td><td>Yy</td><td>Yz</td><td>Ty</td></tr>
- * <tr><td>Dx</td><td>Dy</td><td>Dz</td><td>Tz</td></tr>
- * <tr><td>0</td><td>0</td><td>0</td><td>1</td></tr>
- * </table>
- * <p>
- * Where:
- * <ul>
- * <li>The top-left 3x3 component of the matrix is the view rotation and the right-hand column is the transformation</li>
- * <li>In camera terms R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i></li>
- * <li>T is the view transformation (or eye position)</li>
- * </ul>
- * Note that both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).
- * <p>
  * @author Sarge
  */
-public class Matrix implements Transform, Bufferable {
-	private final float[][] matrix;
+public abstract class Matrix implements Transform, Bufferable {
+	/**
+	 * Creates a new matrix of the given order.
+	 * @param order Matrix order
+	 * @return New matrix
+	 */
+	private static Matrix create(int order) {
+		if(order == Matrix4.ORDER) {
+			return new Matrix4();
+		}
+		else {
+			return new Matrix(order) {
+				@Override
+				public int order() {
+					return order;
+				}
+			};
+		}
+	}
+
+	private final float[] matrix;
 
 	/**
 	 * Constructor.
-	 * @param matrix Matrix
+	 * @param order Matrix order
 	 */
-	private Matrix(float[][] matrix) {
-		if(matrix.length == 0) throw new IllegalArgumentException();
-		this.matrix = matrix;
+	protected Matrix(int order) {
+		Check.oneOrMore(order);
+		this.matrix = new float[order * order];
 	}
 
 	/**
 	 * @return Order (or size) of this matrix
 	 */
-	public int order() {
-		return matrix.length;
-	}
+	public abstract int order();
 
 	@Override
 	public final Matrix matrix() {
@@ -61,25 +63,45 @@ public class Matrix implements Transform, Bufferable {
 
 	/**
 	 * Retrieves a matrix element.
-	 * @param row Matrix row
+	 * @param row Row
 	 * @param col Column
 	 * @return Matrix element
-	 * @throws ArrayIndexOutOfBoundsException if the row or column are out-of-bounds
+	 * @throws IndexOutOfBoundsException if {@link #row} or {@link #col} are out-of-bounds
 	 */
-	public float get(int row, int col) {
-		return matrix[row][col];
+	public float get(int row, int col) throws IndexOutOfBoundsException {
+		check(row);
+		check(col);
+		return getLocal(row, col);
+	}
+
+	private void check(int index) {
+		if((index < 0) || (index >= order())) throw new IndexOutOfBoundsException(index);
+	}
+
+	private float getLocal(int row, int col) {
+		final int index = index(row, col);
+		return matrix[index];
+	}
+
+	/**
+	 * @return Matrix index for the given matrix element
+	 */
+	protected int index(int row, int col) {
+		return row + col * order();
 	}
 
 	/**
 	 * Extracts a matrix row as a vector.
 	 * @param row Row index
 	 * @return Matrix row
-	 * @throws ArrayIndexOutOfBoundsException if the row index is invalid or the matrix is too small
+	 * @throws IndexOutOfBoundsException if the row index is invalid or the matrix is too small
 	 */
-	public Vector row(int row) {
-		final float x = matrix[row][0];
-		final float y = matrix[row][1];
-		final float z = matrix[row][2];
+	public Vector row(int row) throws IndexOutOfBoundsException {
+		check(row);
+		final int order = order();
+		final float x = matrix[row];
+		final float y = matrix[row + order];
+		final float z = matrix[row + 2 * order];
 		return new Vector(x, y, z);
 	}
 
@@ -87,28 +109,33 @@ public class Matrix implements Transform, Bufferable {
 	 * Extracts a matrix column as a vector.
 	 * @param col Column index
 	 * @return Matrix column
-	 * @throws ArrayIndexOutOfBoundsException if the column index is invalid or the matrix is too small
+	 * @throws IndexOutOfBoundsException if the column index is invalid or the matrix is too small
 	 */
-	public Vector column(int col) {
-		final float x = matrix[0][col];
-		final float y = matrix[1][col];
-		final float z = matrix[2][col];
+	public Vector column(int col) throws IndexOutOfBoundsException {
+		check(col);
+		final int order = order();
+		final int index = col * order;
+		final float x = matrix[index];
+		final float y = matrix[index + 1];
+		final float z = matrix[index + 2];
 		return new Vector(x, y, z);
 	}
 
 	@Override
 	public void buffer(ByteBuffer buffer) {
-		final int order = order();
-		for(int r = 0; r < order; ++r) {
-			for(int c = 0; c < order; ++c) {
-				buffer.putFloat(matrix[c][r]);
+		if(buffer.isDirect()) {
+			for(float f : matrix) {
+				buffer.putFloat(f);
 			}
+		}
+		else {
+			buffer.asFloatBuffer().put(matrix);
 		}
 	}
 
 	@Override
 	public int length() {
-		return matrix.length * matrix.length * Float.BYTES;
+		return matrix.length * Float.BYTES;
 	}
 
 	/**
@@ -116,14 +143,17 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix transpose() {
 		final int order = order();
-		final var trans = new Matrix.Builder(order);
+		final Matrix transpose = create(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				trans.set(r, c, matrix[c][r]);
+				final int a = index(r, c);
+				final int b = index(c, r);
+				transpose.matrix[a] = this.matrix[b];
 			}
 		}
-		return trans.build();
+		return transpose;
 	}
+	// TODO - vector API shuffle?
 
 	/**
 	 * Multiplies two matrices together.
@@ -141,18 +171,19 @@ public class Matrix implements Transform, Bufferable {
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different orders");
 
 		// Multiply matrices
-		final var result = new Matrix.Builder(order);
-		for(int r = 0; r < order; ++r) {
-			for(int c = 0; c < order; ++c) {
+		final Matrix result = create(order);
+		int index = 0;
+		for(int c = 0; c < order; ++c) {
+			for(int r = 0; r < order; ++r) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
-					total += this.matrix[r][n] * m.matrix[n][c];
+					total = Math.fma(this.getLocal(r, n), m.getLocal(n, c), total);
 				}
-				result.set(r, c, total);
+				result.matrix[index++] = total;
 			}
 		}
 
-		return result.build();
+		return result;
 	}
 	// TODO - vector API
 
@@ -162,17 +193,7 @@ public class Matrix implements Transform, Bufferable {
 				(obj == this) ||
 				(obj instanceof Matrix that) &&
 				(this.order() == that.order()) &&
-				equals(that);
-	}
-
-	private boolean equals(Matrix that) {
-		final int order = this.order();
-		for(int r = 0; r < order; ++r) {
-			if(!MathsUtil.isEqual(this.matrix[r], that.matrix[r])) {
-				return false;
-			}
-		}
-		return true;
+				MathsUtil.isEqual(this.matrix, that.matrix);
 	}
 
 	/**
@@ -183,93 +204,23 @@ public class Matrix implements Transform, Bufferable {
 		final int order = this.order();
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				sb.append(String.format("%10.5f ", matrix[r][c]));
+				sb.append(String.format("%10.5f ", getLocal(r, c)));
 			}
 			sb.append(StringUtils.LF);
 		}
 		return sb.toString();
 	}
 
-	/**
-	 * Standard 4x4 matrix used for transformation and projection.
-	 * This class provides convenience constants and helper methods for common transformations.
-	 */
-	public static class Matrix4 extends Matrix {
-		/**
-		 * Order of a 4x4 matrix.
-		 */
-		public static final int ORDER = 4;
-
-		/**
-		 * 4x4 identity matrix.
-		 */
-		public static final Matrix IDENTITY = new Matrix.Builder().identity().build();
-
-		/**
-		 * Layout of a 4x4 matrix.
-		 */
-		public static final Component LAYOUT = Component.floats(ORDER * ORDER);
-
-		/**
-		 * Length of a 4x4 matrix (bytes)
-		 */
-		public static final int LENGTH = LAYOUT.stride();
-
-		/**
-		 * Creates a 4x4 translation matrix by populating the top-right column of the matrix.
-		 * @param vec Translation vector
-		 * @return Translation matrix
-		 */
-		public static Matrix translation(Tuple vec) {
-			return new Builder()
-					.identity()
-					.column(3, vec)
-					.build();
-		}
-
-		/**
-		 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix.
-		 * @return Scaling matrix
-		 */
-		public static Matrix scale(float x, float y, float z) {
-			return new Builder()
-					.set(0, 0, x)
-					.set(1, 1, y)
-					.set(2, 2, z)
-					.set(3, 3, 1)
-					.build();
-		}
-
-		Matrix4(float[][] matrix) {
-			super(matrix);
-		}
-
-		@Override
-		public int order() {
-			return ORDER;
-		}
-
-		@Override
-		public int length() {
-			return LENGTH;
-		}
-
-		@Override
-		public String toString() {
-			if(this == IDENTITY) {
-				return "IDENTITY";
-			}
-			else {
-				return super.toString();
-			}
-		}
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("order", order()).build();
 	}
 
 	/**
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private float[][] matrix;
+		private Matrix matrix;
 
 		/**
 		 * Default constructor for a {@link Matrix4}.
@@ -284,14 +235,15 @@ public class Matrix implements Transform, Bufferable {
 		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
 		public Builder(int order) {
-			matrix = new float[order][order];
+			this.matrix = create(order);
 		}
 
 		/**
-		 * Initialises this matrix to identity.
+		 * Initialises to the identity matrix.
 		 */
 		public Builder identity() {
-			for(int n = 0; n < matrix.length; ++n) {
+			final int order = matrix.order();
+			for(int n = 0; n < order; ++n) {
 				set(n, n, 1);
 			}
 			return this;
@@ -302,10 +254,13 @@ public class Matrix implements Transform, Bufferable {
 		 * @param row 		Row
 		 * @param col		Column
 		 * @param value		Matrix element
-		 * @throws ArrayIndexOutOfBoundsException if the row or column is out-of-bounds
+		 * @throws IndexOutOfBoundsException if {@link #row} or {@link #col} is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			matrix[row][col] = value;
+			matrix.check(row);
+			matrix.check(col);
+			final int index = matrix.index(row, col);
+			matrix.matrix[index] = value;
 			return this;
 		}
 
@@ -313,7 +268,7 @@ public class Matrix implements Transform, Bufferable {
 		 * Sets a matrix row to the given vector.
 		 * @param row		Row index
 		 * @param vec 		Vector
-		 * @throws ArrayIndexOutOfBoundsException if the row is out-of-bounds
+		 * @throws IndexOutOfBoundsException if {@link #row} is out-of-bounds
 		 */
 		public Builder row(int row, Tuple vec) {
 			set(row, 0, vec.x);
@@ -326,7 +281,7 @@ public class Matrix implements Transform, Bufferable {
 		 * Sets a matrix column to the given vector.
 		 * @param col 		Column index
 		 * @param vec		Vector
-		 * @throws ArrayIndexOutOfBoundsException if the column is out-of-bounds
+		 * @throws IndexOutOfBoundsException if {@link #col} is out-of-bounds
 		 */
 		public Builder column(int col, Tuple vec) {
 			set(0, col, vec.x);
@@ -341,12 +296,7 @@ public class Matrix implements Transform, Bufferable {
 		 */
 		public Matrix build() {
 			try {
-				if(matrix.length == Matrix4.ORDER) {
-					return new Matrix4(matrix);
-				}
-				else {
-					return new Matrix(matrix);
-				}
+				return matrix;
 			}
 			finally {
 				matrix = null;
