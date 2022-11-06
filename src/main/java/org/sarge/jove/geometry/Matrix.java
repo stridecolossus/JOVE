@@ -138,28 +138,69 @@ public abstract class Matrix implements Transform, Bufferable {
 		return matrix.length * Float.BYTES;
 	}
 
+// import jdk.incubator.vector.*;
+// https://jbaker.io/2022/06/09/vectors-in-java/
+//
+//	private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
+//
+//	/**
+//	 * @return Transpose of this matrix
+//	 */
+//	public Matrix transpose() {
+//		// TODO - cache by order? or factory and override for Matrix4?
+//		final int order = this.order();
+//		final Matrix transpose = create(order);
+//
+//		final int[] index = transpose(order);
+//
+//		final int bound = SPECIES.loopBound(matrix.length);
+//		int n = 0;
+//		for(; n < bound; n += SPECIES.length()) {
+//			final VectorShuffle<Float> shuffle = VectorShuffle.fromArray(SPECIES, index, n);
+//			final FloatVector vec = FloatVector.fromArray(SPECIES, this.matrix, n);
+//			vec.rearrange(shuffle).intoArray(transpose.matrix, n);
+//		}
+//
+//		for(; n < matrix.length; ++n) {
+//			transpose.matrix[n] = this.matrix[index[n]];
+//		}
+//
+//		return transpose;
+//	}
+
 	/**
 	 * @return Transpose of this matrix
 	 */
 	public Matrix transpose() {
-		final int order = order();
+		final int order = this.order();
+		final int[] index = transpose(order);
 		final Matrix transpose = create(order);
+		for(int n = 0; n < matrix.length; ++n) {
+			transpose.matrix[n] = this.matrix[index[n]];
+		}
+		return transpose;
+	}
+
+	/**
+	 * Builds the transpose index for this matrix.
+	 */
+	private int[] transpose(int order) {
+		final int[] transpose = new int[order * order];
+		int index = 0;
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				final int a = index(r, c);
-				final int b = index(c, r);
-				transpose.matrix[a] = this.matrix[b];
+				transpose[index++] = index(r, c);
 			}
 		}
 		return transpose;
 	}
-	// TODO - vector API shuffle?
 
 	/**
 	 * Multiplies two matrices together.
 	 * <p>
-	 * Note that matrix multiplication is <b>non-commutative</b>.
 	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A * B</code> applies B then A.
+	 * <p>
+	 * Note that matrix multiplication is <b>non-commutative</b>.
 	 * <p>
 	 * @param m Matrix
 	 * @return New matrix
@@ -185,7 +226,8 @@ public abstract class Matrix implements Transform, Bufferable {
 
 		return result;
 	}
-	// TODO - vector API
+	// TODO - works but could be much more efficient when calculating array indices?
+	// TODO - JDK19 vector API
 
 	@Override
 	public boolean equals(Object obj) {

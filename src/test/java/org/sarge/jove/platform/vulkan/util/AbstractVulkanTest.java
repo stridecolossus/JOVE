@@ -28,7 +28,7 @@ public abstract class AbstractVulkanTest {
 	protected AllocationService allocator;
 
 	@BeforeEach
-	private final void beforeVulkanTest() {
+	final void beforeVulkanTest() {
 		// Create API
 		lib = mock(VulkanLibrary.class);
 
