@@ -84,6 +84,7 @@ public interface Interpolator extends FloatUnaryOperator {
 	 * @return Interpolated value
 	 */
 	static float lerp(float t, float start, float end) {
+		// TODO - Math.fma(end - start, t, start);
 		return start + (end - start) * t;
 	}
 
@@ -116,6 +117,7 @@ public interface Interpolator extends FloatUnaryOperator {
 	 * @return Mix interpolator
 	 */
 	static Interpolator mix(Interpolator start, Interpolator end, float weight) {
+		// TODO - Math.fma()
 		return t -> (1 - weight) * start.apply(t) + weight * end.apply(t);
 	}
 

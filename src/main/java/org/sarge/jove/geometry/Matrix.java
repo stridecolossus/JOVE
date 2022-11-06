@@ -180,6 +180,7 @@ public abstract class Matrix implements Transform, Bufferable {
 		}
 		return transpose;
 	}
+	// TODO - cache transpose index by order?
 
 	/**
 	 * Builds the transpose index for this matrix.
@@ -196,14 +197,14 @@ public abstract class Matrix implements Transform, Bufferable {
 	}
 
 	/**
-	 * Multiplies two matrices together.
+	 * Multiplies this and the given matrix.
 	 * <p>
 	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A * B</code> applies B then A.
 	 * <p>
 	 * Note that matrix multiplication is <b>non-commutative</b>.
 	 * <p>
 	 * @param m Matrix
-	 * @return New matrix
+	 * @return Multiplied matrix
 	 * @throws IllegalArgumentException if the given matrix is not of the same order as this matrix
 	 */
 	public Matrix multiply(Matrix m) {

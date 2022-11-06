@@ -52,6 +52,7 @@ class Disc {
 		final Vector vec = new Vector(point());
 		return normal.add(vec).normalize();
 	}
+	// TODO - normal?
 
 	/**
 	 * Generates a random vector on the given local axis.
@@ -62,6 +63,7 @@ class Disc {
 		final float r = radius.apply(randomiser.next());
 		return axis.multiply(r);
 	}
+	// TODO - normal?
 
 	/**
 	 * Loads a disc from the given element.

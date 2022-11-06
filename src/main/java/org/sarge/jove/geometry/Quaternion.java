@@ -50,6 +50,7 @@ public final class Quaternion implements Rotation {
 	 * @return Magnitude <b>squared</b> of this quaternion
 	 */
 	public float magnitude() {
+		// TODO - fma
 		return w * w + x * x + y * y + z * z;
 	}
 
@@ -135,7 +136,6 @@ public final class Quaternion implements Rotation {
 		final float zw = z * w;
 
 		return new Matrix.Builder()
-			.identity()
 			.set(0, 0, 1 - 2 * (yy + zz))
 			.set(1, 0, 2 * (xy + zw))
 			.set(2, 0, 2 * (xz - yw))
@@ -145,6 +145,7 @@ public final class Quaternion implements Rotation {
 			.set(0, 2, 2 * (xz + yw))
 			.set(1, 2, 2 * (yz - xw))
 			.set(2, 2, 1 - 2 * (xx + yy))
+			.set(3, 3, 1)
 			.build();
 	}
 

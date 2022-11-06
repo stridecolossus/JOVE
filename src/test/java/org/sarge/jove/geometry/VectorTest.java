@@ -219,7 +219,7 @@ class VectorTest {
 		@DisplayName("itself is the inverse of that vector")
 		@Test
 		void self() {
-			assertEquals(vec.invert(), vec.reflect(vec));
+			assertEquals(vec.invert(), vec.reflect(new Normal(vec)));
 		}
 	}
 

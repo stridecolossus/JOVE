@@ -18,10 +18,9 @@ import org.sarge.jove.common.Component;
  * <p>
  * Where:
  * <ul>
- * <li>The top-left 3x3 component of the matrix is the view rotation</li>
- * <li>The right-hand column is the transformation</li>
+ * <li>The top-left 3x3 component of the matrix is the view orientation</li>
  * <li>R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i> (in camera terms)</li>
- * <li>T is the view transformation (or eye position)</li>
+ * <li>The right-hand column T is the view translation (or eye position)</li>
  * </ul>
  * Note that both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).
  * <p>

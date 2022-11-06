@@ -32,7 +32,7 @@ public class CameraController {
 
 	/**
 	 * Updates the camera for the given view coordinates.
-	 * @see #update(Vector)
+	 * @see #update(Normal)
 	 */
 	public void update(float x, float y) {
 		// TODO - prepare inverse and multiply, move to helper?

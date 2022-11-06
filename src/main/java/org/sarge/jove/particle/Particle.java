@@ -126,7 +126,7 @@ public class Particle implements Ray {
 	 * @param pos		Intersection point
 	 * @param normal	Surface normal at this intersection
 	 */
-	public void reflect(Point pos, Vector normal) {
+	public void reflect(Point pos, Normal normal) {
 		this.pos = notNull(pos);
 		this.dir = dir.reflect(normal);
 	}

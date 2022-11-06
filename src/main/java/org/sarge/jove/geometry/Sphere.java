@@ -39,6 +39,7 @@ public record Sphere(Point centre, float radius) {
 		// Swizzle the coordinates to default space
 		return new Vector(x, z, y);
 	}
+	// TODO - is a normal?
 
 	@Override
 	public boolean equals(Object obj) {

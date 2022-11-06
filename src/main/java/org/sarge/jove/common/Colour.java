@@ -100,6 +100,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		};
 	}
 	// TODO - move to separate class + loader?  see particle system loader
+	// TODO - JDK19 vector API
 
 	@Override
 	public int length() {

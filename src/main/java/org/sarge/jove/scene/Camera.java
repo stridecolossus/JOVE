@@ -66,7 +66,7 @@ public class Camera {
 	/**
 	 * @return Camera view direction
 	 */
-	public Vector direction() {
+	public Normal direction() {
 		return dir;
 	}
 

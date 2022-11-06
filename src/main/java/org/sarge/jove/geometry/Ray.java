@@ -30,6 +30,8 @@ public interface Ray {
 
 	/**
 	 * Default implementation.
+	 * <p>
+	 * Note that this implementation does <b>not</b> constrain the ray direction to be a {@link Normal}.
 	 */
 	record DefaultRay(Point origin, Vector direction) implements Ray {
 		/**
@@ -42,7 +44,6 @@ public interface Ray {
 			Check.notNull(direction);
 		}
 	}
-	// TODO - should be normal
 
 	/**
 	 * Defines a surface that can be tested for intersections with a ray.

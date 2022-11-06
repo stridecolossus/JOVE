@@ -117,6 +117,7 @@ public class CubeBuilder {
 	 */
 	protected Vertex vertex(Point pos, Vector normal, Coordinate coord, Colour col) {
 		// TODO - vertex layout filter
+		// TODO - normal class
 		return Vertex.of(pos, coord);
 	}
 }

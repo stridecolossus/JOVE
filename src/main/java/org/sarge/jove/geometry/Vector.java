@@ -218,10 +218,9 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Reflected vector
 	 * @see <a href="http://www.3dkingdoms.com/weekly/weekly.php?a=2">Reflection</a>
 	 */
-	public Vector reflect(Vector normal) {
-		final Vector n = normal.normalize();
-		final float f = -2f * dot(n);
-		return n.multiply(f).add(this);
+	public Vector reflect(Normal normal) {
+		final float f = -2f * dot(normal);
+		return normal.multiply(f).add(this);
 	}
 
 	@Override
