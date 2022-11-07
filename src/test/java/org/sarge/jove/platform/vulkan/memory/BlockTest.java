@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 
 public class BlockTest {
 	private Block block;

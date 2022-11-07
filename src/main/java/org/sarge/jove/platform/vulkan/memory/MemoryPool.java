@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 
 /**
  * A <i>memory pool</i> is comprised of a number of <i>blocks</i> from which device memory is allocated.

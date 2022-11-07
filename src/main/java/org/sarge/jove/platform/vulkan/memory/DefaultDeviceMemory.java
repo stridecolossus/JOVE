@@ -34,6 +34,10 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 		this.size = oneOrMore(size);
 	}
 
+	protected DefaultDeviceMemory(DefaultDeviceMemory mem) {
+		this(mem.handle, mem.device(), mem.size);
+	}
+
 	@Override
 	public long size() {
 		return size;
@@ -112,13 +116,6 @@ class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
 					.append("size", segment)
 					.build();
 		}
-	}
-
-	/**
-	 * @return Whether this memory can be mapped
-	 */
-	private boolean isHostVisible() {
-		return this instanceof HostVisible;
 	}
 
 	@Override

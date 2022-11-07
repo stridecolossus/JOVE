@@ -8,19 +8,18 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory.Region;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 	private static final int SIZE = 3;
 
-	private DeviceMemory mem;
+	private DefaultDeviceMemory mem;
 	private Handle handle;
 
 	@BeforeEach
 	void before() {
 		handle = new Handle(1);
-		mem = new HostVisibleDeviceMemory(handle, dev, SIZE);
+		mem = new DefaultDeviceMemory(handle, dev, SIZE);
 	}
 
 	@Test
@@ -56,8 +55,13 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		@DisplayName("cannot be mapped if it is not host visible")
 		@Test
 		void visible() {
-			mem = new DefaultDeviceMemory(handle, dev, SIZE);
-			assertThrows(IllegalStateException.class, () -> mem.map());
+			final DeviceMemory invalid = new DefaultDeviceMemory(mem) {
+				@Override
+				public boolean isHostVisible() {
+					return false;
+				}
+			};
+			assertThrows(IllegalStateException.class, () -> invalid.map());
 		}
 
 		@DisplayName("cannot map a region larger than the memory")

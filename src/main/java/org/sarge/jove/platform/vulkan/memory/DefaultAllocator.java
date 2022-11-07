@@ -38,11 +38,17 @@ public class DefaultAllocator implements Allocator {
 		check(lib.vkAllocateMemory(dev, info, null, ref));
 
 		// Create memory wrapper
+		final DefaultDeviceMemory mem = new DefaultDeviceMemory(new Handle(ref), dev, size);
 		if(type.isHostVisible()) {
-			return new HostVisibleDeviceMemory(new Handle(ref), dev, size);
+			return mem;
 		}
 		else {
-			return new DefaultDeviceMemory(new Handle(ref), dev, size);
+			return new DefaultDeviceMemory(mem) {
+				@Override
+				public boolean isHostVisible() {
+					return false;
+				}
+			};
 		}
 	}
 }
