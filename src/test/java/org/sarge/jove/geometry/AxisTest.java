@@ -21,6 +21,45 @@ public class AxisTest {
 		assertEquals(new Vector(0, 0, -1), Z.invert());
 	}
 
+	// TODO - parameterized
+	@Test
+	void orthogonal() {
+		assertEquals(1, X.dot(X));
+		assertEquals(1, Y.dot(Y));
+		assertEquals(1, Z.dot(Z));
+	}
+
+	@Test
+	void dot() {
+		assertEquals(0, X.dot(Y));
+		assertEquals(0, X.dot(Z));
+		assertEquals(0, Y.dot(Z));
+	}
+
+	// TODO - parameterized
+	@Test
+	void dot2() {
+		final Vector vec = new Vector(3, 4, 5);
+		final float expected = new Vector(1, 0, 0).dot(vec);
+		assertEquals(expected, X.dot(vec));
+		assertEquals(expected, vec.dot(X));
+	}
+
+	@Test
+	void cross() {
+		assertEquals(Z, X.cross(Y));
+		assertEquals(Y, Z.cross(X));
+		assertEquals(X, Y.cross(Z));
+	}
+
+	// TODO - parameterized
+	@Test
+	void cross2() {
+		final Vector vec = new Vector(3, 4, 5);
+		final Vector expected = new Vector(1, 0, 0).cross(vec);
+		assertEquals(expected, X.cross(vec));
+	}
+
 	@DisplayName("The axis corresponding to the minimal component of a vector can be determined")
 	@Test
 	void minimal() {
