@@ -60,14 +60,20 @@ public class SphereVolume implements Volume {
 
 	@Override
 	public boolean intersects(Volume vol) {
-		if(vol instanceof SphereVolume that) {
-			final Point centre = that.sphere.centre();
-			final float r = this.radius() + that.radius();
-			return contains(centre, r);
-		}
-		else {
-			return vol.intersects(this);
-		}
+		return switch(vol) {
+			case SphereVolume sphere -> intersects(sphere);
+			case BoundingBox box -> intersects(box.bounds());
+			default -> vol.intersects(this);
+		};
+	}
+
+	/**
+	 * @return Whether two sphere volumes intersect
+	 */
+	private boolean intersects(SphereVolume that) {
+		final Point centre = that.sphere.centre();
+		final float r = this.radius() + that.radius();
+		return contains(centre, r);
 	}
 
 	/**

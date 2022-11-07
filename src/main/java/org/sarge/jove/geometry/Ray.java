@@ -80,7 +80,7 @@ public interface Ray {
 	 * Point nearest = intersection.nearest(ray);
 	 *
 	 * // Determine the surface normal at the intersection
-	 * Vector normal = intersection.normal(p);
+	 * Normal normal = intersection.normal(p);
 	 * <p>
 	 */
 	interface Intersection {

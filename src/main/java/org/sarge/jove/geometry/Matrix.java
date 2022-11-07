@@ -1,6 +1,8 @@
 package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -168,22 +170,23 @@ public abstract class Matrix implements Transform, Bufferable {
 //		return transpose;
 //	}
 
+	private static final Map<Integer, int[]> TRANSPOSE = new ConcurrentHashMap<>();
+
 	/**
 	 * @return Transpose of this matrix
 	 */
 	public Matrix transpose() {
 		final int order = this.order();
-		final int[] index = transpose(order);
+		final int[] index = TRANSPOSE.computeIfAbsent(order, this::transpose);
 		final Matrix transpose = create(order);
 		for(int n = 0; n < matrix.length; ++n) {
 			transpose.matrix[n] = this.matrix[index[n]];
 		}
 		return transpose;
 	}
-	// TODO - cache transpose index by order?
 
 	/**
-	 * Builds the transpose index for this matrix.
+	 * Builds the transpose index for a matrix of the given order.
 	 */
 	private int[] transpose(int order) {
 		final int[] transpose = new int[order * order];

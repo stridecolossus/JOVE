@@ -50,8 +50,12 @@ public final class Quaternion implements Rotation {
 	 * @return Magnitude <b>squared</b> of this quaternion
 	 */
 	public float magnitude() {
-		// TODO - fma
-		return w * w + x * x + y * y + z * z;
+		float mag = 0;
+		mag = Math.fma(w, w, mag);
+		mag = Math.fma(x, x, mag);
+		mag = Math.fma(y, y, mag);
+		mag = Math.fma(z, z, mag);
+		return mag;
 	}
 
 	/**
@@ -112,6 +116,7 @@ public final class Quaternion implements Rotation {
 			w * q.z + z * q.w + x * q.y - y * q.x
 		);
 	}
+	// TODO - JDK19 vector API
 
 	@Override
 	public Vector rotate(Vector vec) {

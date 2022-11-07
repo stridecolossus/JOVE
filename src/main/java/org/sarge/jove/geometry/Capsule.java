@@ -73,7 +73,7 @@ public class Capsule implements Volume {
 			return false; // TOOD
 		}
 		else {
-			return Volume.super.intersects(this);
+			return vol.intersects(this);
 		}
 	}
 

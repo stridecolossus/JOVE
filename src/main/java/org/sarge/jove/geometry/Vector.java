@@ -177,6 +177,7 @@ public sealed class Vector extends Tuple permits Normal {
 		final float z = this.x * vec.y - this.y * vec.x;
 		return new Vector(x, y, z);
 	}
+	// TODO - JDK vector API
 
 	/**
 	 * Determines the nearest point on this vector to the given point.
