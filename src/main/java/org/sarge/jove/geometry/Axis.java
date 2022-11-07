@@ -89,30 +89,25 @@ public final class Axis extends Normal {
 		return inv;
 	}
 
-//	@Override
-//	public float dot(Tuple that) {
-//		return this.get(index) * that.get(index);
-//	}
-//
-//	@Override
-//	public float dot(Tuple that) {
-//		return switch(index) {
-//    		case 0 -> x * that.x;
-//    		case 1 -> y * that.y;
-//    		case 2 -> z * that.z;
-//    		default -> throw new RuntimeException();
-//		};
-//	}
-//
-//	@Override
-//	public Vector cross(Vector vec) {
-//		return switch(index) {
-//    		case 0 -> new Vector(0, -vec.z, vec.y);
-//    		case 1 -> new Vector(+vec.z, 0, -vec.x);
-//    		case 2 -> new Vector(-vec.y, +vec.x, 0);
-//    		default -> throw new RuntimeException();
-//    	};
-//	}
+	@Override
+	public float dot(Tuple that) {
+		return switch(index) {
+    		case 0 -> x * that.x;
+    		case 1 -> y * that.y;
+    		case 2 -> z * that.z;
+    		default -> throw new RuntimeException();
+		};
+	}
+
+	@Override
+	public Vector cross(Vector vec) {
+		return switch(index) {
+    		case 0 -> new Vector(0, -vec.z, vec.y);
+    		case 1 -> new Vector(+vec.z, 0, -vec.x);
+    		case 2 -> new Vector(-vec.y, +vec.x, 0);
+    		default -> throw new RuntimeException();
+    	};
+	}
 
 	/**
 	 * Creates a counter-clockwise rotation matrix about this axis.

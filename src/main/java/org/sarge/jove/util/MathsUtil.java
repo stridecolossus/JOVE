@@ -50,8 +50,6 @@ public final class MathsUtil {
 	/**
 	 * Tests whether two floating-point values are approximately equal.
 	 * TODO - infinity
-	 * @param a
-	 * @param b
 	 * @return Whether the given values are approximately equal
 	 */
 	public static boolean isEqual(float a, float b) {
@@ -65,8 +63,6 @@ public final class MathsUtil {
 
 	/**
 	 * Tests whether two floating-point arrays are approximately equal.
-	 * @param a
-	 * @param b
 	 * @return Whether the given floating-point arrays are approximately equal
 	 * @throws NullPointerException if either array is {@code null}
 	 */

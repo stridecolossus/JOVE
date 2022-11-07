@@ -47,6 +47,9 @@ public interface FloatTable extends FloatUnaryOperator {
 //		};
 //	}
 
+//	https://github.com/AlessandroBorges/IDX3D/blob/idx3d_Java6/source/idx3d/tests/Math2.java
+// https://stackoverflow.com/questions/13460693/using-sincos-in-java
+
 	static FloatTable cos() {
 
 		final FloatUnaryOperator cos = angle -> {

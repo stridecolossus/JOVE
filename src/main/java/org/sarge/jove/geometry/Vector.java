@@ -78,18 +78,12 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Dot product
 	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
 	 */
-	public final float dot(Tuple that) {
-//		if(that instanceof Axis axis) {
-//			return axis.dot(this);
-//		}
-		float dot = 0;
-		dot = Math.fma(this.x, that.x, dot);
-		dot = Math.fma(this.y, that.y, dot);
-		dot = Math.fma(this.z, that.z, dot);
-		return dot;
+	public float dot(Tuple that) {
+		return x * that.x + y * that.y + z * that.z;
 	}
-	// TODO - is this really that much better for such small vectors? FMA does a LOT of stuff, even if it is intrisic
-	// TODO - redundant if we used JDK19 vector API anyway?
+	// TODO - JDK19 vector API
+	// TODO - worth hassle for 3 components?
+	// TODO - check for Axis and delegate?
 
 	/**
 	 * @return Inverse of this vector
@@ -177,14 +171,14 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Cross product
 	 * @see <a href="https://en.wikipedia.org/wiki/Cross_product">Wikipedia</a>
 	 */
-	public final Vector cross(Vector vec) {
+	public Vector cross(Vector vec) {
 		final float x = this.y * vec.z - this.z * vec.y;
 		final float y = this.z * vec.x - this.x * vec.z;
 		final float z = this.x * vec.y - this.y * vec.x;
 		return new Vector(x, y, z);
 	}
 	// TODO - JDK vector API
-	// TODO - any point in optimising vs axis? since 2/3 will be zero, or will FMA do this for us?
+	// TODO - check for Axis and delegate?
 
 	/**
 	 * Determines the nearest point on this vector to the given point.

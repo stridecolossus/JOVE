@@ -50,12 +50,7 @@ public final class Quaternion implements Rotation {
 	 * @return Magnitude <b>squared</b> of this quaternion
 	 */
 	public float magnitude() {
-		float mag = 0;
-		mag = Math.fma(w, w, mag);
-		mag = Math.fma(x, x, mag);
-		mag = Math.fma(y, y, mag);
-		mag = Math.fma(z, z, mag);
-		return mag;
+		return w * w + x * x + y * y + z * z;
 	}
 
 	/**
@@ -100,7 +95,7 @@ public final class Quaternion implements Rotation {
 	 * @return Conjugate of this quaternion (assumes normalized)
 	 */
 	public Quaternion conjugate() {
-		return new Quaternion(w, this.axis().invert());
+		return new Quaternion(w, -x, -y, -z);
 	}
 
 	/**

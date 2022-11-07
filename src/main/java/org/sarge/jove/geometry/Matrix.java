@@ -230,7 +230,7 @@ public abstract class Matrix implements Transform, Bufferable {
 
 		return result;
 	}
-	// TODO - works but could be much more efficient when calculating array indices?
+	// TODO - works but could be much more efficient when calculating array indices
 	// TODO - JDK19 vector API
 
 	@Override
