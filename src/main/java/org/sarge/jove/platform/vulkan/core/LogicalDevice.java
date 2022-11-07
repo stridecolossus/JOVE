@@ -6,8 +6,8 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
+import java.util.function.*;
+import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -338,24 +338,24 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		/**
 		 * Retrieves the work queues.
 		 * @param dev			Logical device handle
-		 * @param required		Required queue descriptor
+		 * @param required		Required queues descriptor
 		 * @return Work queues
 		 */
 		private Stream<Queue> queues(Handle dev, RequiredQueue required) {
-			// Init library
+			// Init API to retrieve each required queue
 			final Instance instance = parent.instance();
 			final Library lib = instance.library();
-			final PointerByReference ref = instance.factory().pointer();
+			final Family family = required.family;
+			final IntFunction<Queue> queue = n -> {
+				final PointerByReference ref = instance.factory().pointer();
+				lib.vkGetDeviceQueue(dev, family.index(), n, ref);
+				return new Queue(new Handle(ref), family);
+			};
 
-			// Retrieve queues
-			final int count = required.priorities.size();
-			final Queue[] queues = new Queue[count];
-			for(int n = 0; n < count; ++n) {
-				lib.vkGetDeviceQueue(dev, required.family.index(), n, ref);
-				queues[n] = new Queue(new Handle(ref.getValue()), required.family);
-			}
-
-			return Arrays.stream(queues);
+			// Retrieve required queues
+			return IntStream
+					.range(0, required.priorities.size())
+					.mapToObj(queue);
 		}
 	}
 

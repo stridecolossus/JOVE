@@ -21,7 +21,7 @@ import org.sarge.lib.util.Check;
 public class ImageTransferCommand extends ImmediateCommand {
 	private final Image image;
 	private final VulkanBuffer buffer;
-	private final boolean inverse;
+	private final boolean write;
 	private final VkBufferImageCopy[] regions;
 	private final VkImageLayout layout;
 
@@ -29,45 +29,58 @@ public class ImageTransferCommand extends ImmediateCommand {
 	 * Constructor.
 	 * @param image				Image
 	 * @param buffer			Buffer
-	 * @param inverse			Whether the copy direction is inverted
+	 * @param write				Whether this command copies the buffer <b>to</b> the image or vice-versa
 	 * @param regions			Copy region(s)
 	 * @param layout			Image layout
-	 * @throws IllegalStateException if the buffer cannot be used for copy operations
+	 * @throws IllegalStateException if the {@link #buffer} or the image {@link #layout} are not valid for this transfer operation
 	 */
-	private ImageTransferCommand(Image image, VulkanBuffer buffer, boolean inverse, VkBufferImageCopy[] regions, VkImageLayout layout) {
+	ImageTransferCommand(Image image, VulkanBuffer buffer, boolean write, VkBufferImageCopy[] regions, VkImageLayout layout) {
 		this.image = notNull(image);
 		this.buffer = notNull(buffer);
-		this.inverse = inverse;
+		this.write = write;
 		this.regions = Arrays.copyOf(regions, regions.length);
 		this.layout = notNull(layout);
-		validate();
+		validateBuffer();
+		validateLayout();
 	}
 
-	private void validate() {
-		buffer.require(inverse ? VkBufferUsageFlag.TRANSFER_DST : VkBufferUsageFlag.TRANSFER_SRC);
+	private void validateBuffer() {
+		buffer.require(write ? VkBufferUsageFlag.TRANSFER_SRC : VkBufferUsageFlag.TRANSFER_DST);
 	}
-	// TODO - validation
-	// dstImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
-	// srcImageLayout must be VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR
+
+	private void validateLayout() {
+		final boolean valid = switch(layout) {
+			case GENERAL, SHARED_PRESENT_KHR -> true;
+			case TRANSFER_DST_OPTIMAL -> write;
+			case TRANSFER_SRC_OPTIMAL -> !write;
+			default -> false;
+		};
+		if(!valid) throw new IllegalStateException("Invalid image layout for copy operation: write=%b layout=%s".formatted(write, layout));
+	}
 
 	@Override
-	public void record(VulkanLibrary lib, Command.Buffer cb) {
-		lib.vkCmdCopyBufferToImage(cb, buffer, image, layout, regions.length, regions);
+	public void record(VulkanLibrary lib, Command.Buffer cmd) {
+		if(write) {
+			lib.vkCmdCopyBufferToImage(cmd, buffer, image, layout, regions.length, regions);
+		}
+		else {
+			lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
+		}
 	}
 
 	/**
-	 * Inverts this command to copy <i>from</i> the buffer <i>to</i> the image.
+	 * Inverts the direction of this command.
 	 * @return Inverse copy command
+	 * @throws IllegalStateException if the buffer is not valid for this transfer operation
 	 */
-	public Command invert() {
-		buffer.require(VkBufferUsageFlag.TRANSFER_DST);
-		return (lib, cmd) -> lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
+	public ImageTransferCommand invert() {
+		return new ImageTransferCommand(image, buffer, !write, regions, layout);
 	}
 
 	/**
 	 * A <i>copy region</i> specifies a portion of the image to be copied.
 	 */
-	public record CopyRegion(long offset, Dimensions row, SubResource res, VkOffset3D imageOffset, Extents extents) {
+	public record CopyRegion(long offset, Dimensions row, SubResource subresource, Extents imageOffset, Extents extents) {
 		/**
 		 * Creates a copy region for the whole of the given image.
 		 * @param descriptor Image descriptor
@@ -84,7 +97,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 		 * Constructor.
 		 * @param offset			Buffer offset
 		 * @param row				Row length/height (texels) or {@code zero} to use the same dimensions as the image
-		 * @param res				Sub-resource
+		 * @param subresource				Sub-resource
 		 * @param imageOffset		Image offset
 		 * @param extents			Image extents
 		 * @throws IllegalArgumentException if {@code row} is non-zero but smaller than the given extents
@@ -93,11 +106,11 @@ public class ImageTransferCommand extends ImmediateCommand {
 		public CopyRegion {
 			Check.zeroOrMore(offset);
 			Check.notNull(row);
-			Check.notNull(res);
+			Check.notNull(subresource);
 			Check.notNull(imageOffset);
 			Check.notNull(extents);
-			if(res.aspects().size() != 1) {
-				throw new IllegalArgumentException("Sub-resource must have a single aspect: " + res);
+			if(subresource.aspects().size() != 1) {
+				throw new IllegalArgumentException("Sub-resource must have a single aspect: " + subresource);
 			}
 			if(!validate(row, extents.size())) {
 				throw new IllegalArgumentException(String.format("Row length/height cannot be smaller than image extents: row=%s extents=%s", row, extents));
@@ -116,12 +129,12 @@ public class ImageTransferCommand extends ImmediateCommand {
 		/**
 		 * Populates the copy descriptor.
 		 */
-		private void populate(VkBufferImageCopy copy) {
+		void populate(VkBufferImageCopy copy) {
 			copy.bufferOffset = offset;
 			copy.bufferRowLength = row.width();
 			copy.bufferImageHeight = row.height();
-			copy.imageSubresource = SubResource.toLayers(res);
-			copy.imageOffset = imageOffset;
+			copy.imageSubresource = SubResource.toLayers(subresource);
+			copy.imageOffset = imageOffset.toOffset();
 			copy.imageExtent = extents.toExtent();
 		}
 
@@ -133,7 +146,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 			private int length;
 			private int height;
 			private SubResource subresource;
-			private VkOffset3D imageOffset = new VkOffset3D();
+			private Extents imageOffsets = Extents.ZERO;
 			private Extents extents;
 
 			/**
@@ -165,10 +178,11 @@ public class ImageTransferCommand extends ImmediateCommand {
 
 			/**
 			 * Sets the image offset (default is no offset).
-			 * @param offset Image offset
+			 * @param imageOffset Image offsets
+			 * @throws IndexOutOfBoundsException if the offset array does not contain three values
 			 */
-			public Builder offset(VkOffset3D offset) {
-				this.imageOffset = notNull(offset);
+			public Builder imageOffsets(Extents imageOffsets) {
+				this.imageOffsets = notNull(imageOffsets);
 				return this;
 			}
 
@@ -186,8 +200,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 			 * @param rect Copy rectangle
 			 */
 			public Builder region(Rectangle rect) {
-				imageOffset.x = rect.x();
-				imageOffset.y = rect.y();
+				imageOffsets(new Extents(new Dimensions(rect.x(), rect.y())));
 				extents(new Extents(rect.dimensions()));
 				return this;
 			}
@@ -206,7 +219,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 			 * @return New copy region
 			 */
 			public CopyRegion build() {
-				return new CopyRegion(offset, new Dimensions(length, height), subresource, imageOffset, extents);
+				return new CopyRegion(offset, new Dimensions(length, height), subresource, imageOffsets, extents);
 			}
 		}
 	}
@@ -217,7 +230,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 	public static class Builder {
 		private VulkanBuffer buffer;
 		private Image image;
-		private boolean inverse;
+		private boolean write = true;
 		private VkImageLayout layout;
 		private final List<CopyRegion> regions = new ArrayList<>();
 
@@ -241,9 +254,10 @@ public class ImageTransferCommand extends ImmediateCommand {
 
 		/**
 		 * Inverts the direction of this builder.
+		 * By default the buffer is copied <b>to</b> the image.
 		 */
 		public Builder invert() {
-			inverse = !inverse;
+			write = !write;
 			return this;
 		}
 
@@ -309,6 +323,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 		 * If no regions are specified the resultant command copies the <b>whole</b> of the image.
 		 * @return New copy command
 		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated, or if no copy regions have been specified
+		 * @throws IllegalStateException if the buffer or the image layout are not valid for this transfer operation
 		 */
 		public ImageTransferCommand build() {
 			// Validate
@@ -321,7 +336,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 			final VkBufferImageCopy[] array = StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
 
 			// Create copy command
-			return new ImageTransferCommand(image, buffer, inverse, array, layout);
+			return new ImageTransferCommand(image, buffer, write, array, layout);
 		}
 	}
 }

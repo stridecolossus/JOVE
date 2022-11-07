@@ -287,8 +287,7 @@ public class RenderPass extends AbstractVulkanObject {
 				 */
 				private static final int VK_SUBPASS_EXTERNAL = (~0);
 
-				@SuppressWarnings("hiding")
-				private Integer index;
+				private Integer subpass;
 				private final Properties src = new Properties(this);
 				private final Properties dest = new Properties(this);
 
@@ -300,7 +299,7 @@ public class RenderPass extends AbstractVulkanObject {
 				 * @param subpass Dependant subpass
 				 */
 				public Dependency dependency(Subpass subpass) {
-					index = subpass.index;
+					this.subpass = subpass.index;
 					return this;
 				}
 
@@ -308,7 +307,7 @@ public class RenderPass extends AbstractVulkanObject {
 				 * Sets this as a dependency on the implicit external subpass before or after the render-pass.
 				 */
 				public Dependency external() {
-					index = VK_SUBPASS_EXTERNAL;
+					this.subpass = VK_SUBPASS_EXTERNAL;
 					return this;
 				}
 
@@ -340,7 +339,7 @@ public class RenderPass extends AbstractVulkanObject {
 				 * @throws IllegalArgumentException if the source or destination pipeline stages is empty
 				 */
 				public Subpass build() {
-					if(index == null) throw new IllegalArgumentException("Dependant subpass has not been configured");
+					if(subpass == null) throw new IllegalArgumentException("Dependant subpass has not been configured");
 					if(src.stages.isEmpty()) throw new IllegalArgumentException("Source stages cannot be empty");
 					if(dest.stages.isEmpty()) throw new IllegalArgumentException("Destination stages cannot be empty");
 					dependencies.add(this);

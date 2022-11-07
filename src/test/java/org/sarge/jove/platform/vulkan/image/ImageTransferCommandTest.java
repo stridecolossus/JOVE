@@ -3,178 +3,253 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.Set;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
+import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.platform.vulkan.image.ImageTransferCommand.CopyRegion;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-import com.sun.jna.Structure;
-
 public class ImageTransferCommandTest extends AbstractVulkanTest {
+	private static final VkBufferImageCopy[] REGIONS = new VkBufferImageCopy[0];
+
 	private Image image;
-	private VulkanBuffer buffer;
-	private ImageTransferCommand.Builder builder;
 	private Command.Buffer cmd;
+	private VulkanBuffer src, dest;
+	private Image.Descriptor descriptor;
 
 	@BeforeEach
 	void before() {
-		// Define image
-		final var descriptor = new Descriptor.Builder()
-				.extents(new Dimensions(2, 3))
-				.format(AbstractVulkanTest.FORMAT)
-				.aspect(VkImageAspect.COLOR)
-				.build();
-
-		// Create image
 		image = mock(Image.class);
-		when(image.descriptor()).thenReturn(descriptor);
-
-		// Create data buffer
-		buffer = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 2 * 3 * Float.BYTES);
-
-		// Create copy command builder
-		builder = new ImageTransferCommand.Builder();
-
-		// Create command buffer
 		cmd = mock(Command.Buffer.class);
+		src = createBuffer(VkBufferUsageFlag.TRANSFER_SRC);
+		dest = createBuffer(VkBufferUsageFlag.TRANSFER_DST);
 	}
 
+	@BeforeEach
+	void descriptor() {
+		descriptor = new Image.Descriptor.Builder()
+				.aspect(VkImageAspect.COLOR)
+				.format(FORMAT)
+				.extents(new Dimensions(2, 3))
+				.build();
+	}
+
+	private VulkanBuffer createBuffer(VkBufferUsageFlag... usage) {
+		return VulkanBufferTest.create(dev, Set.of(usage), mock(DeviceMemory.class), 1);
+	}
+
+	@DisplayName("A transfer command with a source buffer...")
+	@Nested
+	class BufferToImage {
+		@DisplayName("can copy to an image with a valid layout")
+		@ParameterizedTest
+		@EnumSource(names={"GENERAL", "SHARED_PRESENT_KHR", "TRANSFER_DST_OPTIMAL"})
+		void copyBufferImage(VkImageLayout layout) {
+			final var copy = new ImageTransferCommand(image, src, true, REGIONS, layout);
+			copy.record(lib, cmd);
+			verify(lib).vkCmdCopyBufferToImage(cmd, src, image, layout, 0, REGIONS);
+		}
+
+		@DisplayName("cannot copy to an image with an invalid layout")
+		@Test
+		void layout() {
+			assertThrows(IllegalStateException.class, () -> new ImageTransferCommand(image, src, true, REGIONS, VkImageLayout.PREINITIALIZED));
+		}
+
+		@DisplayName("cannot copy from a buffer that is not a source")
+		@Test
+		void source() {
+			assertThrows(IllegalStateException.class, () -> new ImageTransferCommand(image, dest, true, REGIONS, VkImageLayout.GENERAL));
+		}
+	}
+
+	@DisplayName("A transfer command with a destination buffer...")
+	@Nested
+	class ImageToBuffer {
+		@DisplayName("can copy from an image with a valid layout")
+		@ParameterizedTest
+		@EnumSource(names={"GENERAL", "SHARED_PRESENT_KHR", "TRANSFER_SRC_OPTIMAL"})
+		void copyBufferImage(VkImageLayout layout) {
+			final var copy = new ImageTransferCommand(image, dest, false, REGIONS, layout);
+			copy.record(lib, cmd);
+			verify(lib).vkCmdCopyImageToBuffer(cmd, image, layout, dest, 0, new VkBufferImageCopy[0]);
+		}
+
+		@DisplayName("cannot copy from an image with an invalid layout")
+		@Test
+		void layout() {
+			assertThrows(IllegalStateException.class, () -> new ImageTransferCommand(image, dest, false, REGIONS, VkImageLayout.PREINITIALIZED));
+		}
+
+		@DisplayName("cannot copy to a buffer that is not a destination")
+		@Test
+		void source() {
+			assertThrows(IllegalStateException.class, () -> new ImageTransferCommand(image, src, false, REGIONS, VkImageLayout.GENERAL));
+		}
+	}
+
+	@Nested
+	class InvertTests {
+		private VulkanBuffer buffer;
+
+		@BeforeEach
+		void before() {
+    		buffer = createBuffer(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
+		}
+
+		@DisplayName("A transfer command can be inverted")
+    	@Test
+    	void invert() {
+    		final var copy = new ImageTransferCommand(image, buffer, true, REGIONS, VkImageLayout.GENERAL);
+    		copy.invert();
+    	}
+
+    	@DisplayName("A transfer command cannot be inverted if the buffer does not support both directions")
+    	@Test
+    	void buffer() {
+    		final var copy = new ImageTransferCommand(image, src, true, REGIONS, VkImageLayout.GENERAL);
+    		assertThrows(IllegalStateException.class, () -> copy.invert());
+    	}
+
+    	@DisplayName("A transfer command cannot be inverted if the image layout does not support both directions")
+    	@Test
+    	void layout() {
+    		final var copy = new ImageTransferCommand(image, buffer, true, REGIONS, VkImageLayout.TRANSFER_DST_OPTIMAL);
+    		assertThrows(IllegalStateException.class, () -> copy.invert());
+    	}
+	}
+
+	@DisplayName("A region of a transfer command...")
 	@Nested
 	class CopyRegionTests {
-		private VkOffset3D offset;
-
-		@BeforeEach
-		void before() {
-			offset = new VkOffset3D() {
-				@Override
-				public boolean equals(Object obj) {
-					return dataEquals((Structure) obj);
-				}
-			};
-		}
-
 		@Test
-		void constructorInvalidRowLength() {
-			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(1, 1), image.descriptor(), offset, image.descriptor().extents()));
+		void constructor() {
+			final CopyRegion region = new CopyRegion(1, new Dimensions(0, 0), descriptor, Extents.ZERO, descriptor.extents());
+			assertEquals(1L, region.offset());
+			assertEquals(new Dimensions(0, 0), region.row());
+			assertEquals(descriptor, region.subresource());
+			assertEquals(Extents.ZERO, region.imageOffset());
+			assertEquals(descriptor.extents(), region.extents());
 		}
 
-		@Test
-		void constructorInvalidImageAspects() {
-			final var descriptor = new Descriptor.Builder()
-					.extents(new Dimensions(2, 3))
-					.format(AbstractVulkanTest.FORMAT)
-					.aspect(VkImageAspect.DEPTH)
-					.aspect(VkImageAspect.STENCIL)
-					.build();
-			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(0, new Dimensions(0, 0), descriptor, offset, descriptor.extents()));
-		}
-
-		@Test
-		void build() {
-			final CopyRegion region = new CopyRegion.Builder()
-					.offset(offset)
-					.extents(image.descriptor().extents())
-					.subresource(image.descriptor())
-					.build();
-			final CopyRegion expected = new CopyRegion(0, new Dimensions(0, 0), image.descriptor(), offset, image.descriptor().extents());
-			assertEquals(expected, region);
-		}
-
+		@DisplayName("can be constructed for the whole of the image")
 		@Test
 		void of() {
-			final Descriptor descriptor = image.descriptor();
-			final CopyRegion expected = new CopyRegion(0, new Dimensions(0, 0), descriptor, offset, descriptor.extents());
-			assertEquals(expected, CopyRegion.of(descriptor));
+			final CopyRegion region = CopyRegion.of(descriptor);
+			assertEquals(0L, region.offset());
+			assertEquals(new Dimensions(0, 0), region.row());
+			assertEquals(descriptor, region.subresource());
+			assertEquals(Extents.ZERO, region.imageOffset());
+			assertEquals(descriptor.extents(), region.extents());
+		}
+
+		@DisplayName("cannot be applied to an image with multiple aspects")
+		@Test
+		void multiple() {
+			descriptor = new Image.Descriptor.Builder()
+					.aspect(VkImageAspect.DEPTH)
+					.aspect(VkImageAspect.STENCIL)
+					.format(FORMAT)
+					.extents(new Dimensions(2, 3))
+					.build();
+
+			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(1, new Dimensions(0, 0), descriptor, Extents.ZERO, descriptor.extents()));
+		}
+
+		@DisplayName("cannot have a non-zero row length/height smaller than the image extents")
+		@Test
+		void row() {
+			assertThrows(IllegalArgumentException.class, () -> new CopyRegion(1, new Dimensions(1, 2), descriptor, Extents.ZERO, descriptor.extents()));
+		}
+
+		@DisplayName("can be converted to the Vulkan descriptor")
+		@Test
+		void populate() {
+			final CopyRegion region = new CopyRegion(1, new Dimensions(0, 0), descriptor, Extents.ZERO, descriptor.extents());
+			final var copy = new VkBufferImageCopy();
+			region.populate(copy);
+			assertEquals(0, copy.bufferRowLength);
+			assertEquals(0, copy.bufferImageHeight);
+			assertNotNull(copy.imageSubresource);
+			assertEquals(0, copy.imageOffset.x);
+			assertEquals(0, copy.imageOffset.y);
+			assertEquals(0, copy.imageOffset.z);
+			assertEquals(1, copy.imageExtent.depth);
+			assertEquals(2, copy.imageExtent.width);
+			assertEquals(3, copy.imageExtent.height);
 		}
 	}
 
+	@DisplayName("A transfer command created via the builder...")
 	@Nested
 	class BuilderTests {
-		private ImageData data;
+		private ImageTransferCommand.Builder builder;
 
 		@BeforeEach
 		void before() {
-			data = mock(ImageData.class);
-			when(data.levels()).thenReturn(List.of(new ImageData.Level(1, 2)));
+			builder = new ImageTransferCommand.Builder();
 		}
 
+		@DisplayName("can copy a buffer to an image")
 		@Test
 		void build() {
-			// Create command to copy the buffer to the whole of the image
-			final ImageTransferCommand copy = builder
-					.image(image)
-					.buffer(buffer)
-					.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
-					.region(data)
-					.build();
-
-			// Init expected copy descriptor
-			final var expected = new VkBufferImageCopy() {
-				@Override
-				public boolean equals(Object obj) {
-					return dataEquals((Structure) obj);
-				}
-			};
-			expected.imageSubresource.aspectMask = VkImageAspect.COLOR.value();
-			expected.imageSubresource.layerCount = 1;
-			expected.imageExtent.depth = 1;
-			expected.imageExtent.width = 2;
-			expected.imageExtent.height = 3;
-
-			// Perform copy operation
-			copy.record(lib, cmd);
-			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
-
-			// Perform reverse copy operation
-			copy.invert().record(lib, cmd);
-			verify(lib).vkCmdCopyBufferToImage(cmd, buffer, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkBufferImageCopy[]{expected});
-		}
-
-		@Test
-		void buildInvert() {
 			builder
+					.buffer(src)
 					.image(image)
-					.buffer(buffer)
-					.layout(VkImageLayout.TRANSFER_DST_OPTIMAL)
-					.region(data)
+					.layout(VkImageLayout.GENERAL)
+					.region(CopyRegion.of(descriptor))
+					.build();
+		}
+
+		@DisplayName("can be inverted to copy an image to a buffer")
+		@Test
+		void invert() {
+			builder
+					.buffer(dest)
+					.image(image)
+					.layout(VkImageLayout.GENERAL)
+					.region(CopyRegion.of(descriptor))
 					.invert()
-					.build()
-					.record(lib, cmd);
+					.build();
 		}
 
+		@DisplayName("must have an image configured")
 		@Test
-		void buildEmptyBuffer() {
-			builder.image(image);
-			builder.layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
+		void image() {
+			builder.buffer(dest);
+			builder.layout(VkImageLayout.GENERAL);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
+		@DisplayName("must have a buffer configured")
 		@Test
-		void buildEmptyImage() {
-			builder.buffer(buffer);
-			builder.layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
+		void buffer() {
+			builder.image(image);
+			builder.layout(VkImageLayout.GENERAL);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
+		@DisplayName("must have an image layout configured")
 		@Test
-		void buildEmptyImageLayout() {
+		void layout() {
 			builder.image(image);
-			builder.buffer(buffer);
+			builder.buffer(dest);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 
+		@DisplayName("must have at least one copy region")
 		@Test
-		void buildEmptyRegions() {
+		void empty() {
+			builder.buffer(dest);
 			builder.image(image);
-			builder.buffer(buffer);
-			builder.layout(VkImageLayout.TRANSFER_DST_OPTIMAL);
+			builder.layout(VkImageLayout.GENERAL);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 	}
