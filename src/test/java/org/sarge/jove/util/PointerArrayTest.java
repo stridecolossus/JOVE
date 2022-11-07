@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.util;
+package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.util.PointerArray;
+import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.Pointer;
 

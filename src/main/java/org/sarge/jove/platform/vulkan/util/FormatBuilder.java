@@ -4,9 +4,8 @@ import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**

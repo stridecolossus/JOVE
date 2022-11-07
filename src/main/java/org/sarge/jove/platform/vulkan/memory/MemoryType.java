@@ -2,8 +2,8 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import java.util.Set;
 
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 /**

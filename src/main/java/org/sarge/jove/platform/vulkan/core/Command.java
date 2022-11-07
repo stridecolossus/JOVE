@@ -8,10 +8,10 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;

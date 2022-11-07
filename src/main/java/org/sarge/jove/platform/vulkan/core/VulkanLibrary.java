@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toSet;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
@@ -14,6 +13,7 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderLibrary;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;

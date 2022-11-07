@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.util;
+package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -8,8 +8,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.util.StructureCollector;
-import org.sarge.jove.util.MockStructure;
 
 public class StructureCollectorTest {
 	private Object obj;

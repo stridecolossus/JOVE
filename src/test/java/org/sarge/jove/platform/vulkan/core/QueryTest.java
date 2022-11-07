@@ -9,11 +9,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Query.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Structure;
 

@@ -7,13 +7,13 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.StructureCollector;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;

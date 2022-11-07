@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
-import org.sarge.jove.platform.util.ReferenceFactory;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;

@@ -10,9 +10,9 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.Library;
 import com.sun.jna.ptr.IntByReference;

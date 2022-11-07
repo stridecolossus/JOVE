@@ -6,7 +6,7 @@ import java.util.function.Function;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
 import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
-import org.sarge.jove.platform.util.ReferenceFactory;
+import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;

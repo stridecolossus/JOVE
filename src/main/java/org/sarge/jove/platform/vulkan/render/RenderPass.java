@@ -8,13 +8,13 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.util.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;

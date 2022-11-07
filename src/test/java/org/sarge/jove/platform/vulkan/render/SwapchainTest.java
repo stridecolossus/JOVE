@@ -7,7 +7,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerArray;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
@@ -16,6 +15,7 @@ import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.IntegerArray;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

@@ -8,11 +8,11 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;

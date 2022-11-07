@@ -5,7 +5,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.stubbing.Answer;
-import org.sarge.jove.platform.util.ReferenceFactory;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;

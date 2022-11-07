@@ -9,9 +9,9 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Handler.*;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;

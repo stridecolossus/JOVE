@@ -8,11 +8,11 @@ import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;

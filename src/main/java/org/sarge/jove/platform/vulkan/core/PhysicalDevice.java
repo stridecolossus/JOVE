@@ -9,12 +9,12 @@ import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.NativeBooleanConverter;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.render.Surface;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
+import org.sarge.jove.util.NativeBooleanConverter;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

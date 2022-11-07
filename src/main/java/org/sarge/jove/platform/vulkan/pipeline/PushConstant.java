@@ -7,10 +7,10 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.io.BufferHelper;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.lib.util.Check;
 
 /**

@@ -14,7 +14,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
 import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
-import org.sarge.jove.platform.util.ReferenceFactory;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;

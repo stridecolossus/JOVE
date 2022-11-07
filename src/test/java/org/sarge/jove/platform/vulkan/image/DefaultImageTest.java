@@ -8,11 +8,11 @@ import static org.sarge.jove.platform.vulkan.VkImageAspect.COLOR;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.IntegerEnumeration;
 
 import com.sun.jna.ptr.PointerByReference;
 

@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.util;
+package org.sarge.jove.util;
 
 import java.util.Arrays;
 

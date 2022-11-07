@@ -2,7 +2,7 @@ package org.sarge.jove.common;
 
 import java.util.Collection;
 
-import org.sarge.jove.platform.util.PointerArray;
+import org.sarge.jove.util.PointerArray;
 
 import com.sun.jna.*;
 

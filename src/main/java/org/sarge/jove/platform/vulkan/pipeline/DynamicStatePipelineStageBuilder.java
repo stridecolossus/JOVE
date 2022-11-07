@@ -5,9 +5,9 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.sarge.jove.platform.util.IntegerArray;
 import org.sarge.jove.platform.vulkan.VkDynamicState;
 import org.sarge.jove.platform.vulkan.VkPipelineDynamicStateCreateInfo;
+import org.sarge.jove.util.IntegerArray;
 
 /**
  * Builder for the dynamic state pipeline stage.

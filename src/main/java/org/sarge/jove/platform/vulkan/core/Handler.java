@@ -8,9 +8,9 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.util.IntegerEnumeration;
-import org.sarge.jove.platform.util.IntegerEnumeration.ReverseMapping;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.*;
