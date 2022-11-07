@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
-import java.util.function.*;
+import java.util.function.IntFunction;
 
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
@@ -110,13 +110,13 @@ public interface VulkanFunction<T> {
 		 * @param identity		Identity structure
 		 * @return JNA structure array
 		 */
-		default T[] invoke(IntByReference count, Supplier<T> identity) {
+		default T[] invoke(IntByReference count, T identity) {
 			// Invoke to determine the length of the array
 			check(enumerate(count, null));
 
 			// Instantiate the structure array
 			@SuppressWarnings("unchecked")
-			final T[] array = (T[]) identity.get().toArray(count.getValue());
+			final T[] array = (T[]) identity.toArray(count.getValue());
 
 			// Invoke again to populate the array (note passes first element)
 			if(array.length > 0) {

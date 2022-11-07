@@ -153,45 +153,27 @@ public class PhysicalDevice implements NativeObject {
 	}
 
 	/**
-	 * The <i>physical device enumerator</i> is used to enumerate the available devices on this Vulkan implementation.
+	 * Enumerates the physical devices for the given instance.
+	 * @param instance Vulkan instance
+	 * @return Devices
 	 * @see Selector
+	 * @see #predicate(DeviceFeatures)
 	 */
-	public static class Enumerator {
-		private final Instance instance;
+	public static Stream<PhysicalDevice> devices(Instance instance) {
+		// Enumerate device handles
+		final VulkanFunction<Pointer[]> enumerate = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
+		final IntByReference count = instance.factory().integer();
+		final Pointer[] handles = enumerate.invoke(count, Pointer[]::new);
 
-		/**
-		 * Constructor.
-		 * @param instance Vulkan instance
-		 */
-		public Enumerator(Instance instance) {
-			this.instance = notNull(instance);
-		}
-
-		/**
-		 * Enumerates the physical devices for the given instance.
-		 * @return Physical devices
-		 * @see Selector
-		 */
-		public Stream<PhysicalDevice> devices() {
-			final VulkanFunction<Pointer[]> func = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
-			final IntByReference count = instance.factory().integer();
-			final Pointer[] handles = func.invoke(count, Pointer[]::new);
-			return Arrays.stream(handles).map(Handle::new).map(this::create);
-		}
-
-		/**
-		 * Creates and initialises a physical device with the given handle.
-		 * @param handle Device handle
-		 * @return New physical device
-		 */
-		private PhysicalDevice create(Handle handle) {
+		// Init device constructor
+		final Function<Handle, PhysicalDevice> ctor = handle -> {
 			// Enumerate queue families for this device (for some reason the return type is void)
-			final StructureVulkanFunction<VkQueueFamilyProperties> func = (count, array) -> {
-				instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
+			final StructureVulkanFunction<VkQueueFamilyProperties> func = (n, array) -> {
+				instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, n, array);
 				return VulkanLibrary.SUCCESS;
 			};
-			final IntByReference count = instance.factory().integer();
-			final VkQueueFamilyProperties[] props = func.invoke(count, VkQueueFamilyProperties::new);
+			final IntByReference num = instance.factory().integer();
+			final VkQueueFamilyProperties[] props = func.invoke(num, new VkQueueFamilyProperties());
 
 			// Create queue families
 			final List<Family> families = IntStream
@@ -205,16 +187,22 @@ public class PhysicalDevice implements NativeObject {
 
 			// Create device
 			return new PhysicalDevice(handle, instance, families, DeviceFeatures.supported(features));
-		}
+		};
 
-		/**
-		 * Helper - Creates a device predicate for the given required features.
-		 * @param required Required features
-		 * @return New device predicate
-		 */
-		public static Predicate<PhysicalDevice> features(DeviceFeatures required) {
-			return dev -> dev.features().contains(required);
-		}
+		// Create devices
+		return Arrays
+				.stream(handles)
+				.map(Handle::new)
+				.map(ctor);
+	}
+
+	/**
+	 * Helper - Creates a device predicate for the given required features.
+	 * @param required Required features
+	 * @return New device predicate
+	 */
+	public static Predicate<PhysicalDevice> predicate(DeviceFeatures required) {
+		return dev -> dev.features().contains(required);
 	}
 
 	/**
@@ -264,7 +252,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @return New queue flags selector
 		 */
 		public static Selector of(VkQueueFlag... flags) {
-			final var copy = Arrays.asList(flags);
+			final var copy = Set.of(flags);
 			final BiPredicate<PhysicalDevice, Family> predicate = (__, family) -> family.flags().containsAll(copy);
 			return new Selector(predicate);
 		}

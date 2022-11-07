@@ -92,7 +92,7 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	 */
 	static Set<String> extensions(IntByReference count, StructureVulkanFunction<VkExtensionProperties> func) {
 		return Arrays
-				.stream(func.invoke(count, VkExtensionProperties::new))
+				.stream(func.invoke(count, new VkExtensionProperties()))
 				.map(e -> e.extensionName)
 				.map(String::new)
 				.collect(toSet());

@@ -53,7 +53,7 @@ public class ParticleSystem implements Animation {
 	}
 
 	// Particle properties
-	private final Collection<Characteristic> chars;
+	private final Set<Characteristic> chars;
 	private PositionFactory position = PositionFactory.ORIGIN;
 	private VectorFactory vector = VectorFactory.of(Axis.Y);
 	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
@@ -71,7 +71,7 @@ public class ParticleSystem implements Animation {
 	 * @param chars Particle system characteristics
 	 */
 	public ParticleSystem(Characteristic... chars) {
-		this.chars = Arrays.asList(chars);
+		this.chars = Set.of(chars);
 	}
 
 	/**

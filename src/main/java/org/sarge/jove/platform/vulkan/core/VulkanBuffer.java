@@ -4,7 +4,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
@@ -153,7 +153,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the given usage flags
 	 */
 	public final void require(VkBufferUsageFlag... flags) {
-		final Collection<VkBufferUsageFlag> required = Arrays.asList(flags);
+		final var required = Set.of(flags);
 		if(!usage.containsAll(required)) {
 			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
 		}

@@ -84,7 +84,7 @@ public class Surface extends AbstractTransientNativeObject {
 		final VulkanLibrary lib = instance.library();
 		final StructureVulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
 		final IntByReference count = instance.factory().integer();
-		final VkSurfaceFormatKHR[] array = func.invoke(count, VkSurfaceFormatKHR::new);
+		final VkSurfaceFormatKHR[] array = func.invoke(count, new VkSurfaceFormatKHR());
 		return Arrays.asList(array);
 	}
 

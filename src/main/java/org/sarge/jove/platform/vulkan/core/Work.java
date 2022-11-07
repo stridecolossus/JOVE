@@ -54,7 +54,7 @@ import org.sarge.lib.util.Check;
  * @see Command
  * @author Sarge
  */
-public class Work {
+public final class Work {
 	/**
 	 * Helper - Creates a new work submission for the given command buffer.
 	 * @param buffer Command buffer
@@ -220,7 +220,7 @@ public class Work {
 		 * @throws IllegalArgumentException if {@code stages} is empty
 		 * @throws IllegalArgumentException for a duplicate semaphore
 		 */
-		public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
+		public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
 			Check.notNull(semaphore);
 			Check.notEmpty(stages);
 			if(work.wait.containsKey(semaphore)) throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
@@ -232,7 +232,7 @@ public class Work {
 		 * @see #wait(Semaphore, Collection)
 		 */
 		public Builder wait(Semaphore semaphore, VkPipelineStage... stages) {
-			return wait(semaphore, Arrays.asList(stages));
+			return wait(semaphore, Set.of(stages));
 		}
 
 		/**

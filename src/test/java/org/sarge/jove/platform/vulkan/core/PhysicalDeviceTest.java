@@ -12,7 +12,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.util.ReferenceFactory;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 
 import com.sun.jna.Pointer;
@@ -91,54 +91,43 @@ class PhysicalDeviceTest {
 		verify(lib).vkGetPhysicalDeviceFormatProperties(dev, VkFormat.D32_SFLOAT, props);
 	}
 
-	@Nested
-	class EnumeratorTest {
-		private Enumerator enumerator;
+	@DisplayName("The physical devices can be enumerated for a given instance")
+	@Test
+	void devices() {
+		// Init device handle
+		final IntByReference count = instance.factory().integer();
+		final Answer<Integer> answer = inv -> {
+			final Pointer[] array = inv.getArgument(2);
+			array[0] = new Pointer(1);
+			return 0;
+		};
+		doAnswer(answer).when(lib).vkEnumeratePhysicalDevices(instance, count, new Pointer[1]);
 
-		@BeforeEach
-		void before() {
-			enumerator = new Enumerator(instance);
-		}
+		// Init queue family
+		final var arg = new VkQueueFamilyProperties() {
+			@Override
+			public boolean equals(Object obj) {
+				return true;
+			}
+		};
+		final Answer<Integer> families = inv -> {
+			final VkQueueFamilyProperties props = inv.getArgument(2);
+			props.queueCount = 1;
+			props.queueFlags = VkQueueFlag.GRAPHICS.value();
+			return 0;
+		};
+		doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Handle(1), count, arg);
 
-		@DisplayName("The physical devices on the local machine can be enumerated")
-		@Test
-		void enumerate() {
-			// Init device handle
-			final IntByReference count = instance.factory().integer();
-			final Answer<Integer> answer = inv -> {
-				final Pointer[] array = inv.getArgument(2);
-				array[0] = new Pointer(1);
-				return 0;
-			};
-			doAnswer(answer).when(lib).vkEnumeratePhysicalDevices(instance, count, new Pointer[1]);
+		// Enumerate devices
+		assertEquals(List.of(dev), PhysicalDevice.devices(instance).toList());
+	}
 
-			// Init queue family
-			final var arg = new VkQueueFamilyProperties() {
-				@Override
-				public boolean equals(Object obj) {
-					return true;
-				}
-			};
-			final Answer<Integer> families = inv -> {
-				final VkQueueFamilyProperties props = inv.getArgument(2);
-				props.queueCount = 1;
-				props.queueFlags = VkQueueFlag.GRAPHICS.value();
-				return 0;
-			};
-			doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Handle(1), count, arg);
-
-			// Enumerate devices
-			final List<PhysicalDevice> devices = enumerator.devices().toList();
-			assertEquals(List.of(dev), devices);
-		}
-
-		@DisplayName("A physical device can be matched by a required feature set")
-		@Test
-		void features() {
-			final Predicate<PhysicalDevice> predicate = Enumerator.features(DeviceFeatures.EMPTY);
-			assertNotNull(predicate);
-			assertEquals(true, predicate.test(dev));
-		}
+	@DisplayName("A physical device can be matched by a required feature set")
+	@Test
+	void features() {
+		final Predicate<PhysicalDevice> predicate = PhysicalDevice.predicate(DeviceFeatures.EMPTY);
+		assertNotNull(predicate);
+		assertEquals(true, predicate.test(dev));
 	}
 
 	@DisplayName("A physical device selector...")

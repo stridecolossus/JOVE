@@ -20,7 +20,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>shader</i> is a Vulkan shader module.
+ * A <i>shader</i> is a Vulkan shader module used to implement a programmable pipeline stage.
  * @author Sarge
  */
 public class Shader extends AbstractVulkanObject {

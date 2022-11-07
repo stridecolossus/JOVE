@@ -43,7 +43,7 @@ public record ValidationLayer(String name, int version) {
 	 */
 	public static Set<ValidationLayer> layers(IntByReference count, StructureVulkanFunction<VkLayerProperties> func) {
 		return Arrays
-				.stream(func.invoke(count, VkLayerProperties::new))
+				.stream(func.invoke(count, new VkLayerProperties()))
 				.map(ValidationLayer::of)
 				.collect(toCollection(ValidationLayerSet::new));
 	}

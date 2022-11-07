@@ -61,7 +61,7 @@ public final class StructureCollector {
 		@SuppressWarnings("unchecked")
 		final R[] array = (R[]) identity.toArray(data.size());
 
-		// Populate array (use iterator since cannot easily convert collection to generic array using Array#newInstance)
+		// Populate array (using an iterator since cannot easily convert collection to a generic array)
 		final Iterator<T> itr = data.iterator();
 		for(final R element : array) {
 			populate.accept(itr.next(), element);

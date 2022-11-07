@@ -11,6 +11,9 @@ import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 
 /**
  * An <i>image sub-resource</i> defines a subset of the aspects, mip levels and array layers of an image.
+ * <p>
+ * Note that an {@link Image.Descriptor} is a sub-resource with zero values for the base mip level and array layer.
+ * <p>
  * @author Sarge
  */
 public interface SubResource {

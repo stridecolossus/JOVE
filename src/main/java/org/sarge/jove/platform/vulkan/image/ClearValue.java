@@ -6,7 +6,7 @@ import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.lib.util.*;
 
 /**
- * A <i>clear value</i> specifies the clear operation for an attachment.
+ * A <i>clear value</i> specifies the clearing operation for an attachment before a render pass starts.
  * @author Sarge
  */
 public sealed interface ClearValue permits ColourClearValue, DepthClearValue {

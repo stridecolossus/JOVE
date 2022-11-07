@@ -92,7 +92,6 @@ public class WorkTest extends AbstractVulkanTest {
 	void equals() {
 		assertEquals(true, work.equals(work));
 		assertEquals(false, work.equals(null));
-		assertEquals(false, work.equals(mock(Work.class)));
 	}
 
 	@Nested

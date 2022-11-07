@@ -65,7 +65,7 @@ public class FormatSelector {
 	 * @see #filter(boolean, Set)
 	 */
 	public FormatSelector(PhysicalDevice dev, boolean optimal, VkFormatFeature... features) {
-		this(dev, filter(optimal, Set.copyOf(Arrays.asList(features))));
+		this(dev, filter(optimal, Set.of(features)));
 	}
 
 	/**

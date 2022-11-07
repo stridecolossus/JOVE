@@ -11,7 +11,7 @@ import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
 @SuppressWarnings("unchecked")
-public class VulkanFunctionTest {
+class VulkanFunctionTest {
 	private IntByReference count;
 
 	@BeforeEach
@@ -38,7 +38,7 @@ public class VulkanFunctionTest {
 
 		// Invoke and check resultant array
 		final StructureVulkanFunction<Structure> func = spy(StructureVulkanFunction.class);
-		final Structure[] result = func.invoke(count, () -> struct);
+		final Structure[] result = func.invoke(count, struct);
 		assertEquals(array, result);
 		verify(func).enumerate(count, null);
 		verify(func).enumerate(count, struct);

@@ -73,7 +73,7 @@ public interface IntegerEnumeration {
 	 */
 	@SuppressWarnings("unchecked")
 	static <E extends IntegerEnumeration> int reduce(E... values) {
-		return reduce(Arrays.asList(values));
+		return reduce(Set.of(values));
 	}
 
 	/**
