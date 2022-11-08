@@ -4,6 +4,7 @@ import org.sarge.lib.util.Check;
 
 /**
  * A <i>ray</i> is a vector relative to an originating point, used for intersection tests, picking, etc.
+ * Note that the ray direction is <b>not</b> constrained to be a {@link Normal}.
  * @author Sarge
  */
 public interface Ray {
@@ -30,8 +31,6 @@ public interface Ray {
 
 	/**
 	 * Default implementation.
-	 * <p>
-	 * Note that this implementation does <b>not</b> constrain the ray direction to be a {@link Normal}.
 	 */
 	record DefaultRay(Point origin, Vector direction) implements Ray {
 		/**

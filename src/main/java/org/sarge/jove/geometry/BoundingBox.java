@@ -39,7 +39,7 @@ public class BoundingBox implements Volume {
 	public boolean intersects(Volume vol) {
 		return switch(vol) {
 			case SphereVolume sphere -> sphere.intersects(bounds);
-			case BoundingBox box -> bounds.intersects(box.bounds);
+			case BoundingBox box -> bounds.intersects(box.bounds); // TODO - is this right? should check nearest < radius squared?
 			default -> vol.intersects(this);
 		};
 	}

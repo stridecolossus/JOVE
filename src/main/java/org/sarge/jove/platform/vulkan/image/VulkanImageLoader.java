@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.joining;
 
 import java.io.*;
 import java.util.*;
-import java.util.stream.IntStream;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
@@ -138,25 +137,23 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 	 */
 	private static List<Level> loadIndex(DataInput in, int count) throws IOException {
 		// Load MIP level index
-		final int[] offset = new int[count];
-		final int[] length = new int[count];
+		final Level[] index = new Level[count];
 		for(int n = 0; n < count; ++n) {
-			offset[n] = (int) in.readLong();
-			length[n] = (int) in.readLong();
+			final int off = (int) in.readLong();
+			final int len = (int) in.readLong();
+			index[n] = new Level(off, len);
 			in.readLong();
 		}
 
 		// Truncate offsets relative to start of image (note MIP index is in reverse order)
-		final int start = offset[count - 1];
+		final int start = index[count - 1].offset();
 		for(int n = 0; n < count; ++n) {
-			offset[n] -= start;
+			final Level prev = index[n];
+			index[n] = new Level(prev.offset() - start, prev.length());
 		}
 
 		// Create MIP index
-		return IntStream
-				.range(0, count)
-				.mapToObj(n -> new Level(offset[n], length[n]))
-				.toList();
+		return Arrays.asList(index);
 	}
 
 	/**

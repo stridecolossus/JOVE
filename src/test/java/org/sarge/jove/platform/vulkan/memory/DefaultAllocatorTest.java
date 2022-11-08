@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
@@ -17,7 +17,7 @@ public class DefaultAllocatorTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		final Heap heap = new Heap(0, Set.of());
-		type = new MemoryType(1, heap, Set.of());
+		type = new MemoryType(1, heap, Set.of(VkMemoryProperty.HOST_VISIBLE));
 		allocator = new DefaultAllocator(dev);
 	}
 
@@ -26,8 +26,8 @@ public class DefaultAllocatorTest extends AbstractVulkanTest {
 		// Allocate memory
 		final long size = 42;
 		final DeviceMemory mem = allocator.allocate(type, size);
-		assertNotNull(mem);
 		assertEquals(size, mem.size());
+		assertEquals(true, mem.isHostVisible());
 
 		// Check API
 		final var expected = new VkMemoryAllocateInfo() {

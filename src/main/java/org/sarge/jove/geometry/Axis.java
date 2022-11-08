@@ -55,9 +55,9 @@ public final class Axis extends Normal {
 	 * Parses an axis from the given string (case sensitive).
 	 * @param axis Axis
 	 * @return Axis
-	 * @throws IllegalArgumentException if {@link #axis} is not a valid axis
+	 * @throws IllegalArgumentException if {@link #axis} is not a valid axis token
 	 */
-	public static Vector of(String axis) {
+	public static Axis of(String axis) {
 		return switch(axis) {
 			case "X" -> X;
 			case "Y" -> Y;
@@ -109,6 +109,11 @@ public final class Axis extends Normal {
     	};
 	}
 
+	// TODO - optimisations
+	// - only really to optimise vertical axis? check for use cases
+	// - redundant if we used vector API? would that be slower?
+	// - how to make sure above are used on both sides? (without instanceof tests in Vector), double-dispatch would be horrible
+
 	/**
 	 * Creates a counter-clockwise rotation matrix about this axis.
 	 * @param angle Rotation angle (radians)
@@ -141,6 +146,7 @@ public final class Axis extends Normal {
 
 		return matrix.build();
 	}
+	// TODO - introduce underlying enum for axis implementation for rotation, dot, etc? rather than nasty switch on index? Are there more axis specific methods to be added?
 
 	/**
 	 * Selects the cardinal axis corresponding to the <i>minimal component</i> of the given vector.

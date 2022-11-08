@@ -26,7 +26,7 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 	@Test
 	void constructor() {
 		assertEquals(new Handle(new Pointer(1)), layout.handle());
-		assertEquals(Set.of(binding), layout.bindings());
+		assertEquals(List.of(binding), layout.bindings());
 	}
 
 	@Test

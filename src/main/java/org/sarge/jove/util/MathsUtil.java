@@ -165,6 +165,16 @@ public final class MathsUtil {
 		return (float) Math.sin(angle);
 	}
 
+	// TODO - lookup tables
+	// - how to configure for multiple scenarios? ideally avoid singleton (same for accuracy?)
+	// - factor out trig functions (and PI constants & helpers) to interface of some sort?
+	// - with implementation for default sized lookup table, but can override if required
+	// - but then how to plug those into use-cases? would need second method to pass as arg (nasty)
+	// - however sin/cos actually only used in half-dozen or so cases?
+	// - sqrt() is actually pretty good?
+	// - atan() in projection (once)
+	// - factor out approximation stuff to separate class?
+
 	/**
 	 * @param angle Angle (radians)
 	 * @return Cosine of the given angle

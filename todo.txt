@@ -16,10 +16,6 @@ sphere builder
 - sphere/conic builder, uses unit circle, add pole, add ring with N points / segment
 - extrusion, creates 'cylinder' from 2D shape + normal + dist (segment) from previous, iterative
 
-other possible features
-- OpenAL audio
-- shader storage buffer (SSBO)
-
 text
 - atlas?
 - TT fonts?
@@ -32,6 +28,9 @@ features todo
 - degenerate triangles for strip?
 - re-build swapchain and pipeline after window viewport/focus change
 - normals via geometry shader
+- mesh shader
+- OpenAL audio
+- shader storage buffer (SSBO)
 
 blog
 - pipeline cache

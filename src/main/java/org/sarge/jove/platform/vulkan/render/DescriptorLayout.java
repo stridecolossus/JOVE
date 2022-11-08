@@ -114,7 +114,8 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	 */
 	public static DescriptorLayout create(DeviceContext dev, Collection<Binding> bindings) {
 		// Check binding indices
-		if(bindings.stream().map(Binding::index).distinct().toList().size() != bindings.size()) {
+		final long count = bindings.stream().map(Binding::index).distinct().count();
+		if(count != bindings.size()) {
 			throw new IllegalArgumentException("Binding indices must be unique: " + bindings);
 		}
 
@@ -143,7 +144,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 	DescriptorLayout(Handle handle, DeviceContext dev, Collection<Binding> bindings) {
 		super(handle, dev);
 		Check.notEmpty(bindings);
-		this.bindings = Set.copyOf(bindings);
+		this.bindings = List.copyOf(bindings);
 	}
 
 	/**
