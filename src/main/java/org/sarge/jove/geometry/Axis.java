@@ -11,6 +11,10 @@ import org.sarge.jove.util.MathsUtil;
  * <li>Negative Z points <b>into</b> the screen.</li>
  * </ul>
  * <p>
+ * Implementation note:
+ * This class has optimised implementations for commonly used methods such as {@link #dot(Tuple)} or {@link #cross(Vector)}.
+ * It is generally recommended that vector operations delegate accordingly, e.g. {@code vec.dot(this)} rather than {@code this.dot(vec)}.
+ * <p>
  * @author Sarge
  */
 public final class Axis extends Normal {
@@ -110,9 +114,8 @@ public final class Axis extends Normal {
 	}
 
 	// TODO - optimisations
-	// - only really to optimise vertical axis? check for use cases
-	// - redundant if we used vector API? would that be slower?
-	// - how to make sure above are used on both sides? (without instanceof tests in Vector), double-dispatch would be horrible
+	// - only really need to optimise vertical axis? check for use cases
+	// - redundant if we used vector API? or would that be slower anyway?
 
 	/**
 	 * Creates a counter-clockwise rotation matrix about this axis.

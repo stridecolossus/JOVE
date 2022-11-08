@@ -28,6 +28,7 @@ public abstract class MutableRotation extends AbstractAxisAngle {
 			};
 		}
 	}
+	// TODO - should rotation():Matrix be moved to Vector/Axis?
 
 	private float angle;
 

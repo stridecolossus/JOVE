@@ -97,6 +97,30 @@ class MatrixTest {
 		}
 	}
 
+	@DisplayName("A submatrix can be extracted from the matrix")
+	@Test
+	void submatrix() {
+		final Matrix sub = matrix.submatrix(1, 1, 2);
+		assertEquals(2, sub.order());
+		assertEquals(5, sub.get(0, 0));
+		assertEquals(6, sub.get(0, 1));
+		assertEquals(8, sub.get(1, 0));
+		assertEquals(9, sub.get(1, 1));
+	}
+
+	@DisplayName("A submatrix must be smaller than the matrix")
+	@Test
+	void submatrixBounds() {
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.submatrix(0, 0, 4));
+		assertThrows(IndexOutOfBoundsException.class, () -> matrix.submatrix(3, 3, 1));
+	}
+
+	@DisplayName("A submatrix must have a valid order")
+	@Test
+	void submatrixOrder() {
+		assertThrows(IllegalArgumentException.class, () -> matrix.submatrix(1, 1, 0));
+	}
+
 	@DisplayName("A matrix can be multiplied by another matrix")
 	@Test
 	void multiply() {

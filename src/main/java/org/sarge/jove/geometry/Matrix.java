@@ -20,6 +20,7 @@ import org.sarge.lib.util.Check;
  * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> as expected by Vulkan</li>
  * </ul>
  * <p>
+ * @see Matrix4
  * @author Sarge
  */
 public abstract class Matrix implements Transform, Bufferable {
@@ -71,22 +72,22 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @throws IndexOutOfBoundsException if {@link #row} or {@link #col} are out-of-bounds
 	 */
 	public float get(int row, int col) throws IndexOutOfBoundsException {
-		check(row);
-		check(col);
-		return getLocal(row, col);
+		checkBounds(row);
+		checkBounds(col);
+		return element(row, col);
 	}
 
-	private void check(int index) {
+	private void checkBounds(int index) {
 		if((index < 0) || (index >= order())) throw new IndexOutOfBoundsException(index);
 	}
 
-	private float getLocal(int row, int col) {
+	private float element(int row, int col) {
 		final int index = index(row, col);
 		return matrix[index];
 	}
 
 	/**
-	 * @return Matrix index for the given matrix element
+	 * @return Array index for the given matrix element
 	 */
 	protected int index(int row, int col) {
 		return row + col * order();
@@ -99,7 +100,6 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @throws IndexOutOfBoundsException if the row index is invalid or the matrix is too small
 	 */
 	public Vector row(int row) throws IndexOutOfBoundsException {
-		check(row);
 		final int order = order();
 		final float x = matrix[row];
 		final float y = matrix[row + order];
@@ -114,7 +114,6 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @throws IndexOutOfBoundsException if the column index is invalid or the matrix is too small
 	 */
 	public Vector column(int col) throws IndexOutOfBoundsException {
-		check(col);
 		final int order = order();
 		final int index = col * order;
 		final float x = matrix[index];
@@ -123,21 +122,23 @@ public abstract class Matrix implements Transform, Bufferable {
 		return new Vector(x, y, z);
 	}
 
-	@Override
-	public void buffer(ByteBuffer buffer) {
-		if(buffer.isDirect()) {
-			for(float f : matrix) {
-				buffer.putFloat(f);
+	/**
+	 * Extracts a submatrix from this matrix.
+	 * @param row 		Row offset
+	 * @param col 		Column offset
+	 * @param order		Submatrix order
+	 * @return Submatrix
+	 * @throws IndexOutOfBoundsException if the submatrix is out-of-bounds for this matrix
+	 */
+	public Matrix submatrix(int row, int col, int order) {
+		final var sub = new Matrix.Builder(order);
+		for(int r = 0; r < order; ++r) {
+			for(int c = 0; c < order; ++c) {
+				final float f = element(r + row, c + col);
+				sub.set(r, c, f);
 			}
 		}
-		else {
-			buffer.asFloatBuffer().put(matrix);
-		}
-	}
-
-	@Override
-	public int length() {
-		return matrix.length * Float.BYTES;
+		return sub.build();
 	}
 
 // import jdk.incubator.vector.*;
@@ -222,7 +223,7 @@ public abstract class Matrix implements Transform, Bufferable {
 			for(int r = 0; r < order; ++r) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
-					total = Math.fma(this.getLocal(r, n), m.getLocal(n, c), total);
+					total = Math.fma(this.element(r, n), m.element(n, c), total);
 				}
 				result.matrix[index++] = total;
 			}
@@ -232,6 +233,23 @@ public abstract class Matrix implements Transform, Bufferable {
 	}
 	// TODO - works but could be much more efficient when calculating array indices
 	// TODO - JDK19 vector API
+
+	@Override
+	public int length() {
+		return matrix.length * Float.BYTES;
+	}
+
+	@Override
+	public void buffer(ByteBuffer buffer) {
+		if(buffer.isDirect()) {
+			for(float f : matrix) {
+				buffer.putFloat(f);
+			}
+		}
+		else {
+			buffer.asFloatBuffer().put(matrix);
+		}
+	}
 
 	@Override
 	public boolean equals(Object obj) {
@@ -250,7 +268,7 @@ public abstract class Matrix implements Transform, Bufferable {
 		final int order = this.order();
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				sb.append(String.format("%10.5f ", getLocal(r, c)));
+				sb.append(String.format("%10.5f ", element(r, c)));
 			}
 			sb.append(StringUtils.LF);
 		}
@@ -303,8 +321,8 @@ public abstract class Matrix implements Transform, Bufferable {
 		 * @throws IndexOutOfBoundsException if {@link #row} or {@link #col} is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			matrix.check(row);
-			matrix.check(col);
+			matrix.checkBounds(row);
+			matrix.checkBounds(col);
 			final int index = matrix.index(row, col);
 			matrix.matrix[index] = value;
 			return this;

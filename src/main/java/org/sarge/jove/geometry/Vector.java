@@ -83,7 +83,7 @@ public sealed class Vector extends Tuple permits Normal {
 	}
 	// TODO - JDK19 vector API
 	// TODO - worth hassle for 3 components?
-	// TODO - check for Axis and delegate?
+	// TODO - check for Axis and delegate? [no]
 
 	/**
 	 * @return Inverse of this vector
@@ -133,7 +133,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @see #dot(Tuple)
 	 */
 	public float angle(Vector vec) {
-		final float dot = dot(vec);
+		final float dot = vec.dot(this);
 		if(dot < -1) {
 			return -1;
 		}
@@ -207,8 +207,8 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @see <a href="https://en.wikipedia.org/wiki/Vector_projection">Wikipedia</a>
 	 */
 	public Vector project(Vector vec) {
-		final Vector n = vec.normalize();
-		return n.multiply(dot(n));
+		final Normal n = vec.normalize();
+		return n.multiply(n.dot(this));
 	}
 
 	/**
@@ -221,7 +221,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @see <a href="http://www.3dkingdoms.com/weekly/weekly.php?a=2">Reflection</a>
 	 */
 	public Vector reflect(Normal normal) {
-		final float f = -2f * dot(normal);
+		final float f = -2f * normal.dot(this);
 		return normal.multiply(f).add(this);
 	}
 
