@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.*;
@@ -89,18 +90,6 @@ class CommandTest extends AbstractVulkanTest {
 				assertEquals(false, buffer.isReady());
 			}
 
-			@DisplayName("cannot record commands until recording has been started")
-			@Test
-			void add() {
-				assertThrows(IllegalStateException.class, () -> buffer.add(cmd));
-			}
-
-			@DisplayName("cannot end recording if it has not been started")
-			@Test
-			void end() {
-				assertThrows(IllegalStateException.class, () -> buffer.end());
-			}
-
 			@DisplayName("cannot be reset")
 			@Test
 			void reset() {
@@ -111,9 +100,11 @@ class CommandTest extends AbstractVulkanTest {
 		@DisplayName("that is being recorded...")
 		@Nested
 		class Recording {
+			private Recorder recorder;
+
 			@BeforeEach
 			void before() {
-				buffer.begin();
+				recorder = buffer.begin();
 			}
 
 			@DisplayName("is not ready for submission")
@@ -131,7 +122,7 @@ class CommandTest extends AbstractVulkanTest {
 			@DisplayName("can record commands")
 			@Test
 			void add() {
-				buffer.add(cmd);
+				recorder.add(cmd);
 				verify(cmd).record(lib, buffer);
 				assertEquals(false, buffer.isReady());
 			}
@@ -139,7 +130,7 @@ class CommandTest extends AbstractVulkanTest {
 			@DisplayName("can end recording")
 			@Test
 			void end() {
-				buffer.end();
+				recorder.end();
 				verify(lib).vkEndCommandBuffer(buffer);
 				assertEquals(true, buffer.isReady());
 			}
@@ -156,8 +147,7 @@ class CommandTest extends AbstractVulkanTest {
 		class Ready {
 			@BeforeEach
 			void before() {
-				buffer.begin();
-				buffer.end();
+				buffer.begin().end();
 			}
 
 			@DisplayName("is ready for submission")
@@ -170,18 +160,6 @@ class CommandTest extends AbstractVulkanTest {
 			@Test
 			void begin() {
 				assertThrows(IllegalStateException.class, () -> buffer.begin());
-			}
-
-			@DisplayName("cannot record any more commands")
-			@Test
-			void add() {
-				assertThrows(IllegalStateException.class, () -> buffer.add(cmd));
-			}
-
-			@DisplayName("cannot end recording")
-			@Test
-			void end() {
-				assertThrows(IllegalStateException.class, () -> buffer.end());
 			}
 
 			@DisplayName("can be reset")
@@ -198,35 +176,32 @@ class CommandTest extends AbstractVulkanTest {
 	@DisplayName("A secondary command buffer...")
 	@Nested
 	class SecondaryBufferTests {
-		private SecondaryBuffer sec;
+		private Buffer secondary;
 
 		@BeforeEach
 		void before() {
-			sec = pool.secondary(1).iterator().next();
+			secondary = pool.allocate(1, false).iterator().next();
 		}
 
 		@DisplayName("is initially not ready for submission")
 		@Test
 		void constructor() {
-			assertEquals(pool, sec.pool());
-			assertEquals(false, sec.isReady());
-			assertEquals(false, sec.isPrimary());
+			assertEquals(pool, secondary.pool());
+			assertEquals(false, secondary.isReady());
+			assertEquals(false, secondary.isPrimary());
 		}
 
 		@DisplayName("can be recorded to a primary command buffer")
 		@Test
 		void add() {
 			// Record secondary command sequence
-			sec.begin();
-			sec.add(cmd);
-			sec.end();
-			assertEquals(true, sec.isReady());
+			secondary.begin().add(cmd).end();
+			assertEquals(true, secondary.isReady());
 
 			// Record to primary buffer
 			final Buffer buffer = pool.allocate();
-			buffer.begin();
-			buffer.add(List.of(sec));
-			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(List.of(sec)));
+			buffer.begin().add(List.of(secondary));
+			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(List.of(secondary)));
 		}
 
 		@DisplayName("cannot be recorded to a primary command buffer if it is not ready")
@@ -234,13 +209,13 @@ class CommandTest extends AbstractVulkanTest {
 		void notReady() {
 			final Buffer buffer = pool.allocate();
 			buffer.begin();
-			assertThrows(IllegalStateException.class, () -> buffer.add(List.of(sec)));
+			assertThrows(IllegalStateException.class, () -> buffer.begin().add(List.of(secondary)));
 		}
 
 		@DisplayName("cannot record further secondary command buffers")
 		@Test
 		void invalid() {
-			assertThrows(UnsupportedOperationException.class, () -> sec.add(List.of()));
+			assertThrows(IllegalStateException.class, () -> secondary.begin().add(List.of()));
 		}
 	}
 
@@ -285,13 +260,6 @@ class CommandTest extends AbstractVulkanTest {
 				}
 			};
 			verify(lib).vkAllocateCommandBuffers(dev, expected, new Pointer[1]);
-		}
-
-		@Test
-		void secondary() {
-			final Collection<SecondaryBuffer> buffers = pool.secondary(1);
-			assertNotNull(buffers);
-			assertEquals(1, buffers.size());
 		}
 
 		@Test

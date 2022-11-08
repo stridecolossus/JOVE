@@ -7,25 +7,25 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 
 public class RenderSequenceTest {
 	private Command cmd;
-	private Buffer buffer;
+	private Recorder recorder;
 	private RenderSequence seq;
 
 	@BeforeEach
 	void before() {
 		cmd = mock(Command.class);
-		buffer = mock(Buffer.class);
+		recorder = mock(Recorder.class);
 		seq = RenderSequence.of(List.of(cmd));
 		assertNotNull(seq);
 	}
 
 	@Test
 	void sequence() {
-		seq.record(buffer);
-		verify(buffer).add(cmd);
+		seq.record(recorder);
+		verify(recorder).add(cmd);
 	}
 
 	@Test
@@ -33,16 +33,16 @@ public class RenderSequenceTest {
 		final Command before = mock(Command.class);
 		final Command after = mock(Command.class);
 		final RenderSequence wrapper = seq.wrap(before, after);
-		wrapper.record(buffer);
-		verify(buffer).add(before);
-		verify(buffer).add(cmd);
-		verify(buffer).add(after);
+		wrapper.record(recorder);
+		verify(recorder).add(before);
+		verify(recorder).add(cmd);
+		verify(recorder).add(after);
 	}
 
 	@Test
 	void compound() {
 		final RenderSequence compound = RenderSequence.compound(List.of(seq, seq));
-		compound.record(buffer);
-		verify(buffer, times(2)).add(cmd);
+		compound.record(recorder);
+		verify(recorder, times(2)).add(cmd);
 	}
 }

@@ -6,6 +6,7 @@ import java.util.function.*;
 
 import org.sarge.jove.platform.vulkan.VkCommandBufferUsage;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 
 /**
  * The <i>frame builder</i> is responsible for configuring the render task for the next frame.
@@ -40,11 +41,10 @@ public class FrameBuilder {
 	public Buffer build(int index, RenderSequence seq) {
 		final FrameBuffer fb = frames.apply(index);
 		final Buffer buffer = factory.get();
-		buffer.begin(flags);
-		buffer.add(fb.begin());
-		seq.record(buffer);
-		buffer.add(FrameBuffer.END);
-		buffer.end();
-		return buffer;
+		final Recorder recorder = buffer.begin(flags);
+		recorder.add(fb.begin());
+		seq.record(recorder);
+		recorder.add(FrameBuffer.END);
+		return recorder.end();
 	}
 }

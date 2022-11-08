@@ -9,6 +9,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -52,9 +53,12 @@ class CaptureTaskTest extends AbstractVulkanTest {
 		buffer = mock(Buffer.class);
 		pool = mock(Pool.class);
 		when(pool.allocate()).thenReturn(buffer);
-		when(buffer.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)).thenReturn(buffer);
-		when(buffer.end()).thenReturn(buffer);
-		when(buffer.add(any(Command.class))).thenReturn(buffer);
+
+		// Init command recorder
+		final Recorder recorder = mock(Recorder.class);
+		when(buffer.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)).thenReturn(recorder);
+		when(recorder.end()).thenReturn(buffer);
+		when(recorder.add(any(Command.class))).thenReturn(recorder);
 
 		// Create capture task
 		task = new CaptureTask(pool);

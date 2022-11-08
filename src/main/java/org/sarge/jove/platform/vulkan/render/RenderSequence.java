@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 
 /**
  * A <i>render sequence</i> records Vulkan commands to a render task.
@@ -18,7 +19,7 @@ public interface RenderSequence {
 	 * @param buffer Render task
 	 * @see Buffer#add(Command)
 	 */
-	void record(Buffer buffer);
+	void record(Recorder recorder);
 
 	/**
 	 * Wraps this render sequence with the given commands.
@@ -29,10 +30,10 @@ public interface RenderSequence {
 	default RenderSequence wrap(Command before, Command after) {
 		notNull(before);
 		notNull(after);
-		return buffer -> {
-			buffer.add(before);
-			RenderSequence.this.record(buffer);
-			buffer.add(after);
+		return recorder -> {
+			recorder.add(before);
+			RenderSequence.this.record(recorder);
+			recorder.add(after);
 		};
 	}
 
