@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Cosine;
 
 /**
  * An <i>axis</i> is a vector representing one of the <i>cardinal</i> axes.
@@ -119,13 +119,14 @@ public final class Axis extends Normal {
 
 	/**
 	 * Creates a counter-clockwise rotation matrix about this axis.
-	 * @param angle Rotation angle (radians)
+	 * @param angle 		Rotation angle (radians)
+	 * @param cosine		Cosine function
 	 * @return Rotation matrix
 	 */
-	public Matrix rotation(float angle) {
+	public Matrix rotation(float angle, Cosine cosine) {
 		final var matrix = new Matrix.Builder().identity();
-		final float sin = MathsUtil.sin(angle);
-		final float cos = MathsUtil.cos(angle);
+		final float sin = cosine.sin(angle);
+		final float cos = cosine.cos(angle);
 
 		switch(index) {
 			case 0 -> matrix
@@ -150,6 +151,16 @@ public final class Axis extends Normal {
 		return matrix.build();
 	}
 	// TODO - introduce underlying enum for axis implementation for rotation, dot, etc? rather than nasty switch on index? Are there more axis specific methods to be added?
+
+	/**
+	 * Creates a counter-clockwise rotation matrix about this axis.
+	 * @param angle Rotation angle (radians)
+	 * @return Rotation matrix
+	 * @see #rotation(float, Cosine)
+	 */
+	public Matrix rotation(float angle) {
+		return rotation(angle, Cosine.DEFAULT);
+	}
 
 	/**
 	 * Selects the cardinal axis corresponding to the <i>minimal component</i> of the given vector.

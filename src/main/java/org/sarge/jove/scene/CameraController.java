@@ -1,13 +1,13 @@
 package org.sarge.jove.scene;
 
-import static org.sarge.jove.util.MathsUtil.HALF_PI;
+import static org.sarge.jove.util.Trigonometric.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.Interpolator;
 
 /**
  * The <i>camera controller</i> rotates the scene about the camera position, i.e. a free-look controller.
@@ -16,7 +16,7 @@ import org.sarge.jove.util.*;
 public class CameraController {
 	protected final Camera cam;
 	private final Dimensions dim;
-	private final Interpolator horizontal = Interpolator.linear(0, MathsUtil.TWO_PI);
+	private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
 	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
 	// TODO - make interpolator ranges mutable?
 

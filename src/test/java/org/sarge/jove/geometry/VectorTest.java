@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 
 class VectorTest {
 	private Vector vec;
@@ -125,16 +125,27 @@ class VectorTest {
 			final Vector unit = vec.normalize();
 			assertTrue(MathsUtil.isEqual(1, unit.dot(unit)));
 		}
+	}
 
-		@DisplayName("is equivalent to the cosine of the angle between two vectors")
+	@DisplayName("The angle between two vectors...")
+	@Nested
+	class AngleTests {
+		@DisplayName("is zero for parallel vectors")
 		@Test
-		void angle() {
-			assertEquals(MathsUtil.cos(MathsUtil.TWO_PI), vec.angle(vec));
-			assertEquals(1, vec.angle(vec));
-			assertEquals(-1, vec.angle(vec.invert()));
-			assertEquals(MathsUtil.PI, X.angle(X.invert()));
-			assertEquals(MathsUtil.HALF_PI, X.angle(Y));
-			assertEquals(MathsUtil.HALF_PI, X.angle(Z));
+		void parallel() {
+			assertEquals(0, vec.angle(vec));
+		}
+
+		@DisplayName("is the maximum angle for opposite vectors")
+		@Test
+		void opposite() {
+			assertEquals(Trigonometric.PI, vec.angle(vec.invert()));
+		}
+
+		@DisplayName("can be calculated for acute or obtuse angles")
+		@Test
+		void orthogonal() {
+			assertEquals(Trigonometric.HALF_PI, Axis.X.angle(Axis.Y));
 		}
 	}
 

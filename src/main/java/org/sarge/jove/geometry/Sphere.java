@@ -1,8 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.jove.util.MathsUtil.*;
-
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
@@ -28,13 +26,14 @@ public record Sphere(Point centre, float radius) {
 	 */
 	public static Vector vector(float theta, float phi) {
 		// Apply 90 degree clockwise rotation to align with the -Z axis
-		final float angle = theta - MathsUtil.HALF_PI;
+		final float angle = theta - Trigonometric.HALF_PI;
 
 		// Calculate unit-sphere coordinates
-		final float cos = cos(phi);
-		final float x = cos(angle) * cos;
-		final float y = sin(angle) * cos;
-		final float z = sin(phi);
+		final Cosine cosine = Cosine.DEFAULT;		// TODO - cosine
+		final float cos = cosine.cos(phi);
+		final float x = cosine.cos(angle) * cos;
+		final float y = cosine.sin(angle) * cos;
+		final float z = cosine.sin(phi);
 
 		// Swizzle the coordinates to default space
 		return new Vector(x, z, y);

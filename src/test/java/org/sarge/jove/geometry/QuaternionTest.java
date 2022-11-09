@@ -1,7 +1,8 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.util.MathsUtil.PI;
+import static org.sarge.jove.geometry.Axis.Y;
+import static org.sarge.jove.util.Trigonometric.PI;
 
 import org.junit.jupiter.api.*;
 
@@ -28,7 +29,7 @@ public class QuaternionTest {
 
 	@Test
 	void of() {
-		assertEquals(quaternion, Quaternion.of(AxisAngle.of(Axis.Y, PI)));
+		assertEquals(quaternion, Quaternion.of(new AxisAngle(Y, PI)));
 	}
 
 	@Test
@@ -43,7 +44,7 @@ public class QuaternionTest {
 
 	@Test
 	void matrix() {
-		final Rotation rot = AxisAngle.of(Axis.Y, PI);
+		final Rotation rot = new AxisAngle(Y, PI);
 		assertEquals(rot.matrix(), quaternion.matrix());
 	}
 
@@ -60,7 +61,7 @@ public class QuaternionTest {
 
 	@Test
 	void rotation() {
-		assertEquals(AxisAngle.of(Axis.Y, PI), quaternion.toAxisAngle());
+		assertEquals(new AxisAngle(Y, PI), quaternion.toAxisAngle());
 	}
 
 	@Test

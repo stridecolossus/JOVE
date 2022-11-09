@@ -135,14 +135,14 @@ public sealed class Vector extends Tuple permits Normal {
 	public float angle(Vector vec) {
 		final float dot = vec.dot(this);
 		if(dot < -1) {
-			return -1;
+			return Trigonometric.PI;
 		}
 		else
 		if(dot > 1) {
-			return 1;
+			return 0;
 		}
 		else {
-			return MathsUtil.acos(dot);
+			return (float) Math.acos(dot);
 		}
 	}
 

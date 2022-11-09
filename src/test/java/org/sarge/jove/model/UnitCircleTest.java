@@ -6,13 +6,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 
 public class UnitCircleTest {
 	@Test
 	public void segment() {
-		final var segment = UnitCircle.segment(3, 4, 0f, MathsUtil.toRadians(90));
-		final float angle = 4 * MathsUtil.sin(MathsUtil.toRadians(45));
+		final var segment = UnitCircle.segment(3, 4, 0f, Trigonometric.toRadians(90));
+		final float angle = 4 * Cosine.DEFAULT.sin(Trigonometric.toRadians(45));
 		final Point top = new Point(0, 4, 0);
 		final Point middle = new Point(angle, angle, 0);
 		final Point right = new Point(4, 0, 0);

@@ -6,11 +6,6 @@ package org.sarge.jove.geometry;
  */
 public interface Rotation extends Transform {
 	/**
-	 * @return This rotation as an axis-angle
-	 */
-	AxisAngle toAxisAngle();
-
-	/**
 	 * Rotates the given vector by this rotation.
 	 * @param vec Vector
 	 * @return Rotated vector

@@ -3,7 +3,7 @@ package org.sarge.jove.model;
 import java.util.*;
 
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 
 /**
  * A <i>unit circle</i> defines equally spaced points on a circle or segment of a circle.
@@ -20,7 +20,7 @@ public final class UnitCircle {
 	 * @return Unit-circle
 	 */
 	public static List<Point> circle(int num, float radius) {
-		return segment(num, radius, 0, MathsUtil.TWO_PI);
+		return segment(num, radius, 0, Trigonometric.TWO_PI);
 	}
 
 	/**
@@ -36,8 +36,8 @@ public final class UnitCircle {
 		final float segment = (end - start) / (num - 1);
 		for(int n = 0; n < num; ++n) {
 			final float angle = start + segment * n;
-			final float x = MathsUtil.sin(angle) * radius;
-			final float y = MathsUtil.cos(angle) * radius;
+			final float x = Cosine.DEFAULT.sin(angle) * radius;
+			final float y = Cosine.DEFAULT.cos(angle) * radius;
 			final Point pos = new Point(x, y, 0);
 			points.add(pos);
 		}
@@ -46,3 +46,4 @@ public final class UnitCircle {
 }
 // TODO - refactor with sphere
 // TODO - unused?
+// TODO - cosine

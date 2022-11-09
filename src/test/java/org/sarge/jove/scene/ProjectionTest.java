@@ -2,11 +2,10 @@ package org.sarge.jove.scene;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Trigonometric;
 
 public class ProjectionTest {
 	private Dimensions dim;
@@ -26,7 +25,7 @@ public class ProjectionTest {
 				.set(3, 2, -1)
 				.build();
 
-		final Projection proj = Projection.perspective(MathsUtil.HALF_PI);
+		final Projection proj = Projection.perspective(Trigonometric.HALF_PI);
 //		assertEquals(1, proj.height(dim));
 		assertEquals(expected, proj.matrix(0.1f, 1000f, dim));
 	}

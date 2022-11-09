@@ -3,8 +3,14 @@ package org.sarge.jove.util;
 /**
  * Maths utilities.
  * <p>
- * This class provides a suite of floating-point comparison operators that offer approximate equivalence, e.g. {@link #isEqual(float, float)}.
- * The accuracy of these methods can be configured via the {@code jove.accuracy} system property.
+ * This utility class provides:
+ * <ul>
+ * <li>General mathematics helper methods</li>
+ * <li>Wrapper methods for square-root and inverse-root operations (should optimised implementations be required)</li>
+ * <li>A suite of floating-point comparison operators that offer approximate equivalence, e.g. {@link #isEqual(float, float)}</li>
+ * </ul>
+ * <p>
+ * The accuracy of the approximation methods can be configured via the {@code jove.accuracy} system property.
  * <p>
  * @author Sarge
  */
@@ -18,31 +24,6 @@ public final class MathsUtil {
 	 * Half value.
 	 */
 	public static final float HALF = 0.5f;
-
-	/**
-	 * PI (or 180 degrees).
-	 */
-	public static final float PI = (float) Math.PI;
-
-	/**
-	 * Half-PI (or 90 degrees).
-	 */
-	public static final float HALF_PI = PI * HALF;
-
-	/**
-	 * Double PI (or 360 degrees).
-	 */
-	public static final float TWO_PI = 2 * PI;
-
-	/**
-	 * Converts degrees to radians.
-	 */
-	private static final float DEGREES_TO_RADIANS = PI / 180;
-
-	/**
-	 * Converts radians to degrees.
-	 */
-	private static final float RADIANS_TO_DEGREES = 1 / DEGREES_TO_RADIANS;
 
 	private MathsUtil() {
 	}
@@ -90,18 +71,15 @@ public final class MathsUtil {
 
 	/**
 	 * @param num Number
-	 * @return Whether the given integer is even
-	 */
-	public static boolean isEven(int num) {
-		return (num % 2) == 0;
-	}
-
-	/**
-	 * @param num Number
 	 * @return Whether the given integer is a power-of-two
 	 */
 	public static boolean isPowerOfTwo(int num) {
-		return (num > 0) && (num & (num - 1)) == 0;
+		if(num == 0) {
+			return false;
+		}
+		else {
+			return (num & (num - 1)) == 0;
+		}
 	}
 
 	/**
@@ -125,22 +103,6 @@ public final class MathsUtil {
 	}
 
 	/**
-	 * @param radians Angle in radians
-	 * @return Angle in degrees
-	 */
-	public static float toDegrees(float radians) {
-		return radians * RADIANS_TO_DEGREES;
-	}
-
-	/**
-	 * @param degrees Angle in degrees
-	 * @return Angle in radians
-	 */
-	public static float toRadians(float degrees) {
-		return degrees * DEGREES_TO_RADIANS;
-	}
-
-	/**
 	 * @param f Value
 	 * @return Square root
 	 */
@@ -154,86 +116,5 @@ public final class MathsUtil {
 	 */
 	public static float inverseRoot(float f) {
 		return 1 / sqrt(f);
-	}
-
-	/**
-	 * @param angle Angle (radians)
-	 * @return Sine of the given angle
-	 * @see <a href="https://en.wikipedia.org/wiki/Sine">Wikipedia</a>
-	 */
-	public static float sin(float angle) {
-		return (float) Math.sin(angle);
-	}
-
-	// TODO - lookup tables
-	// - how to configure for multiple scenarios? ideally avoid singleton (same for accuracy?)
-	// - factor out trig functions (and PI constants & helpers) to interface of some sort?
-	// - with implementation for default sized lookup table, but can override if required
-	// - but then how to plug those into use-cases? would need second method to pass as arg (nasty)
-	// - however sin/cos actually only used in half-dozen or so cases?
-	// - sqrt() is actually pretty good?
-	// - atan() in projection (once)
-	// - factor out approximation stuff to separate class?
-
-	/**
-	 * @param angle Angle (radians)
-	 * @return Cosine of the given angle
-	 * @see <a href="https://en.wikipedia.org/wiki/Sine">Wikipedia</a>
-	 */
-	public static float cos(float angle) {
-		// TODO - return sin(angle + HALF_PI); ???
-		return (float) Math.cos(angle);
-	}
-
-	/**
-	 * @param angle Angle (radians)
-	 * @return Tangent of the given angle
-	 */
-	public static float tan(float angle) {
-		return (float) Math.tan(angle);
-	}
-
-	/**
-	 * @param angle Angle (radians)
-	 * @return Arc-sine of the given angle
-	 */
-	public static float asin(float angle) {
-		if(angle > -1f) {
-			if(angle < 1f) {
-				return (float) Math.asin(angle);
-			}
-			else {
-				return HALF_PI;
-			}
-		}
-		else {
-			return -HALF_PI;
-		}
-	}
-
-	/**
-	 * @param angle Angle (radians)
-	 * @return Arc-cosine of the given angle
-	 */
-	public static float acos(float angle) {
-		if(angle > -1f) {
-			if(angle < 1f) {
-				return (float) Math.acos(angle);
-			}
-			else {
-				return 0f;
-			}
-		}
-		else {
-			return PI;
-		}
-	}
-
-	/**
-	 * @param angle Angle (radians)
-	 * @return Arc-tangent of the given angle
-	 */
-	public static float atan(float angle) {
-		return (float) Math.atan(angle);
 	}
 }

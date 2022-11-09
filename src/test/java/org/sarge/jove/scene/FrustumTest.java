@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.Trigonometric;
 
 class FrustumTest {
 	private Frustum frustum;
@@ -80,7 +80,7 @@ class FrustumTest {
 
 	@Test
 	void extractProjection() {
-		final Projection projection = Projection.perspective(MathsUtil.HALF_PI);
+		final Projection projection = Projection.perspective(Trigonometric.HALF_PI);
 		final Matrix m = projection.matrix(0, 1, new Dimensions(1, 1));
 		frustum = Frustum.of(m);
 		assertNotNull(frustum);

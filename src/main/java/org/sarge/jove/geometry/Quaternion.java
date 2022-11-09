@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import java.util.Arrays;
 
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.*;
 
 /**
  * A <i>quaternion</i> is a more compact and efficient representation of a rotation about an arbitrary axis.
@@ -21,9 +21,10 @@ public final class Quaternion implements Rotation {
 	 * @return New quaternion
 	 */
 	public static Quaternion of(AxisAngle rot) {
+		final Cosine cosine = rot.cosine();
 		final float half = rot.angle() * MathsUtil.HALF;
-		final float w = MathsUtil.cos(half);
-		final Vector vec = rot.axis().multiply(MathsUtil.sin(half));
+		final float w = cosine.cos(half);
+		final Vector vec = rot.axis().multiply(cosine.sin(half));
 		return new Quaternion(w, vec);
 	}
 
@@ -67,12 +68,15 @@ public final class Quaternion implements Rotation {
 		return new Vector(x, y, z);
 	}
 
-	@Override
+	/**
+	 * Converts this quaternion to an axis-angle.
+	 * @return Axis-angle
+	 */
 	public AxisAngle toAxisAngle() {
 		final float scale = MathsUtil.inverseRoot(1 - w * w);
-		final float angle = 2 * MathsUtil.acos(w);
+		final float angle = 2 * (float) Math.acos(w);
 		final Vector axis = this.axis().multiply(scale);
-		return AxisAngle.of(axis.normalize(), angle);
+		return new AxisAngle(axis.normalize(), angle);
 	}
 
 	/**

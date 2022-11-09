@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.util.MathsUtil.*;
+import static org.sarge.jove.util.Trigonometric.*;
 
 import org.junit.jupiter.api.*;
 

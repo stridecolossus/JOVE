@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.geometry.Axis.Y;
-import static org.sarge.jove.util.MathsUtil.HALF;
+import static org.sarge.jove.util.Trigonometric.HALF_PI;
 
 import org.junit.jupiter.api.*;
 
@@ -11,7 +11,7 @@ public class MutableRotationTest {
 
 	@BeforeEach
 	void before() {
-		rot = MutableRotation.of(Y);
+		rot = new MutableRotation(Y);
 	}
 
 	@Test
@@ -27,14 +27,8 @@ public class MutableRotationTest {
 
 	@Test
 	void set() {
-		rot.set(HALF);
-		assertEquals(HALF, rot.angle());
-		assertEquals(Y.rotation(HALF), rot.matrix());
-		assertEquals(AxisAngle.of(Y, HALF), rot.toAxisAngle());
-	}
-
-	@Test
-	void toAxisAngle() {
-		assertEquals(AxisAngle.of(Y, 0), rot.toAxisAngle());
+		rot.set(HALF_PI);
+		assertEquals(HALF_PI, rot.angle());
+		assertEquals(Y.rotation(HALF_PI), rot.matrix());
 	}
 }

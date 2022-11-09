@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.geometry.Axis.*;
-import static org.sarge.jove.util.MathsUtil.PI;
+import static org.sarge.jove.util.Trigonometric.PI;
 
 import org.junit.jupiter.api.*;
 
