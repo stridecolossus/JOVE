@@ -1,8 +1,6 @@
 package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -71,7 +69,7 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @return Matrix element
 	 * @throws IndexOutOfBoundsException if {@link #row} or {@link #col} are out-of-bounds
 	 */
-	public float get(int row, int col) throws IndexOutOfBoundsException {
+	public final float get(int row, int col) throws IndexOutOfBoundsException {
 		checkBounds(row);
 		checkBounds(col);
 		return element(row, col);
@@ -81,16 +79,27 @@ public abstract class Matrix implements Transform, Bufferable {
 		if((index < 0) || (index >= order())) throw new IndexOutOfBoundsException(index);
 	}
 
+	/**
+	 * @return Matrix element
+	 * @see #index(int, int)
+	 */
 	private float element(int row, int col) {
 		final int index = index(row, col);
 		return matrix[index];
 	}
 
 	/**
-	 * @return Array index for the given matrix element
+	 * @return Array index for the given element
 	 */
 	protected int index(int row, int col) {
-		return row + col * order();
+		return index(row, col, order());
+	}
+
+	/**
+	 * @return Array index for a matrix element of the given order
+	 */
+	private static int index(int row, int col, int order) {
+		return row + col * order;
 	}
 
 	/**
@@ -99,7 +108,7 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @return Matrix row
 	 * @throws IndexOutOfBoundsException if the row index is invalid or the matrix is too small
 	 */
-	public Vector row(int row) throws IndexOutOfBoundsException {
+	public final Vector row(int row) throws IndexOutOfBoundsException {
 		final int order = order();
 		final float x = matrix[row];
 		final float y = matrix[row + order];
@@ -113,7 +122,7 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @return Matrix column
 	 * @throws IndexOutOfBoundsException if the column index is invalid or the matrix is too small
 	 */
-	public Vector column(int col) throws IndexOutOfBoundsException {
+	public final Vector column(int col) throws IndexOutOfBoundsException {
 		final int order = order();
 		final int index = col * order;
 		final float x = matrix[index];
@@ -130,7 +139,7 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @return Submatrix
 	 * @throws IndexOutOfBoundsException if the submatrix is out-of-bounds for this matrix
 	 */
-	public Matrix submatrix(int row, int col, int order) {
+	public final Matrix submatrix(int row, int col, int order) {
 		final var sub = new Matrix.Builder(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
@@ -171,32 +180,43 @@ public abstract class Matrix implements Transform, Bufferable {
 //		return transpose;
 //	}
 
-	private static final Map<Integer, int[]> TRANSPOSE = new ConcurrentHashMap<>();
+	private static final int[][] TRANSPOSE = new int[4][];
 
-	/**
-	 * @return Transpose of this matrix
-	 */
-	public Matrix transpose() {
-		final int order = this.order();
-		final int[] index = TRANSPOSE.computeIfAbsent(order, this::transpose);
-		final Matrix transpose = create(order);
-		for(int n = 0; n < matrix.length; ++n) {
-			transpose.matrix[n] = this.matrix[index[n]];
+	// Build pre-calculated transpose indices for common matrices
+	static {
+		for(int n = 0; n < TRANSPOSE.length; ++n) {
+			TRANSPOSE[n] = transpose(n + 1);
 		}
-		return transpose;
 	}
 
 	/**
 	 * Builds the transpose index for a matrix of the given order.
 	 */
-	private int[] transpose(int order) {
+	private static int[] transpose(int order) {
 		final int[] transpose = new int[order * order];
 		int index = 0;
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				transpose[index++] = index(r, c);
+				transpose[index++] = index(r, c, order);
 			}
 		}
+		return transpose;
+	}
+
+	/**
+	 * @return Transpose of this matrix
+	 */
+	public Matrix transpose() {
+		// Lookup transpose index
+		final int order = this.order();
+		final int[] index = order <= TRANSPOSE.length ? TRANSPOSE[order - 1] : transpose(order);
+
+		// Build transpose matrix
+		final Matrix transpose = create(order);
+		for(int n = 0; n < matrix.length; ++n) {
+			transpose.matrix[n] = this.matrix[index[n]];
+		}
+
 		return transpose;
 	}
 
@@ -211,7 +231,7 @@ public abstract class Matrix implements Transform, Bufferable {
 	 * @return Multiplied matrix
 	 * @throws IllegalArgumentException if the given matrix is not of the same order as this matrix
 	 */
-	public Matrix multiply(Matrix m) {
+	public final Matrix multiply(Matrix m) {
 		// Check same sized matrices
 		final int order = order();
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different orders");
@@ -240,7 +260,7 @@ public abstract class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public void buffer(ByteBuffer buffer) {
+	public final void buffer(ByteBuffer buffer) {
 		if(buffer.isDirect()) {
 			for(float f : matrix) {
 				buffer.putFloat(f);
@@ -252,7 +272,7 @@ public abstract class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof Matrix that) &&

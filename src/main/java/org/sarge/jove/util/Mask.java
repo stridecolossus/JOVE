@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 import java.util.stream.IntStream;
 
 /**
- * A <i>mask</i> is a simple utility class representing a bit-field.
+ * A <i>mask</i> is a simple utility class representing an integer bit-field.
  * @author Sarge
  */
 public record Mask(int mask) {

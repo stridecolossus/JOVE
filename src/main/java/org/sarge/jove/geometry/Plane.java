@@ -22,7 +22,7 @@ import org.sarge.jove.util.MathsUtil;
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
  */
-public class Plane implements Intersected {
+public final class Plane implements Intersected {
 	/**
 	 * The <i>half space</i> defines the <i>sides</i> of this plane with respect to the normal.
 	 * The {@link #POSITIVE} half-space is in <i>front</i> of the plane and {@link #NEGATIVE} is <i>behind</i>.

@@ -112,10 +112,7 @@ public final class Axis extends Normal {
     		default -> throw new RuntimeException();
     	};
 	}
-
-	// TODO - optimisations
-	// - only really need to optimise vertical axis? check for use cases
-	// - redundant if we used vector API? or would that be slower anyway?
+	// TODO - optimisations redundant if we used vector API? or would that be slower anyway?
 
 	/**
 	 * Creates a counter-clockwise rotation matrix about this axis.

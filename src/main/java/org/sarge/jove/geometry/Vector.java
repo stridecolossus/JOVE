@@ -97,7 +97,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @param vec Vector to add
 	 * @return Added vector
 	 */
-	public Vector add(Vector vec) {
+	public final Vector add(Vector vec) {
 		return new Vector(x + vec.x, y + vec.y, z + vec.z);
 	}
 
@@ -106,7 +106,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @param f Scalar
 	 * @return Scaled vector
 	 */
-	public Vector multiply(float f) {
+	public final Vector multiply(float f) {
 		return new Vector(x * f, y * f, z * f);
 	}
 
@@ -115,7 +115,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @param vec Vector
 	 * @return This vector multiplied <i>component wise</i> by the given vector
 	 */
-	public Vector multiply(Vector vec) {
+	public final Vector multiply(Vector vec) {
 		return new Vector(x * vec.x, y * vec.y, z * vec.z);
 	}
 
@@ -132,7 +132,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Angle between vectors (radians)
 	 * @see #dot(Tuple)
 	 */
-	public float angle(Vector vec) {
+	public final float angle(Vector vec) {
 		final float dot = vec.dot(this);
 		if(dot < -1) {
 			return Trigonometric.PI;
@@ -185,7 +185,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @param p Point
 	 * @return Nearest point on this vector
 	 */
-	public Point nearest(Point p) {
+	public final Point nearest(Point p) {
 		final Vector v = new Vector(p);
 		final Vector n = v.project(this);
 		return new Point(n);
@@ -206,7 +206,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Projected vector
 	 * @see <a href="https://en.wikipedia.org/wiki/Vector_projection">Wikipedia</a>
 	 */
-	public Vector project(Vector vec) {
+	public final Vector project(Vector vec) {
 		final Normal n = vec.normalize();
 		return n.multiply(n.dot(this));
 	}
@@ -220,13 +220,13 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Reflected vector
 	 * @see <a href="http://www.3dkingdoms.com/weekly/weekly.php?a=2">Reflection</a>
 	 */
-	public Vector reflect(Normal normal) {
+	public final Vector reflect(Normal normal) {
 		final float f = -2f * normal.dot(this);
 		return normal.multiply(f).add(this);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof Vector that) &&

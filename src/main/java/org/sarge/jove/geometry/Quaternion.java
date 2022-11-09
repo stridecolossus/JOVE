@@ -69,7 +69,7 @@ public final class Quaternion implements Rotation {
 	}
 
 	/**
-	 * Converts this quaternion to an axis-angle.
+	 * Converts this quaternion to an axis-angle rotation.
 	 * @return Axis-angle
 	 */
 	public AxisAngle toAxisAngle() {

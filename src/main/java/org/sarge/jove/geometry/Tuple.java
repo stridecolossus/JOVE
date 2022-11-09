@@ -97,7 +97,7 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return Arrays.toString(new float[]{x, y, z});
 	}
 }

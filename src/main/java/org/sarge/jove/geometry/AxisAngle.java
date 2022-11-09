@@ -10,9 +10,11 @@ import org.sarge.jove.util.*;
 /**
  * An <i>axis-angle</i> defines a counter-clockwise rotation about an axis.
  * <p>
- * The {@link #cosine()} can be overridden to provide a custom trigonometric function used to calculate the rotation matrix.
+ * The {@link #cosine()} method can be overridden to provide a custom trigonometric function used to calculate the rotation matrix.
+ * Alternatively see {@link #of(AxisAngle, Cosine)}
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
+ * @author Sarge
  */
 public class AxisAngle implements Rotation {
 	/**

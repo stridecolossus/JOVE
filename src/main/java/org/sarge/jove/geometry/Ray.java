@@ -25,7 +25,7 @@ public interface Ray {
 	 */
 	default Point point(float dist) {
 		final Point origin = this.origin();
-		final Vector dir = this.direction();
+		final Vector dir = this.direction().normalize();
 		return origin.add(dir.multiply(dist));
 	}
 
