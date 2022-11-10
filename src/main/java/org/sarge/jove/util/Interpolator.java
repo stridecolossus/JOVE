@@ -61,6 +61,8 @@ public interface Interpolator extends FloatUnaryOperator {
 		return t -> 1 - apply(t);
 	}
 
+	// https://github.com/jMonkeyEngine/jmonkeyengine/blob/master/jme3-core/src/main/java/com/jme3/math/Easing.java
+
 	/**
 	 * Mirrors this interpolator.
 	 * @return Mirror interpolator

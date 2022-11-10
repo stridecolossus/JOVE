@@ -103,6 +103,15 @@ public final class MathsUtil {
 	}
 
 	/**
+	 * Clamps the given floating-point value to a 0..1 percentile.
+	 * @param value Value to saturate
+	 * @return Saturated value
+	 */
+	public static float saturate(float value) {
+		return clamp(value, 0, 1);
+	}
+
+	/**
 	 * @param f Value
 	 * @return Square root
 	 */

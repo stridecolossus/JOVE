@@ -56,6 +56,15 @@ class MathsUtilTest {
 	}
 
 	@Test
+	void saturation() {
+		assertEquals(0, saturate(-1));
+		assertEquals(0, saturate(0));
+		assertEquals(HALF, saturate(HALF));
+		assertEquals(1, saturate(1));
+		assertEquals(1, saturate(2));
+	}
+
+	@Test
 	void root() {
 		assertEquals((float) Math.sqrt(42f), MathsUtil.sqrt(42));
 	}

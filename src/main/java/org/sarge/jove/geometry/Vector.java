@@ -145,6 +145,7 @@ public sealed class Vector extends Tuple permits Normal {
 			return (float) Math.acos(dot);
 		}
 	}
+	// TODO - should this actually be MathsUtil.acos()
 
 	/**
 	 * Calculates the <i>cross product</i> of this and the given vector.

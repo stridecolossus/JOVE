@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>capsule</i> is a <i>swept sphere</i> volume specified as a given radius about a line segment.
@@ -54,13 +55,9 @@ public class Capsule implements Volume {
 
 		final float t = Vector.between(a, p).dot(ab) / ab.dot(ab);
 //		p.subtract(a).dot(ab) / ab.dot(ab);
-		final Point n = a.add(ab.multiply(saturate(t)));
+		final Point n = a.add(ab.multiply(MathsUtil.saturate(t)));
 
 		return n.distance(p) < radius * radius;
-	}
-
-	private static float saturate(float t) {
-		return Math.min(1, Math.max(0, t));
 	}
 
 	@Override
