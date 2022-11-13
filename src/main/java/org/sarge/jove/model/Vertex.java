@@ -2,15 +2,12 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.common.*;
+import org.sarge.jove.geometry.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
- * A <i>vertex</i> TODO
+ * A <i>vertex</i> is an element of a {@link Model}.
  * @author Sarge
  */
 public interface Vertex extends Bufferable {
@@ -19,51 +16,72 @@ public interface Vertex extends Bufferable {
 	 */
 	Point position();
 
-	// TODO - common implementation for pos + coord (grid, cube)
+	/**
+	 * @return Layout of this vertex
+	 */
+	Layout layout();
 
 	/**
-	 *
+	 * Builder for a vertex.
 	 */
-	class DefaultVertex implements Vertex {
-		private final Bufferable[] data;
+	class Builder {
+		private Point pos;
+		private Normal normal;
+		private Coordinate2D coord;
+		// TODO - colour?
 
-		public DefaultVertex(Bufferable... data) {
-			// TODO
-			this.data = notNull(data);
+		/**
+		 * Sets the vertex position.
+		 * @param pos Vertex position
+		 */
+		public Builder add(Point pos) {
+			this.pos = notNull(pos);
+			return this;
 		}
 
-		public DefaultVertex(List<Bufferable> data) {
-			this(data.toArray(Bufferable[]::new));
+		/**
+		 * Sets the vertex normal.
+		 * @param normal Vertex normal
+		 */
+		public Builder add(Normal normal) {
+			this.normal = notNull(normal);
+			return this;
 		}
 
-		@Override
-		public Point position() {
-			return (Point) data[0];
+		/**
+		 * Sets the texture coordinate.
+		 * @param coord Texture coordinate
+		 */
+		public Builder add(Coordinate2D coord) {
+			this.coord = notNull(coord);
+			return this;
 		}
 
-		@Override
-		public void buffer(ByteBuffer bb) {
-			for(Bufferable b : data) {
-				b.buffer(bb);
+		/**
+		 * Constructs this vertex.
+		 * @return New vertex
+		 * @throws IllegalArgumentException if the vertex is empty
+		 */
+		public Vertex build() {
+			if(normal == null) {
+				if(coord == null) {
+					if(pos == null) throw new IllegalArgumentException("Vertex cannot be empty");
+					return pos;
+				}
+				else {
+					return new DefaultVertex(pos, coord);
+				}
 			}
-		}
-
-		@Override
-		public int hashCode() {
-			return Arrays.hashCode(data);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof DefaultVertex that) &&
-					Arrays.equals(this.data, that.data);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this).append(data).build();
+			else {
+				if(coord == null) {
+					// TODO
+					throw new UnsupportedOperationException();
+				}
+				else {
+					// TODO - bit silly
+					return new DefaultVertex(pos, coord).add(normal);
+				}
+			}
 		}
 	}
 }

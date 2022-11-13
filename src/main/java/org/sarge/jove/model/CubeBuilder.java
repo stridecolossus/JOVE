@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.Vertex.DefaultVertex;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -37,7 +36,7 @@ public class CubeBuilder {
 	};
 
 	// Face normals
-	private static final Vector[] NORMALS = {
+	private static final Normal[] NORMALS = {
 			Axis.Z,
 			Axis.Z.invert(),
 			Axis.X,
@@ -93,8 +92,8 @@ public class CubeBuilder {
 
 				// Lookup vertex components
 				final Point pos = VERTICES[index].multiply(size);
-				final Vector normal = NORMALS[face];
-				final Coordinate coord = Coordinate2D.QUAD.get(corner);
+				final Normal normal = NORMALS[face];
+				final Coordinate2D coord = Coordinate2D.QUAD.get(corner);
 				final Colour col = COLOURS[face];
 
 				// Build vertex
@@ -106,17 +105,15 @@ public class CubeBuilder {
 
 	/**
 	 * Builds a cube vertex.
-	 * Default implementation creates a vertex composed of the vertex position and texture coordinate.
+	 * This implementation creates a {@link DefaultVertex}, i.e. ignores the {@link #normal} and {@link #col} arguments.
 	 * @param pos			Vertex position
 	 * @param normal		Normal
 	 * @param coord			Texture coordinate
 	 * @param col			Colour
-	 * @return New vertex
-	 * @see Vertex#of(Bufferable...)
+	 * @return New default vertex
+	 * @see DefaultVertex
 	 */
-	protected Vertex vertex(Point pos, Vector normal, Coordinate coord, Colour col) {
-		// TODO - vertex layout filter
-		// TODO - normal class
+	protected Vertex vertex(Point pos, Normal normal, Coordinate2D coord, Colour col) {
 		return new DefaultVertex(pos, coord);
 	}
 }

@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 
 public class IndexedModelTest {
 	private IndexedModel model;

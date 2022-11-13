@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Vertex;
 
 class DuplicateModelTest {

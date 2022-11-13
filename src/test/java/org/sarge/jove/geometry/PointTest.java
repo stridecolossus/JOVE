@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.*;
 
 class PointTest {
 	private Point pos;
@@ -60,6 +60,13 @@ class PointTest {
 	@Test
 	void layout() {
 		assertEquals(Component.floats(3), Point.LAYOUT);
+	}
+
+	@DisplayName("A point is also a vertex")
+	@Test
+	void vertex() {
+		assertEquals(new Layout(Point.LAYOUT), pos.layout());
+		assertEquals(pos, pos.position());
 	}
 
 	@Test

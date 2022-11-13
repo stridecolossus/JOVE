@@ -1,14 +1,14 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.model.Vertex.DefaultVertex;
 
 public class DefaultModelTest {
 	private DefaultModel model;
@@ -48,12 +48,10 @@ public class DefaultModelTest {
     		model.add(vertex);
     	}
 
-    	// TODO
-    	@Disabled
     	@DisplayName("cannot add vertices that do not match the layout of the model")
     	@Test
     	void layout() {
-    		assertThrows(IllegalArgumentException.class, () -> model.add(new DefaultVertex(Colour.WHITE)));
+    		assertThrows(IllegalArgumentException.class, () -> model.add(mock(Vertex.class)));
     	}
 	}
 

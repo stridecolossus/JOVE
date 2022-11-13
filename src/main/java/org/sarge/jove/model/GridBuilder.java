@@ -5,10 +5,9 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.Vertex.DefaultVertex;
 import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
@@ -170,7 +169,7 @@ public class GridBuilder {
 				// TODO - normals from height function
 
 				// Calculate texture coordinate
-				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
+				final Coordinate2D coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
 				final Vertex vertex = new DefaultVertex(pos, coord);

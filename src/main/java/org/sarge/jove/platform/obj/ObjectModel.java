@@ -6,7 +6,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.Vertex.DefaultVertex;
 
 /**
  * The <i>OBJ model</i> comprises the transient vertex data during parsing.
@@ -15,7 +14,7 @@ import org.sarge.jove.model.Vertex.DefaultVertex;
 class ObjectModel {
 	private final VertexComponentList<Point> positions = new VertexComponentList<>();
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
-	private final VertexComponentList<Coordinate> coords = new VertexComponentList<>();
+	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
 	private final List<DefaultModel> models = new ArrayList<>();
 	private DefaultModel model;
 
@@ -73,7 +72,7 @@ class ObjectModel {
 	/**
 	 * @return Texture coordinates
 	 */
-	VertexComponentList<Coordinate> coordinates() {
+	VertexComponentList<Coordinate2D> coordinates() {
 		return coords;
 	}
 
@@ -91,17 +90,25 @@ class ObjectModel {
 	 * @see VertexComponentList#get(int)
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
-		final var components = new ArrayList<Bufferable>();
+		// Init vertex
+		final var vertex = new DefaultVertex.Builder();
 		final Point pos = positions.get(v);
-		components.add(pos);
+		vertex.add(pos);
+
+		// Add optional normal
 		if(vn != null) {
-			components.add(normals.get(vn));
+			final Normal normal = normals.get(vn);
+			vertex.add(normal);
 		}
+
+		// Add optional texture coordinate
 		if(vt != null) {
-			components.add(coords.get(vt));
+			final Coordinate2D coord = coords.get(vt);
+			vertex.add(coord);
 		}
-		model.add(new DefaultVertex(components));
-		// TODO - builder?
+
+		// Add vertex
+		model.add(vertex.build());
 	}
 
 	/**

@@ -17,9 +17,6 @@ public class ObjectModelTest {
 	void before() {
 		model = new ObjectModel();
 		model.positions().add(Point.ORIGIN);
-		model.normals().add(Axis.X);
-		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
-		model.start();
 	}
 
 	@Nested
@@ -27,34 +24,45 @@ public class ObjectModelTest {
 		@DisplayName("Add a vertex with all 3 components")
 		@Test
 		void vertexAll() {
+			model.normals().add(Axis.X);
+			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
+			model.start();
 			model.vertex(1, 1, 1);
 		}
 
 		@DisplayName("Add a vertex with just the position")
 		@Test
 		void vertexOnly() {
+			model.start();
 			model.vertex(1, null, null);
 		}
 
+		@Disabled("TODO - unimplemented")
 		@DisplayName("Add a vertex with a normal")
 		@Test
 		void vertexNormal() {
-			model.vertex(1, null, 1);
+			model.normals().add(Axis.X);
+			model.start();
+			model.vertex(1, 1, null);
 		}
 
 		@DisplayName("Add a vertex with a texture coordinate")
 		@Test
 		void vertexTexture() {
-			model.vertex(1, 1, null);
+			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
+			model.start();
+			model.vertex(1, null, 1);
 		}
 
 		@Test
 		void vertexNegativeIndex() {
+			model.start();
 			model.vertex(-1, null, null);
 		}
 
 		@Test
 		void vertexInvalidIndex() {
+			model.start();
 			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(0, null, null));
 			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(2, null, null));
 		}
@@ -63,6 +71,9 @@ public class ObjectModelTest {
 	@Nested
 	class BuilderTests {
 		private void triangle() {
+			model.normals().add(Axis.X);
+			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
+			model.start();
 			for(int n = 0; n < 3; ++n) {
 				model.vertex(1, 1, 1);
 			}

@@ -1,55 +1,58 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Colour;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Vertex.DefaultVertex;
+import org.sarge.jove.common.Layout;
+import org.sarge.jove.geometry.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 class DefaultVertexTest {
 	private DefaultVertex vertex;
-	private Point pos;
 
 	@BeforeEach
 	void before() {
-		pos = new Point(1, 2, 3);
-		vertex = new DefaultVertex(pos, Colour.WHITE);
+		vertex = new DefaultVertex(Point.ORIGIN, Coordinate2D.TOP_LEFT);
 	}
 
 	@Test
 	void position() {
-		assertEquals(pos, vertex.position());
+		assertEquals(Point.ORIGIN, vertex.position());
 	}
 
-//	@Test
-//	void layout() {
-//		assertEquals(new Layout(Point.LAYOUT, Colour.LAYOUT), vertex.layout());
-//	}
+	@Test
+	void layout() {
+		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), vertex.layout());
+	}
+
+	@Test
+	void normal() {
+		final DefaultVertex result = vertex.add(Axis.Y);
+		assertEquals(Axis.Y, result.normal());
+		assertEquals(new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT), result.layout());
+	}
+
+	@Test
+	void already() {
+		assertThrows(IllegalStateException.class, () -> vertex.add(Axis.Y).add(Axis.Y));
+	}
 
 	@Test
 	void buffer() {
-		final int len = (3 + 4) * Float.BYTES;
-		final ByteBuffer bb = ByteBuffer.allocate(len);
+		final ByteBuffer bb = mock(ByteBuffer.class);
+		when(bb.putFloat(0f)).thenReturn(bb);
 		vertex.buffer(bb);
-		bb.rewind();
-		assertEquals(pos.x, bb.getFloat());
-		assertEquals(pos.y, bb.getFloat());
-		assertEquals(pos.z, bb.getFloat());
-		assertEquals(1, bb.getFloat());
-		assertEquals(1, bb.getFloat());
-		assertEquals(1, bb.getFloat());
-		assertEquals(1, bb.getFloat());
-		assertEquals(0, bb.remaining());
+		verify(bb, times(3 + 2)).putFloat(0f);
 	}
 
 	@Test
 	void equals() {
 		assertEquals(vertex, vertex);
-		assertEquals(vertex, new DefaultVertex(pos, Colour.WHITE));
+		assertEquals(vertex, new DefaultVertex(Point.ORIGIN, Coordinate2D.TOP_LEFT));
 		assertNotEquals(vertex, null);
-		assertNotEquals(vertex, new DefaultVertex(pos));
+		assertNotEquals(vertex, mock(Vertex.class));
 	}
 }

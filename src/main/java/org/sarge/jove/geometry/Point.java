@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.*;
 import org.sarge.jove.model.Vertex;
 import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Converter;
@@ -49,11 +49,6 @@ public final class Point extends Tuple implements Vertex {
 		super(array);
 	}
 
-	@Override
-	public Point position() {
-		return this;
-	}
-
 	/**
 	 * Calculates the distance <b>squared</b> between two points.
 	 * @param p Destination point
@@ -89,6 +84,16 @@ public final class Point extends Tuple implements Vertex {
 	 */
 	public Point multiply(float f) {
 		return new Point(x * f, y * f, z * f);
+	}
+
+	@Override
+	public Point position() {
+		return this;
+	}
+
+	@Override
+	public Layout layout() {
+		return new Layout(LAYOUT);
 	}
 
 	@Override

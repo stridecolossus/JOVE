@@ -8,7 +8,6 @@ import java.util.stream.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>default model</i> is used to construct a mesh comprising {@link Vertex} data.
@@ -61,9 +60,7 @@ public class DefaultModel extends AbstractModel {
 	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this model
 	 */
 	public DefaultModel add(Vertex vertex) {
-		// TODO
-		//if(!vertex.layout().equals(this.layout())) throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
-		Check.notNull(vertex);
+		if(!this.layout().equals(vertex.layout())) throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
 		vertices.add(vertex);
 		return this;
 	}
