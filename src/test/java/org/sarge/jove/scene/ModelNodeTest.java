@@ -5,21 +5,21 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.EmptyVolume;
-import org.sarge.jove.model.Mesh;
+import org.sarge.jove.model.Model;
 
 public class ModelNodeTest {
 	private ModelNode node;
-	private Mesh mesh;
+	private Model model;
 
 	@BeforeEach
 	void before() {
-		mesh = mock(Mesh.class);
-		node = new ModelNode(mesh);
+		model = mock(Model.class);
+		node = new ModelNode(model);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(mesh, node.mesh());
+		assertEquals(model, node.model());
 		assertEquals(EmptyVolume.INSTANCE, node.volume());
 	}
 
@@ -42,13 +42,13 @@ public class ModelNodeTest {
 	@Test
 	void copy() {
 		final ModelNode copy = node.copy();
-		assertEquals(mesh, copy.mesh());
+		assertEquals(model, copy.model());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(node, node);
 		assertNotEquals(node, null);
-		assertNotEquals(node, new ModelNode(mesh));
+		assertNotEquals(node, new ModelNode(model));
 	}
 }

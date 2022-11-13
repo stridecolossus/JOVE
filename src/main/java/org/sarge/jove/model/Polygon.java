@@ -1,14 +1,18 @@
 package org.sarge.jove.model;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.IntFunction;
 import java.util.stream.*;
 
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Vector;
 
 /**
  * A <i>polygon</i> comprises a number of vertices.
+ * <p>
  * Note this implementation assumes (but does not enforce) that the polygon vertices are <i>open</i>, i.e. the final vertex does <b>not</b> duplicate the starting point.
+ * See {@link #close()}
+ * <p>
  * @author Sarge
  */
 public record Polygon(List<Point> vertices) {
@@ -35,28 +39,19 @@ public record Polygon(List<Point> vertices) {
 
 	/**
 	 * Builds the <i>edges</i> of this polygon, where an edge is the vector between successive vertices.
-	 * @param close Whether to include the <i>closing</i> edge, i.e. the edge between the first and last vertices
 	 * @return Edges of this polygon
 	 */
-	public Stream<Vector> edges(boolean close) {
-		final int last = vertices.size() - 1;
-		final var edges = IntStream
-				.range(0, last)
-				.mapToObj(n -> edge(n, n + 1));
-
-		if(close) {
-			return Stream.concat(edges, Stream.of(edge(last, 0)));
-		}
-		else {
-			return edges;
-		}
+	public Stream<Vector> edges() {
+		return IntStream
+				.range(0, vertices.size() - 1)
+				.mapToObj(this::edge);
 	}
 
 	/**
 	 * Builds a vertex edge between the given vertices.
 	 */
-	private Vector edge(int start, int end) {
-		return Vector.between(vertices.get(start), vertices.get(end));
+	private Vector edge(int index) {
+		return Vector.between(vertices.get(index), vertices.get(index + 1));
 	}
 
 	/**
@@ -65,7 +60,7 @@ public record Polygon(List<Point> vertices) {
 	 */
 	public Normal normal() {
 		// Enumerate edges
-		final List<Vector> edges = this.edges(false).toList();
+		final List<Vector> edges = this.edges().toList();
 
 		// Generate the normal of each pair of edges
 		final IntFunction<Vector> cross = n -> {
@@ -80,6 +75,16 @@ public record Polygon(List<Point> vertices) {
 				.mapToObj(cross)
 				.reduce(new Vector(0, 0, 0), Vector::add)
 				.normalize();
+	}
+
+	/**
+	 * Closes this polygon, i.e. duplicates the first vertex at the end of the polygon.
+	 * @return Closed polygon
+	 */
+	public Polygon close() {
+		final var closed = new ArrayList<>(vertices);
+		closed.add(vertices.get(0));
+		return new Polygon(closed);
 	}
 
 	/**

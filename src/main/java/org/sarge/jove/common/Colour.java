@@ -103,11 +103,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	// TODO - JDK19 vector API
 
 	@Override
-	public int length() {
-		return LAYOUT.stride();
-	}
-
-	@Override
 	public void buffer(ByteBuffer buffer) {
 		buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
 	}

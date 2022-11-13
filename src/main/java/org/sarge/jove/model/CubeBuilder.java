@@ -3,6 +3,7 @@ package org.sarge.jove.model;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Vertex.DefaultVertex;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -73,10 +74,8 @@ public class CubeBuilder {
 	 * Constructs a cube with a default vertex layout (vertices and texture coordinates).
 	 * @return New cube model
 	 */
-	public Model build() {
-		final Model model = new Model(Primitive.TRIANGLES);
-		model.layout(Point.LAYOUT);
-		model.layout(Coordinate2D.LAYOUT);
+	public DefaultModel build() {
+		final DefaultModel model = new DefaultModel(Primitive.TRIANGLES, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
 		build(model);
 		return model;
 	}
@@ -86,7 +85,7 @@ public class CubeBuilder {
 	 * @param builder Model builder
 	 * @see #vertex(Point, Vector, Coordinate, Colour)
 	 */
-	public void build(Model model) {
+	public void build(DefaultModel model) {
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -118,6 +117,6 @@ public class CubeBuilder {
 	protected Vertex vertex(Point pos, Vector normal, Coordinate coord, Colour col) {
 		// TODO - vertex layout filter
 		// TODO - normal class
-		return Vertex.of(pos, coord);
+		return new DefaultVertex(pos, coord);
 	}
 }

@@ -22,11 +22,11 @@ class GridBuilderTest {
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
 	@Test
 	void buildQuadStrip() {
-		final Model model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
-		assertEquals(Primitive.PATCH, model.header().primitive());
-		assertEquals((3 * 3) * 4, model.header().count());
-		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), model.header().layout());
-		assertEquals(true, model.header().isIndexed());
+		final DefaultModel model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
+		assertEquals(Primitive.PATCH, model.primitive());
+		assertEquals((3 * 3) * 4, model.count());
+		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
+		assertEquals(true, model.isIndexed());
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")

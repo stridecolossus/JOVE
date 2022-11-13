@@ -43,11 +43,11 @@ class DrawCommandTest extends AbstractVulkanTest {
 	@DisplayName("Create a draw command for a model")
 	@Test
 	void model() {
-		final var header = mock(Model.Header.class);
-		when(header.count()).thenReturn(3);
-		when(header.isIndexed()).thenReturn(true);
+		final var model = mock(Model.class);
+		when(model.count()).thenReturn(3);
+		when(model.isIndexed()).thenReturn(true);
 
-		final DrawCommand draw = DrawCommand.of(header);
+		final DrawCommand draw = DrawCommand.of(model);
 		draw.record(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
 	}

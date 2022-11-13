@@ -108,7 +108,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	@Test
 	void staging() {
 		// Create data
-		final Bufferable data = mock(Bufferable.class);
+		final var data = mock(ByteSizedBufferable.class);
 		when(data.length()).thenReturn((int) SIZE);
 
 		// Create staging buffer

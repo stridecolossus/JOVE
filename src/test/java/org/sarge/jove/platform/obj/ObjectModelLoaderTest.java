@@ -47,20 +47,20 @@ public class ObjectModelLoaderTest {
 		""";
 
 		// Load OBJ models
-		final List<Model> models = loader.load(new StringReader(data));
+		final List<DefaultModel> models = loader.load(new StringReader(data));
 		assertNotNull(models);
 		assertEquals(1, models.size());
 
 		// Check model
-		final Model model = models.get(0);
+		final DefaultModel model = models.get(0);
 		assertNotNull(model);
 
 		// Check header
 		final var layout = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
-		assertEquals(Primitive.TRIANGLES, model.header().primitive());
-		assertEquals(3, model.header().count());
-		assertEquals(layout, model.header().layout());
-		assertEquals(true, model.header().isIndexed());
+		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(3, model.count());
+		assertEquals(layout, model.layout());
+		assertEquals(true, model.isIndexed());
 
 		// Check model data
 		final BufferedModel buffer = model.buffer();

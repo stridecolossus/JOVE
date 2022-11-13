@@ -1,39 +1,33 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.Vertex.DefaultVertex;
 
-public class VertexTest {
-	private Vertex vertex;
+class DefaultVertexTest {
+	private DefaultVertex vertex;
 	private Point pos;
 
 	@BeforeEach
 	void before() {
 		pos = new Point(1, 2, 3);
-		vertex = new Vertex(List.of(pos, Colour.WHITE));
+		vertex = new DefaultVertex(pos, Colour.WHITE);
 	}
 
 	@Test
-	void of() {
-		assertEquals(vertex, Vertex.of(pos, Colour.WHITE));
+	void position() {
+		assertEquals(pos, vertex.position());
 	}
 
-	@Test
-	void components() {
-		assertEquals(pos, vertex.component(0));
-		assertEquals(Colour.WHITE, vertex.component(1));
-	}
-
-	@Test
-	void length() {
-		assertEquals((3 + 4) * Float.BYTES, vertex.length());
-	}
+//	@Test
+//	void layout() {
+//		assertEquals(new Layout(Point.LAYOUT, Colour.LAYOUT), vertex.layout());
+//	}
 
 	@Test
 	void buffer() {
@@ -49,5 +43,13 @@ public class VertexTest {
 		assertEquals(1, bb.getFloat());
 		assertEquals(1, bb.getFloat());
 		assertEquals(0, bb.remaining());
+	}
+
+	@Test
+	void equals() {
+		assertEquals(vertex, vertex);
+		assertEquals(vertex, new DefaultVertex(pos, Colour.WHITE));
+		assertNotEquals(vertex, null);
+		assertNotEquals(vertex, new DefaultVertex(pos));
 	}
 }

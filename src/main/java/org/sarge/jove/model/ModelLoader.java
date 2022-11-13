@@ -5,7 +5,6 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
-import org.sarge.jove.model.Model.Header;
 
 /**
  * The <i>model loader</i> is used to persist and load a JOVE model.
@@ -30,51 +29,18 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 
 		// Load vertex layout
 		final int num = in.readInt();
-		final List<Component> layout = new ArrayList<>();
+		final List<Component> components = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
 			final Component c = helper.layout(in);
-			layout.add(c);
+			components.add(c);
 		}
 
 		// Load data
-		final Bufferable vertices = helper.buffer(in);
-		final Bufferable index = helper.buffer(in);
-
-		// Create model header
-		final Header header = new AbstractModelHeader(primitive) {
-			@Override
-			public Layout layout() {
-				return new Layout(layout);
-			}
-
-			@Override
-			public int count() {
-				return count;
-			}
-
-			@Override
-			public boolean isIndexed() {
-				return index != null;
-			}
-		};
+		final ByteSizedBufferable vertices = helper.buffer(in);
+		final ByteSizedBufferable index = helper.buffer(in);
 
 		// Create mesh
-		return new BufferedModel() {
-			@Override
-			public Header header() {
-				return header;
-			}
-
-			@Override
-			public Bufferable vertices() {
-				return vertices;
-			}
-
-			@Override
-			public Optional<Bufferable> index() {
-				return Optional.ofNullable(index);
-			}
-		};
+		return new BufferedModel(primitive, count, new Layout(components), vertices, index);
 	}
 
 	/**
@@ -83,22 +49,21 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 	 * @param out		Output stream
 	 * @throws IOException if the model cannot be written
 	 * @throws IllegalStateException if the model is undefined
-	 * @see Model#mesh()
+	 * @see DefaultModel#mesh()
 	 */
-	public void save(Model model, DataOutputStream out) throws IOException {
+	public void save(DefaultModel model, DataOutputStream out) throws IOException {
 		// Write file header
 		helper.writeVersion(out);
 
 		// Write model header
-		final Header header = model.header();
-		out.writeUTF(header.primitive().name());
-		out.writeInt(header.count());
+		out.writeUTF(model.primitive().name());
+		out.writeInt(model.count());
 
 		// Write vertex layout
-		final List<Component> layout = header.layout().components();
+		final List<Component> layout = model.layout().components();
 		out.writeInt(layout.size());
 		for(Component c : layout) {
-			helper.write(c, out);
+			helper.write(c, out); // TODO - cast
 		}
 
 		// Write vertices
@@ -106,7 +71,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		helper.write(mesh.vertices(), out);
 
 		// Write index
-		final Optional<Bufferable> index = mesh.index();
+		final Optional<ByteSizedBufferable> index = mesh.index();
 		if(index.isPresent()) {
 			helper.write(index.get(), out);
 		}

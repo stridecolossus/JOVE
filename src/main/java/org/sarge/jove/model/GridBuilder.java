@@ -8,6 +8,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Vertex.DefaultVertex;
 import org.sarge.jove.util.Mask;
 import org.sarge.lib.util.Check;
 
@@ -147,11 +148,9 @@ public class GridBuilder {
 	 * Constructs this grid.
 	 * @return New grid model
 	 */
-	public Model build() {
+	public DefaultModel build() {
 		// Init model
-		final var model = new Model(primitive);
-		model.layout(Point.LAYOUT);
-		model.layout(Coordinate2D.LAYOUT);
+		final var model = new IndexedModel(primitive, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
 
 		// Calculate half distance in both directions
 		final int w = size.width();
@@ -174,7 +173,7 @@ public class GridBuilder {
 				final Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
-				final Vertex vertex = Vertex.of(pos, coord);
+				final Vertex vertex = new DefaultVertex(pos, coord);
 				model.add(vertex);
 			}
 		}

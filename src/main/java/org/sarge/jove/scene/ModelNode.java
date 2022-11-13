@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.model.Mesh;
+import org.sarge.jove.model.Model;
 
 /**
  * A <i>model node</i> is used to render a {@link Mesh} in the scene.
@@ -13,14 +13,14 @@ import org.sarge.jove.model.Mesh;
  * @author Sarge
  */
 public final class ModelNode extends LeafNode {
-	private final Mesh mesh;
+	private final Model model;
 
 	/**
 	 * Constructor.
 	 * @param mesh Renderable mesh
 	 */
-	public ModelNode(Mesh mesh) {
-		this.mesh = notNull(mesh);
+	public ModelNode(Model mesh) {
+		this.model = notNull(mesh);
 	}
 
 	/**
@@ -29,14 +29,14 @@ public final class ModelNode extends LeafNode {
 	 */
 	protected ModelNode(ModelNode node) {
 		super(node);
-		this.mesh = node.mesh;
+		this.model = node.model;
 	}
 
 	/**
-	 * @return Renderable mesh
+	 * @return Model
 	 */
-	public Mesh mesh() {
-		return mesh;
+	public Model model() {
+		return model;
 	}
 
 	@Override
@@ -58,14 +58,14 @@ public final class ModelNode extends LeafNode {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), mesh);
+		return Objects.hash(super.hashCode(), model);
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append(mesh)
+				.append(model)
 				.build();
 	}
 }

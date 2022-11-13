@@ -27,7 +27,7 @@ import org.sarge.lib.util.Check;
  *     .type(Type.NORM)     // NORM
  *     .build();            // B16G16R16A16_UNORM</pre>
  * <p>
- * The {@link #format(ByteSized)} convenience method can also be used to determine the format from a vertex layout:
+ * The {@link #format(Component)} convenience method can also be used to determine the format from a vertex layout:
  * <pre>
  * VkFormat point = FormatBuilder.format(Point.LAYOUT); // R32G32B32_SFLOAT</pre>
  * <p>
@@ -41,7 +41,7 @@ public class FormatBuilder {
 	/**
 	 * Vulkan numeric formats.
 	 * <p>
-	 * The Vulkan numeric formats correspond the general {@link ByteSized.Type} equivalents with the following special cases:
+	 * The Vulkan numeric formats correspond the general {@link Component.Type} equivalents with the following special cases:
 	 * <ul>
 	 * <li>{@link #SCALED} are integer values converted to floating-point</li>
 	 * <li>{@link #RGB} uses the {@code sRGB} nonlinear encoding</li>
@@ -77,7 +77,7 @@ public class FormatBuilder {
 	 */
 	public static VkFormat format(Component layout) {
 		return new FormatBuilder()
-				.count(layout.size())
+				.count(layout.count())
 				.bytes(layout.bytes())
 				.type(NumericFormat.of(layout.type()))
 				.signed(layout.signed())

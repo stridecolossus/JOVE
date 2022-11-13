@@ -32,7 +32,7 @@ public class NativeImageLoaderTest {
 		final int num = image.components().length();
 		final Component layout = image.layout();
 		assertNotNull(layout);
-		assertEquals(num, layout.size());
+		assertEquals(num, layout.count());
 		assertEquals(Component.Type.NORMALIZED, layout.type());
 		assertEquals(Byte.BYTES, layout.bytes());
 		assertEquals(false, layout.signed());
@@ -43,7 +43,7 @@ public class NativeImageLoaderTest {
 		assertEquals(List.of(new Level(0, len)), image.levels());
 
 		// Check image data
-		final Bufferable data = image.data();
+		final ByteSizedBufferable data = image.data();
 		assertNotNull(data);
 		assertEquals(len, data.length());
 	}

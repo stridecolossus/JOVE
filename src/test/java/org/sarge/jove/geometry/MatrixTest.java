@@ -192,12 +192,6 @@ class MatrixTest {
 		}
 	}
 
-	@DisplayName("A matrix has a length in bytes")
-	@Test
-	void length() {
-		assertEquals(ORDER * ORDER * Float.BYTES, matrix.length());
-	}
-
 	@DisplayName("A matrix can be written to an NIO buffer in column-major order")
 	@Test
 	void buffer() {

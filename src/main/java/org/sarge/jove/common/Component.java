@@ -19,7 +19,7 @@ import org.sarge.lib.util.Check;
  * For example the above layout is represented as {@code 3-FLOAT4}.
  * <p>
  */
-public record Component(int size, Component.Type type, boolean signed, int bytes) implements ByteSized {
+public record Component(int count, Component.Type type, boolean signed, int bytes) {
 	/**
 	 * Component types.
 	 */
@@ -66,26 +66,28 @@ public record Component(int size, Component.Type type, boolean signed, int bytes
 
 	/**
 	 * Constructor.
-	 * @param size			Number of elements
+	 * @param count			Number of elements
 	 * @param type			Component type
 	 * @param signed		Whether components are signed or unsigned
 	 * @param bytes			Number of bytes per element
 	 */
 	public Component {
-		Check.oneOrMore(size);
+		Check.oneOrMore(count);
 		Check.notNull(type);
 		Check.oneOrMore(bytes);
 	}
 
-	@Override
+	/**
+	 * @return Stride of this component (bytes)
+	 */
 	public int stride() {
-		return size * bytes;
+		return count * bytes;
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder str = new StringBuilder();
-		str.append(size);
+		str.append(count);
 		str.append('-');
 		str.append(type);
 		str.append(bytes);

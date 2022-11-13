@@ -29,7 +29,6 @@ class ColourTest {
 	@Test
 	void layout() {
 		assertEquals(Component.floats(4), Colour.LAYOUT);
-		assertEquals(4 * Float.BYTES, col.length());
 	}
 
 	@Nested
@@ -66,12 +65,6 @@ class ColourTest {
 		assertNotNull(interpolator);
 		assertEquals(Colour.WHITE, interpolator.apply(0));
 		assertEquals(Colour.BLACK, interpolator.apply(1));
-	}
-
-	@DisplayName("A colour has a length in bytes")
-	@Test
-	void length() {
-		assertEquals(4 * Float.BYTES, col.length());
 	}
 
 	@DisplayName("A colour can be written to an NIO buffer")

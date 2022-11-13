@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.io.*;
-import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
@@ -33,37 +32,26 @@ class ModelLoaderTest {
 	@Test
 	void load() throws IOException {
 		// Create an indexed model to persist
-		final Model model = new Model(Primitive.TRIANGLES)
-				.layout(Point.LAYOUT)
-				.add(Vertex.of(Point.ORIGIN))
-				.add(0)
-				.add(0)
-				.add(0);
+		final var builder = new IndexedModel(Primitive.TRIANGLES, new Layout(Point.LAYOUT));
+		builder.add(Point.ORIGIN);
+		builder.add(0);
+		builder.add(0);
+		builder.add(0);
 
-		// Write model to stream
-		loader.save(model, new DataOutputStream(out));
+		// Write model
+		loader.save(builder, new DataOutputStream(out));
 
-		// Re-load and check header
-		final BufferedModel buffer = read();
-		assertNotNull(buffer);
-
-		// Check header
-		final Model.Header header = buffer.header();
-		assertEquals(Primitive.TRIANGLES, header.primitive());
-		assertEquals(3, header.count());
-		assertEquals(new Layout(Point.LAYOUT), header.layout());
-		assertEquals(true, header.isIndexed());
+		// Reload and check is same
+		final BufferedModel model = read();
+		assertEquals(builder, model);
 
 		// Check vertices
-		final Bufferable vertices = buffer.vertices();
-		assertNotNull(vertices);
+		final ByteSizedBufferable vertices = model.vertices();
 		assertEquals(3 * Float.BYTES, vertices.length());
 
 		// Check index
-		final Optional<Bufferable> index = buffer.index();
-		assertNotNull(index);
-		assertTrue(index.isPresent());
-		assertEquals(3 * Short.BYTES, index.get().length());
+		final ByteSizedBufferable index = model.index().orElseThrow();
+		assertEquals(3 * Short.BYTES, index.length());
 	}
 
 	@Test

@@ -2,17 +2,18 @@ package org.sarge.jove.platform.obj;
 
 import java.util.*;
 
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.*;
 
 /**
- * Adapter for an OBJ model builder that performs vertex de-duplication.
+ * Adapter for an indexed model that performs vertex de-duplication of the OBJ vertices.
  * @author Sarge
  */
-class DuplicateModel extends Model {
+class DuplicateModel extends IndexedModel {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
-	public DuplicateModel() {
-		super(Primitive.TRIANGLES);
+	public DuplicateModel(Layout layout) {
+		super(Primitive.TRIANGLES, layout);
 	}
 
 	@Override

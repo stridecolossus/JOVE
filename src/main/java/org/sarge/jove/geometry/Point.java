@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Component;
+import org.sarge.jove.model.Vertex;
 import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Converter;
 
@@ -8,7 +9,7 @@ import org.sarge.lib.util.Converter;
  * A <i>point</i> is a position in 3D space.
  * @author Sarge
  */
-public final class Point extends Tuple {
+public final class Point extends Tuple implements Vertex {
 	/**
 	 * Origin point.
 	 */
@@ -46,6 +47,11 @@ public final class Point extends Tuple {
 	 */
 	public Point(float[] array) {
 		super(array);
+	}
+
+	@Override
+	public Point position() {
+		return this;
 	}
 
 	/**

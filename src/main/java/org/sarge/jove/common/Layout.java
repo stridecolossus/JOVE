@@ -2,11 +2,13 @@ package org.sarge.jove.common;
 
 import java.util.*;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
- * A <i>layout</i> specifies the structure of a compound data type comprised of {@link Component}.
+ * A <i>layout</i> specifies the structure of compound data types such as tuples, vertices, arrays, etc.
  * @author Sarge
  */
-public final class Layout implements ByteSized {
+public final class Layout {
 	private final List<Component> components;
 	private final int stride;
 
@@ -34,7 +36,9 @@ public final class Layout implements ByteSized {
 		return components;
 	}
 
-	@Override
+	/**
+	 * @return Stride (bytes)
+	 */
 	public int stride() {
 		return stride;
 	}
@@ -54,6 +58,6 @@ public final class Layout implements ByteSized {
 
 	@Override
 	public String toString() {
-		return components.toString();
+		return new ToStringBuilder(this).append(components).build();
 	}
 }

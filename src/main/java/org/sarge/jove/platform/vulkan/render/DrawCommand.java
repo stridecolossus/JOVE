@@ -54,9 +54,9 @@ public interface DrawCommand extends Command {
 	 * @param header Model header
 	 * @return New draw command
 	 */
-	static DrawCommand of(Model.Header header) {
-		final int count = header.count();
-		if(header.isIndexed()) {
+	static DrawCommand of(Model model) {
+		final int count = model.count();
+		if(model.isIndexed()) {
 			return indexed(count);
 		}
 		else {

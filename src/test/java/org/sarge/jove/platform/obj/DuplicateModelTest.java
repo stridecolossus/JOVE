@@ -3,32 +3,32 @@ package org.sarge.jove.platform.obj;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.*;
+import org.sarge.jove.model.Vertex;
 
 class DuplicateModelTest {
-	private DuplicateModel builder;
+	private DuplicateModel model;
 
 	@BeforeEach
 	void before() {
-		builder = new DuplicateModel();
+		model = new DuplicateModel(new Layout(Point.LAYOUT));
 	}
 
 	@Test
 	void build() {
 		// Create some vertices
-		final Vertex vertex = Vertex.of(Point.ORIGIN);
-		final Vertex other = Vertex.of(new Point(1, 2, 3));
+		final Vertex vertex = Point.ORIGIN;
+		final Vertex other = new Point(1, 2, 3);
 
 		// Build an indexed model that re-uses some vertices
-		final Model model = builder
-				.layout(Point.LAYOUT)
+		model
 				.add(vertex)
 				.add(other)
 				.add(vertex);
 
 		// Verify the de-duplicated model
-		assertEquals(3, model.header().count());
+		assertEquals(3, model.count());
 		assertEquals(2, model.vertices().count());
 		assertEquals(3, model.index().count());
 	}

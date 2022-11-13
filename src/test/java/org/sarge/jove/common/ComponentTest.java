@@ -15,7 +15,7 @@ public class ComponentTest {
 
 	@Test
 	void constructor() {
-		assertEquals(3, component.size());
+		assertEquals(3, component.count());
 		assertEquals(Type.FLOAT, component.type());
 		assertEquals(false, component.signed());
 		assertEquals(Float.BYTES, component.bytes());

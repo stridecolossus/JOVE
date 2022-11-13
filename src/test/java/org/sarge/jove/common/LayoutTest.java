@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 
-public class LayoutTest {
+class LayoutTest {
 	private Layout layout;
 	private Component component;
 
@@ -27,10 +27,15 @@ public class LayoutTest {
 	}
 
 	@Test
+	void length() {
+		assertEquals(2 * 3 * Float.BYTES, layout.stride());
+	}
+
+	@Test
 	void equals() {
 		assertEquals(layout, layout);
 		assertEquals(layout, new Layout(component, component));
 		assertNotEquals(layout, null);
-		assertNotEquals(layout, new Layout(component));
+		assertNotEquals(layout, new Layout());
 	}
 }

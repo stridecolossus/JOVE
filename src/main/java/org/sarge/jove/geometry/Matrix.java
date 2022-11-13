@@ -255,11 +255,6 @@ public abstract class Matrix implements Transform, Bufferable {
 	// TODO - JDK19 vector API
 
 	@Override
-	public int length() {
-		return matrix.length * Float.BYTES;
-	}
-
-	@Override
 	public final void buffer(ByteBuffer buffer) {
 		if(buffer.isDirect()) {
 			for(float f : matrix) {

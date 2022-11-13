@@ -72,7 +72,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param data			Data to write
 	 * @return New staging buffer containing the given data
 	 */
-	public static VulkanBuffer staging(DeviceContext dev, Bufferable data) {
+	public static VulkanBuffer staging(DeviceContext dev, ByteSizedBufferable data) {
 		// Init memory properties
 		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
@@ -80,8 +80,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 				.build();
 
 		// Create staging buffer
-		final int len = data.length();
-		final VulkanBuffer buffer = create(dev, len, props);
+		final VulkanBuffer buffer = create(dev, data.length(), props);
 
 		// Write data to buffer
 		final ByteBuffer bb = buffer.buffer();

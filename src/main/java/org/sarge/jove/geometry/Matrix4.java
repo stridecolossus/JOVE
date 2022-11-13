@@ -90,11 +90,6 @@ public class Matrix4 extends Matrix {
 	}
 
 	@Override
-	public int length() {
-		return LENGTH;
-	}
-
-	@Override
 	public String toString() {
 		if(this == IDENTITY) {
 			return "IDENTITY";

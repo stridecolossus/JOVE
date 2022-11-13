@@ -41,13 +41,14 @@ public class PolygonTest {
 	@DisplayName("A polygon can be converted to a number of edge vectors")
 	@Test
 	void edges() {
-		assertEquals(List.of(new Vector(3, 0, 0), new Vector(0, 3, 0)), polygon.edges(false).toList());
+		assertEquals(List.of(new Vector(3, 0, 0), new Vector(0, 3, 0)), polygon.edges().toList());
 	}
 
-	@DisplayName("The polygon edges casn optionally include the closing edge")
+	@DisplayName("A polyogn can be closed by appending the first vertex to the end of the polygon")
 	@Test
 	void close() {
-		assertEquals(List.of(new Vector(3, 0, 0), new Vector(0, 3, 0), new Vector(-3, -3, 0)), polygon.edges(true).toList());
+		final Polygon closed = polygon.close();
+		assertEquals(List.of(new Vector(3, 0, 0), new Vector(0, 3, 0), new Vector(-3, -3, 0)), closed.edges().toList());
 	}
 
 	@DisplayName("A polygon has a normal")

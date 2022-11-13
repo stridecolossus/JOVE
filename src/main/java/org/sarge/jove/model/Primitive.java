@@ -43,6 +43,16 @@ public enum Primitive {
 	}
 
 	/**
+	 * @return Whether this primitive is a triangular polygon
+	 */
+	public boolean isTriangle() {
+		return switch(this) {
+			case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
+			default -> false;
+		};
+	}
+
+	/**
 	 * @return Whether this primitive supports face normals
 	 */
 	public boolean isNormalSupported() {
@@ -53,12 +63,31 @@ public enum Primitive {
 	}
 
 	/**
+	 * Determines the number of faces for the given draw count.
+	 * Returns zero or less for an invalid draw count for this primitive.
+	 * @param count Draw count
+	 * @return Number of faces
+	 */
+	public int faces(int count) {
+		if(isStrip()) {
+			return count - (size - 1);
+		}
+		else {
+			return count / size;
+		}
+	}
+
+	/**
 	 * @param count Number of vertices
 	 * @return Whether the given number of vertices is valid for this primitive
 	 */
 	public boolean isValidVertexCount(int count) {
+		if(count == 0) {
+			return true;
+		}
+		else
 		if(isStrip()) {
-			return (count == 0) || (count >= size);
+			return count >= size;
 		}
 		else {
 			return (count % size) == 0;

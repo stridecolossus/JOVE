@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.common.Component;
-import org.sarge.jove.model.Coordinate;
 import org.sarge.jove.model.Coordinate.*;
 
 class CoordinateTest {
@@ -12,7 +11,6 @@ class CoordinateTest {
 	void one() {
 		final Coordinate1D one = new Coordinate1D(1);
 		assertEquals(1, one.u());
-		assertEquals(1 * Float.BYTES, one.length());
 		assertEquals(Component.floats(1), Coordinate1D.LAYOUT);
 		assertEquals(true, one.equals(one));
 		assertEquals(true, one.equals(new Coordinate1D(1)));
@@ -25,7 +23,6 @@ class CoordinateTest {
 		final Coordinate2D two = new Coordinate2D(1, 2);
 		assertEquals(1, two.u());
 		assertEquals(2, two.v());
-		assertEquals(2 * Float.BYTES, two.length());
 		assertEquals(Component.floats(2), Coordinate2D.LAYOUT);
 		assertEquals(true, two.equals(two));
 		assertEquals(true, two.equals(new Coordinate2D(1, 2)));
@@ -39,7 +36,6 @@ class CoordinateTest {
 		assertEquals(1, three.u());
 		assertEquals(2, three.v());
 		assertEquals(3, three.w());
-		assertEquals(3 * Float.BYTES, three.length());
 		assertEquals(Component.floats(3), Coordinate3D.LAYOUT);
 		assertEquals(true, three.equals(three));
 		assertEquals(true, three.equals(new Coordinate3D(1, 2, 3)));

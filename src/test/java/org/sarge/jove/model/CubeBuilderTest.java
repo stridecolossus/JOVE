@@ -17,13 +17,13 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final Model model = builder.size(2).build();
+		final DefaultModel model = builder.size(2).build();
 		final int count = 6 * 2 * 3;
 		final var layout = new Layout(Point.LAYOUT, Coordinate2D.LAYOUT);
-		assertEquals(Primitive.TRIANGLES, model.header().primitive());
-		assertEquals(count, model.header().count());
-		assertEquals(layout, model.header().layout());
-		assertEquals(false, model.header().isIndexed());
+		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(count, model.count());
+		assertEquals(layout, model.layout());
+		assertEquals(false, model.isIndexed());
 		assertEquals(count * layout.stride() , model.buffer().vertices().length());
 	}
 }

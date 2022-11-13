@@ -2,10 +2,11 @@ package org.sarge.jove.platform.obj;
 
 import java.util.*;
 
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Vertex.DefaultVertex;
 
 /**
  * The <i>OBJ model</i> comprises the transient vertex data during parsing.
@@ -15,27 +16,25 @@ class ObjectModel {
 	private final VertexComponentList<Point> positions = new VertexComponentList<>();
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate> coords = new VertexComponentList<>();
-	private final List<Model> models = new ArrayList<>();
-	private Model model = new DuplicateModel();
-	private boolean empty = true;
+	private final List<DefaultModel> models = new ArrayList<>();
+	private DefaultModel model;
 
 	/**
 	 * Starts a new object group.
 	 */
 	public void start() {
 		// Ignore if current group is empty
-		if(empty) {
+		if(positions.isEmpty()) {
 			return;
 		}
 
 		// Build current model group
 		build();
 
-		// Reset transient model
-		positions.clear();
-		normals.clear();
-		coords.clear();
-		empty = true;
+//		// Reset transient model
+//		positions.clear();
+//		normals.clear();
+//		coords.clear();
 	}
 
 	/**
@@ -43,19 +42,18 @@ class ObjectModel {
 	 */
 	private void build() {
 		// Init model layout
-		model.layout(Point.LAYOUT);
+		final var layout = new ArrayList<Component>();
+		layout.add(Point.LAYOUT);
 		if(!normals.isEmpty()) {
-			model.layout(Normal.LAYOUT);
+			layout.add(Normal.LAYOUT);
 		}
 		if(!coords.isEmpty()) {
-			model.layout(Coordinate2D.LAYOUT);
+			layout.add(Coordinate2D.LAYOUT);
 		}
 
-		// Add model
-		models.add(model);
-
 		// Start new model
-		model = new DuplicateModel();
+		model = new DuplicateModel(new Layout(layout));
+		models.add(model);
 	}
 
 	/**
@@ -93,31 +91,25 @@ class ObjectModel {
 	 * @see VertexComponentList#get(int)
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
-		// Add vertex position
 		final var components = new ArrayList<Bufferable>();
-		components.add(positions.get(v));
-
-		// Add optional normal
+		final Point pos = positions.get(v);
+		components.add(pos);
 		if(vn != null) {
 			components.add(normals.get(vn));
 		}
-
-		// Add optional texture coordinate
 		if(vt != null) {
 			components.add(coords.get(vt));
 		}
-
-		// Add vertex to model
-		model.add(new Vertex(components));
-		empty = false;
+		model.add(new DefaultVertex(components));
+		// TODO - builder?
 	}
 
 	/**
 	 * Constructs the model(s).
 	 * @return Model(s)
 	 */
-	public List<Model> models() {
-		build();
+	public List<DefaultModel> models() {
+//		build();
 		return new ArrayList<>(models);
 	}
 	// TODO - check all groups have same layout

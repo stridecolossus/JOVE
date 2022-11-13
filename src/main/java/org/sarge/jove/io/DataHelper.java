@@ -62,7 +62,7 @@ public class DataHelper {
 	 * @return New buffer or {@code null} if empty
 	 * @throws IOException if the buffer cannot be loaded
 	 */
-	public Bufferable buffer(DataInput in) throws IOException {
+	public ByteSizedBufferable buffer(DataInput in) throws IOException {
 		// Read buffer size
 		final int len = in.readInt();
 
@@ -76,7 +76,7 @@ public class DataHelper {
 		in.readFully(bytes);
 
 		// Convert to buffer
-		return BufferHelper.of(bytes);
+		return ByteSizedBufferable.of(bytes);
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class DataHelper {
 	 * @param obj	Bufferable object to write
 	 * @param out	Output stream
 	 */
-	public void write(Bufferable obj, DataOutput out) throws IOException {
+	public void write(ByteSizedBufferable obj, DataOutput out) throws IOException {
 		// Output length
 		final int len = obj.length();
 		out.writeInt(len);
@@ -121,7 +121,7 @@ public class DataHelper {
 	 * @throws IOException if the layout cannot be written
 	 */
 	public void write(Component layout, DataOutput out) throws IOException {
-		out.writeInt(layout.size());
+		out.writeInt(layout.count());
 		out.writeUTF(layout.type().name());
 		out.writeBoolean(layout.signed());
 		out.writeInt(layout.bytes());

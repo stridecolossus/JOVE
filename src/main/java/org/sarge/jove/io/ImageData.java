@@ -80,7 +80,7 @@ public class ImageData {
 
 	private void validate() {
 		// Check number of components and layout match
-		if(components.length() != layout.size()) {
+		if(components.length() != layout.count()) {
 			throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
 		}
 
@@ -143,8 +143,8 @@ public class ImageData {
 	/**
 	 * @return Image data
 	 */
-	public Bufferable data() {
-		return BufferHelper.of(data);
+	public ByteSizedBufferable data() {
+		return ByteSizedBufferable.of(data);
 	}
 
 	/**

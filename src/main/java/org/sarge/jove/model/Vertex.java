@@ -1,74 +1,69 @@
 package org.sarge.jove.model;
 
+import static org.sarge.lib.util.Check.notNull;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.geometry.Point;
 
 /**
- * A <i>vertex</i> is compound bufferable objects comprising a set of arbitrary vertex components.
+ * A <i>vertex</i> TODO
  * @author Sarge
  */
-public class Vertex implements Bufferable {
+public interface Vertex extends Bufferable {
 	/**
-	 * Creates a new vertex from the given component array.
-	 * @param components Vertex components
-	 * @return New vertex
+	 * @return Vertex position
 	 */
-	public static Vertex of(Bufferable... components) {
-		return new Vertex(Arrays.asList(components));
-	}
+	Point position();
 
-	private final List<Bufferable> components;
+	// TODO - common implementation for pos + coord (grid, cube)
 
 	/**
-	 * Constructor.
-	 * @param components Vertex components
+	 *
 	 */
-	public Vertex(List<Bufferable> components) {
-		this.components = List.copyOf(components);
-	}
+	class DefaultVertex implements Vertex {
+		private final Bufferable[] data;
 
-	/**
-	 * Retrieves a component from this vertex by index.
-	 * @param <T> Component type
-	 * @param index Component index
-	 * @return Vertex component
-	 * @throws IndexOutOfBoundsException if the index is invalid for this vertex
-	 * @throws ClassCastException if the specified component is not the expected type
-	 */
-	@SuppressWarnings("unchecked")
-	public <T> T component(int index) {
-		return (T) components.get(index);
-	}
-
-	@Override
-	public int length() {
-		return components.stream().mapToInt(Bufferable::length).sum();
-	}
-
-	@Override
-	public void buffer(ByteBuffer buffer) {
-		for(Bufferable b : components) {
-			b.buffer(buffer);
+		public DefaultVertex(Bufferable... data) {
+			// TODO
+			this.data = notNull(data);
 		}
-	}
 
-	@Override
-	public int hashCode() {
-		return components.hashCode();
-	}
+		public DefaultVertex(List<Bufferable> data) {
+			this(data.toArray(Bufferable[]::new));
+		}
 
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Vertex that) &&
-				this.components.equals(that.components);
-	}
+		@Override
+		public Point position() {
+			return (Point) data[0];
+		}
 
-	@Override
-	public String toString() {
-		return components.toString();
+		@Override
+		public void buffer(ByteBuffer bb) {
+			for(Bufferable b : data) {
+				b.buffer(bb);
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(data);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof DefaultVertex that) &&
+					Arrays.equals(this.data, that.data);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this).append(data).build();
+		}
 	}
 }

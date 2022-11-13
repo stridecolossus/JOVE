@@ -61,7 +61,7 @@ public class RenderQueue {
 				renderer.accept(e.getKey());
 
 				for(ModelNode n : e.getValue()) {
-					renderer.accept(n.mesh());
+					// TODO - renderer.accept(n.model());
 				}
 			}
 		}

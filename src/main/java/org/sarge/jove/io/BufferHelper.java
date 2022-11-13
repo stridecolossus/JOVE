@@ -2,10 +2,6 @@ package org.sarge.jove.io;
 
 import java.nio.*;
 
-import org.sarge.jove.common.Bufferable;
-
-import com.sun.jna.Structure;
-
 /**
  * The <i>buffer helper</i> provides utility methods for managing NIO byte buffers.
  * <p>
@@ -36,45 +32,6 @@ public final class BufferHelper {
 	}
 
 	/**
-	 * Creates a bufferable wrapping the given array.
-	 * @param bytes Byte array
-	 * @return Bufferable array
-	 */
-	public static Bufferable of(byte[] bytes) {
-		return new Bufferable() {
-			@Override
-			public int length() {
-				return bytes.length;
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				write(bytes, bb);
-			}
-		};
-	}
-
-	/**
-	 * Creates a bufferable wrapping the given JNA structure.
-	 * @param struct Structure
-	 * @return Bufferable structure
-	 */
-	public static Bufferable of(Structure struct) {
-		return new Bufferable() {
-			@Override
-			public int length() {
-				return struct.size();
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				final byte[] array = struct.getPointer().getByteArray(0, struct.size());
-				write(array, bb);
-			}
-		};
-	}
-
-	/**
 	 * Converts a byte buffer to an array.
 	 * @param bb Byte buffer
 	 * @return Byte array
@@ -99,7 +56,7 @@ public final class BufferHelper {
 	 * @param array		Byte array
 	 * @param bb		Buffer
 	 */
-	private static void write(byte[] array, ByteBuffer bb) {
+	public static void write(byte[] array, ByteBuffer bb) {
 		if(bb.isDirect()) {
 			for(byte b : array) {
 				bb.put(b);
@@ -119,38 +76,5 @@ public final class BufferHelper {
 		final ByteBuffer bb = allocate(array.length);
 		write(array, bb);
 		return bb;
-	}
-
-	/**
-	 * Inserts a data <i>element</i> into the given buffer.
-	 * <p>
-	 * This method is intended for populating uniform or push constant buffers that are essentially an array of some object.
-	 * <p>
-	 * For example a uniform buffer containing the projection and modelview matrices could be populated as follows:
-	 * <p>
-	 * <pre>
-	 * // Create backing buffer
-	 * ByteBuffer bb = BufferHelper.allocate(3 * Matrix.IDENTITY.length());
-	 *
-	 * // Init projection matrix (once)
-	 * Matrix projection = ...
-	 * BufferHelper.insert(2, projection, bb);
-	 *
-	 * ...
-	 *
-	 * // Populate modelview matrix (each frame)
-	 * bb.rewind();
-	 * view.buffer(bb);
-	 * model.buffer(bb);
-	 * </pre>
-	 * <p>
-	 * @param index			Object index
-	 * @param data			Bufferable object
-	 * @param bb			Byte buffer
-	 */
-	public static void insert(int index, Bufferable data, ByteBuffer bb) {
-		final int pos = index * data.length();
-		bb.position(pos);
-		data.buffer(bb);
 	}
 }

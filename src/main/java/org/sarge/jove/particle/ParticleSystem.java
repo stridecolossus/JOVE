@@ -16,7 +16,6 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
-import org.sarge.jove.model.Model.Header;
 import org.sarge.lib.util.Check;
 
 /**
@@ -366,30 +365,12 @@ public class ParticleSystem implements Animation {
 		// Init vertex layout
 		final Layout layout = new Layout(Point.LAYOUT, Colour.LAYOUT);
 
-		// Init model header
-		final Header header = new AbstractModelHeader(Primitive.POINTS) {
-			@Override
-			public Layout layout() {
-				return layout;
-			}
-
-			@Override
-			public int count() {
-				return particles.size();
-			}
-
-			@Override
-			public boolean isIndexed() {
-				return false;
-			}
-		};
-
 		// Create vertex buffer
-		final Bufferable vertices = new Bufferable() {
-			@Override
-			public int length() {
-				return layout.stride() * header.count();
-			}
+		final var vertices = new ByteSizedBufferable() {
+            @Override
+            public int length() {
+            	return particles.size() * layout.stride();
+            }
 
 			@Override
 			public void buffer(ByteBuffer bb) {
@@ -400,22 +381,7 @@ public class ParticleSystem implements Animation {
 		};
 
 		// Create model
-		return new BufferedModel() {
-			@Override
-			public Header header() {
-				return header;
-			}
-
-			@Override
-			public Bufferable vertices() {
-				return vertices;
-			}
-
-			@Override
-			public Optional<Bufferable> index() {
-				throw new UnsupportedOperationException();
-			}
-		};
+		return new BufferedModel(Primitive.POINTS, particles.size(), layout, vertices, null);
 	}
 
 	@Override

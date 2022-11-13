@@ -8,11 +8,6 @@ import java.nio.ByteBuffer;
  */
 public interface Bufferable {
 	/**
-	 * @return Length of this object (bytes)
-	 */
-	int length();
-
-	/**
 	 * Writes this object to the given buffer.
 	 * @param bb Buffer
 	 */

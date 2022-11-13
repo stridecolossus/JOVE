@@ -55,12 +55,6 @@ public class TupleTest {
 		assertThrows(IndexOutOfBoundsException.class, () -> tuple.get(3));
 	}
 
-	@DisplayName("A tuple has a length in bytes")
-	@Test
-	void length() {
-		assertEquals(3 * Float.BYTES, tuple.length());
-	}
-
 	@DisplayName("A tuple can be written to an NIO buffer")
 	@Test
 	void buffer() {

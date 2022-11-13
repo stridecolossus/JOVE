@@ -47,7 +47,7 @@ public class DataHelperTest {
 		when(in.readInt()).thenReturn(bytes.length);
 
 		// Load bufferable object
-		final Bufferable obj = helper.buffer(in);
+		final ByteSizedBufferable obj = helper.buffer(in);
 		assertNotNull(obj);
 		assertEquals(1, obj.length());
 		verify(in).readFully(bytes);
@@ -62,7 +62,7 @@ public class DataHelperTest {
 	@Test
 	void writeBuffer() throws IOException {
 		final byte[] bytes = new byte[1];
-		helper.write(BufferHelper.of(bytes), out);
+		helper.write(ByteSizedBufferable.of(bytes), out);
 		verify(out).writeInt(1);
 		verify(out).write(bytes);
 	}
@@ -76,7 +76,7 @@ public class DataHelperTest {
 
 		// Load layout
 		final Component layout = helper.layout(in);
-		assertEquals(3, layout.size());
+		assertEquals(3, layout.count());
 		assertEquals(Float.BYTES, layout.bytes());
 		assertEquals(Component.Type.FLOAT, layout.type());
 		assertEquals(true, layout.signed());
