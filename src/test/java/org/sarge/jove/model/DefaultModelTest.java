@@ -17,7 +17,7 @@ public class DefaultModelTest {
 	@BeforeEach
 	void before() {
 		model = new DefaultModel(Primitive.TRIANGLES, Point.LAYOUT);
-		vertex = Point.ORIGIN;
+		vertex = new SimpleVertex(Point.ORIGIN);
 	}
 
 	@DisplayName("A new default model...")
@@ -52,6 +52,13 @@ public class DefaultModelTest {
     	@Test
     	void layout() {
     		assertThrows(IllegalArgumentException.class, () -> model.add(mock(Vertex.class)));
+    	}
+
+    	@DisplayName("TODO")
+    	@Test
+    	void validate() {
+    		model.validate(false);
+    		model.add(mock(Vertex.class));
     	}
 	}
 
@@ -156,7 +163,7 @@ public class DefaultModelTest {
 			final Point point = new Point(1, 2, 3);
 			model.add(vertex);
 			model.add(vertex);
-			model.add(point);
+			model.add(new SimpleVertex(point));
 			assertEquals(new Bounds(Point.ORIGIN, point), model.bounds());
 		}
 

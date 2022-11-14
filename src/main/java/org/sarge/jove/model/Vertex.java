@@ -12,23 +12,32 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
  */
 public interface Vertex extends Bufferable {
 	/**
-	 * @return Vertex position
-	 */
-	Point position();
-
-	/**
 	 * @return Layout of this vertex
 	 */
 	Layout layout();
 
 	/**
+	 * @return Vertex position
+	 */
+	Point position();
+
+	/**
+	 * Sets the normal of this vertex.
+	 * @param normal Vertex normal
+	 * @throws UnsupportedOperationException if this vertex does not have a normal
+	 */
+	default void normal(Normal normal) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
 	 * Builder for a vertex.
+	 * TODO
 	 */
 	class Builder {
 		private Point pos;
 		private Normal normal;
 		private Coordinate2D coord;
-		// TODO - colour?
 
 		/**
 		 * Sets the vertex position.
@@ -60,27 +69,27 @@ public interface Vertex extends Bufferable {
 		/**
 		 * Constructs this vertex.
 		 * @return New vertex
-		 * @throws IllegalArgumentException if the vertex is empty
+		 * @throws IllegalArgumentException if the vertex does not have a position
 		 */
 		public Vertex build() {
+			if(pos == null) throw new IllegalArgumentException("Vertex must have a position");
+
 			if(normal == null) {
 				if(coord == null) {
-					if(pos == null) throw new IllegalArgumentException("Vertex cannot be empty");
-					return pos;
+					return new SimpleVertex(pos);
 				}
 				else {
 					return new DefaultVertex(pos, coord);
 				}
 			}
 			else {
-				if(coord == null) {
-					// TODO
-					throw new UnsupportedOperationException();
+				final var vertex = new MutableVertex();
+				vertex.position(pos);
+				vertex.normal(normal);
+				if(coord != null) {
+					vertex.coordinate(coord);
 				}
-				else {
-					// TODO - bit silly
-					return new DefaultVertex(pos, coord).add(normal);
-				}
+				return vertex;
 			}
 		}
 	}

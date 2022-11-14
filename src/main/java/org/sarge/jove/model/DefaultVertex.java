@@ -9,82 +9,35 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.lib.util.Check;
 
 /**
- * Default implementation for a vertex comprised of a position and texture coordinate.
- * The {@link #add(Normal)} method wraps this vertex with a normal.
+ * A <i>default vertex</i> is a custom implementation for the common case of vertices that comprise a position and texture coordinate.
  * @author Sarge
  */
 public class DefaultVertex implements Vertex {
-	private static final Layout LAYOUT = new Layout(Point.LAYOUT, Coordinate2D.LAYOUT);
+ 	private static final Layout LAYOUT = new Layout(Point.LAYOUT, Coordinate2D.LAYOUT);
 
 	private final Point pos;
 	private final Coordinate2D coord;
 
 	/**
 	 * Constructor.
-	 * @param pos		Vertex position
-	 * @param coord		Texture coordinate
+	 * @param pos			Vertex position
+	 * @param coord			Texture coordinate
 	 */
 	public DefaultVertex(Point pos, Coordinate2D coord) {
 		this.pos = notNull(pos);
 		this.coord = notNull(coord);
 	}
 
-	/**
-	 * Copy constructor.
-	 * @param vertex Vertex to copy
-	 */
-	protected DefaultVertex(DefaultVertex vertex) {
-		this(vertex.pos, vertex.coord);
-	}
-
 	@Override
-	public final Point position() {
+	public Point position() {
 		return pos;
 	}
 
-	/**
-	 * @return Vertex normal or {@code null} if none
-	 */
-	protected Normal normal() {
-		return null;
-	}
-
-	/**
-	 * Adds a normal to this vertex.
-	 * @param normal Vertex normal
-	 * @return New vertex
-	 * @throws IllegalStateException if this vertex already has a normal
-	 */
-	public DefaultVertex add(Normal normal) {
-		Check.notNull(normal);
-		return new DefaultVertex(this) {
-			private static final Layout NORMAL_LAYOUT = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
-
-			@Override
-			protected Normal normal() {
-				return normal;
-			}
-
-			@Override
-			public DefaultVertex add(Normal normal) {
-				throw new IllegalStateException("Vertex already has a normal");
-			}
-
-			@Override
-			public Layout layout() {
-				return NORMAL_LAYOUT;
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				pos.buffer(bb);
-				normal.buffer(bb);
-				coord.buffer(bb);
-			}
-		};
+	@Override
+	public void normal(Normal normal) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -100,7 +53,7 @@ public class DefaultVertex implements Vertex {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(pos, coord, normal());
+		return Objects.hash(pos, coord);
 	}
 
 	@Override
@@ -109,15 +62,13 @@ public class DefaultVertex implements Vertex {
 				(obj == this) ||
 				(obj instanceof DefaultVertex that) &&
 				this.pos.equals(that.pos) &&
-				this.coord.equals(that.coord) &&
-				Objects.equals(this.normal(), that.normal());
+				this.coord.equals(that.coord);
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append(pos)
-				.append(normal())
 				.append(coord)
 				.build();
 	}

@@ -34,7 +34,6 @@ public class AbstractModelTest {
 	void constructor() {
 		assertEquals(Primitive.TRIANGLES, model.primitive());
 		assertEquals(new Layout(Normal.LAYOUT), model.layout());
-		assertEquals(true, model.isNormalLayout());
 	}
 
 	@Test

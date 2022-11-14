@@ -43,6 +43,13 @@ public final class Layout {
 		return stride;
 	}
 
+	/**
+	 * @return Whether this model contains the given component (by identity)
+	 */
+	public boolean contains(Component component) {
+		return components.stream().anyMatch(c -> c == component);
+	}
+
 	@Override
 	public int hashCode() {
 		return components.hashCode();

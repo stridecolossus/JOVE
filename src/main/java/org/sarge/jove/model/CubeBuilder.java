@@ -105,13 +105,13 @@ public class CubeBuilder {
 
 	/**
 	 * Builds a cube vertex.
-	 * This implementation creates a {@link DefaultVertex}, i.e. ignores the {@link #normal} and {@link #col} arguments.
+	 * This implementation creates a {@link MutableVertex}, i.e. ignores the {@link #normal} and {@link #col} arguments.
 	 * @param pos			Vertex position
 	 * @param normal		Normal
 	 * @param coord			Texture coordinate
 	 * @param col			Colour
 	 * @return New default vertex
-	 * @see DefaultVertex
+	 * @see MutableVertex
 	 */
 	protected Vertex vertex(Point pos, Normal normal, Coordinate2D coord, Colour col) {
 		return new DefaultVertex(pos, coord);

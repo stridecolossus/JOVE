@@ -32,6 +32,12 @@ class LayoutTest {
 	}
 
 	@Test
+	void contains() {
+		assertEquals(true, layout.contains(component));
+		assertEquals(false, layout.contains(null));
+	}
+
+	@Test
 	void equals() {
 		assertEquals(layout, layout);
 		assertEquals(layout, new Layout(component, component));

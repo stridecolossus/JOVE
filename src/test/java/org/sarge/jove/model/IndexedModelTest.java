@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Point;
 
 public class IndexedModelTest {
 	private IndexedModel model;
@@ -14,7 +14,7 @@ public class IndexedModelTest {
 
 	@BeforeEach
 	void before() {
-		vertex = Point.ORIGIN;
+		vertex = new SimpleVertex(Point.ORIGIN);
 		model = new IndexedModel(Primitive.TRIANGLES, new Layout(Point.LAYOUT));
 		model.add(vertex);
 	}

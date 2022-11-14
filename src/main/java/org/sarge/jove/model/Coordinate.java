@@ -75,7 +75,8 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 
 		@Override
 		public void buffer(ByteBuffer buffer) {
-			buffer.putFloat(u).putFloat(v);
+			buffer.putFloat(u);
+			buffer.putFloat(v);
 		}
 
 		@Override
@@ -99,7 +100,9 @@ public sealed interface Coordinate extends Bufferable permits Coordinate1D, Coor
 
 		@Override
 		public void buffer(ByteBuffer buffer) {
-			buffer.putFloat(u).putFloat(v).putFloat(w);
+			buffer.putFloat(u);
+			buffer.putFloat(v);
+			buffer.putFloat(w);
 		}
 
 		@Override

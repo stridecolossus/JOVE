@@ -64,7 +64,9 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 
 	@Override
 	public final void buffer(ByteBuffer buffer) {
-		buffer.putFloat(x).putFloat(y).putFloat(z);
+		buffer.putFloat(x);
+		buffer.putFloat(y);
+		buffer.putFloat(z);
 	}
 
 	@Override

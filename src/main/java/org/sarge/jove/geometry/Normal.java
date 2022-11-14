@@ -28,21 +28,18 @@ public sealed class Normal extends Vector permits Axis {
 		this(new Vector(array));
 	}
 
+	/**
+	 * Normalizes the given vector as required.
+	 */
 	private static Vector normalize(Vector vec) {
-		// Check for copy
-		if(vec instanceof Normal) {
-			return vec;
-		}
-
-		// Check for arbitrary unit-vector
 		final float len = vec.magnitude();
 		if(MathsUtil.isEqual(1, len)) {
 			return vec;
 		}
-
-		// Otherwise normalise vector
-		final float f = MathsUtil.inverseRoot(len);
-		return vec.multiply(f);
+		else {
+    		final float f = MathsUtil.inverseRoot(len);
+    		return vec.multiply(f);
+		}
 	}
 
 	@Override

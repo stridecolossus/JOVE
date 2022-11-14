@@ -43,19 +43,9 @@ public enum Primitive {
 	}
 
 	/**
-	 * @return Whether this primitive is a triangular polygon
+	 * @return Whether this primitive is a triangular polygon that also supports a vertex normal
 	 */
 	public boolean isTriangle() {
-		return switch(this) {
-			case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
-			default -> false;
-		};
-	}
-
-	/**
-	 * @return Whether this primitive supports face normals
-	 */
-	public boolean isNormalSupported() {
 		return switch(this) {
 			case TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> true;
 			default -> false;

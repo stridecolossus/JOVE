@@ -13,15 +13,14 @@ import org.sarge.jove.geometry.Normal;
  * @author Sarge
  */
 public abstract class AbstractModel implements Model {
-	private final Primitive primitive;
-	private final Layout layout;
+	protected final Primitive primitive;
+	protected final Layout layout;
 
 	/**
 	 * Constructor.
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
-	 * @throws IllegalArgumentException if the layout contains a {@link Normal#LAYOUT} but the drawing {@link #primitive()} does not support normals
-	 * @see Primitive#isNormalSupported()
+	 * @throws IllegalArgumentException if the layout contains {@link Normal#LAYOUT} but the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
 	protected AbstractModel(Primitive primitive, Layout layout) {
 		this.primitive = notNull(primitive);
@@ -30,7 +29,7 @@ public abstract class AbstractModel implements Model {
 	}
 
 	private void validate() {
-		if(!primitive.isNormalSupported() && isNormalLayout()) {
+		if(!primitive.isTriangle() && layout.contains(Normal.LAYOUT)) {
 			throw new IllegalArgumentException("Vertex normals are not supported by the drawing primitive: " + primitive);
 		}
 	}
@@ -43,13 +42,6 @@ public abstract class AbstractModel implements Model {
 	@Override
 	public final Layout layout() {
 		return layout;
-	}
-
-	/**
-	 * @return Whether this model contains vertex normals
-	 */
-	protected boolean isNormalLayout() {
-		return layout.components().stream().anyMatch(c -> c == Normal.LAYOUT);
 	}
 
 	@Override

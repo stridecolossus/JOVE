@@ -104,7 +104,10 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 	@Override
 	public void buffer(ByteBuffer buffer) {
-		buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
+		buffer.putFloat(red);
+		buffer.putFloat(green);
+		buffer.putFloat(blue);
+		buffer.putFloat(alpha);
 	}
 
 	/**

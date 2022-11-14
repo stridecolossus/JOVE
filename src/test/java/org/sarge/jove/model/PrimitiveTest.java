@@ -36,20 +36,6 @@ class PrimitiveTest {
 		assertEquals(false, primitive.isStrip());
 	}
 
-	@DisplayName("Triangle-based primitives should support normals")
-	@ParameterizedTest
-	@EnumSource(value=Primitive.class, names={"TRIANGLE.+"}, mode=MATCH_ALL)
-	void isNormalSupport(Primitive primitive) {
-		assertEquals(true, primitive.isNormalSupported());
-	}
-
-	@DisplayName("Non triangle-based primitives should not support normals")
-	@ParameterizedTest
-	@EnumSource(value=Primitive.class, names={"TRIANGLE.+"}, mode=MATCH_NONE)
-	void isNotNormalSupport(Primitive primitive) {
-		assertEquals(false, primitive.isNormalSupported());
-	}
-
 	@DisplayName("Triangular primitives are polygons")
 	@ParameterizedTest
 	@EnumSource(value=Primitive.class, names={"TRIANGLE.+"}, mode=MATCH_ALL)

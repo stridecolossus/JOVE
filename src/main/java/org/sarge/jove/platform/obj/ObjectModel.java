@@ -52,6 +52,7 @@ class ObjectModel {
 
 		// Start new model
 		model = new DuplicateModel(new Layout(layout));
+		model.validate(false);
 		models.add(model);
 	}
 
@@ -91,7 +92,7 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Init vertex
-		final var vertex = new DefaultVertex.Builder();
+		final var vertex = new MutableVertex.Builder();
 		final Point pos = positions.get(v);
 		vertex.add(pos);
 
@@ -99,16 +100,27 @@ class ObjectModel {
 		if(vn != null) {
 			final Normal normal = normals.get(vn);
 			vertex.add(normal);
+			validate(Normal.LAYOUT);
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
 			final Coordinate2D coord = coords.get(vt);
 			vertex.add(coord);
+			validate(Coordinate2D.LAYOUT);
 		}
 
 		// Add vertex
 		model.add(vertex.build());
+	}
+
+	/**
+	 * @throws IllegalArgumentException if the given component is invalid for the current model layout
+	 */
+	private void validate(Component c) {
+		if(!model.layout().contains(c)) {
+			throw new IllegalArgumentException("Invalid vertex layout: " + c);
+		}
 	}
 
 	/**

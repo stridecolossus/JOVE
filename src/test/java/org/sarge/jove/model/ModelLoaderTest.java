@@ -33,7 +33,8 @@ class ModelLoaderTest {
 	void load() throws IOException {
 		// Create an indexed model to persist
 		final var builder = new IndexedModel(Primitive.TRIANGLES, new Layout(Point.LAYOUT));
-		builder.add(Point.ORIGIN);
+		builder.validate(false);
+		builder.add(mock(Vertex.class));
 		builder.add(0);
 		builder.add(0);
 		builder.add(0);

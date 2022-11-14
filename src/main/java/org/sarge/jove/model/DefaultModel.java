@@ -18,6 +18,7 @@ import org.sarge.jove.geometry.*;
  */
 public class DefaultModel extends AbstractModel {
 	private final List<Vertex> vertices = new ArrayList<>();
+	private boolean validate = true;
 
 	/**
 	 * Constructor.
@@ -55,12 +56,25 @@ public class DefaultModel extends AbstractModel {
 	}
 
 	/**
+	 * Sets whether to validate the layout of vertices against this model (default is {@code true}).
+	 * @param validate Whether to validate
+	 * @see #add(Vertex)
+	 */
+	public DefaultModel validate(boolean validate) {
+		this.validate = validate;
+		return this;
+	}
+
+	/**
 	 * Adds a vertex to this model.
 	 * @param vertex Vertex to add
 	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this model
+	 * @see #validate(boolean)
 	 */
 	public DefaultModel add(Vertex vertex) {
-		if(!this.layout().equals(vertex.layout())) throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
+		if(validate && !this.layout().equals(vertex.layout())) {
+			throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
+		}
 		vertices.add(vertex);
 		return this;
 	}
@@ -151,84 +165,67 @@ public class DefaultModel extends AbstractModel {
 		return vertices.get(index);
 	}
 
-//
-//	/**
-//	 * @return Iterator over the polygons of this model
-//	 * @throws IllegalStateException if this model does not contain vertex data
-//	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isPolygon()}
-//	 */
-//	public Iterator<Polygon> faces() {
-//		validate();
-//
-//		final Primitive primitive = this.primitive();
-//		if(!primitive.isPolygon()) throw new IllegalStateException("Model does not contain triangular polygons");
-//
-//		// TODO
-//		final int pos = this.layout().components().indexOf(Point.LAYOUT);
-//		if(pos == -1) throw new IllegalStateException("Model layout does not contain a vertex position");
-//
-//		final int faces = primitive.faces(count());
-//
-//		return new Iterator<>() {
-//			private final int[] indices = new int[3];
-//			private int next;
-//
-//			@Override
-//			public boolean hasNext() {
-//				return next < faces;
-//			}
-//
-//			@Override
-//			public Polygon next() {
-//				if(!hasNext()) throw new NoSuchElementException();
-//
-//				if(primitive.isStrip()) {
-//					final int start = next * 3;
-//					for(int n = 0; n < 3; ++n) {
-//						indices[n] = start + n;
-//					}
-//				}
-//				else {
-//					for(int n = 0; n < 3; ++n) {
-//						indices[n] = next + n;
-//					}
-//				}
-//
-////				if(header.isIndexed()) {
-////    				for(int n = 0; n < 3; ++n) {
-////    					indices[n] = index.get(indices[n]);
-////    				}
-////				}
-//
-//				++next;
-//
-//				// TODO
-//				final List<Point> triangle = Arrays
-//						.stream(indices)
-//						.mapToObj(vertices::get)
-//						.map(v -> (Point) v.component(pos))
-//						.toList();
-//
-//				return new Polygon(triangle);
-//			}
-//		};
-//	}
-//
-//	/**
-//	 * Computes the vertex normals for this model.
-//	 * @throws IllegalStateException if the layout of this model does not contain vertex data or already contains normals
-//	 */
-//	public DefaultModel compute() {
-////		if(!header.components.contains(Point.LAYOUT)) throw new IllegalStateException("Model does not contain vertices");
-////		if(isNormalsLayout()) throw new IllegalStateException("Model already contains vertex normals");
-////		validate();
-////		layout(Normal.LAYOUT);
-////
-////
-////
-//		return this;
-//	}
+	/**
+	 * Computes vertex normals for this model.
+	 * @throws IllegalStateException if this model already has vertex normals
+	 */
+	public void normals() {
+		// Validate normals can be computed
+		final Layout layout = this.layout();
+		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Model does not contain vertices");
+		if(!layout.contains(Normal.LAYOUT)) throw new IllegalStateException("Model does not contain vertex normals");
+		validate();
 
+		// Init empty normals
+		class MutableNormal {
+			private final float[] normal = new float[Normal.SIZE];
+
+			private void add(Normal n) {
+				normal[0] += n.x;
+				normal[1] += n.y;
+				normal[2] += n.z;
+			}
+
+			private Normal normal() {
+				return new Normal(normal);
+			}
+		}
+		final var normals = new MutableNormal[vertices.size()];
+		Arrays.fill(normals, new MutableNormal());
+
+		// Accumulate face normals
+		final int count = primitive.faces(count());
+		final var mapper = mapper(primitive);
+		for(int face = 0; face < count; ++face) {
+			// Compute face normal
+			final int[] indices = mapper.apply(face);
+			final Triangle triangle = triangle(indices);
+			final Normal normal = triangle.normal();
+
+			// Accumulate vertex normals
+			for(int n = 0; n < indices.length; ++n) {
+				final int index = indices[n];
+				normals[index].add(normal);
+			}
+		}
+
+		// Populate vertex normals
+		for(int n = 0; n < normals.length; ++n) {
+			final Vertex v = vertices.get(n);
+			final Normal normal = normals[n].normal();
+			v.normal(normal);
+		}
+	}
+
+	// TODO - segments
+	// - add segment to VBO/index
+	// - calc normals for segment
+	// - delete? insert? replace?
+	// - factor out to separate class?
+
+	/**
+	 * @throws IllegalStateException if this model is not valid for rendering
+	 */
 	private void validate() {
 		final Primitive primitive = this.primitive();
 		if(!primitive.isValidVertexCount(this.count())) {

@@ -19,7 +19,7 @@ public class VertexTest {
 		@Test
 		void position() {
 			builder.add(Point.ORIGIN);
-			assertSame(Point.ORIGIN, builder.build());
+			assertEquals(new SimpleVertex(Point.ORIGIN), builder.build());
 		}
 
 		@Test
@@ -34,7 +34,11 @@ public class VertexTest {
 			builder.add(Point.ORIGIN);
 			builder.add(Axis.Y);
 			builder.add(Coordinate2D.BOTTOM_LEFT);
-			assertEquals(new DefaultVertex(Point.ORIGIN, Coordinate2D.BOTTOM_LEFT).add(Axis.Y), builder.build());
+			final var expected = new MutableVertex();
+			expected.position(Point.ORIGIN);
+			expected.normal(Axis.Y);
+			expected.coordinate(Coordinate2D.BOTTOM_LEFT);
+			assertEquals(expected, builder.build());
 		}
 
 		@Test

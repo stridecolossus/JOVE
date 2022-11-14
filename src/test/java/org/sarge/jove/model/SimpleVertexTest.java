@@ -7,38 +7,42 @@ import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.*;
 
-class DefaultVertexTest {
-	private DefaultVertex vertex;
+class SimpleVertexTest {
+	private SimpleVertex vertex;
 
 	@BeforeEach
 	void before() {
-		vertex = new DefaultVertex(Point.ORIGIN, Coordinate2D.TOP_LEFT);
+		vertex = new SimpleVertex(Point.ORIGIN);
 	}
 
 	@Test
-	void position() {
+	void constructor() {
 		assertEquals(Point.ORIGIN, vertex.position());
 	}
 
 	@Test
+	void normal() {
+		assertThrows(UnsupportedOperationException.class, () -> vertex.normal(Axis.Y));
+	}
+
+	@Test
 	void layout() {
-		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), vertex.layout());
+		assertEquals(new Layout(Point.LAYOUT), vertex.layout());
 	}
 
 	@Test
 	void buffer() {
-		final ByteBuffer bb = mock(ByteBuffer.class);
+		final var bb = mock(ByteBuffer.class);
 		vertex.buffer(bb);
-		verify(bb, times(3 + 2)).putFloat(0f);
+		verify(bb, times(3)).putFloat(0f);
 	}
 
 	@Test
 	void equals() {
 		assertEquals(vertex, vertex);
-		assertEquals(vertex, new DefaultVertex(Point.ORIGIN, Coordinate2D.TOP_LEFT));
+		assertEquals(vertex, new SimpleVertex(Point.ORIGIN));
 		assertNotEquals(vertex, null);
 		assertNotEquals(vertex, mock(Vertex.class));
 	}
