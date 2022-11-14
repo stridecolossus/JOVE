@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
@@ -117,7 +117,7 @@ public class DefaultModelTest {
 		model.add(vertex);
 		model.add(vertex);
 		model.add(vertex);
-		final Triangle triangle = new Triangle(vertex, vertex, vertex);
+		final Triangle triangle = new Triangle(Collections.nCopies(3, Point.ORIGIN));
 		assertEquals(List.of(triangle), model.triangles().toList());
 	}
 

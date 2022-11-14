@@ -32,7 +32,13 @@ public interface Vertex extends Bufferable {
 
 	/**
 	 * Builder for a vertex.
-	 * TODO
+	 * <p>
+	 * The {@link #build()} selects the appropriate vertex sub-class for the given components.
+	 * Note that the vertex position is mandatory.
+	 * <p>
+	 * @see SimpleVertex
+	 * @see DefaultVertex
+	 * @see MutableVertex
 	 */
 	class Builder {
 		private Point pos;

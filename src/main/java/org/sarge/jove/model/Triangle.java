@@ -1,70 +1,44 @@
 package org.sarge.jove.model;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.sarge.jove.geometry.*;
 
 /**
- * TODO
+ * A <i>triangle</i> is a convenience sub-class for a polygon with three vertices.
  * @author Sarge
  */
-public record Triangle(List<Vertex> vertices) {
-	private static final float THIRD = 1f / 3;
-
+public class Triangle extends Polygon {
 	/**
 	 * Constructor.
 	 * @param vertices Triangle vertices
+	 * @throws IllegalArgumentException if the given vertices do not form a triangle
 	 */
-	public Triangle {
-		vertices = List.copyOf(vertices);
+	public Triangle(List<Point> vertices) {
+		super(vertices);
+		if(vertices.size() != 3) throw new IllegalArgumentException("Invalid number of triangle vertices");
 	}
 
 	/**
 	 * Constructor.
 	 */
-	public Triangle(Vertex a, Vertex b, Vertex c) {
+	public Triangle(Point a, Point b, Point c) {
 		this(List.of(a, b, c));
 	}
 
-	/**
-	 * @return Centre point of this triangle
-	 */
-	public Point centre() {
-		return vertices
-				.stream()
-				.map(Vertex::position)
-				.reduce(Point.ORIGIN, Point::add)
-				.multiply(THIRD);
-	}
-
-	/**
-	 * @return Normal of this triangle
-	 */
+	@Override
 	public Normal normal() {
-		final Vector u = edge(0, 1);
-		final Vector v = edge(0, 2);
+		final Vector u = edge(0);
+		final Vector v = edge(1);
 		return u.cross(v).normalize();
 	}
 
-	private Vector edge(int start, int end) {
-		final Point a = vertices.get(start).position();
-		final Point b = vertices.get(end).position();
-		return Vector.between(a, b);
-	}
-
 	/**
-	 * @return Triangle winding order
+	 * @return Whether this triangle is <i>degenerate</i> (has a zero area)
 	 */
-	public WindingOrder winding() {
-		return null;
+	public boolean isDegenerate() {
+		final var vertices = this.vertices();
+		final Point p = vertices.get(0);
+		return p.equals(vertices.get(1)) || p.equals(vertices.get(2));
 	}
-
-	/**
-	 * @return Edges of this triangle
-	 */
-	public Stream<Vector> edges() {
-		return Stream.of(edge(0, 1), edge(1, 2));
-	}
-	// TODO - closed?
 }

@@ -153,9 +153,9 @@ public class DefaultModel extends AbstractModel {
 	// TODO - move to primitive
 
 	private Triangle triangle(int[] indices) {
-		final List<Vertex> vertices = new ArrayList<>(3);
+		final List<Point> vertices = new ArrayList<>(3);
 		for(int n = 0; n < 3; ++n) {
-			vertices.add(vertex(indices[n]));
+			vertices.add(vertex(indices[n]).position());
 		}
 		return new Triangle(vertices);
 	}
@@ -193,7 +193,7 @@ public class DefaultModel extends AbstractModel {
 		final var normals = new MutableNormal[vertices.size()];
 		Arrays.fill(normals, new MutableNormal());
 
-		// Accumulate face normals
+		// Accumulate vertex normals
 		final int count = primitive.faces(count());
 		final var mapper = mapper(primitive);
 		for(int face = 0; face < count; ++face) {

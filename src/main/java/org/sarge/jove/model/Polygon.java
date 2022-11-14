@@ -15,15 +15,24 @@ import org.sarge.jove.geometry.Vector;
  * <p>
  * @author Sarge
  */
-public record Polygon(List<Point> vertices) {
+public class Polygon {
+	private final List<Point> vertices;
+
 	/**
 	 * Constructor.
 	 * @param vertices Polygon vertices
 	 * @throws IllegalArgumentException if {@link #vertices} does not have at least 3 vertices
 	 */
-	public Polygon {
+	public Polygon(List<Point> vertices) {
 		if(vertices.size() < 3) throw new IllegalArgumentException("Polygon must have at least 3 vertices");
-		vertices = List.copyOf(vertices);
+		this.vertices = List.copyOf(vertices);
+	}
+
+	/**
+	 * @return Polygon vertices
+	 */
+	public List<Point> vertices() {
+		return vertices;
 	}
 
 	/**
@@ -50,7 +59,7 @@ public record Polygon(List<Point> vertices) {
 	/**
 	 * Builds a vertex edge between the given vertices.
 	 */
-	private Vector edge(int index) {
+	protected Vector edge(int index) {
 		return Vector.between(vertices.get(index), vertices.get(index + 1));
 	}
 
@@ -96,5 +105,23 @@ public record Polygon(List<Point> vertices) {
 	public WindingOrder winding(Vector axis) {
 		final float dot = axis.dot(this.normal());
 		return WindingOrder.of(dot);
+	}
+
+	@Override
+	public int hashCode() {
+		return vertices.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Polygon that) &&
+				this.vertices.equals(that.vertices);
+	}
+
+	@Override
+	public String toString() {
+		return vertices.toString();
 	}
 }
