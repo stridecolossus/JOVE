@@ -18,6 +18,8 @@ public interface Ray {
 	 */
 	Vector direction();
 
+	// TODO - optional end distance
+
 	/**
 	 * Calculates the point on this ray at the given distance from the origin, i.e. solves the line equation for the given scalar.
 	 * @param dist Distance from the origin

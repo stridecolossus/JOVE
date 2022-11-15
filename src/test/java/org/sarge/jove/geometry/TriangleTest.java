@@ -16,12 +16,23 @@ public class TriangleTest {
 
 	@Test
 	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> new Triangle(List.of()));
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> new Triangle(List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new Triangle(Collections.nCopies(4, Point.ORIGIN)));
+	}
+
+	@Test
+	void centre() {
+		assertEquals(new Point(2, 1, 0), triangle.centre());
 	}
 
 	@Test
 	void normal() {
 		assertEquals(Axis.Z, triangle.normal().normalize());
+	}
+
+	@Test
+	void winding() {
+		assertEquals(WindingOrder.COUNTER_CLOCKWISE, triangle.winding(Axis.Z));
 	}
 
 	@Test

@@ -60,8 +60,7 @@ public final class Plane implements Intersected {
 	public static Plane of(Triangle triangle) {
 		if(triangle.isDegenerate()) throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
 		final Normal normal = triangle.normal().normalize();
-		final Point p = triangle.vertices().get(0);
-		return of(normal, p);
+		return of(normal, triangle.a());
 	}
 
 	/**
