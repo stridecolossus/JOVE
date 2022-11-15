@@ -7,12 +7,12 @@ import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 
-class DuplicateModelTest {
-	private DuplicateModel model;
+class RemoveDuplicateMeshTest {
+	private RemoveDuplicateMesh model;
 
 	@BeforeEach
 	void before() {
-		model = new DuplicateModel(new Layout(Point.LAYOUT));
+		model = new RemoveDuplicateMesh(new Layout(Point.LAYOUT));
 	}
 
 	@Test
@@ -21,7 +21,7 @@ class DuplicateModelTest {
 		final Vertex vertex = new SimpleVertex(Point.ORIGIN);
 		final Vertex other = new SimpleVertex(new Point(1, 2, 3));
 
-		// Build an indexed model that re-uses some vertices
+		// Build an indexed mesh that re-uses some vertices
 		model
 				.add(vertex)
 				.add(other)

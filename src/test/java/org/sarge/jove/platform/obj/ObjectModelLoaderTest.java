@@ -47,12 +47,12 @@ public class ObjectModelLoaderTest {
 		""";
 
 		// Load OBJ models
-		final List<DefaultModel> models = loader.load(new StringReader(data));
+		final List<DefaultMesh> models = loader.load(new StringReader(data));
 		assertNotNull(models);
 		assertEquals(1, models.size());
 
 		// Check model
-		final DefaultModel model = models.get(0);
+		final DefaultMesh model = models.get(0);
 		assertNotNull(model);
 
 		// Check header
@@ -63,7 +63,7 @@ public class ObjectModelLoaderTest {
 		assertEquals(true, model.isIndexed());
 
 		// Check model data
-		final BufferedModel buffer = model.buffer();
+		final BufferedMesh buffer = model.buffer();
 		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, buffer.vertices().length());
 		assertEquals(3 * Short.BYTES, buffer.index().get().length());
 	}

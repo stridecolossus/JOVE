@@ -15,13 +15,13 @@ import java.util.function.Consumer;
  * @author Sarge
  */
 public class RenderQueue {
-	private final Map<Material, Map<Renderable, List<ModelNode>>> queues = new HashMap<>();
+	private final Map<Material, Map<Renderable, List<MeshNode>>> queues = new HashMap<>();
 
 	/**
 	 * Adds a node to this queue.
 	 * @param node Node to add
 	 */
-	void add(ModelNode node) {
+	void add(MeshNode node) {
 		final Material mat = node.material().material();
 		if(mat == Material.NONE) {
 			return;
@@ -36,7 +36,7 @@ public class RenderQueue {
 	 * Removes a node from this queue.
 	 * @param node Node to remove
 	 */
-	void remove(ModelNode node) {
+	void remove(MeshNode node) {
 		final Material mat = node.material().material();
 		final var materials = queues.get(mat);
 		if(materials == null) {
@@ -60,7 +60,7 @@ public class RenderQueue {
 			for(var e : entry.getValue().entrySet()) {
 				renderer.accept(e.getKey());
 
-				for(ModelNode n : e.getValue()) {
+				for(MeshNode n : e.getValue()) {
 					// TODO - renderer.accept(n.model());
 				}
 			}

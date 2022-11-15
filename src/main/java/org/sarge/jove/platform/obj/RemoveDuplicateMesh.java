@@ -9,15 +9,15 @@ import org.sarge.jove.model.*;
  * Adapter for an indexed model that performs vertex de-duplication of the OBJ vertices.
  * @author Sarge
  */
-class DuplicateModel extends IndexedModel {
+class RemoveDuplicateMesh extends IndexedMesh {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
-	public DuplicateModel(Layout layout) {
+	public RemoveDuplicateMesh(Layout layout) {
 		super(Primitive.TRIANGLES, layout);
 	}
 
 	@Override
-	public DuplicateModel add(Vertex vertex) {
+	public RemoveDuplicateMesh add(Vertex vertex) {
 		final Integer prev = map.get(vertex);
 		if(prev == null) {
 			// Register new vertex

@@ -2,16 +2,23 @@ package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.stream.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.util.Mask;
 
 /**
- * TODO
+ * An <i>indexed mesh</i> constructs an index buffer to a renderable mesh.
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>The index buffer can be configured to use the smallest data type depending on the size of the index, see {@link #compact(boolean)}</li>
+ * <li>The index can be restarted using the {@link #restart()} method</i>
+ * </ul>
+ * <p>
  * @author Sarge
  */
-public class IndexedModel extends DefaultModel {
+public class IndexedMesh extends DefaultMesh {
 	/**
 	 * Size of a {@code short} index.
 	 */
@@ -35,7 +42,7 @@ public class IndexedModel extends DefaultModel {
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
 	 */
-	public IndexedModel(Primitive primitive, Layout layout) {
+	public IndexedMesh(Primitive primitive, Layout layout) {
 		super(primitive, layout);
 	}
 
@@ -57,16 +64,23 @@ public class IndexedModel extends DefaultModel {
 	}
 
 	@Override
-	protected int index(int n) {
-		return index.get(n);
+	protected Stream<int[]> indices() {
+		return super.indices().map(this::map);
+	}
+
+	private int[] map(int[] indices) {
+		for(int n = 0; n < indices.length; ++n) {
+			indices[n] = index.get(n);
+		}
+		return indices;
 	}
 
 	/**
-	 * Adds a vertex index to this model.
+	 * Adds a vertex index to this mesh.
 	 * @param index Vertex index
 	 * @throws IndexOutOfBoundsException if {@link #index} is not a valid vertex index
 	 */
-	public IndexedModel add(int index) {
+	public IndexedMesh add(int index) {
 		if((index < 0) || (index >= super.count())) throw new IndexOutOfBoundsException(index);
 		this.index.add(index);
 		return this;
@@ -75,7 +89,7 @@ public class IndexedModel extends DefaultModel {
 	/**
 	 * Restarts the index.
 	 */
-	public IndexedModel restart() {
+	public IndexedMesh restart() {
 		index.add(-1);
 		++restart;
 		return this;
@@ -91,7 +105,7 @@ public class IndexedModel extends DefaultModel {
 	 * @param compact Whether to use compact indices
 	 * @see #isIntegerIndex(int)
 	 */
-	public IndexedModel compact(boolean compact) {
+	public IndexedMesh compact(boolean compact) {
 		this.compact = compact;
 		return this;
 	}
@@ -143,7 +157,7 @@ public class IndexedModel extends DefaultModel {
 	}
 
 	@Override
-	public BufferedModel buffer() {
-		return new BufferedModel(this, new VertexBuffer(), new IndexBuffer());
+	public BufferedMesh buffer() {
+		return new BufferedMesh(this, new VertexBuffer(), new IndexBuffer());
 	}
 }

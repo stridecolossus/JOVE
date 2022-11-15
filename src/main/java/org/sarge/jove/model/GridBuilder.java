@@ -145,11 +145,11 @@ public class GridBuilder {
 
 	/**
 	 * Constructs this grid.
-	 * @return New grid model
+	 * @return New grid mesh
 	 */
-	public DefaultModel build() {
-		// Init model
-		final var model = new IndexedModel(primitive, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
+	public DefaultMesh build() {
+		// Init mesh
+		final var mesh = new IndexedMesh(primitive, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
 
 		// Calculate half distance in both directions
 		final int w = size.width();
@@ -173,7 +173,7 @@ public class GridBuilder {
 
 				// Add grid vertex
 				final Vertex vertex = new DefaultVertex(pos, coord);
-				model.add(vertex);
+				mesh.add(vertex);
 			}
 		}
 
@@ -182,9 +182,9 @@ public class GridBuilder {
 				.range(0, h - 1)
 				.mapToObj(row -> index.row(row))
 				.flatMapToInt(row -> row.indices(w - 1))
-				.forEach(model::add);
+				.forEach(mesh::add);
 
 		// Construct grid
-		return model;
+		return mesh;
 	}
 }

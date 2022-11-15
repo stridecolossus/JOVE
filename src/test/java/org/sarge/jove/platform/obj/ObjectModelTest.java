@@ -85,11 +85,11 @@ public class ObjectModelTest {
 			triangle();
 
 			// Build models
-			final List<DefaultModel> models = model.models();
+			final List<DefaultMesh> models = model.models();
 			assertEquals(1, models.size());
 
 			// Check model
-			final DefaultModel result = models.get(0);
+			final DefaultMesh result = models.get(0);
 			final var layout = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 			assertEquals(Primitive.TRIANGLES, result.primitive());
 			assertEquals(3, result.count());
@@ -97,7 +97,7 @@ public class ObjectModelTest {
 			assertEquals(true, result.isIndexed());
 
 			// Check model data
-			final BufferedModel buffer = result.buffer();
+			final BufferedMesh buffer = result.buffer();
 			assertEquals((3 + 3 + 2) * Float.BYTES, buffer.vertices().length());
 			assertEquals(3 * Short.BYTES, buffer.index().get().length());
 		}

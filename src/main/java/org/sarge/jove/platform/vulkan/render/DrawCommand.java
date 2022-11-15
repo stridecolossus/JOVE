@@ -2,13 +2,13 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.*;
 
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Mesh;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.DeviceLimits;
 
 /**
- * A <i>draw command</i> is used to render a model.
+ * A <i>draw command</i> is used to render a {@link Mesh}.
  * <p>
  * Draw commands are constructed using the {@link Builder} or the convenience factory methods.
  * <p>
@@ -50,13 +50,13 @@ public interface DrawCommand extends Command {
 	}
 
 	/**
-	 * Helper - Creates a draw command for the given model.
-	 * @param header Model header
+	 * Helper - Creates a draw command for the given mesh.
+	 * @param mesh Mesh
 	 * @return New draw command
 	 */
-	static DrawCommand of(Model model) {
-		final int count = model.count();
-		if(model.isIndexed()) {
+	static DrawCommand of(Mesh mesh) {
+		final int count = mesh.count();
+		if(mesh.isIndexed()) {
 			return indexed(count);
 		}
 		else {

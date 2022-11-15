@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.io.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.DefaultModel;
+import org.sarge.jove.model.DefaultMesh;
 import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Check;
 
@@ -19,7 +19,7 @@ import org.sarge.lib.util.Check;
  * @see <a href="https://en.wikipedia.org/wiki/Wavefront_.obj_file">OBJ file format</a>
  * @author Sarge
  */
-public class ObjectModelLoader extends TextLoader implements ResourceLoader<Reader, List<DefaultModel>> {
+public class ObjectModelLoader extends TextLoader implements ResourceLoader<Reader, List<DefaultMesh>> {
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private final ObjectModel model = new ObjectModel();
 	private Consumer<String> handler = line -> { /* Ignored */ };
@@ -78,7 +78,7 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	}
 
 	@Override
-	public List<DefaultModel> load(Reader reader) throws IOException {
+	public List<DefaultMesh> load(Reader reader) throws IOException {
 		super.load(reader, this::parse);
 		return model.models();
 	}

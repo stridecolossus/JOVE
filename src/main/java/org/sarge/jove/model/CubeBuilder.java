@@ -71,20 +71,20 @@ public class CubeBuilder {
 
 	/**
 	 * Constructs a cube with a default vertex layout (vertices and texture coordinates).
-	 * @return New cube model
+	 * @return New cube mesh
 	 */
-	public DefaultModel build() {
-		final DefaultModel model = new DefaultModel(Primitive.TRIANGLES, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
+	public DefaultMesh build() {
+		final DefaultMesh model = new DefaultMesh(Primitive.TRIANGLES, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
 		build(model);
 		return model;
 	}
 
 	/**
 	 * Constructs a cube using the given builder.
-	 * @param builder Model builder
+	 * @param mesh Mesh
 	 * @see #vertex(Point, Vector, Coordinate, Colour)
 	 */
-	public void build(DefaultModel model) {
+	public void build(DefaultMesh mesh) {
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -98,7 +98,7 @@ public class CubeBuilder {
 
 				// Build vertex
 				final Vertex vertex = vertex(pos, normal, coord, col);
-				model.add(vertex);
+				mesh.add(vertex);
 			}
 		}
 	}

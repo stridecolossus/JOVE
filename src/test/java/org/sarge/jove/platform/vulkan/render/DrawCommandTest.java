@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Mesh;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
@@ -40,14 +40,14 @@ class DrawCommandTest extends AbstractVulkanTest {
 		verify(lib).vkCmdDrawIndexed(cmd, 2, 1, 0, 0, 0);
 	}
 
-	@DisplayName("Create a draw command for a model")
+	@DisplayName("Create a draw command for a mesh")
 	@Test
 	void model() {
-		final var model = mock(Model.class);
-		when(model.count()).thenReturn(3);
-		when(model.isIndexed()).thenReturn(true);
+		final var mesh = mock(Mesh.class);
+		when(mesh.count()).thenReturn(3);
+		when(mesh.isIndexed()).thenReturn(true);
 
-		final DrawCommand draw = DrawCommand.of(model);
+		final DrawCommand draw = DrawCommand.of(mesh);
 		draw.record(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
 	}

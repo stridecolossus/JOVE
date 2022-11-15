@@ -17,7 +17,7 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final DefaultModel model = builder.size(2).build();
+		final DefaultMesh model = builder.size(2).build();
 		final int count = 6 * 2 * 3;
 		final var layout = new Layout(Point.LAYOUT, Coordinate2D.LAYOUT);
 		assertEquals(Primitive.TRIANGLES, model.primitive());

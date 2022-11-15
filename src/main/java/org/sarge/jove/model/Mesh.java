@@ -3,10 +3,10 @@ package org.sarge.jove.model;
 import org.sarge.jove.common.Layout;
 
 /**
- * A <i>model</i> specifies the structure of a renderable mesh.
+ * A <i>mesh</i> specifies the structure of a renderable object.
  * @author Sarge
  */
-public interface Model {
+public interface Mesh {
 	/**
 	 * @return Drawing primitive
 	 */
@@ -23,7 +23,7 @@ public interface Model {
 	Layout layout();
 
 	/**
-	 * @return Whether this model has an index
+	 * @return Whether this mesh has an index
 	 */
 	boolean isIndexed();
 }

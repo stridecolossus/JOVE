@@ -9,14 +9,14 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 
-class ModelLoaderTest {
-	private ModelLoader loader;
+class MeshLoaderTest {
+	private MeshLoader loader;
 	private ByteArrayOutputStream out;
 
 	@BeforeEach
 	void before() {
 		out = new ByteArrayOutputStream();
-		loader = new ModelLoader();
+		loader = new MeshLoader();
 	}
 
 	@SuppressWarnings("resource")
@@ -25,33 +25,34 @@ class ModelLoaderTest {
 		assertNotNull(loader.map(mock(InputStream.class)));
 	}
 
-	private BufferedModel read() throws IOException {
+	private BufferedMesh read() throws IOException {
 		return loader.load(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
 	}
 
 	@Test
 	void load() throws IOException {
-		// Create an indexed model to persist
-		final var builder = new IndexedModel(Primitive.TRIANGLES, new Layout(Point.LAYOUT));
+		// Create an indexed mesh
+		final var builder = new IndexedMesh(Primitive.TRIANGLES, new Layout(Point.LAYOUT));
 		builder.validate(false);
 		builder.add(mock(Vertex.class));
 		builder.add(0);
 		builder.add(0);
 		builder.add(0);
 
-		// Write model
-		loader.save(builder, new DataOutputStream(out));
+		// Write mesh
+		final BufferedMesh mesh = builder.buffer();
+		loader.save(mesh, new DataOutputStream(out));
 
 		// Reload and check is same
-		final BufferedModel model = read();
-		assertEquals(builder, model);
+		final BufferedMesh result = read();
+		assertEquals(mesh, result);
 
 		// Check vertices
-		final ByteSizedBufferable vertices = model.vertices();
+		final ByteSizedBufferable vertices = result.vertices();
 		assertEquals(3 * Float.BYTES, vertices.length());
 
 		// Check index
-		final ByteSizedBufferable index = model.index().orElseThrow();
+		final ByteSizedBufferable index = result.index().orElseThrow();
 		assertEquals(3 * Short.BYTES, index.length());
 	}
 

@@ -7,10 +7,10 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
 
 /**
- * The <i>model loader</i> is used to persist and load a JOVE model.
+ * The <i>mesh loader</i> is used to persist and load a {@link BufferedMesh}.
  * @author Sarge
  */
-public class ModelLoader implements ResourceLoader<DataInputStream, BufferedModel> {
+public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh> {
 	private final DataHelper helper = new DataHelper();
 
 	@Override
@@ -19,7 +19,7 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 	}
 
 	@Override
-	public BufferedModel load(DataInputStream in) throws IOException {
+	public BufferedMesh load(DataInputStream in) throws IOException {
 		// Load and verify file format version
 		helper.version(in);
 
@@ -40,34 +40,32 @@ public class ModelLoader implements ResourceLoader<DataInputStream, BufferedMode
 		final ByteSizedBufferable index = helper.buffer(in);
 
 		// Create mesh
-		return new BufferedModel(primitive, count, new Layout(components), vertices, index);
+		return new BufferedMesh(primitive, count, new Layout(components), vertices, index);
 	}
 
 	/**
-	 * Writes a model to an output stream.
-	 * @param model		Model
+	 * Writes a mesh to an output stream.
+	 * @param mesh		Buffered mesh
 	 * @param out		Output stream
-	 * @throws IOException if the model cannot be written
-	 * @throws IllegalStateException if the model is undefined
-	 * @see DefaultModel#mesh()
+	 * @throws IOException if the mesh cannot be written
+	 * @see DefaultMesh#mesh()
 	 */
-	public void save(DefaultModel model, DataOutputStream out) throws IOException {
+	public void save(BufferedMesh mesh, DataOutputStream out) throws IOException {
 		// Write file header
 		helper.writeVersion(out);
 
 		// Write model header
-		out.writeUTF(model.primitive().name());
-		out.writeInt(model.count());
+		out.writeUTF(mesh.primitive().name());
+		out.writeInt(mesh.count());
 
 		// Write vertex layout
-		final List<Component> layout = model.layout().components();
+		final List<Component> layout = mesh.layout().components();
 		out.writeInt(layout.size());
 		for(Component c : layout) {
 			helper.write(c, out); // TODO - cast
 		}
 
 		// Write vertices
-		final BufferedModel mesh = model.buffer();
 		helper.write(mesh.vertices(), out);
 
 		// Write index

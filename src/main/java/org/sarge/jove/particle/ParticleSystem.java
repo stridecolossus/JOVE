@@ -361,7 +361,7 @@ public class ParticleSystem implements Animation {
 	 * Note that changes to the particle system are reflected in the returned model.
 	 * @return Buffered model
 	 */
-	public BufferedModel model() {
+	public BufferedMesh model() {
 		// Init vertex layout
 		final Layout layout = new Layout(Point.LAYOUT, Colour.LAYOUT);
 
@@ -381,7 +381,7 @@ public class ParticleSystem implements Animation {
 		};
 
 		// Create model
-		return new BufferedModel(Primitive.POINTS, particles.size(), layout, vertices, null);
+		return new BufferedMesh(Primitive.POINTS, particles.size(), layout, vertices, null);
 	}
 
 	@Override

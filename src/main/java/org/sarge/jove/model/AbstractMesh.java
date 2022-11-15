@@ -12,7 +12,7 @@ import org.sarge.jove.geometry.Normal;
  * Skeleton implementation.
  * @author Sarge
  */
-public abstract class AbstractModel implements Model {
+public abstract class AbstractMesh implements Mesh {
 	protected final Primitive primitive;
 	protected final Layout layout;
 
@@ -22,7 +22,7 @@ public abstract class AbstractModel implements Model {
 	 * @param layout		Vertex layout
 	 * @throws IllegalArgumentException if the layout contains {@link Normal#LAYOUT} but the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
-	protected AbstractModel(Primitive primitive, Layout layout) {
+	protected AbstractMesh(Primitive primitive, Layout layout) {
 		this.primitive = notNull(primitive);
 		this.layout = notNull(layout);
 		validate();
@@ -53,7 +53,7 @@ public abstract class AbstractModel implements Model {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof Model that) &&
+				(obj instanceof Mesh that) &&
 				(this.primitive == that.primitive()) &&
 				(this.count() == that.count()) &&
 				this.layout.equals(that.layout());

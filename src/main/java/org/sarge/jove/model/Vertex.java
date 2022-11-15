@@ -7,7 +7,7 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
- * A <i>vertex</i> is an element of a {@link Model}.
+ * A <i>vertex</i> is an element of a {@link Mesh}.
  * @author Sarge
  */
 public interface Vertex extends Bufferable {
@@ -34,7 +34,7 @@ public interface Vertex extends Bufferable {
 	 * Builder for a vertex.
 	 * <p>
 	 * The {@link #build()} selects the appropriate vertex sub-class for the given components.
-	 * Note that the vertex position is mandatory.
+	 * Note that the vertex position is mandatory when using this implementation.
 	 * <p>
 	 * @see SimpleVertex
 	 * @see DefaultVertex

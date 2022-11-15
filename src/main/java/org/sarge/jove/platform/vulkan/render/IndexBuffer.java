@@ -36,10 +36,10 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @param buffer		Buffer
 	 * @param count			Index draw count
 	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
-	 * @see DefaultModel#isIntegerIndex(int)
+	 * @see DefaultMesh#isIntegerIndex(int)
 	 */
 	public IndexBuffer(VulkanBuffer buffer, int count) {
-		this(buffer, IndexedModel.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);
+		this(buffer, IndexedMesh.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);
 	}
 
 	/**

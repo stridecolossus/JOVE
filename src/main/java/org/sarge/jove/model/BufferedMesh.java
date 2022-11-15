@@ -7,11 +7,11 @@ import java.util.Optional;
 import org.sarge.jove.common.*;
 
 /**
- * A <i>buffered model</i> is a renderable mesh comprised of buffered vertex data and an optional index.
- * @see DefaultModel#buffer()
+ * A <i>buffered mesh</i> comprises buffered vertex data and an optional index.
+ * @see DefaultMesh#buffer()
  * @author Sarge
  */
-public class BufferedModel extends AbstractModel {
+public class BufferedMesh extends AbstractMesh {
 	private final int count;
 	private final ByteSizedBufferable vertices, index;
 
@@ -23,7 +23,7 @@ public class BufferedModel extends AbstractModel {
 	 * @param vertices		Vertex buffer
 	 * @param index			Optional index buffer
 	 */
-	public BufferedModel(Primitive primitive, int count, Layout layout, ByteSizedBufferable vertices, ByteSizedBufferable index) {
+	public BufferedMesh(Primitive primitive, int count, Layout layout, ByteSizedBufferable vertices, ByteSizedBufferable index) {
 		super(primitive, layout);
 		this.count = zeroOrMore(count);
 		this.vertices = notNull(vertices);
@@ -32,12 +32,12 @@ public class BufferedModel extends AbstractModel {
 
 	/**
 	 * Copy constructor.
-	 * @param model			Underlying model
+	 * @param mesh			Underlying mesh
 	 * @param vertices		Vertex buffer
 	 * @param index			Optional index buffer
 	 */
-	public BufferedModel(Model model, ByteSizedBufferable vertices, ByteSizedBufferable index) {
-		this(model.primitive(), model.count(), model.layout(), vertices, index);
+	public BufferedMesh(Mesh mesh, ByteSizedBufferable vertices, ByteSizedBufferable index) {
+		this(mesh.primitive(), mesh.count(), mesh.layout(), vertices, index);
 	}
 
 	@Override

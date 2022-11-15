@@ -11,7 +11,11 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
- * TODO
+ * A <i>mutable vertex</i> is a convenience catch-all implementation for vertices comprising arbitrary vertex components.
+ * <p>
+ * Note that this implementation does <b>not</b> the vertex {@link #layout()} and therefore assumes that {@link DefaultMesh#validate(boolean)} is deactivated.
+ * In general custom vertex implementations should be created to support a given use case, e.g. {@link SimpleVertex} or {@link DefaultVertex}.
+ * <p>
  * @author Sarge
  */
 public class MutableVertex implements Vertex {

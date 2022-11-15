@@ -10,13 +10,13 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
 
 /**
- * A <i>default model</i> is used to construct a mesh comprising {@link Vertex} data.
+ * A <i>default mesh</i> is used to construct a renderable object comprising {@link Vertex} data.
  * TODO
  * - vertex layout
  * - to buffered
  * @author Sarge
  */
-public class DefaultModel extends AbstractModel {
+public class DefaultMesh extends AbstractMesh {
 	private final List<Vertex> vertices = new ArrayList<>();
 	private boolean validate = true;
 
@@ -25,16 +25,16 @@ public class DefaultModel extends AbstractModel {
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
 	 */
-	public DefaultModel(Primitive primitive, Layout layout) {
+	public DefaultMesh(Primitive primitive, Layout layout) {
 		super(primitive, layout);
 	}
 
 	/**
-	 * Convenience constructor for a model with the given vertex components.
+	 * Convenience constructor for a mesh with the given vertex components.
 	 * @param primitive 	Drawing primitive
 	 * @param components	Vertex components
 	 */
-	public DefaultModel(Primitive primitive, Component... components) {
+	public DefaultMesh(Primitive primitive, Component... components) {
 		super(primitive, new Layout(components));
 	}
 
@@ -49,29 +49,29 @@ public class DefaultModel extends AbstractModel {
 	}
 
 	/**
-	 * @return Model vertices
+	 * @return Vertices of this mesh
 	 */
 	public Stream<Vertex> vertices() {
 		return vertices.stream();
 	}
 
 	/**
-	 * Sets whether to validate the layout of vertices against this model (default is {@code true}).
+	 * Sets whether to validate the layout of vertices against this mesh (default is {@code true}).
 	 * @param validate Whether to validate
 	 * @see #add(Vertex)
 	 */
-	public DefaultModel validate(boolean validate) {
+	public DefaultMesh validate(boolean validate) {
 		this.validate = validate;
 		return this;
 	}
 
 	/**
-	 * Adds a vertex to this model.
+	 * Adds a vertex to this mesh.
 	 * @param vertex Vertex to add
-	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this model
+	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this mesh
 	 * @see #validate(boolean)
 	 */
-	public DefaultModel add(Vertex vertex) {
+	public DefaultMesh add(Vertex vertex) {
 		if(validate && !this.layout().equals(vertex.layout())) {
 			throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
 		}
@@ -85,7 +85,7 @@ public class DefaultModel extends AbstractModel {
 	protected final class VertexBuffer implements ByteSizedBufferable {
 		@Override
 		public int length() {
-			final Layout layout = DefaultModel.this.layout();
+			final Layout layout = DefaultMesh.this.layout();
 			return vertices.size() * layout.stride();
 		}
 
@@ -98,23 +98,23 @@ public class DefaultModel extends AbstractModel {
 	}
 
 	/**
-	 * Creates a buffered instance of this model.
-	 * @return This buffered model
+	 * Creates a buffered instance of this mesh.
+	 * @return Buffered mesh
 	 */
-	public BufferedModel buffer() {
-		return new BufferedModel(this, new VertexBuffer(), null);
+	public BufferedMesh buffer() {
+		return new BufferedMesh(this, new VertexBuffer(), null);
 	}
 
 	/**
-	 * Calculates the bounds of this model.
-	 * @return Model bounds
-	 * @throws IllegalStateException if the model layout does not contain a {@link Point#LAYOUT} component
+	 * Calculates the bounds of this mesh.
+	 * @return Mesh bounds
+	 * @throws IllegalStateException if the layout does not contain a {@link Point#LAYOUT} component
 	 */
 	public Bounds bounds() {
 		// Determine vertex position from layout
 		validate();
 		final boolean pos = this.layout().components().stream().anyMatch(e -> e == Point.LAYOUT);
-		if(!pos) throw new IllegalStateException("Model layout does not contain a vertex position: " + this);
+		if(!pos) throw new IllegalStateException("Layout does not contain a vertex position: " + this);
 
 		// Construct bounds
 		final var bounds = new Bounds.Builder();
@@ -127,23 +127,28 @@ public class DefaultModel extends AbstractModel {
 	}
 
 	/**
-	 * @return Triangles indices for this model
+	 * @return Triangles indices for this mesh
 	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
-	private Stream<int[]> indices() {
+	protected Stream<int[]> indices() {
 		final Primitive primitive = this.primitive();
-		if(!primitive.isTriangle()) throw new IllegalStateException("Model does not contain triangular polygons: " + primitive);
+		if(!primitive.isTriangle()) throw new IllegalStateException("Mesh does not contain triangular polygons: " + primitive);
 		final int faces = primitive.faces(count());
-		return IntStream.range(0, faces).mapToObj(primitive::indices);
+		return IntStream
+				.range(0, faces)
+				.mapToObj(primitive::indices);
 	}
 	// TODO - could be parallel stream operation?
 
 	/**
-	 * @return Triangles for this model
+	 * @return Triangles for this mesh
 	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
-	public Stream<Triangle> triangles() {
-		return indices().map(this::triangle).map(Triangle::new);
+	public final Stream<Triangle> triangles() {
+		return this
+				.indices()
+				.map(this::triangle)
+				.map(Triangle::new);
 	}
 
 	/**
@@ -154,34 +159,24 @@ public class DefaultModel extends AbstractModel {
 	private List<Point> triangle(int[] indices) {
 		return Arrays
 				.stream(indices)
-				.map(this::index)
 				.mapToObj(vertices::get)
 				.map(Vertex::position)
 				.toList();
 	}
 
 	/**
-	 * Maps the given triangle index to a vertex index.
-	 * @param index Triangle index
-	 * @return Vertex index
-	 */
-	protected int index(int index) {
-		return index;
-	}
-
-	/**
-	 * Computes vertex normals for this model.
-	 * @throws IllegalStateException if normals cannot be generated for this moel
+	 * Computes vertex normals for this mesh.
+	 * @throws IllegalStateException if the mesh does not contain vertex data or normals
 	 */
 	public void compute() {
 		// Validate normals can be computed
 		final Layout layout = this.layout();
-		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Model does not contain vertices");
-		if(!layout.contains(Normal.LAYOUT)) throw new IllegalStateException("Model does not contain vertex normals");
+		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Mesh does not contain vertices");
+		if(!layout.contains(Normal.LAYOUT)) throw new IllegalStateException("Mesh does not contain vertex normals");
 		validate();
 
 		/**
-		 * Helper.
+		 * Vertex normals helper.
 		 */
 		class Compute {
 			private final float[][] normals = new float[vertices.size()][3];
@@ -234,7 +229,7 @@ public class DefaultModel extends AbstractModel {
 	// - factor out to separate class?
 
 	/**
-	 * @throws IllegalStateException if this model is not valid for rendering
+	 * @throws IllegalStateException if this mesh is not valid for rendering
 	 */
 	private void validate() {
 		final Primitive primitive = this.primitive();

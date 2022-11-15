@@ -5,21 +5,21 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.model.Model;
+import org.sarge.jove.model.Mesh;
 
 /**
  * A <i>model node</i> is used to render a {@link Mesh} in the scene.
  * TODO - doc linear data structure
  * @author Sarge
  */
-public final class ModelNode extends LeafNode {
-	private final Model model;
+public final class MeshNode extends LeafNode {
+	private final Mesh model;
 
 	/**
 	 * Constructor.
 	 * @param mesh Renderable mesh
 	 */
-	public ModelNode(Model mesh) {
+	public MeshNode(Mesh mesh) {
 		this.model = notNull(mesh);
 	}
 
@@ -27,7 +27,7 @@ public final class ModelNode extends LeafNode {
 	 * Copy constructor.
 	 * @param node Model node to copy
 	 */
-	protected ModelNode(ModelNode node) {
+	protected MeshNode(MeshNode node) {
 		super(node);
 		this.model = node.model;
 	}
@@ -35,7 +35,7 @@ public final class ModelNode extends LeafNode {
 	/**
 	 * @return Model
 	 */
-	public Model model() {
+	public Mesh model() {
 		return model;
 	}
 
@@ -52,8 +52,8 @@ public final class ModelNode extends LeafNode {
 	}
 
 	@Override
-	public ModelNode copy() {
-		return new ModelNode(this);
+	public MeshNode copy() {
+		return new MeshNode(this);
 	}
 
 	@Override

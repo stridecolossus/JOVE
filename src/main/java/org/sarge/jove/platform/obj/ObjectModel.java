@@ -15,8 +15,8 @@ class ObjectModel {
 	private final VertexComponentList<Point> positions = new VertexComponentList<>();
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
-	private final List<DefaultModel> models = new ArrayList<>();
-	private DefaultModel model;
+	private final List<DefaultMesh> models = new ArrayList<>();
+	private DefaultMesh model;
 
 	/**
 	 * Starts a new object group.
@@ -51,7 +51,7 @@ class ObjectModel {
 		}
 
 		// Start new model
-		model = new DuplicateModel(new Layout(layout));
+		model = new RemoveDuplicateMesh(new Layout(layout));
 		model.validate(false);
 		models.add(model);
 	}
@@ -127,7 +127,7 @@ class ObjectModel {
 	 * Constructs the model(s).
 	 * @return Model(s)
 	 */
-	public List<DefaultModel> models() {
+	public List<DefaultMesh> models() {
 //		build();
 		return new ArrayList<>(models);
 	}

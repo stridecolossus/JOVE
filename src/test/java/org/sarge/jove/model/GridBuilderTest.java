@@ -22,7 +22,7 @@ class GridBuilderTest {
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
 	@Test
 	void buildQuadStrip() {
-		final DefaultModel model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
+		final DefaultMesh model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals((3 * 3) * 4, model.count());
 		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
