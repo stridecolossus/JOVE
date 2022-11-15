@@ -381,7 +381,7 @@ public class ParticleSystem implements Animation {
 		};
 
 		// Create model
-		return new BufferedMesh(Primitive.POINTS, particles.size(), layout, vertices, null);
+		return new BufferedMesh(Primitive.POINT, particles.size(), layout, vertices, null);
 	}
 
 	@Override

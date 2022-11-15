@@ -16,7 +16,7 @@ public class DefaultMeshTest {
 
 	@BeforeEach
 	void before() {
-		mesh = new DefaultMesh(Primitive.TRIANGLES, Point.LAYOUT);
+		mesh = new DefaultMesh(Primitive.TRIANGLE, Point.LAYOUT);
 		vertex = new SimpleVertex(Point.ORIGIN);
 	}
 
@@ -25,7 +25,7 @@ public class DefaultMeshTest {
 	class New {
     	@Test
     	void constructor() {
-    		assertEquals(Primitive.TRIANGLES, mesh.primitive());
+    		assertEquals(Primitive.TRIANGLE, mesh.primitive());
     		assertEquals(new Layout(Point.LAYOUT), mesh.layout());
     	}
 
@@ -89,7 +89,7 @@ public class DefaultMeshTest {
 		@DisplayName("cannot enumerate triangles if the primitive is not triangular")
 		@Test
 		void invalid() {
-			mesh = new DefaultMesh(Primitive.LINES, new Layout());
+			mesh = new DefaultMesh(Primitive.LINE, new Layout());
 			assertThrows(IllegalStateException.class, () -> mesh.triangles());
 		}
 	}
@@ -152,7 +152,7 @@ public class DefaultMeshTest {
 		@DisplayName("cannot be generated if the mesh layout does not contain a vertex position")
 		@Test
 		void layout() {
-			mesh = new DefaultMesh(Primitive.TRIANGLES, Normal.LAYOUT);
+			mesh = new DefaultMesh(Primitive.TRIANGLE, Normal.LAYOUT);
 			assertThrows(IllegalStateException.class, () -> mesh.bounds());
 		}
 	}
@@ -171,7 +171,7 @@ public class DefaultMeshTest {
     		vertices[2].position(new Point(3, 3, 0));
 
     		// Populate model
-    		mesh = new DefaultMesh(Primitive.TRIANGLES, new Layout(Point.LAYOUT, Normal.LAYOUT));
+    		mesh = new DefaultMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT, Normal.LAYOUT));
     		mesh.validate(false);
     		for(Vertex v : vertices) {
     			mesh.add(v);
@@ -189,14 +189,14 @@ public class DefaultMeshTest {
     	@DisplayName("cannot be computed if the primitive does not support normals")
     	@Test
     	void triangles() {
-    		mesh = new DefaultMesh(Primitive.LINES, new Layout(Point.LAYOUT));
+    		mesh = new DefaultMesh(Primitive.LINE, new Layout(Point.LAYOUT));
     		assertThrows(IllegalStateException.class, () -> mesh.compute());
     	}
 
     	@DisplayName("cannot be computed if the mesh does not contain vertex data")
     	@Test
     	void vertices() {
-    		mesh = new DefaultMesh(Primitive.TRIANGLES, new Layout());
+    		mesh = new DefaultMesh(Primitive.TRIANGLE, new Layout());
     		assertThrows(IllegalStateException.class, () -> mesh.compute());
     	}
 

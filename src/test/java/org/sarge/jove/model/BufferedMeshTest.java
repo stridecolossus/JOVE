@@ -16,12 +16,12 @@ class BufferedMeshTest {
 	@BeforeEach
 	void before() {
 		data = mock(ByteSizedBufferable.class);
-		mesh = new BufferedMesh(Primitive.TRIANGLES, 3, new Layout(Point.LAYOUT), data, data);
+		mesh = new BufferedMesh(Primitive.TRIANGLE, 3, new Layout(Point.LAYOUT), data, data);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Primitive.TRIANGLES, mesh.primitive());
+		assertEquals(Primitive.TRIANGLE, mesh.primitive());
 		assertEquals(3, mesh.count());
 		assertEquals(new Layout(Point.LAYOUT), mesh.layout());
 		assertEquals(true, mesh.isIndexed());
@@ -31,7 +31,7 @@ class BufferedMeshTest {
 
 	@Test
 	void unindexed() {
-		mesh = new BufferedMesh(Primitive.TRIANGLES, 3, new Layout(Point.LAYOUT), data, null);
+		mesh = new BufferedMesh(Primitive.TRIANGLE, 3, new Layout(Point.LAYOUT), data, null);
 		assertEquals(3, mesh.count());
 		assertEquals(false, mesh.isIndexed());
 		assertEquals(Optional.empty(), mesh.index());

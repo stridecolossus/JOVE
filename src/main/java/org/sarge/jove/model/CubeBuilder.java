@@ -74,7 +74,7 @@ public class CubeBuilder {
 	 * @return New cube mesh
 	 */
 	public DefaultMesh build() {
-		final DefaultMesh model = new DefaultMesh(Primitive.TRIANGLES, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final DefaultMesh model = new DefaultMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
 		build(model);
 		return model;
 	}

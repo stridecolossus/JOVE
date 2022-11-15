@@ -20,7 +20,7 @@ public class CubeBuilderTest {
 		final DefaultMesh model = builder.size(2).build();
 		final int count = 6 * 2 * 3;
 		final var layout = new Layout(Point.LAYOUT, Coordinate2D.LAYOUT);
-		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(Primitive.TRIANGLE, model.primitive());
 		assertEquals(count, model.count());
 		assertEquals(layout, model.layout());
 		assertEquals(false, model.isIndexed());

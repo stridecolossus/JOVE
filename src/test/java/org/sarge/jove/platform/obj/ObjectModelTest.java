@@ -91,7 +91,7 @@ public class ObjectModelTest {
 			// Check model
 			final DefaultMesh result = models.get(0);
 			final var layout = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
-			assertEquals(Primitive.TRIANGLES, result.primitive());
+			assertEquals(Primitive.TRIANGLE, result.primitive());
 			assertEquals(3, result.count());
 			assertEquals(layout, result.layout());
 			assertEquals(true, result.isIndexed());

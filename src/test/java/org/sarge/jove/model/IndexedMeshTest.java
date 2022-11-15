@@ -16,7 +16,7 @@ public class IndexedMeshTest {
 	@BeforeEach
 	void before() {
 		vertex = new SimpleVertex(Point.ORIGIN);
-		mesh = new IndexedMesh(Primitive.TRIANGLES, new Layout(Point.LAYOUT));
+		mesh = new IndexedMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT));
 		mesh.add(vertex);
 	}
 
@@ -80,7 +80,7 @@ public class IndexedMeshTest {
 	void compute() {
 		final var vertex = new MutableVertex();
 		vertex.position(Point.ORIGIN);
-		mesh = new IndexedMesh(Primitive.TRIANGLES, new Layout(Point.LAYOUT, Normal.LAYOUT));
+		mesh = new IndexedMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT, Normal.LAYOUT));
 		mesh.validate(false);
 		mesh.add(vertex);
 		mesh.add(0);

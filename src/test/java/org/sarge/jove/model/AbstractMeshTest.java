@@ -6,7 +6,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Normal;
 
-public class AbstractMeshTest {
+class AbstractMeshTest {
 	private static class MockAbstractModel extends AbstractMesh {
 		public MockAbstractModel(Primitive primitive) {
 			super(primitive, new Layout(Normal.LAYOUT));
@@ -27,24 +27,24 @@ public class AbstractMeshTest {
 
 	@BeforeEach
 	void before() {
-		mesh = new MockAbstractModel(Primitive.TRIANGLES);
+		mesh = new MockAbstractModel(Primitive.TRIANGLE);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(Primitive.TRIANGLES, mesh.primitive());
+		assertEquals(Primitive.TRIANGLE, mesh.primitive());
 		assertEquals(new Layout(Normal.LAYOUT), mesh.layout());
 	}
 
 	@Test
 	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> new MockAbstractModel(Primitive.LINES));
+		assertThrows(IllegalArgumentException.class, () -> new MockAbstractModel(Primitive.LINE));
 	}
 
 	@Test
 	void equals() {
 		assertEquals(mesh, mesh);
-		assertEquals(mesh, new MockAbstractModel(Primitive.TRIANGLES));
+		assertEquals(mesh, new MockAbstractModel(Primitive.TRIANGLE));
 		assertNotEquals(mesh, null);
 		assertNotEquals(mesh, new MockAbstractModel(Primitive.TRIANGLE_STRIP));
 	}

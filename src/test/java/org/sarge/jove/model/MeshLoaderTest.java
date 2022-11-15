@@ -32,7 +32,7 @@ class MeshLoaderTest {
 	@Test
 	void load() throws IOException {
 		// Create an indexed mesh
-		final var builder = new IndexedMesh(Primitive.TRIANGLES, new Layout(Point.LAYOUT));
+		final var builder = new IndexedMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT));
 		builder.validate(false);
 		builder.add(mock(Vertex.class));
 		builder.add(0);

@@ -25,10 +25,10 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 */
 	public AssemblyPipelineStageBuilder topology(Primitive primitive) {
 		this.topology = switch(primitive) {
-			case POINTS 		-> VkPrimitiveTopology.POINT_LIST;
-			case LINES 			-> VkPrimitiveTopology.LINE_LIST;
+			case POINT 			-> VkPrimitiveTopology.POINT_LIST;
+			case LINE 			-> VkPrimitiveTopology.LINE_LIST;
 			case LINE_STRIP 	-> VkPrimitiveTopology.LINE_STRIP;
-			case TRIANGLES 		-> VkPrimitiveTopology.TRIANGLE_LIST;
+			case TRIANGLE 		-> VkPrimitiveTopology.TRIANGLE_LIST;
 			case TRIANGLE_STRIP	-> VkPrimitiveTopology.TRIANGLE_STRIP;
 			case TRIANGLE_FAN	-> VkPrimitiveTopology.TRIANGLE_FAN;
 			case PATCH			-> VkPrimitiveTopology.PATCH_LIST;

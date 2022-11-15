@@ -20,7 +20,7 @@ class AssemblyPipelineStageBuilderTest {
 	void build() {
 		// Build descriptor
 		final VkPipelineInputAssemblyStateCreateInfo info = builder
-				.topology(Primitive.LINES)
+				.topology(Primitive.LINE)
 				.restart(true)
 				.get();
 

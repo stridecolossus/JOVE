@@ -57,7 +57,7 @@ public class ObjectModelLoaderTest {
 
 		// Check header
 		final var layout = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
-		assertEquals(Primitive.TRIANGLES, model.primitive());
+		assertEquals(Primitive.TRIANGLE, model.primitive());
 		assertEquals(3, model.count());
 		assertEquals(layout, model.layout());
 		assertEquals(true, model.isIndexed());

@@ -86,7 +86,7 @@ public class GridBuilder {
 	private Dimensions size = new Dimensions(4, 4);
 	private float tile = 1;
 	private HeightFunction height = HeightFunction.literal(0);
-	private Primitive primitive = Primitive.TRIANGLES;
+	private Primitive primitive = Primitive.TRIANGLE;
 	private IndexFactory index = IndexFactory.TRIANGLES;
 
 	/**
