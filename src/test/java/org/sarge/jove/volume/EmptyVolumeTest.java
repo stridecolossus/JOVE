@@ -1,9 +1,10 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 class EmptyVolumeTest {

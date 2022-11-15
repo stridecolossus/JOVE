@@ -1,6 +1,6 @@
 package org.sarge.jove.scene;
 
-import org.sarge.jove.geometry.Volume;
+import org.sarge.jove.volume.Volume;
 
 /**
  *

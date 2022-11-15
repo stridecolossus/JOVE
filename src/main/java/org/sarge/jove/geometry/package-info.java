@@ -1,4 +1,4 @@
 /**
- * Geometry classes and bounding volumes.
+ * General geometry primitives.
  */
 package org.sarge.jove.geometry;

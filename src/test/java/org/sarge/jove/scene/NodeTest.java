@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.scene.Node.Visitor;
+import org.sarge.jove.volume.*;
 
 class NodeTest {
 	private Node node;

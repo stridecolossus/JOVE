@@ -1,8 +1,9 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.Point;
 
 class CapsuleTest {
 	private Capsule capsule;

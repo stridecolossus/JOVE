@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.volume.*;
 
 /**
  * A <i>node</i> is an element of a scene graph.

@@ -1,10 +1,12 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.*;
+import org.sarge.jove.volume.Bounds;
 
 class BoundsTest {
 	private Bounds bounds;

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Trigonometric;
+import org.sarge.jove.volume.Volume;
 
 class FrustumTest {
 	private Frustum frustum;

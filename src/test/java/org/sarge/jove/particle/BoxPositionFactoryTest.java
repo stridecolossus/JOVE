@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Randomiser;
+import org.sarge.jove.volume.Bounds;
 import org.sarge.lib.element.Element;
 
 public class BoxPositionFactoryTest {

@@ -1,7 +1,9 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
 import java.util.*;
 
+import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 

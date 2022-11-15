@@ -1,10 +1,11 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**

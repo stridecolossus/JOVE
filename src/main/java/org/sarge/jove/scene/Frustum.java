@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
+import org.sarge.jove.volume.Volume;
 import org.sarge.jove.geometry.Vector;
 
 /**

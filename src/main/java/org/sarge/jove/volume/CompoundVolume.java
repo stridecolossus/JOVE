@@ -1,8 +1,9 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
 import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
 /**

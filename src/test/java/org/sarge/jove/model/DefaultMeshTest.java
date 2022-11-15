@@ -9,6 +9,7 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.volume.Bounds;
 
 public class DefaultMeshTest {
 	private DefaultMesh mesh;

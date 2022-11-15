@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.volume.*;
 
 public class LeafNodeTest {
 	private LeafNode node;

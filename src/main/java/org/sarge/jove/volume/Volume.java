@@ -1,5 +1,6 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
 
 /**

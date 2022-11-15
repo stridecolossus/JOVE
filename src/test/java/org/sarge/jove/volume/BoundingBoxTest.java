@@ -1,9 +1,10 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.volume;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 
 class BoundingBoxTest {
