@@ -10,6 +10,7 @@ import org.sarge.jove.geometry.Point;
 
 /**
  * A <i>simple vertex</i> comprises the vertex position only.
+ * @see DefaultVertex
  * @author Sarge
  */
 public class SimpleVertex implements Vertex {

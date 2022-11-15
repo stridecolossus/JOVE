@@ -19,7 +19,7 @@ public interface ByteSizedBufferable extends Bufferable {
 	 * @param bytes Byte array
 	 * @return Bufferable array
 	 */
-	public static ByteSizedBufferable of(byte[] bytes) {
+	static ByteSizedBufferable of(byte[] bytes) {
 		return new ByteSizedBufferable() {
 			@Override
 			public int length() {

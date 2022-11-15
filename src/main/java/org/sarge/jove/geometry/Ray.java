@@ -135,6 +135,7 @@ public interface Ray {
 
 		/**
 		 * Calculates the <i>nearest</i> intersection point to the surface.
+		 * Assumes that {@link #distances()} are ordered nearest to the intersecting surface.
 		 * @param ray Ray
 		 * @throws IllegalStateException if there are no intersections
 		 * @throws UnsupportedOperationException if this intersection is {@link #UNDEFINED}

@@ -3,7 +3,7 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
@@ -13,9 +13,17 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
 /**
  * A <i>mutable vertex</i> is a convenience catch-all implementation for vertices comprising arbitrary vertex components.
  * <p>
- * Note that this implementation does <b>not</b> the vertex {@link #layout()} and therefore assumes that {@link DefaultMesh#validate(boolean)} is deactivated.
- * In general custom vertex implementations should be created to support a given use case, e.g. {@link SimpleVertex} or {@link DefaultVertex}.
+ * The components of this vertex (if present) are written in the following order by the {@link #buffer(ByteBuffer)} method:
+ * <ol>
+ * <li>position</li>
+ * <li>normal</li>
+ * <li>texture coordinate</li>
+ * </ol>
  * <p>
+ * Note that the {@link #layout()} of this vertex is determined on-demand.
+ * <p>
+ * @see SimpleVertex
+ * @see DefaultVertex
  * @author Sarge
  */
 public class MutableVertex implements Vertex {
@@ -65,7 +73,17 @@ public class MutableVertex implements Vertex {
 
 	@Override
 	public Layout layout() {
-		throw new UnsupportedOperationException();
+		final var components = new ArrayList<Component>();
+		if(pos != null) {
+			components.add(Point.LAYOUT);
+		}
+		if(normal != null) {
+			components.add(Normal.LAYOUT);
+		}
+		if(coord != null) {
+			components.add(Coordinate2D.LAYOUT);
+		}
+		return new Layout(components);
 	}
 
 	public Bufferable[] array() {

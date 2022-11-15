@@ -9,6 +9,7 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.volume.Bounds;
 
 public class DefaultMeshTest {
@@ -53,13 +54,6 @@ public class DefaultMeshTest {
     	@Test
     	void layout() {
     		assertThrows(IllegalArgumentException.class, () -> mesh.add(mock(Vertex.class)));
-    	}
-
-    	@DisplayName("can be configured to allow vertices that do not match the layout")
-    	@Test
-    	void validate() {
-    		mesh.validate(false);
-    		mesh.add(mock(Vertex.class));
     	}
 	}
 
@@ -170,10 +164,12 @@ public class DefaultMeshTest {
     		vertices[0].position(Point.ORIGIN);
     		vertices[1].position(new Point(3, 0, 0));
     		vertices[2].position(new Point(3, 3, 0));
+    		for(var v : vertices) {
+    			v.normal(new Normal(new Vector(0, 0, 0)));
+    		}
 
     		// Populate model
     		mesh = new DefaultMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT, Normal.LAYOUT));
-    		mesh.validate(false);
     		for(Vertex v : vertices) {
     			mesh.add(v);
     		}

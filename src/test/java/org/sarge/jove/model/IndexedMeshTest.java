@@ -80,8 +80,8 @@ public class IndexedMeshTest {
 	void compute() {
 		final var vertex = new MutableVertex();
 		vertex.position(Point.ORIGIN);
+		vertex.normal(Axis.Y);
 		mesh = new IndexedMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT, Normal.LAYOUT));
-		mesh.validate(false);
 		mesh.add(vertex);
 		mesh.add(0);
 		mesh.add(0);

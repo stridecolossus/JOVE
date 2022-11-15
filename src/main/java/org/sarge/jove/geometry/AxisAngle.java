@@ -18,7 +18,7 @@ import org.sarge.jove.util.*;
  */
 public class AxisAngle implements Rotation {
 	/**
-	 * Helper - Constructs an axis-angle with a custom cosine function.
+	 * Helper - Constructs an adapter for the given axis-angle with a custom cosine function.
 	 * @param rot 		Axis-angle rotation
 	 * @param cosine	Cosine function
 	 * @return Axis-angle
@@ -72,6 +72,7 @@ public class AxisAngle implements Rotation {
 	 * Provider for the cosine function used to build the rotation matrix from this axis-angle.
 	 * The default implementation delegates to {@link Cosine#DEFAULT}, override to provide a custom cosine function.
 	 * @return Cosine function
+	 * @see #of(AxisAngle, Cosine)
 	 */
 	public Cosine cosine() {
 		return Cosine.DEFAULT;

@@ -16,12 +16,15 @@ import org.sarge.jove.common.Component;
  * <tr><td>0</td><td>0</td><td>0</td><td>1</td></tr>
  * </table>
  * <p>
- * Where:
+ * The top-left 3x3 sub-matrix is the view orientation where (in camera terms):
  * <ul>
- * <li>The top-left 3x3 component of the matrix is the view orientation</li>
- * <li>R is the <i>right</i> vector, Y is <i>up</i> and D is the view <i>direction</i> (in camera terms)</li>
- * <li>The right-hand column T is the view translation (or eye position)</li>
+ * <li>R is the <i>right</i> vector</li>
+ * <li>Y is <i>up</i></li>
+ * <li>and D is the view <i>direction</i> (in camera terms)</li>
  * </ul>
+ * <p>
+ * The right-hand column T is the view translation (or eye position).
+ * <p>
  * Note that both components are inverted (transposed and negated) since the scene is transformed in the opposite direction to the view (or camera).
  * <p>
  * @author Sarge

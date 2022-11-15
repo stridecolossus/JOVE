@@ -52,7 +52,6 @@ class ObjectModel {
 
 		// Start new model
 		model = new RemoveDuplicateMesh(new Layout(layout));
-		model.validate(false);
 		models.add(model);
 	}
 

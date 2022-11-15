@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.*;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.util.Mask;
 
@@ -159,5 +160,14 @@ public class IndexedMesh extends DefaultMesh {
 	@Override
 	public BufferedMesh buffer() {
 		return new BufferedMesh(this, new VertexBuffer(), new IndexBuffer());
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
+				.append("compact", compact)
+				.append("restart", restart)
+				.build();
 	}
 }

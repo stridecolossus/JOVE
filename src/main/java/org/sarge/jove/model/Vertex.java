@@ -2,12 +2,25 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.nio.ByteBuffer;
+
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
  * A <i>vertex</i> is an element of a {@link Mesh}.
+ * <p>
+ * The components of this vertex (if present) are generally assumed to be written in the following order by the {@link #buffer(ByteBuffer)} method:
+ * <ol>
+ * <li>position</li>
+ * <li>normal</li>
+ * <li>texture coordinate</li>
+ * <li>colour</li>
+ * </ol>
+ * <p>
+ * In general custom vertex implementations are created to support a given use-case with a fixed, overridden vertex {@link #layout()}.
+ * <p>
  * @author Sarge
  */
 public interface Vertex extends Bufferable {

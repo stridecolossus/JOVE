@@ -12,14 +12,15 @@ import org.sarge.jove.volume.Bounds;
 
 /**
  * A <i>default mesh</i> is used to construct a renderable object comprising {@link Vertex} data.
- * TODO
- * - vertex layout
- * - to buffered
+ * <p>
+ * The {@link #buffer()} factory method creates a renderable instance of this mesh with a vertex buffer and optional index buffer.
+ * <p>
+ * Vertex normals can be automatically computed using the {@link #compute()} method.
+ * <p>
  * @author Sarge
  */
 public class DefaultMesh extends AbstractMesh {
 	private final List<Vertex> vertices = new ArrayList<>();
-	private boolean validate = true;
 
 	/**
 	 * Constructor.
@@ -57,23 +58,13 @@ public class DefaultMesh extends AbstractMesh {
 	}
 
 	/**
-	 * Sets whether to validate the layout of vertices against this mesh (default is {@code true}).
-	 * @param validate Whether to validate
-	 * @see #add(Vertex)
-	 */
-	public DefaultMesh validate(boolean validate) {
-		this.validate = validate;
-		return this;
-	}
-
-	/**
 	 * Adds a vertex to this mesh.
 	 * @param vertex Vertex to add
 	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this mesh
 	 * @see #validate(boolean)
 	 */
 	public DefaultMesh add(Vertex vertex) {
-		if(validate && !this.layout().equals(vertex.layout())) {
+		if(!this.layout().equals(vertex.layout())) {
 			throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
 		}
 		vertices.add(vertex);
@@ -100,6 +91,7 @@ public class DefaultMesh extends AbstractMesh {
 
 	/**
 	 * Creates a buffered instance of this mesh.
+	 * Note that modifications to this mesh are reflected in the returned buffered mesh.
 	 * @return Buffered mesh
 	 */
 	public BufferedMesh buffer() {

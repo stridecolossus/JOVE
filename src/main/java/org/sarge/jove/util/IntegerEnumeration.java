@@ -15,9 +15,9 @@ import com.sun.jna.*;
  * <p>
  * Integer enumerations can be used in JNA methods and structures by registering the custom {@link #CONVERTER} with the relevant JNA library.
  * <p>
- * Usage:
+ * Example usage:
  * <p>
- * <pre>
+ * {@snippet lang="java" :
  * // Create integer enumeration
  * enum Thing implements IntegerEnumeration {
  *     ONE(1),
@@ -26,21 +26,22 @@ import com.sun.jna.*;
  *
  *     private final int value;
  *
+ *     @Override
  *     public int value() {
  *         return value;
  *     }
  * }
  *
  * // Map literal to enumeration
- * ReverseMapping&lt;Thing&gt; mapping = IntegerEnumeration.mapping(Thing.class);
+ * ReverseMapping<Thing> mapping = IntegerEnumeration.mapping(Thing.class);
  * Thing thing = mapping.map(1);	// ONE
  *
  * // Build integer bit-field from enumeration
- * int bits = IntegerEnumeration.reduce(Thing.ONE, ...);
+ * int bits = IntegerEnumeration.reduce(Thing.ONE);
  *
  * // Enumerate constants from integer bit-field
- * Set set = mapping.enumerate(bits);
- * </pre>
+ * Set<Thing> set = mapping.enumerate(bits);
+ * }
  * <p>
  * @author Sarge
  */
