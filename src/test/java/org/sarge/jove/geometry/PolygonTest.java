@@ -1,4 +1,4 @@
-package org.sarge.jove.model;
+package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.Z;
@@ -6,7 +6,6 @@ import static org.sarge.jove.geometry.Axis.Z;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.*;
 
 public class PolygonTest {
 	private Polygon polygon;
@@ -54,7 +53,7 @@ public class PolygonTest {
 	@DisplayName("A polygon has a normal")
 	@Test
 	void normal() {
-		assertEquals(Axis.Z, polygon.normal());
+		assertEquals(Axis.Z, polygon.normal().normalize());
 	}
 
 	@DisplayName("A polygon...")

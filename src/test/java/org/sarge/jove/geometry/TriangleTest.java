@@ -1,11 +1,10 @@
-package org.sarge.jove.model;
+package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.*;
 
 public class TriangleTest {
 	private Triangle triangle;
@@ -22,7 +21,7 @@ public class TriangleTest {
 
 	@Test
 	void normal() {
-		assertEquals(Axis.Z, triangle.normal());
+		assertEquals(Axis.Z, triangle.normal().normalize());
 	}
 
 	@Test

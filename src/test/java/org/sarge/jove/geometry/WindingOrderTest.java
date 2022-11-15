@@ -1,9 +1,10 @@
-package org.sarge.jove.model;
+package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.geometry.Axis.Z;
 
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.geometry.WindingOrder;
 
 class WindingOrderTest {
 	@Test

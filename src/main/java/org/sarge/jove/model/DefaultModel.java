@@ -2,12 +2,12 @@ package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.function.IntFunction;
 import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Vector;
 
 /**
  * A <i>default model</i> is used to construct a mesh comprising {@link Vertex} data.
@@ -123,98 +123,108 @@ public class DefaultModel extends AbstractModel {
 			bounds.add(p);
 		}
 		return bounds.build();
+		// TODO - parallel? requires spliterator to join bounds?
 	}
 
-	public final Stream<Triangle> triangles() {
-// TODO - optional operation
-//		validate();
-
+	/**
+	 * @return Triangles indices for this model
+	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
+	 */
+	private Stream<int[]> indices() {
 		final Primitive primitive = this.primitive();
 		if(!primitive.isTriangle()) throw new IllegalStateException("Model does not contain triangular polygons: " + primitive);
-
 		final int faces = primitive.faces(count());
-		return IntStream
-				.range(0, faces)
-				.mapToObj(mapper(primitive))
-				.map(this::triangle);
+		return IntStream.range(0, faces).mapToObj(primitive::indices);
+	}
+	// TODO - could be parallel stream operation?
+
+	/**
+	 * @return Triangles for this model
+	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
+	 */
+	public Stream<Triangle> triangles() {
+		return indices().map(this::triangle).map(Triangle::new);
 	}
 
-	private static IntFunction<int[]> mapper(Primitive primitive) {
-		if(primitive.isStrip()) {
-			return face -> new int[]{face, face + 1, face + 2};
-		}
-		else {
-			return face -> {
-				final int start = face * 3;
-				return new int[]{start, start + 1, start + 2};
-			};
-		}
-	}
-	// TODO - move to primitive
-
-	private Triangle triangle(int[] indices) {
-		final List<Point> vertices = new ArrayList<>(3);
-		for(int n = 0; n < 3; ++n) {
-			vertices.add(vertex(indices[n]).position());
-		}
-		return new Triangle(vertices);
+	/**
+	 * Maps the given indices to vertex positions.
+	 * @param indices Triangle indices
+	 * @return Triangle points
+	 */
+	private List<Point> triangle(int[] indices) {
+		return Arrays
+				.stream(indices)
+				.map(this::index)
+				.mapToObj(vertices::get)
+				.map(Vertex::position)
+				.toList();
 	}
 
-	// TODO - indexed
-	protected Vertex vertex(int index) {
-		return vertices.get(index);
+	/**
+	 * Maps the given triangle index to a vertex index.
+	 * @param index Triangle index
+	 * @return Vertex index
+	 */
+	protected int index(int index) {
+		return index;
 	}
 
 	/**
 	 * Computes vertex normals for this model.
-	 * @throws IllegalStateException if this model already has vertex normals
+	 * @throws IllegalStateException if normals cannot be generated for this moel
 	 */
-	public void normals() {
+	public void compute() {
 		// Validate normals can be computed
 		final Layout layout = this.layout();
 		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Model does not contain vertices");
 		if(!layout.contains(Normal.LAYOUT)) throw new IllegalStateException("Model does not contain vertex normals");
 		validate();
 
-		// Init empty normals
-		class MutableNormal {
-			private final float[] normal = new float[Normal.SIZE];
+		/**
+		 * Helper.
+		 */
+		class Compute {
+			private final float[][] normals = new float[vertices.size()][3];
 
-			private void add(Normal n) {
+			/**
+			 * Accumulates triangle normals.
+			 */
+			void add(int[] indices) {
+				// Calculate triangle normal
+				final Triangle triangle = new Triangle(triangle(indices));
+				final var normal = triangle.normal();
+
+				// Accumulate vertex normals
+				for(int n = 0; n < indices.length; ++n) {
+					add(indices[n], normal);
+				}
+			}
+			// TODO - cannot be parallel
+
+			private void add(int index, Vector n) {
+				final float[] normal = normals[index];
 				normal[0] += n.x;
 				normal[1] += n.y;
 				normal[2] += n.z;
 			}
 
-			private Normal normal() {
-				return new Normal(normal);
+			/**
+			 * Populates the accumulated vertex normals.
+			 */
+			void compute() {
+				for(int n = 0; n < normals.length; ++n) {
+					final Vertex v = vertices.get(n);
+					final Normal normal = new Normal(new Vector(normals[n]));
+					v.normal(normal);
+				}
 			}
+			// TODO - could be parallel stream operation
 		}
-		final var normals = new MutableNormal[vertices.size()];
-		Arrays.fill(normals, new MutableNormal());
 
 		// Accumulate vertex normals
-		final int count = primitive.faces(count());
-		final var mapper = mapper(primitive);
-		for(int face = 0; face < count; ++face) {
-			// Compute face normal
-			final int[] indices = mapper.apply(face);
-			final Triangle triangle = triangle(indices);
-			final Normal normal = triangle.normal();
-
-			// Accumulate vertex normals
-			for(int n = 0; n < indices.length; ++n) {
-				final int index = indices[n];
-				normals[index].add(normal);
-			}
-		}
-
-		// Populate vertex normals
-		for(int n = 0; n < normals.length; ++n) {
-			final Vertex v = vertices.get(n);
-			final Normal normal = normals[n].normal();
-			v.normal(normal);
-		}
+		final Compute compute = new Compute();
+		this.indices().forEach(compute::add);
+		compute.compute();
 	}
 
 	// TODO - segments

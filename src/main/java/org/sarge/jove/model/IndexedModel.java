@@ -56,6 +56,11 @@ public class IndexedModel extends DefaultModel {
 		return index.stream().mapToInt(Integer::intValue);
 	}
 
+	@Override
+	protected int index(int n) {
+		return index.get(n);
+	}
+
 	/**
 	 * Adds a vertex index to this model.
 	 * @param index Vertex index

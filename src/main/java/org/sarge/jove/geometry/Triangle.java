@@ -1,8 +1,6 @@
-package org.sarge.jove.model;
+package org.sarge.jove.geometry;
 
 import java.util.List;
-
-import org.sarge.jove.geometry.*;
 
 /**
  * A <i>triangle</i> is a convenience sub-class for a polygon with three vertices.
@@ -27,10 +25,10 @@ public class Triangle extends Polygon {
 	}
 
 	@Override
-	public Normal normal() {
+	public Vector normal() {
 		final Vector u = edge(0);
 		final Vector v = edge(1);
-		return u.cross(v).normalize();
+		return u.cross(v);
 	}
 
 	/**

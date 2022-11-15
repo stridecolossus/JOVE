@@ -8,12 +8,26 @@ import static org.sarge.lib.util.Check.zeroOrMore;
  */
 public enum Primitive {
 	POINTS(1),
+	PATCH(1),
 	LINES(2),
 	LINE_STRIP(2),
 	TRIANGLES(3),
 	TRIANGLE_STRIP(3),
-	TRIANGLE_FAN(3),
-	PATCH(1);
+	TRIANGLE_FAN(3) {
+		@Override
+		public int faces(int count) {
+			return Math.max(0, count - 2);
+		}
+
+		@Override
+		public int[] indices(int face) {
+			final int[] indices = new int[3];
+			indices[0] = face;
+			indices[1] = face + 1;
+			indices[2] = 0;
+			return indices;
+		}
+	};
 
 	private final int size;
 
@@ -43,7 +57,7 @@ public enum Primitive {
 	}
 
 	/**
-	 * @return Whether this primitive is a triangular polygon that also supports a vertex normal
+	 * @return Whether this primitive is a triangular polygon that implicitly supports a vertex normal
 	 */
 	public boolean isTriangle() {
 		return switch(this) {
@@ -72,15 +86,25 @@ public enum Primitive {
 	 * @return Whether the given number of vertices is valid for this primitive
 	 */
 	public boolean isValidVertexCount(int count) {
-		if(count == 0) {
-			return true;
-		}
-		else
 		if(isStrip()) {
-			return count >= size;
+			return (count == 0) || (count >= size);
 		}
 		else {
 			return (count % size) == 0;
 		}
+	}
+
+	/**
+	 * Generates the vertices indices for a polygon of this primitive.
+	 * @param face Face index
+	 * @return Vertex indices
+	 */
+	public int[] indices(int face) {
+		final int[] indices = new int[size];
+		final int start = isStrip() ? face : face * size;
+		for(int n = 0; n < size; ++n) {
+			indices[n] = start + n;
+		}
+		return indices;
 	}
 }

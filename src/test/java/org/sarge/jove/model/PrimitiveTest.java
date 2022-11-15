@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.*;
 
 import org.junit.jupiter.api.*;
@@ -84,5 +84,24 @@ class PrimitiveTest {
 		assertEquals(0, Primitive.POINTS.faces(0));
 		assertEquals(1, Primitive.POINTS.faces(1));
 		assertEquals(2, Primitive.POINTS.faces(2));
+
+		assertEquals(0, Primitive.TRIANGLE_FAN.faces(0));
+		assertEquals(0, Primitive.TRIANGLE_FAN.faces(1));
+		assertEquals(0, Primitive.TRIANGLE_FAN.faces(2));
+		assertEquals(1, Primitive.TRIANGLE_FAN.faces(3));
+		assertEquals(2, Primitive.TRIANGLE_FAN.faces(4));
+		assertEquals(3, Primitive.TRIANGLE_FAN.faces(5));
+	}
+
+	// TODO
+	@Test
+	void indices() {
+		assertArrayEquals(new int[]{1}, Primitive.POINTS.indices(1));
+		assertArrayEquals(new int[]{1}, Primitive.PATCH.indices(1));
+		assertArrayEquals(new int[]{2, 3}, Primitive.LINES.indices(1));
+		assertArrayEquals(new int[]{1, 2}, Primitive.LINE_STRIP.indices(1));
+		assertArrayEquals(new int[]{3, 4, 5}, Primitive.TRIANGLES.indices(1));
+		assertArrayEquals(new int[]{1, 2, 3}, Primitive.TRIANGLE_STRIP.indices(1));
+		assertArrayEquals(new int[]{1, 2, 0}, Primitive.TRIANGLE_FAN.indices(1));
 	}
 }

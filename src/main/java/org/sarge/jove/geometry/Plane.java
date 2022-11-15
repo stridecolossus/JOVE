@@ -52,16 +52,16 @@ public final class Plane implements Intersected {
 	}
 
 	/**
-	 * Creates a plane containing the given triangle of points.
+	 * Creates a plane from the given triangle of points.
+	 * @param triangle Triangle
 	 * @return New plane
-	 * @throws IllegalArgumentException if the triangle is degenerate
+	 * @throws IllegalArgumentException if the given triangle {@link Triangle#isDegenerate()}
 	 */
-	public static Plane of(Point a, Point b, Point c) {
-		final Vector u = Vector.between(a, c);
-		final Vector v = Vector.between(b, c);
-		if(u.equals(v)) throw new IllegalArgumentException("Triangle points cannot be degenerate");
-		final Normal normal = u.cross(v).normalize();
-		return of(normal, a);
+	public static Plane of(Triangle triangle) {
+		if(triangle.isDegenerate()) throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
+		final Normal normal = triangle.normal().normalize();
+		final Point p = triangle.vertices().get(0);
+		return of(normal, p);
 	}
 
 	/**

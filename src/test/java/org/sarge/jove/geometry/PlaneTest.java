@@ -28,14 +28,15 @@ class PlaneTest {
 
 	@Test
 	void triangle() {
-		final Plane result = Plane.of(new Point(0, 1, 0), new Point(1, 1, 0), new Point(1, 1, -1));
-		assertEquals(plane, result);
+		final Point a = new Point(0, 1, 0);
+		final Point b = new Point(1, 1, 0);
+		final Point c = new Point(1, 1, -1);
+		assertEquals(plane, Plane.of(new Triangle(a, b, c)));
 	}
 
 	@Test
 	void degenerate() {
-		final Point p = Point.ORIGIN;
-		assertThrows(IllegalArgumentException.class, () -> Plane.of(p, p, p));
+		assertThrows(IllegalArgumentException.class, () -> Plane.of(new Triangle(Point.ORIGIN, Point.ORIGIN, Point.ORIGIN)));
 	}
 
 	@Test
@@ -46,15 +47,16 @@ class PlaneTest {
 		assertEquals(-2, plane.distance(new Point(0, -1, 0)));
 	}
 
-	@Test
-	void normalize() {
-//		assertEquals(plane, new Plane(new Vector(1, 0, 0), -1).normalize());
-	}
-
-	@Test
-	void normalizeSelf() {
-//		assertSame(plane, plane.normalize());
-	}
+// TODO
+//	@Test
+//	void normalize() {
+////		assertEquals(plane, new Plane(new Vector(1, 0, 0), -1).normalize());
+//	}
+//
+//	@Test
+//	void normalizeSelf() {
+////		assertSame(plane, plane.normalize());
+//	}
 
 	@Nested
 	class HalfSpaceTests {

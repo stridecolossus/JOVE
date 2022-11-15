@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.util.Mask;

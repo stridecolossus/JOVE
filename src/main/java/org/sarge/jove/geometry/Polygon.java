@@ -1,11 +1,10 @@
-package org.sarge.jove.model;
+package org.sarge.jove.geometry;
 
 import java.util.*;
 import java.util.function.IntFunction;
 import java.util.stream.*;
 
-import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.Ray.*;
 
 /**
  * A <i>polygon</i> comprises a number of vertices.
@@ -15,7 +14,7 @@ import org.sarge.jove.geometry.Vector;
  * <p>
  * @author Sarge
  */
-public class Polygon {
+public class Polygon implements Intersected {
 	private final List<Point> vertices;
 
 	/**
@@ -67,7 +66,7 @@ public class Polygon {
 	 * Calculates the normal of this polygon.
 	 * @return Polygon normal
 	 */
-	public Normal normal() {
+	public Vector normal() {
 		// Enumerate edges
 		final List<Vector> edges = this.edges().toList();
 
@@ -82,8 +81,7 @@ public class Polygon {
 		return IntStream
 				.range(0, edges.size() - 1)
 				.mapToObj(cross)
-				.reduce(new Vector(0, 0, 0), Vector::add)
-				.normalize();
+				.reduce(new Vector(0, 0, 0), Vector::add);
 	}
 
 	/**
@@ -110,6 +108,12 @@ public class Polygon {
 	@Override
 	public int hashCode() {
 		return vertices.hashCode();
+	}
+
+	@Override
+	public Intersection intersection(Ray ray) {
+		// TODO - how to do this? especially for concave polygons? custom implementation for triangle
+		return null;
 	}
 
 	@Override

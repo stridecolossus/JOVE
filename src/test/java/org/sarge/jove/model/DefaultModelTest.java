@@ -183,4 +183,54 @@ public class DefaultModelTest {
 			assertThrows(IllegalStateException.class, () -> model.bounds());
 		}
 	}
+
+	@DisplayName("Vertex normals for a model...")
+	@Nested
+	class ComputeNormals {
+    	@DisplayName("can be computed if the model primitive is a triangle")
+    	@Test
+    	void compute() {
+    		// Create triangle
+    		final var vertices = new MutableVertex[3];
+    		Arrays.setAll(vertices, __ -> new MutableVertex());
+    		vertices[0].position(Point.ORIGIN);
+    		vertices[1].position(new Point(3, 0, 0));
+    		vertices[2].position(new Point(3, 3, 0));
+
+    		// Populate model
+    		model = new DefaultModel(Primitive.TRIANGLES, new Layout(Point.LAYOUT, Normal.LAYOUT));
+    		model.validate(false);
+    		for(Vertex v : vertices) {
+    			model.add(v);
+    		}
+
+    		// Compute normals
+    		model.compute();
+
+    		// Check vertex normals
+    		for(MutableVertex v : vertices) {
+    			assertEquals(Axis.Z, v.normal());
+    		}
+    	}
+
+    	@DisplayName("cannot be computed if the primitive does not support normals")
+    	@Test
+    	void triangles() {
+    		model = new DefaultModel(Primitive.LINES, new Layout(Point.LAYOUT));
+    		assertThrows(IllegalStateException.class, () -> model.compute());
+    	}
+
+    	@DisplayName("cannot be computed if the model that does not contain vertex data")
+    	@Test
+    	void vertices() {
+    		model = new DefaultModel(Primitive.TRIANGLES, new Layout());
+    		assertThrows(IllegalStateException.class, () -> model.compute());
+    	}
+
+    	@DisplayName("cannot be computed if the model does not contains normals")
+    	@Test
+    	void invalid() {
+    		assertThrows(IllegalStateException.class, () -> model.compute());
+    	}
+    }
 }
