@@ -26,8 +26,7 @@ public class Desktop implements TransientObject {
 	/**
 	 * Creates the desktop service.
 	 * @return New desktop service
-	 * @throws RuntimeException if GLFW cannot be initialised
-	 * @throws UnsupportedOperationException if the GLFW library cannot be found
+	 * @throws RuntimeException if the GLFW native library cannot be found or cannot be initialised
 	 * @throws UnsatisfiedLinkError if the native library cannot be instantiated
 	 */
 	public static Desktop create() {
@@ -35,7 +34,7 @@ public class Desktop implements TransientObject {
 		final String name = switch(Platform.getOSType()) {
 			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO - path!
 			case Platform.LINUX -> "libglfw";
-			default -> throw new UnsupportedOperationException("Unsupported platform for GLFW: " + Platform.getOSType());
+			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
 		};
 
 		// Init type mapper

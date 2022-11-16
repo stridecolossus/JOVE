@@ -114,7 +114,9 @@ public interface Image extends NativeObject {
 	}
 
 	/**
-	 * An <i>image descriptor</i> specifies the static properties of this image.
+	 * An <i>image descriptor</i> specifies the properties of this image.
+	 * <p>
+	 * Note that an image descriptor is a {@link SubResource} with default (i.e. zero) values for the {@link #mipLevel()} and {@link #baseArrayLayer()} properties.
 	 */
 	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
 		// Valid image aspect combinations
@@ -132,8 +134,8 @@ public interface Image extends NativeObject {
 		 * @param aspects		Image aspect(s)
 		 * @param levelCount	Number of mip levels
 		 * @param layerCount	Number of array layers
-		 * @throws IllegalArgumentException if the image aspects is empty or is an invalid combination
-		 * @throws IllegalArgumentException if the extents are invalid for the given image type
+		 * @throws IllegalArgumentException if {@link #aspects} is empty or is an invalid combination
+		 * @throws IllegalArgumentException if {@link #extents} is invalid for the given image {@link #type}
 		 */
 		public Descriptor {
 			// Validate
@@ -209,7 +211,7 @@ public interface Image extends NativeObject {
 			}
 
 			/**
-			 * Sets the image extents.
+			 * Convenience setter for the extents of a 2D image.
 			 * @param size Image dimensions
 			 */
 			public Builder extents(Dimensions size) {

@@ -199,6 +199,7 @@ public class Sampler extends AbstractVulkanObject {
 		/**
 		 * Sets the address mode for all three components.
 		 * @param mode Address mode
+		 * @see #mode(int, VkSamplerAddressMode)
 		 */
 		public Builder mode(VkSamplerAddressMode mode) {
 			for(int n = 0; n < 3; ++n) {
@@ -208,8 +209,10 @@ public class Sampler extends AbstractVulkanObject {
 		}
 
 		/**
-		 * Sets the texture border colour.
+		 * Sets the texture border colour (default is {@link VkBorderColor#FLOAT_TRANSPARENT_BLACK}).
+		 * Note this is only relevant for the {@link VkSamplerAddressMode#CLAMP_TO_BORDER} address mode.
 		 * @param border Border colour
+		 * @see #mode(VkSamplerAddressMode)
 		 */
 		public Builder border(VkBorderColor border) {
 			info.borderColor = notNull(border);
@@ -250,7 +253,7 @@ public class Sampler extends AbstractVulkanObject {
 		 * Builds this sampler.
 		 * @param dev Logical device
 		 * @return New sampler
-		 * @throws IllegalArgumentException if the minimum LOD is greater-than the maximum LOD
+		 * @throws IllegalArgumentException if the LOD levels are illogical
 		 */
 		public Sampler build(DeviceContext dev) {
 			// Validate

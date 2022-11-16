@@ -26,6 +26,7 @@ public class View extends AbstractVulkanObject {
 	 * Helper - Creates a view for the given image with default configuration.
 	 * @param image Image
 	 * @return New image view
+	 * @see Builder
 	 */
 	public static View of(Image image) {
 		return new Builder(image).build();

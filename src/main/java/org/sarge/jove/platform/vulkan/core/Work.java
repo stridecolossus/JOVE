@@ -214,7 +214,7 @@ public final class Work {
 		}
 
 		/**
-		 * Adds a semaphore to wait on before executing this batch.
+		 * Adds a wait semaphore that must be signalled before this batch can be executed.
 		 * @param semaphore 	Wait semaphore
 		 * @param stages		Pipeline stage(s) at which this semaphore will be signalled
 		 * @throws IllegalArgumentException if {@code stages} is empty

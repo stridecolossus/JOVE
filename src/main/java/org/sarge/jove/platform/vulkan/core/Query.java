@@ -19,7 +19,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>query</i> is used to retrieve statistics from Vulkan.
+ * A <i>query</i> is used to retrieve statistics from Vulkan during a render pass.
  * <p>
  * Generally a query is comprised of two commands that wrap a portion of a render sequence, e.g. to perform an {@link VkQueryType#OCCLUSION} query.
  * <p>
@@ -28,34 +28,42 @@ import com.sun.jna.ptr.PointerByReference;
  * <p>
  * The {@link ResultBuilder} is used to configure the results of a query and to write the data to a destination buffer.
  * <p>
- * Usage:
- * <pre>
+ * Example for an occlusion query:
+ * <p>
+ * {@snippet :
  * // Create an occlusion query pool with two slots
  * LogicalDevice dev = ...
  * Pool pool = Pool.create(dev, VkQueryType.OCCLUSION, 2);
  *
- * // Create a query for the second slot
+ * // Allocate a query for the second slot
  * DefaultQuery query = pool.query(1);
  *
  * // Instrument the render sequence with the query
  * FrameBuffer frame = ...
  * Command.Buffer buffer = ...
- * buffer
- *     .add(pool.reset())
+ * buffer								// @highlight region substring="query" type=highlighted
+ *     .add(query.reset())
  *     .add(frame.begin())
  *         .add(query.begin())
  *             ...
  *         .add(query.end())
- *     .add(FrameBuffer#END);
+ *     .add(FrameBuffer#END);			// @end
  *
  * // Retrieve the query results
  * ByteBuffer results = ...
  * pool.result().build().accept(results);
- * </pre>
+ * }
  * <p>
  * @author Sarge
  */
 public interface Query {
+	/**
+	 * Convenience method to create a command to reset this query.
+	 * @return Reset command
+	 * @see Pool#reset(int, int)
+	 */
+	Command reset();
+
 	/**
 	 * Default implementation for a measurement query wrapping a portion of the render sequence.
 	 */
@@ -161,6 +169,11 @@ public interface Query {
 			validate(slot);
 			return new DefaultQuery() {
 				@Override
+				public Command reset() {
+					return Pool.this.reset(slot, 1);
+				}
+
+				@Override
 				public Command begin(VkQueryControlFlag... flags) {
 					final int mask = IntegerEnumeration.reduce(flags);
 					return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
@@ -183,6 +196,11 @@ public interface Query {
 			validate(slot);
 			return new Timestamp() {
 				@Override
+				public Command reset() {
+					return Pool.this.reset(slot, 1);
+				}
+
+				@Override
 				public Command timestamp(VkPipelineStage stage) {
 					Check.notNull(stage);
 					return (lib, buffer) -> lib.vkCmdWriteTimestamp(buffer, stage, Pool.this, slot);
@@ -191,11 +209,11 @@ public interface Query {
 		}
 
 		/**
-		 * Creates a reset command for this pool.
+		 * Creates a reset command a segment of this pool.
 		 * @param start		Starting slot
 		 * @param num		Number of slots
 		 * @return Reset command
-		 * @throws IllegalArgumentException if the specified range exceeds the number of query slots in this pool
+		 * @throws IllegalArgumentException if the given range is out-of-bounds for this pool
 		 */
 		public Command reset(int start, int num) {
 			Check.zeroOrMore(start);

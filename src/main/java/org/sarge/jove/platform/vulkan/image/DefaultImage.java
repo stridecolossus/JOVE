@@ -13,7 +13,6 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.IntegerEnumeration;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -91,7 +90,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		}
 
 		/**
-		 * Sets the memory properties for this image.
+		 * Sets the memory properties of this image.
 		 * @param props Memory properties
 		 */
 		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
@@ -136,14 +135,17 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		}
 
 		/**
-		 * Sets the initial image layout (default is {@link VkImageLayout#UNDEFINED}).
+		 * Sets the initial layout of this image (default is {@link VkImageLayout#UNDEFINED}).
 		 * @param layout Initial layout
+		 * @throws IllegalArgumentException if {@link #layout} is not {@link VkImageLayout#UNDEFINED} or {@link VkImageLayout#PREINITIALIZED}
 		 */
 		public Builder initialLayout(VkImageLayout layout) {
-			switch(layout) {
-				case UNDEFINED, PREINITIALIZED -> this.layout = layout;
-				default -> throw new IllegalArgumentException("Invalid initial layout: " + layout);
-			}
+			final boolean valid = switch(layout) {
+				case UNDEFINED, PREINITIALIZED -> true;
+				default -> false;
+			};
+			if(!valid) throw new IllegalArgumentException("Invalid initial layout: " + layout);
+			this.layout = notNull(layout);
 			return this;
 		}
 
@@ -152,6 +154,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		 * @param dev Logical device
 		 * @return New image
 		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
+		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */
 		public DefaultImage build(DeviceContext dev) {
 			// Validate

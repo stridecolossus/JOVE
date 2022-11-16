@@ -44,7 +44,7 @@ public class Window extends AbstractTransientNativeObject {
 		MAXIMISED(0x00020008),
 
 		/**
-		 * Disables creation of an OpenGL context for this window.
+		 * Disables creation of the OpenGL context for this window.
 		 */
 		DISABLE_OPENGL(0x00022001) {
 			@Override
@@ -199,6 +199,7 @@ public class Window extends AbstractTransientNativeObject {
 	 * Creates a Vulkan rendering surface for this window.
 	 * @param instance Vulkan instance
 	 * @return Vulkan surface
+	 * @throws RuntimeException if the surface cannot be created for this window
 	 */
 	public Handle surface(Handle instance) {
 		final DesktopLibrary lib = desktop.library();

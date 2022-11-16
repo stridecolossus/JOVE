@@ -7,6 +7,8 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 /**
  * The <i>device limits</i> is a helper class for querying the limits of the supported hardware.
  * <p>
+ * Generally it is assumed that an application will prefer to query hardware limits using string keys rather than programatically via structure fields.
+ * <p>
  * Example for an indirect multi-draw command:
  * <pre>
  * LogicalDevice dev = ...

@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.util.DeviceLimits;
 import org.sarge.jove.util.ReferenceFactory;
 
 /**
- * The <i>device context</i> represents an abstraction for objects dependant on the logical device.
+ * The <i>device context</i> abstracts the logical device.
  * @author Sarge
  */
 public interface DeviceContext {
