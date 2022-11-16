@@ -19,7 +19,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
  * <li>colour</li>
  * </ol>
  * <p>
- * In general custom vertex implementations are created to support a given use-case with a fixed, overridden vertex {@link #layout()}.
+ * In general custom vertex sub-classes should be implemented to support a given use-case with a fixed, overridden vertex {@link #layout()}.
  * <p>
  * @author Sarge
  */

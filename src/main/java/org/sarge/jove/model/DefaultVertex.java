@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
@@ -33,11 +33,6 @@ public class DefaultVertex implements Vertex {
 	@Override
 	public Point position() {
 		return pos;
-	}
-
-	@Override
-	public void normal(Normal normal) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

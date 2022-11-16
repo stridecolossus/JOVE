@@ -4,6 +4,7 @@ import static org.sarge.lib.util.Check.zeroOrMore;
 
 /**
  * A <i>primitive</i> defines the characteristics of the common drawing primitives.
+ * @see <a href="https://registry.khronos.org/vulkan/specs/1.1/html/chap20.html#drawing-primitive-topologies">Vulkan primitive topologies</a>
  * @author Sarge
  */
 public enum Primitive {

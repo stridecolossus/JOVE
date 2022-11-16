@@ -27,6 +27,8 @@ public class IndexedMesh extends DefaultMesh {
 
 	/**
 	 * Determines whether the given draw count requires an {@code int} index.
+	 * i.e. Whether the number of indices is larger than {@linkplain #SHORT_INDEX}.
+	 * TODO - better doc, maybe return data type?
 	 * @param count Draw count
 	 * @return Whether the index data type is integral
 	 */
@@ -99,9 +101,9 @@ public class IndexedMesh extends DefaultMesh {
 	/**
 	 * Sets whether the index buffer uses the most <i>compact</i> data type (default is {@code true}).
 	 * <p>
-	 * If {@link #compact} is set, the data type of the index buffer is {@code short} if the index is small enough.
-	 * Otherwise the index is comprised of {@code int} values.
-	 * TODO - revise doc, restart precludes, note still stored as integers
+	 * If this index is {@link #compact} and the number of indices is small enough the data type of the index buffer is {@code short}.
+	 * Otherwise the index buffer is comprised of {@code int} indices.
+	 * Note that an index that includes {@link #restart()} cannot be compact.
 	 * <p>
 	 * @param compact Whether to use compact indices
 	 * @see #isIntegerIndex(int)

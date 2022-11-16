@@ -17,6 +17,7 @@ import org.sarge.jove.volume.Bounds;
  * <p>
  * Vertex normals can be automatically computed using the {@link #compute()} method.
  * <p>
+ * @see IndexedMesh
  * @author Sarge
  */
 public class DefaultMesh extends AbstractMesh {
@@ -61,7 +62,6 @@ public class DefaultMesh extends AbstractMesh {
 	 * Adds a vertex to this mesh.
 	 * @param vertex Vertex to add
 	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this mesh
-	 * @see #validate(boolean)
 	 */
 	public DefaultMesh add(Vertex vertex) {
 		if(!this.layout().equals(vertex.layout())) {

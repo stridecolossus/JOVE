@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.util.Cosine;
 
 /**
- * An <i>axis</i> is a vector representing one of the <i>cardinal</i> axes.
+ * An <i>axis</i> is a unit vector representing one of the <i>cardinal</i> axes.
  * <p>
  * Notes:
  * <ul>
@@ -161,8 +161,8 @@ public final class Axis extends Normal {
 
 	/**
 	 * Selects the cardinal axis corresponding to the <i>minimal component</i> of the given vector.
-	 * For example the vector {@code 1, 0, 2} corresponds to the Y axis.
-	 * This operation is generally used to determine an arbitrary local coordinate system about a given vector.
+	 * For example the vector {@code 1,0,2} corresponds to the Y axis.
+	 * This operation is generally used to construct an arbitrary local coordinate system about a given vector.
 	 * @return Cardinal axis
 	 */
 	public static Axis minimal(Vector vec) {

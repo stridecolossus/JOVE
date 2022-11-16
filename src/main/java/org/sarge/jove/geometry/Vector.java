@@ -83,7 +83,6 @@ public sealed class Vector extends Tuple permits Normal {
 	}
 	// TODO - JDK19 vector API
 	// TODO - worth hassle for 3 components?
-	// TODO - check for Axis and delegate? [no]
 
 	/**
 	 * @return Inverse of this vector
@@ -179,7 +178,6 @@ public sealed class Vector extends Tuple permits Normal {
 		return new Vector(x, y, z);
 	}
 	// TODO - JDK vector API
-	// TODO - check for Axis and delegate?
 
 	/**
 	 * Determines the nearest point on this vector to the given point.
