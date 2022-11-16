@@ -49,7 +49,7 @@ public record Triangle(Point a, Point b, Point c) implements Intersected {
 	}
 
 	/**
-	 * @return Whether this triangle is <i>degenerate</i> (has a zero area)
+	 * @return Whether this triangle is <i>degenerate</i> (has zero area)
 	 */
 	public boolean isDegenerate() {
 		return a.equals(b) || a.equals(c);

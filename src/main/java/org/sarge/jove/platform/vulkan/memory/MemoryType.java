@@ -24,7 +24,6 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	}
 
 	/**
-	 * Helper.
 	 * @return Whether this memory type is {@link VkMemoryProperty#HOST_VISIBLE}
 	 */
 	public boolean isHostVisible() {

@@ -11,6 +11,15 @@ import java.util.stream.IntStream;
  * | / | / |
  * 3 - 4 - 5
  * </pre>
+ *
+ * TODO
+ * - this is a bit over engineered
+ * - most of the extension points are unused
+ * - too many helpers methods
+ * - simplify
+ * - integrate into primitive?
+ * - add quad primitive?
+ *
  * @author Sarge
  */
 @FunctionalInterface

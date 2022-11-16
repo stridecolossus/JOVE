@@ -15,11 +15,6 @@ public enum Primitive {
 	TRIANGLE_STRIP(3),
 	TRIANGLE_FAN(3) {
 		@Override
-		public int faces(int count) {
-			return Math.max(0, count - 2);
-		}
-
-		@Override
 		public int[] indices(int face) {
 			final int[] indices = new int[3];
 			indices[0] = face;
@@ -75,7 +70,7 @@ public enum Primitive {
 	 */
 	public int faces(int count) {
 		if(isStrip()) {
-			return count - (size - 1);
+			return Math.max(0, count - (size - 1));
 		}
 		else {
 			return count / size;

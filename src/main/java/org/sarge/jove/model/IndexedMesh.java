@@ -9,7 +9,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.util.Mask;
 
 /**
- * An <i>indexed mesh</i> constructs an index buffer to a renderable mesh.
+ * An <i>indexed mesh</i> constructs an index buffer for a renderable mesh.
  * <p>
  * Notes:
  * <ul>

@@ -45,16 +45,6 @@ public class CubeBuilder {
 			Axis.Y.invert(),
 	};
 
-	// Face colours
-	private static final Colour[] COLOURS = {
-		new Colour(1, 0, 0),
-		new Colour(0, 1, 0),
-		new Colour(0, 0, 1),
-		new Colour(1, 1, 0),
-		Colour.BLACK,
-		Colour.WHITE
-	};
-
 	// Indices for the two counter-clockwise triangles of each face
 	private static final int[] TRIANGLES = IndexFactory.TRIANGLES.indices(1).toArray();
 
@@ -94,10 +84,9 @@ public class CubeBuilder {
 				final Point pos = VERTICES[index].multiply(size);
 				final Normal normal = NORMALS[face];
 				final Coordinate2D coord = Coordinate2D.QUAD.get(corner);
-				final Colour col = COLOURS[face];
 
 				// Build vertex
-				final Vertex vertex = vertex(pos, normal, coord, col);
+				final Vertex vertex = vertex(pos, normal, coord);
 				mesh.add(vertex);
 			}
 		}
@@ -105,15 +94,13 @@ public class CubeBuilder {
 
 	/**
 	 * Builds a cube vertex.
-	 * This implementation creates a {@link MutableVertex}, i.e. ignores the {@link #normal} and {@link #col} arguments.
+	 * This implementation creates a {@link DefaultVertex}, i.e. ignores the {@link #normal}.
 	 * @param pos			Vertex position
 	 * @param normal		Normal
 	 * @param coord			Texture coordinate
-	 * @param col			Colour
-	 * @return New default vertex
-	 * @see MutableVertex
+	 * @return Cube vertex
 	 */
-	protected Vertex vertex(Point pos, Normal normal, Coordinate2D coord, Colour col) {
+	protected Vertex vertex(Point pos, Normal normal, Coordinate2D coord) {
 		return new DefaultVertex(pos, coord);
 	}
 }
