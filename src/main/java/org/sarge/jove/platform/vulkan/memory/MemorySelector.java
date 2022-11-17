@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -53,32 +53,41 @@ public class MemorySelector {
 	 * @throws AllocationException if no memory type matches the request
 	 */
 	public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-		// Filter available memory types
-		final Mask mask = new Mask(reqs.memoryTypeBits);
-		final List<MemoryType> candidates = IntStream
-				.range(0, types.length)
-				.filter(n -> mask.contains(Mask.index(n)))
-				.mapToObj(n -> types[n])
-				.toList();
+		/**
+		 * Filter for the required memory properties that also records the fallback as a side-effect.
+		 */
+		class FallbackPredicate implements Predicate<MemoryType> {
+			private MemoryType fallback;
 
-		// Find matching memory type
-		return
-				find(candidates, props.optimal())
-				.or(() -> find(candidates, props.required()))
-				.orElseThrow(() -> new AllocationException(String.format("No available memory type: requirements=%s properties=%s", reqs, props)));
-	}
+			@Override
+			public boolean test(MemoryType type) {
+				if(type.matches(props.required())) {
+    				if(type.matches(props.optimal())) {
+    					// Found optimal match
+    					return true;
+    				}
 
-	/**
-	 * Finds a memory type matching the given properties.
-	 */
-	private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryProperty> props) {
-		if(props.isEmpty()) {
-			return Optional.empty();
+    				// Record fallback candidate
+					if(fallback == null) {
+						fallback = type;
+					}
+				}
+				return false;
+			}
+
+			private Optional<MemoryType> fallback() {
+				return Optional.ofNullable(fallback);
+			}
 		}
 
-		return types
+		// Walk candidate memory types and match against the requested properties
+		final FallbackPredicate predicate = new FallbackPredicate();
+		return new Mask(reqs.memoryTypeBits)
 				.stream()
-				.filter(type -> type.properties().containsAll(props))
-				.findAny();
+				.mapToObj(n -> types[n - 1])
+				.filter(predicate)
+				.findAny()
+				.or(predicate::fallback)
+				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(reqs, props)));
 	}
 }

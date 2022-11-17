@@ -14,7 +14,12 @@ public class MemoryPropertiesTest {
 
 	@BeforeEach
 	void before() {
-		props = new MemoryProperties<>(Set.of(VkBufferUsageFlag.UNIFORM_BUFFER), CONCURRENT, Set.of(HOST_VISIBLE, HOST_COHERENT), Set.of(DEVICE_LOCAL));
+		props = new MemoryProperties<>(
+				Set.of(VkBufferUsageFlag.UNIFORM_BUFFER),
+				CONCURRENT,
+				Set.of(HOST_VISIBLE, HOST_COHERENT),
+				Set.of(DEVICE_LOCAL)
+		);
 	}
 
 	@Test
@@ -22,7 +27,7 @@ public class MemoryPropertiesTest {
 		assertEquals(Set.of(VkBufferUsageFlag.UNIFORM_BUFFER), props.usage());
 		assertEquals(CONCURRENT, props.mode());
 		assertEquals(Set.of(HOST_VISIBLE, HOST_COHERENT), props.required());
-		assertEquals(Set.of(HOST_VISIBLE, HOST_COHERENT, DEVICE_LOCAL), props.optimal());
+		assertEquals(Set.of(DEVICE_LOCAL), props.optimal());
 	}
 
 	@Test
@@ -40,7 +45,6 @@ public class MemoryPropertiesTest {
 			builder = new MemoryProperties.Builder<>();
 		}
 
-		@DisplayName("Memory properties can be constructed using a builder")
 		@Test
 		void build() {
 			builder
@@ -56,7 +60,15 @@ public class MemoryPropertiesTest {
 
 		@DisplayName("The memory properties must contain at least one usage flag")
 		@Test
-		void empty() {
+		void usage() {
+			builder.required(HOST_VISIBLE);
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@DisplayName("The memory properties must contain at least one required property")
+		@Test
+		void required() {
+			builder.usage(VkBufferUsageFlag.UNIFORM_BUFFER);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
 	}

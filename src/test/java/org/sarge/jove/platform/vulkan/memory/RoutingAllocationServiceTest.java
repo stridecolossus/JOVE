@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.VkImageUsageFlag;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class RoutingAllocationServiceTest extends AbstractVulkanTest {
@@ -26,7 +26,10 @@ public class RoutingAllocationServiceTest extends AbstractVulkanTest {
 	@DisplayName("A matching request is routed to the specified allocator")
 	@Test
 	void route() {
-		final MemoryProperties<?> props = new MemoryProperties.Builder<>().usage(VkImageUsageFlag.COLOR_ATTACHMENT).build();
+		final MemoryProperties<?> props = new MemoryProperties.Builder<>()
+				.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
+				.required(VkMemoryProperty.HOST_VISIBLE)
+				.build();
 		final Allocator other = mock(Allocator.class);
 		service.route(props::equals, other);
 		assertEquals(other, service.allocator(props));

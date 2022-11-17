@@ -1,10 +1,9 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.lib.util.Check;
 
@@ -12,7 +11,6 @@ import org.sarge.lib.util.Check;
  * A set of <i>memory properties</i> specifies the purpose and requirements of a memory request.
  * <p>
  * In general the client requests memory for the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
- * Note that this implementation assumes that <i>optimal</i> is a super-set of the <i>required</i> properties.
  * <p>
  * Example for the properties of a uniform buffer visible to the application and ideally GPU resident:
  * <pre>
@@ -37,13 +35,13 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @param required		Required memory properties
 	 * @param optimal		Optimal properties
 	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
+	 * @throws IllegalArgumentException if the {@link #required} memory properties are empty
 	 */
 	public MemoryProperties {
 		Check.notNull(mode);
-		if(usage.isEmpty()) throw new IllegalArgumentException("At least one memory usage must be specified");
-		usage = Set.copyOf(usage);
-		required = Set.copyOf(required);
-		optimal = Set.copyOf(CollectionUtils.union(required, optimal));
+		usage = Set.copyOf(notEmpty(usage));
+		required = Set.copyOf(notEmpty(required));
+		optimal = Set.copyOf(optimal);
 	}
 
 	/**
@@ -95,6 +93,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		/**
 		 * Constructs this memory properties instance.
 		 * @return New memory properties
+		 * @see MemoryProperties#MemoryProperties(Set, VkSharingMode, Set, Set)
 		 */
 		public MemoryProperties<T> build() {
 			return new MemoryProperties<>(usage, mode, required, optimal);

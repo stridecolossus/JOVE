@@ -1,6 +1,8 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.platform.vulkan.VkMemoryHeapFlag.DEVICE_LOCAL;
+import static org.sarge.jove.platform.vulkan.VkMemoryProperty.HOST_VISIBLE;
 
 import java.util.Set;
 
@@ -14,15 +16,15 @@ public class MemoryTypeTest {
 
 	@BeforeEach
 	void before() {
-		heap = new Heap(1, Set.of(VkMemoryHeapFlag.DEVICE_LOCAL));
-		type = new MemoryType(0, heap, Set.of(VkMemoryProperty.HOST_VISIBLE));
+		heap = new Heap(1, Set.of(DEVICE_LOCAL));
+		type = new MemoryType(0, heap, Set.of(HOST_VISIBLE));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(0, type.index());
 		assertEquals(heap, type.heap());
-		assertEquals(Set.of(VkMemoryProperty.HOST_VISIBLE), type.properties());
+		assertEquals(Set.of(HOST_VISIBLE), type.properties());
 		assertEquals(true, type.isHostVisible());
 	}
 
@@ -33,9 +35,15 @@ public class MemoryTypeTest {
 	}
 
 	@Test
+	void matches() {
+		assertEquals(true, type.matches(Set.of(HOST_VISIBLE)));
+		assertEquals(false, type.matches(Set.of(VkMemoryProperty.PROTECTED)));
+	}
+
+	@Test
 	void equals() {
 		assertEquals(true, type.equals(type));
-		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(VkMemoryProperty.HOST_VISIBLE))));
+		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(HOST_VISIBLE))));
 		assertEquals(false, type.equals(null));
 		assertEquals(false, type.equals(new MemoryType(0, heap, Set.of())));
 	}
@@ -45,7 +53,7 @@ public class MemoryTypeTest {
 		@Test
 		void heap() {
 			assertEquals(1, heap.size());
-			assertEquals(Set.of(VkMemoryHeapFlag.DEVICE_LOCAL), heap.flags());
+			assertEquals(Set.of(DEVICE_LOCAL), heap.flags());
 		}
 
 		@Test
@@ -61,12 +69,12 @@ public class MemoryTypeTest {
 		// Create heap
 		final var heap = new VkMemoryHeap();
 		heap.size = 1;
-		heap.flags = VkMemoryHeapFlag.DEVICE_LOCAL.value();
+		heap.flags = DEVICE_LOCAL.value();
 
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = VkMemoryProperty.HOST_VISIBLE.value();
+		info.propertyFlags = HOST_VISIBLE.value();
 
 		// Create memory properties
 		final var props = new VkPhysicalDeviceMemoryProperties();

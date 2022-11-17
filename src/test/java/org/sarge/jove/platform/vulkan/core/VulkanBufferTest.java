@@ -99,10 +99,12 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 
 	@Test
 	void create() {
-		final MemoryProperties<VkBufferUsageFlag> props = new MemoryProperties<>(FLAGS, VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
+		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+				.usage(TRANSFER_SRC)
+				.required(VkMemoryProperty.HOST_VISIBLE)
+				.build();
 		buffer = VulkanBuffer.create(dev, SIZE, props);
-		assertNotNull(buffer);
-		assertEquals(FLAGS, buffer.usage());
+		assertEquals(Set.of(TRANSFER_SRC), buffer.usage());
 	}
 
 	@Test

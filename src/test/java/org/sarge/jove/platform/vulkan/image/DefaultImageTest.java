@@ -69,6 +69,7 @@ class DefaultImageTest extends AbstractVulkanTest {
 			props = new MemoryProperties.Builder<VkImageUsageFlag>()
 					.mode(VkSharingMode.CONCURRENT)
 					.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
+					.required(VkMemoryProperty.HOST_VISIBLE)
 					.build();
 
 			// Init memory allocator

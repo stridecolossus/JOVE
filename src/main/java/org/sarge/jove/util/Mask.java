@@ -17,28 +17,11 @@ public record Mask(int mask) {
 	}
 
 	/**
-	 * Converts the given bit index to a bit-field mask, i.e. performs a left-shift.
-	 * @param index Bit index
-	 * @return Bit-field
-	 */
-	public static int index(int index) {
-		return 1 << index;
-	}
-
-	/**
 	 * @param bits Bit-field
 	 * @return Whether this mask contains the given bit-field, i.e. is a super-set of the required bits
 	 */
 	public boolean contains(int bits) {
 		return (mask & bits) == bits;
-	}
-
-	/**
-	 * @param bits Bit-field
-	 * @return Whether the given bit-field matches this mask, i.e. the given bit-field is a super-set of this mask
-	 */
-	public boolean matches(int bits) {
-		return (mask & bits) == mask;
 	}
 
 	/**
@@ -48,7 +31,7 @@ public record Mask(int mask) {
 		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
 		return IntStream
 				.range(0, range)
-				.map(Mask::index)
+				.map(n -> 1 << n)
 				.filter(this::contains);
 	}
 }
