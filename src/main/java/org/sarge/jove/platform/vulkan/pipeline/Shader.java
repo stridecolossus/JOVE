@@ -86,7 +86,7 @@ public class Shader extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Constructs the descriptor for the given specialisation constants.
+	 * Constructs the Vulkan descriptor for the given specialisation constants.
 	 * <p>
 	 * The following wrapper types are supported:
 	 * <ul>
@@ -133,15 +133,16 @@ public class Shader extends AbstractVulkanObject {
 		}
 
 		// Populate map entries
+		final var entries = constants.entrySet();
 		final Populate populate = new Populate();
 		final var info = new VkSpecializationInfo();
 		info.mapEntryCount = constants.size();
-		info.pMapEntries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate);
+		info.pMapEntries = StructureCollector.pointer(entries, new VkSpecializationMapEntry(), populate);
 
 		// Build constants data buffer
 		final var converter = new NativeBooleanConverter();
 		final ByteBuffer buffer = BufferHelper.allocate(populate.len);
-		for(var entry : constants.entrySet()) {		// TODO - check same order as above
+		for(var entry : entries) {
 			switch(entry.getValue()) {
 				case Float f -> buffer.putFloat(f);
 				case Integer n -> buffer.putInt(n);
@@ -163,7 +164,7 @@ public class Shader extends AbstractVulkanObject {
 	 */
 	interface Library {
 		/**
-		 * Create a shader.
+		 * Creates a shader.
 		 * @param device			Logical device
 		 * @param info				Shader descriptor
 		 * @param pAllocator		Allocator

@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
+import static org.sarge.jove.util.IntegerEnumeration.reduce;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
@@ -14,7 +15,7 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -193,20 +194,19 @@ public class RenderPass extends AbstractVulkanObject {
 			 */
 			private Reference reference(Attachment attachment, VkImageLayout layout) {
 				final int prev = attachments.indexOf(attachment);
-				final int index;
 				if(prev == -1) {
-					index = attachments.size();
+					final int index = attachments.size();
 					attachments.add(attachment);
+					return new Reference(index, attachment, layout);
 				}
 				else {
-					index = prev;
+					return new Reference(prev, attachment, layout);
 				}
-				return new Reference(index, attachment, layout);
 			}
 
 			/**
 			 * Adds a colour attachment.
-			 * @param colour Attachment
+			 * @param colour Colour attachment
 			 * @param layout Layout
 			 * @throws IllegalArgumentException for a duplicate attachment
 			 */
@@ -285,7 +285,7 @@ public class RenderPass extends AbstractVulkanObject {
 				/**
 				 * Index of the implicit external subpass.
 				 */
-				private static final int VK_SUBPASS_EXTERNAL = (~0);
+				private static final int VK_SUBPASS_EXTERNAL = ~0;
 
 				private Integer subpass;
 				private final Properties src = new Properties(this);
@@ -352,10 +352,10 @@ public class RenderPass extends AbstractVulkanObject {
 				private void populate(VkSubpassDependency info) {
 					info.srcSubpass = index;
 					info.dstSubpass = Subpass.this.index;
-					info.srcStageMask = IntegerEnumeration.reduce(src.stages);
-					info.srcAccessMask = IntegerEnumeration.reduce(src.access);
-					info.dstStageMask = IntegerEnumeration.reduce(dest.stages);
-					info.dstAccessMask = IntegerEnumeration.reduce(dest.access);
+					info.srcStageMask = reduce(src.stages);
+					info.srcAccessMask = reduce(src.access);
+					info.dstStageMask = reduce(dest.stages);
+					info.dstAccessMask = reduce(dest.access);
 				}
 			}
 

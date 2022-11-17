@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static org.sarge.jove.util.IntegerEnumeration.reduce;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
@@ -9,7 +10,7 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Structure;
@@ -58,9 +59,9 @@ public class Barrier extends ImmediateCommand {
 	 * @param images		Image memory barriers
 	 */
 	private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, Set<VkDependencyFlag> flags, VkMemoryBarrier[] memory, VkBufferMemoryBarrier[] buffers, VkImageMemoryBarrier[] images) {
-		this.src = IntegerEnumeration.reduce(src);
-		this.dest = IntegerEnumeration.reduce(dest);
-		this.flags = IntegerEnumeration.reduce(flags);
+		this.src = reduce(src);
+		this.dest = reduce(dest);
+		this.flags = reduce(flags);
 		this.memory = memory;
 		this.buffers = buffers;
 		this.images = images;
@@ -206,8 +207,8 @@ public class Barrier extends ImmediateCommand {
 			 * Populates the descriptor for this memory barrier.
 			 */
 			private void populate(VkMemoryBarrier barrier) {
-				barrier.srcAccessMask = IntegerEnumeration.reduce(srcAccess);
-				barrier.dstAccessMask = IntegerEnumeration.reduce(destAccess);
+				barrier.srcAccessMask = reduce(srcAccess);
+				barrier.dstAccessMask = reduce(destAccess);
 			}
 
 			/**
@@ -302,8 +303,8 @@ public class Barrier extends ImmediateCommand {
 				barrier.buffer = buffer.handle();
 				barrier.offset = offset;
 				barrier.size = size;
-				barrier.srcAccessMask = IntegerEnumeration.reduce(srcAccess);
-				barrier.dstAccessMask = IntegerEnumeration.reduce(destAccess);
+				barrier.srcAccessMask = reduce(srcAccess);
+				barrier.dstAccessMask = reduce(destAccess);
 				barrier.srcQueueFamilyIndex = srcFamily;
 				barrier.dstQueueFamilyIndex = destFamily;
 			}
@@ -367,8 +368,8 @@ public class Barrier extends ImmediateCommand {
 			 */
 			private void populate(VkImageMemoryBarrier barrier) {
 				barrier.image = image.handle();
-				barrier.srcAccessMask = IntegerEnumeration.reduce(srcAccess);
-				barrier.dstAccessMask = IntegerEnumeration.reduce(destAccess);
+				barrier.srcAccessMask = reduce(srcAccess);
+				barrier.dstAccessMask = reduce(destAccess);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
 				barrier.subresourceRange = SubResource.toRange(subresource);

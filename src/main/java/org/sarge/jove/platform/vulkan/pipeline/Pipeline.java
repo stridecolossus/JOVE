@@ -303,7 +303,7 @@ public class Pipeline extends AbstractVulkanObject {
 
 			/**
 			 * Adds specialisation constants to parameterise this shader.
-			 * @param constants Specialisation constants or {@code null} to use default values
+			 * @param constants Specialisation constants
 			 * @see Shader#constants(Map)
 			 */
 			public ShaderStageBuilder constants(VkSpecializationInfo constants) {

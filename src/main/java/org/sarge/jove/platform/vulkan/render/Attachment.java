@@ -41,7 +41,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 	 * @param stencil		Depth-stencil operations
 	 * @param before		Initial layout
 	 * @param after			Final layout
-	 * @throws IllegalArgumentException if the {@link #after} layout is not specified or is invalid
+	 * @throws IllegalArgumentException if the {@link #after} layout is unspecified or is invalid
 	 */
 	public Attachment {
 		if(format == null) throw new IllegalArgumentException("No format specified for attachment");
@@ -60,6 +60,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 	 * @param format		Attachment format
 	 * @param after			Final layout
 	 * @return New attachment
+	 * @see #Attachment(VkFormat, VkSampleCount, Operations, Operations, VkImageLayout, VkImageLayout)
 	 */
 	public static Attachment of(VkFormat format, VkImageLayout after) {
 		return new Builder()
@@ -84,7 +85,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 	}
 
 	/**
-	 * Builder for a render pass attachment.
+	 * Builder for an attachment.
 	 */
 	public static class Builder {
 		private VkFormat format;

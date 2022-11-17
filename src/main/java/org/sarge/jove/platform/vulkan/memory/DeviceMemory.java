@@ -8,7 +8,6 @@ import org.sarge.jove.common.*;
  * A <i>device memory</i> instance is an area of device or host memory accessible to the hardware.
  * <p>
  * Device memory that {@link #isHostVisible()} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations.
- * See {@link MemoryType#isHostVisible()}
  * <p>
  * Notes:
  * <ul>

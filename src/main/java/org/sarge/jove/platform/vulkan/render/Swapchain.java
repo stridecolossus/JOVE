@@ -90,7 +90,7 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Indicates that the swapchain has been invalidated when acquiring or presenting a frame, generally when the window is resized or minimised.
+	 * Indicates that this swapchain has been invalidated when acquiring or presenting a frame, generally when the window is resized or minimised.
 	 */
 	public static final class SwapchainInvalidated extends VulkanException {
 		private SwapchainInvalidated(VkResult result) {

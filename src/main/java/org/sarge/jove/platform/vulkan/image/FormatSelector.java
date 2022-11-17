@@ -29,16 +29,17 @@ import org.sarge.lib.util.Check;
 public class FormatSelector {
 	/**
 	 * Helper - Creates a format filter that matches the given set of features.
-	 * @param features		Required format features
 	 * @param optimal		Whether to match on the <i>optimal</i> or <i>linear</i> tiling features
+	 * @param required		Required format features
 	 * @return Format filter
 	 */
-	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> features) {
-		Check.notEmpty(features);
-		final Mask mask = new Mask(IntegerEnumeration.reduce(features));
+	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> required) {
+		Check.notEmpty(required);
+		final int features = IntegerEnumeration.reduce(required);
 		return props -> {
 			final int bits = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-			return mask.matches(bits);
+			final Mask mask = new Mask(bits);
+			return mask.contains(features);
 		};
 	}
 

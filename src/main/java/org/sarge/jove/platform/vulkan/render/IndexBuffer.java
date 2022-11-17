@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.model.*;
+import org.sarge.jove.model.IndexedMesh;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
@@ -21,8 +21,8 @@ public class IndexBuffer extends VulkanBuffer {
 	 * Constructor given a specific index data type.
 	 * @param buffer		Buffer
 	 * @param type			Index type
-	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
-	 * @throws IllegalArgumentException if the given type is invalid
+	 * @throws IllegalStateException if the {@link #buffer} cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
+	 * @throws IllegalArgumentException if the given {@link #type} is invalid
 	 */
 	public IndexBuffer(VulkanBuffer buffer, VkIndexType type) {
 		super(buffer);
@@ -36,7 +36,7 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @param buffer		Buffer
 	 * @param count			Index draw count
 	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
-	 * @see DefaultMesh#isIntegerIndex(int)
+	 * @see IndexedMesh#isIntegerIndex(int)
 	 */
 	public IndexBuffer(VulkanBuffer buffer, int count) {
 		this(buffer, IndexedMesh.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);

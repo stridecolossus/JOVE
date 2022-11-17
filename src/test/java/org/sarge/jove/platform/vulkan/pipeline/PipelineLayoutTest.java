@@ -59,8 +59,8 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			// Create layout
 			final PipelineLayout layout = builder
 					.add(set)
-					.push(one)
-					.push(two)
+					.add(one)
+					.add(two)
 					.build(dev);
 
 			// Check layout

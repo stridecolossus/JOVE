@@ -24,6 +24,9 @@ public interface Allocator {
 
 	/**
 	 * Allocates device memory.
+	 * <p>
+	 * Note that the size of the allocated memory may be larger than {@link #size} depending on how the hardware handles alignment.
+	 * <p>
 	 * @param type		Type of memory to allocate
 	 * @param size		Size of the requested memory (bytes)
 	 * @return New device memory

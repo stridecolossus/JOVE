@@ -39,7 +39,7 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 	 * @param type Descriptor type
 	 * @return Required buffer usage flag
 	 */
-	public static VkBufferUsageFlag map(VkDescriptorType type) {
+	private static VkBufferUsageFlag map(VkDescriptorType type) {
 		return switch(type) {
 			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> VkBufferUsageFlag.UNIFORM_BUFFER;
 			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> VkBufferUsageFlag.STORAGE_BUFFER;

@@ -70,7 +70,7 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * Adds a push constant range to this layout.
 		 * @param range Push constant range
 		 */
-		public Builder push(Range range) {
+		public Builder add(Range range) {
 			Check.notNull(range);
 			ranges.add(range);
 			return this;

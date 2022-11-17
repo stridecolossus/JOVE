@@ -19,16 +19,15 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>Vulkan buffer</i> is used to copy data to/from the hardware.
+ * A <i>Vulkan buffer</i> is used to store arbitrary data on the hardware and to perform copy operations.
  * @author Sarge
  */
 public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * Creates a buffer.
 	 * @param dev			Logical device
-	 * @param allocator		Memory allocator
 	 * @param len			Length (bytes)
-	 * @param dev			Memory properties
+	 * @param props			Memory properties
 	 * @return New buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
@@ -69,8 +68,8 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * Helper - Creates and initialises a staging buffer containing the given data.
 	 * @param dev			Logical device
-	 * @param data			Data to write
-	 * @return New staging buffer containing the given data
+	 * @param data			Data to stage
+	 * @return New staging buffer
 	 */
 	public static VulkanBuffer staging(DeviceContext dev, ByteSizedBufferable data) {
 		// Init memory properties
@@ -149,7 +148,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	/**
 	 * Validates that this buffer supports the given usage flag(s).
-	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the given usage flags
+	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the given required {@link #flags}
 	 */
 	public final void require(VkBufferUsageFlag... flags) {
 		final var required = Set.of(flags);
@@ -171,7 +170,6 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 	/**
 	 * Helper - Creates a command to copy this buffer to the given destination buffer.
-	 * Note that this method does not enforce any restrictions on the <i>usage</i> of either buffer other than they must be a valid source and destination.
 	 * @param dest Destination buffer
 	 * @return New copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small
