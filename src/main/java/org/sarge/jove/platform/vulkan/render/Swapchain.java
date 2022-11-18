@@ -421,7 +421,7 @@ public class Swapchain extends AbstractVulkanObject {
 		public Swapchain build(DeviceContext dev) {
 			// Init swapchain descriptor
 			info.surface = surface.handle();
-			info.imageUsage = IntegerEnumeration.reduce(usage);
+			info.imageUsage = BitField.reduce(usage);
 			info.oldSwapchain = null; // TODO
 
 			// TODO

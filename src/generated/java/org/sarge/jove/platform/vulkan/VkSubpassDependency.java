@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitField;
 
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -21,9 +21,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSubpassDependency extends VulkanStructure implements ByReference {
 	public int srcSubpass;
 	public int dstSubpass;
-	public int srcStageMask;
-	public int dstStageMask;
-	public int srcAccessMask;
-	public int dstAccessMask;
+	public BitField<VkPipelineStage> srcStageMask;
+	public BitField<VkPipelineStage> dstStageMask;
+	public BitField<VkAccess> srcAccessMask;
+	public BitField<VkAccess> dstAccessMask;
 	public int dependencyFlags;
 }

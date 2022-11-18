@@ -217,7 +217,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 					assertEquals(format.colorSpace, info.imageColorSpace);
 					assertEquals(1, info.imageArrayLayers);
 					assertEquals(VkSharingMode.EXCLUSIVE, info.imageSharingMode);
-					assertEquals(VkImageUsageFlag.COLOR_ATTACHMENT.value(), info.imageUsage);
+					assertEquals(VkImageUsageFlag.COLOR_ATTACHMENT.value(), info.imageUsage.bits());
 					assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, info.compositeAlpha);
 					assertEquals(VkPresentModeKHR.FIFO_KHR, info.presentMode);
 					assertEquals(true, info.clipped);

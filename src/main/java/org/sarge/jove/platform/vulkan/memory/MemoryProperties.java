@@ -10,7 +10,7 @@ import org.sarge.lib.util.Check;
 /**
  * A set of <i>memory properties</i> specifies the purpose and requirements of a memory request.
  * <p>
- * In general the client requests memory for the <i>optimal</i> memory properties falling back to the <i>required</i> set as necessary.
+ * In general the client requests <i>required</i> and <i>optimal</i> properties for the memory, with the allocator falling back to the minimal properties as required.
  * <p>
  * Example for the properties of a uniform buffer visible to the application and ideally GPU resident:
  * <pre>

@@ -13,6 +13,7 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.*;
 
@@ -80,7 +81,7 @@ class CommandTest extends AbstractVulkanTest {
 					@Override
 					public boolean equals(Object obj) {
 						final var info = (VkCommandBufferBeginInfo) obj;
-						assertEquals(VkCommandBufferUsage.ONE_TIME_SUBMIT.value(), info.flags);
+						assertEquals(VkCommandBufferUsage.ONE_TIME_SUBMIT.value(), info.flags.bits());
 						assertEquals(null, info.pInheritanceInfo);
 						return true;
 					}
@@ -167,7 +168,7 @@ class CommandTest extends AbstractVulkanTest {
 			void reset() {
 				buffer.reset();
 				buffer.begin();
-				verify(lib).vkResetCommandBuffer(buffer, 0);
+				verify(lib).vkResetCommandBuffer(buffer, new BitField<>(0));
 				assertEquals(false, buffer.isReady());
 			}
 		}
@@ -233,7 +234,7 @@ class CommandTest extends AbstractVulkanTest {
 				@Override
 				public boolean equals(Object obj) {
 					final var info = (VkCommandPoolCreateInfo) obj;
-					assertEquals(0, info.flags);
+					assertEquals(0, info.flags.bits());
 					assertEquals(queue.family().index(), info.queueFamilyIndex);
 					return true;
 				}
@@ -265,7 +266,7 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void reset() {
 			pool.reset();
-			verify(lib).vkResetCommandPool(dev, pool, 0);
+			verify(lib).vkResetCommandPool(dev, pool, new BitField<>(0));
 		}
 
 		@Test

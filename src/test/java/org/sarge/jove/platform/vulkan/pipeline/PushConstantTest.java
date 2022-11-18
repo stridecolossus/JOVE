@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.BitField;
 
 public class PushConstantTest extends AbstractVulkanTest {
 	private static final Set<VkShaderStage> VERTEX = Set.of(VkShaderStage.VERTEX);
@@ -96,7 +97,7 @@ public class PushConstantTest extends AbstractVulkanTest {
 			two.populate(struct);
 			assertEquals(4, struct.offset);
 			assertEquals(8, struct.size);
-			assertEquals(VkShaderStage.FRAGMENT.value(), struct.stageFlags);
+			assertEquals(BitField.reduce(VkShaderStage.FRAGMENT), struct.stageFlags);
 		}
 	}
 
@@ -163,7 +164,7 @@ public class PushConstantTest extends AbstractVulkanTest {
 		void apply() {
 			final UpdateCommand update = constant.update(two, layout);
 			update.record(lib, cmd);
-			verify(lib).vkCmdPushConstants(cmd, layout, VkShaderStage.FRAGMENT.value(), 4, 8, constant.buffer());
+			verify(lib).vkCmdPushConstants(cmd, layout, BitField.reduce(VkShaderStage.FRAGMENT), 4, 8, constant.buffer());
 		}
 	}
 }

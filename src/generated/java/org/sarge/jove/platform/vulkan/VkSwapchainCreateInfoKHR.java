@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -40,7 +41,7 @@ public class VkSwapchainCreateInfoKHR extends VulkanStructure {
 	public VkColorSpaceKHR imageColorSpace;
 	public VkExtent2D imageExtent;
 	public int imageArrayLayers;
-	public int imageUsage;
+	public BitField<VkImageUsageFlag> imageUsage;
 	public VkSharingMode imageSharingMode;
 	public int queueFamilyIndexCount;
 	public Pointer pQueueFamilyIndices;

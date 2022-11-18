@@ -3,35 +3,12 @@ package org.sarge.jove.util;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.IntegerEnumeration;
 import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
 
 import com.sun.jna.FromNativeContext;
 
-public class IntegerEnumerationTest {
-	/**
-	 * Mock implementation.
-	 */
-	private static enum MockEnum implements IntegerEnumeration {
-		A(1),
-		B(2),
-		C(4);
-
-		private final int value;
-
-		private MockEnum(int value) {
-			this.value = value;
-		}
-
-		@Override
-		public int value() {
-			return value;
-		}
-	}
-
+class IntegerEnumerationTest {
 	private ReverseMapping<MockEnum> mapping;
 
 	@BeforeEach
@@ -52,33 +29,11 @@ public class IntegerEnumerationTest {
 		assertEquals(MockEnum.C, mapping.map(4));
 	}
 
-	@DisplayName("An invalid native cannot be mapped to an enumeration constant")
+	@DisplayName("An invalid native value cannot be mapped to an enumeration constant")
 	@Test
 	void mapInvalidLiteral() {
 		assertThrows(IllegalArgumentException.class, () -> mapping.map(0));
 		assertThrows(IllegalArgumentException.class, () -> mapping.map(999));
-	}
-
-	@DisplayName("A collection of enumeration constants can be reduced to an integer bit-field")
-	@Test
-	void reduce() {
-		assertEquals(0, IntegerEnumeration.reduce(Set.of()));
-		assertEquals(0b001, IntegerEnumeration.reduce(Set.of(MockEnum.A)));
-		assertEquals(0b010, IntegerEnumeration.reduce(Set.of(MockEnum.B)));
-		assertEquals(0b100, IntegerEnumeration.reduce(Set.of(MockEnum.C)));
-		assertEquals(0b101, IntegerEnumeration.reduce(Set.of(MockEnum.A, MockEnum.C)));
-		assertEquals(0b111, IntegerEnumeration.reduce(Set.of(MockEnum.A, MockEnum.B, MockEnum.C)));
-	}
-
-	@DisplayName("A bit-field can be transformed to the corresponding set of constants")
-	@Test
-	void enumerate() {
-		assertEquals(Set.of(), mapping.enumerate(0));
-		assertEquals(Set.of(MockEnum.A), mapping.enumerate(0b001));
-		assertEquals(Set.of(MockEnum.B), mapping.enumerate(0b010));
-		assertEquals(Set.of(MockEnum.C), mapping.enumerate(0b100));
-		assertEquals(Set.of(MockEnum.A, MockEnum.C), mapping.enumerate(0b101));
-		assertEquals(Set.of(MockEnum.A, MockEnum.B, MockEnum.C), mapping.enumerate(0b111));
 	}
 
 	@Nested

@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
-import org.sarge.jove.util.StructureCollector;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -144,6 +144,6 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * @param size					Size of the range (bytes)
 		 * @param pValues				Push constants data buffer
 		 */
-		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, ByteBuffer pValues);
+		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, BitField<VkShaderStage> stageFlags, int offset, int size, ByteBuffer pValues);
 	}
 }

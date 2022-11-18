@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * An <i>allocator</i> is responsible for allocating device memory.
+ * The <i>default allocator</i> allocates new device memory instances on demand.
  * @author Sarge
  */
 public class DefaultAllocator implements Allocator {

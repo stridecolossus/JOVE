@@ -49,7 +49,8 @@ public record Queue(Handle handle, Queue.Family family) implements NativeObject 
 		 * @return New queue family
 		 */
 		public static Family of(int index, VkQueueFamilyProperties props) {
-			final Set<VkQueueFlag> flags = IntegerEnumeration.reverse(VkQueueFlag.class).enumerate(props.queueFlags);
+			final var mapping = IntegerEnumeration.reverse(VkQueueFlag.class);
+			final Set<VkQueueFlag> flags = props.queueFlags.enumerate(mapping);
 			return new Family(index, props.queueCount, flags);
 		}
 

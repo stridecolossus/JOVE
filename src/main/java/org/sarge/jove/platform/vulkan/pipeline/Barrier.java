@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.IntegerEnumeration.reduce;
+import static org.sarge.jove.util.BitField.reduce;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.util.StructureCollector;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Structure;
@@ -43,8 +43,8 @@ import com.sun.jna.Structure;
  * @author Sarge
  */
 public class Barrier extends ImmediateCommand {
-	private final int src, dest;
-	private final int flags;
+	private final BitField<VkPipelineStage> src, dest;
+	private final BitField<VkDependencyFlag> flags;
 	private final VkImageMemoryBarrier[] images;
 	private final VkBufferMemoryBarrier[] buffers;
 	private final VkMemoryBarrier[] memory;

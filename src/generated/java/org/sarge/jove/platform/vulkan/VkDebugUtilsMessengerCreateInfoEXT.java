@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitField;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -23,8 +23,8 @@ public class VkDebugUtilsMessengerCreateInfoEXT extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	public Pointer pNext;
 	public int flags;
-	public int messageSeverity;
-	public int messageType;
+	public BitField<VkDebugUtilsMessageSeverity> messageSeverity;
+	public BitField<VkDebugUtilsMessageType> messageType;
 	public Callback pfnUserCallback;
 	public Pointer pUserData;
 }

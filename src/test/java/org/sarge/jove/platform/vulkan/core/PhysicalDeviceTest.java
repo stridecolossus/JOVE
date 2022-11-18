@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
-import org.sarge.jove.util.ReferenceFactory;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -113,7 +113,7 @@ class PhysicalDeviceTest {
 		final Answer<Integer> families = inv -> {
 			final VkQueueFamilyProperties props = inv.getArgument(2);
 			props.queueCount = 1;
-			props.queueFlags = VkQueueFlag.GRAPHICS.value();
+			props.queueFlags = BitField.reduce(VkQueueFlag.GRAPHICS);
 			return 0;
 		};
 		doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Handle(1), count, arg);

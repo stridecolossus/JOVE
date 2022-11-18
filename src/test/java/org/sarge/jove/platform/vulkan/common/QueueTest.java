@@ -10,6 +10,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.Pointer;
 
@@ -46,7 +47,7 @@ class QueueTest {
 	void of() {
 		final var props = new VkQueueFamilyProperties();
 		props.queueCount = 2;
-		props.queueFlags = VkQueueFlag.GRAPHICS.value();
+		props.queueFlags = BitField.reduce(VkQueueFlag.GRAPHICS);
 		assertEquals(family, Family.of(1, props));
 	}
 }

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Handler.*;
-import org.sarge.jove.util.ReferenceFactory;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -109,8 +109,8 @@ public class HandlerTest {
 				public boolean equals(Object obj) {
 					final var info = (VkDebugUtilsMessengerCreateInfoEXT) obj;
 					assertEquals(0, info.flags);
-					assertEquals(VkDebugUtilsMessageSeverity.ERROR.value(), info.messageSeverity);
-					assertEquals(VkDebugUtilsMessageType.GENERAL.value(), info.messageType);
+					assertEquals(BitField.reduce(VkDebugUtilsMessageSeverity.ERROR), info.messageSeverity);
+					assertEquals(BitField.reduce(VkDebugUtilsMessageType.GENERAL), info.messageType);
 					assertNotNull(info.pfnUserCallback);
 					assertNull(info.pUserData);
 					return true;

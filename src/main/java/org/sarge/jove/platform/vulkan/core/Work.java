@@ -66,7 +66,7 @@ public final class Work {
 
 	private final Pool pool;
 	private final List<Buffer> buffers = new ArrayList<>();
-	private final Map<Semaphore, Integer> wait = new LinkedHashMap<>();
+	private final Map<Semaphore, Set<VkPipelineStage>> wait = new LinkedHashMap<>();
 	private final Set<Semaphore> signal = new HashSet<>();
 
 	/**
@@ -98,7 +98,7 @@ public final class Work {
 			info.pWaitSemaphores = NativeObject.array(wait.keySet());
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
-			final int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
+			final int[] stages = wait.values().stream().map(BitField::reduce).mapToInt(BitField::bits).toArray();
 			info.pWaitDstStageMask = new IntegerArray(stages);
 		}
 
@@ -224,7 +224,7 @@ public final class Work {
 			Check.notNull(semaphore);
 			Check.notEmpty(stages);
 			if(work.wait.containsKey(semaphore)) throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
-			work.wait.put(semaphore, IntegerEnumeration.reduce(stages));
+			work.wait.put(semaphore, Set.copyOf(stages));
 			return this;
 		}
 

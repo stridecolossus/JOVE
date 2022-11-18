@@ -64,7 +64,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 		final var heapMapper = IntegerEnumeration.reverse(VkMemoryHeapFlag.class);
 		for(int n = 0; n < heaps.length; ++n) {
 			final VkMemoryHeap heap = descriptor.memoryHeaps[n];
-			final Set<VkMemoryHeapFlag> flags = heapMapper.enumerate(heap.flags);
+			final Set<VkMemoryHeapFlag> flags = heap.flags.enumerate(heapMapper);
 			heaps[n] = new Heap(heap.size, flags);
 		}
 
@@ -74,7 +74,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 		for(int n = 0; n < types.length; ++n) {
 			final VkMemoryType type = descriptor.memoryTypes[n];
 			final Heap heap = heaps[type.heapIndex];
-			final Set<VkMemoryProperty> props = typeMapper.enumerate(type.propertyFlags);
+			final Set<VkMemoryProperty> props = type.propertyFlags.enumerate(typeMapper);
 			types[n] = new MemoryType(n, heap, props);
 		}
 

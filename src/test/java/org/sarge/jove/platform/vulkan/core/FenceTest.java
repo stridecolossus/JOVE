@@ -9,6 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.Structure;
 
@@ -31,7 +32,7 @@ public class FenceTest extends AbstractVulkanTest {
 				return dataEquals((Structure) obj);
 			}
 		};
-		expected.flags = VkFenceCreateFlag.SIGNALED.value();
+		expected.flags = BitField.reduce(VkFenceCreateFlag.SIGNALED);
 		verify(lib).vkCreateFence(dev, expected, null, factory.pointer());
 	}
 

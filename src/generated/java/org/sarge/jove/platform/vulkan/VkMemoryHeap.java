@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.Structure.FieldOrder;
 
@@ -14,5 +15,5 @@ import com.sun.jna.Structure.FieldOrder;
 })
 public class VkMemoryHeap extends VulkanStructure {
 	public long size;
-	public int flags;
+	public BitField<VkMemoryHeapFlag> flags;
 }

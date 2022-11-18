@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.ptr.PointerByReference;
 
@@ -163,7 +163,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 
 			// Populate image structure
 			final var info = new VkImageCreateInfo();
-			info.flags = IntegerEnumeration.reduce(flags);
+			info.flags = BitField.reduce(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
@@ -172,7 +172,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 			info.samples = samples;
 			info.tiling = tiling;
 			info.initialLayout = layout;
-			info.usage = IntegerEnumeration.reduce(props.usage());
+			info.usage = BitField.reduce(props.usage());
 			info.sharingMode = props.mode();
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 

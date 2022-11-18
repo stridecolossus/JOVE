@@ -47,7 +47,7 @@ public class DescriptorLayout extends AbstractVulkanObject {
 			info.binding = index;
 			info.descriptorType = type;
 			info.descriptorCount = count;
-			info.stageFlags = IntegerEnumeration.reduce(stages);
+			info.stageFlags = BitField.reduce(stages);
 		}
 
 		/**

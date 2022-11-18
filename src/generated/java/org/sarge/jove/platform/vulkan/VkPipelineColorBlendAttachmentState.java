@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.Structure.*;
 
@@ -26,5 +27,5 @@ public class VkPipelineColorBlendAttachmentState extends VulkanStructure impleme
 	public VkBlendFactor srcAlphaBlendFactor;
 	public VkBlendFactor dstAlphaBlendFactor;
 	public VkBlendOp alphaBlendOp;
-	public int colorWriteMask;
+	public BitField<VkColorComponent> colorWriteMask;
 }

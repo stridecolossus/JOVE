@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.stream.Collectors.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
@@ -124,7 +123,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 		}
 
 		private boolean enabled = true;
-		private int mask = IntegerEnumeration.reduce(VkColorComponent.values());
+		private List<VkColorComponent> mask = Arrays.asList(VkColorComponent.values());
 		private final BlendOperationBuilder colour = new BlendOperationBuilder();
 		private final BlendOperationBuilder alpha = new BlendOperationBuilder();
 
@@ -156,8 +155,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 					.chars()
 					.mapToObj(Character::toString)
 					.map(VkColorComponent::valueOf)
-					.collect(collectingAndThen(toList(), IntegerEnumeration::reduce));
-
+					.toList();
 			return this;
 		}
 
@@ -193,7 +191,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 			info.alphaBlendOp = alpha.blend;
 
 			// Init colour write mask
-			info.colorWriteMask = mask;
+			info.colorWriteMask = BitField.reduce(mask);
 		}
 
 		/**

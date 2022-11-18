@@ -10,7 +10,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -185,7 +185,7 @@ public interface Command {
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
-			info.flags = IntegerEnumeration.reduce(flags);
+			info.flags = BitField.reduce(flags);
 			info.pInheritanceInfo = null;
 
 			// Start buffer recording
@@ -222,7 +222,7 @@ public interface Command {
 		public void reset(VkCommandBufferResetFlag... flags) {
 			validate(State.EXECUTABLE);
 			// TODO - check pool has flag
-			final int mask = IntegerEnumeration.reduce(flags);
+			final BitField<VkCommandBufferResetFlag> mask = BitField.reduce(flags);
 			final VulkanLibrary lib = pool.device().library();
 			check(lib.vkResetCommandBuffer(this, mask));
 			state = State.INITIAL;
@@ -261,7 +261,7 @@ public interface Command {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
-			info.flags = IntegerEnumeration.reduce(flags);
+			info.flags = BitField.reduce(flags);
 
 			// Create pool
 			final VulkanLibrary lib = dev.library();
@@ -342,7 +342,7 @@ public interface Command {
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
-			final int bits = IntegerEnumeration.reduce(flags);
+			final BitField<VkCommandPoolResetFlag> bits = BitField.reduce(flags);
 			final DeviceContext dev = super.device();
 			check(dev.library().vkResetCommandPool(dev, this, bits));
 		}
@@ -408,7 +408,7 @@ public interface Command {
 		 * @param flags				Flags
 		 * @return Result
 		 */
-		int vkResetCommandPool(DeviceContext device, Pool commandPool, int flags);
+		int vkResetCommandPool(DeviceContext device, Pool commandPool, BitField<VkCommandPoolResetFlag> flags);
 
 		/**
 		 * Allocates a number of command buffers.
@@ -449,7 +449,7 @@ public interface Command {
 		 * @param flags					Flags
 		 * @return Result
 		 */
-		int vkResetCommandBuffer(Buffer commandBuffer, int flags);
+		int vkResetCommandBuffer(Buffer commandBuffer, BitField<VkCommandBufferResetFlag> flags);
 
 		/**
 		 * Executes secondary command buffers.

@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
 import org.sarge.lib.util.Check;
 
@@ -109,8 +109,9 @@ public class Handler extends AbstractTransientNativeObject {
 	 * <ul>
 	 * <li>A JNA callback <b>must</b> implement a <b>single</b> method (though this is not enforced at compile-time)</li>
 	 * <li>The signature of the callback is not part of the public Vulkan API</li>
-	 * <li>TODO - link to VK doc</li>
+	 * <li>The callback type and severity parameters <b>must</b> be native types</li>
 	 * </ul>
+	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
 	static class MessageCallback implements Callback {
 		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = IntegerEnumeration.reverse(VkDebugUtilsMessageSeverity.class);
@@ -125,21 +126,15 @@ public class Handler extends AbstractTransientNativeObject {
 		/**
 		 * Callback handler method.
 		 * @param severity			Severity
-		 * @param type				Message type(s) bit-field
+		 * @param type				Message type(s) bitfield
 		 * @param pCallbackData		Data
 		 * @param pUserData			Optional user data (always {@code null})
 		 * @return Whether to continue execution (always {@code false})
 		 */
-		public boolean message(int severity, int type, VkDebugUtilsMessengerCallbackData pCallbackData, Pointer pUserData) {
-			// Transform bit-masks to enumerations
-			final VkDebugUtilsMessageSeverity severities = SEVERITY.map(severity);
-			final Set<VkDebugUtilsMessageType> types = TYPE.enumerate(type);
-
-			// Wrap and delegate to handler
-			final Message message = new Message(severities, types, pCallbackData);
+		public boolean message(int severity, int typeMask, VkDebugUtilsMessengerCallbackData pCallbackData, Pointer pUserData) {
+			final var types = new BitField<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
+			final Message message = new Message(SEVERITY.map(severity), types, pCallbackData);
 			consumer.accept(message);
-
-			// Continue execution
 			return false;
 		}
 	}
@@ -219,8 +214,8 @@ public class Handler extends AbstractTransientNativeObject {
 
 			// Build handler descriptor
 			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
-			info.messageSeverity = IntegerEnumeration.reduce(severity);
-			info.messageType = IntegerEnumeration.reduce(types);
+			info.messageSeverity = BitField.reduce(severity);
+			info.messageType = BitField.reduce(types);
 			info.pfnUserCallback = new MessageCallback(consumer);
 			info.pUserData = null;
 

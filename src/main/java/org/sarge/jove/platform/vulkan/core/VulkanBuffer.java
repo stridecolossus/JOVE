@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.BitField;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -40,7 +40,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 
 		// Build buffer descriptor
 		final var info = new VkBufferCreateInfo();
-		info.usage = IntegerEnumeration.reduce(props.usage());
+		info.usage = BitField.reduce(props.usage());
 		info.sharingMode = props.mode();
 		info.size = oneOrMore(len);
 		// TODO - queue families

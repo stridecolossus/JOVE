@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
+import org.sarge.jove.util.BitField;
 
 public class FormatSelectorTest {
 	private static final VkFormat FORMAT = VkFormat.UNDEFINED;
@@ -45,26 +46,26 @@ public class FormatSelectorTest {
 	class FilterTests {
 		private static final VkFormatFeature FEATURE = VkFormatFeature.DEPTH_STENCIL_ATTACHMENT;
 
-		@BeforeEach
-		void before() {
-			props.optimalTilingFeatures = FEATURE.value();
-			props.linearTilingFeatures = FEATURE.value();
-		}
-
 		@Test
 		void optimal() {
 			final Predicate<VkFormatProperties> filter = FormatSelector.filter(true, Set.of(FEATURE));
-			assertNotNull(filter);
+			props.optimalTilingFeatures = BitField.reduce(FEATURE);
 			assertEquals(true, filter.test(props));
-			assertEquals(false, filter.test(new VkFormatProperties()));
 		}
 
 		@Test
 		void linear() {
 			final Predicate<VkFormatProperties> filter = FormatSelector.filter(false, Set.of(FEATURE));
-			assertNotNull(filter);
+			props.linearTilingFeatures = BitField.reduce(FEATURE);
 			assertEquals(true, filter.test(props));
-			assertEquals(false, filter.test(new VkFormatProperties()));
+		}
+
+		@Test
+		void unmatched() {
+			props.linearTilingFeatures = new BitField<>(0);
+			props.optimalTilingFeatures = new BitField<>(0);
+			assertEquals(false, FormatSelector.filter(false, Set.of(FEATURE)).test(props));
+			assertEquals(false, FormatSelector.filter(true, Set.of(FEATURE)).test(props));
 		}
 	}
 }

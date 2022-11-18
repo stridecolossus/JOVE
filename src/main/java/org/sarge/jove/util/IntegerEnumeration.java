@@ -52,30 +52,6 @@ public interface IntegerEnumeration {
 	int value();
 
 	/**
-	 * Builds a bit-field from the given enumeration constants.
-	 * @param values Enumeration constants
-	 * @param <E> Enumeration
-	 * @return Bit-field
-	 */
-	static <E extends IntegerEnumeration> int reduce(Collection<E> values) {
-		return values
-				.stream()
-				.mapToInt(IntegerEnumeration::value)
-				.reduce(0, (a, b) -> a | b);
-	}
-
-	/**
-	 * Builds a bit-field from the given enumeration constants.
-	 * @param values Enumeration constants
-	 * @param <E> Enumeration
-	 * @return Bit-field
-	 */
-	@SuppressWarnings("unchecked")
-	static <E extends IntegerEnumeration> int reduce(E... values) {
-		return reduce(Set.of(values));
-	}
-
-	/**
 	 * Retrieves the reverse mapping for the given integer enumeration.
 	 * This method is thread-safe.
 	 * @param <E> Enumeration
@@ -170,18 +146,6 @@ public interface IntegerEnumeration {
 			final E constant = map.get(value);
 			if(constant == null) throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass().getSimpleName()));
 			return constant;
-		}
-
-		/**
-		 * Converts a bit-field to a set of enumeration constants.
-		 * @param bits Bit field
-		 * @return Enumeration constants
-		 */
-		public Set<E> enumerate(int bits) {
-			return new Mask(bits)
-					.stream()
-					.mapToObj(this::map)
-					.collect(toSet());
 		}
 	}
 }

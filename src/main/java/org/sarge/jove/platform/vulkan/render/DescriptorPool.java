@@ -182,7 +182,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 
 			// Init pool descriptor
 			final var info = new VkDescriptorPoolCreateInfo();
-			info.flags = IntegerEnumeration.reduce(flags);
+			info.flags = BitField.reduce(flags);
 			info.poolSizeCount = pool.size();
 			info.pPoolSizes = StructureCollector.pointer(pool.entrySet(), new VkDescriptorPoolSize(), Builder::populate);
 			info.maxSets = max;

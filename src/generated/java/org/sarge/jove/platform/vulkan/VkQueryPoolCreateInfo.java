@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitField;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -23,5 +24,5 @@ public class VkQueryPoolCreateInfo extends VulkanStructure {
 	public int flags;
 	public VkQueryType queryType;
 	public int queryCount;
-	public int pipelineStatistics;
+	public BitField<VkQueryPipelineStatisticFlag> pipelineStatistics;
 }
