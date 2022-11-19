@@ -1,6 +1,6 @@
 package org.sarge.jove.util;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,13 +13,11 @@ import com.sun.jna.*;
  * <p>
  * An integer enumeration has a {@link ReverseMapping} which maps integer literals to the corresponding enumeration constants.
  * <p>
- * Integer enumerations can be used in JNA methods and structures by registering the custom {@link #CONVERTER} with the relevant JNA library.
- * <p>
  * Example usage:
  * <p>
  * {@snippet lang="java" :
  * // Create integer enumeration
- * enum Thing implements IntegerEnumeration {
+ * enum Thing implements IntEnum {
  *     ONE(1),
  *     TWO(2),
  *     ...
@@ -33,16 +31,12 @@ import com.sun.jna.*;
  * }
  *
  * // Map literal to enumeration
- * ReverseMapping<Thing> mapping = IntegerEnumeration.mapping(Thing.class);
- * Thing thing = mapping.map(1);	// ONE
- *
- * // Build integer bit-field from enumeration
- * int bits = IntegerEnumeration.reduce(Thing.ONE);
- *
- * // Enumerate constants from integer bit-field
- * Set<Thing> set = mapping.enumerate(bits);
- * }
+ * ReverseMapping<Thing> mapping = IntEnum.mapping(Thing.class);
+ * Thing one = mapping.map(1);
  * <p>
+ * Integer enumerations can be used in JNA methods and structures by registering the custom {@link #CONVERTER} with the relevant JNA library.
+ * <p>
+ * @see BitMask
  * @author Sarge
  */
 public interface IntEnum {
@@ -107,6 +101,7 @@ public interface IntEnum {
 
 	/**
 	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers <i>to</i> the enumeration constants.
+	 * Note that constants with duplicate values within an enumeration are silently ignored by this implementation.
 	 * @param <E> Integer enumeration
 	 */
 	final class ReverseMapping<E extends IntEnum> {

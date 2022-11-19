@@ -55,7 +55,7 @@ public class IndexedMesh extends DefaultMesh {
 	}
 
 	@Override
-	public boolean isIndexed() {
+	public final boolean isIndexed() {
 		return true;
 	}
 

@@ -9,18 +9,7 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
- * A <i>vertex</i> is an element of a {@link Mesh}.
- * <p>
- * The components of this vertex (if present) are generally assumed to be written in the following order by the {@link #buffer(ByteBuffer)} method:
- * <ol>
- * <li>position</li>
- * <li>normal</li>
- * <li>texture coordinate</li>
- * <li>colour</li>
- * </ol>
- * <p>
- * In general custom vertex sub-classes should be implemented to support a given use-case with a fixed, overridden vertex {@link #layout()}.
- * <p>
+ * A <i>vertex</i> is an element of a {@link Mesh} comprising of a list of bufferable components.
  * @author Sarge
  */
 public interface Vertex extends Bufferable {
@@ -42,6 +31,18 @@ public interface Vertex extends Bufferable {
 	default void normal(Normal normal) {
 		throw new UnsupportedOperationException();
 	}
+
+	/**
+     * The components of this vertex (if present) are generally assumed to be written in the following order by this method:
+     * <ol>
+     * <li>position</li>
+     * <li>normal</li>
+     * <li>texture coordinate</li>
+     * <li>colour</li>
+     * </ol>
+	 */
+	@Override
+	void buffer(ByteBuffer bb);
 
 	/**
 	 * Builder for a vertex.

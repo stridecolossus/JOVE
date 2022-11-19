@@ -1,5 +1,6 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
@@ -11,16 +12,11 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
- * A <i>mutable vertex</i> is a convenience catch-all implementation for vertices comprising arbitrary vertex components.
+ * A <i>mutable vertex</i> is a convenience catch-all vertex implementation.
  * <p>
- * The components of this vertex (if present) are written in the following order by the {@link #buffer(ByteBuffer)} method:
- * <ol>
- * <li>position</li>
- * <li>normal</li>
- * <li>texture coordinate</li>
- * </ol>
- * <p>
- * Note that the {@link #layout()} of this vertex is determined on-demand.
+ * Note that this is a convenience, non-optimal implementation intended for simple use-cases where performance or storage considerations are not a concern.
+ * In particular the {@link #layout()} of this vertex is determined on-demand.
+ * Generally custom vertex sub-classes should be implemented to support a given use-case with a fixed, overridden vertex {@link #layout()}.
  * <p>
  * @see SimpleVertex
  * @see DefaultVertex
@@ -30,6 +26,7 @@ public class MutableVertex implements Vertex {
 	private Point pos;
 	private Normal normal;
 	private Coordinate2D coord;
+	private Colour col;
 
 	@Override
 	public Point position() {
@@ -71,32 +68,51 @@ public class MutableVertex implements Vertex {
 		this.coord = notNull(coord);
 	}
 
-	@Override
-	public Layout layout() {
-		final var components = new ArrayList<Component>();
-		if(pos != null) {
-			components.add(Point.LAYOUT);
-		}
-		if(normal != null) {
-			components.add(Normal.LAYOUT);
-		}
-		if(coord != null) {
-			components.add(Coordinate2D.LAYOUT);
-		}
-		return new Layout(components);
+	/**
+	 * @return Vertex colour
+	 */
+	public Colour colour() {
+		return col;
 	}
 
-	public Bufferable[] array() {
-		return new Bufferable[]{pos, normal, coord};
+	/**
+	 * Sets the vertex colour.
+	 * @param col Colour
+	 */
+	public void colour(Colour col) {
+		this.col = notNull(col);
 	}
+
+	private Bufferable[] array() {
+		return new Bufferable[]{pos, normal, coord, col};
+	}
+
+	@Override
+	public Layout layout() {
+		return Arrays
+				.stream(array())
+				.filter(Objects::nonNull)
+				.map(MutableVertex::component)
+				.collect(collectingAndThen(toList(), Layout::new));
+	}
+
+	private static Component component(Bufferable obj) {
+		return switch(obj) {
+			case Point p -> Point.LAYOUT;
+			case Normal n -> Normal.LAYOUT;
+			case Coordinate2D coord -> Coordinate2D.LAYOUT;
+			case Colour col -> Colour.LAYOUT;
+			default -> throw new UnsupportedOperationException("Unsupported vertex component: " + obj);
+		};
+	}
+	// TODO - this sucks, mapping obj -> layout should be an interface?
 
 	@Override
 	public void buffer(ByteBuffer bb) {
-		for(Bufferable b : array()) {
-			if(b != null) {
-				b.buffer(bb);
-			}
-		}
+		Arrays
+				.stream(array())
+				.filter(Objects::nonNull)
+				.forEach(obj -> obj.buffer(bb));
 	}
 
 	@Override

@@ -64,7 +64,7 @@ public class DefaultMesh extends AbstractMesh {
 	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this mesh
 	 */
 	public DefaultMesh add(Vertex vertex) {
-		if(!this.layout().equals(vertex.layout())) {
+		if(!layout.equals(vertex.layout())) {
 			throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
 		}
 		vertices.add(vertex);
@@ -77,7 +77,6 @@ public class DefaultMesh extends AbstractMesh {
 	protected final class VertexBuffer implements ByteSizedBufferable {
 		@Override
 		public int length() {
-			final Layout layout = DefaultMesh.this.layout();
 			return vertices.size() * layout.stride();
 		}
 
@@ -106,8 +105,7 @@ public class DefaultMesh extends AbstractMesh {
 	public Bounds bounds() {
 		// Determine vertex position from layout
 		validate();
-		final boolean pos = this.layout().components().stream().anyMatch(e -> e == Point.LAYOUT);
-		if(!pos) throw new IllegalStateException("Layout does not contain a vertex position: " + this);
+		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Layout does not contain a vertex position: " + this);
 
 		// Construct bounds
 		final var bounds = new Bounds.Builder();
@@ -124,7 +122,6 @@ public class DefaultMesh extends AbstractMesh {
 	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
 	protected Stream<int[]> indices() {
-		final Primitive primitive = this.primitive();
 		if(!primitive.isTriangle()) throw new IllegalStateException("Mesh does not contain triangular polygons: " + primitive);
 		final int faces = primitive.faces(count());
 		return IntStream
@@ -163,7 +160,6 @@ public class DefaultMesh extends AbstractMesh {
 	 */
 	public void compute() {
 		// Validate normals can be computed
-		final Layout layout = this.layout();
 		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Mesh does not contain vertices");
 		if(!layout.contains(Normal.LAYOUT)) throw new IllegalStateException("Mesh does not contain vertex normals");
 		validate();
@@ -225,7 +221,6 @@ public class DefaultMesh extends AbstractMesh {
 	 * @throws IllegalStateException if this mesh is not valid for rendering
 	 */
 	private void validate() {
-		final Primitive primitive = this.primitive();
 		if(!primitive.isValidVertexCount(this.count())) {
 			throw new IllegalStateException("Invalid draw count for primitive: " + this);
 		}

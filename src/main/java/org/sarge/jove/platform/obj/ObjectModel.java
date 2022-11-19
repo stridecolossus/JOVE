@@ -91,26 +91,31 @@ class ObjectModel {
 	 */
 	public void vertex(int v, Integer vn, Integer vt) {
 		// Init vertex
-		final var vertex = new MutableVertex.Builder();
+		final var vertex = new MutableVertex() {
+			@Override
+			public Layout layout() {
+				return model.layout();
+			}
+		};
 		final Point pos = positions.get(v);
-		vertex.add(pos);
+		vertex.position(pos);
 
 		// Add optional normal
 		if(vn != null) {
 			final Normal normal = normals.get(vn);
-			vertex.add(normal);
+			vertex.normal(normal);
 			validate(Normal.LAYOUT);
 		}
 
 		// Add optional texture coordinate
 		if(vt != null) {
 			final Coordinate2D coord = coords.get(vt);
-			vertex.add(coord);
+			vertex.coordinate(coord);
 			validate(Coordinate2D.LAYOUT);
 		}
 
 		// Add vertex
-		model.add(vertex.build());
+		model.add(vertex);
 	}
 
 	/**
