@@ -25,11 +25,11 @@ public class NativeImageLoaderTest {
 		// Check image header
 		assertEquals(new Dimensions(2, 3), image.size());
 		assertEquals(1, image.layers());
-		assertNotNull(image.components());
+		assertNotNull(image.channels());
 		assertEquals(0, image.format());
 
 		// Check layout
-		final int num = image.components().length();
+		final int num = image.channels().length();
 		final Component layout = image.layout();
 		assertNotNull(layout);
 		assertEquals(num, layout.count());
@@ -54,7 +54,7 @@ public class NativeImageLoaderTest {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_4BYTE_ABGR);
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
-		assertEquals("ABGR", image.components());
+		assertEquals("ABGR", image.channels());
 		check(image);
 	}
 
@@ -64,7 +64,7 @@ public class NativeImageLoaderTest {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_3BYTE_BGR);
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
-		assertEquals("ABGR", image.components());
+		assertEquals("ABGR", image.channels());
 		check(image);
 	}
 
@@ -74,7 +74,7 @@ public class NativeImageLoaderTest {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_BYTE_GRAY);
 		final ImageData image = loader.load(buffered);
 		assertNotNull(image);
-		assertEquals("R", image.components());
+		assertEquals("R", image.channels());
 		check(image);
 	}
 

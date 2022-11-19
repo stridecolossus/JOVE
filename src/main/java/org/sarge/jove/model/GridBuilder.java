@@ -63,7 +63,7 @@ public class GridBuilder {
 		static HeightFunction heightmap(Dimensions size, ImageData image, int component, float scale) {
 			// Validate
 			Check.zeroOrMore(component);
-			if(component >= image.components().length()) throw new IllegalArgumentException(String.format("Invalid component index: component=%d image=%s", component, image));
+			if(component >= image.channels().length()) throw new IllegalArgumentException(String.format("Invalid component index: component=%d image=%s", component, image));
 
 			// Map grid coordinates to image dimensions
 			final Dimensions dim = image.size();

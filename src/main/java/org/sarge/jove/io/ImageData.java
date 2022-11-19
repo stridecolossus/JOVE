@@ -9,18 +9,18 @@ import org.sarge.jove.common.*;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>image data</i> is an abstraction for a general image comprising multiple array layers and MIP levels.
+ * An <i>image data</i> is a wrapper for a general image comprising multiple array layers and MIP levels.
  * <p>
- * The image {@link #components} specifies the order of the channels comprising the image, e.g. {@code ABGR} for a transparent native image.
+ * The image {@link #channels} specifies the order of the channels comprising the image, e.g. {@code ABGR} for a transparent native image.
  * <p>
  * The {@link #layout} describes the pixel structure of each channel.
- * For example an RGB image with one byte per channel would have the following layout: <code>new Layout(3, Byte.class, 1, false)</code>
+ * For example an RGB image with one byte per channel would have the following layout: <code>new Component(3, Byte.class, 1, false)</code>
  * <p>
  * @author Sarge
  */
 public class ImageData {
 	/**
-	 * An <i>image level</i> specifies a MIP level of this image.
+	 * An <i>image level</i> specifies the MIP levels of this image.
 	 */
 	public record Level(int offset, int length) {
 		/**
@@ -34,7 +34,7 @@ public class ImageData {
 		}
 
 		/**
-		 * Helper - Calculate the offset into the image data for the given layer.
+		 * Helper - Calculates the offset into the image data for the given layer.
 		 * @param layer			Layer index
 		 * @param count			Number of layers
 		 * @return Offset
@@ -52,27 +52,27 @@ public class ImageData {
 		 */
 		public static int levels(Dimensions dim) {
 			final float max = Math.max(dim.width(), dim.height());
-			return 1 + (int) Math.floor(Math.log(max) / Math.log(2));
+			return 1 + (int) Math.floor(Math.log(max) / Math.log(2));		// TODO - explanation
 		}
 	}
 
 	private final Dimensions size;
-	private final String components;
+	private final String channels;
 	private final Component layout;
 	private final byte[] data;
 
 	/**
 	 * Constructor.
 	 * @param size				Image dimensions
-	 * @param components		Channel components
+	 * @param channels			Channels
 	 * @param layout			Pixel layout
 	 * @param data				Image data
-	 * @throws IllegalArgumentException if the size of the components and layout do not match
-	 * @throws IllegalArgumentException if the image data does not match the number of MIP levels and array layers
+	 * @throws IllegalArgumentException if the number of {@link #channels} and the {@link #layout} do not match
+	 * @throws IllegalArgumentException if the length of the {@link #data} does not match the number of MIP levels and array layers
 	 */
-	protected ImageData(Dimensions size, String components, Component layout, byte[] data) {
+	public ImageData(Dimensions size, String channels, Component layout, byte[] data) {
 		this.size = notNull(size);
-		this.components = notEmpty(components);
+		this.channels = notEmpty(channels);
 		this.layout = notNull(layout);
 		this.data = notNull(data);
 		validate();
@@ -80,8 +80,8 @@ public class ImageData {
 
 	private void validate() {
 		// Check number of components and layout match
-		if(components.length() != layout.count()) {
-			throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", components, layout));
+		if(channels.length() != layout.count()) {
+			throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", channels, layout));
 		}
 
 		// Check overall image buffer matches MIP levels
@@ -94,7 +94,7 @@ public class ImageData {
 	/**
 	 * @return Image dimensions
 	 */
-	public Dimensions size() {
+	public final Dimensions size() {
 		return size;
 	}
 
@@ -106,16 +106,16 @@ public class ImageData {
 	}
 
 	/**
-	 * @return Pixel components
+	 * @return Image channels
 	 */
-	public String components() {
-		return components;
+	public final String channels() {
+		return channels;
 	}
 
 	/**
 	 * @return Pixel layout
 	 */
-	public Component layout() {
+	public final Component layout() {
 		return layout;
 	}
 
@@ -143,7 +143,7 @@ public class ImageData {
 	/**
 	 * @return Image data
 	 */
-	public ByteSizedBufferable data() {
+	public final ByteSizedBufferable data() {
 		return ByteSizedBufferable.of(data);
 	}
 
@@ -155,8 +155,8 @@ public class ImageData {
 	 * @throws IllegalArgumentException if the component index is invalid for this image
 	 * @see #pixel(int)
 	 */
-	public int pixel(int x, int y, int component) {
-		Check.range(component, 0, components.length() - 1);
+	public final int pixel(int x, int y, int component) {
+		Check.range(component, 0, channels.length() - 1);
 		final int offset = levels().get(0).offset;
 		final int start = (x + y * size.width()) * layout.stride();
 		final int index = offset + start + (component * layout.bytes());
@@ -178,7 +178,7 @@ public class ImageData {
 		return new ToStringBuilder(this)
 				.append(size)
 				.append("depth", depth())
-				.append(components)
+				.append(channels)
 				.append(layout)
 				.append("levels", levels().size())
 				.append("layers", layers())

@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder.NumericFormat;
@@ -105,9 +105,7 @@ class FormatBuilderTest {
 		@DisplayName("The builder can determine the format for an image where the hint is not provided")
 		@Test
 		void image() {
-			final ImageData image = mock(ImageData.class);
-			when(image.layout()).thenReturn(Component.floats(3));
-			when(image.format()).thenReturn(0);
+			final var image = new ImageData(new Dimensions(1, 1), "RGB", Component.floats(3), new byte[4 * 3]);
 			assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
 		}
 	}

@@ -103,7 +103,7 @@ public class VulkanImageLoaderTest {
 
 		// Check image
 		assertEquals(new Dimensions(2, 3), image.size());
-		assertEquals("RGBA", image.components());
+		assertEquals("RGBA", image.channels());
 		assertEquals(FORMAT, image.format());
 		assertEquals(new Component(4, Component.Type.NORMALIZED, false, 1), image.layout());
 		assertEquals(1, image.layers());

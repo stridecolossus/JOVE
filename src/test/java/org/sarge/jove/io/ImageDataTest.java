@@ -24,7 +24,7 @@ public class ImageDataTest {
 	@Test
 	void constructor() {
 		assertEquals(EXTENTS, image.size());
-		assertEquals("RGBA", image.components());
+		assertEquals("RGBA", image.channels());
 		assertNotNull(image.data());
 	}
 

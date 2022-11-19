@@ -1,9 +1,7 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
@@ -37,35 +35,34 @@ class GridBuilderTest {
 
 	@Nested
 	class HeightFunctionTest {
+		private ImageData image;
+
+		@BeforeEach
+		void before() {
+			final Component layout = new Component(4, Component.Type.INTEGER, false, 2);
+			image = new ImageData(new Dimensions(8, 8), "RGBA", layout, new byte[8 * 8 * (4 * 2)]) {
+				@Override
+				protected int pixel(int index) {
+					return 65535;
+				}
+			};
+		}
+
 		@Test
 		void literal() {
 			final HeightFunction function = HeightFunction.literal(3);
-			assertNotNull(function);
 			assertEquals(3, function.height(1, 2));
 		}
 
 		@Test
 		void image() {
-			// Create a height-map image
-			final ImageData image = mock(ImageData.class);
-			when(image.size()).thenReturn(new Dimensions(8, 8));
-			when(image.components()).thenReturn("RGBA");
-			when(image.layout()).thenReturn(new Component(1, Component.Type.INTEGER, false, 2));
-			when(image.pixel(2, 2, 1)).thenReturn(65535);
-
-			// Create height-map function
 			final HeightFunction function = HeightFunction.heightmap(new Dimensions(4, 4), image, 1, 2);
-			assertNotNull(function);
-
-			// Check grid coordinates are mapped to the height-map
 			assertEquals(2, function.height(1, 1));
 		}
 
 		@Test
 		void imageInvalidComponentIndex() {
-			final ImageData image = mock(ImageData.class);
-			when(image.components()).thenReturn(StringUtils.EMPTY);
-			assertThrows(IllegalArgumentException.class, () -> HeightFunction.heightmap(new Dimensions(4, 4), image, 0, 1));
+			assertThrows(IllegalArgumentException.class, () -> HeightFunction.heightmap(new Dimensions(4, 4), image, 999, 1));
 		}
 	}
 }
