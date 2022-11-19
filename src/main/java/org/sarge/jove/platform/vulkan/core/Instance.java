@@ -213,7 +213,7 @@ public class Instance extends AbstractTransientNativeObject {
 	 */
 	interface Library {
 		/**
-		 * Creates a vulkan instance.
+		 * Creates the vulkan instance.
 		 * @param info			Instance descriptor
 		 * @param allocator		Allocator
 		 * @param instance		Returned instance

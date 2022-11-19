@@ -380,8 +380,8 @@ public interface Query {
 		 * @return Query results command
 		 * @throws IllegalArgumentException if the query range is invalid for this pool
 		 * @throws IllegalArgumentException if the stride is not a multiple of the data type of this query
-		 * @throws IllegalStateException if the offset is invalid for the given buffer
-		 * @throws IllegalStateException if the buffer is not a {@link VkBufferUsageFlag#TRANSFER_DST}
+		 * @throws IllegalStateException if the {@link #offset} is invalid for the given buffer
+		 * @throws IllegalStateException if {@link #buffer} is not a {@link VkBufferUsageFlag#TRANSFER_DST}
 		 */
 		public Command build(VulkanBuffer buffer, long offset) {
 			// Validate buffer

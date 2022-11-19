@@ -142,7 +142,7 @@ public class Matrix implements Transform, Bufferable {
 	 * @return Submatrix
 	 * @throws IndexOutOfBoundsException if the submatrix is out-of-bounds for this matrix
 	 */
-	public final Matrix submatrix(int row, int col, int order) {
+	public final Matrix submatrix(int row, int col, int order) throws IndexOutOfBoundsException {
 		final var sub = new Matrix.Builder(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {

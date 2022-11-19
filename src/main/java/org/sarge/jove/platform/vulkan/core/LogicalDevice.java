@@ -6,7 +6,7 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Supplier;
 import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -75,17 +75,23 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		return features;
 	}
 
-	/**
-	 * Initialises device limits for this device.
-	 */
-	private DeviceLimits loadLimits() {
-		final VkPhysicalDeviceProperties props = parent.properties();
-		return new DeviceLimits(props.limits, features);
+	@Override
+	public AllocationService allocator() {
+		return allocator;
 	}
 
-	@Override
-	public DeviceLimits limits() {
-		return limits.get();
+	/**
+	 * Initialises the memory allocation service.
+	 * @param allocator Custom allocator or {@code null} for default
+	 * @return Allocation service
+	 */
+	private AllocationService init(AllocationService allocator) {
+		if(allocator == null) {
+			return new AllocationService(MemorySelector.create(parent), new DefaultAllocator(this));
+		}
+		else {
+			return allocator;
+		}
 	}
 
 	/**
@@ -109,30 +115,24 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		return list.get(0);
 	}
 
-	@Override
-	public AllocationService allocator() {
-		return allocator;
-	}
-
-	/**
-	 * Initialises the memory allocation service.
-	 * @param allocator Custom allocator
-	 * @return Allocation service
-	 */
-	private AllocationService init(AllocationService allocator) {
-		if(allocator == null) {
-			return new AllocationService(MemorySelector.create(parent), new DefaultAllocator(this));
-		}
-		else {
-			return allocator;
-		}
-	}
-
 	/**
 	 * Waits for this device to become idle.
 	 */
 	public void waitIdle() {
 		check(library().vkDeviceWaitIdle(this));
+	}
+
+	/**
+	 * Initialises device limits for this device.
+	 */
+	private DeviceLimits loadLimits() {
+		final VkPhysicalDeviceProperties props = parent.properties();
+		return new DeviceLimits(props.limits, features);
+	}
+
+	@Override
+	public DeviceLimits limits() {
+		return limits.get();
 	}
 
  	@Override
@@ -240,7 +240,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		}
 
 		/**
-		 * Sets the features required by this logical device.
+		 * Sets the features required by this logical device (default is none).
 		 * @param required Required features
 		 */
 		public Builder features(DeviceFeatures required) {
@@ -295,7 +295,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		/**
 		 * Constructs this logical device.
 		 * @return New logical device
-		 * @throws ServiceException if the device cannot be created or the required features are not supported by the physical device
 		 */
 		public LogicalDevice build() {
 			// Create descriptor
@@ -319,43 +318,63 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			// Allocate device
 			final Instance instance = parent.instance();
 			final VulkanLibrary lib = instance.library();
-			final ReferenceFactory factory = instance.factory();
-			final PointerByReference ref = factory.pointer();
+			final PointerByReference ref = instance.factory().pointer();
 			check(lib.vkCreateDevice(parent, info, null, ref));
 
-			// Retrieve required queues
+			// Retrieve work queues
 			final Handle handle = new Handle(ref);
-			final Map<Family, List<Queue>> map = queues
-					.values()
-					.stream()
-					.flatMap(required -> queues(handle, required))
-					.collect(groupingBy(Queue::family));
+			final var helper = new QueueHelper(handle);
+			final var map = helper.queues();
 
 			// Create logical device
 			return new LogicalDevice(handle, parent, required, map, allocator);
 		}
 
 		/**
-		 * Retrieves the work queues.
-		 * @param dev			Logical device handle
-		 * @param required		Required queues descriptor
-		 * @return Work queues
+		 * Helper class for retrieval of the work queues for this device.
 		 */
-		private Stream<Queue> queues(Handle dev, RequiredQueue required) {
-			// Init API to retrieve each required queue
-			final Instance instance = parent.instance();
-			final Library lib = instance.library();
-			final Family family = required.family;
-			final IntFunction<Queue> queue = n -> {
-				final PointerByReference ref = instance.factory().pointer();
-				lib.vkGetDeviceQueue(dev, family.index(), n, ref);
-				return new Queue(new Handle(ref), family);
-			};
+		private class QueueHelper {
+			private final Handle dev;
 
-			// Retrieve required queues
-			return IntStream
-					.range(0, required.priorities.size())
-					.mapToObj(queue);
+			QueueHelper(Handle dev) {
+				this.dev = dev;
+			}
+
+			/**
+			 * @return Work queues for this device
+			 */
+			Map<Family, List<Queue>> queues() {
+				return queues
+						.values()
+						.stream()
+						.flatMap(this::queues)
+						.collect(groupingBy(Queue::family));
+			}
+
+			/**
+			 * Retrieves the work queues for the given requirements.
+			 * @param queue Required work queue
+			 * @return Queues
+			 */
+			private Stream<Queue> queues(RequiredQueue queue) {
+				return IntStream
+        				.range(0, queue.priorities.size())
+        				.mapToObj(n -> queue(queue.family, n));
+			}
+
+			/**
+			 * Retrieves a work queue.
+			 * @param family		Queue family
+			 * @param index			Index
+			 * @return Work queue
+			 */
+			private Queue queue(Family family, int index) {
+				final Instance instance = parent.instance();
+				final Library lib = instance.library();
+				final PointerByReference ref = instance.factory().pointer();
+				lib.vkGetDeviceQueue(dev, family.index(), index, ref);
+				return new Queue(new Handle(ref), family);
+			}
 		}
 	}
 

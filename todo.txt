@@ -37,6 +37,7 @@ blog
 - check out old blog
 
 improvements
+- vertex implementations very ropey? mutable vertex should build layout by mapping from component classes
 - pipeline cache could use Java prefs? and/or user home folder?
 - interpolator revamp
 - joystick from desktop service

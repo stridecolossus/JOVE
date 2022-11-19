@@ -40,7 +40,7 @@ public class Semaphore extends AbstractVulkanObject {
 	interface Library {
 		/**
 		 * Creates a semaphore.
-		 * @param device			Device
+		 * @param device			Logical device
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pSemaphore		Returned semaphore
@@ -50,8 +50,8 @@ public class Semaphore extends AbstractVulkanObject {
 
 		/**
 		 * Destroys a semaphore.
-		 * @param device			Device
-		 * @param semaphore			Semaphore
+		 * @param device			Logical device
+		 * @param semaphore			Semaphore to destroy
 		 * @param pAllocator		Allocator
 		 */
 		void vkDestroySemaphore(DeviceContext device, Semaphore semaphore, Pointer pAllocator);

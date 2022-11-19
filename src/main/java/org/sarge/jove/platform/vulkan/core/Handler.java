@@ -46,6 +46,13 @@ public class Handler extends AbstractTransientNativeObject {
 		invoke(destroy, Void.class, args);
 	}
 
+	/**
+	 * Invokes a handler create/destroy function with the Vulkan type mapper options.
+	 * @param func				Function
+	 * @param returnType		Method return type
+	 * @param args				Arguments
+	 * @return Result
+	 */
 	private static Object invoke(Function func, Class<?> returnType, Object[] args) {
 		return func.invoke(returnType, args, VulkanLibrary.options());
 	}
