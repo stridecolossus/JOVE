@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 import java.util.*;
 
 /**
- * Support for floating-point utilities and implementations of common function stereotypes.
+ * Support for floating-point implementation of the common function stereotypes.
  * @author Sarge
  */
 public final class FloatSupport {

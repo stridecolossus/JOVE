@@ -2,7 +2,6 @@ package org.sarge.jove.geometry;
 
 /**
  * Mutable implementation.
- * @see #cosine()
  * @author Sarge
  */
 public class MutableRotation extends AxisAngle {
@@ -20,7 +19,7 @@ public class MutableRotation extends AxisAngle {
 	}
 
 	@Override
-	public boolean isMutable() {
+	public final boolean isMutable() {
 		return true;
 	}
 }

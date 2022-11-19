@@ -21,7 +21,7 @@ import org.sarge.lib.util.Check;
  * @see Matrix4
  * @author Sarge
  */
-public abstract class Matrix implements Transform, Bufferable {
+public class Matrix implements Transform, Bufferable {
 	/**
 	 * Creates a new matrix of the given order.
 	 * @param order Matrix order
@@ -32,12 +32,7 @@ public abstract class Matrix implements Transform, Bufferable {
 			return new Matrix4();
 		}
 		else {
-			return new Matrix(order) {
-				@Override
-				public int order() {
-					return order;
-				}
-			};
+			return new Matrix(order);
 		}
 	}
 
@@ -55,7 +50,15 @@ public abstract class Matrix implements Transform, Bufferable {
 	/**
 	 * @return Order (or size) of this matrix
 	 */
-	public abstract int order();
+	public int order() {
+		return switch(matrix.length) {
+			case 1 -> 1;
+			case 4 -> 2;
+			case 9 -> 3;
+			case 16 -> 4;
+			default -> (int) Math.sqrt(matrix.length);
+		};
+	}
 
 	@Override
 	public final Matrix matrix() {
@@ -338,8 +341,10 @@ public abstract class Matrix implements Transform, Bufferable {
 		public Builder set(int row, int col, float value) {
 			matrix.checkBounds(row);
 			matrix.checkBounds(col);
+
 			final int index = matrix.index(row, col);
 			matrix.matrix[index] = value;
+
 			return this;
 		}
 

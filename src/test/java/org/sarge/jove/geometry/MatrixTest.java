@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.io.BufferHelper;
 
@@ -27,9 +29,11 @@ class MatrixTest {
 	}
 
 	@DisplayName("A matrix has an order")
-	@Test
-	void order() {
-		assertEquals(ORDER, matrix.order());
+	@ParameterizedTest
+	@ValueSource(ints={1, 2, 3, 4})
+	void order(int order) {
+		matrix = new Matrix.Builder(order).build();
+		assertEquals(order, matrix.order());
 	}
 
 	@DisplayName("A matrix is a transform")

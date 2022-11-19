@@ -41,15 +41,14 @@ public class CosineTable implements Cosine {
 		table[index] = cos;
 	}
 
-	// https://stackoverflow.com/questions/13460693/using-sincos-in-java
-	// https://github.com/AlessandroBorges/IDX3D/blob/idx3d_Java6/source/idx3d/tests/Math2.java
-
 	/**
+	 * Maps the given angle to the corresponding table index.
+	 * @param angle Angle (radians)
 	 * @return Table index for the given angle
 	 */
 	private int index(float angle) {
 		final float segment = MathsUtil.HALF + angle * scale;
-		return (int) segment & mask; //SIGN & (table.length - 1);
+		return (int) segment & mask;
 	}
 
 	@Override

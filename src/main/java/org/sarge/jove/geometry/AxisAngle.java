@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.util.*;
 
 /**
- * An <i>axis-angle</i> defines a counter-clockwise rotation about an axis.
+ * An <i>axis-angle</i> is the default implementation for a rotation.
  * <p>
  * The {@link #cosine()} method can be overridden to provide a custom trigonometric function used to calculate the rotation matrix.
  * Alternatively see {@link #of(AxisAngle, Cosine)}
