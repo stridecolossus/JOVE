@@ -18,7 +18,6 @@ import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>descriptor set</i> specifies resources used during rendering, such as samplers and uniform buffers.
@@ -246,70 +245,6 @@ public class DescriptorSet implements NativeObject {
 	 * Descriptor set API.
 	 */
 	interface Library {
-		/**
-		 * Creates a descriptor set layout.
-		 * @param device				Logical device
-		 * @param pCreateInfo			Create descriptor
-		 * @param pAllocator			Allocator
-		 * @param pSetLayout			Returned layout handle
-		 * @return Result
-		 */
-		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
-
-		/**
-		 * Destroys a descriptor set layout.
-		 * @param device				Logical device
-		 * @param descriptorSetLayout	Layout
-		 * @param pAllocator			Allocator
-		 */
-		void vkDestroyDescriptorSetLayout(DeviceContext device, DescriptorLayout descriptorSetLayout, Pointer pAllocator);
-
-		/**
-		 * Creates a descriptor-set pool.
-		 * @param device				Logical device
-		 * @param pCreateInfo			Descriptor
-		 * @param pAllocator			Allocator
-		 * @param pDescriptorPool		Returned pool
-		 * @return Result
-		 */
-		int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
-
-		/**
-		 * Destroys a descriptor-set pool.
-		 * @param device				Logical device
-		 * @param descriptorPool		Pool
-		 * @param pAllocator			Allocator
-		 */
-		void vkDestroyDescriptorPool(DeviceContext device, DescriptorPool descriptorPool, Pointer pAllocator);
-
-		/**
-		 * Allocates a number of descriptor sets from a given pool.
-		 * @param device				Logical device
-		 * @param pAllocateInfo			Allocation descriptor
-		 * @param pDescriptorSets		Returned descriptor set handles
-		 * @return Result
-		 */
-		int vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
-
-		/**
-		 * Resets all descriptor sets in the given pool, i.e. recycles the resources back to the pool and releases the descriptor sets.
-		 * @param device				Logical device
-		 * @param descriptorPool		Descriptor set pool
-		 * @param flags					Unused
-		 * @return Result
-		 */
-		int vkResetDescriptorPool(DeviceContext device, DescriptorPool descriptorPool, int flags);
-
-		/**
-		 * Releases allocated descriptor sets.
-		 * @param device				Logical device
-		 * @param descriptorPool		Descriptor set pool
-		 * @param descriptorSetCount	Number of descriptor sets
-		 * @param pDescriptorSets		Descriptor set handles
-		 * @return Result
-		 */
-		int vkFreeDescriptorSets(DeviceContext device, DescriptorPool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
-
 		/**
 		 * Updates the resources for one-or-more descriptor sets.
 		 * @param device				Logical device

@@ -9,7 +9,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.common.Queue;
+import org.sarge.jove.platform.vulkan.core.WorkQueue;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
@@ -248,7 +248,7 @@ public interface Command {
 	}
 
 	/**
-	 * A <i>command pool</i> allocates command buffers used to perform work on a given {@link Queue}.
+	 * A <i>command pool</i> allocates command buffers used to perform work on a given {@link WorkQueue}.
 	 */
 	class Pool extends AbstractVulkanObject {
 		/**
@@ -257,7 +257,7 @@ public interface Command {
 		 * @param queue		Work queue
 		 * @param flags		Creation flags
 		 */
-		public static Pool create(DeviceContext dev, Queue queue, VkCommandPoolCreateFlag... flags) {
+		public static Pool create(DeviceContext dev, WorkQueue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
@@ -272,7 +272,7 @@ public interface Command {
 			return new Pool(new Handle(pool), dev, queue);
 		}
 
-		private final Queue queue;
+		private final WorkQueue queue;
 
 		/**
 		 * Constructor.
@@ -280,7 +280,7 @@ public interface Command {
 		 * @param dev			Logical device
 		 * @param queue			Work queue
 		 */
-		private Pool(Handle handle, DeviceContext dev, Queue queue) {
+		private Pool(Handle handle, DeviceContext dev, WorkQueue queue) {
 			super(handle, dev);
 			this.queue = notNull(queue);
 		}
@@ -288,7 +288,7 @@ public interface Command {
 		/**
 		 * @return Work queue for this pool
 		 */
-		public Queue queue() {
+		public WorkQueue queue() {
 			return queue;
 		}
 
@@ -358,7 +358,7 @@ public interface Command {
 
 		/**
 		 * Helper - Waits for the work queue to become idle.
-		 * @see Queue#waitIdle(VulkanLibrary)
+		 * @see WorkQueue#waitIdle(VulkanLibrary)
 		 */
 		public void waitIdle() {
 			final VulkanLibrary lib = super.device().library();

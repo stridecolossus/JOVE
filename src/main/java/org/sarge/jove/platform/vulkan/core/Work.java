@@ -8,14 +8,13 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>work</i> instance represents a group of tasks to be submitted to a {@link Queue}.
+ * A <i>work</i> instance represents a group of tasks to be submitted to a {@link WorkQueue}.
  * <p>
  * A work submission is comprised of:
  * <ul>
@@ -80,7 +79,7 @@ public final class Work {
 	/**
 	 * @return Work queue for this submission
 	 */
-	public Queue queue() {
+	public WorkQueue queue() {
 		return pool.queue();
 	}
 
@@ -135,7 +134,7 @@ public final class Work {
 		// Submit batch
 		final VkSubmitInfo[] array = StructureCollector.array(batch, new VkSubmitInfo(), Work::populate);
 		final VulkanLibrary lib = first.pool.device().library();
-		final Queue queue = first.pool.queue();
+		final WorkQueue queue = first.pool.queue();
 		check(lib.vkQueueSubmit(queue, array.length, array, fence));
 	}
 

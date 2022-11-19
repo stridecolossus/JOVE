@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
@@ -6,21 +6,20 @@ import java.util.Set;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>queue</i> is used to submit work to the hardware.
+ * A <i>work queue</i> is used to submit tasks to the hardware.
  * @author Sarge
  */
-public record Queue(Handle handle, Queue.Family family) implements NativeObject {
+public record WorkQueue(Handle handle, WorkQueue.Family family) implements NativeObject {
 	/**
 	 * Constructor.
 	 * @param handle	Handle
 	 * @param family	Family that this queue belongs to
 	 */
-	public Queue {
+	public WorkQueue {
 		Check.notNull(handle);
 		Check.notNull(family);
 	}

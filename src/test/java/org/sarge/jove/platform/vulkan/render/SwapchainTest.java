@@ -8,9 +8,9 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
@@ -88,12 +88,12 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 	@Nested
 	class PresentationTests {
-		private Queue queue;
+		private WorkQueue queue;
 		private Semaphore semaphore;
 
 		@BeforeEach
 		void before() {
-			queue = new Queue(new Handle(2), new Family(0, 1, Set.of()));
+			queue = new WorkQueue(new Handle(2), new Family(0, 1, Set.of()));
 			semaphore = mock(Semaphore.class);
 			when(semaphore.handle()).thenReturn(new Handle(3));
 		}

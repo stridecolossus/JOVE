@@ -13,6 +13,7 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -178,5 +179,28 @@ public class DescriptorLayout extends AbstractVulkanObject {
 				.appendSuper(super.toString())
 				.append(bindings)
 				.build();
+	}
+
+	/**
+	 * Descriptor set layout API.
+	 */
+	interface Library {
+		/**
+		 * Creates a descriptor set layout.
+		 * @param device				Logical device
+		 * @param pCreateInfo			Create descriptor
+		 * @param pAllocator			Allocator
+		 * @param pSetLayout			Returned layout handle
+		 * @return Result
+		 */
+		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
+
+		/**
+		 * Destroys a descriptor set layout.
+		 * @param device				Logical device
+		 * @param descriptorSetLayout	Layout
+		 * @param pAllocator			Allocator
+		 */
+		void vkDestroyDescriptorSetLayout(DeviceContext device, DescriptorLayout descriptorSetLayout, Pointer pAllocator);
 	}
 }

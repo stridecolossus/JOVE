@@ -8,10 +8,9 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.BitMask;
 
@@ -19,12 +18,12 @@ import com.sun.jna.*;
 
 class CommandTest extends AbstractVulkanTest {
 	private Command cmd;
-	private Queue queue;
+	private WorkQueue queue;
 	private Pool pool;
 
 	@BeforeEach
 	void before() {
-		queue = new Queue(new Handle(1), new Family(2, 1, Set.of()));
+		queue = new WorkQueue(new Handle(1), new Family(2, 1, Set.of()));
 		pool = Pool.create(dev, queue);
 		cmd = mock(Command.class);
 	}

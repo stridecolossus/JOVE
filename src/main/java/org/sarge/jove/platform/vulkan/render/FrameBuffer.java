@@ -25,7 +25,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	/**
 	 * Command to end a render pass on this frame-buffer.
 	 */
-	public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
+	public static final Command END = (lib, buffer) -> lib.vkCmdEndRenderPass(buffer);
 
 	/**
 	 * Creates a frame buffer.
@@ -93,9 +93,9 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 */
 	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
 		super(handle, dev);
-		this.extents = notNull(extents);
-		this.attachments = List.copyOf(notEmpty(attachments));
 		this.pass = notNull(pass);
+		this.attachments = List.copyOf(notEmpty(attachments));
+		this.extents = notNull(extents);
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 
 	/**
 	 * Creates a command to begin rendering.
-	 * @return Begin rendering command
+	 * @return Command to begin rendering
 	 * @see #END
 	 */
 	public Command begin() {

@@ -11,8 +11,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
 import org.sarge.jove.util.StructureCollector;
@@ -22,7 +22,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>render pass</i> is comprised of a number of sub-passes.
+ * A <i>render pass</i> is comprised of a number of sub-passes that render to the frame buffer.
  * @see Subpass
  * @author Sarge
  */
@@ -146,6 +146,14 @@ public class RenderPass extends AbstractVulkanObject {
 			}
 
 			/**
+			 * Creates a command to advance to the next subpass.
+			 * @return Next subpass command
+			 */
+			public static Command next() {
+				return (lib, buffer) -> lib.vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
+			}
+
+			/**
 			 * Populates the descriptor for this sub-pass.
 			 */
 			private void populate(VkSubpassDescription descriptor) {
@@ -165,7 +173,7 @@ public class RenderPass extends AbstractVulkanObject {
 			}
 
 			/**
-			 * A <i>reference</i> specifies an attachment used by this subpass.
+			 * A <i>reference</i> specifies an attachment used by this subpass (by index).
 			 */
 			private record Reference(int index, Attachment attachment, VkImageLayout layout) {
 				/**

@@ -14,8 +14,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
@@ -32,7 +31,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	private final PhysicalDevice parent;
 	private final DeviceFeatures features;
 	private final Supplier<DeviceLimits> limits = new LazySupplier<>(this::loadLimits);
-	private final Map<Family, List<Queue>> queues;
+	private final Map<Family, List<WorkQueue>> queues;
 	private final AllocationService allocator;
 
 	/**
@@ -43,7 +42,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * @param queues 		Work queues
 	 * @param allocator		Memory allocation service or {@code null} to create a default implementation
 	 */
-	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<Queue>> queues, AllocationService allocator) {
+	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<WorkQueue>> queues, AllocationService allocator) {
 		super(handle);
 		this.parent = requireNonNull(parent);
 		this.features = requireNonNull(features);
@@ -97,7 +96,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	/**
 	 * @return Work queues for this device ordered by family
 	 */
-	public Map<Family, List<Queue>> queues() {
+	public Map<Family, List<WorkQueue>> queues() {
 		return queues;
 	}
 
@@ -107,7 +106,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 * @return Queue
 	 * @throws IllegalArgumentException if the queue is not present
 	 */
-	public Queue queue(Family family) {
+	public WorkQueue queue(Family family) {
 		final var list = queues.get(family);
 		if((list == null) || list.isEmpty()) {
 			throw new IllegalArgumentException(String.format("Queue not present: required=%s available=%s", family, queues.keySet()));
@@ -343,12 +342,12 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			/**
 			 * @return Work queues for this device
 			 */
-			Map<Family, List<Queue>> queues() {
+			Map<Family, List<WorkQueue>> queues() {
 				return queues
 						.values()
 						.stream()
 						.flatMap(this::queues)
-						.collect(groupingBy(Queue::family));
+						.collect(groupingBy(WorkQueue::family));
 			}
 
 			/**
@@ -356,7 +355,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			 * @param queue Required work queue
 			 * @return Queues
 			 */
-			private Stream<Queue> queues(RequiredQueue queue) {
+			private Stream<WorkQueue> queues(RequiredQueue queue) {
 				return IntStream
         				.range(0, queue.priorities.size())
         				.mapToObj(n -> queue(queue.family, n));
@@ -368,12 +367,12 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			 * @param index			Index
 			 * @return Work queue
 			 */
-			private Queue queue(Family family, int index) {
+			private WorkQueue queue(Family family, int index) {
 				final Instance instance = parent.instance();
 				final Library lib = instance.library();
 				final PointerByReference ref = instance.factory().pointer();
 				lib.vkGetDeviceQueue(dev, family.index(), index, ref);
-				return new Queue(new Handle(ref), family);
+				return new WorkQueue(new Handle(ref), family);
 			}
 		}
 	}
@@ -423,13 +422,13 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @param fence					Optional fence
 		 * @return Result
 		 */
-		int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
+		int vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 
 		/**
 		 * Waits for the given queue to become idle.
 		 * @param queue Queue
 		 * @return Result
 		 */
-		int vkQueueWaitIdle(Queue queue);
+		int vkQueueWaitIdle(WorkQueue queue);
 	}
 }

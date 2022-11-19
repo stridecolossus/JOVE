@@ -8,9 +8,9 @@ import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.control.Frame.Listener;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.WorkQueue;
 import org.sarge.lib.util.Check;
 
 /**
@@ -132,7 +132,7 @@ public class FrameProcessor implements TransientObject {
 			fence.waitReady();
 
 			// Present rendered frame
-			final Queue queue = buffer.pool().queue();
+			final WorkQueue queue = buffer.pool().queue();
 			swapchain.present(queue, index, ready);
 		}
 

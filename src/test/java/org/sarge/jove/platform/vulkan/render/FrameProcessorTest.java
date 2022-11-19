@@ -7,9 +7,9 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Frame;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
+import org.sarge.jove.platform.vulkan.core.WorkQueue;
 import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.ReferenceFactory;
@@ -64,7 +64,7 @@ class FrameProcessorTest extends AbstractVulkanTest {
 		when(pool.device()).thenReturn(dev);
 
 		// Create presentation queue
-		final Queue queue = new Queue(new Handle(5), new Family(1, 2, Set.of()));
+		final WorkQueue queue = new WorkQueue(new Handle(5), new Family(1, 2, Set.of()));
 		when(pool.queue()).thenReturn(queue);
 
 		// Init frame builder

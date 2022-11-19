@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -8,20 +8,19 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 
-class QueueTest {
-	private Queue queue;
+class WorkQueueTest {
+	private WorkQueue queue;
 	private Family family;
 
 	@BeforeEach
 	void before() {
 		family = new Family(1, 2, Set.of(VkQueueFlag.GRAPHICS));
-		queue = new Queue(new Handle(new Pointer(3)), family);
+		queue = new WorkQueue(new Handle(new Pointer(3)), family);
 	}
 
 	@Test

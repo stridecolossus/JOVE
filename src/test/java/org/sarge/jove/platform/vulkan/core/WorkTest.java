@@ -8,16 +8,15 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.IntegerArray;
 
 import com.sun.jna.Structure;
 
 public class WorkTest extends AbstractVulkanTest {
-	private Queue queue;
+	private WorkQueue queue;
 	private Pool pool;
 	private Buffer buffer;
 	private Work work;
@@ -26,7 +25,7 @@ public class WorkTest extends AbstractVulkanTest {
 	void before() {
 		// Create queue
 		final Family family = new Family(0, 1, Set.of());
-		queue = new Queue(new Handle(1), family);
+		queue = new WorkQueue(new Handle(1), family);
 
 		// Create pool
 		pool = mock(Pool.class);
@@ -74,7 +73,7 @@ public class WorkTest extends AbstractVulkanTest {
 	void invalid() {
 		// Create a different pool
 		final Pool other = mock(Pool.class);
-		when(other.queue()).thenReturn(new Queue(new Handle(999), new Family(1, 2, Set.of())));
+		when(other.queue()).thenReturn(new WorkQueue(new Handle(999), new Family(1, 2, Set.of())));
 
 		// Create a buffer using this pool
 		final Buffer buffer = mock(Buffer.class);
@@ -124,7 +123,7 @@ public class WorkTest extends AbstractVulkanTest {
 		void addInvalidQueueFamily() {
 			final Pool other = mock(Pool.class);
 			when(buffer.pool()).thenReturn(other);
-			when(other.queue()).thenReturn(new Queue(new Handle(999), new Family(1, 2, Set.of())));
+			when(other.queue()).thenReturn(new WorkQueue(new Handle(999), new Family(1, 2, Set.of())));
 			assertThrows(IllegalArgumentException.class, () -> builder.add(buffer));
 		}
 

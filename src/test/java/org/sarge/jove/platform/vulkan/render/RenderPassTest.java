@@ -1,13 +1,14 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
@@ -36,6 +37,15 @@ class RenderPassTest extends AbstractVulkanTest {
 		assertEquals(dev, pass.device());
 		assertEquals(false, pass.isDestroyed());
 		assertEquals(List.of(one), pass.attachments());
+	}
+
+	@DisplayName("A render pass can be advanced to the next subpass")
+	@Test
+	void next() {
+		final var buffer = mock(Command.Buffer.class);
+		final Command next = Subpass.next();
+		next.record(lib, buffer);
+		verify(lib).vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
 	}
 
 	@Test

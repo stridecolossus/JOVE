@@ -9,8 +9,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.common.Queue;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
@@ -30,7 +30,7 @@ import com.sun.jna.ptr.*;
  * The process of rendering a frame is comprised of two operations:
  * <ol>
  * <li>Acquire the index of the next swapchain image using {@link #acquire(Semaphore, Fence)}</li>
- * <li>Present a rendered frame to the surface using {@link #present(Queue, int, Set)}</li>
+ * <li>Present a rendered frame to the surface using {@link #present(WorkQueue, int, Set)}</li>
  * </ol>
  * <p>
  * @author Sarge
@@ -133,9 +133,9 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @param semaphore			Wait semaphore
 	 * @throws SwapchainInvalidated if the image cannot be presented
 	 * @see PresentTaskBuilder
-	 * @see #present(DeviceContext, Queue, VkPresentInfoKHR)
+	 * @see #present(DeviceContext, WorkQueue, VkPresentInfoKHR)
 	 */
-	public void present(Queue queue, int index, Semaphore semaphore) throws SwapchainInvalidated {
+	public void present(WorkQueue queue, int index, Semaphore semaphore) throws SwapchainInvalidated {
 		final VkPresentInfoKHR info = new PresentTaskBuilder()
 				.image(this, index)
 				.wait(semaphore)
@@ -152,7 +152,7 @@ public class Swapchain extends AbstractVulkanObject {
 	 * @throws SwapchainInvalidated if a swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR} or {@link VkResult#SUBOPTIMAL_KHR}
 	 * @see PresentTaskBuilder
 	 */
-	public static void present(DeviceContext dev, Queue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
+	public static void present(DeviceContext dev, WorkQueue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
 		final VulkanLibrary lib = dev.library();
 		final VkResult result = lib.vkQueuePresentKHR(queue, info);
 		switch(result) {
@@ -163,7 +163,7 @@ public class Swapchain extends AbstractVulkanObject {
 
 	/**
 	 * The <i>presentation task builder</i> is used to construct the descriptor for swapchain presentation.
-	 * @see Swapchain#present(DeviceContext, Queue, VkPresentInfoKHR)
+	 * @see Swapchain#present(DeviceContext, WorkQueue, VkPresentInfoKHR)
 	 */
 	public static class PresentTaskBuilder {
 		private final Map<Swapchain, Integer> images = new LinkedHashMap<>();
@@ -477,7 +477,7 @@ public class Swapchain extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Swap-chain API.
+	 * Swapchain API.
 	 */
 	interface Library {
 		/**
@@ -493,7 +493,7 @@ public class Swapchain extends AbstractVulkanObject {
 		/**
 		 * Destroys a swapchain.
 		 * @param device			Logical device
-		 * @param swapchain			Swap-chain
+		 * @param swapchain			Swapchain
 		 * @param pAllocator		Allocator
 		 */
 		void vkDestroySwapchainKHR(DeviceContext device, Swapchain swapchain, Pointer pAllocator);
@@ -526,6 +526,6 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @param pPresentInfo			Pointer to descriptor
 		 * @return Result
 		 */
-		VkResult vkQueuePresentKHR(Queue queue, VkPresentInfoKHR pPresentInfo);
+		VkResult vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo);
 	}
 }

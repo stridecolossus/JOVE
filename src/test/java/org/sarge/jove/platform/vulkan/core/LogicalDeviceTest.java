@@ -8,9 +8,8 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Queue;
-import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
@@ -21,8 +20,8 @@ import com.sun.jna.ptr.PointerByReference;
 public class LogicalDeviceTest {
 	private LogicalDevice device;
 	private PhysicalDevice parent;
-	private Queue.Family family;
-	private Queue queue;
+	private WorkQueue.Family family;
+	private WorkQueue queue;
 	private VulkanLibrary lib;
 	private PointerByReference ref;
 
@@ -58,7 +57,7 @@ public class LogicalDeviceTest {
 		when(parent.families()).thenReturn(List.of(family));
 
 		// Create work queue
-		queue = new Queue(new Handle(1), family);
+		queue = new WorkQueue(new Handle(1), family);
 
 		// Create logical device
 		device = new LogicalDevice(new Handle(1), parent, features, Map.of(family, List.of(queue, queue)), null);
