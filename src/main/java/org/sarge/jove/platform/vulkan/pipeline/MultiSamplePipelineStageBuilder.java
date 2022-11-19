@@ -39,7 +39,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @see #samples(VkSampleCount)
 	 */
 	public MultiSamplePipelineStageBuilder samples(int rasterizationSamples) {
-		info.rasterizationSamples = IntegerEnumeration.reverse(VkSampleCount.class).map(rasterizationSamples);
+		info.rasterizationSamples = IntEnum.reverse(VkSampleCount.class).map(rasterizationSamples);
 		return this;
 	}
 

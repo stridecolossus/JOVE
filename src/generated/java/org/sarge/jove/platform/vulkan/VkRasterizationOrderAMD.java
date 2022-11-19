@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkRasterizationOrderAMD implements IntegerEnumeration {
+public enum VkRasterizationOrderAMD implements IntEnum {
  	VK_RASTERIZATION_ORDER_STRICT_AMD(0), 	
  	VK_RASTERIZATION_ORDER_RELAXED_AMD(1), 	
  	VK_RASTERIZATION_ORDER_BEGIN_RANGE_AMD(0), 	

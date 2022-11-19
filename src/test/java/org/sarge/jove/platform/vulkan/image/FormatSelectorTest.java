@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 public class FormatSelectorTest {
 	private static final VkFormat FORMAT = VkFormat.UNDEFINED;
@@ -49,21 +49,21 @@ public class FormatSelectorTest {
 		@Test
 		void optimal() {
 			final Predicate<VkFormatProperties> filter = FormatSelector.filter(true, Set.of(FEATURE));
-			props.optimalTilingFeatures = BitField.reduce(FEATURE);
+			props.optimalTilingFeatures = BitMask.reduce(FEATURE);
 			assertEquals(true, filter.test(props));
 		}
 
 		@Test
 		void linear() {
 			final Predicate<VkFormatProperties> filter = FormatSelector.filter(false, Set.of(FEATURE));
-			props.linearTilingFeatures = BitField.reduce(FEATURE);
+			props.linearTilingFeatures = BitMask.reduce(FEATURE);
 			assertEquals(true, filter.test(props));
 		}
 
 		@Test
 		void unmatched() {
-			props.linearTilingFeatures = new BitField<>(0);
-			props.optimalTilingFeatures = new BitField<>(0);
+			props.linearTilingFeatures = new BitMask<>(0);
+			props.optimalTilingFeatures = new BitMask<>(0);
 			assertEquals(false, FormatSelector.filter(false, Set.of(FEATURE)).test(props));
 			assertEquals(false, FormatSelector.filter(true, Set.of(FEATURE)).test(props));
 		}

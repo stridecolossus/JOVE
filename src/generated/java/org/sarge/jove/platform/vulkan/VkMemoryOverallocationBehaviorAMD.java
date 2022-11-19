@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkMemoryOverallocationBehaviorAMD implements IntegerEnumeration {
+public enum VkMemoryOverallocationBehaviorAMD implements IntEnum {
  	VK_MEMORY_OVERALLOCATION_BEHAVIOR_DEFAULT_AMD(0), 	
  	VK_MEMORY_OVERALLOCATION_BEHAVIOR_ALLOWED_AMD(1), 	
  	VK_MEMORY_OVERALLOCATION_BEHAVIOR_DISALLOWED_AMD(2), 	

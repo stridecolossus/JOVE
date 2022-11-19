@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkBorderColor implements IntegerEnumeration {
+public enum VkBorderColor implements IntEnum {
  	FLOAT_TRANSPARENT_BLACK(0),
  	INT_TRANSPARENT_BLACK(1),
  	FLOAT_OPAQUE_BLACK(2),

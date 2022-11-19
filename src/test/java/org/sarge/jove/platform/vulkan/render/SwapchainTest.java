@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.IntegerArray;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -159,11 +159,11 @@ public class SwapchainTest extends AbstractVulkanTest {
 
 			// Init surface capabilities used by the swapchain
 			final var caps = new VkSurfaceCapabilitiesKHR();
-			caps.supportedTransforms = VkSurfaceTransformFlagKHR.IDENTITY_KHR.value();
+			caps.supportedTransforms = BitMask.reduce(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
 			caps.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 			caps.maxImageArrayLayers = 1;
-			caps.supportedUsageFlags = VkImageUsageFlag.COLOR_ATTACHMENT.value();
-			caps.supportedCompositeAlpha = VkCompositeAlphaFlagKHR.OPAQUE.value();
+			caps.supportedUsageFlags = BitMask.reduce(VkImageUsageFlag.COLOR_ATTACHMENT);
+			caps.supportedCompositeAlpha = BitMask.reduce(VkCompositeAlphaFlagKHR.OPAQUE);
 			when(surface.capabilities()).thenReturn(caps);
 
 			// Init attachment extents

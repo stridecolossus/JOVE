@@ -45,7 +45,7 @@ import com.sun.jna.*;
  * <p>
  * @author Sarge
  */
-public interface IntegerEnumeration {
+public interface IntEnum {
 	/**
 	 * @return Enum literal
 	 */
@@ -59,7 +59,7 @@ public interface IntegerEnumeration {
 	 * @return Reverse mapping
 	 */
 	@SuppressWarnings("unchecked")
-	static <E extends IntegerEnumeration> ReverseMapping<E> reverse(Class<E> clazz) {
+	static <E extends IntEnum> ReverseMapping<E> reverse(Class<E> clazz) {
 		return (ReverseMapping<E>) ReverseMapping.get(clazz);
 	}
 
@@ -74,7 +74,7 @@ public interface IntegerEnumeration {
 
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
-			if(value instanceof IntegerEnumeration e) {
+			if(value instanceof IntEnum e) {
 				return e.value();
 			}
 			else {
@@ -86,7 +86,7 @@ public interface IntegerEnumeration {
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
 			// Validate enumeration
 			final Class<?> type = context.getTargetType();
-			if(!IntegerEnumeration.class.isAssignableFrom(type)) throw new RuntimeException("Invalid native enumeration class: " + type.getSimpleName());
+			if(!IntEnum.class.isAssignableFrom(type)) throw new RuntimeException("Invalid native enumeration class: " + type.getSimpleName());
 
 			// Map native value
 			final ReverseMapping<?> mapping = ReverseMapping.get(type);
@@ -109,7 +109,7 @@ public interface IntegerEnumeration {
 	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers <i>to</i> the enumeration constants.
 	 * @param <E> Integer enumeration
 	 */
-	final class ReverseMapping<E extends IntegerEnumeration> {
+	final class ReverseMapping<E extends IntEnum> {
 		private static final Map<Class<?>, ReverseMapping<?>> CACHE = new ConcurrentHashMap<>();
 
 		/**
@@ -132,7 +132,7 @@ public interface IntegerEnumeration {
 		 */
 		private ReverseMapping(Class<E> clazz) {
 			final E[] array = clazz.getEnumConstants();
-			this.map = Arrays.stream(array).collect(toMap(IntegerEnumeration::value, Function.identity(), (a, b) -> a));
+			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (a, b) -> a));
 			this.def = map.getOrDefault(0, array[0]);
 		}
 

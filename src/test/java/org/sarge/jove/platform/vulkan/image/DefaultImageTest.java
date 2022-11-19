@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.ptr.PointerByReference;
 
@@ -104,7 +104,7 @@ class DefaultImageTest extends AbstractVulkanTest {
 					return dataEquals((VkImageCreateInfo) obj, true);
 				}
 			};
-			info.flags = BitField.reduce(VkImageCreateFlag.CUBE_COMPATIBLE);
+			info.flags = BitMask.reduce(VkImageCreateFlag.CUBE_COMPATIBLE);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
@@ -113,7 +113,7 @@ class DefaultImageTest extends AbstractVulkanTest {
 			info.samples = VkSampleCount.COUNT_4;
 			info.tiling = VkImageTiling.LINEAR;
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
-			info.usage = BitField.reduce(props.usage());
+			info.usage = BitMask.reduce(props.usage());
 			info.sharingMode = props.mode();
 
 			// Check API

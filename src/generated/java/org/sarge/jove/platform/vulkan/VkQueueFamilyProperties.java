@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Structure.FieldOrder;
 
@@ -16,7 +16,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"minImageTransferGranularity"
 })
 public class VkQueueFamilyProperties extends VulkanStructure {
-	public BitField<VkQueueFlag> queueFlags;
+	public BitMask<VkQueueFlag> queueFlags;
 	public int queueCount;
 	public int timestampValidBits;
 	public VkExtent3D minImageTransferGranularity;

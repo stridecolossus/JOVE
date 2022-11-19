@@ -113,7 +113,7 @@ class PhysicalDeviceTest {
 		final Answer<Integer> families = inv -> {
 			final VkQueueFamilyProperties props = inv.getArgument(2);
 			props.queueCount = 1;
-			props.queueFlags = BitField.reduce(VkQueueFlag.GRAPHICS);
+			props.queueFlags = BitMask.reduce(VkQueueFlag.GRAPHICS);
 			return 0;
 		};
 		doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Handle(1), count, arg);

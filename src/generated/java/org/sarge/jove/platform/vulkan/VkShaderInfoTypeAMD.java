@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkShaderInfoTypeAMD implements IntegerEnumeration {
+public enum VkShaderInfoTypeAMD implements IntEnum {
  	VK_SHADER_INFO_TYPE_STATISTICS_AMD(0), 	
  	VK_SHADER_INFO_TYPE_BINARY_AMD(1), 	
  	VK_SHADER_INFO_TYPE_DISASSEMBLY_AMD(2), 	

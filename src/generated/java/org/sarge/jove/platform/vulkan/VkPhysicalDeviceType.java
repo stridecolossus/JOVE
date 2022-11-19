@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkPhysicalDeviceType implements IntegerEnumeration {
+public enum VkPhysicalDeviceType implements IntEnum {
  	VK_PHYSICAL_DEVICE_TYPE_OTHER(0), 	
  	VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU(1), 	
  	VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU(2), 	

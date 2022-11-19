@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkGeometryInstanceFlagBitsNV implements IntegerEnumeration {
+public enum VkGeometryInstanceFlagBitsNV implements IntEnum {
  	VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV(1), 	
  	VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_NV(2), 	
  	VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_NV(4), 	

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkCoarseSampleOrderTypeNV implements IntegerEnumeration {
+public enum VkCoarseSampleOrderTypeNV implements IntEnum {
  	VK_COARSE_SAMPLE_ORDER_TYPE_DEFAULT_NV(0), 	
  	VK_COARSE_SAMPLE_ORDER_TYPE_CUSTOM_NV(1), 	
  	VK_COARSE_SAMPLE_ORDER_TYPE_PIXEL_MAJOR_NV(2), 	

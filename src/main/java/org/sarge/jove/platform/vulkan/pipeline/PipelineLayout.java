@@ -144,6 +144,6 @@ public class PipelineLayout extends AbstractVulkanObject {
 		 * @param size					Size of the range (bytes)
 		 * @param pValues				Push constants data buffer
 		 */
-		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, BitField<VkShaderStage> stageFlags, int offset, int size, ByteBuffer pValues);
+		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, BitMask<VkShaderStage> stageFlags, int offset, int size, ByteBuffer pValues);
 	}
 }

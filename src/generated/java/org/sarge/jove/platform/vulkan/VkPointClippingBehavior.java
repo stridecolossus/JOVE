@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkPointClippingBehavior implements IntegerEnumeration {
+public enum VkPointClippingBehavior implements IntEnum {
  	VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES(0), 	
  	VK_POINT_CLIPPING_BEHAVIOR_USER_CLIP_PLANES_ONLY(1), 	
  	VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES_KHR(0), 	

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkCompareOp implements IntegerEnumeration {
+public enum VkCompareOp implements IntEnum {
  	NEVER(0),
  	LESS(1),
  	EQUAL(2),

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkChromaLocation implements IntegerEnumeration {
+public enum VkChromaLocation implements IntEnum {
  	VK_CHROMA_LOCATION_COSITED_EVEN(0), 	
  	VK_CHROMA_LOCATION_MIDPOINT(1), 	
  	VK_CHROMA_LOCATION_COSITED_EVEN_KHR(0), 	

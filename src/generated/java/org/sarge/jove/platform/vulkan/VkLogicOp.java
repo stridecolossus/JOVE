@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkLogicOp implements IntegerEnumeration {
+public enum VkLogicOp implements IntEnum {
  	CLEAR(0),
  	AND(1),
  	AND_REVERSE(2),

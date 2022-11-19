@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkExternalFenceFeatureFlag implements IntegerEnumeration {
+public enum VkExternalFenceFeatureFlag implements IntEnum {
  	VK_EXTERNAL_FENCE_FEATURE_EXPORTABLE_BIT(1), 	
  	VK_EXTERNAL_FENCE_FEATURE_IMPORTABLE_BIT(2), 	
  	VK_EXTERNAL_FENCE_FEATURE_EXPORTABLE_BIT_KHR(1), 	

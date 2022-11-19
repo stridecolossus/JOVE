@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
-import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.*;
@@ -114,8 +114,8 @@ public class Handler extends AbstractTransientNativeObject {
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
 	static class MessageCallback implements Callback {
-		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = IntegerEnumeration.reverse(VkDebugUtilsMessageSeverity.class);
-		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = IntegerEnumeration.reverse(VkDebugUtilsMessageType.class);
+		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = IntEnum.reverse(VkDebugUtilsMessageSeverity.class);
+		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = IntEnum.reverse(VkDebugUtilsMessageType.class);
 
 		private final Consumer<Message> consumer;
 
@@ -132,7 +132,7 @@ public class Handler extends AbstractTransientNativeObject {
 		 * @return Whether to continue execution (always {@code false})
 		 */
 		public boolean message(int severity, int typeMask, VkDebugUtilsMessengerCallbackData pCallbackData, Pointer pUserData) {
-			final var types = new BitField<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
+			final var types = new BitMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
 			final Message message = new Message(SEVERITY.map(severity), types, pCallbackData);
 			consumer.accept(message);
 			return false;
@@ -214,8 +214,8 @@ public class Handler extends AbstractTransientNativeObject {
 
 			// Build handler descriptor
 			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
-			info.messageSeverity = BitField.reduce(severity);
-			info.messageType = BitField.reduce(types);
+			info.messageSeverity = BitMask.reduce(severity);
+			info.messageType = BitMask.reduce(types);
 			info.pfnUserCallback = new MessageCallback(consumer);
 			info.pUserData = null;
 

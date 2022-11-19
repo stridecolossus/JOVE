@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkTimeDomainEXT implements IntegerEnumeration {
+public enum VkTimeDomainEXT implements IntEnum {
  	VK_TIME_DOMAIN_DEVICE_EXT(0), 	
  	VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT(1), 	
  	VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT(2), 	

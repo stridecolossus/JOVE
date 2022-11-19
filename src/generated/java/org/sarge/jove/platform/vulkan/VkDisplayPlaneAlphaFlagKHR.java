@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkDisplayPlaneAlphaFlagKHR implements IntegerEnumeration {
+public enum VkDisplayPlaneAlphaFlagKHR implements IntEnum {
  	VK_DISPLAY_PLANE_ALPHA_OPAQUE_BIT_KHR(1), 	
  	VK_DISPLAY_PLANE_ALPHA_GLOBAL_BIT_KHR(2), 	
  	VK_DISPLAY_PLANE_ALPHA_PER_PIXEL_BIT_KHR(4), 	

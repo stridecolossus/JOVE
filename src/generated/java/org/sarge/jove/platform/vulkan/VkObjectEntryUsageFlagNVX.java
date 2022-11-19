@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkObjectEntryUsageFlagNVX implements IntegerEnumeration {
+public enum VkObjectEntryUsageFlagNVX implements IntEnum {
  	VK_OBJECT_ENTRY_USAGE_GRAPHICS_BIT_NVX(1), 	
  	VK_OBJECT_ENTRY_USAGE_COMPUTE_BIT_NVX(2), 	
  	VK_OBJECT_ENTRY_USAGE_FLAG_BITS_MAX_ENUM_NVX(2147483647); 	

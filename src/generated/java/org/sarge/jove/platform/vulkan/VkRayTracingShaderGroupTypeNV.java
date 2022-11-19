@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkRayTracingShaderGroupTypeNV implements IntegerEnumeration {
+public enum VkRayTracingShaderGroupTypeNV implements IntEnum {
  	VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV(0), 	
  	VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV(1), 	
  	VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_NV(2), 	

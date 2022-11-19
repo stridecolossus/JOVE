@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkVendorId implements IntegerEnumeration {
+public enum VkVendorId implements IntEnum {
  	VK_VENDOR_ID_VIV(65537), 	
  	VK_VENDOR_ID_VSI(65538), 	
  	VK_VENDOR_ID_KAZAN(65539), 	

@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 public class ColourBlendPipelineStageBuilderTest {
 	private static final float[] CONSTANTS = {1, 2, 3, 4};
@@ -47,7 +47,7 @@ public class ColourBlendPipelineStageBuilderTest {
 
 		final VkPipelineColorBlendAttachmentState attachment = info.pAttachments;
 		assertEquals(true, attachment.blendEnable);
-		assertEquals(new BitField<>(15), attachment.colorWriteMask);
+		assertEquals(new BitMask<>(15), attachment.colorWriteMask);
 		assertEquals(VkBlendOp.SUBTRACT, attachment.colorBlendOp);
 		assertEquals(VkBlendFactor.SRC_ALPHA, attachment.srcColorBlendFactor);
 		assertEquals(VkBlendFactor.DST_ALPHA, attachment.dstColorBlendFactor);

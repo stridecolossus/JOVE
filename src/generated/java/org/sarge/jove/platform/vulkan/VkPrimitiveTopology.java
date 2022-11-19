@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkPrimitiveTopology implements IntegerEnumeration {
+public enum VkPrimitiveTopology implements IntEnum {
  	POINT_LIST(0),
  	LINE_LIST(1),
  	LINE_STRIP(2),

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkPeerMemoryFeatureFlag implements IntegerEnumeration {
+public enum VkPeerMemoryFeatureFlag implements IntEnum {
  	VK_PEER_MEMORY_FEATURE_COPY_SRC_BIT(1), 	
  	VK_PEER_MEMORY_FEATURE_COPY_DST_BIT(2), 	
  	VK_PEER_MEMORY_FEATURE_GENERIC_SRC_BIT(4), 	

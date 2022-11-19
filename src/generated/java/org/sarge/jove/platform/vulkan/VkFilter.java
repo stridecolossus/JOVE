@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkFilter implements IntegerEnumeration {
+public enum VkFilter implements IntEnum {
  	NEAREST(0),
  	LINEAR(1),
  	CUBIC_IMG(1000015000),

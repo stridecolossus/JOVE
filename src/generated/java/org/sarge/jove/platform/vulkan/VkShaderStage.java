@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkShaderStage implements IntegerEnumeration {
+public enum VkShaderStage implements IntEnum {
  	VERTEX(1),
  	TESSELLATION_CONTROL(2),
  	TESSELLATION_EVALUATION(4),

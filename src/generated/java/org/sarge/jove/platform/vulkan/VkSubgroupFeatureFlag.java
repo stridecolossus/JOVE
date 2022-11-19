@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkSubgroupFeatureFlag implements IntegerEnumeration {
+public enum VkSubgroupFeatureFlag implements IntEnum {
  	VK_SUBGROUP_FEATURE_BASIC_BIT(1), 	
  	VK_SUBGROUP_FEATURE_VOTE_BIT(2), 	
  	VK_SUBGROUP_FEATURE_ARITHMETIC_BIT(4), 	

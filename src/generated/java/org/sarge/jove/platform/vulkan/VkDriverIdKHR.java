@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkDriverIdKHR implements IntegerEnumeration {
+public enum VkDriverIdKHR implements IntEnum {
  	VK_DRIVER_ID_AMD_PROPRIETARY_KHR(1), 	
  	VK_DRIVER_ID_AMD_OPEN_SOURCE_KHR(2), 	
  	VK_DRIVER_ID_MESA_RADV_KHR(3), 	

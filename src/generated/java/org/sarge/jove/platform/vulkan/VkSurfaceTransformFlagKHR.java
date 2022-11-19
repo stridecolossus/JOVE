@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkSurfaceTransformFlagKHR implements IntegerEnumeration {
+public enum VkSurfaceTransformFlagKHR implements IntEnum {
  	IDENTITY_KHR(1),
  	ROTATE_90_KHR(2),
  	ROTATE_180_KHR(4),

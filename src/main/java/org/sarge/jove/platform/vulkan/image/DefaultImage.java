@@ -121,7 +121,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntegerEnumeration.reverse(VkSampleCount.class).map(samples);
+			this.samples = IntEnum.reverse(VkSampleCount.class).map(samples);
 			return this;
 		}
 
@@ -163,7 +163,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 
 			// Populate image structure
 			final var info = new VkImageCreateInfo();
-			info.flags = BitField.reduce(flags);
+			info.flags = BitMask.reduce(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
@@ -172,7 +172,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 			info.samples = samples;
 			info.tiling = tiling;
 			info.initialLayout = layout;
-			info.usage = BitField.reduce(props.usage());
+			info.usage = BitMask.reduce(props.usage());
 			info.sharingMode = props.mode();
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 

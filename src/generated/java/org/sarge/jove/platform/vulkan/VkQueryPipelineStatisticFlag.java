@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkQueryPipelineStatisticFlag implements IntegerEnumeration {
+public enum VkQueryPipelineStatisticFlag implements IntEnum {
  	INPUT_ASSEMBLY_VERTICES(1),
  	INPUT_ASSEMBLY_PRIMITIVES(2),
  	VERTEX_SHADER_INVOCATIONS(4),

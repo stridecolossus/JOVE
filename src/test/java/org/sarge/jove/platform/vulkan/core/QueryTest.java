@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Query.*;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Structure;
 
@@ -44,7 +44,7 @@ public class QueryTest extends AbstractVulkanTest {
 			final Command begin = query.begin(VkQueryControlFlag.PRECISE);
 			assertNotNull(begin);
 			begin.record(lib, buffer);
-			verify(lib).vkCmdBeginQuery(buffer, pool, 0, BitField.reduce(VkQueryControlFlag.PRECISE));
+			verify(lib).vkCmdBeginQuery(buffer, pool, 0, BitMask.reduce(VkQueryControlFlag.PRECISE));
 		}
 
 		@DisplayName("is ended by a command wrapping a segment of the render sequence")
@@ -91,7 +91,7 @@ public class QueryTest extends AbstractVulkanTest {
 			};
 			expected.queryType = VkQueryType.OCCLUSION;
 			expected.queryCount = 1;
-			expected.pipelineStatistics = new BitField<>(0);
+			expected.pipelineStatistics = new BitMask<>(0);
 			verify(lib).vkCreateQueryPool(dev, expected, null, factory.pointer());
 		}
 
@@ -150,7 +150,7 @@ public class QueryTest extends AbstractVulkanTest {
 		};
 		expected.queryType = VkQueryType.PIPELINE_STATISTICS;
 		expected.queryCount = 1;
-		expected.pipelineStatistics = BitField.reduce(VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS);
+		expected.pipelineStatistics = BitMask.reduce(VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS);
 		verify(lib).vkCreateQueryPool(dev, expected, null, factory.pointer());
 	}
 
@@ -201,14 +201,14 @@ public class QueryTest extends AbstractVulkanTest {
 			@Test
 			void accept() {
 				accessor.accept(bb);
-				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 4, BitField.reduce(WAIT));
+				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 4, BitMask.reduce(WAIT));
 			}
 
 			@DisplayName("can be configured as long values")
 			@Test
 			void acceptLongValues() {
 				builder.longs().build().accept(bb);
-				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 8, BitField.reduce(WAIT, VkQueryResultFlag.LONG));
+				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 8, BitMask.reduce(WAIT, VkQueryResultFlag.LONG));
 			}
 
 			@DisplayName("cannot be copied to a buffer that is too small for the results")
@@ -225,7 +225,7 @@ public class QueryTest extends AbstractVulkanTest {
 			final VulkanBuffer dest = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 2 * 4);
 			final Command copy = builder.build(dest, 0);
 			copy.record(lib, buffer);
-			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, new BitField<>(0));
+			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, new BitMask<>(0));
 		}
 	}
 }

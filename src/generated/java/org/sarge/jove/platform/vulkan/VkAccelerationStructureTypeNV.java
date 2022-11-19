@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkAccelerationStructureTypeNV implements IntegerEnumeration {
+public enum VkAccelerationStructureTypeNV implements IntEnum {
  	VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV(0), 	
  	VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV(1), 	
  	VK_ACCELERATION_STRUCTURE_TYPE_BEGIN_RANGE_NV(0), 	

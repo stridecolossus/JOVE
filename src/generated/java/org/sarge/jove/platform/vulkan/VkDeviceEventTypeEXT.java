@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkDeviceEventTypeEXT implements IntegerEnumeration {
+public enum VkDeviceEventTypeEXT implements IntEnum {
  	VK_DEVICE_EVENT_TYPE_DISPLAY_HOTPLUG_EXT(0), 	
  	VK_DEVICE_EVENT_TYPE_BEGIN_RANGE_EXT(0), 	
  	VK_DEVICE_EVENT_TYPE_END_RANGE_EXT(0), 	

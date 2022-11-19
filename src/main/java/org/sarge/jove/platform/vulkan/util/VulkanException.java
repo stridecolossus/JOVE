@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * A <i>Vulkan exception</i> wraps an error code returned by the Vulkan platform.
@@ -53,7 +53,7 @@ public class VulkanException extends RuntimeException {
 	 */
 	private static String reason(int result) {
 		try {
-			return IntegerEnumeration.reverse(VkResult.class).map(result).name();
+			return IntEnum.reverse(VkResult.class).map(result).name();
 		}
 		catch(IllegalArgumentException e) {
 			return "Unknown error code";

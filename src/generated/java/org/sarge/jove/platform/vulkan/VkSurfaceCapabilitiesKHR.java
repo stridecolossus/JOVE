@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitMask;
 
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -28,8 +28,8 @@ public class VkSurfaceCapabilitiesKHR extends VulkanStructure implements ByRefer
 	public VkExtent2D minImageExtent;
 	public VkExtent2D maxImageExtent;
 	public int maxImageArrayLayers;
-	public int supportedTransforms;
+	public BitMask<VkSurfaceTransformFlagKHR> supportedTransforms;
 	public VkSurfaceTransformFlagKHR currentTransform;
-	public int supportedCompositeAlpha;
-	public int supportedUsageFlags;
+	public BitMask<VkCompositeAlphaFlagKHR> supportedCompositeAlpha;
+	public BitMask<VkImageUsageFlag> supportedUsageFlags;
 }

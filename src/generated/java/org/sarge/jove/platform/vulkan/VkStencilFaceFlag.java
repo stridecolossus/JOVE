@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkStencilFaceFlag implements IntegerEnumeration {
+public enum VkStencilFaceFlag implements IntEnum {
  	VK_STENCIL_FACE_FRONT_BIT(1), 	
  	VK_STENCIL_FACE_BACK_BIT(2), 	
  	VK_STENCIL_FRONT_AND_BACK(3), 	

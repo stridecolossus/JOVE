@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkValidationFeatureDisableEXT implements IntegerEnumeration {
+public enum VkValidationFeatureDisableEXT implements IntEnum {
  	VK_VALIDATION_FEATURE_DISABLE_ALL_EXT(0), 	
  	VK_VALIDATION_FEATURE_DISABLE_SHADERS_EXT(1), 	
  	VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT(2), 	

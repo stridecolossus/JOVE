@@ -9,7 +9,7 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 public class MemoryTypeTest {
 	private MemoryType type;
@@ -70,12 +70,12 @@ public class MemoryTypeTest {
 		// Create heap
 		final var heap = new VkMemoryHeap();
 		heap.size = 1;
-		heap.flags = BitField.reduce(DEVICE_LOCAL);
+		heap.flags = BitMask.reduce(DEVICE_LOCAL);
 
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = BitField.reduce(HOST_VISIBLE);
+		info.propertyFlags = BitMask.reduce(HOST_VISIBLE);
 
 		// Create memory properties
 		final var props = new VkPhysicalDeviceMemoryProperties();

@@ -17,21 +17,29 @@ public record Mask(int mask) {
 	}
 
 	/**
-	 * @param bits Bit-field
-	 * @return Whether this mask contains the given bit-field, i.e. is a super-set of the required bits
+	 * Maps the given bit index to an integer value, i.e. performs a left-shift.
+	 * @param index Bit index
+	 * @return Integer
 	 */
-	public boolean contains(int bits) {
-		return (mask & bits) == bits;
+	public static int toInteger(int index) {
+		return 1 << index;
 	}
 
 	/**
-	 * @return The bits of this mask as a stream of integers
+	 * @param index Bit index
+	 * @return Whether this mask contains the given bit
+	 */
+	public boolean contains(int value) {
+		return (mask & value) == value;
+	}
+
+	/**
+	 * @return The bits of this mask as a stream of indices
 	 */
 	public IntStream stream() {
 		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
 		return IntStream
 				.range(0, range)
-				.map(n -> 1 << n)
-				.filter(this::contains);
+				.filter(n -> contains(toInteger(n)));
 	}
 }

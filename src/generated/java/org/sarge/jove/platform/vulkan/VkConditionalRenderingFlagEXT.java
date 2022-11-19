@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkConditionalRenderingFlagEXT implements IntegerEnumeration {
+public enum VkConditionalRenderingFlagEXT implements IntEnum {
  	VK_CONDITIONAL_RENDERING_INVERTED_BIT_EXT(1), 	
  	VK_CONDITIONAL_RENDERING_FLAG_BITS_MAX_ENUM_EXT(2147483647); 	
 

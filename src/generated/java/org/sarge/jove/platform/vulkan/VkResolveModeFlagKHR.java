@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkResolveModeFlagKHR implements IntegerEnumeration {
+public enum VkResolveModeFlagKHR implements IntEnum {
  	VK_RESOLVE_MODE_NONE_KHR(0), 	
  	VK_RESOLVE_MODE_SAMPLE_ZERO_BIT_KHR(1), 	
  	VK_RESOLVE_MODE_AVERAGE_BIT_KHR(2), 	

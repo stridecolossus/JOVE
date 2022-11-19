@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkBlendOverlapEXT implements IntegerEnumeration {
+public enum VkBlendOverlapEXT implements IntEnum {
  	VK_BLEND_OVERLAP_UNCORRELATED_EXT(0), 	
  	VK_BLEND_OVERLAP_DISJOINT_EXT(1), 	
  	VK_BLEND_OVERLAP_CONJOINT_EXT(2), 	

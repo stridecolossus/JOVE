@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkDiscardRectangleModeEXT implements IntegerEnumeration {
+public enum VkDiscardRectangleModeEXT implements IntEnum {
  	VK_DISCARD_RECTANGLE_MODE_INCLUSIVE_EXT(0), 	
  	VK_DISCARD_RECTANGLE_MODE_EXCLUSIVE_EXT(1), 	
  	VK_DISCARD_RECTANGLE_MODE_BEGIN_RANGE_EXT(0), 	

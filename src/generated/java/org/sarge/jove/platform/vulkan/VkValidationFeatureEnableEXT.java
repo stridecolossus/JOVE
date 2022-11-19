@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkValidationFeatureEnableEXT implements IntegerEnumeration {
+public enum VkValidationFeatureEnableEXT implements IntEnum {
  	VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT(0), 	
  	VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT(1), 	
  	VK_VALIDATION_FEATURE_ENABLE_BEGIN_RANGE_EXT(0), 	

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkComponentTypeNV implements IntegerEnumeration {
+public enum VkComponentTypeNV implements IntEnum {
  	VK_COMPONENT_TYPE_FLOAT16_NV(0), 	
  	VK_COMPONENT_TYPE_FLOAT32_NV(1), 	
  	VK_COMPONENT_TYPE_FLOAT64_NV(2), 	

@@ -24,8 +24,7 @@ class MaskTest {
 
 	@Test
 	void stream() {
-		assertNotNull(mask.stream());
-		assertArrayEquals(new int[]{0b001, 0b100}, mask.stream().toArray());
+		assertArrayEquals(new int[]{0, 2}, mask.stream().toArray());
 	}
 
 	@Test
@@ -34,6 +33,14 @@ class MaskTest {
 		assertEquals(mask, new Mask(0b101));
 		assertNotEquals(mask, null);
 		assertNotEquals(mask, new Mask(0));
+	}
+
+	@Test
+	void toInteger() {
+		assertEquals(1, Mask.toInteger(0));
+		assertEquals(2, Mask.toInteger(1));
+		assertEquals(4, Mask.toInteger(2));
+		assertEquals(1, Mask.toInteger(32));
 	}
 
 	@Test

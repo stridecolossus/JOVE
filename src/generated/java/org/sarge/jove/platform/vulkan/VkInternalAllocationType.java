@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkInternalAllocationType implements IntegerEnumeration {
+public enum VkInternalAllocationType implements IntEnum {
  	VK_INTERNAL_ALLOCATION_TYPE_EXECUTABLE(0), 	
  	VK_INTERNAL_ALLOCATION_TYPE_BEGIN_RANGE(0), 	
  	VK_INTERNAL_ALLOCATION_TYPE_END_RANGE(0), 	

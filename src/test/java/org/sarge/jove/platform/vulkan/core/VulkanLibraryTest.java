@@ -24,7 +24,7 @@ class VulkanLibraryTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(classes={boolean.class, Boolean.class, IntegerEnumeration.class, BitField.class, Handle.class, NativeObject.class})
+	@ValueSource(classes={boolean.class, Boolean.class, IntEnum.class, BitMask.class, Handle.class, NativeObject.class})
 	void mapper(Class<?> type) {
 		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(type));
 	}

@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
 /**
@@ -61,7 +61,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
 		// Extract heaps
 		final var heaps = new Heap[descriptor.memoryHeapCount];
-		final var heapMapper = IntegerEnumeration.reverse(VkMemoryHeapFlag.class);
+		final var heapMapper = IntEnum.reverse(VkMemoryHeapFlag.class);
 		for(int n = 0; n < heaps.length; ++n) {
 			final VkMemoryHeap heap = descriptor.memoryHeaps[n];
 			final Set<VkMemoryHeapFlag> flags = heap.flags.enumerate(heapMapper);
@@ -70,7 +70,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 
 		// Extract memory types
 		final var types = new MemoryType[descriptor.memoryTypeCount];
-		final var typeMapper = IntegerEnumeration.reverse(VkMemoryProperty.class);
+		final var typeMapper = IntEnum.reverse(VkMemoryProperty.class);
 		for(int n = 0; n < types.length; ++n) {
 			final VkMemoryType type = descriptor.memoryTypes[n];
 			final Heap heap = heaps[type.heapIndex];

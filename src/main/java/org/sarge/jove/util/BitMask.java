@@ -4,29 +4,28 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
 
-import org.sarge.jove.util.IntegerEnumeration.ReverseMapping;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 import com.sun.jna.*;
 
 /**
- * A <i>bitfield</i> is a native integer representing a set of enumeration constants.
+ * A <i>bit mask</i> is a wrapper for a native integer representing a set of enumeration constants.
  * <p>
- * This allows enumerations that represent bitfields to be
- * type safety
- * clarity
+ * This class allows enumeration bit masks used in API methods and structures to be represented in a more type-safe manner, i.e. rather than a simple integer.
  * <p>
- * example
+ * The {@link #reduce(Collection)} method creates a bit mask from a collection of enumeration constants and {@link #enumerate(ReverseMapping)} performs the reverse operation.
  * <p>
- * @param <E> Bitfield enumeration
+ * @see IntEnum
+ * @param <E> Bit mask enumeration
  */
-public class BitField<E extends IntegerEnumeration> {
+public class BitMask<E extends IntEnum> {
 	private final int bits;
 
 	/**
 	 * Constructor.
 	 * @param bits Bitfield
 	 */
-	public BitField(int bits) {
+	public BitMask(int bits) {
 		this.bits = bits;
 	}
 
@@ -38,36 +37,37 @@ public class BitField<E extends IntegerEnumeration> {
 	}
 
 	/**
-	 * Builds a bitfield from the given enumeration constants.
+	 * Builds a mask from the given enumeration constants.
 	 * @param values Enumeration constants
 	 * @param <E> Bitfield enumeration
-	 * @return Bitfield
+	 * @return New bit mask
 	 */
-	public static <E extends IntegerEnumeration> BitField<E> reduce(Collection<E> values) {
+	public static <E extends IntEnum> BitMask<E> reduce(Collection<E> values) {
 		final int bits = values
 				.stream()
-				.mapToInt(IntegerEnumeration::value)
+				.mapToInt(IntEnum::value)
 				.reduce(0, (a, b) -> a | b);
 
-		return new BitField<>(bits);
+		return new BitMask<>(bits);
 	}
 
 	/**
 	 * @see #reduce(Collection)
 	 */
 	@SuppressWarnings("unchecked")
-	public static <E extends IntegerEnumeration> BitField<E> reduce(E... values) {
+	public static <E extends IntEnum> BitMask<E> reduce(E... values) {
 		return reduce(Set.of(values));
 	}
 
 	/**
-	 * Converts this bitfield to the corresponding enumeration constants.
+	 * Converts this mask to the corresponding enumeration constants.
 	 * @param reverse Reverse mapping
 	 * @return Enumeration constants
 	 */
 	public Set<E> enumerate(ReverseMapping<E> reverse) {
 		return new Mask(bits)
     			.stream()
+    			.map(Mask::toInteger)
     			.mapToObj(reverse::map)
     			.collect(toSet());
 	}
@@ -81,7 +81,7 @@ public class BitField<E extends IntegerEnumeration> {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof BitField<?> that) &&
+				(obj instanceof BitMask<?> that) &&
 				(this.bits == that.bits);
 	}
 
@@ -91,7 +91,7 @@ public class BitField<E extends IntegerEnumeration> {
 	}
 
 	/**
-	 * JNA type converter for a bitfield.
+	 * JNA type converter for a bit mask.
 	 */
 	public static final TypeConverter CONVERTER = new TypeConverter() {
 		@Override
@@ -102,7 +102,7 @@ public class BitField<E extends IntegerEnumeration> {
 		@Override
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
 			if(nativeValue instanceof Integer n) {
-				return new BitField<>(n);
+				return new BitMask<>(n);
 			}
 			else {
 				return null;
@@ -111,7 +111,7 @@ public class BitField<E extends IntegerEnumeration> {
 
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
-			if(value instanceof BitField<?> bitfield) {
+			if(value instanceof BitMask<?> bitfield) {
 				return bitfield.bits;
 			}
 			else {

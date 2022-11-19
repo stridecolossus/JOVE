@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.geometry.Axis.Z;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.geometry.WindingOrder;
 
 class WindingOrderTest {
 	@Test

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkSamplerYcbcrModelConversion implements IntegerEnumeration {
+public enum VkSamplerYcbcrModelConversion implements IntEnum {
  	VK_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY(0), 	
  	VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_IDENTITY(1), 	
  	VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_709(2), 	

@@ -8,7 +8,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -27,7 +27,7 @@ public class Fence extends AbstractVulkanObject {
 	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
-		info.flags = BitField.reduce(flags);
+		info.flags = BitMask.reduce(flags);
 
 		// Create fence
 		final VulkanLibrary lib = dev.library();

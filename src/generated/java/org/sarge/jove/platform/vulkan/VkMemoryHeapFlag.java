@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkMemoryHeapFlag implements IntegerEnumeration {
+public enum VkMemoryHeapFlag implements IntEnum {
  	DEVICE_LOCAL(1),
  	MULTI_INSTANCE(2),
  	MULTI_INSTANCE_KHR(2);

@@ -10,7 +10,7 @@ import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 import org.sarge.lib.util.Check;
 
 /**
@@ -170,7 +170,7 @@ public class PushConstant {
 		 * Populates a push constant range descriptor.
 		 */
 		void populate(VkPushConstantRange range) {
-			range.stageFlags = BitField.reduce(stages);
+			range.stageFlags = BitMask.reduce(stages);
 			range.size = size;
 			range.offset = offset;
 		}
@@ -182,7 +182,7 @@ public class PushConstant {
 	public class UpdateCommand implements Command {
 		private final Range range;
 		private final PipelineLayout layout;
-		private final BitField<VkShaderStage> stages;
+		private final BitMask<VkShaderStage> stages;
 
 		private UpdateCommand(Range range, PipelineLayout layout) {
 			if(!layout.push().ranges().contains(range)) {
@@ -190,7 +190,7 @@ public class PushConstant {
 			}
 			this.range = notNull(range);
 			this.layout = notNull(layout);
-			this.stages = BitField.reduce(range.stages);
+			this.stages = BitMask.reduce(range.stages);
 		}
 
 		@Override

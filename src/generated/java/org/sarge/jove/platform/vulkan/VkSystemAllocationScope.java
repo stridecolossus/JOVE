@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkSystemAllocationScope implements IntegerEnumeration {
+public enum VkSystemAllocationScope implements IntEnum {
  	VK_SYSTEM_ALLOCATION_SCOPE_COMMAND(0), 	
  	VK_SYSTEM_ALLOCATION_SCOPE_OBJECT(1), 	
  	VK_SYSTEM_ALLOCATION_SCOPE_CACHE(2), 	

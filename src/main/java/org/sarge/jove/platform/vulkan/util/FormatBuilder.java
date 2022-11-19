@@ -36,7 +36,7 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class FormatBuilder {
-	private static final IntegerEnumeration.ReverseMapping<VkFormat> MAPPING = IntegerEnumeration.reverse(VkFormat.class);
+	private static final IntEnum.ReverseMapping<VkFormat> MAPPING = IntEnum.reverse(VkFormat.class);
 
 	/**
 	 * Vulkan numeric formats.

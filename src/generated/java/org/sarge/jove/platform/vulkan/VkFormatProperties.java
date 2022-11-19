@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Structure.FieldOrder;
 
@@ -15,7 +15,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"bufferFeatures"
 })
 public class VkFormatProperties extends VulkanStructure {
-	public BitField<VkFormatFeature> linearTilingFeatures;
-	public BitField<VkFormatFeature> optimalTilingFeatures;
-	public BitField<VkFormatFeature> bufferFeatures;
+	public BitMask<VkFormatFeature> linearTilingFeatures;
+	public BitMask<VkFormatFeature> optimalTilingFeatures;
+	public BitMask<VkFormatFeature> bufferFeatures;
 }

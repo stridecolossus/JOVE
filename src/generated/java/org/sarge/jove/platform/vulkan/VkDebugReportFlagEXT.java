@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkDebugReportFlagEXT implements IntegerEnumeration {
+public enum VkDebugReportFlagEXT implements IntEnum {
  	VK_DEBUG_REPORT_INFORMATION_BIT_EXT(1), 	
  	VK_DEBUG_REPORT_WARNING_BIT_EXT(2), 	
  	VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT(4), 	

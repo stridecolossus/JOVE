@@ -44,8 +44,8 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	private static TypeMapper mapper() {
 		final var mapper = new DefaultTypeMapper();
 		mapper.addTypeConverter(Boolean.class, new NativeBooleanConverter());
-		mapper.addTypeConverter(IntegerEnumeration.class, IntegerEnumeration.CONVERTER);
-		mapper.addTypeConverter(BitField.class, BitField.CONVERTER);
+		mapper.addTypeConverter(IntEnum.class, IntEnum.CONVERTER);
+		mapper.addTypeConverter(BitMask.class, BitMask.CONVERTER);
 		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
 		mapper.addTypeConverter(NativeObject.class, NativeObject.CONVERTER);
 		return mapper;

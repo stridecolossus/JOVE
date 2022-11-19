@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkIndirectCommandsTokenTypeNVX implements IntegerEnumeration {
+public enum VkIndirectCommandsTokenTypeNVX implements IntEnum {
  	VK_INDIRECT_COMMANDS_TOKEN_TYPE_PIPELINE_NVX(0), 	
  	VK_INDIRECT_COMMANDS_TOKEN_TYPE_DESCRIPTOR_SET_NVX(1), 	
  	VK_INDIRECT_COMMANDS_TOKEN_TYPE_INDEX_BUFFER_NVX(2), 	

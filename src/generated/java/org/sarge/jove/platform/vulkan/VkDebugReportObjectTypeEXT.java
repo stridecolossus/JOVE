@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkDebugReportObjectTypeEXT implements IntegerEnumeration {
+public enum VkDebugReportObjectTypeEXT implements IntEnum {
  	VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT(0), 	
  	VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT(1), 	
  	VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT(2), 	

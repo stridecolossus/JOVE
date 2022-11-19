@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkColorSpaceKHR implements IntegerEnumeration {
+public enum VkColorSpaceKHR implements IntEnum {
  	SRGB_NONLINEAR_KHR(0),
  	DISPLAY_P3_NONLINEAR_EXT(1000104001),
  	EXTENDED_SRGB_LINEAR_EXT(1000104002),

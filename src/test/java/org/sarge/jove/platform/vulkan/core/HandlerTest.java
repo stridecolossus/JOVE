@@ -109,8 +109,8 @@ public class HandlerTest {
 				public boolean equals(Object obj) {
 					final var info = (VkDebugUtilsMessengerCreateInfoEXT) obj;
 					assertEquals(0, info.flags);
-					assertEquals(BitField.reduce(VkDebugUtilsMessageSeverity.ERROR), info.messageSeverity);
-					assertEquals(BitField.reduce(VkDebugUtilsMessageType.GENERAL), info.messageType);
+					assertEquals(BitMask.reduce(VkDebugUtilsMessageSeverity.ERROR), info.messageSeverity);
+					assertEquals(BitMask.reduce(VkDebugUtilsMessageType.GENERAL), info.messageType);
 					assertNotNull(info.pfnUserCallback);
 					assertNull(info.pUserData);
 					return true;

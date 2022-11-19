@@ -3,7 +3,6 @@ package org.sarge.jove.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.NativeBooleanConverter;
 
 class NativeBooleanConverterTest {
 	private NativeBooleanConverter converter;

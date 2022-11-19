@@ -7,7 +7,7 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 /**
  * An <i>image sub-resource</i> defines a subset of the aspects, mip levels and array layers of an image.
@@ -54,7 +54,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceRange toRange(SubResource res) {
 		final var range = new VkImageSubresourceRange();
-		range.aspectMask = BitField.reduce(res.aspects());
+		range.aspectMask = BitMask.reduce(res.aspects());
 		range.baseMipLevel = res.mipLevel();
 		range.levelCount = res.levelCount();
 		range.baseArrayLayer = res.baseArrayLayer();
@@ -69,7 +69,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceLayers toLayers(SubResource res) {
 		final var layers = new VkImageSubresourceLayers();
-		layers.aspectMask = BitField.reduce(res.aspects());
+		layers.aspectMask = BitMask.reduce(res.aspects());
 		layers.mipLevel = res.mipLevel();
 		layers.baseArrayLayer = res.baseArrayLayer();
 		layers.layerCount = res.layerCount();

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkGeometryTypeNV implements IntegerEnumeration {
+public enum VkGeometryTypeNV implements IntEnum {
  	VK_GEOMETRY_TYPE_TRIANGLES_NV(0), 	
  	VK_GEOMETRY_TYPE_AABBS_NV(1), 	
  	VK_GEOMETRY_TYPE_BEGIN_RANGE_NV(0), 	

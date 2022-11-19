@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkCoverageModulationModeNV implements IntegerEnumeration {
+public enum VkCoverageModulationModeNV implements IntEnum {
  	VK_COVERAGE_MODULATION_MODE_NONE_NV(0), 	
  	VK_COVERAGE_MODULATION_MODE_RGB_NV(1), 	
  	VK_COVERAGE_MODULATION_MODE_ALPHA_NV(2), 	

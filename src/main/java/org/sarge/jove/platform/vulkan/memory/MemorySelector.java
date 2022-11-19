@@ -84,7 +84,7 @@ public class MemorySelector {
 		final FallbackPredicate predicate = new FallbackPredicate();
 		return new Mask(reqs.memoryTypeBits)
 				.stream()
-				.mapToObj(n -> types[n - 1])
+				.mapToObj(n -> types[n])
 				.filter(predicate)
 				.findAny()
 				.or(predicate::fallback)

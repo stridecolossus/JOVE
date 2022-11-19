@@ -12,7 +12,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 
@@ -114,7 +114,7 @@ public class DescriptorPoolTest extends AbstractVulkanTest {
 				public boolean equals(Object obj) {
 					final var info = (VkDescriptorPoolCreateInfo) obj;
 					assertEquals(3, info.maxSets);
-					assertEquals(BitField.reduce(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET), info.flags);
+					assertEquals(BitMask.reduce(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET), info.flags);
 					assertEquals(1, info.poolSizeCount);
 					assertNotNull(info.pPoolSizes);
 					return true;

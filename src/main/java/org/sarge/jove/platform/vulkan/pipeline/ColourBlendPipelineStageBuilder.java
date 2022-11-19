@@ -191,7 +191,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 			info.alphaBlendOp = alpha.blend;
 
 			// Init colour write mask
-			info.colorWriteMask = BitField.reduce(mask);
+			info.colorWriteMask = BitMask.reduce(mask);
 		}
 
 		/**

@@ -274,8 +274,8 @@ public class Swapchain extends AbstractVulkanObject {
 			return new Dimensions(extents.width, extents.height);
 		}
 
-		private static void validate(int bits, IntegerEnumeration e) {
-			final Mask mask = new Mask(bits);
+		private static void validate(BitMask<?> bitfield, IntEnum e) {
+			final Mask mask = new Mask(bitfield.bits());
 			if(!mask.contains(e.value())) throw new IllegalArgumentException("Unsupported property: " + e);
 		}
 
@@ -421,7 +421,7 @@ public class Swapchain extends AbstractVulkanObject {
 		public Swapchain build(DeviceContext dev) {
 			// Init swapchain descriptor
 			info.surface = surface.handle();
-			info.imageUsage = BitField.reduce(usage);
+			info.imageUsage = BitMask.reduce(usage);
 			info.oldSwapchain = null; // TODO
 
 			// TODO

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkBlendFactor implements IntegerEnumeration {
+public enum VkBlendFactor implements IntEnum {
  	ZERO(0),
  	ONE(1),
  	SRC_COLOR(2),

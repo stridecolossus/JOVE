@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkAttachmentDescriptionFlag implements IntegerEnumeration {
+public enum VkAttachmentDescriptionFlag implements IntEnum {
  	VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT(1), 	
  	VK_ATTACHMENT_DESCRIPTION_FLAG_BITS_MAX_ENUM(2147483647); 	
 

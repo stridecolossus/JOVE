@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkPipelineCacheHeaderVersion implements IntegerEnumeration {
+public enum VkPipelineCacheHeaderVersion implements IntEnum {
  	VK_PIPELINE_CACHE_HEADER_VERSION_ONE(1), 	
  	VK_PIPELINE_CACHE_HEADER_VERSION_BEGIN_RANGE(1), 	
  	VK_PIPELINE_CACHE_HEADER_VERSION_END_RANGE(1), 	

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Structure.FieldOrder;
 
@@ -17,7 +17,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"layerCount"
 })
 public class VkImageSubresourceRange extends VulkanStructure {
-	public BitField<VkImageAspect> aspectMask;
+	public BitMask<VkImageAspect> aspectMask;
 	public int baseMipLevel;
 	public int levelCount;
 	public int baseArrayLayer;

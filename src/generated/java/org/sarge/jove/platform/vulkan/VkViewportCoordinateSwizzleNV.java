@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkViewportCoordinateSwizzleNV implements IntegerEnumeration {
+public enum VkViewportCoordinateSwizzleNV implements IntEnum {
  	VK_VIEWPORT_COORDINATE_SWIZZLE_POSITIVE_X_NV(0), 	
  	VK_VIEWPORT_COORDINATE_SWIZZLE_NEGATIVE_X_NV(1), 	
  	VK_VIEWPORT_COORDINATE_SWIZZLE_POSITIVE_Y_NV(2), 	

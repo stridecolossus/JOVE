@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkQueueGlobalPriorityEXT implements IntegerEnumeration {
+public enum VkQueueGlobalPriorityEXT implements IntEnum {
  	VK_QUEUE_GLOBAL_PRIORITY_LOW_EXT(128), 	
  	VK_QUEUE_GLOBAL_PRIORITY_MEDIUM_EXT(256), 	
  	VK_QUEUE_GLOBAL_PRIORITY_HIGH_EXT(512), 	

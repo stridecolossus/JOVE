@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.LazySupplier;
 
 import com.sun.jna.Pointer;
@@ -128,7 +128,7 @@ public class Surface extends AbstractTransientNativeObject {
 		final int[] array = func.invoke(count, int[]::new);
 
 		// Convert to enumeration
-		final var mapping = IntegerEnumeration.reverse(VkPresentModeKHR.class);
+		final var mapping = IntEnum.reverse(VkPresentModeKHR.class);
 		return Arrays
 				.stream(array)
 				.mapToObj(mapping::map)

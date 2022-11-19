@@ -9,7 +9,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 public class SubResourceTest {
 	private Descriptor descriptor;
@@ -49,7 +49,7 @@ public class SubResourceTest {
 	void toLayers() {
 		final VkImageSubresourceLayers layers = SubResource.toLayers(res);
 		assertNotNull(layers);
-		assertEquals(BitField.reduce(VkImageAspect.DEPTH), layers.aspectMask);
+		assertEquals(BitMask.reduce(VkImageAspect.DEPTH), layers.aspectMask);
 		assertEquals(1, layers.mipLevel);
 		assertEquals(2, layers.baseArrayLayer);
 		assertEquals(3, layers.layerCount);
@@ -60,7 +60,7 @@ public class SubResourceTest {
 	void toRange() {
 		final VkImageSubresourceRange range = SubResource.toRange(res);
 		assertNotNull(range);
-		assertEquals(BitField.reduce(VkImageAspect.DEPTH), range.aspectMask);
+		assertEquals(BitMask.reduce(VkImageAspect.DEPTH), range.aspectMask);
 		assertEquals(1, range.baseMipLevel);
 		assertEquals(2, range.levelCount);
 		assertEquals(2, range.baseArrayLayer);

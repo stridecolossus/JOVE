@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkImageCreateFlag implements IntegerEnumeration {
+public enum VkImageCreateFlag implements IntEnum {
  	SPARSE_BINDING(1),
  	SPARSE_RESIDENCY(2),
  	SPARSE_ALIASED(4),

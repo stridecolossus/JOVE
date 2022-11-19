@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.volume.Bounds;
 
 class BoundsTest {
 	private Bounds bounds;

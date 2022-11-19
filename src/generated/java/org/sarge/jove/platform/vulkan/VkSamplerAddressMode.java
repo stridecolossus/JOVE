@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkSamplerAddressMode implements IntegerEnumeration {
+public enum VkSamplerAddressMode implements IntEnum {
  	REPEAT(0),
  	MIRRORED_REPEAT(1),
  	CLAMP_TO_EDGE(2),

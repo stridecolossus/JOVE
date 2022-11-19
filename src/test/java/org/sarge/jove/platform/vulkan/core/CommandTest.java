@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.common.Queue.Family;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.*;
 
@@ -168,7 +168,7 @@ class CommandTest extends AbstractVulkanTest {
 			void reset() {
 				buffer.reset();
 				buffer.begin();
-				verify(lib).vkResetCommandBuffer(buffer, new BitField<>(0));
+				verify(lib).vkResetCommandBuffer(buffer, new BitMask<>(0));
 				assertEquals(false, buffer.isReady());
 			}
 		}
@@ -266,7 +266,7 @@ class CommandTest extends AbstractVulkanTest {
 		@Test
 		void reset() {
 			pool.reset();
-			verify(lib).vkResetCommandPool(dev, pool, new BitField<>(0));
+			verify(lib).vkResetCommandPool(dev, pool, new BitMask<>(0));
 		}
 
 		@Test

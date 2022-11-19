@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkBuildAccelerationStructureFlagNV implements IntegerEnumeration {
+public enum VkBuildAccelerationStructureFlagNV implements IntEnum {
  	VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_NV(1), 	
  	VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_NV(2), 	
  	VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_NV(4), 	

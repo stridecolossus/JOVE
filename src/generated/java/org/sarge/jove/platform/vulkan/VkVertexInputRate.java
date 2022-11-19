@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkVertexInputRate implements IntegerEnumeration {
+public enum VkVertexInputRate implements IntEnum {
  	VERTEX(0),
  	INSTANCE(1);
 

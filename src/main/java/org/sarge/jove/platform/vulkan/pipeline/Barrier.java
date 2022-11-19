@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.BitField.reduce;
+import static org.sarge.jove.util.BitMask.reduce;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
@@ -43,8 +43,8 @@ import com.sun.jna.Structure;
  * @author Sarge
  */
 public class Barrier extends ImmediateCommand {
-	private final BitField<VkPipelineStage> src, dest;
-	private final BitField<VkDependencyFlag> flags;
+	private final BitMask<VkPipelineStage> src, dest;
+	private final BitMask<VkDependencyFlag> flags;
 	private final VkImageMemoryBarrier[] images;
 	private final VkBufferMemoryBarrier[] buffers;
 	private final VkMemoryBarrier[] memory;

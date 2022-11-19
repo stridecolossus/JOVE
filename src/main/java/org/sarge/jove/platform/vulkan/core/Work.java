@@ -98,7 +98,7 @@ public final class Work {
 			info.pWaitSemaphores = NativeObject.array(wait.keySet());
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
-			final int[] stages = wait.values().stream().map(BitField::reduce).mapToInt(BitField::bits).toArray();
+			final int[] stages = wait.values().stream().map(BitMask::reduce).mapToInt(BitMask::bits).toArray();
 			info.pWaitDstStageMask = new IntegerArray(stages);
 		}
 

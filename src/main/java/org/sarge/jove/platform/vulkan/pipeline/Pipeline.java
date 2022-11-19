@@ -365,7 +365,7 @@ public class Pipeline extends AbstractVulkanObject {
 		 */
 		private void populate(VkGraphicsPipelineCreateInfo info) {
 			// Init descriptor
-			info.flags = BitField.reduce(flags);
+			info.flags = BitMask.reduce(flags);
 
 			// Init layout
 			if(layout == null) throw new IllegalArgumentException("No pipeline layout specified");
@@ -493,6 +493,6 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @param imageMemoryBarrierCount			Number of image barriers
 		 * @param pImageMemoryBarriers				Image barriers
 		 */
-		void vkCmdPipelineBarrier(Buffer commandBuffer, BitField<VkPipelineStage> srcStageMask, BitField<VkPipelineStage> dstStageMask, BitField<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
+		void vkCmdPipelineBarrier(Buffer commandBuffer, BitMask<VkPipelineStage> srcStageMask, BitMask<VkPipelineStage> dstStageMask, BitMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 	}
 }

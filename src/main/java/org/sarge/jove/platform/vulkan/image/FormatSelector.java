@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 import org.sarge.lib.util.Check;
 
 /**
@@ -35,9 +35,9 @@ public class FormatSelector {
 	 */
 	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> required) {
 		Check.notEmpty(required);
-		final BitField<VkFormatFeature> features = BitField.reduce(required);
+		final BitMask<VkFormatFeature> features = BitMask.reduce(required);
 		return props -> {
-			final BitField<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
+			final BitMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
 			return (supported.bits() & features.bits()) == features.bits();
 			// TODO
 //			final Mask mask = new Mask(bits);

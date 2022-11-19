@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder.ShaderStageBuild
 import org.sarge.jove.platform.vulkan.pipeline.ViewportPipelineStageBuilder.Viewport;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 
@@ -94,7 +94,7 @@ class PipelineTest extends AbstractVulkanTest {
 				public boolean equals(Object obj) {
 					// Check descriptor
 					final var info = (VkGraphicsPipelineCreateInfo) obj;
-					assertEquals(new BitField<>(0), info.flags);
+					assertEquals(new BitMask<>(0), info.flags);
 
 					// Check derived pipelines
 					assertEquals(null, info.basePipelineHandle);

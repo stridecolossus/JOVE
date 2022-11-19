@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -30,7 +30,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkImageCreateInfo extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.IMAGE_CREATE_INFO;
 	public Pointer pNext;
-	public BitField<VkImageCreateFlag> flags;
+	public BitMask<VkImageCreateFlag> flags;
 	public VkImageType imageType;
 	public VkFormat format;
 	public VkExtent3D extent;
@@ -38,7 +38,7 @@ public class VkImageCreateInfo extends VulkanStructure {
 	public int arrayLayers;
 	public VkSampleCount samples;
 	public VkImageTiling tiling;
-	public BitField<VkImageUsageFlag> usage;
+	public BitMask<VkImageUsageFlag> usage;
 	public VkSharingMode sharingMode;
 	public int queueFamilyIndexCount;
 	public Pointer pQueueFamilyIndices;

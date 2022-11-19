@@ -12,7 +12,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -117,7 +117,7 @@ public interface Query {
 			final var info = new VkQueryPoolCreateInfo();
 			info.queryType = notNull(type);
 			info.queryCount = oneOrMore(slots);
-			info.pipelineStatistics = BitField.reduce(stats);
+			info.pipelineStatistics = BitMask.reduce(stats);
 
 			// Instantiate query pool
 			final PointerByReference ref = dev.factory().pointer();
@@ -175,7 +175,7 @@ public interface Query {
 
 				@Override
 				public Command begin(VkQueryControlFlag... flags) {
-					final BitField<VkQueryControlFlag> mask = BitField.reduce(flags);
+					final BitMask<VkQueryControlFlag> mask = BitMask.reduce(flags);
 					return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
 				}
 
@@ -355,7 +355,7 @@ public interface Query {
 		 */
 		public Consumer<ByteBuffer> build() {
 			// Validate query result
-			final BitField<VkQueryResultFlag> mask = validate();
+			final BitMask<VkQueryResultFlag> mask = validate();
 
 			// Init library
 			final DeviceContext dev = pool.device();
@@ -391,7 +391,7 @@ public interface Query {
 			buffer.validate(offset - 1 + count * stride);
 
 			// Validate query result
-			final BitField<VkQueryResultFlag> mask = validate();
+			final BitMask<VkQueryResultFlag> mask = validate();
 
 			// Create results command
 			return (lib, cmd) -> {
@@ -404,7 +404,7 @@ public interface Query {
 		 * Validates this query result.
 		 * @return Flags bit-field
 		 */
-		private BitField<VkQueryResultFlag> validate() {
+		private BitMask<VkQueryResultFlag> validate() {
 			// Validate query range
 			if(start + count > pool.slots) {
 				throw new IllegalArgumentException(String.format("Invalid query slot range: start=%d count=%d pool=%s", start, count, pool));
@@ -417,7 +417,7 @@ public interface Query {
 			}
 
 			// Build flags mask
-			return BitField.reduce(flags);
+			return BitMask.reduce(flags);
 		}
 
 		@Override
@@ -469,7 +469,7 @@ public interface Query {
 		 * @param query				Query slot
 		 * @param flags				Flags
 		 */
-		void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, BitField<VkQueryControlFlag> flags);
+		void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, BitMask<VkQueryControlFlag> flags);
 
 		/**
 		 * Ends a query.
@@ -500,7 +500,7 @@ public interface Query {
 		 * @param flags				Query flags
 		 * @return Result
 		 */
-		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, ByteBuffer pData, long stride, BitField<VkQueryResultFlag> flags);
+		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, ByteBuffer pData, long stride, BitMask<VkQueryResultFlag> flags);
 
 		/**
 		 * Writes query results to a Vulkan buffer.
@@ -513,6 +513,6 @@ public interface Query {
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
 		 */
-		void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, BitField<VkQueryResultFlag> flags);
+		void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, BitMask<VkQueryResultFlag> flags);
 	}
 }

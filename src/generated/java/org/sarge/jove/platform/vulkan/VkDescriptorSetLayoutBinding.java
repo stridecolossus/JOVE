@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.*;
@@ -21,6 +21,6 @@ public class VkDescriptorSetLayoutBinding extends VulkanStructure implements ByR
 	public int binding;
 	public VkDescriptorType descriptorType;
 	public int descriptorCount;
-	public BitField<VkShaderStage> stageFlags;
+	public BitMask<VkShaderStage> stageFlags;
 	public Pointer pImmutableSamplers;
 }

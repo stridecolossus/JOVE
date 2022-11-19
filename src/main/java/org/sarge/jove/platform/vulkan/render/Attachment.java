@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.View;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
 /**
@@ -132,7 +132,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		 * @see #samples(VkSampleCount)
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntegerEnumeration.reverse(VkSampleCount.class).map(samples);
+			this.samples = IntEnum.reverse(VkSampleCount.class).map(samples);
 			return this;
 		}
 

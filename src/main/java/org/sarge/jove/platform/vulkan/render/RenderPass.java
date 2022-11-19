@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.jove.util.BitField.reduce;
+import static org.sarge.jove.util.BitMask.reduce;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;

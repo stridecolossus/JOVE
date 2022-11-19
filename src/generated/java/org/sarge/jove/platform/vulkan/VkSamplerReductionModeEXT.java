@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkSamplerReductionModeEXT implements IntegerEnumeration {
+public enum VkSamplerReductionModeEXT implements IntEnum {
  	VK_SAMPLER_REDUCTION_MODE_WEIGHTED_AVERAGE_EXT(0), 	
  	VK_SAMPLER_REDUCTION_MODE_MIN_EXT(1), 	
  	VK_SAMPLER_REDUCTION_MODE_MAX_EXT(2), 	

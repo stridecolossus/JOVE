@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkImageViewCreateFlag implements IntegerEnumeration {
+public enum VkImageViewCreateFlag implements IntEnum {
  	VK_IMAGE_VIEW_CREATE_FRAGMENT_DENSITY_MAP_DYNAMIC_BIT_EXT(1), 	
  	VK_IMAGE_VIEW_CREATE_FLAG_BITS_MAX_ENUM(2147483647); 	
 

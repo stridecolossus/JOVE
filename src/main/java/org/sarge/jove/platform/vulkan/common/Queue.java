@@ -7,7 +7,7 @@ import java.util.Set;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
 /**
@@ -49,7 +49,7 @@ public record Queue(Handle handle, Queue.Family family) implements NativeObject 
 		 * @return New queue family
 		 */
 		public static Family of(int index, VkQueueFamilyProperties props) {
-			final var mapping = IntegerEnumeration.reverse(VkQueueFlag.class);
+			final var mapping = IntEnum.reverse(VkQueueFlag.class);
 			final Set<VkQueueFlag> flags = props.queueFlags.enumerate(mapping);
 			return new Family(index, props.queueCount, flags);
 		}

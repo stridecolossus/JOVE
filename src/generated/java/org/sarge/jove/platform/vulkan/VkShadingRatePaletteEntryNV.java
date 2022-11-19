@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
 /**
  * Vulkan enumeration wrapper.
  * This class has been code-generated.
  */
-public enum VkShadingRatePaletteEntryNV implements IntegerEnumeration {
+public enum VkShadingRatePaletteEntryNV implements IntEnum {
  	VK_SHADING_RATE_PALETTE_ENTRY_NO_INVOCATIONS_NV(0), 	
  	VK_SHADING_RATE_PALETTE_ENTRY_16_INVOCATIONS_PER_PIXEL_NV(1), 	
  	VK_SHADING_RATE_PALETTE_ENTRY_8_INVOCATIONS_PER_PIXEL_NV(2), 	
