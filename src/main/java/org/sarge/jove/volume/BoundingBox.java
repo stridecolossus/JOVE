@@ -61,24 +61,26 @@ public class BoundingBox implements Volume {
 	 */
 	@Override
 	public Intersection intersection(Ray ray) {
+		// Convert arguments to slab-wise components
+		final float[] min = bounds.min().toArray();
+		final float[] max = bounds.max().toArray();
+		final float[] origin = ray.origin().toArray();
+		final float[] dir = ray.direction().toArray();
+
 		// Determine intersection distances
 		float n = Float.NEGATIVE_INFINITY;
 		float f = Float.POSITIVE_INFINITY;
 		for(int c = 0; c < Vector.SIZE; ++c) {
-			final float origin = ray.origin().get(c);
-			final float dir = ray.direction().get(c);
-			final float min = bounds.min().get(c);
-			final float max = bounds.max().get(c);
-			if(MathsUtil.isZero(dir)) {
+			if(MathsUtil.isZero(dir[c])) {
 				// Check for parallel ray
-				if((origin < min) || (origin > max)) {
+				if((origin[c] < min[c]) || (origin[c] > max[c])) {
 					return Intersection.NONE;
 				}
 			}
 			else {
 				// Calc intersection distances
-				final float a = intersect(min, origin, dir);
-				final float b = intersect(max, origin, dir);
+				final float a = intersect(c, min, origin, dir);
+				final float b = intersect(c, max, origin, dir);
 
 				// Update intersections
 				n = Math.max(n, Math.min(a, b));
@@ -113,13 +115,14 @@ public class BoundingBox implements Volume {
 
 	/**
 	 * Calculates the intersection of the given ray component.
-	 * @param value			Ray component
+	 * @param index			Component index
+	 * @param value			Ray
 	 * @param origin		Origin
 	 * @param dir			Direction
 	 * @return Intersection distance
 	 */
-	private static float intersect(float value, float origin, float dir) {
-		return (value - origin) / dir;
+	private static float intersect(int index, float[] value, float[] origin, float[] dir) {
+		return (value[index] - origin[index]) / dir[index];
 	}
 
 	/**

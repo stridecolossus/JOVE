@@ -15,7 +15,6 @@ import org.sarge.jove.geometry.Vector;
  */
 public class Randomiser {
 	private final Random random;
-	private final float[] array = new float[3];
 	private final Interpolator interpolator = Interpolator.linear(-1, +1);
 
 	/**
@@ -51,13 +50,13 @@ public class Randomiser {
 
 	/**
 	 * Generates a randomised vector.
-	 * This method is <b>not</b> thread-safe.
 	 * @return Randomised vector
 	 */
 	public Vector vector() {
-		for(int n = 0; n < array.length; ++n) {
-			array[n] = interpolator.apply(next());
+		final float[] vec = new float[Vector.SIZE];
+		for(int n = 0; n < vec.length; ++n) {
+			vec[n] = interpolator.apply(next());
 		}
-		return new Vector(array);
+		return new Vector(vec);
 	}
 }

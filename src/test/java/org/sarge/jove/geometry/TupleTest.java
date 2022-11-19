@@ -42,17 +42,14 @@ public class TupleTest {
 		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[]{1, 2, 3, 4}));
 	}
 
-	@DisplayName("The components of a tuple can be retrieved by index")
+	@DisplayName("A tuple can be converted to an array")
 	@Test
-	void get() {
-		assertEquals(1, tuple.get(0));
-		assertEquals(2, tuple.get(1));
-		assertEquals(3, tuple.get(2));
-	}
-
-	@Test
-	void getInvalidComponentIndex() {
-		assertThrows(IndexOutOfBoundsException.class, () -> tuple.get(3));
+	void toArray() {
+		final float[] array = tuple.toArray();
+		assertEquals(3, array.length);
+		assertEquals(1, array[0]);
+		assertEquals(2, array[1]);
+		assertEquals(3, array[2]);
 	}
 
 	@DisplayName("A tuple can be written to an NIO buffer")

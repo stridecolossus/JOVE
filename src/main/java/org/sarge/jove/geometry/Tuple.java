@@ -48,18 +48,14 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 	}
 
 	/**
-	 * Extracts a component from this tuple by index.
-	 * @param index Component index 0..2
-	 * @return Component of this tuple
-	 * @throws IndexOutOfBoundsException for an invalid index
+	 * @return This tuple as an array
 	 */
-	public final float get(int index) {
-		return switch(index) {
-			case 0 -> x;
-			case 1 -> y;
-			case 2 -> z;
-			default -> throw new IndexOutOfBoundsException("Invalid component index: " + index);
-		};
+	public float[] toArray() {
+		final float[] array = new float[SIZE];
+		array[0] = x;
+		array[1] = y;
+		array[2] = z;
+		return array;
 	}
 
 	@Override
@@ -95,6 +91,6 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 
 	@Override
 	public final String toString() {
-		return Arrays.toString(new float[]{x, y, z});
+		return Arrays.toString(toArray());
 	}
 }

@@ -152,10 +152,10 @@ public record Bounds(Point min, Point max) {
 		 * @param p Point to add
 		 */
 		public Builder add(Point p) {
+			final float[] array = p.toArray();
 			for(int n = 0; n < Point.SIZE; ++n) {
-				final float value = p.get(n);
-				min[n] = Math.min(value, min[n]);
-				max[n] = Math.max(value, max[n]);
+				min[n] = Math.min(array[n], min[n]);
+				max[n] = Math.max(array[n], max[n]);
 			}
 			return this;
 		}
