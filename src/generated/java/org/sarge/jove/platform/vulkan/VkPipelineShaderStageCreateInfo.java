@@ -4,8 +4,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -23,7 +22,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkPipelineShaderStageCreateInfo extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
 	public Pointer pNext;
-	public int flags;
+	public int flags; // TODO - 1.3
 	public VkShaderStage stage;
 	public Handle module;
 	public String pName;

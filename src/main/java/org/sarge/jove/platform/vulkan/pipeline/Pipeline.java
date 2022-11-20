@@ -22,6 +22,7 @@ import com.sun.jna.Pointer;
  * @author Sarge
  */
 public class Pipeline extends AbstractVulkanObject {
+	private final VkPipelineBindPoint type;
 	private final PipelineLayout layout;
 	private final Set<VkPipelineCreateFlag> flags;
 
@@ -29,13 +30,22 @@ public class Pipeline extends AbstractVulkanObject {
 	 * Constructor.
 	 * @param handle		Pipeline handle
 	 * @param dev			Device
+	 * @param type			Pipeline type
 	 * @param layout		Pipeline layout
 	 * @param flags			Creation flags
 	 */
-	Pipeline(Handle handle, DeviceContext dev, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
+	Pipeline(Handle handle, DeviceContext dev, VkPipelineBindPoint type, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
 		super(handle, dev);
+		this.type = notNull(type);
 		this.layout = notNull(layout);
 		this.flags = Set.copyOf(flags);
+	}
+
+	/**
+	 * @return Type of this pipeline (or the bind point)
+	 */
+	public VkPipelineBindPoint type() {
+		return type;
 	}
 
 	/**
@@ -57,7 +67,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @return New bind pipeline command
 	 */
 	public Command bind() {
-		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, Pipeline.this);
+		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, type, Pipeline.this);
 	}
 
 	@Override
@@ -69,6 +79,7 @@ public class Pipeline extends AbstractVulkanObject {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
+				.append(type)
 				.append(layout)
 				.append(flags)
 				.build();
@@ -79,8 +90,9 @@ public class Pipeline extends AbstractVulkanObject {
 	 */
 	public static class Builder {
 		// Properties
-		private PipelineLayout layout;
-		private RenderPass pass;
+		private final VkPipelineBindPoint type;
+		private final PipelineLayout layout;
+		private final RenderPass pass;
 		private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
 		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
 
@@ -101,8 +113,18 @@ public class Pipeline extends AbstractVulkanObject {
 
 		/**
 		 * Constructor.
+		 * @param type			Pipeline type
+		 * @param layout		Layout
+		 * @param pass			Render pass
 		 */
-		public Builder() {
+		public Builder(VkPipelineBindPoint type, PipelineLayout layout, RenderPass pass) {
+			this.type = notNull(type);
+			this.layout = notNull(layout);
+			this.pass = notNull(pass);
+			init();
+		}
+
+		private void init() {
 			input.parent(this);
 			assembly.parent(this);
 			tesselation.parent(this);
@@ -112,24 +134,6 @@ public class Pipeline extends AbstractVulkanObject {
 			depth.parent(this);
 			blend.parent(this);
 			dynamic.parent(this);
-		}
-
-		/**
-		 * Sets the layout for this pipeline.
-		 * @param layout Pipeline layout
-		 */
-		public Builder layout(PipelineLayout layout) {
-			this.layout = notNull(layout);
-			return this;
-		}
-
-		/**
-		 * Sets the render pass for this pipeline.
-		 * @param pass Render pass
-		 */
-		public Builder pass(RenderPass pass) {
-			this.pass = notNull(pass);
-			return this;
 		}
 
 		/**
@@ -366,13 +370,7 @@ public class Pipeline extends AbstractVulkanObject {
 		private void populate(VkGraphicsPipelineCreateInfo info) {
 			// Init descriptor
 			info.flags = BitMask.reduce(flags);
-
-			// Init layout
-			if(layout == null) throw new IllegalArgumentException("No pipeline layout specified");
 			info.layout = layout.handle();
-
-			// Init render pass
-			if(pass == null) throw new IllegalArgumentException("No render pass specified");
 			info.renderPass = pass.handle();
 			info.subpass = 0;		// TODO - subpass?
 
@@ -442,10 +440,11 @@ public class Pipeline extends AbstractVulkanObject {
 			for(int n = 0; n < array.length; ++n) {
 				final Builder builder = builders.get(n);
 				final Handle handle = new Handle(pointers[n]);
-				pipelines[n] = new Pipeline(handle, dev, builder.layout, builder.flags);
+				pipelines[n] = new Pipeline(handle, dev, VkPipelineBindPoint.GRAPHICS, builder.layout, builder.flags); // TODO - type
 			}
 			return Arrays.asList(pipelines);
 		}
+		// TODO - compute pipelines => complexity!
 	}
 
 	/**
@@ -453,7 +452,7 @@ public class Pipeline extends AbstractVulkanObject {
 	 */
 	interface Library {
 		/**
-		 * Creates a graphics pipeline.
+		 * Creates an array of graphics pipelines.
 		 * @param device			Logical device
 		 * @param pipelineCache		Optional pipeline cache
 		 * @param createInfoCount	Number of pipelines to create
@@ -463,6 +462,18 @@ public class Pipeline extends AbstractVulkanObject {
 		 * @return Result
 		 */
 		int vkCreateGraphicsPipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+
+		/**
+		 * Creates an array of compute pipelines.
+		 * @param device			Logical device
+		 * @param pipelineCache		Optional pipeline cache
+		 * @param createInfoCount	Number of pipelines to create
+		 * @param pCreateInfos		Descriptor(s)
+		 * @param pAllocator		Allocator
+		 * @param pPipelines		Returned pipeline(s)
+		 * @return Result
+		 */
+		int vkCreateComputePipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
 
 		/**
 		 * Destroys a pipeline.

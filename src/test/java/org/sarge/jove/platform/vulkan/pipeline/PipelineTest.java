@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.*;
 
@@ -12,7 +11,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Builder.ShaderStageBuilder;
-import org.sarge.jove.platform.vulkan.pipeline.ViewportPipelineStageBuilder.Viewport;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.BitMask;
@@ -26,12 +24,13 @@ class PipelineTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		layout = mock(PipelineLayout.class);
-		pipeline = new Pipeline(new Handle(1), dev, layout, Set.of());
+		pipeline = new Pipeline(new Handle(1), dev, VkPipelineBindPoint.GRAPHICS, layout, Set.of());
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(layout, pipeline.layout());
+		assertEquals(VkPipelineBindPoint.GRAPHICS, pipeline.type());
 		assertEquals(false, pipeline.isDestroyed());
 	}
 
@@ -61,15 +60,13 @@ class PipelineTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Pipeline.Builder();
 			pass = mock(RenderPass.class);
+			builder = new Pipeline.Builder(VkPipelineBindPoint.GRAPHICS, layout, pass);
 			viewport = new Rectangle(new Dimensions(3, 4));
 		}
 
 		private void init(Pipeline.Builder builder) {
 			builder
-					.layout(layout)
-					.pass(pass)
 					.viewport(viewport)
 					.shader(VkShaderStage.VERTEX, mock(Shader.class));
 		}
@@ -131,37 +128,10 @@ class PipelineTest extends AbstractVulkanTest {
 			verify(lib).vkCreateGraphicsPipelines(dev, cache, 1, new VkGraphicsPipelineCreateInfo[]{expected}, null, new Pointer[1]);
 		}
 
-		private void addVertexShaderStage(Pipeline.Builder builder) {
-			builder
-				.shader(VkShaderStage.VERTEX)
-					.shader(mock(Shader.class))
-					.build();
-		}
-
+		@DisplayName("A graphics pipeline must contain a vertex shader")
 		@Test
-		void buildIncomplete() {
-			// Check empty builder
-			assertThrows(IllegalArgumentException.class, "pipeline layout", () -> builder.build(null, dev));
-
-			// Add layout
-			builder.layout(layout);
-			assertThrows(IllegalArgumentException.class, "render pass", () -> builder.build(null, dev));
-
-			// Add render-pass
-			builder.pass(pass);
-			assertThrows(IllegalStateException.class, "vertex shader", () -> builder.build(null, dev));
-
-			// Add shader
-			addVertexShaderStage(builder);
-			assertThrows(IllegalArgumentException.class, "viewports", () -> builder.build(null, dev));
-
-			// Add viewport stage, should now build successfully
-			builder
-				.viewport()
-					.viewport(new Viewport(viewport))
-					.scissor(viewport)
-					.build()
-				.build(null, dev);
+		void empty() {
+			assertThrows(IllegalStateException.class, () -> builder.build(null, dev));
 		}
 
 		@Nested
@@ -198,14 +168,15 @@ class PipelineTest extends AbstractVulkanTest {
 			}
 
 			@Test
-			void shaderMissingShaderModule() {
+			void empty() {
 				assertThrows(IllegalArgumentException.class, () -> builder.shader(VkShaderStage.VERTEX).build());
 			}
 
 			@Test
-			void shaderDuplicateStage() {
-				addVertexShaderStage(builder);
-				assertThrows(IllegalArgumentException.class, () -> addVertexShaderStage(builder));
+			void duplicate() {
+				final Shader shader = mock(Shader.class);
+				builder.shader(VkShaderStage.VERTEX, shader);
+				assertThrows(IllegalArgumentException.class, () -> builder.shader(VkShaderStage.VERTEX, shader));
 			}
 		}
 
@@ -216,7 +187,7 @@ class PipelineTest extends AbstractVulkanTest {
 
 			@BeforeEach
 			void before() {
-				parent = new Pipeline(new Handle(2), dev, layout, Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
+				parent = new Pipeline(new Handle(2), dev, VkPipelineBindPoint.GRAPHICS, layout, Set.of(VkPipelineCreateFlag.ALLOW_DERIVATIVES));
 			}
 
 			@DisplayName("can be derived from an existing parent pipeline")
@@ -263,7 +234,7 @@ class PipelineTest extends AbstractVulkanTest {
 				builder.parent();
 
 				// Create derived builder
-				final var child = new Pipeline.Builder();
+				final var child = new Pipeline.Builder(VkPipelineBindPoint.GRAPHICS, layout, pass);
 				init(child);
 				child.derive(builder);
 
@@ -274,7 +245,7 @@ class PipelineTest extends AbstractVulkanTest {
 			@DisplayName("cannot be derived from a peer that is not present at instantiation time")
 			@Test
 			void missing() {
-				final var child = new Pipeline.Builder();
+				final var child = new Pipeline.Builder(VkPipelineBindPoint.GRAPHICS, layout, pass);
 				init(child);
 				builder.parent();
 				child.derive(builder);
