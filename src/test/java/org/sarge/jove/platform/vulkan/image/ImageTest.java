@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.util.Set;
 
@@ -54,26 +53,26 @@ class ImageTest extends AbstractVulkanTest {
 		@Test
 		void invalidAspects() {
 			final var aspects = Set.of(VkImageAspect.COLOR, VkImageAspect.DEPTH);
-			assertThrows(IllegalArgumentException.class, "Invalid image aspects", () -> new Descriptor(TYPE, FORMAT, EXTENTS, aspects, 1, 1));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(TYPE, FORMAT, EXTENTS, aspects, 1, 1));
 		}
 
 		@DisplayName("for a 2D image must have a depth of one")
 		@Test
 		void invalidExtentsDepth() {
 			final Extents extents = new Extents(new Dimensions(2, 3), 4);
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(TYPE, FORMAT, extents, ASPECTS, 1, 1));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(TYPE, FORMAT, extents, ASPECTS, 1, 1));
 		}
 
 		@DisplayName("for a 1D image must have height and depth of one")
 		@Test
 		void invalidExtentsHeightDepth() {
-			assertThrows(IllegalArgumentException.class, "Invalid extents", () -> new Descriptor(VkImageType.ONE_D, FORMAT, EXTENTS, ASPECTS, 1, 1));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.ONE_D, FORMAT, EXTENTS, ASPECTS, 1, 1));
 		}
 
 		@DisplayName("for a 3D image can only contain a single array layer")
 		@Test
 		void invalidArrayLayers() {
-			assertThrows(IllegalArgumentException.class, "Array layers must be one", () -> new Descriptor(VkImageType.THREE_D, FORMAT, EXTENTS, ASPECTS, 1, 2));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.THREE_D, FORMAT, EXTENTS, ASPECTS, 1, 2));
 		}
 
 		@Test

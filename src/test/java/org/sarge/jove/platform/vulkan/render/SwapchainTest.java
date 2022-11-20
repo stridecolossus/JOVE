@@ -9,7 +9,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.WorkQueue;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
@@ -54,13 +53,16 @@ public class SwapchainTest extends AbstractVulkanTest {
 		void before() {
 			semaphore = mock(Semaphore.class);
 			fence = mock(Fence.class);
-			when(factory.integer()).thenReturn(new IntByReference(0));
 		}
 
 		@DisplayName("The next image to be rendered can be acquired from the swapchain")
 		@Test
 		void acquire() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, factory.integer())).thenReturn(VkResult.SUCCESS);
+			final var factory = mock(ReferenceFactory.class);
+			final var ref = new IntByReference(0);
+			when(factory.integer()).thenReturn(ref);
+			when(dev.factory()).thenReturn(factory);
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, ref)).thenReturn(VkResult.SUCCESS);
 			assertEquals(0, swapchain.acquire(semaphore, fence));
 			assertEquals(view, swapchain.latest());
 		}

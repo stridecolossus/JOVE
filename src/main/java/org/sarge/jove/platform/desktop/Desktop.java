@@ -2,6 +2,7 @@ package org.sarge.jove.platform.desktop;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.lang.annotation.*;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -10,16 +11,18 @@ import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.*;
+import com.sun.jna.Native;
 import com.sun.jna.ptr.IntByReference;
 
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
  * <p>
- * Note that several GLFW operations <b>must</b> be executed on the main thread, e.g. {@link #poll()}.
+ * Note that many GLFW operations <b>must</b> be executed on the main thread, these are marked by the {@link MainThread} annotation.
+ * See <a href="https://www.glfw.org/docs/latest/intro.html#thread_safety">Thread Constraints</a>
  * <p>
  * @see <a href="https://www.glfw.org/docs/latest/index.html">GLFW documentation</a>
  * @see <a href="https://github.com/badlogic/jglfw/blob/master/jglfw/jni/glfw-3.0/include/GL/glfw3.h">C header</a>
- * @see <a href="https://www.glfw.org/docs/latest/intro.html#thread_safety">Thread Constraints</a>
+ * <p>
  * @author Sarge
  */
 public class Desktop implements TransientObject {
@@ -29,6 +32,7 @@ public class Desktop implements TransientObject {
 	 * @throws RuntimeException if the GLFW native library cannot be found or cannot be initialised
 	 * @throws UnsatisfiedLinkError if the native library cannot be instantiated
 	 */
+	@MainThread
 	public static Desktop create() {
 		// Determine library name
 		final String name = switch(Platform.getOSType()) {
@@ -45,26 +49,36 @@ public class Desktop implements TransientObject {
 		// Load native library
 		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
 
-		// TODO - nasty fiddle
-		lib.glfwInitHint(0x00050001, 0);
+		// Disable joystick hats being present in the buttons array
+		JoystickManager.init(lib);
 
 		// Init GLFW
 		final int result = lib.glfwInit();
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
 
 		// Create desktop service
-		return new Desktop(lib);
+		return new Desktop(lib, ReferenceFactory.DEFAULT);
+	}
+
+	/**
+	 * Marker interface for methods that <b>must</b> be called from the main thread.
+	 */
+	@Retention(RetentionPolicy.SOURCE)
+	@Target(ElementType.METHOD)
+	@interface MainThread {
+		// Marker
 	}
 
 	private final DesktopLibrary lib;
-	private final ReferenceFactory factory = ReferenceFactory.DEFAULT;
+	private final ReferenceFactory factory;
 
 	/**
 	 * Constructor.
 	 * @param lib GLFW library
 	 */
-	Desktop(DesktopLibrary lib) {
+	Desktop(DesktopLibrary lib, ReferenceFactory factory) {
 		this.lib = notNull(lib);
+		this.factory = notNull(factory);
 	}
 
 	/**
@@ -97,8 +111,8 @@ public class Desktop implements TransientObject {
 
 	/**
 	 * Processes pending input events.
-	 * This method <b>must</b> be executed on the main thread.
 	 */
+	@MainThread
 	public void poll() {
 		lib.glfwPollEvents();
 	}
@@ -116,6 +130,7 @@ public class Desktop implements TransientObject {
 	 * Sets a handler for GLFW errors.
 	 * @param handler Error handler
 	 */
+	@MainThread
 	public void setErrorHandler(Consumer<String> handler) {
 		final ErrorCallback callback = (error, description) -> {
 			final String message = String.format("GLFW error: [%d] %s", error, description);
@@ -125,6 +140,7 @@ public class Desktop implements TransientObject {
 	}
 
 	@Override
+	@MainThread
 	public void destroy() {
 		lib.glfwTerminate();
 	}

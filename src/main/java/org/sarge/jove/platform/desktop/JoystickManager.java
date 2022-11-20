@@ -2,9 +2,7 @@ package org.sarge.jove.platform.desktop;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
@@ -14,6 +12,14 @@ import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
  * @author Sarge
  */
 public class JoystickManager {
+	/**
+	 * Initialises joystick support.
+	 */
+	static void init(DesktopLibrary lib) {
+    	// Disable joystick hats being present in the buttons array
+    	lib.glfwInitHint(0x00050001, 0);
+	}
+
 	/**
 	 * A <i>connection listener</i> notifies joystick connection and disconnection events.
 	 */

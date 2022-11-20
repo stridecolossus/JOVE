@@ -1,8 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import java.util.function.Consumer;
@@ -10,24 +9,26 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
-import org.sarge.jove.util.TestHelper.IntByReferenceMatcher;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.StringArray;
 
 public class DesktopTest {
 	private Desktop desktop;
 	private DesktopLibrary lib;
+	private ReferenceFactory factory;
 
 	@BeforeEach
 	void before() {
 		lib = mock(DesktopLibrary.class);
-		desktop = new Desktop(lib);
+		factory = new MockReferenceFactory();
+		desktop = new Desktop(lib, factory);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(lib, desktop.library());
-		assertNotNull(desktop.factory());
+		assertEquals(factory, desktop.factory());
 	}
 
 	@Test
@@ -51,16 +52,15 @@ public class DesktopTest {
 
 	@Test
 	void extensions() {
-		final String[] extensions = {"one", "two"};
-		final IntByReferenceMatcher count = new IntByReferenceMatcher(2);
-		when(lib.glfwGetRequiredInstanceExtensions(argThat(count))).thenReturn(new StringArray(extensions));
+		final String[] extensions = {"ext"};
+		when(lib.glfwGetRequiredInstanceExtensions(factory.integer())).thenReturn(new StringArray(extensions));
 		assertArrayEquals(extensions, desktop.extensions());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	void setErrorHandler() {
 		// Set error handler
-		@SuppressWarnings("unchecked")
 		final Consumer<String> handler = mock(Consumer.class);
 		desktop.setErrorHandler(handler);
 
@@ -70,7 +70,6 @@ public class DesktopTest {
 
 		// Check handler
 		final ErrorCallback callback = captor.getValue();
-		assertNotNull(callback);
 		callback.error(42, "doh");
 		verify(handler).accept("GLFW error: [42] doh");
 	}

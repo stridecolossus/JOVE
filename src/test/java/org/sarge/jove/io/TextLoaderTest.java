@@ -1,8 +1,8 @@
 package org.sarge.jove.io;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.sarge.jove.util.TestHelper.assertThrows;
 
 import java.io.*;
 import java.util.Set;
@@ -46,6 +46,6 @@ public class TextLoaderTest {
 	@Test
 	void error() {
 		doThrow(new IllegalArgumentException("Whatever")).when(consumer).accept(anyString());
-		assertThrows(IOException.class, "Whatever at line 1", () -> loader.load(new StringReader("text"), consumer));
+		assertThrows(IOException.class, () -> loader.load(new StringReader("text"), consumer));
 	}
 }

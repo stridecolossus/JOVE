@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Check;
@@ -62,6 +63,7 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 	 * @param desktop Desktop service
 	 * @return Current display mode
 	 */
+	@MainThread
 	public DisplayMode mode(Desktop desktop) {
 		final DesktopDisplayMode mode = desktop.library().glfwGetVideoMode(this);
 		return DisplayMode.of(mode);
@@ -69,9 +71,11 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 
 	/**
 	 * Enumerates the monitors attached to this system.
+	 * The <i>primary</i> monitor is the first in the array.
 	 * @param desktop Desktop service
 	 * @return Monitors
 	 */
+	@MainThread
 	public static List<Monitor> monitors(Desktop desktop) {
 		// Enumerate monitors
 		final DesktopLibraryMonitor lib = desktop.library();
@@ -79,7 +83,7 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 		final IntByReference count = factory.integer();
 		final Pointer[] monitors = lib.glfwGetMonitors(count).getPointerArray(0, count.getValue());
 
-		// Create monitors
+		// Creates a monitor
 		final Function<Pointer, Monitor> create = ptr -> {
 			// Retrieve monitor name
 			final String name = lib.glfwGetMonitorName(ptr);
@@ -87,7 +91,7 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 			// Retrieve monitor dimensions
 			final IntByReference w = factory.integer();
 			final IntByReference h = factory.integer();
-			lib.glfwGetMonitorPhysicalSize(ptr, w, h);
+			lib.glfwGetMonitorPhysicalSize(ptr, w, h);		// TODO - millimetres?
 
 			// Retrieve display modes
 			final DesktopDisplayMode first = lib.glfwGetVideoModes(ptr, count);
@@ -95,7 +99,8 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 			final List<DisplayMode> modes = Arrays.stream(array).map(DisplayMode::of).toList();
 
 			// Create monitor
-			return new Monitor(new Handle(ptr), name, new Dimensions(w.getValue(), h.getValue()), modes);
+			final var size = new Dimensions(w.getValue(), h.getValue());
+			return new Monitor(new Handle(ptr), name, size, modes);
 		};
 
 		// Create monitors

@@ -7,10 +7,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.AllocationService;
-import org.sarge.jove.util.ReferenceFactory;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.*;
+import org.sarge.jove.util.*;
 
 /**
  * Base-class for a unit-test dependant on the Vulkan API and a logical device.
@@ -32,24 +29,22 @@ public abstract class AbstractVulkanTest {
 		// Create API
 		lib = mock(VulkanLibrary.class);
 
-		// Init reference factory
-		factory = mock(ReferenceFactory.class);
-		when(factory.integer()).thenReturn(new IntByReference(1));
-		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(2)));
-
-		// Init device limits
-		final DeviceLimits limits = mock(DeviceLimits.class);
-
-		// Init memory allocator
-		allocator = mock(AllocationService.class);
-
 		// Create logical device
 		dev = mock(LogicalDevice.class);
 		when(dev.handle()).thenReturn(new Handle(3));
 		when(dev.library()).thenReturn(lib);
+
+		// Init reference factory
+		factory = new MockReferenceFactory();
 		when(dev.factory()).thenReturn(factory);
-		when(dev.limits()).thenReturn(limits);
+
+		// Init memory allocator
+		allocator = mock(AllocationService.class);
 		when(dev.allocator()).thenReturn(allocator);
+
+		// Init device limits
+		final DeviceLimits limits = mock(DeviceLimits.class);
+		when(dev.limits()).thenReturn(limits);
 	}
 
 	/**

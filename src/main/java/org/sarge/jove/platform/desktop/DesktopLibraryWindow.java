@@ -3,7 +3,7 @@ package org.sarge.jove.platform.desktop;
 import org.sarge.jove.common.Handle;
 
 import com.sun.jna.*;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.ptr.*;
 
 /**
  * GLFW window API.
@@ -49,12 +49,49 @@ interface DesktopLibraryWindow {
 	 */
 	int glfwCreateWindowSurface(Handle instance, Window window, Pointer allocator, PointerByReference surface);
 
-	// TODO - other methods
-	// glfwWindowShouldClose(window)
-	// glfwSetWindowCloseCallback(window, window_close_callback);
-	// glfwSetWindowSize(window, 640, 480);
-	// glfwSetWindowTitle(window, u8"This is always a UTF-8 string");
-	// GLFWmonitor* monitor = glfwGetWindowMonitor(window);
+	/**
+	 * @param window Window
+	 * @return Whether the given window can be closed by the user
+	 */
+	boolean glfwWindowShouldClose(Window window);
+
+	/**
+	 * Sets whether the given window can be closed by the user.
+	 * @param window		Window
+	 * @param close			Whether the window can be closed
+	 * @return Result
+	 */
+	int glfwSetWindowShouldClose(Window window, boolean close);
+
+	/**
+	 * Sets the title of a window.
+	 * @param window		Window
+	 * @param title			New title
+	 */
+	void glfwSetWindowTitle(Window window, String title);
+
+	/**
+	 * Retrieves the dimensions of a window.
+	 * @param window	Window
+	 * @param w			Width
+	 * @param h			Height
+	 */
+	void glfwGetWindowSize(Window window, IntByReference w, IntByReference h);
+
+	/**
+	 * Sets the window dimensions.
+	 * @param window	Window
+	 * @param w			Width
+	 * @param h			Height
+	 */
+	void glfwSetWindowSize(Window window, int w, int h);
+
+	/**
+	 * Retrieves the monitor for a full sized window.
+	 * @param window Window
+	 * @return Monitor or {@code null} if not full screen
+	 */
+	Monitor glfwGetWindowMonitor(Window window);
 
 	/**
 	 * Listener for window events represented by a boolean state, e.g. window focus.

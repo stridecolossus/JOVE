@@ -5,14 +5,14 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 import java.util.function.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
+import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
 import org.sarge.lib.util.*;
 
 import com.sun.jna.*;
-import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.ptr.*;
 
 /**
  * Native window implemented using GLFW.
@@ -72,46 +72,19 @@ public class Window extends AbstractTransientNativeObject {
 		}
 	}
 
-	/**
-	 * Descriptor for the properties of this window.
-	 */
-	public record Descriptor(String title, Dimensions size, Set<Hint> hints) {
-		/**
-		 * Constructor.
-		 * @param title			Window title
-		 * @param size			Dimensions
-		 * @param hints			Creation hints
-		 */
-		public Descriptor {
-			Check.notEmpty(title);
-			Check.notNull(size);
-			hints = Set.copyOf(hints);
-		}
-	}
-
 	private final Desktop desktop;
-	private final Descriptor descriptor;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
 	private final Map<Object, Callback> registry = new WeakHashMap<>();
 
 	/**
 	 * Constructor.
-	 * @param window			Window handle
-	 * @param desktop			Desktop service
-	 * @param descriptor		Window descriptor
+	 * @param window	Window handle
+	 * @param desktop	Desktop service
 	 */
-	Window(Handle window, Desktop desktop, Descriptor descriptor) {
+	Window(Handle window, Desktop desktop) {
 		super(window);
 		this.desktop = notNull(desktop);
-		this.descriptor = notNull(descriptor);
-	}
-
-	/**
-	 * @return Descriptor for this window
-	 */
-	public Descriptor descriptor() {
-		return descriptor;
 	}
 
 	/**
@@ -136,9 +109,75 @@ public class Window extends AbstractTransientNativeObject {
 	}
 
 	/**
+	 * @return Size of this window
+	 */
+	@MainThread
+	public Dimensions size() {
+		final IntByReference w = desktop.factory().integer();
+		final IntByReference h = desktop.factory().integer();
+		desktop.library().glfwGetWindowSize(this, w, h);
+		return new Dimensions(w.getValue(), h.getValue());
+	}
+
+	/**
+	 * Sets the window dimensions.
+	 * @param size Window dimensions
+	 */
+	@MainThread
+	public void size(Dimensions size) {
+		desktop.library().glfwSetWindowSize(this, size.width(), size.height());
+	}
+
+	/**
+	 * @return Whether this window can be closed by the user
+	 */
+	public boolean isCloseable() {
+		return desktop.library().glfwWindowShouldClose(this);
+	}
+
+	/**
+	 * Sets whether this window can be closed by the user.
+	 * @param closeable Whether window can be closed
+	 */
+	public void setCloseable(boolean closeable) {
+		desktop.library().glfwSetWindowShouldClose(this, closeable);
+	}
+
+	/**
+	 * Resets the window title.
+	 * @param title New title
+	 */
+	@MainThread
+	public void title(String title) {
+		Check.notNull(title);
+		desktop.library().glfwSetWindowTitle(this, title);
+	}
+
+	/**
+	 * @return Monitor for a full screen window
+	 */
+	@MainThread
+	public Optional<Monitor> monitor() {
+		final Monitor monitor =	desktop.library().glfwGetWindowMonitor(this);
+		return Optional.ofNullable(monitor);
+	}
+
+	/**
+	 * Sets this a full screen window.
+	 */
+	@MainThread
+	public void full() {
+		// TODO - GLFWAPI void glfwSetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int xpos, int ypos, int width, int height, int refreshRate);
+		// monitor = null for windowed
+		// rate can be GLFW_DONTCARE
+		throw new UnsupportedOperationException();
+	}
+
+	/**
 	 * Sets the listener for window state changes.
 	 * @param listener Listener for window state changes or {@code null} to remove the listener
 	 */
+	@MainThread
 	public void listener(WindowListener.Type type, WindowListener listener) {
 		// Determine listener registration method
 		final DesktopLibrary lib = desktop.library();
@@ -164,6 +203,7 @@ public class Window extends AbstractTransientNativeObject {
 	 * Sets the listener for window resize events.
 	 * @param listener Resize listener or {@code null} to remove the listener
 	 */
+	@MainThread
 	public void resize(IntBinaryOperator listener) {
 		final String key = "resize";
 		final DesktopLibrary lib = desktop.library();
@@ -212,16 +252,9 @@ public class Window extends AbstractTransientNativeObject {
 	}
 
 	@Override
+	@MainThread
 	protected void release() {
 		desktop.library().glfwDestroyWindow(this);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(descriptor)
-				.build();
 	}
 
 	/**
@@ -261,7 +294,7 @@ public class Window extends AbstractTransientNativeObject {
 		}
 
 		/**
-		 * Sets the monitor for this window.
+		 * Sets the monitor for a full screen window.
 		 * @param monitor Monitor
 		 */
 		public Builder monitor(Monitor monitor) {
@@ -274,6 +307,7 @@ public class Window extends AbstractTransientNativeObject {
 		 * @return New window
 		 * @throws RuntimeException if the window cannot be created
 		 */
+		@MainThread
 		public Window build(Desktop desktop) {
 			// Apply window hints
 			final DesktopLibrary lib = desktop.library();
@@ -282,17 +316,12 @@ public class Window extends AbstractTransientNativeObject {
 				hint.apply(lib);
 			}
 
-			// Create window descriptor
-			final Descriptor descriptor = new Descriptor(title, size, hints);
-
 			// Create window
 			final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), title, monitor, null);
-			if(window == null) {
-				throw new RuntimeException(String.format("Window cannot be created: descriptor=%s monitor=%s", descriptor, monitor));
-			}
+			if(window == null) throw new RuntimeException("Window cannot be created");
 
-			// Create window domain object
-			return new Window(new Handle(window), desktop, descriptor);
+			// Create domain object
+			return new Window(new Handle(window), desktop);
 		}
 	}
 }

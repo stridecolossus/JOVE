@@ -1,18 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.sarge.jove.util.TestHelper.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
@@ -155,21 +148,21 @@ public class MemoryPoolTest {
 	@Test
 	void allocateFails() {
 		when(allocator.allocate(type, 1)).thenThrow(new AllocationException("doh"));
-		assertThrows(AllocationException.class, "doh", () -> pool.allocate(1));
+		assertThrows(AllocationException.class, () -> pool.allocate(1));
 	}
 
 	@DisplayName("Allocation should fail if the underlying allocator returns a NULL block")
 	@Test
 	void allocateReturnsNull() {
 		when(allocator.allocate(type, 1)).thenReturn(null);
-		assertThrows(AllocationException.class, "Allocator returned NULL", () -> pool.allocate(1));
+		assertThrows(AllocationException.class, () -> pool.allocate(1));
 	}
 
 	@DisplayName("Allocation should fail if the underlying allocator returns a block that is too small")
 	@Test
 	void allocateReturnsSmallerBlock() {
 		when(allocator.allocate(type, 2)).thenReturn(block);
-		assertThrows(AllocationException.class, "smaller than the requested size", () -> pool.allocate(2));
+		assertThrows(AllocationException.class, () -> pool.allocate(2));
 	}
 
 	@DisplayName("Releasing the pool should restore all memory back to the pool")
