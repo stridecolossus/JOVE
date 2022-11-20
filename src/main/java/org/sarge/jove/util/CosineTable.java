@@ -1,7 +1,14 @@
 package org.sarge.jove.util;
 
 /**
- * Cosine function implemented via a lookup table.
+ * A <i>cosine table</i> implements the trigonometric functions via a lookup table.
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>This implementation sacrifices accuracy for improved performance (of the order of x20)</li>
+ * <li>For small angles (less than 45 degrees) the Java maths functions are generally equivalent in terms of performance (and are obviously more accurate)</li>
+ * </ul>
+ * <p>
  * @author Sarge
  */
 public class CosineTable implements Cosine {

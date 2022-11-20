@@ -139,8 +139,8 @@ public class PushConstant {
 		public Range {
 			Check.zeroOrMore(offset);
 			Check.oneOrMore(size);
-			checkAlignment(offset);
-			checkAlignment(size);
+			VulkanLibrary.checkAlignment(offset);
+			VulkanLibrary.checkAlignment(size);
 			Check.notEmpty(stages);
 			stages = Set.copyOf(stages);
 		}
@@ -153,10 +153,6 @@ public class PushConstant {
 		 */
 		public Range(int size, Set<VkShaderStage> stages) {
 			this(0, size, stages);
-		}
-
-		private static void checkAlignment(int size) {
-			if((size % 4) != 0) throw new IllegalArgumentException("Push constant offset/size must be a multiple of four bytes");
 		}
 
 		/**

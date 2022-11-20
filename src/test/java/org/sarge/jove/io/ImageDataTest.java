@@ -59,6 +59,12 @@ public class ImageDataTest {
 
 	@DisplayName("The layout of an image must match the components string")
 	@Test
+	void invalidChannel() {
+		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "XXX", Component.floats(3), DATA));
+	}
+
+	@DisplayName("The number of channels of an image must match the layout")
+	@Test
 	void invalidComponentLayout() {
 		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", Component.floats(3), DATA));
 	}
@@ -105,7 +111,7 @@ public class ImageDataTest {
 	@DisplayName("A pixel in the image data...")
 	@Nested
 	class PixelTests {
-		@DisplayName("can be looked up by position and component")
+		@DisplayName("can be looked up by position and channel index")
 		@Test
 		void pixel() {
 			final int index = (1 + 2 * 2) * 4 + 3;
@@ -119,7 +125,7 @@ public class ImageDataTest {
 			assertThrows(ArrayIndexOutOfBoundsException.class, () -> image.pixel(2, 3, 0));
 		}
 
-		@DisplayName("cannot be looked up by an invalid component index")
+		@DisplayName("cannot be looked using an invalid channel index")
 		@Test
 		void pixelInvalidComponentIndex() {
 			assertThrows(IllegalArgumentException.class, () -> image.pixel(0, 0, 4));

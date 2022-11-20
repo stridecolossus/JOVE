@@ -67,6 +67,7 @@ public class ImageData {
 	 * @param channels			Channels
 	 * @param layout			Pixel layout
 	 * @param data				Image data
+	 * @throws IllegalArgumentException for a {@link #channel} that is not one of RGBA (upper case sensitive)
 	 * @throws IllegalArgumentException if the number of {@link #channels} and the {@link #layout} do not match
 	 * @throws IllegalArgumentException if the length of the {@link #data} does not match the number of MIP levels and array layers
 	 */
@@ -79,15 +80,20 @@ public class ImageData {
 	}
 
 	private void validate() {
-		// Check number of components and layout match
+		// Validate channels
+		for(char ch : channels.toCharArray()) {
+			if(Colour.RGBA.indexOf(ch) == -1) throw new IllegalArgumentException("Invalid channel character: " + ch);
+		}
+
+		// Check channels and layout match
 		if(channels.length() != layout.count()) {
-			throw new IllegalArgumentException(String.format("Mismatched image components and layout: components=%s layout=%s", channels, layout));
+			throw new IllegalArgumentException("Mismatched image channels and layout: components=%s layout=%s".formatted(channels, layout));
 		}
 
 		// Check overall image buffer matches MIP levels
 		final int total = this.levels().stream().mapToInt(Level::length).sum();
 		if(data.length != total) {
-			throw new IllegalArgumentException(String.format("Invalid image data length: expected=%d actual=%d", total, data.length));
+			throw new IllegalArgumentException("Invalid image data length: expected=%d actual=%d".formatted(total, data.length));
 		}
 	}
 

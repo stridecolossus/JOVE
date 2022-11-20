@@ -19,7 +19,7 @@ import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import com.sun.jna.Pointer;
 
 public class VulkanBufferTest extends AbstractVulkanTest {
-	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(TRANSFER_SRC, VERTEX_BUFFER);
+	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(TRANSFER_SRC, TRANSFER_DST, VERTEX_BUFFER);
 	private static final long SIZE = 4;
 
 	private VulkanBuffer buffer;
@@ -82,8 +82,9 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 	void require() {
 		buffer.require();
 		buffer.require(TRANSFER_SRC);
+		buffer.require(TRANSFER_DST);
 		buffer.require(VERTEX_BUFFER);
-		buffer.require(TRANSFER_SRC, VERTEX_BUFFER);
+		buffer.require(TRANSFER_SRC, TRANSFER_DST, VERTEX_BUFFER);
 	}
 
 	@Test
@@ -124,6 +125,7 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		verify(data).buffer(bb);
 	}
 
+	@DisplayName("A buffer can be destroyed")
 	@Test
 	void destroy() {
 		buffer.destroy();
@@ -131,30 +133,53 @@ public class VulkanBufferTest extends AbstractVulkanTest {
 		verify(mem).destroy();
 	}
 
-	@Test
-	void copy() {
-		// Create destination
-		final VulkanBuffer dest = create(dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mem, SIZE);
+	@DisplayName("A buffer copy command...")
+	@Nested
+	class CopyBufferTests {
+    	@DisplayName("can be created to copy the whole of the buffer")
+    	@Test
+    	void copy() {
+    		final VulkanBuffer dest = create(dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mem, SIZE);
+    		final BufferCopyCommand copy = buffer.copy(dest);
+    		copy.record(lib, mock(Command.Buffer.class));
+    	}
 
-		// Create copy command
-		final Command copy = buffer.copy(dest);
-		assertNotNull(copy);
-
-		// Init expected copy region descriptor
-		final var region = new VkBufferCopy() {
-			@Override
-			public boolean equals(Object obj) {
-				final VkBufferCopy actual = (VkBufferCopy) obj;
-				assertEquals(0, actual.srcOffset);
-				assertEquals(0, actual.dstOffset);
-				assertEquals(SIZE, actual.size);
-				return true;
-			}
-		};
-
-		// Copy buffer
-		final var cmd = mock(Command.Buffer.class);
-		copy.record(lib, cmd);
-		verify(lib).vkCmdCopyBuffer(cmd, buffer, dest, 1, new VkBufferCopy[]{region});
+    	@DisplayName("cannot copy a buffer to itself")
+    	@Test
+    	void self() {
+    		assertThrows(IllegalArgumentException.class, () -> buffer.copy(buffer));
+    	}
 	}
+
+	@DisplayName("A buffer fill command...")
+	@Nested
+	class FillBufferTests {
+    	@Test
+    	void fill() {
+    		final Command fill = buffer.fill(0, VulkanBuffer.VK_WHOLE_SIZE, 42);
+    		final var cmd = mock(Command.Buffer.class);
+    		fill.record(lib, cmd);
+    		verify(lib).vkCmdFillBuffer(cmd, buffer, 0, VulkanBuffer.VK_WHOLE_SIZE, 42);
+    	}
+
+    	@DisplayName("must have a valid buffer offset")
+    	@Test
+    	void offset() {
+    		assertThrows(IllegalArgumentException.class, () -> buffer.fill(SIZE, VulkanBuffer.VK_WHOLE_SIZE, 42));
+    	}
+
+    	@DisplayName("must have an offset and size with the correct alignment")
+    	@Test
+    	void alignment() {
+    		assertThrows(IllegalArgumentException.class, () -> buffer.fill(3, VulkanBuffer.VK_WHOLE_SIZE, 42));
+    		assertThrows(IllegalArgumentException.class, () -> buffer.fill(0, 3, 42));
+    	}
+
+    	@DisplayName("must be created from a buffer that is a transfer destination")
+    	@Test
+    	void destination() {
+    		final VulkanBuffer invalid = create(dev, Set.of(VkBufferUsageFlag.TRANSFER_SRC), mem, SIZE);
+    		assertThrows(IllegalStateException.class, () -> invalid.fill(0, VulkanBuffer.VK_WHOLE_SIZE, 42));
+    	}
+    }
 }

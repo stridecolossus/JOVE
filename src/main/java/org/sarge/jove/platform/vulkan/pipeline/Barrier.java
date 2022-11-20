@@ -252,14 +252,9 @@ public class Barrier extends ImmediateCommand {
 		 * Builder for a buffer memory barrier.
 		 */
 		public class BufferBarrierBuilder extends AbstractBarrierBuilder<BufferBarrierBuilder> {
-			/**
-			 * Special case size for a barrier using the entire buffer.
-			 */
-			private static final long VK_WHOLE_SIZE = (~0);
-
 			private final VulkanBuffer buffer;
 			private long offset;
-			private long size = VK_WHOLE_SIZE;
+			private long size = VulkanBuffer.VK_WHOLE_SIZE;
 
 			private BufferBarrierBuilder(VulkanBuffer buffer) {
 				this.buffer = notNull(buffer);
@@ -314,7 +309,7 @@ public class Barrier extends ImmediateCommand {
 			 */
 			@Override
 			public Builder build() {
-				if(size != VK_WHOLE_SIZE) {
+				if(size != VulkanBuffer.VK_WHOLE_SIZE) {
 					validate(offset + size);
 				}
 				buffers.add(this);

@@ -24,6 +24,11 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class VulkanBuffer extends AbstractVulkanObject {
 	/**
+	 * Special case size for the whole of this buffer.
+	 */
+	public static final long VK_WHOLE_SIZE = (~0);
+
+	/**
 	 * Creates a buffer.
 	 * @param dev			Logical device
 	 * @param len			Length (bytes)
@@ -169,7 +174,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Helper - Creates a command to copy this buffer to the given destination buffer.
+	 * Helper - Creates a command to copy the whole of this buffer to the given destination buffer.
 	 * @param dest Destination buffer
 	 * @return New copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small
@@ -177,6 +182,29 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 */
 	public BufferCopyCommand copy(VulkanBuffer dest) {
 		return BufferCopyCommand.of(this, dest);
+	}
+
+	/**
+	 * Creates a command to fill this buffer with a given value.
+	 * @param offset		Buffer offset
+	 * @param size			Number of bytes to fill or {@link #VK_WHOLE_SIZE} to fill to the end of the buffer
+	 * @param value			Value to fill
+	 * @return Fill command
+	 * @throws IllegalArgumentException if {@link #offset} and {@link #size} are larger than this buffer
+	 * @throws IllegalArgumentException if {@link #offset} is not a multiple of 4 bytes
+	 * @throws IllegalArgumentException if {@link #size} is not {@link #VK_WHOLE_SIZE} and is not a multiple of 4 bytes
+	 * @throws IllegalStateException if this buffer was not created as a {@link VkBufferUsageFlag#TRANSFER_DST}
+	 */
+	public Command fill(long offset, long size, int value) {
+		validate(offset);
+		VulkanLibrary.checkAlignment(offset);
+		if(size != VK_WHOLE_SIZE) {
+			Check.oneOrMore(size);
+			VulkanLibrary.checkAlignment(size);
+		}
+		require(VkBufferUsageFlag.TRANSFER_DST);
+
+		return (lib, cmd) -> lib.vkCmdFillBuffer(cmd, this, offset, size, value);
 	}
 
 	@Override
@@ -280,5 +308,15 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		 * @param pRegions			Region descriptor(s)
 		 */
 		void vkCmdCopyBuffer(Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions);
+
+		/**
+		 * Fills a buffer with a given value.
+		 * @param commandBuffer		Command buffer
+		 * @param dstBuffer			Buffer to fill
+		 * @param dstOffset			Offset
+		 * @param size				Number of bytes to fill
+		 * @param data				Value to fill
+		 */
+		void vkCmdFillBuffer(Buffer commandBuffer, VulkanBuffer dstBuffer, long dstOffset, long size, int data);
 	}
 }

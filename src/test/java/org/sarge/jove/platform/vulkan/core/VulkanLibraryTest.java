@@ -18,27 +18,32 @@ import com.sun.jna.Library;
 import com.sun.jna.ptr.IntByReference;
 
 class VulkanLibraryTest {
+	@DisplayName("The Vulkan library has an implementation version number")
 	@Test
 	void version() {
 		assertEquals("1.1.0", VulkanLibrary.VERSION.toString());
 	}
 
+	@DisplayName("The Vulkan library can marshal JOVE types")
 	@ParameterizedTest
 	@ValueSource(classes={boolean.class, Boolean.class, IntEnum.class, BitMask.class, Handle.class, NativeObject.class})
 	void mapper(Class<?> type) {
 		assertNotNull(VulkanLibrary.MAPPER.getToNativeConverter(type));
 	}
 
+	@DisplayName("The Vulkan library options include the JOVE type mapper")
 	@Test
 	void options() {
 		assertEquals(Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER), VulkanLibrary.options());
 	}
 
+	@DisplayName("The Vulkan library can be instantiated")
 	@Test
 	void create() {
 		VulkanLibrary.create();
 	}
 
+	@DisplayName("The supported extensions can be retrieved for the local platform")
 	@Test
 	void extensions() {
 		final var lib = mock(VulkanLibrary.class);
@@ -47,21 +52,39 @@ class VulkanLibraryTest {
 		verify(lib).vkEnumerateInstanceExtensionProperties(null, count, null);
 	}
 
+	@DisplayName("A Vulkan API method that returns...")
 	@Nested
 	class CheckTests {
+		@DisplayName("the SUCCESS result code is valid")
 		@Test
 		void success() {
 			VulkanLibrary.check(VulkanLibrary.SUCCESS);
 		}
 
+		@DisplayName("an error result code fails")
 		@Test
 		void error() {
 			assertThrows(VulkanException.class, () -> VulkanLibrary.check(VkResult.ERROR_DEVICE_LOST.value()));
 		}
 
+		@DisplayName("an unknown result code fails")
 		@Test
 		void unknown() {
-			assertThrows(VulkanException.class, () -> VulkanLibrary.check(-1));
+			assertThrows(VulkanException.class, () -> VulkanLibrary.check(999));
 		}
+	}
+
+	@DisplayName("An offset or size must be a multiple of 4 bytes")
+	@ParameterizedTest
+	@ValueSource(ints={0, 4, 8})
+	void checkAlignment(int size) {
+		VulkanLibrary.checkAlignment(size);
+	}
+
+	@DisplayName("An offset or size that is not a multiple of 4 bytes is invalid")
+	@ParameterizedTest
+	@ValueSource(ints={1, 2, 3})
+	void checkAlignmentInvalid(int size) {
+		assertThrows(IllegalArgumentException.class, () -> VulkanLibrary.checkAlignment(size));
 	}
 }

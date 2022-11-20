@@ -1,7 +1,11 @@
 package org.sarge.jove.util;
 
 /**
- * Cosine function.
+ * A <i>cosine function</i> is used to perform trigonometric calculations for rotations.
+ * <p>
+ * The purpose of this abstraction is to allow more performant implementations to be used where appropriate.
+ * The {@link #DEFAULT} implementation delegates to the Java maths methods.
+ * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Sine">Wikipedia</a>
  * @author Sarge
  */

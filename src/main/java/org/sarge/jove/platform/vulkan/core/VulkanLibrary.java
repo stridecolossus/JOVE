@@ -86,6 +86,16 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	}
 
 	/**
+	 * @param size Buffer offset or size
+	 * @throws IllegalArgumentException if the give size is not a multiple of 4 bytes
+	 */
+	static void checkAlignment(long size) {
+		if((size % 4) != 0) {
+			throw new IllegalArgumentException("Buffer offset/size must be a multiple of four bytes");
+		}
+	}
+
+	/**
 	 * Enumerates supported extensions for the Vulkan platform or a physical device.
 	 * @param count		Count
 	 * @param func 		Extensions function

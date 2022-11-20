@@ -24,6 +24,7 @@ text
 - https://snorristurluson.github.io/TextRenderingWithFreetype/
 
 features todo
+- compute pipeline builder => sub-class builders? very complicated since both need layout, cache, derivatives, x2 descriptors, x2 API methods (is ray tracing a compute pipeline?)
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - degenerate triangles for strip?
 - re-build swapchain and pipeline after window viewport/focus change
