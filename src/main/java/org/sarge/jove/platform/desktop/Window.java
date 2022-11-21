@@ -20,7 +20,7 @@ import com.sun.jna.ptr.*;
  */
 public class Window extends AbstractTransientNativeObject {
 	/**
-	 * Window hints.
+	 * Window creation hints.
 	 */
 	public enum Hint {
 		/**
@@ -34,7 +34,7 @@ public class Window extends AbstractTransientNativeObject {
 		DECORATED(0x00020005),
 
 		/**
-		 * Full-screen windows are iconified on focus loss.
+		 * Full screen windows are iconified on focus loss.
 		 */
 		AUTO_ICONIFY(0x00020006),
 
@@ -163,7 +163,7 @@ public class Window extends AbstractTransientNativeObject {
 	}
 
 	/**
-	 * Sets this a full screen window.
+	 * Sets this as a full screen window.
 	 */
 	@MainThread
 	public void full() {
@@ -296,6 +296,7 @@ public class Window extends AbstractTransientNativeObject {
 		/**
 		 * Sets the monitor for a full screen window.
 		 * @param monitor Monitor
+		 * @see Monitor#monitors(Desktop)
 		 */
 		public Builder monitor(Monitor monitor) {
 			this.monitor = notNull(monitor);

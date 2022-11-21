@@ -13,7 +13,7 @@ import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
  */
 public class JoystickManager {
 	/**
-	 * Initialises joystick support.
+	 * Disables joystick hats being present in the buttons array
 	 */
 	static void init(DesktopLibrary lib) {
     	// Disable joystick hats being present in the buttons array

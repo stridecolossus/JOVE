@@ -6,11 +6,10 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
 import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
-import org.sarge.jove.util.MockReferenceFactory;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
@@ -66,17 +65,10 @@ class MonitorTest {
 
 	@Test
 	void monitors() {
-//		// Init integer-by-reference return values
-//		final IntByReference count = integer(1);
-//		final var integers = List.of(count, integer(2), integer(3), count);
-//
-//		final ReferenceFactory factory = mock(ReferenceFactory.class);
-//		when(factory.integer()).then(AdditionalAnswers.returnsElementsOf(integers));
-//		when(desktop.factory()).thenReturn(factory);
-
 		// Init reference factory
-		final var factory = new MockReferenceFactory();
-		final IntByReference count = factory.integer();
+		final var factory = mock(ReferenceFactory.class);
+		final IntByReference count = new IntByReference(1);
+		when(factory.integer()).thenReturn(count, new IntByReference(2), new IntByReference(3), count);
 		when(desktop.factory()).thenReturn(factory);
 
 		// Init array of monitors
@@ -85,19 +77,9 @@ class MonitorTest {
 		array.setPointer(0, handle);
 		when(lib.glfwGetMonitors(count)).thenReturn(array);
 
-		// Init monitor dimensions
-		final Answer<Void> answer = inv -> {
-
-			return null;
-		};
-		doAnswer(answer).when(lib).glfwGetMonitorPhysicalSize(factory.pointer().getValue(), count, count);
-
-		// Init monitor name
+		// Init monitor properties
 		when(lib.glfwGetMonitorName(handle)).thenReturn("name");
-//		when(lib.glfwGetMonitorPhysicalSize(factory.pointer().getValue(), count, count)).thenReturn();
-		// Init monitor display modes
 		when(lib.glfwGetVideoModes(handle, count)).thenReturn(struct);
-//		doAnswer(CALLS_REAL_METHODS)
 
 		// Enumerate monitors
 		assertEquals(List.of(monitor), Monitor.monitors(desktop));

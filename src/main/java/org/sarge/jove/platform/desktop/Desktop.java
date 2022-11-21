@@ -17,7 +17,7 @@ import com.sun.jna.ptr.IntByReference;
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
  * <p>
- * Note that many GLFW operations <b>must</b> be executed on the main thread, these are marked by the {@link MainThread} annotation.
+ * Note that many GLFW operations <b>must</b> be executed on the <b>main</b> thread, these are marked by the {@link MainThread} annotation.
  * See <a href="https://www.glfw.org/docs/latest/intro.html#thread_safety">Thread Constraints</a>
  * <p>
  * @see <a href="https://www.glfw.org/docs/latest/index.html">GLFW documentation</a>
@@ -48,8 +48,6 @@ public class Desktop implements TransientObject {
 
 		// Load native library
 		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
-
-		// Disable joystick hats being present in the buttons array
 		JoystickManager.init(lib);
 
 		// Init GLFW
