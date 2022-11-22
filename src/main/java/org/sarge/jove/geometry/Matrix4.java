@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Layout;
 
 /**
  * Standard 4x4 matrix used for transformation and projection.
@@ -43,7 +43,7 @@ public class Matrix4 extends Matrix {
 	/**
 	 * Layout of a 4x4 matrix.
 	 */
-	public static final Component LAYOUT = Component.floats(ORDER * ORDER);
+	public static final Layout LAYOUT = Layout.floats(ORDER * ORDER);
 
 	/**
 	 * Length of a 4x4 matrix (bytes)

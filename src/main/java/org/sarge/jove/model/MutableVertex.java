@@ -8,6 +8,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
+import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
@@ -88,24 +89,14 @@ public class MutableVertex implements Vertex {
 	}
 
 	@Override
-	public Layout layout() {
+	public CompoundLayout layout() {
 		return Arrays
 				.stream(array())
 				.filter(Objects::nonNull)
-				.map(MutableVertex::component)
-				.collect(collectingAndThen(toList(), Layout::new));
+				.map(Component.class::cast)
+				.map(Component::layout)
+				.collect(collectingAndThen(toList(), CompoundLayout::new));
 	}
-
-	private static Component component(Bufferable obj) {
-		return switch(obj) {
-			case Point p -> Point.LAYOUT;
-			case Normal n -> Normal.LAYOUT;
-			case Coordinate2D coord -> Coordinate2D.LAYOUT;
-			case Colour col -> Colour.LAYOUT;
-			default -> throw new UnsupportedOperationException("Unsupported vertex component: " + obj);
-		};
-	}
-	// TODO - this sucks, mapping obj -> layout should be an interface?
 
 	@Override
 	public void buffer(ByteBuffer bb) {

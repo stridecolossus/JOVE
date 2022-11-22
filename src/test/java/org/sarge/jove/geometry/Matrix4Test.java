@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Layout;
 
 class Matrix4Test {
 	@Test
@@ -14,7 +14,7 @@ class Matrix4Test {
 
 	@Test
 	void layout() {
-		assertEquals(Component.floats(4 * 4), Matrix4.LAYOUT);
+		assertEquals(Layout.floats(4 * 4), Matrix4.LAYOUT);
 	}
 
 	@Test

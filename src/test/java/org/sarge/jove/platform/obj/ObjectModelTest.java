@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
@@ -90,7 +90,7 @@ public class ObjectModelTest {
 
 			// Check model
 			final DefaultMesh result = models.get(0);
-			final var layout = new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
+			final var layout = new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 			assertEquals(Primitive.TRIANGLE, result.primitive());
 			assertEquals(3, result.count());
 			assertEquals(layout, result.layout());

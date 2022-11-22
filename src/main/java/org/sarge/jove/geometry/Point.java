@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.FloatArrayConverter;
 import org.sarge.lib.util.Converter;
 
@@ -8,7 +9,7 @@ import org.sarge.lib.util.Converter;
  * A <i>point</i> is a position in 3D space.
  * @author Sarge
  */
-public final class Point extends Tuple {
+public final class Point extends Tuple implements Component {
 	/**
 	 * Origin point.
 	 */
@@ -17,7 +18,7 @@ public final class Point extends Tuple {
 	/**
 	 * Layout for a point.
 	 */
-	public static final Component LAYOUT = Component.floats(SIZE);
+	public static final Layout LAYOUT = Layout.floats(SIZE);
 
 	/**
 	 * Point converter.
@@ -83,6 +84,11 @@ public final class Point extends Tuple {
 	 */
 	public Point multiply(float f) {
 		return new Point(x * f, y * f, z * f);
+	}
+
+	@Override
+	public Layout layout() {
+		return LAYOUT;
 	}
 
 	@Override

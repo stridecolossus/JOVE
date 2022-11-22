@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.*;
 
 class SimpleVertexTest {
@@ -29,7 +29,7 @@ class SimpleVertexTest {
 
 	@Test
 	void layout() {
-		assertEquals(new Layout(Point.LAYOUT), vertex.layout());
+		assertEquals(new CompoundLayout(Point.LAYOUT), vertex.layout());
 	}
 
 	@Test

@@ -75,16 +75,16 @@ public class DataHelperTest {
 		when(in.readBoolean()).thenReturn(true);
 
 		// Load layout
-		final Component layout = helper.layout(in);
+		final Layout layout = helper.layout(in);
 		assertEquals(3, layout.count());
 		assertEquals(Float.BYTES, layout.bytes());
-		assertEquals(Component.Type.FLOAT, layout.type());
+		assertEquals(Layout.Type.FLOAT, layout.type());
 		assertEquals(true, layout.signed());
 	}
 
 	@Test
 	void writeLayout() throws IOException {
-		final Component layout = Component.floats(3);
+		final Layout layout = Layout.floats(3);
 		helper.write(layout, out);
 		verify(out).writeInt(3);
 		verify(out).writeInt(Float.BYTES);

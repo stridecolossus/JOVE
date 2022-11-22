@@ -3,7 +3,7 @@ package org.sarge.jove.platform.obj;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 
@@ -12,7 +12,7 @@ class RemoveDuplicateMeshTest {
 
 	@BeforeEach
 	void before() {
-		model = new RemoveDuplicateMesh(new Layout(Point.LAYOUT));
+		model = new RemoveDuplicateMesh(new CompoundLayout(Point.LAYOUT));
 	}
 
 	@Test

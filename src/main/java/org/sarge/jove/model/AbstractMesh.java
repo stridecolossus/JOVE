@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Normal;
 
 /**
@@ -14,7 +14,7 @@ import org.sarge.jove.geometry.Normal;
  */
 public abstract class AbstractMesh implements Mesh {
 	protected final Primitive primitive;
-	protected final Layout layout;
+	protected final CompoundLayout layout;
 
 	/**
 	 * Constructor.
@@ -22,7 +22,7 @@ public abstract class AbstractMesh implements Mesh {
 	 * @param layout		Vertex layout
 	 * @throws IllegalArgumentException if the layout contains {@link Normal#LAYOUT} but the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
-	protected AbstractMesh(Primitive primitive, Layout layout) {
+	protected AbstractMesh(Primitive primitive, CompoundLayout layout) {
 		this.primitive = notNull(primitive);
 		this.layout = notNull(layout);
 		validate();
@@ -40,7 +40,7 @@ public abstract class AbstractMesh implements Mesh {
 	}
 
 	@Override
-	public final Layout layout() {
+	public final CompoundLayout layout() {
 		return layout;
 	}
 

@@ -28,7 +28,7 @@ public class DefaultMesh extends AbstractMesh {
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
 	 */
-	public DefaultMesh(Primitive primitive, Layout layout) {
+	public DefaultMesh(Primitive primitive, CompoundLayout layout) {
 		super(primitive, layout);
 	}
 
@@ -37,8 +37,8 @@ public class DefaultMesh extends AbstractMesh {
 	 * @param primitive 	Drawing primitive
 	 * @param components	Vertex components
 	 */
-	public DefaultMesh(Primitive primitive, Component... components) {
-		super(primitive, new Layout(components));
+	public DefaultMesh(Primitive primitive, Layout... components) {
+		super(primitive, new CompoundLayout(components));
 	}
 
 	@Override

@@ -16,7 +16,7 @@ public class IndexedMeshTest {
 	@BeforeEach
 	void before() {
 		vertex = new SimpleVertex(Point.ORIGIN);
-		mesh = new IndexedMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT));
+		mesh = new IndexedMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT));
 		mesh.add(vertex);
 	}
 
@@ -81,7 +81,7 @@ public class IndexedMeshTest {
 		final var vertex = new MutableVertex();
 		vertex.position(Point.ORIGIN);
 		vertex.normal(Axis.Y);
-		mesh = new IndexedMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT, Normal.LAYOUT));
+		mesh = new IndexedMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT));
 		mesh.add(vertex);
 		mesh.add(0);
 		mesh.add(0);

@@ -4,13 +4,14 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public interface Coordinate extends Bufferable {
+public interface Coordinate extends Bufferable, Component {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
@@ -33,7 +34,12 @@ public interface Coordinate extends Bufferable {
 		/**
 		 * Layout of a 1D texture coordinate.
 		 */
-		public static final Component LAYOUT = Component.floats(1);
+		public static final Layout LAYOUT = Layout.floats(1);
+
+		@Override
+		public Layout layout() {
+			return LAYOUT;
+		}
 
 		@Override
 		public void buffer(ByteBuffer buffer) {
@@ -56,7 +62,7 @@ public interface Coordinate extends Bufferable {
 		/**
 		 * Layout of a 2D texture coordinate.
 		 */
-		public static final Component LAYOUT = Component.floats(2);
+		public static final Layout LAYOUT = Layout.floats(2);
 
 		/**
 		 * Quad coordinates.
@@ -71,6 +77,11 @@ public interface Coordinate extends Bufferable {
 		 * Texture coordinates for a quad with a counter-clockwise winding order.
 		 */
 		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT);
+
+		@Override
+		public Layout layout() {
+			return LAYOUT;
+		}
 
 		@Override
 		public void buffer(ByteBuffer buffer) {
@@ -95,7 +106,12 @@ public interface Coordinate extends Bufferable {
 		/**
 		 * Layout of a 3D texture coordinate.
 		 */
-		public static final Component LAYOUT = Component.floats(3);
+		public static final Layout LAYOUT = Layout.floats(3);
+
+		@Override
+		public Layout layout() {
+			return LAYOUT;
+		}
 
 		@Override
 		public void buffer(ByteBuffer buffer) {

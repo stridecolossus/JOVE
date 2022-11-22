@@ -45,7 +45,7 @@ public class IndexedMesh extends DefaultMesh {
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
 	 */
-	public IndexedMesh(Primitive primitive, Layout layout) {
+	public IndexedMesh(Primitive primitive, CompoundLayout layout) {
 		super(primitive, layout);
 	}
 

@@ -3,13 +3,13 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Normal;
 
 class AbstractMeshTest {
 	private static class MockAbstractModel extends AbstractMesh {
 		public MockAbstractModel(Primitive primitive) {
-			super(primitive, new Layout(Normal.LAYOUT));
+			super(primitive, new CompoundLayout(Normal.LAYOUT));
 		}
 
 		@Override
@@ -33,7 +33,7 @@ class AbstractMeshTest {
 	@Test
 	void constructor() {
 		assertEquals(Primitive.TRIANGLE, mesh.primitive());
-		assertEquals(new Layout(Normal.LAYOUT), mesh.layout());
+		assertEquals(new CompoundLayout(Normal.LAYOUT), mesh.layout());
 	}
 
 	@Test

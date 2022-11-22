@@ -2,7 +2,7 @@ package org.sarge.jove.platform.obj;
 
 import java.util.*;
 
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.model.*;
 
 /**
@@ -12,7 +12,7 @@ import org.sarge.jove.model.*;
 class RemoveDuplicateMesh extends IndexedMesh {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
-	public RemoveDuplicateMesh(Layout layout) {
+	public RemoveDuplicateMesh(CompoundLayout layout) {
 		super(Primitive.TRIANGLE, layout);
 	}
 

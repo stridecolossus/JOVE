@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 
 /**
  * A <i>mesh</i> specifies the structure of a renderable object.
@@ -20,7 +20,7 @@ public interface Mesh {
 	/**
 	 * @return Vertex layout
 	 */
-	Layout layout();
+	CompoundLayout layout();
 
 	/**
 	 * @return Whether this mesh has an index

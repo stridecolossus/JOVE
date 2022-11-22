@@ -23,7 +23,7 @@ public class BufferedMesh extends AbstractMesh {
 	 * @param vertices		Vertex buffer
 	 * @param index			Optional index buffer
 	 */
-	public BufferedMesh(Primitive primitive, int count, Layout layout, ByteSizedBufferable vertices, ByteSizedBufferable index) {
+	public BufferedMesh(Primitive primitive, int count, CompoundLayout layout, ByteSizedBufferable vertices, ByteSizedBufferable index) {
 		super(primitive, layout);
 		this.count = zeroOrMore(count);
 		this.vertices = notNull(vertices);

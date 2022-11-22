@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
@@ -28,7 +28,7 @@ public class DefaultMeshTest {
     	@Test
     	void constructor() {
     		assertEquals(Primitive.TRIANGLE, mesh.primitive());
-    		assertEquals(new Layout(Point.LAYOUT), mesh.layout());
+    		assertEquals(new CompoundLayout(Point.LAYOUT), mesh.layout());
     	}
 
     	@DisplayName("is not indexed")
@@ -84,7 +84,7 @@ public class DefaultMeshTest {
 		@DisplayName("cannot enumerate triangles if the primitive is not triangular")
 		@Test
 		void invalid() {
-			mesh = new DefaultMesh(Primitive.LINE, new Layout());
+			mesh = new DefaultMesh(Primitive.LINE, new CompoundLayout());
 			assertThrows(IllegalStateException.class, () -> mesh.triangles());
 		}
 	}
@@ -169,7 +169,7 @@ public class DefaultMeshTest {
     		}
 
     		// Populate model
-    		mesh = new DefaultMesh(Primitive.TRIANGLE, new Layout(Point.LAYOUT, Normal.LAYOUT));
+    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT));
     		for(Vertex v : vertices) {
     			mesh.add(v);
     		}
@@ -186,14 +186,14 @@ public class DefaultMeshTest {
     	@DisplayName("cannot be computed if the primitive does not support normals")
     	@Test
     	void triangles() {
-    		mesh = new DefaultMesh(Primitive.LINE, new Layout(Point.LAYOUT));
+    		mesh = new DefaultMesh(Primitive.LINE, new CompoundLayout(Point.LAYOUT));
     		assertThrows(IllegalStateException.class, () -> mesh.compute());
     	}
 
     	@DisplayName("cannot be computed if the mesh does not contain vertex data")
     	@Test
     	void vertices() {
-    		mesh = new DefaultMesh(Primitive.TRIANGLE, new Layout());
+    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout());
     		assertThrows(IllegalStateException.class, () -> mesh.compute());
     	}
 

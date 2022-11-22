@@ -29,9 +29,9 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 
 		// Load vertex layout
 		final int num = in.readInt();
-		final List<Component> components = new ArrayList<>();
+		final List<Layout> components = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
-			final Component c = helper.layout(in);
+			final Layout c = helper.layout(in);
 			components.add(c);
 		}
 
@@ -40,7 +40,7 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 		final ByteSizedBufferable index = helper.buffer(in);
 
 		// Create mesh
-		return new BufferedMesh(primitive, count, new Layout(components), vertices, index);
+		return new BufferedMesh(primitive, count, new CompoundLayout(components), vertices, index);
 	}
 
 	/**
@@ -59,9 +59,9 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 		out.writeInt(mesh.count());
 
 		// Write vertex layout
-		final List<Component> layout = mesh.layout().components();
+		final List<Layout> layout = mesh.layout().components();
 		out.writeInt(layout.size());
-		for(Component c : layout) {
+		for(Layout c : layout) {
 			helper.write(c, out); // TODO - cast
 		}
 

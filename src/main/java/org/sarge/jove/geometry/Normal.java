@@ -1,17 +1,18 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.common.Component;
+import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>normal</i> is a unit vector with a magnitude of <b>one</b>.
  * @author Sarge
  */
-public sealed class Normal extends Vector permits Axis {
+public sealed class Normal extends Vector implements Component permits Axis {
 	/**
 	 * Layout for a vertex normal.
 	 */
-	public static final Component LAYOUT = Component.floats(3);
+	public static final Layout LAYOUT = Layout.floats(3);
 
 	/**
 	 * Constructor.
@@ -55,5 +56,10 @@ public sealed class Normal extends Vector permits Axis {
 	@Override
 	public Normal invert() {
 		return new Normal(super.invert());
+	}
+
+	@Override
+	public Layout layout() {
+		return LAYOUT;
 	}
 }

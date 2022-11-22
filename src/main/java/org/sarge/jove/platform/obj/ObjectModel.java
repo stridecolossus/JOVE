@@ -41,7 +41,7 @@ class ObjectModel {
 	 */
 	private void build() {
 		// Init model layout
-		final var layout = new ArrayList<Component>();
+		final var layout = new ArrayList<Layout>();
 		layout.add(Point.LAYOUT);
 		if(!normals.isEmpty()) {
 			layout.add(Normal.LAYOUT);
@@ -51,7 +51,7 @@ class ObjectModel {
 		}
 
 		// Start new model
-		model = new RemoveDuplicateMesh(new Layout(layout));
+		model = new RemoveDuplicateMesh(new CompoundLayout(layout));
 		models.add(model);
 	}
 
@@ -93,7 +93,7 @@ class ObjectModel {
 		// Init vertex
 		final var vertex = new MutableVertex() {
 			@Override
-			public Layout layout() {
+			public CompoundLayout layout() {
 				return model.layout();
 			}
 		};
@@ -121,7 +121,7 @@ class ObjectModel {
 	/**
 	 * @throws IllegalArgumentException if the given component is invalid for the current model layout
 	 */
-	private void validate(Component c) {
+	private void validate(Layout c) {
 		if(!model.layout().contains(c)) {
 			throw new IllegalArgumentException("Invalid vertex layout: " + c);
 		}

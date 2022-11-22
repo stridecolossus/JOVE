@@ -149,7 +149,7 @@ public class GridBuilder {
 	 */
 	public DefaultMesh build() {
 		// Init mesh
-		final var mesh = new IndexedMesh(primitive, new Layout(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final var mesh = new IndexedMesh(primitive, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
 
 		// Calculate half distance in both directions
 		final int w = size.width();

@@ -30,10 +30,10 @@ public class NativeImageLoaderTest {
 
 		// Check layout
 		final int num = image.channels().length();
-		final Component layout = image.layout();
+		final Layout layout = image.layout();
 		assertNotNull(layout);
 		assertEquals(num, layout.count());
-		assertEquals(Component.Type.NORMALIZED, layout.type());
+		assertEquals(Layout.Type.NORMALIZED, layout.type());
 		assertEquals(Byte.BYTES, layout.bytes());
 		assertEquals(false, layout.signed());
 		assertEquals(num, layout.stride());

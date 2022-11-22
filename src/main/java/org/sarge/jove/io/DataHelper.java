@@ -106,12 +106,12 @@ public class DataHelper {
 	 * @return Layout
 	 * @throws IOException if the layout cannot be loaded
 	 */
-	public Component layout(DataInput in) throws IOException {
+	public Layout layout(DataInput in) throws IOException {
 		final int size = in.readInt();
-		final var type = Component.Type.valueOf(in.readUTF());
+		final var type = Layout.Type.valueOf(in.readUTF());
 		final boolean signed = in.readBoolean();
 		final int bytes = in.readInt();
-		return new Component(size, type, signed, bytes);
+		return new Layout(size, type, signed, bytes);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class DataHelper {
 	 * @param out		Output stream
 	 * @throws IOException if the layout cannot be written
 	 */
-	public void write(Component layout, DataOutput out) throws IOException {
+	public void write(Layout layout, DataOutput out) throws IOException {
 		out.writeInt(layout.count());
 		out.writeUTF(layout.type().name());
 		out.writeBoolean(layout.signed());

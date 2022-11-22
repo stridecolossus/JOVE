@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
@@ -15,7 +15,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
  * @author Sarge
  */
 public class DefaultVertex implements Vertex {
- 	private static final Layout LAYOUT = new Layout(Point.LAYOUT, Coordinate2D.LAYOUT);
+ 	private static final CompoundLayout LAYOUT = new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT);
 
 	private final Point pos;
 	private final Coordinate2D coord;
@@ -36,7 +36,7 @@ public class DefaultVertex implements Vertex {
 	}
 
 	@Override
-	public Layout layout() {
+	public CompoundLayout layout() {
 		return LAYOUT;
 	}
 

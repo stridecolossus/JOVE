@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 
 /**
@@ -14,7 +14,7 @@ import org.sarge.jove.geometry.Point;
  * @author Sarge
  */
 public class SimpleVertex implements Vertex {
-	private static final Layout LAYOUT = new Layout(Point.LAYOUT);
+	private static final CompoundLayout LAYOUT = new CompoundLayout(Point.LAYOUT);
 
 	private final Point pos;
 
@@ -27,7 +27,7 @@ public class SimpleVertex implements Vertex {
 	}
 
 	@Override
-	public Layout layout() {
+	public CompoundLayout layout() {
 		return LAYOUT;
 	}
 

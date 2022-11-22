@@ -79,9 +79,9 @@ class FormatBuilderTest {
 		@DisplayName("The layout component types map to the Vulkan euivalent")
 		@Test
 		void of() {
-			assertEquals(NumericFormat.INT, NumericFormat.of(Component.Type.INTEGER));
-			assertEquals(NumericFormat.FLOAT, NumericFormat.of(Component.Type.FLOAT));
-			assertEquals(NumericFormat.NORM, NumericFormat.of(Component.Type.NORMALIZED));
+			assertEquals(NumericFormat.INT, NumericFormat.of(Layout.Type.INTEGER));
+			assertEquals(NumericFormat.FLOAT, NumericFormat.of(Layout.Type.FLOAT));
+			assertEquals(NumericFormat.NORM, NumericFormat.of(Layout.Type.NORMALIZED));
 		}
 	}
 
@@ -90,7 +90,7 @@ class FormatBuilderTest {
 		@DisplayName("The builder can construct a format for a given vertex layout")
 		@Test
 		void layout() {
-			assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Component(3, Component.Type.FLOAT, true, 2)));
+			assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Layout(3, Layout.Type.FLOAT, true, 2)));
 		}
 
 		@DisplayName("The builder can determine the format for an image using the hint")
@@ -105,7 +105,7 @@ class FormatBuilderTest {
 		@DisplayName("The builder can determine the format for an image where the hint is not provided")
 		@Test
 		void image() {
-			final var image = new ImageData(new Dimensions(1, 1), "RGB", Component.floats(3), new byte[4 * 3]);
+			final var image = new ImageData(new Dimensions(1, 1), "RGB", Layout.floats(3), new byte[4 * 3]);
 			assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
 		}
 	}

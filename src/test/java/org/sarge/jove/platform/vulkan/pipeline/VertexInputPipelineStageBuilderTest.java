@@ -66,7 +66,7 @@ public class VertexInputPipelineStageBuilderTest {
 	@DisplayName("The vertex configuration can be specified by a vertex layout")
 	@Test
 	void layout() {
-		final var layout = new Layout(Component.floats(1), Component.floats(2));
+		final var layout = new CompoundLayout(Layout.floats(1), Layout.floats(2));
 		final var descriptor = builder.add(layout).get();
 		assertEquals(1, descriptor.vertexBindingDescriptionCount);
 		assertEquals(2, descriptor.vertexAttributeDescriptionCount);

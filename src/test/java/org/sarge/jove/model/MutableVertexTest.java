@@ -21,7 +21,7 @@ class MutableVertexTest {
 
 	@Test
 	void empty() {
-		assertEquals(new Layout(), vertex.layout());
+		assertEquals(new CompoundLayout(), vertex.layout());
 	}
 
 	@Test
@@ -54,7 +54,7 @@ class MutableVertexTest {
 		vertex.normal(Axis.Y);
 		vertex.coordinate(Coordinate2D.BOTTOM_LEFT);
 		vertex.colour(Colour.WHITE);
-		assertEquals(new Layout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT, Colour.LAYOUT), vertex.layout());
+		assertEquals(new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT, Colour.LAYOUT), vertex.layout());
 	}
 
 	@Test

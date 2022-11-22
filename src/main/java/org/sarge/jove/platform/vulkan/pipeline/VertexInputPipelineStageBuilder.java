@@ -37,7 +37,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * <p>
 	 * @param layout Vertex layout
 	 */
-	public VertexInputPipelineStageBuilder add(Layout layout) {
+	public VertexInputPipelineStageBuilder add(CompoundLayout layout) {
 		// Init binding
 		final var binding = new BindingBuilder();
 		final int stride = layout.stride();
@@ -45,7 +45,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 
 		// Add attribute for each layout component
 		int offset = 0;
-		for(Component c : layout.components()) {
+		for(Layout c : layout.components()) {
 			// Determine component format
 			final VkFormat format = FormatBuilder.format(c);
 

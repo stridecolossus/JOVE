@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
@@ -25,7 +25,7 @@ class DefaultVertexTest {
 
 	@Test
 	void layout() {
-		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), vertex.layout());
+		assertEquals(new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT), vertex.layout());
 	}
 
 	@Test

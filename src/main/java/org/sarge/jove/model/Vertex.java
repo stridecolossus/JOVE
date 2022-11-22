@@ -9,14 +9,14 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
- * A <i>vertex</i> is an element of a {@link Mesh} comprising of a list of bufferable components.
+ * A <i>vertex</i> is an element of a {@link Mesh} comprising of vertex {@link Component}s.
  * @author Sarge
  */
 public interface Vertex extends Bufferable {
 	/**
 	 * @return Layout of this vertex
 	 */
-	Layout layout();
+	CompoundLayout layout();
 
 	/**
 	 * @return Vertex position

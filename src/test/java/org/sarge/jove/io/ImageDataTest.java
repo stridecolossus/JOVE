@@ -10,7 +10,7 @@ import org.sarge.jove.io.ImageData.Level;
 
 public class ImageDataTest {
 	private static final Dimensions EXTENTS = new Dimensions(2, 3);
-	private static final Component LAYOUT = new Component(4, Component.Type.INTEGER, false, 1);
+	private static final Layout LAYOUT = new Layout(4, Layout.Type.INTEGER, false, 1);
 	private static final byte[] DATA = new byte[2 * 3 * 4];
 
 	private ImageData image;
@@ -60,13 +60,13 @@ public class ImageDataTest {
 	@DisplayName("The layout of an image must match the components string")
 	@Test
 	void invalidChannel() {
-		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "XXX", Component.floats(3), DATA));
+		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "XXX", Layout.floats(3), DATA));
 	}
 
 	@DisplayName("The number of channels of an image must match the layout")
 	@Test
 	void invalidComponentLayout() {
-		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", Component.floats(3), DATA));
+		assertThrows(IllegalArgumentException.class, () -> new ImageData(EXTENTS, "RGBA", Layout.floats(3), DATA));
 	}
 
 	@DisplayName("The length of the image data must match the specified layout and dimensions")

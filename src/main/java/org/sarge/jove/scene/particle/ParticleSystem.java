@@ -363,7 +363,7 @@ public class ParticleSystem implements Animation {
 	 */
 	public BufferedMesh model() {
 		// Init vertex layout
-		final Layout layout = new Layout(Point.LAYOUT, Colour.LAYOUT);
+		final CompoundLayout layout = new CompoundLayout(Point.LAYOUT, Colour.LAYOUT);
 
 		// Create vertex buffer
 		final var vertices = new ByteSizedBufferable() {

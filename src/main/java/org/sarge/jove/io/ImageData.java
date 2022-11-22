@@ -58,7 +58,7 @@ public class ImageData {
 
 	private final Dimensions size;
 	private final String channels;
-	private final Component layout;
+	private final Layout layout;
 	private final byte[] data;
 
 	/**
@@ -71,7 +71,7 @@ public class ImageData {
 	 * @throws IllegalArgumentException if the number of {@link #channels} and the {@link #layout} do not match
 	 * @throws IllegalArgumentException if the length of the {@link #data} does not match the number of MIP levels and array layers
 	 */
-	public ImageData(Dimensions size, String channels, Component layout, byte[] data) {
+	public ImageData(Dimensions size, String channels, Layout layout, byte[] data) {
 		this.size = notNull(size);
 		this.channels = notEmpty(channels);
 		this.layout = notNull(layout);
@@ -121,7 +121,7 @@ public class ImageData {
 	/**
 	 * @return Pixel layout
 	 */
-	public final Component layout() {
+	public final Layout layout() {
 		return layout;
 	}
 

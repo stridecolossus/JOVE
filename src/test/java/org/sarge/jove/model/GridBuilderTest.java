@@ -23,7 +23,7 @@ class GridBuilderTest {
 		final DefaultMesh model = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals((3 * 3) * 4, model.count());
-		assertEquals(new Layout(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
+		assertEquals(new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
 		assertEquals(true, model.isIndexed());
 	}
 
@@ -39,7 +39,7 @@ class GridBuilderTest {
 
 		@BeforeEach
 		void before() {
-			final Component layout = new Component(4, Component.Type.INTEGER, false, 2);
+			final Layout layout = new Layout(4, Layout.Type.INTEGER, false, 2);
 			image = new ImageData(new Dimensions(8, 8), "RGBA", layout, new byte[8 * 8 * (4 * 2)]) {
 				@Override
 				protected int pixel(int index) {
