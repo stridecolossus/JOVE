@@ -18,7 +18,7 @@ class CompoundLayoutTest {
 
 	@Test
 	void components() {
-		assertEquals(List.of(component, component), layout.components());
+		assertEquals(List.of(component, component), layout.layout());
 	}
 
 	@Test

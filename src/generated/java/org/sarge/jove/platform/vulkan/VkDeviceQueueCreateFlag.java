@@ -7,11 +7,10 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkDeviceQueueCreateFlag implements IntEnum {
- 	VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT(1), 	
- 	VK_DEVICE_QUEUE_CREATE_FLAG_BITS_MAX_ENUM(2147483647); 	
+ 	VK_DEVICE_QUEUE_CREATE_PROTECTED_BIT(1);
 
 	private final int value;
-	
+
 	private VkDeviceQueueCreateFlag(int value) {
 		this.value = value;
 	}

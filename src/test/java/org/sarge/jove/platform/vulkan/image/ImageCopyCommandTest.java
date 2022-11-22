@@ -1,8 +1,11 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
@@ -10,19 +13,25 @@ import org.sarge.jove.platform.vulkan.image.Image.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class ImageCopyCommandTest extends AbstractVulkanTest {
-	@Test
-	void copy() {
+	private Image src, dest;
+
+	@BeforeEach
+	void before() {
 		final Extents extents = new Extents(new Dimensions(2, 3));
 		final Descriptor descriptor = new Descriptor.Builder()
 				.format(FORMAT)
 				.aspect(VkImageAspect.COLOR)
 				.extents(extents)
 				.build();
-		final Image src = mock(Image.class);
-		final Image dest = mock(Image.class);
+
+		src = mock(Image.class);
+		dest = mock(Image.class);
 		when(src.descriptor()).thenReturn(descriptor);
 		when(dest.descriptor()).thenReturn(descriptor);
+	}
 
+	@Test
+	void copy() {
 		final ImageCopyCommand copy = ImageCopyCommand.of(src, dest);
 		final Buffer buffer = mock(Buffer.class);
 		final var region = new VkImageCopy() {
@@ -34,4 +43,42 @@ public class ImageCopyCommandTest extends AbstractVulkanTest {
 		copy.record(lib, buffer);
 		verify(lib).vkCmdCopyImage(buffer, src, VkImageLayout.TRANSFER_SRC_OPTIMAL, dest, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkImageCopy[]{region});
 	}
+
+	@Nested
+	class BuilderTests {
+		private ImageCopyCommand.Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new ImageCopyCommand.Builder(src, dest);
+		}
+
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> builder.build());
+		}
+
+		@Test
+		void self() {
+			assertThrows(IllegalArgumentException.class, () -> new ImageCopyCommand.Builder(src, src));
+		}
+
+    	@ParameterizedTest
+    	@EnumSource(value=VkImageLayout.class, names={"TRANSFER_SRC_OPTIMAL", "GENERAL", "SHARED_PRESENT_KHR"})
+    	void source(VkImageLayout layout) {
+			builder.source(layout);
+    	}
+
+    	@ParameterizedTest
+    	@EnumSource(value=VkImageLayout.class, names={"TRANSFER_DST_OPTIMAL", "GENERAL", "SHARED_PRESENT_KHR"})
+    	void destination(VkImageLayout layout) {
+			builder.destination(layout);
+    	}
+
+    	@Test
+    	void invalid() {
+    		assertThrows(IllegalArgumentException.class, () -> builder.source(VkImageLayout.PREINITIALIZED));
+    		assertThrows(IllegalArgumentException.class, () -> builder.destination(VkImageLayout.PREINITIALIZED));
+    	}
+    }
 }

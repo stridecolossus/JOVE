@@ -3,11 +3,14 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.*;
 
+import java.util.*;
+
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
+import org.sarge.jove.util.BitMask;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -110,6 +113,7 @@ public class Sampler extends AbstractVulkanObject {
 		private static final float VK_LOD_CLAMP_NONE = 1000;
 
 		private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
+		private final Set<VkSamplerCreateFlag> flags = new HashSet<>();
 
 		public Builder() {
 			min(VkFilter.LINEAR);
@@ -120,6 +124,16 @@ public class Sampler extends AbstractVulkanObject {
 			mode(VkSamplerAddressMode.REPEAT);
 			border(VkBorderColor.FLOAT_TRANSPARENT_BLACK);
 			unnormalizedCoordinates(false);
+		}
+
+		/**
+		 * Adds a sampler creation flag.
+		 * @param flag Creation flag
+		 */
+		public Builder flag(VkSamplerCreateFlag flag) {
+			Check.notNull(flag);
+			this.flags.add(flag);
+			return this;
 		}
 
 		/**
@@ -260,6 +274,9 @@ public class Sampler extends AbstractVulkanObject {
 			if(info.minLod > info.maxLod) {
 				throw new IllegalArgumentException("Invalid min/max LOD");
 			}
+
+			// Init flags
+			info.flags = BitMask.reduce(flags);
 
 			// Instantiate sampler
 			final VulkanLibrary lib = dev.library();

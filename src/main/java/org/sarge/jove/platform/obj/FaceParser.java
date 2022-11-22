@@ -3,7 +3,7 @@ package org.sarge.jove.platform.obj;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * The <i>face parser</i> parses the OBJ face command.
+ * The <i>face parser</i> parses an OBJ face command.
  * <p>
  * Each <i>face</i> is a polygon of <i>vertices</i> each comprising the following indices into the model:
  * <ul>

@@ -5,35 +5,35 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>layout</i> specifies the structure of compound data types such as tuples, vertices, arrays, etc.
+ * A <i>compound layout</i> specifies the structure of compound data types such as vertices.
  * @author Sarge
  */
 public final class CompoundLayout {
-	private final List<Layout> components;
+	private final List<Layout> layout;
 	private final int stride;
 
 	/**
 	 * Constructor.
-	 * @param components Components of this layout
+	 * @param layout Layout
 	 */
-	public CompoundLayout(List<Layout> components) {
-		this.components = List.copyOf(components);
-		this.stride = components.stream().mapToInt(Layout::stride).sum();
+	public CompoundLayout(List<Layout> layout) {
+		this.layout = List.copyOf(layout);
+		this.stride = layout.stream().mapToInt(Layout::stride).sum();
 	}
 
 	/**
 	 * Constructor.
-	 * @param components Components of this layout
+	 * @param layout Layout
 	 */
-	public CompoundLayout(Layout... components) {
-		this(Arrays.asList(components));
+	public CompoundLayout(Layout... layout) {
+		this(Arrays.asList(layout));
 	}
 
 	/**
-	 * @return Components of this layout
+	 * @return Layout
 	 */
-	public List<Layout> components() {
-		return components;
+	public List<Layout> layout() {
+		return layout;
 	}
 
 	/**
@@ -44,15 +44,15 @@ public final class CompoundLayout {
 	}
 
 	/**
-	 * @return Whether this model contains the given component (by identity)
+	 * @return Whether this layout contains the given element (by identity)
 	 */
 	public boolean contains(Layout component) {
-		return components.stream().anyMatch(c -> c == component);
+		return layout.stream().anyMatch(c -> c == component);
 	}
 
 	@Override
 	public int hashCode() {
-		return components.hashCode();
+		return layout.hashCode();
 	}
 
 	@Override
@@ -60,11 +60,11 @@ public final class CompoundLayout {
 		return
 				(obj == this) ||
 				(obj instanceof CompoundLayout that) &&
-				this.components.equals(that.components);
+				this.layout.equals(that.layout);
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(components).build();
+		return new ToStringBuilder(this).append(layout).build();
 	}
 }

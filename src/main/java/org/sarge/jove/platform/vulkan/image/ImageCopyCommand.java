@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
@@ -91,8 +92,8 @@ public class ImageCopyCommand extends ImmediateCommand {
 	 */
 	public static class Builder {
 		private final Image src, dest;
-		private VkImageLayout srcLayout = VkImageLayout.TRANSFER_SRC_OPTIMAL;
-		private VkImageLayout destLayout = VkImageLayout.TRANSFER_DST_OPTIMAL;
+		private VkImageLayout srcLayout = TRANSFER_SRC_OPTIMAL;
+		private VkImageLayout destLayout = TRANSFER_DST_OPTIMAL;
 		private final List<CopyRegion> regions = new ArrayList<>();
 
 		/**
@@ -105,15 +106,15 @@ public class ImageCopyCommand extends ImmediateCommand {
 			this.src = notNull(src);
 			this.dest = notNull(dest);
 		}
+		// TODO - check format features of the images?
 
 		/**
 		 * Sets the layout of the source image.
 		 * @param srcLayout Source layout
 		 */
 		public Builder source(VkImageLayout srcLayout) {
+			validate(srcLayout, TRANSFER_SRC_OPTIMAL);
 			this.srcLayout = notNull(srcLayout);
-			// TODO - TRANSFER_SRC_OPTIMAL | GENERAL | SHARED_PRESENT
-			// TODO - check format features?
 			return this;
 		}
 
@@ -122,10 +123,17 @@ public class ImageCopyCommand extends ImmediateCommand {
 		 * @param destayout Destination layout
 		 */
 		public Builder destination(VkImageLayout destLayout) {
+			validate(destLayout, TRANSFER_DST_OPTIMAL);
 			this.destLayout = notNull(destLayout);
-			// TODO - TRANSFER_DST_OPTIMAL | GENERAL | SHARED_PRESENT
-			// TODO - check format features?
 			return this;
+		}
+
+		private static void validate(VkImageLayout layout, VkImageLayout valid) {
+			final boolean ok = switch(layout) {
+				case GENERAL, SHARED_PRESENT_KHR -> true;
+				default -> layout == valid;
+			};
+			if(!ok) throw new IllegalArgumentException("Invalid image layout: " + layout);
 		}
 
 		/**

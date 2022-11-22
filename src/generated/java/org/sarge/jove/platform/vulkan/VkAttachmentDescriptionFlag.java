@@ -7,11 +7,10 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkAttachmentDescriptionFlag implements IntEnum {
- 	VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT(1), 	
- 	VK_ATTACHMENT_DESCRIPTION_FLAG_BITS_MAX_ENUM(2147483647); 	
+ 	VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT(1);
 
 	private final int value;
-	
+
 	private VkAttachmentDescriptionFlag(int value) {
 		this.value = value;
 	}

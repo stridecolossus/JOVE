@@ -50,9 +50,9 @@ public class DescriptorPool extends AbstractVulkanObject {
 	 */
 	public Collection<DescriptorSet> allocate(List<DescriptorLayout> layouts) {
 		Check.notEmpty(layouts);
-		final int count = layouts.size();
 
 		// Build allocation descriptor
+		final int count = layouts.size();
 		final var info = new VkDescriptorSetAllocateInfo();
 		info.descriptorPool = this.handle();
 		info.descriptorSetCount = count;
@@ -119,7 +119,7 @@ public class DescriptorPool extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Builder for a descriptor pool.
+	 * Builder for a descriptor set pool.
 	 */
 	public static class Builder {
 		private final Map<VkDescriptorType, Integer> pool = new HashMap<>();

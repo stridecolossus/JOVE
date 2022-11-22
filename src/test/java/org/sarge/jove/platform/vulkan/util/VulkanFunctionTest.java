@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 
-import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
 @SuppressWarnings("unchecked")
@@ -32,13 +32,13 @@ class VulkanFunctionTest {
 	@Test
 	void structure() {
 		// Create identity instance
-		final Structure struct = mock(Structure.class);
-		final Structure[] array = new Structure[]{struct, struct};
+		final var struct = mock(VulkanStructure.class);
+		final var array = new VulkanStructure[]{struct, struct};
 		when(struct.toArray(2)).thenReturn(array);
 
 		// Invoke and check resultant array
-		final StructureVulkanFunction<Structure> func = spy(StructureVulkanFunction.class);
-		final Structure[] result = func.invoke(count, struct);
+		final StructureVulkanFunction<VulkanStructure> func = spy(StructureVulkanFunction.class);
+		final VulkanStructure[] result = func.invoke(count, struct);
 		assertEquals(array, result);
 		verify(func).enumerate(count, null);
 		verify(func).enumerate(count, struct);

@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class SurfaceTest extends AbstractVulkanTest {
+class SurfaceTest extends AbstractVulkanTest {
 	private Surface surface;
 	private Instance instance;
 	private PhysicalDevice physical;

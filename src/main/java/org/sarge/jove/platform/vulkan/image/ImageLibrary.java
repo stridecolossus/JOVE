@@ -57,11 +57,11 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param srcImage			Source image
 	 * @param srcImageLayout	Source layout
 	 * @param dstImage			Destination image
-	 * @param dstImageLayou		Destination layout
+	 * @param dstImageLayout	Destination layout
 	 * @param regionCount		Number of regions
 	 * @param pRegions			Regions
 	 */
-	void vkCmdCopyImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayou, int regionCount, VkImageCopy[] pRegions);
+	void vkCmdCopyImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageCopy[] pRegions);
 
 	/**
 	 * Copies a buffer to an image.

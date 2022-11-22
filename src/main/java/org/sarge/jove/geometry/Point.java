@@ -68,16 +68,6 @@ public final class Point extends Tuple implements Component {
 	}
 
 	/**
-	 * Convenience method - Subtracts the given tuple from this point.
-	 * @param that Tuple
-	 * @return Subtracted point
-	 * @see #add(Tuple)
-	 */
-	public Point subtract(Tuple that) {
-		return new Point(x - that.x, y - that.y, z - that.z);
-	}
-
-	/**
 	 * Multiplies this point.
 	 * @param f Scalar
 	 * @return Multiplied point

@@ -33,7 +33,7 @@ public class PipelineCache extends AbstractVulkanObject {
 	 */
 	public static PipelineCache create(DeviceContext dev, byte[] data) {
 		// Build create descriptor
-		final VkPipelineCacheCreateInfo info = new VkPipelineCacheCreateInfo();
+		final var info = new VkPipelineCacheCreateInfo();
 		if(data != null) {
 			info.initialDataSize = data.length;
 			info.pInitialData = BufferHelper.buffer(data);

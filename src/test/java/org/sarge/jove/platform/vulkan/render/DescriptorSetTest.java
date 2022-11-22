@@ -11,7 +11,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 public class DescriptorSetTest extends AbstractVulkanTest {

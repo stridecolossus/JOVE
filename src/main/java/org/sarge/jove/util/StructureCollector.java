@@ -33,7 +33,7 @@ import com.sun.jna.Structure.ByReference;
  * SomeStructure[] array = StructureCollector.array(list, new SomeStructure(), populate);
  *
  * // Transform to a pointer-to-array (assumes by-reference)
- * SomeStructure first = StructureCollector.pointer(list, new SomeStructure(), populate);
+ * SomeStructure first = StructureCollector.pointer(list, new SomeStructure.ByReference(), populate);
  * </pre>
  * <p>
  * @author Sarge

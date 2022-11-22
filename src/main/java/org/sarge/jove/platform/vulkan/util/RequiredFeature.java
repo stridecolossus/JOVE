@@ -6,11 +6,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
- * A <i>required feature</i> annotation denotes configuration methods associated with a required device feature.
+ * The <i>required feature</i> annotation denotes configuration methods associated with a required device feature.
  * <p>
  * The annotation specifies the following:
  * <ul>
@@ -34,7 +33,7 @@ import java.util.stream.Stream;
  * The following field types <b>only</b> are supported:
  * <ul>
  * <li>boolean flags</li>
- * <li>numeric values (int, long, float)</li>
+ * <li>numerics: {@code int}, {@code long} or {@code float}</li>
  * </ul>
  * <p>
  * The {@link Processor} walks configuration objects (usually Vulkan structure descriptors) via reflection to enumerate required device features.
@@ -73,36 +72,40 @@ public @interface RequiredFeature {
 		 * @throws UnsupportedOperationException for an unsupported field type
 		 */
 		public Stream<String> enumerate(Object obj) {
-			// Test for required device features
-			final Predicate<RequiredFeature> isRequired = annotation -> {
-				// Retrieve field
-				final Object value;
-				try {
-					final Field field = obj.getClass().getDeclaredField(annotation.field());
-					field.setAccessible(true);
-					value = field.get(obj);
-				}
-				catch(Exception e) {
-					throw new RuntimeException(e);
-				}
-
-				// Test whether device feature is required
-				return switch(value) {
-					case null -> false;
-					case Boolean b -> b;
-					case Number num -> num.floatValue() > annotation.predicate();
-					default -> throw new UnsupportedOperationException(String.format("Unsupported required feature: object=%s feature=%s", obj, annotation));
-				};
-			};
-
-			// Enumerate required features
 			final Method[] methods = obj.getClass().getDeclaredMethods();
 			return Arrays
 					.stream(methods)
 					.map(m -> m.getAnnotation(RequiredFeature.class))
 					.filter(Objects::nonNull)
-					.filter(isRequired)
+					.filter(required -> required(obj, required))
 					.map(RequiredFeature::feature);
+		}
+
+		/**
+		 * Tests whether the a configuration object satisfies the given required feature.
+		 * @param obj			Configuration object
+		 * @param feature		Required feature
+		 * @return Whether required
+		 */
+		private static boolean required(Object obj, RequiredFeature feature) {
+			// Retrieve field
+			final Object value;
+			try {
+				final Field field = obj.getClass().getDeclaredField(feature.field());
+				field.setAccessible(true);
+				value = field.get(obj);
+			}
+			catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+
+			// Test whether device feature is required
+			return switch(value) {
+				case null -> false;
+				case Boolean b -> b;
+				case Number num -> num.floatValue() > feature.predicate();
+				default -> throw new UnsupportedOperationException("Unsupported required feature: object=%s feature=%s".formatted(obj, feature));
+			};
 		}
 	}
 }

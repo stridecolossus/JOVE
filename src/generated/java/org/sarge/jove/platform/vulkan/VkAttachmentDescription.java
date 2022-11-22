@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitMask;
 
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -21,7 +21,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"finalLayout"
 })
 public class VkAttachmentDescription extends VulkanStructure implements ByReference {
-	public int flags;
+	public BitMask<VkAttachmentDescriptionFlag> flags;
 	public VkFormat format;
 	public VkSampleCount samples;
 	public VkAttachmentLoadOp loadOp;

@@ -4,6 +4,8 @@ import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.function.IntFunction;
 
+import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 
@@ -82,7 +84,7 @@ public interface VulkanFunction<T> {
 	 * Adapter for a Vulkan function that retrieves an <b>array</b> of JNA structures.
 	 * @param <T> Vulkan structure
 	 */
-	interface StructureVulkanFunction<T extends Structure> extends VulkanFunction<T> {
+	interface StructureVulkanFunction<T extends VulkanStructure> extends VulkanFunction<T> {
 		/**
 		 * Invokes this function using the <i>two-stage invocation</i> approach to retrieve an array of JNA structures.
 		 * <p>

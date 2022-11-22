@@ -34,7 +34,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSwapchainCreateInfoKHR extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.SWAPCHAIN_CREATE_INFO_KHR;
 	public Pointer pNext;
-	public int flags;
+	public BitMask<VkSwapchainCreateFlagKHR> flags;
 	public Handle surface;
 	public int minImageCount;
 	public VkFormat imageFormat;

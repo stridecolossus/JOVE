@@ -13,30 +13,27 @@ public final class ComponentMapping {
 	private static final int SIZE = 4;
 
 	/**
-	 * @return Identity component mapping
+	 * Identity component mapping.
 	 * @see VkComponentSwizzle#IDENTITY
 	 */
-	public static VkComponentMapping identity() {
-		final var mapping = new ComponentMapping();
-		return mapping.build();
-	}
+	public static final ComponentMapping IDENTITY = new ComponentMapping();
 
 	/**
 	 * Creates a component mapping from the given string specifying the swizzle for each channel of an image.
 	 * <p>
-	 * The character corresponding to each channel is one of the following:
+	 * Each character in the string is one of the following:
 	 * <ul>
-	 * <li>an RGBA character, e.g. {@code R} for {@link VkComponentSwizzle#R}</li>
+	 * <li>an RGBA channel, e.g. {@code R} for {@link VkComponentSwizzle#R}</li>
 	 * <li>{@code =} for {@link VkComponentSwizzle#IDENTITY}</li>
 	 * <li>{@code 1} for {@link VkComponentSwizzle#ONE}</li>
 	 * <li>{@code 0} for {@link VkComponentSwizzle#ZERO}</li>
 	 * </ul>
-	 * @param components Mapping specification
+	 * @param components Component mapping string specification (case sensitive)
 	 * @return Component mapping
 	 * @throws IllegalArgumentException if {@link #mapping} is empty or longer than 4 characters in length
 	 * @throws IllegalArgumentException for an unsupported channel swizzle character
 	 */
-	public static VkComponentMapping of(String components) {
+	public static ComponentMapping of(String components) {
 		// Validate
 		final int len = components.length();
 		if(len == 0) throw new IllegalArgumentException("Component mapping cannot be empty");
@@ -48,8 +45,7 @@ public final class ComponentMapping {
 			mapping.swizzle[n] = swizzle(components.charAt(n));
 		}
 
-		// Create mapping
-		return mapping.build();
+		return mapping;
 	}
 
 	/**
@@ -79,9 +75,9 @@ public final class ComponentMapping {
 
 	/**
 	 * Creates the descriptor for this component mapping.
-	 * @return New component mapping
+	 * @return Component mapping descriptor
 	 */
-	private VkComponentMapping build() {
+	public VkComponentMapping build() {
 		final var mapping = new VkComponentMapping();
 		mapping.r = swizzle[0];
 		mapping.g = swizzle[1];

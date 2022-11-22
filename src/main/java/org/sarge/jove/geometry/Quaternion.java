@@ -154,6 +154,11 @@ public final class Quaternion implements Rotation {
 	}
 
 	@Override
+	public int hashCode() {
+		return Arrays.hashCode(array());
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||

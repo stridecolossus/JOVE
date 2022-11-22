@@ -8,7 +8,7 @@ import org.sarge.jove.control.Event.Source;
 import com.sun.jna.Callback;
 
 /**
- * A <i>desktop source</i> is a template for a source based on a GLFW callback.
+ * A <i>desktop source</i> is a template for an event source based on a GLFW callback.
  * <p>
  * The over-ridden {@link #bind(Consumer)} method encapsulates the following steps:
  * <ol>

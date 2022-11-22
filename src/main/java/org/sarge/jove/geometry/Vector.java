@@ -20,7 +20,10 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @return Vector between the given points
 	 */
 	public static Vector between(Point start, Point end) {
-		return new Vector(end.subtract(start));
+		final float x = end.x - start.x;
+		final float y = end.y - start.y;
+		final float z = end.z - start.z;
+		return new Vector(x, y, z);
 	}
 
 	/**

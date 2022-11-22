@@ -55,7 +55,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 			case TRANSFER_SRC_OPTIMAL -> !write;
 			default -> false;
 		};
-		if(!valid) throw new IllegalStateException("Invalid image layout for copy operation: write=%b layout=%s".formatted(write, layout));
+		if(!valid) throw new IllegalStateException("Invalid image layout for copy operation: write=%s layout=%s".formatted(write, layout));
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class ImageTransferCommand extends ImmediateCommand {
 		 * Constructor.
 		 * @param offset			Buffer offset
 		 * @param row				Row length/height (texels) or {@code zero} to use the same dimensions as the image
-		 * @param subresource				Sub-resource
+		 * @param subresource		Sub-resource
 		 * @param imageOffset		Image offset
 		 * @param extents			Image extents
 		 * @throws IllegalArgumentException if {@code row} is non-zero but smaller than the given extents

@@ -55,7 +55,7 @@ public class Desktop implements TransientObject {
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
 
 		// Create desktop service
-		return new Desktop(lib, ReferenceFactory.DEFAULT);
+		return new Desktop(lib, new ReferenceFactory());
 	}
 
 	/**
@@ -72,7 +72,8 @@ public class Desktop implements TransientObject {
 
 	/**
 	 * Constructor.
-	 * @param lib GLFW library
+	 * @param lib 			GLFW library
+	 * @param factory		Reference factory
 	 */
 	Desktop(DesktopLibrary lib, ReferenceFactory factory) {
 		this.lib = notNull(lib);

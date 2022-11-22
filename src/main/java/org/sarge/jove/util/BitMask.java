@@ -60,6 +60,14 @@ public class BitMask<E extends IntEnum> {
 	}
 
 	/**
+	 * @param mask Mask
+	 * @return Whether this enumeration contains the given mask
+	 */
+	public boolean contains(BitMask<E> mask) {
+		return (bits & mask.bits) == mask.bits;
+	}
+
+	/**
 	 * Converts this mask to the corresponding enumeration constants.
 	 * @param reverse Reverse mapping
 	 * @return Enumeration constants

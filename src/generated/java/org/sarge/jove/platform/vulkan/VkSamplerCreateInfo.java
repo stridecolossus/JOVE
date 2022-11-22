@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -32,7 +33,7 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkSamplerCreateInfo extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.SAMPLER_CREATE_INFO;
 	public Pointer pNext;
-	public int flags;
+	public BitMask<VkSamplerCreateFlag> flags;
 	public VkFilter magFilter;
 	public VkFilter minFilter;
 	public VkSamplerMipmapMode mipmapMode;

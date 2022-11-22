@@ -10,7 +10,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.WorkQueue;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
@@ -241,6 +240,7 @@ public class Swapchain extends AbstractVulkanObject {
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private final Surface surface;
 		private final VkSurfaceCapabilitiesKHR caps;
+		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private ClearValue clear;
 
@@ -277,6 +277,16 @@ public class Swapchain extends AbstractVulkanObject {
 		private static void validate(BitMask<?> bitfield, IntEnum e) {
 			final Mask mask = new Mask(bitfield.bits());
 			if(!mask.contains(e.value())) throw new IllegalArgumentException("Unsupported property: " + e);
+		}
+
+		/**
+		 * Adds a creation flag for this swapchain.
+		 * @param flag Creation flag
+		 */
+		public Builder flag(VkSwapchainCreateFlagKHR flag) {
+			Check.notNull(flag);
+			flags.add(flag);
+			return this;
 		}
 
 		/**
@@ -420,6 +430,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 */
 		public Swapchain build(DeviceContext dev) {
 			// Init swapchain descriptor
+			info.flags = BitMask.reduce(flags);
 			info.surface = surface.handle();
 			info.imageUsage = BitMask.reduce(usage);
 			info.oldSwapchain = null; // TODO

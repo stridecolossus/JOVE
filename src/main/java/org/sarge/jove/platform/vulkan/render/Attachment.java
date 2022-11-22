@@ -12,7 +12,7 @@ import org.sarge.lib.util.Check;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Operations colour, Attachment.Operations stencil, VkImageLayout before, VkImageLayout after) {
+public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Operations colour, Attachment.Operations depthStencil, VkImageLayout before, VkImageLayout after) {
 	/**
 	 * Convenience wrapper for load-store operations.
 	 */
@@ -21,6 +21,16 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		 * Default load-store operations.
 		 */
 		public static final Operations DONT_CARE = new Operations(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
+
+		/**
+		 * Convenience load-store operations for the colour attachment.
+		 */
+		public static final Operations COLOUR = new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE);
+
+		/**
+		 * Convenience load-store operations for the depth-stencil attachment.
+		 */
+		public static final Operations DEPTH_STENCIL = new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE);
 
 		/**
 		 * Constructor.
@@ -35,12 +45,12 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 
 	/**
 	 * Constructor.
-	 * @param format		Attachment format
-	 * @param samples		Number of samples
-	 * @param colour		Colour load-store operations
-	 * @param stencil		Depth-stencil operations
-	 * @param before		Initial layout
-	 * @param after			Final layout
+	 * @param format			Attachment format
+	 * @param samples			Number of samples
+	 * @param colour			Colour load-store operations
+	 * @param depthStencil		Depth-stencil operations
+	 * @param before			Initial layout
+	 * @param after				Final layout
 	 * @throws IllegalArgumentException if the {@link #after} layout is unspecified or is invalid
 	 */
 	public Attachment {
@@ -51,7 +61,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		}
 		Check.notNull(samples);
 		Check.notNull(colour);
-		Check.notNull(stencil);
+		Check.notNull(depthStencil);
 		Check.notNull(before);
 	}
 
@@ -78,8 +88,8 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		attachment.samples = samples;
 		attachment.loadOp = colour.load;
 		attachment.storeOp = colour.store;
-		attachment.stencilLoadOp = stencil.load;
-		attachment.stencilStoreOp = stencil.store;
+		attachment.stencilLoadOp = depthStencil.load;
+		attachment.stencilStoreOp = depthStencil.store;
 		attachment.initialLayout = before;
 		attachment.finalLayout = after;
 	}
@@ -90,10 +100,8 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 	public static class Builder {
 		private VkFormat format;
 		private VkSampleCount samples = VkSampleCount.COUNT_1;
-		private VkAttachmentLoadOp load = VkAttachmentLoadOp.DONT_CARE;
-		private VkAttachmentStoreOp store = VkAttachmentStoreOp.DONT_CARE;
-		private VkAttachmentLoadOp stencilLoad = VkAttachmentLoadOp.DONT_CARE;
-		private VkAttachmentStoreOp stencilStore = VkAttachmentStoreOp.DONT_CARE;
+		private Operations colour = Operations.DONT_CARE;
+		private Operations depthStencil = Operations.DONT_CARE;
 		private VkImageLayout before = VkImageLayout.UNDEFINED;
 		private VkImageLayout after;
 
@@ -137,38 +145,20 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		}
 
 		/**
-		 * Sets the attachment load operation (before rendering).
-		 * @param op Load operation
+		 * Sets the load/store operations for the colour attachment.
+		 * @param colour Colour operations
 		 */
-		public Builder load(VkAttachmentLoadOp op) {
-			this.load = notNull(op);
+		public Builder colour(Operations colour) {
+			this.colour = notNull(colour);
 			return this;
 		}
 
 		/**
-		 * Sets the attachment store operation (after rendering).
-		 * @param op Store operation
+		 * Sets the load/store operations for the depth-stencil attachment.
+		 * @param depthStencil Depth-stencil operations
 		 */
-		public Builder store(VkAttachmentStoreOp op) {
-			this.store = notNull(op);
-			return this;
-		}
-
-		/**
-		 * Sets the attachment stencil load operation (before rendering).
-		 * @param op Stencil load operation
-		 */
-		public Builder stencilLoad(VkAttachmentLoadOp op) {
-			this.stencilLoad = notNull(op);
-			return this;
-		}
-
-		/**
-		 * Sets the attachment stencil store operation (after rendering).
-		 * @param op Stencil store operation
-		 */
-		public Builder stencilStore(VkAttachmentStoreOp op) {
-			this.stencilStore = notNull(op);
+		public Builder depth(Operations depthStencil) {
+			this.depthStencil = notNull(depthStencil);
 			return this;
 		}
 
@@ -198,11 +188,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		public Attachment build() {
 			if(format == null) throw new IllegalArgumentException("No format specified for attachment");
 			if(after == null) throw new IllegalArgumentException("No final layout specified");
-
-			final Operations colour = new Operations(load, store);
-			final Operations stencil = new Operations(stencilLoad, stencilStore);
-
-			return new Attachment(format, samples, colour, stencil, before, after);
+			return new Attachment(format, samples, colour, depthStencil, before, after);
 		}
 	}
 }

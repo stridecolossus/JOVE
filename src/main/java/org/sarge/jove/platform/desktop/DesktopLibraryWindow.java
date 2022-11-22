@@ -33,7 +33,7 @@ interface DesktopLibraryWindow {
 	void glfwDefaultWindowHints();
 
 	/**
-	 * Sets a creation window hint.
+	 * Sets a creation window hint to be applied to the next window.
 	 * @param hint		Hint
 	 * @param value		Value
 	 */

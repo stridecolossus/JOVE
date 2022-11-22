@@ -59,7 +59,7 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 		out.writeInt(mesh.count());
 
 		// Write vertex layout
-		final List<Layout> layout = mesh.layout().components();
+		final List<Layout> layout = mesh.layout().layout();
 		out.writeInt(layout.size());
 		for(Layout c : layout) {
 			helper.write(c, out); // TODO - cast

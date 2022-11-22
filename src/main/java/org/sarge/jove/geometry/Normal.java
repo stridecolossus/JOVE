@@ -59,7 +59,7 @@ public sealed class Normal extends Vector implements Component permits Axis {
 	}
 
 	@Override
-	public Layout layout() {
+	public final Layout layout() {
 		return LAYOUT;
 	}
 }

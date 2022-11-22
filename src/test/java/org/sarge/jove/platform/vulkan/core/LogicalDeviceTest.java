@@ -160,7 +160,6 @@ public class LogicalDeviceTest {
 					.build();
 
 			// Check device
-			assertNotNull(device);
 			assertEquals(new Handle(1), device.handle());
 			assertEquals(false, device.isDestroyed());
 			assertEquals(parent, device.parent());
@@ -176,7 +175,6 @@ public class LogicalDeviceTest {
 					assertEquals(0, actual.flags);
 
 					// Check device features
-					assertNotNull(actual.pEnabledFeatures);
 					assertEquals(true, actual.pEnabledFeatures.samplerAnisotropy);
 
 					// Check extensions
@@ -189,7 +187,7 @@ public class LogicalDeviceTest {
 
 					// Check required queues
 					assertEquals(1, actual.queueCreateInfoCount);
-					assertEquals(0, actual.pQueueCreateInfos.flags);
+					assertEquals(null, actual.pQueueCreateInfos.flags);
 					assertEquals(2, actual.pQueueCreateInfos.queueCount);
 					assertEquals(1, actual.pQueueCreateInfos.queueFamilyIndex);
 					assertNotNull(actual.pQueueCreateInfos.pQueuePriorities);

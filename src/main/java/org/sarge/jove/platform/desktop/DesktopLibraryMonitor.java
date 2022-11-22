@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.ptr.IntByReference;
 
@@ -24,12 +23,14 @@ interface DesktopLibraryMonitor {
 	}
 
 	/**
+	 * Enumerates monitors attached to this system.
 	 * @param count Number of monitors
 	 * @return Pointer to array of monitors
 	 */
 	Pointer glfwGetMonitors(IntByReference count);
 
 	/**
+	 * Enumerates the video modes supported by the given monitor.
 	 * @param monitor		Monitor
 	 * @param count			Number of modes
 	 * @return Display modes for the given monitor
@@ -37,12 +38,14 @@ interface DesktopLibraryMonitor {
 	DesktopDisplayMode glfwGetVideoModes(Pointer monitor, IntByReference count);
 
 	/**
+	 * Retrieves the current video mode of the given monitor.
 	 * @param monitor Monitor
 	 * @return Current display mode of the given monitor
 	 */
 	DesktopDisplayMode glfwGetVideoMode(Monitor monitor);
 
 	/**
+	 * Retrieves the dimensions of the given monitor.
 	 * @param monitor		Monitor
 	 * @param w				Returned width
 	 * @param h				Returned height
@@ -50,6 +53,7 @@ interface DesktopLibraryMonitor {
 	void glfwGetMonitorPhysicalSize(Pointer monitor, IntByReference w, IntByReference h);
 
 	/**
+	 * Retrieves the name of the given monitor.
 	 * @param monitor Monitor
 	 * @return Monitor name
 	 */

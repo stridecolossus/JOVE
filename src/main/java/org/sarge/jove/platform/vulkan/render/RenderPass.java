@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
-import org.sarge.jove.util.StructureCollector;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -296,6 +296,7 @@ public class RenderPass extends AbstractVulkanObject {
 				private static final int VK_SUBPASS_EXTERNAL = ~0;
 
 				private Integer subpass;
+				private final Set<VkDependencyFlag> flags = new HashSet<>();
 				private final Properties src = new Properties(this);
 				private final Properties dest = new Properties(this);
 
@@ -325,6 +326,16 @@ public class RenderPass extends AbstractVulkanObject {
 				 */
 				public Dependency self() {
 					return dependency(Subpass.this);
+				}
+
+				/**
+				 * Adds a dependency flag.
+				 * @param flag Dependency flag
+				 */
+				public Dependency flag(VkDependencyFlag flag) {
+					Check.notNull(flag);
+					flags.add(flag);
+					return this;
 				}
 
 				/**
@@ -358,6 +369,7 @@ public class RenderPass extends AbstractVulkanObject {
 				 * Populates the descriptor for this dependency.
 				 */
 				private void populate(VkSubpassDependency info) {
+					info.dependencyFlags = BitMask.reduce(flags);
 					info.srcSubpass = index;
 					info.dstSubpass = Subpass.this.index;
 					info.srcStageMask = reduce(src.stages);

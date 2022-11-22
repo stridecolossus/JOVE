@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
 /**
@@ -55,8 +55,8 @@ public class FormatBuilder {
 		RGB;
 
 		/**
-		 * Maps the given layout component type to the corresponding Vulkan numeric format.
-		 * @param type Layout component type
+		 * Maps the given layout data type to the corresponding Vulkan numeric format.
+		 * @param type Layout data type
 		 * @return Vulkan numeric format
 		 * @throws UnsupportedOperationException if the given type is not supported
 		 */
@@ -122,7 +122,7 @@ public class FormatBuilder {
 	/**
 	 * Sets the colour components, e.g. {@code RGBA}.
 	 * @param template Colour components
-	 * @throws IllegalArgumentException if the given components is empty or is longer than 4 components
+	 * @throws IllegalArgumentException if {@link #components} is empty or is longer than 4 characters in length
 	 * @see Colour#RGBA
 	 */
 	public FormatBuilder components(String components) {
@@ -134,7 +134,7 @@ public class FormatBuilder {
 	/**
 	 * Sets the number of components.
 	 * @param count Number of components
-	 * @throws IllegalArgumentException if the given count exceeds the components template
+	 * @throws IllegalArgumentException if {@link #count} exceeds the components template
 	 * @see #components(String)
 	 */
 	public FormatBuilder count(int count) {
@@ -148,8 +148,11 @@ public class FormatBuilder {
 	 * @throws IllegalArgumentException if the number of bytes is invalid
 	 */
 	public FormatBuilder bytes(int bytes) {
-		Check.range(bytes, 1, 8);
-		if(!MathsUtil.isPowerOfTwo(bytes)) {
+		final boolean valid = switch(bytes) {
+    		case 1, 2, 4, 8 -> true;
+    		default -> false;
+		};
+		if(!valid) {
 			throw new IllegalArgumentException("Unsupported number of component bytes: " + bytes);
 		}
 		this.bytes = bytes;

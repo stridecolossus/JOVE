@@ -10,7 +10,6 @@ import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.BitMask;
 

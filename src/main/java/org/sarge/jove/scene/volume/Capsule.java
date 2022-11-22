@@ -51,7 +51,7 @@ public class Capsule implements Volume {
 		final Normal normal = new Normal(segment);
 
 		final Point a = bottom.add(normal);
-		final Point b = top.subtract(normal);
+		final Point b = top.add(normal.invert());
 		final Vector ab = Vector.between(a, b);
 
 		final float t = Vector.between(a, p).dot(ab) / ab.dot(ab);

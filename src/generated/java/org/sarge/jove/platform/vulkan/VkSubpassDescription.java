@@ -1,10 +1,10 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -23,7 +23,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"pPreserveAttachments"
 })
 public class VkSubpassDescription extends VulkanStructure implements ByReference {
-	public int flags;
+	public BitMask<VkSubpassDescriptionFlag> flags;
 	public VkPipelineBindPoint pipelineBindPoint;
 	public int inputAttachmentCount;
 	public Pointer pInputAttachments;

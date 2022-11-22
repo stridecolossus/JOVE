@@ -45,7 +45,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 
 		// Add attribute for each layout component
 		int offset = 0;
-		for(Layout c : layout.components()) {
+		for(Layout c : layout.layout()) {
 			// Determine component format
 			final VkFormat format = FormatBuilder.format(c);
 

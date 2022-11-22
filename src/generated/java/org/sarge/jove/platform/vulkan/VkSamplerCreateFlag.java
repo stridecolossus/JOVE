@@ -7,12 +7,11 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkSamplerCreateFlag implements IntEnum {
- 	VK_SAMPLER_CREATE_SUBSAMPLED_BIT_EXT(1), 	
- 	VK_SAMPLER_CREATE_SUBSAMPLED_COARSE_RECONSTRUCTION_BIT_EXT(2), 	
- 	VK_SAMPLER_CREATE_FLAG_BITS_MAX_ENUM(2147483647); 	
+ 	VK_SAMPLER_CREATE_SUBSAMPLED_BIT_EXT(1),
+ 	VK_SAMPLER_CREATE_SUBSAMPLED_COARSE_RECONSTRUCTION_BIT_EXT(2);
 
 	private final int value;
-	
+
 	private VkSamplerCreateFlag(int value) {
 		this.value = value;
 	}

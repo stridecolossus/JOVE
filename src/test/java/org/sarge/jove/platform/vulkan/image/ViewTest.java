@@ -132,15 +132,13 @@ public class ViewTest extends AbstractVulkanTest {
 				public boolean equals(Object obj) {
 					// Check descriptor
 					final var info = (VkImageViewCreateInfo) obj;
-					assertNotNull(info);
-					assertEquals(0, info.flags);
+					assertEquals(null, info.flags);
 					assertEquals(ViewTest.this.image.handle(), info.image);
 					assertEquals(VkImageViewType.CUBE, info.viewType);
 					assertEquals(FORMAT, info.format);
 					assertNotNull(info.subresourceRange);
 
 					// Check component mapping
-					assertNotNull(info.components);
 					assertEquals(VkComponentSwizzle.B, info.components.r);
 					assertEquals(VkComponentSwizzle.G, info.components.g);
 					assertEquals(VkComponentSwizzle.R, info.components.b);

@@ -55,7 +55,7 @@ public class Matrix4 extends Matrix {
 	 * @param vec Translation vector
 	 * @return Translation matrix
 	 */
-	public static Matrix translation(Tuple vec) {
+	public static Matrix translation(Vector vec) {
 		return new Builder()
 				.identity()
 				.column(3, vec)

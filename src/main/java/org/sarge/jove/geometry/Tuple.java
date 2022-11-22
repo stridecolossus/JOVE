@@ -50,7 +50,7 @@ public sealed class Tuple implements Bufferable permits Point, Vector {
 	/**
 	 * @return This tuple as an array
 	 */
-	public float[] toArray() {
+	public final float[] toArray() {
 		final float[] array = new float[SIZE];
 		array[0] = x;
 		array[1] = y;

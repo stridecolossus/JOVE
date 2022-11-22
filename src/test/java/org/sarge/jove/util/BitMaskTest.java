@@ -15,6 +15,14 @@ class BitMaskTest {
 		mapping = IntEnum.reverse(MockEnum.class);
 	}
 
+	@Test
+	void contains() {
+		final BitMask<MockEnum> mask = BitMask.reduce(MockEnum.A);
+		assertEquals(true, mask.contains(mask));
+		assertEquals(false, mask.contains(BitMask.reduce(MockEnum.B)));
+		assertEquals(false, mask.contains(BitMask.reduce(MockEnum.A, MockEnum.B)));
+	}
+
 	@DisplayName("A collection of enumeration constants can be reduced to a bitfield")
 	@Test
 	void reduce() {

@@ -25,5 +25,5 @@ public class VkSubpassDependency extends VulkanStructure implements ByReference 
 	public BitMask<VkPipelineStage> dstStageMask;
 	public BitMask<VkAccess> srcAccessMask;
 	public BitMask<VkAccess> dstAccessMask;
-	public int dependencyFlags;
+	public BitMask<VkDependencyFlag> dependencyFlags;
 }

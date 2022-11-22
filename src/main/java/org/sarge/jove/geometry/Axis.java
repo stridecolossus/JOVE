@@ -33,13 +33,12 @@ public final class Axis extends Normal {
 	 * <ul>
 	 * <li>A case-sensitive axis token, e.g. {@code X}</li>
 	 * <li>An inverse axis prefixed with the minus sign, e.g. {@code -X}</li>
-	 * <li>Otherwise an arbitrary vector</li>
+	 * <li>Otherwise an arbitrary vector parsed by {@link Vector#CONVERTER}</li>
 	 * </ul>
 	 * @param str String to parse
 	 * @return Parsed vector
 	 * @throws IllegalArgumentException for an invalid axis token
 	 * @throws NumberFormatException for an invalid vector
-	 * @see Vector#CONVERTER
 	 * @see #of(String)
 	 */
 	public static Vector parse(String str) {

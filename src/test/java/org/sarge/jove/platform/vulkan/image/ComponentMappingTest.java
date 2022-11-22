@@ -10,8 +10,7 @@ class ComponentMappingTest {
 	@DisplayName("The identity component mapping is comprised of the identity swizzle")
 	@Test
 	void identity() {
-		final VkComponentMapping mapping = ComponentMapping.identity();
-		assertNotNull(mapping);
+		final VkComponentMapping mapping = ComponentMapping.IDENTITY.build();
 		assertEquals(VkComponentSwizzle.IDENTITY, mapping.r);
 		assertEquals(VkComponentSwizzle.IDENTITY, mapping.g);
 		assertEquals(VkComponentSwizzle.IDENTITY, mapping.b);
@@ -21,8 +20,7 @@ class ComponentMappingTest {
 	@DisplayName("A component mapping can be constructed from the components of an image")
 	@Test
 	void of() {
-		final VkComponentMapping mapping = ComponentMapping.of("RGBA");
-		assertNotNull(mapping);
+		final VkComponentMapping mapping = ComponentMapping.of("RGBA").build();
 		assertEquals(VkComponentSwizzle.R, mapping.r);
 		assertEquals(VkComponentSwizzle.G, mapping.g);
 		assertEquals(VkComponentSwizzle.B, mapping.b);
@@ -32,8 +30,7 @@ class ComponentMappingTest {
 	@DisplayName("Unspecified channels are IDENTITY by default")
 	@Test
 	void unspecified() {
-		final VkComponentMapping mapping = ComponentMapping.of("R");
-		assertNotNull(mapping);
+		final VkComponentMapping mapping = ComponentMapping.of("R").build();
 		assertEquals(VkComponentSwizzle.R, mapping.r);
 		assertEquals(VkComponentSwizzle.IDENTITY, mapping.g);
 		assertEquals(VkComponentSwizzle.IDENTITY, mapping.b);
@@ -43,8 +40,7 @@ class ComponentMappingTest {
 	@DisplayName("A component mapping also supports the special case swizzle characters")
 	@Test
 	void special() {
-		final VkComponentMapping mapping = ComponentMapping.of("10=R");
-		assertNotNull(mapping);
+		final VkComponentMapping mapping = ComponentMapping.of("10=R").build();
 		assertEquals(VkComponentSwizzle.ONE, mapping.r);
 		assertEquals(VkComponentSwizzle.ZERO, mapping.g);
 		assertEquals(VkComponentSwizzle.IDENTITY, mapping.b);

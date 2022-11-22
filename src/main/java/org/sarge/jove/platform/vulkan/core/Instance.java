@@ -99,7 +99,7 @@ public class Instance extends AbstractTransientNativeObject {
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private Version api = VulkanLibrary.VERSION;
-		private ReferenceFactory factory = ReferenceFactory.DEFAULT;
+		private ReferenceFactory factory = new ReferenceFactory();
 
 		/**
 		 * Sets the application name.

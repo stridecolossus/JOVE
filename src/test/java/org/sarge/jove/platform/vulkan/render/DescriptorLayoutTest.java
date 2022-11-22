@@ -8,7 +8,6 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.DescriptorLayout.Binding;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 import com.sun.jna.Pointer;
@@ -64,38 +63,5 @@ public class DescriptorLayoutTest extends AbstractVulkanTest {
 	@Test
 	void duplicate() {
 		assertThrows(IllegalArgumentException.class, () -> DescriptorLayout.create(dev, List.of(binding, binding)));
-	}
-
-	@Nested
-	class ResourceBindingTests {
-		@BeforeEach
-		void before() {
-			binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(1, binding.index());
-			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, binding.type());
-			assertEquals(2, binding.count());
-			assertEquals(Set.of(VkShaderStage.FRAGMENT), binding.stages());
-		}
-
-		@Test
-		void constructorEmptyStages() {
-			assertThrows(IllegalArgumentException.class, () -> new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of()));
-		}
-
-		@Test
-		void build() {
-			final Binding result = new Binding.Builder()
-					.binding(1)
-					.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
-					.count(2)
-					.stage(VkShaderStage.FRAGMENT)
-					.build();
-
-			assertEquals(binding, result);
-		}
 	}
 }
