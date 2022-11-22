@@ -39,3 +39,29 @@ public interface Cosine extends Trigonometric {
 		}
 	};
 }
+
+// TODO - acos() and asin()?  others? e.g. a/tan()?
+//
+//public static float acos(float fValue) {
+//    if (-1.0f < fValue) {
+//        if (fValue < 1.0f) {
+//            return (float) Math.acos(fValue);
+//        }
+//
+//        return 0.0f;
+//    }
+//
+//    return PI;
+//}
+//
+//public static float asin(float fValue) {
+//    if (-1.0f < fValue) {
+//        if (fValue < 1.0f) {
+//            return (float) Math.asin(fValue);
+//        }
+//
+//        return HALF_PI;
+//    }
+//
+//    return -HALF_PI;
+//}

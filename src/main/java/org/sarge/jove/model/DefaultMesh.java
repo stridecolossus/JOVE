@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.volume.Bounds;
+import org.sarge.jove.scene.volume.Bounds;
 
 /**
  * A <i>default mesh</i> is used to construct a renderable object comprising {@link Vertex} data.
