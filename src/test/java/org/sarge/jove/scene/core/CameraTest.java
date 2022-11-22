@@ -1,11 +1,11 @@
-package org.sarge.jove.scene.graph;
+package org.sarge.jove.scene.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.graph.Camera;
+import org.sarge.jove.scene.core.Camera;
 
 class CameraTest {
 	private Camera cam;

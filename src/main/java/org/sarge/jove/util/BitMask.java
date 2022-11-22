@@ -18,7 +18,7 @@ import com.sun.jna.*;
  * @see IntEnum
  * @param <E> Bit mask enumeration
  */
-public class BitMask<E extends IntEnum> {
+public final class BitMask<E extends IntEnum> {
 	private final int bits;
 
 	/**

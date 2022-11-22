@@ -1,4 +1,4 @@
-package org.sarge.jove.scene.graph;
+package org.sarge.jove.scene.core;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;

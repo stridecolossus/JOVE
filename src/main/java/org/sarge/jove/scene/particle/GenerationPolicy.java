@@ -4,6 +4,7 @@ package org.sarge.jove.scene.particle;
  * A <i>generation policy</i> for a particle system specifies the number of particles to be generated per second.
  * @author Sarge
  */
+@FunctionalInterface
 public interface GenerationPolicy {
 	/**
 	 * Determines the number of particles to add on each frame.

@@ -40,9 +40,13 @@ public class BoxPositionFactory implements PositionFactory {
 	 * @return Box position factory
 	 */
 	public static PositionFactory load(Element e, Randomiser randomiser) {
-		final Point min = e.child("min").text().transform(Point.CONVERTER);
-		final Point max = e.child("max").text().transform(Point.CONVERTER);
+		final Point min = point(e, "min");
+		final Point max = point(e, "min");
 		final Bounds bounds = new Bounds(min, max);
 		return new BoxPositionFactory(bounds, randomiser);
+	}
+
+	private static Point point(Element e, String name) {
+		return e.child(name).text().transform(Point.CONVERTER);
 	}
 }

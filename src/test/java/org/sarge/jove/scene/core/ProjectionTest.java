@@ -1,11 +1,11 @@
-package org.sarge.jove.scene.graph;
+package org.sarge.jove.scene.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.scene.graph.Projection;
+import org.sarge.jove.scene.core.Projection;
 import org.sarge.jove.util.Trigonometric;
 
 public class ProjectionTest {

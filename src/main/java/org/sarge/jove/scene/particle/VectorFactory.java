@@ -39,6 +39,6 @@ public interface VectorFactory {
 	 * @return Cone vector factory
 	 */
 	static VectorFactory cone(Disc disc) {
-		return () -> disc.vector();
+		return disc::vector;
 	}
 }

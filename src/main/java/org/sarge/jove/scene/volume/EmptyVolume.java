@@ -18,11 +18,11 @@ public final class EmptyVolume implements Volume {
 
 	@Override
 	public Bounds bounds() {
-		return new Bounds(Point.ORIGIN, Point.ORIGIN);
+		return Bounds.EMPTY;
 	}
 
 	@Override
-	public boolean contains(Point pt) {
+	public boolean contains(Point p) {
 		return false;
 	}
 

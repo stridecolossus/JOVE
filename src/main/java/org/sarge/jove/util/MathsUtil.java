@@ -38,7 +38,7 @@ public final class MathsUtil {
 			return Float.isInfinite(b);
 		}
 		else {
-			return Math.abs(a - b) < ACCURACY;
+			return isZero(a - b);
 		}
 	}
 

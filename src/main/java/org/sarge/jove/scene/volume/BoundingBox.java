@@ -23,9 +23,6 @@ public class BoundingBox implements Volume {
 		this.bounds = notNull(bounds);
 	}
 
-	/**
-	 * @return Bounds of this volume
-	 */
 	@Override
 	public Bounds bounds() {
 		return bounds;

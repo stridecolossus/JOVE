@@ -1,4 +1,4 @@
-package org.sarge.jove.scene.graph;
+package org.sarge.jove.scene.core;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;

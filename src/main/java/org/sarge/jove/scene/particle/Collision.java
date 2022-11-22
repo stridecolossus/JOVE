@@ -7,6 +7,7 @@ import org.sarge.jove.geometry.Ray.Intersection;
  * A <i>collision</i> defines the result of a particle intersection.
  * @author Sarge
  */
+@FunctionalInterface
 public interface Collision {
 	/**
 	 * Applies this collision to the given particle.
@@ -26,7 +27,7 @@ public interface Collision {
 	 * @see Particle#stop(Point)
 	 */
 	Collision STOP = (p, intersection) -> {
-		final Point pt = intersection.nearest(p);
-		p.stop(pt);
+		final Point pos = intersection.nearest(p);
+		p.stop(pos);
 	};
 }

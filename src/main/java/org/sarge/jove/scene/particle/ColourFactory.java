@@ -30,7 +30,7 @@ public interface ColourFactory {
 	static ColourFactory of(Colour col) {
 		return new ColourFactory() {
 			@Override
-			public Colour colour(float __) {
+			public Colour colour(float t) {
 				return col;
 			}
 

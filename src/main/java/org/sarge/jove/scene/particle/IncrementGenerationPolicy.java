@@ -9,7 +9,6 @@ import org.sarge.lib.element.Element;
  */
 public class IncrementGenerationPolicy implements GenerationPolicy {
 	private final float inc;
-
 	private float pending;
 
 	/**

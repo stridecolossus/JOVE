@@ -1,7 +1,7 @@
 package org.sarge.jove.control;
 
 /**
- * A <i>playable</i> is a media file or animation that can be controlled by a {@link Player}.
+ * A <i>playable</i> object is a media file or animation that can be controlled by a {@link Player}.
  * @author Sarge
  */
 public interface Playable {

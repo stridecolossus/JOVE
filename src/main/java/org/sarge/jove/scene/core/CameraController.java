@@ -1,4 +1,4 @@
-package org.sarge.jove.scene.graph;
+package org.sarge.jove.scene.core;
 
 import static org.sarge.jove.util.Trigonometric.*;
 import static org.sarge.lib.util.Check.notNull;
@@ -10,7 +10,7 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Interpolator;
 
 /**
- * The <i>camera controller</i> rotates the scene about the camera position, i.e. a free-look controller.
+ * The <i>camera controller</i> rotates the scene about the cameras position, i.e. a free-look controller.
  * @author Sarge
  */
 public class CameraController {

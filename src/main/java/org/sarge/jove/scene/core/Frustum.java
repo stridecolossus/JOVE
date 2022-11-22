@@ -1,4 +1,4 @@
-package org.sarge.jove.scene.graph;
+package org.sarge.jove.scene.core;
 
 import java.util.*;
 

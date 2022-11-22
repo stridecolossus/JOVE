@@ -1,7 +1,5 @@
 package org.sarge.jove.util;
 
-import java.util.Arrays;
-
 import com.sun.jna.Memory;
 
 /**
@@ -28,6 +26,6 @@ public class FloatArray extends Memory {
 		return
 				(obj == this) ||
 				(obj instanceof FloatArray that) &&
-				Arrays.equals(this.array, that.array);
+				MathsUtil.isEqual(this.array, that.array);
 	}
 }
