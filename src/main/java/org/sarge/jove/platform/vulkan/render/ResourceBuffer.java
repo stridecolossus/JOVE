@@ -23,7 +23,6 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 	 * @throws IllegalStateException if {@link #type} is not supported by this buffer
 	 * @throws IllegalStateException if this resource is too large for the hardware
 	 * @throws IllegalArgumentException if the {@link #offset} exceeds the {@link #length()} of this buffer
-	 * @see #usage(VkDescriptorType)
 	 */
 	public ResourceBuffer(VulkanBuffer buffer, VkDescriptorType type, long offset) {
 		super(buffer);

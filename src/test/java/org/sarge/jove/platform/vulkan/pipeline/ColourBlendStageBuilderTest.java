@@ -2,9 +2,11 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.BitMask;
 
 public class ColourBlendStageBuilderTest {
@@ -66,5 +68,19 @@ public class ColourBlendStageBuilderTest {
 	@Test
 	void invalid() {
 		assertThrows(IllegalArgumentException.class, () -> builder.attachment().mask("cobblers"));
+	}
+
+	@Test
+	void constants() {
+		assertThrows(IndexOutOfBoundsException.class, () -> builder.constants(new float[0]));
+	}
+
+	@Test
+	void setDynamicBlendConstants() {
+		final var lib = mock(VulkanLibrary.class);
+		final var buffer = mock(Command.Buffer.class);
+		final Command cmd = builder.setDynamicBlendConstants(CONSTANTS);
+		cmd.record(lib, buffer);
+		verify(lib).vkCmdSetBlendConstants(buffer, CONSTANTS);
 	}
 }

@@ -5,6 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.util.*;
 
 /**
@@ -16,6 +17,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 
 	public ColourBlendStageBuilder() {
+		info.flags = 0;
 		info.logicOpEnable = false;
 		info.logicOp = VkLogicOp.COPY;
 		Arrays.fill(info.blendConstants, 1);
@@ -50,12 +52,15 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	/**
 	 * Sets the global blending constants.
 	 * @param constants Blending constants array
-	 * @throws IllegalArgumentException if the given array does not contain <b>four</b> values
+	 * @throws IndexOutOfBoundsException if the given array does not contain <b>four</b> values
 	 */
 	public ColourBlendStageBuilder constants(float[] constants) {
-		if(constants.length != info.blendConstants.length) throw new IllegalArgumentException(String.format("Expected exactly %d blend constants", info.blendConstants.length));
-		System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
+		copy(constants, info.blendConstants);
 		return this;
+	}
+
+	private static void copy(float[] src, float[] dest) {
+		System.arraycopy(src, 0, dest, 0, dest.length);
 	}
 
 	@Override
@@ -70,6 +75,18 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 		info.pAttachments = StructureCollector.pointer(attachments, new VkPipelineColorBlendAttachmentState(), AttachmentBuilder::populate);
 
 		return info;
+	}
+
+	/**
+	 * Creates a command to dynamically set the blend constants.
+	 * @param constants Blend constants
+	 * @return Dynamic blend constants command
+	 * @throws IndexOutOfBoundsException if the given array does not contain <b>four</b> values
+	 */
+	public Command setDynamicBlendConstants(float[] constants) {
+		final float[] copy = new float[info.blendConstants.length];
+		copy(constants, copy);
+		return (lib, buffer) -> lib.vkCmdSetBlendConstants(buffer, copy);
 	}
 
 	/**

@@ -3,7 +3,9 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
+import org.sarge.lib.util.Check;
 
 /**
  * Builder for the rasterizer pipeline stage.
@@ -82,6 +84,7 @@ public class RasterizerStageBuilder extends AbstractStageBuilder<VkPipelineRaste
 //		return this;
 		throw new UnsupportedOperationException();
 	}
+	// TODO - also dynamic API
 
 	/**
 	 * Sets the line width (default is {@code one}).
@@ -97,5 +100,16 @@ public class RasterizerStageBuilder extends AbstractStageBuilder<VkPipelineRaste
 	@Override
 	VkPipelineRasterizationStateCreateInfo get() {
 		return info;
+	}
+
+	/**
+	 * Creates a command to dynamically set the line width.
+	 * @param w Line width
+	 * @return Dynamic line width command
+	 */
+	@RequiredFeature(field="lineWidth", feature="wideLines")
+	public Command setDynamicLineWidth(float w) {
+		Check.oneOrMore(w);
+		return (lib, cmd) -> lib.vkCmdSetLineWidth(cmd, w);
 	}
 }

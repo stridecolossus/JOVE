@@ -1,9 +1,11 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
 
 public class RasterizerStageBuilderTest {
 	private RasterizerStageBuilder builder;
@@ -55,5 +57,14 @@ public class RasterizerStageBuilderTest {
 //		assertEquals(0, info.depthBiasConstantFactor);
 //		assertEquals(0, info.depthBiasClamp);
 //		assertEquals(0, info.depthBiasSlopeFactor);
+	}
+
+	@Test
+	void setDynamicLineWidth() {
+		final var buffer = mock(Command.Buffer.class);
+		final var lib = mock(VulkanLibrary.class);
+		final Command cmd = builder.setDynamicLineWidth(2);
+		cmd.record(lib, buffer);
+		verify(lib).vkCmdSetLineWidth(buffer, 2f);
 	}
 }

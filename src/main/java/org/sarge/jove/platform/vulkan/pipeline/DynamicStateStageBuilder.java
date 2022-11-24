@@ -2,11 +2,10 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import org.sarge.jove.platform.vulkan.VkDynamicState;
-import org.sarge.jove.platform.vulkan.VkPipelineDynamicStateCreateInfo;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.IntegerArray;
 
 /**
@@ -33,14 +32,67 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 			return null;
 		}
 
-		// Convert states to integer array
-		final int[] array = states.stream().mapToInt(VkDynamicState::value).toArray();
-
-		// Populate descriptor
+		// Init descriptor
 		final var info = new VkPipelineDynamicStateCreateInfo();
-		info.dynamicStateCount = states.size();
+		info.flags = 0;		// Reserved
+
+		// Populate dynamic states
+		final int[] array = states.stream().mapToInt(VkDynamicState::value).toArray();
+		info.dynamicStateCount = array.length;
 		info.pDynamicStates = new IntegerArray(array);
 
 		return info;
+	}
+
+	/**
+	 * Dynamic pipeline state library.
+	 */
+	interface Library {
+		/**
+		 * Dynamically sets viewports.
+		 * @param commandBuffer			Command buffer
+		 * @param firstViewport			Index of the first viewport
+		 * @param viewportCount			Number of viewports
+		 * @param pViewports			Dynamic viewports
+		 */
+		void vkCmdSetViewport(Buffer commandBuffer, int firstViewport, int viewportCount, VkViewport pViewports);
+
+		/**
+		 * Dynamically sets scissor rectangles.
+		 * @param commandBuffer			Command buffer
+		 * @param firstScissor			Index of the first scissor
+		 * @param scissorCount			Number of scissors
+		 * @param pScissors				Dynamic scissors
+		 */
+		void vkCmdSetScissor(Buffer commandBuffer, int firstScissor, int scissorCount, VkRect2D pScissors);
+
+		/**
+		 * Dynamically sets the line width.
+		 * @param commandBuffer			Command buffer
+		 * @param lineWidth				Line width
+		 */
+		void vkCmdSetLineWidth(Buffer commandBuffer, float lineWidth);
+
+		// TODO
+		void vkCmdSetDepthBias(Buffer commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor);
+
+		/**
+		 * Dynamically sets the blend constants.
+		 * @param commandBuffer			Command buffer
+		 * @param blendConstants		Blend constants
+		 */
+		void vkCmdSetBlendConstants(Buffer commandBuffer, float blendConstants[]);
+
+		// TODO
+		void vkCmdSetDepthBounds(Buffer commandBuffer, float minDepthBounds, float maxDepthBounds);
+
+		// TODO
+		void vkCmdSetStencilCompareMask(Buffer commandBuffer, VkStencilFaceFlag faceMask, int compareMask);
+
+		// TODO
+		void vkCmdSetStencilWriteMask(Buffer commandBuffer, VkStencilFaceFlag faceMask, int writeMask);
+
+		// TODO
+		void vkCmdSetStencilReference(Buffer commandBuffer, VkStencilFaceFlag faceMask, int reference);
 	}
 }

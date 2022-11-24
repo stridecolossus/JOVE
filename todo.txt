@@ -24,14 +24,13 @@ text
 - https://snorristurluson.github.io/TextRenderingWithFreetype/
 
 features todo
-- compute pipeline builder => sub-class builders? very complicated since both need layout, cache, derivatives, x2 descriptors, x2 API methods (is ray tracing a compute pipeline?)
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - degenerate triangles for strip?
 - re-build swapchain and pipeline after window viewport/focus change
 - normals via geometry shader
 - mesh shader
 - OpenAL audio
-- shader storage buffer (SSBO)
+- dynamic descriptors sets and uniform buffers (?)
 
 blog
 - pipeline cache
@@ -48,3 +47,4 @@ particles
 - or similar to vertex?
 - start/end size => vertex attribute
 - low/high fade, when particles start to fade, high = lifetime
+- storage buffer for particles in compute pipeline
