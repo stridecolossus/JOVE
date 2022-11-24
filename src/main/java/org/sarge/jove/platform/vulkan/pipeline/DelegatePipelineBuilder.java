@@ -51,7 +51,7 @@ public interface DelegatePipelineBuilder<T extends VulkanStructure> {
 	 */
 	default Pipeline build(DeviceContext dev, PipelineLayout layout) {
 		return new Pipeline.Builder<>(DelegatePipelineBuilder.this)
-				.build(dev, null, null)
+				.build(dev, layout, null)
 				.iterator()
 				.next();
 	}
