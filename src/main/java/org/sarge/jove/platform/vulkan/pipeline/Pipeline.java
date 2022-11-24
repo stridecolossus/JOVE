@@ -1,18 +1,16 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.pipeline.ViewportPipelineStageBuilder.Viewport;
-import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
@@ -86,366 +84,142 @@ public class Pipeline extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Builder for a pipeline.
+	 * Builder for an array of pipelines.
+	 * <p>
+	 * The descriptor for a concrete pipeline is created by a {@link DelegatePipelineBuilder}.
+	 * <p>
+	 * Vulkan instantiates pipelines as an <i>array</i> in one operation.
+	 * Additionally pipelines can be <i>derived</i> which may improve performance at creation and when switching pipeline state during rendering.
+	 * <p>
+	 * A pipeline can be derived from:
+	 * <ol>
+	 * <li>an existing pipeline using the {@link #derive(Pipeline)} method</li>
+	 * <li>or from a <i>peer</i> builder within the array via {@link #derive(Builder)}</li>
+	 * </ol>
+	 * <p>
+	 * In both cases the parent pipeline must be configured as {@link #allowDerivatives()} during creation.
+	 * <p>
+	 * @param <T> Pipeline type
 	 */
-	public static class Builder {
-		// Properties
-		private final VkPipelineBindPoint type;
-		private final PipelineLayout layout;
-		private final RenderPass pass;
-		private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
-		private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
+	public static class Builder<T extends VulkanStructure> {
+    	private final DelegatePipelineBuilder<T> delegate;
+    	private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
+    	private final List<Builder<T>> builders = new ArrayList<>();
+    	private Handle base;
+    	private Builder<T> parent;
 
-		// Derivative pipelines
-		private Handle base;
-		private Builder parent;
+    	/**
+    	 * Constructor.
+    	 * @param delegate Delegate pipeline builder
+    	 */
+    	public Builder(DelegatePipelineBuilder<T> delegate) {
+    		this.delegate = notNull(delegate);
+    		this.builders.add(this);
+    	}
 
-		// Fixed function stages
-		private final VertexInputPipelineStageBuilder input = new VertexInputPipelineStageBuilder();
-		private final AssemblyPipelineStageBuilder assembly = new AssemblyPipelineStageBuilder();
-		private final TesselationPipelineStageBuilder tesselation = new TesselationPipelineStageBuilder();
-		private final ViewportPipelineStageBuilder viewport = new ViewportPipelineStageBuilder();
-		private final RasterizerPipelineStageBuilder raster = new RasterizerPipelineStageBuilder();
-		private final MultiSamplePipelineStageBuilder multi = new MultiSamplePipelineStageBuilder();
-		private final DepthStencilPipelineStageBuilder depth = new DepthStencilPipelineStageBuilder();
-		private final ColourBlendPipelineStageBuilder blend = new ColourBlendPipelineStageBuilder();
-		private final DynamicStatePipelineStageBuilder dynamic = new DynamicStatePipelineStageBuilder();
+    	/**
+    	 * Adds a pipeline to be built as a <i>peer</i> of this pipeline.
+    	 * Note that all peers are aggregated into this builder.
+    	 * @param peer Peer pipeline builder
+    	 */
+    	public Builder<T> add(Builder<T> peer) {
+    		builders.addAll(peer.builders);
+    		peer.builders.clear();
+    		return this;
+    	}
 
-		/**
-		 * Constructor.
-		 * @param type			Pipeline type
-		 * @param layout		Layout
-		 * @param pass			Render pass
-		 */
-		public Builder(VkPipelineBindPoint type, PipelineLayout layout, RenderPass pass) {
-			this.type = notNull(type);
-			this.layout = notNull(layout);
-			this.pass = notNull(pass);
-			init();
-		}
+    	/**
+    	 * Sets a pipeline creation flag.
+    	 * @param flag Pipeline creation flag
+    	 */
+    	public Builder<T> flag(VkPipelineCreateFlag flag) {
+    		this.flags.add(notNull(flag));
+    		return this;
+    	}
 
-		private void init() {
-			input.parent(this);
-			assembly.parent(this);
-			tesselation.parent(this);
-			viewport.parent(this);
-			raster.parent(this);
-			multi.parent(this);
-			depth.parent(this);
-			blend.parent(this);
-			dynamic.parent(this);
-		}
+    	/**
+    	 * Sets this as a parent from which pipelines can be derived.
+    	 * This is a synonym for {@link #flag(VkPipelineCreateFlag)} with a {@link VkPipelineCreateFlag#ALLOW_DERIVATIVES} flag.
+    	 * @see #derive(Pipeline)
+    	 * @see #derive(Builder)
+    	 */
+    	public Builder<T> allowDerivatives() {
+    		return flag(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
+    	}
 
-		/**
-		 * Sets a pipeline creation flag.
-		 * @param flag Pipeline creation flag
-		 * @throws IllegalArgumentException if the flag is {@link VkPipelineCreateFlag#DERIVATIVE}
-		 * @see #derive(Pipeline)
-		 */
-		public Builder flag(VkPipelineCreateFlag flag) {
-			if(flag == VkPipelineCreateFlag.DERIVATIVE) throw new IllegalArgumentException("Cannot explicitly set pipeline as a derivative, use derive()");
-			this.flags.add(notNull(flag));
-			return this;
-		}
+    	/**
+    	 * @throws IllegalArgumentException if {@link #parent} does not allow derivatives or this pipeline is already derived
+    	 */
+    	private void derive(Set<VkPipelineCreateFlag> flags) {
+    		if(!flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) {
+    			throw new IllegalArgumentException("Invalid parent pipeline");
+    		}
+    		if(this.flags.contains(VkPipelineCreateFlag.DERIVATIVE)) {
+    			throw new IllegalArgumentException("Pipeline is already a derivative");
+    		}
+    		this.flags.add(VkPipelineCreateFlag.DERIVATIVE);
+    	}
 
-		/**
-		 * Sets this as a parent from which pipelines can be derived.
-		 * This is a synonym for {@link #flag(VkPipelineCreateFlag)} with a {@link VkPipelineCreateFlag#ALLOW_DERIVATIVES} flag.
-		 * @see #derive(Pipeline)
-		 * @see #derive(Builder)
-		 */
-		public Builder parent() {
-			return flag(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
-		}
+    	/**
+    	 * Derives this pipeline from an existing base pipeline.
+    	 * @param base Base pipeline
+    	 * @throws IllegalArgumentException if {@link #parent} does not allow derivatives or this pipeline is already derived
+    	 * @see #allowDerivatives()
+    	 */
+    	public Builder<T> derive(Pipeline base) {
+    		derive(base.flags());
+    		this.base = base.handle();
+    		return this;
+    	}
 
-		/**
-		 * Derives this pipeline from an existing base pipeline.
-		 * @param base Base pipeline
-		 * @throws IllegalArgumentException if the parent pipeline does not allow derivatives or this pipeline is already derived
-		 * @see #parent()
-		 */
-		public Builder derive(Pipeline base) {
-			derive(base.flags());
-			this.base = base.handle();
-			return this;
-		}
-		// TODO - wouldn't we want to clone the pipeline config as well? but how? pipeline/builder interdependent pointers?
+    	/**
+    	 * Derives this pipeline from the given builder.
+    	 * Note that {@link #parent} and its peers are automatically added to this builder if they are not already present.
+    	 * @param parent Parent pipeline builder
+    	 * @throws IllegalArgumentException if {@link #parent} is this builder, does not allow derivatives, or this pipeline is already derived
+    	 * @see #allowDerivatives()
+    	 * @see #add(Builder)
+    	 */
+    	public Builder<T> derive(Builder<T> parent) {
+    		if(parent == this) throw new IllegalArgumentException("Cannot derive from self");
+    		this.parent = notNull(parent);
+    		add(parent);
+    		derive(parent.flags);
+    		return this;
+    	}
 
-		/**
-		 * Derives this pipeline from the given builder.
-		 * @param parent Parent pipeline builder
-		 * @throws IllegalArgumentException if the parent pipeline does not allow derivatives or this pipeline is already derived
-		 * @throws IllegalStateException if the given parent is this builder
-		 * @see #parent()
-		 */
-		public Builder derive(Builder parent) {
-			if(parent == this) throw new IllegalStateException("Cannot derive from self");
-			derive(parent.flags);
-			this.parent = notNull(parent);
-			return this;
-		}
+    	/**
+    	 * Builds this group of pipelines.
+    	 * @param dev			Logical device
+    	 * @param layout		Pipeline layout
+    	 * @param cache			Optional pipeline cache
+    	 * @return New pipelines
+    	 */
+    	public List<Pipeline> build(DeviceContext dev, PipelineLayout layout, PipelineCache cache) {
+    		// Build descriptors and patch peer indices
+    		final BiConsumer<Builder<T>, T> populate = (builder, out) -> {
+    			final var flags = BitMask.reduce(builder.flags);
+    			final int index = builder.parent == null ? -1 : builders.indexOf(builder.parent);
+    			delegate.populate(flags, layout, builder.base, index, out);
+    		};
+    		final T[] array = StructureCollector.array(builders, delegate.identity(), populate);
 
-		/**
-		 * @throws IllegalArgumentException if the parent pipeline does not allow derivatives or this pipeline is already derived
-		 */
-		private void derive(Set<VkPipelineCreateFlag> flags) {
-			// Check pipeline can be derived
-			if(!flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) {
-				throw new IllegalArgumentException("Invalid parent pipeline");
-			}
+    		// Instantiate pipelines
+    		final Pointer[] handles = new Pointer[builders.size()];
+    		final int result = delegate.create(dev, cache, array, handles);
+    		VulkanLibrary.check(result);
 
-			// Mark as derivative
-			if(this.flags.contains(VkPipelineCreateFlag.DERIVATIVE)) {
-				throw new IllegalArgumentException("Pipeline is already a derivative");
-			}
-			this.flags.add(VkPipelineCreateFlag.DERIVATIVE);
-		}
-
-		/**
-		 * @return Builder for the vertex input stage
-		 */
-		public VertexInputPipelineStageBuilder input() {
-			return input;
-		}
-
-		/**
-		 * @return Builder for the input assembly stage
-		 */
-		public AssemblyPipelineStageBuilder assembly() {
-			return assembly;
-		}
-
-		/**
-		 * @return Builder for the tesselation stage
-		 */
-		public TesselationPipelineStageBuilder tesselation() {
-			return tesselation;
-		}
-
-		/**
-		 * @return Builder for the viewport stage
-		 */
-		public ViewportPipelineStageBuilder viewport() {
-			return viewport;
-		}
-
-		/**
-		 * Convenience helper to add a viewport and scissor rectangle with the same dimensions.
-		 * @param rect Viewport/scissor rectangle
-		 */
-		public Builder viewport(Rectangle rect) {
-			viewport.viewport(new Viewport(rect));
-			viewport.scissor(rect);
-			return this;
-		}
-
-		/**
-		 * @return Builder for the rasterizer stage
-		 */
-		public RasterizerPipelineStageBuilder rasterizer() {
-			return raster;
-		}
-
-		/**
-		 * @return Builder for the multi-sample stage
-		 */
-		public MultiSamplePipelineStageBuilder multi() {
-			return multi;
-		}
-
-		/**
-		 * @return Builder for the depth-stencil stage
-		 */
-		public DepthStencilPipelineStageBuilder depth() {
-			return depth;
-		}
-
-		/**
-		 * @return Builder for the colour-blend stage
-		 */
-		public ColourBlendPipelineStageBuilder blend() {
-			return blend;
-		}
-
-		/**
-		 * @return Builder for the dynamic state stage
-		 */
-		public DynamicStatePipelineStageBuilder dynamic() {
-			return dynamic;
-		}
-
-		/**
-		 * A <i>shader stage builder</i> configures a programmable shader stage for this pipeline.
-		 */
-		public class ShaderStageBuilder {
-			private final VkShaderStage stage;
-			private Shader shader;
-			private String name = "main";
-			private VkSpecializationInfo constants;
-
-			private ShaderStageBuilder(VkShaderStage stage) {
-				this.stage = stage;
-			}
-
-			/**
-			 * Sets the shader module.
-			 * @param shader Shader module
-			 */
-			public ShaderStageBuilder shader(Shader shader) {
-				this.shader = notNull(shader);
-				return this;
-			}
-
-			/**
-			 * Sets the method name of this shader stage (default is {@code main}).
-			 * @param name Shader method name
-			 */
-			public ShaderStageBuilder name(String name) {
-				this.name = notEmpty(name);
-				return this;
-			}
-
-			/**
-			 * Adds specialisation constants to parameterise this shader.
-			 * @param constants Specialisation constants
-			 * @see Shader#constants(Map)
-			 */
-			public ShaderStageBuilder constants(VkSpecializationInfo constants) {
-				this.constants = notNull(constants);
-				return this;
-			}
-
-			/**
-			 * Constructs this shader pipeline stage.
-			 * @return Parent pipeline builder
-			 * @throws IllegalArgumentException if the shader module has not been configured
-			 */
-			public Builder build() {
-				validate();
-				return Builder.this;
-			}
-
-			/**
-			 * Populates the shader stage descriptor.
-			 */
-			void populate(VkPipelineShaderStageCreateInfo info) {
-				validate();
-				info.sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
-				info.stage = stage;
-				info.module = shader.handle();
-				info.pName = name;
-				info.pSpecializationInfo = constants;
-			}
-
-			private void validate() {
-				if(shader == null) throw new IllegalArgumentException("Shader module not populated");
-			}
-		}
-
-		/**
-		 * Starts a new programmable shader pipeline stage.
-		 * @param stage Shader stage
-		 * @return Builder for a shader stage
-		 * @throws IllegalArgumentException for a duplicate shader stage
-		 */
-		public ShaderStageBuilder shader(VkShaderStage stage) {
-			final var shader = new ShaderStageBuilder(stage);
-			if(shaders.containsKey(stage)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
-			shaders.put(stage, shader);
-			return shader;
-		}
-
-		/**
-		 * Convenience helper to add a shader stage with default configuration.
-		 * @param stage		Shader stage
-		 * @param shader	Shader module
-		 */
-		public Builder shader(VkShaderStage stage, Shader shader) {
-			return shader(stage).shader(shader).build();
-		}
-
-		/**
-		 * Populates the pipeline descriptor.
-		 */
-		private void populate(VkGraphicsPipelineCreateInfo info) {
-			// Init descriptor
-			info.flags = BitMask.reduce(flags);
-			info.layout = layout.handle();
-			info.renderPass = pass.handle();
-			info.subpass = 0;		// TODO - subpass?
-
-			// Init shader pipeline stages
-			if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
-			info.stageCount = shaders.size();
-			info.pStages = StructureCollector.pointer(shaders.values(), new VkPipelineShaderStageCreateInfo(), ShaderStageBuilder::populate);
-
-			// Init fixed function stages
-			info.pVertexInputState = input.get();
-			info.pInputAssemblyState = assembly.get();
-			info.pTessellationState = tesselation.get();
-			info.pViewportState = viewport.get();
-			info.pRasterizationState = raster.get();
-			info.pMultisampleState = multi.get();
-			info.pDepthStencilState = depth.get();
-			info.pColorBlendState = blend.get();			// TODO - check number of blend attachments = framebuffers
-			info.pDynamicState = dynamic.get();
-
-			// Init derivative pipelines
-			info.basePipelineHandle = base;
-			info.basePipelineIndex = -1;
-		}
-
-		/**
-		 * Convenience variant to construct a single pipeline.
-		 * @param cache		Optional pipeline cache
-		 * @param dev		Logical device
-		 * @return New pipeline
-		 * @throws IllegalArgumentException if the pipeline layout or render pass have not been specified
-		 * @throws IllegalArgumentException unless at least a {@link VkShaderStage#VERTEX} shader stage has been configured
-		 */
-		public Pipeline build(PipelineCache cache, DeviceContext dev) {
-			final List<Pipeline> pipelines = build(List.of(this), cache, dev);
-			return pipelines.get(0);
-		}
-
-		/**
-		 * Constructs multiple pipelines.
-		 * @param builders		Pipeline builders
-		 * @param cache			Optional pipeline cache
-		 * @param dev 			Logical device
-		 * @return New pipelines
-		 */
-		public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
-			// Build array of descriptors
-			final VkGraphicsPipelineCreateInfo[] array = StructureCollector.array(builders, new VkGraphicsPipelineCreateInfo(), Builder::populate);
-
-			// Patch derived pipeline indices
-			for(int n = 0; n < array.length; ++n) {
-				final Builder parent = builders.get(n).parent;
-				if(parent == null) {
-					continue;
-				}
-				final int index = builders.indexOf(parent);
-				if(index == -1) throw new IllegalArgumentException("Parent pipeline not present in array: index=" + n);
-				array[n].basePipelineIndex = index;
-			}
-
-			// Allocate pipelines
-			final VulkanLibrary lib = dev.library();
-			final Pointer[] pointers = new Pointer[array.length];
-			check(lib.vkCreateGraphicsPipelines(dev, cache, array.length, array, null, pointers));
-
-			// Create pipelines
-			final Pipeline[] pipelines = new Pipeline[array.length];
-			for(int n = 0; n < array.length; ++n) {
-				final Builder builder = builders.get(n);
-				final Handle handle = new Handle(pointers[n]);
-				pipelines[n] = new Pipeline(handle, dev, VkPipelineBindPoint.GRAPHICS, builder.layout, builder.flags); // TODO - type
-			}
-			return Arrays.asList(pipelines);
-		}
-		// TODO - compute pipelines => complexity!
-	}
+    		// Create pipelines
+    		final VkPipelineBindPoint type = delegate.type();
+    		final Pipeline[] pipelines = new Pipeline[array.length];
+    		for(int n = 0; n < array.length; ++n) {
+    			final Builder<T> builder = builders.get(n);
+    			final Handle handle = new Handle(handles[n]);
+    			pipelines[n] = new Pipeline(handle, dev, type, layout, builder.flags);
+    		}
+    		return Arrays.asList(pipelines);
+    	}
+    }
 
 	/**
 	 * Pipeline API.

@@ -7,15 +7,15 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 
-public class VertexInputPipelineStageBuilderTest {
+public class VertexInputStageBuilderTest {
 	private static final VkFormat FORMAT = VkFormat.B8G8R8_SINT;
 	private static final int STRIDE = 3 * Float.BYTES;
 
-	private VertexInputPipelineStageBuilder builder;
+	private VertexInputStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new VertexInputPipelineStageBuilder();
+		builder = new VertexInputStageBuilder();
 	}
 
 	@DisplayName("The vertex configuration can be empty")

@@ -14,7 +14,7 @@ import org.sarge.jove.util.StructureCollector;
  * @see VkPipelineVertexInputStateCreateInfo
  * @author Sarge
  */
-public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineVertexInputStateCreateInfo> {
+public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVertexInputStateCreateInfo> {
 	private final Map<Integer, BindingBuilder> bindings = new HashMap<>();
 	private final List<AttributeBuilder> attributes = new ArrayList<>();
 
@@ -37,7 +37,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * <p>
 	 * @param layout Vertex layout
 	 */
-	public VertexInputPipelineStageBuilder add(CompoundLayout layout) {
+	public VertexInputStageBuilder add(CompoundLayout layout) {
 		// Init binding
 		final var binding = new BindingBuilder();
 		final int stride = layout.stride();
@@ -142,7 +142,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 		 * Constructs this input binding.
 		 * @throws IllegalArgumentException for a duplicate binding index or if no vertex attributes are specified
 		 */
-		public VertexInputPipelineStageBuilder build() {
+		public VertexInputStageBuilder build() {
 			// Validate binding description
 			if(bindings.containsKey(index)) throw new IllegalArgumentException("Duplicate binding index: " + index);
 			if(locations.isEmpty()) throw new IllegalArgumentException(String.format("No attributes specified for binding: ", index));
@@ -150,7 +150,7 @@ public class VertexInputPipelineStageBuilder extends AbstractPipelineStageBuilde
 			// Add binding
 			bindings.put(index, this);
 
-			return VertexInputPipelineStageBuilder.this;
+			return VertexInputStageBuilder.this;
 		}
 	}
 

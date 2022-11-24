@@ -9,14 +9,14 @@ import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
  * @see VkPipelineTessellationStateCreateInfo
  * @author Sarge
  */
-public class TesselationPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineTessellationStateCreateInfo> {
+public class TesselationStageBuilder extends AbstractStageBuilder<VkPipelineTessellationStateCreateInfo> {
 	private int points;
 
 	/**
 	 * Sets the number of patch control points.
 	 * @param points Number of control points
 	 */
-	public TesselationPipelineStageBuilder points(int points) {
+	public TesselationStageBuilder points(int points) {
 		this.points = oneOrMore(points);
 		return this;
 	}

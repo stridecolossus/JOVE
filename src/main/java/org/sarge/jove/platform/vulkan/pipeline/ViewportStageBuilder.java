@@ -14,7 +14,7 @@ import org.sarge.lib.util.*;
  * Builder for the viewport stage descriptor.
  * @author Sarge
  */
-public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineViewportStateCreateInfo> {
+public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewportStateCreateInfo> {
 	/**
 	 * Viewport descriptor.
 	 */
@@ -52,7 +52,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * <p>
 	 * @param flip Whether to flip viewports
 	 */
-	public ViewportPipelineStageBuilder flip(boolean flip) {
+	public ViewportStageBuilder flip(boolean flip) {
 		this.flip = flip;
 		return this;
 	}
@@ -64,7 +64,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * @param max		Maximum depth
 	 */
 	@RequiredFeature(field="viewportCount", feature="multiViewport")
-	public ViewportPipelineStageBuilder viewport(Viewport viewport) {
+	public ViewportStageBuilder viewport(Viewport viewport) {
 		Check.notNull(viewport);
 		viewports.add(viewport);
 		return this;
@@ -74,7 +74,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * Adds a scissor rectangle.
 	 * @param rect Scissor rectangle
 	 */
-	public ViewportPipelineStageBuilder scissor(Rectangle rect) {
+	public ViewportStageBuilder scissor(Rectangle rect) {
 		scissors.add(notNull(rect));
 		return this;
 	}
@@ -127,7 +127,7 @@ public class ViewportPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = StructureCollector.pointer(scissors, new VkRect2D.ByReference(), ViewportPipelineStageBuilder::populate);
+		info.pScissors = StructureCollector.pointer(scissors, new VkRect2D.ByReference(), ViewportStageBuilder::populate);
 
 		return info;
 	}

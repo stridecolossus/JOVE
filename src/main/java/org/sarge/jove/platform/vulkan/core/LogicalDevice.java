@@ -159,7 +159,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
 		public RequiredQueue {
-			requireNonNull(family);
+			Check.notNull(family);
 			Check.notEmpty(priorities);
 			if(priorities.size() > family.count()) {
 				throw new IllegalArgumentException(String.format("Number of queues exceeds family: available=%d requested=%d", family.count(), priorities.size()));

@@ -21,7 +21,7 @@ public class Fence extends AbstractVulkanObject {
 	/**
 	 * Creates a fence.
 	 * @param dev			Logical device
-	 * @param flags			Fence flags
+	 * @param flags			Creation flags
 	 * @return New fence
 	 */
 	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
@@ -49,7 +49,6 @@ public class Fence extends AbstractVulkanObject {
 
 	/**
 	 * @return Whether this fence has been signalled
-	 * @throws VulkanException if the status cannot be retrieved
 	 */
 	public boolean signalled() {
 		final DeviceContext dev = this.device();

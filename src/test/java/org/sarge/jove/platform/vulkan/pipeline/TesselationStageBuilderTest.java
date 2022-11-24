@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
 
-public class TesselationPipelineStageBuilderTest {
-	private TesselationPipelineStageBuilder builder;
+public class TesselationStageBuilderTest {
+	private TesselationStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new TesselationPipelineStageBuilder();
+		builder = new TesselationStageBuilder();
 	}
 
 	@Test

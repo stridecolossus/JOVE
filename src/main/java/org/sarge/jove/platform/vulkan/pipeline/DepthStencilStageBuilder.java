@@ -9,10 +9,10 @@ import org.sarge.jove.platform.vulkan.util.RequiredFeature;
  * Builder for the depth-stencil pipeline stage.
  * @author Sarge
  */
-public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
+public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
 	private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
 
-	DepthStencilPipelineStageBuilder() {
+	DepthStencilStageBuilder() {
 		enable(false);
 		write(true);
 		compare(VkCompareOp.LESS_OR_EQUAL);
@@ -28,7 +28,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * @param depthTestEnable Whether depth-test is enabled
 	 */
 	@RequiredFeature(field="depthTestEnable", feature="depthBounds")
-	public DepthStencilPipelineStageBuilder enable(boolean depthTestEnable) {
+	public DepthStencilStageBuilder enable(boolean depthTestEnable) {
 		info.depthTestEnable = depthTestEnable;
 		return this;
 	}
@@ -37,7 +37,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * Sets whether to write to the depth buffer (default is {@code true}).
 	 * @param depthWriteEnable Whether to write to the depth buffer
 	 */
-	public DepthStencilPipelineStageBuilder write(boolean depthWriteEnable) {
+	public DepthStencilStageBuilder write(boolean depthWriteEnable) {
 		info.depthWriteEnable = depthWriteEnable;
 		return this;
 	}
@@ -46,7 +46,7 @@ public class DepthStencilPipelineStageBuilder extends AbstractPipelineStageBuild
 	 * Sets the depth-test comparison function (default is {@link VkCompareOp#LESS}).
 	 * @param depthCompareOp Comparison function
 	 */
-	public DepthStencilPipelineStageBuilder compare(VkCompareOp depthCompareOp) {
+	public DepthStencilStageBuilder compare(VkCompareOp depthCompareOp) {
 		info.depthCompareOp = notNull(depthCompareOp);
 		return this;
 	}

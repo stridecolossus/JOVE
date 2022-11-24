@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkCompareOp;
 
-public class DepthStencilPipelineStageBuilderTest {
-	private DepthStencilPipelineStageBuilder builder;
+public class DepthStencilStageBuilderTest {
+	private DepthStencilStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new DepthStencilPipelineStageBuilder();
+		builder = new DepthStencilStageBuilder();
 	}
 
 	@Test

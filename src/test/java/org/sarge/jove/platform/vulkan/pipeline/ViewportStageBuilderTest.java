@@ -4,15 +4,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.platform.vulkan.pipeline.ViewportPipelineStageBuilder.Viewport;
+import org.sarge.jove.platform.vulkan.pipeline.ViewportStageBuilder.Viewport;
 
-public class ViewportPipelineStageBuilderTest {
-	private ViewportPipelineStageBuilder builder;
+public class ViewportStageBuilderTest {
+	private ViewportStageBuilder builder;
 	private Rectangle rect;
 
 	@BeforeEach
 	void before() {
-		builder = new ViewportPipelineStageBuilder();
+		builder = new ViewportStageBuilder();
 		rect = new Rectangle(1, 2, 3, 4);
 	}
 

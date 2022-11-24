@@ -14,14 +14,14 @@ import org.sarge.jove.util.IntegerArray;
  * @see VkPipelineDynamicStateCreateInfo
  * @author Sarge
  */
-public class DynamicStatePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineDynamicStateCreateInfo> {
+public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDynamicStateCreateInfo> {
 	private final Set<VkDynamicState> states = new HashSet<>();
 
 	/**
 	 * Adds a dynamic state.
 	 * @param state Dynamic state
 	 */
-	public DynamicStatePipelineStageBuilder state(VkDynamicState state) {
+	public DynamicStateStageBuilder state(VkDynamicState state) {
 		states.add(notNull(state));
 		return this;
 	}

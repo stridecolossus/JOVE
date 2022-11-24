@@ -8,12 +8,12 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntegerArray;
 import org.sarge.lib.util.Percentile;
 
-public class MultiSamplePipelineStageBuilderTest {
-	private MultiSamplePipelineStageBuilder builder;
+public class MultiSampleStageBuilderTest {
+	private MultiSampleStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new MultiSamplePipelineStageBuilder();
+		builder = new MultiSampleStageBuilder();
 	}
 
 	@Test

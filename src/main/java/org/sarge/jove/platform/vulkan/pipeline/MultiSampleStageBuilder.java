@@ -11,10 +11,10 @@ import org.sarge.lib.util.Percentile;
  * @see VkPipelineMultisampleStateCreateInfo
  * @author Sarge
  */
-public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineMultisampleStateCreateInfo> {
+public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMultisampleStateCreateInfo> {
 	private VkPipelineMultisampleStateCreateInfo info = new VkPipelineMultisampleStateCreateInfo();
 
-	public MultiSamplePipelineStageBuilder() {
+	public MultiSampleStageBuilder() {
 		samples(1);
 		sampleShadingEnable(false);
 		minSampleShading(Percentile.ONE);
@@ -27,7 +27,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param samples Sample count
 	 * @see #samples(int)
 	 */
-	public MultiSamplePipelineStageBuilder rasterizationSamples(VkSampleCount rasterizationSamples) {
+	public MultiSampleStageBuilder rasterizationSamples(VkSampleCount rasterizationSamples) {
 		info.rasterizationSamples = notNull(rasterizationSamples);
 		return this;
 	}
@@ -38,7 +38,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 	 * @see #samples(VkSampleCount)
 	 */
-	public MultiSamplePipelineStageBuilder samples(int rasterizationSamples) {
+	public MultiSampleStageBuilder samples(int rasterizationSamples) {
 		info.rasterizationSamples = IntEnum.reverse(VkSampleCount.class).map(rasterizationSamples);
 		return this;
 	}
@@ -47,7 +47,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * Sets whether multi-sample shading is enabled (default is {@code false}).
 	 * @param sampleShadingEnable Whether sample shading is enabled
 	 */
-	public MultiSamplePipelineStageBuilder sampleShadingEnable(boolean sampleShadingEnable) {
+	public MultiSampleStageBuilder sampleShadingEnable(boolean sampleShadingEnable) {
 		info.sampleShadingEnable = sampleShadingEnable;
 		return this;
 	}
@@ -56,7 +56,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * Sets the minimum fraction of sample shading (default is one).
 	 * @param minSampleShading Minimum sample shading fraction
 	 */
-	public MultiSamplePipelineStageBuilder minSampleShading(Percentile minSampleShading) {
+	public MultiSampleStageBuilder minSampleShading(Percentile minSampleShading) {
 		info.minSampleShading = minSampleShading.floatValue();
 		return this;
 	}
@@ -65,7 +65,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * Sets the sample mask.
 	 * @param mask Sample mask
 	 */
-	public MultiSamplePipelineStageBuilder sampleMask(int[] mask) {
+	public MultiSampleStageBuilder sampleMask(int[] mask) {
 		// TODO - length = samples / 32
 		info.pSampleMask = new IntegerArray(mask);
 		return this;
@@ -75,7 +75,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * Sets whether an temporary coverage value is generated based on the alpha value of the first colour output.
 	 * @param alphaToCoverageEnable Whether <i>alpha to coverage</i> is enabled
 	 */
-	public MultiSamplePipelineStageBuilder alphaToCoverageEnable(boolean alphaToCoverageEnable) {
+	public MultiSampleStageBuilder alphaToCoverageEnable(boolean alphaToCoverageEnable) {
 		info.alphaToCoverageEnable = alphaToCoverageEnable;
 		return this;
 	}
@@ -84,7 +84,7 @@ public class MultiSamplePipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * Sets whether the alpha component of the first colour output is replaced with one.
 	 * @param alphaToOneEnable Whether <i>alpha to one</i> is enabled
 	 */
-	public MultiSamplePipelineStageBuilder alphaToOneEnable(boolean alphaToOneEnable) {
+	public MultiSampleStageBuilder alphaToOneEnable(boolean alphaToOneEnable) {
 		info.alphaToOneEnable = alphaToOneEnable;
 		return this;
 	}

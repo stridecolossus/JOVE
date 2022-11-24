@@ -9,12 +9,12 @@ import org.sarge.jove.platform.vulkan.VkDynamicState;
 import org.sarge.jove.platform.vulkan.VkPipelineDynamicStateCreateInfo;
 import org.sarge.jove.util.IntegerArray;
 
-public class DynamicStatePipelineStageBuilderTest {
-	private DynamicStatePipelineStageBuilder builder;
+public class DynamicStateStageBuilderTest {
+	private DynamicStateStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new DynamicStatePipelineStageBuilder();
+		builder = new DynamicStateStageBuilder();
 	}
 
 	@Test

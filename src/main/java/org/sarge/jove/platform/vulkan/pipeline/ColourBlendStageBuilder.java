@@ -11,11 +11,11 @@ import org.sarge.jove.util.*;
  * Builder for the colour-blend pipeline stage.
  * @author Sarge
  */
-public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineColorBlendStateCreateInfo> {
+public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColorBlendStateCreateInfo> {
 	private final VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 
-	public ColourBlendPipelineStageBuilder() {
+	public ColourBlendStageBuilder() {
 		info.logicOpEnable = false;
 		info.logicOp = VkLogicOp.COPY;
 		Arrays.fill(info.blendConstants, 1);
@@ -33,7 +33,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * Enables colour blending.
 	 * @param enabled Whether enabled (default is {@code false})
 	 */
-	public ColourBlendPipelineStageBuilder enable(boolean enabled) {
+	public ColourBlendStageBuilder enable(boolean enabled) {
 		info.logicOpEnable = enabled;
 		return this;
 	}
@@ -42,7 +42,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * Sets the global colour blending operation.
 	 * @param op Colour-blending operation
 	 */
-	public ColourBlendPipelineStageBuilder operation(VkLogicOp op) {
+	public ColourBlendStageBuilder operation(VkLogicOp op) {
 		info.logicOp = notNull(op);
 		return this;
 	}
@@ -52,7 +52,7 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 	 * @param constants Blending constants array
 	 * @throws IllegalArgumentException if the given array does not contain <b>four</b> values
 	 */
-	public ColourBlendPipelineStageBuilder constants(float[] constants) {
+	public ColourBlendStageBuilder constants(float[] constants) {
 		if(constants.length != info.blendConstants.length) throw new IllegalArgumentException(String.format("Expected exactly %d blend constants", info.blendConstants.length));
 		System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
 		return this;
@@ -198,8 +198,8 @@ public class ColourBlendPipelineStageBuilder extends AbstractPipelineStageBuilde
 		 * Constructs this colour-blend attachment.
 		 * @return Colour-blend builder
 		 */
-		public ColourBlendPipelineStageBuilder build() {
-			return ColourBlendPipelineStageBuilder.this;
+		public ColourBlendStageBuilder build() {
+			return ColourBlendStageBuilder.this;
 		}
 	}
 }

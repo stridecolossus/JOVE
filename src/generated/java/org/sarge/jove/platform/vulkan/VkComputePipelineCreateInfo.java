@@ -1,6 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure.FieldOrder;
@@ -21,9 +23,9 @@ import com.sun.jna.Structure.FieldOrder;
 public class VkComputePipelineCreateInfo extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.COMPUTE_PIPELINE_CREATE_INFO;
 	public Pointer pNext;
-	public int flags;
+	public BitMask<VkPipelineCreateFlag> flags;
 	public VkPipelineShaderStageCreateInfo stage;
-	public Pointer layout;
-	public Pointer basePipelineHandle;
+	public Handle layout;
+	public Handle basePipelineHandle;
 	public int basePipelineIndex;
 }

@@ -8,14 +8,14 @@ import org.sarge.jove.platform.vulkan.util.RequiredFeature;
  * Builder for the input assembly pipeline stage.
  * @author Sarge
  */
-public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
+public class AssemblyStageBuilder extends AbstractStageBuilder<VkPipelineInputAssemblyStateCreateInfo> {
 	private VkPrimitiveTopology topology;
 	private boolean restart;
 
 	/**
 	 * Constructor.
 	 */
-	AssemblyPipelineStageBuilder() {
+	AssemblyStageBuilder() {
 		topology(Primitive.TRIANGLE_STRIP);
 	}
 
@@ -23,7 +23,7 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * Sets the primitive topology.
 	 * @param primitive Primitive
 	 */
-	public AssemblyPipelineStageBuilder topology(Primitive primitive) {
+	public AssemblyStageBuilder topology(Primitive primitive) {
 		this.topology = switch(primitive) {
 			case POINT 			-> VkPrimitiveTopology.POINT_LIST;
 			case LINE 			-> VkPrimitiveTopology.LINE_LIST;
@@ -42,7 +42,7 @@ public class AssemblyPipelineStageBuilder extends AbstractPipelineStageBuilder<V
 	 * @param restart Whether restart is enabled
 	 */
 	@RequiredFeature(field="primitiveRestartEnable", feature="primitiveTopologyListRestart")
-	public AssemblyPipelineStageBuilder restart(boolean restart) {
+	public AssemblyStageBuilder restart(boolean restart) {
 		this.restart = restart;
 		return this;
 	}

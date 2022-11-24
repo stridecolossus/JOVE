@@ -1,18 +1,16 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class ShaderTest extends AbstractVulkanTest {
+class ShaderTest extends AbstractVulkanTest {
 	private static final byte[] CODE = new byte[]{42};
 
 	private Shader shader;
@@ -69,47 +67,6 @@ public class ShaderTest extends AbstractVulkanTest {
 		void load() throws IOException {
 			final Shader shader = loader.load(new ByteArrayInputStream(CODE));
 			assertNotNull(shader);
-		}
-	}
-
-	@DisplayName("Shader specialisation constants...")
-	@Nested
-	class SpecialisationConstantTests {
-		@DisplayName("can be constructed from an indexed map of values")
-		@Test
-		void constants() {
-			// Build constants table
-			final Map<Integer, Object> map = Map.of(
-					1, 1,
-					2, 2f,
-					3, true
-			);
-
-			// Create constants
-			final VkSpecializationInfo info = Shader.constants(new LinkedHashMap<>(map));
-			assertNotNull(info);
-			assertNotNull(info.pMapEntries);
-			assertEquals(3, info.mapEntryCount);
-			assertEquals(4 + 4 + 4, info.dataSize);
-
-			// Check data buffer
-			final ByteBuffer bb = ByteBuffer.allocate(12);
-			bb.putInt(1);
-			bb.putFloat(2f);
-			bb.putInt(1);
-			assertEquals(bb, info.pData);
-		}
-
-		@DisplayName("can be empty")
-		@Test
-		void empty() {
-			assertEquals(null, Shader.constants(Map.of()));
-		}
-
-		@DisplayName("must have a supported data type")
-		@Test
-		void invalid() {
-			assertThrows(UnsupportedOperationException.class, () -> Shader.constants(Map.of(1, "doh")));
 		}
 	}
 }

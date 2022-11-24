@@ -8,12 +8,12 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.*;
 
-class AssemblyPipelineStageBuilderTest {
-	private AssemblyPipelineStageBuilder builder;
+class AssemblyStageBuilderTest {
+	private AssemblyStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new AssemblyPipelineStageBuilder();
+		builder = new AssemblyStageBuilder();
 	}
 
 	@Test

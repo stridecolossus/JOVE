@@ -7,14 +7,14 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.BitMask;
 
-public class ColourBlendPipelineStageBuilderTest {
+public class ColourBlendStageBuilderTest {
 	private static final float[] CONSTANTS = {1, 2, 3, 4};
 
-	private ColourBlendPipelineStageBuilder builder;
+	private ColourBlendStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new ColourBlendPipelineStageBuilder();
+		builder = new ColourBlendStageBuilder();
 	}
 
 	@Test

@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 
-public class RasterizerPipelineStageBuilderTest {
-	private RasterizerPipelineStageBuilder builder;
+public class RasterizerStageBuilderTest {
+	private RasterizerStageBuilder builder;
 
 	@BeforeEach
 	void before() {
-		builder = new RasterizerPipelineStageBuilder();
+		builder = new RasterizerStageBuilder();
 	}
 
 	@Test

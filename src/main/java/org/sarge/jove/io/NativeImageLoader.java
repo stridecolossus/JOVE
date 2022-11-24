@@ -24,20 +24,20 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		// Validate image
 		if(image == null) throw new IOException("Invalid image");
 
-		// Determine component mapping
-		final String components = switch(image.getType()) {
+		// Determine image channels
+		final String channels = switch(image.getType()) {
 			case TYPE_BYTE_GRAY -> "R";
 			case TYPE_4BYTE_ABGR, TYPE_3BYTE_BGR, TYPE_BYTE_INDEXED -> "ABGR";
 			default -> throw new RuntimeException("Unsupported image format: " + image);
 		};
 
 		// Extract image data array
-		final DataBufferByte buffer = (DataBufferByte) image.getRaster().getDataBuffer();
+		final var buffer = (DataBufferByte) image.getRaster().getDataBuffer();
 		final byte[] bytes = buffer.getData();
 
 		// Init image properties
 		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
-		final Layout layout = new Layout(components.length(), Layout.Type.NORMALIZED, false, 1);
+		final Layout layout = new Layout(channels.length(), Layout.Type.NORMALIZED, false, 1);
 		// TODO - should be INTEGER? but VK format needs to be UNORM
 
 		// Inject alpha channel as required
@@ -48,7 +48,7 @@ public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageDat
 		assert data.length == size.area() * layout.stride();
 
 		// Create image
-		return new ImageData(size, components, layout, data);
+		return new ImageData(size, channels, layout, data);
 	}
 
 	/**
