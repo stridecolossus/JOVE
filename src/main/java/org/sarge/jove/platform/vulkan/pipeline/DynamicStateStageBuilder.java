@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.util.IntegerArray;
+import org.sarge.jove.util.*;
 
 /**
  * Builder for the dynamic state pipeline stage.
@@ -83,16 +83,36 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 */
 		void vkCmdSetBlendConstants(Buffer commandBuffer, float blendConstants[]);
 
-		// TODO
+		/**
+		 * Sets the bounds for the depth test.
+		 * @param commandBuffer			Command buffer
+		 * @param minDepthBounds		Minimum depth
+		 * @param maxDepthBounds		Maximum depth
+		 */
 		void vkCmdSetDepthBounds(Buffer commandBuffer, float minDepthBounds, float maxDepthBounds);
 
-		// TODO
-		void vkCmdSetStencilCompareMask(Buffer commandBuffer, VkStencilFaceFlag faceMask, int compareMask);
+		/**
+		 * Sets the stencil compare mask.
+		 * @param commandBuffer			Command buffer
+		 * @param faceMask				Face flags
+		 * @param compareMask			Compare mask
+		 */
+		void vkCmdSetStencilCompareMask(Buffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int compareMask);
 
-		// TODO
-		void vkCmdSetStencilWriteMask(Buffer commandBuffer, VkStencilFaceFlag faceMask, int writeMask);
+		/**
+		 * Sets the stencil write mask.
+		 * @param commandBuffer			Command buffer
+		 * @param faceMask				Face flags
+		 * @param writeMask				Write mask
+		 */
+		void vkCmdSetStencilWriteMask(Buffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int writeMask);
 
-		// TODO
-		void vkCmdSetStencilReference(Buffer commandBuffer, VkStencilFaceFlag faceMask, int reference);
+		/**
+		 * Sets the stencil reference.
+		 * @param commandBuffer			Command buffer
+		 * @param faceMask				Face flags
+		 * @param reference				Reference value
+		 */
+		void vkCmdSetStencilReference(Buffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int reference);
 	}
 }

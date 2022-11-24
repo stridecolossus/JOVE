@@ -43,6 +43,7 @@ import java.util.stream.Stream;
  */
 @Retention(RUNTIME)
 @Target(METHOD)
+@Repeatable(RequiredFeature.List.class)
 public @interface RequiredFeature {
 	/**
 	 * @return Field name
@@ -59,6 +60,15 @@ public @interface RequiredFeature {
 	 * @return Required feature name
 	 */
 	String feature();
+
+	/**
+	 * Container.
+	 */
+	@Retention(RUNTIME)
+	@Target(METHOD)
+	@interface List {
+		RequiredFeature[] value();
+	}
 
 	/**
 	 * The <i>required feature processor</i> enumerates required device features via reflection specified by an annotated configuration object.

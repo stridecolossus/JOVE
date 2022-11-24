@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 /**
@@ -19,9 +18,6 @@ import com.sun.jna.Structure.FieldOrder;
 	"reference"
 })
 public class VkStencilOpState extends VulkanStructure {
-	public static class ByValue extends VkStencilOpState implements Structure.ByValue { }
-	public static class ByReference extends VkStencilOpState implements Structure.ByReference { }
-
 	public VkStencilOp failOp;
 	public VkStencilOp passOp;
 	public VkStencilOp depthFailOp;
