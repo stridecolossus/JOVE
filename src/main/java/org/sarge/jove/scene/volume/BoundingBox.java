@@ -2,10 +2,12 @@ package org.sarge.jove.scene.volume;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.List;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -57,7 +59,7 @@ public class BoundingBox implements Volume {
 	 * @see <a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection">Ray-box intersection</a>
 	 */
 	@Override
-	public Intersection intersection(Ray ray) {
+	public Iterable<Intersection> intersections(Ray ray) {
 		// Convert arguments to slab-wise components
 		final float[] min = bounds.min().toArray();
 		final float[] max = bounds.max().toArray();
@@ -71,7 +73,7 @@ public class BoundingBox implements Volume {
 			if(MathsUtil.isZero(dir[c])) {
 				// Check for parallel ray
 				if((origin[c] < min[c]) || (origin[c] > max[c])) {
-					return Intersection.NONE;
+					return Intersected.NONE;
 				}
 			}
 			else {
@@ -85,29 +87,26 @@ public class BoundingBox implements Volume {
 
 				// Check for ray missing the box
 				if(n > f) {
-					return Intersection.NONE;
+					return Intersected.NONE;
 				}
 
 				// Check for box behind ray
 				if(f < 0) {
-					return Intersection.NONE;
+					return Intersected.NONE;
 				}
 			}
 		}
 
 		// Build results
-		final float[] distances = distances(n, f);
-		return new Intersection() {
-			@Override
-			public float[] distances() {
-				return distances;
-			}
-
-			@Override
-			public Normal normal(Point p) {
-				return Vector.between(bounds.centre(), p).normalize();
-			}
-		};
+		final Point centre = bounds.centre();
+		final var far = new DefaultIntersection(ray, f, centre);
+		if((n < 0) || MathsUtil.isEqual(n, f)) {
+			return List.of(far);
+		}
+		else {
+			final var near = new DefaultIntersection(ray, n, centre);
+			return List.of(near, far);
+		}
 	}
 
 	/**
@@ -120,18 +119,6 @@ public class BoundingBox implements Volume {
 	 */
 	private static float intersect(int index, float[] value, float[] origin, float[] dir) {
 		return (value[index] - origin[index]) / dir[index];
-	}
-
-	/**
-	 * Builds intersection distances.
-	 */
-	private static float[] distances(float n, float f) {
-		if((n < 0) || MathsUtil.isEqual(n, f)) {
-			return new float[]{f};
-		}
-		else {
-			return new float[]{n, f};
-		}
 	}
 
 	@Override

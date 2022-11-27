@@ -21,12 +21,6 @@ class RayTest {
 	}
 
 	@Test
-	void point() {
-		assertEquals(Point.ORIGIN, ray.point(0));
-		assertEquals(new Point(1, 0, 0), ray.point(1));
-	}
-
-	@Test
 	void equals() {
 		assertEquals(ray, ray);
 		assertEquals(ray, new DefaultRay(Point.ORIGIN, Axis.X));
@@ -35,20 +29,67 @@ class RayTest {
 	}
 
 	@Nested
-	class IntersectionTests {
+	class IntersectedSurfaceTests {
+		@DisplayName("An empty intersection result cannot be iterated")
 		@Test
 		void none() {
-			assertEquals(true, Intersection.NONE.isEmpty());
-			assertArrayEquals(new float[0], Intersection.NONE.distances());
-			assertThrows(UnsupportedOperationException.class, () -> Intersection.NONE.normal(null));
+			final var results = Intersected.NONE.iterator();
+			assertEquals(false, results.hasNext());
+		}
+
+		@DisplayName("An undefined intersection result can be iterated but has a NULL value")
+		@Test
+		void undefined() {
+			final var results = Intersected.UNDEFINED.iterator();
+			assertEquals(true, results.hasNext());
+			assertEquals(null, results.next());
+		}
+	}
+
+	@DisplayName("A simple intersection result can be constructed with a single intersection and surface normal")
+	@Test
+	void of() {
+		final Intersection result = Intersection.of(ray, 1, Axis.Y);
+		assertEquals(1f, result.distance());
+		assertEquals(new Point(Axis.X), result.point());
+		assertEquals(Axis.Y, result.normal());
+	}
+
+	@DisplayName("An intersection...")
+	@Nested
+	class DefaultIntersectionTests {
+		private AbstractIntersection intersection;
+
+		@BeforeEach
+		void before() {
+			intersection = new DefaultIntersection(ray, 1, Point.ORIGIN);
+		}
+
+		@DisplayName("has an intersection point on the given ray")
+		@Test
+		void constructor() {
+			assertEquals(1f, intersection.distance());
+			assertEquals(new Point(Axis.X), intersection.point());
+		}
+
+		@DisplayName("can calculate the surface normal relative to a given centre point")
+		@Test
+		void normal() {
+			assertEquals(Axis.X, intersection.normal());
+		}
+
+		@DisplayName("can be ordered by distance")
+		@Test
+		void compare() {
+			assertEquals(0, intersection.compareTo(intersection));
+			assertEquals(1, intersection.compareTo(mock(Intersection.class)));
 		}
 
 		@Test
-		void of() {
-			final var intersection = Intersection.of(3, Axis.Y);
-			assertEquals(false, intersection.isEmpty());
-			assertArrayEquals(new float[]{3}, intersection.distances());
-			assertEquals(Axis.Y, intersection.normal(null));
+		void equals() {
+			assertEquals(intersection, intersection);
+			assertNotEquals(intersection, null);
+			assertNotEquals(intersection, mock(Intersection.class));
 		}
 	}
 }

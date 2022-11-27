@@ -44,8 +44,8 @@ public class AggregateVolume implements Volume {
 //	}
 
 	@Override
-	public Intersection intersection(Ray ray) {
-		return vol.intersection(ray);
+	public Iterable<Intersection> intersections(Ray ray) {
+		return vol.intersections(ray);
 	}
 
 	@Override

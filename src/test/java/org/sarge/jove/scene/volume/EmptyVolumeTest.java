@@ -5,8 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.Test;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.scene.volume.*;
+import org.sarge.jove.geometry.Ray.Intersected;
 
 class EmptyVolumeTest {
 	@Test
@@ -26,7 +25,7 @@ class EmptyVolumeTest {
 
 	@Test
 	void intersectsRay() {
-		assertEquals(Intersection.NONE, EmptyVolume.INSTANCE.intersection(null));
+		assertEquals(Intersected.NONE, EmptyVolume.INSTANCE.intersections(mock(Ray.class)));
 	}
 
 	@Test

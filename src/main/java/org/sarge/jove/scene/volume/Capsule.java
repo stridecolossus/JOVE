@@ -82,7 +82,7 @@ public class Capsule implements Volume {
 	}
 
 	@Override
-	public Intersection intersection(Ray ray) {
+	public Iterable<Intersection> intersections(Ray ray) {
 		// TODO
 		return null;
 	}

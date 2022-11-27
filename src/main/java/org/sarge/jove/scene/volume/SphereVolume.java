@@ -2,9 +2,11 @@ package org.sarge.jove.scene.volume;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.List;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
 
 /**
@@ -94,9 +96,10 @@ public class SphereVolume implements Volume {
 	}
 
 	@Override
-	public Intersection intersection(Ray ray) {
+	public Iterable<Intersection> intersections(Ray ray) {
 		// Determine length of the nearest point on the ray to the centre of the sphere
-		final Vector vec = Vector.between(ray.origin(), sphere.centre());
+		final Point centre = sphere.centre();
+		final Vector vec = Vector.between(ray.origin(), centre);
 		final float nearest = ray.direction().dot(vec);
 		final float len = vec.magnitude();
 
@@ -112,28 +115,25 @@ public class SphereVolume implements Volume {
 		final float r = sphere.radius();
 		final float radius = r * r;
 		if(Math.abs(dist) > radius) {
-			return Intersection.NONE;
+			return Intersected.NONE;
 		}
 
 		// Create lazy intersection record
-		return new SphereIntersections() {
-			@Override
-			public float[] distances() {
-				// Calculate offset from nearest point to intersection(s)
-				// TODO - leave as squared?
-				final float offset = MathsUtil.sqrt(radius - dist);
+		return () -> {
+			// Calculate offset from nearest point to intersection(s)
+			// TODO - leave as squared?
+			final float offset = MathsUtil.sqrt(radius - dist);
 
-				// Build intersection results
-				final float a = nearest + offset;
-				if(len < radius) {
-					// Ray origin is inside the sphere
-					return new float[]{a};
-				}
-				else {
-					// Ray is outside the sphere (two intersections)
-					final float b = nearest - offset;
-					return new float[]{b, a};
-				}
+			// Build intersection results
+			final Intersection a = new DefaultIntersection(ray, nearest + offset, centre);
+			if(len < radius) {
+				// Ray origin is inside the sphere
+				return List.of(a).iterator();
+			}
+			else {
+				// Ray is outside the sphere (two intersections)
+				final Intersection b = new DefaultIntersection(ray, nearest - offset, centre);
+				return List.of(b, a).iterator();
 			}
 		};
 	}
@@ -144,43 +144,29 @@ public class SphereVolume implements Volume {
 	 * @param len			Distance from the ray origin to the centre of the sphere
 	 * @param nearest		Length of the projected nearest point on the ray to the sphere centre
 	 */
-	private Intersection intersectBehind(Ray ray, float len, float nearest) {
+	private Iterable<Intersection> intersectBehind(Ray ray, float len, float nearest) {
 		final float r = sphere.radius();
 		final float radius = r * r;
 		if(len > radius) {
 			// Ray originates outside the sphere
-			return Intersection.NONE;
+			return Intersected.NONE;
 		}
 		else
 		if(len < radius) {
 			// Ray originates inside the sphere
-			return new SphereIntersections() {
+			final var intersection = new DefaultIntersection(ray, 0, sphere.centre()) {
 				@Override
-				public float[] distances() {
+				public float distance() {
 					final float dist = len - nearest * nearest;
 					final float offset = MathsUtil.sqrt(radius - dist);
-					return new float[]{offset + nearest};
+					return offset + nearest;
 				}
 			};
+			return List.of(intersection);
 		}
 		else {
 			// Ray originates on the sphere surface
-			return new SphereIntersections() {
-				@Override
-				public float[] distances() {
-					return new float[]{0};
-				}
-			};
-		}
-	}
-
-	/**
-	 * Adapter for intersections with this sphere.
-	 */
-	private abstract class SphereIntersections implements Intersection {
-		@Override
-		public Normal normal(Point p) {
-			return Vector.between(sphere.centre(), p).normalize();
+			return List.of(new DefaultIntersection(ray, 0, sphere.centre()));
 		}
 	}
 

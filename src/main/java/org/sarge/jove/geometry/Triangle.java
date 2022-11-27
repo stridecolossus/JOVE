@@ -67,7 +67,7 @@ public record Triangle(Point a, Point b, Point c) implements Intersected {
 	}
 
 	@Override
-	public Intersection intersection(Ray ray) {
+	public Iterable<Intersection> intersections(Ray ray) {
 //		// Determine angle between ray and triangle
 //		final Normal normal = this.normal().normalize();
 //		final float denom = normal.dot(ray.direction());

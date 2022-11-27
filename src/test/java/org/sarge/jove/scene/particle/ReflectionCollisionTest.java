@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.scene.particle.*;
 
 public class ReflectionCollisionTest {
 	private Collision collision;
@@ -16,7 +15,7 @@ public class ReflectionCollisionTest {
 	void before() {
 		collision = new ReflectionCollision(0.5f);
 		particle = new Particle(0, Point.ORIGIN, Axis.X);
-		intersection = Intersection.of(1, Axis.Y);
+		intersection = Intersection.of(particle, 1, Axis.Y);
 	}
 
 	@Test

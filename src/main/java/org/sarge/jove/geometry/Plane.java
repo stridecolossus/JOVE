@@ -2,7 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Objects;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.Ray.*;
@@ -138,7 +138,7 @@ public final class Plane implements Intersected {
 	}
 
 	@Override
-	public Intersection intersection(Ray ray) {
+	public Iterable<Intersection> intersections(Ray ray) {
 		return intersections(ray, true);
 	}
 
@@ -148,13 +148,13 @@ public final class Plane implements Intersected {
 	 * @param pos Whether rays originating in the {@link HalfSpace#POSITIVE} half space are subject to the intersection test
 	 * @return Intersections
 	 */
-	private Intersection intersections(Ray ray, boolean pos) {
+	private Iterable<Intersection> intersections(Ray ray, boolean pos) {
 		// Determine angle between ray and normal
 		final float denom = normal.dot(ray.direction());
 
 		// Orthogonal ray does not intersect
 		if(MathsUtil.isZero(denom)) {
-			return Intersection.NONE;
+			return Intersected.NONE;
 		}
 
 		// Calc intersection distance
@@ -164,17 +164,17 @@ public final class Plane implements Intersected {
 		// Check for intersection
 		if(pos) {
 			if(t < 0) {
-				return Intersection.NONE;
+				return Intersected.NONE;
 			}
 		}
 		else {
 			if(d > 0) {
-				return Intersection.NONE;
+				return Intersected.NONE;
 			}
 		}
 
 		// Build intersection result
-		return Intersection.of(t, normal);
+		return List.of(Intersection.of(ray, t, normal));
 	}
 
 	/**
@@ -190,7 +190,7 @@ public final class Plane implements Intersected {
 	 * Creates an adapter for this plane that considers <b>all</b> rays in the given half space as intersecting.
 	 * <p>
 	 * This implementation may offer better performance where the actual intersection point and surface normal are not relevant.
-	 * Note that the intersection results are either {@link Intersection#NONE} or {@link Intersection#UNDEFINED}.
+	 * Note that the intersection results are either {@link Intersected#NONE} or {@link Intersected#UNDEFINED}.
 	 * <p>
 	 * @return Half space intersection test
 	 * @see #behind()
@@ -198,10 +198,10 @@ public final class Plane implements Intersected {
 	public Intersected halfspace(HalfSpace space) {
 		return ray -> {
 			if(halfspace(ray.origin()) == space) {
-				return Intersection.UNDEFINED;
+				return Intersected.UNDEFINED;
 			}
 			else {
-				return Intersection.NONE;
+				return Intersected.NONE;
 			}
 		};
 	}

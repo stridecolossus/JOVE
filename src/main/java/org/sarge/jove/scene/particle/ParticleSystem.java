@@ -323,10 +323,10 @@ public class ParticleSystem implements Animation {
 	private void collide(Particle p) {
 		for(var entry : surfaces.entrySet()) {
 			final Intersected surface = entry.getKey();
-			final Intersection intersections = surface.intersection(p);
-			if(!intersections.isEmpty()) {
+			final Iterator<Intersection> itr = surface.intersections(p).iterator();
+			if(itr.hasNext()) {
 				final Collision collision = entry.getValue();
-				collision.collide(p, intersections);
+				collision.collide(p, itr.next());
 				break;
 			}
 		}

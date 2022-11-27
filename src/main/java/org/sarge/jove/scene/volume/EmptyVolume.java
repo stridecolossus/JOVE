@@ -1,7 +1,7 @@
 package org.sarge.jove.scene.volume;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 
 /**
  * Null or empty volume.
@@ -37,8 +37,8 @@ public final class EmptyVolume implements Volume {
 	}
 
 	@Override
-	public Intersection intersection(Ray ray) {
-		return Intersection.NONE;
+	public Iterable<Intersection> intersections(Ray ray) {
+		return Intersected.NONE;
 	}
 
 	@Override
