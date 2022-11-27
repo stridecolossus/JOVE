@@ -2,7 +2,6 @@ package org.sarge.jove.io;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -48,7 +47,7 @@ public class ResourceLoaderAdapter<T, R> {
 			final T data = loader.map(in);
 			return loader.load(data);
 		}
-		catch(IOException e) {
+		catch(Exception e) {
 			throw new RuntimeException("Error loading resource: " + name, e);
 		}
 	}

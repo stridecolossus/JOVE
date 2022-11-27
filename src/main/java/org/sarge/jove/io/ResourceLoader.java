@@ -1,6 +1,5 @@
 package org.sarge.jove.io;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -38,15 +37,15 @@ public interface ResourceLoader<T, R> {
 	 * Maps the given input stream to the intermediate data type for this resource.
 	 * @param in Input stream
 	 * @return Intermediate data
-	 * @throws IOException if the stream cannot be mapped
+	 * @throws Exception if the stream cannot be mapped
 	 */
-	T map(InputStream in) throws IOException;
+	T map(InputStream in) throws Exception;
 
 	/**
 	 * Loads this resource.
 	 * @param data Input data
 	 * @return Resource
-	 * @throws IOException if the resource cannot be loaded
+	 * @throws Exception if the resource cannot be loaded
 	 */
-	R load(T data) throws IOException;
+	R load(T data) throws Exception;
 }

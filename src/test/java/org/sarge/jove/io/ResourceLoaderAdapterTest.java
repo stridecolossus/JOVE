@@ -1,16 +1,13 @@
 package org.sarge.jove.io;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
+@SuppressWarnings({"resource", "unchecked"})
 public class ResourceLoaderAdapterTest {
 	private static final String NAME = "name";
 
@@ -20,7 +17,7 @@ public class ResourceLoaderAdapterTest {
 	private InputStream in;
 
 	@BeforeEach
-	void before() throws IOException {
+	void before() throws Exception {
 		// Create data source
 		src = mock(DataSource.class);
 		in = mock(InputStream.class);
@@ -35,7 +32,7 @@ public class ResourceLoaderAdapterTest {
 	}
 
 	@Test
-	void load() throws IOException {
+	void load() throws Exception {
 		final Object obj = new Object();
 		when(loader.load(in)).thenReturn(obj);
 		assertEquals(obj, adapter.load(NAME));
@@ -48,14 +45,14 @@ public class ResourceLoaderAdapterTest {
 	}
 
 	@Test
-	void loadMapperError() throws IOException {
-		when(loader.map(in)).thenThrow(IOException.class);
+	void loadMapperError() throws Exception {
+		when(loader.map(in)).thenThrow(Exception.class);
 		assertThrows(RuntimeException.class, () -> adapter.load(NAME));
 	}
 
 	@Test
-	void loadLoaderError() throws IOException {
-		when(loader.load(in)).thenThrow(IOException.class);
+	void loadLoaderError() throws Exception {
+		when(loader.load(in)).thenThrow(Exception.class);
 		assertThrows(RuntimeException.class, () -> adapter.load(NAME));
 	}
 }
