@@ -23,7 +23,7 @@ public class ColourBlendStageBuilderTest {
 	void create() {
 		// Build descriptor
 		final var info = builder
-				.enable(true)
+				.enable()
 				.operation(VkLogicOp.COPY)
 				.constants(CONSTANTS)
 				.attachment()
@@ -55,7 +55,7 @@ public class ColourBlendStageBuilderTest {
 		assertEquals(VkBlendFactor.DST_ALPHA, attachment.dstColorBlendFactor);
 		assertEquals(VkBlendOp.MAX, attachment.alphaBlendOp);
 		assertEquals(VkBlendFactor.ONE, attachment.srcAlphaBlendFactor);
-		assertEquals(VkBlendFactor.ONE, attachment.dstAlphaBlendFactor);
+		assertEquals(VkBlendFactor.ZERO, attachment.dstAlphaBlendFactor);
 	}
 
 	@Test

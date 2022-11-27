@@ -65,7 +65,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	}
 
 	/**
-	 * Sets the comparison function for the depth test (default is {@link VkCompareOp#LESS}).
+	 * Sets the comparison function for the depth test (default is {@link VkCompareOp#LESS_OR_EQUAL}).
 	 * @param depthCompareOp Comparison function
 	 */
 	public DepthStencilStageBuilder compare(VkCompareOp depthCompareOp) {

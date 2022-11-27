@@ -2,9 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlag.*;
-
-import java.util.Set;
+import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlag.DERIVATIVE;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
@@ -22,13 +20,14 @@ class PipelineTest extends AbstractVulkanTest {
 	@BeforeEach
 	void before() {
 		layout = mock(PipelineLayout.class);
-		pipeline = new Pipeline(new Handle(1), dev, VkPipelineBindPoint.GRAPHICS, layout, Set.of());
+		pipeline = new Pipeline(new Handle(1), dev, VkPipelineBindPoint.GRAPHICS, layout, false);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(layout, pipeline.layout());
 		assertEquals(VkPipelineBindPoint.GRAPHICS, pipeline.type());
+		assertEquals(false, pipeline.isAllowDerivatives());
 		assertEquals(false, pipeline.isDestroyed());
 	}
 
@@ -70,7 +69,7 @@ class PipelineTest extends AbstractVulkanTest {
 			void before() {
     			base = mock(Pipeline.class);
     			when(base.handle()).thenReturn(new Handle(3));
-    			when(base.flags()).thenReturn(Set.of(ALLOW_DERIVATIVES));
+    			when(base.isAllowDerivatives()).thenReturn(true);
 			}
 
     		@DisplayName("A pipeline can be derived from an existing pipeline")

@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlag.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
@@ -16,13 +17,13 @@ import org.sarge.jove.util.*;
 import com.sun.jna.Pointer;
 
 /**
- * A <i>pipeline</i> specifies the configuration of the various stages for graphics rendering.
+ * A <i>pipeline</i> defines the configuration for graphics rendering or compute shaders.
  * @author Sarge
  */
 public class Pipeline extends AbstractVulkanObject {
 	private final VkPipelineBindPoint type;
 	private final PipelineLayout layout;
-	private final Set<VkPipelineCreateFlag> flags;
+	private final boolean parent;
 
 	/**
 	 * Constructor.
@@ -30,13 +31,13 @@ public class Pipeline extends AbstractVulkanObject {
 	 * @param dev			Device
 	 * @param type			Pipeline type
 	 * @param layout		Pipeline layout
-	 * @param flags			Creation flags
+	 * @param parent		Whether this is a parent pipeline that {@link VkPipelineCreateFlag#ALLOW_DERIVATIVES}
 	 */
-	Pipeline(Handle handle, DeviceContext dev, VkPipelineBindPoint type, PipelineLayout layout, Set<VkPipelineCreateFlag> flags) {
+	Pipeline(Handle handle, DeviceContext dev, VkPipelineBindPoint type, PipelineLayout layout, boolean parent) {
 		super(handle, dev);
 		this.type = notNull(type);
 		this.layout = notNull(layout);
-		this.flags = Set.copyOf(flags);
+		this.parent = parent;
 	}
 
 	/**
@@ -54,10 +55,11 @@ public class Pipeline extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Pipeline flags
+	 * @return Whether this is a parent pipeline
+	 * @see VkPipelineCreateFlag#ALLOW_DERIVATIVES
 	 */
-	public Set<VkPipelineCreateFlag> flags() {
-		return flags;
+	public boolean isAllowDerivatives() {
+		return parent;
 	}
 
 	/**
@@ -79,7 +81,7 @@ public class Pipeline extends AbstractVulkanObject {
 				.appendSuper(super.toString())
 				.append(type)
 				.append(layout)
-				.append(flags)
+				.append("parent", parent)
 				.build();
 	}
 
@@ -144,20 +146,16 @@ public class Pipeline extends AbstractVulkanObject {
     	 * @see #derive(Builder)
     	 */
     	public Builder<T> allowDerivatives() {
-    		return flag(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
+    		return flag(ALLOW_DERIVATIVES);
     	}
 
     	/**
-    	 * @throws IllegalArgumentException if {@link #parent} does not allow derivatives or this pipeline is already derived
+    	 * Sets this as a derived pipeline.
+    	 * @throws IllegalArgumentException if this pipeline is already derived
     	 */
-    	private void derive(Set<VkPipelineCreateFlag> flags) {
-    		if(!flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES)) {
-    			throw new IllegalArgumentException("Invalid parent pipeline");
-    		}
-    		if(this.flags.contains(VkPipelineCreateFlag.DERIVATIVE)) {
-    			throw new IllegalArgumentException("Pipeline is already a derivative");
-    		}
-    		this.flags.add(VkPipelineCreateFlag.DERIVATIVE);
+    	private void derive() {
+    		if(flags.contains(DERIVATIVE)) throw new IllegalArgumentException("Pipeline is already a derivative");
+    		flags.add(DERIVATIVE);
     	}
 
     	/**
@@ -167,7 +165,8 @@ public class Pipeline extends AbstractVulkanObject {
     	 * @see #allowDerivatives()
     	 */
     	public Builder<T> derive(Pipeline base) {
-    		derive(base.flags());
+    		if(!base.isAllowDerivatives()) throw new IllegalArgumentException("Invalid parent pipeline: " + base);
+    		derive();
     		this.base = base.handle();
     		return this;
     	}
@@ -182,9 +181,10 @@ public class Pipeline extends AbstractVulkanObject {
     	 */
     	public Builder<T> derive(Builder<T> parent) {
     		if(parent == this) throw new IllegalArgumentException("Cannot derive from self");
+    		if(!parent.flags.contains(ALLOW_DERIVATIVES)) throw new IllegalArgumentException("Invalid peer pipeline: " + parent);
     		this.parent = notNull(parent);
     		add(parent);
-    		derive(parent.flags);
+    		derive();
     		return this;
     	}
 
@@ -215,7 +215,8 @@ public class Pipeline extends AbstractVulkanObject {
     		for(int n = 0; n < array.length; ++n) {
     			final Builder<T> builder = builders.get(n);
     			final Handle handle = new Handle(handles[n]);
-    			pipelines[n] = new Pipeline(handle, dev, type, layout, builder.flags);
+    			final boolean parent = builder.flags.contains(ALLOW_DERIVATIVES);
+    			pipelines[n] = new Pipeline(handle, dev, type, layout, parent);
     		}
     		return Arrays.asList(pipelines);
     	}

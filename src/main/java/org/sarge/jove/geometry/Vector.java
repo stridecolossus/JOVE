@@ -135,7 +135,7 @@ public sealed class Vector extends Tuple permits Normal {
 	 * @see #dot(Tuple)
 	 */
 	public final float angle(Vector vec) {
-		final float dot = vec.dot(this);
+		final float dot = this.dot(vec);
 		if(dot < -1) {
 			return Trigonometric.PI;
 		}

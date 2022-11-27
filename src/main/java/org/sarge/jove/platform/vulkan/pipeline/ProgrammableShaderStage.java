@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 
 /**
- * A <i>programmable shader stage</i> defines a programmable stage of the pipeline.
+ * A <i>programmable shader stage</i> defines a pipeline stage implemented by a {@link Shader} module.
  * @author Sarge
  */
 public final class ProgrammableShaderStage {
@@ -180,7 +180,7 @@ public final class ProgrammableShaderStage {
     	}
 
     	/**
-    	 * Helper class - Populates the descriptor for each constant and calculates the offsets and total length as side-effects.
+    	 * Populates the descriptor for each constant and calculates the offsets and total length as side-effects.
     	 */
     	private static class Populate implements BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry> {
     		private int len = 0;

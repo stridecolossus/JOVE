@@ -49,7 +49,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 	 */
 	interface Library {
 		/**
-		 * Dynamically sets viewports.
+		 * Sets dynamic viewports.
 		 * @param commandBuffer			Command buffer
 		 * @param firstViewport			Index of the first viewport
 		 * @param viewportCount			Number of viewports
@@ -58,7 +58,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		void vkCmdSetViewport(Buffer commandBuffer, int firstViewport, int viewportCount, VkViewport pViewports);
 
 		/**
-		 * Dynamically sets scissor rectangles.
+		 * Set dynamic scissor rectangles.
 		 * @param commandBuffer			Command buffer
 		 * @param firstScissor			Index of the first scissor
 		 * @param scissorCount			Number of scissors
@@ -67,7 +67,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		void vkCmdSetScissor(Buffer commandBuffer, int firstScissor, int scissorCount, VkRect2D pScissors);
 
 		/**
-		 * Dynamically sets the line width.
+		 * Sets the line width.
 		 * @param commandBuffer			Command buffer
 		 * @param lineWidth				Line width
 		 */
@@ -77,7 +77,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		void vkCmdSetDepthBias(Buffer commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor);
 
 		/**
-		 * Dynamically sets the blend constants.
+		 * Sets the colour blend constants.
 		 * @param commandBuffer			Command buffer
 		 * @param blendConstants		Blend constants
 		 */

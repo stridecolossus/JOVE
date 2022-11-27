@@ -111,7 +111,6 @@ public final class Axis extends Normal {
     		default -> throw new RuntimeException();
     	};
 	}
-	// TODO - optimisations redundant if we used vector API? or would that be slower anyway?
 
 	/**
 	 * Creates a counter-clockwise rotation matrix about this axis.

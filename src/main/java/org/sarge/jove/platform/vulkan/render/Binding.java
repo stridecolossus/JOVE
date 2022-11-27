@@ -49,7 +49,7 @@ public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderS
 		private final Set<VkShaderStage> stages = new HashSet<>();
 
 		/**
-		 * Sets the index of this binding.
+		 * Sets the index of this binding (default is binding zero).
 		 * @param binding Binding index
 		 */
 		public Builder binding(int binding) {
@@ -67,7 +67,7 @@ public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderS
 		}
 
 		/**
-		 * Sets the array count of this binding.
+		 * Sets the array count of this binding (default is one).
 		 * @param count Array count
 		 */
 		public Builder count(int count) {
@@ -87,6 +87,7 @@ public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderS
 		/**
 		 * Constructs this binding.
 		 * @return New layout binding
+		 * @see Binding#Binding(int, VkDescriptorType, int, Set)
 		 */
 		public Binding build() {
 			return new Binding(binding, type, count, stages);

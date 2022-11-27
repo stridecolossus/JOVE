@@ -17,8 +17,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	private final List<AttachmentBuilder> attachments = new ArrayList<>();
 
 	public ColourBlendStageBuilder() {
-		info.flags = 0;
-		info.logicOpEnable = false;
+		info.flags = 0;			// Reserved
 		info.logicOp = VkLogicOp.COPY;
 		Arrays.fill(info.blendConstants, 1);
 	}
@@ -28,15 +27,16 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	 * @return New colour-blend attachment builder
 	 */
 	public AttachmentBuilder attachment() {
-		return new AttachmentBuilder();
+		final var builder = new AttachmentBuilder();
+		builder.enabled = true;
+		return builder;
 	}
 
 	/**
 	 * Enables colour blending.
-	 * @param enabled Whether enabled (default is {@code false})
 	 */
-	public ColourBlendStageBuilder enable(boolean enabled) {
-		info.logicOpEnable = enabled;
+	public ColourBlendStageBuilder enable() {
+		info.logicOpEnable = true;
 		return this;
 	}
 
@@ -67,7 +67,8 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	VkPipelineColorBlendStateCreateInfo get() {
 		// Init default attachment if none specified
 		if(attachments.isEmpty()) {
-			new AttachmentBuilder().build();
+			final var builder = new AttachmentBuilder();
+			builder.build();
 		}
 
 		// Add attachment descriptors
@@ -97,8 +98,8 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 		 * Blend operation builder.
 		 */
 		public class BlendOperationBuilder {
-			private VkBlendFactor src;
-			private VkBlendFactor dest;
+			private VkBlendFactor src = VkBlendFactor.ONE;
+			private VkBlendFactor dest = VkBlendFactor.ZERO;
 			private VkBlendOp blend = VkBlendOp.ADD;
 
 			private BlendOperationBuilder() {
@@ -139,26 +140,15 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 			}
 		}
 
-		private boolean enabled = true;
-		private List<VkColorComponent> mask = Arrays.asList(VkColorComponent.values());
+		private static final List<VkColorComponent> MASK = Arrays.asList(VkColorComponent.values());
+
+		private boolean enabled;
+		private List<VkColorComponent> mask = MASK;
 		private final BlendOperationBuilder colour = new BlendOperationBuilder();
 		private final BlendOperationBuilder alpha = new BlendOperationBuilder();
 
 		private AttachmentBuilder() {
-			colour.source(VkBlendFactor.SRC_ALPHA);
-			colour.destination(VkBlendFactor.ONE_MINUS_SRC_ALPHA);
-			alpha.source(VkBlendFactor.ONE);
-			alpha.destination(VkBlendFactor.ONE);
 			attachments.add(this);
-		}
-
-		/**
-		 * Sets whether blending is enabled for the colour attachment (default is {@code true}).
-		 * @param enabled Whether blending is enabled
-		 */
-		public AttachmentBuilder enable(boolean enabled) {
-			this.enabled = enabled;
-			return this;
 		}
 
 		/**

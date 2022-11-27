@@ -10,7 +10,7 @@ import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.*;
 
 /**
- * Builder for the viewport stage descriptor.
+ * Builder for the viewport pipeline stage.
  * Note that the number of scissor rectangles <b>must</b> match the number of viewports.
  * @author Sarge
  */

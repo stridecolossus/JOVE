@@ -14,7 +14,7 @@ import org.sarge.lib.util.Check;
  */
 public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Operations colour, Attachment.Operations depthStencil, VkImageLayout before, VkImageLayout after) {
 	/**
-	 * Convenience wrapper for load-store operations.
+	 * Convenience wrapper for a load-store operations pair.
 	 */
 	public record Operations(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
 		/**
@@ -23,12 +23,12 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		public static final Operations DONT_CARE = new Operations(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
 
 		/**
-		 * Convenience load-store operations for the colour attachment.
+		 * Convenience load-store operations for a colour attachment.
 		 */
 		public static final Operations COLOUR = new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE);
 
 		/**
-		 * Convenience load-store operations for the depth-stencil attachment.
+		 * Convenience load-store operations for a depth-stencil attachment.
 		 */
 		public static final Operations DEPTH_STENCIL = new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE);
 

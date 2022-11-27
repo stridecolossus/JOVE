@@ -8,7 +8,7 @@ import org.sarge.jove.util.BitMask;
 import com.sun.jna.Pointer;
 
 /**
- * An <i>delegate pipeline builder</i> is used to configure and create a pipeline.
+ * A <i>delegate pipeline builder</i> is used to configure and create a pipeline.
  * @see Pipeline.Builder
  * @author Sarge
  */
