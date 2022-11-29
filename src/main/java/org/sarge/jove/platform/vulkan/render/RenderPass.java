@@ -1,30 +1,23 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.jove.util.BitMask.reduce;
-import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
-import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
-import org.sarge.jove.platform.vulkan.util.VulkanUtility;
-import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.render.Subpass.Dependency;
+import org.sarge.jove.util.StructureCollector;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>render pass</i> is comprised of a number of sub-passes that render to the frame buffer.
+ * A <i>render pass</i> is comprised of a number of sub passes that render to the frame buffer.
  * @see Subpass
  * @author Sarge
  */
@@ -102,9 +95,23 @@ public class RenderPass extends AbstractVulkanObject {
 		 * @return New subpass
 		 */
 		public Subpass subpass() {
-			final Subpass subpass = new Subpass(subpasses.size());
+			final Subpass subpass = new Subpass(this, subpasses.size());
 			subpasses.add(subpass);
 			return subpass;
+		}
+
+		/**
+		 * Adds an attachment to this render pass (if not already present).
+		 * @param attachment Attach
+		 * @return Attachment index
+		 */
+		int add(Attachment attachment) {
+			int index = attachments.indexOf(attachment);
+			if(index == -1) {
+				index = attachments.size();
+				attachments.add(attachment);
+			}
+			return index;
 		}
 
 		/**
@@ -140,403 +147,6 @@ public class RenderPass extends AbstractVulkanObject {
 
 			// Create render pass
 			return new RenderPass(new Handle(ref), dev, attachments);
-		}
-
-		/**
-		 * A <i>sub-pass</i> specifies a stage of a render-pass.
-		 */
-		public class Subpass {
-			private final int index;
-			private final List<Dependency> dependencies = new ArrayList<>();
-			private final List<Reference> colour = new ArrayList<>();
-			private Reference depth;
-
-			/**
-			 * Constructor.
-			 * @param index Subpass index
-			 */
-			private Subpass(int index) {
-				this.index = zeroOrMore(index);
-			}
-
-			/**
-			 * @return Sub-pass dependencies
-			 */
-			private Stream<Dependency> dependencies() {
-				return dependencies.stream();
-			}
-
-			/**
-			 * Creates a command to advance to the next subpass.
-			 * @return Next subpass command
-			 */
-			public static Command next() {
-				return (lib, buffer) -> lib.vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
-			}
-
-			/**
-			 * Populates the descriptor for this sub-pass.
-			 */
-			private void populate(VkSubpassDescription descriptor) {
-				// Init descriptor
-				descriptor.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
-
-				// Populate colour attachments
-				descriptor.colorAttachmentCount = colour.size();
-				descriptor.pColorAttachments = StructureCollector.pointer(colour, new VkAttachmentReference(), Reference::populate);
-
-				// Populate depth attachment
-				if(depth != null) {
-					final var ref = new VkAttachmentReference();
-					depth.populate(ref);
-					descriptor.pDepthStencilAttachment = ref;
-				}
-			}
-
-			/**
-			 * A <i>reference</i> specifies an attachment used by this subpass (by index).
-			 */
-			private record Reference(int index, Attachment attachment, VkImageLayout layout) {
-				/**
-				 * Constructor.
-				 * @param index				Reference index
-				 * @param attachment		Attachment
-				 * @param layout			Image layout
-				 */
-				private Reference {
-					Check.zeroOrMore(index);
-					Check.notNull(attachment);
-					Check.notNull(layout);
-				}
-
-				/**
-				 * Populates the descriptor for this attachment reference.
-				 */
-				private void populate(VkAttachmentReference descriptor) {
-					descriptor.attachment = index;
-					descriptor.layout = layout;
-				}
-			}
-
-			/**
-			 * Allocates an attachment reference.
-			 */
-			private Reference reference(Attachment attachment, VkImageLayout layout) {
-				final int prev = attachments.indexOf(attachment);
-				if(prev == -1) {
-					final int index = attachments.size();
-					attachments.add(attachment);
-					return new Reference(index, attachment, layout);
-				}
-				else {
-					return new Reference(prev, attachment, layout);
-				}
-			}
-
-			/**
-			 * Adds a colour attachment.
-			 * @param colour Colour attachment
-			 * @param layout Layout
-			 * @throws IllegalArgumentException for a duplicate attachment
-			 */
-			public Subpass colour(Attachment colour, VkImageLayout layout) {
-				if(contains(colour)) throw new IllegalArgumentException("Colour attachment must be unique: " + colour);
-				this.colour.add(reference(colour, layout));
-				return this;
-			}
-
-			/**
-			 * Convenience method to add a colour attachment with a {@link VkImageLayout#COLOR_ATTACHMENT_OPTIMAL} layout.
-			 * @param colour Colour attachment
-			 * @throws IllegalArgumentException for a duplicate attachment
-			 */
-			public Subpass colour(Attachment colour) {
-				return colour(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-			}
-
-			/**
-			 * Sets the depth-stencil attachment.
-			 * @param depth		Attachment
-			 * @param layout	Layout
-			 * @throws IllegalArgumentException if the depth-stencil has already been specified
-			 */
-			public Subpass depth(Attachment depth, VkImageLayout layout) {
-				if(this.depth != null) throw new IllegalArgumentException("Depth-stencil attachment has already been specified");
-				this.depth = reference(depth, layout);
-				return this;
-			}
-
-			/**
-			 * Starts a new subpass dependency.
-			 * @return New subpass dependency builder
-			 */
-			public Dependency dependency() {
-				return new Dependency();
-			}
-
-			/**
-			 * @return Whether the given attachment is used by this subpass
-			 */
-			private boolean contains(Attachment attachment) {
-				return colour.stream().map(Reference::attachment).anyMatch(attachment::equals);
-			}
-
-			/**
-			 * @throws IllegalArgumentException for an empty subpass or duplicate attachment
-			 */
-			private void verify() {
-				if(colour.isEmpty() && (depth == null)) {
-					throw new IllegalArgumentException("No attachments specified");
-				}
-				if((depth != null) && contains(depth.attachment)) {
-					throw new IllegalArgumentException("Depth-stencil cannot refer to a colour attachment");
-				}
-			}
-
-			/**
-			 * Constructs this subpass.
-			 * @return Parent render-pass builder
-			 */
-			public RenderPass.Builder build() {
-				verify();
-				return RenderPass.Builder.this;
-			}
-
-			/**
-			 * A <i>subpass dependency</i> configures this subpass to be dependant on a previous stage of the render-pass.
-			 * <p>
-			 * A subpass can be dependant on the implicit, external subpass using the {@link Dependency#external()} method.
-			 * <br>
-			 * A self-referential subpass is configured using {@link Dependency#self()}.
-			 * <p>
-			 */
-			public class Dependency {
-				/**
-				 * Index of the implicit external subpass.
-				 */
-				private static final int VK_SUBPASS_EXTERNAL = ~0;
-
-				private Integer subpass;
-				private final Set<VkDependencyFlag> flags = new HashSet<>();
-				private final Properties src = new Properties(this);
-				private final Properties dest = new Properties(this);
-
-				private Dependency() {
-				}
-
-				/**
-				 * Sets the dependant subpass.
-				 * @param subpass Dependant subpass
-				 */
-				public Dependency dependency(Subpass subpass) {
-					this.subpass = subpass.index;
-					return this;
-				}
-
-				/**
-				 * Sets this as a dependency on the implicit external subpass before or after the render-pass.
-				 */
-				public Dependency external() {
-					this.subpass = VK_SUBPASS_EXTERNAL;
-					return this;
-				}
-
-				/**
-				 * Sets this as a self-referential dependency.
-				 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#synchronization-pipeline-barriers-subpass-self-dependencies">self-dependency</a>
-				 */
-				public Dependency self() {
-					return dependency(Subpass.this);
-				}
-
-				/**
-				 * Adds a dependency flag.
-				 * @param flag Dependency flag
-				 */
-				public Dependency flag(VkDependencyFlag flag) {
-					Check.notNull(flag);
-					flags.add(flag);
-					return this;
-				}
-
-				/**
-				 * @return Source properties
-				 */
-				public Properties source() {
-					return src;
-				}
-
-				/**
-				 * @return Destination properties, i.e. this subpass
-				 */
-				public Properties destination() {
-					return dest;
-				}
-
-				/**
-				 * Constructs this dependency.
-				 * @throws IllegalArgumentException if the dependant subpass has not been specified
-				 * @throws IllegalArgumentException if the source or destination pipeline stages is empty
-				 */
-				public Subpass build() {
-					if(subpass == null) throw new IllegalArgumentException("Dependant subpass has not been configured");
-					if(src.stages.isEmpty()) throw new IllegalArgumentException("Source stages cannot be empty");
-					if(dest.stages.isEmpty()) throw new IllegalArgumentException("Destination stages cannot be empty");
-					dependencies.add(this);
-					return Subpass.this;
-				}
-
-				/**
-				 * Populates the descriptor for this dependency.
-				 */
-				private void populate(VkSubpassDependency info) {
-					info.dependencyFlags = BitMask.reduce(flags);
-					info.srcSubpass = index;
-					info.dstSubpass = Subpass.this.index;
-					info.srcStageMask = reduce(src.stages);
-					info.srcAccessMask = reduce(src.access);
-					info.dstStageMask = reduce(dest.stages);
-					info.dstAccessMask = reduce(dest.access);
-				}
-			}
-
-			/**
-			 * Source or destination properties of this dependency.
-			 */
-			public class Properties {
-				private final Dependency dependency;
-				private final Set<VkPipelineStage> stages = new HashSet<>();
-				private final Set<VkAccess> access = new HashSet<>();
-
-				private Properties(Dependency dependency) {
-					this.dependency = dependency;
-				}
-
-				/**
-				 * Adds a pipeline stage to this dependency.
-				 * @param stage Pipeline stage
-				 */
-				public Properties stage(VkPipelineStage stage) {
-					this.stages.add(notNull(stage));
-					return this;
-				}
-
-				/**
-				 * Adds an access flag to this dependency.
-				 * @param access Access flag
-				 */
-				public Properties access(VkAccess access) {
-					this.access.add(notNull(access));
-					return this;
-				}
-
-				/**
-				 * Constructs this set of dependency properties.
-				 */
-				public Dependency build() {
-					return dependency;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Builder for a command to clear attachments during this render pass.
-	 */
-	public class ClearAttachmentCommandBuilder {
-		/**
-		 * A <i>clear attachment</i> specifies an attachment to be cleared.
-		 */
-		public class ClearAttachment {
-			private final int index;
-			private final Set<VkImageAspect> aspects;
-			private final ClearValue clear;
-
-			/**
-			 * Constructor.
-			 * @param attachment		Attachment to clear
-			 * @param aspects			Image aspects
-			 * @param clear				Clear value
-			 * @throws IllegalArgumentException if {@link #attachment} is not used by this render pass
-			 * @throws IllegalArgumentException if {@link #aspects} is not valid for the attachment
-			 * @throws IllegalArgumentException if {@link #clear} is not the expected type for the attachment format
-			 */
-			public ClearAttachment(Attachment attachment, Set<VkImageAspect> aspects, ClearValue clear) {
-				Check.notNull(attachment);
-				Check.notEmpty(aspects);
-				if(!aspects.contains(clear.aspect())) throw new IllegalArgumentException("Invalid clear value %s for attachment aspects %s".formatted(clear, aspects));
-				this.index = index(attachment);
-				this.aspects = Set.copyOf(aspects);
-				this.clear = notNull(clear);
-			}
-
-			private int index(Attachment attachment) {
-				final int index = attachments.indexOf(attachment);
-				if(index == -1) throw new IllegalArgumentException("Invalid attachment for this render pass: " + attachment);
-				return index;
-			}
-
-			void populate(VkClearAttachment info) {
-				info.aspectMask = BitMask.reduce(aspects);
-				info.colorAttachment = index;
-				clear.populate(info.clearValue);
-			}
-		}
-
-		/**
-		 * A <i>clear attachment region</i> specifies an area of the attachment(s) to clear.
-		 */
-		public record Region(Rectangle rect, int baseArrayLayer, int layerCount) {
-			/**
-			 * Constructor.
-			 * @param rect					Clear rectangle
-			 * @param baseArrayLayer		Image base array layer
-			 * @param layerCount			Image layer count
-			 */
-			public Region {
-				Check.notNull(rect);
-				Check.zeroOrMore(baseArrayLayer);
-				Check.oneOrMore(layerCount);
-			}
-
-			void populate(VkClearRect clear) {
-				VulkanUtility.populate(rect, clear.rect);
-				clear.baseArrayLayer = baseArrayLayer;
-				clear.layerCount = layerCount;
-			}
-		}
-
-		private final List<ClearAttachment> entries = new ArrayList<>();
-		private final List<Region> regions = new ArrayList<>();
-
-		/**
-		 * Adds an attachment to be cleared.
-		 * @param attachment Clear attachment descriptor
-		 */
-		public ClearAttachmentCommandBuilder attachment(ClearAttachment attachment) {
-			Check.notNull(attachment);
-			entries.add(attachment);
-			return this;
-		}
-
-		/**
-		 * Adds a region of the attachment to be cleared.
-		 * @param region Region to clear
-		 */
-		public ClearAttachmentCommandBuilder region(Region region) {
-			Check.notNull(region);
-			regions.add(region);
-			return this;
-		}
-
-		/**
-		 * Constructs this command.
-		 * @return New clear attachments command
-		 */
-		public Command build() {
-			final VkClearAttachment attachments = StructureCollector.pointer(entries, new VkClearAttachment(), ClearAttachment::populate);
-			final VkClearRect rects = StructureCollector.pointer(regions, new VkClearRect(), Region::populate);
-			return (lib, buffer) -> lib.vkCmdClearAttachments(buffer, entries.size(), attachments, regions.size(), rects);
 		}
 	}
 
@@ -603,8 +213,6 @@ public class RenderPass extends AbstractVulkanObject {
 
 //		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange pRanges);
 //		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
-
-		// TODO
-		void vkCmdResolveImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageResolve pRegions);
+//		void vkCmdResolveImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageResolve pRegions);
 	}
 }
