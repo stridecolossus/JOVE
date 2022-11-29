@@ -1,42 +1,47 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
+import org.sarge.jove.platform.vulkan.render.RenderPass.ClearAttachmentCommandBuilder;
+import org.sarge.jove.platform.vulkan.render.RenderPass.ClearAttachmentCommandBuilder.Region;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.BitMask;
 
 class RenderPassTest extends AbstractVulkanTest {
 	private RenderPass pass;
-	private Attachment one, two;
+	private Attachment col, depth;
 
 	@BeforeEach
 	void before() {
-		one = new Attachment.Builder()
+		col = new Attachment.Builder()
 				.format(FORMAT)
 				.finalLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
 				.build();
 
-		two = new Attachment.Builder()
+		depth = new Attachment.Builder()
 				.format(FORMAT)
 				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 				.build();
 
-		pass = new RenderPass(new Handle(1), dev, List.of(one));
+		pass = new RenderPass(new Handle(1), dev, List.of(col, depth));
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(dev, pass.device());
 		assertEquals(false, pass.isDestroyed());
-		assertEquals(List.of(one), pass.attachments());
+		assertEquals(List.of(col, depth), pass.attachments());
 	}
 
 	@DisplayName("A render pass can be advanced to the next subpass")
@@ -46,6 +51,12 @@ class RenderPassTest extends AbstractVulkanTest {
 		final Command next = Subpass.next();
 		next.record(lib, buffer);
 		verify(lib).vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
+	}
+
+	@Test
+	void granularity() {
+		final VkExtent2D area = pass.granularity();
+		verify(lib).vkGetRenderAreaGranularity(dev, pass, area);
 	}
 
 	@Test
@@ -75,13 +86,13 @@ class RenderPassTest extends AbstractVulkanTest {
 			// Builder render-pass with a single subpass
 			pass = builder
 					.subpass()
-						.colour(one)
+						.colour(col)
 						.build()
 					.build(dev);
 
 			// Check render-pass
 			assertNotNull(pass);
-			assertEquals(List.of(one), pass.attachments());
+			assertEquals(List.of(col), pass.attachments());
 
 			// Check API
 			final var expected = new VkRenderPassCreateInfo() {
@@ -103,14 +114,14 @@ class RenderPassTest extends AbstractVulkanTest {
 		void attachments() {
 			pass = builder
 					.subpass()
-						.colour(one)
+						.colour(col)
 						.build()
 					.subpass()
-						.depth(two, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+						.depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 						.build()
 					.build(dev);
 
-			assertEquals(List.of(one, two), pass.attachments());
+			assertEquals(List.of(col, depth), pass.attachments());
 		}
 
 		@DisplayName("A subpass...")
@@ -127,13 +138,13 @@ class RenderPassTest extends AbstractVulkanTest {
 			@DisplayName("can contain a colour attachment")
 			@Test
 			void colour() {
-				subpass.colour(one, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+				subpass.colour(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
 			}
 
 			@DisplayName("can contain a depth-stencil attachment")
 			@Test
 			void depth() {
-				subpass.depth(two, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+				subpass.depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 			}
 
 			@DisplayName("must contain at least one attachment")
@@ -145,15 +156,15 @@ class RenderPassTest extends AbstractVulkanTest {
 			@DisplayName("cannot contain a duplicate colour attachment")
 			@Test
 			void duplicate() {
-				subpass.colour(one);
-				assertThrows(IllegalArgumentException.class, () -> subpass.colour(one));
+				subpass.colour(col);
+				assertThrows(IllegalArgumentException.class, () -> subpass.colour(col));
 			}
 
 			@DisplayName("cannot contain the same colour and depth-stencil attachment")
 			@Test
 			void invalid() {
-				subpass.colour(one);
-				subpass.depth(one, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+				subpass.colour(col);
+				subpass.depth(col, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 				assertThrows(IllegalArgumentException.class, () -> subpass.build());
 			}
 		}
@@ -175,12 +186,12 @@ class RenderPassTest extends AbstractVulkanTest {
 			@Test
 			void dependencies() {
 				// Init previous subpass
-				subpass.colour(one);
+				subpass.colour(col);
 
 				// Create a second subpass with a dependency
 				builder
 						.subpass()
-							.colour(one)
+							.colour(col)
 							.dependency()
 								.dependency(subpass)
 								.source()
@@ -238,6 +249,109 @@ class RenderPassTest extends AbstractVulkanTest {
 				dependency.source().stage(VkPipelineStage.FRAGMENT_SHADER);
 				assertThrows(IllegalArgumentException.class, () -> dependency.build());
 			}
+		}
+	}
+
+	@DisplayName("A clear attachment command...")
+	@Nested
+	class ClearAttachmentCommandBuilderTests {
+		private ClearAttachmentCommandBuilder builder;
+		private ColourClearValue white;
+		private Rectangle rect;
+
+		@BeforeEach
+		void before() {
+			builder = pass.new ClearAttachmentCommandBuilder();
+			white = new ColourClearValue(Colour.WHITE);
+			rect = new Rectangle(1, 2, 3, 4);
+		}
+
+		@Nested
+		class AttachmentTests {
+    		@DisplayName("can clear a colour attachment")
+    		@Test
+    		void colour() {
+    			final var clear = builder.new ClearAttachment(col, Set.of(VkImageAspect.COLOR), white);
+    			builder.attachment(clear);
+    		}
+
+    		@DisplayName("can clear the depth-stencil attachment")
+    		@Test
+    		void depth() {
+    			final var clear = builder.new ClearAttachment(depth, Set.of(VkImageAspect.DEPTH), DepthClearValue.DEFAULT);
+    			builder.attachment(clear);
+    		}
+
+    		@DisplayName("cannot clear an attachment that does not belong to the render pass")
+    		@Test
+    		void invalid() {
+    			final Attachment other = new Attachment.Builder()
+    					.format(FORMAT)
+    					.finalLayout(VkImageLayout.GENERAL)
+    					.build();
+
+    			assertThrows(IllegalArgumentException.class, () -> builder.new ClearAttachment(other, Set.of(VkImageAspect.COLOR), white));
+    		}
+
+    		@DisplayName("must specify image aspects that are a subset of the attachment")
+    		@Test
+    		void aspects() {
+    			assertThrows(IllegalArgumentException.class, () -> builder.new ClearAttachment(col, Set.of(), DepthClearValue.DEFAULT));
+    			// TODO - check colour, depth and/or stencil
+    		}
+
+    		@DisplayName("must specify a clear value that matches the type of attachment")
+    		@Test
+    		void type() {
+    			assertThrows(IllegalArgumentException.class, () -> builder.new ClearAttachment(col, Set.of(VkImageAspect.COLOR), DepthClearValue.DEFAULT));
+    			assertThrows(IllegalArgumentException.class, () -> builder.new ClearAttachment(depth, Set.of(VkImageAspect.DEPTH), white));
+    		}
+
+    		@Test
+    		void populate() {
+    			final var clear = builder.new ClearAttachment(depth, Set.of(VkImageAspect.DEPTH), DepthClearValue.DEFAULT);
+    			final var info = new VkClearAttachment();
+    			clear.populate(info);
+    			assertEquals(BitMask.reduce(VkImageAspect.DEPTH), info.aspectMask);
+    			assertNotNull(info.clearValue);
+    			assertEquals(1, info.colorAttachment);			// Note this index is actually unused for the depth-stencil
+    		}
+		}
+
+		@Nested
+		class RegionTests {
+    		@DisplayName("can clear a region of the attachments")
+    		@Test
+    		void region() {
+    			builder.region(new Region(rect, 0, 1));
+    		}
+
+    		@Test
+    		void populate() {
+    			final Region region = new Region(rect, 0, 1);
+    			final var info = new VkClearRect();
+    			region.populate(info);
+    			assertEquals(1, info.rect.offset.x);
+    			assertEquals(2, info.rect.offset.y);
+    			assertEquals(3, info.rect.extent.width);
+    			assertEquals(4, info.rect.extent.height);
+    			assertEquals(0, info.baseArrayLayer);
+    			assertEquals(1, info.layerCount);
+    		}
+		}
+
+		@DisplayName("can be executed")
+		@Test
+		void build() {
+			final Command cmd = builder
+					.attachment(builder.new ClearAttachment(col, Set.of(VkImageAspect.COLOR), white))
+					.attachment(builder.new ClearAttachment(depth, Set.of(VkImageAspect.DEPTH), DepthClearValue.DEFAULT))
+					.region(new Region(rect, 0, 1))
+					.build();
+
+			final var buffer = mock(Command.Buffer.class);
+			cmd.record(lib, buffer);
+			verify(lib).vkCmdClearAttachments(eq(buffer), eq(2), isA(VkClearAttachment.class), eq(1), isA(VkClearRect.class));
 		}
 	}
 }

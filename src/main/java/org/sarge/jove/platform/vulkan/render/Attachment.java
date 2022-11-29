@@ -54,6 +54,15 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 	 * @throws IllegalArgumentException if the {@link #after} layout is unspecified or is invalid
 	 */
 	public Attachment {
+		// TODO - validation
+		// format not UNDEFINED
+		// initial no UNDEFINED if colour/depth and load=LOAD
+		// if format=colour initial not DEPTH_STENCIL*, format=depth/stencil initial not COLOUR
+		// if colour, final not DEPTH*
+		// ditto depth
+		// if depth/stencil then initial/final must match
+		// if depth/stencil and load=LOAD then initial not UNDEFINED
+
 		if(format == null) throw new IllegalArgumentException("No format specified for attachment");
 		if(after == null) throw new IllegalArgumentException("No final layout specified");
 		switch(after) {

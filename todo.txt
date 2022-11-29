@@ -29,8 +29,9 @@ features todo
 - re-build swapchain and pipeline after window viewport/focus change
 - normals via geometry shader
 - mesh shader
-- OpenAL audio
 - dynamic descriptors sets and uniform buffers (?)
+- OpenAL streaming audio (queue)
+https://github.com/kcat/openal-soft/wiki/Programmer%27s-Guide#queuing-buffers-on-a-source
 
 blog
 - pipeline cache
@@ -41,6 +42,7 @@ improvements
 - interpolator revamp
 - joystick from desktop service
 - code gen type mapper sucks, should be declarative but not using nasty switches? table driven somehow (we already have the table!), functional?
+- vkGetPhysicalDeviceImageFormatProperties?
 
 particles
 - particle class ~ use case? position, timestamp(?), colour, size?
@@ -48,3 +50,7 @@ particles
 - start/end size => vertex attribute
 - low/high fade, when particles start to fade, high = lifetime
 - storage buffer for particles in compute pipeline
+
+typedef void (VKAPI_PTR *PFN_vkCmdDispatch)(VkCommandBuffer commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ);
+typedef void (VKAPI_PTR *PFN_vkCmdDispatchIndirect)(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset);
+

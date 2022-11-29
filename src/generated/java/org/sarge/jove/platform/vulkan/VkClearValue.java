@@ -1,8 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
-import com.sun.jna.Structure.ByReference;
+import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
-import com.sun.jna.Union;
 
 /**
  * Vulkan structure.
@@ -12,7 +11,8 @@ import com.sun.jna.Union;
 	"color",
 	"depthStencil"
 })
-public class VkClearValue extends Union implements ByReference {
+public class VkClearValue extends Union {
+	public static class ByReference extends VkClearValue implements Structure.ByReference { }
 	public VkClearColorValue color;
 	public VkClearDepthStencilValue depthStencil;
 }

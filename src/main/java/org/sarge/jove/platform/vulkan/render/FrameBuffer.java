@@ -122,7 +122,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 		ext.height = extents.height();
 		// TODO - offset
 
-		// Map attachments to clear values
+		// Build attachment clear operations
 		final Collection<ClearValue> clear = attachments
 				.stream()
 				.map(View::clear)
@@ -131,7 +131,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 
 		// Init clear values
 		info.clearValueCount = clear.size();
-		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
+		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue.ByReference(), ClearValue::populate);
 
 		// Create command
 		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, VkSubpassContents.INLINE);

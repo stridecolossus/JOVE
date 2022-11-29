@@ -6,13 +6,6 @@ package org.sarge.jove.common;
  */
 public record Rectangle(int x, int y, int width, int height) {
 	/**
-	 * Constructor.
-	 */
-	public Rectangle {
-		// Without this ctor the IDE shows it as undefined (but the code compiles!) WTF
-	}
-
-	/**
 	 * Constructor for a rectangle at the origin.
 	 * @param size Rectangle size
 	 */

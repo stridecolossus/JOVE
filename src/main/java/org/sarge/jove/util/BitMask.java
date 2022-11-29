@@ -11,9 +11,9 @@ import com.sun.jna.*;
 /**
  * A <i>bit mask</i> is a wrapper for a native integer representing a set of enumeration constants.
  * <p>
- * This class allows enumeration bit masks used in API methods and structures to be represented in a more type-safe manner, i.e. rather than a simple integer.
+ * This class allows enumeration bit masks in API methods and structures to be represented in a more type-safe manner, i.e. rather than a simple integer.
  * <p>
- * The {@link #reduce(Collection)} method creates a bit mask from a collection of enumeration constants and {@link #enumerate(ReverseMapping)} performs the reverse operation.
+ * The {@link #reduce(Collection)} method creates a bit mask from a collection of enumeration constants and {@link #enumerate(ReverseMapping)} performs the inverse operation.
  * <p>
  * @see IntEnum
  * @param <E> Bit mask enumeration

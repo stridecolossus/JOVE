@@ -8,13 +8,15 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass;
 import org.sarge.jove.platform.vulkan.render.RenderPass.Builder.Subpass.Dependency;
+import org.sarge.jove.platform.vulkan.util.VulkanUtility;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
@@ -45,6 +47,25 @@ public class RenderPass extends AbstractVulkanObject {
 	 */
 	public List<Attachment> attachments() {
 		return attachments;
+	}
+
+	/**
+	 * Queries the render area granularity for this render pass.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>An optimal render pass should have offsets and dimensions that are multiples of the returned granularity</li>
+	 * <li>Subpass dependencies are not affected by the render area and apply to the entire sub-resource of the attached frame buffer</li>
+	 * </ul>
+	 * @return Render area granularity
+	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#vkGetRenderAreaGranularity">vkGetRenderAreaGranularity</a>
+	 */
+	public VkExtent2D granularity() {
+		final DeviceContext dev = this.device();
+		final Library lib = dev.library();
+		final var area = new VkExtent2D();
+		lib.vkGetRenderAreaGranularity(dev, this, area);
+		return area;
 	}
 
 	@Override
@@ -420,6 +441,106 @@ public class RenderPass extends AbstractVulkanObject {
 	}
 
 	/**
+	 * Builder for a command to clear attachments during this render pass.
+	 */
+	public class ClearAttachmentCommandBuilder {
+		/**
+		 * A <i>clear attachment</i> specifies an attachment to be cleared.
+		 */
+		public class ClearAttachment {
+			private final int index;
+			private final Set<VkImageAspect> aspects;
+			private final ClearValue clear;
+
+			/**
+			 * Constructor.
+			 * @param attachment		Attachment to clear
+			 * @param aspects			Image aspects
+			 * @param clear				Clear value
+			 * @throws IllegalArgumentException if {@link #attachment} is not used by this render pass
+			 * @throws IllegalArgumentException if {@link #aspects} is not valid for the attachment
+			 * @throws IllegalArgumentException if {@link #clear} is not the expected type for the attachment format
+			 */
+			public ClearAttachment(Attachment attachment, Set<VkImageAspect> aspects, ClearValue clear) {
+				Check.notNull(attachment);
+				Check.notEmpty(aspects);
+				if(!aspects.contains(clear.aspect())) throw new IllegalArgumentException("Invalid clear value %s for attachment aspects %s".formatted(clear, aspects));
+				this.index = index(attachment);
+				this.aspects = Set.copyOf(aspects);
+				this.clear = notNull(clear);
+			}
+
+			private int index(Attachment attachment) {
+				final int index = attachments.indexOf(attachment);
+				if(index == -1) throw new IllegalArgumentException("Invalid attachment for this render pass: " + attachment);
+				return index;
+			}
+
+			void populate(VkClearAttachment info) {
+				info.aspectMask = BitMask.reduce(aspects);
+				info.colorAttachment = index;
+				clear.populate(info.clearValue);
+			}
+		}
+
+		/**
+		 * A <i>clear attachment region</i> specifies an area of the attachment(s) to clear.
+		 */
+		public record Region(Rectangle rect, int baseArrayLayer, int layerCount) {
+			/**
+			 * Constructor.
+			 * @param rect					Clear rectangle
+			 * @param baseArrayLayer		Image base array layer
+			 * @param layerCount			Image layer count
+			 */
+			public Region {
+				Check.notNull(rect);
+				Check.zeroOrMore(baseArrayLayer);
+				Check.oneOrMore(layerCount);
+			}
+
+			void populate(VkClearRect clear) {
+				VulkanUtility.populate(rect, clear.rect);
+				clear.baseArrayLayer = baseArrayLayer;
+				clear.layerCount = layerCount;
+			}
+		}
+
+		private final List<ClearAttachment> entries = new ArrayList<>();
+		private final List<Region> regions = new ArrayList<>();
+
+		/**
+		 * Adds an attachment to be cleared.
+		 * @param attachment Clear attachment descriptor
+		 */
+		public ClearAttachmentCommandBuilder attachment(ClearAttachment attachment) {
+			Check.notNull(attachment);
+			entries.add(attachment);
+			return this;
+		}
+
+		/**
+		 * Adds a region of the attachment to be cleared.
+		 * @param region Region to clear
+		 */
+		public ClearAttachmentCommandBuilder region(Region region) {
+			Check.notNull(region);
+			regions.add(region);
+			return this;
+		}
+
+		/**
+		 * Constructs this command.
+		 * @return New clear attachments command
+		 */
+		public Command build() {
+			final VkClearAttachment attachments = StructureCollector.pointer(entries, new VkClearAttachment(), ClearAttachment::populate);
+			final VkClearRect rects = StructureCollector.pointer(regions, new VkClearRect(), Region::populate);
+			return (lib, buffer) -> lib.vkCmdClearAttachments(buffer, entries.size(), attachments, regions.size(), rects);
+		}
+	}
+
+	/**
 	 * Render pass API.
 	 */
 	interface Library {
@@ -461,5 +582,29 @@ public class RenderPass extends AbstractVulkanObject {
 		 * @param contents				Sub-pass contents
 		 */
 		void vkCmdNextSubpass(Buffer commandBuffer, VkSubpassContents contents);
+
+		/**
+		 * Queries the render area granularity for a render pass.
+		 * @param dev					Logical device
+		 * @param renderPass			Render pass
+		 * @param pGranularity			Returned render area granularity
+		 */
+		void vkGetRenderAreaGranularity(DeviceContext dev, RenderPass renderPass, VkExtent2D pGranularity);
+
+		/**
+		 * Clears attachments in this render pass.
+		 * @param commandBuffer			Command buffer
+		 * @param attachmentCount		Number of attachments
+		 * @param pAttachments			Attachments to clear
+		 * @param rectCount				Number of clear regions
+		 * @param pRects				Clear regions
+		 */
+		void vkCmdClearAttachments(Buffer commandBuffer, int attachmentCount, VkClearAttachment pAttachments, int rectCount, VkClearRect pRects);
+
+//		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange pRanges);
+//		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
+
+		// TODO
+		void vkCmdResolveImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageResolve pRegions);
 	}
 }

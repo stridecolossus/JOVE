@@ -40,7 +40,7 @@ public final class ComponentMapping {
 		if(len > SIZE) throw new IllegalArgumentException("Invalid component mapping length: " + components);
 
 		// Map component swizzles
-		final ComponentMapping mapping = new ComponentMapping();
+		final var mapping = new ComponentMapping();
 		for(int n = 0; n < len; ++n) {
 			mapping.swizzle[n] = swizzle(components.charAt(n));
 		}
@@ -74,7 +74,7 @@ public final class ComponentMapping {
 	}
 
 	/**
-	 * Creates the descriptor for this component mapping.
+	 * Creates the Vulkan descriptor for this component mapping.
 	 * @return Component mapping descriptor
 	 */
 	public VkComponentMapping build() {
