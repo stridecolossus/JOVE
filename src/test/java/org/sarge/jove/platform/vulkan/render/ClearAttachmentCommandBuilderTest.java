@@ -25,16 +25,8 @@ class ClearAttachmentCommandBuilderTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		col = new Attachment.Builder()
-				.format(FORMAT)
-				.finalLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-				.build();
-
-		depth = new Attachment.Builder()
-				.format(FORMAT)
-				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-				.build();
-
+		col = Attachment.colour(FORMAT);
+		depth = Attachment.depth(FORMAT);
 		pass = new RenderPass(new Handle(1), dev, List.of(col, depth));
 		builder = new ClearAttachmentCommandBuilder(pass);
 		white = new ColourClearValue(Colour.WHITE);
@@ -60,11 +52,7 @@ class ClearAttachmentCommandBuilderTest extends AbstractVulkanTest {
 		@DisplayName("cannot clear an attachment that does not belong to the render pass")
 		@Test
 		void invalid() {
-			final Attachment other = new Attachment.Builder()
-					.format(FORMAT)
-					.finalLayout(VkImageLayout.GENERAL)
-					.build();
-
+			final Attachment other = new Attachment.Builder(FORMAT).finalLayout(VkImageLayout.GENERAL).build();
 			assertThrows(IllegalArgumentException.class, () -> builder.new ClearAttachment(other, Set.of(VkImageAspect.COLOR), white));
 		}
 

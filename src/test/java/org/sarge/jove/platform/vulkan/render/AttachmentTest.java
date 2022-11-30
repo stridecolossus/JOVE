@@ -4,49 +4,28 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Attachment.Operations;
+import org.sarge.jove.platform.vulkan.render.Attachment.LoadStore;
 
 class AttachmentTest {
 	private static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
 
 	private Attachment attachment;
-	private Operations op;
 
 	@BeforeEach
 	void before() {
-		op = new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE);
-		attachment = new Attachment(FORMAT, VkSampleCount.COUNT_1, op, op, VkImageLayout.UNDEFINED, VkImageLayout.PRESENT_SRC_KHR);
-	}
-
-	@Nested
-	class OperationTests {
-    	@Test
-    	void dontCare() {
-    		assertEquals(VkAttachmentLoadOp.DONT_CARE, Operations.DONT_CARE.load());
-    		assertEquals(VkAttachmentStoreOp.DONT_CARE, Operations.DONT_CARE.store());
-    	}
-
-    	@Test
-    	void colour() {
-    		assertEquals(VkAttachmentLoadOp.CLEAR, Operations.COLOUR.load());
-    		assertEquals(VkAttachmentStoreOp.STORE, Operations.COLOUR.store());
-    	}
-
-    	@Test
-    	void depthStencil() {
-    		assertEquals(VkAttachmentLoadOp.CLEAR, Operations.DEPTH_STENCIL.load());
-    		assertEquals(VkAttachmentStoreOp.DONT_CARE, Operations.DEPTH_STENCIL.store());
-    	}
+		attachment = new Attachment(
+				FORMAT,
+				VkSampleCount.COUNT_1,
+				new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE),
+				new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE),
+				VkImageLayout.UNDEFINED,
+				VkImageLayout.PRESENT_SRC_KHR
+		);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(FORMAT, attachment.format());
-		assertEquals(VkSampleCount.COUNT_1, attachment.samples());
-		assertEquals(op, attachment.colour());
-		assertEquals(op, attachment.depthStencil());
-		assertEquals(VkImageLayout.UNDEFINED, attachment.before());
-		assertEquals(VkImageLayout.PRESENT_SRC_KHR, attachment.after());
 	}
 
 	@Test
@@ -57,36 +36,55 @@ class AttachmentTest {
 		assertEquals(VkSampleCount.COUNT_1, descriptor.samples);
 		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
 		assertEquals(VkAttachmentStoreOp.STORE, descriptor.storeOp);
-		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.stencilLoadOp);
-		assertEquals(VkAttachmentStoreOp.STORE, descriptor.stencilStoreOp);
+		assertEquals(VkAttachmentLoadOp.DONT_CARE, descriptor.stencilLoadOp);
+		assertEquals(VkAttachmentStoreOp.DONT_CARE, descriptor.stencilStoreOp);
 		assertEquals(VkImageLayout.UNDEFINED, descriptor.initialLayout);
 		assertEquals(VkImageLayout.PRESENT_SRC_KHR, descriptor.finalLayout);
-	}
-
-	@Test
-	void finalLayout() {
-		assertThrows(IllegalArgumentException.class, () -> Attachment.of(FORMAT, null));
-		assertThrows(IllegalArgumentException.class, () -> Attachment.of(FORMAT, VkImageLayout.UNDEFINED));
-		assertThrows(IllegalArgumentException.class, () -> Attachment.of(FORMAT, VkImageLayout.PREINITIALIZED));
 	}
 
 	@Test
 	void equals() {
 		assertEquals(attachment, attachment);
 		assertNotEquals(attachment, null);
-		assertNotEquals(attachment, Attachment.of(FORMAT, VkImageLayout.PRESENT_SRC_KHR));
 	}
 
-	@Test
-	void builder() {
-		final var builder = new Attachment.Builder()
-				.format(FORMAT)
-				.samples(1)
-				.colour(new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE))
-				.depth(new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE))
-				.initialLayout(VkImageLayout.UNDEFINED)
-				.finalLayout(VkImageLayout.PRESENT_SRC_KHR);
+	@Nested
+	class BuilderTests {
+		private Attachment.Builder builder;
 
-		assertEquals(attachment, builder.build());
+		@BeforeEach
+		void before() {
+			builder = new Attachment.Builder(FORMAT);
+		}
+
+		@Test
+		void build() {
+			builder.samples(1);
+			builder.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE));
+			builder.finalLayout(VkImageLayout.PRESENT_SRC_KHR);
+			assertEquals(attachment, builder.build());
+		}
+
+		@DisplayName("The image format of an attachment cannot be undefined")
+		@Test
+		void undefined() {
+			assertThrows(IllegalArgumentException.class, () -> new Attachment.Builder(null).build());
+			assertThrows(IllegalArgumentException.class, () -> new Attachment.Builder(VkFormat.UNDEFINED).build());
+		}
+
+		@DisplayName("The final image layout of an attachment cannot be undefined")
+		@Test
+		void invalid() {
+			assertThrows(IllegalArgumentException.class, () -> builder.finalLayout(VkImageLayout.UNDEFINED).build());
+			assertThrows(IllegalArgumentException.class, () -> builder.finalLayout(VkImageLayout.PREINITIALIZED).build());
+		}
+
+		@DisplayName("The initial image layout of an attachment cannot be undefined if the image is loaded")
+		@Test
+		void load() {
+			final LoadStore load = new LoadStore(VkAttachmentLoadOp.LOAD, VkAttachmentStoreOp.DONT_CARE);
+			assertThrows(IllegalArgumentException.class, () -> builder.attachment(load).build());
+			assertThrows(IllegalArgumentException.class, () -> builder.stencil(load).build());
+		}
 	}
 }

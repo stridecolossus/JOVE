@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.*;
@@ -43,19 +45,6 @@ class ImageTest extends AbstractVulkanTest {
 			assertEquals(3, descriptor.layerCount());
 		}
 
-		@DisplayName("must have at least one aspect")
-		@Test
-		void emptyAspects() {
-			assertThrows(IllegalArgumentException.class, () -> new Descriptor(TYPE, FORMAT, EXTENTS, Set.of(), 1, 1));
-		}
-
-		@DisplayName("must have a valid combination of image aspects")
-		@Test
-		void invalidAspects() {
-			final var aspects = Set.of(VkImageAspect.COLOR, VkImageAspect.DEPTH);
-			assertThrows(IllegalArgumentException.class, () -> new Descriptor(TYPE, FORMAT, EXTENTS, aspects, 1, 1));
-		}
-
 		@DisplayName("for a 2D image must have a depth of one")
 		@Test
 		void invalidExtentsDepth() {
@@ -75,18 +64,53 @@ class ImageTest extends AbstractVulkanTest {
 			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.THREE_D, FORMAT, EXTENTS, ASPECTS, 1, 2));
 		}
 
-		@Test
-		void builder() {
-			final Descriptor result = new Descriptor.Builder()
-					.type(TYPE)
-					.format(FORMAT)
-					.extents(EXTENTS)
-					.aspect(VkImageAspect.COLOR)
-					.mipLevels(2)
-					.arrayLayers(3)
-					.build();
+		@Nested
+		class BuilderTests {
+			private Descriptor.Builder builder;
 
-			assertEquals(descriptor, result);
+			@BeforeEach
+			void before() {
+				builder = new Descriptor.Builder();
+				builder.type(TYPE);
+				builder.format(FORMAT);
+				builder.extents(EXTENTS);
+			}
+
+    		@Test
+    		void build() {
+    			builder
+    					.aspect(VkImageAspect.COLOR)
+    					.mipLevels(2)
+    					.arrayLayers(3)
+    					.build();
+
+    			assertEquals(descriptor, builder.build());
+    		}
+
+    		@ParameterizedTest
+    		@EnumSource(value=VkImageAspect.class, names={"COLOR", "DEPTH", "STENCIL"})
+    		void aspects(VkImageAspect aspect) {
+    			builder.aspect(aspect).build();
+    		}
+
+    		@Test
+    		void depthStencil() {
+    			builder.aspect(VkImageAspect.DEPTH);
+    			builder.aspect(VkImageAspect.STENCIL);
+    			builder.build();
+    		}
+
+    		@Test
+    		void empty() {
+    			assertThrows(IllegalArgumentException.class, () -> builder.build());
+    		}
+
+    		@Test
+    		void invalid() {
+    			builder.aspect(VkImageAspect.COLOR);
+    			builder.aspect(VkImageAspect.DEPTH);
+    			assertThrows(IllegalArgumentException.class, () -> builder.build());
+    		}
 		}
 	}
 

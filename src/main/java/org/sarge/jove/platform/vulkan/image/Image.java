@@ -120,11 +120,13 @@ public interface Image extends NativeObject {
 	 */
 	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements SubResource {
 		// Valid image aspect combinations
-		private static final Collection<Set<VkImageAspect>> VALID_ASPECTS = List.of(
+		private static final Collection<Set<VkImageAspect>> ASPECTS = List.of(
 				Set.of(VkImageAspect.COLOR),
 				Set.of(VkImageAspect.DEPTH),
+				Set.of(VkImageAspect.STENCIL),
 				Set.of(VkImageAspect.DEPTH, VkImageAspect.STENCIL)
 		);
+		// TODO - multi-planar, others, e.g. planes?
 
 		/**
 		 * Constructor.
@@ -136,6 +138,7 @@ public interface Image extends NativeObject {
 		 * @param layerCount	Number of array layers
 		 * @throws IllegalArgumentException if {@link #aspects} is empty or is an invalid combination
 		 * @throws IllegalArgumentException if {@link #extents} is invalid for the given image {@link #type}
+		 * @see Image#validate(Set)
 		 */
 		public Descriptor {
 			// Validate
@@ -157,8 +160,9 @@ public interface Image extends NativeObject {
 			}
 
 			// Validate image aspects
-			if(!VALID_ASPECTS.contains(aspects)) throw new IllegalArgumentException("Invalid image aspects: " + aspects);
-
+			if(!ASPECTS.contains(aspects)) {
+				throw new IllegalArgumentException("Invalid image aspects: " + aspects);
+			}
 			// TODO - validate format against aspects, e.g. D32_FLOAT is not stencil, D32_FLOAT_S8_UINT has stencil
 		}
 

@@ -30,10 +30,7 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		when(view.clear()).thenReturn(Optional.of(clear));
 
 		// Create attachment
-		final Attachment attachment = new Attachment.Builder()
-				.format(FORMAT)
-				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
-				.build();
+		final Attachment attachment = Attachment.colour(FORMAT);
 
 		// Create render pass
 		pass = mock(RenderPass.class);

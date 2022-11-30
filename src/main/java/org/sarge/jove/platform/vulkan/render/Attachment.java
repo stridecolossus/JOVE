@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static org.sarge.jove.platform.vulkan.VkAttachmentLoadOp.LOAD;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
@@ -12,129 +12,120 @@ import org.sarge.lib.util.Check;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Operations colour, Attachment.Operations depthStencil, VkImageLayout before, VkImageLayout after) {
+public record Attachment(VkFormat format, VkSampleCount samples, Attachment.LoadStore attachment, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
 	/**
 	 * Convenience wrapper for a load-store operations pair.
 	 */
-	public record Operations(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
-		/**
-		 * Default load-store operations.
-		 */
-		public static final Operations DONT_CARE = new Operations(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
-
-		/**
-		 * Convenience load-store operations for a colour attachment.
-		 */
-		public static final Operations COLOUR = new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE);
-
-		/**
-		 * Convenience load-store operations for a depth-stencil attachment.
-		 */
-		public static final Operations DEPTH_STENCIL = new Operations(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE);
-
+	record LoadStore(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
 		/**
 		 * Constructor.
 		 * @param load		Load operation
 		 * @param store		Store operation
 		 */
-		public Operations {
+		public LoadStore {
 			Check.notNull(load);
 			Check.notNull(store);
 		}
 	}
 
 	/**
-	 * Constructor.
-	 * @param format			Attachment format
-	 * @param samples			Number of samples
-	 * @param colour			Colour load-store operations
-	 * @param depthStencil		Depth-stencil operations
-	 * @param before			Initial layout
-	 * @param after				Final layout
-	 * @throws IllegalArgumentException if the {@link #after} layout is unspecified or is invalid
+	 * Creates a simple colour attachment for presentation.
+	 * @param format Colour image layout
+	 * @return Colour attachment
 	 */
-	public Attachment {
-		// TODO - validation
-		// format not UNDEFINED
-		// initial no UNDEFINED if colour/depth and load=LOAD
-		// if format=colour initial not DEPTH_STENCIL*, format=depth/stencil initial not COLOUR
-		// if colour, final not DEPTH*
-		// ditto depth
-		// if depth/stencil then initial/final must match
-		// if depth/stencil and load=LOAD then initial not UNDEFINED
-
-		if(format == null) throw new IllegalArgumentException("No format specified for attachment");
-		if(after == null) throw new IllegalArgumentException("No final layout specified");
-		switch(after) {
-			case UNDEFINED, PREINITIALIZED -> throw new IllegalArgumentException("Invalid final layout: " + after);
-		}
-		Check.notNull(samples);
-		Check.notNull(colour);
-		Check.notNull(depthStencil);
-		Check.notNull(before);
-	}
-
-	/**
-	 * Creates an attachment with default configuration.
-	 * @param format		Attachment format
-	 * @param after			Final layout
-	 * @return New attachment
-	 * @see #Attachment(VkFormat, VkSampleCount, Operations, Operations, VkImageLayout, VkImageLayout)
-	 */
-	public static Attachment of(VkFormat format, VkImageLayout after) {
-		return new Builder()
-				.format(format)
-				.finalLayout(after)
+	public static Attachment colour(VkFormat format) {
+		return new Builder(format)
+				.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE))
+				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 				.build();
 	}
 
 	/**
-	 * Populates a descriptor for this descriptor.
+	 * Creates a simple depth attachment.
+	 * @param format Depth image layout
+	 * @return Depth attachment
+	 */
+	public static Attachment depth(VkFormat format) {
+		return new Builder(format)
+				.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE))
+				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+				.build();
+	}
+
+	/**
+	 * Constructor.
+	 * @param format			Image format
+	 * @param samples			Number of samples
+	 * @param attachment		Attachment operations
+	 * @param stencil			Stencil operations
+	 * @param initialLayout		Initial layout
+	 * @param finalLayout		Final layout
+	 * @throws IllegalArgumentException if {@link #format} is undefined
+	 * @throws IllegalArgumentException if {@link #finalLayout} is invalid for this attachment
+	 * @throws IllegalArgumentException if {@link #initialLayout} is undefined and the load operation is {@link VkAttachmentLoadOp#LOAD}
+	 */
+	public Attachment {
+		Check.notNull(format);
+		Check.notNull(samples);
+		Check.notNull(attachment);
+		Check.notNull(stencil);
+		Check.notNull(initialLayout);
+		Check.notNull(finalLayout);
+
+		if(format == VkFormat.UNDEFINED) throw new IllegalArgumentException("Format cannot be undefined");
+
+		switch(finalLayout) {
+    		case UNDEFINED, PREINITIALIZED -> throw new IllegalArgumentException("Invalid final layout: " + finalLayout);
+    	}
+
+		if(initialLayout == VkImageLayout.UNDEFINED) {
+			if(attachment.load == LOAD) throw new IllegalArgumentException("Cannot load an image with an undefined layout");
+			if(stencil.load == LOAD) throw new IllegalArgumentException("Cannot load a stencil with an undefined layout");
+		}
+
+		// TODO - further validation
+		// - no attachment load-store if stencil only
+		// - no stencil load-store if colour image
+	}
+
+	/**
+	 * Populates the Vulkan descriptor for this attachment.
 	 * @param desc Attachment descriptor
 	 */
-	void populate(VkAttachmentDescription attachment) {
-		attachment.format = format;
-		attachment.samples = samples;
-		attachment.loadOp = colour.load;
-		attachment.storeOp = colour.store;
-		attachment.stencilLoadOp = depthStencil.load;
-		attachment.stencilStoreOp = depthStencil.store;
-		attachment.initialLayout = before;
-		attachment.finalLayout = after;
+	void populate(VkAttachmentDescription desc) {
+		desc.format = format;
+		desc.samples = samples;
+		desc.loadOp = attachment.load;
+		desc.storeOp = attachment.store;
+		desc.stencilLoadOp = stencil.load;
+		desc.stencilStoreOp = stencil.store;
+		desc.initialLayout = initialLayout;
+		desc.finalLayout = finalLayout;
 	}
 
 	/**
 	 * Builder for an attachment.
 	 */
 	public static class Builder {
-		private VkFormat format;
+		private static final LoadStore DONT_CARE = new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
+
+		private final VkFormat format;
 		private VkSampleCount samples = VkSampleCount.COUNT_1;
-		private Operations colour = Operations.DONT_CARE;
-		private Operations depthStencil = Operations.DONT_CARE;
-		private VkImageLayout before = VkImageLayout.UNDEFINED;
-		private VkImageLayout after;
+		private LoadStore attachment = DONT_CARE;
+		private LoadStore stencil = DONT_CARE;
+		private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;
+		private VkImageLayout finalLayout;
 
 		/**
-		 * Sets the attachment format.
-		 * @param format Attachment format
+		 * Constructor.
+		 * @param format Image format
 		 */
-		public Builder format(VkFormat format) {
-			// TODO - check undefined? or is that valid?
+		public Builder(VkFormat format) {
 			this.format = notNull(format);
-			return this;
 		}
 
 		/**
-		 * Helper - Sets the attachment format to that of the given image view.
-		 * @param view Image view
-		 */
-		public Builder format(View view) {
-			final VkFormat format = view.image().descriptor().format();
-			return format(format);
-		}
-
-		/**
-		 * Sets the number of samples.
+		 * Sets the number of samples (default is one).
 		 * @param samples Number of samples
 		 */
 		public Builder samples(VkSampleCount samples) {
@@ -154,20 +145,20 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		}
 
 		/**
-		 * Sets the load/store operations for the colour attachment.
-		 * @param colour Colour operations
+		 * Sets the load-store operations for a colour or depth attachment.
+		 * @param load Attachment operations
 		 */
-		public Builder colour(Operations colour) {
-			this.colour = notNull(colour);
+		public Builder attachment(LoadStore attachment) {
+			this.attachment = notNull(attachment);
 			return this;
 		}
 
 		/**
-		 * Sets the load/store operations for the depth-stencil attachment.
-		 * @param depthStencil Depth-stencil operations
+		 * Sets the load-store operations for the stencil.
+		 * @param stencil Stencil operation
 		 */
-		public Builder depth(Operations depthStencil) {
-			this.depthStencil = notNull(depthStencil);
+		public Builder stencil(LoadStore stencil) {
+			this.stencil = notNull(stencil);
 			return this;
 		}
 
@@ -176,28 +167,25 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Oper
 		 * @param layout Initial image layout
 		 */
 		public Builder initialLayout(VkImageLayout layout) {
-			this.before = notNull(layout);
+			this.initialLayout = notNull(layout);
 			return this;
 		}
 
 		/**
-		 * Sets the final image layout.
-		 * @param layout final image layout
+		 * Sets the final layout.
+		 * @param layout Final image layout
 		 */
 		public Builder finalLayout(VkImageLayout layout) {
-			this.after = notNull(layout);
+			this.finalLayout = notNull(layout);
 			return this;
 		}
 
 		/**
 		 * Constructs this attachment.
-		 * @throws IllegalArgumentException if the attachment format or final layout have not been specified
 		 * @return New attachment
 		 */
 		public Attachment build() {
-			if(format == null) throw new IllegalArgumentException("No format specified for attachment");
-			if(after == null) throw new IllegalArgumentException("No final layout specified");
-			return new Attachment(format, samples, colour, depthStencil, before, after);
+			return new Attachment(format, samples, attachment, stencil, initialLayout, finalLayout);
 		}
 	}
 }

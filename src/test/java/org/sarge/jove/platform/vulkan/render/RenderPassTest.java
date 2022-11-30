@@ -17,16 +17,8 @@ class RenderPassTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		col = new Attachment.Builder()
-				.format(FORMAT)
-				.finalLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-				.build();
-
-		depth = new Attachment.Builder()
-				.format(FORMAT)
-				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-				.build();
-
+		col = Attachment.colour(FORMAT);
+		depth = Attachment.depth(FORMAT);
 		pass = new RenderPass(new Handle(1), dev, List.of(col, depth));
 	}
 
