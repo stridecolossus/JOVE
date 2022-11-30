@@ -26,5 +26,5 @@ public class VkRenderPassBeginInfo extends VulkanStructure {
 	public Handle framebuffer;
 	public VkRect2D renderArea;
 	public int clearValueCount;
-	public VkClearValue pClearValues;
+	public VkClearValue.ByReference pClearValues;
 }
