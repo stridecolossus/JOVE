@@ -294,7 +294,7 @@ public interface Command {
 		/**
 		 * Allocates a number of command buffers from this pool.
 		 * @param num			Number of buffers to allocate
-		 * @param level			Buffer level
+		 * @param primary		Whether to allocate primary or secondary buffers
 		 * @return Allocated buffers
 		 */
 		public List<Buffer> allocate(int num, boolean primary) {

@@ -113,9 +113,9 @@ public sealed class Vector extends Tuple permits Normal {
 	}
 
 	/**
-	 * Multiplies this vector by the given vector.
+	 * Multiplies this vector <i>component wise</i> by the given vector.
 	 * @param vec Vector
-	 * @return This vector multiplied <i>component wise</i> by the given vector
+	 * @return Multiplied vector
 	 */
 	public final Vector multiply(Vector vec) {
 		return new Vector(x * vec.x, y * vec.y, z * vec.z);

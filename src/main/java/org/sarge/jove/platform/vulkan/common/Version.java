@@ -14,9 +14,6 @@ public record Version(int major, int minor, int patch) implements Comparable<Ver
 
 	/**
 	 * Constructor.
-	 * @param major
-	 * @param minor
-	 * @param patch
 	 */
 	public Version {
 		oneOrMore(major);
@@ -29,16 +26,12 @@ public record Version(int major, int minor, int patch) implements Comparable<Ver
 	 * @see Vulkan header {@code VK_MAKE_VERSION} macro
 	 */
 	public int toInteger() {
-        return (int) compact();
-	}
-
-	private long compact() {
-        return (major << 22) | (minor << 12) | patch;
+        return (int) ((long) major << 22) | (minor << 12) | patch;
 	}
 
 	@Override
 	public int compareTo(Version that) {
-		return (int) (this.compact() - that.compact());
+		return this.toInteger() - that.toInteger();
 	}
 
 	@Override
