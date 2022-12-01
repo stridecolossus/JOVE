@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
-import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
@@ -53,14 +53,14 @@ public class PipelineLayout extends AbstractVulkanObject {
 	 * Builder for a pipeline layout.
 	 */
 	public static class Builder {
-		private final List<DescriptorLayout> sets = new ArrayList<>();
+		private final List<DescriptorSet.Layout> sets = new ArrayList<>();
 		private final List<Range> ranges = new ArrayList<>();
 
 		/**
 		 * Adds a descriptor set layout to this pipeline.
 		 * @param layout Descriptor set layout
 		 */
-		public Builder add(DescriptorLayout layout) {
+		public Builder add(DescriptorSet.Layout layout) {
 			Check.notNull(layout);
 			sets.add(layout);
 			return this;

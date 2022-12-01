@@ -42,7 +42,8 @@ improvements
 - interpolator revamp
 - joystick from desktop service
 - code gen type mapper sucks, should be declarative but not using nasty switches? table driven somehow (we already have the table!), functional?
-- vkGetPhysicalDeviceImageFormatProperties?
+- vkGetPhysicalDeviceImageFormatProperties? to check attachment format vs layouts
+- attachment image stereotypes? why pass layout into subpass? why separate methods to add colour/depth?
 
 particles
 - particle class ~ use case? position, timestamp(?), colour, size?

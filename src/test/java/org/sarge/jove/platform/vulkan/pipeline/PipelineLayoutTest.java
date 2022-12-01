@@ -11,7 +11,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
-import org.sarge.jove.platform.vulkan.render.DescriptorLayout;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class PipelineLayoutTest extends AbstractVulkanTest {
@@ -46,7 +46,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Create descriptor set layout
-			final DescriptorLayout set = mock(DescriptorLayout.class);
+			final var set = mock(DescriptorSet.Layout.class);
 			when(set.handle()).thenReturn(new Handle(1));
 
 			// Create push constant ranges
