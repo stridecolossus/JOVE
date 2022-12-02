@@ -4,7 +4,7 @@ import static org.sarge.jove.platform.audio.AudioParameter.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.FloatArray;
+import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
@@ -51,7 +51,7 @@ public class AudioListener {
 	 */
 	public void orientation(Vector forward, Vector up) {
 		final float[] array = {forward.x, forward.y, forward.z, up.x, up.y, up.z};
-		lib.alListenerfv(ORIENTATION, new FloatArray(array));
+		lib.alListenerfv(ORIENTATION, new PointerToFloatArray(array));
 		dev.check();
 	}
 

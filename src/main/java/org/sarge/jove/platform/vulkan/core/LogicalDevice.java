@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
+import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
 import org.sarge.lib.util.*;
 
 import com.sun.jna.*;
@@ -197,7 +198,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			// Populate queue descriptor
 			info.queueCount = array.length;
 			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = new FloatArray(ArrayUtils.toPrimitive(array));
+			info.pQueuePriorities = new PointerToFloatArray(ArrayUtils.toPrimitive(array));
 		}
 	}
 

@@ -6,7 +6,7 @@ import static org.sarge.jove.platform.audio.AudioParameter.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.FloatArray;
+import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
 
 class AudioListenerTest {
 	private AudioListener listener;
@@ -39,7 +39,7 @@ class AudioListenerTest {
 	void orientation() {
 		final float[] array = {0, 0, 1, 0, 1, 0};
 		listener.orientation(Axis.Z, Axis.Y);
-		verify(lib).alListenerfv(ORIENTATION, new FloatArray(array));
+		verify(lib).alListenerfv(ORIENTATION, new PointerToFloatArray(array));
 	}
 
 	@Test

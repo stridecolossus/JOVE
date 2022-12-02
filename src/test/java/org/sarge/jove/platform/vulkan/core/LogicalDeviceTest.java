@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
 import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
 
@@ -190,7 +191,7 @@ public class LogicalDeviceTest {
 					assertEquals(null, actual.pQueueCreateInfos.flags);
 					assertEquals(2, actual.pQueueCreateInfos.queueCount);
 					assertEquals(1, actual.pQueueCreateInfos.queueFamilyIndex);
-					assertNotNull(actual.pQueueCreateInfos.pQueuePriorities);
+					assertEquals(new PointerToFloatArray(new float[]{0.5f, 1f}), actual.pQueueCreateInfos.pQueuePriorities);
 
 					return true;
 				}

@@ -1,33 +1,21 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 
-public class NativeObjectTest {
+class NativeObjectTest {
 	private NativeObject obj;
-	private Pointer ptr;
 
 	@BeforeEach
 	void before() {
-		ptr = new Pointer(1);
 		obj = mock(NativeObject.class);
-		when(obj.handle()).thenReturn(new Handle(ptr));
+		when(obj.handle()).thenReturn(new Handle(1));
 	}
 
 	@Nested
@@ -39,40 +27,36 @@ public class NativeObjectTest {
 			mem = NativeObject.array(List.of(obj, obj));
 		}
 
+		@DisplayName("An array of native objects can be transformed to a JNA pointer-to-pointer-array")
 		@Test
 		void array() {
-			assertNotNull(mem);
 			assertEquals(Native.POINTER_SIZE * 2, mem.size());
 			verify(obj, times(2)).handle();
 		}
 
+		@DisplayName("An empty array of native objects is transformed to NULL")
 		@Test
 		void empty() {
 			assertEquals(null, NativeObject.array(Set.of()));
-		}
-
-		@Test
-		void equals() {
-			assertEquals(true, mem.equals(mem));
-			assertEquals(true, mem.equals(NativeObject.array(List.of(obj, obj))));
-			assertEquals(false, mem.equals(null));
-			assertEquals(false, mem.equals(NativeObject.array(List.of(obj))));
 		}
 	}
 
 	@Nested
 	class ConverterTests {
+		@DisplayName("A native object is marshalled as a JNA pointer")
 		@Test
 		void nativeType() {
 			assertEquals(Pointer.class, NativeObject.CONVERTER.nativeType());
 		}
 
+		@DisplayName("A native object can be marshalled to a JNA pointer")
 		@Test
 		void toNative() {
-			assertEquals(ptr, NativeObject.CONVERTER.toNative(obj, null));
+			assertEquals(new Pointer(1), NativeObject.CONVERTER.toNative(obj, null));
 			assertEquals(null, NativeObject.CONVERTER.toNative(null, null));
 		}
 
+		@DisplayName("A native object cannot be marshalled from a JNA pointer")
 		@Test
 		void fromNative() {
 			assertThrows(UnsupportedOperationException.class, () -> NativeObject.CONVERTER.fromNative(obj, null));

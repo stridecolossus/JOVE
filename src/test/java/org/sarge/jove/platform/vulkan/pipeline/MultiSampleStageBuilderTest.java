@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntegerArray;
+import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 import org.sarge.lib.util.Percentile;
 
 public class MultiSampleStageBuilderTest {
@@ -32,7 +32,7 @@ public class MultiSampleStageBuilderTest {
 		assertEquals(VkSampleCount.COUNT_8, info.rasterizationSamples);
 		assertEquals(true, info.sampleShadingEnable);
 		assertEquals(0.5f, info.minSampleShading);
-		assertEquals(new IntegerArray(new int[1]), info.pSampleMask);
+		assertEquals(new PointerToIntArray(new int[1]), info.pSampleMask);
 		assertEquals(true, info.alphaToCoverageEnable);
 		assertEquals(true, info.alphaToOneEnable);
 	}

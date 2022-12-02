@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.*;
+import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 import org.sarge.lib.util.Check;
 
 /**
@@ -98,7 +99,7 @@ public final class Work {
 
 			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
 			final int[] stages = wait.values().stream().map(BitMask::reduce).mapToInt(BitMask::bits).toArray();
-			info.pWaitDstStageMask = new IntegerArray(stages);
+			info.pWaitDstStageMask = new PointerToIntArray(stages);
 		}
 
 		// Populate signal semaphores

@@ -309,7 +309,7 @@ public class DescriptorSet implements NativeObject {
 	 * @return New bind command
 	 */
 	public static Command bind(PipelineLayout layout, Collection<DescriptorSet> sets) {
-		final PointerArray array = NativeObject.array(sets);
+		final Pointer array = NativeObject.array(sets);
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
 				VkPipelineBindPoint.GRAPHICS,

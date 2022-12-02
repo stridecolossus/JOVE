@@ -6,7 +6,8 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 
 /**
  * Builder for the dynamic state pipeline stage.
@@ -39,7 +40,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		// Populate dynamic states
 		final int[] array = states.stream().mapToInt(VkDynamicState::value).toArray();
 		info.dynamicStateCount = array.length;
-		info.pDynamicStates = new IntegerArray(array);
+		info.pDynamicStates = new PointerToIntArray(array);
 
 		return info;
 	}

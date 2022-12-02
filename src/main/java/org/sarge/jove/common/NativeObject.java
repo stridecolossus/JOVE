@@ -2,7 +2,7 @@ package org.sarge.jove.common;
 
 import java.util.Collection;
 
-import org.sarge.jove.util.PointerArray;
+import org.sarge.jove.util.NativeHelper.PointerToPointerArray;
 
 import com.sun.jna.*;
 
@@ -17,11 +17,11 @@ public interface NativeObject {
 	Handle handle();
 
 	/**
-	 * Helper - Converts the given objects to a JNA pointer-array.
+	 * Helper - Converts the given objects to a JNA pointer-to-array-of-pointers.
 	 * @param objects Native objects
 	 * @return Pointer array
 	 */
-	static PointerArray array(Collection<? extends NativeObject> objects) {
+	static Memory array(Collection<? extends NativeObject> objects) {
 		// Check for empty data
 		if(objects.isEmpty()) {
 			return null;
@@ -35,7 +35,7 @@ public interface NativeObject {
 				.toArray(Pointer[]::new);
 
 		// Create pointer array
-		return new PointerArray(pointers);
+		return new PointerToPointerArray(pointers);
 	}
 
 	/**

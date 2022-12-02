@@ -15,6 +15,7 @@ import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.*;
+import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -109,7 +110,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 					final var info = (VkPresentInfoKHR) obj;
 					assertEquals(1, info.swapchainCount);
 					assertEquals(NativeObject.array(List.of(swapchain)), info.pSwapchains);
-					assertEquals(new IntegerArray(new int[]{4}), info.pImageIndices);
+					assertEquals(new PointerToIntArray(new int[]{4}), info.pImageIndices);
 					assertEquals(1, info.waitSemaphoreCount);
 					assertEquals(NativeObject.array(List.of(semaphore)), info.pWaitSemaphores);
 					return true;
@@ -130,7 +131,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 			assertNotNull(info);
 			assertEquals(1, info.swapchainCount);
 			assertEquals(NativeObject.array(List.of(swapchain)), info.pSwapchains);
-			assertEquals(new IntegerArray(new int[]{4}), info.pImageIndices);
+			assertEquals(new PointerToIntArray(new int[]{4}), info.pImageIndices);
 			assertEquals(1, info.waitSemaphoreCount);
 			assertEquals(NativeObject.array(List.of(semaphore)), info.pWaitSemaphores);
 		}

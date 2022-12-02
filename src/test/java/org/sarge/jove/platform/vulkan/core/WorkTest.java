@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.IntegerArray;
+import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 
 import com.sun.jna.Structure;
 
@@ -185,7 +185,7 @@ public class WorkTest extends AbstractVulkanTest {
 					// Check wait semaphores
 					assertEquals(1, info.waitSemaphoreCount);
 					assertEquals(NativeObject.array(Set.of(wait)), info.pWaitSemaphores);
-					assertEquals(new IntegerArray(new int[]{VkPipelineStage.TOP_OF_PIPE.value()}), info.pWaitDstStageMask);
+					assertEquals(new PointerToIntArray(new int[]{VkPipelineStage.TOP_OF_PIPE.value()}), info.pWaitDstStageMask);
 
 					// Check signal semaphores
 					assertEquals(1, info.signalSemaphoreCount);

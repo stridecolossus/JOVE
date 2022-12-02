@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntegerArray;
+import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 
 public class DynamicStateStageBuilderTest {
 	private DynamicStateStageBuilder builder;
@@ -19,7 +19,7 @@ public class DynamicStateStageBuilderTest {
 		final VkPipelineDynamicStateCreateInfo info = builder.state(VkDynamicState.SCISSOR).get();
 		assertEquals(0, info.flags);
 		assertEquals(1, info.dynamicStateCount);
-		assertEquals(new IntegerArray(new int[]{VkDynamicState.SCISSOR.value()}), info.pDynamicStates);
+		assertEquals(new PointerToIntArray(new int[]{VkDynamicState.SCISSOR.value()}), info.pDynamicStates);
 	}
 
 	@Test
