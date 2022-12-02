@@ -1,17 +1,17 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
+
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Subpass.Dependency;
+import org.sarge.jove.platform.vulkan.render.Subpass.*;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.BitMask;
 
-@DisplayName("A subpass...")
 @Nested
 class SubpassTest extends AbstractVulkanTest {
-	private RenderPass.Builder parent;
 	private Subpass subpass;
 	private Attachment col, depth;
 
@@ -19,120 +19,172 @@ class SubpassTest extends AbstractVulkanTest {
 	void before() {
 		col = Attachment.colour(FORMAT);
 		depth = Attachment.depth(FORMAT);
-		parent = new RenderPass.Builder();
-		subpass = new Subpass(parent, 0);
+		subpass = new Subpass();
 	}
 
-	@DisplayName("can contain a colour attachment")
 	@Test
-	void colour() {
-		subpass.colour(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+	void populate() {
+		final Reference refColour = new Reference(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+		refColour.init(1);
+		subpass.colour(refColour);
+
+		final Reference refDepth = new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		refDepth.init(2);
+		subpass.depth(refDepth);
+
+		final var desc = new VkSubpassDescription();
+		subpass.populate(desc);
+		assertEquals(VkPipelineBindPoint.GRAPHICS, desc.pipelineBindPoint);
+		assertEquals(1, desc.colorAttachmentCount);
+		assertNotNull(desc.pColorAttachments);
+		assertNotNull(desc.pDepthStencilAttachment);
 	}
 
-	@DisplayName("can contain a depth-stencil attachment")
+	@DisplayName("A render pass can be conveniently created from a single subpass")
 	@Test
-	void depth() {
-		subpass.depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	void create() {
+		final RenderPass pass = subpass.colour(col).create(dev);
+		assertNotNull(pass);
 	}
 
-	@DisplayName("must contain at least one attachment")
-	@Test
-	void empty() {
-		assertThrows(IllegalArgumentException.class, () -> subpass.build());
-	}
-
-	@DisplayName("cannot contain a duplicate colour attachment")
-	@Test
-	void duplicate() {
-		subpass.colour(col);
-		assertThrows(IllegalArgumentException.class, () -> subpass.colour(col));
-	}
-
-	@DisplayName("cannot contain the same colour and depth-stencil attachment")
-	@Test
-	void invalid() {
-		subpass.colour(col);
-		subpass.depth(col, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		assertThrows(IllegalArgumentException.class, () -> subpass.build());
-	}
-
-    @DisplayName("A subpass dependency...")
-    @Nested
-    class DependencyTests {
-    	private Dependency dependency;
-
-    	@BeforeEach
-    	void before() {
-    		dependency = subpass.dependency();
-    		assertNotNull(dependency);
-    	}
-
-    	@DisplayName("can be configured between two subpasses")
+	@DisplayName("A subpass...")
+	@Nested
+    	class AttachmentTests {
+    	@DisplayName("can contain a colour attachment")
     	@Test
-    	void dependencies() {
-    		// Init previous subpass
-    		subpass.colour(col);
-
-    		// Create a second subpass with a dependency
-    		parent
-    				.subpass()
-    					.colour(col)
-    					.dependency()
-    						.dependency(subpass)
-    						.source()
-    							.stage(VkPipelineStage.TRANSFER)
-    							.build()
-    						.destination()
-    							.stage(VkPipelineStage.TRANSFER)
-    							.build()
-    						.build()
-    					.build()
-    				.build(dev);
-
-    		// Check API
-    		final var expected = new VkRenderPassCreateInfo() {
-    			@Override
-    			public boolean equals(Object obj) {
-    				final var actual = (VkRenderPassCreateInfo) obj;
-    				assertEquals(1, actual.dependencyCount);
-    				return true;
-    			}
-    		};
-    		verify(lib).vkCreateRenderPass(dev, expected, null, factory.pointer());
+    	void colour() {
+    		final Reference ref = new Reference(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+    		subpass.colour(ref);
+    		assertEquals(List.of(ref), subpass.attachments().toList());
     	}
 
-    	@DisplayName("must refer to a previous subpass")
+    	@DisplayName("can contain a depth-stencil attachment")
+    	@Test
+    	void depth() {
+    		final Reference ref = new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    		subpass.depth(ref);
+    		assertEquals(List.of(ref), subpass.attachments().toList());
+    	}
+
+    	@DisplayName("cannot contain a duplicate colour attachment")
+    	@Test
+    	void duplicate() {
+    		subpass.colour(col);
+    		assertThrows(IllegalArgumentException.class, () -> subpass.colour(col));
+    	}
+
+    	@DisplayName("can contain both colour and depth-stencil attachments")
+    	@Test
+    	void both() {
+    		subpass.colour(col);
+    		subpass.depth(new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
+    		assertEquals(2, subpass.attachments().count());
+    	}
+
+    	@DisplayName("cannot contain the same colour and depth-stencil attachment")
+    	@Test
+    	void invalid() {
+    		subpass.colour(col);
+    		subpass.depth(new Reference(col, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
+    		assertThrows(IllegalArgumentException.class, () -> subpass.attachments());
+    	}
+
+    	@DisplayName("must contain at least one attachment")
     	@Test
     	void empty() {
-    		assertThrows(IllegalArgumentException.class, () -> dependency.build());
+    		assertThrows(IllegalArgumentException.class, () -> subpass.attachments());
     	}
 
-    	@DisplayName("can refer to the implicit external subpass")
     	@Test
-    	void external() {
-    		dependency.external();
+    	void reference() {
+    		final var info = new VkAttachmentReference();
+    		final Reference ref = new Reference(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+    		ref.init(2);
+    		ref.populate(info);
+    		assertEquals(2, info.attachment);
+    		assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, info.layout);
     	}
+	}
 
-    	@DisplayName("can be self-referential")
-    	@Test
-    	void self() {
-    		dependency.self();
-    	}
+	@DisplayName("A subpass dependency...")
+	@Nested
+	class DependencyTests {
+		private Subpass other;
+		private Dependency dependency;
+		private VkSubpassDependency desc;
 
-    	@DisplayName("must have at least one source pipeline stage")
-    	@Test
-    	void source() {
-    		dependency.dependency(subpass);
-    		dependency.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
-    		assertThrows(IllegalArgumentException.class, () -> dependency.build());
-    	}
+		@BeforeEach
+		void before() {
+			desc = new VkSubpassDependency();
+			other = new Subpass();
+			dependency = subpass.dependency(other);
+		}
 
-    	@DisplayName("must have at least one destination pipeline stage")
-    	@Test
-    	void destination() {
-    		dependency.dependency(subpass);
-    		dependency.source().stage(VkPipelineStage.FRAGMENT_SHADER);
-    		assertThrows(IllegalArgumentException.class, () -> dependency.build());
-    	}
-    }
+		@Test
+		void constructor() {
+			assertNotNull(dependency);
+			assertEquals(List.of(dependency), subpass.dependencies().toList());
+		}
+
+		@DisplayName("has source and destination properties")
+		@Test
+		void properties() {
+			assertNotNull(dependency.source());
+			assertNotNull(dependency.destination());
+		}
+
+		@DisplayName("can be configured by a builder")
+		@Test
+		void build() {
+			// Configure a dependency
+			dependency.flag(VkDependencyFlag.VIEW_LOCAL);
+        	dependency.source().stage(VkPipelineStage.VERTEX_SHADER);
+			dependency.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
+        	dependency.destination().access(VkAccess.SHADER_READ);
+
+			// Patch subpass indices
+			other.init(1);
+			subpass.init(2);
+
+			// Check descriptor
+			dependency.populate(desc);
+			assertEquals(BitMask.reduce(VkDependencyFlag.VIEW_LOCAL), desc.dependencyFlags);
+			assertEquals(1, desc.srcSubpass);
+			assertEquals(2, desc.dstSubpass);
+			assertEquals(BitMask.reduce(VkPipelineStage.VERTEX_SHADER), desc.srcStageMask);
+			assertEquals(BitMask.reduce(), desc.srcAccessMask);
+			assertEquals(BitMask.reduce(VkPipelineStage.FRAGMENT_SHADER), desc.dstStageMask);
+			assertEquals(BitMask.reduce(VkAccess.SHADER_READ), desc.dstAccessMask);
+		}
+
+		@DisplayName("can depend on the implicit subpass before or after the render pass")
+		@Test
+		void implicit() {
+			subpass.init(2);
+			dependency = subpass.dependency(Subpass.VK_SUBPASS_EXTERNAL);
+			dependency.source().stage(VkPipelineStage.VERTEX_SHADER);
+			dependency.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
+			dependency.populate(desc);
+			assertEquals(-1, desc.srcSubpass);
+			assertEquals(2, desc.dstSubpass);
+		}
+
+		@DisplayName("can be self referential")
+		@Test
+		void self() {
+			subpass.init(2);
+			dependency = subpass.dependency(subpass);
+			dependency.source().stage(VkPipelineStage.VERTEX_SHADER);
+			dependency.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
+			dependency.populate(desc);
+			assertEquals(2, desc.srcSubpass);
+			assertEquals(2, desc.dstSubpass);
+		}
+
+		@DisplayName("must contain source and destination pipeline stages")
+		@Test
+		void empty() {
+			assertThrows(IllegalArgumentException.class, () -> dependency.populate(desc));
+		}
+	}
 }

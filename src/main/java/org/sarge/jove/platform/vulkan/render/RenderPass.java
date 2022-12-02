@@ -2,16 +2,17 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
-import java.util.*;
+import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.render.Subpass.Dependency;
+import org.sarge.jove.platform.vulkan.render.Subpass.*;
 import org.sarge.jove.util.StructureCollector;
+import org.sarge.lib.util.Utility;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -40,6 +41,14 @@ public class RenderPass extends AbstractVulkanObject {
 	 */
 	public List<Attachment> attachments() {
 		return attachments;
+	}
+
+	/**
+	 * Creates a command to advance to the next subpass.
+	 * @return Next subpass command
+	 */
+	public static Command next() {
+		return (lib, buffer) -> lib.vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
 	}
 
 	/**
@@ -75,79 +84,66 @@ public class RenderPass extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Builder for a render-pass.
-	 * <p>
-	 * Example:
-	 * <pre>
-	 * RenderPass pass = new RenderPass.Builder()
-	 *     .subpass()
-	 *         .colour(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)
-	 *         .depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-	 *         .build()
-	 *     .build(dev);
-	 * </pre>
+	 * Creates a render pass.
+	 * @param dev			Logical device
+	 * @param subpasses		Subpass list
+	 * @return New render pass
+	 * @throws IllegalArgumentException if {@link #subpasses} is empty, contains duplicates, or does not contain a dependant subpass
 	 */
-	public static class Builder {
-		private final List<Subpass> subpasses = new ArrayList<>();
-		private final List<Attachment> attachments = new ArrayList<>();
+	public static RenderPass create(DeviceContext dev, List<Subpass> subpasses) {
+		// Validate
+		if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one subpass must be specified");
+		if(!Utility.distinct(subpasses)) throw new IllegalArgumentException("Subpasses cannot be duplicated");
 
-		/**
-		 * @return New subpass
-		 */
-		public Subpass subpass() {
-			final Subpass subpass = new Subpass(this, subpasses.size());
-			subpasses.add(subpass);
-			return subpass;
+		// Enumerate attachment references across the sub-passes
+		final List<Reference> references = subpasses
+				.stream()
+				.flatMap(Subpass::attachments)
+				.toList();
+
+		// Aggregate the attachments for this render pass
+		final List<Attachment> attachments = references
+				.stream()
+				.map(Reference::attachment)
+				.distinct()
+				.toList();
+
+		// Patch attachment indices
+		for(Reference ref : references) {
+			final int index = attachments.indexOf(ref.attachment());
+			ref.init(index);
 		}
 
-		/**
-		 * Adds an attachment to this render pass (if not already present).
-		 * @param attachment Attach
-		 * @return Attachment index
-		 */
-		int add(Attachment attachment) {
-			int index = attachments.indexOf(attachment);
-			if(index == -1) {
-				index = attachments.size();
-				attachments.add(attachment);
-			}
-			return index;
+		// Patch subpass indices
+		int index = 0;
+		for(Subpass subpass : subpasses) {
+			subpass.init(index++);
 		}
 
-		/**
-		 * Constructs this render pass.
-		 * @return New render pass
-		 * @throws IllegalArgumentException if the list of sub-passes is empty or a dependency refers to a missing subpass
-		 */
-		public RenderPass build(DeviceContext dev) {
-			// Validate
-			if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one subpass must be specified");
-			subpasses.forEach(Subpass::verify);
+		// Init render pass descriptor
+		final var info = new VkRenderPassCreateInfo();
+		info.flags = 0;			// Reserved
 
-			// Init render pass descriptor
-			final var info = new VkRenderPassCreateInfo();
+		// Add attachments
+		info.attachmentCount = attachments.size();
+		info.pAttachments = StructureCollector.pointer(attachments, new VkAttachmentDescription(), Attachment::populate);
 
-			// Add attachments
-			info.attachmentCount = attachments.size();
-			info.pAttachments = StructureCollector.pointer(attachments, new VkAttachmentDescription(), Attachment::populate);
+		// Add sub-passes
+		info.subpassCount = subpasses.size();
+		info.pSubpasses = StructureCollector.pointer(subpasses, new VkSubpassDescription(), Subpass::populate);
 
-			// Add sub-passes
-			info.subpassCount = subpasses.size();
-			info.pSubpasses = StructureCollector.pointer(subpasses, new VkSubpassDescription(), Subpass::populate);
+		// Add dependencies
+		final List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
+		info.dependencyCount = dependencies.size();
+		info.pDependencies = StructureCollector.pointer(dependencies, new VkSubpassDependency(), Dependency::populate);
 
-			// Add dependencies
-			final List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
-			info.dependencyCount = dependencies.size();
-			info.pDependencies = StructureCollector.pointer(dependencies, new VkSubpassDependency(), Dependency::populate);
+		// Allocate render pass
+		final VulkanLibrary lib = dev.library();
+		final PointerByReference ref = dev.factory().pointer();
+		check(lib.vkCreateRenderPass(dev, info, null, ref));
 
-			// Allocate render pass
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateRenderPass(dev, info, null, ref));
-
-			// Create render pass
-			return new RenderPass(new Handle(ref), dev, attachments);
-		}
+		// Create render pass
+		return new RenderPass(new Handle(ref), dev, attachments);
 	}
 
 	/**

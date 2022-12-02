@@ -6,30 +6,58 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>sub-pass</i> specifies a stage of a {@link RenderPass}.
+ * A <i>sub-pass</i> is a transient, mutable specification for the stage of a {@link RenderPass}.
+ * <p>
+ * Attachments used during this subpass are added by the {@link #colour(Reference)} or {@link #depth(Reference)} methods.
+ * <p>
+ * Subpass dependencies are configured by the {@link #dependency(Subpass)} factory method.
+ * <p>
  * @author Sarge
  */
 public class Subpass {
-	private final RenderPass.Builder parent;
-	private final int index;
+	/**
+	 * Implicit subpass before or after the render pass.
+	 */
+	public static final Subpass VK_SUBPASS_EXTERNAL = new Subpass();
+
+	static {
+		VK_SUBPASS_EXTERNAL.index = ~0;
+	}
+
 	private final List<Dependency> dependencies = new ArrayList<>();
 	private final List<Reference> colour = new ArrayList<>();
 	private Reference depth;
+	private Integer index;
 
 	/**
-	 * Constructor.
-	 * @param parent	Parent builder
-	 * @param index 	Subpass index
+	 * Patches the index of this subpass.
+	 * @param index Subpass index
 	 */
-	Subpass(RenderPass.Builder parent, int index) {
-		this.parent = notNull(parent);
+	void init(int index) {
+		assert this.index == null;
 		this.index = zeroOrMore(index);
+	}
+
+	/**
+	 * @return Attachments used by this subpass
+	 * @throws IllegalArgumentException if this subpass is empty
+	 */
+	Stream<Reference> attachments() {
+		if(depth == null) {
+			if(colour.isEmpty()) throw new IllegalArgumentException("No attachments specified");
+			return colour.stream();
+		}
+		else {
+			if(contains(depth.attachment)) throw new IllegalArgumentException("Depth-stencil cannot refer to a colour attachment");
+			return Stream.concat(colour.stream(), Stream.of(depth));
+		}
 	}
 
 	/**
@@ -40,15 +68,7 @@ public class Subpass {
 	}
 
 	/**
-	 * Creates a command to advance to the next subpass.
-	 * @return Next subpass command
-	 */
-	public static Command next() {
-		return (lib, buffer) -> lib.vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
-	}
-
-	/**
-	 * Populates the descriptor for this sub-pass.
+	 * Populates the descriptor for this subpass.
 	 */
 	void populate(VkSubpassDescription descriptor) {
 		// Init descriptor
@@ -67,77 +87,120 @@ public class Subpass {
 	}
 
 	/**
-	 * A <i>reference</i> specifies an attachment used by this subpass (by index).
+	 * Convenience factory to create a render pass comprised of just this subpass.
+	 * @param dev Logical device
+	 * @return Render pass
 	 */
-	private record Reference(int index, Attachment attachment, VkImageLayout layout) {
+	public RenderPass create(DeviceContext dev) {
+		return RenderPass.create(dev, List.of(this));
+	}
+
+	/**
+	 * A <i>reference</i> specifies an attachment used by this subpass.
+	 */
+	public static class Reference {
+		private final Attachment attachment;
+		private final VkImageLayout layout;
+		private Integer num;
+
 		/**
 		 * Constructor.
-		 * @param index				Reference index
 		 * @param attachment		Attachment
 		 * @param layout			Image layout
 		 */
-		private Reference {
-			Check.zeroOrMore(index);
-			Check.notNull(attachment);
-			Check.notNull(layout);
+		public Reference(Attachment attachment, VkImageLayout layout) {
+			this.attachment = notNull(attachment);
+			this.layout = notNull(layout);
+		}
+
+		/**
+		 * @return Attachment
+		 */
+		public Attachment attachment() {
+			return attachment;
+		}
+
+		/**
+		 * Patches the attachment index for this reference.
+		 * @param index Attachment index
+		 */
+		void init(int index) {
+			assert num == null;
+			num = zeroOrMore(index);
 		}
 
 		/**
 		 * Populates the descriptor for this attachment reference.
 		 */
-		private void populate(VkAttachmentReference descriptor) {
-			descriptor.attachment = index;
-			descriptor.layout = layout;
+		void populate(VkAttachmentReference ref) {
+			ref.attachment = num;
+			ref.layout = layout;
 		}
-	}
 
-	/**
-	 * Allocates an attachment reference.
-	 */
-	private Reference reference(Attachment attachment, VkImageLayout layout) {
-		final int index = parent.add(attachment);
-		return new Reference(index, attachment, layout);
+		@Override
+		public int hashCode() {
+			return Objects.hash(attachment, layout);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Reference that) &&
+					this.attachment.equals(that.attachment) &&
+					(this.layout == that.layout);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.append(attachment)
+					.append(layout)
+					.append("index", num)
+					.build();
+		}
 	}
 
 	/**
 	 * Adds a colour attachment.
 	 * @param colour Colour attachment
 	 * @param layout Layout
-	 * @throws IllegalArgumentException for a duplicate attachment
+	 * @throws IllegalArgumentException for a duplicate colour attachment
 	 */
-	public Subpass colour(Attachment colour, VkImageLayout layout) {
-		if(contains(colour)) throw new IllegalArgumentException("Colour attachment must be unique: " + colour);
-		this.colour.add(reference(colour, layout));
+	public Subpass colour(Reference ref) {
+		if(contains(ref.attachment)) throw new IllegalArgumentException("Colour attachment must be unique: " + colour);
+		this.colour.add(ref);
 		return this;
 	}
 
 	/**
 	 * Convenience method to add a colour attachment with a {@link VkImageLayout#COLOR_ATTACHMENT_OPTIMAL} layout.
-	 * @param colour Colour attachment
-	 * @throws IllegalArgumentException for a duplicate attachment
+	 * @see #colour(Reference)
 	 */
 	public Subpass colour(Attachment colour) {
-		return colour(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+		return colour(new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL));
 	}
 
 	/**
 	 * Sets the depth-stencil attachment.
-	 * @param depth		Attachment
-	 * @param layout	Layout
+	 * @param ref Attachment reference
 	 * @throws IllegalArgumentException if the depth-stencil has already been specified
 	 */
-	public Subpass depth(Attachment depth, VkImageLayout layout) {
+	public Subpass depth(Reference ref) {
 		if(this.depth != null) throw new IllegalArgumentException("Depth-stencil attachment has already been specified");
-		this.depth = reference(depth, layout);
+		this.depth = notNull(ref);
 		return this;
 	}
 
 	/**
 	 * Starts a new subpass dependency.
+	 * @param subpass Dependant subpass
 	 * @return New subpass dependency builder
 	 */
-	public Dependency dependency() {
-		return new Dependency();
+	public Dependency dependency(Subpass subpass) {
+		final var dependency = new Dependency(subpass);
+		dependencies.add(dependency);
+		return dependency;
 	}
 
 	/**
@@ -147,72 +210,34 @@ public class Subpass {
 		return colour.stream().map(Reference::attachment).anyMatch(attachment::equals);
 	}
 
-	/**
-	 * @throws IllegalArgumentException for an empty subpass or duplicate attachment
-	 */
-	void verify() {
-		if(colour.isEmpty() && (depth == null)) {
-			throw new IllegalArgumentException("No attachments specified");
-		}
-		if((depth != null) && contains(depth.attachment)) {
-			throw new IllegalArgumentException("Depth-stencil cannot refer to a colour attachment");
-		}
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
 	}
 
 	/**
-	 * Constructs this subpass.
-	 * @return Parent builder
-	 */
-	public RenderPass.Builder build() {
-		verify();
-		return parent;
-	}
-
-	/**
-	 * A <i>subpass dependency</i> configures this subpass to be dependant on a previous stage of the render-pass.
+	 * A <i>subpass dependency</i> configures this subpass to be dependant on a previous stage of the render pass.
 	 * <p>
-	 * A subpass can be dependant on the implicit, external subpass using the {@link Dependency#external()} method.
+	 * A subpass can be dependant on the implicit subpass before or after the render pass by specified by the synthetic {@link Subpass#VK_SUBPASS_EXTERNAL} subpass.
 	 * <br>
-	 * A self-referential subpass is configured using {@link Dependency#self()}.
+	 * A subpass can also be self referential.
+	 * See <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#synchronization-pipeline-barriers-subpass-self-dependencies">self-dependency</a>.
+	 * <p>
+	 * Note that a subpass dependency <b>must</b> specify the {@link #source()} and {@link #destination()} pipeline stages of the dependency.
 	 * <p>
 	 */
 	public class Dependency {
-		/**
-		 * Index of the implicit external subpass.
-		 */
-		private static final int VK_SUBPASS_EXTERNAL = ~0;
-
-		private Integer subpass;
+		private Subpass dependency;
 		private final Set<VkDependencyFlag> flags = new HashSet<>();
-		private final Properties src = new Properties(this);
-		private final Properties dest = new Properties(this);
-
-		private Dependency() {
-		}
+		private final Properties src = new Properties();
+		private final Properties dest = new Properties();
 
 		/**
-		 * Sets the dependant subpass.
-		 * @param subpass Dependant subpass
+		 * Constructor.
+		 * @param dependency Dependant subpass
 		 */
-		public Dependency dependency(Subpass subpass) {
-			this.subpass = subpass.index;
-			return this;
-		}
-
-		/**
-		 * Sets this as a dependency on the implicit external subpass before or after the render-pass.
-		 */
-		public Dependency external() {
-			this.subpass = VK_SUBPASS_EXTERNAL;
-			return this;
-		}
-
-		/**
-		 * Sets this as a self-referential dependency.
-		 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#synchronization-pipeline-barriers-subpass-self-dependencies">self-dependency</a>
-		 */
-		public Dependency self() {
-			return dependency(Subpass.this);
+		private Dependency(Subpass dependency) {
+			this.dependency = notNull(dependency);
 		}
 
 		/**
@@ -233,31 +258,23 @@ public class Subpass {
 		}
 
 		/**
-		 * @return Destination properties, i.e. this subpass
+		 * @return Destination properties, i.e. for this subpass
 		 */
 		public Properties destination() {
 			return dest;
 		}
 
 		/**
-		 * Constructs this dependency.
-		 * @throws IllegalArgumentException if the dependant subpass has not been specified
-		 * @throws IllegalArgumentException if the source or destination pipeline stages is empty
-		 */
-		public Subpass build() {
-			if(subpass == null) throw new IllegalArgumentException("Dependant subpass has not been configured");
-			if(src.stages.isEmpty()) throw new IllegalArgumentException("Source stages cannot be empty");
-			if(dest.stages.isEmpty()) throw new IllegalArgumentException("Destination stages cannot be empty");
-			dependencies.add(this);
-			return Subpass.this;
-		}
-
-		/**
 		 * Populates the descriptor for this dependency.
+		 * @throws IllegalArgumentException if the dependant subpass is not included in the render pass
 		 */
 		void populate(VkSubpassDependency info) {
+			if(dependency.index == null) throw new IllegalArgumentException("Missing dependant subpass: " + dependency);
+			if(src.stages.isEmpty()) throw new IllegalArgumentException("Source stages cannot be empty");
+			if(dest.stages.isEmpty()) throw new IllegalArgumentException("Destination stages cannot be empty");
+
 			info.dependencyFlags = BitMask.reduce(flags);
-			info.srcSubpass = index;
+			info.srcSubpass = dependency.index;
 			info.dstSubpass = Subpass.this.index;
 			info.srcStageMask = reduce(src.stages);
 			info.srcAccessMask = reduce(src.access);
@@ -269,21 +286,17 @@ public class Subpass {
 	/**
 	 * Source or destination properties of this dependency.
 	 */
-	public class Properties {
-		private final Dependency dependency;
+	public static class Properties {
 		private final Set<VkPipelineStage> stages = new HashSet<>();
 		private final Set<VkAccess> access = new HashSet<>();
-
-		private Properties(Dependency dependency) {
-			this.dependency = dependency;
-		}
 
 		/**
 		 * Adds a pipeline stage to this dependency.
 		 * @param stage Pipeline stage
 		 */
 		public Properties stage(VkPipelineStage stage) {
-			this.stages.add(notNull(stage));
+			Check.notNull(stage);
+			this.stages.add(stage);
 			return this;
 		}
 
@@ -292,15 +305,9 @@ public class Subpass {
 		 * @param access Access flag
 		 */
 		public Properties access(VkAccess access) {
-			this.access.add(notNull(access));
+			Check.notNull(access);
+			this.access.add(access);
 			return this;
-		}
-
-		/**
-		 * Constructs this set of dependency properties.
-		 */
-		public Dependency build() {
-			return dependency;
 		}
 	}
 }
