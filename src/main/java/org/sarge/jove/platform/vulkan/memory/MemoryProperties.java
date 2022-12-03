@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 
@@ -39,8 +39,10 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 */
 	public MemoryProperties {
 		Check.notNull(mode);
-		usage = Set.copyOf(notEmpty(usage));
-		required = Set.copyOf(notEmpty(required));
+		Check.notEmpty(usage);
+		Check.notEmpty(required);
+		usage = Set.copyOf(usage);
+		required = Set.copyOf(required);
 		optimal = Set.copyOf(optimal);
 	}
 

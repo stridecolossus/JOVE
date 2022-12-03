@@ -8,7 +8,7 @@ title: Perspective Projection
 
 - [Overview](#overview)
 - [View Transformation](#view-transformation)
-- [Cube Model](#cube-model)
+- [Cube](#cube)
 - [Integration](#integration)
 
 ---
@@ -31,9 +31,9 @@ This will require the following new components:
 
 The demo will then be extended to render a rotating texture cube which will also require:
 
-* A builder for a general _model_.
+* A builder for a _mesh_ comprising vertex data.
 
-* A specific builder for a cube model.
+* A specific builder for a cube.
 
 * A rotation matrix.
 
@@ -86,7 +86,7 @@ public final class Matrix implements Bufferable {
 }
 ```
 
-The matrix data is implemented as a 2D floating-point array, this is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.
+The matrix data is implemented as a 2D floating-point array, this is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.  Later we will probably refactor the matrix as a one-dimensional column-major array.
 
 A matrix is also a bufferable object:
 
@@ -485,39 +485,44 @@ Note that the translation component of the view transform was reverted back to t
 
 ---
 
-## Cube Model
+## Cube
 
-### Model
+### Mesh
 
-The cube will be represented by a _model_ which composes vertex data and the properties of the model:
+The cube will be implemented as a _mesh_ which composes the drawing properties of a renderable object:
 
 ```java
-public class Model {
+public interface Mesh {
     /**
-     * Descriptor for this model.
+     * @return Drawing primitive
      */
-    public record Header(Primitive primitive, int count, List<Layout> layout) {
-    }
+    Primitive primitive();
 
-    private final Header header;
-    private final Bufferable vertices;
+    /**
+     * @return Draw count
+     */
+    int count();
+
+    /**
+     * @return Vertex layout
+     */
+    CompoundLayout layout();
 }
 ```
-
-Where _count_ is the draw count for the model and _layout_ specifies the structure of each vertex in the model.
-
-The model header is factored into a separate domain class since the actual model vertices (and later the index buffer) are not required once the data has been loaded to the hardware.
 
 Rather than fiddling the code-generated `VkPrimitiveTopology` enumeration a wrapper is implemented for drawing primitives which can then provide additional helpers:
 
 ```java
 public enum Primitive {
-    TRIANGLES(3, VkPrimitiveTopology.TRIANGLE_LIST),
-    TRIANGLE_STRIP(3, VkPrimitiveTopology.TRIANGLE_STRIP),
-    ...
+    POINT(1),
+    PATCH(1),
+    LINE(2),
+    LINE_STRIP(2),
+    TRIANGLE(3),
+    TRIANGLE_STRIP(3),
+    TRIANGLE_FAN(3);
 
     private final int size;
-    private final VkPrimitiveTopology topology;
     
     /**
      * @return Whether this primitive is a strip
@@ -531,20 +536,19 @@ public enum Primitive {
 }
 ```
 
-A model is constructed by a companion builder:
+A mesh is constructed by the following mutable implementation:
 
 ```java
-public static class Builder {
-    private Primitive primitive = Primitive.TRIANGLE_STRIP;
-    private final List<Layout> layout = new ArrayList<>();
+public class DefaultMesh extends AbstractMesh {
     private final List<Vertex> vertices = new ArrayList<>();
-    
-    ...
-    
-    public Model build() {    
-        Header header = new Header(primitive, vertices.size(), layout);
-        Bufferable data = vertices();
-        return new Model(header, data);
+
+    public DefaultMesh(Primitive primitive, CompoundLayout layout) {
+        super(primitive, layout);
+    }
+
+    public DefaultMesh add(Vertex vertex) {
+        vertices.add(vertex);
+        return this;
     }
 }
 ```
@@ -571,21 +575,16 @@ public Bufferable vertices() {
 
 ### Cube Builder
 
-The new model implementation is then used to construct a cube:
+The new mesh implementation is next used to construct the cube:
 
 ```java
 public class CubeBuilder {
     private float size = MathsUtil.HALF;
     
-    public Model build() {
-        var model = new Model.Builder()
-            .primitive(Primitive.TRIANGLES)
-            .layout(Point.LAYOUT)
-            .layout(Coordinate2D.LAYOUT);
-
+    public Mesh build() {
+        DefaultMesh mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
         ...
-
-        return model;
+        return mesh;
     }
 }
 ```
@@ -656,10 +655,10 @@ for(int face = 0; face < FACES.length; ++face) {
 }
 ```
 
-Finally each vertex is added to the cube model:
+Finally each vertex is added to the cube:
 
 ```java
-Vertex vertex = Vertex.of(pos, coord);
+Vertex vertex = new DefaultVertex(pos, coord);
 model.add(vertex);
 ```
 
@@ -674,7 +673,7 @@ In the demo the hard-coded quad vertices are replaced by a cube model:
 ```java
 public class VertexBufferConfiguration {
     @Bean
-    public static Model cube() {
+    public static Mesh cube() {
         return new CubeBuilder().build();
     }
 }
@@ -705,16 +704,31 @@ public class InputAssemblyStageBuilder extends AbstractPipelineBuilder<VkPipelin
 }
 ```
 
-The vertex input and assembly stages are now specified by the cube model in the pipeline configuration:
+Which maps the drawing primitive to the corresponding Vulkan topology:
+
+```java
+public AssemblyStageBuilder topology(Primitive primitive) {
+    this.topology = switch(primitive) {
+        case POINT          -> VkPrimitiveTopology.POINT_LIST;
+        case LINE           -> VkPrimitiveTopology.LINE_LIST;
+        ...
+        default -> throw new RuntimeException();
+    };
+    return this;
+}
+```
+
+
+The vertex input and assembly stages are now specified by the cube mesh in the pipeline configuration:
 
 ```java
 return new Pipeline.Builder()
     ...
     .input()
-        .add(model.header().layout())
+        .add(cube.layout())
         .build()
     .assembly()
-        .topology(model.header().primitive())
+        .topology(cube.primitive())
         .build()
     .build(dev);
 ```
@@ -722,8 +736,7 @@ return new Pipeline.Builder()
 Finally the draw command is updated in the render sequence:
 
 ```java
-int count = model.header().count();
-Command draw = (api, handle) -> api.vkCmdDraw(handle, count, 1, 0, 0);
+Command draw = (api, handle) -> api.vkCmdDraw(handle, mesh.count(), 1, 0, 0);
 ```
 
 When we run the demo it should look roughly the same since we will be looking at the front face of the cube.
@@ -845,6 +858,6 @@ In this chapter we rendered a 3D rotating textured cube and implementing the fol
 
 * Uniform buffers
 
-* Builders for a general model and cubes
+* Builders for a vertex mesh and cubes
 
-* A rotation matrix.
+* A rotation matrix

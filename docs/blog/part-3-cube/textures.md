@@ -454,7 +454,7 @@ public DefaultImage build(LogicalDevice dev, AllocationService allocator) {
     info.samples = samples;
     info.tiling = tiling;
     info.initialLayout = layout;
-    info.usage = IntegerEnumeration.reduce(props.usage());
+    info.usage = BitMask.reduce(props.usage());
     info.sharingMode = props.mode();
     ...
 }
@@ -577,7 +577,7 @@ A slight irritation that only came to light during this chapter is that there ar
 ```java
 default VkImageSubresourceRange toRange() {
     var range = new VkImageSubresourceRange();
-    range.aspectMask = IntegerEnumeration.reduce(aspects());
+    range.aspectMask = BitMask.reduce(aspects());
     range.baseMipLevel = mipLevel();
     range.levelCount = levelCount();
     range.baseArrayLayer = baseArrayLayer();
@@ -587,7 +587,7 @@ default VkImageSubresourceRange toRange() {
 
 default VkImageSubresourceLayers toLayers() {
     var layers = new VkImageSubresourceLayers();
-    layers.aspectMask = IntegerEnumeration.reduce(aspects());
+    layers.aspectMask = BitMask.reduce(aspects());
     layers.mipLevel = mipLevel();
     layers.baseArrayLayer = baseArrayLayer();
     layers.layerCount = layerCount();
@@ -762,12 +762,12 @@ A _pipeline barrier_ is a command used to synchronise access to images, buffers 
 
 ```java
 public class Barrier extends ImmediateCommand {
-    private final int src, dest;
+    private final BitMask<VkPipelineStage> src, dest;
     private final VkImageMemoryBarrier[] images;
 
     private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, VkImageMemoryBarrier[] images) {
-        this.src = IntegerEnumeration.reduce(src);
-        this.dest = IntegerEnumeration.reduce(dest);
+        this.src = BitMask.reduce(src);
+        this.dest = BitMask.reduce(dest);
         this.images = notNull(images);
     }
 
@@ -817,8 +817,8 @@ The Vulkan descriptor for the barrier is populated as follows:
 ```java
 private void populate(VkImageMemoryBarrier barrier) {
     barrier.image = image.handle();
-    barrier.srcAccessMask = IntegerEnumeration.reduce(src);
-    barrier.dstAccessMask = IntegerEnumeration.reduce(dest);
+    barrier.srcAccessMask = BitMask.reduce(src);
+    barrier.dstAccessMask = BitMask.reduce(dest);
     barrier.oldLayout = oldLayout;
     barrier.newLayout = newLayout;
     barrier.subresourceRange = SubResource.toRange(subresource);

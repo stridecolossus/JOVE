@@ -72,7 +72,7 @@ private void populate(VkDescriptorSetLayoutBinding info) {
     info.binding = binding;
     info.descriptorType = type;
     info.descriptorCount = count;
-    info.stageFlags = IntegerEnumeration.reduce(stages);
+    info.stageFlags = BitMask.reduce(stages);
 }
 ```
 
@@ -207,7 +207,7 @@ Next the Vulkan descriptor for the pool is configured:
 
 ```java
 var info = new VkDescriptorPoolCreateInfo();
-info.flags = IntegerEnumeration.reduce(flags);
+info.flags = BitMask.reduce(flags);
 info.poolSizeCount = entries.size();
 info.pPoolSizes = StructureHelper.pointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
 info.maxSets = max;

@@ -526,7 +526,7 @@ public class ModifiedButton extends DefaultButton {
 Where the modifiers is another enumeration (again using the GLFW values):
 
 ```java
-public enum Modifier implements IntegerEnumeration {
+public enum Modifier implements IntEnum {
     SHIFT(0x0001),
     CONTROL(0x0002),
     ALT(0x0004),

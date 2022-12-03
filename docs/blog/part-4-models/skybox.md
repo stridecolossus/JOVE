@@ -830,7 +830,7 @@ public class FormatBuilder {
             return format(image.layout());
         }
         else {
-            return IntegerEnumeration.mapping(VkFormat.class).map(image.format());
+            return IntEnum.mapping(VkFormat.class).map(image.format());
         }
     }
 }

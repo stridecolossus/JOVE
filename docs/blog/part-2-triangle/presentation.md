@@ -300,7 +300,7 @@ public Set<VkPresentModeKHR> modes() {
 The presentation modes are returned as an integer array which is mapped to the corresponding enumeration:
 
 ```java
-var mapping = IntegerEnumeration.mapping(VkPresentModeKHR.class);
+var mapping = IntEnum.mapping(VkPresentModeKHR.class);
 return Arrays
     .stream(array)
     .mapToObj(mapping::map)
@@ -417,7 +417,7 @@ The `subresourceRange` field of the create descriptor specifies a subset of the 
 
 ```java
 var range = new VkImageSubresourceRange();
-range.aspectMask = IntegerEnumeration.reduce(image.descriptor().aspects());
+range.aspectMask = BitMask.reduce(image.descriptor().aspects());
 range.baseMipLevel = 0;
 range.levelCount = 1;
 range.baseArrayLayer = 0;

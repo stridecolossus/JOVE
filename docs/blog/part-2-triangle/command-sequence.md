@@ -83,11 +83,11 @@ A new API is implemented for commands:
 ```java
 interface Library {
     int  vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pCommandPool);
-    int  vkResetCommandPool(LogicalDevice device, Pool commandPool, int flags);
+    int  vkResetCommandPool(LogicalDevice device, Pool commandPool, BitMask<VkCommandPoolResetFlag> flags);
     void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Pointer pAllocator);
 
     int  vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
-    int  vkResetCommandBuffer(Buffer commandBuffer, int flags);
+    int  vkResetCommandBuffer(Buffer commandBuffer, BitMask<VkCommandBufferResetFlag> flags);
     void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
 
     int  vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
@@ -122,7 +122,7 @@ public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFla
     // Init pool descriptor
     var info = new VkCommandPoolCreateInfo();
     info.queueFamilyIndex = queue.family().index();
-    info.flags = IntegerEnumeration.reduce(flags);
+    info.flags = BitMask.reduce(flags);
 
     // Create pool
     VulkanLibrary lib = dev.library();
@@ -178,7 +178,7 @@ Finally the pool can also be reset which recycles resources and restores all all
 
 ```java
 public void reset(VkCommandPoolResetFlag... flags) {
-    int bits = IntegerEnumeration.reduce(flags);
+    BitMask<VkCommandPoolResetFlag> bits = BitMask.reduce(flags);
     DeviceContext dev = super.device();
     check(dev.library().vkResetCommandPool(dev, this, bits));
 }
@@ -217,7 +217,7 @@ public Buffer begin(VkCommandBufferUsageFlag... flags) {
 
     // Init descriptor
     var info = new VkCommandBufferBeginInfo();
-    info.flags = IntegerEnumeration.reduce(flags);
+    info.flags = BitMask.reduce(flags);
 
     // Start buffer recording
     VulkanLibrary lib = pool.device().library();

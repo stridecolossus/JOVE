@@ -1,4 +1,4 @@
----
+    ---
 title: The Render Loop and Synchronisation
 ---
 
@@ -612,24 +612,19 @@ To integrate the semaphores the work class is extended by adding two new members
 ```java
 public class Work {
     ...
-    private final Map<Semaphore, Integer> wait = new LinkedHashMap<>();
+    private final Map<Semaphore, Set<VkPipelineStage>> wait = new LinkedHashMap<>();
     private final Set<Semaphore> signal = new HashSet<>();
 }
 ```
 
-Each entry in the `wait` table consists of:
-
-* A semaphore that must be signalled before the work can be performed.
-
-* The stages(s) of the pipeline to wait on stored as an integer mask.
-
+Each entry in the `wait` table consists of a semaphore that must be signalled before the work can be performed and the stages(s) of the pipeline to wait on.
 The `signal` member is the set of semaphores to be signalled when the work has completed.
 
 The builder is modified to configure the semaphores:
 
 ```java
 public Builder wait(Semaphore semaphore, Collection<VkPipelineStage> stages) {
-    wait.put(semaphore, IntegerEnumeration.reduce(stages));
+    wait.put(semaphore, Set.copyOf(stages));
     return this;
 }
 
@@ -658,17 +653,17 @@ info.pWaitSemaphores = NativeObject.toArray(wait.keySet());
 And then the list of pipeline stages for each semaphore:
 
 ```java
-int[] stages = wait.values().stream().mapToInt(Integer::intValue).toArray();
-info.pWaitDstStageMask = new IntegerArray(stages);
+int[] stages = wait.values().stream().map(BitMask::reduce).mapToInt(BitMask::bits).toArray();
+info.pWaitDstStageMask = new PointerToIntArray(stages);
 ```
 
 Note that although `pWaitDstStageMask` implies this is a bit-field it is in fact a pointer to an integer array.
 
-Here the `IntegerArray` helper class is introduced to transform the array of pipeline stages to a contiguous memory block:
+Here the `PointerToIntArray` helper class is introduced to transform the array of pipeline stages to a contiguous memory block:
 
 ```java
-public class IntegerArray extends Memory {
-    public IntegerArray(int[] array) {
+public class PointerToIntArray extends Memory {
+    public PointerToIntArray(int[] array) {
         super(Integer.BYTES * array.length);
         for(int n = 0; n < array.length; ++n) {
             setInt(n * Integer.BYTES, array[n]);
@@ -677,7 +672,7 @@ public class IntegerArray extends Memory {
 }
 ```
 
-Additional helpers are also implemented for arrays of floating-point values and pointers.  Surprisingly JNA does not provide these helpers (or it does but they are hidden for some reason).
+Additional helpers are also implemented for arrays of floating-point values and pointers.  Surprisingly JNA does not provide these helpers (or where it does they are hidden for some reason).
 
 The step to submit the render task is factored out to a local helper method and integrated with the semaphores:
 
@@ -714,8 +709,8 @@ Again fences are created via a factory:
 ```java
 public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
     // Init descriptor
-    VkFenceCreateInfo info = new VkFenceCreateInfo();
-    info.flags = IntegerEnumeration.reduce(flags);
+    var info = new VkFenceCreateInfo();
+    info.flags = BitMask.reduce(flags);
 
     // Create fence
     VulkanLibrary lib = dev.library();
@@ -893,10 +888,10 @@ The descriptor for the subpass dependency is populated as follows:
 void populate(VkSubpassDependency info) {
     info.srcSubpass = index;
     info.dstSubpass = Subpass.this.index;
-    info.srcStageMask = IntegerEnumeration.reduce(src.stages);
-    info.srcAccessMask = IntegerEnumeration.reduce(src.access);
-    info.dstStageMask = IntegerEnumeration.reduce(dest.stages);
-    info.dstAccessMask = IntegerEnumeration.reduce(dest.access);
+    info.srcStageMask = BitMask.reduce(src.stages);
+    info.srcAccessMask = BitMask.reduce(src.access);
+    info.dstStageMask = BitMask.reduce(dest.stages);
+    info.dstAccessMask = BitMask.reduce(dest.access);
 }
 ```
 

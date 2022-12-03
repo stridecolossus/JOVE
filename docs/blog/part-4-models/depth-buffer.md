@@ -629,10 +629,10 @@ The following factory method creates a format predicate for optimal or linear ti
 
 ```java
 public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> features) {
-    Mask mask = new Mask(IntegerEnumeration.reduce(features));
+    BitMask<VkFormatFeature> mask = BitMask.reduce(required);
     return props -> {
-        int bits = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-        return mask.matches(bits);
+        BitMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
+        return supported.contains(mask);
     };
 }
 ```
@@ -641,8 +641,8 @@ Where `Mask` is a new utility class for common bit-level operations:
 
 ```java
 public record Mask(int mask) {
-    public boolean matches(int bits) {
-        return (mask & bits) == mask;
+    public boolean contains(int value) {
+        return (mask & value) == value;
     }
 }
 ```

@@ -184,7 +184,7 @@ The memory types and heaps are enumerated from the two arrays in the descriptor 
 public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
     // Extract heaps
     Heap[] heaps = new Heap[props.memoryHeapCount];
-    var heapMapper = IntegerEnumeration.mapping(VkMemoryHeapFlag.class);
+    var heapMapper = IntEnum.mapping(VkMemoryHeapFlag.class);
     for(int n = 0; n < heaps.length; ++n) {
         VkMemoryHeap heap = props.memoryHeaps[n];
         Set<VkMemoryHeapFlag> flags = heapMapper.enumerate(heap.flags);
@@ -193,7 +193,7 @@ public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
 
     // Extract memory types
     MemoryType[] types = new MemoryType[props.memoryTypeCount];
-    var typeMapper = IntegerEnumeration.mapping(VkMemoryProperty.class);
+    var typeMapper = IntEnum.mapping(VkMemoryProperty.class);
     for(int n = 0; n < types.length; ++n) {
         VkMemoryType type = props.memoryTypes[n];
         Heap heap = heaps[type.heapIndex];
@@ -216,16 +216,11 @@ public record MemoryProperties<T>(
 )
 ```
 
-Note that this type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
+Notes:
 
-The constructor enforces the _optimal_ properties to be a super-set of the _required_ properties.
+* This type is generic based on the relevant usage enumeration, e.g. `VkImageUsage` for device memory used by an image.
 
-```java
-public MemoryProperties {
-    ...
-    optimal = Set.copyOf(CollectionUtils.union(required, optimal));
-}
-```
+* The _optimal_ properties are assumed to be in __addition__ to the _required_ properties.
 
 ### Memory Selection
 
@@ -258,33 +253,44 @@ public class MemorySelector {
 }
 ```
 
-The `select` method first enumerates the _candidate_ memory types by applying the filter:
+The `select` method maps the memory requirements bit mask to the candidate memory types and applies a predicate:
 
 ```java
-List<MemoryType> candidates = IntStream
-    .range(0, types.length)
-    .filter(n -> ((1 << n) & reqs.memoryTypeBits) == n)
+var matcher = new FallbackMatcher();
+return new Mask(reqs.memoryTypeBits)
+    .stream()
     .mapToObj(n -> types[n])
-    .toList();
+    .filter(matcher)
+    .findAny()
+    .or(matcher::fallback)
+    .orElseThrow(() -> new AllocationException());
 ```
 
-Next the best available type is selected from these candidates:
+The predicate tests each memory type against the memory properties and records the fallback as a side-effect:
 
 ```java
-MemoryType type =
-    find(candidates, props.optimal())
-    .or(() -> find(candidates, props.required()))
-    .orElseThrow(() -> new AllocationException(...));
-```
+class FallbackMatcher implements Predicate<MemoryType> {
+    private MemoryType fallback;
 
-Where the `find` method is a helper which matches the memory properties:
+    @Override
+    public boolean test(MemoryType type) {
+        // Skip if does not satisfy the minimal requirements
+        if(!type.matches(props.required())) {
+            return false;
+        }
 
-```java
-private static Optional<MemoryType> find(List<MemoryType> types, Set<VkMemoryProperty> props) {
-    return types
-        .stream()
-        .filter(type -> type.properties().containsAll(props))
-        .findAny();
+        // Check for optimal match
+        if(type.matches(props.optimal())) {
+            return true;
+        }
+
+        // Record fallback candidate
+        if(fallback == null) {
+            fallback = type;
+        }
+
+        return false;
+    }
 }
 ```
 

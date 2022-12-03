@@ -246,7 +246,7 @@ public class VulkanException extends RuntimeException {
 
     private static String reason(int result) {
         try {
-            return IntegerEnumeration.mapping(VkResult.class).map(result).name();
+            return IntEnum.mapping(VkResult.class).map(result).name();
         }
         catch(IllegalArgumentException e) {
             return "Unknown error code";
@@ -540,8 +540,8 @@ Notes:
 On invocation the callback first transforms the _severity_ and the _types_ bit-field to the corresponding enumerations:
 
 ```java
-VkDebugUtilsMessageSeverity severityEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageSeverity.class).map(severity);
-Collection<VkDebugUtilsMessageType> typesEnum = IntegerEnumeration.mapping(VkDebugUtilsMessageType.class).enumerate(type);
+VkDebugUtilsMessageSeverity severityEnum = IntEnum.mapping(VkDebugUtilsMessageSeverity.class).map(severity);
+Collection<VkDebugUtilsMessageType> typesEnum = IntEnum.mapping(VkDebugUtilsMessageType.class).enumerate(type);
 ```
 
 The relevant data is then composed into a message instance and delegated to the handler:
@@ -593,8 +593,8 @@ The `build` method first populates the descriptor for the handler:
 ```java
 public Handler build() {
     var info = new VkDebugUtilsMessengerCreateInfoEXT();
-    info.messageSeverity = IntegerEnumeration.reduce(severity);
-    info.messageType = IntegerEnumeration.reduce(types);
+    info.messageSeverity = BitMask.reduce(severity);
+    info.messageType = BitMask.reduce(types);
     info.pfnUserCallback = new MessageCallback(consumer);
     info.pUserData = null;
 }

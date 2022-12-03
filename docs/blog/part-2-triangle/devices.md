@@ -134,7 +134,8 @@ Another helper is implemented to create a queue family domain object:
 
 ```java
 private static Family family(int index, VkQueueFamilyProperties props) {
-    Set<VkQueueFlag> flags = IntegerEnumeration.mapping(VkQueueFlag.class).enumerate(props.queueFlags);
+    var mapping = IntEnum.reverse(VkQueueFlag.class);
+    Set<VkQueueFlag> flags = props.queueFlags.enumerate(mapping);
     return new Family(index, props.queueCount, flags);
 }
 ```

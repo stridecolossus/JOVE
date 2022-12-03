@@ -1,4 +1,4 @@
----
+    ---
 title: Galaxy Demo
 ---
 
@@ -204,7 +204,7 @@ public record PushConstantRange(int offset, int size, Set<VkShaderStage> stages)
     }
 
     void populate(VkPushConstantRange range) {
-        range.stageFlags = IntegerEnumeration.reduce(stages);
+        range.stageFlags = BitMask.reduce(stages);
         range.size = size;
         range.offset = offset;
     }
@@ -766,8 +766,10 @@ Which specifies the logical operation between a fragment and the existing colour
 
 ```java
 public class AttachmentBuilder {
-    private boolean enabled = true;
-    private int mask = IntegerEnumeration.reduce(VkColorComponent.values());
+    private static final List<VkColorComponent> MASK = Arrays.asList(VkColorComponent.values());
+
+    private boolean enabled;
+    private List<VkColorComponent> mask = MASK;
     private final BlendOperationBuilder colour = new BlendOperationBuilder();
     private final BlendOperationBuilder alpha = new BlendOperationBuilder();
 
@@ -789,8 +791,7 @@ public AttachmentBuilder mask(String mask) {
         .chars()
         .mapToObj(Character::toString)
         .map(VkColorComponent::valueOf)
-        .collect(collectingAndThen(toList(), IntegerEnumeration::reduce));
-
+        .toList();
     return this;
 }
 ```

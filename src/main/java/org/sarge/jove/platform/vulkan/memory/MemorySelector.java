@@ -54,24 +54,28 @@ public class MemorySelector {
 	 */
 	public MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
 		/**
-		 * Filter for the required memory properties that also records the fallback as a side-effect.
+		 * Matches a memory type for the required properties and also records the fallback as a side-effect.
 		 */
-		class FallbackPredicate implements Predicate<MemoryType> {
+		class FallbackMatcher implements Predicate<MemoryType> {
 			private MemoryType fallback;
 
 			@Override
 			public boolean test(MemoryType type) {
-				if(type.matches(props.required())) {
-    				if(type.matches(props.optimal())) {
-    					// Found optimal match
-    					return true;
-    				}
-
-    				// Record fallback candidate
-					if(fallback == null) {
-						fallback = type;
-					}
+				// Skip if does not satisfy the minimal requirements
+				if(!type.matches(props.required())) {
+					return false;
 				}
+
+				// Check for optimal match
+    			if(type.matches(props.optimal())) {
+    				return true;
+    			}
+
+    			// Record fallback candidate
+				if(fallback == null) {
+					fallback = type;
+				}
+
 				return false;
 			}
 
@@ -81,13 +85,13 @@ public class MemorySelector {
 		}
 
 		// Walk candidate memory types and match against the requested properties
-		final FallbackPredicate predicate = new FallbackPredicate();
+		final var matcher = new FallbackMatcher();
 		return new Mask(reqs.memoryTypeBits)
 				.stream()
 				.mapToObj(n -> types[n])
-				.filter(predicate)
+				.filter(matcher)
 				.findAny()
-				.or(predicate::fallback)
+				.or(matcher::fallback)
 				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(reqs, props)));
 	}
 }

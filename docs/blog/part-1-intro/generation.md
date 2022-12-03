@@ -368,9 +368,9 @@ This is the Velocity template for an enumeration:
 ```java
 package $package;
 
-import org.sarge.jove.util.IntegerEnumeration;
+import org.sarge.jove.util.IntEnum;
 
-public enum $name implements IntegerEnumeration {
+public enum $name implements IntEnum {
     #foreach($entry in $values.entrySet())
         ${entry.key}($entry.value)#if($foreach.hasNext),#else;#end
     #end
@@ -394,7 +394,7 @@ Notes:
 
 * The various tokens prefixed by the hash character are Velocity directives whose purpose should be fairly self-evident.
 
-* The purpose of the `IntegerEnumeration` is explained in the next chapter.
+* The purpose of the `IntEnum` is explained in the next chapter.
 
 The line that actually generates a enumeration constant might be slightly confusing at first glance due to white-space constraints.  The following fragment expands the `if..else..end` directive to illustrate the logic, adding a comma between each constant and a semi-colon after the final value:
 
@@ -427,7 +427,7 @@ typedef enum VkImageUsageFlagBits {
 Becomes the following Java enumeration:
 
 ```java
-public enum VkImageUsageFlag implements IntegerEnumeration {
+public enum VkImageUsageFlag implements IntEnum {
     TRANSFER_SRC(1),
     TRANSFER_DST(2),
     SAMPLED(4),

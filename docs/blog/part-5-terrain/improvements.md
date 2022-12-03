@@ -1,4 +1,4 @@
----
+    ---
 title: Improvements
 ---
 
@@ -295,11 +295,11 @@ interface Library {
     int  vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pQueryPool);
     void vkDestroyQueryPool(DeviceContext device, Pool queryPool, Pointer pAllocator);
     void vkCmdResetQueryPool(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount);
-    void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, int flags);
+    void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, BitMask<VkQueryControlFlag> flags);
     void vkCmdEndQuery(Buffer commandBuffer, Pool queryPool, int query);
     void vkCmdWriteTimestamp(Buffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
-    int  vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, ByteBuffer pData, long stride, int flags);
-    void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, int flags);
+    int  vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, ByteBuffer pData, long stride, BitMask<VkQueryResultFlag> flags);
+    void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, BitMask<VkQueryResultFlag> flags);
 }
 ```
 
@@ -336,7 +336,7 @@ public static Pool create(DeviceContext dev, VkQueryType type, int slots, VkQuer
     var info = new VkQueryPoolCreateInfo();
     info.queryType = notNull(type);
     info.queryCount = oneOrMore(slots);
-    info.pipelineStatistics = IntegerEnumeration.reduce(stats);
+    info.pipelineStatistics = BitMask.reduce(stats);
 
     // Instantiate query pool
     PointerByReference ref = dev.factory().pointer();
@@ -357,7 +357,7 @@ public DefaultQuery query(int slot) {
     return new DefaultQuery() {
         @Override
         public Command begin(VkQueryControlFlag... flags) {
-            int mask = IntegerEnumeration.reduce(flags);
+            int mask = BitMask.reduce(flags);
             return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
         }
 
@@ -453,20 +453,20 @@ public Consumer<ByteBuffer> build() {
 The `validate` method checks that the `stride` is a multiple of the specified data type and builds the flags bit-mask:
 
 ```java
-private int validate() {
+private BitMask<VkQueryResultFlag> validate() {
     // Validate query range
     if(start + count > pool.slots) {
-        throw new IllegalArgumentException(...);
+        throw new IllegalArgumentException();
     }
 
     // Validate stride
     long multiple = flags.contains(VkQueryResultFlag.LONG) ? Long.BYTES : Integer.BYTES;
     if((stride % multiple) != 0) {
-        throw new IllegalArgumentException(...);
+        throw new IllegalArgumentException();
     }
 
     // Build flags mask
-    return IntegerEnumeration.reduce(flags);
+    return BitMask.reduce(flags);
 }
 ```
 
