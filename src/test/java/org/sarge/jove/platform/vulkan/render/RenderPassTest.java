@@ -9,7 +9,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.render.Subpass.Dependency;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
 class RenderPassTest extends AbstractVulkanTest {
@@ -67,9 +66,18 @@ class RenderPassTest extends AbstractVulkanTest {
     	@Test
     	void create() {
 			// Create subpass with a dependency
-			final Dependency dep = subpass.dependency(other);
-			dep.source(VkPipelineStage.VERTEX_SHADER);
-			dep.destination(VkPipelineStage.FRAGMENT_SHADER);
+			subpass
+					.dependency()
+					.subpass(other)
+					.source()
+						.stage(VkPipelineStage.VERTEX_SHADER)
+						.build()
+					.destination()
+						.stage(VkPipelineStage.FRAGMENT_SHADER)
+						.build()
+					.build();
+
+			// Add attachments
 			subpass.colour(attachment);
 			other.colour(attachment);
 
@@ -120,7 +128,16 @@ class RenderPassTest extends AbstractVulkanTest {
     	void dependencies() {
 			subpass.colour(attachment);
 			other.colour(attachment);
-			subpass.dependency(other);
+			subpass
+					.dependency()
+					.subpass(other)
+					.source()
+						.stage(VkPipelineStage.VERTEX_SHADER)
+						.build()
+					.destination()
+						.stage(VkPipelineStage.FRAGMENT_SHADER)
+						.build()
+					.build();
 			assertThrows(IllegalArgumentException.class, () -> RenderPass.create(dev, List.of(subpass)));
     	}
 

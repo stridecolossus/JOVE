@@ -117,7 +117,7 @@ class SubpassTest extends AbstractVulkanTest {
 		void before() {
 			desc = new VkSubpassDependency();
 			other = new Subpass();
-			dependency = subpass.dependency(other);
+			dependency = subpass.dependency();
 		}
 
 		@Test
@@ -130,10 +130,17 @@ class SubpassTest extends AbstractVulkanTest {
 		@Test
 		void build() {
 			// Configure a dependency
-			dependency.flag(VkDependencyFlag.VIEW_LOCAL);
-        	dependency.source(VkPipelineStage.VERTEX_SHADER);
-			dependency.destination(VkPipelineStage.FRAGMENT_SHADER);
-        	dependency.destination(VkAccess.SHADER_READ);
+			dependency
+					.subpass(other)
+    				.flag(VkDependencyFlag.VIEW_LOCAL)
+            		.source()
+            			.stage(VkPipelineStage.VERTEX_SHADER)
+            			.build()
+            		.destination()
+            			.stage(VkPipelineStage.FRAGMENT_SHADER)
+            			.access(VkAccess.SHADER_READ)
+            			.build()
+            		.build();
 
 			// Patch subpass indices
 			other.init(1);
@@ -154,9 +161,15 @@ class SubpassTest extends AbstractVulkanTest {
 		@Test
 		void implicit() {
 			subpass.init(2);
-			dependency = subpass.dependency(Subpass.VK_SUBPASS_EXTERNAL);
-			dependency.source(VkPipelineStage.VERTEX_SHADER);
-			dependency.destination(VkPipelineStage.FRAGMENT_SHADER);
+			dependency
+					.external()
+					.source()
+						.stage(VkPipelineStage.VERTEX_SHADER)
+						.build()
+					.destination()
+						.stage(VkPipelineStage.FRAGMENT_SHADER)
+						.build()
+					.build();
 			dependency.populate(desc);
 			assertEquals(-1, desc.srcSubpass);
 			assertEquals(2, desc.dstSubpass);
@@ -166,9 +179,17 @@ class SubpassTest extends AbstractVulkanTest {
 		@Test
 		void self() {
 			subpass.init(2);
-			dependency = subpass.dependency(subpass);
-			dependency.source(VkPipelineStage.VERTEX_SHADER);
-			dependency.destination(VkPipelineStage.FRAGMENT_SHADER);
+			dependency
+					.subpass(subpass)
+        			.flag(VkDependencyFlag.VIEW_LOCAL)
+            		.source()
+            			.stage(VkPipelineStage.VERTEX_SHADER)
+            			.build()
+            		.destination()
+            			.stage(VkPipelineStage.FRAGMENT_SHADER)
+            			.access(VkAccess.SHADER_READ)
+            			.build()
+            		.build();
 			dependency.populate(desc);
 			assertEquals(2, desc.srcSubpass);
 			assertEquals(2, desc.dstSubpass);
@@ -177,7 +198,7 @@ class SubpassTest extends AbstractVulkanTest {
 		@DisplayName("must contain source and destination pipeline stages")
 		@Test
 		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> dependency.populate(desc));
+			assertThrows(IllegalArgumentException.class, () -> dependency.build());
 		}
 	}
 }

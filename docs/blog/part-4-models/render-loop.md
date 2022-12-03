@@ -1,4 +1,4 @@
-    ---
+---
 title: The Render Loop and Synchronisation
 ---
 

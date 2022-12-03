@@ -16,7 +16,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	/**
 	 * Convenience wrapper for a load-store operations pair.
 	 */
-	record LoadStore(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
+	public record LoadStore(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
 		/**
 		 * Constructor.
 		 * @param load		Load operation

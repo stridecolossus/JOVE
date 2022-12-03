@@ -17,20 +17,11 @@ import org.sarge.lib.util.Check;
  * <p>
  * Attachments used during this subpass are added by the {@link #colour(Reference)} or {@link #depth(Reference)} methods.
  * <p>
- * Subpass dependencies are configured by the {@link #dependency(Subpass)} factory method.
+ * Subpass dependencies are configured by the {@link #dependency()} factory method.
  * <p>
  * @author Sarge
  */
 public class Subpass {
-	/**
-	 * Implicit subpass before or after the render pass.
-	 */
-	public static final Subpass VK_SUBPASS_EXTERNAL = new Subpass();
-
-	static {
-		VK_SUBPASS_EXTERNAL.index = ~0;
-	}
-
 	private final List<Dependency> dependencies = new ArrayList<>();
 	private final List<Reference> colour = new ArrayList<>();
 	private Reference depth;
@@ -193,12 +184,11 @@ public class Subpass {
 	}
 
 	/**
-	 * Starts a new subpass dependency.
-	 * @param subpass Dependant subpass
+	 * Starts a new subpass dependency builder.
 	 * @return New subpass dependency builder
 	 */
-	public Dependency dependency(Subpass subpass) {
-		final var dependency = new Dependency(subpass);
+	public Dependency dependency() {
+		final var dependency = new Dependency();
 		dependencies.add(dependency);
 		return dependency;
 	}
@@ -216,9 +206,9 @@ public class Subpass {
 	}
 
 	/**
-	 * A <i>subpass dependency</i> configures this subpass to be dependant on a previous stage of the render pass.
+	 * A <i>subpass dependency</i> is a builder that configures this subpass to be dependant on a previous stage of the render pass.
 	 * <p>
-	 * A subpass can be dependant on the implicit subpass before or after the render pass by specified by the synthetic {@link Subpass#VK_SUBPASS_EXTERNAL} subpass.
+	 * A subpass can be dependant on the implicit subpass before or after the render pass using the {@link #external()} method.
 	 * <br>
 	 * A subpass can also be self referential.
 	 * See <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#synchronization-pipeline-barriers-subpass-self-dependencies">self-dependency</a>.
@@ -227,17 +217,36 @@ public class Subpass {
 	 * <p>
 	 */
 	public class Dependency {
+		/**
+		 * Implicit subpass before or after the render pass.
+		 */
+		private static final Subpass VK_SUBPASS_EXTERNAL = new Subpass();
+
+		static {
+			VK_SUBPASS_EXTERNAL.index = ~0;
+		}
+
 		private Subpass dependency;
 		private final Set<VkDependencyFlag> flags = new HashSet<>();
 		private final Properties src = new Properties();
 		private final Properties dest = new Properties();
 
 		/**
-		 * Constructor.
+		 * Sets the dependant subpass.
 		 * @param dependency Dependant subpass
 		 */
-		private Dependency(Subpass dependency) {
+		public Dependency subpass(Subpass dependency) {
 			this.dependency = notNull(dependency);
+			return this;
+		}
+
+		/**
+		 * Sets the dependant subpass.
+		 * @param dependency Dependant subpass
+		 */
+		public Dependency external() {
+			this.dependency = VK_SUBPASS_EXTERNAL;
+			return this;
 		}
 
 		/**
@@ -251,39 +260,67 @@ public class Subpass {
 		}
 
 		/**
-		 * Sets a source pipeline stage.
-		 * @param stage Source pipeline stage
+		 * Builder for the source or destination properties of this dependency.
 		 */
-		public Dependency source(VkPipelineStage stage) {
-			src.stage(stage);
-			return this;
+		public class Properties {
+			private final Set<VkPipelineStage> stages = new HashSet<>();
+			private final Set<VkAccess> access = new HashSet<>();
+
+			/**
+			 * Adds a pipeline stage to this dependency.
+			 * @param stage Pipeline stage
+			 */
+			public Properties stage(VkPipelineStage stage) {
+				Check.notNull(stage);
+				this.stages.add(stage);
+				return this;
+			}
+
+			/**
+			 * Adds an access flag to this dependency.
+			 * @param access Access flag
+			 */
+			public Properties access(VkAccess access) {
+				Check.notNull(access);
+				this.access.add(access);
+				return this;
+			}
+
+			/**
+			 * Constructs these dependency properties.
+			 * @throws IllegalArgumentException if the pipeline stages are empty
+			 */
+			public Dependency build() {
+				if(stages.isEmpty()) throw new IllegalArgumentException("Pipeline stages cannot be empty");
+				return Dependency.this;
+			}
 		}
 
 		/**
-		 * Sets a source access flag.
-		 * @param access Source access
+		 * @return Source properties
 		 */
-		public Dependency source(VkAccess access) {
-			src.access(access);
-			return this;
+		public Properties source() {
+			return src;
 		}
 
 		/**
-		 * Sets a destination pipeline stage.
-		 * @param stage Destination pipeline stage
+		 * @return Destination properties, i.e. for this subpass
 		 */
-		public Dependency destination(VkPipelineStage stage) {
-			dest.stage(stage);
-			return this;
+		public Properties destination() {
+			return dest;
 		}
 
 		/**
-		 * Sets a destination access flag.
-		 * @param access Destination access
+		 * Constructs this dependency.
+		 * @return Subpass
+		 * @throws IllegalArgumentException if the dependant subpass has not been configured
+		 * @throws IllegalArgumentException if the source or destination properties are empty
 		 */
-		public Dependency destination(VkAccess access) {
-			dest.access(access);
-			return this;
+		public Subpass build() {
+			if(dependency == null) throw new IllegalArgumentException("Dependant subpass must be configured");
+			src.build();
+			dest.build();
+			return Subpass.this;
 		}
 
 		/**
@@ -292,9 +329,6 @@ public class Subpass {
 		 */
 		void populate(VkSubpassDependency info) {
 			if(dependency.index == null) throw new IllegalArgumentException("Missing dependant subpass: " + dependency);
-			if(src.stages.isEmpty()) throw new IllegalArgumentException("Source stages cannot be empty");
-			if(dest.stages.isEmpty()) throw new IllegalArgumentException("Destination stages cannot be empty");
-
 			info.dependencyFlags = BitMask.reduce(flags);
 			info.srcSubpass = dependency.index;
 			info.dstSubpass = Subpass.this.index;
@@ -302,32 +336,6 @@ public class Subpass {
 			info.srcAccessMask = reduce(src.access);
 			info.dstStageMask = reduce(dest.stages);
 			info.dstAccessMask = reduce(dest.access);
-		}
-	}
-
-	/**
-	 * Source or destination properties of this dependency.
-	 */
-	private static class Properties {
-		private final Set<VkPipelineStage> stages = new HashSet<>();
-		private final Set<VkAccess> access = new HashSet<>();
-
-		/**
-		 * Adds a pipeline stage to this dependency.
-		 * @param stage Pipeline stage
-		 */
-		private void stage(VkPipelineStage stage) {
-			Check.notNull(stage);
-			this.stages.add(stage);
-		}
-
-		/**
-		 * Adds an access flag to this dependency.
-		 * @param access Access flag
-		 */
-		private void access(VkAccess access) {
-			Check.notNull(access);
-			this.access.add(access);
 		}
 	}
 }

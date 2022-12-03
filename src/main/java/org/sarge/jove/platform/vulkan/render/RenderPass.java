@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
 import org.sarge.jove.util.StructureCollector;
-import org.sarge.lib.util.Utility;
+import org.sarge.lib.util.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -37,7 +37,7 @@ public class RenderPass extends AbstractVulkanObject {
 	}
 
 	/**
-	 * @return Attachments used in this render-pass
+	 * @return Attachments used in this render pass
 	 */
 	public List<Attachment> attachments() {
 		return attachments;
@@ -45,10 +45,21 @@ public class RenderPass extends AbstractVulkanObject {
 
 	/**
 	 * Creates a command to advance to the next subpass.
+	 * @param contents Subpass contents
 	 * @return Next subpass command
 	 */
+	public static Command next(VkSubpassContents contents) {
+		Check.notNull(contents);
+		return (lib, buffer) -> lib.vkCmdNextSubpass(buffer, contents);
+	}
+
+	/**
+	 * Creates a command to advance to the next subpass using {@link VkSubpassContents#INLINE}.
+	 * @return Next subpass command
+	 * @see #next(VkSubpassContents)
+	 */
 	public static Command next() {
-		return (lib, buffer) -> lib.vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
+		return next(VkSubpassContents.INLINE);
 	}
 
 	/**

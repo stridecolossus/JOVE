@@ -24,6 +24,7 @@ text
 - https://snorristurluson.github.io/TextRenderingWithFreetype/
 
 features todo
+- enhance Work to chain sequences + sync, e.g. for loading a texture, Q - use semaphores, or fence for each step, both?
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - degenerate triangles for strip?
 - re-build swapchain and pipeline after window viewport/focus change
