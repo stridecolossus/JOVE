@@ -71,7 +71,8 @@ public class Instance extends AbstractTransientNativeObject {
 	 * Attaches a diagnostic handler to this instance.
 	 */
 	void attach(Handler handler) {
-		handlers.add(notNull(handler));
+		Check.notNull(handler);
+		handlers.add(handler);
 	}
 
 	@Override

@@ -71,7 +71,7 @@ public class HandlerTest {
 	@Test
 	void destroy() {
 		// Destroy handler
-		final Handler handler = new Builder(instance).build();
+		final Handler handler = new Builder().build(instance);
 		handler.destroy();
 		assertEquals(true, handler.isDestroyed());
 
@@ -87,7 +87,7 @@ public class HandlerTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Builder(instance);
+			builder = new Builder();
 		}
 
 		@Test
@@ -97,7 +97,7 @@ public class HandlerTest {
 					.severity(VkDebugUtilsMessageSeverity.ERROR)
 					.type(VkDebugUtilsMessageType.GENERAL)
 					.consumer(consumer)
-					.build();
+					.build(instance);
 
 			// Check handler
 			assertNotNull(handler);
@@ -125,7 +125,7 @@ public class HandlerTest {
 
 		@Test
 		void defaults() {
-			builder.build();
+			builder.build(instance);
 		}
 	}
 }

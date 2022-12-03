@@ -251,17 +251,39 @@ public class Subpass {
 		}
 
 		/**
-		 * @return Source properties
+		 * Sets a source pipeline stage.
+		 * @param stage Source pipeline stage
 		 */
-		public Properties source() {
-			return src;
+		public Dependency source(VkPipelineStage stage) {
+			src.stage(stage);
+			return this;
 		}
 
 		/**
-		 * @return Destination properties, i.e. for this subpass
+		 * Sets a source access flag.
+		 * @param access Source access
 		 */
-		public Properties destination() {
-			return dest;
+		public Dependency source(VkAccess access) {
+			src.access(access);
+			return this;
+		}
+
+		/**
+		 * Sets a destination pipeline stage.
+		 * @param stage Destination pipeline stage
+		 */
+		public Dependency destination(VkPipelineStage stage) {
+			dest.stage(stage);
+			return this;
+		}
+
+		/**
+		 * Sets a destination access flag.
+		 * @param access Destination access
+		 */
+		public Dependency destination(VkAccess access) {
+			dest.access(access);
+			return this;
 		}
 
 		/**
@@ -286,7 +308,7 @@ public class Subpass {
 	/**
 	 * Source or destination properties of this dependency.
 	 */
-	public static class Properties {
+	private static class Properties {
 		private final Set<VkPipelineStage> stages = new HashSet<>();
 		private final Set<VkAccess> access = new HashSet<>();
 
@@ -294,20 +316,18 @@ public class Subpass {
 		 * Adds a pipeline stage to this dependency.
 		 * @param stage Pipeline stage
 		 */
-		public Properties stage(VkPipelineStage stage) {
+		private void stage(VkPipelineStage stage) {
 			Check.notNull(stage);
 			this.stages.add(stage);
-			return this;
 		}
 
 		/**
 		 * Adds an access flag to this dependency.
 		 * @param access Access flag
 		 */
-		public Properties access(VkAccess access) {
+		private void access(VkAccess access) {
 			Check.notNull(access);
 			this.access.add(access);
-			return this;
 		}
 	}
 }

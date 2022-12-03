@@ -126,21 +126,14 @@ class SubpassTest extends AbstractVulkanTest {
 			assertEquals(List.of(dependency), subpass.dependencies().toList());
 		}
 
-		@DisplayName("has source and destination properties")
-		@Test
-		void properties() {
-			assertNotNull(dependency.source());
-			assertNotNull(dependency.destination());
-		}
-
 		@DisplayName("can be configured by a builder")
 		@Test
 		void build() {
 			// Configure a dependency
 			dependency.flag(VkDependencyFlag.VIEW_LOCAL);
-        	dependency.source().stage(VkPipelineStage.VERTEX_SHADER);
-			dependency.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
-        	dependency.destination().access(VkAccess.SHADER_READ);
+        	dependency.source(VkPipelineStage.VERTEX_SHADER);
+			dependency.destination(VkPipelineStage.FRAGMENT_SHADER);
+        	dependency.destination(VkAccess.SHADER_READ);
 
 			// Patch subpass indices
 			other.init(1);
@@ -162,8 +155,8 @@ class SubpassTest extends AbstractVulkanTest {
 		void implicit() {
 			subpass.init(2);
 			dependency = subpass.dependency(Subpass.VK_SUBPASS_EXTERNAL);
-			dependency.source().stage(VkPipelineStage.VERTEX_SHADER);
-			dependency.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
+			dependency.source(VkPipelineStage.VERTEX_SHADER);
+			dependency.destination(VkPipelineStage.FRAGMENT_SHADER);
 			dependency.populate(desc);
 			assertEquals(-1, desc.srcSubpass);
 			assertEquals(2, desc.dstSubpass);
@@ -174,8 +167,8 @@ class SubpassTest extends AbstractVulkanTest {
 		void self() {
 			subpass.init(2);
 			dependency = subpass.dependency(subpass);
-			dependency.source().stage(VkPipelineStage.VERTEX_SHADER);
-			dependency.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
+			dependency.source(VkPipelineStage.VERTEX_SHADER);
+			dependency.destination(VkPipelineStage.FRAGMENT_SHADER);
 			dependency.populate(desc);
 			assertEquals(2, desc.srcSubpass);
 			assertEquals(2, desc.dstSubpass);

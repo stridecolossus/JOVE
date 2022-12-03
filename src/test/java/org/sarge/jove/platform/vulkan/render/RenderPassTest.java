@@ -68,8 +68,8 @@ class RenderPassTest extends AbstractVulkanTest {
     	void create() {
 			// Create subpass with a dependency
 			final Dependency dep = subpass.dependency(other);
-			dep.source().stage(VkPipelineStage.VERTEX_SHADER);
-			dep.destination().stage(VkPipelineStage.FRAGMENT_SHADER);
+			dep.source(VkPipelineStage.VERTEX_SHADER);
+			dep.destination(VkPipelineStage.FRAGMENT_SHADER);
 			subpass.colour(attachment);
 			other.colour(attachment);
 

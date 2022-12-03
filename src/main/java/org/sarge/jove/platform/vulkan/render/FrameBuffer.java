@@ -33,7 +33,7 @@ public class FrameBuffer extends AbstractVulkanObject {
 	 * @param extents			Image extents
 	 * @param attachments		Attachments
 	 * @return New frame buffer
-	 * @throws IllegalArgumentException if the number of attachments is not the same as the render pass
+	 * @throws IllegalArgumentException if the number of {@link #attachments} is not the same as the render pass
 	 * @throws IllegalArgumentException if an attachment is not of the expected format
 	 * @throws IllegalArgumentException if an attachment is smaller than the given extents
 	 */

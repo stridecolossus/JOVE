@@ -53,15 +53,15 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 		final int scheme = in.readInt();
 		if(scheme > 3) throw new UnsupportedOperationException("Unsupported compression scheme: " + scheme);
 
-		// Load format descriptor offsets
+		// Load format descriptor length
 		in.readInt();
 		final int formatByteLength = in.readInt();
 
-		// Load key-value offsets
+		// Load key-value length
 		in.readInt();
 		final int keyValuesByteLength = in.readInt();
 
-		// Load compression offsets
+		// Load compression length
 		in.readLong();
 		final long compressionByteLength = in.readLong();
 
@@ -251,20 +251,13 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 
 	/**
 	 * Loads the key-values.
-	 * @param in
-	 * @param size		Expected size
+	 * @param size Size of this section (bytes)
 	 * @return Key-values entries
 	 */
 	static List<byte[]> loadKeyValues(DataInput in, int size) throws IOException {
-		// Skip if empty
-		if(size == 0) {
-			return List.of();
-		}
-
-		// Load key-values
 		final List<byte[]> entries = new ArrayList<>();
 		int count = 0;
-		while(true) {
+		while(count < size) {
 			// Load key-value length
 			final int len = in.readInt();
 
@@ -273,30 +266,15 @@ public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
 			in.readFully(entry);
 			entries.add(entry);
 
-			// Calculate padding
-			final int padding = padding(len);
+			// Calculate padding to align on a 4-byte boundary
+			final int padding = 3 - ((len + 3) % 4);
 			in.skipBytes(padding);
 
 			// Calculate position
 			count += len + padding + 4;
 			assert count <= size;
-
-			// Stop at end of key-values
-			if(count >= size) {
-				break;
-			}
 		}
-
 		return entries;
-	}
-
-	/**
-	 * Calculates the number of padding bytes required to align the given length on a 4-byte boundary.
-	 * @param len Length
-	 * @return Padding
-	 */
-	private static int padding(int len) {
-		return 3 - ((len + 3) % 4);
 	}
 
 	/**

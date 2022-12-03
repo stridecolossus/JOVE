@@ -164,18 +164,9 @@ public class Handler extends AbstractTransientNativeObject {
 	 * </ul>
 	 */
 	public static class Builder {
-		private final Instance instance;
 		private final Set<VkDebugUtilsMessageSeverity> severity = new HashSet<>();
 		private final Set<VkDebugUtilsMessageType> types = new HashSet<>();
 		private Consumer<Message> consumer = System.err::println;
-
-		/**
-		 * Constructor.
-		 * @param instance Parent instance
-		 */
-		public Builder(Instance instance) {
-			this.instance = notNull(instance);
-		}
 
 		/**
 		 * Sets the message consumer (messages are dumped to the error console by default).
@@ -205,10 +196,10 @@ public class Handler extends AbstractTransientNativeObject {
 		}
 
 		/**
-		 * Builds and attaches this handler.
-		 * @throws IllegalArgumentException if the message severities or types is empty
+		 * Builds this handler and attaches it to the given instance.
+		 * @param instance Instance
 		 */
-		public Handler build() {
+		public Handler build(Instance instance) {
 			// Init default configuration if not explicitly specified
 			if(severity.isEmpty()) {
 				severity(VkDebugUtilsMessageSeverity.WARNING);

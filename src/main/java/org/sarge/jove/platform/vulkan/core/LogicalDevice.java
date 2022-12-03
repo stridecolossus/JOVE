@@ -45,8 +45,8 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 	 */
 	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<WorkQueue>> queues, AllocationService allocator) {
 		super(handle);
-		this.parent = requireNonNull(parent);
-		this.features = requireNonNull(features);
+		this.parent = notNull(parent);
+		this.features = notNull(features);
 		this.queues = Map.copyOf(queues);
 		this.allocator = init(allocator);
 	}
