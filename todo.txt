@@ -39,6 +39,7 @@ blog
 - check out old blog
 
 improvements
+- sort out maths stuff: cosine, inverse root, acos? atan? others?  Inject into normalize() and converter methods as appropriate, or uses default (which should be class not interface?) 
 - pipeline cache could use Java prefs? and/or user home folder?
 - interpolator revamp
 - joystick from desktop service

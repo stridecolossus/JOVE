@@ -47,7 +47,8 @@ public interface VulkanFunction<T> {
 	 * <pre>
 	 * VulkanLibrary lib = ...
 	 * VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array);
-	 * Pointer[] array = func.invoke(new IntegerByReference(), Pointer[]::new);</pre>
+	 * Pointer[] array = func.invoke(new IntegerByReference(), Pointer[]::new);
+	 * </pre>
 	 * This method is equivalent to the following:
 	 * <pre>
 	 * // Count number of results
@@ -58,7 +59,8 @@ public interface VulkanFunction<T> {
 	 * Pointer[] array = new Pointer[count.getValue()];
 	 *
 	 * // Populate array
-	 * lib.someFunction(count, array);</pre>
+	 * lib.someFunction(count, array);
+	 * </pre>
 	 * @param <T> Data type
 	 * @param count			Size of the data
 	 * @param factory		Creates the resultant data object
@@ -94,7 +96,8 @@ public interface VulkanFunction<T> {
 		 * <pre>
 		 * VulkanLibrary lib = ...
 		 * VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array);
-		 * SomeStructure[] array = func.invoke(new IntegerByReference(), SomeStructure::new);</pre>
+		 * SomeStructure[] array = func.invoke(new IntegerByReference(), SomeStructure::new);
+		 * </pre>
 		 * This adapter is equivalent to the following:
 		 * <pre>
 		 * // Count number of results
@@ -105,7 +108,8 @@ public interface VulkanFunction<T> {
 		 * SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
 		 *
 		 * // Populate array (note passes first element)
-		 * lib.someFunction(count, array[0]);</pre>
+		 * lib.someFunction(count, array[0]);
+		 * </pre>
 		 * <p>
 		 * @param <T> Structure type
 		 * @param count			Array size

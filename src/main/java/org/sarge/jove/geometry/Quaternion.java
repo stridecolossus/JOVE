@@ -85,7 +85,7 @@ public final class Quaternion implements Rotation {
 	 */
 	public Quaternion normalize() {
 		final float magnitude = magnitude();
-		if(MathsUtil.isZero(magnitude)) {
+		if(MathsUtil.isZero(magnitude)) {				// TODO - check this
 			return this;
 		}
 		else {

@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.util.Cosine;
 
 /**
- * An <i>axis</i> is a unit vector representing one of the <i>cardinal</i> axes.
+ * An <i>axis</i> is the unit vector representing one of the <i>cardinal</i> axes.
  * <p>
  * Notes:
  * <ul>

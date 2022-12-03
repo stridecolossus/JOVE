@@ -30,7 +30,7 @@ public class FloatArrayConverter<T> implements Converter<T> {
 		// Tokenize
 		final String[] parts = StringUtils.split(str.trim(), " ,");
 		if(parts.length != size) {
-			throw new IllegalArgumentException("Expected tuple: actual=%d expected=%d".formatted(parts.length, size));
+			throw new IllegalArgumentException("Invalid tuple length: actual=%d expected=%d".formatted(parts.length, size));
 		}
 
 		// Convert to array

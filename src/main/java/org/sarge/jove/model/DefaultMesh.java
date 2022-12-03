@@ -198,7 +198,7 @@ public class DefaultMesh extends AbstractMesh {
 			void compute() {
 				for(int n = 0; n < normals.length; ++n) {
 					final Vertex v = vertices.get(n);
-					final Normal normal = new Normal(new Vector(normals[n]));
+					final Normal normal = new Normal(normals[n]);
 					v.normal(normal);
 				}
 			}
