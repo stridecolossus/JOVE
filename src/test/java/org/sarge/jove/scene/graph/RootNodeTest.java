@@ -8,40 +8,35 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.model.Mesh;
 
-class MeshNodeTest {
-	private MeshNode node;
+class RootNodeTest {
 	private RootNode root;
 	private Mesh mesh;
 	private Material mat;
 
 	@BeforeEach
 	void before() {
+		root = new RootNode();
 		mesh = mock(Mesh.class);
 		mat = mock(Material.class);
-		root = new RootNode();
-		node = new MeshNode(root, mesh, mat);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(root, node.parent());
-		assertEquals(mesh, node.mesh());
-		assertEquals(mat, node.material());
+		assertEquals(null, root.parent());
+		assertEquals(root, root.root());
 	}
 
-	@DisplayName("TODO")
 	@Test
 	void attach() {
+		final MeshNode node = new MeshNode(root, mesh, mat);
 		assertEquals(List.of(node), root.nodes().toList());
-//		assertEquals(List.of(node), root.nodes(mat));
+		// TODO
 	}
 
-	@DisplayName("A mesh node can be detached from the scene graph")
 	@Test
 	void detach() {
+		final MeshNode node = new MeshNode(root, mesh, mat);
 		node.detach();
-		assertEquals(null, node.parent());
 		assertEquals(List.of(), root.nodes().toList());
-//		assertEquals(List.of(), root.nodes(mat));
 	}
 }

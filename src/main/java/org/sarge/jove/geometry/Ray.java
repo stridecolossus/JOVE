@@ -46,7 +46,7 @@ public interface Ray {
 		/**
 		 * Determines the intersections of this surface with the given ray.
     	 * <p>
-    	 * The returned intersections are generally assumed to be ordered nearest to the surface.
+    	 * The returned intersections are generally assumed to be ordered nearest to the ray origin.
     	 * <p>
 		 * @param ray Ray
 		 * @return Intersections
@@ -133,7 +133,7 @@ public interface Ray {
 		public final Point point() {
 			if(pos == null) {
 				final Point origin = ray.origin();
-				final Vector dir = ray.direction().normalize();
+				final Normal dir = ray.direction().normalize();
 				pos = origin.add(dir.multiply(distance()));
 			}
 			return pos;

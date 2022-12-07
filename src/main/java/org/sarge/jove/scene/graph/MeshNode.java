@@ -8,64 +8,64 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.model.Mesh;
 
 /**
- * A <i>model node</i> is used to render a {@link Mesh} in the scene.
- * TODO - doc linear data structure
+ * A <i>mesh node</i> is a renderable element of a scene graph.
+ * TODO - link to root
  * @author Sarge
  */
-public final class MeshNode extends LeafNode {
-	private final Mesh model;
+public class MeshNode extends Node implements Renderable {
+	private final Mesh mesh;
+	private final Material mat;
 
 	/**
 	 * Constructor.
-	 * @param mesh Renderable mesh
+	 * @param parent	Parent node
+	 * @param mesh		Mesh
+	 * @param mat		Material
 	 */
-	public MeshNode(Mesh mesh) {
-		this.model = notNull(mesh);
+	public MeshNode(GroupNode parent, Mesh mesh, Material mat) {
+		super(parent);
+		this.mesh = notNull(mesh);
+		this.mat = notNull(mat);
+		attach();
+	}
+
+	private void attach() {
+		final RootNode root = this.root();
+		root.add(this);
 	}
 
 	/**
-	 * Copy constructor.
-	 * @param node Model node to copy
+	 * @return Mesh
 	 */
-	protected MeshNode(MeshNode node) {
-		super(node);
-		this.model = node.model;
+	public Mesh mesh() {
+		return mesh;
 	}
 
 	/**
-	 * @return Model
+	 * @return Material
 	 */
-	public Mesh model() {
-		return model;
+	public Material material() {
+		return mat;
 	}
 
 	@Override
-	protected void attach(Node parent) {
-		super.attach(parent);
-//		queue.add(this);
-	}
-
-	@Override
-	protected void detach() {
+	public void detach() {
+		final RootNode root = this.root();
+		root.remove(this);
 		super.detach();
-//		queue.remove(this);
-	}
-
-	@Override
-	public MeshNode copy() {
-		return new MeshNode(this);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), model);
+		return Objects.hash(mesh, mat);
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append(model)
+				.append(mesh)
+				.append(mat)
 				.build();
 	}
 }

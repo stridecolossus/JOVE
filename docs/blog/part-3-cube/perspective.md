@@ -666,9 +666,9 @@ model.add(vertex);
 
 ## Integration
 
-### Model
+### Cube
 
-In the demo the hard-coded quad vertices are replaced by a cube model:
+In the demo the hard-coded quad vertices are replaced by a cube mesh:
 
 ```java
 public class VertexBufferConfiguration {
@@ -682,7 +682,7 @@ public class VertexBufferConfiguration {
 The cube is injected into the `vbo` bean and loaded into the staging buffer:
 
 ```java
-VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, model.vertices());
+VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, cube.vertices());
 ```
 
 To configure the drawing primitive the relatively trivial _input assembly pipeline stage_ is implemented:

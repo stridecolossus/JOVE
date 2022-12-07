@@ -7,7 +7,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>group node</i> is a collection of nodes.
+ * A <i>group node</i>
+ * TODO
  * @author Sarge
  */
 public class GroupNode extends Node {
@@ -15,74 +16,51 @@ public class GroupNode extends Node {
 
 	/**
 	 * Constructor.
+	 * @param parent Parent node
 	 */
-	public GroupNode() {
+	public GroupNode(GroupNode parent) {
+		super(parent);
 	}
 
 	/**
-	 * Copy constructor.
-	 * @param group Group node to copy
+	 * Root node constructor.
 	 */
-	protected GroupNode(GroupNode group) {
-		super(group);
-		for(Node n : group.nodes) {
-			final Node clone = n.copy();
-			nodes.add(clone);
-		}
+	protected GroupNode() {
 	}
 
 	/**
-	 * @return Children of this node
+	 * @return Child nodes
 	 */
 	public Stream<Node> nodes() {
 		return nodes.stream();
 	}
 
 	/**
-	 * Adds the given node to this group.
-	 * @param node Node to add
-	 * @throws IllegalStateException if the given node is already attached
-	 * @throws IllegalArgumentException if the given node is this node
+	 * Attaches the given node to this group.
+	 * @param node Node to attach
 	 */
-	public void add(Node node) {
+	protected final void attach(Node node) {
 		Check.notNull(node);
-		if(node == this) throw new IllegalArgumentException("Cannot attach a node to itself");
+		assert !nodes.contains(node);
 		nodes.add(node);
-		node.attach(this);
 	}
 
 	/**
-	 * Removes the given node from this group.
-	 * @param node Node to remove
-	 * @throws IllegalStateException if the given node is not attached to this group
+	 * Detaches the given node from this group.
+	 * @param node Node to detach
+	 * @throws IllegalArgumentException if {@link #node} is not a member of this group
 	 */
-	public void remove(Node node) {
-		final boolean removed = nodes.remove(node);
-		if(!removed) throw new IllegalStateException("Not a child of this node");
-		node.detach();
-	}
-
-	@Override
-	public void accept(Visitor visitor) {
-		// Visit this node
-		visitor.visit(this);
-
-		// Recurse to children
-		for(Node n : nodes) {
-			n.accept(visitor);
-		}
-	}
-
-	@Override
-	public GroupNode copy() {
-		return new GroupNode(this);
+	protected void detach(Node node) {
+		if(node.parent() != this) throw new IllegalArgumentException("Not a member of this group: " + node);
+		Check.notNull(node);
+		nodes.remove(node);
 	}
 
 	/**
-	 * Detaches all children from this group.
+	 * Removes all nodes from this group.
 	 */
 	public void clear() {
-		for(Node n : nodes) {
+		for(Node n : new ArrayList<>(nodes)) {
 			n.detach();
 		}
 		nodes.clear();
@@ -92,7 +70,7 @@ public class GroupNode extends Node {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append("children", nodes.size())
+				.append("nodes", nodes.size())
 				.build();
 	}
 }

@@ -45,7 +45,7 @@ class BoundingBoxTest {
 
 	@Test
 	void intersects() {
-		assertEquals(false, box.intersects(EmptyVolume.INSTANCE));
+		assertEquals(false, box.intersects(new EmptyVolume()));
 	}
 
 	@Nested

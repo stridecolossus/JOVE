@@ -8,14 +8,6 @@ import org.sarge.jove.geometry.Ray.*;
  * @author Sarge
  */
 public final class EmptyVolume implements Volume {
-	/**
-	 * Empty volume.
-	 */
-	public static final EmptyVolume INSTANCE = new EmptyVolume();
-
-	private EmptyVolume() {
-	}
-
 	@Override
 	public Bounds bounds() {
 		return Bounds.EMPTY;
@@ -43,6 +35,6 @@ public final class EmptyVolume implements Volume {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj == this;
+		return obj instanceof EmptyVolume;
 	}
 }

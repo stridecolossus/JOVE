@@ -4,102 +4,119 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.graph.LocalTransform;
+import org.sarge.jove.scene.graph.LocalTransform.UpdateVisitor;
 
-public class LocalTransformTest {
+class LocalTransformTest {
 	private LocalTransform transform;
 	private Matrix matrix;
+	private Node node;
 
 	@BeforeEach
 	void before() {
+		node = new Node();
+		transform = node.transform();
 		matrix = Matrix4.translation(Axis.X);
-		transform = new LocalTransform();
 	}
 
 	@DisplayName("A new local transform...")
 	@Nested
 	class New {
-		@DisplayName("is initialised to the identity matrix")
+		@DisplayName("has an identity transform")
 		@Test
 		void constructor() {
 			assertEquals(Matrix4.IDENTITY, transform.transform());
 		}
 
-		@DisplayName("can override the local transform")
+		@DisplayName("can set the local transform")
 		@Test
 		void set() {
 			transform.set(matrix);
 			assertEquals(matrix, transform.transform());
 		}
 
-		@DisplayName("has an undefined world matrix")
-		@Test
-		void undefined() {
-			assertEquals(true, transform.isDirty());
-			assertThrows(IllegalStateException.class, () -> transform.matrix());
-		}
-	}
-
-	@DisplayName("The world matrix of a new local transform...")
-	@Nested
-	class Undefined {
-		@DisplayName("can be updated")
+		@DisplayName("can update the world matrix")
 		@Test
 		void update() {
-			transform.set(matrix);
-			transform.update(null);
-			assertEquals(false, transform.isDirty());
-			assertEquals(matrix, transform.matrix());
+			transform.update(node);
 		}
 
-		@DisplayName("can be composed with its parent")
+		@DisplayName("has an undefined world matrix")
 		@Test
-		void compose() {
-			final LocalTransform parent = new LocalTransform();
-			parent.set(matrix);
-			parent.update(null);
-			transform.update(parent);
-			assertEquals(false, transform.isDirty());
-			assertEquals(matrix, transform.matrix());
-		}
-
-		@DisplayName("silently ignores resets")
-		@Test
-		void reset() {
-			transform.reset();
-			assertEquals(true, transform.isDirty());
-		}
-	}
-
-	@DisplayName("The world matrix of an updated local transform...")
-	@Nested
-	class Updated {
-		@BeforeEach
-		void before() {
-			transform.update(null);
-		}
-
-		@DisplayName("can be modified")
-		@Test
-		void set() {
-			transform.set(matrix);
-			assertEquals(true, transform.isDirty());
-		}
-
-		@DisplayName("can be reset to the undefined state")
-		@Test
-		void reset() {
-			transform.reset();
-			assertEquals(true, transform.isDirty());
+		void matrix() {
 			assertThrows(IllegalStateException.class, () -> transform.matrix());
 		}
 	}
 
-	@DisplayName("A local transform can be cloned")
-	@Test
-	void copy() {
-		final LocalTransform copy = new LocalTransform(transform);
-		assertEquals(true, copy.isDirty());
-		assertEquals(Matrix4.IDENTITY, copy.transform());
+	@DisplayName("An updated local transform...")
+	@Nested
+	class Updated {
+		private Matrix other;
+
+		@BeforeEach
+		void before() {
+			other = Matrix4.translation(Axis.Y);
+			transform.set(matrix);
+			transform.update(node);
+		}
+
+		@DisplayName("has a world matrix")
+		@Test
+		void matrix() {
+			assertEquals(matrix, transform.matrix());
+		}
+
+		@DisplayName("can reset the local transform of a node")
+		@Test
+		void update() {
+			transform.set(other);
+			transform.update(node);
+			assertEquals(other, transform.matrix());
+		}
+
+		@DisplayName("composes the world matrix with the ancestors of the node")
+		@Test
+		void compose() {
+			final GroupNode parent = new GroupNode();
+			parent.transform().set(other);
+			parent.transform().update(parent);
+			node = new Node(parent);
+			transform.update(node);
+			assertEquals(other.multiply(matrix), transform.matrix());
+		}
 	}
+
+	@Test
+	void equals() {
+		assertEquals(transform, transform);
+		assertNotEquals(transform, null);
+		assertNotEquals(transform, new LocalTransform());
+	}
+
+	@DisplayName("An update visitor...")
+	@Nested
+	class VisitorTests {
+		private UpdateVisitor visitor;
+
+		@BeforeEach
+		void before() {
+			visitor = new UpdateVisitor();
+		}
+
+		@DisplayName("updates the world matrix of a visited node")
+    	@Test
+    	void matrix() {
+    		visitor.update(node);
+			transform.matrix();
+    	}
+
+		@DisplayName("recursively visits the nodes of a scene graph")
+    	@Test
+    	void recurse() {
+			final GroupNode parent = new GroupNode();
+			node = new Node(parent);
+    		visitor.update(parent);
+    		parent.transform().matrix();
+			node.transform().matrix();
+    	}
+    }
 }
