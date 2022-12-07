@@ -104,16 +104,14 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 
 		// Check for end of animation
 		if(time > duration) {
-			if(isRepeating()) {
+			if(repeat) {
 				// Cycle animation
 				time = time % duration;
 			}
 			else {
 				// Stop animation
 				time = duration;
-				animation.update(1);
 				apply(Playable.State.STOP);
-				return;
 			}
 		}
 

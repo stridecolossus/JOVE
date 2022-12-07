@@ -991,212 +991,115 @@ Multiple frames can now be executed in parallel, the introduced synchronisation 
 
 ## Rotation and Animation
 
-### Animator
+### Normals
 
-The final enhancement to the existing code is the implementation of a new framework to support rotation animations.
+To support rotations the `Vector` class is expanded by the introduction of:
 
-First the following new abstraction defines something that can be played:
+* A specific sub-class for _normal_ vectors.
 
-```java
-public interface Playable {
-    boolean isPlaying();
-    void play();
-    void pause();
-    void stop();
-}
-```
+* A further specialisation for the _cardinal_ axes (replacing the existing constants in the vector class).
 
-Which is partially implemented in the following template class:
+* A `sealed` hierarchy for the various `Tuple` implementations.
+
+A _normal_ is a unit-vector:
 
 ```java
-public abstract class AbstractPlayable implements Playable {
-    private boolean playing;
+public sealed class Normal extends Vector implements Component permits Axis {
+    public static final Layout LAYOUT = Layout.floats(3);
 
-    @Override
-    public boolean isPlaying() {
-        return playing;
+    public Normal(Vector vec) {
+        super(normalize(vec));
     }
 
     @Override
-    public void play() {
-        if(playing) throw new IllegalStateException();
-        playing = true;
+    public final float magnitude() {
+        return 1;
     }
 
     @Override
-    public void pause() {
-        update();
-    }
-
-    @Override
-    public void stop() {
-        update();
-    }
-
-    private void update() {
-        if(!playing) throw new IllegalStateException();
-        playing = false;
+    public final Normal normalize() {
+        return this;
     }
 }
 ```
 
-A playable resource is managed by the _player_ controller:
+The `normalize` code is moved from the `Vector` class and the existing method is refactored accordingly:
 
 ```java
-public class Player extends AbstractPlayable {
-    /**
-     * Listener for player state changes.
-     */
-    @FunctionalInterface
-    public interface Listener {
-        /**
-         * Notifies a player state change.
-         * @param player Player
-         */
-        void update(Player player);
-    }
-
-    private final Collection<Playable> playing = new ArrayList<>();
-    private final Collection<Listener> listeners = new HashSet<>();
+public Normal normalize() {
+    return new Normal(this);
 }
 ```
 
-The player delegates state changes and notifies interested listeners, for example:
+Next this new type is sub-classed for the cardinal axes:
 
 ```java
+public final class Axis extends Normal {
+    public static final Axis
+            X = new Axis(0),
+            Y = new Axis(1),
+            Z = new Axis(2);
+}
+```
+
+The vector of each axis is initialised in the constructor:
+
+```java
+private final int index;
+
+private Axis(int index) {
+    super(axis(index));
+    this.index = index;
+}
+
+private static Vector axis(int index) {
+    final float[] axis = new float[SIZE];
+    axis[index] = 1;
+    return new Vector(axis);
+}
+```
+
+The frequently used inverse axes are also pre-calculated and cached:
+
+```java
+private final Normal inv = super.invert();
+
 @Override
-public void stop() {
-    super.stop();
-    delegate(Playable::stop);
-}
-
-private void delegate(Consumer<Playable> state) {
-    playing.forEach(state);
-    listeners.forEach(e -> e.update(this));
+public Normal invert() {
+    return inv;
 }
 ```
 
-Next a simple stopwatch utility is implemented that records an elapsed duration:
+And finally the code to construct a rotation matrix about one of the cardinal axes is moved from the matrix class:
 
 ```java
-public class Frame {
-    @FunctionalInterface
-    public interface Listener {
-        /**
-         * Notifies a completed frame.
-         */
-        void update();
+public Matrix rotation(float angle) {
+    var matrix = new Matrix.Builder().identity();
+    float sin = MathsUtil.sin(angle);
+    float cos = MathsUtil.cos(angle);
+    switch(index) {
+        case 0 -> matrix.set(...);
+        ...
     }
-
-    private Instant start = Instant.EPOCH;
-    private Instant end = Instant.EPOCH;
-    private Duration elapsed;
+    return matrix.build();
 }
 ```
 
-Note that the frame listener interface is moved to this new class.
+Note that this code switches on the `index` of the axis, this works fine for now but may be replaced later by an internal helper enumeration.
 
-The _frame_ is started at the beginning of some activity.
+The purpose of these changes are:
 
-```java
-public Instant start() {
-    start = Instant.now();
-    elapsed = null;
-    return start;
-}
-```
+1. The intent of code using the new hierarchy can now be made more expressive and type-safe, e.g. classes that _require_ a unit-vector can now enforce the `Normal` type explicitly.
 
-And can be queried for the elapsed duration:
+2. Reduces the reliance on documented assumptions and defensive checks to ensure vectors are normalised when required, e.g. when generating rotation matrices.
 
-```java
-public Duration elapsed() {
-    if(elapsed == null) {
-        end = Instant.now();
-        elapsed = Duration.between(start, end);
-    }
-    return elapsed;
-}
-```
+3. The overhead of re-normalising is trivial where an already normalized vector is referenced as the base `Vector` type.
 
-This timer is used by an _animator_ which interpolates an _animation_ over a given duration:
+4. The hierarchy now supports extension points for further optimisations, e.g. caching of the inverse cardinal axes.
 
-```java
-public class Animator extends AbstractPlayable implements Frame.Listener {
-    /**
-     * An <i>animation</i> is updated by this animator.
-     */
-    @FunctionalInterface
-    public interface Animation {
-        /**
-         * Updates this animation.
-         * @param animator Animator
-         */
-        void update(Animator animator);
-    }
+### Rotations
 
-    // Configuration
-    private final Animation animation;
-    private final long duration;
-    private float speed = 1;
-    private boolean repeat = true;
-
-    // Animation state
-    private final Frame frame = new Frame();
-    private long time;
-    private float pos;
-}
-```
-
-The animator ignores frame events if it has been stopped or paused:
-
-```java
-public void update() {
-    if(!isPlaying()) {
-        return;
-    }
-    ...
-}
-```
-
-Next the elapsed duration since the previous frame is calculated:
-
-```java
-frame.end();
-time += frame.elapsed().toMillis() * speed;
-```
-
-At the end of the duration the current time is quantised or the animation stops if it is not repeating:
-
-```java
-if(time > duration) {
-    if(repeat) {
-        time = time % duration;
-    }
-    else {
-        super.stop();
-        time = duration;
-    }
-}
-```
-
-The updated position is then applied to the animation:
-
-```java
-pos = time / (float) duration;
-animation.update(this);
-```
-
-And finally the timer is restarted for the next frame:
-
-```java
-if(isPlaying()) {
-    frame.start();
-}
-```
-
-### Rotation
-
-Next a second new abstraction is introduced for a general matrix transformation:
+Next a new abstraction is introduced for a general transformation implemented by a matrix:
 
 ```java
 @FunctionalInterface
@@ -1205,44 +1108,34 @@ public interface Transform {
      * @return Transformation matrix
      */
     Matrix matrix();
-
-    /**
-     * @return Whether this transform has changed (default is {@code false})
-     */
-    default boolean isDirty() {
-        return false;
-    }
 }
 ```
 
-Which is sub-classed by a specialised rotation transform:
+With the following intermediate specialisation for rotation transforms (a marker interface for the time being):
 
 ```java
 public interface Rotation extends Transform {
-    /**
-     * @return This rotation as an axis-angle
-     */
-    AxisAngle toAxisAngle();
 }
 ```
 
-Where an axis-angle is a template implementation:
+Note that a matrix is itself a transform:
 
 ```java
-abstract class AxisAngle implements Rotation {
-    protected final Vector axis;
-    protected float angle;
-
-    protected AxisAngle(Vector axis, float angle) {
-        this.axis = axis.normalize();
-        this.angle = angle;
-    }
-
+public Matrix {
     @Override
-    public AxisAngle toAxisAngle() {
+    public final Matrix matrix() {
         return this;
     }
+}
+```
 
+The simplest rotation implementation is an axis-angle which specifies a counter-clockwise rotation about a given normal:
+
+```java
+public class AxisAngle implements Rotation {
+    private final Normal axis;
+    private final float angle;
+    
     @Override
     public Matrix matrix() {
         ...
@@ -1250,17 +1143,13 @@ abstract class AxisAngle implements Rotation {
 }
 ```
 
-Note that the rotation axis is normalised in the constructor of the mutable rotation, otherwise the results will be interesting!
+Note that this implementation enforces the axis to be a unit-vector, the results for an arbitrary vector would be interesting!
 
-The implementation of the `matrix` method is covered below.
+The new `Axis` class generates a rotation matrix for the cardinal axes, however the new framework needs to support rotations about an arbitrary axis (which was explicitly disallowed in the original code), rather than composing multiple matrices as in the previous demo.  Implementing code to generate a rotation matrix about an arbitrary axis is relatively straight-forward (if somewhat messy) but a better alternative is to introduce _quaternions_ which also offer additional functionality that will be required in later chapters.
 
 ### Quaternions
 
-A _quaternion_ is a more compact and efficient representation of a rotation but is less intuitive to use and comprehend.
-
-See [Wikipedia](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation).
-
-Generally quaternions are used to represent a rotation about an _arbitrary_ axis or where multiple rotations are frequently composed, e.g. skeletal animation.
+A _quaternion_ is a more compact and efficient representation of a rotation often used when multiple rotations are frequently composed (e.g. skeletal animation), but is generally less intuitive to use and comprehend:
 
 ```java
 public final class Quaternion implements Rotation {
@@ -1297,105 +1186,11 @@ public AxisAngle toAxisAngle() {
     float scale = MathsUtil.inverseRoot(1 - w * w);
     float angle = 2 * MathsUtil.acos(w);
     Vector axis = new Vector(x, y, z).multiply(scale);
-    return AxisAngle.of(axis, angle);
+    return new AxisAngle(axis, angle);
 }
 ```
 
-Where a fixed axis-angle is constructed by a factory method which caches the rotation matrix:
-
-```java
-public static AxisAngle of(Vector axis, float angle) {
-    return new AxisAngle(axis, angle) {
-        private final Matrix matrix = super.matrix();
-
-        @Override
-        public Matrix matrix() {
-            return matrix;
-        }
-    };
-}
-```
-
-### Rotation Matrix
-
-The aim here is to use the existing code to construct a rotation matrix for the cardinal axes, but use a quaternion for the more general case of an arbitrary axis.  This is based on the following assumptions:
-
-* Constructing a rotation matrix for a cardinal axis is more efficient than generating it from a quaternion.
-
-* Many use-cases will rotate about the cardinal axes.
-
-* The existing matrix code disallows the case of an arbitrary axis forcing the application to decide which implementation to use (or requires an awkward test to differentiate between cardinal and arbitrary axes).
-
-Therefore a new vector implementation is introduced for cardinal axes which can then generate a rotation matrix.
-
-First we take the opportunity to introduce an intermediate type for a normalised vector:
-
-```java
-public class NormalizedVector extends Vector {
-    /**
-     * @param len Vector length
-     * @return Whether the given vector length is normalised
-     */
-    protected static boolean isNormalized(float len) {
-        return MathsUtil.isEqual(1, len);
-    }
-
-    @Override
-    public float magnitude() {
-        return 1;
-    }
-
-    @Override
-    public NormalizedVector normalize() {
-        return this;
-    }
-}
-```
-
-The `normalize` method of the vector class is refactored accordingly.
-
-Next the cardinal `Axis` is implemented and the existing constants are moved from the vector class:
-
-```java
-public abstract class Axis extends NormalizedVector {
-    public static final Axis X = ...
-    public static final Axis Y = ...
-    public static final Axis Z = ...
-    
-    /**
-     * Constructs the rotation matrix for this axis.
-     */
-    protected abstract void rotation(float sin, float cos, Matrix.Builder matrix);
-}
-```
-
-The existing matrix building code is moved to this new type:
-
-```java
-public Matrix rotation(float angle) {
-    var matrix = new Matrix.Builder().identity();
-    float sin = MathsUtil.sin(angle);
-    float cos = MathsUtil.cos(angle);
-    rotation(sin, cos, matrix);
-    return matrix.build();
-}
-```
-
-Which delegates to the specific implementation for each axis, for example:
-
-```java
-public static final Axis X = new Axis(new Vector(1, 0, 0)) {
-    @Override
-    protected void rotation(float sin, float cos, Builder matrix) {
-        matrix.set(1, 1, cos);
-        matrix.set(1, 2, -sin);
-        matrix.set(2, 1, sin);
-        matrix.set(2, 2, cos);
-    }
-};
-```
-
-Finally the `matrix` method in the axis-angle class can now select the appropriate mechanism to build a rotation matrix based on type rather than the awkward switching logic used previously:
+The implementation of the `matrix` method for a quaternion (not shown) is less performant than the code for the cardinal axes.  For an immutable, one-off rotation this probably would not be a concern, but for rotations about the cardinal axes that are frequently re-calculated the faster solution is obviously preferable.  Therefore the axis-angle class selects the most appropriate implementation:
 
 ```java
 public Matrix matrix() {
@@ -1408,52 +1203,209 @@ public Matrix matrix() {
 }
 ```
 
-Note that a quaternion also implements `Rotation` so an application now has the option of explicitly choosing an implementation or leaving the responsibility to the framework.
-
-The final new type is an implementation for a mutable rotation:
+Finally the following mutable sub-class supports animation of a rotation:
 
 ```java
 public class MutableRotation extends AxisAngle {
-    private boolean dirty = true;
-
-    public MutableRotation(Vector axis) {
-        super(axis, 0);
-    }
-
-    public void angle(float angle) {
-        this.angle = angle;
-    }
-
     @Override
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    @Override
-    public Matrix matrix() {
-        dirty = false;
-        return super.matrix();
+    public void set(float angle) {
+        super.set(angle);
     }
 }
 ```
 
-Which is then adapted into a rotation animation:
+Where the `set` method modifies the rotation `angle` (which becomes a mutable but hidden property) and is exposed in this implementation.
+
+### Player
+
+The final enhancement to the existing code is the implementation of a new framework to support playable media and animations.
+
+First the following new abstraction defines a media resource or animation that can be played:
 
 ```java
-public class RotationAnimation implements Animation {
-    private final MutableRotation rot;
-
-    public RotationAnimation(Vector axis) {
-        this.rot = new MutableRotation(axis.normalize());
+public interface Playable {
+    enum State {
+        STOP,
+        PLAY,
+        PAUSE
     }
 
+    default boolean isPlaying() {
+        return state() == State.PLAY;
+    }
+
+    State state();
+
+    void apply(State state);
+}
+```
+
+Which is partially implemented by the following skeleton:
+
+```java
+public abstract class AbstractPlayable implements Playable {
+    private State state = State.STOP;
+
     @Override
-    public void update(Animator animator) {
-        float angle = animator.position() * MathsUtil.TWO_PI;
-        rot.angle(angle);
+    public void apply(State state) {
+        this.state = notNull(state);
     }
 }
 ```
+
+A playable resource is managed by the _player_ controller:
+
+```java
+public class Player extends AbstractPlayable {
+    @FunctionalInterface
+    public interface Listener {
+        void update(Player player);
+    }
+
+    private Playable playable;
+    private final Collection<Listener> listeners = new HashSet<>();
+}
+```
+
+Note that a player is itself a `Playable` and delegates state changes to the underlying playable resource:
+
+```java
+public void apply(State state) {
+    super.apply(state);
+    playable.apply(state);
+    update();
+}
+```
+
+Where `update` notifies interested observers of any state changes:
+
+```java
+private void update() {
+    for(Listener listener : listeners) {
+        listener.update(this);
+    }
+}
+```
+
+A playable resource may stop playing in the background, for example:
+
+* OpenAL audio generally runs on a separate thread and stops playing at the end of a non-looping clip.
+
+* A non-repeating animation terminates when the animation duration expires.
+
+This case is handled by testing the underlying playable when querying the player state:
+
+```java
+public State state() {
+    State state = super.state();
+    if((state == State.PLAY) && !playable.isPlaying()) {
+        super.apply(State.STOP);
+        update();
+        return State.STOP;
+    }
+    return state;
+}
+```
+
+### Animation
+
+Next a simple stopwatch utility is implemented that records the elapsed duration of a frame:
+
+```java
+public class Frame {
+    @FunctionalInterface
+    public interface Listener {
+        void update(Frame frame);
+    }
+
+    private Instant start = Instant.EPOCH;
+    private Instant end = Instant.EPOCH;
+}
+```
+
+Note that the existing frame listener interface is moved to this new class and modified to accept a `Frame` instance.
+
+The frame provides `start` and `stop` methods to wrap some activity (i.e. rendering) and the elapsed duration can then be queried:
+
+```java
+public Duration elapsed() {
+    return Duration.between(start, end);
+}
+```
+
+The frame processor introduced earlier is modified to include a `Frame` instance and the `render` method is instrumented to record the elapsed duration.
+
+Finally the `Animator` is introduced which interpolates an _animation_ position over a given duration:
+
+```java
+public class Animator extends AbstractPlayable implements Frame.Listener {
+    @FunctionalInterface
+    public interface Animation {
+        void update(float pos);
+    }
+
+    private final Animation animation;
+    private final long duration;
+    private long time;
+    private float speed = 1;
+    private boolean repeat = true;
+
+    @Override
+    public void update(Frame frame) {
+        ...
+    }
+}
+```
+
+The animator is a playable object, therefore the `update` method ignores frame events if the animation is not running:
+
+```java
+public void update() {
+    if(!isPlaying()) {
+        return;
+    }
+    ...
+}
+```
+
+Next the _time position_ of the animation is calculated:
+
+```java
+time += frame.elapsed().toMillis() * speed;
+```
+
+At the end of the duration the `time` is quantised or the animation stops if it is not repeating:
+
+```java
+if(time > duration) {
+    if(repeat) {
+        time = time % duration;
+    }
+    else {
+        time = duration;
+        apply(Playable.State.STOP);
+    }
+}
+```
+
+Finally the updated position is then applied to the animation:
+
+```java
+animation.update(time / (float) duration);
+```
+
+The final piece of the jigsaw is the mutable rotation implementation is modified to support animation about the unit-circle:
+
+```java
+public class MutableRotation extends AxisAngle implements Animation {
+    @Override
+    public void update(float pos) {
+        set(pos * TWO_PI);
+    }
+}
+```
+
+Alternatively a separate adapter could have been implemented but that hardly seemed worthwhile for such a relatively trivial case.
 
 ### Integration
 
@@ -1461,8 +1413,9 @@ In the cube demo the existing hand-crafted matrix code is replaced by a rotation
 
 ```java
 @Bean
-static RotationAnimation rotation() {
-    return new RotationAnimation(new Vector(MathsUtil.HALF, 1, 0));
+static MutableRotation rotation() {
+    Normal axis = new Vector(MathsUtil.HALF, 1, 0).normalize();
+    return new MutableRotation(axis);
 }
 ```
 
@@ -1470,8 +1423,8 @@ The animation and timing logic is replaced by an animator:
 
 ```java
 @Bean
-static Animator animator(ApplicationConfiguration cfg, RotationAnimation rot) {
-    return new Animator(cfg.getPeriod(), rot);
+static Animator animator(Animation rot, ApplicationConfiguration cfg) {
+    return new Animator(rot, cfg.getPeriod());
 }
 ```
 
@@ -1480,9 +1433,8 @@ Which is controlled by a player:
 ```java
 @Bean
 public static Player player(Animator animator) {
-    Player player = new Player();
-    player.add(animator);
-    player.play();
+    Player player = new Player(animator);
+    player.apply(Playable.State.PLAY);
     return player;
 }
 ```
@@ -1490,9 +1442,9 @@ public static Player player(Animator animator) {
 And finally the code to update the uniform buffer is refactored accordingly:
 
 ```java
-public static FrameListener update(ResourceBuffer uniform, Matrix projection, Matrix view, RotationAnimation rot) {
+public static FrameListener update(ResourceBuffer uniform, Matrix projection, Matrix view, MutableRotation rot) {
     ByteBuffer bb = uniform.buffer();
-    return () -> {
+    return frame -> {
         Matrix model = rot.rotation().matrix();
         Matrix matrix = projection.multiply(view).multiply(model);
         matrix.buffer(bb);
@@ -1513,7 +1465,6 @@ In this chapter the render loop was improved by:
 
 - Implementation of Vulkan synchronisation to safely utilise the multi-threaded rendering pipeline.
 
-- The addition of a new framework for animations.
+- The addition of a new framework for playable media and animations.
 
-This might appear a lot of work for little benefit, however we now have a framework which can be more easily extended in future chapters, in particular when input devices and scene graphs are introduced later.
-
+This might appear a lot of work for little benefit, however we now have a framework which can be more easily extended in future chapters, in particular when input devices and scene graphs are introduced in later chapters.

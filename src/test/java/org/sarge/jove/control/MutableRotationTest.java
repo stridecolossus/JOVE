@@ -1,10 +1,11 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.geometry.Axis.Y;
 import static org.sarge.jove.util.Trigonometric.HALF_PI;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.MutableRotation;
 
 class MutableRotationTest {
 	private MutableRotation rot;

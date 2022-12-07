@@ -1,6 +1,7 @@
-package org.sarge.jove.geometry;
+package org.sarge.jove.control;
 
 import org.sarge.jove.control.Animator.Animation;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Trigonometric;
 
 /**
