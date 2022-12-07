@@ -9,6 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.control.Playable;
+import org.sarge.jove.control.Playable.State;
 import org.sarge.jove.geometry.*;
 
 import com.sun.jna.ptr.IntByReference;
@@ -18,6 +20,7 @@ class AudioSourceTest {
 	private AudioDevice dev;
 	private AudioLibrary lib;
 	private AudioBuffer buffer;
+	private Playable playable;
 
 	@BeforeEach
 	void before() {
@@ -26,6 +29,7 @@ class AudioSourceTest {
 		when(dev.library()).thenReturn(lib);
 		source = AudioSource.create(dev);
 		buffer = mock(AudioBuffer.class);
+		playable = source.playable();
 	}
 
 	@Test
@@ -98,7 +102,7 @@ class AudioSourceTest {
 		@DisplayName("cannot be played")
 		@Test
 		void play() {
-			assertThrows(IllegalStateException.class, () -> source.play());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.PLAY));
 		}
 	}
 
@@ -113,7 +117,7 @@ class AudioSourceTest {
 		@DisplayName("is not playing")
 		@Test
 		void isPlaying() {
-			assertEquals(false, source.isPlaying());
+			assertEquals(false, playable.isPlaying());
 		}
 
 		@Test
@@ -126,20 +130,20 @@ class AudioSourceTest {
 		@DisplayName("can be played")
 		@Test
 		void play() {
-			source.play();
+			playable.apply(State.PLAY);
 			verify(lib).alSourcePlay(source);
 		}
 
 		@DisplayName("cannot be paused")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> source.pause());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.PAUSE));
 		}
 
 		@DisplayName("cannot be stopped")
 		@Test
 		void stop() {
-			assertThrows(IllegalStateException.class, () -> source.stop());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.STOP));
 		}
 
 		@DisplayName("can be rewound")
@@ -156,7 +160,7 @@ class AudioSourceTest {
 		@BeforeEach
 		void before() {
 			source.buffer(buffer);
-			source.play();
+			playable.apply(State.PLAY);
 		}
 
 		@DisplayName("checks whether the audio has finished")
@@ -168,35 +172,35 @@ class AudioSourceTest {
 				return null;
 			};
 			doAnswer(answer).when(lib).alGetSourcei(eq(source), eq(AudioParameter.SOURCE_STATE), any(IntByReference.class));
-			assertEquals(true, source.isPlaying());
+			assertEquals(true, playable.isPlaying());
 		}
 
 		@DisplayName("is stopped when the audio finishes")
 		@Test
 		void finished() {
-			assertEquals(false, source.isPlaying());
+			assertEquals(false, playable.isPlaying());
 			verify(lib).alGetSourcei(eq(source), eq(AudioParameter.SOURCE_STATE), any(IntByReference.class));
 		}
 
 		@DisplayName("cannot be played")
 		@Test
 		void play() {
-			assertThrows(IllegalStateException.class, () -> source.play());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.PLAY));
 		}
 
 		@DisplayName("can be paused")
 		@Test
 		void pause() {
-			source.pause();
-			assertEquals(false, source.isPlaying());
+			playable.apply(State.PAUSE);
+			assertEquals(false, playable.isPlaying());
 			verify(lib).alSourcePause(source);
 		}
 
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			source.stop();
-			assertEquals(false, source.isPlaying());
+			playable.apply(State.STOP);
+			assertEquals(false, playable.isPlaying());
 			verify(lib).alSourceStop(source);
 		}
 	}
@@ -207,32 +211,32 @@ class AudioSourceTest {
 		@BeforeEach
 		void before() {
 			source.buffer(buffer);
-			source.play();
-			source.pause();
+			playable.apply(State.PLAY);
+			playable.apply(State.PAUSE);
 		}
 
 		@DisplayName("is not playing")
 		@Test
 		void isPlaying() {
-			assertEquals(false, source.isPlaying());
+			assertEquals(false, playable.isPlaying());
 		}
 
 		@DisplayName("can be restarted")
 		@Test
 		void play() {
-			source.play();
+			playable.apply(State.PLAY);
 		}
 
 		@DisplayName("cannot be paused")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> source.pause());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.PAUSE));
 		}
 
-		@DisplayName("cannot be stopped")
+		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			assertThrows(IllegalStateException.class, () -> source.stop());
+			playable.apply(State.STOP);
 		}
 	}
 

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.spy;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.Playable.State;
 
 public class AbstractPlayableTest {
 	private AbstractPlayable playable;
@@ -17,6 +18,7 @@ public class AbstractPlayableTest {
 	@Test
 	void constructor() {
 		assertEquals(false, playable.isPlaying());
+		assertEquals(State.STOP, playable.state());
 	}
 
 	@DisplayName("A playable that is stopped...")
@@ -25,20 +27,20 @@ public class AbstractPlayableTest {
 		@DisplayName("can be played")
 		@Test
 		void play() {
-			playable.play();
+			playable.apply(State.PLAY);
 			assertEquals(true, playable.isPlaying());
 		}
 
 		@DisplayName("cannot be paused")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.pause());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.PAUSE));
 		}
 
 		@DisplayName("cannot be stopped")
 		@Test
 		void stop() {
-			assertThrows(IllegalStateException.class, () -> playable.stop());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.STOP));
 		}
 	}
 
@@ -47,26 +49,28 @@ public class AbstractPlayableTest {
 	class Playing {
 		@BeforeEach
 		void before() {
-			playable.play();
+			playable.apply(State.PLAY);
 		}
 
 		@DisplayName("cannot be played")
 		@Test
 		void play() {
-			assertThrows(IllegalStateException.class, () -> playable.play());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.PLAY));
 		}
 
 		@DisplayName("can be paused")
 		@Test
 		void pause() {
-			playable.pause();
+			playable.apply(State.PAUSE);
+			assertEquals(State.PAUSE, playable.state());
 			assertEquals(false, playable.isPlaying());
 		}
 
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			playable.stop();
+			playable.apply(State.STOP);
+			assertEquals(State.STOP, playable.state());
 			assertEquals(false, playable.isPlaying());
 		}
 	}
@@ -76,27 +80,27 @@ public class AbstractPlayableTest {
 	class Paused {
 		@BeforeEach
 		void before() {
-			playable.play();
-			playable.pause();
+			playable.apply(State.PLAY);
+			playable.apply(State.PAUSE);
 		}
 
 		@DisplayName("can be restarted")
 		@Test
 		void play() {
-			playable.play();
+			playable.apply(State.PLAY);
 			assertEquals(true, playable.isPlaying());
 		}
 
 		@DisplayName("cannot be paused")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.pause());
+			assertThrows(IllegalStateException.class, () -> playable.apply(State.PAUSE));
 		}
 
-		@DisplayName("cannot be stopped")
+		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			assertThrows(IllegalStateException.class, () -> playable.stop());
+			playable.apply(State.STOP);
 		}
 	}
 }

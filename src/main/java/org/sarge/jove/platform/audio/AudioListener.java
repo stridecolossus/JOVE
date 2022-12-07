@@ -66,14 +66,20 @@ public class AudioListener {
 	}
 
 	/**
-	 * Sets the global doppler shift properties (defaults value are one).
-	 * @param factor		Doppler shift factor
-	 * @param velocity		Doppler velocity
+	 * Sets the global doppler shift factor (default is one).
+	 * @param factor Doppler shift factor
 	 */
-	public void doppler(float factor, float velocity) {
+	public void dopplerFactor(float factor) {
 		Check.zeroOrMore(factor);
 		lib.alDopplerFactor(factor);
 		dev.check();
+	}
+
+	/**
+	 * Sets the global doppler shift velocity (default is one).
+	 * @param velocity Doppler velocity
+	 */
+	public void dopplerVelocity(float velocity) {
 		Check.zeroOrMore(velocity);
 		lib.alDopplerVelocity(velocity);
 		dev.check();

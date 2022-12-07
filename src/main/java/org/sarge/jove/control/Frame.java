@@ -22,8 +22,9 @@ public class Frame {
 	public interface Listener {
 		/**
 		 * Notifies a completed frame.
+		 * @param frame Completed frame
 		 */
-		void update();
+		void update(Frame frame);
 	}
 
 	private Instant start = Instant.EPOCH;
@@ -31,9 +32,10 @@ public class Frame {
 	private Duration elapsed;
 
 	/**
-	 * @return Time of last frame completion
+	 * @return Time of the last frame completion
 	 */
 	public Instant time() {
+		check();
 		return end;
 	}
 
@@ -41,8 +43,8 @@ public class Frame {
 	 * @return Elapsed duration of this frame
 	 */
 	public Duration elapsed() {
+		check();
 		if(elapsed == null) {
-			end = Instant.now();
 			elapsed = Duration.between(start, end);
 		}
 		return elapsed;
@@ -50,11 +52,29 @@ public class Frame {
 
 	/**
 	 * Starts a new frame.
+	 * @throws IllegalStateException if this frame has already been started
 	 */
-	public Instant start() {
+	public void start() {
+		if(end == null) throw new IllegalStateException("Frame is already started");
 		start = Instant.now();
+		end = null;
 		elapsed = null;
-		return start;
+	}
+
+	/**
+	 * Stops this frame.
+	 * @throws IllegalStateException if this frame has not been completed
+	 */
+	public void stop() {
+		if(end != null) throw new IllegalStateException("Frame is already completed");
+		end = Instant.now();
+	}
+
+	/**
+	 * @throws IllegalStateException if this frame has not been completed
+	 */
+	private void check() {
+		if(end == null) throw new IllegalStateException("Frame has not been completed");
 	}
 
 	@Override
@@ -77,8 +97,8 @@ public class Frame {
 		}
 
 		@Override
-		public void update() {
-			final Instant now = Instant.now();
+		public void update(Frame frame) {
+			final Instant now = frame.time();
 			if(now.isAfter(next)) {
 				count = 1;
 				next = now.plusMillis(MILLISECONDS_PER_SECOND);

@@ -7,14 +7,12 @@ import java.time.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.*;
+import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
-import org.sarge.jove.scene.particle.*;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
-	private Animator animator;
 	private Frame frame;
 
 	@BeforeEach
@@ -22,15 +20,7 @@ class ParticleSystemTest {
 		frame = mock(Frame.class);
 		when(frame.time()).thenReturn(Instant.ofEpochSecond(1));
 		when(frame.elapsed()).thenReturn(Duration.ofSeconds(2));
-
 		sys = new ParticleSystem();
-
-		animator = new Animator(sys) {
-			@Override
-			public Frame frame() {
-				return frame;
-			}
-		};
 	}
 
 	// TODO - mesh tests
@@ -55,7 +45,7 @@ class ParticleSystemTest {
 		@DisplayName("does nothing on a frame update")
 		@Test
 		void update() {
-			sys.update(animator);
+			sys.update(frame);
 			assertEquals(0, sys.size());
 		}
 
@@ -80,7 +70,7 @@ class ParticleSystemTest {
 		@Test
 		void generate() {
 			sys.policy(GenerationPolicy.fixed(1));
-			sys.update(animator);
+			sys.update(frame);
 			assertEquals(1, sys.size());
 		}
 
@@ -119,7 +109,7 @@ class ParticleSystemTest {
 		@Test
 		void update() {
 			final Particle p = create();
-			sys.update(animator);
+			sys.update(frame);
 			assertEquals(new Point(0, 2, 0), p.origin());
 		}
 
@@ -129,7 +119,7 @@ class ParticleSystemTest {
 			final Particle p = create();
 			final Influence inf = mock(Influence.class);
 			sys.add(inf);
-			sys.update(animator);
+			sys.update(frame);
 			verify(inf).apply(p, 2f);
 		}
 
@@ -138,7 +128,7 @@ class ParticleSystemTest {
 		void expired() {
 			sys.lifetime(Duration.ofMillis(2));
 			create();
-			sys.update(animator);
+			sys.update(frame);
 			assertEquals(0, sys.size());
 		}
 	}
@@ -157,7 +147,7 @@ class ParticleSystemTest {
 		@DisplayName("is not updated by the particle system")
 		@Test
 		void update() {
-			sys.update(animator);
+			sys.update(frame);
 			assertEquals(Point.ORIGIN, p.origin());
 		}
 
@@ -166,7 +156,7 @@ class ParticleSystemTest {
 		void collide() {
 			final Intersected surface = mock(Intersected.class);
 			sys.add(surface, Collision.DESTROY);
-			sys.update(animator);
+			sys.update(frame);
 			verifyNoInteractions(surface);
 		}
 	}
@@ -187,14 +177,14 @@ class ParticleSystemTest {
 		void update() {
 			final Intersected surface = mock(Intersected.class);
 			sys.add(surface, Collision.DESTROY);
-			sys.update(animator);
+			sys.update(frame);
 			assertEquals(false, p.isAlive());
 		}
 
 		@DisplayName("is culled")
 		@Test
 		void culled() {
-			sys.update(animator);
+			sys.update(frame);
 			assertEquals(0, sys.size());
 		}
 	}

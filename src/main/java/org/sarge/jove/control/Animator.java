@@ -1,11 +1,13 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.*;
+
+import java.time.Duration;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * An <i>animator</i> is a specialised playable for an {@link Animation} that is updated per frame.
+ * An <i>animator</i> is a specialised playable for an {@link Animation} updated on each frame.
  * @author Sarge
  */
 public class Animator extends AbstractPlayable implements Frame.Listener {
@@ -16,22 +18,46 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	public interface Animation {
 		/**
 		 * Updates this animation.
-		 * @param animator Animator
+		 * @param pos Animation position 0..1
 		 */
-		void update(Animator animator);
+		void update(float pos);
 	}
 
-	protected final Animation animation;
-	private final Frame frame = new Frame();
+	private final Animation animation;
+	private final long duration;
+	private long time;
 	private float speed = 1;
 	private boolean repeat = true;
 
 	/**
 	 * Constructor.
-	 * @param animation Animation
+	 * @param animation 	Animation
+	 * @param duration		Duration
 	 */
-	public Animator(Animation animation) {
+	public Animator(Animation animation, Duration duration) {
 		this.animation = notNull(animation);
+		this.duration = oneOrMore(duration.toMillis());
+	}
+
+	/**
+	 * @return Animation controlled by this animator
+	 */
+	public Animation animation() {
+		return animation;
+	}
+
+	/**
+	 * @return Animation duration
+	 */
+	public Duration duration() {
+		return Duration.ofMillis(duration);
+	}
+
+	/**
+	 * @return Current animation position
+	 */
+	public Duration time() {
+		return Duration.ofMillis(time);
 	}
 
 	/**
@@ -66,49 +92,43 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		this.repeat = repeat;
 	}
 
-	/**
-	 * @return Animation frame tracker
-	 */
-	public Frame frame() {
-		return frame;
-	}
-
-	/**
-	 * @return Animation time (ms)
-	 */
-	public float elapsed() {
-		return this.frame().elapsed().toMillis() * speed;
-	}
-
 	@Override
-	public void play() {
-		super.play();
-		frame.start();
-	}
-
-	@Override
-	public void update() {
+	public void update(Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
-		// Update animation
-		animation.update(this);
+		// Update animation time position
+		time += frame.elapsed().toMillis() * speed;
 
-		// Start next frame
-		if(isPlaying()) {
-			frame.start();
+		// Check for end of animation
+		if(time > duration) {
+			if(isRepeating()) {
+				// Cycle animation
+				time = time % duration;
+			}
+			else {
+				// Stop animation
+				time = duration;
+				animation.update(1);
+				apply(Playable.State.STOP);
+				return;
+			}
 		}
+
+		// Update animation
+		animation.update(time / (float) duration);
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append(animation)
+				.append(String.format("%s/%s", time, duration))
 				.append("speed", speed)
 				.append("repeat", repeat)
+				.append(animation)
 				.build();
 	}
 }

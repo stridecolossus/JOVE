@@ -6,7 +6,7 @@ import static org.sarge.jove.util.Trigonometric.HALF_PI;
 
 import org.junit.jupiter.api.*;
 
-public class MutableRotationTest {
+class MutableRotationTest {
 	private MutableRotation rot;
 
 	@BeforeEach
@@ -30,5 +30,11 @@ public class MutableRotationTest {
 		rot.set(HALF_PI);
 		assertEquals(HALF_PI, rot.angle());
 		assertEquals(Y.rotation(HALF_PI), rot.matrix());
+	}
+
+	@Test
+	void animation() {
+		rot.update(0.25f);
+		assertEquals(HALF_PI, rot.angle());
 	}
 }

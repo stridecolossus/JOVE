@@ -10,8 +10,7 @@ import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.*;
-import org.sarge.jove.control.Animator.Animation;
+import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.geometry.Vector;
@@ -37,7 +36,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class ParticleSystem implements Animation {
+public class ParticleSystem implements Frame.Listener {
 	private static final float SCALE = 1f / Frame.MILLISECONDS_PER_SECOND;
 
 	/**
@@ -236,13 +235,13 @@ public class ParticleSystem implements Animation {
 	}
 
 	@Override
-	public synchronized void update(Animator animator) {
-		final long time = animator.frame().time().toEpochMilli();
-		final float elapsed = animator.elapsed() * SCALE;
+	public void update(Frame frame) {
+		final long time = frame.time().toEpochMilli();
+		final float elapsed = frame.elapsed().toMillis() * SCALE;
 		expire(time);
 		update(time, elapsed);
 		cull();
-		generate(time, elapsed * animator.speed());
+		generate(time, elapsed);
 	}
 
 	/**

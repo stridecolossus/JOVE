@@ -9,6 +9,7 @@ import javax.sound.sampled.AudioSystem;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.*;
+import org.sarge.jove.control.Playable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.platform.audio.AudioListener.DistanceModel;
@@ -165,7 +166,7 @@ public class AudioDevice extends AbstractTransientNativeObject {
 		System.out.println("Initialising listener");
 		final AudioListener listener = new AudioListener(dev);
 		listener.position(Point.ORIGIN);
-		listener.doppler(2, 3);
+		//listener.doppler(2, 3);
 		listener.speed(4);
 		listener.model(DistanceModel.INVERSE, true);
 
@@ -191,8 +192,9 @@ public class AudioDevice extends AbstractTransientNativeObject {
 		System.out.println(queue.buffers().toList());
 
 		System.out.println("Playing...");
-		queue.play();
-		while(queue.isPlaying()) {
+		final Playable playable = queue.playable();
+		playable.apply(Playable.State.PLAY);
+		while(playable.isPlaying()) {
 			Thread.sleep(50);
 			queue.processed();
 		}

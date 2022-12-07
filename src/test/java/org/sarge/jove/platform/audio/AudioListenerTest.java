@@ -50,7 +50,8 @@ class AudioListenerTest {
 
 	@Test
 	void doppler() {
-		listener.doppler(2, 3);
+		listener.dopplerFactor(2);
+		listener.dopplerVelocity(3);
 		verify(lib).alDopplerFactor(2);
 		verify(lib).alDopplerVelocity(3);
 	}

@@ -4,20 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.Playable.State;
 import org.sarge.jove.control.Player.Listener;
 
 class PlayerTest {
 	private Player player;
+	private Playable playable;
 
 	@BeforeEach
 	void before() {
-		player = new Player();
+		playable = mock(Playable.class);
+		player = new Player(playable);
 	}
 
 	@DisplayName("A new player is initially stopped")
 	@Test
 	void constructor() {
 		assertEquals(false, player.isPlaying());
+		assertEquals(playable, player.playable());
 	}
 
 	@DisplayName("A player...")
@@ -26,71 +30,40 @@ class PlayerTest {
 		@DisplayName("can be played")
 		@Test
 		void play() {
-			player.play();
+			player.apply(State.PLAY);
+			when(playable.isPlaying()).thenReturn(true);
 			assertEquals(true, player.isPlaying());
+			verify(playable).apply(State.PLAY);
 		}
 
 		@DisplayName("can be paused")
 		@Test
 		void pause() {
-			player.play();
-			player.pause();
+			player.apply(State.PLAY);
+			player.apply(State.PAUSE);
 			assertEquals(false, player.isPlaying());
+			verify(playable).apply(State.PAUSE);
 		}
 
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			player.play();
-			player.stop();
+			player.apply(State.PLAY);
+			player.apply(State.STOP);
+			assertEquals(false, player.isPlaying());
+			verify(playable).apply(State.STOP);
+		}
+
+		@DisplayName("is stopped if the underlying playable is stopped")
+		@Test
+		void stopped() {
+			player.apply(State.PLAY);
+			when(playable.isPlaying()).thenReturn(false);
 			assertEquals(false, player.isPlaying());
 		}
 	}
 
-	@DisplayName("A playable added to a player...")
-	@Nested
-	class PlayableTests {
-		private Playable playable;
-
-		@BeforeEach
-		void before() {
-			playable = mock(Playable.class);
-			player.add(playable);
-		}
-
-		@DisplayName("can be played")
-		@Test
-		void play() {
-			player.play();
-			verify(playable).play();
-		}
-
-		@DisplayName("can be paused")
-		@Test
-		void pause() {
-			player.play();
-			player.pause();
-			verify(playable).pause();
-		}
-
-		@DisplayName("can be stopped")
-		@Test
-		void stop() {
-			player.play();
-			player.stop();
-			verify(playable).stop();
-		}
-
-		@DisplayName("can be removed from the player")
-		@Test
-		void remove() {
-			player.remove(playable);
-			player.play();
-			verifyNoInteractions(playable);
-		}
-	}
-
-	@DisplayName("A play listener...")
+	@DisplayName("A player state change listener...")
 	@Nested
 	class ListenerTests {
 		private Listener listener;
@@ -104,31 +77,17 @@ class PlayerTest {
 		@DisplayName("is notified when the player is played")
 		@Test
 		void play() {
-			player.play();
-			verify(listener).update(player);
-		}
-
-		@DisplayName("is notified when the player is paused")
-		@Test
-		void pause() {
-			player.play();
-			player.pause();
-			verify(listener, times(2)).update(player);
-		}
-
-		@DisplayName("is notified when the player is stopped")
-		@Test
-		void stop() {
-			player.play();
-			player.stop();
-			verify(listener, times(2)).update(player);
+			player.apply(State.PLAY);
+			player.apply(State.PAUSE);
+			player.apply(State.STOP);
+			verify(listener, times(3)).update(player);
 		}
 
 		@DisplayName("can be removed from the player")
 		@Test
 		void remove() {
 			player.remove(listener);
-			player.play();
+			player.apply(State.PLAY);
 			verifyNoInteractions(listener);
 		}
 	}

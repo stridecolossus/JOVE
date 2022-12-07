@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.Playable;
+import org.sarge.jove.control.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
@@ -20,7 +20,7 @@ import com.sun.jna.ptr.IntByReference;
  * An <i>audio source</i> plays an {@link AudioBuffer}.
  * @author Sarge
  */
-public class AudioSource extends AbstractTransientNativeObject implements Playable {
+public class AudioSource extends AbstractTransientNativeObject {
 	/**
 	 * Creates an audio source.
 	 * @param dev Audio device
@@ -37,7 +37,7 @@ public class AudioSource extends AbstractTransientNativeObject implements Playab
 	protected final AudioDevice dev;
 	protected final Library lib;
 	protected final List<AudioBuffer> buffers = new ArrayList<>();
-	private boolean playing;
+	private final AudioSourcePlayable playable = new AudioSourcePlayable();
 
 	/**
 	 * Constructor.
@@ -81,7 +81,7 @@ public class AudioSource extends AbstractTransientNativeObject implements Playab
 		lib.alSourcei(this, BUFFER, buffer);
 		dev.check();
 		buffers.add(buffer);
-		playing = false;
+		playable.stop();
 	}
 
 	/**
@@ -91,7 +91,53 @@ public class AudioSource extends AbstractTransientNativeObject implements Playab
 		lib.alSourcei(this, BUFFER, 0);
 		dev.check();
 		buffers.clear();
-		playing = false;
+		playable.stop();
+	}
+
+	/**
+	 *
+	 */
+	private class AudioSourcePlayable extends AbstractPlayable {
+		@Override
+		public boolean isPlaying() {
+    		final var ref = new IntByReference();
+    		lib.alGetSourcei(AudioSource.this, SOURCE_STATE, ref);
+    		return ref.getValue() == PLAYING.value();
+		}
+
+		@Override
+		public void apply(State state) {
+			super.apply(state);
+			switch(state) {
+        		case PLAY -> {
+        			if(buffers.isEmpty()) throw new IllegalStateException("No buffer(s) to play: " + this);
+        			lib.alSourcePlay(AudioSource.this);
+        		}
+        		case PAUSE -> {
+        			lib.alSourcePause(AudioSource.this);
+        		}
+        		case STOP -> {
+        			lib.alSourceStop(AudioSource.this);
+        		}
+    		}
+			dev.check();
+		}
+
+		/**
+		 * Interrupts this audio source if playing.
+		 */
+		private void stop() {
+			if(this.state() != State.STOP) {
+				apply(State.STOP);
+			}
+		}
+	}
+
+	/**
+	 * @return This source as a playable instance
+	 */
+	public Playable playable() {
+		return playable;
 	}
 
 	/**
@@ -151,41 +197,6 @@ public class AudioSource extends AbstractTransientNativeObject implements Playab
 		dev.check();
 	}
 
-	@Override
-	public boolean isPlaying() {
-		if(playing) {
-    		final var ref = new IntByReference();
-    		lib.alGetSourcei(this, SOURCE_STATE, ref);
-    		playing = ref.getValue() == PLAYING.value();
-		}
-		return playing;
-	}
-
-	@Override
-	public void play() {
-		if(buffers.isEmpty()) throw new IllegalStateException("No buffer(s) to play: " + this);
-		if(playing) throw new IllegalStateException("Already playing: " + this);
-		lib.alSourcePlay(this);
-		dev.check();
-		playing = true;
-	}
-
-	@Override
-	public void pause() {
-		checkPlaying();
-		lib.alSourcePause(this);
-		dev.check();
-		playing = false;
-	}
-
-	@Override
-	public void stop() {
-		checkPlaying();
-		lib.alSourceStop(this);
-		dev.check();
-		playing = false;
-	}
-
 	/**
 	 * Rewinds this source.
 	 */
@@ -194,10 +205,6 @@ public class AudioSource extends AbstractTransientNativeObject implements Playab
 		dev.check();
 	}
 	// TODO - is this valid for a queue?
-
-	private void checkPlaying() {
-		if(!playing) throw new IllegalStateException("Not playing: " + this);
-	}
 
 	@Override
 	protected void release() {
@@ -211,7 +218,7 @@ public class AudioSource extends AbstractTransientNativeObject implements Playab
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append("playing", playing)
+				.append(playable)
 				.append("buffers", buffers.size())
 				.build();
 	}

@@ -3,7 +3,6 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -24,27 +23,61 @@ public class Player extends AbstractPlayable {
 		void update(Player player);
 	}
 
-	private final Collection<Playable> playing = new ArrayList<>();
+	private Playable playable;
 	private final Collection<Listener> listeners = new HashSet<>();
 
 	/**
-	 * Adds a playable to this player.
-	 * @param playable Playable to add
+	 * Constructor.
+	 * @param playable Playable object
 	 */
-	public void add(Playable playable) {
-		playing.add(notNull(playable));
+	public Player(Playable playable) {
+		set(playable);
 	}
 
 	/**
-	 * Removes a playable.
-	 * @param playable Playable to remove
+	 * @return Playable object controlled by this player
 	 */
-	public void remove(Playable playable) {
-		playing.remove(playable);
+	public Playable playable() {
+		return playable;
 	}
 
 	/**
-	 * Adds a player state change listener.
+	 * Sets the playable object being controlled by this player.
+	 * @param playable Playable object
+	 */
+	public void set(Playable playable) {
+		this.playable = notNull(playable);
+	}
+
+	@Override
+	public State state() {
+		final State state = super.state();
+		if((state == State.PLAY) && !playable.isPlaying()) {
+			super.apply(State.STOP);
+			update();
+			return State.STOP;
+		}
+		return state;
+	}
+
+	@Override
+	public void apply(State state) {
+		super.apply(state);
+		playable.apply(state);
+		update();
+	}
+
+	/**
+	 * Notifies listeners of a state change.
+	 */
+	private void update() {
+		for(Listener listener : listeners) {
+			listener.update(this);
+		}
+	}
+
+	/**
+	 * Adds a state change listener.
 	 * @param listener State change listener
 	 */
 	public void add(Listener listener) {
@@ -52,7 +85,7 @@ public class Player extends AbstractPlayable {
 	}
 
 	/**
-	 * Removes a listener.
+	 * Removes a state change listener.
 	 * @param listener Listener to remove
 	 */
 	public void remove(Listener listener) {
@@ -60,33 +93,10 @@ public class Player extends AbstractPlayable {
 	}
 
 	@Override
-	public void play() {
-		super.play();
-		delegate(Playable::play);
-	}
-
-	@Override
-	public void pause() {
-		super.pause();
-		delegate(Playable::pause);
-	}
-
-	@Override
-	public void stop() {
-		super.stop();
-		delegate(Playable::stop);
-	}
-
-	private void delegate(Consumer<Playable> state) {
-		playing.forEach(state);
-		listeners.forEach(e -> e.update(this));
-	}
-
-	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
-				.append("count", playing.size())
+				.append(playable)
 				.append("listeners", listeners.size())
 				.build();
 	}

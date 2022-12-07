@@ -5,12 +5,12 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.control.Frame;
 import org.sarge.jove.control.Frame.Listener;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.WorkQueue;
 import org.sarge.lib.util.Check;
 
 /**
@@ -88,7 +88,7 @@ public class FrameProcessor implements TransientObject {
 
 		// Notify frame completion
 		for(Listener listener : listeners) {
-			listener.update();
+			listener.update(frame.tracker);
 		}
 	}
 
@@ -103,6 +103,7 @@ public class FrameProcessor implements TransientObject {
 	 * In-flight frame.
 	 */
 	private class VulkanFrame {
+		private final Frame tracker = new Frame();
 		private final Semaphore available, ready;
 		private final Fence fence;
 
@@ -116,8 +117,9 @@ public class FrameProcessor implements TransientObject {
 		 * Renders this frame.
 		 * @param seq Render sequence
 		 */
-		public void render(RenderSequence seq) {
+		void render(RenderSequence seq) {
 			// Wait for completion of the previous frame
+			tracker.start();
 			fence.waitReady();
 			fence.reset();
 
