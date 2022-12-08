@@ -109,7 +109,7 @@ public class Particle {
 The _particle system_ is a controller implemented as an animation:
 
 ```java
-public class ParticleSystem implements Animation {
+public class ParticleSystem implements Frame.Listener {
     private PositionFactory pos = PositionFactory.ORIGIN;
     private VectorFactory vec = VectorFactory.of(Axis.Y);
     private final List<Particle> particles = new ArrayList<>();
@@ -455,17 +455,18 @@ The application for the _sparks_ demo is cloned from the previous project and a 
 public class ParticleSystemConfiguration {
     private final ApplicationConfiguration cfg;
     private final ParticleSystem sys;
-    private final Model model;
-    private final Animator animator;
+    private final Mesh mesh;
+    private final Player player;
 
     @Bean
-    public Animator animator() {
-        return animator;
+    public Player player() {
+        player.play();
+        return player;
     }
 
     @Bean
-    public Model model() {
-        return model;
+    public Mesh mesh() {
+        return mesh;
     }
 }
 ```
@@ -475,8 +476,8 @@ The particle system, model and animator are instantiated in the constructor:
 ```java
 public ParticleSystemConfiguration() {
     this.sys = system();
-    this.animator = new Animator(sys);
-    this.model = new ParticleModel(sys);
+    this.player = new Player(sys);
+    this.mesh = sys.mesh();
 }
 ```
 
@@ -487,12 +488,14 @@ private static ParticleSystem system() {
     var sys = new ParticleSystem();
     sys.policy(new IncrementGenerationPolicy(10, 100));
     sys.lifetime(5000L);
-    sys.vector(new ConeVectorFactory(Axis.Y, 1, new Randomiser()));
+    sys.direction(new ConeDirectionFactory(Axis.Y, 1, new Randomiser()));
     return sys;
 }
 ```
 
 Next the vertex buffer for the particles is created:
+
+TODO - move
 
 ```java
 @Bean
@@ -523,17 +526,6 @@ public Frame.Listener update(VertexBuffer vbo) {
         model.vertices().buffer(bb);
         region.unmap();
     };
-}
-```
-
-And finally the animation is started:
-
-```java
-@PostConstruct
-void start() {
-    Player player = new Player();
-    player.add(animator);
-    player.play();
 }
 ```
 
@@ -578,17 +570,13 @@ To support particle collisions we introduce _ray intersections_ where a _ray_ is
 
 ```java
 public interface Ray {
-    /**
-     * @return Ray origin
-     */
     Point origin();
-
-    /**
-     * @return Ray direction
-     */
-    Vector direction();
+    Normal direction();
+    float length();
 }
 ```
+
+Where `length` specifies the end point of the ray (which can be infinite).
 
 Next a new abstraction defines some arbitrary geometry that can be _intersected_ by a ray:
 
@@ -597,80 +585,86 @@ public interface Intersected {
     /**
      * Determines the intersections of this surface with the given ray.
      * @param ray Ray
-     * @return Intersection(s)
+     * @return Intersections
      */
-    Intersection intersection(Ray ray);
+    Iterable<Intersection> intersections(Ray ray);
+
+    /**
+     * Empty result.
+     */
+    Iterable<Intersection> NONE = List.of();
 }
 ```
 
-Where an _intersection_ specifies the distances of each intersection point along the ray and a function to determine the surface normal:
+Where an _intersection_ specifies a point on the ray and an optional surface normal:
 
 ```java
 public interface Intersection {
     /**
-     * @return Intersection distance(s)
+     * @return Intersection distance along the ray
      */
-    float[] distances();
+    float distance();
 
     /**
-     * @return Whether any intersections are present
+     * Calculates the intersection point on the ray, i.e. solves the line equation for the intersection distance.
+     * @return Intersection point
      */
-    default boolean isEmpty() {
-        return false;
-    }
+    Point point();
 
     /**
-     * Determines the surface normal at the given intersection point on this ray.
-     * @param p Intersection point
+     * Surface normal at this intersection.
      * @return Surface normal
+     * @throws UnsupportedOperationException if the normal is undefined
      */
-    default Vector normal(Point p) {
+    default Normal normal() {
         throw new UnsupportedOperationException();
     }
 }
 ```
 
-Finally a convenience constant is added for the case of an empty set of results:
+Which is partially implemented by the following skeleton:
 
 ```java
-Intersection NONE = new Intersection() {
-    @Override
-    public float[] distances() {
-        return new float[0];
-    }
+abstract class AbstractIntersection implements Intersection {
+    private final Ray ray;
+    private final float dist;
+    private Point pos;
 
     @Override
-    public boolean isEmpty() {
-        return true;
+    public final Point point() {
+        if(pos == null) {
+            Point origin = ray.origin();
+            Normal dir = ray.direction();
+            pos = origin.add(dir.multiply(dist));
+        }
+        return pos;
     }
-};
+}
 ```
 
-The rationale for this rather elaborate API is to allow intersections, and particularly surface normals, to be lazily evaluated since they are not relevant in all use-cases.
+The rationale for this rather elaborate API is to allow intersections, and particularly surface normals, to be lazily evaluated for a variety of reasons:
 
-For example:
+* As will be seen later, the process of determining intersections with a surface generally requires computationally expensive code (such as square roots) where the logic to calculate the _number_ of intersections and their positions is often inter-related.  Hence the intersection results are expressed as an `Iterable` where calculation of the results can be deferred as required.
 
-* A collision surface defined to destroy intersected particles only needs to know _whether_ an intersection occurs and not where.
+* Calculation of the actual intersection distance (and surface normal) can often be ignored altogether.  For example a collision surface defined to destroy intersected particles only needs to know _whether_ an intersection occurs and not where.
 
-* Surface normals are irrelevant for scene picking.
+* Surface normals are irrelevant for many use cases, e.g. scene picking.
+
+The `UNDEFINED` constant is added to the `Intersected` interface for the cases where at least one intersection has occurred but the actual details are not relevant.
 
 ### Planes
 
 The simplest collision surface implementation is a _plane_ defined by a normal and a distance from the origin:
 
 ```java
-public record Plane(Vector normal, float distance) implements Intersected {
-    public float distance(Point pt) {
-        return normal.dot(pt) + distance;
-    }
-}
+public record Plane(Normal normal, float distance) implements Intersected
 ```
 
 In addition to the canonical constructor a plane can be specified by the normal and a point on the plane:
 
 ```java
-public static Plane of(Vector normal, Point pt) {
-    return new Plane(normal, -pt.dot(normal));
+public Plane(Normal n, Point p) {
+    this(n, -n.dot(p));
 }
 ```
 
@@ -678,10 +672,10 @@ Finally a plane can be constructed from a triangle of points lying in the plane:
 
 ```java
 public static Plane of(Point a, Point b, Point c) {
-    Vector u = Vector.between(a, c);
-    Vector v = Vector.between(b, c);
-    Vector normal = u.cross(v);
-    return of(normal, a);
+    Vector u = Vector.between(a, b);
+    Vector v = Vector.between(a, c);
+    Normal normal = u.cross(v).normalize();
+    return new Plane(normal, a);
 }
 ```
 
@@ -698,31 +692,21 @@ public Iterator<Intersection> intersections(Ray ray) {
     }
 
     // Calc intersection
-    float t = -distance(ray.origin()) / denom;
-    if(t < 0) {
+    float d = -distance(ray.origin()) / denom;
+    if((d < 0) || (d > ray.length()) {
         return NONE;
     }
 
     // Build intersection
-    return Intersection.of(t, normal);
+    return Intersection.of(ray, d, normal);
 }
 ```
 
-Which creates a simple intersection result using a new factory method:
+Where `distance` calculates the distance of a given point from the plane:
 
 ```java
-static Intersection of(float d, Vector normal) {
-    return new Intersection() {
-        @Override
-        public float[] distances() {
-            return new float[]{d};
-        }
-
-        @Override
-        public Vector normal(Point p) {
-            return normal;
-        }
-    };
+public float distance(Point p) {
+    return normal.dot(p) + distance;
 }
 ```
 
@@ -731,9 +715,7 @@ static Intersection of(float d, Vector normal) {
 Particle collisions are configured by an intersecting surface and an associated collision function:
 
 ```java
-public class ParticleSystem implements Animation {
-    private final Map<Intersected, Collision> surfaces = new HashMap<>();
-}
+private final Map<Intersected, Collision> surfaces = new HashMap<>();
 ```
 
 The particle class is modified to implement the new `Ray` abstraction and can now be tested for collisions:
@@ -742,10 +724,10 @@ The particle class is modified to implement the new `Ray` abstraction and can no
 private void collide(Particle p) {
     for(var entry : surfaces.entrySet()) {
         Intersected surface = entry.getKey();
-        Intersection intersection = surface.intersection(p);
-        if(!intersections.isEmpty()) {
+        Iterator<Intersection> itr = surface.intersections(p).iterator();
+        if(itr.hasNext()) {
             Collision collision = entry.getValue();
-            collision.collide(p, intersections);
+            collision.collide(p, itr.next());
             break;
         }
     }
@@ -759,7 +741,7 @@ public interface Collision {
     /**
      * Applies this collision to the given particle.
      * @param p                 Particle
-     * @param intersection      Intersection(s)
+     * @param intersection      Intersection
      */
     void collide(Particle p, Intersection intersection);
     
@@ -772,29 +754,9 @@ public interface Collision {
      * Stops a collided particle at the given intersection.
      */
     Collision STOP = (p, intersection) -> {
-        Point pt = intersection.nearest(p);
-        p.stop(pt);
+        Point pos = intersection.point();
+        p.stop(pos);
     };
-}
-```
-
-Where `nearest` selects the _first_ intersection point:
-
-```java
-default Point nearest(Ray ray) {
-    float[] distances = distances();
-    if(distances.length == 0) throw new IllegalStateException();
-    return ray.point(distances[0]);
-}
-```
-
-And `point` calculates a point along the ray, i.e. solves the line equation:
-
-```java
-default Point point(float dist) {
-    Point origin = this.origin();
-    Vector dir = this.direction();
-    return origin.add(dir.multiply(dist));
 }
 ```
 
@@ -823,69 +785,6 @@ void stop(Point pos) {
 }
 ```
 
-Since the `DESTROY` case does not require the actual intersection results the existing ray intersection test is overkill, we only need to know whether the ray is _behind_ the plane.
-
-The _half space_ defines the _sides_ of a plane with respect to the normal, where the `POSITIVE` half-space is in _front_ of the plane:
-
-```java
-public enum HalfSpace {
-    POSITIVE,
-    NEGATIVE,
-    INTERSECT
-}
-```
-
-The half-space for a given distance from the plane is determined by the following helper:
-
-```java
-public static HalfSpace of(float d) {
-    if(d < 0) {
-        return NEGATIVE;
-    }
-    else
-    if(d > 0) {
-        return POSITIVE;
-    }
-    else {
-        return INTERSECT;
-    }
-}
-```
-
-Which is also used to determine the half-space for a given point:
-
-```java
-public HalfSpace halfspace(Point pt) {
-    return HalfSpace.of(distance(pt));
-}
-```
-
-The following adapter on the plane can now be implemented as an alternative and slightly more efficient intersection test based on the half-space of the ray:
-
-```java
-public Intersected halfspace(HalfSpace space) {
-    return ray -> {
-        if(halfspace(ray.origin()) == space) {
-            return UNDEFINED;
-        }
-        else {
-            return NONE;
-        }
-    };
-}
-```
-
-Where `UNDEFINED` is another constant for an intersection with undefined results:
-
-```java
-Intersection UNDEFINED = new Intersection() {
-    @Override
-    public List<Float> distances() {
-        throw new UnsupportedOperationException();
-    }
-};
-```
-
 ### Reflection
 
 The slightly more involved reflection case is factored out to a new collision implementation:
@@ -903,9 +802,9 @@ The particle is reflected about the first intersection point and the absorption 
 ```java
 @Override
 public void collide(Particle p, Intersection intersection) {
-    Point pt = intersection.nearest(p);
-    Vector normal = intersection.normal(pt);
-    p.reflect(pt, normal);
+    Point pos = intersection.point();
+    Normal normal = intersection.normal();
+    p.reflect(pos, normal);
     p.velocity(absorb);
 }
 ```
@@ -913,7 +812,7 @@ public void collide(Particle p, Intersection intersection) {
 This method delegates to a new particle mutator:
 
 ```java
-public void reflect(Point pos, Vector normal) {
+public void reflect(Point pos, Normal normal) {
     this.pos = notNull(pos);
     this.dir = dir.reflect(normal);
 }
@@ -922,57 +821,13 @@ public void reflect(Point pos, Vector normal) {
 Which in turn delegates to a new method on the vector class to reflect about a given normal:
 
 ```java
-public Vector reflect(Vector normal) {
-    Vector n = normal.normalize();
-    float f = -2f * dot(n);
-    return n.multiply(f).add(this);
+public Vector reflect(Normal normal) {
+    float f = -2f * normal.dot(this);
+    return normal.multiply(f).add(this);
 }
 ```
 
 Note that as things stand this approach simply moves the particle to the intersection point and reflects the movement vector.  This may produce poor results for large elapsed durations since the distance travelled (or remaining) is not taken into account.
-
-There is a further problem when using planes as a reflecting surface, since __all__ rays that cross that plane are considered as intersecting.  In this instance what is really required is an intersection test that only considers rays that have moved behind the plane, and a modification to allow the intersection point to be calculated backwards from the origin.  Therefore the existing code is modified to optionally take this case into account:
-
-```java
-private Intersection intersections(Ray ray, boolean pos) {
-    ...
-    
-    // Calc intersection distance
-    float d = distance(ray.origin());
-    float t = -d / denom;
-
-    // Check for intersection
-    if(pos) {
-        if(t < 0) {
-            return NONE;
-        }
-    }
-    else {
-        if(d > 0) {
-            return NONE;
-        }
-    }
-
-    ...
-}
-```
-
-Where `pos` is a flag indicating whether to include rays in the positive half-space in the intersection test, which is `true` in the general case:
-
-```java
-@Override
-public Intersection intersection(Ray ray) {
-    return intersections(ray, true);
-}
-```
-
-A further adapter can now be defined that only considers rays in the negative half-space:
-
-```java
-public Intersected behind() {
-    return ray -> intersections(ray, false);
-}
-```
 
 The demo is modified by the introduction of an influence to simulate gravity and a collision surface representing the ground:
 

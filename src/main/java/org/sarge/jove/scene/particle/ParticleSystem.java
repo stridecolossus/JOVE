@@ -356,11 +356,11 @@ public class ParticleSystem implements Frame.Listener {
 	}
 
 	/**
-	 * Creates a buffered model for this particle system.
-	 * Note that changes to the particle system are reflected in the returned model.
-	 * @return Buffered model
+	 * Creates a buffered mesh for this particle system.
+	 * Note that changes to the particle system are reflected in the returned mesh.
+	 * @return Buffered mesh
 	 */
-	public BufferedMesh model() {
+	public BufferedMesh mesh() {
 		// Init vertex layout
 		final CompoundLayout layout = new CompoundLayout(Point.LAYOUT, Colour.LAYOUT);
 
@@ -379,7 +379,7 @@ public class ParticleSystem implements Frame.Listener {
 			}
 		};
 
-		// Create model
+		// Create mesh
 		return new BufferedMesh(Primitive.POINT, particles.size(), layout, vertices, null);
 	}
 

@@ -24,8 +24,8 @@ class PlaneTest {
 	}
 
 	@Test
-	void of() {
-		assertEquals(plane, Plane.of(Y, new Point(0, 1, 0)));
+	void point() {
+		assertEquals(plane, new Plane(Y, new Point(0, 1, 0)));
 	}
 
 	@Test

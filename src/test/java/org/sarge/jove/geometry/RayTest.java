@@ -37,12 +37,12 @@ class RayTest {
 			assertEquals(false, results.hasNext());
 		}
 
-		@DisplayName("An undefined intersection result can be iterated but has a NULL value")
+		@DisplayName("An undefined intersection result cannot be queried")
 		@Test
 		void undefined() {
 			final var results = Intersected.UNDEFINED.iterator();
 			assertEquals(true, results.hasNext());
-			assertEquals(null, results.next());
+			assertThrows(UnsupportedOperationException.class, () -> results.next());
 		}
 	}
 
@@ -81,8 +81,8 @@ class RayTest {
 		@DisplayName("can be ordered by distance")
 		@Test
 		void compare() {
-			assertEquals(0, intersection.compareTo(intersection));
-			assertEquals(1, intersection.compareTo(mock(Intersection.class)));
+			assertEquals(0, Intersection.COMPARATOR.compare(intersection, intersection));
+			assertEquals(1, Intersection.COMPARATOR.compare(intersection, mock(Intersection.class)));
 		}
 
 		@Test

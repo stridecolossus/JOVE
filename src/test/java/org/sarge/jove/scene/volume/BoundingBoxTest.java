@@ -175,8 +175,8 @@ class BoundingBoxTest {
 		@Test
 		void intersects() {
 			final Point centre = bounds.centre();
-			assertEquals(true, box.intersects(Plane.of(Axis.Y, centre)));
-			assertEquals(true, box.intersects(Plane.of(Axis.Y.invert(), centre)));
+			assertEquals(true, box.intersects(new Plane(Axis.Y, centre)));
+			assertEquals(true, box.intersects(new Plane(Axis.Y.invert(), centre)));
 		}
 	}
 }

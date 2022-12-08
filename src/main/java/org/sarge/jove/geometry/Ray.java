@@ -54,9 +54,6 @@ public interface Ray {
 	interface Intersected {
 		/**
 		 * Determines the intersections of this surface with the given ray.
-    	 * <p>
-    	 * The returned intersections are generally assumed to be ordered nearest to the ray origin.
-    	 * <p>
 		 * @param ray Ray
 		 * @return Intersections
 		 */
@@ -70,20 +67,43 @@ public interface Ray {
 		/**
 		 * Intersection with undefined results, e.g. for use cases where the actual intersections (and normals) are not relevant.
 		 */
-		Iterable<Intersection> UNDEFINED = Arrays.asList((Intersection) null);
+		Iterable<Intersection> UNDEFINED = undefined();
+
+		/**
+		 * @return Undefined instance
+		 */
+		private static Iterable<Intersection> undefined() {
+			final var itr = new Iterator<Intersection>() {
+    			@Override
+    			public boolean hasNext() {
+    				return true;
+    			}
+
+    			@Override
+    			public Intersection next() {
+    				throw new UnsupportedOperationException();
+    			}
+    		};
+    		return () -> itr;
+		}
 	}
 
 	/**
 	 * An <i>intersection</i> specifies where this ray intersects an {@link Intersected} surface.
 	 */
-	interface Intersection extends Comparable<Intersection> {
+	interface Intersection {
 		/**
-		 * @return Intersection distance from the ray origin
+		 * Orders intersections by distance from the ray origin.
+		 */
+		Comparator<Intersection> COMPARATOR = Comparator.comparing(Intersection::distance);
+
+		/**
+		 * @return Distance of this intersection from the ray origin
 		 */
 		float distance();
 
 		/**
-		 * Calculates the point on this ray at the given distance from the origin, i.e. solves the line equation for the intersection distance.
+		 * Calculates the intersection point on the ray, i.e. solves the line equation for this {@link #distance()}.
 		 * @return Intersection point
 		 */
 		Point point();
@@ -142,43 +162,34 @@ public interface Ray {
 		public final Point point() {
 			if(pos == null) {
 				final Point origin = ray.origin();
-				final Normal dir = ray.direction().normalize();
-				pos = origin.add(dir.multiply(distance()));
+				final Normal dir = ray.direction();
+				pos = origin.add(dir.multiply(dist));
 			}
 			return pos;
 		}
 
 		@Override
-		public final int compareTo(Intersection that) {
-			return Float.compare(this.distance(), that.distance());
-		}
-
-		@Override
 		public int hashCode() {
-			return Objects.hash(ray, distance());
+			return Objects.hash(ray, dist);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
 			return
 					(obj == this) ||
-					(obj instanceof AbstractIntersection that) &&
-					this.ray.equals(that.ray) &&
-					MathsUtil.isEqual(this.distance(), that.distance()) &&
+					(obj instanceof Intersection that) &&
+					MathsUtil.isEqual(this.dist, that.distance()) &&
 					Objects.equals(this.normal(), that.normal());
 		}
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this)
-					.append("dist", distance())
-					.append("normal", normal())
-					.build();
+			return new ToStringBuilder(this).append("dist", dist).build();
 		}
 	}
 
 	/**
-	 * Default implementation that calculates the intersection normal relative to the surface centre point.
+	 * Default implementation that calculates an intersection normal relative to the centre point of the surface.
 	 */
 	class DefaultIntersection extends AbstractIntersection {
 		private final Point centre;
