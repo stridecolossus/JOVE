@@ -131,7 +131,7 @@ public record Layout(int size, Type type, boolean signed, int bytes) {
         NORMALIZED
     }
 
-    public int length() {
+    public int stride() {
         return size * bytes;
     }
 }
@@ -163,16 +163,29 @@ public record Colour(...) {
 }
 ```
 
-We can now implement a helper method in the vertex input pipeline stage builder to configure a binding from the layouts of a vertex:
+A group of layouts can be aggregated into a _compound layout_ to specify the vertex structure:
 
 ```java
-public VertexInputStageBuilder add(List<Layout> layouts) {
-    // Add binding
-    BindingBuilder binding = new BindingBuilder();
+public final class CompoundLayout {
+    private final List<Layout> layout;
+    private final int stride;
 
-    // Init vertex stride
-    int stride = Layout.stride(layouts);
+    public CompoundLayout(List<Layout> layout) {
+        this.layout = List.copyOf(layout);
+        this.stride = layout.stream().mapToInt(Layout::stride).sum();
+    }
+}
+```
+
+A helper method can now be implemented in the vertex input pipeline stage builder to configure a binding from the vertex layout:
+
+```java
+public VertexInputStageBuilder add(CompoundLayout layout) {
+    // Init binding
+    var binding = new BindingBuilder();
+    int stride = layout.stride();
     binding.stride(stride);
+
 
     ...
 
@@ -181,21 +194,13 @@ public VertexInputStageBuilder add(List<Layout> layouts) {
 }
 ```
 
-Where `stride` is an accessor on the layout class:
-
-```java
-public static int stride(List<Layout> layouts) {
-    return layouts.stream().mapToInt(Layout::length).sum();
-}
-```
-
-A vertex attribute is created for each layout:
+A vertex attribute is created for layout:
 
 ```java
 int offset = 0;
-for(Layout component : layouts) {
+for(Layout c : layout.layout()) {
     // Determine component format
-    VkFormat format = FormatBuilder.format(component);
+    VkFormat format = FormatBuilder.format(c);
 
     // Add attribute for component
     new AttributeBuilder(binding)
@@ -204,7 +209,7 @@ for(Layout component : layouts) {
         .build();
 
     // Increment offset to the start of the next attribute
-    offset += component.length();
+    offset += c.length();
 }
 assert offset == stride;
 ```
@@ -228,7 +233,7 @@ public static VkFormat format(Layout layout) {
 }
 ```
 
-Where the new `Type.of` helper maps the general component type to the Vulkan equivalent.
+Where the new `Type::of` helper method maps the Java component type to the Vulkan equivalent.
 
 We can now replace the configuration for the vertex data in the pipeline with the following considerably simpler configuration:
 
