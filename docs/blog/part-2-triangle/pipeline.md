@@ -174,7 +174,16 @@ public class ViewportStageBuilder extends AbstractPipelineStageBuilder<VkPipelin
 A `Viewport` is a local type that composes a viewport rectangle and near/far rendering depths:
 
 ```java
-private record Viewport(Rectangle rect, Percentile min, Percentile max)
+public record Viewport(Rectangle rect, Percentile min, Percentile max) {
+    void populate(VkViewport info) {
+        info.x = rectangle.x();
+        info.y = rectangle.y();
+        info.width = rectangle.width();
+        info.height = rectangle.height();
+        info.minDepth = min.floatValue();
+        info.maxDepth = max.floatValue();
+    }
+}
 ```
 
 Where `Rectangle` is another trivial record type:
@@ -183,33 +192,11 @@ Where `Rectangle` is another trivial record type:
 public record Rectangle(int x, int y, int width, int height)
 ```
 
-The builder provides methods to add viewports:
-
-```java
-public ViewportStageBuilder viewport(Rectangle rect, Percentile min, Percentile max) {
-    viewports.add(new Viewport(rect, min, max));
-    return this;
-}
-
-public ViewportPipelineStageBuilder viewport(Rectangle rect) {
-    return viewport(rect, Percentile.ZERO, Percentile.ONE);
-}
-```
-
-And scissor rectangles:
-
-```java
-public ViewportStageBuilder scissor(Rectangle rect) {
-    scissors.add(notNull(rect));
-    return this;
-}
-```
-
 The following overloaded helper is added to the parent pipeline builder for the common case of a single viewport and scissor rectangle with the same dimensions:
 
 ```java
 public Builder viewport(Rectangle rect) {
-    viewport.viewport(rect);
+    viewport.viewport(new Viewport(rect));
     viewport.scissor(rect);
     return this;
 }
@@ -238,20 +225,7 @@ VkPipelineViewportStateCreateInfo get() {
 }
 ```
 
-Which uses the following population method on the `Viewport` type:
-
-```java
-private void populate(VkViewport viewport) {
-    viewport.x = rect.x();
-    viewport.y = rect.y();
-    viewport.width = rect.width();
-    viewport.height = rect.height();
-    viewport.minDepth = min.floatValue();
-    viewport.maxDepth = max.floatValue();
-}
-```
-
-Note there are separate fields for the number of viewports and scissors but they __must__ have the same value.
+Note there are separate fields for the number of viewports and scissors but they __must__ be the same size.
 
 ---
 
@@ -308,7 +282,7 @@ interface Library {
 }
 ```
 
-The following helper is also added to new class to load the shader code from the file system:
+The following helper is also added to load shader code from the file system:
 
 ```java
 public static Shader load(LogicalDevice dev, InputStream in) throws IOException {
@@ -317,40 +291,36 @@ public static Shader load(LogicalDevice dev, InputStream in) throws IOException 
 }
 ```
 
-### Shader Pipeline Stage
-
-A pipeline can be comprised of multiple programmable shader stages, therefore in this case the sub-builder is implemented as an inner class of the pipeline builder:
+A shader stage is configured by the following new class and companion builder:
 
 ```java
-public static class Builder {
-    private final Map<VkShaderStage, ShaderStageBuilder> shaders = new HashMap<>();
+public final class ProgrammableShaderStage {
+    private static final String MAIN = "main";
 
-    public class ShaderStageBuilder {
-        private final VkShaderStage stage;
-        private Shader shader;
-        private String name = "main";
-    }
+    private final VkShaderStage stage;
+    private final Shader shader;
+    private final String name;
 }
 ```
 
-A shader stage is configured via the following factory method:
-
-```java
-public ShaderStageBuilder shader(VkShaderStage stage) {
-    var shader = new ShaderStageBuilder(stage);
-    if(shaders.containsKey(stage)) throw new IllegalArgumentException(...);
-    shaders.put(stage, shader);
-    return shader;
-}
-```
-
-Finally the descriptor for the shader is populated as follows:
+The descriptor for a shader stage is populated as follows:
 
 ```java
 void populate(VkPipelineShaderStageCreateInfo info) {
     info.stage = stage;
     info.module = shader.handle();
     info.pName = name;
+}
+```
+
+Finally a collection of shader stages is added to the pipeline builder:
+
+```java
+public Builder shader(ProgrammableShaderStage shader) {
+    VkShaderStage stage = shader.stage();
+    if(shaders.containsKey(stage)) throw new IllegalArgumentException();
+    shaders.put(stage, shader);
+    return this;
 }
 ```
 
@@ -388,9 +358,9 @@ pipeline.pColorBlendState = blend.get();
 And similarly for the programmable stages:
 
 ```java
-if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
+if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException();
 pipeline.stageCount = shaders.size();
-pipeline.pStages = StructureHelper.pointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, ShaderStageBuilder::populate);
+pipeline.pStages = StructureHelper.pointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, ProgrammableShaderStage::populate);
 ```
 
 Finally the pipeline is instantiated:
@@ -508,8 +478,6 @@ PipelineLayout pipelineLayout() {
 @Bean
 public Pipeline pipeline(RenderPass pass, Swapchain swapchain, Shader vertex, Shader fragment, PipelineLayout layout) {
     return new Pipeline.Builder()
-        .layout(layout)
-        .pass(pass)
         .viewport(swapchain.extents())
         .shader(VkShaderStage.VERTEX)
             .shader(vertex)
@@ -517,7 +485,7 @@ public Pipeline pipeline(RenderPass pass, Swapchain swapchain, Shader vertex, Sh
         .shader(VkShaderStage.FRAGMENT)
             .shader(fragment)
             .build()
-        .build(dev);
+        .build(dev, pass, layout);
 }
 ```
 

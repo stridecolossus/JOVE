@@ -808,7 +808,7 @@ public void render(RenderSequence seq) {
     fence.waitReady();
 
     // Present rendered frame
-    Queue queue = buffer.pool().queue();
+    WorkQueue queue = buffer.pool().queue();
     swapchain.present(queue, index, ready);
 }
 ```
@@ -817,72 +817,63 @@ The demo should now run without validation errors (for the render loop anyway), 
 
 ### Subpass Dependencies
 
-The final synchronisation mechanism is a _subpass dependency_ which specifies memory and execution dependencies between the stages of a render-pass.
+The final synchronisation mechanism is a _subpass dependency_ which specifies memory and execution dependencies between the stages of a render pass.
 
-A subpass dependency is configured via two new mutable types:
+A subpass dependency is configured via two new mutable inner classes:
 
 ```java
 public class Dependency {
-    private Integer index;
-    private final Properties src = new Properties(this);
-    private final Properties dest = new Properties(this);
+    private Subpass dependency;
+    private final Set<VkDependencyFlag> flags = new HashSet<>();
+    private final Properties src = new Properties();
+    private final Properties dest = new Properties();
 }
 ```
 
-Where `index` refers to the dependant subpass by _index_ (see below).
-
-And _source_ and _destination_ specify the properties of the dependency:
+Where _source_ and _destination_ specify the properties of the dependency:
 
 ```java
 public class Properties {
-    private final Dependency dependency;
     private final Set<VkPipelineStage> stages = new HashSet<>();
     private final Set<VkAccess> access = new HashSet<>();
 }
 ```
 
-The subpass domain class is modified to include an index and the list of dependencies:
+Note that the _destination_ of the dependency is implicitly the enclosing subpass.
+
+The subpass domain type is modified to include the list of dependencies:
 
 ```java
 public class Subpass {
-    ...
-    private int index;
     private final List<Dependency> dependencies = new ArrayList<>();
 
     public Dependency dependency() {
-        return new Dependency();
+        var dependency = new Dependency();
+        dependencies.add(dependency);
+        return dependency;
     }
 }
 ```
 
-The subpass _index_ is allocated by the builder of the parent render pass:
+The source and destination subpass instances are referenced by _index_ in the same manner as the attachment references.
+A hidden mutable `index` is added to the subpass class which is initialised in the `create` method of the render pass:
 
 ```java
-public Subpass subpass() {
-    Subpass subpass = new Subpass(subpasses.size());
-    ...
+int index = 0;
+for(Subpass subpass : subpasses) {
+    subpass.init(index++);
 }
 ```
 
-The dependant subpass can be specified in the dependency:
+Next the subpass dependencies are added to the render pass:
 
 ```java
-public Dependency dependency(Subpass subpass) {
-    index = subpass.index;
-    return this;
-}
+List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
+info.dependencyCount = dependencies.size();
+info.pDependencies = StructureCollector.pointer(dependencies, new VkSubpassDependency(), Dependency::populate);
 ```
 
-A subpass can also be dependant on the implicit subpass before or after the render pass:
-
-```java
-public Dependency external() {
-    index = VK_SUBPASS_EXTERNAL;
-    return this;
-}
-```
-
-The descriptor for the subpass dependency is populated as follows:
+Which are populated as follows:
 
 ```java
 void populate(VkSubpassDependency info) {
@@ -895,34 +886,42 @@ void populate(VkSubpassDependency info) {
 }
 ```
 
-Note that the _destination_ of the dependency is implicitly the enclosing subpass.
-
-The final change is to modify the render pass builder to populate the aggregated subpass dependencies:
+A subpass can also be dependant on the implicit subpass before or after the render pass:
 
 ```java
-List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
-info.dependencyCount = dependencies.size();
-info.pDependencies = StructureHelper.pointer(dependencies, VkSubpassDependency::new, Dependency::populate);
+public Dependency external() {
+    this.dependency = VK_SUBPASS_EXTERNAL;
+    return this;
+}
+```
+
+Where `VK_SUBPASS_EXTERNAL` is a synthetic subpass with a special case index (copied from the Vulkan header file):
+
+```java
+public class Dependency {
+    private static final Subpass VK_SUBPASS_EXTERNAL = new Subpass();
+
+    static {
+        VK_SUBPASS_EXTERNAL.index = ~0;
+    }
+}
 ```
 
 In the demo a dependency can now be configured on the implicit `external` subpass:
 
 ```java
-RenderPass pass = new RenderPass.Builder()
-    .subpass()
-        .colour(attachment)
-        .dependency()
-            .external()
-            .source()
-                .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
-                .build()
-            .destination()
-                .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
-                .access(VkAccess.COLOR_ATTACHMENT_WRITE)
-                .build()
+Subpass subpass = new Subpass()
+    .colour(attachment)
+    .dependency()
+        .external()
+        .source()
+            .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
             .build()
-        .build()
-    .build(dev);
+        .destination()
+            .stage(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+            .access(VkAccess.COLOR_ATTACHMENT_WRITE)
+            .build()
+        .build();
 ```
 
 The _destination_ clause specifies that the subpass should wait for the colour attachment to be ready for writing, i.e. when the swapchain has finished using the image.

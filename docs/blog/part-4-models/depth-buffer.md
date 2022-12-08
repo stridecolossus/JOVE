@@ -285,8 +285,8 @@ public class ModelConfiguration {
     @Autowired private Pool graphics;
 
     @Bean
-    public static Model model(DataSource src) {
-        var loader = new ResourceLoaderAdapter<>(src, new ModelLoader());
+    public static Mesh model(DataSource src) {
+        var loader = new ResourceLoaderAdapter<>(src, new MeshLoader());
         return loader.load("chalet.model");
     }
 }
@@ -296,14 +296,14 @@ Then the VBO and index buffer objects are created for the model:
 
 ```java
 @Bean
-public VertexBuffer vbo(Model model) {
-    VulkanBuffer buffer = buffer(model.vertices(), VkBufferUsage.VERTEX_BUFFER);
+public VertexBuffer vbo(Mesh mesh) {
+    VulkanBuffer buffer = buffer(mesh.vertices(), VkBufferUsage.VERTEX_BUFFER);
     return new VertexBuffer(buffer);
 }
 
 @Bean
-public IndexBuffer index(Model model) {
-    VulkanBuffer buffer = buffer(model.index().get(), VkBufferUsage.INDEX_BUFFER);
+public IndexBuffer index(Mesh mesh) {
+    VulkanBuffer buffer = buffer(mesh.index().get(), VkBufferUsage.INDEX_BUFFER);
     return new IndexBuffer(buffer, VkIndexType.UINT32);
 }
 ```
@@ -349,7 +349,7 @@ Finally the `update` method is refactored as follows:
 ```java
 @Bean
 public FrameListener update(ResourceBuffer uniform) {
-    return (start, end) -> {
+    return frame -> {
         Matrix tilt = Rotation.of(Axis.X, MathsUtil.toRadians(-90)).matrix();
         Matrix rot = Rotation.of(Axis.Y, MathsUtil.toRadians(120)).matrix();
         Matrix model = rot.multiply(tilt);
@@ -518,7 +518,7 @@ Attachment depth = new Attachment.Builder()
     .finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
     .build();
 
-Subpass subpass = new Subpass.Builder()
+Subpass subpass = new Subpass()
     .colour(colour)
     .depth(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
     ...
@@ -537,7 +537,7 @@ Unlike the swapchain images the application is responsible for creating and mana
 ```java
 @Bean
 public View depth(Swapchain swapchain, AllocationService allocator) {
-    Descriptor descriptor = new Descriptor.Builder()
+    var descriptor = new Image.Descriptor.Builder()
         .aspect(VkImageAspect.DEPTH)
         .extents(swapchain.extents())
         .format(VkFormat.D32_SFLOAT)
@@ -637,16 +637,6 @@ public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormat
 }
 ```
 
-Where `Mask` is a new utility class for common bit-level operations:
-
-```java
-public record Mask(int mask) {
-    public boolean contains(int value) {
-        return (mask & value) == value;
-    }
-}
-```
-
 A convenience constructor (not shown) is also added to create a selector using the `filter` factory method.
 
 The optimal format can now be selected in the demo when configuring the depth buffer:
@@ -689,11 +679,11 @@ public static VkSurfaceFormatKHR defaultSurfaceFormat() {
 
     // Init default swapchain image format
     format.format = new FormatBuilder()
-            .components("BGRA")
-            .bytes(1)
-            .signed(false)
-            .type(FormatBuilder.Type.NORM)
-            .build();
+        .components("BGRA")
+        .bytes(1)
+        .signed(false)
+        .type(FormatBuilder.Type.NORM)
+        .build();
 
     return format;
 }
@@ -705,10 +695,10 @@ A second helper is added to select a preferred presentation mode:
 public VkPresentModeKHR mode(VkPresentModeKHR... modes) {
     Set<VkPresentModeKHR> available = this.modes();
     return Arrays
-            .stream(modes)
-            .filter(available::contains)
-            .findAny()
-            .orElse(DEFAULT_PRESENTATION_MODE);
+        .stream(modes)
+        .filter(available::contains)
+        .findAny()
+        .orElse(DEFAULT_PRESENTATION_MODE);
 }
 ```
 
@@ -757,24 +747,16 @@ Where `LazySupplier` returns a singleton instance using a relatively cheap threa
 
 By default the Vulkan Y axis points __down__ which is the opposite direction to OpenGL (and just about every other 3D library).
 
-However we came across a global solution that handily flips the axis by specifying a 'negative' viewport rectangle: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+However we came across a global solution that handily flips the vertical axis by specifying a 'negative' viewport rectangle: [Flipping the Vulkan viewport](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
 
-The implementation is relatively trivial - we add a _flip_ setting to the `ViewportStageBuilder` which is applied when the viewport descriptor is populated:
+The implementation is relatively trivial:
 
 ```java
-private void populate(Viewport viewport, VkViewport info) {
-    Rectangle rect = viewport.rect;
-    info.x = rect.x();
-    info.width = rect.width();
-    if(flip) {
-        info.y = rect.y() + rect.height();
-        info.height = -rect.height();
-    }
-    else {
-        info.y = rect.y();
-        info.height = rect.height();
-    }
-    ...
+public Viewport flip() {
+    int y = rectangle.y() + rectangle.height();
+    int h = - rectangle.height();
+    Rectangle flip = new Rectangle(rectangle.x(), y, rectangle.width(), h);
+    return new Viewport(flip, min, max);
 }
 ```
 
@@ -784,13 +766,13 @@ Notes:
 
 * The Y coordinate of the viewport origin is also shifted to the bottom of the viewport.
 
-However we eventually decided against using the global flip as the default setting for a couple of reasons:
+However we eventually decided against using this as the default implementation for a couple of reasons:
 
 1. This is a breaking change for existing code since flipping the Y axis also essentially flips the triangle winding order.
 
 2. The implementation actually flips the _coordinate space_ rather than simply flipping the frame buffer.  This means that __all__ code still needs to be aware that the global flip is enabled (e.g. for the camera model and view transform later on) which seems to defeat the object.
 
-Therefore the _flip_ setting is disabled by default and we just accept that the Y direction is __down__ from this point forwards.
+Therefore `flip` is an optional helper method and we just accept that the Y direction is __down__ from this point forwards.
 
 ---
 

@@ -647,13 +647,13 @@ Instead we note that as things stand the following steps in the loading process 
 
 Ideally the above steps would only be performed _once_ since we are only really interested in the resultant vertex and index bufferable objects.  Therefore a custom persistence mechanism is introduced to write the final model to the file-system _once_ as an off-line activity which can then be loaded with minimal overhead.
 
-A new component outputs a model to a `DataOutputStream` which supports both Java primitives and byte arrays:
+A new component outputs a mesh to a `DataOutputStream` which supports both Java primitives and byte arrays:
 
 ```java
-public class ModelLoader {
+public class MeshLoader {
     private static final int VERSION = 1;
 
-    private static void write(Model model, DataOutputStream out) throws IOException {
+    private static void write(Mesh mesh, DataOutputStream out) throws IOException {
     }
 }
 ```
@@ -667,15 +667,14 @@ out.writeInt(VERSION);
 The model header is written next:
 
 ```java
-Header header = model.header();
-out.writeUTF(header.primitive().name());
-out.writeInt(header.count());
+out.writeUTF(mesh.primitive().name());
+out.writeInt(mesh.count());
 ```
 
 Followed by the vertex layout:
 
 ```java
-List<Layout> layout = model.layout();
+List<Layout> layout = mesh.layout().layout();
 out.writeInt(layout.size());
 for(Layout e : layout) {
     out.writeInt(e.size());
@@ -685,12 +684,12 @@ for(Layout e : layout) {
 }
 ```
 
-Note that the _type_ of each component in the layout is output as a string using the `writeUTF` method on the stream.
+Note that the _type_ of each component in the layout is written as a string using the `writeUTF` method on the stream.
 
 Next the vertex buffer is output:
 
 ```java
-writeBuffer(model.vertices(), out);
+writeBuffer(mesh.vertices(), out);
 ```
 
 Which uses the following helper to output the length of the data followed by the buffer as a byte-array:
@@ -715,17 +714,15 @@ private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOE
 
 And finally the optional index buffer is written using the same helper.
 
-### Model Loader
-
-Next a new public method is added to the loader class to read back the persisted model:
+Next a new public method is added to the loader to read back the persisted mesh:
 
 ```java
-public Model load(DataInputStream in) throws IOException {
+public Mesh load(DataInputStream in) throws IOException {
     ...
 }
 ```
 
-The loader first verifies that the file-format version is supported:
+The loader first verifies that the file version is supported:
 
 ```java
 int version = in.readInt();
@@ -762,10 +759,10 @@ Bufferable vertices = loadBuffer(in);
 Bufferable index = loadBuffer(in);
 ```
 
-And finally the model is instantiated:
+And finally the mesh is instantiated:
 
 ```java
-return new Model(new Header(primitive, count, layout), vertices, index);
+return new BufferedMesh(primitive, count, new CompoundLayout(components), vertices, index);
 ```
 
 The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additional check for an empty buffer):

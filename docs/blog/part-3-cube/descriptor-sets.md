@@ -282,39 +282,32 @@ Finally the descriptor set domain object can be implemented:
 public class DescriptorSet implements NativeObject {
     private final Handle handle;
     private final Layout layout;
-    private final Map<Binding, DescriptorResource> entries;
-    private final Set<Binding> modified = new HashSet<>();
+    private final Map<Binding, ResourceEntry> entries;
 }
 ```
 
-All bindings are initialised as _modified_ in the constructor:
+Where a resource entry is a mutable inner class that maps a resource to a binding:
 
 ```java
-public DescriptorSet(...) {
-    ...
-    modified.addAll(layout.bindings());
+private class ResourceEntry {
+    private final Binding binding;
+    private DescriptorResource res;
+    private boolean dirty = true;
 }
 ```
 
-A resource can now be bound to the descriptor set:
+A resource is bound by the following mutator:
 
 ```java
 public void set(Binding binding, DescriptorResource res) {
-    // Check binding belongs to this set
-    if(!layout.bindings().values().contains(binding)) {
-        throw new IllegalArgumentException(...);
-    }
-
-    // Check expected resource
-    if(binding.type() != res.type()) {
-        throw new IllegalArgumentException(...);
-    }
-
-    // Update entry
-    entries.put(binding, res);
-    modified.add(binding);
+    ResourceEntry entry = entries.get(binding);
+    entry.set(res);
 }
 ```
+
+Which delegates to the entry and marks the resource as dirty, i.e. requires an update.
+
+This method also validates (not shown) that the binding belongs to the descriptor layout and the resource is the correct type.
 
 ### Updates
 
@@ -326,48 +319,12 @@ Applying the updated resources to the descriptor sets is slightly complicated:
 
 3. Updates are applied as a batch operation.
 
-First a transient type is implemented that composes a modified entry:
-
-```java
-private record Modified(DescriptorSet set, Binding binding, DescriptorResource res) {
-    private Modified {
-        if(res == null) throw new IllegalStateException(...);
-    }
-}
-```
-
-The modified resources can then be enumerated from a descriptor set:
-
-```java
-private Stream<Modified> modified() {
-    return modified
-        .stream()
-        .map(e -> new Modified(this, e, entries.get(e)));
-}
-```
-
-The Vulkan descriptor for each modified entry is populated as follows:
-
-```java
-private void populate(VkWriteDescriptorSet write) {
-    // Init write descriptor
-    write.dstBinding = binding.index();
-    write.descriptorType = binding.type();
-    write.dstSet = set.handle();
-    write.descriptorCount = 1;
-    write.dstArrayElement = 0;
-
-    // Init resource descriptor
-    res.populate(write);
-}
-```
-
 To apply a batch of updates the total set of modified sets is first enumerated:
 
 ```java
 public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
-    // Enumerate modified resources
-    List<Modified> modified = descriptors
+    // Enumerate modified sets
+    var modified = descriptors
         .stream()
         .flatMap(DescriptorSet::modified)
         .toList();
@@ -376,29 +333,52 @@ public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptor
     if(modified.isEmpty()) {
         return 0;
     }
-    
-    ...
+}
+```
 
-    return writes.length;
+Where the `modified` entries for each descriptor set are selected via a helper:
+
+```java
+private Stream<ResourceEntry> modified() {
+    return entries
+        .values()
+        .stream()
+        .filter(e -> e.dirty);
 }
 ```
 
 The set of updates is transformed to an array of Vulkan descriptors and the API is invoked to apply the changes:
 
 ```java
-VkWriteDescriptorSet[] writes = StructureHelper.array(modified, VkWriteDescriptorSet::new, Modified::populate);
+VkWriteDescriptorSet[] writes = StructureCollector.array(modified, new VkWriteDescriptorSet(), ResourceEntry::populate);
 dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+return writes.length;
 ```
 
-Finally the `modified` descriptor sets are cleared:
+Where a Vulkan descriptor is populated for each updated entry:
 
 ```java
-modified
-    .stream()
-    .map(Modified::set)
-    .map(e -> e.modified)
-    .forEach(Set::clear);
+private void populate(VkWriteDescriptorSet write) {
+    // Validate
+    if(res == null) throw new IllegalStateException();
+    assert dirty;
+
+    // Init write descriptor
+    write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
+    write.dstBinding = binding.index();
+    write.descriptorType = binding.type();
+    write.dstSet = DescriptorSet.this.handle();
+    write.descriptorCount = 1;
+
+    // Init resource descriptor
+    res.populate(write);
+
+    // Mark as updated
+    dirty = false;
+}
 ```
+
+Note that the `dirty` flag is cleared as a side-effect.
 
 A new library is created for the API methods in this chapter:
 

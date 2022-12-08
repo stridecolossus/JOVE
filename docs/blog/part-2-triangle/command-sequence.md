@@ -56,11 +56,11 @@ The starting point is an outline class for commands, buffers and pools:
 @FunctionalInterface
 public interface Command {
     /**
-     * Executes this command.
+     * Records this command to the given buffer.
      * @param lib       Vulkan library
-     * @param buffer    Command buffer handle
+     * @param buffer    Command buffer
      */
-    void execute(VulkanLibrary lib, Buffer buffer);
+    void record(VulkanLibrary lib, Buffer buffer);
 
     /**
      * A <i>command buffer</i> is allocated by a {@link Pool} and used to record commands.
@@ -101,9 +101,9 @@ The command pool is tackled first:
 
 ```java
 class Pool extends AbstractVulkanObject {
-    private final Queue queue;
+    private final WorkQueue queue;
 
-    private Pool(Pointer handle, LogicalDevice dev, Queue queue) {
+    private Pool(Pointer handle, LogicalDevice dev, WorkQueue queue) {
         super(handle, dev);
         this.queue = notNull(queue);
     }
@@ -118,7 +118,7 @@ class Pool extends AbstractVulkanObject {
 Command pools are created via a factory method:
 
 ```java
-public static Pool create(LogicalDevice dev, Queue queue, VkCommandPoolCreateFlag... flags) {
+public static Pool create(LogicalDevice dev, WorkQueue queue, VkCommandPoolCreateFlag... flags) {
     // Init pool descriptor
     var info = new VkCommandPoolCreateInfo();
     info.queueFamilyIndex = queue.family().index();
@@ -211,9 +211,9 @@ The _state_ member tracks whether the buffer has been recorded or is ready for e
 The `begin` method starts the recording of a command sequence:
 
 ```java
-public Buffer begin(VkCommandBufferUsageFlag... flags) {
+public Recorder begin(VkCommandBufferUsageFlag... flags) {
     // Check buffer can be recorded
-    if(state != State.INITIAL) throw new IllegalStateException(...);
+    if(state != State.INITIAL) throw new IllegalStateException();
 
     // Init descriptor
     var info = new VkCommandBufferBeginInfo();
@@ -225,30 +225,35 @@ public Buffer begin(VkCommandBufferUsageFlag... flags) {
 
     // Start recording
     state = State.RECORDING;
-    return this;
+    return new Recorder();
 }
 ```
 
-The sequence is then recorded by adding commands:
+The `Recorder` is an inner class used to record commands to the sequence:
 
 ```java
-public Buffer add(Command cmd) {
-    if(state != State.RECORDING) throw new IllegalStateException(...);
-    VulkanLibrary lib = pool.device().library();
-    cmd.execute(lib, this);
-    return this;
+public class Recorder {
+    private Recorder() {
+    }
+
+    public Recorder add(Command cmd) {
+        if(state != State.RECORDING) throw new IllegalStateException();
+        VulkanLibrary lib = pool.device().library();
+        cmd.record(lib, Buffer.this);
+        return this;
+    }
 }
 ```
 
-Finally the `end` method completes recording:
+And finally the `end` method completes recording and marks the buffer ready for execution:
 
 ```java
 public Buffer end() {
-    if(state != State.RECORDING) throw new IllegalStateException(...);
+    if(state != State.RECORDING) throw new IllegalStateException();
     VulkanLibrary lib = pool.device().library();
     check(lib.vkEndCommandBuffer(this));
     state = State.EXECUTABLE;
-    return this;
+    return Buffer.this;
 }
 ```
 
@@ -336,7 +341,7 @@ Finally the new API method is added to the device library:
 ```java
 interface Library {
     ...
-    int vkQueueSubmit(Queue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
+    int vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 }
 ```
 
@@ -346,7 +351,7 @@ interface Library {
 
 ### Commands
 
-We can now implement the specific commands required for rendering the triangle in the demo.
+The specific commands required for rendering the triangle can now be implemented.
 
 The following factory method is added on the `FrameBuffer` class to begin rendering to that buffer:
 
@@ -370,7 +375,7 @@ public Command begin() {
 }
 ```
 
-For the moment a temporarily bodge is added to clear the attachment to a grey colour:
+For the moment a temporarily bodge is added to clear the attachment to a neutral grey colour:
 
 ```java
 VkClearValue clear = new VkClearValue();
@@ -385,7 +390,7 @@ Clear values will be more fully implemented in the [models](/JOVE/blog/part-4-mo
 Ending the render pass is defined as a constant since the command does not require any additional arguments:
 
 ```java
-public static final Command END = (api, buffer) -> api.vkCmdEndRenderPass(buffer);
+public static final Command END = (lib, buffer) -> lib.vkCmdEndRenderPass(buffer);
 ```
 
 To bind the pipeline in the render sequence a new command factory method is added to the `Pipeline` class:
@@ -399,7 +404,7 @@ public Command bind() {
 Finally the draw command is hard-coded to render the triangle vertices:
 
 ```java
-Command draw = (api, handle) -> api.vkCmdDraw(handle, 3, 1, 0, 0);
+Command draw = (lib, handle) -> lib.vkCmdDraw(handle, 3, 1, 0, 0);
 ```
 
 This specifies three triangles vertices, in a single instance, both starting at index zero.  A proper builder for draw commands will be implemented in a later chapter.
@@ -422,7 +427,7 @@ In the demo application the devices configuration class is modified by replacing
 ```java
 class DeviceConfiguration {
     private static Pool pool(LogicalDevice dev, Family family) {
-        Queue queue = dev.queue(family);
+        WorkQueue queue = dev.queue(family);
         return Pool.create(dev, queue);
     }
     
