@@ -7,7 +7,7 @@ import java.time.Duration;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * An <i>animator</i> is a specialised playable for an {@link Animation} updated on each frame.
+ * An <i>animator</i> is a specialised playable for an {@link Animation} interpolated over a given duration.
  * @author Sarge
  */
 public class Animator extends AbstractPlayable implements Frame.Listener {

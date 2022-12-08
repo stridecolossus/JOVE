@@ -139,16 +139,6 @@ public final class Plane implements Intersected {
 
 	@Override
 	public Iterable<Intersection> intersections(Ray ray) {
-		return intersections(ray, true);
-	}
-
-	/**
-	 * Determines the intersections of the given ray in the specified half space of this plane.
-	 * @param ray Ray
-	 * @param pos Whether rays originating in the {@link HalfSpace#POSITIVE} half space are subject to the intersection test
-	 * @return Intersections
-	 */
-	private Iterable<Intersection> intersections(Ray ray, boolean pos) {
 		// Determine angle between ray and normal
 		final float denom = normal.dot(ray.direction());
 
@@ -158,52 +148,15 @@ public final class Plane implements Intersected {
 		}
 
 		// Calc intersection distance
-		final float d = distance(ray.origin());
-		final float t = -d / denom;
+		final float dist = -distance(ray.origin()) / denom;
 
 		// Check for intersection
-		if(pos) {
-			if(t < 0) {
-				return Intersected.NONE;
-			}
-		}
-		else {
-			if(d > 0) {
-				return Intersected.NONE;
-			}
+		if((dist < 0) || (dist > ray.length())) {
+			return Intersected.NONE;
 		}
 
 		// Build intersection result
-		return List.of(Intersection.of(ray, t, normal));
-	}
-
-	/**
-	 * Creates an adapter for this plane that only applies the intersection test to rays <i>behind</i> this plane, i.e. in the {@link HalfSpace#NEGATIVE} half space.
-	 * @return Intersecting surface for rays behind this plane
-	 * @see #halfspace(HalfSpace)
-	 */
-	public Intersected behind() {
-		return ray -> intersections(ray, false);
-	}
-
-	/**
-	 * Creates an adapter for this plane that considers <b>all</b> rays in the given half space as intersecting.
-	 * <p>
-	 * This implementation may offer better performance where the actual intersection point and surface normal are not relevant.
-	 * Note that the intersection results are either {@link Intersected#NONE} or {@link Intersected#UNDEFINED}.
-	 * <p>
-	 * @return Half space intersection test
-	 * @see #behind()
-	 */
-	public Intersected halfspace(HalfSpace space) {
-		return ray -> {
-			if(halfspace(ray.origin()) == space) {
-				return Intersected.UNDEFINED;
-			}
-			else {
-				return Intersected.NONE;
-			}
-		};
+		return List.of(Intersection.of(ray, dist, normal));
 	}
 
 	@Override

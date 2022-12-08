@@ -23,7 +23,7 @@ import org.sarge.lib.util.Check;
  * The {@link #policy(Policy)} configures the number of new particles to be generated on each frame.
  * Alternatively particles can be pre-allocated using the {@link #add(int, long)} method.
  * <p>
- * New particles are initialised according to the configured {@link #position(PositionFactory)} and {@link #vector(VectorFactory)} factories.
+ * New particles are initialised according to the configured {@link #position(PositionFactory)} and {@link #vector(DirectionFactory)} factories.
  * The maximum lifetime of a particle can be configured via {@link #lifetime(long)}.
  * <p>
  * On each frame all particles that are not {@link Particle#isIdle()} are updated as follows:
@@ -53,7 +53,7 @@ public class ParticleSystem implements Frame.Listener {
 	// Particle properties
 	private final Set<Characteristic> chars;
 	private PositionFactory position = PositionFactory.ORIGIN;
-	private VectorFactory vector = VectorFactory.of(Axis.Y);
+	private DirectionFactory vector = DirectionFactory.of(Axis.Y);
 	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
 	private int max = 1;
 	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
@@ -99,7 +99,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * Sets the initial movement vector for new particles (default is {@link Vector#Y}).
 	 * @param vec Movement vector factory
 	 */
-	public ParticleSystem vector(VectorFactory vec) {
+	public ParticleSystem vector(DirectionFactory vec) {
 		this.vector = notNull(vec);
 		return this;
 	}
@@ -140,7 +140,7 @@ public class ParticleSystem implements Frame.Listener {
 		final List<Particle> added = new ArrayList<>(actual);
 		for(int n = 0; n < actual; ++n) {
 			final Point start = position.position();
-			final Vector dir = vector.vector();
+			final Normal dir = vector.direction();
 			final Particle p = particle(time, start, dir);
 			added.add(p);
 		}
@@ -165,7 +165,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param dir		Initial movement direction
 	 * @return New particle
 	 */
-	protected Particle particle(long time, Point pos, Vector dir) {
+	protected Particle particle(long time, Point pos, Normal dir) {
 		return new Particle(time, pos, dir);
 	}
 

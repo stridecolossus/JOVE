@@ -6,13 +6,13 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
-public class CollisionTest {
+class CollisionTest {
 	private Particle particle;
 	private Intersection intersection;
 
 	@BeforeEach
 	void before() {
-		particle = new Particle(0, Point.ORIGIN, new Vector(1, 1, 0));
+		particle = new Particle(0, Point.ORIGIN, new Vector(1, 1, 0).normalize());
 		intersection = Intersection.of(particle, 1, Axis.Y);
 	}
 

@@ -5,10 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.scene.particle.*;
 import org.sarge.jove.util.Randomiser;
 import org.sarge.lib.element.*;
-import org.sarge.lib.util.*;
 
 public class ParticleSystemLoaderTest {
 	private ParticleSystemLoader loader;
@@ -42,15 +40,17 @@ public class ParticleSystemLoaderTest {
 			            <end>0.5, 0, 0, 0</end>
 			        </interpolated>
 			    </colour>
+			    <!--
 			    <influences>
 			        <literal>-Y</literal>
 			    </influences>
+			    -->
 			    <surfaces>
 			        <reflect>
-			            <behind>
+			            <plane>
 			                <normal>Y</normal>
 			                <distance>0</distance>
-			            </behind>
+			            </plane>
 			            <absorb>0.3</absorb>
 			        </reflect>
 			    </surfaces>

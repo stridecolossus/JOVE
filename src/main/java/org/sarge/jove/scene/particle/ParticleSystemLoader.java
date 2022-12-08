@@ -6,7 +6,6 @@ import java.io.*;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Plane.HalfSpace;
 import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.scene.particle.ParticleSystem.Characteristic;
@@ -24,7 +23,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	private final ElementLoader loader = new ElementLoader();
 	private final LoaderRegistry<GenerationPolicy> policy;
 	private final LoaderRegistry<PositionFactory> position;
-	private final LoaderRegistry<VectorFactory> vector;
+	private final LoaderRegistry<DirectionFactory> vector;
 	private final LoaderRegistry<ColourFactory> colour;
 
 	/**
@@ -55,11 +54,11 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 				.register("circle", e -> PositionFactory.circle(Point.ORIGIN, Disc.load(e, randomiser)));
 	}
 
-	protected LoaderRegistry<VectorFactory> vector() {
-		return new LoaderRegistry<VectorFactory>()
-				.register("literal", Axis::parse, VectorFactory::of)
-				.register("random", __ -> VectorFactory.random(randomiser))
-				.register("cone", e -> VectorFactory.cone(Disc.load(e, randomiser)));
+	protected LoaderRegistry<DirectionFactory> vector() {
+		return new LoaderRegistry<DirectionFactory>()
+				.register("literal", Axis::parse, vec -> DirectionFactory.of(vec.normalize()))
+				.register("random", __ -> DirectionFactory.random(randomiser))
+				.register("cone", e -> DirectionFactory.cone(Disc.load(e, randomiser)));
 	}
 
 	protected LoaderRegistry<ColourFactory> colour() {
@@ -166,7 +165,7 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	 */
 	private Influence influence(Element root) {
 		return switch(root.name()) {
-			case "literal" -> Influence.of(root.text().transform(Axis::parse));
+//			case "literal" -> Influence.of(root.text().transform(Axis::parse));
 			case "velocity" -> Influence.velocity(root.child("velocity").text().toFloat());
 			default -> throw root.exception("Unknown influence");
 		};
@@ -182,8 +181,8 @@ public class ParticleSystemLoader implements ResourceLoader<Element, ParticleSys
 	private Intersected surface(Element root) {
 		return switch(root.name()) {
 			case "plane" -> plane(root);
-			case "behind" -> plane(root).behind();
-			case "negative" -> plane(root).halfspace(HalfSpace.NEGATIVE);
+//			case "behind" -> plane(root).behind();
+//			case "negative" -> plane(root).halfspace(HalfSpace.NEGATIVE);
 			default -> throw root.exception("Unknown collision surface");
 		};
 	}

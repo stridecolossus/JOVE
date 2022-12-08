@@ -48,7 +48,7 @@ class Disc {
 	 * Generates a random vector where this disc represents a cone.
 	 * @return Random vector
 	 */
-	public Vector vector() {
+	public Normal vector() {
 		final Vector vec = new Vector(point());
 		return normal.add(vec).normalize();
 	}

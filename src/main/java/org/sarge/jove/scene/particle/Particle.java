@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>particle</i> is a mutable record for the position and direction of a vertex in a particle system.
@@ -16,8 +17,9 @@ import org.sarge.jove.geometry.*;
 public class Particle implements Ray {
 	private final long created;
 	private Point pos;
-	private Vector dir;
+	private Normal dir;
 	private Colour col = Colour.WHITE;
+	private float velocity = 1;
 
 	/**
 	 * Constructor.
@@ -25,7 +27,7 @@ public class Particle implements Ray {
 	 * @param pos 			Starting position
 	 * @param dir			Initial direction
 	 */
-	protected Particle(long created, Point pos, Vector dir) {
+	protected Particle(long created, Point pos, Normal dir) {
 		this.created = zeroOrMore(created);
 		this.pos = notNull(pos);
 		this.dir = notNull(dir);
@@ -44,8 +46,13 @@ public class Particle implements Ray {
 	}
 
 	@Override
-	public Vector direction() {
+	public Normal direction() {
 		return dir;
+	}
+
+	@Override
+	public float length() {
+		return velocity;
 	}
 
 	/**
@@ -105,19 +112,21 @@ public class Particle implements Ray {
 	}
 
 	/**
-	 * Combines the given vector with the direction of this particle.
-	 * @param vec Direction modifier
+	 * Sets the direction of this particle.
+	 * @param dir Particle direction
 	 */
-	public void add(Vector vec) {
-		dir = dir.add(vec);
+	public void direction(Normal dir) {
+		this.dir = notNull(dir);
 	}
 
 	/**
-	 * Modifies the <i>velocity</i> of this particle.
-	 * @param v Velocity modifier
+	 * Modifies the velocity (or ray length) of this particle.
+	 * @param velocity Velocity modifier
+	 * @throws IllegalArgumentException if {@link #velocity} is zero
 	 */
-	public void velocity(float v) {
-		dir = dir.multiply(v);
+	public void velocity(float velocity) {
+		if(MathsUtil.isZero(velocity)) throw new IllegalArgumentException();
+		this.velocity *= velocity;
 	}
 
 	/**
@@ -128,7 +137,7 @@ public class Particle implements Ray {
 	 */
 	public void reflect(Point pos, Normal normal) {
 		this.pos = notNull(pos);
-		this.dir = dir.reflect(normal);
+		this.dir = dir.reflect(normal).normalize();
 	}
 
 	/**
@@ -151,7 +160,7 @@ public class Particle implements Ray {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(created, pos, dir, col);
+		return Objects.hash(created, pos, dir, col, velocity);
 	}
 
 	@Override
@@ -162,7 +171,8 @@ public class Particle implements Ray {
 				(this.created == that.created) &&
 				this.pos.equals(that.pos) &&
 				this.dir.equals(that.dir) &&
-				this.col.equals(that.col);
+				this.col.equals(that.col) &&
+				MathsUtil.isEqual(this.velocity, that.velocity);
 	}
 
 	@Override
@@ -170,6 +180,7 @@ public class Particle implements Ray {
 		return new ToStringBuilder(this)
 				.append("pos", pos)
 				.append("dir", dir)
+				.append("velocity", velocity)
 				.append("col", col)
 				.append("created", created)
 				.build();

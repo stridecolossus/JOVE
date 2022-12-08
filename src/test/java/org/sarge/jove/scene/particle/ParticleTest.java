@@ -5,9 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.particle.Particle;
 
-public class ParticleTest {
+class ParticleTest {
 	private Particle particle;
 
 	@BeforeEach
@@ -32,18 +31,18 @@ public class ParticleTest {
 		assertEquals(new Point(1, 0, 0), particle.origin());
 	}
 
-	@DisplayName("The movement vector of a particle can be combined")
+	@DisplayName("The direction of a particle can be modified")
 	@Test
-	void vector() {
-		particle.add(Axis.X);
-		assertEquals(Axis.X.add(Axis.Y), particle.direction());
+	void direction() {
+		particle.direction(Axis.X);
+		assertEquals(Axis.X, particle.direction());
 	}
 
 	@DisplayName("The velocity of a particle can be modified")
 	@Test
 	void velocity() {
 		particle.velocity(2);
-		assertEquals(Axis.Y.multiply(2), particle.direction());
+		assertEquals(2, particle.length());
 	}
 
 	@DisplayName("A moving particle can be stopped")

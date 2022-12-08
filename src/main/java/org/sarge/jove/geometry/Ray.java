@@ -19,15 +19,19 @@ public interface Ray {
 	Point origin();
 
 	/**
-	 * Note that the ray direction is <b>not</b> constrained to be a {@link Normal}.
 	 * @return Ray direction
 	 */
-	Vector direction();
+	Normal direction();
 
 	/**
-	 * Default implementation.
+	 * @return Length of this ray
 	 */
-	record DefaultRay(Point origin, Vector direction) implements Ray {
+	float length();
+
+	/**
+	 * Default implementation for an infinitely long ray.
+	 */
+	record DefaultRay(Point origin, Normal direction) implements Ray {
 		/**
 		 * Constructor.
 		 * @param origin			Ray origin
@@ -36,6 +40,11 @@ public interface Ray {
 		public DefaultRay {
 			Check.notNull(origin);
 			Check.notNull(direction);
+		}
+
+		@Override
+		public float length() {
+			return Float.POSITIVE_INFINITY;
 		}
 	}
 

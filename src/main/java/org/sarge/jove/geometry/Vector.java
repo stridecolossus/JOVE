@@ -216,11 +216,10 @@ public sealed class Vector extends Tuple permits Normal {
 	/**
 	 * Reflects this vector about the given normal.
 	 * <p>
-	 * The reflection R of vector V onto a surface with normal N is: <pre>R = -2(V.N)N + V</pre>
+	 * The reflection R of vector V onto a surface with normal N is: <pre>R = V-2(V.N)N</pre>
 	 * <p>
 	 * @param normal Normal
 	 * @return Reflected vector
-	 * @see <a href="http://www.3dkingdoms.com/weekly/weekly.php?a=2">Reflection</a>
 	 */
 	public final Vector reflect(Normal normal) {
 		final float f = -2f * normal.dot(this);
