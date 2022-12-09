@@ -5,7 +5,6 @@ import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.core.Camera;
 
 class CameraTest {
 	private Camera cam;
@@ -98,7 +97,7 @@ class CameraTest {
 	@Test
 	void matrix() {
 		// Create camera rotation
-		final Matrix rot = new Matrix.Builder()
+		final Matrix rot = Matrix4.builder()
 				.identity()
 				.row(0, X)
 				.row(1, Y)

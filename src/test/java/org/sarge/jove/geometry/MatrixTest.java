@@ -201,6 +201,8 @@ class MatrixTest {
 	void buffer() {
 		final ByteBuffer buffer = ByteBuffer.allocate(ORDER * ORDER * Float.BYTES);
 		matrix.buffer(buffer);
+		assertEquals(0, buffer.remaining());
+		buffer.rewind();
 		for(int r = 0; r < ORDER; ++r) {
 			for(int c = 0; c < ORDER; ++c) {
 				final float expected = r + c * ORDER;

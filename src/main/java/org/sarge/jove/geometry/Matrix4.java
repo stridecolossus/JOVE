@@ -29,7 +29,7 @@ import org.sarge.jove.common.Layout;
  * <p>
  * @author Sarge
  */
-public class Matrix4 extends Matrix {
+public final class Matrix4 {
 	/**
 	 * Order of a 4x4 matrix.
 	 */
@@ -38,7 +38,7 @@ public class Matrix4 extends Matrix {
 	/**
 	 * 4x4 identity matrix.
 	 */
-	public static final Matrix IDENTITY = new Matrix.Builder().identity().build();
+	public static final Matrix IDENTITY = builder().identity().build();
 
 	/**
 	 * Layout of a 4x4 matrix.
@@ -50,13 +50,24 @@ public class Matrix4 extends Matrix {
 	 */
 	public static final int LENGTH = LAYOUT.stride();
 
+	private Matrix4() {
+	}
+
+	/**
+	 *
+	 * @return New builder for a 4x4 matrix
+	 */
+	public static Matrix.Builder builder() {
+		return new Matrix.Builder(ORDER);
+	}
+
 	/**
 	 * Creates a 4x4 translation matrix by populating the top-right column of the matrix.
 	 * @param vec Translation vector
 	 * @return Translation matrix
 	 */
 	public static Matrix translation(Vector vec) {
-		return new Builder()
+		return builder()
 				.identity()
 				.column(3, vec)
 				.build();
@@ -67,38 +78,11 @@ public class Matrix4 extends Matrix {
 	 * @return Scaling matrix
 	 */
 	public static Matrix scale(float x, float y, float z) {
-		return new Builder()
+		return builder()
 				.set(0, 0, x)
 				.set(1, 1, y)
 				.set(2, 2, z)
 				.set(3, 3, 1)
 				.build();
-	}
-
-	/**
-	 * Constructor.
-	 */
-	Matrix4() {
-		super(ORDER);
-	}
-
-	@Override
-	public int order() {
-		return ORDER;
-	}
-
-	@Override
-	protected int index(int row, int col) {
-		return row + (col << 2);
-	}
-
-	@Override
-	public String toString() {
-		if(this == IDENTITY) {
-			return "IDENTITY";
-		}
-		else {
-			return super.toString();
-		}
 	}
 }

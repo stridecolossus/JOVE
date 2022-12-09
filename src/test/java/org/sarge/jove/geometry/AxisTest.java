@@ -71,37 +71,38 @@ public class AxisTest {
 	@DisplayName("A rotation matrix about an axis can be constructed")
 	@Nested
 	class RotationTests {
+		private Matrix.Builder expected;
+
+		@BeforeEach
+		void before() {
+			expected = Matrix4.builder().identity();
+		}
+
 		@Test
 		void x() {
-			final Matrix expected = new Matrix.Builder()
-					.identity()
+			expected
 					.set(1, 1, -1)
-					.set(2, 2, -1)
-					.build();
+					.set(2, 2, -1);
 
-			assertEquals(expected, X.rotation(PI));
+			assertEquals(expected.build(), X.rotation(PI));
 		}
 
 		@Test
 		void y() {
-			final Matrix expected = new Matrix.Builder()
-					.identity()
+			expected
 					.set(0, 0, -1)
-					.set(2, 2, -1)
-					.build();
+					.set(2, 2, -1);
 
-			assertEquals(expected, Y.rotation(PI));
+			assertEquals(expected.build(), Y.rotation(PI));
 		}
 
 		@Test
 		void z() {
-			final Matrix expected = new Matrix.Builder()
-					.identity()
+			expected
 					.set(0, 0, -1)
-					.set(1, 1, -1)
-					.build();
+					.set(1, 1, -1);
 
-			assertEquals(expected, Z.rotation(PI));
+			assertEquals(expected.build(), Z.rotation(PI));
 		}
 	}
 

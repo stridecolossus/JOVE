@@ -139,7 +139,7 @@ public final class Quaternion implements Rotation {
 		final float zz = z * z;
 		final float zw = z * w;
 
-		return new Matrix.Builder()
+		return Matrix4.builder()
 			.set(0, 0, 1 - 2 * (yy + zz))
 			.set(1, 0, 2 * (xy + zw))
 			.set(2, 0, 2 * (xz - yw))

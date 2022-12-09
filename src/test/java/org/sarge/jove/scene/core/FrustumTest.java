@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.graph.*;
 import org.sarge.jove.scene.volume.Volume;
 import org.sarge.jove.util.Trigonometric;
 
@@ -54,7 +53,7 @@ class FrustumTest {
 	@Test
 	void extract() {
 		// Construct a view matrix
-		final Matrix m = new Matrix.Builder()
+		final Matrix m = Matrix4.builder()
 				.identity()
 				.row(0, X)
 				.row(1, Y)		// Note this test does not invert the Y axis

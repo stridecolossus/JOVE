@@ -159,7 +159,7 @@ public class Camera {
 		final Matrix trans = Matrix4.translation(new Vector(pos).invert());
 
 		// Build rotation component
-		final Matrix rot = new Matrix.Builder()
+		final Matrix rot = Matrix4.builder()
 				.identity()
 				.row(0, right)
 				.row(1, y)

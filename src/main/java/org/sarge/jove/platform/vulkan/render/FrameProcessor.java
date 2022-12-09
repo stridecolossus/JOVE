@@ -84,7 +84,9 @@ public class FrameProcessor implements TransientObject {
 		final VulkanFrame frame = frames[index];
 
 		// Render frame
+		frame.tracker.start();
 		frame.render(seq);
+		frame.tracker.stop();
 
 		// Notify frame completion
 		for(Listener listener : listeners) {
@@ -119,7 +121,6 @@ public class FrameProcessor implements TransientObject {
 		 */
 		void render(RenderSequence seq) {
 			// Wait for completion of the previous frame
-			tracker.start();
 			fence.waitReady();
 			fence.reset();
 

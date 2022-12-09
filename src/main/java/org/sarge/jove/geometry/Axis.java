@@ -119,7 +119,7 @@ public final class Axis extends Normal {
 	 * @return Rotation matrix
 	 */
 	public Matrix rotation(float angle, Cosine cosine) {
-		final var matrix = new Matrix.Builder().identity();
+		final var matrix = Matrix4.builder().identity();
 		final float sin = cosine.sin(angle);
 		final float cos = cosine.cos(angle);
 

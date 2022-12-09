@@ -7,9 +7,9 @@ import org.sarge.jove.common.Layout;
 
 class Matrix4Test {
 	@Test
-	void constructor() {
-		final Matrix matrix = new Matrix4();
-		assertEquals(4, matrix.order());
+	void identity() {
+		final Matrix identity = new Matrix.Builder(4).identity().build();
+		assertEquals(identity, Matrix4.IDENTITY);
 	}
 
 	@Test
@@ -19,13 +19,13 @@ class Matrix4Test {
 
 	@Test
 	void translation() {
-		final Matrix expected = new Matrix.Builder().identity().column(3, Axis.X).build();
+		final Matrix expected = Matrix4.builder().identity().column(3, Axis.X).build();
 		assertEquals(expected, Matrix4.translation(Axis.X));
 	}
 
 	@Test
 	void scale() {
-		final Matrix expected = new Matrix.Builder().identity().set(2, 2, 3).build();
+		final Matrix expected = Matrix4.builder().identity().set(2, 2, 3).build();
 		assertEquals(expected, Matrix4.scale(1, 1, 3));
 	}
 }
