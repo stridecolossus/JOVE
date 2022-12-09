@@ -280,30 +280,25 @@ Finally the descriptor set domain object can be implemented:
 public class DescriptorSet implements NativeObject {
     private final Handle handle;
     private final Layout layout;
-    private final Map<Binding, ResourceEntry> entries;
+    private final Map<Binding, DescriptorResource> entries = new HashMap<>();
+    private final Set<Binding> modified = new HashSet<>();
 }
 ```
 
-Where a resource entry is a mutable inner class that maps a resource to a binding:
+All entries are initialised as 'dirty' in the constructor:
 
 ```java
-private class ResourceEntry {
-    private final Binding binding;
-    private DescriptorResource res;
-    private boolean dirty = true;
-}
+modified.addAll(layout.bindings);
 ```
 
 A resource is bound by the following mutator:
 
 ```java
 public void set(Binding binding, DescriptorResource res) {
-    ResourceEntry entry = entries.get(binding);
-    entry.set(res);
+    entries.put(binding, res);
+    modified.add(binding);
 }
 ```
-
-Which delegates to the entry and marks the resource as dirty, i.e. requires an update.
 
 This method also validates (not shown) that the binding belongs to the descriptor layout and the resource is the correct type.
 
@@ -317,52 +312,57 @@ Applying the updated resources to the descriptor sets is slightly complicated:
 
 3. Updates are applied as a batch operation.
 
-To apply a batch of updates the total set of modified sets is first enumerated:
+First a transient type is introduced that wraps up the various dependencies for each updated resource:
+
+```java
+private record Update(DescriptorSet set, Binding binding, DescriptorResource res)
+```
+
+Next the total set of updates is enumerated for a given batch of descriptor sets:
 
 ```java
 public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
     // Enumerate modified sets
-    var modified = descriptors
+    var updates = descriptors
         .stream()
-        .flatMap(DescriptorSet::modified)
+        .flatMap(DescriptorSet::updates)
         .toList();
 
     // Ignore if nothing to update
-    if(modified.isEmpty()) {
+    if(updates.isEmpty()) {
         return 0;
     }
 }
 ```
 
-Where the `modified` entries for each descriptor set are selected via a helper:
+Where the pending `updates` for each descriptor set are selected via a helper:
 
 ```java
-private Stream<ResourceEntry> modified() {
-    return entries
-        .values()
-        .stream()
-        .filter(e -> e.dirty);
-}
+return layout.bindings
+    .stream()
+    .filter(modified::contains)
+    .map(b -> new Update(this, b, entries.get(b)));
 ```
 
-Each modified entry requires a separate descriptor which is initialised as follows:
+Each modified resource requires a separate descriptor which is populated in the new `Update` type as follows:
 
 ```java
 private void populate(VkWriteDescriptorSet write) {
     // Validate
-    if(res == null) throw new IllegalStateException();
-    assert dirty;
+    if(res == null) throw new IllegalStateException(String.format("Resource not populated: set=%s binding=%s", set, binding));
+    assert set.modified.contains(binding);
 
     // Init write descriptor
     write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
     write.dstBinding = binding.index();
     write.descriptorType = binding.type();
-    write.dstSet = DescriptorSet.this.handle();
+    write.dstSet = set.handle();
     write.descriptorCount = 1;
+    write.dstArrayElement = 0;
 }
 ```
 
-The same structure is used to update __all__ resources, therefore the type determines the relevant field to populate:
+The same structure is used to update __all__ resources, therefore the type of the structure determines the relevant field to populate:
 
 ```java
 switch(res.build()) {
@@ -372,14 +372,19 @@ switch(res.build()) {
 }
 ```
 
-And the `dirty` flag is cleared as a side-effect of the update.
-
-Finally the set of updates is transformed to an array and the API is invoked to apply the changes:
+The set of updates is transformed to an array and the API is invoked to apply the changes:
 
 ```java
 VkWriteDescriptorSet[] writes = StructureCollector.array(modified, new VkWriteDescriptorSet(), ResourceEntry::populate);
 dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
-return writes.length;
+```
+
+And finally the modified descriptor sets are marked as updated:
+
+```java
+for(Update update : updates) {
+    update.clear();
+}
 ```
 
 A new library is created for the API methods in this chapter:
