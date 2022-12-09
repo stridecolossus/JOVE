@@ -602,7 +602,7 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
     }
 
     @Override
-    public VkDescriptorBufferInfo populate() {
+    public VkDescriptorBufferInfo build() {
         ...
     }
 }

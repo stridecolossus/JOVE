@@ -10,13 +10,13 @@ import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.*;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
 import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 
@@ -33,8 +33,17 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 		layout = new DescriptorSet.Layout(new Handle(1), dev, List.of(binding));
 
 		// Create sampler resource
-		res = mock(DescriptorResource.class);
-		when(res.type()).thenReturn(VkDescriptorType.COMBINED_IMAGE_SAMPLER);
+		res = new DescriptorResource() {
+			@Override
+			public VkDescriptorType type() {
+				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
+			}
+
+			@Override
+			public VulkanStructure build() {
+				return new VkDescriptorImageInfo();
+			}
+		};
 
 		// Create descriptor set
 		descriptor = new DescriptorSet(new Handle(2), layout);
@@ -82,8 +91,9 @@ public class DescriptorSetTest extends AbstractVulkanTest {
     	@DisplayName("cannot be set to a resource with a different descriptor type")
     	@Test
     	void setInvalidResource() {
-    		when(res.type()).thenReturn(VkDescriptorType.STORAGE_BUFFER);
-    		assertThrows(IllegalArgumentException.class, () -> descriptor.set(binding, res));
+    		final var invalid = mock(DescriptorResource.class);
+    		when(invalid.type()).thenReturn(VkDescriptorType.STORAGE_BUFFER);
+    		assertThrows(IllegalArgumentException.class, () -> descriptor.set(binding, invalid));
     	}
 	}
 
@@ -113,7 +123,6 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 
     		// Check API
     		verify(lib).vkUpdateDescriptorSets(dev, 1, new VkWriteDescriptorSet[]{write}, 0, null);
-    		verify(res).populate(write);
     	}
 
 		@DisplayName("is ignored if none of the resources have been modified")
@@ -128,6 +137,24 @@ public class DescriptorSetTest extends AbstractVulkanTest {
     	@Test
     	void empty() {
     		assertThrows(IllegalStateException.class, () -> DescriptorSet.update(dev, Set.of(descriptor)));
+    	}
+
+		@DisplayName("must be a supported resource type")
+    	@Test
+    	void type() {
+			final var unsupported = new DescriptorResource() {
+				@Override
+				public VkDescriptorType type() {
+					return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
+				}
+
+				@Override
+				public VulkanStructure build() {
+					return new MockStructure();
+				}
+			};
+			descriptor.set(binding, unsupported);
+    		assertThrows(UnsupportedOperationException.class, () -> DescriptorSet.update(dev, Set.of(descriptor)));
     	}
 	}
 

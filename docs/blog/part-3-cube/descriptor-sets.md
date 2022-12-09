@@ -245,10 +245,10 @@ public interface DescriptorResource {
     VkDescriptorType type();
 
     /**
-     * Populates the write descriptor for this resource.
-     * @param write Write descriptor
+     * Builds the Vulkan descriptor for this resource.
+     * @return Vulkan descriptor
      */
-    void populate(VkWriteDescriptorSet write);
+    VulkanStructure build();
 }
 ```
 
@@ -263,18 +263,16 @@ public DescriptorResource resource(View texture) {
         }
 
         @Override
-        public void populate(VkWriteDescriptorSet write) {
+        public VkDescriptorImageInfo build() {
             var info = new VkDescriptorImageInfo();
             info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
             info.sampler = Sampler.this.handle();
             info.imageView = view.handle();
-            write.pImageInfo = info;
+            return info;
         }
     };
 }
 ```
-
-Note that the same structure is used to update __all__ types of resource, in this case the `pImageInfo` field is populated for the texture sampler.
 
 Finally the descriptor set domain object can be implemented:
 
@@ -347,15 +345,7 @@ private Stream<ResourceEntry> modified() {
 }
 ```
 
-The set of updates is transformed to an array of Vulkan descriptors and the API is invoked to apply the changes:
-
-```java
-VkWriteDescriptorSet[] writes = StructureCollector.array(modified, new VkWriteDescriptorSet(), ResourceEntry::populate);
-dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
-return writes.length;
-```
-
-Where a Vulkan descriptor is populated for each updated entry:
+Each modified entry requires a separate descriptor which is initialised as follows:
 
 ```java
 private void populate(VkWriteDescriptorSet write) {
@@ -369,16 +359,28 @@ private void populate(VkWriteDescriptorSet write) {
     write.descriptorType = binding.type();
     write.dstSet = DescriptorSet.this.handle();
     write.descriptorCount = 1;
-
-    // Init resource descriptor
-    res.populate(write);
-
-    // Mark as updated
-    dirty = false;
 }
 ```
 
-Note that the `dirty` flag is cleared as a side-effect.
+The same structure is used to update __all__ resources, therefore the type determines the relevant field to populate:
+
+```java
+switch(res.build()) {
+    case VkDescriptorImageInfo image -> write.pImageInfo = image;
+    case VkDescriptorBufferInfo buffer -> write.pBufferInfo = buffer;
+    default -> throw new UnsupportedOperationException();
+}
+```
+
+And the `dirty` flag is cleared as a side-effect of the update.
+
+Finally the set of updates is transformed to an array and the API is invoked to apply the changes:
+
+```java
+VkWriteDescriptorSet[] writes = StructureCollector.array(modified, new VkWriteDescriptorSet(), ResourceEntry::populate);
+dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+return writes.length;
+```
 
 A new library is created for the API methods in this chapter:
 

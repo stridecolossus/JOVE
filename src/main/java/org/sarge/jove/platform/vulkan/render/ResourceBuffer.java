@@ -74,12 +74,12 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 	}
 
 	@Override
-	public void populate(VkWriteDescriptorSet write) {
+	public VkDescriptorBufferInfo build() {
 		final var info = new VkDescriptorBufferInfo();
 		info.buffer = handle();
 		info.offset = offset;
 		info.range = length();					// TODO - maxUniformBufferRange, needs to be a separate parameter otherwise offset MUST be zero!
-		write.pBufferInfo = info;
+		return info;
 	}
 
 	/**

@@ -193,7 +193,12 @@ public class DescriptorSet implements NativeObject {
 			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
 
 			// Init resource descriptor
-			res.populate(write);
+			switch(res.build()) {
+    			case VkDescriptorImageInfo image -> write.pImageInfo = image;
+    			case VkDescriptorBufferInfo buffer -> write.pBufferInfo = buffer;
+    			default -> throw new UnsupportedOperationException("Unsupported resource descriptor: " + res);
+			}
+			// TODO - pTexelBuffer
 
 			// Mark as updated
 			dirty = false;

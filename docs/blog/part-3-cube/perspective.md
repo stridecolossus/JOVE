@@ -166,12 +166,12 @@ public DescriptorResource uniform() {
         }
 
         @Override
-        public void populate(VkWriteDescriptorSet write) {
+        public VkDescriptorBufferInfo build() {
             var info = new VkDescriptorBufferInfo();
             info.buffer = handle();
             info.offset = offset;
             info.range = length();
-            write.pBufferInfo = info;
+            return info;
         }
     };
 }

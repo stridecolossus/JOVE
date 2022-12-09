@@ -56,12 +56,8 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void populate() {
-		final var write = new VkWriteDescriptorSet();
-		res.populate(write);
-
-		final VkDescriptorBufferInfo info = write.pBufferInfo;
-		assertNotNull(info);
+	void build() {
+		final VkDescriptorBufferInfo info = res.build();
 		assertEquals(res.handle(), info.buffer);
 		assertEquals(res.length(), info.range);
 		assertEquals(0, info.offset);
