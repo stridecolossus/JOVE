@@ -1,5 +1,6 @@
 package org.sarge.jove.geometry;
 
+import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.Cosine;
 
 /**
@@ -22,9 +23,9 @@ public final class Axis extends Normal {
 	 * Cardinal axes.
 	 */
 	public static final Axis
-			X = new Axis(0),
-			Y = new Axis(1),
-			Z = new Axis(2);
+			X = new Axis(Instance.X),
+			Y = new Axis(Instance.Y),
+			Z = new Axis(Instance.Z);
 
 	/**
 	 * Parses a vector from the given string.
@@ -69,22 +70,16 @@ public final class Axis extends Normal {
 		};
 	}
 
-	private final int index;
+	private final Instance axis;
 	private final Normal inv = super.invert();
 
 	/**
 	 * Constructor.
 	 * @param index Axis index
 	 */
-	private Axis(int index) {
-		super(axis(index));
-		this.index = index;
-	}
-
-	private static Vector axis(int index) {
-		final float[] axis = new float[SIZE];
-		axis[index] = 1;
-		return new Vector(axis);
+	private Axis(Instance axis) {
+		super(axis.vector());
+		this.axis = axis;
 	}
 
 	@Override
@@ -94,7 +89,7 @@ public final class Axis extends Normal {
 
 	@Override
 	public float dot(Tuple that) {
-		return switch(index) {
+		return switch(axis.ordinal()) {
     		case 0 -> x * that.x;
     		case 1 -> y * that.y;
     		case 2 -> z * that.z;
@@ -104,7 +99,7 @@ public final class Axis extends Normal {
 
 	@Override
 	public Vector cross(Vector vec) {
-		return switch(index) {
+		return switch(axis.ordinal()) {
     		case 0 -> new Vector(0, -vec.z, vec.y);
     		case 1 -> new Vector(+vec.z, 0, -vec.x);
     		case 2 -> new Vector(-vec.y, +vec.x, 0);
@@ -122,30 +117,9 @@ public final class Axis extends Normal {
 		final var matrix = Matrix4.builder().identity();
 		final float sin = cosine.sin(angle);
 		final float cos = cosine.cos(angle);
-
-		switch(index) {
-			case 0 -> matrix
-					.set(1, 1, cos)
-					.set(1, 2, -sin)
-					.set(2, 1, sin)
-					.set(2, 2, cos);
-
-			case 1 -> matrix
-					.set(0, 0, cos)
-					.set(0, 2, sin)
-					.set(2, 0, -sin)
-					.set(2, 2, cos);
-
-			case 2 -> matrix
-					.set(0, 0, cos)
-					.set(0, 1, -sin)
-					.set(1, 0, sin)
-					.set(1, 1, cos);
-		}
-
+		axis.rotation(sin, cos, matrix);
 		return matrix.build();
 	}
-	// TODO - introduce underlying enum for axis implementation for rotation, dot, etc? rather than nasty switch on index? Are there more axis specific methods to be added?
 
 	/**
 	 * Creates a counter-clockwise rotation matrix about this axis.
@@ -169,6 +143,60 @@ public final class Axis extends Normal {
 		}
 		else {
 			return vec.y < vec.z ? Y : Z;
+		}
+	}
+
+	/**
+	 * Axis implementation.
+	 */
+	@SuppressWarnings("hiding")
+	private enum Instance {
+		X {
+			@Override
+			protected void rotation(float sin, float cos, Builder matrix) {
+				matrix
+        				.set(1, 1, cos)
+        				.set(1, 2, -sin)
+        				.set(2, 1, sin)
+        				.set(2, 2, cos);
+			}
+		},
+
+		Y {
+			@Override
+			protected void rotation(float sin, float cos, Builder matrix) {
+				matrix
+            			.set(0, 0, cos)
+            			.set(0, 2, sin)
+            			.set(2, 0, -sin)
+            			.set(2, 2, cos);
+			}
+		},
+
+		Z {
+			@Override
+			protected void rotation(float sin, float cos, Builder matrix) {
+				matrix
+            			.set(0, 0, cos)
+            			.set(0, 1, -sin)
+            			.set(1, 0, sin)
+            			.set(1, 1, cos);
+			}
+		};
+
+		/**
+		 * Builds the rotation matrix for this axis.
+		 */
+		protected abstract void rotation(float sin, float cos, Matrix.Builder matrix);
+
+		/**
+		 * @return Axis vector
+		 */
+		private Vector vector() {
+			final float[] vec = new float[SIZE];
+			final int index = ordinal();
+			vec[index] = 1;
+			return new Vector(vec);
 		}
 	}
 }
