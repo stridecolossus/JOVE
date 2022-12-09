@@ -650,8 +650,6 @@ The rationale for this rather elaborate API is to allow intersections, and parti
 
 * Surface normals are irrelevant for many use cases, e.g. scene picking.
 
-The `UNDEFINED` constant is added to the `Intersected` interface for the cases where at least one intersection has occurred but the actual details are not relevant.
-
 ### Planes
 
 The simplest collision surface implementation is a _plane_ defined by a normal and a distance from the origin:
@@ -835,7 +833,7 @@ The demo is modified by the introduction of an influence to simulate gravity and
 private static ParticleSystem system(ApplicationConfiguration cfg) {
     ...
     sys.add(Influence.of(Axis.Y.invert()));
-    sys.add(new Plane(Axis.Y, 0).behind(), Collision.STOP);
+    sys.add(new Plane(Axis.Y, 0), Collision.STOP);
     return sys;
 }
 ```
@@ -847,7 +845,7 @@ The particles should now stick to the ground:
 Finally the collision surface is modified to reflect particles with a dampening absorption factor on each 'bounce':
 
 ```java
-sys.add(new Plane(Axis.Y, 0).behind(), new ReflectionCollision(0.3f));
+sys.add(new Plane(Axis.Y, 0), new ReflectionCollision(0.3f));
 ```
 
 ---
@@ -1162,10 +1160,10 @@ In this case an XML document seems the most appropriate format to configure the 
     </influences>
     <surfaces>
         <reflect>
-            <behind>
+            <plane>
                 <normal>Y</normal>
                 <distance>0</distance>
-            </behind>
+            </plane>
             <absorb>0.3</absorb>
         </reflect>
     </surfaces>

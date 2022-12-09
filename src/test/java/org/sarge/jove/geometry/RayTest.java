@@ -28,24 +28,6 @@ class RayTest {
 		assertNotEquals(ray, mock(Ray.class));
 	}
 
-	@Nested
-	class IntersectedSurfaceTests {
-		@DisplayName("An empty intersection result cannot be iterated")
-		@Test
-		void none() {
-			final var results = Intersected.NONE.iterator();
-			assertEquals(false, results.hasNext());
-		}
-
-		@DisplayName("An undefined intersection result cannot be queried")
-		@Test
-		void undefined() {
-			final var results = Intersected.UNDEFINED.iterator();
-			assertEquals(true, results.hasNext());
-			assertThrows(UnsupportedOperationException.class, () -> results.next());
-		}
-	}
-
 	@DisplayName("A simple intersection result can be constructed with a single intersection and surface normal")
 	@Test
 	void of() {
@@ -53,6 +35,13 @@ class RayTest {
 		assertEquals(1f, result.distance());
 		assertEquals(new Point(Axis.X), result.point());
 		assertEquals(Axis.Y, result.normal());
+	}
+
+	@DisplayName("An empty intersection result has no values")
+	@Test
+	void none() {
+		final var results = Intersected.NONE.iterator();
+		assertEquals(false, results.hasNext());
 	}
 
 	@DisplayName("An intersection...")

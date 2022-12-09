@@ -12,7 +12,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.*;
+import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
 import org.sarge.lib.util.Check;
@@ -322,10 +322,10 @@ public class ParticleSystem implements Frame.Listener {
 	private void collide(Particle p) {
 		for(var entry : surfaces.entrySet()) {
 			final Intersected surface = entry.getKey();
-			final Iterator<Intersection> itr = surface.intersections(p).iterator();
-			if(itr.hasNext()) {
+			final var results = surface.intersections(p);
+			if(results != Intersected.NONE) {
 				final Collision collision = entry.getValue();
-				collision.collide(p, itr.next());
+				collision.collide(p, results.iterator().next());
 				break;
 			}
 		}

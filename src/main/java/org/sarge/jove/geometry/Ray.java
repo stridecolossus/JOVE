@@ -63,29 +63,6 @@ public interface Ray {
 		 * Empty result.
 		 */
 		Iterable<Intersection> NONE = List.of();
-
-		/**
-		 * Intersection with undefined results, e.g. for use cases where the actual intersections (and normals) are not relevant.
-		 */
-		Iterable<Intersection> UNDEFINED = undefined();
-
-		/**
-		 * @return Undefined instance
-		 */
-		private static Iterable<Intersection> undefined() {
-			final var itr = new Iterator<Intersection>() {
-    			@Override
-    			public boolean hasNext() {
-    				return true;
-    			}
-
-    			@Override
-    			public Intersection next() {
-    				throw new UnsupportedOperationException();
-    			}
-    		};
-    		return () -> itr;
-		}
 	}
 
 	/**
