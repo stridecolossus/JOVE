@@ -3,9 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.common.Layout;
 
 /**
- * Standard 4x4 matrix used for transformation and projection.
- * <p>
- * This class provides various convenience constants and factory methods for common transformations.
+ * Utility class providing various convenience constants and factory methods for common transformations.
  * <p>
  * The matrix is assumed to have the following structure for view and perspective transformation:
  * <p>
@@ -54,7 +52,6 @@ public final class Matrix4 {
 	}
 
 	/**
-	 *
 	 * @return New builder for a 4x4 matrix
 	 */
 	public static Matrix.Builder builder() {

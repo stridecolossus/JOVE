@@ -272,7 +272,7 @@ public class DescriptorSet implements NativeObject {
 	 */
 	public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
 		// Enumerate pending updates
-		final var updates = descriptors
+		final List<Update> updates = descriptors
 				.stream()
 				.flatMap(DescriptorSet::updates)
 				.toList();
@@ -285,6 +285,7 @@ public class DescriptorSet implements NativeObject {
 		// Apply updates
 		final VkWriteDescriptorSet[] writes = StructureCollector.array(updates, new VkWriteDescriptorSet(), Update::populate);
 		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+		// TODO - DS copies?
 
 		// Mark as updated
 		for(Update update : updates) {
@@ -487,7 +488,8 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public void free(Collection<DescriptorSet> sets) {
 			final DeviceContext dev = this.device();
-			check(dev.library().vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.array(sets)));
+			final Library lib = dev.library();
+			check(lib.vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.array(sets)));
 		}
 
 		/**
@@ -495,7 +497,8 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public void reset() {
 			final DeviceContext dev = this.device();
-			check(dev.library().vkResetDescriptorPool(dev, this, 0));
+			final Library lib = dev.library();
+			check(lib.vkResetDescriptorPool(dev, this, 0));
 		}
 
 		@Override
