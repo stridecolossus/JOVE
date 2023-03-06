@@ -38,7 +38,7 @@ public class SpherePositionFactory implements PositionFactory {
 	 */
 	public static SpherePositionFactory load(Element e, Randomiser randomiser) {
 		final Point centre = e.child("centre").text().transform(Point.CONVERTER);
-		final float radius = e.child("radius").text().toFloat();
+		final float radius = e.child("radius").text().transform(Float::parseFloat);
 		final var sphere = new Sphere(centre, radius);
 		return new SpherePositionFactory(sphere, randomiser);
 	}

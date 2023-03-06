@@ -4,7 +4,6 @@ import java.util.Iterator;
 
 import org.sarge.jove.util.FloatSupport.FloatUnaryOperator;
 import org.sarge.lib.element.Element;
-import org.sarge.lib.element.Element.Content;
 
 /**
  * An <i>interpolator</i> is a floating-point function applied to a percentile value, used for animation, easing, etc.
@@ -148,8 +147,8 @@ public interface Interpolator extends FloatUnaryOperator {
 			case "smooth", "smoothstep" -> Interpolator.SMOOTH;
 
 			case "linear" -> {
-				final float start = e.child("start").text().toFloat();
-				final float end = e.child("end").text().toFloat();
+				final float start = e.child("start").text().transform(Float::parseFloat);
+				final float end = e.child("end").text().transform(Float::parseFloat);
 				yield linear(start, end);
 			}
 
@@ -158,7 +157,7 @@ public interface Interpolator extends FloatUnaryOperator {
 				final Iterator<Element> itr = e.children().iterator();
 				final Interpolator start = load(itr.next());
 				final Interpolator end = load(itr.next());
-				final float weight = e.optional("weight").map(Element::text).map(Content::toFloat).orElse(MathsUtil.HALF);
+				final float weight = e.text("weight").map(Float::parseFloat).orElse(MathsUtil.HALF);
 				yield mix(start, end, weight);
 			}
 

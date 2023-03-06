@@ -60,13 +60,18 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 	/**
 	 * Constructor.
-	 * @throws IllegalArgumentException if any argument is not a percentile value
+	 * @throws IllegalArgumentException if any argument is not a 0..1 percentile value
+	 * @see Percentile#isValid(float)
 	 */
 	public Colour {
-		Check.isPercentile(red);
-		Check.isPercentile(green);
-		Check.isPercentile(blue);
-		Check.isPercentile(alpha);
+		validate(red);
+		validate(green);
+		validate(blue);
+		validate(alpha);
+	}
+
+	private static void validate(float f) {
+		if(!Percentile.isValid(f)) throw new IllegalArgumentException("Invalid colour component: " + f);
 	}
 
 	/**

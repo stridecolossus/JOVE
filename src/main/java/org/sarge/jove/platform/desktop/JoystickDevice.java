@@ -7,7 +7,6 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.control.Event.*;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -32,7 +31,8 @@ public class JoystickDevice implements Device {
 	 * @param desktop		Desktop service
 	 */
 	JoystickDevice(int id, String name, Desktop desktop) {
-		this.id = Check.range(id, 0, 16);
+		if((id < 0) || (id >= 16)) throw new IllegalArgumentException("Invalid joystick index: " + id);
+		this.id = id;
 		this.name = notEmpty(name);
 		this.desktop = notNull(desktop);
 		this.axes = initAxes();

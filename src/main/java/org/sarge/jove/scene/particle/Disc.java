@@ -73,7 +73,7 @@ class Disc {
 	 */
 	public static Disc load(Element e, Randomiser randomiser) {
 		final Vector normal = e.child("normal").text().transform(Axis::parse);
-		final float radius = e.child("radius").text().toFloat();
+		final float radius = e.child("radius").text().transform(Float::parseFloat);
 		return new Disc(normal.normalize(), radius, randomiser);
 	}
 }

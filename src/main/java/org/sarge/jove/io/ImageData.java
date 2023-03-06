@@ -162,7 +162,7 @@ public class ImageData {
 	 * @see #pixel(int)
 	 */
 	public final int pixel(int x, int y, int component) {
-		Check.range(component, 0, channels.length() - 1);
+		if((component < 0) || (component >= channels.length())) throw new IllegalArgumentException("Invalid component index: component=%d channels=%d".formatted(component, channels.length()));
 		final int offset = levels().get(0).offset;
 		final int start = (x + y * size.width()) * layout.stride();
 		final int index = offset + start + (component * layout.bytes());

@@ -45,7 +45,7 @@ public class IncrementGenerationPolicy implements GenerationPolicy {
 	 * @return Incremental policy
 	 */
 	public static IncrementGenerationPolicy load(Element e) {
-		final int inc = e.text().toInteger();
+		final int inc = e.text().transform(Integer::parseInt);
 		return new IncrementGenerationPolicy(inc);
 	}
 }

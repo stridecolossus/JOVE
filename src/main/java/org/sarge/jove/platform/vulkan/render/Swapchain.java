@@ -297,7 +297,10 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @see VkSurfaceCapabilitiesKHR
 		 */
 		public Builder count(int num) {
-			info.minImageCount = Check.range(num, caps.minImageCount, caps.maxImageCount);
+			if((num < caps.minImageCount) || (num > caps.maxImageCount)) {
+				throw new IllegalArgumentException("Invalid number of images: num=%d range=%d/%d".formatted(num, caps.minImageCount, caps.maxImageCount));
+			}
+			info.minImageCount = num;
 			return this;
 		}
 
@@ -346,7 +349,7 @@ public class Swapchain extends AbstractVulkanObject {
 		 * @see VkSurfaceCapabilitiesKHR#maxImageArrayLayers
 		 */
 		public Builder arrays(int layers) {
-			Check.range(layers, 1, caps.maxImageArrayLayers);
+			if((layers < 1) || (layers > caps.maxImageArrayLayers)) throw new IllegalArgumentException("Invalid number of layers: layers=%d max=%d".formatted(layers, caps.maxImageArrayLayers));
 			info.imageArrayLayers = layers;
 			return this;
 		}

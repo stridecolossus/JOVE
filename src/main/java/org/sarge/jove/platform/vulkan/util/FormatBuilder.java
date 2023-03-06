@@ -6,7 +6,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.IntEnum;
-import org.sarge.lib.util.Check;
 
 /**
  * The <i>format builder</i> is used to programatically select a Vulkan format.
@@ -138,7 +137,8 @@ public class FormatBuilder {
 	 * @see #components(String)
 	 */
 	public FormatBuilder count(int count) {
-		this.count = Check.range(count, 1, components.length());
+		if((count < 1) || (count > components.length())) throw new IllegalArgumentException("Invalid number of components: count=%d max=%d".formatted(count, components.length()));
+		this.count = count;
 		return this;
 	}
 

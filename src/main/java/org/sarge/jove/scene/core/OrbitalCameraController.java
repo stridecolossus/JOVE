@@ -5,7 +5,6 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
 
 /**
  * An <i>orbital camera controller</i> rotates the camera about a <i>target</i> position at a specified <i>radius</i>.
@@ -88,7 +87,8 @@ public class OrbitalCameraController extends CameraController {
 	 * @throws IllegalArgumentException if the radius is out-of-range
 	 */
 	public void radius(float radius) {
-		this.radius = Check.range(radius, min, max);
+		if((radius < min) || (radius > max)) throw new IllegalArgumentException("Invalid radius: radius=%d range=%d/%d".formatted(radius, min, max));
+		this.radius = radius;
 		init();
 	}
 
@@ -97,7 +97,7 @@ public class OrbitalCameraController extends CameraController {
 	 * @throws IllegalArgumentException if the minimum is zero or greater-than the maximum
 	 */
 	public void range(float min, float max) {
-		Check.positive(min);
+		if(min <= 0) throw new IllegalArgumentException("Minimum range must be positive");
 		if((min >= max) || (min > radius)) throw new IllegalArgumentException("Invalid zoom range");
 		this.min = min;
 		this.max = max;
@@ -109,7 +109,8 @@ public class OrbitalCameraController extends CameraController {
 	 * @see #zoom(float)
 	 */
 	public void scale(float scale) {
-		this.scale = Check.positive(scale);
+		if(scale <= 0) throw new IllegalArgumentException("Zoom scale must be positive");
+		this.scale = scale;
 	}
 
 	/**
