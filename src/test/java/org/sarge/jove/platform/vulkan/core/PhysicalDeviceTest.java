@@ -26,28 +26,14 @@ class PhysicalDeviceTest {
 
 	@BeforeEach
 	void before() {
-		// Create an instance
-		instance = mock(Instance.class);
-
-		// Init Vulkan
 		lib = mock(VulkanLibrary.class);
-		when(instance.library()).thenReturn(lib);
-
-		// Init reference factory
-		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		when(factory.integer()).thenReturn(new IntByReference(1));
-		when(instance.factory()).thenReturn(factory);
-
-		// Create a queue family
+		instance = new Instance(new Handle(2), lib, new MockReferenceFactory());
 		family = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
-
-		// Create device
 		dev = new PhysicalDevice(new Handle(1), instance, List.of(family), DeviceFeatures.EMPTY);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(1), dev.handle());
 		assertEquals(instance, dev.instance());
 		assertEquals(List.of(family), dev.families());
 		assertEquals(DeviceFeatures.EMPTY, dev.features());
@@ -88,6 +74,7 @@ class PhysicalDeviceTest {
 	@Test
 	void format() {
 		final VkFormatProperties props = dev.properties(VkFormat.D32_SFLOAT);
+		assertNotNull(props);
 		verify(lib).vkGetPhysicalDeviceFormatProperties(dev, VkFormat.D32_SFLOAT, props);
 	}
 

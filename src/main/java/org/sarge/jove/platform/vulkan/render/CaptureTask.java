@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
 
 /**
@@ -40,13 +40,13 @@ public class CaptureTask {
 	 * @param swapchain Swapchain to capture
 	 * @return Screenshot
 	 */
-	public Image capture(Swapchain swapchain) {
+	public Image capture(Swapchain swapchain, AllocationService allocator) {
 		// Retrieve latest rendered swapchain image
 		final Image image = swapchain.latest().image();
 
 		// Create destination screenshot image
 		final DeviceContext dev = swapchain.device();
-		final DefaultImage screenshot = screenshot(dev, image.descriptor());
+		final DefaultImage screenshot = screenshot(dev, allocator, image.descriptor());
 
 		// Init copy command
 		final Command copy = ImageCopyCommand.of(image, screenshot);
@@ -71,9 +71,10 @@ public class CaptureTask {
 	/**
 	 * Creates a screenshot image.
 	 * @param dev			Logical device
+	 * @param allocator		Memory allocator
 	 * @param target		Target image descriptor
 	 */
-	private static DefaultImage screenshot(DeviceContext dev, Image.Descriptor target) {
+	private static DefaultImage screenshot(DeviceContext dev, AllocationService allocator, Image.Descriptor target) {
 		// Create descriptor
 		final var descriptor = new Image.Descriptor.Builder()
 				.type(VkImageType.TWO_D)
@@ -94,7 +95,7 @@ public class CaptureTask {
 				.descriptor(descriptor)
 				.properties(props)
 				.tiling(VkImageTiling.LINEAR)
-				.build(dev);
+				.build(dev, allocator);
 	}
 
 	/**

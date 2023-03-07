@@ -21,7 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @see FrameBuffer
  * @author Sarge
  */
-public class View extends AbstractVulkanObject {
+public class View extends VulkanObject {
 	/**
 	 * Helper - Creates a view for the given image with default configuration.
 	 * @param image Image
@@ -68,7 +68,7 @@ public class View extends AbstractVulkanObject {
 	 * @throws IllegalArgumentException if the clear value is incompatible with this view
 	 */
 	public View clear(ClearValue clear) {
-		if(!isValid(clear)) throw new IllegalArgumentException(String.format("Invalid clear value for this view: clear=%s view=%s", clear, this));
+		if(!isValid(clear)) throw new IllegalArgumentException("Invalid clear value for this view: clear=%s view=%s".formatted(clear, this));
 		this.clear = clear;
 		return this;
 	}

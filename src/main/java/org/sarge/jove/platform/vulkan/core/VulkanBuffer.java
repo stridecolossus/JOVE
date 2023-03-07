@@ -22,7 +22,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>Vulkan buffer</i> is used to store arbitrary data on the hardware and to perform copy operations.
  * @author Sarge
  */
-public class VulkanBuffer extends AbstractVulkanObject {
+public class VulkanBuffer extends VulkanObject {
 	/**
 	 * Special case size for the whole of this buffer.
 	 */
@@ -31,12 +31,13 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * Creates a buffer.
 	 * @param dev			Logical device
+	 * @param allocator		Memory allocator
 	 * @param len			Length (bytes)
 	 * @param props			Memory properties
 	 * @return New buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
-	public static VulkanBuffer create(DeviceContext dev, long len, MemoryProperties<VkBufferUsageFlag> props) {
+	public static VulkanBuffer create(DeviceContext dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {
 		// TODO
 		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
 		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
@@ -61,7 +62,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 		lib.vkGetBufferMemoryRequirements(dev, handle, reqs);
 
 		// Allocate buffer memory
-		final DeviceMemory mem = dev.allocator().allocate(reqs, props);
+		final DeviceMemory mem = allocator.allocate(reqs, props);
 
 		// Bind memory
 		check(lib.vkBindBufferMemory(dev, handle, mem, 0L));
@@ -71,12 +72,13 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	}
 
 	/**
-	 * Helper - Creates and initialises a staging buffer containing the given data.
+	 * Creates and initialises a staging buffer containing the given data.
 	 * @param dev			Logical device
+	 * @param allocator		Memory allocator
 	 * @param data			Data to stage
 	 * @return New staging buffer
 	 */
-	public static VulkanBuffer staging(DeviceContext dev, ByteSizedBufferable data) {
+	public static VulkanBuffer staging(DeviceContext dev, AllocationService allocator, ByteSizedBufferable data) {
 		// Init memory properties
 		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
@@ -84,7 +86,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 				.build();
 
 		// Create staging buffer
-		final VulkanBuffer buffer = create(dev, data.length(), props);
+		final VulkanBuffer buffer = create(dev, allocator, data.length(), props);
 
 		// Write data to buffer
 		final ByteBuffer bb = buffer.buffer();
@@ -123,21 +125,21 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	/**
 	 * @return Usage flags for this buffer
 	 */
-	public final Set<VkBufferUsageFlag> usage() {
+	public Set<VkBufferUsageFlag> usage() {
 		return usage;
 	}
 
 	/**
 	 * @return Buffer memory
 	 */
-	public final DeviceMemory memory() {
+	public DeviceMemory memory() {
 		return mem;
 	}
 
 	/**
 	 * @return Length of this buffer
 	 */
-	public final long length() {
+	public long length() {
 		return len;
 	}
 
@@ -146,9 +148,9 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @param offset Buffer offset
 	 * @throws IllegalArgumentException if the {@link #offset} exceeds the {@link #length()} of this buffer
 	 */
-	public void validate(long offset) {
+	public void checkOffset(long offset) {
 		Check.zeroOrMore(offset);
-		if(offset >= len) throw new IllegalArgumentException(String.format("Invalid buffer offset: offset=%d buffer=%s", offset, this));
+		if(offset >= len) throw new IllegalArgumentException("Invalid buffer offset: offset=%d buffer=%s".formatted(offset, this));
 	}
 
 	/**
@@ -158,7 +160,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	public final void require(VkBufferUsageFlag... flags) {
 		final var required = Set.of(flags);
 		if(!usage.containsAll(required)) {
-			throw new IllegalStateException(String.format("Invalid usage for buffer: required=%s buffer=%s", required, this));
+			throw new IllegalStateException("Invalid usage for buffer: required=%s buffer=%s".formatted(required, this));
 		}
 	}
 
@@ -166,7 +168,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * Helper - Provides access to the underlying buffer (mapping the buffer memory as required).
 	 * @return Underlying buffer
 	 */
-	public final ByteBuffer buffer() {
+	protected final ByteBuffer buffer() {
 		return mem
 				.region()
 				.orElseGet(mem::map)
@@ -196,7 +198,7 @@ public class VulkanBuffer extends AbstractVulkanObject {
 	 * @throws IllegalStateException if this buffer was not created as a {@link VkBufferUsageFlag#TRANSFER_DST}
 	 */
 	public Command fill(long offset, long size, int value) {
-		validate(offset);
+		checkOffset(offset);
 		VulkanLibrary.checkAlignment(offset);
 		if(size != VK_WHOLE_SIZE) {
 			Check.oneOrMore(size);

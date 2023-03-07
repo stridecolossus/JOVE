@@ -249,7 +249,7 @@ public interface Command {
 	/**
 	 * A <i>command pool</i> allocates command buffers used to perform work on a given {@link WorkQueue}.
 	 */
-	class Pool extends AbstractVulkanObject {
+	class Pool extends VulkanObject {
 		/**
 		 * Creates a command pool for the given queue.
 		 * @param dev		Logical device
@@ -279,7 +279,7 @@ public interface Command {
 		 * @param dev			Logical device
 		 * @param queue			Work queue
 		 */
-		private Pool(Handle handle, DeviceContext dev, WorkQueue queue) {
+		Pool(Handle handle, DeviceContext dev, WorkQueue queue) {
 			super(handle, dev);
 			this.queue = notNull(queue);
 		}

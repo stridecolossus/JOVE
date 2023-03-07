@@ -15,7 +15,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
@@ -28,27 +27,24 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
-public class LogicalDevice extends AbstractTransientNativeObject implements DeviceContext {
+public class LogicalDevice extends TransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
 	private final DeviceFeatures features;
 	private final Supplier<DeviceLimits> limits = new LazySupplier<>(this::loadLimits);
 	private final Map<Family, List<WorkQueue>> queues;
-	private final AllocationService allocator;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
 	 * @param parent 		Parent physical device
 	 * @param features		Features enabled on this device
-	 * @param queues 		Work queues
-	 * @param allocator		Memory allocation service or {@code null} to create a default implementation
+	 * @param queues 		Work queues indexed by family
 	 */
-	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<WorkQueue>> queues, AllocationService allocator) {
+	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<WorkQueue>> queues) {
 		super(handle);
 		this.parent = notNull(parent);
 		this.features = notNull(features);
 		this.queues = Map.copyOf(queues);
-		this.allocator = init(allocator);
 	}
 
 	/**
@@ -75,24 +71,19 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		return features;
 	}
 
-	@Override
-	public AllocationService allocator() {
-		return allocator;
-	}
-
-	/**
-	 * Initialises the memory allocation service.
-	 * @param allocator Custom allocator or {@code null} for default
-	 * @return Allocation service
-	 */
-	private AllocationService init(AllocationService allocator) {
-		if(allocator == null) {
-			return new AllocationService(MemorySelector.create(parent), new DefaultAllocator(this));
-		}
-		else {
-			return allocator;
-		}
-	}
+//	/**
+//	 * Initialises the memory allocation service.
+//	 * @param allocator Custom allocator or {@code null} for default
+//	 * @return Allocation service
+//	 */
+//	private AllocationService init(AllocationService allocator) {
+//		if(allocator == null) {
+//			return new AllocationService(MemorySelector.create(parent), new DefaultAllocator(this));
+//		}
+//		else {
+//			return allocator;
+//		}
+//	}
 
 	/**
 	 * @return Work queues for this device ordered by family
@@ -229,7 +220,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		private final Set<String> layers = new HashSet<>();
 		private final Map<Family, RequiredQueue> queues = new HashMap<>();
 		private DeviceFeatures required = DeviceFeatures.EMPTY;
-		private AllocationService allocator;
 
 		/**
 		 * Constructor.
@@ -284,15 +274,6 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 		}
 
 		/**
-		 * Sets a custom memory allocation service.
-		 * @param allocator Allocation service
-		 */
-		public Builder allocator(AllocationService allocator) {
-			this.allocator = notNull(allocator);
-			return this;
-		}
-
-		/**
 		 * Constructs this logical device.
 		 * @return New logical device
 		 */
@@ -327,7 +308,7 @@ public class LogicalDevice extends AbstractTransientNativeObject implements Devi
 			final var map = helper.queues();
 
 			// Create logical device
-			return new LogicalDevice(handle, parent, required, map, allocator);
+			return new LogicalDevice(handle, parent, required, map);
 		}
 
 		/**

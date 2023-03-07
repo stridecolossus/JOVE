@@ -7,17 +7,19 @@ import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class DefaultAllocatorTest extends AbstractVulkanTest {
+class DefaultAllocatorTest {
 	private MemoryType type;
 	private Allocator allocator;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
 		final Heap heap = new Heap(0, Set.of());
 		type = new MemoryType(1, heap, Set.of(VkMemoryProperty.HOST_VISIBLE));
+		dev = new MockDeviceContext();
 		allocator = new DefaultAllocator(dev);
 	}
 
@@ -40,6 +42,6 @@ public class DefaultAllocatorTest extends AbstractVulkanTest {
 				return true;
 			}
 		};
-		verify(lib).vkAllocateMemory(dev, expected, null, factory.pointer());
+		verify(dev.library()).vkAllocateMemory(dev, expected, null, dev.factory().pointer());
 	}
 }

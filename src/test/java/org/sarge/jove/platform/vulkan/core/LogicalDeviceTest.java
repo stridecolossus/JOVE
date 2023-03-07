@@ -7,75 +7,42 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.util.MockReferenceFactory;
 import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
-import org.sarge.jove.util.ReferenceFactory;
 import org.sarge.lib.util.Percentile;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 public class LogicalDeviceTest {
 	private LogicalDevice device;
 	private PhysicalDevice parent;
-	private WorkQueue.Family family;
 	private WorkQueue queue;
 	private VulkanLibrary lib;
-	private PointerByReference ref;
 
 	@BeforeEach
 	void before() {
-		// Create instance
-		final Instance instance = mock(Instance.class);
-
 		// Init Vulkan
 		lib = mock(VulkanLibrary.class);
-		when(instance.library()).thenReturn(lib);
 
-		// Init reference factory
-		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		ref = new PointerByReference(new Pointer(1));
-		when(factory.pointer()).thenReturn(ref);
-		when(instance.factory()).thenReturn(factory);
-
-		// Create parent device
-		parent = mock(PhysicalDevice.class);
-		when(parent.instance()).thenReturn(instance);
-
-		// Init device properties
-		final var props = new VkPhysicalDeviceProperties();
-		props.limits = new VkPhysicalDeviceLimits();
-		when(parent.properties()).thenReturn(props);
-
-		// Init enabled features
-		final DeviceFeatures features = mock(DeviceFeatures.class);
-
-		// Create queue family
-		family = new Family(1, 2, Set.of());
-		when(parent.families()).thenReturn(List.of(family));
-
-		// Create work queue
-		queue = new WorkQueue(new Handle(1), family);
+		// Create parent physical device
+		final WorkQueue.Family family = new Family(1, 2, Set.of());
+		final Instance instance = new Instance(new Handle(1), lib, new MockReferenceFactory());
+		final var features = mock(DeviceFeatures.class);
+		parent = new PhysicalDevice(new Handle(2), instance, List.of(family), features);
 
 		// Create logical device
-		device = new LogicalDevice(new Handle(1), parent, features, Map.of(family, List.of(queue, queue)), null);
+		queue = new WorkQueue(new Handle(3), family);
+		device = new LogicalDevice(new Handle(4), parent, features, Map.of(family, List.of(queue)));
 	}
 
 	@Test
 	void constructor() {
+		assertEquals(false, device.isDestroyed());
 		assertEquals(parent, device.parent());
 		assertEquals(lib, device.library());
 		assertEquals(parent.instance().factory(), device.factory());
-		assertEquals(false, device.isDestroyed());
-	}
-
-	@DisplayName("A logical device initialises a default memory allocation service if one is not configured")
-	@Test
-	void allocator() {
-		assertNotNull(device.allocator());
 	}
 
 	@DisplayName("A logical device has a set of enabled features")
@@ -87,7 +54,6 @@ public class LogicalDeviceTest {
 	@DisplayName("A logical device has a set of hardware limits")
 	@Test
 	void limits() {
-		when(parent.properties()).thenReturn(new VkPhysicalDeviceProperties());
 		final DeviceLimits limits = device.limits();
 		assertNotNull(limits);
 	}
@@ -95,13 +61,13 @@ public class LogicalDeviceTest {
 	@DisplayName("A logical device has a set of work queues")
 	@Test
 	void queues() {
-		assertEquals(Map.of(family, List.of(queue, queue)), device.queues());
+		assertEquals(Map.of(queue.family(), List.of(queue)), device.queues());
 	}
 
 	@DisplayName("A work queue for a given familt can be retrieved from the logical device")
 	@Test
 	void queue() {
-		assertEquals(queue, device.queue(family));
+		assertEquals(queue, device.queue(queue.family()));
 	}
 
 	@DisplayName("A work queue can be blocked until all work has completed")
@@ -131,13 +97,13 @@ public class LogicalDeviceTest {
 		@DisplayName("must have at least one queue priority")
 		@Test
 		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(family, List.of()));
+			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(queue.family(), List.of()));
 		}
 
 		@DisplayName("cannot specify more queues than the available number in the family")
 		@Test
 		void exceeds() {
-			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(family, 3));
+			assertThrows(IllegalArgumentException.class, () -> new RequiredQueue(queue.family(), 3));
 		}
 	}
 
@@ -154,20 +120,20 @@ public class LogicalDeviceTest {
 		void build() {
 			// Create device
 			device = builder
-					.queue(new RequiredQueue(family, List.of(Percentile.HALF, Percentile.ONE)))
+					.queue(new RequiredQueue(queue.family(), List.of(Percentile.HALF, Percentile.ONE)))
 					.extension("ext")
 					.layer(ValidationLayer.STANDARD_VALIDATION)
 					.features(DeviceFeatures.required(Set.of("samplerAnisotropy")))
 					.build();
 
 			// Check device
-			assertEquals(new Handle(1), device.handle());
 			assertEquals(false, device.isDestroyed());
 			assertEquals(parent, device.parent());
-			assertEquals(Map.of(family, List.of(queue, queue)), device.queues());
+			assertEquals(1, device.queues().size());
+			assertEquals(2, device.queues().get(queue.family()).size());
 			assertEquals(DeviceFeatures.required(Set.of("samplerAnisotropy")), device.features());
 
-			// Init expected descriptor
+			// Check API
 			final var expected = new VkDeviceCreateInfo() {
 				@Override
 				public boolean equals(Object obj) {
@@ -196,9 +162,7 @@ public class LogicalDeviceTest {
 					return true;
 				}
 			};
-
-			// Check API
-			verify(lib).vkCreateDevice(parent, expected, null, ref);
+			verify(lib).vkCreateDevice(parent, expected, null, device.factory().pointer());
 		}
 
 		@DisplayName("A required queue must specify a family that belongs to the logical device")

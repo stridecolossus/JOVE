@@ -17,12 +17,12 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>fence</i> is used to synchronise between application code and Vulkan.
  * @author Sarge
  */
-public class Fence extends AbstractVulkanObject {
+public class Fence extends VulkanObject {
 	/**
 	 * Creates a fence.
 	 * @param dev			Logical device
 	 * @param flags			Creation flags
-	 * @return New fence
+	 * @return Fence
 	 */
 	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor

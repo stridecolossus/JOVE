@@ -8,20 +8,22 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Structure;
 
-public class FenceTest extends AbstractVulkanTest {
+public class FenceTest {
 	private Fence fence;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
+		lib = dev.library();
 		fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
-		assertNotNull(fence);
-		assertEquals(dev, fence.device());
-		assertNotNull(fence.isDestroyed());
 	}
 
 	@Test
@@ -33,7 +35,7 @@ public class FenceTest extends AbstractVulkanTest {
 			}
 		};
 		expected.flags = BitMask.reduce(VkFenceCreateFlag.SIGNALED);
-		verify(lib).vkCreateFence(dev, expected, null, factory.pointer());
+		verify(lib).vkCreateFence(dev, expected, null, dev.factory().pointer());
 	}
 
 	@DisplayName("A signalled fence...")

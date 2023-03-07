@@ -8,12 +8,10 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Structure;
@@ -21,11 +19,13 @@ import com.sun.jna.Structure;
 public class BarrierTest {
 	private Barrier.Builder builder;
 	private Family srcFamily, destFamily;
-	final VulkanLibrary lib = mock(VulkanLibrary.class);
-	final Command.Buffer cb = mock(Command.Buffer.class);
+	private VulkanLibrary lib;
+	private Command.Buffer cmd;
 
 	@BeforeEach
 	void before() {
+		lib = mock(VulkanLibrary.class);
+		cmd = new MockCommandBuffer();
 		srcFamily = new Family(1, 1, Set.of());
 		destFamily = new Family(2, 2, Set.of());
 		builder = new Barrier.Builder();
@@ -62,8 +62,8 @@ public class BarrierTest {
 			final var src = BitMask.reduce(VkPipelineStage.TRANSFER);
 			final var dest = BitMask.reduce(VkPipelineStage.FRAGMENT_SHADER);
 			final var flags = BitMask.reduce(VkDependencyFlag.VIEW_LOCAL);
-			barrier.record(lib, cb);
-			verify(lib).vkCmdPipelineBarrier(cb, src, dest, flags, 1, new VkMemoryBarrier[]{expected}, 0, null, 0, null);
+			barrier.record(lib, cmd);
+			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 1, new VkMemoryBarrier[]{expected}, 0, null, 0, null);
 		}
 	}
 
@@ -74,7 +74,8 @@ public class BarrierTest {
 
 		@BeforeEach
 		void before() {
-			buffer = VulkanBufferTest.create(mock(DeviceContext.class), Set.of(VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 3);
+			buffer = mock(VulkanBuffer.class);
+			when(buffer.length()).thenReturn(3L);
 		}
 
 		@DisplayName("can be executed to transition a buffer")
@@ -113,8 +114,8 @@ public class BarrierTest {
 			final var src = BitMask.reduce(VkPipelineStage.TRANSFER);
 			final var dest = BitMask.reduce(VkPipelineStage.FRAGMENT_SHADER);
 			final var flags = BitMask.reduce(VkDependencyFlag.VIEW_LOCAL);
-			barrier.record(lib, cb);
-			verify(lib).vkCmdPipelineBarrier(cb, src, dest, flags, 0, null, 1, new VkBufferMemoryBarrier[]{expected}, 0, null);
+			barrier.record(lib, cmd);
+			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 0, null, 1, new VkBufferMemoryBarrier[]{expected}, 0, null);
 		}
 
 		@DisplayName("cannot have an offset larger than the buffer")
@@ -194,8 +195,8 @@ public class BarrierTest {
 			final var src = BitMask.reduce(VkPipelineStage.TRANSFER);
 			final var dest = BitMask.reduce(VkPipelineStage.FRAGMENT_SHADER);
 			final var flags = BitMask.reduce(VkDependencyFlag.VIEW_LOCAL);
-			barrier.record(lib, cb);
-			verify(lib).vkCmdPipelineBarrier(cb, src, dest, flags, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{expected});
+			barrier.record(lib, cmd);
+			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{expected});
 		}
 
 		@DisplayName("must have a new layout configured")

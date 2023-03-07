@@ -19,7 +19,7 @@ import com.sun.jna.ptr.PointerByReference;
  * Default implementation.
  * @author Sarge
  */
-class DefaultDeviceMemory extends AbstractVulkanObject implements DeviceMemory {
+class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	private final long size;
 	private Region region;
 

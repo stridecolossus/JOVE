@@ -19,19 +19,19 @@ public final class Handle {
 	}
 
 	/**
+	 * Constructor.
+	 * @param peer Peer memory pointer
+	 */
+	public Handle(long peer) {
+		this.ptr = new Pointer(peer);
+	}
+
+	/**
 	 * Convenience constructor given a pointer returned from the native layer.
 	 * @param ref Pointer reference
 	 */
 	public Handle(PointerByReference ref) {
 		this(ref.getValue());
-	}
-
-	/**
-	 * Test constructor.
-	 * @param peer Underlying peer
-	 */
-	public Handle(long peer) {
-		this.ptr = new Pointer(peer);
 	}
 
 	/**

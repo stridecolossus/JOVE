@@ -12,16 +12,23 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class PipelineCacheTest extends AbstractVulkanTest {
+import com.sun.jna.ptr.IntByReference;
+
+public class PipelineCacheTest {
 	private static final byte[] DATA = new byte[42];
 
 	private PipelineCache cache;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
+		lib = dev.library();
 		cache = new PipelineCache(new Handle(1), dev);
 	}
 
@@ -36,13 +43,10 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 	void create() {
 		// Create cache
 		cache = PipelineCache.create(dev, DATA);
-
-		// Check cache
-		assertNotNull(cache);
 		assertEquals(dev, cache.device());
 		assertEquals(false, cache.isDestroyed());
 
-		// Init expected create descriptor
+		// Check API
 		final var expected = new VkPipelineCacheCreateInfo() {
 			@Override
 			public boolean equals(Object obj) {
@@ -53,9 +57,7 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 				return true;
 			}
 		};
-
-		// Check API
-		verify(lib).vkCreatePipelineCache(dev, expected, null, factory.pointer());
+		verify(lib).vkCreatePipelineCache(dev, expected, null, dev.factory().pointer());
 	}
 
 	@Test
@@ -65,11 +67,11 @@ public class PipelineCacheTest extends AbstractVulkanTest {
 
 	@Test
 	void data() {
+		final IntByReference count = dev.factory().integer();
 		final ByteBuffer data = cache.data();
-		assertNotNull(data);
 		assertEquals(1, data.capacity());
-		verify(lib).vkGetPipelineCacheData(dev, cache, factory.integer(), null);
-		verify(lib).vkGetPipelineCacheData(dev, cache, factory.integer(), data);
+		verify(lib).vkGetPipelineCacheData(dev, cache, count, null);
+		verify(lib).vkGetPipelineCacheData(dev, cache, count, data);
 	}
 
 	@Test

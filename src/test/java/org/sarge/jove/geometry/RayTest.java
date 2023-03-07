@@ -37,6 +37,15 @@ class RayTest {
 		assertEquals(Axis.Y, result.normal());
 	}
 
+	@DisplayName("An intersection result can be constructed with a surface normal relative to the centre of the intresected volume")
+	@Test
+	void centre() {
+		final Intersection result = Intersection.of(ray, 1, Point.ORIGIN);
+		assertEquals(1f, result.distance());
+		assertEquals(new Point(Axis.X), result.point());
+		assertEquals(Axis.X, result.normal());
+	}
+
 	@DisplayName("An empty intersection result has no values")
 	@Test
 	void none() {
@@ -47,11 +56,11 @@ class RayTest {
 	@DisplayName("An intersection...")
 	@Nested
 	class DefaultIntersectionTests {
-		private AbstractIntersection intersection;
+		private DefaultIntersection intersection;
 
 		@BeforeEach
 		void before() {
-			intersection = new DefaultIntersection(ray, 1, Point.ORIGIN);
+			intersection = new DefaultIntersection(ray, 1);
 		}
 
 		@DisplayName("has an intersection point on the given ray")
@@ -59,12 +68,6 @@ class RayTest {
 		void constructor() {
 			assertEquals(1f, intersection.distance());
 			assertEquals(new Point(Axis.X), intersection.point());
-		}
-
-		@DisplayName("can calculate the surface normal relative to a given centre point")
-		@Test
-		void normal() {
-			assertEquals(Axis.X, intersection.normal());
 		}
 
 		@DisplayName("can be ordered by distance")

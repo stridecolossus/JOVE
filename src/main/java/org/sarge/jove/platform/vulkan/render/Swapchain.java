@@ -35,7 +35,7 @@ import com.sun.jna.ptr.*;
  * <p>
  * @author Sarge
  */
-public class Swapchain extends AbstractVulkanObject {
+public class Swapchain extends VulkanObject {
 	/**
 	 * Swap-chain extension name.
 	 */
@@ -243,7 +243,7 @@ public class Swapchain extends AbstractVulkanObject {
 		private final VkSurfaceCapabilitiesKHR caps;
 		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
-		private ClearValue clear;
+		private ColourClearValue clear;
 
 		/**
 		 * Constructor.

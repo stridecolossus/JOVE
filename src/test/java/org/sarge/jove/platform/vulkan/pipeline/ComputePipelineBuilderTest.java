@@ -6,12 +6,12 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 
-class ComputePipelineBuilderTest extends AbstractVulkanTest {
+class ComputePipelineBuilderTest {
 	private ComputePipelineBuilder builder;
 	private PipelineLayout layout;
 	private ProgrammableShaderStage stage;
@@ -47,7 +47,8 @@ class ComputePipelineBuilderTest extends AbstractVulkanTest {
 
 	@Test
 	void create() {
+		final var dev = new MockDeviceContext();
 		builder.create(dev, null, new VkComputePipelineCreateInfo[]{info}, new Pointer[1]);
-		verify(lib).vkCreateComputePipelines(dev, null, 1, new VkComputePipelineCreateInfo[]{info}, null, new Pointer[1]);
+		verify(dev.library()).vkCreateComputePipelines(dev, null, 1, new VkComputePipelineCreateInfo[]{info}, null, new Pointer[1]);
 	}
 }

@@ -8,7 +8,7 @@ import org.sarge.jove.util.MathsUtil;
  * A <i>normal</i> is a unit vector with a magnitude of <b>one</b>.
  * @author Sarge
  */
-public sealed class Normal extends Vector implements Component permits Axis {
+public class Normal extends Vector implements Component {
 	/**
 	 * Layout for a vertex normal.
 	 */
@@ -24,6 +24,7 @@ public sealed class Normal extends Vector implements Component permits Axis {
 
 	/**
 	 * Array constructor.
+	 * @param array Normal as a floating-point array
 	 */
 	public Normal(float[] array) {
 		this(new Vector(array));

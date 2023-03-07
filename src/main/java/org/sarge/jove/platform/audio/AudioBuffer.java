@@ -16,7 +16,7 @@ import com.sun.jna.Pointer;
  * <p>
  * @author Sarge
  */
-public class AudioBuffer extends AbstractTransientNativeObject {
+public class AudioBuffer extends TransientNativeObject {
 	/**
 	 * Creates an audio buffer.
 	 * @param dev Audio device
@@ -27,7 +27,7 @@ public class AudioBuffer extends AbstractTransientNativeObject {
     	final int[] id = new int[1];
     	lib.alGenBuffers(1, id);
     	dev.check();
-		return new AudioBuffer(new Handle(id[0]), dev);
+		return new AudioBuffer(new Handle(new Pointer(id[0])), dev);
 	}
 
 	private final AudioDevice dev;

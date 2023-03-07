@@ -125,14 +125,14 @@ public class SphereVolume implements Volume {
 			final float offset = MathsUtil.sqrt(radius - dist);
 
 			// Build intersection results
-			final Intersection a = new DefaultIntersection(ray, nearest + offset, centre);
+			final Intersection a = Intersection.of(ray, nearest + offset, centre);
 			if(len < radius) {
 				// Ray origin is inside the sphere
 				return List.of(a).iterator();
 			}
 			else {
 				// Ray is outside the sphere (two intersections)
-				final Intersection b = new DefaultIntersection(ray, nearest - offset, centre);
+				final Intersection b = Intersection.of(ray, nearest - offset, centre);
 				return List.of(b, a).iterator();
 			}
 		};
@@ -154,19 +154,25 @@ public class SphereVolume implements Volume {
 		else
 		if(len < radius) {
 			// Ray originates inside the sphere
-			final var intersection = new DefaultIntersection(ray, 0, sphere.centre()) {
+			final var intersection = new DefaultIntersection(ray, 0) {
 				@Override
 				public float distance() {
 					final float dist = len - nearest * nearest;
 					final float offset = MathsUtil.sqrt(radius - dist);
 					return offset + nearest;
 				}
+
+				@Override
+				public Normal normal() {
+					// TODO - duplicate code -> Intersection.of()
+					return Vector.between(sphere.centre(), this.point()).normalize();
+				}
 			};
 			return List.of(intersection);
 		}
 		else {
 			// Ray originates on the sphere surface
-			return List.of(new DefaultIntersection(ray, 0, sphere.centre()));
+			return List.of(Intersection.of(ray, 0, sphere.centre()));
 		}
 	}
 

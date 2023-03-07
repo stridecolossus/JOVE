@@ -15,7 +15,7 @@ class LocalTransformTest {
 	void before() {
 		node = new Node();
 		transform = node.transform();
-		matrix = Matrix4.translation(Axis.X);
+		matrix = Matrix.translation(Axis.X);
 	}
 
 	@DisplayName("A new local transform...")
@@ -24,7 +24,7 @@ class LocalTransformTest {
 		@DisplayName("has an identity transform")
 		@Test
 		void constructor() {
-			assertEquals(Matrix4.IDENTITY, transform.transform());
+			assertEquals(Matrix.IDENTITY, transform.transform());
 		}
 
 		@DisplayName("can set the local transform")
@@ -54,7 +54,7 @@ class LocalTransformTest {
 
 		@BeforeEach
 		void before() {
-			other = Matrix4.translation(Axis.Y);
+			other = Matrix.translation(Axis.Y);
 			transform.set(matrix);
 			transform.update(node);
 		}

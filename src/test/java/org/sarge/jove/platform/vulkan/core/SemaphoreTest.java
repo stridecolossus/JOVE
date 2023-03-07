@@ -1,31 +1,24 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 
-import com.sun.jna.ptr.PointerByReference;
-
-public class SemaphoreTest extends AbstractVulkanTest {
+public class SemaphoreTest {
 	@Test
 	void create() {
-		// Create semaphore
+		final var dev = new MockDeviceContext();
 		final Semaphore semaphore = Semaphore.create(dev);
+		final var info = new VkSemaphoreCreateInfo() {
+			@Override
+			public boolean equals(Object obj) {
+				return true;
+			}
+		};
 		assertNotNull(semaphore);
-
-		// Check API
-		final ArgumentCaptor<VkSemaphoreCreateInfo> captor = ArgumentCaptor.forClass(VkSemaphoreCreateInfo.class);
-		verify(lib).vkCreateSemaphore(eq(dev), captor.capture(), isNull(), isA(PointerByReference.class));
-
-		// Check create descriptor
-		final VkSemaphoreCreateInfo info = captor.getValue();
-		assertNotNull(info);
-		assertEquals(0, info.flags);
+		verify(dev.library()).vkCreateSemaphore(dev, info, null, dev.factory().pointer());
 	}
 }

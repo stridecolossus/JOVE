@@ -25,7 +25,7 @@ import com.sun.jna.ptr.IntByReference;
  * <p>
  * @author Sarge
  */
-public class Desktop implements TransientObject {
+public final class Desktop implements TransientObject {
 	/**
 	 * Creates the desktop service.
 	 * @return New desktop service

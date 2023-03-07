@@ -8,28 +8,21 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.Source;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.util.ReferenceFactory;
 
 public class KeyboardDeviceTest {
 	private KeyboardDevice dev;
 	private Window window;
-	private DesktopLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Init desktop
-		final Desktop desktop = mock(Desktop.class);
-		lib = mock(DesktopLibrary.class);
-		when(desktop.library()).thenReturn(lib);
-
-		// Create window
-		window = mock(Window.class);
-		when(window.desktop()).thenReturn(desktop);
-
-		// Create device
+		final Desktop desktop = new Desktop(mock(DesktopLibrary.class), new ReferenceFactory());
+		window = new Window(new Handle(1), desktop);
 		dev = new KeyboardDevice(window);
 	}
 

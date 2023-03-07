@@ -8,21 +8,25 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.*;
 
-class CommandTest extends AbstractVulkanTest {
+class CommandTest {
 	private Command cmd;
 	private WorkQueue queue;
 	private Pool pool;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
+		lib = dev.library();
 		queue = new WorkQueue(new Handle(1), new Family(2, 1, Set.of()));
 		pool = Pool.create(dev, queue);
 		cmd = mock(Command.class);
@@ -238,7 +242,7 @@ class CommandTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateCommandPool(dev, expected, null, factory.pointer());
+			verify(lib).vkCreateCommandPool(dev, expected, null, dev.factory().pointer());
 		}
 
 		@Test

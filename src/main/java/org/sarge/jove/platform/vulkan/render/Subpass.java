@@ -206,9 +206,9 @@ public class Subpass {
 	}
 
 	/**
-	 * A <i>subpass dependency</i> is a builder that configures this subpass to be dependant on a previous stage of the render pass.
+	 * A <i>subpass dependency</i> configures this subpass to be dependant on a previous stage of the render pass.
 	 * <p>
-	 * A subpass can be dependant on the implicit subpass before or after the render pass using the {@link #external()} method.
+	 * A subpass can be dependant on the <i>implicit</i> subpass before or after the render pass using the {@link #external()} method.
 	 * <br>
 	 * A subpass can also be self referential.
 	 * See <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#synchronization-pipeline-barriers-subpass-self-dependencies">self-dependency</a>.

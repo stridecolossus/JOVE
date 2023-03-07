@@ -3,46 +3,52 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.platform.vulkan.image.ImageTransferCommand.CopyRegion;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
-public class ImageTransferCommandTest extends AbstractVulkanTest {
+public class ImageTransferCommandTest {
 	private static final VkBufferImageCopy[] REGIONS = new VkBufferImageCopy[0];
 
 	private Image image;
 	private Command.Buffer cmd;
 	private VulkanBuffer src, dest;
 	private Image.Descriptor descriptor;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		image = mock(Image.class);
-		cmd = mock(Command.Buffer.class);
-		src = createBuffer(VkBufferUsageFlag.TRANSFER_SRC);
-		dest = createBuffer(VkBufferUsageFlag.TRANSFER_DST);
-	}
+		dev = new MockDeviceContext();
+		lib = dev.library();
 
-	@BeforeEach
-	void descriptor() {
+		image = mock(Image.class);
+		cmd = new MockCommandBuffer();
+
+		src = create(dev, VkBufferUsageFlag.TRANSFER_SRC);
+		dest = create(dev, VkBufferUsageFlag.TRANSFER_DST);
+
 		descriptor = new Image.Descriptor.Builder()
 				.aspect(VkImageAspect.COLOR)
-				.format(FORMAT)
+				.format(VkFormat.R32G32B32A32_SFLOAT)
 				.extents(new Dimensions(2, 3))
 				.build();
 	}
 
-	private VulkanBuffer createBuffer(VkBufferUsageFlag... usage) {
-		return VulkanBufferTest.create(dev, Set.of(usage), mock(DeviceMemory.class), 1);
+	private static VulkanBuffer create(DeviceContext dev, VkBufferUsageFlag usage) {
+		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+				.usage(usage)
+				.required(VkMemoryProperty.DEVICE_LOCAL)
+				.build();
+
+		return VulkanBuffer.create(dev, null, 4, props); // TODO - service
 	}
 
 	@DisplayName("A transfer command with a source buffer...")
@@ -101,7 +107,13 @@ public class ImageTransferCommandTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-    		buffer = createBuffer(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
+			final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+					.usage(VkBufferUsageFlag.TRANSFER_SRC)
+					.usage(VkBufferUsageFlag.TRANSFER_DST)
+					.required(VkMemoryProperty.DEVICE_LOCAL)
+					.build();
+
+			buffer = VulkanBuffer.create(dev, null, 4, props);
 		}
 
 		@DisplayName("A transfer command can be inverted")
@@ -156,7 +168,7 @@ public class ImageTransferCommandTest extends AbstractVulkanTest {
 			descriptor = new Image.Descriptor.Builder()
 					.aspect(VkImageAspect.DEPTH)
 					.aspect(VkImageAspect.STENCIL)
-					.format(FORMAT)
+					.format(VkFormat.R32G32B32A32_SFLOAT)
 					.extents(new Dimensions(2, 3))
 					.build();
 

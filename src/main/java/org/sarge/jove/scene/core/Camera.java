@@ -156,10 +156,10 @@ public class Camera {
 		final Vector y = dir.cross(right).normalize();
 
 		// Build translation component
-		final Matrix trans = Matrix4.translation(new Vector(pos).invert());
+		final Matrix trans = Matrix.translation(new Vector(pos).invert());
 
 		// Build rotation component
-		final Matrix rot = Matrix4.builder()
+		final Matrix rot = new Matrix.Builder()
 				.identity()
 				.row(0, right)
 				.row(1, y)

@@ -53,7 +53,7 @@ class FrustumTest {
 	@Test
 	void extract() {
 		// Construct a view matrix
-		final Matrix m = Matrix4.builder()
+		final Matrix m = new Matrix.Builder()
 				.identity()
 				.row(0, X)
 				.row(1, Y)		// Note this test does not invert the Y axis
@@ -76,7 +76,7 @@ class FrustumTest {
 		assertEquals(expected, frustum.planes());
 
 		// Frustum from view matrix should be same as identity
-		assertEquals(frustum, Frustum.of(Matrix4.IDENTITY));
+		assertEquals(frustum, Frustum.of(Matrix.IDENTITY));
 	}
 
 	@Test

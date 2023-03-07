@@ -11,7 +11,7 @@ import org.sarge.jove.geometry.*;
  * @author Sarge
  */
 public class LocalTransform {
-	private Transform transform = Matrix4.IDENTITY;
+	private Transform transform = Matrix.IDENTITY;
 	private transient Matrix matrix;
 
 	LocalTransform() {
@@ -63,7 +63,7 @@ public class LocalTransform {
 		}
 		else {
 			final Matrix world = parent.transform().matrix();
-    		if(local == Matrix4.IDENTITY) {
+    		if(local == Matrix.IDENTITY) {
     			return world;
     		}
     		else {

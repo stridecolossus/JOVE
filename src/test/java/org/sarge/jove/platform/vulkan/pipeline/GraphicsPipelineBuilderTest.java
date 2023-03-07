@@ -6,13 +6,13 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 
-class GraphicsPipelineBuilderTest extends AbstractVulkanTest {
+class GraphicsPipelineBuilderTest {
 	private GraphicsPipelineBuilder builder;
 	private RenderPass pass;
 	private VkGraphicsPipelineCreateInfo info;
@@ -80,7 +80,8 @@ class GraphicsPipelineBuilderTest extends AbstractVulkanTest {
 
 	@Test
 	void create() {
+		final var dev = new MockDeviceContext();
 		builder.create(dev, null, new VkGraphicsPipelineCreateInfo[]{info}, new Pointer[1]);
-		verify(lib).vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{info}, null, new Pointer[1]);
+		verify(dev.library()).vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{info}, null, new Pointer[1]);
 	}
 }

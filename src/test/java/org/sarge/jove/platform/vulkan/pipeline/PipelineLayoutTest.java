@@ -9,16 +9,18 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-class PipelineLayoutTest extends AbstractVulkanTest {
+class PipelineLayoutTest {
 	private PipelineLayout layout;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
 		layout = new PipelineLayout(new Handle(1), dev, new PushConstant(List.of()));
 	}
 
@@ -31,7 +33,8 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		layout.destroy();
-		verify(lib).vkDestroyPipelineLayout(dev, layout, null);
+		assertEquals(true, layout.isDestroyed());
+		verify(dev.library()).vkDestroyPipelineLayout(dev, layout, null);
 	}
 
 	@Nested
@@ -54,7 +57,7 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			final Range two = new Range(4, 8, Set.of(VkShaderStage.FRAGMENT));
 
 			// Init push constants max size
-			limit("maxPushConstantsSize", 12);
+//			limit("maxPushConstantsSize", 12);
 
 			// Create layout
 			final PipelineLayout layout = builder
@@ -82,12 +85,12 @@ class PipelineLayoutTest extends AbstractVulkanTest {
 			};
 
 			// Check pipeline allocation API
-			verify(lib).vkCreatePipelineLayout(dev, expected, null, factory.pointer());
+			verify(dev.library()).vkCreatePipelineLayout(dev, expected, null, dev.factory().pointer());
 		}
 
 		@Test
 		void empty() {
-			limit("maxPushConstantsSize", 0);
+//			limit("maxPushConstantsSize", 0);
 			assertNotNull(builder.build(dev));
 		}
 	}

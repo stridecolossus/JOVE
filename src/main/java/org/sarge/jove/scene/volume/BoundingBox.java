@@ -99,12 +99,12 @@ public class BoundingBox implements Volume {
 
 		// Build results
 		final Point centre = bounds.centre();
-		final var far = new DefaultIntersection(ray, f, centre);
+		final var far = Intersection.of(ray, f, centre);
 		if((n < 0) || MathsUtil.isEqual(n, f)) {
 			return List.of(far);
 		}
 		else {
-			final var near = new DefaultIntersection(ray, n, centre);
+			final var near = Intersection.of(ray, n, centre);
 			return List.of(near, far);
 		}
 	}

@@ -8,16 +8,20 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 
-class RenderPassTest extends AbstractVulkanTest {
+class RenderPassTest {
 	private RenderPass pass;
 	private Attachment attachment;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		attachment = Attachment.colour(FORMAT);
+		dev = new MockDeviceContext();
+		lib = dev.library();
+		attachment = Attachment.colour(VkFormat.R32G32B32A32_SFLOAT);
 		pass = new RenderPass(new Handle(1), dev, List.of(attachment));
 	}
 
@@ -99,7 +103,7 @@ class RenderPassTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateRenderPass(dev, expected, null, factory.pointer());
+			verify(lib).vkCreateRenderPass(dev, expected, null, dev.factory().pointer());
     	}
 
 		@DisplayName("contains the aggregated attachments of its subpasses")

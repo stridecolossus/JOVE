@@ -18,7 +18,7 @@ import com.sun.jna.ptr.*;
  * Native window implemented using GLFW.
  * @author Sarge
  */
-public class Window extends AbstractTransientNativeObject {
+public final class Window extends TransientNativeObject {
 	/**
 	 * Window creation hints.
 	 */

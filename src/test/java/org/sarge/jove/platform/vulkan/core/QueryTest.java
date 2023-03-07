@@ -9,20 +9,25 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Query.*;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.memory.MockDeviceMemory;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Structure;
 
-public class QueryTest extends AbstractVulkanTest {
+public class QueryTest {
 	private Pool pool;
 	private Command.Buffer buffer;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
+		lib = dev.library();
 		buffer = mock(Command.Buffer.class);
 	}
 
@@ -92,7 +97,7 @@ public class QueryTest extends AbstractVulkanTest {
 			expected.queryType = VkQueryType.OCCLUSION;
 			expected.queryCount = 1;
 			expected.pipelineStatistics = new BitMask<>(0);
-			verify(lib).vkCreateQueryPool(dev, expected, null, factory.pointer());
+			verify(lib).vkCreateQueryPool(dev, expected, null, dev.factory().pointer());
 		}
 
 		@DisplayName("cannot allocate more queries than the available number of slots")
@@ -151,7 +156,7 @@ public class QueryTest extends AbstractVulkanTest {
 		expected.queryType = VkQueryType.PIPELINE_STATISTICS;
 		expected.queryCount = 1;
 		expected.pipelineStatistics = BitMask.reduce(VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS);
-		verify(lib).vkCreateQueryPool(dev, expected, null, factory.pointer());
+		verify(lib).vkCreateQueryPool(dev, expected, null, dev.factory().pointer());
 	}
 
 	@DisplayName("The results for a query...")
@@ -222,7 +227,7 @@ public class QueryTest extends AbstractVulkanTest {
 		@DisplayName("can be copied to a Vulkan buffer")
 		@Test
 		void copy() {
-			final VulkanBuffer dest = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mock(DeviceMemory.class), 2 * 4);
+			final var dest = new VulkanBuffer(new Handle(2), dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), new MockDeviceMemory(), 2 * 4);
 			final Command copy = builder.build(dest, 0);
 			copy.record(lib, buffer);
 			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, new BitMask<>(0));

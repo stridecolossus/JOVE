@@ -23,7 +23,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>pipeline layout</i> specifies the resources used by a pipeline.
  * @author Sarge
  */
-public class PipelineLayout extends AbstractVulkanObject {
+public class PipelineLayout extends VulkanObject {
 	private final PushConstant push;
 
 	/**

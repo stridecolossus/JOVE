@@ -7,7 +7,7 @@ import org.sarge.lib.util.Converter;
  * A <i>vector</i> is a direction in 3D space.
  * @author Sarge
  */
-public sealed class Vector extends Tuple permits Normal {
+public class Vector extends Tuple {
 	/**
 	 * Converter for a vector.
 	 */

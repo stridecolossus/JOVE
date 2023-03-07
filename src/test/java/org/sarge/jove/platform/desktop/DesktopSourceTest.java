@@ -6,7 +6,9 @@ import static org.mockito.Mockito.*;
 import java.util.function.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Event;
+import org.sarge.jove.util.ReferenceFactory;
 
 import com.sun.jna.Callback;
 
@@ -21,9 +23,8 @@ class DesktopSourceTest {
 	@SuppressWarnings("unchecked")
 	void before() {
 		// Create window
-		final Desktop desktop = mock(Desktop.class);
-		window = mock(Window.class);
-		when(window.desktop()).thenReturn(desktop);
+		final Desktop desktop = new Desktop(mock(DesktopLibrary.class), new ReferenceFactory());
+		window = new Window(new Handle(1), desktop);
 
 		// Init listener
 		method = mock(BiConsumer.class);
@@ -58,6 +59,5 @@ class DesktopSourceTest {
 	void bind() {
 		assertEquals(listener, source.bind(handler));
 		verify(method).accept(window, listener);
-		verify(window).register(handler, listener);
 	}
 }

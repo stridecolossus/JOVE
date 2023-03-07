@@ -6,7 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
  * Template implementation for a native object managed by the application.
  * @author Sarge
  */
-public abstract class AbstractTransientNativeObject implements NativeObject, TransientObject {
+public abstract class TransientNativeObject implements NativeObject, TransientObject {
 	protected final Handle handle;
 
 	private boolean destroyed;
@@ -15,12 +15,12 @@ public abstract class AbstractTransientNativeObject implements NativeObject, Tra
 	 * Constructor.
 	 * @param handle Handle
 	 */
-	protected AbstractTransientNativeObject(Handle handle) {
+	protected TransientNativeObject(Handle handle) {
 		this.handle = notNull(handle);
 	}
 
 	@Override
-	public Handle handle() {
+	public final Handle handle() {
 		return handle;
 	}
 
@@ -51,8 +51,7 @@ public abstract class AbstractTransientNativeObject implements NativeObject, Tra
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof AbstractTransientNativeObject that) &&
-				(this.destroyed == that.isDestroyed()) &&
+				(obj instanceof TransientNativeObject that) &&
 				this.handle.equals(that.handle());
 	}
 

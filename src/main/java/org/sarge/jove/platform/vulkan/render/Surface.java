@@ -22,7 +22,7 @@ import com.sun.jna.ptr.IntByReference;
  * A <i>surface</i> defines the capabilities of a Vulkan rendering surface.
  * @author Sarge
  */
-public class Surface extends AbstractTransientNativeObject {
+public class Surface extends TransientNativeObject {
 	/**
 	 * Default presentation mode (FIFO, guaranteed on all Vulkan implementations).
 	 */

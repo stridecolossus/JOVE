@@ -15,12 +15,12 @@ import org.sarge.jove.scene.volume.Bounds;
  * <p>
  * The {@link #buffer()} factory method creates a renderable instance of this mesh with a vertex buffer and optional index buffer.
  * <p>
- * Vertex normals can be automatically computed using the {@link #compute()} method.
+ * Vertex normals are automatically computed using the {@link #compute()} method.
  * <p>
  * @see IndexedMesh
  * @author Sarge
  */
-public class DefaultMesh extends AbstractMesh {
+public class DefaultMesh extends Mesh {
 	private final List<Vertex> vertices = new ArrayList<>();
 
 	/**

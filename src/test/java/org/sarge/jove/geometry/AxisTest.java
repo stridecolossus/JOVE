@@ -75,7 +75,7 @@ public class AxisTest {
 
 		@BeforeEach
 		void before() {
-			expected = Matrix4.builder().identity();
+			expected = new Matrix.Builder().identity();
 		}
 
 		@Test

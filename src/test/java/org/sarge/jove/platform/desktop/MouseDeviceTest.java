@@ -7,9 +7,11 @@ import java.util.Set;
 import java.util.function.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.*;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
+import org.sarge.jove.util.ReferenceFactory;
 
 @SuppressWarnings("unchecked")
 public class MouseDeviceTest {
@@ -19,8 +21,8 @@ public class MouseDeviceTest {
 
 	@BeforeEach
 	void before() {
-		window = mock(Window.class);
 		lib = mock(DesktopLibrary.class);
+		window = new Window(new Handle(1), new Desktop(lib, new ReferenceFactory()));
 		mouse = new MouseDevice(window);
 	}
 

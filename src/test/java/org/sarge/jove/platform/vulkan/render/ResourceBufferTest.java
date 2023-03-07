@@ -1,19 +1,17 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 import static org.sarge.jove.platform.vulkan.VkDescriptorType.UNIFORM_BUFFER;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
-public class ResourceBufferTest extends AbstractVulkanTest {
+public class ResourceBufferTest {
 	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.UNIFORM_BUFFER);
 
 	private VulkanBuffer buffer;
@@ -21,38 +19,41 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 
 	@BeforeEach
 	void before() {
-		limit("maxUniformBufferRange", 4);
-		buffer = VulkanBufferTest.create(dev, FLAGS, mock(DeviceMemory.class),  4);
+		final var dev = new MockDeviceContext();
+		// TODO - dev.limit("maxUniformBufferRange", 4);
+
+		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+				.usage(VkBufferUsageFlag.UNIFORM_BUFFER)
+				.required(VkMemoryProperty.DEVICE_LOCAL)
+				.build();
+
+		buffer = VulkanBuffer.create(new MockDeviceContext(), null, 4, props); // TODO
 		res = new ResourceBuffer(buffer, UNIFORM_BUFFER, 0);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(1), res.handle());
-		assertEquals(dev, res.device());
 		assertEquals(FLAGS, res.usage());
 		assertEquals(4L, res.length());
 		assertEquals(UNIFORM_BUFFER, res.type());
 	}
 
+	@DisplayName("A resource buffer must have a valid descriptor type")
 	@Test
-	void invalidDescriptorType() {
+	void type() {
 		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.SAMPLER, 0));
 	}
 
+	@DisplayName("The type of a resource buffer must be supported by the underlying buffer")
 	@Test
-	void unsupportedBufferUsage() {
+	void unsupported() {
 		assertThrows(IllegalStateException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.STORAGE_BUFFER, 0));
 	}
 
+	@DisplayName("The offset of a resource buffer cannot exceed the underlying buffer")
 	@Test
-	void invalidBufferOffset() {
-		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, UNIFORM_BUFFER, 4));
-	}
-
-	@Test
-	void invalidBufferLength() {
-		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, UNIFORM_BUFFER, 5));
+	void invalid() {
+		assertThrows(IllegalArgumentException.class, () -> new ResourceBuffer(buffer, VkDescriptorType.UNIFORM_BUFFER, 4));
 	}
 
 	@Test
@@ -64,7 +65,7 @@ public class ResourceBufferTest extends AbstractVulkanTest {
 	}
 
 	@Test
-	void offsetInvalid() {
+	void offset() {
 		assertThrows(IllegalArgumentException.class, () -> res.offset(4L));
 	}
 

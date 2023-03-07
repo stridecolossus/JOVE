@@ -97,7 +97,7 @@ public interface Query {
 	/**
 	 * A <i>query pool</i> is comprised of a number of <i>slots</i> used to execute queries.
 	 */
-	class Pool extends AbstractVulkanObject {
+	class Pool extends VulkanObject {
 		/**
 		 * Creates a query pool.
 		 * @param dev		Device
@@ -388,7 +388,7 @@ public interface Query {
 			Check.notNull(buffer);
 			Check.zeroOrMore(offset);
 			buffer.require(VkBufferUsageFlag.TRANSFER_DST);
-			buffer.validate(offset - 1 + count * stride);
+			buffer.checkOffset(offset - 1 + count * stride);
 
 			// Validate query result
 			final BitMask<VkQueryResultFlag> mask = validate();

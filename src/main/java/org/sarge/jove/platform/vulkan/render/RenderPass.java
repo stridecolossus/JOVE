@@ -22,7 +22,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @see Subpass
  * @author Sarge
  */
-public class RenderPass extends AbstractVulkanObject {
+public class RenderPass extends VulkanObject {
 	private final List<Attachment> attachments;
 
 	/**

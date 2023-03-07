@@ -1,41 +1,42 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.BufferCopyCommand.Builder;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class BufferCopyCommandTest extends AbstractVulkanTest {
+public class BufferCopyCommandTest {
 	private BufferCopyCommand copy;
 	private VulkanBuffer src, dest;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
+		// Init device
+		dev = new MockDeviceContext();
+
 		// Create buffers
 		final var usage = Set.of(VkBufferUsageFlag.TRANSFER_SRC, VkBufferUsageFlag.TRANSFER_DST);
 		final var mem = mock(DeviceMemory.class);
-		src = VulkanBufferTest.create(dev, usage, mem, 2);
-		dest = VulkanBufferTest.create(dev, usage, mem, 3);
+		src = new VulkanBuffer(new Handle(1), dev, usage, mem, 1);
+		dest = new VulkanBuffer(new Handle(2), dev, usage, mem, 2);
 
 		// Create copy command
-		copy = new Builder()
-				.source(src)
-				.destination(dest)
-				.region(0, 1, 2)
-				.build();
+		copy = BufferCopyCommand.of(src, dest);
 	}
 
 	@Test
 	void execute() {
 		// Execute copy
-		final Command.Buffer cmd = mock(Command.Buffer.class);
-		copy.record(lib, cmd);
+		final var cmd = new MockCommandBuffer();
+		copy.record(dev.library(), cmd);
 
 		// Check API
 		final VkBufferCopy region = new VkBufferCopy() {
@@ -44,22 +45,16 @@ public class BufferCopyCommandTest extends AbstractVulkanTest {
 				return
 						(obj instanceof VkBufferCopy that) &&
 						(that.srcOffset == 0) &&
-						(that.dstOffset == 1) &&
-						(that.size == 2);
+						(that.dstOffset == 0) &&
+						(that.size == 1);
 			}
 		};
-		verify(lib).vkCmdCopyBuffer(cmd, src, dest, 1, new VkBufferCopy[]{region});
-	}
-
-	@Test
-	void of() {
-		assertNotNull(BufferCopyCommand.of(src, dest));
+		verify(dev.library()).vkCmdCopyBuffer(cmd, src, dest, 1, new VkBufferCopy[]{region});
 	}
 
 	@Test
 	void invert() {
-		final Command inverse = copy.invert();
-		inverse.record(lib, mock(Command.Buffer.class));
+		copy.invert().record(dev.library(), null);
 	}
 
 	@Nested

@@ -20,7 +20,7 @@ import com.sun.jna.ptr.IntByReference;
  * An <i>audio source</i> plays an {@link AudioBuffer}.
  * @author Sarge
  */
-public class AudioSource extends AbstractTransientNativeObject {
+public class AudioSource extends TransientNativeObject {
 	/**
 	 * Creates an audio source.
 	 * @param dev Audio device
@@ -31,7 +31,7 @@ public class AudioSource extends AbstractTransientNativeObject {
 		final int[] ids = new int[1];
 		lib.alGenSources(1, ids);
 		dev.check();
-		return new AudioSource(new Handle(ids[0]), dev);
+		return new AudioSource(new Handle(new Pointer(ids[0])), dev);
 	}
 
 	protected final AudioDevice dev;

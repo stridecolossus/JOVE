@@ -8,9 +8,8 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class MemorySelectorTest extends AbstractVulkanTest {
+public class MemorySelectorTest {
 	private MemorySelector selector;
 	private MemoryType fallback, optimal;
 	private VkMemoryRequirements reqs;

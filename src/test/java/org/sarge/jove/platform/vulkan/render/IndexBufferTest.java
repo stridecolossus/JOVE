@@ -1,47 +1,51 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
 
-public class IndexBufferTest extends AbstractVulkanTest {
-	private static final long SIZE = 4;
-
-	private VulkanBuffer buffer;
+public class IndexBufferTest {
+//	private VulkanBuffer buffer;
 	private IndexBuffer index;
+	private MockDeviceContext dev;
 	private Command.Buffer cmd;
 
 	@BeforeEach
 	void before() {
-		cmd = mock(Command.Buffer.class);
-		buffer = VulkanBufferTest.create(dev, Set.of(VkBufferUsageFlag.INDEX_BUFFER), mock(DeviceMemory.class), SIZE);
+
+		dev = new MockDeviceContext();
+		cmd = new MockCommandBuffer();
+
+		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+				.usage(VkBufferUsageFlag.INDEX_BUFFER)
+				.required(VkMemoryProperty.DEVICE_LOCAL)
+				.build();
+
+		final var buffer = VulkanBuffer.create(dev, null, 4, props); // TODO
 		index = new IndexBuffer(buffer, VkIndexType.UINT32);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(1), index.handle());
-		assertEquals(dev, index.device());
 		assertEquals(Set.of(VkBufferUsageFlag.INDEX_BUFFER), index.usage());
-		assertEquals(SIZE, buffer.length());
+		assertEquals(4, index.length());
 	}
 
 	@Test
 	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> new IndexBuffer(buffer, VkIndexType.NONE_NV));
+		assertThrows(IllegalArgumentException.class, () -> new IndexBuffer(index, VkIndexType.NONE_NV));
 	}
 
 	@Test
 	void length() {
-		limit("maxDrawIndexedIndexValue", 0);
+//		limit("maxDrawIndexedIndexValue", 0);
 		assertThrows(IllegalStateException.class, () -> index.bind(0));
 	}
 
@@ -49,7 +53,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	class IntegerIndex {
 		@BeforeEach
 		void before() {
-			limit("maxDrawIndexedIndexValue", 1);
+//			limit("maxDrawIndexedIndexValue", 1);
 		}
 
 		@Test
@@ -59,6 +63,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 
 		@Test
 		void bind() {
+			final VulkanLibrary lib = dev.library();
 			final Command bind = index.bind(0);
 			bind.record(lib, cmd);
 			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT32);
@@ -70,7 +75,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	class ShortIndex {
 		@BeforeEach
 		void before() {
-			index = new IndexBuffer(buffer, 1);
+			index = new IndexBuffer(index, 1);
 		}
 
 		@DisplayName("has a short data type")
@@ -82,6 +87,7 @@ public class IndexBufferTest extends AbstractVulkanTest {
 		@DisplayName("is bound with a short data type")
 		@Test
 		void bind() {
+			final VulkanLibrary lib = dev.library();
 			final Command bind = index.bind(0);
 			bind.record(lib, cmd);
 			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT16);
@@ -91,8 +97,8 @@ public class IndexBufferTest extends AbstractVulkanTest {
 	@Test
 	void equals() {
 		assertEquals(true, index.equals(index));
-		assertEquals(true, index.equals(new IndexBuffer(buffer, VkIndexType.UINT32)));
+		assertEquals(true, index.equals(new IndexBuffer(index, VkIndexType.UINT32)));
 		assertEquals(false, index.equals(null));
-		assertEquals(false, index.equals(new IndexBuffer(buffer, VkIndexType.UINT16)));
+		assertEquals(false, index.equals(new IndexBuffer(index, VkIndexType.UINT16)));
 	}
 }

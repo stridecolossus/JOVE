@@ -20,13 +20,14 @@ class MonitorTest {
 	private DesktopDisplayMode struct;
 	private Desktop desktop;
 	private DesktopLibrary lib;
+	private ReferenceFactory factory;
 
 	@BeforeEach
 	void before() {
 		// Init desktop service
 		lib = mock(DesktopLibrary.class);
-		desktop = mock(Desktop.class);
-		when(desktop.library()).thenReturn(lib);
+		factory = mock(ReferenceFactory.class);
+		desktop = new Desktop(lib, factory);
 
 		// Init GLFW display mode
 		struct = new DesktopDisplayMode();
@@ -66,10 +67,8 @@ class MonitorTest {
 	@Test
 	void monitors() {
 		// Init reference factory
-		final var factory = mock(ReferenceFactory.class);
 		final IntByReference count = new IntByReference(1);
 		when(factory.integer()).thenReturn(count, new IntByReference(2), new IntByReference(3), count);
-		when(desktop.factory()).thenReturn(factory);
 
 		// Init array of monitors
 		final Pointer handle = new Pointer(1);

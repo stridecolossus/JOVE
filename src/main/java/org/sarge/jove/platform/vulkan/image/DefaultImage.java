@@ -13,13 +13,14 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.*;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>default image</i> is a Vulkan image managed by the application.
  * @author Sarge
  */
-public class DefaultImage extends AbstractVulkanObject implements Image {
+public class DefaultImage extends VulkanObject implements Image {
 	private final Descriptor descriptor;
 	private final DeviceMemory mem;
 
@@ -88,6 +89,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 			this.descriptor = notNull(descriptor);
 			return this;
 		}
+		// TODO - ctor
 
 		/**
 		 * Sets the memory properties of this image.
@@ -97,6 +99,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 			this.props = notNull(props);
 			return this;
 		}
+		// TODO - ctor
 
 		/**
 		 * Adds an image creation flag.
@@ -156,7 +159,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
 		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */
-		public DefaultImage build(DeviceContext dev) {
+		public DefaultImage build(DeviceContext dev, AllocationService allocator) {
 			// Validate
 			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");
@@ -187,7 +190,7 @@ public class DefaultImage extends AbstractVulkanObject implements Image {
 			lib.vkGetImageMemoryRequirements(dev, handle, reqs);
 
 			// Allocate image memory
-			final DeviceMemory mem = dev.allocator().allocate(reqs, props);
+			final DeviceMemory mem = allocator.allocate(reqs, props);
 
 			// Bind memory to image
 			check(lib.vkBindImageMemory(dev, handle, mem, 0));

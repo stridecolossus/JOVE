@@ -5,13 +5,13 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.common.AbstractVulkanObject.Destructor;
+import org.sarge.jove.platform.vulkan.common.VulkanObject.Destructor;
 import org.sarge.jove.platform.vulkan.core.*;
 
-public class AbstractVulkanObjectTest {
-	private AbstractVulkanObject obj;
+public class VulkanObjectTest {
+	private VulkanObject obj;
 	private DeviceContext dev;
-	private Destructor<AbstractVulkanObject> destructor;
+	private Destructor<VulkanObject> destructor;
 	private Handle handle;
 	private boolean released;
 
@@ -23,16 +23,15 @@ public class AbstractVulkanObjectTest {
 
 		// Create context
 		dev = mock(LogicalDevice.class);
-		when(dev.handle()).thenReturn(new Handle(2));
 
 		// Create destructor
 		destructor = mock(Destructor.class);
 		released = false;
 
 		// Create object
-		obj = new AbstractVulkanObject(handle, dev) {
+		obj = new VulkanObject(handle, dev) {
 			@Override
-			protected Destructor<AbstractVulkanObject> destructor(VulkanLibrary lib) {
+			protected Destructor<VulkanObject> destructor(VulkanLibrary lib) {
 				return destructor;
 			}
 
@@ -69,6 +68,6 @@ public class AbstractVulkanObjectTest {
 	void equals() {
 		assertEquals(true, obj.equals(obj));
 		assertEquals(false, obj.equals(null));
-		assertEquals(false, obj.equals(mock(AbstractVulkanObject.class)));
+		assertEquals(false, obj.equals(mock(VulkanObject.class)));
 	}
 }

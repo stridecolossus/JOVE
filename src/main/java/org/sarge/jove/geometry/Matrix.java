@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.*;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -22,6 +22,46 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class Matrix implements Transform, Bufferable {
+	/**
+	 * Default 4x4 order.
+	 */
+	public static final int ORDER = 4;
+
+	/**
+	 * 4x4 identity matrix.
+	 */
+	public static final Matrix IDENTITY = new Builder().identity().build();
+
+	/**
+	 * Layout of a 4x4 matrix.
+	 */
+	public static final Layout LAYOUT = Layout.floats(ORDER * ORDER);
+
+	/**
+	 * Creates a 4x4 translation matrix by populating the top-right column of the matrix.
+	 * @param vec Translation vector
+	 * @return Translation matrix
+	 */
+	public static Matrix translation(Vector vec) {
+		return new Builder()
+				.identity()
+				.column(3, vec)
+				.build();
+	}
+
+	/**
+	 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix.
+	 * @return Scaling matrix
+	 */
+	public static Matrix scale(float x, float y, float z) {
+		return new Builder()
+				.set(0, 0, x)
+				.set(1, 1, y)
+				.set(2, 2, z)
+				.set(3, 3, 1)
+				.build();
+	}
+
 	private final float[][] matrix;
 
 	/**
@@ -210,6 +250,13 @@ public class Matrix implements Transform, Bufferable {
 		 */
 		public Builder(int order) {
 			this.matrix = new Matrix(order);
+		}
+
+		/**
+		 * Constructor for a 4x4 matrix.
+		 */
+		public Builder() {
+			this(ORDER);
 		}
 
 		/**

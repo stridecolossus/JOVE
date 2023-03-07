@@ -8,7 +8,7 @@ import org.sarge.jove.common.*;
  * An <i>audio context</i> is an active instance of a {@link AudioDevice}.
  * @author Sarge
  */
-public class AudioContext extends AbstractTransientNativeObject {
+public class AudioContext extends TransientNativeObject {
 	/**
 	 * Creates a context for the given device.
 	 * @param dev Device

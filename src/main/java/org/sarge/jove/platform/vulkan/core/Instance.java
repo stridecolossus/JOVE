@@ -16,10 +16,10 @@ import com.sun.jna.*;
 import com.sun.jna.ptr.*;
 
 /**
- * An <i>instance</i> is the root object for a Vulkan application.
+ * The <i>instance</i> is the root object for a Vulkan application.
  * @author Sarge
  */
-public class Instance extends AbstractTransientNativeObject {
+public class Instance extends TransientNativeObject {
 	private final VulkanLibrary lib;
 	private final ReferenceFactory factory;
 	private final Map<String, Function> functions = new HashMap<>();

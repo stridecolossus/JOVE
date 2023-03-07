@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -14,9 +13,9 @@ import org.sarge.jove.platform.vulkan.core.Handler.*;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.*;
-import com.sun.jna.ptr.PointerByReference;
 
 public class HandlerTest {
+	private Handler handler;
 	private Instance instance;
 	private Function function;
 	private Consumer<Message> consumer;
@@ -24,61 +23,57 @@ public class HandlerTest {
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		// Init reference factory
-		final ReferenceFactory factory = mock(ReferenceFactory.class);
-		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(1)));
-
-		// Create instance
-		instance = mock(Instance.class);
-		when(instance.handle()).thenReturn(new Handle(2));
-		when(instance.factory()).thenReturn(factory);
-
-		// Init create/destroy API method
-		function = mock(Function.class);
-		when(function.invoke(any(), any(), any())).thenReturn(0); // TODO - nasty
-		when(instance.function("vkDestroyDebugUtilsMessengerEXT")).thenReturn(function);
-		when(instance.function("vkCreateDebugUtilsMessengerEXT")).thenReturn(function);
-
-		// Create message consumer
 		consumer = mock(Consumer.class);
+		function = mock(Function.class);
+		instance = new Instance(new Handle(1), mock(VulkanLibrary.class), new MockReferenceFactory()) {
+			@Override
+			public Function function(String name) {
+				return function;
+			}
+		};
+		handler = new Handler(new Handle(1), instance);
 	}
 
-	@DisplayName("A diagnostics message has a human-readable description")
 	@Test
-	void message() {
-		// Init callback
-		final var data = new VkDebugUtilsMessengerCallbackData();
-		data.pMessage = "message";
-		data.pMessageIdName = "name";
-
-		// Check message wrapper
-		final var types = Set.of(VkDebugUtilsMessageType.GENERAL, VkDebugUtilsMessageType.VALIDATION);
-		final Message message = new Message(VkDebugUtilsMessageSeverity.WARNING, types, data);
-		assertEquals("WARNING:GENERAL-VALIDATION:name:message", message.toString());
-	}
-
-	@DisplayName("The diagnostics callback delegates a message to the configured consumer")
-	@Test
-	void callback() {
-		final var data = new VkDebugUtilsMessengerCallbackData();
-		final Message expected = new Message(VkDebugUtilsMessageSeverity.WARNING, Set.of(VkDebugUtilsMessageType.PERFORMANCE), data);
-		final MessageCallback callback = new MessageCallback(consumer);
-		callback.message(VkDebugUtilsMessageSeverity.WARNING.value(), VkDebugUtilsMessageType.PERFORMANCE.value(), data, null);
-		verify(consumer).accept(expected);
+	void constructor() {
+		assertEquals(false, handler.isDestroyed());
 	}
 
 	@DisplayName("A handler can be destroyed")
 	@Test
 	void destroy() {
-		// Destroy handler
-		final Handler handler = new Builder().build(instance);
 		handler.destroy();
 		assertEquals(true, handler.isDestroyed());
-
-		// Check API
 		final Object[] args = {instance, handler, null};
 		final var options = Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
 		verify(function).invoke(Void.class, args, options);
+	}
+
+	@Nested
+	class MessageTests {
+    	@DisplayName("A diagnostics message has a human-readable description")
+    	@Test
+    	void message() {
+    		// Init callback
+    		final var data = new VkDebugUtilsMessengerCallbackData();
+    		data.pMessage = "message";
+    		data.pMessageIdName = "name";
+
+    		// Check message wrapper
+    		final var types = Set.of(VkDebugUtilsMessageType.GENERAL, VkDebugUtilsMessageType.VALIDATION);
+    		final Message message = new Message(VkDebugUtilsMessageSeverity.WARNING, types, data);
+    		assertEquals("WARNING:GENERAL-VALIDATION:name:message", message.toString());
+    	}
+
+    	@DisplayName("The diagnostics callback delegates a message to the configured consumer")
+    	@Test
+    	void callback() {
+    		final var data = new VkDebugUtilsMessengerCallbackData();
+    		final Message expected = new Message(VkDebugUtilsMessageSeverity.WARNING, Set.of(VkDebugUtilsMessageType.PERFORMANCE), data);
+    		final MessageCallback callback = new MessageCallback(consumer);
+    		callback.message(VkDebugUtilsMessageSeverity.WARNING.value(), VkDebugUtilsMessageType.PERFORMANCE.value(), data, null);
+    		verify(consumer).accept(expected);
+    	}
 	}
 
 	@Nested
@@ -92,17 +87,6 @@ public class HandlerTest {
 
 		@Test
 		void build() {
-			// Build handler
-			final Handler handler = builder
-					.severity(VkDebugUtilsMessageSeverity.ERROR)
-					.type(VkDebugUtilsMessageType.GENERAL)
-					.consumer(consumer)
-					.build(instance);
-
-			// Check handler
-			assertNotNull(handler);
-			assertEquals(false, handler.isDestroyed());
-
 			// Init expected construction descriptor
 			final var expected = new VkDebugUtilsMessengerCreateInfoEXT() {
 				@Override
@@ -117,15 +101,20 @@ public class HandlerTest {
 				}
 			};
 
-			// Check API
+			// Init API
 			final Object[] args = {instance, expected, null, instance.factory().pointer()};
 			final var options = Map.of(Library.OPTION_TYPE_MAPPER, VulkanLibrary.MAPPER);
-			verify(function).invoke(Integer.class, args, options);
-		}
+			when(function.invoke(Integer.class, args, options)).thenReturn(0);
 
-		@Test
-		void defaults() {
-			builder.build(instance);
+			// Build handler
+			final Handler handler = builder
+					.severity(VkDebugUtilsMessageSeverity.ERROR)
+					.type(VkDebugUtilsMessageType.GENERAL)
+					.consumer(consumer)
+					.build(instance);
+
+			// Check handler
+			assertEquals(false, handler.isDestroyed());
 		}
 	}
 }

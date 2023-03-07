@@ -1,14 +1,13 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 
 class ProgrammableShaderStageTest {
 	private ProgrammableShaderStage stage;
@@ -17,10 +16,9 @@ class ProgrammableShaderStageTest {
 
 	@BeforeEach
 	void before() {
-		shader = mock(Shader.class);
+		shader = Shader.create(new MockDeviceContext(), new byte[0]);
 		stage = new ProgrammableShaderStage(VkShaderStage.VERTEX, shader);
 		info = new VkPipelineShaderStageCreateInfo();
-		when(shader.handle()).thenReturn(new Handle(1));
 	}
 
 	@Test

@@ -21,7 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @see Instance#handler()
  * @author Sarge
  */
-public class Handler extends AbstractTransientNativeObject {
+public class Handler extends TransientNativeObject {
 	/**
 	 * Debug utility extension name.
 	 */
@@ -34,7 +34,7 @@ public class Handler extends AbstractTransientNativeObject {
 	 * @param handle 		Handle
 	 * @param instance		Parent instance
 	 */
-	private Handler(Handle handle, Instance instance) {
+	Handler(Handle handle, Instance instance) {
 		super(handle);
 		this.instance = notNull(instance);
 	}

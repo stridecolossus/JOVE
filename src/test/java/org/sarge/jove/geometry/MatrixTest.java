@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.io.BufferHelper;
 
@@ -290,6 +291,32 @@ class MatrixTest {
 		void columnBounds() {
 			assertThrows(IndexOutOfBoundsException.class, () -> builder.column(-1, Axis.X));
 			assertThrows(IndexOutOfBoundsException.class, () -> builder.column(ORDER, Axis.X));
+		}
+	}
+
+	@Nested
+	class Matrix4Test {
+		@Test
+		void identity() {
+			final Matrix identity = new Matrix.Builder(4).identity().build();
+			assertEquals(identity, Matrix.IDENTITY);
+		}
+
+		@Test
+		void layout() {
+			assertEquals(Layout.floats(4 * 4), Matrix.LAYOUT);
+		}
+
+		@Test
+		void translation() {
+			final Matrix expected = new Matrix.Builder().identity().column(3, Axis.X).build();
+			assertEquals(expected, Matrix.translation(Axis.X));
+		}
+
+		@Test
+		void scale() {
+			final Matrix expected = new Matrix.Builder().identity().set(2, 2, 3).build();
+			assertEquals(expected, Matrix.scale(1, 1, 3));
 		}
 	}
 }

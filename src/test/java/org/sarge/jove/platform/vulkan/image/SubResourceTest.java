@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.BitMask;
 
 public class SubResourceTest {
@@ -20,7 +19,7 @@ public class SubResourceTest {
 		descriptor = new Descriptor.Builder()
 				.aspect(VkImageAspect.DEPTH)
 				.aspect(VkImageAspect.STENCIL)
-				.format(AbstractVulkanTest.FORMAT)
+				.format(VkFormat.R32G32B32A32_SFLOAT)
 				.mipLevels(3)
 				.arrayLayers(4)
 				.extents(new Dimensions(5, 6))

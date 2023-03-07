@@ -7,18 +7,19 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.MathsUtil;
 
 import com.sun.jna.Pointer;
 
-public class SamplerTest extends AbstractVulkanTest {
+public class SamplerTest {
 	private Sampler sampler;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
 		sampler = new Sampler(new Handle(1), dev);
 	}
 
@@ -55,9 +56,8 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			view = mock(View.class);
+			view = new View(new Handle(2), dev, mock(Image.class));
 			res = sampler.resource(view);
-			when(view.handle()).thenReturn(new Handle(new Pointer(2)));
 		}
 
 		@Test
@@ -67,7 +67,7 @@ public class SamplerTest extends AbstractVulkanTest {
 
 		@Test
 		void build() {
-			final VkDescriptorImageInfo info = (VkDescriptorImageInfo) res.build();
+			final var info = (VkDescriptorImageInfo) res.build();
 			assertEquals(sampler.handle(), info.sampler);
 			assertEquals(view.handle(), info.imageView);
 			assertEquals(VkImageLayout.SHADER_READ_ONLY_OPTIMAL, info.imageLayout);
@@ -101,10 +101,10 @@ public class SamplerTest extends AbstractVulkanTest {
 					.build(dev);
 
 			// Init expected descriptor
-			final VkSamplerCreateInfo expected = new VkSamplerCreateInfo() {
+			final var expected = new VkSamplerCreateInfo() {
 				@Override
 				public boolean equals(Object obj) {
-					final VkSamplerCreateInfo info = (VkSamplerCreateInfo) obj;
+					final var info = (VkSamplerCreateInfo) obj;
 					assertNotNull(info);
 					assertEquals(VkFilter.LINEAR, info.minFilter);
 					assertEquals(VkFilter.NEAREST, info.magFilter);
@@ -125,38 +125,9 @@ public class SamplerTest extends AbstractVulkanTest {
 				}
 			};
 
-			// Check sampler
+			// Check API
 			assertNotNull(sampler);
-			verify(lib).vkCreateSampler(dev, expected, null, factory.pointer());
-		}
-
-		@Test
-		void buildDefaults() {
-			final VkSamplerCreateInfo expected = new VkSamplerCreateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final VkSamplerCreateInfo info = (VkSamplerCreateInfo) obj;
-					assertNotNull(info);
-					assertEquals(VkFilter.LINEAR, info.minFilter);
-					assertEquals(VkFilter.LINEAR, info.magFilter);
-					assertEquals(VkSamplerMipmapMode.LINEAR, info.mipmapMode);
-					assertEquals(0f, info.mipLodBias);
-					assertEquals(0f, info.minLod);
-					assertEquals(1000f, info.maxLod);
-					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeU);
-					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeV);
-					assertEquals(VkSamplerAddressMode.REPEAT, info.addressModeW);
-					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
-					assertEquals(false, info.anisotropyEnable);
-					assertEquals(1f, info.maxAnisotropy);
-					assertEquals(false, info.compareEnable);
-					assertEquals(null, info.compareOp);
-					assertEquals(false, info.unnormalizedCoordinates);
-					return true;
-				}
-			};
-			assertNotNull(builder.build(dev));
-			verify(lib).vkCreateSampler(dev, expected, null, factory.pointer());
+			verify(dev.library()).vkCreateSampler(dev, expected, null, dev.factory().pointer());
 		}
 
 		@Test

@@ -11,7 +11,7 @@ import org.sarge.jove.common.*;
  * @see DefaultMesh#buffer()
  * @author Sarge
  */
-public class BufferedMesh extends AbstractMesh {
+public class BufferedMesh extends Mesh {
 	private final int count;
 	private final ByteSizedBufferable vertices, index;
 

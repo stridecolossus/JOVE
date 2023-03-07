@@ -19,7 +19,7 @@ import org.sarge.jove.util.IntEnum;
  * An <i>audio device</i> represents a audio player on this system.
  * @author Sarge
  */
-public class AudioDevice extends AbstractTransientNativeObject {
+public class AudioDevice extends TransientNativeObject {
 	private static final IntEnum.ReverseMapping<AudioParameter> ERRORS = IntEnum.reverse(AudioParameter.class);
 
 	/**

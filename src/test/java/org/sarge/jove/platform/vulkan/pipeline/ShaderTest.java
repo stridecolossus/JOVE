@@ -8,25 +8,22 @@ import java.io.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.common.*;
 
-class ShaderTest extends AbstractVulkanTest {
+class ShaderTest {
 	private static final byte[] CODE = new byte[]{42};
 
+	private DeviceContext dev;
 	private Shader shader;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
 		shader = Shader.create(dev, CODE);
 	}
 
 	@Test
 	void create() {
-		// Check shader
-		assertNotNull(shader);
-		assertNotNull(shader.handle());
-
-		// Check API
 		final var expected = new VkShaderModuleCreateInfo() {
 			@Override
 			public boolean equals(Object obj) {
@@ -37,14 +34,14 @@ class ShaderTest extends AbstractVulkanTest {
 				return true;
 			}
 		};
-		verify(lib).vkCreateShaderModule(dev, expected, null, factory.pointer());
+		verify(dev.library()).vkCreateShaderModule(dev, expected, null, dev.factory().pointer());
 	}
 
 	@DisplayName("A shader can be destroyed")
 	@Test
 	void destroy() {
 		shader.destroy();
-		verify(lib).vkDestroyShaderModule(dev, shader, null);
+		verify(dev.library()).vkDestroyShaderModule(dev, shader, null);
 	}
 
 	@Nested

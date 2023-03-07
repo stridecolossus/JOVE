@@ -103,19 +103,37 @@ public interface Ray {
 		 */
 		static Intersection of(Ray ray, float dist, Normal normal) {
 			Check.notNull(normal);
-			return new AbstractIntersection(ray, dist) {
+			return new DefaultIntersection(ray, dist) {
 				@Override
 				public Normal normal() {
 					return normal;
 				}
 			};
 		}
+
+		/**
+		 *
+		 * @param ray
+		 * @param dist
+		 * @param centre
+		 * @return
+		 */
+		static Intersection of(Ray ray, float dist, Point centre) {
+			Check.notNull(centre);
+			return new DefaultIntersection(ray, dist) {
+				@Override
+				public Normal normal() {
+					return Vector.between(centre, this.point()).normalize();
+				}
+			};
+		}
 	}
 
 	/**
+	 * TODO
 	 * Skeleton implementation.
 	 */
-	abstract class AbstractIntersection implements Intersection {
+	class DefaultIntersection implements Intersection {
 		private final Ray ray;
 		private final float dist;
 		private Point pos;
@@ -125,7 +143,7 @@ public interface Ray {
 		 * @param ray 		Ray
 		 * @param dist		Intersection distance
 		 */
-		public AbstractIntersection(Ray ray, float dist) {
+		protected DefaultIntersection(Ray ray, float dist) {
 			this.ray = notNull(ray);
 			this.dist = dist;
 		}
@@ -162,29 +180,6 @@ public interface Ray {
 		@Override
 		public String toString() {
 			return new ToStringBuilder(this).append("dist", dist).build();
-		}
-	}
-
-	/**
-	 * Default implementation that calculates an intersection normal relative to the centre point of the surface.
-	 */
-	class DefaultIntersection extends AbstractIntersection {
-		private final Point centre;
-
-		/**
-		 * Constructor.
-		 * @param ray			Ray
-		 * @param dist			Intersection distance
-		 * @param centre		Surface centre
-		 */
-		public DefaultIntersection(Ray ray, float dist, Point centre) {
-			super(ray, dist);
-			this.centre = notNull(centre);
-		}
-
-		@Override
-		public Normal normal() {
-			return Vector.between(centre, this.point()).normalize();
 		}
 	}
 }

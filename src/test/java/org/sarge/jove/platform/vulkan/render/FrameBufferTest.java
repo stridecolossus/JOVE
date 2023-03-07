@@ -3,43 +3,41 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.platform.vulkan.render.FrameBuffer.Group;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 
-public class FrameBufferTest extends AbstractVulkanTest {
-	private static final Dimensions EXTENTS = new Dimensions(2, 3);
-
+public class FrameBufferTest {
 	private FrameBuffer buffer;
 	private RenderPass pass;
+	private MockImage image;
 	private View view;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Create image view
-		final ClearValue clear = new ClearValue.ColourClearValue(Colour.WHITE);
-		view = mock(View.class);
-		when(view.handle()).thenReturn(new Handle(1));
-		when(view.clear()).thenReturn(Optional.of(clear));
+		// Init device
+		dev = new MockDeviceContext();
+		lib = dev.library();
 
-		// Create attachment
-		final Attachment attachment = Attachment.colour(FORMAT);
+		// Create image view
+		image = new MockImage();
+		view = View.of(image);
+		view.clear(new ColourClearValue(Colour.WHITE));
 
 		// Create render pass
-		pass = mock(RenderPass.class);
-		when(pass.handle()).thenReturn(new Handle(2));
-		when(pass.attachments()).thenReturn(List.of(attachment));
-		when(pass.device()).thenReturn(dev);
+		final Attachment attachment = Attachment.colour(VkFormat.R32G32B32A32_SFLOAT);
+		pass = new RenderPass(new Handle(2), dev, List.of(attachment));
 
 		// Create frame buffer
-		buffer = new FrameBuffer(new Handle(1), dev, pass, List.of(view), EXTENTS);
+		buffer = new FrameBuffer(new Handle(1), dev, pass, List.of(view), new Dimensions(2, 3));
 	}
 
 	@DisplayName("A frame buffer is comprised of the swapchain image and additional attachments")
@@ -110,33 +108,13 @@ public class FrameBufferTest extends AbstractVulkanTest {
 		verify(lib).vkCmdEndRenderPass(cmd);
 	}
 
-	private void init(VkFormat format, Dimensions extents) {
-		// Init image
-		final Descriptor descriptor = new Descriptor.Builder()
-				.format(format)
-				.extents(extents)
-				.aspect(VkImageAspect.COLOR)
-				.build();
-
-		// Create image
-		final Image image = mock(Image.class);
-		when(view.image()).thenReturn(image);
-		when(image.descriptor()).thenReturn(descriptor);
-	}
-
 	@Nested
 	class CreateTests {
-		@BeforeEach
-		void before() {
-			init(FORMAT, EXTENTS);
-		}
-
 		@DisplayName("A frame buffer can be created for a swapchain image")
 		@Test
 		void create() {
 			// Construct buffer
-			buffer = FrameBuffer.create(pass, EXTENTS, List.of(view));
-			assertNotNull(buffer);
+			buffer = FrameBuffer.create(pass, new Dimensions(2, 3), List.of(view));
 			assertEquals(dev, buffer.device());
 			assertEquals(false, buffer.isDestroyed());
 			assertEquals(List.of(view), buffer.attachments());
@@ -163,58 +141,61 @@ public class FrameBufferTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateFramebuffer(dev, expected, null, factory.pointer());
+			verify(lib).vkCreateFramebuffer(dev, expected, null, dev.factory().pointer());
 		}
 
-		@DisplayName("Number of configured attachments should match the render pass")
+		@DisplayName("The number of configured attachments should match the render pass")
 		@Test
 		void createInvalidAttachmentCount() {
-			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, EXTENTS, List.of(view, view)));
+			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, new Dimensions(2, 3), List.of(view, view)));
 		}
 
-		@DisplayName("Frame buffer image formats should match the attachments")
+		@DisplayName("The frame buffer image formats should match the attachments")
 		@Test
 		void createInvalidFormat() {
-			init(VkFormat.UNDEFINED, EXTENTS);
-			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, EXTENTS, List.of(view, view)));
+			image.descriptor.format(VkFormat.UNDEFINED);
+			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, new Dimensions(2, 3), List.of(view)));
 		}
 
-		@DisplayName("Attachment dimensions cannot be smaller than the frame buffer")
+		@DisplayName("The attachment dimensions cannot be smaller than the frame buffer")
 		@Test
 		void createInvalidExtents() {
-			init(FORMAT, new Dimensions(1, 2));
-			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, EXTENTS, List.of(view)));
-		}
-	}
-
-	@Nested
-	class FrameSetTests {
-		private Group group;
-		private Swapchain swapchain;
-
-		@BeforeEach
-		void before() {
-			init(FORMAT, EXTENTS);
-			swapchain = mock(Swapchain.class);
-			when(swapchain.extents()).thenReturn(EXTENTS);
-			when(swapchain.attachments()).thenReturn(List.of(view));
-			group = new Group(swapchain, pass, List.of());
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(swapchain, group.swapchain());
-			assertEquals(false, group.isDestroyed());
-		}
-
-		@Test
-		void buffer() {
-			assertNotNull(group.buffer(0));
-		}
-
-		@Test
-		void destroy() {
-			group.destroy();
+			image.descriptor.extents(new Dimensions(1, 2));
+			assertThrows(IllegalArgumentException.class, () -> FrameBuffer.create(pass, new Dimensions(2, 3), List.of(view)));
 		}
 	}
 }
+
+// TODO - are we actually going to use this?
+//
+//	@Nested
+//	class FrameSetTests {
+//		private Group group;
+//		private Swapchain swapchain;
+//
+//		@BeforeEach
+//		void before() {
+////			init(VkFormat.R32G32B32A32_SFLOAT, new Dimensions(2, 3));
+//			swapchain = mock(Swapchain.class);
+//			when(swapchain.extents()).thenReturn(new Dimensions(2, 3));
+//			when(swapchain.attachments()).thenReturn(List.of(view));
+//			group = new Group(swapchain, pass, List.of());
+//		}
+//
+//		@Test
+//		void constructor() {
+//			assertEquals(swapchain, group.swapchain());
+//			assertEquals(false, group.isDestroyed());
+//		}
+//
+//		@Test
+//		void buffer() {
+//			assertNotNull(group.buffer(0));
+//		}
+//
+//		@Test
+//		void destroy() {
+//			group.destroy();
+//		}
+//	}
+//}

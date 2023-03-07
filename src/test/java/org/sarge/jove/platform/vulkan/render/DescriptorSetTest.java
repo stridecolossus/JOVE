@@ -11,23 +11,28 @@ import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.*;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 
-public class DescriptorSetTest extends AbstractVulkanTest {
+public class DescriptorSetTest {
 	private Binding binding;
 	private DescriptorSet.Layout layout;
 	private DescriptorSet descriptor;
 	private DescriptorResource res;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
+		// Init device
+		dev = new MockDeviceContext();
+		lib = dev.library();
+
 		// Create layout with a sampler binding
 		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
 		layout = new DescriptorSet.Layout(new Handle(1), dev, List.of(binding));
@@ -229,7 +234,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 			};
 
 			// Check API
-			verify(lib).vkCreateDescriptorSetLayout(dev, expected, null, factory.pointer());
+			verify(lib).vkCreateDescriptorSetLayout(dev, expected, null, dev.factory().pointer());
 		}
 
 		@DisplayName("cannot contain duplicate bindings")
@@ -342,7 +347,7 @@ public class DescriptorSetTest extends AbstractVulkanTest {
 						return true;
 					}
 				};
-				verify(lib).vkCreateDescriptorPool(dev, expected, null, factory.pointer());
+				verify(lib).vkCreateDescriptorPool(dev, expected, null, dev.factory().pointer());
 			}
 
 			@DisplayName("must contain at least one descriptor type")

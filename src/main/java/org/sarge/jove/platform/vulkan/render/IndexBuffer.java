@@ -56,7 +56,7 @@ public class IndexBuffer extends VulkanBuffer {
 	 * @throws IllegalStateException if the index is larger than the {@code maxDrawIndexedIndexValue} hardware limit
 	 */
 	public Command bind(long offset) {
-		validate(offset);
+		checkOffset(offset);
 		validateLimit();
 		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
 	}

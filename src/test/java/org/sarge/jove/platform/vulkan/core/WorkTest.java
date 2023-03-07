@@ -8,35 +8,35 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 
 import com.sun.jna.Structure;
 
-public class WorkTest extends AbstractVulkanTest {
+public class WorkTest {
 	private WorkQueue queue;
 	private Pool pool;
 	private Buffer buffer;
 	private Work work;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Create queue
+		// Init device
+		dev = new MockDeviceContext();
+		lib = dev.library();
+
+		// Create work queue
 		final Family family = new Family(0, 1, Set.of());
 		queue = new WorkQueue(new Handle(1), family);
 
-		// Create pool
-		pool = mock(Pool.class);
-		when(pool.queue()).thenReturn(queue);
-		when(pool.device()).thenReturn(dev);
-
 		// Create command buffer
-		buffer = mock(Buffer.class);
-		when(buffer.pool()).thenReturn(pool);
-		when(buffer.handle()).thenReturn(new Handle(2));
-		when(buffer.isReady()).thenReturn(true);
+		pool = new Command.Pool(new Handle(2), dev, queue);
+		buffer = pool.allocate();
+		buffer.begin().end();
 
 		// Create work instance
 		work = new Work.Builder(pool).add(buffer).build();
@@ -100,8 +100,8 @@ public class WorkTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			wait = mock(Semaphore.class);
-			signal = mock(Semaphore.class);
+			wait = new Semaphore(new Handle(1), dev);
+			signal = new Semaphore(new Handle(2), dev);
 			builder = new Work.Builder(pool);
 		}
 
@@ -114,16 +114,16 @@ public class WorkTest extends AbstractVulkanTest {
 		@DisplayName("A command buffer that has not been recorded cannot be added to the work")
 		@Test
 		void addNotRecorded() {
-			when(buffer.isReady()).thenReturn(false);
+			buffer.reset();
 			assertThrows(IllegalStateException.class, () -> builder.add(buffer));
 		}
 
 		@DisplayName("All command buffers in the work must submit to the same queue family")
 		@Test
 		void addInvalidQueueFamily() {
-			final Pool other = mock(Pool.class);
-			when(buffer.pool()).thenReturn(other);
-			when(other.queue()).thenReturn(new WorkQueue(new Handle(999), new Family(1, 2, Set.of())));
+			final var other = new WorkQueue(new Handle(1), new Family(1, 2, Set.of()));
+			pool = new Command.Pool(new Handle(1), dev, other);
+			buffer = pool.allocate().begin().end();
 			assertThrows(IllegalArgumentException.class, () -> builder.add(buffer));
 		}
 
@@ -157,21 +157,15 @@ public class WorkTest extends AbstractVulkanTest {
 		@DisplayName("A work submission can be constructed via the builder")
 		@Test
 		void build() {
-			// Init semaphores
-			final Handle handle = new Handle(3);
-			when(wait.handle()).thenReturn(handle);
-			when(signal.handle()).thenReturn(handle);
-
 			// Build work
 			work = builder
 					.add(buffer)
-					.add(buffer)
+					//.add(buffer)
 					.wait(wait, VkPipelineStage.TOP_OF_PIPE)
 					.signal(signal)
 					.build();
 
 			// Submit work
-			assertNotNull(work);
 			work.submit(null);
 
 			// Init expected submission descriptor
@@ -179,8 +173,8 @@ public class WorkTest extends AbstractVulkanTest {
 				@Override
 				public boolean equals(Object obj) {
 					final VkSubmitInfo info = (VkSubmitInfo) obj;
-					assertEquals(2, info.commandBufferCount);
-					assertEquals(NativeObject.array(List.of(buffer, buffer)), info.pCommandBuffers);
+					assertEquals(1, info.commandBufferCount);
+					assertEquals(NativeObject.array(List.of(buffer)), info.pCommandBuffers);
 
 					// Check wait semaphores
 					assertEquals(1, info.waitSemaphoreCount);

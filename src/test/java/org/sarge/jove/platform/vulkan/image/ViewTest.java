@@ -1,39 +1,41 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.memory.MockDeviceMemory;
 
-public class ViewTest extends AbstractVulkanTest {
+public class ViewTest {
 	private View view;
 	private DefaultImage image;
 	private ClearValue clear;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
+		// Init device
+		dev = new MockDeviceContext();
+
 		// Create image descriptor
 		final Descriptor descriptor = new Descriptor.Builder()
-				.format(FORMAT)
+				.format(VkFormat.R32G32B32A32_SFLOAT)
 				.extents(new Dimensions(3, 4))
 				.aspect(VkImageAspect.COLOR)
 				.build();
 
 		// Create image
-		image = mock(DefaultImage.class);
-		when(image.descriptor()).thenReturn(descriptor);
-		when(image.handle()).thenReturn(new Handle(1));
-		when(image.device()).thenReturn(dev);
+		image = new DefaultImage(new Handle(2), dev, descriptor, new MockDeviceMemory());
 
 		// Create image view
-		view = new View(new Handle(2), dev, image);
+		view = new View(new Handle(3), dev, image);
 
 		// Init clear value
 		clear = new ColourClearValue(Colour.WHITE);
@@ -49,7 +51,8 @@ public class ViewTest extends AbstractVulkanTest {
 	@DisplayName("A default view can be constructed for a given image")
 	@Test
 	void of() {
-		assertEquals(view, View.of(image));
+		view = View.of(image);
+		assertEquals(image, view.image());
 	}
 
 	@DisplayName("The clear value for a view...")
@@ -86,9 +89,8 @@ public class ViewTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		view.destroy();
-		verify(lib).vkDestroyImageView(dev, view, null);
-		verify(image).destroy();
-		verifyNoMoreInteractions(lib);
+		verify(dev.library()).vkDestroyImageView(dev, view, null);
+		assertEquals(true, image.isDestroyed());
 	}
 
 	@DisplayName("The underlying image of the view is destroyed by default")
@@ -96,7 +98,7 @@ public class ViewTest extends AbstractVulkanTest {
 	void auto() {
 		view.setDestroyImage(false);
 		view.destroy();
-		verify(image, never()).destroy();
+		assertEquals(false, image.isDestroyed());
 	}
 
 	@Nested
@@ -105,7 +107,6 @@ public class ViewTest extends AbstractVulkanTest {
 
 		@BeforeEach
 		void before() {
-			when(image.device()).thenReturn(dev);
 			builder = new View.Builder(image);
 		}
 
@@ -122,7 +123,6 @@ public class ViewTest extends AbstractVulkanTest {
 					.build();
 
 			// Check view
-			assertNotNull(view);
 			assertNotNull(view.handle());
 			assertEquals(image, view.image());
 
@@ -135,7 +135,7 @@ public class ViewTest extends AbstractVulkanTest {
 					assertEquals(null, info.flags);
 					assertEquals(ViewTest.this.image.handle(), info.image);
 					assertEquals(VkImageViewType.CUBE, info.viewType);
-					assertEquals(FORMAT, info.format);
+					assertEquals(VkFormat.R32G32B32A32_SFLOAT, info.format);
 					assertNotNull(info.subresourceRange);
 
 					// Check component mapping
@@ -149,7 +149,7 @@ public class ViewTest extends AbstractVulkanTest {
 			};
 
 			// Check API
-			verify(lib).vkCreateImageView(dev, expected, null, factory.pointer());
+			verify(dev.library()).vkCreateImageView(dev, expected, null, dev.factory().pointer());
 		}
 	}
 }

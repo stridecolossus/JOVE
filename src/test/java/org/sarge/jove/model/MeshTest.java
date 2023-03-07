@@ -6,8 +6,8 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Normal;
 
-class AbstractMeshTest {
-	private static class MockAbstractModel extends AbstractMesh {
+class MeshTest {
+	private static class MockAbstractModel extends Mesh {
 		public MockAbstractModel(Primitive primitive) {
 			super(primitive, new CompoundLayout(Normal.LAYOUT));
 		}
@@ -23,7 +23,7 @@ class AbstractMeshTest {
 		}
 	}
 
-	private AbstractMesh mesh;
+	private Mesh mesh;
 
 	@BeforeEach
 	void before() {

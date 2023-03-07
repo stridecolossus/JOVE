@@ -8,18 +8,24 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class ImageCopyCommandTest extends AbstractVulkanTest {
+public class ImageCopyCommandTest {
 	private Image src, dest;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
+		lib = dev.library();
+
 		final Extents extents = new Extents(new Dimensions(2, 3));
 		final Descriptor descriptor = new Descriptor.Builder()
-				.format(FORMAT)
+				.format(VkFormat.R32G32B32A32_SFLOAT)
 				.aspect(VkImageAspect.COLOR)
 				.extents(extents)
 				.build();

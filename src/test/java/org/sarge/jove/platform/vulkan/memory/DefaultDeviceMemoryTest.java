@@ -8,31 +8,28 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.common.*;
 
-class DefaultDeviceMemoryTest extends AbstractVulkanTest {
-	private static final int SIZE = 3;
-
+class DefaultDeviceMemoryTest {
 	private DefaultDeviceMemory mem;
-	private Handle handle;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
-		handle = new Handle(1);
-		mem = new DefaultDeviceMemory(handle, dev, SIZE);
+		dev = new MockDeviceContext();
+		mem = new DefaultDeviceMemory(new Handle(1), dev, 3);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(handle, mem.handle());
 		assertEquals(false, mem.isDestroyed());
-		assertEquals(SIZE, mem.size());
+		assertEquals(3, mem.size());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(mem, mem);
-		assertEquals(mem, new DefaultDeviceMemory(handle, dev, SIZE));
+		assertEquals(mem, new DefaultDeviceMemory(new Handle(1), dev, 3));
 		assertNotEquals(mem, null);
 		assertNotEquals(mem, mock(DeviceMemory.class));
 	}
@@ -67,7 +64,7 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		@DisplayName("cannot map a region larger than the memory")
 		@Test
 		void invalid() {
-			assertThrows(IllegalArgumentException.class, () -> mem.map(1, SIZE));
+			assertThrows(IllegalArgumentException.class, () -> mem.map(1, 3));
 		}
 
 		@DisplayName("can be destroyed")
@@ -97,8 +94,7 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		@DisplayName("has a region mapping")
 		@Test
 		void region() {
-			assertNotNull(region);
-			assertEquals(SIZE, region.size());
+			assertEquals(3, region.size());
 			assertEquals(Optional.of(region), mem.region());
 		}
 
@@ -119,14 +115,13 @@ class DefaultDeviceMemoryTest extends AbstractVulkanTest {
 		@Test
 		void buffer() {
 			final ByteBuffer bb = region.buffer();
-			assertNotNull(bb);
-			assertEquals(SIZE, bb.capacity());
+			assertEquals(3, bb.capacity());
 		}
 
 		@DisplayName("cannot provide a buffer larger than the region")
 		@Test
 		void invalid() {
-			assertThrows(IllegalArgumentException.class, () -> region.buffer(1, SIZE));
+			assertThrows(IllegalArgumentException.class, () -> region.buffer(1, 3));
 		}
 
 		@DisplayName("can be destroyed")

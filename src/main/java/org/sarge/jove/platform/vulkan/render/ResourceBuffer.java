@@ -29,7 +29,7 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 		this.type = notNull(type);
 		this.offset = zeroOrMore(offset);
 		require(map(type));
-		validate(offset);
+		checkOffset(offset);
 		validate();
 	}
 

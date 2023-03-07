@@ -138,7 +138,7 @@ public interface Image extends NativeObject {
 		 * @param layerCount	Number of array layers
 		 * @throws IllegalArgumentException if {@link #aspects} is empty or is an invalid combination
 		 * @throws IllegalArgumentException if {@link #extents} is invalid for the given image {@link #type}
-		 * @see Image#validate(Set)
+		 * @see Image#checkOffset(Set)
 		 */
 		public Descriptor {
 			// Validate

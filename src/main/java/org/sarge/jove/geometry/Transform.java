@@ -31,7 +31,7 @@ public interface Transform {
 
 			@Override
 			public Matrix matrix() {
-				return list.stream().map(Transform::matrix).reduce(Matrix4.IDENTITY, Matrix::multiply);
+				return list.stream().map(Transform::matrix).reduce(Matrix.IDENTITY, Matrix::multiply);
 			}
 		};
 	}

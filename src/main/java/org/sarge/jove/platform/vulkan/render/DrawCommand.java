@@ -34,7 +34,7 @@ public interface DrawCommand extends Command {
 	/**
 	 * Creates a simple draw command.
 	 * @param count Number of vertices
-	 * @return New draw command
+	 * @return Simple draw command
 	 */
 	static DrawCommand draw(int count) {
 		return new Builder().count(count).build();
@@ -43,16 +43,16 @@ public interface DrawCommand extends Command {
 	/**
 	 * Creates an indexed draw command.
 	 * @param count Number of indices
-	 * @return New indexed draw command
+	 * @return Indexed draw command
 	 */
 	static DrawCommand indexed(int count) {
 		return new Builder().indexed().count(count).build();
 	}
 
 	/**
-	 * Helper - Creates a draw command for the given mesh.
+	 * Creates a draw command for the given mesh.
 	 * @param mesh Mesh
-	 * @return New draw command
+	 * @return Draw command
 	 */
 	static DrawCommand of(Mesh mesh) {
 		final int count = mesh.count();
@@ -63,6 +63,7 @@ public interface DrawCommand extends Command {
 			return draw(count);
 		}
 	}
+	// TODO - should this be on mesh?
 
 	/**
 	 * Builder for a draw command.
@@ -197,7 +198,7 @@ public interface DrawCommand extends Command {
 		public DrawCommand build(VulkanBuffer buffer) {
 			// Validate
 			buffer.require(VkBufferUsageFlag.INDIRECT_BUFFER);
-			buffer.validate(offset);
+			buffer.checkOffset(offset);
 
 			// Check indirect multi-draw is supported
 			final DeviceLimits limits = buffer.device().limits();

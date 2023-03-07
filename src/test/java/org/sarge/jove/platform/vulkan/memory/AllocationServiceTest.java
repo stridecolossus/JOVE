@@ -7,9 +7,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class AllocationServiceTest extends AbstractVulkanTest {
+public class AllocationServiceTest {
 	private AllocationService service;
 	private MemoryType type;
 	private Allocator allocator;

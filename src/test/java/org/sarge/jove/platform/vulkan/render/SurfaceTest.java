@@ -9,38 +9,38 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.util.MockReferenceFactory;
 
-class SurfaceTest extends AbstractVulkanTest {
+import com.sun.jna.ptr.IntByReference;
+
+class SurfaceTest {
 	private Surface surface;
-	private Instance instance;
-	private PhysicalDevice physical;
+	private PhysicalDevice dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		// Create instance
-		instance = mock(Instance.class);
-		when(instance.library()).thenReturn(lib);
-		when(instance.factory()).thenReturn(factory);
+		// Init Vulkan
+		lib = mock(VulkanLibrary.class);
 
-		// Create physical device
-		physical = mock(PhysicalDevice.class);
-		when(physical.instance()).thenReturn(instance);
+		// Create instance
+		final var instance = mock(Instance.class);
+		when(instance.factory()).thenReturn(new MockReferenceFactory());
+		when(instance.library()).thenReturn(lib);
+
+		// Create device
+		dev = mock(PhysicalDevice.class);
+		when(dev.instance()).thenReturn(instance);
 
 		// Create surface
-		surface = new Surface(new Handle(1), physical);
-	}
-
-	@Test
-	void constructor() {
-		assertNotNull(surface.handle());
-		assertEquals(false, surface.isDestroyed());
+		surface = new Surface(new Handle(1), dev);
 	}
 
 	@Test
 	void destroy() {
 		surface.destroy();
-		verify(lib).vkDestroySurfaceKHR(instance, surface, null);
+		verify(lib).vkDestroySurfaceKHR(dev.instance(), surface, null);
+		assertEquals(true, surface.isDestroyed());
 	}
 
 	@DisplayName("A surface has a descriptor of its supported capabilities")
@@ -48,15 +48,15 @@ class SurfaceTest extends AbstractVulkanTest {
 	void capabilities() {
 		final VkSurfaceCapabilitiesKHR caps = surface.capabilities();
 		assertNotNull(caps);
-		verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical, surface, caps);
+		verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, surface, caps);
 	}
 
 	@DisplayName("A surface provides the supported surface formats")
 	@Test
 	void formats() {
+		final IntByReference count = dev.instance().factory().integer();
 		final List<VkSurfaceFormatKHR> formats = surface.formats();
-		assertNotNull(formats);
-		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(physical, surface, factory.integer(), formats.get(0));
+		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface, count, formats.get(0));
 	}
 
 	@DisplayName("An available surface format can be selected for the surface")
@@ -80,7 +80,6 @@ class SurfaceTest extends AbstractVulkanTest {
 	@Test
 	void defaultSurfaceFormat() {
 		final VkSurfaceFormatKHR format = Surface.defaultSurfaceFormat();
-		assertNotNull(format);
 		assertEquals(VkFormat.B8G8R8A8_UNORM, format.format);
 		assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, format.colorSpace);
 	}
@@ -88,9 +87,10 @@ class SurfaceTest extends AbstractVulkanTest {
 	@DisplayName("A surface provides the set of supported presentation modes")
 	@Test
 	void modes() {
+		final IntByReference count = dev.instance().factory().integer();
 		final Set<VkPresentModeKHR> modes = surface.modes();
 		final VkPresentModeKHR first = modes.iterator().next();
-		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(physical, surface, factory.integer(), new int[]{first.value()});
+		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(dev, surface, count, new int[]{first.value()});
 	}
 
 	@DisplayName("An available presentation mode can be selected for the surface")
@@ -112,21 +112,19 @@ class SurfaceTest extends AbstractVulkanTest {
 	void cached() {
 		// Create cached instance
 		final Surface cached = surface.cached();
-		assertNotNull(cached);
-
-		// Check capabilities are cached
 		final VkSurfaceCapabilitiesKHR caps = cached.capabilities();
 		assertEquals(caps, cached.capabilities());
-		verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical, surface, caps);
+		verify(lib, times(1)).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, surface, caps);
 
 		// Check surface formats are cached
+		final IntByReference count = dev.instance().factory().integer();
 		final List<VkSurfaceFormatKHR> formats = cached.formats();
 		assertEquals(formats, cached.formats());
-		verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfaceFormatsKHR(physical, surface, factory.integer(), formats.get(0));
+		verify(lib, times(1)).vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface, count, formats.get(0));
 
 		// Check presentation modes are cached
 		final Set<VkPresentModeKHR> modes = cached.modes();
 		assertEquals(modes, cached.modes());
-		verify(lib, atMostOnce()).vkGetPhysicalDeviceSurfacePresentModesKHR(physical, surface, factory.integer(), new int[]{modes.iterator().next().value()});
+		verify(lib, times(1)).vkGetPhysicalDeviceSurfacePresentModesKHR(dev, surface, count, new int[]{modes.iterator().next().value()});
 	}
 }

@@ -7,18 +7,20 @@ import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlag.DERIVATIVE;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
 
-class PipelineTest extends AbstractVulkanTest {
+class PipelineTest {
 	private Pipeline pipeline;
 	private PipelineLayout layout;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
 		layout = mock(PipelineLayout.class);
 		pipeline = new Pipeline(new Handle(1), dev, VkPipelineBindPoint.GRAPHICS, layout, false);
 	}
@@ -33,16 +35,17 @@ class PipelineTest extends AbstractVulkanTest {
 
 	@Test
 	void bind() {
+		final VulkanLibrary lib = dev.library();
 		final Command cmd = pipeline.bind();
-		final Command.Buffer cb = mock(Command.Buffer.class);
-		cmd.record(lib, cb);
-		verify(lib).vkCmdBindPipeline(cb, VkPipelineBindPoint.GRAPHICS, pipeline);
+		final var buffer = new MockCommandBuffer();
+		cmd.record(lib, buffer);
+		verify(lib).vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, pipeline);
 	}
 
 	@Test
 	void destroy() {
 		pipeline.destroy();
-		verify(lib).vkDestroyPipeline(dev, pipeline, null);
+		verify(dev.library()).vkDestroyPipeline(dev, pipeline, null);
 	}
 
 	@Nested
@@ -67,9 +70,7 @@ class PipelineTest extends AbstractVulkanTest {
 
 			@BeforeEach
 			void before() {
-    			base = mock(Pipeline.class);
-    			when(base.handle()).thenReturn(new Handle(3));
-    			when(base.isAllowDerivatives()).thenReturn(true);
+    			base = new Pipeline(new Handle(3), dev, VkPipelineBindPoint.GRAPHICS, layout, true);
 			}
 
     		@DisplayName("A pipeline can be derived from an existing pipeline")

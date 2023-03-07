@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
@@ -11,9 +10,10 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-class ImageTest extends AbstractVulkanTest {
+class ImageTest {
+	private static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
+
 	@Test
 	void cubemap() {
 		assertEquals(6, Image.CUBEMAP_ARRAY_LAYERS);
@@ -135,7 +135,6 @@ class ImageTest extends AbstractVulkanTest {
 		@Test
 		void extents() {
 			final VkExtent3D result = extents.toExtent();
-			assertNotNull(result);
 			assertEquals(2, result.width);
 			assertEquals(4, result.height);
 			assertEquals(3, result.depth);
@@ -145,7 +144,6 @@ class ImageTest extends AbstractVulkanTest {
 		@Test
 		void offset() {
 			final VkOffset3D result = extents.toOffset();
-			assertNotNull(result);
 			assertEquals(2, result.x);
 			assertEquals(4, result.y);
 			assertEquals(3, result.z);

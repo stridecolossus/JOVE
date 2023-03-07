@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 
-public class AbstractTransientNativeObjectTest {
-	private AbstractTransientNativeObject obj;
+public class TransientNativeObjectTest {
+	private TransientNativeObject obj;
 	private Handle handle;
 	private boolean destroyed;
 
@@ -13,7 +13,7 @@ public class AbstractTransientNativeObjectTest {
 	void before() {
 		handle = new Handle(1);
 		destroyed = false;
-		obj = new AbstractTransientNativeObject(handle) {
+		obj = new TransientNativeObject(handle) {
 			@Override
 			protected void release() {
 				destroyed = true;

@@ -4,7 +4,7 @@ import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.Cosine;
 
 /**
- * An <i>axis</i> is the unit vector representing one of the <i>cardinal</i> axes.
+ * An <i>axis</i> is the unit vector for one of the <i>cardinal</i> axes.
  * <p>
  * Notes:
  * <ul>
@@ -114,7 +114,7 @@ public final class Axis extends Normal {
 	 * @return Rotation matrix
 	 */
 	public Matrix rotation(float angle, Cosine cosine) {
-		final var matrix = Matrix4.builder().identity();
+		final var matrix = new Matrix.Builder().identity();
 		final float sin = cosine.sin(angle);
 		final float cos = cosine.cos(angle);
 		axis.rotation(sin, cos, matrix);

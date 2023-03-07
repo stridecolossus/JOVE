@@ -10,26 +10,19 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.util.ReferenceFactory;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
-public class InstanceTest {
+class InstanceTest {
 	private Instance instance;
 	private VulkanLibrary lib;
 	private ReferenceFactory factory;
 
 	@BeforeEach
 	void before() {
-		// Create Vulkan API
 		lib = mock(VulkanLibrary.class);
-
-		// Init reference factory
-		factory = mock(ReferenceFactory.class);
-		when(factory.pointer()).thenReturn(new PointerByReference(new Pointer(1)));
-
-		// Create instance
+		factory = new MockReferenceFactory();
 		instance = new Instance(new Handle(1), lib, factory);
 	}
 
@@ -98,11 +91,10 @@ public class InstanceTest {
 				.build(lib);
 
 			// Check instance
-			assertNotNull(instance);
 			assertEquals(lib, instance.library());
 			assertEquals(false, instance.isDestroyed());
 
-			// Init expected create descriptor
+			// Check API
 			final var expected = new VkInstanceCreateInfo() {
 				@Override
 				public boolean equals(Object obj) {
@@ -125,8 +117,6 @@ public class InstanceTest {
 					return true;
 				}
 			};
-
-			// Check API
 			verify(lib).vkCreateInstance(expected, null, factory.pointer());
 		}
 

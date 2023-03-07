@@ -16,10 +16,10 @@ import org.sarge.lib.util.Check;
  */
 public class BufferCopyCommand extends ImmediateCommand {
 	/**
-	 * Helper - Creates a command to copy between the given buffers.
+	 * Creates a command to copy between the given buffers.
 	 * @param src		Source buffer
 	 * @param dest		Destination buffer
-	 * @return New buffer copy command
+	 * @return Copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small
 	 * @throws IllegalStateException if the given buffers are not a valid source and destination
 	 */
@@ -127,8 +127,8 @@ public class BufferCopyCommand extends ImmediateCommand {
 		public Builder region(long srcOffset, long destOffset, long size) {
 			// Validate
 			Check.oneOrMore(size);
-			src.validate(srcOffset + size - 1);
-			dest.validate(destOffset + size - 1);
+			src.checkOffset(srcOffset + size - 1);
+			dest.checkOffset(destOffset + size - 1);
 
 			// Create copy region descriptor
 			regions.add(new CopyRegion(srcOffset, destOffset, size));

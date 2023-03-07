@@ -6,19 +6,23 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.platform.vulkan.image.ImageBlitCommand.Builder;
 import org.sarge.jove.platform.vulkan.image.ImageBlitCommand.Builder.BlitRegion;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class ImageBlitCommandTest extends AbstractVulkanTest {
+public class ImageBlitCommandTest {
 	private ImageBlitCommand blit;
 	private VkImageBlit region;
 	private Image image;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
+		lib = dev.library();
 		image = mock(Image.class);
 		region = new VkImageBlit();
 		blit = new ImageBlitCommand(image, VkImageLayout.TRANSFER_SRC_OPTIMAL, image, VkImageLayout.TRANSFER_DST_OPTIMAL, new VkImageBlit[]{region}, VkFilter.LINEAR);

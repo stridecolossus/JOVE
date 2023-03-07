@@ -6,15 +6,16 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-class PoolAllocatorTest extends AbstractVulkanTest {
+class PoolAllocatorTest {
 	private Allocator delegate;
 	private PoolAllocator pool;
 	private MemoryType type;
 	private AllocationPolicy policy;
 	private DeviceMemory block;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
@@ -30,6 +31,7 @@ class PoolAllocatorTest extends AbstractVulkanTest {
 		when(policy.apply(1, 0)).thenReturn(1L);
 
 		// Create pool
+		dev = new MockDeviceContext();
 		delegate = new DefaultAllocator(dev);
 		pool = new PoolAllocator(delegate, 1, policy);
 	}

@@ -270,7 +270,7 @@ public class DescriptorSet implements NativeObject {
 	 * @throws IllegalStateException if any resource has not been populated
 	 * @see #set(Binding, DescriptorResource)
 	 */
-	public static int update(LogicalDevice dev, Collection<DescriptorSet> descriptors) {
+	public static int update(DeviceContext dev, Collection<DescriptorSet> descriptors) {
 		// Enumerate pending updates
 		final List<Update> updates = descriptors
 				.stream()
@@ -336,7 +336,7 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * A <i>descriptor set layout</i> specifies the resource bindings for a descriptor set.
 	 */
-	public static class Layout extends AbstractVulkanObject {
+	public static class Layout extends VulkanObject {
 		/**
 		 * Creates a descriptor set layout.
 		 * @param dev			Logical device
@@ -416,7 +416,7 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * A <i>descriptor set pool</i> is used to allocate and manage a group of descriptor sets.
 	 */
-	public static class Pool extends AbstractVulkanObject {
+	public static class Pool extends VulkanObject {
 		private final int max;
 
 		/**

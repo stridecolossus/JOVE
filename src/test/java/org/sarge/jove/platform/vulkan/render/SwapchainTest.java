@@ -8,33 +8,36 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.BitMask;
 import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 
-public class SwapchainTest extends AbstractVulkanTest {
+public class SwapchainTest {
 	private Swapchain swapchain;
 	private View view;
 	private Dimensions extents;
+	private DeviceContext dev;
+	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		view = mock(View.class);
+		dev = new MockDeviceContext();
+		lib = dev.library();
+		view = View.of(new MockImage());
 		extents = new Dimensions(2, 3);
-		swapchain = new Swapchain(new Handle(1), dev, FORMAT, extents, List.of(view));
+		swapchain = new Swapchain(new Handle(1), dev, VkFormat.R32G32B32A32_SFLOAT, extents, List.of(view));
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(FORMAT, swapchain.format());
+		assertEquals(VkFormat.R32G32B32A32_SFLOAT, swapchain.format());
 		assertEquals(extents, swapchain.extents());
 		assertEquals(List.of(view), swapchain.attachments());
 	}
@@ -42,6 +45,7 @@ public class SwapchainTest extends AbstractVulkanTest {
 	@Test
 	void destroy() {
 		swapchain.destroy();
+		assertEquals(true, swapchain.isDestroyed());
 		verify(lib).vkDestroySwapchainKHR(dev, swapchain, null);
 	}
 
@@ -59,13 +63,8 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@DisplayName("The next image to be rendered can be acquired from the swapchain")
 		@Test
 		void acquire() {
-			final var factory = mock(ReferenceFactory.class);
-			final var ref = new IntByReference(0);
-			when(factory.integer()).thenReturn(ref);
-			when(dev.factory()).thenReturn(factory);
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, ref)).thenReturn(VkResult.SUCCESS);
-			assertEquals(0, swapchain.acquire(semaphore, fence));
-			assertEquals(view, swapchain.latest());
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, dev.factory().integer())).thenReturn(VkResult.SUCCESS);
+			assertEquals(1, swapchain.acquire(semaphore, fence));
 		}
 
 		@DisplayName("Acquiring the next image requires at least one synchronisation argument")
@@ -77,14 +76,14 @@ public class SwapchainTest extends AbstractVulkanTest {
 		@DisplayName("The next image cannot be acquired if the swapchain has become invalid")
 		@Test
 		void error() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, factory.integer())).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR);
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, dev.factory().integer())).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR);
 			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 
 		@DisplayName("The next image can be acquired if the swapchain is sub-optimal")
 		@Test
 		void suboptimal() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, factory.integer())).thenReturn(VkResult.SUBOPTIMAL_KHR);
+			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, dev.factory().integer())).thenReturn(VkResult.SUBOPTIMAL_KHR);
 			swapchain.acquire(null, fence);
 		}
 	}
@@ -227,8 +226,8 @@ public class SwapchainTest extends AbstractVulkanTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateSwapchainKHR(dev, expected, null, factory.pointer());
-			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle(), factory.integer(), new Pointer[1]);
+			verify(lib).vkCreateSwapchainKHR(dev, expected, null, dev.factory().pointer());
+			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle(), dev.factory().integer(), new Pointer[1]);
 		}
 
 		@DisplayName("The swapchain format must be supported by the surface")

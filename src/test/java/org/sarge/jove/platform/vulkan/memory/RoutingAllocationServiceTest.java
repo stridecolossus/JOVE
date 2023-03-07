@@ -5,9 +5,8 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 
-public class RoutingAllocationServiceTest extends AbstractVulkanTest {
+public class RoutingAllocationServiceTest {
 	private RoutingAllocationService service;
 	private Allocator def;
 
@@ -30,6 +29,7 @@ public class RoutingAllocationServiceTest extends AbstractVulkanTest {
 				.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
 				.required(VkMemoryProperty.HOST_VISIBLE)
 				.build();
+
 		final Allocator other = mock(Allocator.class);
 		service.route(props::equals, other);
 		assertEquals(other, service.allocator(props));

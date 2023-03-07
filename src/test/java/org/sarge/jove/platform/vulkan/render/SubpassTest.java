@@ -6,19 +6,20 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
-import org.sarge.jove.platform.vulkan.util.AbstractVulkanTest;
 import org.sarge.jove.util.BitMask;
 
 @Nested
-class SubpassTest extends AbstractVulkanTest {
+class SubpassTest {
 	private Subpass subpass;
 	private Attachment col, depth;
 
 	@BeforeEach
 	void before() {
-		col = Attachment.colour(FORMAT);
-		depth = Attachment.depth(FORMAT);
+		final VkFormat format = VkFormat.R32G32B32A32_SFLOAT;
+		col = Attachment.colour(format);
+		depth = Attachment.depth(format);
 		subpass = new Subpass();
 	}
 
@@ -43,7 +44,7 @@ class SubpassTest extends AbstractVulkanTest {
 	@DisplayName("A render pass can be conveniently created from a single subpass")
 	@Test
 	void create() {
-		final RenderPass pass = subpass.colour(col).create(dev);
+		final RenderPass pass = subpass.colour(col).create(new MockDeviceContext());
 		assertNotNull(pass);
 	}
 

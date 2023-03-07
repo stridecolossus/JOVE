@@ -49,12 +49,11 @@ public interface NativeObject {
 
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
-			if(value == null) {
-				return null;
+			if(value instanceof NativeObject obj) {
+				return obj.handle().pointer();
 			}
 			else {
-				final var obj = (NativeObject) value;
-				return obj.handle().pointer();
+				return null;
 			}
 		}
 
