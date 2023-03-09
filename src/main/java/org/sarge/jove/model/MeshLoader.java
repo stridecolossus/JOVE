@@ -66,10 +66,10 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 		}
 
 		// Write vertices
-		helper.write(mesh.vertices(), out);
+		helper.write(mesh.vertexBuffer(), out);
 
 		// Write index
-		final Optional<ByteSizedBufferable> index = mesh.index();
+		final Optional<ByteSizedBufferable> index = mesh.indexBuffer();
 		if(index.isPresent()) {
 			helper.write(index.get(), out);
 		}

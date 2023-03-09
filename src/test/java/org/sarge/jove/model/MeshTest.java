@@ -3,7 +3,7 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.CompoundLayout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Normal;
 
 class MeshTest {
@@ -20,6 +20,11 @@ class MeshTest {
 		@Override
 		public boolean isIndexed() {
 			return false;
+		}
+
+		@Override
+		public ByteSizedBufferable vertexBuffer() {
+			return null;
 		}
 	}
 

@@ -25,8 +25,8 @@ class BufferedMeshTest {
 		assertEquals(3, mesh.count());
 		assertEquals(new CompoundLayout(Point.LAYOUT), mesh.layout());
 		assertEquals(true, mesh.isIndexed());
-		assertEquals(data, mesh.vertices());
-		assertEquals(Optional.of(data), mesh.index());
+		assertEquals(data, mesh.vertexBuffer());
+		assertEquals(Optional.of(data), mesh.indexBuffer());
 	}
 
 	@Test
@@ -34,6 +34,6 @@ class BufferedMeshTest {
 		mesh = new BufferedMesh(Primitive.TRIANGLE, 3, new CompoundLayout(Point.LAYOUT), data, null);
 		assertEquals(3, mesh.count());
 		assertEquals(false, mesh.isIndexed());
-		assertEquals(Optional.empty(), mesh.index());
+		assertEquals(Optional.empty(), mesh.indexBuffer());
 	}
 }

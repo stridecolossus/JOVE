@@ -50,7 +50,7 @@ public class IndexedMesh extends DefaultMesh {
 	}
 
 	@Override
-	public int count() {
+	public final int count() {
 		return index.size() - restart;
 	}
 
@@ -67,8 +67,8 @@ public class IndexedMesh extends DefaultMesh {
 	}
 
 	@Override
-	protected Stream<int[]> indices() {
-		return super.indices().map(this::map);
+	protected final Stream<int[]> triangles() {
+		return super.triangles().map(this::map);
 	}
 
 	private int[] map(int[] indices) {
@@ -145,7 +145,7 @@ public class IndexedMesh extends DefaultMesh {
 					}
 				}
 				else {
-					final int[] indices = index().toArray();
+					final int[] indices = index.stream().mapToInt(Integer::intValue).toArray();
 					bb.asIntBuffer().put(indices);
 // TODO - does not update the position!!!
 //					bb.position(bb.position() + indices.length * Integer.BYTES);
@@ -160,7 +160,12 @@ public class IndexedMesh extends DefaultMesh {
 	}
 
 	@Override
-	public BufferedMesh buffer() {
+	public final Optional<ByteSizedBufferable> indexBuffer() {
+		return Optional.of(new IndexBuffer());
+	}
+
+	@Override
+	public final BufferedMesh buffer() {
 		return new BufferedMesh(this, new VertexBuffer(), new IndexBuffer());
 	}
 

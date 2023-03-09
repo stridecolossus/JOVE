@@ -2,14 +2,14 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Objects;
+import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.CompoundLayout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Normal;
 
 /**
- * Skeleton implementation.
+ * A <i>mesh</i> is a renderable model comprised of {@link Vertex} data and an optional index.
  * @author Sarge
  */
 public abstract class Mesh {
@@ -58,6 +58,18 @@ public abstract class Mesh {
 	 */
 	public final CompoundLayout layout() {
 		return layout;
+	}
+
+	/**
+	 * @return Vertex buffer
+	 */
+	public abstract ByteSizedBufferable vertexBuffer();
+
+	/**
+	 * @return Index buffer
+	 */
+	public Optional<ByteSizedBufferable> indexBuffer() {
+		return Optional.empty();
 	}
 
 	@Override

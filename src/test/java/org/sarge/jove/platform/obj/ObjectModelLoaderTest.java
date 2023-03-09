@@ -64,8 +64,8 @@ public class ObjectModelLoaderTest {
 
 		// Check model data
 		final BufferedMesh buffer = model.buffer();
-		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, buffer.vertices().length());
-		assertEquals(3 * Short.BYTES, buffer.index().get().length());
+		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, buffer.vertexBuffer().length());
+		assertEquals(3 * Short.BYTES, buffer.indexBuffer().get().length());
 	}
 
 	@Test

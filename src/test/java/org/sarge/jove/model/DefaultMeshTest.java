@@ -4,12 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.CompoundLayout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
 
 public class DefaultMeshTest {
@@ -77,8 +76,8 @@ public class DefaultMeshTest {
 		@DisplayName("can enumerate the triangles comprising the mesh")
 		@Test
 		void triangles() {
-			final Triangle triangle = new Triangle(Collections.nCopies(3, Point.ORIGIN));
-			assertEquals(List.of(triangle), mesh.triangles().toList());
+			final int[] expected = {0, 1, 2};
+			assertArrayEquals(new int[][]{expected}, mesh.triangles().toArray());
 		}
 
 		@DisplayName("cannot enumerate triangles if the primitive is not triangular")
@@ -113,11 +112,14 @@ public class DefaultMeshTest {
 			mesh.add(vertex);
 			mesh.add(vertex);
 
-			// Check vertices
+			// Create VBO
+			final ByteSizedBufferable vertices = buffer.vertexBuffer();
 			final int len = 3 * 3 * 4;
+			assertEquals(len, vertices.length());
+
+			// Check vertices
 			final ByteBuffer bb = ByteBuffer.allocate(len);
-			assertEquals(len, buffer.vertices().length());
-			buffer.vertices().buffer(bb);
+			vertices.buffer(bb);
 			assertEquals(0, bb.remaining());
 		}
 	}

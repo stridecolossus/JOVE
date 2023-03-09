@@ -47,11 +47,11 @@ class MeshLoaderTest {
 		assertEquals(mesh, result);
 
 		// Check vertices
-		final ByteSizedBufferable vertices = result.vertices();
+		final ByteSizedBufferable vertices = result.vertexBuffer();
 		assertEquals(3 * Float.BYTES, vertices.length());
 
 		// Check index
-		final ByteSizedBufferable index = result.index().orElseThrow();
+		final ByteSizedBufferable index = result.indexBuffer().orElseThrow();
 		assertEquals(3 * Short.BYTES, index.length());
 	}
 

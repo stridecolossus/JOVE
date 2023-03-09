@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
@@ -59,7 +58,7 @@ public class IndexedMeshTest {
 		mesh.add(0);
 		mesh.add(1);
 		mesh.add(2);
-		assertEquals(List.of(new Triangle(List.of(Point.ORIGIN, a, b))), mesh.triangles().toList());
+		assertArrayEquals(new int[][]{new int[]{0, 1, 2}}, mesh.triangles().toArray());
 	}
 
 	@DisplayName("The triangles of an indexed mesh ignore index restarts")
@@ -115,7 +114,7 @@ public class IndexedMeshTest {
 
 			// Check index buffer
 			final int len = 3 * Short.BYTES;
-			final ByteSizedBufferable index = buffer.index().orElseThrow();
+			final ByteSizedBufferable index = buffer.indexBuffer().orElseThrow();
 			final ByteBuffer bb = ByteBuffer.allocate(len);
 			assertEquals(len, index.length());
 			index.buffer(bb);
@@ -136,7 +135,7 @@ public class IndexedMeshTest {
 
 			// Check index is integral
 			final int len = size * Integer.BYTES;
-			final ByteSizedBufferable index = buffer.index().orElseThrow();
+			final ByteSizedBufferable index = buffer.indexBuffer().orElseThrow();
 			assertEquals(len, index.length());
 
 			// Check index buffer

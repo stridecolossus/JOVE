@@ -11,11 +11,11 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
 
 /**
- * A <i>default mesh</i> is used to construct a renderable object comprising {@link Vertex} data.
+ * A <i>default mesh</i> is a mutable implementation used to construct a model.
  * <p>
- * The {@link #buffer()} factory method creates a renderable instance of this mesh with a vertex buffer and optional index buffer.
+ * The {@link #buffer()} factory method generates a renderable instance of this mesh.
  * <p>
- * Vertex normals are automatically computed using the {@link #compute()} method.
+ * Vertex normals can be automatically computed using the {@link #compute()} method.
  * <p>
  * @see IndexedMesh
  * @author Sarge
@@ -52,9 +52,9 @@ public class DefaultMesh extends Mesh {
 	}
 
 	/**
-	 * @return Vertices of this mesh
+	 * @return Mesh vertices
 	 */
-	public Stream<Vertex> vertices() {
+	public final Stream<Vertex> vertices() {
 		return vertices.stream();
 	}
 
@@ -88,6 +88,11 @@ public class DefaultMesh extends Mesh {
 		}
 	}
 
+	@Override
+	public final ByteSizedBufferable vertexBuffer() {
+		return new VertexBuffer();
+	}
+
 	/**
 	 * Creates a buffered instance of this mesh.
 	 * Note that modifications to this mesh are reflected in the returned buffered mesh.
@@ -102,7 +107,7 @@ public class DefaultMesh extends Mesh {
 	 * @return Mesh bounds
 	 * @throws IllegalStateException if the layout does not contain a {@link Point#LAYOUT} component
 	 */
-	public Bounds bounds() {
+	public final Bounds bounds() {
 		// Determine vertex position from layout
 		validate();
 		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Layout does not contain a vertex position: " + this);
@@ -121,7 +126,7 @@ public class DefaultMesh extends Mesh {
 	 * @return Triangles indices for this mesh
 	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
-	protected Stream<int[]> indices() {
+	protected Stream<int[]> triangles() {
 		if(!primitive.isTriangle()) throw new IllegalStateException("Mesh does not contain triangular polygons: " + primitive);
 		final int faces = primitive.faces(count());
 		return IntStream
@@ -130,16 +135,16 @@ public class DefaultMesh extends Mesh {
 	}
 	// TODO - could be parallel stream operation?
 
-	/**
-	 * @return Triangles for this mesh
-	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
-	 */
-	public final Stream<Triangle> triangles() {
-		return this
-				.indices()
-				.map(this::triangle)
-				.map(Triangle::new);
-	}
+//	/**
+//	 * @return Triangles for this mesh
+//	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
+//	 */
+//	public final Stream<Triangle> triangles() {
+//		return this
+//				.indices()
+//				.map(this::triangle)
+//				.map(Triangle::new);
+//	}
 
 	/**
 	 * Maps the given indices to vertex positions.
@@ -167,7 +172,7 @@ public class DefaultMesh extends Mesh {
 		/**
 		 * Vertex normals helper.
 		 */
-		class Compute {
+		class NormalBuilder {
 			private final float[][] normals = new float[vertices.size()][3];
 
 			/**
@@ -206,8 +211,8 @@ public class DefaultMesh extends Mesh {
 		}
 
 		// Accumulate vertex normals
-		final Compute compute = new Compute();
-		this.indices().forEach(compute::add);
+		final var compute = new NormalBuilder();
+		this.triangles().forEach(compute::add);
 		compute.compute();
 	}
 

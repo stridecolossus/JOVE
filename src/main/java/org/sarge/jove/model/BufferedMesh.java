@@ -50,17 +50,13 @@ public class BufferedMesh extends Mesh {
 		return index != null;
 	}
 
-	/**
-	 * @return Vertex buffer
-	 */
-	public ByteSizedBufferable vertices() {
+	@Override
+	public ByteSizedBufferable vertexBuffer() {
 		return vertices;
 	}
 
-	/**
-	 * @return Index buffer
-	 */
-	public Optional<ByteSizedBufferable> index() {
+	@Override
+	public Optional<ByteSizedBufferable> indexBuffer() {
 		return Optional.ofNullable(index);
 	}
 }
