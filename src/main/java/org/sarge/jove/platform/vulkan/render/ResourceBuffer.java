@@ -64,8 +64,11 @@ public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 		}
 
 		// Validate buffer size
+		final long len = this.length();
 		final int max = this.device().limits().value(key);
-		if(length() > max) throw new IllegalStateException(String.format("Buffer too large: length=%d limit=%d", length(), max));
+		if(len > max) {
+			throw new IllegalStateException("Buffer too large: length=%d limit=%d".formatted(len, max));
+		}
 	}
 
 	@Override

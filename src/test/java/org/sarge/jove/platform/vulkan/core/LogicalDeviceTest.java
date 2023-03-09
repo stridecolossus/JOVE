@@ -7,10 +7,11 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkDeviceCreateInfo;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.MockReferenceFactory;
 import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
 import org.sarge.lib.util.Percentile;
@@ -29,12 +30,13 @@ public class LogicalDeviceTest {
 		// Create parent physical device
 		final WorkQueue.Family family = new Family(1, 2, Set.of());
 		final Instance instance = new Instance(new Handle(1), lib, new MockReferenceFactory());
-		final var features = mock(DeviceFeatures.class);
-		parent = new PhysicalDevice(new Handle(2), instance, List.of(family), features);
+		final var supported = new SupportedFeatures(new VkPhysicalDeviceFeatures());
+		parent = new PhysicalDevice(new Handle(2), instance, List.of(family), supported);
 
 		// Create logical device
+		final var limits = new DeviceLimits(new VkPhysicalDeviceLimits());
 		queue = new WorkQueue(new Handle(3), family);
-		device = new LogicalDevice(new Handle(4), parent, features, Map.of(family, List.of(queue)));
+		device = new LogicalDevice(new Handle(4), parent, new RequiredFeatures(Set.of()), limits, Map.of(family, List.of(queue)));
 	}
 
 	@Test
@@ -123,7 +125,7 @@ public class LogicalDeviceTest {
 					.queue(new RequiredQueue(queue.family(), List.of(Percentile.HALF, Percentile.ONE)))
 					.extension("ext")
 					.layer(ValidationLayer.STANDARD_VALIDATION)
-					.features(DeviceFeatures.required(Set.of("samplerAnisotropy")))
+					.feature("samplerAnisotropy")
 					.build();
 
 			// Check device
@@ -131,7 +133,7 @@ public class LogicalDeviceTest {
 			assertEquals(parent, device.parent());
 			assertEquals(1, device.queues().size());
 			assertEquals(2, device.queues().get(queue.family()).size());
-			assertEquals(DeviceFeatures.required(Set.of("samplerAnisotropy")), device.features());
+			assertEquals(new RequiredFeatures(Set.of("samplerAnisotropy")), device.features());
 
 			// Check API
 			final var expected = new VkDeviceCreateInfo() {

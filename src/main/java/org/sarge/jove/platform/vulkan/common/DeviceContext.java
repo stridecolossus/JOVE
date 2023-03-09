@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.common;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.DeviceLimits;
 import org.sarge.jove.util.ReferenceFactory;
 
 /**
@@ -24,6 +23,11 @@ public interface DeviceContext {
 	 * @return Reference factory
 	 */
 	ReferenceFactory factory();
+
+	/**
+	 * @return Features enabled on this device
+	 */
+	RequiredFeatures features();
 
 	/**
 	 * @return Hardware limits for this device

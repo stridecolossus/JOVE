@@ -81,7 +81,7 @@ public class IndexBuffer extends VulkanBuffer {
 		// Validate size of this index
 		final long count = this.length() / Integer.BYTES;
 		if(count > max) {
-			throw new IllegalStateException(String.format("Index too large: count=%d max=%d index=%s", count, max, this));
+			throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
 		}
 		// TODO - mod by offset?
 	}

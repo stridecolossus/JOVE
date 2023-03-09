@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 import static org.sarge.jove.platform.vulkan.VkDescriptorType.UNIFORM_BUFFER;
 
 import java.util.Set;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.*;
 
 public class ResourceBufferTest {
 	private static final Set<VkBufferUsageFlag> FLAGS = Set.of(VkBufferUsageFlag.UNIFORM_BUFFER);
@@ -19,15 +20,17 @@ public class ResourceBufferTest {
 
 	@BeforeEach
 	void before() {
+		// Init device
 		final var dev = new MockDeviceContext();
-		// TODO - dev.limit("maxUniformBufferRange", 4);
+		when(dev.limits().value("maxUniformBufferRange")).thenReturn(4);
 
+		// Configure resource buffer
 		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.UNIFORM_BUFFER)
-				.required(VkMemoryProperty.DEVICE_LOCAL)
 				.build();
 
-		buffer = VulkanBuffer.create(new MockDeviceContext(), null, 4, props); // TODO
+		// Create resource buffer
+		buffer = VulkanBuffer.create(dev, new MockAllocator(), 4, props);
 		res = new ResourceBuffer(buffer, UNIFORM_BUFFER, 0);
 	}
 

@@ -4,8 +4,8 @@ import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.model.Mesh;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.util.DeviceLimits;
 
 /**
  * A <i>draw command</i> is used to render a {@link Mesh}.
@@ -201,17 +201,18 @@ public interface DrawCommand extends Command {
 			buffer.checkOffset(offset);
 
 			// Check indirect multi-draw is supported
-			final DeviceLimits limits = buffer.device().limits();
+			final DeviceContext dev = buffer.device();
+			final DeviceLimits limits = dev.limits();
 			final int max = limits.value("maxDrawIndirectCount");
-			limits.require("multiDrawIndirect");
-			if(count > max) throw new IllegalArgumentException(String.format("Invalid indirect draw count: count=%d max=%d", count, max));
+			if(count > max) throw new IllegalArgumentException("Invalid indirect draw count: count=%d max=%d".formatted(count, max));
+			dev.features().require("multiDrawIndirect");
 
 			// Create command
 			if(indexed) {
-				return (api, cmd) -> api.vkCmdDrawIndexedIndirect(cmd, buffer, offset, count, stride);
+				return (lib, cmd) -> lib.vkCmdDrawIndexedIndirect(cmd, buffer, offset, count, stride);
 			}
 			else {
-				return (api, cmd) -> api.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
+				return (lib, cmd) -> lib.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
 			}
 		}
 	}

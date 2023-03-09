@@ -1,21 +1,19 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
 import org.sarge.lib.util.*;
@@ -29,8 +27,8 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class LogicalDevice extends TransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
-	private final DeviceFeatures features;
-	private final Supplier<DeviceLimits> limits = new LazySupplier<>(this::loadLimits);
+	private final RequiredFeatures features;
+	private final DeviceLimits limits;
 	private final Map<Family, List<WorkQueue>> queues;
 
 	/**
@@ -38,12 +36,14 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	 * @param handle 		Device handle
 	 * @param parent 		Parent physical device
 	 * @param features		Features enabled on this device
+	 * @param limits		Hardware limits
 	 * @param queues 		Work queues indexed by family
 	 */
-	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, Map<Family, List<WorkQueue>> queues) {
+	LogicalDevice(Handle handle, PhysicalDevice parent, RequiredFeatures features, DeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
 		super(handle);
 		this.parent = notNull(parent);
 		this.features = notNull(features);
+		this.limits = notNull(limits);
 		this.queues = Map.copyOf(queues);
 	}
 
@@ -64,26 +64,15 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		return parent.instance().factory();
 	}
 
-	/**
-	 * @return Features enabled on this device
-	 */
-	public DeviceFeatures features() {
+	@Override
+	public RequiredFeatures features() {
 		return features;
 	}
 
-//	/**
-//	 * Initialises the memory allocation service.
-//	 * @param allocator Custom allocator or {@code null} for default
-//	 * @return Allocation service
-//	 */
-//	private AllocationService init(AllocationService allocator) {
-//		if(allocator == null) {
-//			return new AllocationService(MemorySelector.create(parent), new DefaultAllocator(this));
-//		}
-//		else {
-//			return allocator;
-//		}
-//	}
+	@Override
+	public DeviceLimits limits() {
+		return limits;
+	}
 
 	/**
 	 * @return Work queues for this device ordered by family
@@ -111,19 +100,6 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	 */
 	public void waitIdle() {
 		check(library().vkDeviceWaitIdle(this));
-	}
-
-	/**
-	 * Initialises device limits for this device.
-	 */
-	private DeviceLimits loadLimits() {
-		final VkPhysicalDeviceProperties props = parent.properties();
-		return new DeviceLimits(props.limits, features);
-	}
-
-	@Override
-	public DeviceLimits limits() {
-		return limits.get();
 	}
 
  	@Override
@@ -218,24 +194,15 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		private final PhysicalDevice parent;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
+		private final Set<String> features = new HashSet<>();
 		private final Map<Family, RequiredQueue> queues = new HashMap<>();
-		private DeviceFeatures required = DeviceFeatures.EMPTY;
 
 		/**
 		 * Constructor.
 		 * @param parent Parent physical device
 		 */
 		public Builder(PhysicalDevice parent) {
-			this.parent = requireNonNull(parent);
-		}
-
-		/**
-		 * Sets the features required by this logical device (default is none).
-		 * @param required Required features
-		 */
-		public Builder features(DeviceFeatures required) {
-			this.required = requireNonNull(required);
-			return this;
+			this.parent = notNull(parent);
 		}
 
 		/**
@@ -256,6 +223,15 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 */
 		public Builder layer(ValidationLayer layer) {
 			layers.add(layer.name());
+			return this;
+		}
+
+		/**
+		 * Adds a feature required by this device.
+		 * @param Required feature
+		 */
+		public Builder feature(String feature) {
+			features.add(feature);
 			return this;
 		}
 
@@ -281,9 +257,6 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			// Create descriptor
 			final var info = new VkDeviceCreateInfo();
 
-			// Add required features
-			info.pEnabledFeatures = required.descriptor();
-
 			// Add required extensions
 			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
 			info.enabledExtensionCount = extensions.size();
@@ -291,6 +264,10 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			// Add validation layers
 			info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
 			info.enabledLayerCount = layers.size();
+
+			// Add required features
+			final var required = new RequiredFeatures(features);
+			info.pEnabledFeatures = required.structure();
 
 			// Add required queues
 			info.queueCreateInfoCount = queues.size();
@@ -302,13 +279,17 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			final PointerByReference ref = instance.factory().pointer();
 			check(lib.vkCreateDevice(parent, info, null, ref));
 
+			// Retrieve hardware limits
+			final VkPhysicalDeviceProperties props = parent.properties();
+			final var limits = new DeviceLimits(props.limits);
+
 			// Retrieve work queues
 			final Handle handle = new Handle(ref);
 			final var helper = new QueueHelper(handle);
 			final var map = helper.queues();
 
 			// Create logical device
-			return new LogicalDevice(handle, parent, required, map);
+			return new LogicalDevice(handle, parent, required, limits, map);
 		}
 
 		/**

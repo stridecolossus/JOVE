@@ -2,33 +2,18 @@ package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 
 public class DeviceLimitsTest {
 	private DeviceLimits limits;
 	private VkPhysicalDeviceLimits struct;
-	private DeviceFeatures features;
 
 	@BeforeEach
 	void before() {
 		struct = new VkPhysicalDeviceLimits();
-		features = DeviceFeatures.required(Set.of("feature"));
-		limits = new DeviceLimits(struct, features);
-	}
-
-	@DisplayName("An optional device feature can be required by the application")
-	@Test
-	void require() {
-		limits.require("feature");
-	}
-
-	@DisplayName("An unsupported device feature fails if required by the application")
-	@Test
-	void unsupported() {
-		assertThrows(IllegalStateException.class, () -> limits.require("unsupported"));
+		limits = new DeviceLimits(struct);
 	}
 
 	@DisplayName("A device limit can be queried by name")

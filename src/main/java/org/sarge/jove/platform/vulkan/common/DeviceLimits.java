@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.platform.vulkan.common;
 
 import static org.sarge.lib.util.Check.notNull;
 
@@ -7,57 +7,39 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 /**
  * The <i>device limits</i> is a helper class for querying the limits of the supported hardware.
  * <p>
- * Generally it is assumed that an application will prefer to query hardware limits using string keys rather than programatically via structure fields.
+ * This class is essentially a wrapper for the {@link VkPhysicalDeviceLimits} structure.
+ * Generally it is assumed that the user will prefer to query hardware limits using string keys rather than programatically via structure fields.
  * <p>
  * Example for an indirect multi-draw command:
  * <pre>
  * LogicalDevice dev = ...
  * DeviceLimits limits = dev.limits();
  * limits.require("multiDrawIndirect");
- * float max = limits.value("maxDrawIndirectCount");</pre>
+ * float max = limits.value("maxDrawIndirectCount");
+ * if(count > max) throw ...</pre>
  * <p>
- * Some limits are a quantised range of values which can be queried using the {@link #range(String, String)} helper method:
+ * Some limits are a quantised range of values which can be queried using the {@link #range(String, String)} method:
  * <pre>
  * float[] sizes = limits.range("pointSizeRange", "pointSizeGranularity");</pre>
- * @see VkPhysicalDeviceLimits
+ * <p>
  * @author Sarge
  */
 public class DeviceLimits {
 	private final VkPhysicalDeviceLimits limits;
-	private final DeviceFeatures features;
 
 	/**
 	 * Constructor.
 	 * @param limits 		Device limits
 	 * @param features		Supported features
 	 */
-	public DeviceLimits(VkPhysicalDeviceLimits limits, DeviceFeatures features) {
+	public DeviceLimits(VkPhysicalDeviceLimits limits) {
 		this.limits = notNull(limits);
-		this.features = notNull(features);
 		limits.write();
 	}
 
 	/**
-	 * @return Device features
-	 */
-	public DeviceFeatures features() {
-		return features;
-	}
-
-	/**
-	 * Helper - Checks that the given device feature is supported by the hardware.
-	 * @param name Feature name
-	 * @throws IllegalStateException if the feature is not supported
-	 */
-	public void require(String name) {
-		if(!features.features().contains(name)) {
-			throw new IllegalStateException("Feature not supported: " + name);
-		}
-	}
-
-	/**
 	 * Retrieves a device limit by name.
-	 * @param <T> Limit type
+	 * @param <T> Data type
 	 * @param name Limit name
 	 * @return Limit
 	 */

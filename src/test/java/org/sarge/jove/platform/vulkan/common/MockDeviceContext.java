@@ -4,12 +4,13 @@ import static org.mockito.Mockito.mock;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.DeviceLimits;
 import org.sarge.jove.util.*;
 
 public class MockDeviceContext implements DeviceContext {
 	private final VulkanLibrary lib = mock(VulkanLibrary.class);
 	private final ReferenceFactory factory = new MockReferenceFactory();
+	private final RequiredFeatures features = mock(RequiredFeatures.class);
+	private final DeviceLimits limits = mock(DeviceLimits.class);
 
 	@Override
 	public Handle handle() {
@@ -26,17 +27,13 @@ public class MockDeviceContext implements DeviceContext {
 		return factory;
 	}
 
-//	@Override
-//	public AllocationService allocator() {
-//		// TODO
-//		final var service = mock(AllocationService.class);
-//		when(service.allocate(any(VkMemoryRequirements.class), any(MemoryProperties.class))).thenReturn(new MockDeviceMemory());
-//		return service;
-//	}
+	@Override
+	public RequiredFeatures features() {
+		return features;
+	}
 
 	@Override
 	public DeviceLimits limits() {
-		// TODO
-		return mock(DeviceLimits.class);
+		return limits;
 	}
 }

@@ -49,15 +49,15 @@ class PipelineLayoutTest {
 		@Test
 		void build() {
 			// Create descriptor set layout
-			final var set = mock(DescriptorSet.Layout.class);
-			when(set.handle()).thenReturn(new Handle(1));
+			final var binding = new DescriptorSet.Binding(0, VkDescriptorType.SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+			final var set = DescriptorSet.Layout.create(dev, Set.of(binding));
 
 			// Create push constant ranges
 			final Range one = new Range(0, 4, Set.of(VkShaderStage.VERTEX));
 			final Range two = new Range(4, 8, Set.of(VkShaderStage.FRAGMENT));
 
 			// Init push constants max size
-//			limit("maxPushConstantsSize", 12);
+			when(dev.limits().value("maxPushConstantsSize")).thenReturn(12);
 
 			// Create layout
 			final PipelineLayout layout = builder
