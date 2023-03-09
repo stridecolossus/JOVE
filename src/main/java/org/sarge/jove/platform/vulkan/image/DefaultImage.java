@@ -17,10 +17,10 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
- * A <i>default image</i> is a Vulkan image managed by the application.
+ * A <i>default image</i> is a Vulkan image or texture managed by the application.
  * @author Sarge
  */
-public class DefaultImage extends VulkanObject implements Image {
+public final class DefaultImage extends VulkanObject implements Image {
 	private final Descriptor descriptor;
 	private final DeviceMemory mem;
 
@@ -31,7 +31,7 @@ public class DefaultImage extends VulkanObject implements Image {
 	 * @param descriptor	Descriptor for this image
 	 * @param mem			Device memory
 	 */
-	protected DefaultImage(Handle handle, DeviceContext dev, Descriptor descriptor, DeviceMemory mem) {
+	DefaultImage(Handle handle, DeviceContext dev, Descriptor descriptor, DeviceMemory mem) {
 		super(handle, dev);
 		this.descriptor = notNull(descriptor);
 		this.mem = notNull(mem);

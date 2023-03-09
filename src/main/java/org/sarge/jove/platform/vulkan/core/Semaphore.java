@@ -11,7 +11,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>semaphore</i> is used to synchronise operations within or across command queues.
  * @author Sarge
  */
-public class Semaphore extends VulkanObject {
+public class Semaphore extends VulkanObject {		// TODO - final?
 	/**
 	 * Creates a new semaphore.
 	 * @param dev Logical device

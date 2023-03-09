@@ -134,7 +134,7 @@ class PhysicalDeviceTest {
 	@DisplayName("A physical device can be matched by a required feature set")
 	@Test
 	void predicate() {
-		final var required = new RequiredFeatures(Set.of("samplerAnisotropy"));
+		final var required = new DeviceFeatures(Set.of("samplerAnisotropy"));
 		final Predicate<PhysicalDevice> predicate = PhysicalDevice.predicate(required);
 		assertNotNull(predicate);
 		assertEquals(true, predicate.test(dev));

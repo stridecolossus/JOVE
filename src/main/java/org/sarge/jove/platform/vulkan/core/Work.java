@@ -19,13 +19,13 @@ import org.sarge.lib.util.Check;
  * <p>
  * A work submission is comprised of:
  * <ul>
- * <li>the queue to submit the work</li>
+ * <li>the queue that performs the work</li>
  * <li>one-or-more command buffers</li>
  * <li>a set of <i>wait</i> semaphores specifying when the work can begin</li>
- * <li>a set of <i>signal</i> semaphores that are signalled when <b>all</b> the buffers have been executed</li>
+ * <li>a set of <i>signal</i> semaphores that are notified when <b>all</b> the buffers have been executed</li>
  * </ul>
  * <p>
- * Note that <b>all</b> command buffers in a work submission <b>must</b> be allocated from pools created with the same queue family.
+ * Note that <b>all</b> command buffers in a work submission <b>must</b> be allocated from pools with the same queue family.
  * <p>
  * Usage:
  * <pre>

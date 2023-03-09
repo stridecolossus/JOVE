@@ -34,7 +34,7 @@ public interface Image extends NativeObject {
 	 */
 	record Extents(Dimensions size, int depth) {
 		/**
-		 * Extents with zero dimensions.
+		 * Extents for an image with zero dimensions.
 		 */
 		public static final Extents ZERO = new Extents(new Dimensions(0, 0), 0);
 

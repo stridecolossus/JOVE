@@ -27,7 +27,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class LogicalDevice extends TransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
-	private final RequiredFeatures features;
+	private final DeviceFeatures features;
 	private final DeviceLimits limits;
 	private final Map<Family, List<WorkQueue>> queues;
 
@@ -39,7 +39,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	 * @param limits		Hardware limits
 	 * @param queues 		Work queues indexed by family
 	 */
-	LogicalDevice(Handle handle, PhysicalDevice parent, RequiredFeatures features, DeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
+	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, DeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
 		super(handle);
 		this.parent = notNull(parent);
 		this.features = notNull(features);
@@ -65,7 +65,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	}
 
 	@Override
-	public RequiredFeatures features() {
+	public DeviceFeatures features() {
 		return features;
 	}
 
@@ -266,7 +266,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			info.enabledLayerCount = layers.size();
 
 			// Add required features
-			final var required = new RequiredFeatures(features);
+			final var required = new DeviceFeatures(features);
 			info.pEnabledFeatures = required.structure();
 
 			// Add required queues

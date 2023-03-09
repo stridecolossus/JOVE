@@ -175,7 +175,7 @@ public interface Command {
 		/**
 		 * Starts recording to this command buffer.
 		 * @param flags Creation flags
-		 * @return New command buffer recorder
+		 * @return Command buffer recorder
 		 * @throws IllegalStateException if this buffer is not ready for recording
 		 */
 		public Recorder begin(VkCommandBufferUsage... flags) {
@@ -249,7 +249,7 @@ public interface Command {
 	/**
 	 * A <i>command pool</i> allocates command buffers used to perform work on a given {@link WorkQueue}.
 	 */
-	class Pool extends VulkanObject {
+	final class Pool extends VulkanObject {
 		/**
 		 * Creates a command pool for the given queue.
 		 * @param dev		Logical device

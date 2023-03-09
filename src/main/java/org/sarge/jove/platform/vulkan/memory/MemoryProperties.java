@@ -45,6 +45,14 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	}
 
 	/**
+	 * Convenience constructor for basic memory properties with the given usage.
+	 * @param usage Memory usage
+	 */
+	public MemoryProperties(T usage) {
+		this(Set.of(usage), VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
+	}
+
+	/**
 	 * Builder for memory properties.
 	 * @param <T> Usage enumeration
 	 */

@@ -89,21 +89,19 @@ public final class Axis extends Normal {
 
 	@Override
 	public float dot(Tuple that) {
-		return switch(axis.ordinal()) {
-    		case 0 -> x * that.x;
-    		case 1 -> y * that.y;
-    		case 2 -> z * that.z;
-    		default -> throw new RuntimeException();
+		return switch(axis) {
+			case X -> x * that.x;
+			case Y -> y * that.y;
+			case Z -> z * that.z;
 		};
 	}
 
 	@Override
 	public Vector cross(Vector vec) {
-		return switch(axis.ordinal()) {
-    		case 0 -> new Vector(0, -vec.z, vec.y);
-    		case 1 -> new Vector(+vec.z, 0, -vec.x);
-    		case 2 -> new Vector(-vec.y, +vec.x, 0);
-    		default -> throw new RuntimeException();
+		return switch(axis) {
+    		case X -> new Vector(0, -vec.z, vec.y);
+    		case Y -> new Vector(+vec.z, 0, -vec.x);
+    		case Z -> new Vector(-vec.y, +vec.x, 0);
     	};
 	}
 

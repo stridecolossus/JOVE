@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 /**
  * The <i>supported features</i> enumerates the device features supported by the hardware.
- * @see RequiredFeatures
+ * @see DeviceFeatures
  * @author Sarge
  */
 public final class SupportedFeatures {
@@ -47,8 +47,8 @@ public final class SupportedFeatures {
 	 * @param required Required features
 	 * @return Whether the given required features are supported by the hardware
 	 */
-	public boolean contains(RequiredFeatures required) {
-		return this.features().containsAll(required.features());
+	public boolean contains(DeviceFeatures required) {
+		return this.features().containsAll(required.enabled());
 	}
 
 	@Override

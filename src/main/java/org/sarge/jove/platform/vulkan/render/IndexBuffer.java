@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.*;
  * <p>
  * @author Sarge
  */
-public class IndexBuffer extends VulkanBuffer {
+public final class IndexBuffer extends VulkanBuffer {
 	private final VkIndexType type;
 
 	/**

@@ -125,21 +125,21 @@ public class VulkanBuffer extends VulkanObject {
 	/**
 	 * @return Usage flags for this buffer
 	 */
-	public Set<VkBufferUsageFlag> usage() {
+	public final Set<VkBufferUsageFlag> usage() {
 		return usage;
 	}
 
 	/**
 	 * @return Buffer memory
 	 */
-	public DeviceMemory memory() {
+	public final DeviceMemory memory() {
 		return mem;
 	}
 
 	/**
 	 * @return Length of this buffer
 	 */
-	public long length() {
+	public final long length() {
 		return len;
 	}
 
@@ -210,7 +210,7 @@ public class VulkanBuffer extends VulkanObject {
 	}
 
 	@Override
-	protected Destructor<VulkanBuffer> destructor(VulkanLibrary lib) {
+	protected final Destructor<VulkanBuffer> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyBuffer;
 	}
 

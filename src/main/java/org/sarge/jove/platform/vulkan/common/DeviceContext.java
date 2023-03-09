@@ -27,7 +27,7 @@ public interface DeviceContext {
 	/**
 	 * @return Features enabled on this device
 	 */
-	RequiredFeatures features();
+	DeviceFeatures features();
 
 	/**
 	 * @return Hardware limits for this device

@@ -30,9 +30,9 @@ public class SupportedFeaturesTest {
 
 	@Test
 	void contains() {
-		final var required = new RequiredFeatures(Set.of("samplerAnisotropy"));
+		final var required = new DeviceFeatures(Set.of("samplerAnisotropy"));
 		assertEquals(true, features.contains(required));
-		assertEquals(true, features.contains(new RequiredFeatures(Set.of())));
-		assertEquals(false, features.contains(new RequiredFeatures(Set.of("cobblers"))));
+		assertEquals(true, features.contains(new DeviceFeatures(Set.of())));
+		assertEquals(false, features.contains(new DeviceFeatures(Set.of("cobblers"))));
 	}
 }

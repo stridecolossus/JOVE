@@ -20,7 +20,6 @@ public class HandleTest {
 	@Test
 	void constructor() {
 		assertEquals(ptr.hashCode(), handle.hashCode());
-		assertEquals(ptr, handle.pointer());
 	}
 
 	@Test

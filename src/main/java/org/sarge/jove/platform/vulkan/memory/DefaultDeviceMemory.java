@@ -38,17 +38,17 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	@Override
-	public MemoryType type() {
+	public final MemoryType type() {
 		return type;
 	}
 
 	@Override
-	public long size() {
+	public final long size() {
 		return size;
 	}
 
 	@Override
-	public Optional<Region> region() {
+	public final Optional<Region> region() {
 		return Optional.ofNullable(region);
 	}
 
@@ -169,7 +169,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	@Override
-	protected Destructor<DefaultDeviceMemory> destructor(VulkanLibrary lib) {
+	protected final Destructor<DefaultDeviceMemory> destructor(VulkanLibrary lib) {
 		return lib::vkFreeMemory;
 	}
 

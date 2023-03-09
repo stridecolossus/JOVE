@@ -70,9 +70,7 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 
 	/**
 	 * Adds a viewport.
-	 * @param rectangle		Viewport rectangle
-	 * @param min			Minimum depth
-	 * @param max			Maximum depth
+	 * @param viewport Viewport to add
 	 */
 	@RequiredFeature(field="viewportCount", feature="multiViewport")
 	public ViewportStageBuilder viewport(Viewport viewport) {

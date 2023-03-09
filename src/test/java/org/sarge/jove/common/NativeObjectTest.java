@@ -19,7 +19,7 @@ class NativeObjectTest {
 	}
 
 	@Nested
-	class HandleArrayTests {
+	class ArrayTests {
 		private Memory mem;
 
 		@BeforeEach

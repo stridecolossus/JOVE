@@ -1,10 +1,9 @@
-package org.sarge.jove.platform.vulkan.util;
+package org.sarge.jove.platform.vulkan.common;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
-import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 
 public class DeviceLimitsTest {
 	private DeviceLimits limits;

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
@@ -16,11 +16,13 @@ class ComputePipelineBuilderTest {
 	private PipelineLayout layout;
 	private ProgrammableShaderStage stage;
 	private VkComputePipelineCreateInfo info;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
 		layout = mock(PipelineLayout.class);
-		stage = new ProgrammableShaderStage(VkShaderStage.VERTEX, mock(Shader.class));
+		stage = new ProgrammableShaderStage(VkShaderStage.VERTEX, Shader.create(dev, new byte[0]));
 		builder = new ComputePipelineBuilder(stage);
 		info = new VkComputePipelineCreateInfo();
 	}
@@ -47,7 +49,6 @@ class ComputePipelineBuilderTest {
 
 	@Test
 	void create() {
-		final var dev = new MockDeviceContext();
 		builder.create(dev, null, new VkComputePipelineCreateInfo[]{info}, new Pointer[1]);
 		verify(dev.library()).vkCreateComputePipelines(dev, null, 1, new VkComputePipelineCreateInfo[]{info}, null, new Pointer[1]);
 	}

@@ -36,7 +36,7 @@ public class LogicalDeviceTest {
 		// Create logical device
 		final var limits = new DeviceLimits(new VkPhysicalDeviceLimits());
 		queue = new WorkQueue(new Handle(3), family);
-		device = new LogicalDevice(new Handle(4), parent, new RequiredFeatures(Set.of()), limits, Map.of(family, List.of(queue)));
+		device = new LogicalDevice(new Handle(4), parent, new DeviceFeatures(Set.of()), limits, Map.of(family, List.of(queue)));
 	}
 
 	@Test
@@ -133,7 +133,7 @@ public class LogicalDeviceTest {
 			assertEquals(parent, device.parent());
 			assertEquals(1, device.queues().size());
 			assertEquals(2, device.queues().get(queue.family()).size());
-			assertEquals(new RequiredFeatures(Set.of("samplerAnisotropy")), device.features());
+			assertEquals(new DeviceFeatures(Set.of("samplerAnisotropy")), device.features());
 
 			// Check API
 			final var expected = new VkDeviceCreateInfo() {

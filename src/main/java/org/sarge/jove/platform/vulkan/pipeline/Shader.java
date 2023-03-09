@@ -18,7 +18,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>shader</i> is a Vulkan shader module used to implement a programmable pipeline stage.
  * @author Sarge
  */
-public class Shader extends VulkanObject {
+public final class Shader extends VulkanObject {
 	/**
 	 * Creates a shader module.
 	 * @param dev		Logical device

@@ -50,7 +50,7 @@ public final class Point extends Tuple implements Component {
 	}
 
 	/**
-	 * Calculates the distance <b>squared</b> between two points.
+	 * Calculates the distance <b>squared</b> between this and the given point.
 	 * @param p Destination point
 	 * @return Distance <b>squared</b> to the given point
 	 */
@@ -60,7 +60,7 @@ public final class Point extends Tuple implements Component {
 
 	/**
 	 * Adds the given tuple to this point.
-	 * @param that Tuple
+	 * @param that Tuple to add
 	 * @return Added point
 	 */
 	public Point add(Tuple that) {
@@ -68,7 +68,7 @@ public final class Point extends Tuple implements Component {
 	}
 
 	/**
-	 * Multiplies this point.
+	 * Multiplies this point by the given scalar.
 	 * @param f Scalar
 	 * @return Multiplied point
 	 */

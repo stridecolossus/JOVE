@@ -7,17 +7,17 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
-public class RequiredFeaturesTest {
-	private RequiredFeatures features;
+public class DeviceFeaturesTest {
+	private DeviceFeatures features;
 
 	@BeforeEach
 	void before() {
-		features = new RequiredFeatures(Set.of("samplerAnisotropy"));
+		features = new DeviceFeatures(Set.of("samplerAnisotropy"));
 	}
 
 	@Test
 	void features() {
-		assertEquals(Set.of("samplerAnisotropy"), features.features());
+		assertEquals(Set.of("samplerAnisotropy"), features.enabled());
 	}
 
 	@Test

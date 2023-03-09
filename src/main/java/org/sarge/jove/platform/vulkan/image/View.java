@@ -21,7 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @see FrameBuffer
  * @author Sarge
  */
-public class View extends VulkanObject {
+public final class View extends VulkanObject {
 	/**
 	 * Helper - Creates a view for the given image with default configuration.
 	 * @param image Image

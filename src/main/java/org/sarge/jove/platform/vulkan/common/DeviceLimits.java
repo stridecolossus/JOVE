@@ -5,7 +5,7 @@ import static org.sarge.lib.util.Check.notNull;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 
 /**
- * The <i>device limits</i> is a helper class for querying the limits of the supported hardware.
+ * The <i>device limits</i> is a helper for querying the limits of the supported hardware.
  * <p>
  * This class is essentially a wrapper for the {@link VkPhysicalDeviceLimits} structure.
  * Generally it is assumed that the user will prefer to query hardware limits using string keys rather than programatically via structure fields.
@@ -29,8 +29,7 @@ public class DeviceLimits {
 
 	/**
 	 * Constructor.
-	 * @param limits 		Device limits
-	 * @param features		Supported features
+	 * @param limits Device limits
 	 */
 	public DeviceLimits(VkPhysicalDeviceLimits limits) {
 		this.limits = notNull(limits);
@@ -42,6 +41,7 @@ public class DeviceLimits {
 	 * @param <T> Data type
 	 * @param name Limit name
 	 * @return Limit
+	 * @throws ClassCastException if the type is invalid for the specified field
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T value(String name) {

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.BitMask;
 
@@ -17,13 +17,17 @@ class GraphicsPipelineBuilderTest {
 	private RenderPass pass;
 	private VkGraphicsPipelineCreateInfo info;
 	private PipelineLayout layout;
+	private Shader shader;
+	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
+		dev = new MockDeviceContext();
 		pass = mock(RenderPass.class);
 		builder = new GraphicsPipelineBuilder(pass);
 		info = new VkGraphicsPipelineCreateInfo();
 		layout = mock(PipelineLayout.class);
+		shader = Shader.create(dev, new byte[0]);
 	}
 
 	@Test
@@ -38,7 +42,7 @@ class GraphicsPipelineBuilderTest {
 
 	@Test
 	void populate() {
-		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, mock(Shader.class)));
+		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, shader));
 		builder.viewport(new Rectangle(new Dimensions(2, 3)));
 		builder.populate(BitMask.of(), layout, new Handle(1), 2, info);
 		assertEquals(BitMask.of(), info.flags);
@@ -67,20 +71,19 @@ class GraphicsPipelineBuilderTest {
 	@DisplayName("A graphics pipeline must configure at least one viewport")
 	@Test
 	void viewports() {
-		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, mock(Shader.class)));
+		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, shader));
 		assertThrows(IllegalArgumentException.class, () -> builder.populate(BitMask.of(), layout, null, -1, info));
 	}
 
 	@DisplayName("A graphics pipeline cannot contain a duplicate shader stage")
 	@Test
 	void duplicate() {
-		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, mock(Shader.class)));
-		assertThrows(IllegalArgumentException.class, () -> builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, mock(Shader.class))));
+		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, shader));
+		assertThrows(IllegalArgumentException.class, () -> builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, shader)));
 	}
 
 	@Test
 	void create() {
-		final var dev = new MockDeviceContext();
 		builder.create(dev, null, new VkGraphicsPipelineCreateInfo[]{info}, new Pointer[1]);
 		verify(dev.library()).vkCreateGraphicsPipelines(dev, null, 1, new VkGraphicsPipelineCreateInfo[]{info}, null, new Pointer[1]);
 	}

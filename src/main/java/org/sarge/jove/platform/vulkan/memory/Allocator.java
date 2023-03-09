@@ -54,7 +54,7 @@ public class Allocator {
 	}
 
 	/**
-	 * Copy constructor for specialisations.
+	 * Copy constructor for specialised implementations.
 	 * @param allocator Delegate allocator to copy
 	 */
 	protected Allocator(Allocator allocator) {
@@ -65,11 +65,11 @@ public class Allocator {
 	 * Allocates device memory for the given request.
 	 * <p>
 	 * The {@link <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceMemoryProperties.html">Vulkan documentation</a>}
-	 * describes the suggested approach to select the appropriate memory type for a request as follows:
+	 * describes the suggested approach to select the appropriate memory type for a given request as follows:
 	 * <ol>
-	 * <li>Filter the candidate memory types by to the {@link VkMemoryRequirements#memoryTypeBits} mask</li>
+	 * <li>Filter the candidate memory types by the {@link VkMemoryRequirements#memoryTypeBits} mask</li>
 	 * <li>Find the <i>optimal</i> type matching the given memory properties</li>
-	 * <li>Otherwise fallback to an available type matching the minimal <i>required</i> properties</li>
+	 * <li>Otherwise fallback to the <b>first</b> available type matching the minimal <i>required</i> properties</li>
 	 * </ol>
 	 * <p>
 	 * @param reqs			Memory requirements
@@ -87,19 +87,19 @@ public class Allocator {
 	 * Selects the memory type for the given request.
 	 * @param reqs			Requirements
 	 * @param props			Memory properties
-	 * @return Selected memory type index
+	 * @return Selected memory type
 	 * @throws AllocationException if no memory type matches the request
 	 */
 	private MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
 		/**
-		 * Matches a memory type for the required properties and also records the fallback as a side-effect.
+		 * Matches a memory type for the given properties and records the fallback as a side-effect.
 		 */
 		class FallbackMatcher implements Predicate<MemoryType> {
 			private MemoryType fallback;
 
 			@Override
 			public boolean test(MemoryType type) {
-				// Skip if does not satisfy the minimal requirements
+				// Skip if this type does not match the minimal requirements
 				if(!type.matches(props.required())) {
 					return false;
 				}

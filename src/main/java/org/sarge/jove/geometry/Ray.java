@@ -86,7 +86,7 @@ public interface Ray {
 		Point point();
 
 		/**
-		 * Surface normal at this intersection.
+		 * Determines the surface normal at this intersection.
 		 * @return Surface normal
 		 * @throws UnsupportedOperationException if the normal is undefined
 		 */
@@ -112,11 +112,11 @@ public interface Ray {
 		}
 
 		/**
-		 *
-		 * @param ray
-		 * @param dist
-		 * @param centre
-		 * @return
+		 * Creates an intersection with a surface normal relative to the centre of the {@link Intersected} volume.
+		 * @param ray		Ray
+		 * @param dist		Distance
+		 * @param centre	Centre of the intersected volume
+		 * @return Intersection
 		 */
 		static Intersection of(Ray ray, float dist, Point centre) {
 			Check.notNull(centre);
@@ -130,8 +130,8 @@ public interface Ray {
 	}
 
 	/**
-	 * TODO
-	 * Skeleton implementation.
+	 * Default implementation.
+	 * Note that the surface normal is undefined.
 	 */
 	class DefaultIntersection implements Intersection {
 		private final Ray ray;
@@ -173,13 +173,15 @@ public interface Ray {
 			return
 					(obj == this) ||
 					(obj instanceof Intersection that) &&
-					MathsUtil.isEqual(this.dist, that.distance()) &&
-					Objects.equals(this.normal(), that.normal());
+					MathsUtil.isEqual(this.dist, that.distance());
 		}
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this).append("dist", dist).build();
+			return new ToStringBuilder(this)
+					.append(ray)
+					.append("dist", dist)
+					.build();
 		}
 	}
 }

@@ -9,7 +9,7 @@ import org.sarge.jove.util.*;
 public class MockDeviceContext implements DeviceContext {
 	private final VulkanLibrary lib = mock(VulkanLibrary.class);
 	private final ReferenceFactory factory = new MockReferenceFactory();
-	private final RequiredFeatures features = mock(RequiredFeatures.class);
+	private final DeviceFeatures features = mock(DeviceFeatures.class);
 	private final DeviceLimits limits = mock(DeviceLimits.class);
 
 	@Override
@@ -28,7 +28,7 @@ public class MockDeviceContext implements DeviceContext {
 	}
 
 	@Override
-	public RequiredFeatures features() {
+	public DeviceFeatures features() {
 		return features;
 	}
 

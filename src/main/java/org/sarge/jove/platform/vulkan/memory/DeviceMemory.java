@@ -6,9 +6,9 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 
 /**
- * A <i>device memory</i> instance is an area of device or host memory accessible to the hardware.
+ * A <i>device memory</i> instance is an area of memory accessible to the hardware.
  * <p>
- * Memory that is {@link VkMemoryProperty#HOST_VISIBLE} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations.
+ * Memory that is {@link VkMemoryProperty#HOST_VISIBLE} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations by the application.
  * <p>
  * Notes:
  * <ul>
@@ -56,7 +56,7 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	Optional<Region> region();
 
 	/**
-	 * Maps a region of this device memory.
+	 * Maps the whole of this device memory.
 	 * @param offset		Offset into this memory
 	 * @param size			Size of the region to map
 	 * @return Mapped memory region

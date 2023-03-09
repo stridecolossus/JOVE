@@ -44,9 +44,9 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	public static final Converter<Colour> CONVERTER = new FloatArrayConverter<>(SIZE, Colour::of);
 
 	/**
-	 * Creates a colour from the given floating-point array representing an RGBA value <b>or</b> a 3-element RGB array with the alpha value initialised to <b>one</b>.
+	 * Creates a colour from the given floating-point array representing an RGBA colour <b>or</b> an RGB colour with the alpha value initialised to <b>one</b>.
 	 * @param array Colour array
-	 * @return New colour
+	 * @return Colour
 	 * @throws IllegalArgumentException if the array is not an RGB or RGBA array or any component is not a valid percentile value
 	 */
 	public static Colour of(float[] array) {

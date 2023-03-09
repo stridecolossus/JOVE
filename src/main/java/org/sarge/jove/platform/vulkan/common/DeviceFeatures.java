@@ -5,24 +5,24 @@ import java.util.Set;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 /**
- * The <i>required features</i> specifies the device features required by the application.
+ * The <i>device features</i> specifies the hardware features enabled by the application.
  * @author Sarge
  */
-public class RequiredFeatures {
+public class DeviceFeatures {
 	private final Set<String> features;
 
 	/**
 	 * Constructor.
-	 * @param features Required features
+	 * @param features Enabled features
 	 */
-	public RequiredFeatures(Set<String> features) {
+	public DeviceFeatures(Set<String> features) {
 		this.features = Set.copyOf(features);
 	}
 
 	/**
-	 * @return Required features
+	 * @return Enabled features
 	 */
-	public Set<String> features() {
+	public Set<String> enabled() {
 		return features;
 	}
 
@@ -40,11 +40,11 @@ public class RequiredFeatures {
 
 	/**
 	 * Tests whether the given feature is enabled on this device.
-	 * @param feature Required feature
+	 * @param feature Device feature
 	 */
 	public void require(String feature) {
 		if(!features.contains(feature)) {
-			throw new IllegalStateException("Feature not supported by this device: " + feature);
+			throw new IllegalStateException("Feature not enabled by this device: " + feature);
 		}
 	}
 
@@ -52,8 +52,8 @@ public class RequiredFeatures {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof RequiredFeatures that) &&
-				this.features.equals(that.features());
+				(obj instanceof DeviceFeatures that) &&
+				this.features.equals(that.enabled());
 	}
 
 	@Override

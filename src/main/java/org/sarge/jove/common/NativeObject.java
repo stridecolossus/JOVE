@@ -16,6 +16,10 @@ public interface NativeObject {
 	 */
 	Handle handle();
 
+	private static Object pointer(NativeObject obj) {
+		return Handle.CONVERTER.toNative(obj.handle(), null);
+	}
+
 	/**
 	 * Helper - Converts the given objects to a JNA pointer-to-array-of-pointers.
 	 * @param objects Native objects
@@ -30,8 +34,7 @@ public interface NativeObject {
 		// Convert to array
 		final Pointer[] pointers = objects
 				.stream()
-				.map(NativeObject::handle)
-				.map(Handle::pointer)
+				.map(NativeObject::pointer)
 				.toArray(Pointer[]::new);
 
 		// Create pointer array
@@ -50,7 +53,8 @@ public interface NativeObject {
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
 			if(value instanceof NativeObject obj) {
-				return obj.handle().pointer();
+				// TODO - could we return handle here? i.e. does it cascade?
+				return pointer(obj);
 			}
 			else {
 				return null;

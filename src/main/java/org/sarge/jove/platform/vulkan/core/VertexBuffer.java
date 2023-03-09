@@ -23,9 +23,9 @@ public class VertexBuffer extends VulkanBuffer {
 	}
 
 	/**
-	 * Creates a command to bind this buffer as a VBO.
+	 * Creates a command to bind this vertex buffer to a pipeline.
 	 * @param binding Binding index
-	 * @return Command to bind this buffer
+	 * @return Bind command
 	 * @see #bind(int, Collection)
 	 */
 	public Command bind(int binding) {
@@ -35,8 +35,8 @@ public class VertexBuffer extends VulkanBuffer {
 	/**
 	 * Creates a command to bind a collection of vertex buffers.
 	 * @param start 		Start binding index
-	 * @param buffers		Buffers to bind
-	 * @return Command to bind the given buffers
+	 * @param buffers		Vertex buffers to bind
+	 * @return Bind command
 	 */
 	public static Command bind(int start, Collection<VertexBuffer> buffers) {
 		final Pointer array = NativeObject.array(buffers);

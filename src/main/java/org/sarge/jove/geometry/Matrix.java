@@ -21,7 +21,7 @@ import org.sarge.lib.util.Check;
  * @see Matrix4
  * @author Sarge
  */
-public class Matrix implements Transform, Bufferable {
+public final class Matrix implements Transform, Bufferable {
 	/**
 	 * Default 4x4 order.
 	 */

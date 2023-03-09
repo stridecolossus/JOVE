@@ -71,9 +71,9 @@ public class WorkTest {
 	@DisplayName("A work batch must all submit to the same queue family")
 	@Test
 	void invalid() {
-		// Create a different pool
-		final Pool other = mock(Pool.class);
-		when(other.queue()).thenReturn(new WorkQueue(new Handle(999), new Family(1, 2, Set.of())));
+		// Create a pool with a different queue
+		final var queue = new WorkQueue(new Handle(2), new Family(1, 2, Set.of()));
+		final Pool other = new Pool(new Handle(3), dev, queue);
 
 		// Create a buffer using this pool
 		final Buffer buffer = mock(Buffer.class);

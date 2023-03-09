@@ -34,13 +34,6 @@ public final class Handle {
 		this(ref.getValue());
 	}
 
-	/**
-	 * @return Underlying pointer
-	 */
-	Pointer pointer() {
-		return ptr;
-	}
-
 	@Override
 	public int hashCode() {
 		return ptr.hashCode();

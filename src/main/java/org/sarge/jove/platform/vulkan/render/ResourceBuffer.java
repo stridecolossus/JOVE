@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
  * A <i>resource buffer</i> wraps a Vulkan buffer as a descriptor resource, e.g. a {@link VkBufferUsageFlag#UNIFORM_BUFFER}.
  * @author Sarge
  */
-public class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
+public final class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
 	private final VkDescriptorType type;
 	private final long offset;
 
