@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.util.DeviceLimits;
+import org.sarge.jove.platform.vulkan.common.*;
 
 public class PageAllocationPolicyTest {
 	private AllocationPolicy policy;

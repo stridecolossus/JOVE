@@ -16,10 +16,10 @@ import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
  * <ul>
  * <li>The pool grows as required according to the configured {@link AllocationPolicy}</li>
  * <li>Released memory allocations are restored to the pool and potentially reallocated</li>
- * <li>Free memory can be pre-allocated into the pool using the {@link MemoryPool#init(long)} method</li>
+ * <li>Free memory can be pre-allocated into the pool via the {@link #init(long)} method</li>
  * </ul>
  * <p>
- * Note that a mapped {@link Region} for a block can be silently unmapped by the pool since only one mapped region is permitted per block by the underlying implementation.
+ * Note that a mapped {@link Region} for a block can be silently unmapped by the pool since only one mapped region is permitted per block.
  * The client is responsible for ensuring that a new region is mapped as required.
  * Alternatively a non-pooled allocator implementation could be considered where memory mapping is highly volatile.
  * <p>
@@ -27,18 +27,15 @@ import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
  */
 public class MemoryPool implements TransientObject {
 	private final MemoryType type;
-	private final Allocator allocator;
 	private final List<Block> blocks = new ArrayList<>();
 	private long total;
 
 	/**
 	 * Constructor.
-	 * @param type				Memory type
-	 * @param allocator			Allocator
+	 * @param type Memory type for this pool
 	 */
-	public MemoryPool(MemoryType type, Allocator allocator) {
+	public MemoryPool(MemoryType type) {
 		this.type = notNull(type);
-		this.allocator = notNull(allocator);
 	}
 
 	/**
@@ -78,40 +75,43 @@ public class MemoryPool implements TransientObject {
 	/**
 	 * Initialises this pool with the given amount of free memory.
 	 * Note that the configured growth policy is applied to the given memory size.
-	 * @param size Amount of memory to add to this pool (bytes)
+	 * @param size 			Amount of memory to add to this pool (bytes)
+	 * @param allocator		Memory allocator
 	 * @throws AllocationException if the memory cannot be allocated
 	 */
-	public void init(long size) {
+	public void init(long size, Allocator allocator) {
 		// TODO - Ideally we should apply policy here as well
-		block(size);
+		block(size, allocator);
 		assert free() >= size;
 	}
 
 	/**
 	 * Allocates memory from this pool.
-	 * @param size  Memory size
+	 * @param size  		Required memory size (bytes)
+	 * @param allocator		Memory allocator
 	 * @return Allocated memory
 	 */
-	public DeviceMemory allocate(long size) {
+	public DeviceMemory allocate(long size, Allocator allocator) {
 		// Short cut to allocate a new block if pool has insufficient free memory
 		if(free() < size) {
-			return allocateNewBlock(size);
+			return allocateNewBlock(size, allocator);
 		}
 
 		// Otherwise attempt to re/allocate from an existing block before allocating new memory
 		return
 				allocateFromBlock(size)
 				.or(() -> reallocate(size))
-				.orElseGet(() -> allocateNewBlock(size));
+				.orElseGet(() -> allocateNewBlock(size, allocator));
 	}
 
 	/**
 	 * Allocates from a new block.
-	 * @param size Allocation size
+	 * @param size 			Allocation size
+	 * @param allocator		Memory allocator
 	 * @return Allocated memory
 	 */
-	private DeviceMemory allocateNewBlock(long size) {
-		final Block block = block(size);
+	private DeviceMemory allocateNewBlock(long size, Allocator allocator) {
+		final Block block = block(size, allocator);
 		return block.allocate(size);
 	}
 
@@ -146,15 +146,19 @@ public class MemoryPool implements TransientObject {
 
 	/**
 	 * Allocates a new memory block in this pool.
-	 * @param size Block size
+	 * @param size 			Block size
+	 * @param allocator		Memory allocator
 	 * @return New memory block
 	 * @throws AllocationException if the underlying allocator failed
 	 */
-	private Block block(long size) {
+	private Block block(long size, Allocator allocator) {
 		// Allocate memory
 		final DeviceMemory mem;
 		try {
 			mem = allocator.allocate(type, size);
+		}
+		catch(AllocationException e) {
+			throw e;
 		}
 		catch(Exception e) {
 			throw new AllocationException(e);

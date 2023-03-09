@@ -64,12 +64,5 @@ public class MemoryPropertiesTest {
 			builder.required(HOST_VISIBLE);
 			assertThrows(IllegalArgumentException.class, () -> builder.build());
 		}
-
-		@DisplayName("The memory properties must contain at least one required property")
-		@Test
-		void required() {
-			builder.usage(VkBufferUsageFlag.UNIFORM_BUFFER);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
 	}
 }

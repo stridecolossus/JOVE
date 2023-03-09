@@ -35,12 +35,10 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @param required		Required memory properties
 	 * @param optimal		Optimal properties
 	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
-	 * @throws IllegalArgumentException if the {@link #required} memory properties are empty
 	 */
 	public MemoryProperties {
 		Check.notNull(mode);
 		Check.notEmpty(usage);
-		Check.notEmpty(required);
 		usage = Set.copyOf(usage);
 		required = Set.copyOf(required);
 		optimal = Set.copyOf(optimal);

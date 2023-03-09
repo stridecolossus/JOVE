@@ -20,6 +20,7 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
+	private final MemoryType type;
 	private final long size;
 	private Region region;
 
@@ -27,15 +28,18 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	 * Constructor.
 	 * @param handle		Memory pointer
 	 * @param dev			Logical device
+	 * @param type			Type of memory
 	 * @param size			Size of this memory (bytes)
 	 */
-	DefaultDeviceMemory(Handle handle, DeviceContext dev, long size) {
+	DefaultDeviceMemory(Handle handle, DeviceContext dev, MemoryType type, long size) {
 		super(handle, dev);
+		this.type = notNull(type);
 		this.size = oneOrMore(size);
 	}
 
-	protected DefaultDeviceMemory(DefaultDeviceMemory mem) {
-		this(mem.handle, mem.device(), mem.size);
+	@Override
+	public MemoryType type() {
+		return type;
 	}
 
 	@Override
@@ -78,7 +82,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			checkAlive();
 			checkMapped();
 			if(offset + size > segment) {
-				throw new IllegalArgumentException(String.format("Buffer offset/length is larger than region: offset=%d size=%d region=%s", offset, size, this));
+				throw new IllegalArgumentException("Buffer offset/length larger than region: offset=%d size=%d region=%s".formatted(offset, size, this));
 			}
 			return ptr.getByteBuffer(offset, size);
 		}
@@ -128,9 +132,9 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			throw new IllegalStateException("Device memory has already been mapped: " + this);
 		}
 		if(offset + size > this.size) {
-			throw new IllegalArgumentException(String.format("Mapped region is larger than this device memory: offset=%d size=%d mem=%s", offset, size, this));
+			throw new IllegalArgumentException("Mapped region is larger than this device memory: offset=%d size=%d mem=%s".formatted(offset, size, this));
 		}
-		if(!isHostVisible()) {
+		if(!type.isHostVisible()) {
 			throw new IllegalStateException("Device memory is not host visible: " + this);
 		}
 
@@ -159,7 +163,9 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	 * @throws IllegalStateException if the region has been unmapped or invalidated
 	 */
 	private void checkMapped() {
-		if(region == null) throw new IllegalStateException("Memory region has been invalidated: " + this);
+		if(region == null) {
+			throw new IllegalStateException("Memory region has been invalidated: " + this);
+		}
 	}
 
 	@Override
@@ -174,7 +180,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(handle, size);
+		return Objects.hash(handle, type, size);
 	}
 
 	@Override
@@ -182,6 +188,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		return
 				(obj == this) ||
 				(obj instanceof DefaultDeviceMemory that) &&
+				(this.type == that.type) &&
 				(this.size == that.size) &&
 				this.handle.equals(that.handle);
 	}
@@ -190,6 +197,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	public String toString() {
 		return new ToStringBuilder(this)
 				.appendSuper(super.toString())
+				.append("type", type)
 				.append("size", size)
 				.append("mapped", region)
 				.build();

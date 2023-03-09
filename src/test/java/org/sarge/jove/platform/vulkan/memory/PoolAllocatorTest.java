@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.*;
 
@@ -10,30 +9,17 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 
 class PoolAllocatorTest {
-	private Allocator delegate;
+	private Allocator allocator;
 	private PoolAllocator pool;
 	private MemoryType type;
-	private AllocationPolicy policy;
-	private DeviceMemory block;
 	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
-		// Create a memory block
-		block = mock(DeviceMemory.class);
-		when(block.size()).thenReturn(1L);
-
-		// Create underlying allocator
-		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of());
-
-		// Create allocation policy
-		policy = mock(AllocationPolicy.class);
-		when(policy.apply(1, 0)).thenReturn(1L);
-
-		// Create pool
 		dev = new MockDeviceContext();
-		delegate = new DefaultAllocator(dev);
-		pool = new PoolAllocator(delegate, 1, policy);
+		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of());
+		allocator = new Allocator(dev, new MemoryType[]{type});
+		pool = new PoolAllocator(allocator, 1, AllocationPolicy.NONE);
 	}
 
 	@Test
@@ -64,19 +50,12 @@ class PoolAllocatorTest {
 		assertEquals(1, pool.count());
 		assertEquals(1, pool.size());
 		assertEquals(0, pool.free());
-		verify(policy).apply(1, 0);
 	}
 
 	@Test
 	void allocateMaximum() {
 		pool.allocate(type, 1);
 		assertThrows(AllocationException.class, () -> pool.allocate(type, 1));
-	}
-
-	@Test
-	void allocatePolicy() {
-		when(policy.apply(1, 0)).thenReturn(0L);
-		pool.allocate(type, 1);
 	}
 
 	@Test

@@ -10,6 +10,7 @@ import java.util.stream.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.render.Surface;
 import org.sarge.jove.platform.vulkan.util.*;
@@ -27,7 +28,7 @@ public class PhysicalDevice implements NativeObject {
 	private final Handle handle;
 	private final Instance instance;
 	private final List<Family> families;
-	private final DeviceFeatures features;
+	private final SupportedFeatures features;
 
 	/**
 	 * Constructor.
@@ -36,7 +37,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @param families		Queue families
 	 * @param features		Features supported by this device
 	 */
-	PhysicalDevice(Handle handle, Instance instance, List<Family> families, DeviceFeatures features) {
+	PhysicalDevice(Handle handle, Instance instance, List<Family> families, SupportedFeatures features) {
 		this.handle = notNull(handle);
 		this.instance = notNull(instance);
 		this.families = List.copyOf(families);
@@ -69,14 +70,25 @@ public class PhysicalDevice implements NativeObject {
 	public VkPhysicalDeviceProperties properties() {
 		final var props = new VkPhysicalDeviceProperties();
 		final VulkanLibrary lib = instance.library();
-		lib.vkGetPhysicalDeviceProperties(PhysicalDevice.this, props);
+		lib.vkGetPhysicalDeviceProperties(this, props);
 		return props;
+	}
+
+	/**
+	 * Retrieves the memory properties of this device.
+	 * @return Device memory properties
+	 */
+	public VkPhysicalDeviceMemoryProperties memory() {
+    	final var props = new VkPhysicalDeviceMemoryProperties();
+    	final VulkanLibrary lib = instance.library();
+    	lib.vkGetPhysicalDeviceMemoryProperties(this, props);
+    	return props;
 	}
 
 	/**
 	 * @return Features supported by this device
 	 */
-	public DeviceFeatures features() {
+	public SupportedFeatures features() {
 		return features;
 	}
 
@@ -133,17 +145,6 @@ public class PhysicalDevice implements NativeObject {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof PhysicalDevice that) &&
-				this.handle.equals(that.handle) &&
-				this.instance.equals(that.instance) &&
-				this.families.equals(that.families) &&
-				this.features.equals(that.features);
-	}
-
-	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("handle", handle)
@@ -181,12 +182,12 @@ public class PhysicalDevice implements NativeObject {
 					.mapToObj(n -> Family.of(n, props[n]))
 					.toList();
 
-			// Retrieve device features
+			// Retrieve features supported by this device
 			final var features = new VkPhysicalDeviceFeatures();
 			instance.library().vkGetPhysicalDeviceFeatures(handle, features);
 
 			// Create device
-			return new PhysicalDevice(handle, instance, families, DeviceFeatures.supported(features));
+			return new PhysicalDevice(handle, instance, families, new SupportedFeatures(features));
 		};
 
 		// Create devices
@@ -201,7 +202,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @param required Required features
 	 * @return New device predicate
 	 */
-	public static Predicate<PhysicalDevice> predicate(DeviceFeatures required) {
+	public static Predicate<PhysicalDevice> predicate(RequiredFeatures required) {
 		return dev -> dev.features().contains(required);
 	}
 

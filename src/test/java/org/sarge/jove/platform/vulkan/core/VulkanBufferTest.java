@@ -17,7 +17,7 @@ public class VulkanBufferTest {
 	private VulkanBuffer buffer;
 	private DeviceMemory mem;
 	private DeviceContext dev;
-	private AllocationService allocator;
+	private Allocator allocator;
 	private VulkanLibrary lib;
 
 	@BeforeEach
@@ -25,7 +25,7 @@ public class VulkanBufferTest {
 		dev = new MockDeviceContext();
 		lib = dev.library();
 		mem = new MockDeviceMemory();
-		allocator = null; // TODO - new MockAllocationService(mem);
+		allocator = new MockAllocator();
 		buffer = new VulkanBuffer(new Handle(1), dev, Set.of(TRANSFER_SRC, TRANSFER_DST, VERTEX_BUFFER), mem, 2);
 	}
 
@@ -86,7 +86,7 @@ public class VulkanBufferTest {
 			@Override
 			public boolean equals(Object obj) {
 				final var info = (VkBufferCreateInfo) obj;
-				assertEquals(BitMask.reduce(TRANSFER_SRC), info.usage);
+				assertEquals(BitMask.of(TRANSFER_SRC), info.usage);
 				assertEquals(VkSharingMode.EXCLUSIVE, info.sharingMode);
 				assertEquals(2, info.size);
 				return true;
@@ -95,7 +95,6 @@ public class VulkanBufferTest {
 		final var reqs = new VkMemoryRequirements() {
 			@Override
 			public boolean equals(Object obj) {
-				System.out.println(obj);
 				return true;
 			}
 		};

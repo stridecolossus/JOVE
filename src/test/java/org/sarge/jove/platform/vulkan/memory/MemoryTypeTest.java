@@ -70,12 +70,12 @@ public class MemoryTypeTest {
 		// Create heap
 		final var heap = new VkMemoryHeap();
 		heap.size = 1;
-		heap.flags = BitMask.reduce(DEVICE_LOCAL);
+		heap.flags = BitMask.of(DEVICE_LOCAL);
 
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = BitMask.reduce(HOST_VISIBLE);
+		info.propertyFlags = BitMask.of(HOST_VISIBLE);
 
 		// Create memory properties
 		final var props = new VkPhysicalDeviceMemoryProperties();

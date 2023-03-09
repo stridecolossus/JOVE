@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
@@ -13,12 +14,11 @@ import org.sarge.lib.util.Check;
 public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> properties) {
 	/**
 	 * Constructor.
-	 * @param index				Index
+	 * @param index				Type index
 	 * @param heap				Heap
 	 * @param properties		Memory properties
 	 */
 	public MemoryType {
-		Check.zeroOrMore(index);
 		Check.notNull(heap);
 		properties = Set.copyOf(properties);
 	}
@@ -57,6 +57,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	 * Extracts the memory types supported by the hardware from the given descriptor.
 	 * @param descriptor Memory properties descriptor
 	 * @return Memory types
+	 * @see PhysicalDevice#memory()
 	 */
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
 		// Extract heaps

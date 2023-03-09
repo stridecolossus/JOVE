@@ -127,6 +127,11 @@ class Block {
 		}
 
 		@Override
+		public MemoryType type() {
+			return mem.type();
+		}
+
+		@Override
 		public long size() {
 			return size;
 		}

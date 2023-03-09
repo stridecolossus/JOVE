@@ -1,14 +1,23 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import java.nio.ByteBuffer;
+import java.util.Set;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.io.BufferHelper;
+import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 public class MockDeviceMemory extends DefaultDeviceMemory {
+	private static final MemoryType TYPE = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryProperty.HOST_VISIBLE));
+
 	public MockDeviceMemory() {
-		super(new Handle(1), new MockDeviceContext(), 2);
+		this(TYPE);
+	}
+
+	public MockDeviceMemory(MemoryType type) {
+		super(new Handle(1), new MockDeviceContext(), type, 2);
 	}
 
 	@Override
@@ -26,6 +35,7 @@ public class MockDeviceMemory extends DefaultDeviceMemory {
 
 			@Override
 			public void unmap() {
+				// Whatever
 			}
 		};
 	}

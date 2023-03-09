@@ -10,9 +10,9 @@ import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.DeviceFeatures;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
@@ -23,28 +23,44 @@ class PhysicalDeviceTest {
 	private VulkanLibrary lib;
 	private Instance instance;
 	private Family family;
+	private SupportedFeatures features;
 
 	@BeforeEach
 	void before() {
+		// Init Vulkan
 		lib = mock(VulkanLibrary.class);
 		instance = new Instance(new Handle(2), lib, new MockReferenceFactory());
+
+		// Init supported features
+		final var struct = new VkPhysicalDeviceFeatures();
+		struct.samplerAnisotropy = true;
+		features = new SupportedFeatures(struct);
+
+		// Create device
 		family = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
-		dev = new PhysicalDevice(new Handle(1), instance, List.of(family), DeviceFeatures.EMPTY);
+		dev = new PhysicalDevice(new Handle(1), instance, List.of(family), features);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(instance, dev.instance());
 		assertEquals(List.of(family), dev.families());
-		assertEquals(DeviceFeatures.EMPTY, dev.features());
 	}
 
-	@DisplayName("A physical device exposes a descriptor of its properties")
+	@DisplayName("A physical device can retrieve its properties")
 	@Test
 	void properties() {
 		final VkPhysicalDeviceProperties props = dev.properties();
 		assertNotNull(props);
 		verify(lib).vkGetPhysicalDeviceProperties(dev, props);
+	}
+
+	@DisplayName("A physical device can retrieve the memory properties of the hardware")
+	@Test
+	void memory() {
+		final VkPhysicalDeviceMemoryProperties props = dev.memory();
+		assertNotNull(props);
+		verify(lib).vkGetPhysicalDeviceMemoryProperties(dev, props);
 	}
 
 	@DisplayName("The supported extensions can be retrieved from a physical device")
@@ -60,6 +76,12 @@ class PhysicalDeviceTest {
 	void layers() {
 		dev.layers();
 		verify(lib).vkEnumerateDeviceLayerProperties(dev, instance.factory().integer(), null);
+	}
+
+	@DisplayName("A physical device has a set of supported features")
+	@Test
+	void features() {
+		assertEquals(Set.of("samplerAnisotropy"), dev.features().features());
 	}
 
 	@DisplayName("A physical device can optionally support presentation")
@@ -100,19 +122,20 @@ class PhysicalDeviceTest {
 		final Answer<Integer> families = inv -> {
 			final VkQueueFamilyProperties props = inv.getArgument(2);
 			props.queueCount = 1;
-			props.queueFlags = BitMask.reduce(VkQueueFlag.GRAPHICS);
+			props.queueFlags = BitMask.of(VkQueueFlag.GRAPHICS);
 			return 0;
 		};
 		doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Handle(1), count, arg);
 
 		// Enumerate devices
-		assertEquals(List.of(dev), PhysicalDevice.devices(instance).toList());
+		assertEquals(1, PhysicalDevice.devices(instance).count());
 	}
 
 	@DisplayName("A physical device can be matched by a required feature set")
 	@Test
-	void features() {
-		final Predicate<PhysicalDevice> predicate = PhysicalDevice.predicate(DeviceFeatures.EMPTY);
+	void predicate() {
+		final var required = new RequiredFeatures(Set.of("samplerAnisotropy"));
+		final Predicate<PhysicalDevice> predicate = PhysicalDevice.predicate(required);
 		assertNotNull(predicate);
 		assertEquals(true, predicate.test(dev));
 	}

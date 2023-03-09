@@ -19,7 +19,7 @@ class DefaultImageTest {
 	private DeviceMemory mem;
 	private VulkanLibrary lib;
 	private DeviceContext dev;
-	private AllocationService allocator;
+	private Allocator allocator;
 
 	@BeforeEach
 	void before() {
@@ -39,7 +39,7 @@ class DefaultImageTest {
 		// Init image memory
 		mem = new MockDeviceMemory();
 
-		allocator = null; // TODO
+		allocator = new MockAllocator();
 
 		// Create image
 		image = new DefaultImage(new Handle(2), dev, descriptor, mem);
@@ -103,7 +103,7 @@ class DefaultImageTest {
 					return dataEquals((VkImageCreateInfo) obj, true);
 				}
 			};
-			info.flags = BitMask.reduce(VkImageCreateFlag.CUBE_COMPATIBLE);
+			info.flags = BitMask.of(VkImageCreateFlag.CUBE_COMPATIBLE);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
@@ -112,7 +112,7 @@ class DefaultImageTest {
 			info.samples = VkSampleCount.COUNT_4;
 			info.tiling = VkImageTiling.LINEAR;
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
-			info.usage = BitMask.reduce(props.usage());
+			info.usage = new BitMask<>(props.usage());
 			info.sharingMode = props.mode();
 
 			// Check API

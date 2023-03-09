@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.platform.vulkan.image.ImageTransferCommand.CopyRegion;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.*;
 
 public class ImageTransferCommandTest {
 	private static final VkBufferImageCopy[] REGIONS = new VkBufferImageCopy[0];
@@ -48,7 +48,7 @@ public class ImageTransferCommandTest {
 				.required(VkMemoryProperty.DEVICE_LOCAL)
 				.build();
 
-		return VulkanBuffer.create(dev, null, 4, props); // TODO - service
+		return VulkanBuffer.create(dev, new MockAllocator(), 4, props);
 	}
 
 	@DisplayName("A transfer command with a source buffer...")
@@ -113,7 +113,7 @@ public class ImageTransferCommandTest {
 					.required(VkMemoryProperty.DEVICE_LOCAL)
 					.build();
 
-			buffer = VulkanBuffer.create(dev, null, 4, props);
+			buffer = VulkanBuffer.create(dev, new MockAllocator(), 4, props);
 		}
 
 		@DisplayName("A transfer command can be inverted")

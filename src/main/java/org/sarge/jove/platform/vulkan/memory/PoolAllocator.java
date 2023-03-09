@@ -16,20 +16,21 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class PoolAllocator implements Allocator {
+public class PoolAllocator extends Allocator {
+	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
 	private final Allocator allocator;
 	private final int max;
 	private final AllocationPolicy policy;
-	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
 	private int count;
 
 	/**
 	 * Constructor.
-	 * @param allocator 	Delegate allocator
+	 * @param allocator		Delegate allocator
 	 * @param max			Maximum number of allocations
 	 * @param policy		Allocation policy
 	 */
 	public PoolAllocator(Allocator allocator, int max, AllocationPolicy policy) {
+		super(allocator);
 		this.allocator = notNull(allocator);
 		this.max = oneOrMore(max);
 		this.policy = notNull(policy);
@@ -62,7 +63,7 @@ public class PoolAllocator implements Allocator {
 	 * @return Pool
 	 */
 	public MemoryPool pool(MemoryType type) {
-		return pools.computeIfAbsent(type, __ -> new MemoryPool(type, allocator));
+		return pools.computeIfAbsent(type, MemoryPool::new);
 	}
 
 	/**
@@ -83,7 +84,8 @@ public class PoolAllocator implements Allocator {
 		final long actual = policy.apply(size, pool.size());
 
 		// Allocate from pool
-		final DeviceMemory mem = pool.allocate(Math.max(size, actual));
+		// TODO - seems nasty extending AND reference to delegate?
+		final DeviceMemory mem = pool.allocate(Math.max(size, actual), allocator);
 
 		// Update stats
 		++count;

@@ -159,14 +159,14 @@ public class DefaultImage extends VulkanObject implements Image {
 		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
 		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */
-		public DefaultImage build(DeviceContext dev, AllocationService allocator) {
+		public DefaultImage build(DeviceContext dev, Allocator allocator) {
 			// Validate
 			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");
 
 			// Populate image structure
 			final var info = new VkImageCreateInfo();
-			info.flags = BitMask.reduce(flags);
+			info.flags = new BitMask<>(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
@@ -175,7 +175,7 @@ public class DefaultImage extends VulkanObject implements Image {
 			info.samples = samples;
 			info.tiling = tiling;
 			info.initialLayout = layout;
-			info.usage = BitMask.reduce(props.usage());
+			info.usage = new BitMask<>(props.usage());
 			info.sharingMode = props.mode();
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 

@@ -40,7 +40,7 @@ public class CaptureTask {
 	 * @param swapchain Swapchain to capture
 	 * @return Screenshot
 	 */
-	public Image capture(Swapchain swapchain, AllocationService allocator) {
+	public Image capture(Swapchain swapchain, Allocator allocator) {
 		// Retrieve latest rendered swapchain image
 		final Image image = swapchain.latest().image();
 
@@ -74,7 +74,7 @@ public class CaptureTask {
 	 * @param allocator		Memory allocator
 	 * @param target		Target image descriptor
 	 */
-	private static DefaultImage screenshot(DeviceContext dev, AllocationService allocator, Image.Descriptor target) {
+	private static DefaultImage screenshot(DeviceContext dev, Allocator allocator, Image.Descriptor target) {
 		// Create descriptor
 		final var descriptor = new Image.Descriptor.Builder()
 				.type(VkImageType.TWO_D)

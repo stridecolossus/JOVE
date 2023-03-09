@@ -37,7 +37,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @return New buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
-	public static VulkanBuffer create(DeviceContext dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {
+	public static VulkanBuffer create(DeviceContext dev, Allocator allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {
 		// TODO
 		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
 		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
@@ -46,7 +46,7 @@ public class VulkanBuffer extends VulkanObject {
 
 		// Build buffer descriptor
 		final var info = new VkBufferCreateInfo();
-		info.usage = BitMask.reduce(props.usage());
+		info.usage = new BitMask<>(props.usage());
 		info.sharingMode = props.mode();
 		info.size = oneOrMore(len);
 		// TODO - queue families
@@ -78,7 +78,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param data			Data to stage
 	 * @return New staging buffer
 	 */
-	public static VulkanBuffer staging(DeviceContext dev, AllocationService allocator, ByteSizedBufferable data) {
+	public static VulkanBuffer staging(DeviceContext dev, Allocator allocator, ByteSizedBufferable data) {
 		// Init memory properties
 		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)

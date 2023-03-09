@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
@@ -9,17 +9,15 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.memory.MemoryProperties;
+import org.sarge.jove.platform.vulkan.memory.*;
 
 public class IndexBufferTest {
-//	private VulkanBuffer buffer;
 	private IndexBuffer index;
 	private MockDeviceContext dev;
 	private Command.Buffer cmd;
 
 	@BeforeEach
 	void before() {
-
 		dev = new MockDeviceContext();
 		cmd = new MockCommandBuffer();
 
@@ -28,7 +26,7 @@ public class IndexBufferTest {
 				.required(VkMemoryProperty.DEVICE_LOCAL)
 				.build();
 
-		final var buffer = VulkanBuffer.create(dev, null, 4, props); // TODO
+		final var buffer = VulkanBuffer.create(dev, new MockAllocator(), 4, props);
 		index = new IndexBuffer(buffer, VkIndexType.UINT32);
 	}
 
@@ -45,7 +43,7 @@ public class IndexBufferTest {
 
 	@Test
 	void length() {
-//		limit("maxDrawIndexedIndexValue", 0);
+		when(dev.limits().value("maxDrawIndexedIndexValue")).thenReturn(0);
 		assertThrows(IllegalStateException.class, () -> index.bind(0));
 	}
 
@@ -53,7 +51,7 @@ public class IndexBufferTest {
 	class IntegerIndex {
 		@BeforeEach
 		void before() {
-//			limit("maxDrawIndexedIndexValue", 1);
+			when(dev.limits().value("maxDrawIndexedIndexValue")).thenReturn(1);
 		}
 
 		@Test

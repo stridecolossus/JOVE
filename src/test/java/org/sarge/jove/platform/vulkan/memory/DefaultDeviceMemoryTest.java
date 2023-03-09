@@ -4,32 +4,37 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.nio.ByteBuffer;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 class DefaultDeviceMemoryTest {
 	private DefaultDeviceMemory mem;
 	private DeviceContext dev;
+	private MemoryType type;
 
 	@BeforeEach
 	void before() {
 		dev = new MockDeviceContext();
-		mem = new DefaultDeviceMemory(new Handle(1), dev, 3);
+		type = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryProperty.HOST_VISIBLE));
+		mem = new DefaultDeviceMemory(new Handle(1), dev, type, 3);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(false, mem.isDestroyed());
+		assertEquals(type, mem.type());
 		assertEquals(3, mem.size());
+		assertEquals(false, mem.isDestroyed());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(mem, mem);
-		assertEquals(mem, new DefaultDeviceMemory(new Handle(1), dev, 3));
+		assertEquals(mem, new DefaultDeviceMemory(new Handle(1), dev, type, 3));
 		assertNotEquals(mem, null);
 		assertNotEquals(mem, mock(DeviceMemory.class));
 	}
@@ -52,13 +57,9 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("cannot be mapped if it is not host visible")
 		@Test
 		void visible() {
-			final DeviceMemory invalid = new DefaultDeviceMemory(mem) {
-				@Override
-				public boolean isHostVisible() {
-					return false;
-				}
-			};
-			assertThrows(IllegalStateException.class, () -> invalid.map());
+			final MemoryType invalid = new MemoryType(0, new Heap(1, Set.of()), Set.of());
+			mem = new DefaultDeviceMemory(new Handle(1), dev, invalid, 3);
+			assertThrows(IllegalStateException.class, () -> mem.map());
 		}
 
 		@DisplayName("cannot map a region larger than the memory")

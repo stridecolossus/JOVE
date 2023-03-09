@@ -42,7 +42,7 @@ public interface MemoryLibrary {
 	int vkMapMemory(DeviceContext device, DeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
 
 	/**
-	 * Un-maps a memory region.
+	 * Unmaps a memory region.
 	 * @param device			Logical device
 	 * @param memory			Memory
 	 */
