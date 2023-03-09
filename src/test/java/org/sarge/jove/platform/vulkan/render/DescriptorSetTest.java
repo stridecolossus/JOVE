@@ -14,7 +14,6 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.*;
-import org.sarge.jove.platform.vulkan.render.DescriptorSet.Layout;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
@@ -72,25 +71,39 @@ public class DescriptorSetTest {
 
 	@DisplayName("A descriptor set resource...")
 	@Nested
-	class ResourceTests {
+	class EntryTests {
+		private Entry entry;
+
+		@BeforeEach
+		void before() {
+			entry = descriptor.entry(binding);
+		}
+
+    	@DisplayName("TODO")
+    	@Test
+    	void entry() {
+    		assertNotNull(entry);
+    	}
+
     	@DisplayName("can be populated")
     	@Test
     	void set() {
-    		descriptor.set(binding, res);
+    		entry.set(res);
+    		assertEquals(res, entry.get());
     	}
 
     	@DisplayName("can be overwritten with a new resource")
     	@Test
     	void reset() {
-    		descriptor.set(binding, res);
-    		descriptor.set(binding, res);
+    		entry.set(res);
+    		entry.set(res);
     	}
 
     	@DisplayName("cannot populate a binding that does not belong to the layout")
     	@Test
     	void invalid() {
     		final Binding other = new Binding(2, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
-    		assertThrows(IllegalArgumentException.class, () -> descriptor.set(other, res));
+    		assertThrows(IllegalArgumentException.class, () -> descriptor.entry(other));
     	}
 
     	@DisplayName("cannot be set to a resource with a different descriptor type")
@@ -98,7 +111,7 @@ public class DescriptorSetTest {
     	void setInvalidResource() {
     		final var invalid = mock(DescriptorResource.class);
     		when(invalid.type()).thenReturn(VkDescriptorType.STORAGE_BUFFER);
-    		assertThrows(IllegalArgumentException.class, () -> descriptor.set(binding, invalid));
+    		assertThrows(IllegalArgumentException.class, () -> entry.set(invalid));
     	}
 	}
 
@@ -109,7 +122,7 @@ public class DescriptorSetTest {
     	@Test
     	void update() {
     		// Apply update
-    		descriptor.set(binding, res);
+    		descriptor.entry(binding).set(res);
     		assertEquals(1, DescriptorSet.update(dev, Set.of(descriptor)));
 
     		// Init expected write descriptor
@@ -133,7 +146,7 @@ public class DescriptorSetTest {
 		@DisplayName("is ignored if none of the resources have been modified")
     	@Test
     	void none() {
-    		descriptor.set(binding, res);
+    		descriptor.entry(binding).set(res);
     		DescriptorSet.update(dev, Set.of(descriptor));
     		assertEquals(0, DescriptorSet.update(dev, Set.of(descriptor)));
     	}
@@ -158,7 +171,7 @@ public class DescriptorSetTest {
 					return new MockStructure();
 				}
 			};
-			descriptor.set(binding, unsupported);
+    		descriptor.entry(binding).set(unsupported);
     		assertThrows(UnsupportedOperationException.class, () -> DescriptorSet.update(dev, Set.of(descriptor)));
     	}
 	}
@@ -205,7 +218,7 @@ public class DescriptorSetTest {
 		@DisplayName("must contain at least one binding")
 		@Test
 		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> new Layout(new Handle(1), dev, List.of()));
+			assertThrows(IllegalArgumentException.class, () -> new DescriptorSet.Layout(new Handle(1), dev, List.of()));
 		}
 
 		@DisplayName("can be destroyed")
@@ -219,7 +232,7 @@ public class DescriptorSetTest {
 		@Test
 		void create() {
 			// Create layout
-			layout = Layout.create(dev, List.of(binding));
+			layout = DescriptorSet.Layout.create(dev, List.of(binding));
 			assertNotNull(layout);
 
 			// Init expected create descriptor
@@ -240,7 +253,7 @@ public class DescriptorSetTest {
 		@DisplayName("cannot contain duplicate bindings")
 		@Test
 		void duplicate() {
-			assertThrows(IllegalArgumentException.class, () -> Layout.create(dev, List.of(binding, binding)));
+			assertThrows(IllegalArgumentException.class, () -> DescriptorSet.Layout.create(dev, List.of(binding, binding)));
 		}
 	}
 
