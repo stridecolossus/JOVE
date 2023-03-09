@@ -96,8 +96,7 @@ public class SwapchainTest {
 		@BeforeEach
 		void before() {
 			queue = new WorkQueue(new Handle(2), new Family(0, 1, Set.of()));
-			semaphore = mock(Semaphore.class);
-			when(semaphore.handle()).thenReturn(new Handle(3));
+			semaphore = Semaphore.create(dev);
 		}
 
 		@DisplayName("A rendered swapchain image can be presented to the swapchain")
@@ -153,19 +152,20 @@ public class SwapchainTest {
 		@BeforeEach
 		void before() {
 			// Init rendering surface
-			format = Surface.defaultSurfaceFormat();
 			surface = mock(Surface.class);
-			when(surface.handle()).thenReturn(new Handle(1));
 			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
+
+			// Init surface format
+			format = Surface.defaultSurfaceFormat();
 			when(surface.format(format.format, format.colorSpace)).thenReturn(Optional.of(format));
 
-			// Init surface capabilities used by the swapchain
+			// Init surface capabilities
 			final var caps = new VkSurfaceCapabilitiesKHR();
-			caps.supportedTransforms = BitMask.reduce(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
+			caps.supportedTransforms = BitMask.of(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
 			caps.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 			caps.maxImageArrayLayers = 1;
-			caps.supportedUsageFlags = BitMask.reduce(VkImageUsageFlag.COLOR_ATTACHMENT);
-			caps.supportedCompositeAlpha = BitMask.reduce(VkCompositeAlphaFlagKHR.OPAQUE);
+			caps.supportedUsageFlags = BitMask.of(VkImageUsageFlag.COLOR_ATTACHMENT);
+			caps.supportedCompositeAlpha = BitMask.of(VkCompositeAlphaFlagKHR.OPAQUE);
 			when(surface.capabilities()).thenReturn(caps);
 
 			// Init attachment extents
@@ -212,8 +212,8 @@ public class SwapchainTest {
 				@Override
 				public boolean equals(Object obj) {
 					final var info = (VkSwapchainCreateInfoKHR) obj;
-					assertEquals(new Handle(1), info.surface);
-					assertNotNull(info.imageExtent);
+					assertEquals(3, info.imageExtent.width);
+					assertEquals(4, info.imageExtent.height);
 					assertEquals(VkSurfaceTransformFlagKHR.IDENTITY_KHR, info.preTransform);
 					assertEquals(format.format, info.imageFormat);
 					assertEquals(format.colorSpace, info.imageColorSpace);

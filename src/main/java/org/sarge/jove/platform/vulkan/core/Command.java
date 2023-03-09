@@ -184,7 +184,7 @@ public interface Command {
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
-			info.flags = BitMask.reduce(flags);
+			info.flags = BitMask.of(flags);
 			info.pInheritanceInfo = null;
 
 			// Start buffer recording
@@ -221,7 +221,7 @@ public interface Command {
 		public void reset(VkCommandBufferResetFlag... flags) {
 			validate(State.EXECUTABLE);
 			// TODO - check pool has flag
-			final BitMask<VkCommandBufferResetFlag> mask = BitMask.reduce(flags);
+			final BitMask<VkCommandBufferResetFlag> mask = BitMask.of(flags);
 			final VulkanLibrary lib = pool.device().library();
 			check(lib.vkResetCommandBuffer(this, mask));
 			state = State.INITIAL;
@@ -260,7 +260,7 @@ public interface Command {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
-			info.flags = BitMask.reduce(flags);
+			info.flags = BitMask.of(flags);
 
 			// Create pool
 			final VulkanLibrary lib = dev.library();
@@ -341,7 +341,7 @@ public interface Command {
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
-			final BitMask<VkCommandPoolResetFlag> bits = BitMask.reduce(flags);
+			final var bits = BitMask.of(flags);
 			final DeviceContext dev = super.device();
 			check(dev.library().vkResetCommandPool(dev, this, bits));
 		}

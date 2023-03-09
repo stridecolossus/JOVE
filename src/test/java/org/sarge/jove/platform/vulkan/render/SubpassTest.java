@@ -149,13 +149,13 @@ class SubpassTest {
 
 			// Check descriptor
 			dependency.populate(desc);
-			assertEquals(BitMask.reduce(VkDependencyFlag.VIEW_LOCAL), desc.dependencyFlags);
+			assertEquals(BitMask.of(VkDependencyFlag.VIEW_LOCAL), desc.dependencyFlags);
 			assertEquals(1, desc.srcSubpass);
 			assertEquals(2, desc.dstSubpass);
-			assertEquals(BitMask.reduce(VkPipelineStage.VERTEX_SHADER), desc.srcStageMask);
-			assertEquals(BitMask.reduce(), desc.srcAccessMask);
-			assertEquals(BitMask.reduce(VkPipelineStage.FRAGMENT_SHADER), desc.dstStageMask);
-			assertEquals(BitMask.reduce(VkAccess.SHADER_READ), desc.dstAccessMask);
+			assertEquals(BitMask.of(VkPipelineStage.VERTEX_SHADER), desc.srcStageMask);
+			assertEquals(BitMask.of(), desc.srcAccessMask);
+			assertEquals(BitMask.of(VkPipelineStage.FRAGMENT_SHADER), desc.dstStageMask);
+			assertEquals(BitMask.of(VkAccess.SHADER_READ), desc.dstAccessMask);
 		}
 
 		@DisplayName("can depend on the implicit subpass before or after the render pass")

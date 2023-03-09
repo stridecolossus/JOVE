@@ -198,7 +198,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 			info.alphaBlendOp = alpha.blend;
 
 			// Init colour write mask
-			info.colorWriteMask = BitMask.reduce(mask);
+			info.colorWriteMask = new BitMask<>(mask);
 		}
 
 		/**

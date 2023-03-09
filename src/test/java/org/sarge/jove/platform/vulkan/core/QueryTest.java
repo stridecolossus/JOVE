@@ -49,7 +49,7 @@ public class QueryTest {
 			final Command begin = query.begin(VkQueryControlFlag.PRECISE);
 			assertNotNull(begin);
 			begin.record(lib, buffer);
-			verify(lib).vkCmdBeginQuery(buffer, pool, 0, BitMask.reduce(VkQueryControlFlag.PRECISE));
+			verify(lib).vkCmdBeginQuery(buffer, pool, 0, BitMask.of(VkQueryControlFlag.PRECISE));
 		}
 
 		@DisplayName("is ended by a command wrapping a segment of the render sequence")
@@ -96,7 +96,7 @@ public class QueryTest {
 			};
 			expected.queryType = VkQueryType.OCCLUSION;
 			expected.queryCount = 1;
-			expected.pipelineStatistics = new BitMask<>(0);
+			expected.pipelineStatistics = BitMask.of();
 			verify(lib).vkCreateQueryPool(dev, expected, null, dev.factory().pointer());
 		}
 
@@ -155,7 +155,7 @@ public class QueryTest {
 		};
 		expected.queryType = VkQueryType.PIPELINE_STATISTICS;
 		expected.queryCount = 1;
-		expected.pipelineStatistics = BitMask.reduce(VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS);
+		expected.pipelineStatistics = BitMask.of(VkQueryPipelineStatisticFlag.VERTEX_SHADER_INVOCATIONS);
 		verify(lib).vkCreateQueryPool(dev, expected, null, dev.factory().pointer());
 	}
 
@@ -206,14 +206,14 @@ public class QueryTest {
 			@Test
 			void accept() {
 				accessor.accept(bb);
-				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 4, BitMask.reduce(WAIT));
+				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 4, BitMask.of(WAIT));
 			}
 
 			@DisplayName("can be configured as long values")
 			@Test
 			void acceptLongValues() {
 				builder.longs().build().accept(bb);
-				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 8, BitMask.reduce(WAIT, VkQueryResultFlag.LONG));
+				verify(lib).vkGetQueryPoolResults(dev, pool, 0, 2, bb.remaining(), bb, 8, BitMask.of(WAIT, VkQueryResultFlag.LONG));
 			}
 
 			@DisplayName("cannot be copied to a buffer that is too small for the results")
@@ -230,7 +230,7 @@ public class QueryTest {
 			final var dest = new VulkanBuffer(new Handle(2), dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), new MockDeviceMemory(), 2 * 4);
 			final Command copy = builder.build(dest, 0);
 			copy.record(lib, buffer);
-			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, new BitMask<>(0));
+			verify(lib).vkCmdCopyQueryPoolResults(buffer, pool, 0, 2, dest, 0, 4, BitMask.of());
 		}
 	}
 }

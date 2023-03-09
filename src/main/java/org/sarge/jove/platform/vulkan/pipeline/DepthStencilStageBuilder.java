@@ -170,7 +170,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	 */
 	public Command setDynamicStencilCompareMask(StencilMaskType type, Set<VkStencilFaceFlag> face, int mask) {
 		Check.notEmpty(face);
-		final BitMask<VkStencilFaceFlag> faceMask = BitMask.reduce(face);
+		final var faceMask = new BitMask<>(face);
 		return (lib, buffer) -> {
 			switch(type) {
     			case COMPARE 	-> lib.vkCmdSetStencilCompareMask(buffer, faceMask, mask);

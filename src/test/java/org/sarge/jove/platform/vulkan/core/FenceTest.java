@@ -34,7 +34,7 @@ public class FenceTest {
 				return dataEquals((Structure) obj);
 			}
 		};
-		expected.flags = BitMask.reduce(VkFenceCreateFlag.SIGNALED);
+		expected.flags = BitMask.of(VkFenceCreateFlag.SIGNALED);
 		verify(lib).vkCreateFence(dev, expected, null, dev.factory().pointer());
 	}
 

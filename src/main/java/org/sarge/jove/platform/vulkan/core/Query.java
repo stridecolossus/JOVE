@@ -117,7 +117,7 @@ public interface Query {
 			final var info = new VkQueryPoolCreateInfo();
 			info.queryType = notNull(type);
 			info.queryCount = oneOrMore(slots);
-			info.pipelineStatistics = BitMask.reduce(stats);
+			info.pipelineStatistics = BitMask.of(stats);
 
 			// Instantiate query pool
 			final PointerByReference ref = dev.factory().pointer();
@@ -175,7 +175,7 @@ public interface Query {
 
 				@Override
 				public Command begin(VkQueryControlFlag... flags) {
-					final BitMask<VkQueryControlFlag> mask = BitMask.reduce(flags);
+					final BitMask<VkQueryControlFlag> mask = BitMask.of(flags);
 					return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
 				}
 
@@ -417,7 +417,7 @@ public interface Query {
 			}
 
 			// Build flags mask
-			return BitMask.reduce(flags);
+			return new BitMask<>(flags);
 		}
 
 		@Override

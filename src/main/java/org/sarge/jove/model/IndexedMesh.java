@@ -6,7 +6,7 @@ import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.util.Mask;
+import org.sarge.jove.util.BitField;
 
 /**
  * An <i>indexed mesh</i> constructs an index buffer for a renderable mesh.
@@ -23,7 +23,7 @@ public class IndexedMesh extends DefaultMesh {
 	/**
 	 * Size of a {@code short} index.
 	 */
-	private static final long SHORT_INDEX = Mask.unsignedMaximum(Short.SIZE);
+	private static final long SHORT_INDEX = BitField.unsignedMaximum(Short.SIZE);
 
 	/**
 	 * Determines whether the given draw count requires an {@code int} index.

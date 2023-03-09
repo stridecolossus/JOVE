@@ -96,7 +96,7 @@ public class PipelineLayout extends VulkanObject {
 			if(len > 0) {
 				// Check that overall size is supported by the hardware
 				final int max = dev.limits().value("maxPushConstantsSize");
-				if(len > max) throw new IllegalArgumentException(String.format("Push constant buffer too large: max=%d len=%d ", max, len));
+				if(len > max) throw new IllegalArgumentException("Push constant buffer too large: max=%d len=%d".formatted(max, len));
 
 				// Add push constant ranges
 				info.pushConstantRangeCount = ranges.size();

@@ -13,16 +13,34 @@ import com.sun.jna.*;
  * <p>
  * This class allows enumeration bit masks in API methods and structures to be represented in a more type-safe manner, i.e. rather than a simple integer.
  * <p>
- * The {@link #reduce(Collection)} method creates a bit mask from a collection of enumeration constants and {@link #enumerate(ReverseMapping)} performs the inverse operation.
- * <p>
  * @see IntEnum
  * @param <E> Bit mask enumeration
  */
 public final class BitMask<E extends IntEnum> {
+	/**
+	 * Creates a bit mask from the given array.
+	 * @param <E> Bit mask enumeration
+	 * @param values Enumeration array
+	 * @return Bit mask
+	 * @see #BitMask(Collection)
+	 */
+	@SafeVarargs
+	public static <E extends IntEnum> BitMask<E> of(E... values) {
+		return new BitMask<>(Set.of(values));
+	}
+
 	private final int bits;
 
 	/**
 	 * Constructor.
+	 * @param values Enumeration
+	 */
+	public BitMask(Collection<E> values) {
+		this.bits = values.stream().mapToInt(IntEnum::value).sum();
+	}
+
+	/**
+	 * Constructor given a native bitfield.
 	 * @param bits Bitfield
 	 */
 	public BitMask(int bits) {
@@ -37,45 +55,29 @@ public final class BitMask<E extends IntEnum> {
 	}
 
 	/**
-	 * Builds a mask from the given enumeration constants.
-	 * @param values Enumeration constants
-	 * @param <E> Bitfield enumeration
-	 * @return New bit mask
-	 */
-	public static <E extends IntEnum> BitMask<E> reduce(Collection<E> values) {
-		final int bits = values
-				.stream()
-				.mapToInt(IntEnum::value)
-				.reduce(0, (a, b) -> a | b);
-
-		return new BitMask<>(bits);
-	}
-
-	/**
-	 * @see #reduce(Collection)
-	 */
-	@SuppressWarnings("unchecked")
-	public static <E extends IntEnum> BitMask<E> reduce(E... values) {
-		return reduce(Set.of(values));
-	}
-
-	/**
 	 * @param mask Mask
-	 * @return Whether this enumeration contains the given mask
+	 * @return Whether this mask contains the given enumeration mask
 	 */
 	public boolean contains(BitMask<E> mask) {
-		return (bits & mask.bits) == mask.bits;
+		return BitField.contains(bits, mask.bits);
 	}
 
 	/**
-	 * Converts this mask to the corresponding enumeration constants.
+	 * @param value Enumeration constant
+	 * @return Whether this mask contains the given value
+	 */
+	public boolean contains(E value) {
+		return BitField.contains(bits, value.value());
+	}
+
+	/**
+	 * Converts this mask to the corresponding enumeration.
 	 * @param reverse Reverse mapping
 	 * @return Enumeration constants
 	 */
 	public Set<E> enumerate(ReverseMapping<E> reverse) {
-		return new Mask(bits)
+		return new BitField(bits)
     			.stream()
-    			.map(Mask::toInteger)
     			.mapToObj(reverse::map)
     			.collect(toSet());
 	}

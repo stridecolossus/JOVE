@@ -46,7 +46,7 @@ class WorkQueueTest {
 	void of() {
 		final var props = new VkQueueFamilyProperties();
 		props.queueCount = 2;
-		props.queueFlags = BitMask.reduce(VkQueueFlag.GRAPHICS);
+		props.queueFlags = BitMask.of(VkQueueFlag.GRAPHICS);
 		assertEquals(family, Family.of(1, props));
 	}
 }

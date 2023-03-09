@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.util.BitMask.reduce;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
@@ -59,9 +58,9 @@ public class Barrier extends ImmediateCommand {
 	 * @param images		Image memory barriers
 	 */
 	private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, Set<VkDependencyFlag> flags, VkMemoryBarrier[] memory, VkBufferMemoryBarrier[] buffers, VkImageMemoryBarrier[] images) {
-		this.src = reduce(src);
-		this.dest = reduce(dest);
-		this.flags = reduce(flags);
+		this.src = new BitMask<>(src);
+		this.dest = new BitMask<>(dest);
+		this.flags = new BitMask<>(flags);
 		this.memory = memory;
 		this.buffers = buffers;
 		this.images = images;
@@ -207,8 +206,8 @@ public class Barrier extends ImmediateCommand {
 			 * Populates the descriptor for this memory barrier.
 			 */
 			private void populate(VkMemoryBarrier barrier) {
-				barrier.srcAccessMask = reduce(srcAccess);
-				barrier.dstAccessMask = reduce(destAccess);
+				barrier.srcAccessMask = new BitMask<>(srcAccess);
+				barrier.dstAccessMask = new BitMask<>(destAccess);
 			}
 
 			/**
@@ -298,8 +297,8 @@ public class Barrier extends ImmediateCommand {
 				barrier.buffer = buffer.handle();
 				barrier.offset = offset;
 				barrier.size = size;
-				barrier.srcAccessMask = reduce(srcAccess);
-				barrier.dstAccessMask = reduce(destAccess);
+				barrier.srcAccessMask = new BitMask<>(srcAccess);
+				barrier.dstAccessMask = new BitMask<>(destAccess);
 				barrier.srcQueueFamilyIndex = srcFamily;
 				barrier.dstQueueFamilyIndex = destFamily;
 			}
@@ -363,8 +362,8 @@ public class Barrier extends ImmediateCommand {
 			 */
 			private void populate(VkImageMemoryBarrier barrier) {
 				barrier.image = image.handle();
-				barrier.srcAccessMask = reduce(srcAccess);
-				barrier.dstAccessMask = reduce(destAccess);
+				barrier.srcAccessMask = new BitMask<>(srcAccess);
+				barrier.dstAccessMask = new BitMask<>(destAccess);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
 				barrier.subresourceRange = SubResource.toRange(subresource);

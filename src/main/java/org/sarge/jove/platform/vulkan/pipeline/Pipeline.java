@@ -198,7 +198,7 @@ public class Pipeline extends VulkanObject {
     	public List<Pipeline> build(DeviceContext dev, PipelineLayout layout, PipelineCache cache) {
     		// Build descriptors and patch peer indices
     		final BiConsumer<Builder<T>, T> populate = (builder, out) -> {
-    			final var flags = BitMask.reduce(builder.flags);
+    			final var flags = new BitMask<>(builder.flags);
     			final int index = builder.parent == null ? -1 : builders.indexOf(builder.parent);
     			delegate.populate(flags, layout, builder.base, index, out);
     		};

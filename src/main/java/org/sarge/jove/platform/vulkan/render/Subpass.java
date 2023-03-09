@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.jove.util.BitMask.reduce;
 import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
@@ -329,13 +328,13 @@ public class Subpass {
 		 */
 		void populate(VkSubpassDependency info) {
 			if(dependency.index == null) throw new IllegalArgumentException("Missing dependant subpass: " + dependency);
-			info.dependencyFlags = BitMask.reduce(flags);
+			info.dependencyFlags = new BitMask<>(flags);
 			info.srcSubpass = dependency.index;
 			info.dstSubpass = Subpass.this.index;
-			info.srcStageMask = reduce(src.stages);
-			info.srcAccessMask = reduce(src.access);
-			info.dstStageMask = reduce(dest.stages);
-			info.dstAccessMask = reduce(dest.access);
+			info.srcStageMask = new BitMask<>(src.stages);
+			info.srcAccessMask = new BitMask<>(src.access);
+			info.dstStageMask = new BitMask<>(dest.stages);
+			info.dstAccessMask = new BitMask<>(dest.access);
 		}
 	}
 }

@@ -166,7 +166,7 @@ public class PushConstant {
 		 * Populates a push constant range descriptor.
 		 */
 		void populate(VkPushConstantRange range) {
-			range.stageFlags = BitMask.reduce(stages);
+			range.stageFlags = new BitMask<>(stages);
 			range.size = size;
 			range.offset = offset;
 		}
@@ -186,7 +186,7 @@ public class PushConstant {
 			}
 			this.range = notNull(range);
 			this.layout = notNull(layout);
-			this.stages = BitMask.reduce(range.stages);
+			this.stages = new BitMask<>(range.stages);
 		}
 
 		@Override

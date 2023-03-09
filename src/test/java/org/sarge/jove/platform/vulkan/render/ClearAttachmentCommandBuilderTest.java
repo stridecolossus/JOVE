@@ -76,7 +76,7 @@ class ClearAttachmentCommandBuilderTest {
 			final var clear = builder.new ClearAttachment(depth, Set.of(VkImageAspect.DEPTH), DepthClearValue.DEFAULT);
 			final var info = new VkClearAttachment();
 			clear.populate(info);
-			assertEquals(BitMask.reduce(VkImageAspect.DEPTH), info.aspectMask);
+			assertEquals(BitMask.of(VkImageAspect.DEPTH), info.aspectMask);
 			assertNotNull(info.clearValue);
 			assertEquals(1, info.colorAttachment);			// Note this index is actually unused for the depth-stencil
 		}
@@ -124,7 +124,7 @@ class ClearAttachmentCommandBuilderTest {
 			@Override
 			public boolean equals(Object obj) {
 				final var info = (VkClearAttachment) obj;
-				assertEquals(BitMask.reduce(VkImageAspect.COLOR), info.aspectMask);
+				assertEquals(BitMask.of(VkImageAspect.COLOR), info.aspectMask);
 				assertEquals(0, info.colorAttachment);
 				assertNotNull(info.clearValue);
 				return true;

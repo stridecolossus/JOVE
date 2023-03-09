@@ -88,7 +88,7 @@ public class DescriptorSet implements NativeObject {
 			info.binding = index;
 			info.descriptorType = type;
 			info.descriptorCount = count;
-			info.stageFlags = BitMask.reduce(stages);
+			info.stageFlags = new BitMask<>(stages);
 		}
 
 		/**
@@ -578,7 +578,7 @@ public class DescriptorSet implements NativeObject {
 
 				// Init pool descriptor
 				final var info = new VkDescriptorPoolCreateInfo();
-				info.flags = BitMask.reduce(flags);
+				info.flags = new BitMask<>(flags);
 				info.poolSizeCount = pool.size();
 				info.pPoolSizes = StructureCollector.pointer(pool.entrySet(), new VkDescriptorPoolSize(), Builder::populate);
 				info.maxSets = max;

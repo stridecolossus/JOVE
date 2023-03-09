@@ -35,7 +35,7 @@ public class FormatSelector {
 	 */
 	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> required) {
 		Check.notEmpty(required);
-		final BitMask<VkFormatFeature> mask = BitMask.reduce(required);
+		final BitMask<VkFormatFeature> mask = new BitMask<>(required);
 		return props -> {
 			final BitMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
 			return supported.contains(mask);

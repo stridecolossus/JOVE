@@ -60,7 +60,7 @@ public class ClearAttachmentCommandBuilder {
 		}
 
 		void populate(VkClearAttachment info) {
-			info.aspectMask = BitMask.reduce(aspects);
+			info.aspectMask = new BitMask<>(aspects);
 			info.colorAttachment = index;
 			clear.populate(info.clearValue);
 		}

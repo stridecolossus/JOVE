@@ -171,7 +171,7 @@ class CommandTest {
 			void reset() {
 				buffer.reset();
 				buffer.begin();
-				verify(lib).vkResetCommandBuffer(buffer, new BitMask<>(0));
+				verify(lib).vkResetCommandBuffer(buffer, BitMask.of());
 				assertEquals(false, buffer.isReady());
 			}
 		}
@@ -269,7 +269,7 @@ class CommandTest {
 		@Test
 		void reset() {
 			pool.reset();
-			verify(lib).vkResetCommandPool(dev, pool, new BitMask<>(0));
+			verify(lib).vkResetCommandPool(dev, pool, BitMask.of());
 		}
 
 		@Test

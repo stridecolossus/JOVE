@@ -98,7 +98,7 @@ public class PushConstantTest {
 			two.populate(struct);
 			assertEquals(4, struct.offset);
 			assertEquals(8, struct.size);
-			assertEquals(BitMask.reduce(VkShaderStage.FRAGMENT), struct.stageFlags);
+			assertEquals(BitMask.of(VkShaderStage.FRAGMENT), struct.stageFlags);
 		}
 	}
 
@@ -165,7 +165,7 @@ public class PushConstantTest {
 			final var lib = layout.device().library();
 			final UpdateCommand update = constant.update(two, layout);
 			update.record(lib, cmd);
-			verify(lib).vkCmdPushConstants(cmd, layout, BitMask.reduce(VkShaderStage.FRAGMENT), 4, 8, constant.buffer());
+			verify(lib).vkCmdPushConstants(cmd, layout, BitMask.of(VkShaderStage.FRAGMENT), 4, 8, constant.buffer());
 		}
 	}
 }

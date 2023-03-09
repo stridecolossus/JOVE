@@ -18,6 +18,6 @@ class DelegatePipelineBuilderTest {
 		when(builder.type()).thenReturn(VkPipelineBindPoint.GRAPHICS);
 		when(builder.identity()).thenReturn(info);
 		builder.build(dev, layout);
-		verify(builder).populate(new BitMask<>(0), layout, null, -1, info);
+		verify(builder).populate(BitMask.of(), layout, null, -1, info);
 	}
 }

@@ -17,19 +17,20 @@ class BitMaskTest {
 
 	@Test
 	void contains() {
-		final BitMask<MockEnum> mask = BitMask.reduce(MockEnum.A);
+		final BitMask<MockEnum> mask = BitMask.of(MockEnum.A);
 		assertEquals(true, mask.contains(mask));
-		assertEquals(false, mask.contains(BitMask.reduce(MockEnum.B)));
-		assertEquals(false, mask.contains(BitMask.reduce(MockEnum.A, MockEnum.B)));
+		assertEquals(true, mask.contains(BitMask.of()));
+		assertEquals(false, mask.contains(BitMask.of(MockEnum.B)));
+		assertEquals(false, mask.contains(BitMask.of(MockEnum.A, MockEnum.B)));
 	}
 
 	@DisplayName("A collection of enumeration constants can be reduced to a bitfield")
 	@Test
-	void reduce() {
-		assertEquals(new BitMask<>(0), 	BitMask.reduce(Set.of()));
-		assertEquals(new BitMask<>(0b001), BitMask.reduce(MockEnum.A));
-		assertEquals(new BitMask<>(0b010), BitMask.reduce(MockEnum.B));
-		assertEquals(new BitMask<>(0b011), BitMask.reduce(MockEnum.A, MockEnum.B));
+	void bitfield() {
+		assertEquals(0, 	BitMask.of().bits());
+		assertEquals(0b001, BitMask.of(MockEnum.A).bits());
+		assertEquals(0b010, BitMask.of(MockEnum.B).bits());
+		assertEquals(0b011, BitMask.of(MockEnum.A, MockEnum.B).bits());
 	}
 
 	@DisplayName("A bitfield can be converted to the corresponding set of constants")
@@ -43,11 +44,11 @@ class BitMaskTest {
 
 	@Test
 	void equals() {
-		final BitMask<MockEnum> mask = new BitMask<>(1);
+		final BitMask<MockEnum> mask = BitMask.of(MockEnum.A);
 		assertEquals(mask, mask);
-		assertEquals(mask, new BitMask<MockEnum>(1));
+		assertEquals(mask, BitMask.of(MockEnum.A));
 		assertNotEquals(mask, null);
-		assertNotEquals(mask, new BitMask<>(2));
+		assertNotEquals(mask, BitMask.of(MockEnum.B));
 	}
 
 	@Nested
@@ -59,12 +60,12 @@ class BitMaskTest {
 
 		@Test
 		void toNative() {
-			assertEquals(1, BitMask.CONVERTER.toNative(new BitMask<>(1), null));
+			assertEquals(1, BitMask.CONVERTER.toNative(BitMask.of(MockEnum.A), null));
 		}
 
 		@Test
 		void fromNative() {
-			assertEquals(new BitMask<>(1), BitMask.CONVERTER.fromNative(1, null));
+			assertEquals(BitMask.of(MockEnum.A), BitMask.CONVERTER.fromNative(1, null));
 		}
 	}
 }

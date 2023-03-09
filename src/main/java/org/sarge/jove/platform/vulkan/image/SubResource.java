@@ -54,7 +54,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceRange toRange(SubResource res) {
 		final var range = new VkImageSubresourceRange();
-		range.aspectMask = BitMask.reduce(res.aspects());
+		range.aspectMask = new BitMask<>(res.aspects());
 		range.baseMipLevel = res.mipLevel();
 		range.levelCount = res.levelCount();
 		range.baseArrayLayer = res.baseArrayLayer();
@@ -69,7 +69,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceLayers toLayers(SubResource res) {
 		final var layers = new VkImageSubresourceLayers();
-		layers.aspectMask = BitMask.reduce(res.aspects());
+		layers.aspectMask = new BitMask<>(res.aspects());
 		layers.mipLevel = res.mipLevel();
 		layers.baseArrayLayer = res.baseArrayLayer();
 		layers.layerCount = res.layerCount();

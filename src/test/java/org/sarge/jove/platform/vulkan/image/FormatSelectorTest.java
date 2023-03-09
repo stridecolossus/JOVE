@@ -49,21 +49,21 @@ public class FormatSelectorTest {
 		@Test
 		void optimal() {
 			final Predicate<VkFormatProperties> filter = FormatSelector.filter(true, Set.of(FEATURE));
-			props.optimalTilingFeatures = BitMask.reduce(FEATURE);
+			props.optimalTilingFeatures = BitMask.of(FEATURE);
 			assertEquals(true, filter.test(props));
 		}
 
 		@Test
 		void linear() {
 			final Predicate<VkFormatProperties> filter = FormatSelector.filter(false, Set.of(FEATURE));
-			props.linearTilingFeatures = BitMask.reduce(FEATURE);
+			props.linearTilingFeatures = BitMask.of(FEATURE);
 			assertEquals(true, filter.test(props));
 		}
 
 		@Test
 		void unmatched() {
-			props.linearTilingFeatures = new BitMask<>(0);
-			props.optimalTilingFeatures = new BitMask<>(0);
+			props.linearTilingFeatures = BitMask.of();
+			props.optimalTilingFeatures = BitMask.of();
 			assertEquals(false, FormatSelector.filter(false, Set.of(FEATURE)).test(props));
 			assertEquals(false, FormatSelector.filter(true, Set.of(FEATURE)).test(props));
 		}

@@ -102,7 +102,7 @@ class DepthStencilStageBuilderTest {
     	void setDynamicStencilCompareMask() {
     		final Command cmd = builder.setDynamicStencilCompareMask(StencilMaskType.WRITE, Set.of(VkStencilFaceFlag.FRONT), 42);
     		cmd.record(lib, buffer);
-    		verify(lib).vkCmdSetStencilWriteMask(buffer, BitMask.reduce(VkStencilFaceFlag.FRONT), 42);
+    		verify(lib).vkCmdSetStencilWriteMask(buffer, BitMask.of(VkStencilFaceFlag.FRONT), 42);
     	}
     }
 }

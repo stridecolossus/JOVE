@@ -37,8 +37,8 @@ class ComputePipelineBuilderTest {
 
 	@Test
 	void populate() {
-		builder.populate(new BitMask<>(0), layout, new Handle(1), 2, info);
-		assertEquals(new BitMask<>(0), info.flags);
+		builder.populate(BitMask.of(), layout, new Handle(1), 2, info);
+		assertEquals(BitMask.of(), info.flags);
 		assertEquals(layout.handle(), info.layout);
 		assertEquals(new Handle(1), info.basePipelineHandle);
 		assertEquals(2, info.basePipelineIndex);

@@ -276,7 +276,7 @@ public class Sampler extends VulkanObject {
 			}
 
 			// Init flags
-			info.flags = BitMask.reduce(flags);
+			info.flags = new BitMask<>(flags);
 
 			// Instantiate sampler
 			final VulkanLibrary lib = dev.library();

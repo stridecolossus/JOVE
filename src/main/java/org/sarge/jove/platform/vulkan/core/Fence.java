@@ -27,7 +27,7 @@ public class Fence extends VulkanObject {
 	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
-		info.flags = BitMask.reduce(flags);
+		info.flags = BitMask.of(flags);
 
 		// Create fence
 		final VulkanLibrary lib = dev.library();

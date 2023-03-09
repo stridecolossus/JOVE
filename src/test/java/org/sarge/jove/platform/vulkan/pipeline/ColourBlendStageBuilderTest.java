@@ -4,6 +4,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -48,8 +50,9 @@ public class ColourBlendStageBuilderTest {
 		assertNotNull(info.pAttachments);
 
 		final VkPipelineColorBlendAttachmentState attachment = info.pAttachments;
+		final var mask = List.of(VkColorComponent.values());
 		assertEquals(true, attachment.blendEnable);
-		assertEquals(new BitMask<>(15), attachment.colorWriteMask);
+		assertEquals(new BitMask<>(mask), attachment.colorWriteMask);
 		assertEquals(VkBlendOp.SUBTRACT, attachment.colorBlendOp);
 		assertEquals(VkBlendFactor.SRC_ALPHA, attachment.srcColorBlendFactor);
 		assertEquals(VkBlendFactor.DST_ALPHA, attachment.dstColorBlendFactor);
