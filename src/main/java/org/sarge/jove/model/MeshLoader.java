@@ -10,7 +10,7 @@ import org.sarge.jove.io.*;
  * The <i>mesh loader</i> is used to persist and load a {@link BufferedMesh}.
  * @author Sarge
  */
-public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh> {
+public class MeshLoader implements ResourceLoader<DataInputStream, Mesh> {
 	private final DataHelper helper = new DataHelper();
 
 	@Override
@@ -19,7 +19,7 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 	}
 
 	@Override
-	public BufferedMesh load(DataInputStream in) throws IOException {
+	public Mesh load(DataInputStream in) throws IOException {
 		// Load and verify file format version
 		helper.version(in);
 
@@ -29,10 +29,10 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 
 		// Load vertex layout
 		final int num = in.readInt();
-		final List<Layout> components = new ArrayList<>();
+		final List<Layout> layout = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
 			final Layout c = helper.layout(in);
-			components.add(c);
+			layout.add(c);
 		}
 
 		// Load data
@@ -40,17 +40,31 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 		final ByteSizedBufferable index = helper.buffer(in);
 
 		// Create mesh
-		return new BufferedMesh(primitive, count, new CompoundLayout(components), vertices, index);
+		return new AbstractMesh(primitive, new CompoundLayout(layout)) {
+			@Override
+			public int count() {
+				return count;
+			}
+
+			@Override
+			public ByteSizedBufferable vertices() {
+				return vertices;
+			}
+
+			@Override
+			public Optional<ByteSizedBufferable> index() {
+				return Optional.of(index);
+			}
+		};
 	}
 
 	/**
 	 * Writes a mesh to an output stream.
-	 * @param mesh		Buffered mesh
+	 * @param mesh		Mesh
 	 * @param out		Output stream
 	 * @throws IOException if the mesh cannot be written
-	 * @see DefaultMesh#mesh()
 	 */
-	public void save(BufferedMesh mesh, DataOutputStream out) throws IOException {
+	public void save(Mesh mesh, DataOutputStream out) throws IOException {
 		// Write file header
 		helper.writeVersion(out);
 
@@ -66,10 +80,10 @@ public class MeshLoader implements ResourceLoader<DataInputStream, BufferedMesh>
 		}
 
 		// Write vertices
-		helper.write(mesh.vertexBuffer(), out);
+		helper.write(mesh.vertices(), out);
 
 		// Write index
-		final Optional<ByteSizedBufferable> index = mesh.indexBuffer();
+		final Optional<ByteSizedBufferable> index = mesh.index();
 		if(index.isPresent()) {
 			helper.write(index.get(), out);
 		}

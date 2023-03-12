@@ -360,9 +360,9 @@ public class ParticleSystem implements Frame.Listener {
 	 * Note that changes to the particle system are reflected in the returned mesh.
 	 * @return Buffered mesh
 	 */
-	public BufferedMesh mesh() {
+	public Mesh mesh() {
 		// Init vertex layout
-		final CompoundLayout layout = new CompoundLayout(Point.LAYOUT, Colour.LAYOUT);
+		final var layout = new CompoundLayout(Point.LAYOUT, Colour.LAYOUT);
 
 		// Create vertex buffer
 		final var vertices = new ByteSizedBufferable() {
@@ -380,7 +380,17 @@ public class ParticleSystem implements Frame.Listener {
 		};
 
 		// Create mesh
-		return new BufferedMesh(Primitive.POINT, particles.size(), layout, vertices, null);
+		return new AbstractMesh(Primitive.POINT, layout) {
+			@Override
+			public int count() {
+				return particles.size();
+			}
+
+			@Override
+			public ByteSizedBufferable vertices() {
+				return vertices;
+			}
+		};
 	}
 
 	@Override

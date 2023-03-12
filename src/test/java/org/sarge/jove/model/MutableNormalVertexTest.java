@@ -1,6 +1,7 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
@@ -8,12 +9,12 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 
-class VertexTest {
-	private Vertex vertex;
+class MutableNormalVertexTest {
+	private MutableNormalVertex vertex;
 
 	@BeforeEach
 	void before() {
-		vertex = new Vertex(Point.ORIGIN);
+		vertex = new MutableNormalVertex(Point.ORIGIN);
 	}
 
 	@Test
@@ -23,21 +24,30 @@ class VertexTest {
 
 	@Test
 	void normal() {
-		assertThrows(UnsupportedOperationException.class, () -> vertex.add(Axis.X));
+		vertex.add(Axis.Y);
+		assertEquals(Axis.Y, vertex.normal());
+	}
+
+	@Test
+	void accumulated() {
+		vertex.add(Axis.X);
+		vertex.add(Axis.X.invert());
+		vertex.add(Axis.Y);
+		assertEquals(Axis.Y, vertex.normal());
 	}
 
 	@Test
 	void buffer() {
 		final var buffer = mock(ByteBuffer.class);
+		vertex.add(Axis.Y);
 		vertex.buffer(buffer);
-		verify(buffer, times(3)).putFloat(0f);
+		verify(buffer, times(6)).putFloat(anyFloat());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(vertex, vertex);
-		assertEquals(vertex, new Vertex(Point.ORIGIN));
 		assertNotEquals(vertex, null);
-		assertNotEquals(vertex, new Vertex(new Point(1, 2, 3)));
+		assertNotEquals(vertex, new MutableNormalVertex(new Point(1, 2, 3)));
 	}
 }

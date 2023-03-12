@@ -14,41 +14,51 @@ public class FaceParserTest {
 	void before() {
 		parser = new FaceParser();
 		model = mock(ObjectModel.class);
+		when(model.components()).thenReturn(3);
 	}
 
 	@Test
-	void parsePosition() {
+	void position() {
+		when(model.components()).thenReturn(1);
 		parser.parse("1 1 1", model);
-		verify(model, times(3)).vertex(1, null, null);
+		verify(model, times(3)).vertex(new int[]{1, 0, 0});
 	}
 
 	@Test
-	void parsePositionTexture() {
-		parser.parse("1/1 1/1 1/1", model);
-		verify(model, times(3)).vertex(1, null, 1);
+	void coordinate() {
+		when(model.components()).thenReturn(2);
+		parser.parse("1/2 1/2 1/2", model);
+		verify(model, times(3)).vertex(new int[]{1, 2, 0});
 	}
 
 	@Test
-	void parsePositionTextureNormal() {
-		parser.parse("1/1/1 1/1/1 1/1/1", model);
-		verify(model, times(3)).vertex(1, 1, 1);
+	void normal() {
+		when(model.components()).thenReturn(2);
+		parser.parse("1//3 1//3 1//3", model);
+		verify(model, times(3)).vertex(new int[]{1, 0, 3});
 	}
 
 	@Test
-	void parsePositionNormal() {
-		parser.parse("1//1 1//1 1//1", model);
-		verify(model, times(3)).vertex(1, 1, null);
+	void all() {
+		when(model.components()).thenReturn(3);
+		parser.parse("1/2/3 1/2/3 1/2/3", model);
+		verify(model, times(3)).vertex(new int[]{1, 2, 3});
 	}
 
 	@Test
-	void parseInvalidFaceLength() {
+	void invalid() {
 		assertThrows(IllegalArgumentException.class, () -> parser.parse(StringUtils.EMPTY, model));
 		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 2", model));
 		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 2 3 4", model));
 	}
 
 	@Test
-	void parseInvalidFaceComponents() {
+	void length() {
+		assertThrows(IllegalArgumentException.class, () -> parser.parse("1/2/3/4 1 2", model));
+	}
+
+	@Test
+	void components() {
 		assertThrows(IllegalArgumentException.class, () -> parser.parse("1/2/3/4 1 2", model));
 	}
 }

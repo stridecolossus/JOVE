@@ -1,10 +1,8 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
@@ -17,17 +15,17 @@ public class DefaultMeshTest {
 
 	@BeforeEach
 	void before() {
-		mesh = new DefaultMesh(Primitive.TRIANGLE, Point.LAYOUT);
-		vertex = new SimpleVertex(Point.ORIGIN);
+		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT));
+		vertex = new Vertex(Point.ORIGIN);
 	}
 
-	@DisplayName("A new default mesh...")
+	@DisplayName("A new mesh...")
 	@Nested
 	class New {
     	@Test
     	void constructor() {
     		assertEquals(Primitive.TRIANGLE, mesh.primitive());
-    		assertEquals(new CompoundLayout(Point.LAYOUT), mesh.layout());
+    		assertEquals(new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), mesh.layout());
     	}
 
     	@DisplayName("is not indexed")
@@ -36,23 +34,16 @@ public class DefaultMeshTest {
     		assertEquals(false, mesh.isIndexed());
     	}
 
-    	@DisplayName("is initially empty")
+    	@DisplayName("initially has no vertex data")
     	@Test
     	void empty() {
     		assertEquals(0, mesh.count());
-    		assertEquals(0, mesh.vertices().count());
     	}
 
     	@DisplayName("can have vertex data added")
     	@Test
     	void add() {
     		mesh.add(vertex);
-    	}
-
-    	@DisplayName("cannot add vertices that do not match the layout of the mesh")
-    	@Test
-    	void layout() {
-    		assertThrows(IllegalArgumentException.class, () -> mesh.add(mock(Vertex.class)));
     	}
 	}
 
@@ -70,57 +61,21 @@ public class DefaultMeshTest {
 		@Test
 		void add() {
 			assertEquals(3, mesh.count());
-			assertEquals(3, mesh.vertices().count());
 		}
 
-		@DisplayName("can enumerate the triangles comprising the mesh")
-		@Test
-		void triangles() {
-			final int[] expected = {0, 1, 2};
-			assertArrayEquals(new int[][]{expected}, mesh.triangles().toArray());
-		}
-
-		@DisplayName("cannot enumerate triangles if the primitive is not triangular")
-		@Test
-		void invalid() {
-			mesh = new DefaultMesh(Primitive.LINE, new CompoundLayout());
-			assertThrows(IllegalStateException.class, () -> mesh.triangles());
-		}
-	}
-
-	@DisplayName("A buffered mesh...")
-	@Nested
-	class BufferedModelTests {
-		private BufferedMesh buffer;
-
-		@BeforeEach
-		void before() {
-			buffer = mesh.buffer();
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(mesh, buffer);
-			assertEquals(false, buffer.isIndexed());
-		}
-
-		@DisplayName("has a vertex buffer")
+		@DisplayName("can construct the vertex buffer")
 		@Test
 		void vertices() {
-			// Build model
-			mesh.add(vertex);
-			mesh.add(vertex);
-			mesh.add(vertex);
-
-			// Create VBO
-			final ByteSizedBufferable vertices = buffer.vertexBuffer();
-			final int len = 3 * 3 * 4;
+			final ByteSizedBufferable vertices = mesh.vertices();
+			final int len = 3 * (3 + 3) * Float.BYTES;
 			assertEquals(len, vertices.length());
+		}
 
-			// Check vertices
-			final ByteBuffer bb = ByteBuffer.allocate(len);
-			vertices.buffer(bb);
-			assertEquals(0, bb.remaining());
+		@DisplayName("does not have an index buffer")
+		@Test
+		void index() {
+			assertEquals(false, mesh.isIndexed());
+			assertEquals(Optional.empty(), mesh.index());
 		}
 	}
 
@@ -133,7 +88,7 @@ public class DefaultMeshTest {
 			final Point point = new Point(1, 2, 3);
 			mesh.add(vertex);
 			mesh.add(vertex);
-			mesh.add(new SimpleVertex(point));
+			mesh.add(new Vertex(point));
 			assertEquals(new Bounds(Point.ORIGIN, point), mesh.bounds());
 		}
 
@@ -149,7 +104,7 @@ public class DefaultMeshTest {
 		@DisplayName("cannot be generated if the mesh layout does not contain a vertex position")
 		@Test
 		void layout() {
-			mesh = new DefaultMesh(Primitive.TRIANGLE, Normal.LAYOUT);
+			mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Normal.LAYOUT));
 			assertThrows(IllegalStateException.class, () -> mesh.bounds());
 		}
 	}
@@ -161,17 +116,13 @@ public class DefaultMeshTest {
     	@Test
     	void compute() {
     		// Create triangle
-    		final var vertices = new MutableVertex[3];
-    		Arrays.setAll(vertices, __ -> new MutableVertex());
-    		vertices[0].position(Point.ORIGIN);
-    		vertices[1].position(new Point(3, 0, 0));
-    		vertices[2].position(new Point(3, 3, 0));
-    		for(var v : vertices) {
-    			v.normal(new Normal(new Vector(0, 0, 0)));
-    		}
+    		final MutableNormalVertex[] vertices = {
+    				new MutableNormalVertex(Point.ORIGIN),
+    				new MutableNormalVertex(new Point(3, 0, 0)),
+    				new MutableNormalVertex(new Point(3, 3, 0))
+    		};
 
     		// Populate model
-    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT));
     		for(Vertex v : vertices) {
     			mesh.add(v);
     		}
@@ -180,28 +131,22 @@ public class DefaultMeshTest {
     		mesh.compute();
 
     		// Check vertex normals
-    		for(MutableVertex v : vertices) {
+    		for(var v : vertices) {
     			assertEquals(Axis.Z, v.normal());
     		}
-    	}
-
-    	@DisplayName("cannot be computed if the primitive does not support normals")
-    	@Test
-    	void triangles() {
-    		mesh = new DefaultMesh(Primitive.LINE, new CompoundLayout(Point.LAYOUT));
-    		assertThrows(IllegalStateException.class, () -> mesh.compute());
     	}
 
     	@DisplayName("cannot be computed if the mesh does not contain vertex data")
     	@Test
     	void vertices() {
-    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout());
+    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Normal.LAYOUT));
     		assertThrows(IllegalStateException.class, () -> mesh.compute());
     	}
 
-    	@DisplayName("cannot be computed if the mesh does not contains normals")
+    	@DisplayName("cannot be computed if the mesh does not contain vertex normals")
     	@Test
-    	void invalid() {
+    	void normals() {
+    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout());
     		assertThrows(IllegalStateException.class, () -> mesh.compute());
     	}
     }

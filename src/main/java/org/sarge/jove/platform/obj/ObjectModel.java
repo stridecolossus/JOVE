@@ -1,7 +1,9 @@
 package org.sarge.jove.platform.obj;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
@@ -17,6 +19,7 @@ class ObjectModel {
 	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
 	private final List<DefaultMesh> models = new ArrayList<>();
 	private DefaultMesh model;
+	private int components;
 
 	/**
 	 * Starts a new object group.
@@ -49,6 +52,7 @@ class ObjectModel {
 		if(!coords.isEmpty()) {
 			layout.add(Coordinate2D.LAYOUT);
 		}
+		components = layout.size();
 
 		// Start new model
 		model = new RemoveDuplicateMesh(new CompoundLayout(layout));
@@ -58,80 +62,133 @@ class ObjectModel {
 	/**
 	 * @return Vertex positions
 	 */
-	VertexComponentList<Point> positions() {
+	public VertexComponentList<Point> positions() {
 		return positions;
 	}
 
 	/**
 	 * @return Normals
 	 */
-	VertexComponentList<Normal> normals() {
+	public VertexComponentList<Normal> normals() {
 		return normals;
 	}
 
 	/**
 	 * @return Texture coordinates
 	 */
-	VertexComponentList<Coordinate2D> coordinates() {
+	public VertexComponentList<Coordinate2D> coordinates() {
 		return coords;
+	}
+
+	/**
+	 * @return Number of vertex components per face
+	 */
+	public int components() {
+		return components;
+	}
+
+	/**
+	 * Custom OBJ vertex with optional vertex normal and texture coordinate.
+	 */
+	private static class MutableVertex extends Vertex {
+		private Normal normal;
+		private Coordinate2D coord;
+
+		/**
+		 * Constructor.
+		 * @param pos Vertex position
+		 */
+		public MutableVertex(Point pos) {
+			super(pos);
+		}
+
+		/**
+		 * Sets the vertex normal.
+		 */
+		void normal(Normal normal) {
+			this.normal = normal;
+		}
+
+		/**
+		 * Sets the texture coordinate.
+		 */
+		void coordinate(Coordinate2D coord) {
+			this.coord = coord;
+		}
+
+		@Override
+		public void buffer(ByteBuffer bb) {
+			super.buffer(bb);
+			if(normal != null) {
+				normal.buffer(bb);
+			}
+			if(coord != null) {
+				coord.buffer(bb);
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.position(), normal, coord);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof MutableVertex that) &&
+					this.position().equals(that.position()) &&
+					Objects.equals(this.normal, that.normal) &&
+					Objects.equals(this.coord, that.coord);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.appendSuper(super.toString())
+					.append("normal", normal)
+					.append("coord", coord)
+					.build();
+		}
 	}
 
 	/**
 	 * Adds a vertex to the current model.
 	 * <ul>
-	 * <li>the vertex position is mandatory</li>
-	 * <li>texture coordinates and normals are optional, i.e. can be {@code null}</li>
-	 * <li>indices start at <b>one</b> and can be negative</li>
+	 * <li>The vertex position is mandatory</li>
+	 * <li>Texture coordinates and normals are optional, i.e. can be {@code null}</li>
+	 * <li>Indices start at <b>one</b> and can be negative</li>
 	 * </ul>
-	 * @param v			Vertex index
-	 * @param vn		Normal index
-	 * @param vt		Texture coordinate index
+	 * @param indices Vertex component indices
 	 * @throws IndexOutOfBoundsException for an invalid index
 	 * @see VertexComponentList#get(int)
 	 */
-	public void vertex(int v, Integer vn, Integer vt) {
-		// Init vertex
-		final var vertex = new MutableVertex() {
-			@Override
-			public CompoundLayout layout() {
-				return model.layout();
-			}
-		};
-		final Point pos = positions.get(v);
-		vertex.position(pos);
-
-		// Add optional normal
-		if(vn != null) {
-			final Normal normal = normals.get(vn);
-			vertex.normal(normal);
-			validate(Normal.LAYOUT);
-		}
+	public void vertex(int[] indices) {
+		// Create vertex
+		final Point pos = positions.get(indices[0]);
+		final var vertex = new MutableVertex(pos);
 
 		// Add optional texture coordinate
-		if(vt != null) {
-			final Coordinate2D coord = coords.get(vt);
+		if(indices[1] != 0) {
+			final Coordinate2D coord = coords.get(indices[1]);
 			vertex.coordinate(coord);
-			validate(Coordinate2D.LAYOUT);
 		}
 
-		// Add vertex
+		// Add optional vertex normal
+		if(indices[2] != 0) {
+			final Normal normal = normals.get(indices[2]);
+			vertex.normal(normal);
+		}
+
+		// Add to model
 		model.add(vertex);
-	}
-
-	/**
-	 * @throws IllegalArgumentException if the given component is invalid for the current model layout
-	 */
-	private void validate(Layout c) {
-		if(!model.layout().contains(c)) {
-			throw new IllegalArgumentException("Invalid vertex layout: " + c);
-		}
 	}
 
 	/**
 	 * Constructs the model(s).
 	 * @return Model(s)
 	 */
-	public List<DefaultMesh> models() {
+	public List<Mesh> models() {
 //		build();
 		return new ArrayList<>(models);
 	}

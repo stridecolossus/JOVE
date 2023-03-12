@@ -2,10 +2,11 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.nio.ByteBuffer;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.util.BitField;
@@ -131,7 +132,7 @@ public class GridBuilder {
 	}
 
 	/**
-	 * Sets the factory used to generate an indexed grid (default is {@link Triangle#INDEX_STRIP}).
+	 * Sets the factory used to generate an indexed grid.
 	 * @param index Index factory
 	 */
 	public GridBuilder index(IndexFactory index) {
@@ -172,7 +173,7 @@ public class GridBuilder {
 				final Coordinate2D coord = new Coordinate2D((float) col / w, (float) row / h);
 
 				// Add grid vertex
-				final Vertex vertex = new DefaultVertex(pos, coord);
+				final Vertex vertex = vertex(pos, coord);
 				mesh.add(vertex);
 			}
 		}
@@ -186,5 +187,22 @@ public class GridBuilder {
 
 		// Construct grid
 		return mesh;
+	}
+
+	/**
+	 * Creates a new vertex for this mesh.
+	 * Override to use a custom vertex implementation, e.g. {@link MutableNormalVertex}.
+	 * @param pos		Vertex position
+	 * @param coord		Texture coordinate
+	 * @return Vertex
+	 */
+	protected Vertex vertex(Point pos, Coordinate coord) {
+		return new Vertex(pos) {
+			@Override
+			public void buffer(ByteBuffer bb) {
+				super.buffer(bb);
+				coord.buffer(bb);
+			}
+		};
 	}
 }

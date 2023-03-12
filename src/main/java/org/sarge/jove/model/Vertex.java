@@ -4,113 +4,62 @@ import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.ByteBuffer;
 
-import org.sarge.jove.common.*;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
- * A <i>vertex</i> is an element of a {@link Mesh} comprising of vertex {@link Component}s.
+ * A <i>vertex</i> is an element of a {@link Mesh}.
+ * TODO
  * @author Sarge
  */
-public interface Vertex extends Bufferable {
+public class Vertex implements Bufferable {
+	private final Point pos;
+
 	/**
-	 * @return Layout of this vertex
+	 * Constructor.
+	 * @param pos Vertex position
 	 */
-	CompoundLayout layout();
+	public Vertex(Point pos) {
+		this.pos = notNull(pos);
+	}
 
 	/**
 	 * @return Vertex position
 	 */
-	Point position();
-
-	/**
-	 * Sets the normal of this vertex.
-	 * @param normal Vertex normal
-	 * @throws UnsupportedOperationException if this vertex does not have a normal
-	 */
-	default void normal(Normal normal) {
-		throw new UnsupportedOperationException();
+	public final Point position() {
+		return pos;
 	}
 
 	/**
-     * The components of this vertex (if present) are generally assumed to be written in the following order by this method:
-     * <ol>
-     * <li>position</li>
-     * <li>normal</li>
-     * <li>texture coordinate</li>
-     * <li>colour</li>
-     * </ol>
+	 * Adds the given vector to the normal of this vertex.
+	 * @param normal Vertex normal
+	 * @throws UnsupportedOperationException if this vertex does not contain a normal
 	 */
+	void add(Vector normal) {
+		throw new UnsupportedOperationException();
+	}
+
 	@Override
-	void buffer(ByteBuffer bb);
+	public void buffer(ByteBuffer bb) {
+		pos.buffer(bb);
+	}
 
-	/**
-	 * Builder for a vertex.
-	 * <p>
-	 * The {@link #build()} selects the appropriate vertex sub-class for the given components.
-	 * Note that the vertex position is mandatory when using this implementation.
-	 * <p>
-	 * @see SimpleVertex
-	 * @see DefaultVertex
-	 * @see MutableVertex
-	 */
-	class Builder {
-		private Point pos;
-		private Normal normal;
-		private Coordinate2D coord;
+	@Override
+	public int hashCode() {
+		return pos.hashCode();
+	}
 
-		/**
-		 * Sets the vertex position.
-		 * @param pos Vertex position
-		 */
-		public Builder add(Point pos) {
-			this.pos = notNull(pos);
-			return this;
-		}
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Vertex that) &&
+				this.pos.equals(that.position());
+	}
 
-		/**
-		 * Sets the vertex normal.
-		 * @param normal Vertex normal
-		 */
-		public Builder add(Normal normal) {
-			this.normal = notNull(normal);
-			return this;
-		}
-
-		/**
-		 * Sets the texture coordinate.
-		 * @param coord Texture coordinate
-		 */
-		public Builder add(Coordinate2D coord) {
-			this.coord = notNull(coord);
-			return this;
-		}
-
-		/**
-		 * Constructs this vertex.
-		 * @return New vertex
-		 * @throws IllegalArgumentException if the vertex does not have a position
-		 */
-		public Vertex build() {
-			if(pos == null) throw new IllegalArgumentException("Vertex must have a position");
-
-			if(normal == null) {
-				if(coord == null) {
-					return new SimpleVertex(pos);
-				}
-				else {
-					return new DefaultVertex(pos, coord);
-				}
-			}
-			else {
-				final var vertex = new MutableVertex();
-				vertex.position(pos);
-				vertex.normal(normal);
-				if(coord != null) {
-					vertex.coordinate(coord);
-				}
-				return vertex;
-			}
-		}
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append("pos", pos).build();
 	}
 }

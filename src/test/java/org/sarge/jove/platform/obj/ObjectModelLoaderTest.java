@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -47,25 +46,22 @@ public class ObjectModelLoaderTest {
 		""";
 
 		// Load OBJ models
-		final List<DefaultMesh> models = loader.load(new StringReader(data));
-		assertNotNull(models);
+		final List<Mesh> models = loader.load(new StringReader(data));
 		assertEquals(1, models.size());
 
 		// Check model
-		final DefaultMesh model = models.get(0);
-		assertNotNull(model);
+		final Mesh mesh = models.get(0);
 
 		// Check header
 		final var layout = new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
-		assertEquals(Primitive.TRIANGLE, model.primitive());
-		assertEquals(3, model.count());
-		assertEquals(layout, model.layout());
-		assertEquals(true, model.isIndexed());
+		assertEquals(Primitive.TRIANGLE, mesh.primitive());
+		assertEquals(3, mesh.count());
+		assertEquals(layout, mesh.layout());
+		assertEquals(true, mesh.isIndexed());
 
 		// Check model data
-		final BufferedMesh buffer = model.buffer();
-		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, buffer.vertexBuffer().length());
-		assertEquals(3 * Short.BYTES, buffer.indexBuffer().get().length());
+		assertEquals(3 * (3 + 3 + 2) * Float.BYTES, mesh.vertices().length());
+		assertEquals(3 * Short.BYTES, mesh.index().get().length());
 	}
 
 	@Test

@@ -2,233 +2,106 @@ package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
+import org.sarge.lib.util.Check;
 
 /**
- * A <i>default mesh</i> is a mutable implementation used to construct a model.
- * <p>
- * The {@link #buffer()} factory method generates a renderable instance of this mesh.
+ * A <i>default mesh</i> is a mutable implementation used to construct a renderable model.
  * <p>
  * Vertex normals can be automatically computed using the {@link #compute()} method.
  * <p>
  * @see IndexedMesh
  * @author Sarge
  */
-public class DefaultMesh extends Mesh {
+public class DefaultMesh extends AbstractMesh {
 	private final List<Vertex> vertices = new ArrayList<>();
 
 	/**
 	 * Constructor.
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
+	 * @throws IllegalArgumentException if the layout contains {@link Normal#LAYOUT} but the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
 	public DefaultMesh(Primitive primitive, CompoundLayout layout) {
 		super(primitive, layout);
 	}
 
 	/**
-	 * Convenience constructor for a mesh with the given vertex components.
-	 * @param primitive 	Drawing primitive
-	 * @param components	Vertex components
+	 * Adds a vertex to this mesh.
+	 * @param vertex Vertex to add
 	 */
-	public DefaultMesh(Primitive primitive, Layout... components) {
-		super(primitive, new CompoundLayout(components));
+	public DefaultMesh add(Vertex vertex) {
+		Check.notNull(vertex);
+		vertices.add(vertex);
+		return this;
 	}
+	// TODO - validation (by length?)
 
 	@Override
 	public int count() {
 		return vertices.size();
 	}
 
-	@Override
-	public boolean isIndexed() {
-		return false;
-	}
-
 	/**
-	 * @return Mesh vertices
+	 * Retrieve a vertex.
+	 * @param index Vertex index
+	 * @return Vertex
+	 * @throws IndexOutOfBoundsException for an invalid index
 	 */
-	public final Stream<Vertex> vertices() {
-		return vertices.stream();
-	}
-
-	/**
-	 * Adds a vertex to this mesh.
-	 * @param vertex Vertex to add
-	 * @throws IllegalArgumentException if the layout of the given {@link #vertex} is invalid for this mesh
-	 */
-	public DefaultMesh add(Vertex vertex) {
-		if(!layout.equals(vertex.layout())) {
-			throw new IllegalArgumentException("Invalid vertex layout: vertex=%s model=%s".formatted(vertex, this));
-		}
-		vertices.add(vertex);
-		return this;
-	}
-
-	/**
-	 * Mesh vertex buffer.
-	 */
-	protected final class VertexBuffer implements ByteSizedBufferable {
-		@Override
-		public int length() {
-			return vertices.size() * layout.stride();
-		}
-
-		@Override
-		public void buffer(ByteBuffer bb) {
-			for(Vertex v : vertices) {
-				v.buffer(bb);
-			}
-		}
+	public Vertex vertex(int index) {
+		return vertices.get(index);
 	}
 
 	@Override
-	public final ByteSizedBufferable vertexBuffer() {
-		return new VertexBuffer();
-	}
+	public final ByteSizedBufferable vertices() {
+		return new ByteSizedBufferable() {
+    		@Override
+    		public int length() {
+    			return vertices.size() * DefaultMesh.this.layout().stride();
+    		}
 
-	/**
-	 * Creates a buffered instance of this mesh.
-	 * Note that modifications to this mesh are reflected in the returned buffered mesh.
-	 * @return Buffered mesh
-	 */
-	public BufferedMesh buffer() {
-		return new BufferedMesh(this, new VertexBuffer(), null);
+    		@Override
+    		public void buffer(ByteBuffer bb) {
+    			for(Vertex v : vertices) {
+    				v.buffer(bb);
+    			}
+    		}
+    	};
 	}
 
 	/**
 	 * Calculates the bounds of this mesh.
 	 * @return Mesh bounds
 	 * @throws IllegalStateException if the layout does not contain a {@link Point#LAYOUT} component
+	 * @throws IllegalStateException if {@link #count()} is not valid for the drawing primitive
 	 */
 	public final Bounds bounds() {
-		// Determine vertex position from layout
-		validate();
-		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Layout does not contain a vertex position: " + this);
+		checkMesh();
 
-		// Construct bounds
 		final var bounds = new Bounds.Builder();
 		for(Vertex v : vertices) {
 			final Point p = v.position();
 			bounds.add(p);
 		}
+
 		return bounds.build();
 		// TODO - parallel? requires spliterator to join bounds?
 	}
 
 	/**
-	 * @return Triangles indices for this mesh
-	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
-	 */
-	protected Stream<int[]> triangles() {
-		if(!primitive.isTriangle()) throw new IllegalStateException("Mesh does not contain triangular polygons: " + primitive);
-		final int faces = primitive.faces(count());
-		return IntStream
-				.range(0, faces)
-				.mapToObj(primitive::indices);
-	}
-	// TODO - could be parallel stream operation?
-
-//	/**
-//	 * @return Triangles for this mesh
-//	 * @throws IllegalStateException if the drawing primitive is not {@link Primitive#isTriangle()}
-//	 */
-//	public final Stream<Triangle> triangles() {
-//		return this
-//				.indices()
-//				.map(this::triangle)
-//				.map(Triangle::new);
-//	}
-
-	/**
-	 * Maps the given indices to vertex positions.
-	 * @param indices Triangle indices
-	 * @return Triangle points
-	 */
-	private List<Point> triangle(int[] indices) {
-		return Arrays
-				.stream(indices)
-				.mapToObj(vertices::get)
-				.map(Vertex::position)
-				.toList();
-	}
-
-	/**
 	 * Computes vertex normals for this mesh.
-	 * @throws IllegalStateException if the mesh does not contain vertex data or normals
+	 * @throws IllegalStateException if the layout does not contain a {@link Point#LAYOUT} component
+	 * @throws IllegalStateException if {@link #count()} is not valid for the drawing primitive
+	 * @see ComputeNormals
 	 */
 	public void compute() {
-		// Validate normals can be computed
-		if(!layout.contains(Point.LAYOUT)) throw new IllegalStateException("Mesh does not contain vertices");
-		if(!layout.contains(Normal.LAYOUT)) throw new IllegalStateException("Mesh does not contain vertex normals");
-		validate();
-
-		/**
-		 * Vertex normals helper.
-		 */
-		class NormalBuilder {
-			private final float[][] normals = new float[vertices.size()][3];
-
-			/**
-			 * Accumulates triangle normals.
-			 */
-			void add(int[] indices) {
-				// Calculate triangle normal
-				final Triangle triangle = new Triangle(triangle(indices));
-				final var normal = triangle.normal();
-
-				// Accumulate vertex normals
-				for(int n = 0; n < indices.length; ++n) {
-					add(indices[n], normal);
-				}
-			}
-			// TODO - cannot be parallel
-
-			private void add(int index, Vector n) {
-				final float[] normal = normals[index];
-				normal[0] += n.x;
-				normal[1] += n.y;
-				normal[2] += n.z;
-			}
-
-			/**
-			 * Populates the accumulated vertex normals.
-			 */
-			void compute() {
-				for(int n = 0; n < normals.length; ++n) {
-					final Vertex v = vertices.get(n);
-					final Normal normal = new Normal(normals[n]);
-					v.normal(normal);
-				}
-			}
-			// TODO - could be parallel stream operation
-		}
-
-		// Accumulate vertex normals
-		final var compute = new NormalBuilder();
-		this.triangles().forEach(compute::add);
+		checkMesh();
+		final var compute = new ComputeNormals(this);
 		compute.compute();
-	}
-
-	// TODO - segments
-	// - add segment to VBO/index
-	// - calc normals for segment
-	// - delete? insert? replace?
-	// - factor out to separate class?
-
-	/**
-	 * @throws IllegalStateException if this mesh is not valid for rendering
-	 */
-	private void validate() {
-		if(!primitive.isValidVertexCount(this.count())) {
-			throw new IllegalStateException("Invalid draw count for primitive: " + this);
-		}
 	}
 
 	@Override

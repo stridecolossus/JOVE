@@ -2,7 +2,6 @@ package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.stream.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
@@ -26,9 +25,8 @@ public class IndexedMesh extends DefaultMesh {
 	private static final long SHORT_INDEX = BitField.unsignedMaximum(Short.SIZE);
 
 	/**
-	 * Determines whether the given draw count requires an {@code int} index.
-	 * i.e. Whether the number of indices is larger than {@linkplain #SHORT_INDEX}.
-	 * TODO - better doc, maybe return data type?
+	 * Determines whether the given draw count requires a {@code int} index.
+	 * i.e. Whether the number of indices is larger than a {@code short} value.
 	 * @param count Draw count
 	 * @return Whether the index data type is integral
 	 */
@@ -59,23 +57,21 @@ public class IndexedMesh extends DefaultMesh {
 		return true;
 	}
 
-	/**
-	 * @return Index
-	 */
-	public IntStream index() {
-		return index.stream().mapToInt(Integer::intValue);
-	}
+//	@Override
+//	protected Stream<int[]> triangles() {
+//		return super.triangles().map(this::map);
+//	}
+//
+//	private int[] map(int[] indices) {
+//		for(int n = 0; n < indices.length; ++n) {
+//			indices[n] = index.get(n);
+//		}
+//		return indices;
+//	}
 
 	@Override
-	protected final Stream<int[]> triangles() {
-		return super.triangles().map(this::map);
-	}
-
-	private int[] map(int[] indices) {
-		for(int n = 0; n < indices.length; ++n) {
-			indices[n] = index.get(n);
-		}
-		return indices;
+	public Vertex vertex(int index) {
+		return super.vertex(this.index.get(index));
 	}
 
 	/**
@@ -103,7 +99,7 @@ public class IndexedMesh extends DefaultMesh {
 	 * <p>
 	 * If this index is {@link #compact} and the number of indices is small enough the data type of the index buffer is {@code short}.
 	 * Otherwise the index buffer is comprised of {@code int} indices.
-	 * Note that an index that includes {@link #restart()} cannot be compact.
+	 * Note that an index that includes {@link #restart()} ignores this setting.
 	 * <p>
 	 * @param compact Whether to use compact indices
 	 * @see #isIntegerIndex(int)
@@ -111,6 +107,11 @@ public class IndexedMesh extends DefaultMesh {
 	public IndexedMesh compact(boolean compact) {
 		this.compact = compact;
 		return this;
+	}
+
+	@Override
+	public Optional<ByteSizedBufferable> index() {
+		return Optional.of(new IndexBuffer());
 	}
 
 	/**
@@ -128,7 +129,6 @@ public class IndexedMesh extends DefaultMesh {
 				return true;
 			}
 		}
-		// TODO - move compact to parameter of mesh factory?
 
 		@Override
 		public int length() {
@@ -139,17 +139,7 @@ public class IndexedMesh extends DefaultMesh {
 		@Override
 		public void buffer(ByteBuffer bb) {
 			if(isIntegral())  {
-				if(bb.isDirect()) {
-					for(int n : index) {
-						bb.putInt(n);
-					}
-				}
-				else {
-					final int[] indices = index.stream().mapToInt(Integer::intValue).toArray();
-					bb.asIntBuffer().put(indices);
-// TODO - does not update the position!!!
-//					bb.position(bb.position() + indices.length * Integer.BYTES);
-				}
+				bufferIntegral(bb);
 			}
 			else {
 				for(int n : index) {
@@ -157,16 +147,23 @@ public class IndexedMesh extends DefaultMesh {
 				}
 			}
 		}
-	}
 
-	@Override
-	public final Optional<ByteSizedBufferable> indexBuffer() {
-		return Optional.of(new IndexBuffer());
-	}
-
-	@Override
-	public final BufferedMesh buffer() {
-		return new BufferedMesh(this, new VertexBuffer(), new IndexBuffer());
+		/**
+		 * Buffers an integral index.
+		 */
+		private void bufferIntegral(ByteBuffer bb) {
+    		if(bb.isDirect()) {
+    			for(int n : index) {
+    				bb.putInt(n);
+    			}
+    		}
+    		else {
+    			final int[] indices = index.stream().mapToInt(Integer::intValue).toArray();
+    			bb.asIntBuffer().put(indices);
+    //TODO - does not update the position!!!
+    //			bb.position(bb.position() + indices.length * Integer.BYTES);
+    		}
+		}
 	}
 
 	@Override

@@ -31,46 +31,43 @@ import org.apache.commons.lang3.StringUtils;
  * f 1/2/3      // Vertex, coordinate and normal
  * f 1//3       // Vertex and normal
  * </pre>
- * @see ObjectModel#position(Integer[])
  * @see VertexComponentList#get(int)
+ * @see ObjectModel#vertex(int[])
  * @author Sarge
  */
 class FaceParser implements Parser {
-	private static final int SIZE = 3;
-
 	@Override
 	public void parse(String args, ObjectModel model) {
 		// Tokenize
 		final String[] faces = StringUtils.split(args);
-		if(faces.length != SIZE) {
+		if(faces.length != 3) {
 			throw new IllegalArgumentException("Expected triangle face");
 		}
 
 		// Parse vertices for this face
 		for(int n = 0; n < faces.length; ++n) {
 			// Tokenize face
-			final String face = faces[n];
-			final String[] parts = StringUtils.splitPreserveAllTokens(face, '/');
-			if(parts.length > SIZE) throw new IllegalArgumentException("Invalid face: " + face);
+			final String[] parts = StringUtils.splitPreserveAllTokens(faces[n], '/');
+			if((parts.length == 0) || (parts.length > 3)) {
+				throw new IllegalArgumentException("Invalid number of face components: expected=%d actual=%d".formatted(model.components(), parts.length));
+			}
 
 			// Parse mandatory vertex position
-			if((parts.length == 0) || parts[0].isEmpty()) throw new IllegalArgumentException("Missing mandatory vertex position: " + face);
-			final int v = Integer.parseInt(parts[0]);
+			final int[] components = new int[3];
+			components[0] = Integer.parseInt(parts[0]);
 
 			// Parse optional texture coordinate
-			Integer vt = null;
 			if((parts.length > 1) && !parts[1].isEmpty()) {
-				vt = Integer.parseInt(parts[1]);
+				components[1] = Integer.parseInt(parts[1]);
 			}
 
-			// Parse optional normal
-			Integer vn = null;
-			if(parts.length == SIZE) {
-				vn = Integer.parseInt(parts[2]);
+			// Parse optional vertex normal
+			if(parts.length == 3) {
+				components[2] = Integer.parseInt(parts[2]);
 			}
 
-			// Add vertex to model
-			model.vertex(v, vn, vt);
+			// Add vertex
+			model.vertex(components);
 		}
 	}
 }

@@ -27,23 +27,22 @@ public class ObjectModelTest {
 			model.normals().add(Axis.X);
 			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 			model.start();
-			model.vertex(1, 1, 1);
+			model.vertex(new int[]{1, 1, 1});
 		}
 
 		@DisplayName("Add a vertex with just the position")
 		@Test
 		void vertexOnly() {
 			model.start();
-			model.vertex(1, null, null);
+			model.vertex(new int[]{1, 0, 0});
 		}
 
-		@Disabled("TODO - unimplemented")
 		@DisplayName("Add a vertex with a normal")
 		@Test
 		void vertexNormal() {
 			model.normals().add(Axis.X);
 			model.start();
-			model.vertex(1, 1, null);
+			model.vertex(new int[]{1, 0, 1});
 		}
 
 		@DisplayName("Add a vertex with a texture coordinate")
@@ -51,20 +50,20 @@ public class ObjectModelTest {
 		void vertexTexture() {
 			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 			model.start();
-			model.vertex(1, null, 1);
+			model.vertex(new int[]{1, 1, 0});
 		}
 
 		@Test
 		void vertexNegativeIndex() {
 			model.start();
-			model.vertex(-1, null, null);
+			model.vertex(new int[]{-1, 0, 0});
 		}
 
 		@Test
 		void vertexInvalidIndex() {
 			model.start();
-			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(0, null, null));
-			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(2, null, null));
+			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(new int[]{0, 0, 0}));
+			assertThrows(IndexOutOfBoundsException.class, () -> model.vertex(new int[]{2, 0, 0}));
 		}
 	}
 
@@ -75,7 +74,7 @@ public class ObjectModelTest {
 			model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 			model.start();
 			for(int n = 0; n < 3; ++n) {
-				model.vertex(1, 1, 1);
+				model.vertex(new int[]{1, 1, 1});
 			}
 		}
 
@@ -85,21 +84,20 @@ public class ObjectModelTest {
 			triangle();
 
 			// Build models
-			final List<DefaultMesh> models = model.models();
+			final List<Mesh> models = model.models();
 			assertEquals(1, models.size());
 
 			// Check model
-			final DefaultMesh result = models.get(0);
+			final Mesh mesh = models.get(0);
 			final var layout = new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
-			assertEquals(Primitive.TRIANGLE, result.primitive());
-			assertEquals(3, result.count());
-			assertEquals(layout, result.layout());
-			assertEquals(true, result.isIndexed());
+			assertEquals(Primitive.TRIANGLE, mesh.primitive());
+			assertEquals(3, mesh.count());
+			assertEquals(layout, mesh.layout());
+			assertEquals(true, mesh.isIndexed());
 
 			// Check model data
-			final BufferedMesh buffer = result.buffer();
-			assertEquals((3 + 3 + 2) * Float.BYTES, buffer.vertexBuffer().length());
-			assertEquals(3 * Short.BYTES, buffer.indexBuffer().get().length());
+			assertEquals((3 + 3 + 2) * Float.BYTES, mesh.vertices().length());
+			assertEquals(3 * Short.BYTES, mesh.index().get().length());
 		}
 
 		// TODO

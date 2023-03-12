@@ -1,6 +1,8 @@
 package org.sarge.jove.model;
 
-import org.sarge.jove.common.*;
+import java.nio.ByteBuffer;
+
+import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.util.MathsUtil;
@@ -60,21 +62,12 @@ public class CubeBuilder {
 	}
 
 	/**
-	 * Constructs a cube with a default vertex layout (vertices and texture coordinates).
-	 * @return New cube mesh
+	 * Constructs a cube mesh comprised of {@link Primitive#TRIANGLE}.
+	 * @return Cube mesh
+	 * @see #vertex(Point, Normal, Coordinate2D)
 	 */
 	public DefaultMesh build() {
 		final DefaultMesh mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
-		build(mesh);
-		return mesh;
-	}
-
-	/**
-	 * Constructs a cube using the given builder.
-	 * @param mesh Mesh
-	 * @see #vertex(Point, Vector, Coordinate, Colour)
-	 */
-	public void build(DefaultMesh mesh) {
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -90,17 +83,25 @@ public class CubeBuilder {
 				mesh.add(vertex);
 			}
 		}
+		return mesh;
 	}
 
 	/**
 	 * Builds a cube vertex.
-	 * This implementation creates a {@link DefaultVertex}, i.e. ignores the {@link #normal}.
+	 * Override for a custom vertex implementation.
 	 * @param pos			Vertex position
 	 * @param normal		Normal
 	 * @param coord			Texture coordinate
 	 * @return Cube vertex
 	 */
 	protected Vertex vertex(Point pos, Normal normal, Coordinate2D coord) {
-		return new DefaultVertex(pos, coord);
+		return new Vertex(pos) {
+			@Override
+			public void buffer(ByteBuffer bb) {
+				super.buffer(bb);
+				normal.buffer(bb);
+				coord.buffer(bb);
+			}
+		};
 	}
 }
