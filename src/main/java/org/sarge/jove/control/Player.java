@@ -10,7 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * A <i>player</i> is a controller for playable media and animations.
  * @author Sarge
  */
-public class Player extends AbstractPlayable {
+public class Player extends Playable {
 	/**
 	 * Listener for player state changes.
 	 */

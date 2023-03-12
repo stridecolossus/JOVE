@@ -1,14 +1,18 @@
 package org.sarge.jove.control;
 
+import static org.sarge.lib.util.Check.notNull;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * A <i>playable</i> object is a media file or animation that can be controlled by a {@link Player}.
  * @author Sarge
  */
-public interface Playable {
+public class Playable {
 	/**
 	 * Playable states/operations.
 	 */
-	enum State {
+	public enum State {
 		STOP,
 		PLAY,
 		PAUSE;
@@ -25,16 +29,20 @@ public interface Playable {
 		}
 	}
 
+	private State state = State.STOP;
+
 	/**
 	 * @return Current state of this playable object
 	 */
-	State state();
+	public State state() {
+		return state;
+	}
 
 	/**
 	 * @return Whether this playable object is currently playing
 	 */
-	default boolean isPlaying() {
-		return state() == State.PLAY;
+	public boolean isPlaying() {
+		return state == State.PLAY;
 	}
 
 	/**
@@ -43,5 +51,13 @@ public interface Playable {
 	 * @throws IllegalStateException if {@link #state} is invalid for this playable
 	 * @see State#isValidTransition(State)
 	 */
-	void apply(State state);
+	public void apply(State state) {
+		if(!this.state.isValidTransition(state)) throw new IllegalStateException("Invalid state transition: this=%s next=%s".formatted(this, state));
+		this.state = notNull(state);
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append(state).build();
+	}
 }

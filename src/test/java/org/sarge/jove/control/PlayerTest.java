@@ -10,11 +10,18 @@ import org.sarge.jove.control.Player.Listener;
 class PlayerTest {
 	private Player player;
 	private Playable playable;
+	private boolean playing;
 
 	@BeforeEach
 	void before() {
-		playable = mock(Playable.class);
-		player = new Player(playable);
+		playable = new Playable();
+		playing = true;
+		player = new Player(playable) {
+			@Override
+			public boolean isPlaying() {
+				return playing && (super.state() == State.PLAY);
+			}
+		};
 	}
 
 	@DisplayName("A new player is initially stopped")
@@ -27,38 +34,38 @@ class PlayerTest {
 	@DisplayName("A player...")
 	@Nested
 	class PlayerTests {
+		@BeforeEach
+		void before() {
+			player.apply(State.PLAY);
+		}
+
 		@DisplayName("can be played")
 		@Test
 		void play() {
-			player.apply(State.PLAY);
-			when(playable.isPlaying()).thenReturn(true);
 			assertEquals(true, player.isPlaying());
-			verify(playable).apply(State.PLAY);
+			assertEquals(State.PLAY, playable.state());
 		}
 
 		@DisplayName("can be paused")
 		@Test
 		void pause() {
-			player.apply(State.PLAY);
 			player.apply(State.PAUSE);
 			assertEquals(false, player.isPlaying());
-			verify(playable).apply(State.PAUSE);
+			assertEquals(State.PAUSE, playable.state());
 		}
 
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			player.apply(State.PLAY);
 			player.apply(State.STOP);
 			assertEquals(false, player.isPlaying());
-			verify(playable).apply(State.STOP);
+			assertEquals(State.STOP, playable.state());
 		}
 
 		@DisplayName("is stopped if the underlying playable is stopped")
 		@Test
 		void stopped() {
-			player.apply(State.PLAY);
-			when(playable.isPlaying()).thenReturn(false);
+			playing = false;
 			assertEquals(false, player.isPlaying());
 		}
 	}

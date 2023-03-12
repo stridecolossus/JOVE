@@ -10,7 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * An <i>animator</i> is a specialised playable for an {@link Animation} interpolated over a given duration.
  * @author Sarge
  */
-public class Animator extends AbstractPlayable implements Frame.Listener {
+public class Animator extends Playable implements Frame.Listener {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */

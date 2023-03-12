@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.*;
+import org.sarge.jove.control.Playable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
@@ -97,7 +97,7 @@ public class AudioSource extends TransientNativeObject {
 	/**
 	 *
 	 */
-	private class AudioSourcePlayable extends AbstractPlayable {
+	private class AudioSourcePlayable extends Playable {
 		@Override
 		public boolean isPlaying() {
     		final var ref = new IntByReference();
