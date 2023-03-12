@@ -237,7 +237,7 @@ public final class Work {
 
 		/**
 		 * Adds a semaphore to be signalled when this batch has completed execution.
-		 * @param semaphore Signal semaphore
+		 * @param semaphore Semaphore to be signalled
 		 */
 		public Builder signal(Semaphore semaphore) {
 			Check.notNull(semaphore);
@@ -248,7 +248,7 @@ public final class Work {
 		/**
 		 * Constructs this work.
 		 * @return New work
-		 * @throws IllegalArgumentException if the command buffers is empty or any semaphore is used as both a wait and signal
+		 * @throws IllegalArgumentException if no command buffers have been added or any semaphore is used as both a wait and signal
 		 */
 		public Work build() {
 			if(work.buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");

@@ -19,7 +19,7 @@ public abstract class VulkanStructure extends Structure {
 	}
 
 	@Override
-	public List<String> getFieldOrder() {
+	public final List<String> getFieldOrder() {
 		return super.getFieldOrder();
 	}
 }

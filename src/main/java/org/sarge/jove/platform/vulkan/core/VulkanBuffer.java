@@ -28,73 +28,6 @@ public class VulkanBuffer extends VulkanObject {
 	 */
 	public static final long VK_WHOLE_SIZE = (~0);
 
-	/**
-	 * Creates a buffer.
-	 * @param dev			Logical device
-	 * @param allocator		Memory allocator
-	 * @param len			Length (bytes)
-	 * @param props			Memory properties
-	 * @return New buffer
-	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
-	 */
-	public static VulkanBuffer create(DeviceContext dev, Allocator allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {
-		// TODO
-		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
-		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
-		// - queue families (unique, < vkGetPhysicalDeviceQueueFamilyProperties)
-		// - queueFamilyIndexCount
-
-		// Build buffer descriptor
-		final var info = new VkBufferCreateInfo();
-		info.usage = new BitMask<>(props.usage());
-		info.sharingMode = props.mode();
-		info.size = oneOrMore(len);
-		// TODO - queue families
-
-		// Allocate buffer
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkCreateBuffer(dev, info, null, ref));
-
-		// Query memory requirements
-		final Handle handle = new Handle(ref);
-		final var reqs = new VkMemoryRequirements();
-		lib.vkGetBufferMemoryRequirements(dev, handle, reqs);
-
-		// Allocate buffer memory
-		final DeviceMemory mem = allocator.allocate(reqs, props);
-
-		// Bind memory
-		check(lib.vkBindBufferMemory(dev, handle, mem, 0L));
-
-		// Create buffer
-		return new VulkanBuffer(handle, dev, props.usage(), mem, len);
-	}
-
-	/**
-	 * Creates and initialises a staging buffer containing the given data.
-	 * @param dev			Logical device
-	 * @param allocator		Memory allocator
-	 * @param data			Data to stage
-	 * @return New staging buffer
-	 */
-	public static VulkanBuffer staging(DeviceContext dev, Allocator allocator, ByteSizedBufferable data) {
-		// Init memory properties
-		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
-				.usage(VkBufferUsageFlag.TRANSFER_SRC)
-				.required(VkMemoryProperty.HOST_VISIBLE)
-				.build();
-
-		// Create staging buffer
-		final VulkanBuffer buffer = create(dev, allocator, data.length(), props);
-
-		// Write data to buffer
-		final ByteBuffer bb = buffer.buffer();
-		data.buffer(bb);
-
-		return buffer;
-	}
-
 	private final Set<VkBufferUsageFlag> usage;
 	private final DeviceMemory mem;
 	private final long len;
@@ -240,6 +173,73 @@ public class VulkanBuffer extends VulkanObject {
 				.append("usage", usage)
 				.append("mem", mem)
 				.build();
+	}
+
+	/**
+	 * Creates a buffer.
+	 * @param dev			Logical device
+	 * @param allocator		Memory allocator
+	 * @param len			Length (bytes)
+	 * @param props			Memory properties
+	 * @return New buffer
+	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
+	 */
+	public static VulkanBuffer create(DeviceContext dev, Allocator allocator, long len, MemoryProperties<VkBufferUsageFlag> props) {
+		// TODO
+		if(props.mode() == VkSharingMode.CONCURRENT) throw new UnsupportedOperationException();
+		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
+		// - queue families (unique, < vkGetPhysicalDeviceQueueFamilyProperties)
+		// - queueFamilyIndexCount
+
+		// Build buffer descriptor
+		final var info = new VkBufferCreateInfo();
+		info.usage = new BitMask<>(props.usage());
+		info.sharingMode = props.mode();
+		info.size = oneOrMore(len);
+		// TODO - queue families
+
+		// Allocate buffer
+		final VulkanLibrary lib = dev.library();
+		final PointerByReference ref = dev.factory().pointer();
+		check(lib.vkCreateBuffer(dev, info, null, ref));
+
+		// Query memory requirements
+		final Handle handle = new Handle(ref);
+		final var reqs = new VkMemoryRequirements();
+		lib.vkGetBufferMemoryRequirements(dev, handle, reqs);
+
+		// Allocate buffer memory
+		final DeviceMemory mem = allocator.allocate(reqs, props);
+
+		// Bind memory
+		check(lib.vkBindBufferMemory(dev, handle, mem, 0L));
+
+		// Create buffer
+		return new VulkanBuffer(handle, dev, props.usage(), mem, len);
+	}
+
+	/**
+	 * Creates and initialises a staging buffer containing the given data.
+	 * @param dev			Logical device
+	 * @param allocator		Memory allocator
+	 * @param data			Data to stage
+	 * @return New staging buffer
+	 */
+	public static VulkanBuffer staging(DeviceContext dev, Allocator allocator, ByteSizedBufferable data) {
+		// Init memory properties
+		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
+				.usage(VkBufferUsageFlag.TRANSFER_SRC)
+				.required(VkMemoryProperty.HOST_VISIBLE)
+				.build();
+
+		// Create staging buffer
+		final VulkanBuffer buffer = create(dev, allocator, data.length(), props);
+
+		// Write data to buffer
+		final ByteBuffer bb = buffer.buffer();
+		data.buffer(bb);
+
+		return buffer;
 	}
 
 	/**

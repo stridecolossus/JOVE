@@ -17,15 +17,17 @@ import com.sun.jna.*;
 public class HandlerTest {
 	private Handler handler;
 	private Instance instance;
+	private VulkanLibrary lib;
 	private Function function;
 	private Consumer<Message> consumer;
 
 	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
+		lib = mock(VulkanLibrary.class);
 		consumer = mock(Consumer.class);
 		function = mock(Function.class);
-		instance = new Instance(new Handle(1), mock(VulkanLibrary.class), new MockReferenceFactory()) {
+		instance = new Instance(new Handle(1), lib, new MockReferenceFactory()) {
 			@Override
 			public Function function(String name) {
 				return function;
@@ -100,6 +102,8 @@ public class HandlerTest {
 					return true;
 				}
 			};
+
+			when(lib.vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT")).thenReturn(new Pointer(42));
 
 			// Init API
 			final Object[] args = {instance, expected, null, instance.factory().pointer()};

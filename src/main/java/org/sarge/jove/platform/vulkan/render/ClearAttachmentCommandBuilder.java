@@ -6,9 +6,8 @@ import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue;
-import org.sarge.jove.platform.vulkan.util.VulkanUtility;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
 
@@ -83,14 +82,14 @@ public class ClearAttachmentCommandBuilder {
 		}
 
 		void populate(VkClearRect clear) {
-			VulkanUtility.populate(rect, clear.rect);
+			VulkanLibrary.populate(rect, clear.rect);
 			clear.baseArrayLayer = baseArrayLayer;
 			clear.layerCount = layerCount;
 		}
 	}
 
 	private final List<ClearAttachment> entries = new ArrayList<>();
-	private final List<ClearAttachmentCommandBuilder.Region> regions = new ArrayList<>();
+	private final List<Region> regions = new ArrayList<>();
 
 	/**
 	 * Adds an attachment to be cleared.
@@ -106,7 +105,7 @@ public class ClearAttachmentCommandBuilder {
 	 * Adds a region of the attachment to be cleared.
 	 * @param region Region to clear
 	 */
-	public ClearAttachmentCommandBuilder region(ClearAttachmentCommandBuilder.Region region) {
+	public ClearAttachmentCommandBuilder region(Region region) {
 		Check.notNull(region);
 		regions.add(region);
 		return this;

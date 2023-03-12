@@ -16,18 +16,18 @@ public class Normal extends Vector implements Component {
 
 	/**
 	 * Constructor.
-	 * @param vec Vector
+	 * @param normal Normal
 	 */
-	public Normal(Vector vec) {
-		super(normalize(vec));
+	public Normal(Vector normal) {
+		super(normalize(normal));
 	}
 
 	/**
 	 * Array constructor.
-	 * @param array Normal as a floating-point array
+	 * @param normal Normal as a floating-point array
 	 */
-	public Normal(float[] array) {
-		this(new Vector(array));
+	public Normal(float[] normal) {
+		this(new Vector(normal));
 	}
 
 	/**

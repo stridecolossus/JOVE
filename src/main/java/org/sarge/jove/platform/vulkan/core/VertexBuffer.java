@@ -11,7 +11,7 @@ import com.sun.jna.Pointer;
  * A <i>vertex buffer</i> binds vertex data to the pipeline.
  * @author Sarge
  */
-public class VertexBuffer extends VulkanBuffer {
+public final class VertexBuffer extends VulkanBuffer {
 	/**
 	 * Constructor.
 	 * @param buffer Underlying buffer

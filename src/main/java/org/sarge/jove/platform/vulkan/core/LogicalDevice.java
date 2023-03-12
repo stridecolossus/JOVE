@@ -117,7 +117,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	}
 
 	/**
-	 * A <i>required queue</i> is a transient descriptor for a work queue for this device.
+	 * A <i>required queue</i> is a transient descriptor for a work queue.
 	 */
 	public record RequiredQueue(Family family, List<Percentile> priorities) {
 		/**
@@ -130,7 +130,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			Check.notNull(family);
 			Check.notEmpty(priorities);
 			if(priorities.size() > family.count()) {
-				throw new IllegalArgumentException(String.format("Number of queues exceeds family: available=%d requested=%d", family.count(), priorities.size()));
+				throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.size()));
 			}
 			priorities = List.copyOf(priorities);
 		}
@@ -144,7 +144,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		}
 
 		/**
-		 * Constructor for a group of queues with default priority.
+		 * Constructor for a group of queues with a default priority.
 		 * @param family		Queue family
 		 * @param num			Number of required queues
 		 */

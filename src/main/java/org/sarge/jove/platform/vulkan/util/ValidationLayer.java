@@ -31,32 +31,20 @@ public record ValidationLayer(String name, int version) {
 	}
 
 	/**
-	 * Enumerates validation layers supported by the platform or a physical device.
-	 * <p>
-	 * Note that validation layers at the device level are deprecated.
-	 * <p>
-	 * The {@link Set#contains(Object)} method considers a layer to be a member if a matching entry with an equal or greater version number is present.
-	 * <p>
-	 * @param count			Number of layers
-	 * @param func			Layers function
-	 * @return Validation layers
+	 * Constructor.
+	 * @param name				Layer name
+	 * @param version			Version number
 	 */
-	public static Set<ValidationLayer> layers(IntByReference count, StructureVulkanFunction<VkLayerProperties> func) {
-		return Arrays
-				.stream(func.invoke(count, new VkLayerProperties()))
-				.map(ValidationLayer::of)
-				.collect(toCollection(ValidationLayerSet::new));
+	public ValidationLayer {
+		Check.notEmpty(name);
 	}
 
 	/**
-	 * Enumerates validation layers supported by this platform.
-	 * @param lib 			Vulkan library
-	 * @param count			Number of layers
-	 * @return Validation layers supported by this platform
+	 * Convenience constructor for a validation layer with a version number of <b>one</b>.
+	 * @param name Layer name
 	 */
-	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count) {
-		final StructureVulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
-		return layers(count, func);
+	public ValidationLayer(String name) {
+		this(name, 1);
 	}
 
 	/**
@@ -84,19 +72,31 @@ public record ValidationLayer(String name, int version) {
 	}
 
 	/**
-	 * Constructor.
-	 * @param name				Layer name
-	 * @param version			Version number
+	 * Enumerates validation layers supported by the platform or a physical device.
+	 * <p>
+	 * Note that validation layers at the device level are deprecated.
+	 * <p>
+	 * The {@link Set#contains(Object)} method considers a layer to be a member if a matching entry with an equal or greater version number is present.
+	 * <p>
+	 * @param count			Number of layers
+	 * @param func			Layers function
+	 * @return Validation layers
 	 */
-	public ValidationLayer {
-		Check.notEmpty(name);
+	public static Set<ValidationLayer> layers(IntByReference count, StructureVulkanFunction<VkLayerProperties> func) {
+		return Arrays
+				.stream(func.invoke(count, new VkLayerProperties()))
+				.map(ValidationLayer::of)
+				.collect(toCollection(ValidationLayerSet::new));
 	}
 
 	/**
-	 * Convenience constructor for a validation layer with a version number of <b>one</b>.
-	 * @param name Layer name
+	 * Enumerates validation layers supported by this platform.
+	 * @param lib 			Vulkan library
+	 * @param count			Number of layers
+	 * @return Validation layers supported by this platform
 	 */
-	public ValidationLayer(String name) {
-		this(name, 1);
+	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count) {
+		final StructureVulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
+		return layers(count, func);
 	}
 }

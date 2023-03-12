@@ -4,8 +4,8 @@ import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.*;
 
@@ -100,7 +100,7 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 	 * Populates scissor rectangle descriptors.
 	 */
 	private static VkRect2D.ByReference scissors(List<Rectangle> scissors) {
-		return StructureCollector.pointer(scissors, new VkRect2D.ByReference(), VulkanUtility::populate);
+		return StructureCollector.pointer(scissors, new VkRect2D.ByReference(), VulkanLibrary::populate);
 	}
 
 	@Override

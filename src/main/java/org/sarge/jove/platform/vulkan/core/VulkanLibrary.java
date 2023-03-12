@@ -86,6 +86,18 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 	}
 
 	/**
+	 * Populates a 2D Vulkan rectangle.
+	 * @param rect			Rectangle
+	 * @param struct		Vulkan rectangle
+	 */
+	static void populate(Rectangle rect, VkRect2D struct) {
+		struct.offset.x = rect.x();
+		struct.offset.y = rect.y();
+		struct.extent.width = rect.width();
+		struct.extent.height = rect.height();
+	}
+
+	/**
 	 * @param size Buffer offset or size
 	 * @throws IllegalArgumentException if the give size is not a multiple of 4 bytes
 	 */

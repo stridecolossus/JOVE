@@ -57,14 +57,12 @@ public class FormatBuilder {
 		 * Maps the given layout data type to the corresponding Vulkan numeric format.
 		 * @param type Layout data type
 		 * @return Vulkan numeric format
-		 * @throws UnsupportedOperationException if the given type is not supported
 		 */
 		public static NumericFormat of(Layout.Type type) {
 			return switch(type) {
 				case INTEGER -> INT;
 				case FLOAT -> FLOAT;
 				case NORMALIZED -> NORM;
-				default -> throw new UnsupportedOperationException("Unsupported component type: " + type);
 			};
 		}
 	}

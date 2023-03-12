@@ -3,26 +3,21 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>programmable shader stage</i> defines a pipeline stage implemented by a {@link Shader} module.
  * @author Sarge
  */
-public final class ProgrammableShaderStage {
+public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String name, VkSpecializationInfo constants) {
 	private static final String MAIN = "main";
-
-	private final VkShaderStage stage;
-	private final Shader shader;
-	private final String name;
-	private final VkSpecializationInfo constants;
 
 	/**
 	 * Constructor.
@@ -40,18 +35,10 @@ public final class ProgrammableShaderStage {
 	 * @param name			Method name
 	 * @param constants		Optional specialisation constants
 	 */
-	private ProgrammableShaderStage(VkShaderStage stage, Shader shader, String name, VkSpecializationInfo constants) {
-		this.stage = notNull(stage);
-		this.shader = notNull(shader);
-		this.name = notEmpty(name);
-		this.constants = constants;
-	}
-
-	/**
-	 * @return Shader stage
-	 */
-	public VkShaderStage stage() {
-		return stage;
+	public ProgrammableShaderStage {
+		Check.notNull(stage);
+		Check.notNull(shader);
+		Check.notEmpty(name);
 	}
 
 	/**
@@ -63,31 +50,6 @@ public final class ProgrammableShaderStage {
 		info.module = shader.handle();
 		info.pName = name;
 		info.pSpecializationInfo = constants;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(stage, shader, name, constants);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof ProgrammableShaderStage that) &&
-				(this.stage == that.stage) &&
-				this.shader.equals(that.shader) &&
-				this.name.equals(that.name) &&
-				Objects.equals(this.constants, that.constants);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(stage)
-				.append(shader)
-				.append(name)
-				.build();
 	}
 
 	/**

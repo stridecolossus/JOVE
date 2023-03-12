@@ -10,7 +10,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.*;
 
@@ -72,6 +72,17 @@ class VulkanLibraryTest {
 		void unknown() {
 			assertThrows(VulkanException.class, () -> VulkanLibrary.check(999));
 		}
+	}
+
+	@Test
+	void rectangle() {
+		final var rect = new Rectangle(1, 2, 3, 4);
+		final var struct = new VkRect2D();
+		VulkanLibrary.populate(rect, struct);
+		assertEquals(1, struct.offset.x);
+		assertEquals(2, struct.offset.y);
+		assertEquals(3, struct.extent.width);
+		assertEquals(4, struct.extent.height);
 	}
 
 	@DisplayName("An offset or size must be a multiple of 4 bytes")
