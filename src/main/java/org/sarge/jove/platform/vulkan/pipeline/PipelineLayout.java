@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
+import org.sarge.jove.platform.vulkan.pipeline.PushConstant.*;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
@@ -42,6 +42,19 @@ public final class PipelineLayout extends VulkanObject {
 	 */
 	public PushConstant push() {
 		return push;
+	}
+
+	/**
+	 * Creates an update command for the given push constant range.
+	 * @param range Push constant range
+	 * @return Update command
+	 * @throws IllegalStateException if the given {@link #range} does not belong to this layout
+	 */
+	public UpdateCommand update(Range range) {
+		if(!push.ranges().contains(range)) {
+			throw new IllegalStateException("Invalid range for push constant: range=%s constant=%s".formatted(range, push));
+		}
+		return push.new UpdateCommand(range, this);
 	}
 
 	@Override

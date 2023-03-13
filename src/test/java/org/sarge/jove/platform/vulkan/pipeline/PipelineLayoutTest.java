@@ -1,8 +1,9 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.sarge.jove.platform.vulkan.VkShaderStage.*;
 
 import java.util.*;
 
@@ -17,11 +18,13 @@ import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 class PipelineLayoutTest {
 	private PipelineLayout layout;
 	private DeviceContext dev;
+	private Range range;
 
 	@BeforeEach
 	void before() {
 		dev = new MockDeviceContext();
-		layout = new PipelineLayout(new Handle(1), dev, new PushConstant(List.of()));
+		range = new Range(0, 4, Set.of(VERTEX));
+		layout = new PipelineLayout(new Handle(1), dev, new PushConstant(List.of(range)));
 	}
 
 	@Test
@@ -38,6 +41,20 @@ class PipelineLayoutTest {
 	}
 
 	@Nested
+	class PushConstantUpdateCommandTests {
+    	@Test
+    	void update() {
+    		assertNotNull(layout.update(range));
+    	}
+
+    	@Test
+    	void other() {
+    		final Range other = range = new Range(0, 4, Set.of(FRAGMENT));
+    		assertThrows(IllegalStateException.class, () -> layout.update(other));
+    	}
+	}
+
+	@Nested
 	class BuilderTests {
 		private Builder builder;
 
@@ -49,12 +66,12 @@ class PipelineLayoutTest {
 		@Test
 		void build() {
 			// Create descriptor set layout
-			final var binding = new DescriptorSet.Binding(0, VkDescriptorType.SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
+			final var binding = new DescriptorSet.Binding(0, VkDescriptorType.SAMPLER, 1, Set.of(FRAGMENT));
 			final var set = DescriptorSet.Layout.create(dev, Set.of(binding));
 
 			// Create push constant ranges
-			final Range one = new Range(0, 4, Set.of(VkShaderStage.VERTEX));
-			final Range two = new Range(4, 8, Set.of(VkShaderStage.FRAGMENT));
+			final Range one = new Range(0, 4, Set.of(VERTEX));
+			final Range two = new Range(4, 8, Set.of(FRAGMENT));
 
 			// Init push constants max size
 			when(dev.limits().value("maxPushConstantsSize")).thenReturn(12);

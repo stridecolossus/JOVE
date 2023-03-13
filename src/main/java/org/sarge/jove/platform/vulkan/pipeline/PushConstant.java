@@ -52,11 +52,16 @@ public final class PushConstant {
 	 * @throws IllegalArgumentException if any segment of the push constant is not covered by at least one range
 	 */
 	PushConstant(List<Range> ranges) {
-		final int len = ranges.stream().mapToInt(Range::length).reduce(0, Integer::max);
-		this.data = BufferHelper.allocate(len);
 		this.ranges = List.copyOf(ranges);
-		validateStages();
-		validateCoverage();
+		if(ranges.isEmpty()) {
+			this.data = null;
+		}
+		else {
+    		final int len = ranges.stream().mapToInt(Range::max).reduce(0, Integer::max);
+    		this.data = BufferHelper.allocate(len);
+    		validateStages();
+    		validateCoverage();
+		}
 	}
 
 	/**
@@ -82,7 +87,7 @@ public final class PushConstant {
 		int prev = 0;
 		for(Range r : list) {
 			if(r.offset > prev) throw new IllegalArgumentException("Push constant buffer not covered by ranges");
-			prev = r.length();
+			prev = r.max();
 		}
 		assert prev == length();
 	}
@@ -95,17 +100,29 @@ public final class PushConstant {
 	}
 
 	/**
-	 * @return Overall length of this push constant
+	 * @return Overall length of the backing buffer for this push constant (bytes)
 	 */
 	public int length() {
-		return data.capacity();
+		if(data == null) {
+			return 0;
+		}
+		else {
+			return data.capacity();
+		}
 	}
 
 	/**
 	 * @return Push constant data buffer
+	 * @throws IllegalStateException if this push constant is empty
 	 */
 	public ByteBuffer buffer() {
+		if(data == null) throw new IllegalStateException("Push constant is empty: " + this);
 		return data;
+	}
+
+	@Override
+	public int hashCode() {
+		return ranges.hashCode();
 	}
 
 	@Override
@@ -113,15 +130,12 @@ public final class PushConstant {
 		return
 				(obj == this) ||
 				(obj instanceof PushConstant that) &&
-				this.ranges.equals(that.ranges);
+				this.ranges.equals(that.ranges());
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this)
-				.append(data)
-				.append(ranges)
-				.build();
+		return new ToStringBuilder(this).append(ranges).build();
 	}
 
 	/**
@@ -146,19 +160,9 @@ public final class PushConstant {
 		}
 
 		/**
-		 * Constructor.
-		 * @param size			Size of this range (bytes)
-		 * @param stages		Shader stages
-		 * @throws IllegalArgumentException if {@link #size} do not satisfy the alignment rules for push constants
+		 * @return Maximum size of the backing buffer to support this range
 		 */
-		public Range(int size, Set<VkShaderStage> stages) {
-			this(0, size, stages);
-		}
-
-		/**
-		 * @return Maximum length of this range
-		 */
-		private int length() {
+		int max() {
 			return offset + size;
 		}
 
@@ -175,18 +179,21 @@ public final class PushConstant {
 	/**
 	 * A <i>push constant update command</i> is used to the update a segment of this push constant.
 	 */
-	public class UpdateCommand implements Command {
+	public final class UpdateCommand implements Command {
 		private final Range range;
 		private final PipelineLayout layout;
 		private final BitMask<VkShaderStage> stages;
 
-		private UpdateCommand(Range range, PipelineLayout layout) {
-			if(!layout.push().ranges().contains(range)) {
-				throw new IllegalStateException("Invalid range for push constant: range=%s constant=%s".formatted(range, layout.push()));
-			}
+		/**
+		 * Constructor.
+		 * @param range			Push constant range to update
+		 * @param layout		Pipeline layout
+		 */
+		UpdateCommand(Range range, PipelineLayout layout) {
 			this.range = notNull(range);
 			this.layout = notNull(layout);
 			this.stages = new BitMask<>(range.stages);
+			assert ranges.contains(range);
 		}
 
 		@Override
@@ -202,27 +209,5 @@ public final class PushConstant {
 					.append("range", range)
 					.build();
 		}
-	}
-
-	/**
-	 * Creates an update command for a push constant with a single range.
-	 * @param layout Pipeline layout
-	 * @return New update command
-	 * @throws IllegalStateException if this push constant is empty or has multiple ranges
-	 */
-	public UpdateCommand update(PipelineLayout layout) {
-		if(ranges.size() > 1) throw new IllegalStateException("Push constant has multiple ranges: " + this);
-		return new UpdateCommand(ranges.get(0), layout);
-	}
-
-	/**
-	 * Creates an update command for the given range.
-	 * @param range		Range to update
-	 * @param layout 	Pipeline layout
-	 * @return New update command
-	 * @throws IllegalArgumentException if the given range is not a member of this push constant
-	 */
-	public UpdateCommand update(Range range, PipelineLayout layout) {
-		return new UpdateCommand(range, layout);
 	}
 }
