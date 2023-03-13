@@ -35,7 +35,7 @@ import com.sun.jna.ptr.*;
  * <p>
  * @author Sarge
  */
-public class Swapchain extends VulkanObject {
+public final class Swapchain extends VulkanObject {
 	/**
 	 * Swap-chain extension name.
 	 */

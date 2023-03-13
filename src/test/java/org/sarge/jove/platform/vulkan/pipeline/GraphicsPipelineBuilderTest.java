@@ -1,13 +1,15 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.render.RenderPass;
+import org.sarge.jove.platform.vulkan.render.*;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
@@ -22,11 +24,16 @@ class GraphicsPipelineBuilderTest {
 
 	@BeforeEach
 	void before() {
+		// TODO - messy
+		final Subpass subpass = new Subpass();
+		final Attachment attachment = new Attachment.Builder(VkFormat.B8G8R8A8_SINT).finalLayout(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL).build();
+		subpass.colour(attachment);
+
 		dev = new MockDeviceContext();
-		pass = mock(RenderPass.class);
+		pass = RenderPass.create(dev, List.of(subpass));
 		builder = new GraphicsPipelineBuilder(pass);
 		info = new VkGraphicsPipelineCreateInfo();
-		layout = mock(PipelineLayout.class);
+		layout = new PipelineLayout.Builder().build(dev);
 		shader = Shader.create(dev, new byte[0]);
 	}
 

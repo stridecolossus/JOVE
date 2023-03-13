@@ -339,7 +339,7 @@ public final class DescriptorSet implements NativeObject {
 	/**
 	 * A <i>descriptor set layout</i> specifies the resource bindings for a descriptor set.
 	 */
-	public static class Layout extends VulkanObject {
+	public static final class Layout extends VulkanObject {
 		/**
 		 * Creates a descriptor set layout.
 		 * @param dev			Logical device
@@ -419,7 +419,7 @@ public final class DescriptorSet implements NativeObject {
 	/**
 	 * A <i>descriptor set pool</i> is used to allocate and manage a group of descriptor sets.
 	 */
-	public static class Pool extends VulkanObject {
+	public static final class Pool extends VulkanObject {
 		private final int max;
 
 		/**

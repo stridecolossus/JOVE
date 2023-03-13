@@ -41,7 +41,7 @@ import com.sun.jna.Structure;
  * <p>
  * @author Sarge
  */
-public class Barrier extends ImmediateCommand {
+public final class Barrier extends ImmediateCommand {
 	private final BitMask<VkPipelineStage> src, dest;
 	private final BitMask<VkDependencyFlag> flags;
 	private final VkImageMemoryBarrier[] images;

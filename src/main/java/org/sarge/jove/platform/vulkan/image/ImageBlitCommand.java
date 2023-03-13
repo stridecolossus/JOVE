@@ -16,7 +16,7 @@ import org.sarge.lib.util.Check;
  * The <i>image blit command</i> copies regions of an image, potentially performing format conversion, scaling and filtering.
  * @author Sarge
  */
-public class ImageBlitCommand extends ImmediateCommand {
+public final class ImageBlitCommand extends ImmediateCommand {
 	private final Image src, dest;
 	private final VkImageLayout srcLayout, destLayout;
 	private final VkImageBlit[] regions;

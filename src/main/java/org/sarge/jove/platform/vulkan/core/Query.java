@@ -97,7 +97,7 @@ public interface Query {
 	/**
 	 * A <i>query pool</i> is comprised of a number of <i>slots</i> used to execute queries.
 	 */
-	class Pool extends VulkanObject {
+	final class Pool extends VulkanObject {
 		/**
 		 * Creates a query pool.
 		 * @param dev		Device

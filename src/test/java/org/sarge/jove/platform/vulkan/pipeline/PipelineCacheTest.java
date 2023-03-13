@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.*;
+import org.sarge.jove.io.DataSource;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -19,8 +19,6 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineCache.Loader;
 import com.sun.jna.ptr.IntByReference;
 
 public class PipelineCacheTest {
-	private static final byte[] DATA = new byte[42];
-
 	private PipelineCache cache;
 	private DeviceContext dev;
 	private VulkanLibrary lib;
@@ -42,7 +40,7 @@ public class PipelineCacheTest {
 	@Test
 	void create() {
 		// Create cache
-		cache = PipelineCache.create(dev, DATA);
+		cache = PipelineCache.create(dev, new byte[1]);
 		assertEquals(dev, cache.device());
 		assertEquals(false, cache.isDestroyed());
 
@@ -52,7 +50,7 @@ public class PipelineCacheTest {
 			public boolean equals(Object obj) {
 				final var actual = (VkPipelineCacheCreateInfo) obj;
 				assertEquals(0, actual.flags);
-				assertEquals(DATA.length, actual.initialDataSize);
+				assertEquals(1, actual.initialDataSize);
 				assertNotNull(actual.pInitialData);
 				return true;
 			}
@@ -100,19 +98,19 @@ public class PipelineCacheTest {
 
 		@Test
 		void load() throws IOException {
-			final PipelineCache cache = loader.load(new ByteArrayInputStream(DATA));
+			final PipelineCache cache = loader.load(new ByteArrayInputStream(new byte[0]));
 			assertNotNull(cache);
 		}
 
 		@Test
 		void write() throws IOException {
-			final ByteArrayOutputStream out = new ByteArrayOutputStream();
-			final PipelineCache cache = mock(PipelineCache.class);
-			when(cache.data()).thenReturn(BufferHelper.buffer(DATA));
+			final var out = new ByteArrayOutputStream();
+			final var cache = new PipelineCache(new Handle(2), dev);
 			loader.write(cache, out);
-			assertEquals(DATA.length, out.size());
+			assertEquals(1, out.size());
 		}
 
+		@SuppressWarnings("resource")
 		@Test
 		void root() throws IOException {
 			final Path root = Files.createTempDirectory("PipelineCacheTest");

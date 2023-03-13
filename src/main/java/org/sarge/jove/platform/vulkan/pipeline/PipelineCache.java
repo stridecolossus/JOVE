@@ -24,7 +24,7 @@ import com.sun.jna.ptr.*;
  * TODO - doc persistence
  * @author Sarge
  */
-public class PipelineCache extends VulkanObject {
+public final class PipelineCache extends VulkanObject {
 	/**
 	 * Creates a pipeline cache with the given data blob.
 	 * @param dev		Logical data

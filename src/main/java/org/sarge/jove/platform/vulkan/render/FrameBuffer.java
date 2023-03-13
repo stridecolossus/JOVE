@@ -21,7 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
  * @author Sarge
  */
-public class FrameBuffer extends VulkanObject {
+public final class FrameBuffer extends VulkanObject {
 	/**
 	 * Command to end a render pass on this frame-buffer.
 	 */

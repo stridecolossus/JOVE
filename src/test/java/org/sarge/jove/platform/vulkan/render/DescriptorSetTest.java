@@ -62,11 +62,11 @@ public class DescriptorSetTest {
 	@DisplayName("A descriptor set can be bound to the graphics pipeline")
 	@Test
 	void bind() {
-		final PipelineLayout pipelineLayout = mock(PipelineLayout.class);
-		final Command bind = descriptor.bind(pipelineLayout);
+		final var pipeline = new PipelineLayout.Builder().build(dev);
+		final Command bind = descriptor.bind(pipeline);
 		final var buffer = mock(Command.Buffer.class);
 		bind.record(lib, buffer);
-		verify(lib).vkCmdBindDescriptorSets(buffer, VkPipelineBindPoint.GRAPHICS, pipelineLayout, 0, 1, NativeObject.array(List.of(descriptor)), 0, null);
+		verify(lib).vkCmdBindDescriptorSets(buffer, VkPipelineBindPoint.GRAPHICS, pipeline, 0, 1, NativeObject.array(List.of(descriptor)), 0, null);
 	}
 
 	@DisplayName("A descriptor set resource...")

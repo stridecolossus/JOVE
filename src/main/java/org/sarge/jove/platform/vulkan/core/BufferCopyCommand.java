@@ -14,7 +14,7 @@ import org.sarge.lib.util.Check;
  * A <i>buffer copy command</i> is used to transfer data between Vulkan buffers.
  * @author Sarge
  */
-public class BufferCopyCommand extends ImmediateCommand {
+public final class BufferCopyCommand extends ImmediateCommand {
 	/**
 	 * Creates a command to copy between the given buffers.
 	 * @param src		Source buffer

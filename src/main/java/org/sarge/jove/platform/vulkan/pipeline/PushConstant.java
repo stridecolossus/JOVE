@@ -28,7 +28,7 @@ import org.sarge.lib.util.Check;
  * <pre>
  * // Create push constant
  * Range range = new Range(0, 4, Set.of(VkShaderStage.VERTEX));
- * PushConstant push = new PushConstant(List.of(range, ...));
+ * var push = new PushConstant(List.of(range, ...));
  *
  * // Create command to update a range of the push constant
  * PipelineLayout layout = ...
@@ -41,7 +41,7 @@ import org.sarge.lib.util.Check;
  * @see PipelineLayout
  * @author Sarge
  */
-public class PushConstant {
+public final class PushConstant {
 	private final ByteBuffer data;
 	private final List<Range> ranges;
 

@@ -56,8 +56,8 @@ public class SwapchainTest {
 
 		@BeforeEach
 		void before() {
-			semaphore = mock(Semaphore.class);
-			fence = mock(Fence.class);
+			semaphore = Semaphore.create(dev);
+			fence = Fence.create(dev);
 		}
 
 		@DisplayName("The next image to be rendered can be acquired from the swapchain")

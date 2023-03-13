@@ -17,7 +17,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>fence</i> is used to synchronise between application code and Vulkan.
  * @author Sarge
  */
-public class Fence extends VulkanObject { // TODO - final?
+public final class Fence extends VulkanObject {
 	/**
 	 * Creates a fence.
 	 * @param dev			Logical device

@@ -18,7 +18,7 @@ import org.sarge.lib.util.Check;
  * An <i>image transfer command</i> is used to copy an image to/from a Vulkan buffer.
  * @author Sarge
  */
-public class ImageTransferCommand extends ImmediateCommand {
+public final class ImageTransferCommand extends ImmediateCommand {
 	private final Image image;
 	private final VulkanBuffer buffer;
 	private final boolean write;

@@ -51,7 +51,7 @@ public class WorkTest {
 	@Test
 	void submit() {
 		// Submit work
-		final Fence fence = mock(Fence.class);
+		final Fence fence = Fence.create(dev);
 		work.submit(fence);
 
 		// Init expected submission descriptor

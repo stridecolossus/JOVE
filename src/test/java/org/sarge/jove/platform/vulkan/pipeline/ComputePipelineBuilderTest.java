@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
@@ -21,7 +21,7 @@ class ComputePipelineBuilderTest {
 	@BeforeEach
 	void before() {
 		dev = new MockDeviceContext();
-		layout = mock(PipelineLayout.class);
+		layout = new PipelineLayout.Builder().build(dev);
 		stage = new ProgrammableShaderStage(VkShaderStage.VERTEX, Shader.create(dev, new byte[0]));
 		builder = new ComputePipelineBuilder(stage);
 		info = new VkComputePipelineCreateInfo();

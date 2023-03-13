@@ -20,7 +20,7 @@ import com.sun.jna.Pointer;
  * A <i>pipeline</i> defines the configuration for graphics rendering or compute shaders.
  * @author Sarge
  */
-public class Pipeline extends VulkanObject {
+public final class Pipeline extends VulkanObject {
 	private final VkPipelineBindPoint type;
 	private final PipelineLayout layout;
 	private final boolean parent;

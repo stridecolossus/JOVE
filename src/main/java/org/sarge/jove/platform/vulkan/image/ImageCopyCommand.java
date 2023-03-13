@@ -16,7 +16,7 @@ import org.sarge.lib.util.Check;
  * An <i>image copy command</i> is used to copy between images.
  * @author Sarge
  */
-public class ImageCopyCommand extends ImmediateCommand {
+public final class ImageCopyCommand extends ImmediateCommand {
 	/**
 	 * Creates a copy command for the whole of the image.
 	 * @param src		Source

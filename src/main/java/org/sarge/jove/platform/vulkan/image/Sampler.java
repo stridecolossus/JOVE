@@ -20,7 +20,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>sampler</i> is used to sample from a texture image.
  * @author Sarge
  */
-public class Sampler extends VulkanObject {
+public final class Sampler extends VulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle		Sampler handle
