@@ -49,11 +49,11 @@ public interface Ray {
 	}
 
 	/**
-	 * Defines a surface that can be tested for intersections with a ray.
+	 * An <i>intersected</i> defines a surface that can be tested for intersections with a ray.
 	 */
 	interface Intersected {
 		/**
-		 * Determines the intersections of this surface with the given ray.
+		 * Calculates the intersections of this surface with the given ray.
 		 * @param ray Ray
 		 * @return Intersections
 		 */
@@ -66,7 +66,7 @@ public interface Ray {
 	}
 
 	/**
-	 * An <i>intersection</i> specifies where this ray intersects an {@link Intersected} surface.
+	 * An <i>intersection</i> specifies the points where this ray intersects an {@link Intersected} surface.
 	 */
 	interface Intersection {
 		/**

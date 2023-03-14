@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 import java.util.stream.IntStream;
 
 /**
- * A <i>bitfield</i> is a simple utility class representing an integer mask.
+ * A <i>bitfield</i> is a utility class representing an integer mask.
  * @author Sarge
  */
 public record BitField(int mask) {
@@ -45,7 +45,7 @@ public record BitField(int mask) {
 	}
 
 	/**
-	 * @return The positive bits of this bitfield as a stream of indices
+	 * @return The positive bits of this bitfield as a stream of integer values
 	 * @see #map(int)
 	 */
 	public IntStream stream() {

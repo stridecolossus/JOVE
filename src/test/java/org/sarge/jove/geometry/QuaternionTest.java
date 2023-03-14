@@ -67,7 +67,7 @@ public class QuaternionTest {
 	@Test
 	void rotate() {
 		final Vector vec = new Vector(1, 0, 0);
-		assertEquals(new Vector(-1, 0, 0), quaternion.rotate(vec));
+		assertEquals(new Vector(-1, 0, 0), quaternion.rotate(vec, null));
 	}
 
 	@Test

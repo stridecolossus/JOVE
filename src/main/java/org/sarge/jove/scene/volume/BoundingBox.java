@@ -46,8 +46,8 @@ public class BoundingBox implements Volume {
 
 	@Override
 	public boolean intersects(Plane plane) {
-		final Vector n = plane.normal();
-		return intersects(plane, bounds.negative(n)) || intersects(plane, bounds.positive(n));
+		final Vector normal = plane.normal();
+		return intersects(plane, bounds.negative(normal)) || intersects(plane, bounds.positive(normal));
 	}
 
 	private static boolean intersects(Plane plane, Point p) {
@@ -55,7 +55,7 @@ public class BoundingBox implements Volume {
 	}
 
 	/**
-	 * Determines ray intersections using the component-wise slab method.
+	 * Determines ray intersections using the <i>component-wise slab</i> method.
 	 * @see <a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection">Ray-box intersection</a>
 	 */
 	@Override

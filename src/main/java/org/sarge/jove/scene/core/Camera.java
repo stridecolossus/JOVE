@@ -6,7 +6,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 
 /**
- * A <i>camera</i> is a model of the viewers position and orientation, used to generate the <i>view transform</i> matrix.
+ * A <i>camera</i> models the viewers position and orientation.
+ * <p>
+ * Note that the camera points in the opposite direction to the view, i.e. points out of the screen.
+ * <p>
  * @author Sarge
  */
 public class Camera {
@@ -82,7 +85,7 @@ public class Camera {
 	}
 
 	/**
-	 * Helper - Points the camera at the given location.
+	 * Points the camera at the given location.
 	 * @param target Target position
 	 * @throws IllegalArgumentException if {@link #target} is the same as the current position of the camera
 	 * @throws IllegalStateException if the resultant direction would result in gimbal lock

@@ -46,7 +46,7 @@ public interface Volume extends Intersected {
 	 * @throws UnsupportedOperationException by default
 	 */
 	default boolean intersects(Volume vol) {
-		throw new UnsupportedOperationException(String.format("Unsupported volumes: this=%s that=%s", this, vol));
+		throw new UnsupportedOperationException("Unsupported volumes: this=%s that=%s".formatted(this, vol));
 	}
 
 	/**

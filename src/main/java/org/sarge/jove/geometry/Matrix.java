@@ -17,8 +17,8 @@ import org.sarge.lib.util.Check;
  * <li>The <i>order</i> specifies the dimensions of the matrix</li>
  * <li>Matrix data written by {@link #buffer(ByteBuffer)} is <i>column major</i> as expected by Vulkan</li>
  * </ul>
+ * TODO - doc 4x4 matrix
  * <p>
- * @see Matrix4
  * @author Sarge
  */
 public final class Matrix implements Transform, Bufferable {

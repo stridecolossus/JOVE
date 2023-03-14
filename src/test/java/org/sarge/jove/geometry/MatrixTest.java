@@ -41,7 +41,6 @@ class MatrixTest {
 	@Test
 	void transform() {
 		assertEquals(matrix, matrix.matrix());
-		assertEquals(false, matrix.isMutable());
 	}
 
 	@DisplayName("The elements of a matrix can be retrieved by row and column")

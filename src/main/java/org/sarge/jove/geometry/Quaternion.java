@@ -17,15 +17,22 @@ public final class Quaternion implements Rotation {
 
 	/**
 	 * Creates a quaternion from the given axis-angle rotation.
-	 * @param rot Axis-angle
-	 * @return New quaternion
+	 * @param rot 			Axis-angle
+	 * @param cosine		Cosine function
+	 * @return Quaternion
 	 */
-	public static Quaternion of(AxisAngle rot) {
-		final Cosine cosine = rot.cosine();
+	public static Quaternion of(AxisAngle rot, Cosine cosine) {
 		final float half = rot.angle() * MathsUtil.HALF;
 		final float w = cosine.cos(half);
 		final Vector vec = rot.axis().multiply(cosine.sin(half));
 		return new Quaternion(w, vec);
+	}
+
+	/**
+	 * @see #of(AxisAngle, Cosine)
+	 */
+	public static Quaternion of(AxisAngle rot) {
+		return of(rot, Cosine.DEFAULT);
 	}
 
 	public final float w, x, y, z;
@@ -68,10 +75,7 @@ public final class Quaternion implements Rotation {
 		return new Vector(x, y, z);
 	}
 
-	/**
-	 * Converts this quaternion to an axis-angle rotation.
-	 * @return Axis-angle
-	 */
+	@Override
 	public AxisAngle toAxisAngle() {
 		final float scale = MathsUtil.inverseRoot(1 - w * w);
 		final float angle = 2 * (float) Math.acos(w);
@@ -118,7 +122,7 @@ public final class Quaternion implements Rotation {
 	// TODO - JDK19 vector API
 
 	@Override
-	public Vector rotate(Vector vec) {
+	public Vector rotate(Vector vec, Cosine cosine) {
 		final Quaternion q = new Quaternion(0, vec);
 		final Quaternion result = this.multiply(q).multiply(this.conjugate());
 		return result.axis();

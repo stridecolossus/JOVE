@@ -14,13 +14,6 @@ public interface Transform {
 	Matrix matrix();
 
 	/**
-	 * @return Whether this is a mutable transformation
-	 */
-	default boolean isMutable() {
-		return false;
-	}
-
-	/**
 	 * Creates a compound transform.
 	 * @param transforms Transforms
 	 * @return Compound transform

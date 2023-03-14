@@ -149,6 +149,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 		return region;
 	}
+	// TODO - region rounding if not host coherent
 
 	/**
 	 * @throws IllegalStateException if this memory has been released
@@ -175,6 +176,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 	@Override
 	protected void release() {
+		// TODO - do we need to explicitly unmap?
 		region = null;
 	}
 

@@ -112,9 +112,9 @@ public class SphereVolume implements Volume {
 		final float dist = nearest * nearest - len;
 
 		// Stop if ray does not intersect
-		final float r = sphere.radius();
-		final float radius = r * r;
-		if(Math.abs(dist) > radius) {
+		final float radius = sphere.radius();
+		final float radiusSquared = radius * radius;
+		if(Math.abs(dist) > radiusSquared) {
 			return Intersected.NONE;
 		}
 
@@ -122,11 +122,11 @@ public class SphereVolume implements Volume {
 		return () -> {
 			// Calculate offset from nearest point to intersection(s)
 			// TODO - leave as squared?
-			final float offset = MathsUtil.sqrt(radius - dist);
+			final float offset = MathsUtil.sqrt(radiusSquared - dist);
 
 			// Build intersection results
 			final Intersection a = Intersection.of(ray, nearest + offset, centre);
-			if(len < radius) {
+			if(len < radiusSquared) {
 				// Ray origin is inside the sphere
 				return List.of(a).iterator();
 			}

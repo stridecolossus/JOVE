@@ -12,7 +12,6 @@ class TransformTest {
 		final Transform trans = Matrix.IDENTITY;
 		final Transform compound = Transform.of(List.of(trans));
 		assertNotNull(compound);
-		assertEquals(false, compound.isMutable());
 		assertEquals(Matrix.IDENTITY, compound.matrix());
 	}
 }

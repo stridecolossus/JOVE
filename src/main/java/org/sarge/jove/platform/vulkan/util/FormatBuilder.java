@@ -40,7 +40,7 @@ public final class FormatBuilder {
 	/**
 	 * Vulkan numeric formats.
 	 * <p>
-	 * The Vulkan numeric formats correspond the general {@link Layout.Type} equivalents with the following special cases:
+	 * The Vulkan numeric formats correspond to the general {@link Layout.Type} equivalents with the following special cases:
 	 * <ul>
 	 * <li>{@link #SCALED} are integer values converted to floating-point</li>
 	 * <li>{@link #RGB} uses the {@code sRGB} nonlinear encoding</li>
@@ -182,7 +182,7 @@ public final class FormatBuilder {
 	 */
 	public VkFormat build() {
 		// Build component format
-		final StringBuilder layout = new StringBuilder();
+		final var layout = new StringBuilder();
 		final int size = bytes * Byte.SIZE;
 		for(int n = 0; n < count; ++n) {
 			layout.append(components.charAt(n));

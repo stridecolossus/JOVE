@@ -32,7 +32,8 @@ features todo
 - mesh shader
 - dynamic descriptors sets and uniform buffers (?)
 - OpenAL streaming audio (queue)
-https://github.com/kcat/openal-soft/wiki/Programmer%27s-Guide#queuing-buffers-on-a-source
+- https://github.com/kcat/openal-soft/wiki/Programmer%27s-Guide#queuing-buffers-on-a-source
+- memory region rounding if not host coherent
 
 blog
 - pipeline cache

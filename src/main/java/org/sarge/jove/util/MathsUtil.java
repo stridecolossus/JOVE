@@ -43,9 +43,7 @@ public final class MathsUtil {
 	}
 
 	/**
-	 * Tests whether two floating-point arrays are approximately equal.
 	 * @return Whether the given floating-point arrays are approximately equal
-	 * @throws NullPointerException if either array is {@code null}
 	 */
 	public static boolean isEqual(float[] a, float[] b) {
 		if(a.length != b.length) {
