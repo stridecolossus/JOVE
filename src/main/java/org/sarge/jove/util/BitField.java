@@ -44,6 +44,13 @@ public record BitField(int mask) {
 		return (bitfield & value) == value;
 	}
 
+	public IntStream indices() {
+		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
+		return IntStream
+				.range(0, range)
+				.filter(n -> contains(map(n)));
+	}
+
 	/**
 	 * @return The positive bits of this bitfield as a stream of integer values
 	 * @see #map(int)

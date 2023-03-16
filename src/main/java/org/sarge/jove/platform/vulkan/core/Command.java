@@ -185,7 +185,7 @@ public interface Command {
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
 			info.flags = BitMask.of(flags);
-			info.pInheritanceInfo = null;
+			info.pInheritanceInfo = null; // TODO - secondary command buffers
 
 			// Start buffer recording
 			final VulkanLibrary lib = pool.device().library();

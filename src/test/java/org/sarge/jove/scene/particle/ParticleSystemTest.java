@@ -7,17 +7,17 @@ import java.time.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Frame;
+import org.sarge.jove.control.FrameTimer;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
-	private Frame frame;
+	private FrameTimer frame;
 
 	@BeforeEach
 	void before() {
-		frame = mock(Frame.class);
+		frame = mock(FrameTimer.class);
 		when(frame.time()).thenReturn(Instant.ofEpochSecond(1));
 		when(frame.elapsed()).thenReturn(Duration.ofSeconds(2));
 		sys = new ParticleSystem();

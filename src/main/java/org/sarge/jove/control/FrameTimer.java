@@ -6,10 +6,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>frame</i> is a stopwatch timer for an elapsed duration.
+ * A <i>frame timer</i> is a simple stopwatch for the elapsed duration of a rendered frame.
  * @author Sarge
  */
-public class Frame {
+public class FrameTimer {
 	/**
 	 * Number of milliseconds per second.
 	 */
@@ -24,15 +24,15 @@ public class Frame {
 		 * Notifies a completed frame.
 		 * @param frame Completed frame
 		 */
-		void update(Frame frame);
+		void update(FrameTimer frame);
 	}
 
-	private Instant start = Instant.EPOCH;
-	private Instant end = Instant.EPOCH;
-	private Duration elapsed;
+	private Instant start = Instant.now();
+	private Instant end;
 
 	/**
-	 * @return Time of the last frame completion
+	 * @return Frame completion time
+	 * @throws IllegalStateException if this frame has not been completed
 	 */
 	public Instant time() {
 		check();
@@ -41,33 +41,11 @@ public class Frame {
 
 	/**
 	 * @return Elapsed duration of this frame
+	 * @throws IllegalStateException if this frame has not been completed
 	 */
 	public Duration elapsed() {
 		check();
-		if(elapsed == null) {
-			elapsed = Duration.between(start, end);
-		}
-		return elapsed;
-	}
-
-	/**
-	 * Starts a new frame.
-	 * @throws IllegalStateException if this frame has already been started
-	 */
-	public void start() {
-		if(end == null) throw new IllegalStateException("Frame is already started");
-		start = Instant.now();
-		end = null;
-		elapsed = null;
-	}
-
-	/**
-	 * Stops this frame.
-	 * @throws IllegalStateException if this frame has not been completed
-	 */
-	public void stop() {
-		if(end != null) throw new IllegalStateException("Frame is already completed");
-		end = Instant.now();
+		return Duration.between(start, end);
 	}
 
 	/**
@@ -77,9 +55,18 @@ public class Frame {
 		if(end == null) throw new IllegalStateException("Frame has not been completed");
 	}
 
+	/**
+	 * Stops this frame.
+	 * @throws IllegalStateException if this frame has already been completed
+	 */
+	public void stop() {
+		if(end != null) throw new IllegalStateException("Frame has already been completed");
+		end = Instant.now();
+	}
+
 	@Override
 	public String toString() {
-		return String.format("%s -> %s (%s)", start, end, elapsed);
+		return String.format("%s -> %s", start, end);
 	}
 
 	/**
@@ -97,7 +84,7 @@ public class Frame {
 		}
 
 		@Override
-		public void update(Frame frame) {
+		public void update(FrameTimer frame) {
 			final Instant now = frame.time();
 			if(now.isAfter(next)) {
 				count = 1;

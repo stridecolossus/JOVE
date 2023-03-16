@@ -21,7 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
  * @author Sarge
  */
-public final class FrameBuffer extends VulkanObject {
+public class FrameBuffer extends VulkanObject {
 	/**
 	 * Command to end a render pass on this frame-buffer.
 	 */
@@ -134,7 +134,7 @@ public final class FrameBuffer extends VulkanObject {
 		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue.ByReference(), ClearValue::populate);
 
 		// Create command
-		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, VkSubpassContents.INLINE);
+		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, VkSubpassContents.INLINE); // SECONDARY_COMMAND_BUFFERS);
 	}
 
 	@Override

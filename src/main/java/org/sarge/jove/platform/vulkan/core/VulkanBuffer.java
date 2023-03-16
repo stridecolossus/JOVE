@@ -101,7 +101,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * Helper - Provides access to the underlying buffer (mapping the buffer memory as required).
 	 * @return Underlying buffer
 	 */
-	protected final ByteBuffer buffer() {
+	public final ByteBuffer buffer() {
 		return mem
 				.region()
 				.orElseGet(mem::map)

@@ -34,6 +34,11 @@ public final class Semaphore extends VulkanObject {
 		return lib::vkDestroySemaphore;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
+	}
+
 	/**
 	 * Vulkan semaphore API.
 	 */

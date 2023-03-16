@@ -20,5 +20,5 @@ public class VkCommandBufferBeginInfo extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.COMMAND_BUFFER_BEGIN_INFO;
 	public Pointer pNext;
 	public BitMask<VkCommandBufferUsage> flags;
-	public Pointer pInheritanceInfo;
+	public VkCommandBufferInheritanceInfo pInheritanceInfo;
 }

@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import com.sun.jna.Structure.*;
 
 /**
  * Vulkan structure.
@@ -19,7 +19,7 @@ import com.sun.jna.Structure.FieldOrder;
 	"queryFlags",
 	"pipelineStatistics"
 })
-public class VkCommandBufferInheritanceInfo extends VulkanStructure {
+public class VkCommandBufferInheritanceInfo extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.COMMAND_BUFFER_INHERITANCE_INFO;
 	public Pointer pNext;
 	public Pointer renderPass;

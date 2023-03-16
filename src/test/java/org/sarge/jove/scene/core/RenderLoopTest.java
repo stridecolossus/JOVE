@@ -1,20 +1,31 @@
 package org.sarge.jove.scene.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.scene.core.RenderLoop;
+import org.sarge.jove.control.FrameTimer;
+import org.sarge.jove.scene.core.RenderLoop.Scheduler;
 
 @Timeout(1)
+@SuppressWarnings("rawtypes")
 public class RenderLoopTest {
 	private RenderLoop loop;
+	private Scheduler scheduler;
+	private Future future;
 	private Runnable task;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		task = mock(Runnable.class);
-		loop = new RenderLoop();
+		scheduler = mock(Scheduler.class);
+		future = mock(Future.class);
+		when(scheduler.start(any())).thenReturn(future);
+		loop = new RenderLoop(scheduler);
 	}
 
 	@AfterEach
@@ -31,19 +42,6 @@ public class RenderLoopTest {
 		@Test
 		void isRunning() {
 			assertEquals(false, loop.isRunning());
-		}
-
-		@DisplayName("has a default FPS configured")
-		@Test
-		void rate() {
-			assertEquals(1000 / 60, loop.rate());
-		}
-
-		@DisplayName("can configure the target FPS")
-		@Test
-		void fps() {
-			loop.rate(10);
-			assertEquals(1000 / 10, loop.rate());
 		}
 
 		@DisplayName("can be started")
@@ -74,6 +72,7 @@ public class RenderLoopTest {
 		void stop() {
 			loop.stop();
 			assertEquals(false, loop.isRunning());
+			verify(future).cancel(false);
 		}
 
 		@DisplayName("cannot be started again")
@@ -81,11 +80,43 @@ public class RenderLoopTest {
 		void start() {
 			assertThrows(IllegalStateException.class, () -> loop.start(task));
 		}
+	}
 
-		@DisplayName("cannot change the target FPS")
-		@Test
-		void fps() {
-			assertThrows(IllegalStateException.class, () -> loop.rate(60));
+	@Nested
+	class ListenerTests {
+		private FrameTimer.Listener listener;
+
+		@BeforeEach
+		void before() {
+			listener = mock(FrameTimer.Listener.class);
+			loop.add(listener);
 		}
+
+		@Disabled
+		@Test
+		void start() {
+			loop.start(task);
+			verify(listener, atLeastOnce()).update(any());
+			// TODO
+		}
+
+		@Test
+		void remove() {
+			loop.remove(listener);
+			// TODO
+		}
+	}
+
+	@Test
+	void continual() {
+		loop = new RenderLoop(Scheduler.CONTINUAL);
+		loop.start(task);
+	}
+
+	@Test
+	void fixed() {
+		scheduler = Scheduler.fixed(60);
+		loop = new RenderLoop(scheduler);
+		loop.start(task);
 	}
 }

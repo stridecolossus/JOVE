@@ -67,7 +67,7 @@ public class CubeBuilder {
 	 * @see #vertex(Point, Normal, Coordinate2D)
 	 */
 	public DefaultMesh build() {
-		final DefaultMesh mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final DefaultMesh mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, /*Normal.LAYOUT,*/ Coordinate2D.LAYOUT));
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -99,7 +99,7 @@ public class CubeBuilder {
 			@Override
 			public void buffer(ByteBuffer bb) {
 				super.buffer(bb);
-				normal.buffer(bb);
+//				normal.buffer(bb);
 				coord.buffer(bb);
 			}
 		};
