@@ -26,15 +26,6 @@ public record BitField(int mask) {
 	}
 
 	/**
-	 * @param index Bit index
-	 * @return Whether this bitfield contains the given value
-	 * @see #contains(int, int)
-	 */
-	public boolean contains(int value) {
-		return contains(mask, value);
-	}
-
-	/**
 	 * Helper.
 	 * @param bitfield		Bitfield
 	 * @param value			Value
@@ -44,23 +35,15 @@ public record BitField(int mask) {
 		return (bitfield & value) == value;
 	}
 
-	public IntStream indices() {
-		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
-		return IntStream
-				.range(0, range)
-				.filter(n -> contains(map(n)));
-	}
-
 	/**
-	 * @return The positive bits of this bitfield as a stream of integer values
+	 * @return The positive bits of this mask as a stream of index values in the range 0..31
 	 * @see #map(int)
 	 */
 	public IntStream stream() {
 		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
 		return IntStream
 				.range(0, range)
-				.map(BitField::map)
-				.filter(this::contains);
+				.filter(bit -> contains(mask, map(bit)));
 	}
 
 	@Override

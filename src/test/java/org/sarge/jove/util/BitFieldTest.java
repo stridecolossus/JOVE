@@ -14,17 +14,18 @@ class BitFieldTest {
 
 	@Test
 	void contains() {
-		assertEquals(true,   bitfield.contains(0b101));
-		assertEquals(true,   bitfield.contains(0b100));
-		assertEquals(true,   bitfield.contains(0b001));
-		assertEquals(true,   bitfield.contains(0));
-		assertEquals(false,  bitfield.contains(0b111));
-		assertEquals(false,  bitfield.contains(0b1111));
+		final int mask = bitfield.mask();
+		assertEquals(true,   BitField.contains(mask, 0b101));
+		assertEquals(true,   BitField.contains(mask, 0b100));
+		assertEquals(true,   BitField.contains(mask, 0b001));
+		assertEquals(true,   BitField.contains(mask, 0));
+		assertEquals(false,  BitField.contains(mask, 0b111));
+		assertEquals(false,  BitField.contains(mask, 0b1111));
 	}
 
 	@Test
 	void stream() {
-		assertArrayEquals(new int[]{1, 4}, bitfield.stream().toArray());
+		assertArrayEquals(new int[]{0, 2}, bitfield.stream().toArray());
 	}
 
 	@Test

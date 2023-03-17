@@ -16,7 +16,7 @@ import com.sun.jna.*;
  * @see IntEnum
  * @param <E> Bit mask enumeration
  */
-public final class BitMask<E extends IntEnum> {
+public record BitMask<E extends IntEnum>(int bits) {
 	/**
 	 * Creates a bit mask from the given array.
 	 * @param <E> Bit mask enumeration
@@ -29,22 +29,16 @@ public final class BitMask<E extends IntEnum> {
 		return new BitMask<>(Set.of(values));
 	}
 
-	private final int bits;
-
 	/**
 	 * Constructor.
 	 * @param values Enumeration
 	 */
 	public BitMask(Collection<E> values) {
-		this.bits = values.stream().mapToInt(IntEnum::value).sum();
+		this(reduce(values));
 	}
 
-	/**
-	 * Constructor given a native bitfield.
-	 * @param bits Bitfield
-	 */
-	public BitMask(int bits) {
-		this.bits = bits;
+	private static int reduce(Collection<? extends IntEnum> values) {
+		return values.stream().mapToInt(IntEnum::value).sum();
 	}
 
 	/**
@@ -78,6 +72,7 @@ public final class BitMask<E extends IntEnum> {
 	public Set<E> enumerate(ReverseMapping<E> reverse) {
 		return new BitField(bits)
     			.stream()
+    			.map(BitField::map)
     			.mapToObj(reverse::map)
     			.collect(toSet());
 	}

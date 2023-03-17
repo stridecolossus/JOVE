@@ -125,7 +125,7 @@ public class Allocator {
 		// Walk candidate memory types and match against the requested properties
 		final var matcher = new FallbackMatcher();
 		return new BitField(reqs.memoryTypeBits)
-				.indices()
+				.stream()
 				.mapToObj(n -> types[n])
 				.filter(matcher)
 				.findAny()

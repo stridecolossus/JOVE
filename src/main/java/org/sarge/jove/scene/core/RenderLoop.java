@@ -19,7 +19,7 @@ import org.sarge.lib.util.Check;
  */
 public class RenderLoop {
 	/**
-	 * A <i>render loop</i> scheduler is responsible for scheduling render tasks.
+	 * A render loop <i>scheduler</i> is responsible for scheduling render tasks.
 	 */
 	public interface Scheduler {
 		/**

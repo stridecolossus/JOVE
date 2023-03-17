@@ -4,28 +4,21 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.FrameTimer;
 import org.sarge.jove.scene.core.RenderLoop.Scheduler;
 
 @Timeout(1)
-@SuppressWarnings("rawtypes")
 public class RenderLoopTest {
+	private CountDownLatch latch;
 	private RenderLoop loop;
-	private Scheduler scheduler;
-	private Future future;
-	private Runnable task;
 
-	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
-		task = mock(Runnable.class);
-		scheduler = mock(Scheduler.class);
-		future = mock(Future.class);
-		when(scheduler.start(any())).thenReturn(future);
-		loop = new RenderLoop(scheduler);
+		latch = new CountDownLatch(1);
+		loop = new RenderLoop(Scheduler.CONTINUAL);
 	}
 
 	@AfterEach
@@ -47,7 +40,7 @@ public class RenderLoopTest {
 		@DisplayName("can be started")
 		@Test
 		void start() {
-			loop.start(task);
+			loop.start(mock(Runnable.class));
 			assertEquals(true, loop.isRunning());
 		}
 
@@ -63,8 +56,12 @@ public class RenderLoopTest {
 	class Running {
 		@BeforeEach
 		void before() {
-			loop.start(task);
-			assertEquals(true, loop.isRunning());
+			loop.start(latch::countDown);
+		}
+
+		@Test
+		void started() throws InterruptedException {
+			latch.await();
 		}
 
 		@DisplayName("can be stopped")
@@ -72,13 +69,12 @@ public class RenderLoopTest {
 		void stop() {
 			loop.stop();
 			assertEquals(false, loop.isRunning());
-			verify(future).cancel(false);
 		}
 
 		@DisplayName("cannot be started again")
 		@Test
 		void start() {
-			assertThrows(IllegalStateException.class, () -> loop.start(task));
+			assertThrows(IllegalStateException.class, () -> loop.start(mock(Runnable.class)));
 		}
 	}
 
@@ -92,31 +88,17 @@ public class RenderLoopTest {
 			loop.add(listener);
 		}
 
-		@Disabled
 		@Test
-		void start() {
-			loop.start(task);
-			verify(listener, atLeastOnce()).update(any());
-			// TODO
+		void start() throws InterruptedException {
+			loop.start(latch::countDown);
+			latch.await();
+			verify(listener).update(any());
 		}
-
-		@Test
-		void remove() {
-			loop.remove(listener);
-			// TODO
-		}
-	}
-
-	@Test
-	void continual() {
-		loop = new RenderLoop(Scheduler.CONTINUAL);
-		loop.start(task);
 	}
 
 	@Test
 	void fixed() {
-		scheduler = Scheduler.fixed(60);
-		loop = new RenderLoop(scheduler);
-		loop.start(task);
+		loop = new RenderLoop(Scheduler.fixed(60));
+		loop.start(mock(Runnable.class));
 	}
 }
