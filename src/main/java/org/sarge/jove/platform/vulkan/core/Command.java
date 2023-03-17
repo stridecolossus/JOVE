@@ -249,7 +249,7 @@ public interface Command {
 	/**
 	 * A <i>command pool</i> allocates command buffers used to perform work on a given {@link WorkQueue}.
 	 */
-	final class Pool extends VulkanObject {
+	class Pool extends VulkanObject {
 		/**
 		 * Creates a command pool for the given queue.
 		 * @param dev		Logical device

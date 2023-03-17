@@ -39,12 +39,12 @@ public class WorkTest {
 		buffer.begin().end();
 
 		// Create work instance
-		work = new Work.Builder(pool).add(buffer).build();
+		work = new Work.Builder().add(buffer).build();
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(queue, work.queue());
+		assertEquals(pool, work.pool());
 	}
 
 	@DisplayName("Work can be submitted to a queue")
@@ -73,17 +73,15 @@ public class WorkTest {
 	void invalid() {
 		// Create a pool with a different queue
 		final var queue = new WorkQueue(new Handle(2), new Family(1, 2, Set.of()));
-		final Pool other = new Pool(new Handle(3), dev, queue);
+		final Pool otherPool = new Pool(new Handle(3), dev, queue);
 
 		// Create a buffer using this pool
-		final Buffer buffer = mock(Buffer.class);
-		when(buffer.pool()).thenReturn(other);
-		when(buffer.isReady()).thenReturn(true);
-
-		// Create work
-		final Work invalid = new Work.Builder(other).add(buffer).build();
+		final Buffer other = mock(Buffer.class);
+		when(other.pool()).thenReturn(otherPool);
+		when(other.isReady()).thenReturn(true);
 
 		// Check cannot submit to different queues
+		final Work invalid = Work.of(other);
 		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, invalid), null));
 	}
 
@@ -102,7 +100,7 @@ public class WorkTest {
 		void before() {
 			wait = new Semaphore(new Handle(1), dev);
 			signal = new Semaphore(new Handle(2), dev);
-			builder = new Work.Builder(pool);
+			builder = new Work.Builder();
 		}
 
 		@DisplayName("A command buffer can be added to the work")
@@ -121,10 +119,11 @@ public class WorkTest {
 		@DisplayName("All command buffers in the work must submit to the same queue family")
 		@Test
 		void addInvalidQueueFamily() {
-			final var other = new WorkQueue(new Handle(1), new Family(1, 2, Set.of()));
-			pool = new Command.Pool(new Handle(1), dev, other);
-			buffer = pool.allocate().begin().end();
-			assertThrows(IllegalArgumentException.class, () -> builder.add(buffer));
+			final var other = new WorkQueue(new Handle(1), new Family(999, 2, Set.of()));
+			final Pool otherPool = new Command.Pool(new Handle(2), dev, other);
+			final Buffer invalid = otherPool.allocate().begin().end();
+			builder.add(buffer);
+			assertThrows(IllegalArgumentException.class, () -> builder.add(invalid));
 		}
 
 		@DisplayName("The work can be configured to wait for a semaphore")

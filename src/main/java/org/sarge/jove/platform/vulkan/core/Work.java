@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 
@@ -9,7 +8,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
-import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 import org.sarge.lib.util.Check;
@@ -30,22 +28,21 @@ import org.sarge.lib.util.Check;
  * Usage:
  * <pre>
  * // Record a command buffer
- * Command.Pool pool = ...
  * Command.Buffer buffer = ...
  *
  * // Init synchronisation
  * Semaphore wait = ...
  * Semaphore signal = ...
- * Fence fence = ...
  *
  * // Create work submission
- * Work work = new Builder(pool)
+ * Work work = new Builder()
  *     .add(buffer)
  *     .wait(wait, VkPipelineStage.TOP_OF_PIPE)
  *     .signal(signal)
  *     .build();
  *
  * // Submit work
+ * Fence fence = ...
  * work.submit(fence);
  *
  * // Submit a batch of work
@@ -64,24 +61,18 @@ public final class Work {
 		return Builder.of(buffer).build();
 	}
 
-	private final Pool pool;
 	private final List<Buffer> buffers = new ArrayList<>();
 	private final Map<Semaphore, Set<VkPipelineStage>> wait = new LinkedHashMap<>();
 	private final Set<Semaphore> signal = new HashSet<>();
 
-	/**
-	 * Constructor.
-	 * @param pool Command pool for this submission
-	 */
-	private Work(Pool pool) {
-		this.pool = notNull(pool);
+	private Work() {
 	}
 
 	/**
-	 * @return Work queue for this submission
+	 * @return Command pool for this submission
 	 */
-	public WorkQueue queue() {
-		return pool.queue();
+	public Pool pool() {
+		return buffers.get(0).pool();
 	}
 
 	/**
@@ -124,28 +115,20 @@ public final class Work {
 	 * @throws NoSuchElementException if the batch is empty
 	 */
 	public static void submit(Collection<Work> batch, Fence fence) {
-		// Check batch submits to expected queue
-		final Work first = batch.iterator().next();
-		for(Work work : batch) {
-			if(!matches(first.pool, work.pool)) {
-				throw new IllegalArgumentException(String.format("Work batch does not submit to the same queue family: queue=%s work=%s", first.pool.queue(), work));
+		// Check batch submits to same queue
+		final Iterator<Work> work = batch.iterator();
+		final Pool pool = work.next().pool();
+		final WorkQueue queue = pool.queue();
+		while(work.hasNext()) {
+			if(!queue.equals(work.next().pool().queue())) {
+				throw new IllegalArgumentException(String.format("Work batch does not submit to the same queue family: queue=%s work=%s", queue, work));
 			}
 		}
 
 		// Submit batch
 		final VkSubmitInfo[] array = StructureCollector.array(batch, new VkSubmitInfo(), Work::populate);
-		final VulkanLibrary lib = first.pool.device().library();
-		final WorkQueue queue = first.pool.queue();
+		final VulkanLibrary lib = pool.device().library();
 		check(lib.vkQueueSubmit(queue, array.length, array, fence));
-	}
-
-	/**
-	 * @return Whether the given command pools share the same queue family
-	 */
-	private static boolean matches(Pool left, Pool right) {
-		final Family a = left.queue().family();
-		final Family b = right.queue().family();
-		return a.equals(b);
 	}
 
 	@Override
@@ -153,7 +136,7 @@ public final class Work {
 		return
 				(obj == this) ||
 				(obj instanceof Work that) &&
-				this.queue().equals(that.queue()) &&
+				this.pool().equals(that.pool()) &&
 				this.buffers.equals(that.buffers) &&
 				this.wait.equals(that.wait) &&
 				this.signal.equals(that.signal);
@@ -162,10 +145,10 @@ public final class Work {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
-				.append("queue", queue())
+				.append("pool", pool())
 				.append("buffers", buffers.size())
-				.append("wait", wait.size())
-				.append("signal", signal.size())
+				.append("waits", wait.size())
+				.append("signals", signal.size())
 				.build();
 	}
 
@@ -179,18 +162,11 @@ public final class Work {
 		 * @return New work builder
 		 */
 		public static Builder of(Buffer buffer) {
-			return new Builder(buffer.pool()).add(buffer);
+			return new Builder().add(buffer);
 		}
 
-		private Work work;
-
-		/**
-		 * Constructor.
-		 * @param pool Command pool for this submission
-		 */
-		public Builder(Pool pool) {
-			this.work = new Work(pool);
-		}
+		private Work work = new Work();
+		private WorkQueue queue;
 
 		/**
 		 * Adds a command buffer to be submitted.
@@ -200,11 +176,19 @@ public final class Work {
 		 */
 		public Builder add(Buffer buffer) {
 			// Check buffer has been recorded
-			if(!buffer.isReady()) throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
+			if(!buffer.isReady()) {
+				throw new IllegalStateException("Command buffer has not been recorded: " + buffer);
+			}
 
 			// Check all work is submitted to the same queue family
-			if(!matches(work.pool, buffer.pool())) {
-				throw new IllegalArgumentException(String.format("Command buffer must submit to the queue family of this work: buffer=%s work=%s", buffer, work));
+			final WorkQueue that = buffer.pool().queue();
+			if(queue == null) {
+				queue = that;
+			}
+			else {
+    			if(!queue.equals(that)) {
+    				throw new IllegalArgumentException("Command buffer must submit to the queue family of this work: buffer=%s expected=%s".formatted(buffer, queue));
+    			}
 			}
 
 			// Add buffer to this work
@@ -223,7 +207,9 @@ public final class Work {
 		public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
 			Check.notNull(semaphore);
 			Check.notEmpty(stages);
-			if(work.wait.containsKey(semaphore)) throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
+			if(work.wait.containsKey(semaphore)) {
+				throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
+			}
 			work.wait.put(semaphore, Set.copyOf(stages));
 			return this;
 		}
@@ -251,8 +237,12 @@ public final class Work {
 		 * @throws IllegalArgumentException if no command buffers have been added or any semaphore is used as both a wait and signal
 		 */
 		public Work build() {
-			if(work.buffers.isEmpty()) throw new IllegalArgumentException("No command buffers specified");
-			if(!Collections.disjoint(work.signal, work.wait.keySet())) throw new IllegalArgumentException("Semaphore cannot be used as both wait and signal");
+			if(work.buffers.isEmpty()) {
+				throw new IllegalArgumentException("No command buffers specified");
+			}
+			if(!Collections.disjoint(work.signal, work.wait.keySet())) {
+				throw new IllegalArgumentException("Semaphore cannot be used as both wait and signal");
+			}
 
 			try {
 				return work;

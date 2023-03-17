@@ -23,9 +23,83 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class FrameBuffer extends VulkanObject {
 	/**
-	 * Command to end a render pass on this frame-buffer.
+	 * Command to end the render pass on this frame buffer.
 	 */
 	public static final Command END = (lib, buffer) -> lib.vkCmdEndRenderPass(buffer);
+
+	private final RenderPass pass;
+	private final List<View> attachments;
+	private final Dimensions extents;
+
+	/**
+	 * Constructor.
+	 * @param handle 			Handle
+	 * @param dev				Logical device
+	 * @param pass				Render pass
+	 * @param attachments		Attachments
+	 * @param extents			Image extents
+	 */
+	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
+		super(handle, dev);
+		this.pass = notNull(pass);
+		this.attachments = List.copyOf(notEmpty(attachments));
+		this.extents = notNull(extents);
+	}
+
+	/**
+	 * @return Attachments
+	 */
+	public List<View> attachments() {
+		return attachments;
+	}
+
+	/**
+	 * Creates a command to begin rendering to this frame buffer.
+	 * @return Rendering command
+	 * @see #END
+	 */
+	public Command begin() {
+		// Create descriptor
+		final var info = new VkRenderPassBeginInfo();
+		info.renderPass = pass.handle();
+		info.framebuffer = this.handle();
+
+		// Populate rendering area
+		final VkExtent2D ext = info.renderArea.extent;
+		ext.width = extents.width();
+		ext.height = extents.height();
+		// TODO - offset => extents is rectangle
+
+		// Build attachment clear operations
+		final Collection<ClearValue> clear = attachments
+				.stream()
+				.map(View::clear)
+				.flatMap(Optional::stream)
+				.toList();
+
+		// Init clear values
+		info.clearValueCount = clear.size();
+		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
+
+		// Create command
+		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, VkSubpassContents.INLINE); // SECONDARY_COMMAND_BUFFERS);
+	}
+	// TODO - VkSubpassContents as parameter
+
+	@Override
+	protected Destructor<FrameBuffer> destructor(VulkanLibrary lib) {
+		return lib::vkDestroyFramebuffer;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
+				.append("pass", pass)
+				.append("extents", extents)
+				.append("attachments", attachments)
+				.build();
+	}
 
 	/**
 	 * Creates a frame buffer.
@@ -79,135 +153,58 @@ public class FrameBuffer extends VulkanObject {
 		return new FrameBuffer(new Handle(ref), dev, pass, attachments, extents);
 	}
 
-	private final RenderPass pass;
-	private final List<View> attachments;
-	private final Dimensions extents;
-
 	/**
-	 * Constructor.
-	 * @param handle 			Handle
-	 * @param dev				Logical device
-	 * @param pass				Render pass
-	 * @param attachments		Attachments
-	 * @param extents			Image extents
-	 */
-	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
-		super(handle, dev);
-		this.pass = notNull(pass);
-		this.attachments = List.copyOf(notEmpty(attachments));
-		this.extents = notNull(extents);
-	}
-
-	/**
-	 * @return Attachments
-	 */
-	public List<View> attachments() {
-		return attachments;
-	}
-
-	/**
-	 * Creates a command to begin rendering.
-	 * @return Command to begin rendering
-	 * @see #END
-	 */
-	public Command begin() {
-		// Create descriptor
-		final var info = new VkRenderPassBeginInfo();
-		info.renderPass = pass.handle();
-		info.framebuffer = this.handle();
-
-		// Populate rendering area
-		final VkExtent2D ext = info.renderArea.extent;
-		ext.width = extents.width();
-		ext.height = extents.height();
-		// TODO - offset
-
-		// Build attachment clear operations
-		final Collection<ClearValue> clear = attachments
-				.stream()
-				.map(View::clear)
-				.flatMap(Optional::stream)
-				.toList();
-
-		// Init clear values
-		info.clearValueCount = clear.size();
-		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue.ByReference(), ClearValue::populate);
-
-		// Create command
-		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, VkSubpassContents.INLINE); // SECONDARY_COMMAND_BUFFERS);
-	}
-
-	@Override
-	protected Destructor<FrameBuffer> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyFramebuffer;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("pass", pass)
-				.append("extents", extents)
-				.append("attachments", attachments)
-				.build();
-	}
-
-	/**
-	 * A <i>frame buffer group</i> is a convenience aggregation for a set of frame buffers used by a given swapchain.
+	 * A <i>frame buffer group</i> aggregates a set of frame buffers used during rendering.
 	 */
 	public static class Group implements TransientObject {
-		private final Swapchain swapchain;
 		private final List<FrameBuffer> buffers;
 
-		/**
-		 * Constructor.
-		 * @param swapchain			Swapchain
-		 * @param pass				Render pass
-		 * @param additional		Additional attachments
-		 */
-		public Group(Swapchain swapchain, RenderPass pass, List<View> additional) {
-			// Init buffers
-			final List<View> images = swapchain.attachments();
-			this.buffers = new ArrayList<>(images.size());
-			this.swapchain = notNull(swapchain);
+    	/**
+    	 * Constructor.
+    	 * @param pass				Render pass
+    	 * @param swapchain			Swapchain
+    	 * @param additional		Additional attachments
+    	 */
+    	public Group(RenderPass pass, Swapchain swapchain, List<View> additional) {
+    		final Dimensions extents = swapchain.extents();
+    		this.buffers = swapchain
+    				.attachments()
+    				.stream()
+    				.map(col -> join(col, additional))
+    				.map(list -> create(pass, extents, list))
+    				.toList();
+    	}
 
-			// Create buffers
-			final Dimensions extents = swapchain.extents();
-			for(View image : images) {
-				// Enumerate attachments
-				final var attachments = new ArrayList<View>();
-				attachments.add(image);
-				attachments.addAll(additional);
+    	/**
+    	 * Convenience constructor for a group of frame buffers with an additional depth-stencil attachment.
+    	 * @param pass				Render pass
+    	 * @param swapchain			Swapchain
+    	 * @param depth				Depth-stencil attachment
+    	 */
+    	public Group(RenderPass pass, Swapchain swapchain, View depth) {
+    		this(pass, swapchain, List.of(depth));
+    	}
 
-				// Create buffer
-				final FrameBuffer buffer = create(pass, extents, attachments);
-				buffers.add(buffer);
-			}
+    	private static List<View> join(View col, List<View> additional) {
+    		final List<View> list = new ArrayList<>();
+    		list.add(col);
+    		list.addAll(additional);
+    		return list;
+    	}
+
+    	/**
+    	 * @return Frame buffers in this group
+    	 */
+    	public List<FrameBuffer> buffers() {
+			return buffers;
 		}
 
-		/**
-		 * @return Swapchain
-		 */
-		public Swapchain swapchain() {
-			return swapchain;
-		}
-
-		/**
-		 * Retrieves a frame buffer by swapchain index.
-		 * @param index Index
-		 * @return Frame buffer
-		 * @throws IndexOutOfBoundsException for an invalid index
-		 */
-		public FrameBuffer buffer(int index) {
-			return buffers.get(index);
-		}
-
-		@Override
-		public void destroy() {
-			for(FrameBuffer b : buffers) {
-				b.destroy();
-			}
-		}
+    	@Override
+    	public void destroy() {
+    		for(var b : buffers) {
+    			b.destroy();
+    		}
+    	}
 	}
 
 	/**

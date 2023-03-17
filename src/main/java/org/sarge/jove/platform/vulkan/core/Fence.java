@@ -17,14 +17,55 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>fence</i> is used to synchronise between application code and Vulkan.
  * @author Sarge
  */
-public final class Fence extends VulkanObject {
+public interface Fence extends NativeObject, TransientObject {
+	/**
+	 * @return Whether this fence has been signalled
+	 */
+	boolean signalled();
+
+	/**
+	 * Resets this fence.
+	 * @see #reset(LogicalDevice, Collection)
+	 */
+	void reset();
+
+	/**
+	 * Resets a group of fences.
+	 * @param dev			Logical device
+	 * @param fences		Fences to reset
+	 */
+	static void reset(DeviceContext dev, Collection<Fence> fences) {
+		final Pointer array = NativeObject.array(fences);
+		final VulkanLibrary lib = dev.library();
+		check(lib.vkResetFences(dev, fences.size(), array));
+	}
+
+	/**
+	 * Waits for this fence.
+	 * @see #wait(LogicalDevice, Collection, boolean, long)
+	 */
+	void waitReady();
+
+	/**
+	 * Waits for a group of fences.
+	 * @param dev			Logical device
+	 * @param fences		Fences
+	 * @param all			Whether to wait for all or any fence
+	 * @param timeout		Timeout (nanoseconds)
+	 */
+	static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
+		final Pointer array = NativeObject.array(fences);
+		final VulkanLibrary lib = dev.library();
+		check(lib.vkWaitForFences(dev, fences.size(), array, all, timeout));
+	}
+
 	/**
 	 * Creates a fence.
 	 * @param dev			Logical device
 	 * @param flags			Creation flags
 	 * @return Fence
 	 */
-	public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
+	static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
 		info.flags = BitMask.of(flags);
@@ -35,75 +76,59 @@ public final class Fence extends VulkanObject {
 		check(lib.vkCreateFence(dev, info, null, ref));
 
 		// Create domain object
-		return new Fence(new Handle(ref), dev);
+		return new DefaultFence(new Handle(ref), dev);
 	}
 
 	/**
-	 * Constructor.
-	 * @param handle		Handle
-	 * @param dev			Logical device
+	 * Default implementation.
 	 */
-	Fence(Handle handle, DeviceContext dev) {
-		super(handle, dev);
-	}
+	final class DefaultFence extends VulkanObject implements Fence {
+    	/**
+    	 * Constructor.
+    	 * @param handle		Handle
+    	 * @param dev			Logical device
+    	 */
+    	DefaultFence(Handle handle, DeviceContext dev) {
+    		super(handle, dev);
+    	}
 
-	/**
-	 * @return Whether this fence has been signalled
-	 */
-	public boolean signalled() {
-		final DeviceContext dev = this.device();
-		final VulkanLibrary lib = dev.library();
-		final VkResult result = lib.vkGetFenceStatus(dev, this);
-		return switch(result) {
-			case SUCCESS -> true;
-			case NOT_READY -> false;
-			default -> throw new VulkanException(result);
-		};
-	}
+    	/**
+    	 * @return Whether this fence has been signalled
+    	 */
+    	@Override
+		public boolean signalled() {
+    		final DeviceContext dev = this.device();
+    		final VulkanLibrary lib = dev.library();
+    		final VkResult result = lib.vkGetFenceStatus(dev, this);
+    		return switch(result) {
+    			case SUCCESS -> true;
+    			case NOT_READY -> false;
+    			default -> throw new VulkanException(result);
+    		};
+    	}
 
-	/**
-	 * Resets a group of fences.
-	 * @param dev			Logical device
-	 * @param fences		Fences to reset
-	 */
-	public static void reset(DeviceContext dev, Collection<Fence> fences) {
-		final Pointer array = NativeObject.array(fences);
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkResetFences(dev, fences.size(), array));
-	}
+    	/**
+    	 * Resets this fence.
+    	 * @see Fence#reset(LogicalDevice, Collection)
+    	 */
+    	@Override
+		public void reset() {
+    		Fence.reset(device(), Set.of(this));
+    	}
 
-	/**
-	 * Resets this fence.
-	 * @see #reset(LogicalDevice, Collection)
-	 */
-	public void reset() {
-		reset(device(), Set.of(this));
-	}
+    	/**
+    	 * Waits for this fence.
+    	 * @see Fence#wait(LogicalDevice, Collection, boolean, long)
+    	 */
+    	@Override
+		public void waitReady() {
+    		Fence.wait(device(), Set.of(this), true, Long.MAX_VALUE);
+    	}
 
-	/**
-	 * Waits for a group of fences.
-	 * @param dev			Logical device
-	 * @param fences		Fences
-	 * @param all			Whether to wait for all or any fence
-	 * @param timeout		Timeout (nanoseconds)
-	 */
-	public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
-		final Pointer array = NativeObject.array(fences);
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkWaitForFences(dev, fences.size(), array, all, timeout));
-	}
-
-	/**
-	 * Waits for this fence.
-	 * @see #wait(LogicalDevice, Collection, boolean, long)
-	 */
-	public void waitReady() {
-		wait(device(), Set.of(this), true, Long.MAX_VALUE);
-	}
-
-	@Override
-	protected Destructor<Fence> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyFence;
+    	@Override
+    	protected Destructor<DefaultFence> destructor(VulkanLibrary lib) {
+    		return lib::vkDestroyFence;
+    	}
 	}
 
 	/**
