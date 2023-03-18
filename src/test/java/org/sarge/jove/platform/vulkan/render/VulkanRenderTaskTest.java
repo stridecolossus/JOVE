@@ -31,6 +31,6 @@ class VulkanRenderTaskTest {
 		when(selector.frame()).thenReturn(frame);
 		when(composer.compose(buffer)).thenReturn(render);
 		task.render();
-		verify(frame).present(render, swapchain);
+		verify(frame).present(render);
 	}
 }

@@ -6,6 +6,7 @@ import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>Vulkan frame</i> is used to acquire and present frames during the rendering process.
@@ -17,7 +18,6 @@ import org.sarge.jove.platform.vulkan.core.*;
  * <li>Present the completed frame to the swapchain</li>
  * </ol>
  * <p>
- * TODO - does this need to an abstraction? will we ever need alternative implementations?
  * @author Sarge
  */
 public class VulkanFrame implements TransientObject {
@@ -35,7 +35,7 @@ public class VulkanFrame implements TransientObject {
 	private final Semaphore available, ready;
 	private final Fence fence;
 	private int index;
-	private boolean acquired;
+	private Swapchain swapchain;
 
 	/**
 	 * Constructor.
@@ -60,15 +60,15 @@ public class VulkanFrame implements TransientObject {
 	 */
 	public int acquire(Swapchain swapchain) {
 		// Acquire frame
-		if(acquired) throw new IllegalStateException("Frame has already been acquired: " + this);
-		acquired = true;
+		Check.notNull(swapchain);
+		if(this.swapchain != null) throw new IllegalStateException("Frame has already been acquired: " + this);
 
 		// Wait for completion of the previous frame
 		fence.waitReady();
 		fence.reset();
 
 		// Retrieve frame buffer index
-		// TODO - swapchain returns a 'handle'? => store here, no need for parameter in present()
+		this.swapchain = swapchain;
 		index = swapchain.acquire(available, null);
 
 		return index;
@@ -77,12 +77,11 @@ public class VulkanFrame implements TransientObject {
 	/**
 	 * Submits the given render task and presents the completed frame.
 	 * Blocks until the render task has been completed.
-	 * @param render		Render task
-	 * @param swapchain		Swapchain
+	 * @param render Render task
 	 * @throws IllegalStateException if this frame has not been acquired
 	 */
-	public void present(Command.Buffer render, Swapchain swapchain) {
-		if(!acquired) throw new IllegalStateException("Frame has not been acquired: " + this);
+	public void present(Command.Buffer render) {
+		if(swapchain == null) throw new IllegalStateException("Frame has not been acquired: " + this);
 
 		// Submit render task
 		submit(render);
@@ -93,7 +92,7 @@ public class VulkanFrame implements TransientObject {
 		// Present completed frame
 		final WorkQueue queue = render.pool().queue();
 		swapchain.present(queue, index, ready);
-		acquired = false;
+		swapchain = null;
 	}
 
 	/**

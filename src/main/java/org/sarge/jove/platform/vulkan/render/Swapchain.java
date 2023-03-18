@@ -108,7 +108,9 @@ public class Swapchain extends VulkanObject {
 	 */
 	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
 		// Validate
-		if((semaphore == null) && (fence == null)) throw new IllegalArgumentException("Either a semaphore or fence must be provided");
+		if((semaphore == null) && (fence == null)) {
+			throw new IllegalArgumentException("Either a semaphore or fence must be provided");
+		}
 
 		// Retrieve next image index
 		final DeviceContext dev = super.device();

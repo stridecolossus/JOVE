@@ -1,6 +1,6 @@
 package org.sarge.jove.scene.core;
 
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -10,7 +10,7 @@ import org.sarge.jove.control.FrameTimer.Listener;
 import org.sarge.lib.util.Check;
 
 /**
- * The <i>render loop</i> performs frame rendering according to a configured {@link Scheduler} policy.
+ * The <i>render loop</i> performs frame rendering according to a configured frame rate.
  * <p>
  * Note that frame rendering tasks are executed sequentially on a single thread.
  * <p>
@@ -18,54 +18,15 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class RenderLoop {
-	/**
-	 * A render loop <i>scheduler</i> is responsible for scheduling render tasks.
-	 */
-	public interface Scheduler {
-		/**
-		 * Starts a render task.
-		 * @param task Render task to start
-		 * @return Future
-		 */
-		Future<?> start(Runnable task);
-
-		/**
-		 * A <i>continual</i> scheduler renders frames continually without throttling, i.e. essentially an infinite loop.
-		 * @return Continual scheduler
-		 */
-		Scheduler CONTINUAL = task -> {
-			final ExecutorService executor = Executors.newSingleThreadExecutor();
-			return executor.submit(task);
-		};
-
-		/**
-		 * Creates a scheduler that renders at a fixed frame-rate.
-		 * <p>
-		 * Note that frames that take longer than the configured rate simply back up the rendering process.
-		 * i.e. Frames may start late but are not executed concurrently.
-		 * <p>
-		 * @param fps Target frames-per-second
-		 * @return Fixed rate scheduler
-		 */
-		static Scheduler fixed(int fps) {
-			return task -> {
-				final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-				final long period = TimeUnit.SECONDS.toMillis(1) / fps;
-				return executor.scheduleAtFixedRate(task, 0, period, TimeUnit.MILLISECONDS);
-			};
-		}
-	}
-
-	private final Scheduler scheduler;
 	private final Set<Listener> listeners = new HashSet<>();
+	private int rate;
 	private Future<?> future;
 
 	/**
 	 * Constructor.
-	 * @param scheduler Render task scheduler
 	 */
-	public RenderLoop(Scheduler scheduler) {
-		this.scheduler = notNull(scheduler);
+	public RenderLoop() {
+		rate(60);
 	}
 
 	/**
@@ -73,6 +34,24 @@ public class RenderLoop {
 	 */
 	public boolean isRunning() {
 		return future != null;
+	}
+
+	/**
+	 * @return Target frame rate (or FPS)
+	 */
+	public int rate() {
+		return rate;
+	}
+
+	/**
+	 * Sets the target frame rate (or FPS).
+	 * @param rate Frame rate
+	 * @throws IllegalArgumentException if {@link #rate} is not one-or-more
+	 * @throws IllegalStateException if this loop is running
+	 */
+	public void rate(int rate) {
+		if(isRunning()) throw new IllegalStateException("Cannot set frame rate while running");
+		this.rate = oneOrMore(rate);
 	}
 
 	/**
@@ -99,20 +78,14 @@ public class RenderLoop {
 	 */
 	public void start(Runnable task) {
 		Check.notNull(task);
-		if(future != null) {
+		if(isRunning()) {
 			throw new IllegalStateException("Render loop has already been started");
 		}
 
-		final Runnable wrapper = () -> {
-			final FrameTimer frame = run(task);
-			update(frame);
-		};
-
-		future = scheduler.start(wrapper);
-
-		if(future == null) {
-			throw new RuntimeException("Scheduler returned empty future: " + scheduler);
-		}
+		final Runnable wrapper = () -> run(task);
+		final long period = TimeUnit.SECONDS.toMillis(1) / rate;
+		final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+		future = executor.scheduleAtFixedRate(wrapper, 0, period, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -120,10 +93,11 @@ public class RenderLoop {
 	 * @param task Render task
 	 * @return Frame
 	 */
-	private static FrameTimer run(Runnable task) {
+	private FrameTimer run(Runnable task) {
 		final FrameTimer timer = new FrameTimer();
 		task.run();
 		timer.stop();
+		update(timer);
 		return timer;
 	}
 
@@ -142,10 +116,10 @@ public class RenderLoop {
 	 * @throws IllegalStateException if rendering has not been started
 	 */
 	public void stop() {
-		if(future == null) {
+		if(!isRunning()) {
 			throw new IllegalStateException("Render loop has not been started");
 		}
-		future.cancel(false);
+		future.cancel(true);
 		future = null;
 	}
 }

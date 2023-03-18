@@ -8,17 +8,18 @@ import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.FrameTimer;
-import org.sarge.jove.scene.core.RenderLoop.Scheduler;
 
 @Timeout(1)
 public class RenderLoopTest {
 	private CountDownLatch latch;
 	private RenderLoop loop;
+	private Runnable task;
 
 	@BeforeEach
 	void before() {
-		latch = new CountDownLatch(1);
-		loop = new RenderLoop(Scheduler.CONTINUAL);
+		latch = new CountDownLatch(2);
+		task = latch::countDown;
+		loop = new RenderLoop();
 	}
 
 	@AfterEach
@@ -40,7 +41,7 @@ public class RenderLoopTest {
 		@DisplayName("can be started")
 		@Test
 		void start() {
-			loop.start(mock(Runnable.class));
+			loop.start(task);
 			assertEquals(true, loop.isRunning());
 		}
 
@@ -56,7 +57,7 @@ public class RenderLoopTest {
 	class Running {
 		@BeforeEach
 		void before() {
-			loop.start(latch::countDown);
+			loop.start(task);
 		}
 
 		@Test
@@ -74,10 +75,42 @@ public class RenderLoopTest {
 		@DisplayName("cannot be started again")
 		@Test
 		void start() {
-			assertThrows(IllegalStateException.class, () -> loop.start(mock(Runnable.class)));
+			assertThrows(IllegalStateException.class, () -> loop.start(task));
 		}
 	}
 
+	@DisplayName("The frame rate of the loop...")
+	@Nested
+	class FrameRateTests {
+    	@DisplayName("has a default FPS target")
+    	@Test
+    	void rate() {
+    		assertEquals(60, loop.rate());
+    	}
+
+    	@DisplayName("can be set to an FPS target")
+    	@Test
+    	void modify() {
+    		loop.rate(50);
+    		assertEquals(50, loop.rate());
+    	}
+
+    	@DisplayName("cannot be set if the loop is running")
+    	@Test
+    	void running() {
+    		loop.start(task);
+    		assertThrows(IllegalStateException.class, () -> loop.rate(50));
+    	}
+
+    	@DisplayName("cannot be zero")
+    	@Test
+    	void invalid() {
+    		assertThrows(IllegalArgumentException.class, () -> loop.rate(0));
+    		assertThrows(IllegalArgumentException.class, () -> loop.rate(-1));
+    	}
+	}
+
+	@DisplayName("A frame listener...")
 	@Nested
 	class ListenerTests {
 		private FrameTimer.Listener listener;
@@ -88,17 +121,22 @@ public class RenderLoopTest {
 			loop.add(listener);
 		}
 
+		@DisplayName("can be attached to the loop to receive frame completion events")
 		@Test
-		void start() throws InterruptedException {
-			loop.start(latch::countDown);
+		void add() throws InterruptedException {
+			loop.start(task);
 			latch.await();
-			verify(listener).update(any());
+			verify(listener, atLeastOnce()).update(any(FrameTimer.class));
+		}
+
+		@DisplayName("can be removed from the loop")
+		@Test
+		void remove() throws InterruptedException {
+			loop.remove(listener);
+			loop.start(task);
+			latch.await();
+			verifyNoInteractions(listener);
 		}
 	}
 
-	@Test
-	void fixed() {
-		loop = new RenderLoop(Scheduler.fixed(60));
-		loop.start(mock(Runnable.class));
-	}
 }

@@ -47,6 +47,6 @@ public class VulkanRenderTask {
 		final Command.Buffer render = composer.compose(fb);
 
 		// Present rendered frame
-		frame.present(render, swapchain);
+		frame.present(render);
 	}
 }
