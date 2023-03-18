@@ -332,21 +332,13 @@ public interface Command {
 		}
 
 		/**
-		 * Allocates a single primary command buffer from this pool.
+		 * Allocates a single command buffer from this pool.
+		 * @param primary Whether to allocate a primary or secondary buffer
 		 * @return New command buffer
 		 */
-		public Buffer allocate() {
-			final List<Buffer> buffers = allocate(1, true);
+		public Buffer allocate(boolean primary) {
+			final List<Buffer> buffers = allocate(1, primary);
 			return buffers.get(0);
-		}
-
-		/**
-		 * Allocates a number of primary command buffers from this pool.
-		 * @param num Number of buffers to allocate
-		 * @return New command buffers
-		 */
-		public List<Buffer> allocate(int num) {
-			return allocate(num, true);
 		}
 
 		/**

@@ -162,7 +162,7 @@ public final class Work {
 	 */
 	public static Buffer submit(Command cmd, Pool pool) {
 		final Buffer buffer = pool
-				.allocate()
+				.allocate(true)
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 				.add(cmd)
 				.end();

@@ -22,7 +22,8 @@ public class FrameComposer {
 
 	/**
 	 * Constructor.
-	 * @param pool Command pool
+	 * @param pool 			Command pool
+	 * @param sequence		Factory for the render sequence
 	 */
 	public FrameComposer(Pool pool, Supplier<List<Buffer>> sequence) {
 		this.pool = notNull(pool);
@@ -55,7 +56,7 @@ public class FrameComposer {
 	public Command.Buffer compose(FrameBuffer frame) {
 		final Command begin = frame.begin(contents);
 		return pool
-				.allocate()
+				.allocate(true)
 				.begin(flags)
 				.add(begin)
 				.add(sequence.get())

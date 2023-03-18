@@ -46,7 +46,7 @@ class CommandTest {
 
 		@BeforeEach
 		void before() {
-			buffer = pool.allocate();
+			buffer = pool.allocate(true);
 		}
 
 		@Test
@@ -199,7 +199,7 @@ class CommandTest {
 			assertEquals(true, secondary.isReady());
 
 			// Record to primary buffer
-			final Buffer buffer = pool.allocate();
+			final Buffer buffer = pool.allocate(true);
 			buffer.begin().add(List.of(secondary));
 			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(List.of(secondary)));
 		}
@@ -207,7 +207,7 @@ class CommandTest {
 		@DisplayName("cannot be recorded to a primary command buffer if it is not ready")
 		@Test
 		void notReady() {
-			final Buffer buffer = pool.allocate();
+			final Buffer buffer = pool.allocate(true);
 			buffer.begin();
 			assertThrows(IllegalStateException.class, () -> buffer.begin().add(List.of(secondary)));
 		}
@@ -244,8 +244,7 @@ class CommandTest {
 		@Test
 		void allocate() {
 			// Allocate a buffer
-			final Collection<Buffer> buffers = pool.allocate(1);
-			assertNotNull(buffers);
+			final Collection<Buffer> buffers = pool.allocate(1, true);
 			assertEquals(1, buffers.size());
 
 			// Check allocator
@@ -270,7 +269,7 @@ class CommandTest {
 
 		@Test
 		void free() {
-			final Buffer buffer = pool.allocate();
+			final Buffer buffer = pool.allocate(true);
 			pool.free(Set.of(buffer));
 			final Memory array = NativeObject.array(List.of(buffer));
 			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);

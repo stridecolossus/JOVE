@@ -35,7 +35,7 @@ public class WorkTest {
 
 		// Create command buffer
 		pool = new Command.Pool(new Handle(2), dev, queue);
-		buffer = pool.allocate();
+		buffer = pool.allocate(true);
 		buffer.begin().end();
 
 		// Create work instance
@@ -121,7 +121,7 @@ public class WorkTest {
 		void addInvalidQueueFamily() {
 			final var other = new WorkQueue(new Handle(1), new Family(999, 2, Set.of()));
 			final Pool otherPool = new Command.Pool(new Handle(2), dev, other);
-			final Buffer invalid = otherPool.allocate().begin().end();
+			final Buffer invalid = otherPool.allocate(true).begin().end();
 			builder.add(buffer);
 			assertThrows(IllegalArgumentException.class, () -> builder.add(invalid));
 		}
