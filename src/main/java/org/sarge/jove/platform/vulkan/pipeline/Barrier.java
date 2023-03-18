@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.util.*;
@@ -41,7 +40,7 @@ import com.sun.jna.Structure;
  * <p>
  * @author Sarge
  */
-public final class Barrier extends ImmediateCommand {
+public final class Barrier implements Command {
 	private final BitMask<VkPipelineStage> src, dest;
 	private final BitMask<VkDependencyFlag> flags;
 	private final VkImageMemoryBarrier[] images;

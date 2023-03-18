@@ -28,23 +28,12 @@ public interface Command {
 	void record(VulkanLibrary lib, Buffer buffer);
 
 	/**
-	 * An <i>immediate command</i> is a convenience base-class for one-off commands such as transfer operations.
+	 * Convenience helper - Submits this command as a one-time operation and blocks until completed.
+	 * @param pool Command pool
+	 * @see Work#submit(Command, Pool)
 	 */
-	abstract class ImmediateCommand implements Command {
-		/**
-		 * Submits this as a <i>one time</i> command to the given pool and waits for completion.
-		 * @param pool Command pool
-		 * @see Buffer#submit()
-		 * @see VkCommandBufferUsage#ONE_TIME_SUBMIT
-		 */
-		public Buffer submit(Pool pool) {
-			return pool
-					.allocate()
-					.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-					.add(this)
-					.end()
-					.submit();
-		}
+	default Buffer submit(Pool pool) {
+		return Work.submit(this, pool);
 	}
 
 	/**
@@ -236,23 +225,6 @@ public interface Command {
 		}
 
 		/**
-		 * Helper - Submits this buffer and <b>blocks</b> until completion.
-		 * @see Work#submit(Fence)
-		 */
-		public Buffer submit() {
-			final Fence fence = Fence.create(pool.device());
-			try {
-				Work.of(this).submit(fence);
-				fence.waitReady();
-			}
-			finally {
-				fence.destroy();
-				free();
-			}
-			return this;
-		}
-
-		/**
 		 * Resets this command buffer.
 		 * @param flags Flags
 		 * @throws IllegalStateException if this buffer has not been recorded
@@ -394,15 +366,6 @@ public interface Command {
 		public void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
 			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.array(buffers));
-		}
-
-		/**
-		 * Helper - Waits for the work queue to become idle.
-		 * @see WorkQueue#waitIdle(VulkanLibrary)
-		 */
-		public void waitIdle() {
-			final VulkanLibrary lib = super.device().library();
-			queue.waitIdle(lib);
 		}
 
 		@Override

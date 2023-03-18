@@ -159,13 +159,12 @@ public class WorkTest {
 			// Build work
 			work = builder
 					.add(buffer)
-					//.add(buffer)
 					.wait(wait, VkPipelineStage.TOP_OF_PIPE)
 					.signal(signal)
 					.build();
 
 			// Submit work
-			work.submit(null);
+			work.submit((Fence) null);
 
 			// Init expected submission descriptor
 			final VkSubmitInfo expected = new VkSubmitInfo() {

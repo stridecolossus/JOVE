@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
 
@@ -14,7 +13,7 @@ import org.sarge.lib.util.Check;
  * A <i>buffer copy command</i> is used to transfer data between Vulkan buffers.
  * @author Sarge
  */
-public final class BufferCopyCommand extends ImmediateCommand {
+public final class BufferCopyCommand implements Command {
 	/**
 	 * Creates a command to copy between the given buffers.
 	 * @param src		Source buffer

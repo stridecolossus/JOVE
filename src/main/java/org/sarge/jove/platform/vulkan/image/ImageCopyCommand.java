@@ -6,8 +6,7 @@ import static org.sarge.lib.util.Check.notNull;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.*;
 import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
@@ -16,7 +15,7 @@ import org.sarge.lib.util.Check;
  * An <i>image copy command</i> is used to copy between images.
  * @author Sarge
  */
-public final class ImageCopyCommand extends ImmediateCommand {
+public final class ImageCopyCommand implements Command {
 	/**
 	 * Creates a copy command for the whole of the image.
 	 * @param src		Source

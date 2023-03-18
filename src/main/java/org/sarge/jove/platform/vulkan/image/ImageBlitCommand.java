@@ -6,8 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Extents;
 import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
@@ -16,7 +15,7 @@ import org.sarge.lib.util.Check;
  * The <i>image blit command</i> copies regions of an image, potentially performing format conversion, scaling and filtering.
  * @author Sarge
  */
-public final class ImageBlitCommand extends ImmediateCommand {
+public final class ImageBlitCommand implements Command {
 	private final Image src, dest;
 	private final VkImageLayout srcLayout, destLayout;
 	private final VkImageBlit[] regions;

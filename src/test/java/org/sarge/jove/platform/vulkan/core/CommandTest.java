@@ -29,19 +29,14 @@ class CommandTest {
 		lib = dev.library();
 		queue = new WorkQueue(new Handle(1), new Family(2, 1, Set.of()));
 		pool = Pool.create(dev, queue);
-		cmd = mock(Command.class);
+		cmd = spy(Command.class);
 	}
 
-	@DisplayName("An immediate command...")
-	@Nested
-	class ImmediateCommandTests {
-		@DisplayName("can be submitted as a one-off operation")
-		@Test
-		void submit() {
-			final var immediate = spy(ImmediateCommand.class);
-			final Buffer buffer = immediate.submit(pool);
-			verify(immediate).record(lib, buffer);
-		}
+	@DisplayName("A command can be submitted as a one-off operation")
+	@Test
+	void submit() {
+		final Buffer buffer = cmd.submit(pool);
+		verify(cmd).record(lib, buffer);
 	}
 
 	@DisplayName("A command buffer...")
@@ -279,12 +274,6 @@ class CommandTest {
 			pool.free(Set.of(buffer));
 			final Memory array = NativeObject.array(List.of(buffer));
 			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
-		}
-
-		@Test
-		void waitIdle() {
-			pool.waitIdle();
-			verify(lib).vkQueueWaitIdle(queue);
 		}
 
 		@Test

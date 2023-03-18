@@ -9,7 +9,6 @@ import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.ImmediateCommand;
 import org.sarge.jove.platform.vulkan.image.Image.*;
 import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.util.Check;
@@ -18,7 +17,7 @@ import org.sarge.lib.util.Check;
  * An <i>image transfer command</i> is used to copy an image to/from a Vulkan buffer.
  * @author Sarge
  */
-public final class ImageTransferCommand extends ImmediateCommand {
+public final class ImageTransferCommand implements Command {
 	private final Image image;
 	private final VulkanBuffer buffer;
 	private final boolean write;

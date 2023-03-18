@@ -7,7 +7,7 @@ import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Pool;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.memory.*;
@@ -51,8 +51,8 @@ public class CaptureTask {
 		// Init copy command
 		final Command copy = ImageCopyCommand.of(image, screenshot);
 
-		// Submit screenshot task
-		pool
+		// Build screenshot task
+		final Command.Buffer buffer = pool
 				.allocate()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 					.add(destination(screenshot))
@@ -60,8 +60,10 @@ public class CaptureTask {
 					.add(copy)
 					.add(prepare(screenshot))
 					.add(restore(image))
-				.end()
-				.submit();
+				.end();
+
+		// submit and wait for screenshot
+		Work.submit(buffer);
 
 		return screenshot;
 	}

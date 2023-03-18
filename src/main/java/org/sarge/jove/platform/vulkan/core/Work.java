@@ -7,6 +7,7 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.NativeHelper.PointerToIntArray;
@@ -55,7 +56,7 @@ public final class Work {
 	/**
 	 * Helper - Creates a new work submission for the given command buffer.
 	 * @param buffer Command buffer
-	 * @return New work
+	 * @return Work
 	 */
 	public static Work of(Buffer buffer) {
 		return Builder.of(buffer).build();
@@ -150,6 +151,43 @@ public final class Work {
 				.append("waits", wait.size())
 				.append("signals", signal.size())
 				.build();
+	}
+
+	/**
+	 * Helper - Submits the given command as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} command buffer and waits for completion.
+	 * @param cmd		Command
+	 * @param pool		Pool
+	 * @return Allocated command buffer
+	 * @see #submit(Buffer)
+	 */
+	public static Buffer submit(Command cmd, Pool pool) {
+		final Buffer buffer = pool
+				.allocate()
+				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+				.add(cmd)
+				.end();
+
+		submit(buffer);
+
+		return buffer;
+	}
+
+	/**
+	 * Helper - Submits the given command buffer and waits for completion.
+	 * @param buffer Command buffer
+	 * @see #submit(Command, Pool)
+	 */
+	public static void submit(Buffer buffer) {
+		final DeviceContext dev = buffer.pool().device();
+		final Fence fence = Fence.create(dev);
+		try {
+			Work.of(buffer).submit(fence);
+			fence.waitReady();
+		}
+		finally {
+			fence.destroy();
+			buffer.free();
+		}
 	}
 
 	/**
