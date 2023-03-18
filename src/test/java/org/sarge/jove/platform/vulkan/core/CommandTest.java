@@ -199,7 +199,8 @@ class CommandTest {
 		@Test
 		void add() {
 			// Record secondary command sequence
-			secondary.begin().add(cmd).end();
+			final Handle pass = new Handle(1);
+			secondary.begin(pass).add(cmd).end();
 			assertEquals(true, secondary.isReady());
 
 			// Record to primary buffer

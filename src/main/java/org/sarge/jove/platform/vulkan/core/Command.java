@@ -136,12 +136,21 @@ public interface Command {
 				return this;
 			}
 
+			public Recorder addAll(List<Command> commands) {
+				final VulkanLibrary lib = pool.device().library();
+				validate(State.RECORDING);
+				for(Command cmd : commands) {
+					cmd.record(lib, Buffer.this);
+				}
+				return this;
+			}
+
 			/**
 			 * Records a set of secondary command buffers.
 			 * @param secondary Secondary buffers
 			 * @throws IllegalStateException if this buffer is not recording or is a secondary buffer
 			 * @throws IllegalStateException if any of {@link #secondary} have not been recorded
-			 * @throws IllegalArgumentException if any of {@link #secondary} are {@link Buffer#isPrimary()}
+			 * @throws IllegalArgumentException if any of {@link #secondary} is a primary buffer
 			 */
 			public Recorder add(List<Buffer> secondary) {
 				// Validate
@@ -173,19 +182,49 @@ public interface Command {
 		}
 
 		/**
-		 * Starts recording to this command buffer.
+		 * Starts recording to this <b>primary</b> command buffer.
 		 * @param flags Creation flags
-		 * @return Command buffer recorder
+		 * @return Primary command buffer recorder
 		 * @throws IllegalStateException if this buffer is not ready for recording
+		 * @throws IllegalStateException if this is not a primary buffer
 		 */
 		public Recorder begin(VkCommandBufferUsage... flags) {
+			if(!isPrimary()) throw new IllegalStateException("Expected primary command buffer");
+			return begin((VkCommandBufferInheritanceInfo) null, flags);
+		}
+
+		/**
+		 * Starts recording to this <b>secondary</b> command buffer.
+		 * @param pass		Render pass
+		 * @param flags		Creation flags
+		 * @return Secondary command buffer recorder
+		 * @throws IllegalStateException if this buffer is not ready for recording
+		 * @throws IllegalStateException if this is not a secondary buffer
+		 */
+		public Recorder begin(Handle pass, VkCommandBufferUsage... flags) {
+			if(isPrimary()) throw new IllegalStateException("Expected secondary command buffer");
+
+			final var info = new VkCommandBufferInheritanceInfo();
+			info.renderPass = notNull(pass);
+			info.subpass = 0; // TODO - subpass index, query stuff
+
+			return begin(info, flags);
+		}
+
+		/**
+		 * Starts recording.
+		 * @param inheritance		Inheritance descriptor for a secondary command buffer
+		 * @param flags				Creation flags
+		 * @return Command buffer recorder
+		 */
+		private Recorder begin(VkCommandBufferInheritanceInfo inheritance, VkCommandBufferUsage... flags) {
 			// Check buffer can be recorded
 			validate(State.INITIAL);
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
 			info.flags = BitMask.of(flags);
-			info.pInheritanceInfo = null; // TODO - secondary command buffers
+			info.pInheritanceInfo = inheritance;
 
 			// Start buffer recording
 			final VulkanLibrary lib = pool.device().library();
@@ -226,6 +265,7 @@ public interface Command {
 			check(lib.vkResetCommandBuffer(this, mask));
 			state = State.INITIAL;
 		}
+		// TODO - should allocated buffers be invalidated?
 
 		/**
 		 * Releases this buffer back to the pool.
@@ -234,6 +274,7 @@ public interface Command {
 		public void free() {
 			pool.free(Set.of(this));
 		}
+		// TODO - should allocated buffers be invalidated?
 
 		@Override
 		public String toString() {

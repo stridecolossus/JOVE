@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 import com.sun.jna.Pointer;
@@ -22,9 +23,9 @@ import com.sun.jna.Structure.*;
 public class VkCommandBufferInheritanceInfo extends VulkanStructure implements ByReference {
 	public VkStructureType sType = VkStructureType.COMMAND_BUFFER_INHERITANCE_INFO;
 	public Pointer pNext;
-	public Pointer renderPass;
+	public Handle renderPass;
 	public int subpass;
-	public Pointer framebuffer;
+	public Handle framebuffer;
 	public boolean occlusionQueryEnable;
 	public VkQueryControlFlag queryFlags;
 	public VkQueryPipelineStatisticFlag pipelineStatistics;

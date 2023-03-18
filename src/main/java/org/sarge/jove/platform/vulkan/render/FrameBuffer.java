@@ -58,7 +58,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @return Rendering command
 	 * @see #END
 	 */
-	public Command begin() {
+	public Command begin(VkSubpassContents contents) {
 		// Create descriptor
 		final var info = new VkRenderPassBeginInfo();
 		info.renderPass = pass.handle();
@@ -82,9 +82,8 @@ public class FrameBuffer extends VulkanObject {
 		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
 
 		// Create command
-		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, VkSubpassContents.INLINE); // SECONDARY_COMMAND_BUFFERS);
+		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, contents);
 	}
-	// TODO - VkSubpassContents as parameter
 
 	@Override
 	protected Destructor<FrameBuffer> destructor(VulkanLibrary lib) {

@@ -59,11 +59,8 @@ public class FrameBufferTest {
 	@DisplayName("A frame buffer can be used to start a render pass")
 	@Test
 	void begin() {
-		// Create command
-		final Command begin = buffer.begin();
-		assertNotNull(begin);
-
 		// Start render pass
+		final Command begin = buffer.begin(VkSubpassContents.INLINE);
 		final Command.Buffer cmd = mock(Command.Buffer.class);
 		begin.record(lib, cmd);
 
@@ -73,7 +70,6 @@ public class FrameBufferTest {
 			public boolean equals(Object obj) {
 				// Check descriptor
 				final var actual = (VkRenderPassBeginInfo) obj;
-				assertNotNull(actual);
 				assertEquals(buffer.handle(), actual.framebuffer);
 				assertEquals(pass.handle(), actual.renderPass);
 
