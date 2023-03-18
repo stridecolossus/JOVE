@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.FrameTimer;
@@ -139,4 +140,20 @@ public class RenderLoopTest {
 		}
 	}
 
+	@DisplayName("Exceptions caused by a render task can be delegated to a handler")
+	@SuppressWarnings("unchecked")
+	@Test
+	void handler() throws InterruptedException {
+		final Consumer<Exception> handler = mock(Consumer.class);
+		final var e = new RuntimeException();
+		task = () -> {
+			latch.countDown();
+			throw e;
+		};
+		loop.handler(handler);
+		loop.start(task);
+		latch.await();
+		verify(handler, atLeastOnce()).accept(e);
+		assertEquals(true, loop.isRunning());
+	}
 }

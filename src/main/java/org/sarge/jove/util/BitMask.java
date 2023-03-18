@@ -31,6 +31,14 @@ public record BitMask<E extends IntEnum>(int bits) {
 
 	/**
 	 * Constructor.
+	 * @param bits Bit mask
+	 */
+	public BitMask {
+		// Empty
+	}
+
+	/**
+	 * Constructor.
 	 * @param values Enumeration
 	 */
 	public BitMask(Collection<E> values) {

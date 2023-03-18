@@ -1,9 +1,10 @@
 package org.sarge.jove.scene.core;
 
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.util.Check.*;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 import org.sarge.jove.control.FrameTimer;
 import org.sarge.jove.control.FrameTimer.Listener;
@@ -21,6 +22,7 @@ public class RenderLoop {
 	private final Set<Listener> listeners = new HashSet<>();
 	private int rate;
 	private Future<?> future;
+	private Consumer<Exception> handler = System.err::println;
 
 	/**
 	 * Constructor.
@@ -72,6 +74,14 @@ public class RenderLoop {
 	}
 
 	/**
+	 * Sets the handler for exceptions in the render task (default dumps to the error console).
+	 * @param handler Exception handler
+	 */
+	public void handler(Consumer<Exception> handler) {
+		this.handler = notNull(handler);
+	}
+
+	/**
 	 * Starts the render loop.
 	 * @param task Render task
 	 * @throws IllegalStateException if rendering has already been started
@@ -82,7 +92,15 @@ public class RenderLoop {
 			throw new IllegalStateException("Render loop has already been started");
 		}
 
-		final Runnable wrapper = () -> run(task);
+		final Runnable wrapper = () -> {
+			try {
+				run(task);
+			}
+			catch(Exception e) {
+				handler.accept(e);
+			}
+		};
+
 		final long period = TimeUnit.SECONDS.toMillis(1) / rate;
 		final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 		future = executor.scheduleAtFixedRate(wrapper, 0, period, TimeUnit.MILLISECONDS);
@@ -91,14 +109,12 @@ public class RenderLoop {
 	/**
 	 * Runs the given render task and tracks the elapsed duration.
 	 * @param task Render task
-	 * @return Frame
 	 */
-	private FrameTimer run(Runnable task) {
+	private void run(Runnable task) {
 		final FrameTimer timer = new FrameTimer();
 		task.run();
 		timer.stop();
 		update(timer);
-		return timer;
 	}
 
 	/**
