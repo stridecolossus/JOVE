@@ -6,31 +6,20 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
-import org.sarge.jove.util.FloatSupport.FloatFunction;
 
 /**
  * A <i>mutable rotation</i> is a specialised rotation about an axis.
- * <p>
- * This implementation selects the most performant algorithm to construct the resultant matrix depending on the rotation axis.
- * A rotation about one of the <i>cardinal</i> axes delegates to {@link Axis#rotation(float, Cosine)}.
- * Otherwise the rotation matrix calculated by {@link Quaternion#matrix()} with a new quaternion instance created on each invocation.
- * <p>
  * @author Sarge
  */
 public class MutableRotation implements Rotation, Animation {
-	private final Cosine cosine;
-	private Normal axis;
-	private float angle;
-	private FloatFunction<Matrix> matrix;
+	private AxisAngle rot;
 
 	/**
 	 * Constructor.
-	 * @param axis			Rotation axis
-	 * @param cosine		Cosine function
+	 * @param rot Rotation
 	 */
-	public MutableRotation(Normal axis, Cosine cosine) {
-		this.cosine = notNull(cosine);
-		set(axis);
+	public MutableRotation(AxisAngle rot) {
+		this.rot = notNull(rot);
 	}
 
 	/**
@@ -38,22 +27,22 @@ public class MutableRotation implements Rotation, Animation {
 	 * @param axis Rotation axis
 	 */
 	public MutableRotation(Normal axis) {
-		this(axis, Cosine.DEFAULT);
+		this(new AxisAngle(axis, 0));
 	}
 
 	@Override
 	public Matrix matrix() {
-		return matrix.apply(angle);
+		return rot.matrix();
 	}
 
 	@Override
 	public AxisAngle toAxisAngle() {
-		return new AxisAngle(axis, angle);
+		return rot;
 	}
 
 	@Override
-	public Vector rotate(Vector vec, Cosine cosine) {
-		return this.toAxisAngle().rotate(vec, cosine);
+	public Vector rotate(Vector vec) {
+		return rot.rotate(vec);
 	}
 
 	/**
@@ -61,8 +50,7 @@ public class MutableRotation implements Rotation, Animation {
 	 * @param axis Rotation axis
 	 */
 	public void set(Normal axis) {
-		this.axis = notNull(axis);
-		this.matrix = function();
+		set(axis, rot.angle());
 	}
 
 	/**
@@ -70,22 +58,20 @@ public class MutableRotation implements Rotation, Animation {
 	 * @param angle Rotation angle (radians)
 	 */
 	public void set(float angle) {
-		this.angle = angle;
+		set(rot.axis(), angle);
 	}
 
 	/**
-	 * Determines the appropriate rotation function for the given axis.
+	 * Resets the underlying rotation.
 	 */
-	private FloatFunction<Matrix> function() {
-		if(axis instanceof Axis cardinal) {
-			return angle -> cardinal.rotation(angle, cosine);
-		}
-		else {
-			return angle -> {
-				final AxisAngle rot = this.toAxisAngle();
-				return Quaternion.of(rot, cosine).matrix();
-			};
-		}
+	private void set(Normal axis, float angle) {
+		final Cosine cos = rot.cosine();
+		this.rot = new AxisAngle(axis, angle) {
+			@Override
+			public Cosine cosine() {
+				return cos;
+			}
+		};
 	}
 
 	@Override
@@ -96,9 +82,6 @@ public class MutableRotation implements Rotation, Animation {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this)
-				.append(axis)
-				.append(angle)
-				.build();
+		return new ToStringBuilder(this).append(rot).build();
 	}
 }

@@ -1,10 +1,18 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.Cosine;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.util.Check.notNull;
+
+import java.util.Objects;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.util.*;
 
 /**
  * An <i>axis-angle</i> is the default implementation for a rotation.
+ * <p>
+ * The {@link #matrix()} method selects the optimal algorithm to construct a matrix from this rotation.
+ * A rotation about a cardinal {@link Axis} delegates to {@link Axis#rotation(float, Cosine)}.
+ * Otherwise the matrix is constructed from a {@link Quaternion} instance created on each invocation.
  * <p>
  * The {@link #cosine()} method can be overridden to provide a custom trigonometric function used to calculate the rotation matrix.
  * Alternatively see {@link #of(AxisAngle, Cosine)}
@@ -12,24 +20,77 @@ import org.sarge.lib.util.Check;
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public record AxisAngle(Normal axis, float angle) implements Rotation {
+public class AxisAngle implements Rotation {
+	private final Normal axis;
+	private final float angle;
+
 	/**
 	 * Constructor.
 	 * @param axis		Rotation axis
 	 * @param angle		Angle (radians)
 	 */
-	public AxisAngle {
-		Check.notNull(axis);
+	public AxisAngle(Normal axis, float angle) {
+		this.axis = notNull(axis);
+		this.angle = angle;
+	}
+
+	/**
+	 * Copy constructor.
+	 */
+	protected AxisAngle(AxisAngle that) {
+		this.axis = that.axis();
+		this.angle = that.angle();
+	}
+
+	/**
+	 * @return Rotation axis
+	 */
+	public final Normal axis() {
+		return axis;
+	}
+
+	/**
+	 * @return Rotation angle (radians)
+	 */
+	public float angle() {
+		return angle;
 	}
 
 	@Override
-	public final Matrix matrix() {
-		return Quaternion.of(this).matrix();
+	public Matrix matrix() {
+		if(axis instanceof Axis cardinal) {
+			return cardinal.rotation(angle, cosine());
+		}
+		else {
+			return Quaternion.of(this).matrix();
+		}
 	}
 
 	@Override
 	public AxisAngle toAxisAngle() {
 		return this;
+	}
+
+	/**
+	 * @return Cosine function
+	 */
+	public Cosine cosine() {
+		return Cosine.DEFAULT;
+	}
+
+	/**
+	 * Creates an axis-angle adapter that uses the given cosine function.
+	 * @param that		Axis-angle to adapt
+	 * @param cosine	Cosine function
+	 * @return Axis-angle
+	 */
+	public AxisAngle of(AxisAngle that, Cosine cosine) {
+		return new AxisAngle(that) {
+			@Override
+			public Cosine cosine() {
+				return cosine;
+			}
+		};
 	}
 
 	/**
@@ -48,11 +109,31 @@ public record AxisAngle(Normal axis, float angle) implements Rotation {
 	 * <p>
 	 */
 	@Override
-	public Vector rotate(Vector vec, Cosine cosine) {
+	public Vector rotate(Vector vec) {
+		final Cosine cosine = this.cosine();
 		final float cos = cosine.cos(angle);
 		final Vector a = vec.multiply(cos);
 		final Vector b = axis.cross(vec).multiply(cosine.sin(angle));
 		final Vector c = axis.multiply((1 - cos) * axis.dot(vec));
 		return a.add(b).add(c);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(axis, angle);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof AxisAngle that) &&
+				this.axis.equals(that.axis()) &&
+				MathsUtil.isEqual(this.angle, that.angle());
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this).append(axis).append(angle).build();
 	}
 }
