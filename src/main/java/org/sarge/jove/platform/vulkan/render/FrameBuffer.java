@@ -29,7 +29,7 @@ public class FrameBuffer extends VulkanObject {
 
 	private final RenderPass pass;
 	private final List<View> attachments;
-	private final Dimensions extents;
+	private final Rectangle extents;
 
 	/**
 	 * Constructor.
@@ -39,7 +39,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @param attachments		Attachments
 	 * @param extents			Image extents
 	 */
-	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Dimensions extents) {
+	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Rectangle extents) {
 		super(handle, dev);
 		this.pass = notNull(pass);
 		this.attachments = List.copyOf(notEmpty(attachments));
@@ -65,10 +65,10 @@ public class FrameBuffer extends VulkanObject {
 		info.framebuffer = this.handle();
 
 		// Populate rendering area
-		final VkExtent2D ext = info.renderArea.extent;
-		ext.width = extents.width();
-		ext.height = extents.height();
-		// TODO - offset => extents is rectangle
+		info.renderArea.extent.width = extents.width();
+		info.renderArea.extent.height = extents.height();
+		info.renderArea.offset.x = extents.x();
+		info.renderArea.offset.y = extents.y();
 
 		// Build attachment clear operations
 		final Collection<ClearValue> clear = attachments
@@ -110,7 +110,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @throws IllegalArgumentException if an attachment is not of the expected format
 	 * @throws IllegalArgumentException if an attachment is smaller than the given extents
 	 */
-	public static FrameBuffer create(RenderPass pass, Dimensions extents, List<View> attachments) {
+	public static FrameBuffer create(RenderPass pass, Rectangle extents, List<View> attachments) {
 		// Validate attachments
 		final List<Attachment> expected = pass.attachments();
 		final int size = expected.size();
@@ -128,7 +128,7 @@ public class FrameBuffer extends VulkanObject {
 
 			// Validate attachment contains frame-buffer extents
 			final Dimensions dim = descriptor.extents().size();
-			if(extents.compareTo(dim) > 0) {
+			if(extents.dimensions().compareTo(dim) > 0) {
 				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dim, extents));
 			}
 		}
@@ -165,7 +165,7 @@ public class FrameBuffer extends VulkanObject {
     	 * @param additional		Additional attachments
     	 */
     	public Group(RenderPass pass, Swapchain swapchain, List<View> additional) {
-    		final Dimensions extents = swapchain.extents();
+    		final var extents = new Rectangle(swapchain.extents());  // TODO - configurable
     		this.buffers = swapchain
     				.attachments()
     				.stream()
