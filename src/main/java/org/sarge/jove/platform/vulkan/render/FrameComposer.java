@@ -11,7 +11,10 @@ import org.sarge.jove.platform.vulkan.core.Command.*;
 
 /**
  * The <i>frame composer</i> builds the render task for the next frame.
- * TODO - doc
+ * <p>
+ * The default configuration assumes that the render sequence is comprised of <i>secondary</i> command buffers.
+ * The {@link #contents(VkSubpassContents)} method can be used to override the default behaviour.
+ * <p>
  * @author Sarge
  */
 public class FrameComposer {

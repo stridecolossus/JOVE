@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>Vulkan frame</i> is used to acquire and present frames during the rendering process.
+ * A <i>Vulkan frame</i> tracks the state of an in-flight frame during the rendering process.
  * <p>
  * This is a blocking implementation that synchronises the acquire-render-present process as follows:
  * <ol>
@@ -62,6 +62,9 @@ public class VulkanFrame implements TransientObject {
 		// Acquire frame
 		Check.notNull(swapchain);
 		if(this.swapchain != null) throw new IllegalStateException("Frame has already been acquired: " + this);
+		// TODO - do we need additional state and/or sync locks here?
+		// i.e. state = pending | acquired | rendering | presented (panding?)
+		// reentrant lock on acquire() and release when presented?
 
 		// Wait for completion of the previous frame
 		fence.waitReady();
@@ -81,12 +84,11 @@ public class VulkanFrame implements TransientObject {
 	 * @throws IllegalStateException if this frame has not been acquired
 	 */
 	public void present(Command.Buffer render) {
-		if(swapchain == null) throw new IllegalStateException("Frame has not been acquired: " + this);
-
 		// Submit render task
+		if(swapchain == null) throw new IllegalStateException("Frame has not been rendered: " + this);
 		submit(render);
 
-		// Wait for frame to be rendered
+		// Wait for render to be completed
 		fence.waitReady();
 
 		// Present completed frame

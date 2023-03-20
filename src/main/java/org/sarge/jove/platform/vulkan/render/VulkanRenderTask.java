@@ -10,7 +10,16 @@ import org.sarge.jove.scene.core.RenderLoop;
 /**
  * The <i>Vulkan render task</i> is used to render and present a frame to the swapchain.
  * <p>
- * The intention of this class is to use the {@link #render()} method as a task for the {@link RenderLoop}.
+ * This class orchestrates the components that collaborate to render a frame as follows:
+ * <ol>
+ * <li>Select the next frame state tracker from the selector</li>
+ * <li>Acquire the next frame buffer to be rendered from the swapchain</li>
+ * <li>Invoke the frame composer to build the render task for the selected frame and buffer</li>
+ * <li>Render the frame</li>
+ * <li>Present the completed frame to the swapchain</li>
+ * </ol>
+ * <p>
+ * The {@link #render()} method is generally used as the task for the {@link RenderLoop}.
  * <p>
  * @author Sarge
  */
