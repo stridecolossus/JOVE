@@ -41,6 +41,7 @@ public class MemoryPoolTest {
     		assertEquals(Optional.empty(), pool.allocate(1));
     	}
 
+		@Disabled
     	@DisplayName("cannot reallocate memory")
     	@Test
     	void reallocate() {
@@ -203,6 +204,7 @@ public class MemoryPoolTest {
 			assertEquals(0, pool.allocations().count());
 		}
 
+		@Disabled
 		@DisplayName("can reallocate the destroyed memory")
 		@Test
 		void reallocate() {
@@ -213,6 +215,7 @@ public class MemoryPoolTest {
 			assertEquals(1, pool.allocations().count());
 		}
 
+		@Disabled
 		@DisplayName("can reallocate a portion of the destroyed memory")
 		@Test
 		void portion() {

@@ -108,6 +108,7 @@ public class BlockTest {
 			verify(prev).unmap();
 		}
 
+		@Disabled
 		@Test
 		void reallocate() {
 			allocation.destroy();
@@ -115,11 +116,13 @@ public class BlockTest {
 			assertEquals(false, allocation.isDestroyed());
 		}
 
+		@Disabled
 		@Test
 		void reallocateNotDestroyed() {
 			assertThrows(IllegalStateException.class, () -> allocation.reallocate());
 		}
 
+		@Disabled
 		@Test
 		void reallocateBlockDestroyed() {
 			mem.destroy();

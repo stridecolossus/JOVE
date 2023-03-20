@@ -89,9 +89,9 @@ public class MemoryPool implements TransientObject {
 	public Optional<DeviceMemory> allocate(long size) {
 		return blocks
 				.stream()
-				.filter(b -> b.remaining() >= size)
+				.filter(block -> block.remaining() >= size)
 				.findAny()
-				.map(b -> b.allocate(size));
+				.map(block -> block.allocate(size));
 	}
 
 	/**
@@ -112,8 +112,8 @@ public class MemoryPool implements TransientObject {
 
 	private DeviceMemory reallocate(BlockDeviceMemory mem) {
 		// TODO - split, etc
-		mem.reallocate();
-		return mem;
+		throw new UnsupportedOperationException();
+		//return mem;
 	}
 
 //	@Override

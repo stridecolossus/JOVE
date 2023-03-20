@@ -180,7 +180,8 @@ class Block {
 //		}
 
 		public void reallocate() {
-			destroyed = false;
+			throw new UnsupportedOperationException(); // TODO - reallocation, split, etc
+			//destroyed = false;
 		}
 
 		@Override
