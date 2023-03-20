@@ -79,13 +79,12 @@ public class AxisAngle implements Rotation {
 	}
 
 	/**
-	 * Creates an axis-angle adapter that uses the given cosine function.
-	 * @param that		Axis-angle to adapt
-	 * @param cosine	Cosine function
+	 * Creates an adapter for this axis-angle that uses the given cosine function when constructing the rotation matrix.
+	 * @param cosine Cosine function
 	 * @return Axis-angle
 	 */
-	public AxisAngle of(AxisAngle that, Cosine cosine) {
-		return new AxisAngle(that) {
+	public AxisAngle of(Cosine cosine) {
+		return new AxisAngle(this) {
 			@Override
 			public Cosine cosine() {
 				return cosine;

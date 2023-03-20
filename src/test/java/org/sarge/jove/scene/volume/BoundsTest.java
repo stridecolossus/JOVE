@@ -2,11 +2,8 @@ package org.sarge.jove.scene.volume;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.volume.Bounds;
 
 class BoundsTest {
 	private Bounds bounds;
@@ -115,12 +112,6 @@ class BoundsTest {
 		}
 	}
 
-	@DisplayName("A bounds can be created as an aggregate of a collection of bounds")
-	@Test
-	void sum() {
-		assertEquals(bounds, Bounds.sum(List.of(bounds, bounds)));
-	}
-
 	@DisplayName("A bounds builder...")
 	@Nested
 	class BuilderTests {
@@ -153,10 +144,13 @@ class BoundsTest {
 			assertEquals(Bounds.EMPTY, builder.build());
 		}
 
-		@DisplayName("can add other bounds")
+		@DisplayName("can combine bounds")
 		@Test
-		void bounds() {
-			builder.add(bounds);
+		void sum() {
+			final var other = new Bounds.Builder();
+			other.add(min);
+			builder.add(max);
+			builder.sum(other);
 			assertEquals(bounds, builder.build());
 		}
 	}

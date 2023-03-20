@@ -65,13 +65,9 @@ public class MutableRotation implements Rotation, Animation {
 	 * Resets the underlying rotation.
 	 */
 	private void set(Normal axis, float angle) {
+		final var updated = new AxisAngle(axis, angle);
 		final Cosine cos = rot.cosine();
-		this.rot = new AxisAngle(axis, angle) {
-			@Override
-			public Cosine cosine() {
-				return cos;
-			}
-		};
+		rot = updated.of(cos);
 	}
 
 	@Override

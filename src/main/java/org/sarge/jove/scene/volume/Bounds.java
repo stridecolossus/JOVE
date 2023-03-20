@@ -1,9 +1,10 @@
 package org.sarge.jove.scene.volume;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.stream.Collector;
+import java.util.stream.Collector.Characteristics;
 
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.geometry.Vector;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtil;
 import org.sarge.lib.util.Check;
 
@@ -112,20 +113,6 @@ public record Bounds(Point min, Point max) {
 	}
 
 	/**
-	 * Calculates the sum of the given bounds, i.e. the aggregate bounds enclosing the given set.
-	 * @param bounds Bounds to sum
-	 * @return Aggregated bounds
-	 * @see Builder#add(Bounds)
-	 */
-	public static Bounds sum(Collection<Bounds> bounds) {
-		final Builder builder = new Builder();
-		for(Bounds b : bounds) {
-			builder.add(b);
-		}
-		return builder.build();
-	}
-
-	/**
 	 * Builder for bounds.
 	 */
 	public static class Builder {
@@ -161,10 +148,12 @@ public record Bounds(Point min, Point max) {
 		}
 
 		/**
-		 * Adds the given bounds to this bounds.
-		 * @param bounds Bounds to add
+		 * Sums this and the given set of bounds, i.e. computes the aggregate enclosing both.
+		 * @param that Bounds to add
+		 * @return Summed bounds
 		 */
-		public Builder add(Bounds bounds) {
+		public Builder sum(Builder that) {
+			final Bounds bounds = that.build();
 			add(bounds.min);
 			add(bounds.max);
 			return this;
@@ -178,6 +167,19 @@ public record Bounds(Point min, Point max) {
 			final Point a = new Point(min);
 			final Point b = new Point(max);
 			return new Bounds(a, b);
+		}
+
+		/**
+		 * Creates a collector for computing bounds.
+		 * @return Bounds collector
+		 */
+		public static Collector<Point, ?, Builder> collector() {
+			return Collector.of(
+					Bounds.Builder::new,
+					Bounds.Builder::add,
+					Bounds.Builder::sum,
+					Characteristics.UNORDERED, Characteristics.IDENTITY_FINISH
+			);
 		}
 	}
 }

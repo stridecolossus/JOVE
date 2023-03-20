@@ -1,10 +1,12 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.sarge.jove.geometry.Axis.Y;
 import static org.sarge.jove.util.Trigonometric.PI;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.util.Cosine;
 
 class AxisAngleTest {
 	private AxisAngle rot;
@@ -18,6 +20,7 @@ class AxisAngleTest {
 	void constructor() {
 		assertEquals(Y, rot.axis());
 		assertEquals(PI, rot.angle());
+		assertEquals(Cosine.DEFAULT, rot.cosine());
 	}
 
 	@Test
@@ -28,6 +31,15 @@ class AxisAngleTest {
 	@Test
 	void matrix() {
 		assertEquals(Y.rotation(PI), rot.matrix());
+	}
+
+	@Test
+	void of() {
+		final Cosine cos = mock(Cosine.class);
+		rot = rot.of(cos);
+		assertEquals(cos, rot.cosine());
+		rot.matrix();
+		verify(cos).cos(PI);
 	}
 
 	@Test

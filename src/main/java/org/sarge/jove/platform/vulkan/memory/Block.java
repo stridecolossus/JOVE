@@ -180,9 +180,17 @@ class Block {
 //		}
 
 		public void reallocate() {
-			throw new UnsupportedOperationException(); // TODO - reallocation, split, etc
+			throw new UnsupportedOperationException();
 			//destroyed = false;
 		}
+		/**
+		 * TODO - reallocation
+		 * policy?
+		 * - disable			cannot reallocate once destroyed
+		 * - resize/split		splits into 2 allocations if < size
+		 * - reuse				can only reallocate if = size
+		 * - others?
+		 */
 
 		@Override
 		public boolean isDestroyed() {
