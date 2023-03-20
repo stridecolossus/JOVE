@@ -37,24 +37,31 @@ class Block {
 	}
 
 	/**
+	 * @return Size of this block
+	 */
+	public long size() {
+		return mem.size();
+	}
+
+	/**
 	 * @return Free memory in this block
 	 */
 	long free() {
 		final long total = allocations.stream().filter(ALIVE).mapToLong(DeviceMemory::size).sum();
-		return mem.size() - total;
+		return size() - total;
 	}
 
 	/**
 	 * @return Remaining free memory in this block
 	 */
 	long remaining() {
-		return mem.size() - next;
+		return size() - next;
 	}
 
 	/**
 	 * @return Allocated memory in this block
 	 */
-	Stream<? extends DeviceMemory> allocations() {
+	Stream<BlockDeviceMemory> allocations() {
 		return allocations.stream();
 	}
 
@@ -92,6 +99,16 @@ class Block {
 	}
 
 	@Override
+	public int hashCode() {
+		return mem.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
+	}
+
+	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append("mem", mem)
@@ -104,7 +121,7 @@ class Block {
 	/**
 	 * Proxy implementation for memory allocated from this block.
 	 */
-	private class BlockDeviceMemory implements DeviceMemory {
+	class BlockDeviceMemory implements DeviceMemory {
 		private final long offset;
 		private final long size;
 
@@ -154,12 +171,16 @@ class Block {
 			return mem.map(offset, size);
 		}
 
-		@Override
-		public DeviceMemory reallocate() {
-			if(!destroyed) throw new IllegalStateException("Block allocation cannot be reallocated: " + this);
-			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
+//		@Override
+//		public DeviceMemory reallocate() {
+//			if(!destroyed) throw new IllegalStateException("Block allocation cannot be reallocated: " + this);
+//			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
+//			destroyed = false;
+//			return this;
+//		}
+
+		public void reallocate() {
 			destroyed = false;
-			return this;
 		}
 
 		@Override

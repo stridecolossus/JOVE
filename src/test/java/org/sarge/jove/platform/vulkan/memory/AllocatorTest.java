@@ -27,7 +27,7 @@ class AllocatorTest {
 
 		// Init a memory request matching all types
 		reqs = new VkMemoryRequirements();
-		reqs.size = 42;
+		reqs.size = 2;
 		reqs.memoryTypeBits = 0b11;
 
 		// Init memory properties for the optimal type
@@ -39,7 +39,14 @@ class AllocatorTest {
 
 		// Create allocator
 		dev = new MockDeviceContext();
-		allocator = new Allocator(dev, new MemoryType[]{fallback, optimal});
+		allocator = new Allocator(dev, new MemoryType[]{fallback, optimal}, 1, 5);
+	}
+
+	@Test
+	void constructor() {
+		assertEquals(0, allocator.count());
+		assertEquals(1, allocator.max());
+		assertEquals(5, allocator.page());
 	}
 
 	@DisplayName("Memory can be allocated for a matching memory type")
@@ -47,8 +54,9 @@ class AllocatorTest {
 	void allocate() {
 		final DeviceMemory mem = allocator.allocate(reqs, props);
 		assertEquals(optimal, mem.type());
-		assertEquals(42, mem.size());
+		assertEquals(2, mem.size());
 		assertEquals(false, mem.isDestroyed());
+		assertEquals(1, allocator.count());
 	}
 
 	@Test
@@ -57,7 +65,7 @@ class AllocatorTest {
 			@Override
 			public boolean equals(Object obj) {
 				final var info = (VkMemoryAllocateInfo) obj;
-				assertEquals(42, info.allocationSize);
+				assertEquals(5, info.allocationSize);
 				assertEquals(1, info.memoryTypeIndex);
 				return true;
 			}
@@ -108,5 +116,21 @@ class AllocatorTest {
 		};
 		when(dev.library().vkAllocateMemory(dev, info, null, dev.factory().pointer())).thenReturn(999);
 		assertThrows(AllocationException.class, () -> allocator.allocate(reqs, props));
+	}
+
+	@DisplayName("Memory cannot be allocated if the total number of allocations supported by the hardware is exceeded")
+	@Test
+	void max() {
+		allocator.allocate(reqs, props);
+		assertThrows(AllocationException.class, () -> allocator.allocate(reqs, props));
+	}
+
+	@DisplayName("The total number of allocations can be reset")
+	@Test
+	void reset() {
+		allocator.allocate(reqs, props);
+		allocator.reset();
+		assertEquals(0, allocator.count());
+		allocator.allocate(reqs, props);
 	}
 }

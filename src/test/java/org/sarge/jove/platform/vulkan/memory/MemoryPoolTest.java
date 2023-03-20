@@ -1,187 +1,227 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 public class MemoryPoolTest {
 	private MemoryPool pool;
 	private MemoryType type;
-	private Allocator allocator;
-	private DeviceMemory block, larger;
+	private Block block;
 	private DeviceContext dev;
 
 	@BeforeEach
 	void before() {
-		// Init device
 		dev = new MockDeviceContext();
-
-		// Create some memory
 		type = new MemoryType(0, new Heap(0, Set.of()), Set.of());
-		block = new DefaultDeviceMemory(new Handle(1), dev, type, 1);
-		larger = new DefaultDeviceMemory(new Handle(2), dev, type, 3);
-
-		// Create allocator
-		allocator = mock(Allocator.class);
-		when(allocator.allocate(type, 1)).thenReturn(block);
-		when(allocator.allocate(type, 3)).thenReturn(larger);
-
-		// Create pool
+		block = new Block(new DefaultDeviceMemory(new Handle(1), dev, type, 2));
 		pool = new MemoryPool(type);
 	}
 
-	@Test
-	void constructor() {
-		assertEquals(0, pool.size());
-		assertEquals(0, pool.free());
-		assertEquals(0, pool.count());
-		assertEquals(0, pool.allocations().count());
+	@DisplayName("A new pool...")
+	@Nested
+	class Empty {
+    	@DisplayName("is initially empty")
+    	@Test
+    	void empty() {
+    		assertEquals(0, pool.size());
+    		assertEquals(0, pool.free());
+    		assertEquals(0, pool.count());
+    		assertEquals(0, pool.allocations().count());
+    	}
+
+    	@DisplayName("cannot allocate memory")
+    	@Test
+    	void allocate() {
+    		assertEquals(Optional.empty(), pool.allocate(1));
+    	}
+
+    	@DisplayName("cannot reallocate memory")
+    	@Test
+    	void reallocate() {
+    		assertEquals(Optional.empty(), pool.reallocate(1));
+    	}
+
+    	@DisplayName("can add new memory blocks")
+    	@Test
+    	void add() {
+    		pool.add(block);
+    		assertEquals(2, pool.size());
+    		assertEquals(2, pool.free());
+    		assertEquals(1, pool.count());
+    		assertEquals(0, pool.allocations().count());
+    	}
+
+    	@DisplayName("cannot add a block that is in use")
+    	@Test
+    	void used() {
+    		block.allocate(1);
+    		assertThrows(IllegalArgumentException.class, () -> pool.add(block));
+    	}
 	}
 
-	@Test
-	void init() {
-		pool.init(1, allocator);
-		assertEquals(1, pool.size());
-		assertEquals(1, pool.free());
-		assertEquals(1, pool.count());
-		assertEquals(0, pool.allocations().count());
+	@DisplayName("A pool with a free memory block...")
+	@Nested
+	class Free {
+		@BeforeEach
+		void before() {
+			pool.add(block);
+		}
+
+		@DisplayName("can allocate from the block")
+		@Test
+		void allocate() {
+			final DeviceMemory mem = pool.allocate(1).get();
+			assertEquals(1, mem.size());
+			assertEquals(type, mem.type());
+			assertEquals(false, mem.isDestroyed());
+			assertEquals(2, pool.size());
+			assertEquals(1, pool.free());
+			assertEquals(1, pool.count());
+			assertEquals(1, pool.allocations().count());
+		}
+
+		@DisplayName("cannot allocate if there are no blocks with sufficient free memory")
+		@Test
+		void none() {
+			assertEquals(Optional.empty(), pool.allocate(3));
+			assertEquals(Optional.empty(), pool.reallocate(3));
+		}
+
+		@DisplayName("cannot add the same block more than once")
+		@Test
+		void duplicate() {
+			assertThrows(IllegalArgumentException.class, () -> pool.add(block));
+		}
+
+		@DisplayName("can destroy the allocated blocks")
+		@Test
+    	void destroy() {
+    		pool.destroy();
+    		assertEquals(2, block.remaining());
+			assertEquals(0, pool.size());
+			assertEquals(0, pool.free());
+			assertEquals(0, pool.count());
+			assertEquals(0, pool.allocations().count());
+    	}
 	}
 
-	@DisplayName("Released memory should be returned to the pool")
-	@Test
-	void destroyAllocatedMemory() {
-		final DeviceMemory mem = pool.allocate(1, allocator);
-		mem.destroy();
-		assertEquals(1, pool.size());
-		assertEquals(1, pool.free());
-		assertEquals(1, pool.count());
-		assertEquals(0, pool.allocations().count());
+	@DisplayName("A pool with partially allocated memory blocks...")
+	@Nested
+	class Partial {
+		private DeviceMemory mem;
+
+		@BeforeEach
+		void before() {
+			pool.add(block);
+			mem = pool.allocate(1).get();
+		}
+
+		@DisplayName("can allocate from an available block with sufficient remaining memory")
+		@Test
+		void allocate() {
+			final DeviceMemory remaining = pool.allocate(1).get();
+			assertEquals(1, remaining.size());
+			assertEquals(type, remaining.type());
+			assertEquals(false, remaining.isDestroyed());
+			assertEquals(2, pool.size());
+			assertEquals(0, pool.free());
+			assertEquals(1, pool.count());
+			assertEquals(2, pool.allocations().count());
+		}
+
+		@DisplayName("cannot allocate if there are no blocks with sufficient free memory")
+		@Test
+		void none() {
+			assertEquals(Optional.empty(), pool.allocate(3));
+			assertEquals(Optional.empty(), pool.reallocate(3));
+		}
+
+		@DisplayName("can release the allocated memory back to the pool")
+		@Test
+    	void release() {
+    		pool.release();
+    		assertEquals(true, mem.isDestroyed());
+			assertEquals(2, pool.size());
+			assertEquals(2, pool.free());
+			assertEquals(1, pool.count());
+			assertEquals(0, pool.allocations().count());
+    	}
+
+		@DisplayName("can destroy all allocated blocks")
+		@Test
+    	void destroy() {
+    		pool.destroy();
+    		assertEquals(true, mem.isDestroyed());
+			assertEquals(0, pool.size());
+			assertEquals(0, pool.free());
+			assertEquals(0, pool.count());
+			assertEquals(0, pool.allocations().count());
+    	}
 	}
 
-	@DisplayName("An empty pool should allocate a new block")
-	@Test
-	void allocateNewBlock() {
-		// Allocate memory from a newly allocated block
-		final DeviceMemory mem = pool.allocate(1, allocator);
-		assertNotNull(mem);
-		assertEquals(1, mem.size());
-		assertEquals(false, mem.isDestroyed());
-		assertEquals(block.handle(), mem.handle());
+	@DisplayName("A pool with no free memory blocks...")
+	@Nested
+	class Exhausted {
+		@BeforeEach
+		void before() {
+			pool.add(block);
+			pool.allocate(2).get();
+		}
 
-		// Check new block allocated
-		assertEquals(1, pool.size());
-		assertEquals(0, pool.free());
-		assertEquals(1, pool.count());
-		assertArrayEquals(new DeviceMemory[]{mem}, pool.allocations().toArray());
-		verify(allocator).allocate(type, 1);
+		@DisplayName("cannot allocate new memory")
+		@Test
+		void allocate() {
+			assertEquals(Optional.empty(), pool.allocate(1));
+			assertEquals(Optional.empty(), pool.reallocate(1));
+		}
 	}
 
-	@DisplayName("An empty pool should allocate a new block which may be larger than the requested size")
-	@Test
-	void allocateNewLargerBlock() {
-		when(allocator.allocate(type, 1)).thenReturn(larger);
-		final DeviceMemory mem = pool.allocate(1, allocator);
-		assertEquals(larger.handle(), mem.handle());
-		assertEquals(1, mem.size());
-		assertEquals(3, pool.size());
-		assertEquals(2, pool.free());
-		assertEquals(1, pool.count());
-	}
+	@DisplayName("A pool with a block containing destroyed memory...")
+	@Nested
+	class Destroyed {
+		private DeviceMemory mem;
 
-	@DisplayName("Memory should be allocated from an existing block with the requested size")
-	@Test
-	void allocateExistingBlock() {
-		pool.init(1, allocator);
-		assertEquals(1, pool.allocate(1, allocator).size());
-		assertEquals(1, pool.size());
-		assertEquals(0, pool.free());
-		assertEquals(1, pool.count());
-	}
+		@BeforeEach
+		void before() {
+			pool.add(block);
+			mem = pool.allocate(2).get();
+			mem.destroy();
+		}
 
-	@DisplayName("Memory should be allocated from an existing block with available free memory")
-	@Test
-	void allocateExistingLargerBlock() {
-		pool.init(3, allocator);
-		assertEquals(1, pool.allocate(1, allocator).size());
-		assertEquals(3, pool.size());
-		assertEquals(2, pool.free());
-		assertEquals(1, pool.count());
-	}
+		@DisplayName("has available free memory that can be reallocated")
+		@Test
+		void free() {
+			assertEquals(2, pool.size());
+			assertEquals(2, pool.free());
+			assertEquals(1, pool.count());
+			assertEquals(0, pool.allocations().count());
+		}
 
-	@DisplayName("Memory should be reallocated if available")
-	@Test
-	void allocateReallocatedMemory() {
-		// Add a large block
-		pool.init(3, allocator);
+		@DisplayName("can reallocate the destroyed memory")
+		@Test
+		void reallocate() {
+			assertEquals(Optional.of(mem), pool.reallocate(2));
+			assertEquals(2, pool.size());
+			assertEquals(0, pool.free());
+			assertEquals(1, pool.count());
+			assertEquals(1, pool.allocations().count());
+		}
 
-		// Allocate then destroy some memory
-		final DeviceMemory mem = pool.allocate(1, allocator);
-		mem.destroy();
-		assertEquals(true, mem.isDestroyed());
-
-		// Allocate and destroy some more memory that is larger
-		pool.allocate(2, allocator).destroy();
-
-		// Allocate and check reallocates the memory with nearest size
-		assertEquals(mem, pool.allocate(1, allocator));
-		assertEquals(false, mem.isDestroyed());
-		assertArrayEquals(new DeviceMemory[]{mem}, pool.allocations().toArray());
-
-		// Check reallocated memory
-		assertEquals(3, pool.size());
-		assertEquals(2, pool.free());
-		assertEquals(1, pool.count());
-	}
-
-	@DisplayName("Allocation should fail if the underlying allocator fails")
-	@Test
-	void allocateFails() {
-		when(allocator.allocate(type, 1)).thenThrow(new AllocationException("doh"));
-		assertThrows(AllocationException.class, () -> pool.allocate(1, allocator));
-	}
-
-	@DisplayName("Allocation should fail if the underlying allocator returns a NULL block")
-	@Test
-	void allocateReturnsNull() {
-		when(allocator.allocate(type, 1)).thenReturn(null);
-		assertThrows(AllocationException.class, () -> pool.allocate(1, allocator));
-	}
-
-	@DisplayName("Allocation should fail if the underlying allocator returns a block that is too small")
-	@Test
-	void allocateReturnsSmallerBlock() {
-		when(allocator.allocate(type, 2)).thenReturn(block);
-		assertThrows(AllocationException.class, () -> pool.allocate(2, allocator));
-	}
-
-	@DisplayName("Releasing the pool should restore all memory back to the pool")
-	@Test
-	void release() {
-		final DeviceMemory mem = pool.allocate(1, allocator);
-		pool.release();
-		assertEquals(1, pool.size());
-		assertEquals(1, pool.free());
-		assertEquals(1, pool.count());
-		assertEquals(0, pool.allocations().count());
-		assertEquals(true, mem.isDestroyed());
-	}
-
-	@DisplayName("Destroying the pool should destroy all allocated blocks")
-	@Test
-	void destroy() {
-		final DeviceMemory mem = pool.allocate(1, allocator);
-		pool.destroy();
-		assertEquals(0, pool.size());
-		assertEquals(0, pool.free());
-		assertEquals(0, pool.count());
-		assertEquals(0, pool.allocations().count());
-		assertEquals(true, mem.isDestroyed());
+		@DisplayName("can reallocate a portion of the destroyed memory")
+		@Test
+		void portion() {
+			final DeviceMemory portion = pool.reallocate(1).get();
+			assertEquals(1, portion.size());
+			assertEquals(2, pool.size());
+			assertEquals(1, pool.free());
+			assertEquals(1, pool.count());
+			assertEquals(1, pool.allocations().count());
+		}
 	}
 }

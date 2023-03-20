@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 
 class PoolAllocatorTest {
 	private Allocator allocator;
@@ -18,8 +17,8 @@ class PoolAllocatorTest {
 	void before() {
 		dev = new MockDeviceContext();
 		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of());
-		allocator = new Allocator(dev, new MemoryType[]{type});
-		pool = new PoolAllocator(allocator, 1, AllocationPolicy.NONE);
+		allocator = new Allocator(dev, new MemoryType[]{type}, 1, 2);
+		pool = new PoolAllocator(allocator, 3);
 	}
 
 	@Test
@@ -27,6 +26,7 @@ class PoolAllocatorTest {
 		assertEquals(0, pool.count());
 		assertEquals(0, pool.size());
 		assertEquals(0, pool.free());
+		assertEquals(2, pool.page());
 		assertEquals(Map.of(), pool.pools());
 	}
 
@@ -50,12 +50,6 @@ class PoolAllocatorTest {
 		assertEquals(1, pool.count());
 		assertEquals(1, pool.size());
 		assertEquals(0, pool.free());
-	}
-
-	@Test
-	void allocateMaximum() {
-		pool.allocate(type, 1);
-		assertThrows(AllocationException.class, () -> pool.allocate(type, 1));
 	}
 
 	@Test

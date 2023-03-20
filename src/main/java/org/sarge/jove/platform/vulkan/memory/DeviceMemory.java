@@ -73,13 +73,4 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	default Region map() {
 		return map(0, size());
 	}
-
-	/**
-	 * Reallocates this memory.
-	 * @throws IllegalStateException if this memory cannot be reallocated
-	 * @throws UnsupportedOperationException by default
-	 */
-	default DeviceMemory reallocate() {
-		throw new UnsupportedOperationException();
-	}
 }

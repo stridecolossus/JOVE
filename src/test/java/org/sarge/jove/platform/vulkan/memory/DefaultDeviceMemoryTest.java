@@ -74,12 +74,6 @@ class DefaultDeviceMemoryTest {
 			mem.destroy();
 			assertEquals(true, mem.isDestroyed());
 		}
-
-		@DisplayName("cannot be reallocated by default")
-		@Test
-		void reallocate() {
-			assertThrows(UnsupportedOperationException.class, () -> mem.reallocate());
-		}
 	}
 
 	@DisplayName("A mapped device memory instance...")

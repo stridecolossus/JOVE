@@ -10,7 +10,7 @@ public class MockAllocator extends Allocator {
 	private static final MemoryType TYPE = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryProperty.HOST_VISIBLE));
 
 	public MockAllocator() {
-		super(new MockDeviceContext(), new MemoryType[]{TYPE});
+		super(new MockDeviceContext(), new MemoryType[]{TYPE}, 999, 1);
 	}
 
 	@Override

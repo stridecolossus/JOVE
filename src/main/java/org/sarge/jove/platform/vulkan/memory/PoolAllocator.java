@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.util.Check.oneOrMore;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.lib.util.Check;
+import org.sarge.jove.common.TransientObject;
 
 /**
  * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
@@ -16,31 +16,18 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class PoolAllocator extends Allocator {
+public class PoolAllocator extends Allocator implements TransientObject {
 	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
-	private final Allocator allocator;
-	private final int max;
-	private final AllocationPolicy policy;
-	private int count;
+	private final int pages;
 
 	/**
 	 * Constructor.
 	 * @param allocator		Delegate allocator
-	 * @param max			Maximum number of allocations
-	 * @param policy		Allocation policy
+	 * @param pages			Number of pages to allocate for a new block
 	 */
-	public PoolAllocator(Allocator allocator, int max, AllocationPolicy policy) {
+	public PoolAllocator(Allocator allocator, int pages) {
 		super(allocator);
-		this.allocator = notNull(allocator);
-		this.max = oneOrMore(max);
-		this.policy = notNull(policy);
-	}
-
-	/**
-	 * @return Number of memory allocations
-	 */
-	public int count() {
-		return count;
+		this.pages = oneOrMore(pages);
 	}
 
 	/**
@@ -74,23 +61,37 @@ public class PoolAllocator extends Allocator {
 	}
 
 	@Override
-	public DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
-		// Validate
-		Check.oneOrMore(size);
-		if(count >= max) throw new AllocationException("Maximum number of allocations exceeded");
-
-		// Apply allocation policy
+	protected DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
 		final MemoryPool pool = pool(type);
-		final long actual = policy.apply(size, pool.size());
+		return pool
+				.allocate(size)
+				.or(() -> pool.reallocate(size))
+				.orElseGet(() -> create(type, size, pool));
+	}
 
-		// Allocate from pool
-		// TODO - seems nasty extending AND reference to delegate?
-		final DeviceMemory mem = pool.allocate(Math.max(size, actual), allocator);
+	/**
+	 * Allocates memory from a new block.
+	 * @param type 		Memory type
+	 * @param size 		Size (bytes)
+	 * @param pool		Memory pool
+	 * @return Allocated memory
+	 * @throws AllocationException if a new block cannot be allocated
+	 */
+	private DeviceMemory create(MemoryType type, long size, MemoryPool pool) throws AllocationException {
+		// Allocate memory for a new block
+		final DeviceMemory mem = super.allocate(type, size);
 
-		// Update stats
-		++count;
+		// Add new block to pool
+		final Block block = new Block(mem);
+		pool.add(block);
 
-		return mem;
+		// Allocate from this block
+		return block.allocate(size);
+	}
+
+	@Override
+	protected long quantise(long size) {
+		return super.quantise(size) * pages;
 	}
 
 	/**
@@ -101,12 +102,10 @@ public class PoolAllocator extends Allocator {
 		assert free() == size();
 	}
 
-	/**
-	 * Destroys <b>all</b> memory allocation by this pool.
-	 */
+	@Override
 	public void destroy() {
 		pools.values().forEach(MemoryPool::destroy);
-		count = 0;
+		super.reset();
 		assert size() == 0;
 		assert free() == 0;
 	}
@@ -114,9 +113,9 @@ public class PoolAllocator extends Allocator {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
+				.appendSuper(super.toString())
 				.append("pools", pools.size())
-				.append("allocations", String.format("%d/%d", count, max))
-				.append("policy", policy)
+				.append("pages", pages)
 				.build();
 	}
 }

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 
 public class BlockTest {
 	private Block block;
@@ -68,7 +69,7 @@ public class BlockTest {
 
 	@Nested
 	class BlockDeviceMemoryTests {
-		private DeviceMemory allocation;
+		private BlockDeviceMemory allocation;
 
 		@BeforeEach
 		void before() {

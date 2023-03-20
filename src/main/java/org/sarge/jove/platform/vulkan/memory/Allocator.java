@@ -5,10 +5,11 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.BitField;
 
 import com.sun.jna.ptr.PointerByReference;
@@ -39,26 +40,73 @@ public class Allocator {
 		}
 	}
 
+	/**
+	 * Creates and configures a memory allocator for the given device.
+	 * @param dev Logical device
+	 * @return Allocator
+	 * @see MemoryType#enumerate(VkPhysicalDeviceMemoryProperties)
+	 * @see LogicalDevice#limits()
+	 */
+	public static Allocator create(LogicalDevice dev) {
+		// Retrieve supported memory types
+		final var props = dev.parent().memory();
+		final MemoryType[] types = MemoryType.enumerate(props);
+
+		// Lookup hardware limits
+		final DeviceLimits limits = dev.limits();
+		final int max = limits.value("maxMemoryAllocationCount");
+    	final long page = limits.value("bufferImageGranularity");
+
+    	// Create allocator
+    	return new Allocator(dev, types, max, page);
+	}
+
 	private final DeviceContext dev;
 	private final MemoryType[] types;
+	private final long page;
+	private final int max;
+	private int count;
 
 	/**
 	 * Constructor.
 	 * @param dev		Logical device
 	 * @param types 	Memory types
-	 * @see MemoryType#enumerate(VkPhysicalDeviceMemoryProperties)
+	 * @param max		Maximum number of allocations
+	 * @param page		Memory page granularity
 	 */
-	public Allocator(DeviceContext dev, MemoryType[] types) {
+	public Allocator(DeviceContext dev, MemoryType[] types, int max, long page) {
 		this.dev = notNull(dev);
 		this.types = Arrays.copyOf(types, types.length);
+		this.max = oneOrMore(max);
+		this.page = oneOrMore(page);
 	}
 
 	/**
-	 * Copy constructor for specialised implementations.
-	 * @param allocator Delegate allocator to copy
+	 * Copy constructor.
 	 */
 	protected Allocator(Allocator allocator) {
-		this(allocator.dev, allocator.types);
+		this(allocator.dev, allocator.types, allocator.max, allocator.page);
+	}
+
+	/**
+	 * @return Number of allocations
+	 */
+	public final int count() {
+		return count;
+	}
+
+	/**
+	 * @return Maximum number of allocations supported by the hardware
+	 */
+	public final int max() {
+		return max;
+	}
+
+	/**
+	 * @return Page size granularity
+	 */
+	public final long page() {
+		return page;
 	}
 
 	/**
@@ -135,6 +183,11 @@ public class Allocator {
 
 	/**
 	 * Allocates memory of the given type.
+	 * <p>
+	 * The requested memory size is quantised to the optimal {@link #page()} size granularity specified by the hardware.
+	 * Additionally the size of the allocated memory may be larger due to alignment constraints.
+	 * i.e. The actual allocation may be larger than {@link #size} however in either case this is transparent to the resultant device memory instance.
+	 * <p>
 	 * @param type		Memory type
 	 * @param size		Size (bytes)
 	 * @return Allocated memory
@@ -142,9 +195,15 @@ public class Allocator {
 	 * @throws AllocationException if the memory cannot be allocated
 	 */
 	protected DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
+		// Check maximum number of allocations
+		if(count >= max) throw new AllocationException("Number of allocations exceeds the hardware limit".formatted(count, max));
+
+		// Quantise the requested size
+		final long actual = quantise(size);
+
 		// Init memory descriptor
 		final var info = new VkMemoryAllocateInfo();
-		info.allocationSize = oneOrMore(size);
+		info.allocationSize = oneOrMore(actual);
 		info.memoryTypeIndex = type.index();
 
 		// Allocate memory
@@ -158,6 +217,32 @@ public class Allocator {
 		}
 
 		// Create device memory
+		++count;
 		return new DefaultDeviceMemory(new Handle(ref), dev, type, size);
+	}
+
+	/**
+	 * Quantises the requested memory size to the configured page size.
+	 * @param size Memory size (bytes)
+	 * @return Quantised size
+	 */
+	protected long quantise(long size) {
+		return (1 + (size / page)) * page;
+	}
+
+	/**
+	 * Clears the allocation count.
+	 */
+	protected final void reset() {
+		count = 0;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this)
+				.append("types", types.length)
+				.append("allocations", String.format("%d/%d", count, max))
+				.append("page", page)
+				.build();
 	}
 }
