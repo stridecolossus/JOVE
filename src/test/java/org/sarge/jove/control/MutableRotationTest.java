@@ -6,6 +6,7 @@ import static org.sarge.jove.util.Trigonometric.HALF_PI;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.util.Cosine;
 
 class MutableRotationTest {
 	private MutableRotation rot;
@@ -22,7 +23,7 @@ class MutableRotationTest {
 
 	@Test
 	void matrix() {
-		assertEquals(Y.rotation(0), rot.matrix());
+		assertEquals(Y.rotation(0, Cosine.DEFAULT), rot.matrix());
 	}
 
 	@Test
@@ -35,7 +36,7 @@ class MutableRotationTest {
 	void angle() {
 		rot.set(HALF_PI);
 		assertEquals(new AxisAngle(Y, HALF_PI), rot.toAxisAngle());
-		assertEquals(Y.rotation(HALF_PI), rot.matrix());
+		assertEquals(Y.rotation(HALF_PI, Cosine.DEFAULT), rot.matrix());
 	}
 
 	@Test

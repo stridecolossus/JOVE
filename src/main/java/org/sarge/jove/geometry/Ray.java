@@ -49,7 +49,7 @@ public interface Ray {
 	}
 
 	/**
-	 * An <i>intersected</i> defines a surface that can be tested for intersections with a ray.
+	 * An <i>intersected</i> surface can be tested for intersections with a ray.
 	 */
 	interface Intersected {
 		/**
@@ -66,7 +66,7 @@ public interface Ray {
 	}
 
 	/**
-	 * An <i>intersection</i> specifies the points where this ray intersects an {@link Intersected} surface.
+	 * An <i>intersection</i> specifies a point where this ray intersects an {@link Intersected} surface.
 	 */
 	interface Intersection {
 		/**
@@ -112,7 +112,7 @@ public interface Ray {
 		}
 
 		/**
-		 * Creates an intersection with a surface normal relative to the centre of the {@link Intersected} volume.
+		 * Creates an intersection for the common case of a surface normal relative to the centre of the {@link Intersected} volume.
 		 * @param ray		Ray
 		 * @param dist		Distance
 		 * @param centre	Centre of the intersected volume
@@ -130,13 +130,12 @@ public interface Ray {
 	}
 
 	/**
-	 * Default implementation.
-	 * Note that the surface normal is undefined.
+	 * Default implementation for an intersection with an undefined surface normal.
 	 */
 	class DefaultIntersection implements Intersection {
 		private final Ray ray;
 		private final float dist;
-		private Point pos;
+		private transient Point pos;
 
 		/**
 		 * Constructor.

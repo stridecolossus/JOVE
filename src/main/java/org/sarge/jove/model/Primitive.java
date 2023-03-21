@@ -92,6 +92,7 @@ public enum Primitive {
 		}
 	}
 
+	// TODO - is this actually used?
 	/**
 	 * Generates the vertices indices for a polygon of this primitive.
 	 * @param face Face index

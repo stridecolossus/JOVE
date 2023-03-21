@@ -18,7 +18,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>handler</i> is a consumer for Vulkan diagnostic messages.
- * @see Instance#handler()
+ * @see Instance#attach(Handler)
  * @author Sarge
  */
 public class Handler extends TransientNativeObject {
@@ -52,6 +52,7 @@ public class Handler extends TransientNativeObject {
 	 * @param returnType		Method return type
 	 * @param args				Arguments
 	 * @return Result
+	 * @see VulkanLibrary#options()
 	 */
 	private static Object invoke(Function func, Class<?> returnType, Object[] args) {
 		return func.invoke(returnType, args, VulkanLibrary.options());
@@ -159,8 +160,8 @@ public class Handler extends TransientNativeObject {
 	 * </pre>
 	 * Notes:
 	 * <ul>
-	 * <li>if not explicitly configured the severity and types are initialised to default values</li>
-	 * <li>the default message consumer dumps diagnostic reports to the error console</li>
+	 * <li>If not explicitly configured the severity and types are initialised to default values</li>
+	 * <li>The default message consumer dumps diagnostic reports to the error console</li>
 	 * </ul>
 	 */
 	public static class Builder {

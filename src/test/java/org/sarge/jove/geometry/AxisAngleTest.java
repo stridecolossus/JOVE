@@ -30,7 +30,7 @@ class AxisAngleTest {
 
 	@Test
 	void matrix() {
-		assertEquals(Y.rotation(PI), rot.matrix());
+		assertEquals(Y.rotation(PI, Cosine.DEFAULT), rot.matrix());
 	}
 
 	@Test

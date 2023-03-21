@@ -57,18 +57,6 @@ public class IndexedMesh extends DefaultMesh {
 		return true;
 	}
 
-//	@Override
-//	protected Stream<int[]> triangles() {
-//		return super.triangles().map(this::map);
-//	}
-//
-//	private int[] map(int[] indices) {
-//		for(int n = 0; n < indices.length; ++n) {
-//			indices[n] = index.get(n);
-//		}
-//		return indices;
-//	}
-
 	@Override
 	public Vertex vertex(int index) {
 		return super.vertex(this.index.get(index));

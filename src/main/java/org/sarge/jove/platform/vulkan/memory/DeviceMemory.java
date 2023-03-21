@@ -56,7 +56,7 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	Optional<Region> region();
 
 	/**
-	 * Maps the whole of this device memory.
+	 * Maps a segment of this device memory.
 	 * @param offset		Offset into this memory
 	 * @param size			Size of the region to map
 	 * @return Mapped memory region
@@ -66,7 +66,7 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	Region map(long offset, long size);
 
 	/**
-	 * Maps this device memory.
+	 * Maps the whole of this device memory.
 	 * @return Mapped memory region
 	 * @see #map(long, long)
 	 */

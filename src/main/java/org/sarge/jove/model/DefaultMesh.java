@@ -51,7 +51,7 @@ public class DefaultMesh extends AbstractMesh {
 	}
 
 	/**
-	 * Retrieve a vertex.
+	 * Retrieves a vertex.
 	 * @param index Vertex index
 	 * @return Vertex
 	 * @throws IndexOutOfBoundsException for an invalid index

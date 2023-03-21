@@ -109,7 +109,7 @@ public class VulkanBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Helper - Creates a command to copy the whole of this buffer to the given destination buffer.
+	 * Creates a command to copy the whole of this buffer to the given destination buffer.
 	 * @param dest Destination buffer
 	 * @return New copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small
@@ -219,7 +219,10 @@ public class VulkanBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Creates and initialises a staging buffer containing the given data.
+	 * Helper - Creates and initialises a staging buffer containing the given data.
+	 * <p>
+	 * The staging buffer is a {@link VkBufferUsageFlag#TRANSFER_SRC} with {@link VkMemoryProperty#HOST_VISIBLE} memory.
+	 * <p>
 	 * @param dev			Logical device
 	 * @param allocator		Memory allocator
 	 * @param data			Data to stage

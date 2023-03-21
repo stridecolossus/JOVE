@@ -84,8 +84,6 @@ public class Vector extends Tuple {
 	public float dot(Tuple that) {
 		return x * that.x + y * that.y + z * that.z;
 	}
-	// TODO - JDK19 vector API
-	// TODO - worth hassle for 3 components?
 
 	/**
 	 * @return Inverse of this vector
@@ -180,7 +178,6 @@ public class Vector extends Tuple {
 		final float z = this.x * vec.y - this.y * vec.x;
 		return new Vector(x, y, z);
 	}
-	// TODO - JDK vector API
 
 	/**
 	 * Determines the nearest point on this vector to the given point.

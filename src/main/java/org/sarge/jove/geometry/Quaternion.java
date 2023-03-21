@@ -17,8 +17,7 @@ public final class Quaternion implements Rotation {
 
 	/**
 	 * Creates a quaternion from the given axis-angle rotation.
-	 * @param rot 			Axis-angle
-	 * @param cosine		Cosine function
+	 * @param rot Axis-angle
 	 * @return Quaternion
 	 */
 	public static Quaternion of(AxisAngle rot) {

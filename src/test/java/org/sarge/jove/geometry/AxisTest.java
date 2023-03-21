@@ -5,6 +5,7 @@ import static org.sarge.jove.geometry.Axis.*;
 import static org.sarge.jove.util.Trigonometric.PI;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.util.Cosine;
 
 public class AxisTest {
 	@Test
@@ -84,7 +85,7 @@ public class AxisTest {
 					.set(1, 1, -1)
 					.set(2, 2, -1);
 
-			assertEquals(expected.build(), X.rotation(PI));
+			assertEquals(expected.build(), X.rotation(PI, Cosine.DEFAULT));
 		}
 
 		@Test
@@ -93,7 +94,7 @@ public class AxisTest {
 					.set(0, 0, -1)
 					.set(2, 2, -1);
 
-			assertEquals(expected.build(), Y.rotation(PI));
+			assertEquals(expected.build(), Y.rotation(PI, Cosine.DEFAULT));
 		}
 
 		@Test
@@ -102,7 +103,7 @@ public class AxisTest {
 					.set(0, 0, -1)
 					.set(1, 1, -1);
 
-			assertEquals(expected.build(), Z.rotation(PI));
+			assertEquals(expected.build(), Z.rotation(PI, Cosine.DEFAULT));
 		}
 	}
 

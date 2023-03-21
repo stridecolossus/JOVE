@@ -120,16 +120,6 @@ public final class Axis extends Normal {
 	}
 
 	/**
-	 * Creates a counter-clockwise rotation matrix about this axis.
-	 * @param angle Rotation angle (radians)
-	 * @return Rotation matrix
-	 * @see #rotation(float, Cosine)
-	 */
-	public Matrix rotation(float angle) {
-		return rotation(angle, Cosine.DEFAULT);
-	}
-
-	/**
 	 * Selects the cardinal axis corresponding to the <i>minimal component</i> of the given vector.
 	 * For example the vector {@code 1,0,2} corresponds to the Y axis.
 	 * This operation is generally used to construct an arbitrary local coordinate system about a given vector.
