@@ -154,7 +154,7 @@ public final class Work {
 	}
 
 	/**
-	 * Helper - Submits the given command as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} command buffer and waits for completion.
+	 * Helper - Submits the given command as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} primary command buffer and waits for completion.
 	 * @param cmd		Command
 	 * @param pool		Pool
 	 * @return Allocated command buffer
@@ -162,7 +162,7 @@ public final class Work {
 	 */
 	public static Buffer submit(Command cmd, Pool pool) {
 		final Buffer buffer = pool
-				.allocate(true)
+				.primary()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 				.add(cmd)
 				.end();

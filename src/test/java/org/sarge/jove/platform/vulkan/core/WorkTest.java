@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.util.*;
 
@@ -35,8 +35,7 @@ public class WorkTest {
 
 		// Create command buffer
 		pool = new Command.Pool(new Handle(2), dev, queue);
-		buffer = pool.allocate(true);
-		buffer.begin().end();
+		buffer = pool.primary().begin().end();
 
 		// Create work instance
 		work = new Work.Builder().add(buffer).build();
@@ -71,16 +70,8 @@ public class WorkTest {
 	@DisplayName("A work batch must all submit to the same queue family")
 	@Test
 	void invalid() {
-		// Create a pool with a different queue
-		final var queue = new WorkQueue(new Handle(2), new Family(1, 2, Set.of()));
-		final Pool otherPool = new Pool(new Handle(3), dev, queue);
-
-		// Create a buffer using this pool
-		final Buffer other = mock(Buffer.class);
-		when(other.pool()).thenReturn(otherPool);
-		when(other.isReady()).thenReturn(true);
-
-		// Check cannot submit to different queues
+		final PrimaryBuffer other = new MockCommandBuffer();
+		other.begin().end();
 		final Work invalid = Work.of(other);
 		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, invalid), null));
 	}
@@ -121,7 +112,7 @@ public class WorkTest {
 		void addInvalidQueueFamily() {
 			final var other = new WorkQueue(new Handle(1), new Family(999, 2, Set.of()));
 			final Pool otherPool = new Command.Pool(new Handle(2), dev, other);
-			final Buffer invalid = otherPool.allocate(true).begin().end();
+			final Buffer invalid = otherPool.primary().begin().end();
 			builder.add(buffer);
 			assertThrows(IllegalArgumentException.class, () -> builder.add(invalid));
 		}

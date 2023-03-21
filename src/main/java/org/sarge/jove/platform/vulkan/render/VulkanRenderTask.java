@@ -2,17 +2,19 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.List;
+import java.util.*;
 
+import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.scene.core.RenderLoop;
+import org.sarge.lib.util.Check;
 
 /**
  * The <i>Vulkan render task</i> is used to render and present a frame to the swapchain.
  * <p>
  * This class orchestrates the components that collaborate to render a frame as follows:
  * <ol>
- * <li>Select the next frame state tracker from the selector</li>
+ * <li>Select the next in-flight frame to render</li>
  * <li>Acquire the next frame buffer to be rendered from the swapchain</li>
  * <li>Invoke the frame composer to build the render task for the selected frame and buffer</li>
  * <li>Render the frame</li>
@@ -23,22 +25,26 @@ import org.sarge.jove.scene.core.RenderLoop;
  * <p>
  * @author Sarge
  */
-public class VulkanRenderTask {
+public class VulkanRenderTask implements TransientObject {
 	private final List<FrameBuffer> buffers;
-	private final FrameSelector selector;
+	private final VulkanFrame[] frames;
 	private final FrameComposer composer;
 	private final Swapchain swapchain;
+	private int next;
 
 	/**
 	 * Constructor.
 	 * @param buffers		Frame buffers
-	 * @param selector		Selects the next frame to render
+	 * @param frames		In-flight frames
 	 * @param composer		Composer for the render task
 	 * @param swapchain		Swapchain
+	 * @throws IllegalArgumentException if {@link #buffers} or {@link #frames} is empty
 	 */
-	public VulkanRenderTask(List<FrameBuffer> buffers, FrameSelector selector, FrameComposer composer, Swapchain swapchain) {
+	public VulkanRenderTask(List<FrameBuffer> buffers, VulkanFrame[] frames, FrameComposer composer, Swapchain swapchain) {
+		Check.notEmpty(buffers);
+		Check.notEmpty(frames);
 		this.buffers = List.copyOf(buffers);
-		this.selector = notNull(selector);
+		this.frames = Arrays.copyOf(frames, frames.length);
 		this.composer = notNull(composer);
 		this.swapchain = notNull(swapchain);
 	}
@@ -47,15 +53,29 @@ public class VulkanRenderTask {
 	 * Renders the next frame.
 	 */
 	public void render() {
-		// Acquire next frame
-		final VulkanFrame frame = selector.frame();
+		// Select next frame
+		final VulkanFrame frame = frames[next];
+
+		// Acquire next frame buffer
 		final int index = frame.acquire(swapchain);
 		final FrameBuffer fb = buffers.get(index);
 
 		// Compose render task
-		final Command.Buffer render = composer.compose(fb);
+		final Command.Buffer render = composer.compose(next, fb);
 
 		// Present rendered frame
 		frame.present(render);
+
+		// Move to next frame
+		if(++next >= frames.length) {
+			next = 0;
+		}
+	}
+
+	@Override
+	public void destroy() {
+		for(var frame : frames) {
+			frame.destroy();
+		}
 	}
 }

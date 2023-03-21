@@ -10,7 +10,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer.Recorder;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.BitMask;
 
@@ -42,24 +41,23 @@ class CommandTest {
 	@DisplayName("A command buffer...")
 	@Nested
 	class BufferTests {
-		private Buffer buffer;
+		private PrimaryBuffer buffer;
 
 		@BeforeEach
 		void before() {
-			buffer = pool.allocate(true);
+			buffer = pool.primary();
 		}
 
 		@Test
 		void constructor() {
 			assertEquals(pool, buffer.pool());
-			assertEquals(true, buffer.isPrimary());
 		}
 
 		@DisplayName("can be released back to the pool")
 		@Test
 		void free() {
-			buffer.free();
 			final Memory array = NativeObject.array(List.of(buffer));
+			buffer.free();
 			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
 		}
 
@@ -99,11 +97,9 @@ class CommandTest {
 		@DisplayName("that is being recorded...")
 		@Nested
 		class Recording {
-			private Recorder recorder;
-
 			@BeforeEach
 			void before() {
-				recorder = buffer.begin();
+				buffer.begin();
 			}
 
 			@DisplayName("is not ready for submission")
@@ -121,7 +117,7 @@ class CommandTest {
 			@DisplayName("can record commands")
 			@Test
 			void add() {
-				recorder.add(cmd);
+				buffer.add(cmd);
 				verify(cmd).record(lib, buffer);
 				assertEquals(false, buffer.isReady());
 			}
@@ -129,7 +125,7 @@ class CommandTest {
 			@DisplayName("can end recording")
 			@Test
 			void end() {
-				recorder.end();
+				buffer.end();
 				verify(lib).vkEndCommandBuffer(buffer);
 				assertEquals(true, buffer.isReady());
 			}
@@ -175,19 +171,11 @@ class CommandTest {
 	@DisplayName("A secondary command buffer...")
 	@Nested
 	class SecondaryBufferTests {
-		private Buffer secondary;
+		private SecondaryBuffer secondary;
 
 		@BeforeEach
 		void before() {
-			secondary = pool.allocate(1, false).iterator().next();
-		}
-
-		@DisplayName("is initially not ready for submission")
-		@Test
-		void constructor() {
-			assertEquals(pool, secondary.pool());
-			assertEquals(false, secondary.isReady());
-			assertEquals(false, secondary.isPrimary());
+			secondary = pool.secondary();
 		}
 
 		@DisplayName("can be recorded to a primary command buffer")
@@ -199,7 +187,7 @@ class CommandTest {
 			assertEquals(true, secondary.isReady());
 
 			// Record to primary buffer
-			final Buffer buffer = pool.allocate(true);
+			final PrimaryBuffer buffer = pool.primary();
 			buffer.begin().add(List.of(secondary));
 			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(List.of(secondary)));
 		}
@@ -207,15 +195,8 @@ class CommandTest {
 		@DisplayName("cannot be recorded to a primary command buffer if it is not ready")
 		@Test
 		void notReady() {
-			final Buffer buffer = pool.allocate(true);
-			buffer.begin();
-			assertThrows(IllegalStateException.class, () -> buffer.begin().add(List.of(secondary)));
-		}
-
-		@DisplayName("cannot record further secondary command buffers")
-		@Test
-		void invalid() {
-			assertThrows(IllegalStateException.class, () -> secondary.begin().add(List.of()));
+			final PrimaryBuffer buffer = pool.primary().begin();
+			assertThrows(IllegalStateException.class, () -> buffer.add(List.of(secondary)));
 		}
 	}
 
@@ -244,7 +225,7 @@ class CommandTest {
 		@Test
 		void allocate() {
 			// Allocate a buffer
-			final Collection<Buffer> buffers = pool.allocate(1, true);
+			final Collection<PrimaryBuffer> buffers = pool.primary(1);
 			assertEquals(1, buffers.size());
 
 			// Check allocator
@@ -269,9 +250,9 @@ class CommandTest {
 
 		@Test
 		void free() {
-			final Buffer buffer = pool.allocate(true);
-			pool.free(Set.of(buffer));
+			final Buffer buffer = pool.primary();
 			final Memory array = NativeObject.array(List.of(buffer));
+			pool.free(Set.of(buffer));
 			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
 		}
 

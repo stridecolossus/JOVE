@@ -53,7 +53,7 @@ public class CaptureTask {
 
 		// Build screenshot task
 		final Command.Buffer buffer = pool
-				.allocate(true)
+				.primary()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 					.add(destination(screenshot))
 					.add(source(image))

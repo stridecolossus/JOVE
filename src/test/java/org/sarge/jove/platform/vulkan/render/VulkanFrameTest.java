@@ -88,7 +88,7 @@ class VulkanFrameTest {
     	void present() {
     		final WorkQueue queue = new WorkQueue(new Handle(1), new WorkQueue.Family(1, 2, Set.of()));
     		final var pool = Command.Pool.create(dev, queue);
-    		final var render = pool.allocate(true).begin().end();
+    		final var render = pool.primary().begin().end();
     		frame.present(render);
     		verify(fence, times(2)).waitReady();
     		verify(swapchain).present(queue, 1, ready);

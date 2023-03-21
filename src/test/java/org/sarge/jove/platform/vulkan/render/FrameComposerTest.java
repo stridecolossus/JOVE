@@ -1,20 +1,21 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import java.util.*;
-import java.util.function.Supplier;
+import static org.mockito.Mockito.mock;
+
+import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.Command.Pool;
 
 class FrameComposerTest {
 	private DeviceContext dev;
 	private FrameComposer composer;
 	private Pool pool;
-	private Supplier<List<Buffer>> seq;
+	private Command.Sequence seq;
 
 	@BeforeEach
 	void before() {
@@ -26,7 +27,7 @@ class FrameComposerTest {
 		pool = Command.Pool.create(dev, queue);
 
 		// Init render sequence factory
-		seq = () -> List.of();
+		seq = mock(Command.Sequence.class);
 
 		// Create composer
 		composer = new FrameComposer(pool, seq);

@@ -2,9 +2,6 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.*;
@@ -19,16 +16,17 @@ import org.sarge.jove.platform.vulkan.core.Command.*;
  */
 public class FrameComposer {
 	private final Pool pool;
-	private final Supplier<List<Buffer>> sequence;
+	private final Sequence sequence;
+
 	private VkCommandBufferUsage[] flags = {VkCommandBufferUsage.ONE_TIME_SUBMIT};
 	private VkSubpassContents contents = VkSubpassContents.SECONDARY_COMMAND_BUFFERS;
 
 	/**
 	 * Constructor.
 	 * @param pool 			Command pool
-	 * @param sequence		Factory for the render sequence
+	 * @param sequence		Render sequence
 	 */
-	public FrameComposer(Pool pool, Supplier<List<Buffer>> sequence) {
+	public FrameComposer(Pool pool, Sequence sequence) {
 		this.pool = notNull(pool);
 		this.sequence = notNull(sequence);
 	}
@@ -53,17 +51,27 @@ public class FrameComposer {
 
 	/**
 	 * Composes the render task for the next frame.
+	 * @param index In-flight frame index
 	 * @param frame Frame buffer
 	 * @return Render task
 	 */
-	public Command.Buffer compose(FrameBuffer frame) {
+	public Buffer compose(int index, FrameBuffer frame) {
+		// Allocate a primary command buffer
+		final PrimaryBuffer buffer = pool.primary();
+
+		// Start recording
+		buffer.begin(flags);
+
+		// Create a render pass for the given frame buffer
 		final Command begin = frame.begin(contents);
-		return pool
-				.allocate(true)
-				.begin(flags)
-				.add(begin)
-				.add(sequence.get())
-				.add(FrameBuffer.END)
-				.end();
+		final Sequence pass = sequence.wrap(begin, FrameBuffer.END);
+
+		// Record render pass
+		pass.record(index, buffer);
+
+		// Finish recording
+		buffer.end();
+
+		return buffer;
 	}
 }

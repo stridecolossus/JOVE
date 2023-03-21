@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.notNull;
 
+import java.util.Arrays;
+
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -30,6 +32,18 @@ public class VulkanFrame implements TransientObject {
 		final var ready = Semaphore.create(dev);
 		final var fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
 		return new VulkanFrame(available, ready, fence);
+	}
+
+	/**
+	 * Creates an array of frames.
+	 * @param dev		Logical device
+	 * @param count		Number of frames
+	 * @return Array of frames
+	 */
+	public static VulkanFrame[] array(DeviceContext dev, int count) {
+		final var frames = new VulkanFrame[count];
+		Arrays.setAll(frames, n -> VulkanFrame.create(dev));
+		return frames;
 	}
 
 	private final Semaphore available, ready;
