@@ -34,9 +34,8 @@ public class LogicalDeviceTest {
 		parent = new PhysicalDevice(new Handle(2), instance, List.of(family), supported);
 
 		// Create logical device
-		final var limits = new DeviceLimits(new VkPhysicalDeviceLimits());
 		queue = new WorkQueue(new Handle(3), family);
-		device = new LogicalDevice(new Handle(4), parent, new DeviceFeatures(Set.of()), limits, Map.of(family, List.of(queue)));
+		device = new LogicalDevice(new Handle(4), parent, new DeviceFeatures(Set.of()), new VkPhysicalDeviceLimits(), Map.of(family, List.of(queue)));
 	}
 
 	@Test
@@ -51,13 +50,6 @@ public class LogicalDeviceTest {
 	@Test
 	void features() {
 		assertNotNull(device.features());
-	}
-
-	@DisplayName("A logical device has a set of hardware limits")
-	@Test
-	void limits() {
-		final DeviceLimits limits = device.limits();
-		assertNotNull(limits);
 	}
 
 	@DisplayName("A logical device has a set of work queues")

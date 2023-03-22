@@ -1,12 +1,13 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 
 public class BlockTest {
@@ -15,12 +16,7 @@ public class BlockTest {
 
 	@BeforeEach
 	void before() {
-		// Create parent memory
-		mem = mock(DeviceMemory.class);
-		when(mem.size()).thenReturn(3L);
-		when(mem.handle()).thenReturn(new Handle(4));
-
-		// Create block
+		mem = new DefaultDeviceMemory(new Handle(1), new MockDeviceContext(), MockAllocator.TYPE, 3);
 		block = new Block(mem);
 	}
 
@@ -53,7 +49,7 @@ public class BlockTest {
 
 	@Test
 	void allocateDestroyed() {
-		when(mem.isDestroyed()).thenReturn(true);
+		mem.destroy();
 		assertThrows(IllegalStateException.class, () -> block.allocate(1));
 	}
 
@@ -61,8 +57,7 @@ public class BlockTest {
 	void destroy() {
 		final DeviceMemory allocation = block.allocate(1);
 		block.destroy();
-		verify(mem).destroy();
-		when(mem.isDestroyed()).thenReturn(true);
+		assertEquals(true, mem.isDestroyed());
 		assertEquals(true, allocation.isDestroyed());
 		assertEquals(0, block.allocations().count());
 	}
@@ -87,11 +82,9 @@ public class BlockTest {
 
 		@Test
 		void map() {
-			final Region region = mock(Region.class);
-			when(mem.region()).thenReturn(Optional.of(region));
-			when(mem.map(1, 2)).thenReturn(region);
+			final Region region = mem.map(1, 2);
+			region.unmap();
 			assertEquals(region, allocation.map(1, 2));
-			verify(mem).map(1, 2);
 		}
 
 		@Test
@@ -102,31 +95,41 @@ public class BlockTest {
 
 		@Test
 		void mapReplacePrevious() {
-			final Region prev = mock(Region.class);
-			when(mem.region()).thenReturn(Optional.of(prev));
-			allocation.map();
-			verify(prev).unmap();
+			final Region prev = mem.map();
+			assertNotEquals(prev, allocation.map());
 		}
 
-		@Disabled
 		@Test
 		void reallocate() {
 			allocation.destroy();
-			allocation.reallocate();
+			allocation.reallocate(1);
+			assertEquals(1, allocation.size());
 			assertEquals(false, allocation.isDestroyed());
 		}
 
-		@Disabled
 		@Test
 		void reallocateNotDestroyed() {
-			assertThrows(IllegalStateException.class, () -> allocation.reallocate());
+			assertThrows(IllegalStateException.class, () -> allocation.reallocate(1));
 		}
 
-		@Disabled
 		@Test
 		void reallocateBlockDestroyed() {
 			mem.destroy();
-			assertThrows(IllegalStateException.class, () -> allocation.reallocate());
+			assertThrows(IllegalStateException.class, () -> allocation.reallocate(1));
+		}
+
+		@Test
+		void reallocateTooLarge() {
+			allocation.destroy();
+			assertThrows(IllegalArgumentException.class, () -> allocation.reallocate(3));
+		}
+
+		@Test
+		void reallocateUnmapped() {
+			allocation.map();
+			allocation.destroy();
+			allocation.reallocate(1);
+			assertEquals(Optional.empty(), allocation.region());
 		}
 
 		@Test
@@ -145,7 +148,7 @@ public class BlockTest {
 
 		@Test
 		void isDestroyed() {
-			when(mem.isDestroyed()).thenReturn(true);
+			mem.destroy();
 			assertEquals(true, allocation.isDestroyed());
 		}
 

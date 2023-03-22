@@ -26,7 +26,7 @@ class PoolAllocatorTest {
 		assertEquals(0, pool.count());
 		assertEquals(0, pool.size());
 		assertEquals(0, pool.free());
-		assertEquals(2, pool.page());
+		assertEquals(2, pool.granularity());
 		assertEquals(Map.of(), pool.pools());
 	}
 

@@ -4,7 +4,7 @@ import static org.sarge.lib.util.Check.*;
 
 import org.sarge.jove.model.*;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
@@ -201,10 +201,12 @@ public interface DrawCommand extends Command {
 
 			// Check indirect multi-draw is supported
 			final DeviceContext dev = buffer.device();
-			final DeviceLimits limits = dev.limits();
-			final int max = limits.value("maxDrawIndirectCount");
-			if(count > max) throw new IllegalArgumentException("Invalid indirect draw count: count=%d max=%d".formatted(count, max));
 			dev.features().require("multiDrawIndirect");
+
+			// Check the indirect draw count is supported by the hardware
+			final var limits = dev.limits();
+			final int max = limits.maxDrawIndirectCount;
+			if(count > max) throw new IllegalArgumentException("Invalid indirect draw count: count=%d max=%d".formatted(count, max));
 
 			// Create command
 			if(indexed) {

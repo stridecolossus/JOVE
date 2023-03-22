@@ -28,7 +28,7 @@ import com.sun.jna.ptr.PointerByReference;
 public class LogicalDevice extends TransientNativeObject implements DeviceContext {
 	private final PhysicalDevice parent;
 	private final DeviceFeatures features;
-	private final DeviceLimits limits;
+	private final VkPhysicalDeviceLimits limits;
 	private final Map<Family, List<WorkQueue>> queues;
 
 	/**
@@ -39,7 +39,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	 * @param limits		Hardware limits
 	 * @param queues 		Work queues indexed by family
 	 */
-	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, DeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
+	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, VkPhysicalDeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
 		super(handle);
 		this.parent = notNull(parent);
 		this.features = notNull(features);
@@ -70,7 +70,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	}
 
 	@Override
-	public DeviceLimits limits() {
+	public VkPhysicalDeviceLimits limits() {
 		return limits;
 	}
 
@@ -281,7 +281,6 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 
 			// Retrieve hardware limits
 			final VkPhysicalDeviceProperties props = parent.properties();
-			final var limits = new DeviceLimits(props.limits);
 
 			// Retrieve work queues
 			final Handle handle = new Handle(ref);
@@ -289,7 +288,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			final var map = helper.queues();
 
 			// Create logical device
-			return new LogicalDevice(handle, parent, required, limits, map);
+			return new LogicalDevice(handle, parent, required, props.limits, map);
 		}
 
 		/**

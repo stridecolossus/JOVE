@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.util.Set;
 
@@ -43,7 +43,7 @@ public class IndexBufferTest {
 
 	@Test
 	void length() {
-		when(dev.limits().value("maxDrawIndexedIndexValue")).thenReturn(0);
+		dev.limits().maxDrawIndexedIndexValue = 0;
 		assertThrows(IllegalStateException.class, () -> index.bind(0));
 	}
 
@@ -51,7 +51,7 @@ public class IndexBufferTest {
 	class IntegerIndex {
 		@BeforeEach
 		void before() {
-			when(dev.limits().value("maxDrawIndexedIndexValue")).thenReturn(1);
+			dev.limits().maxDrawIndexedIndexValue = 1;
 		}
 
 		@Test

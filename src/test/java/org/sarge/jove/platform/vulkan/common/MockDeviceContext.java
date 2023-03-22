@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.common;
 import static org.mockito.Mockito.mock;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.*;
 
@@ -10,7 +11,7 @@ public class MockDeviceContext implements DeviceContext {
 	private final VulkanLibrary lib = mock(VulkanLibrary.class);
 	private final ReferenceFactory factory = new MockReferenceFactory();
 	private final DeviceFeatures features = mock(DeviceFeatures.class);
-	private final DeviceLimits limits = mock(DeviceLimits.class);
+	private final VkPhysicalDeviceLimits limits = new VkPhysicalDeviceLimits();
 
 	@Override
 	public Handle handle() {
@@ -33,7 +34,7 @@ public class MockDeviceContext implements DeviceContext {
 	}
 
 	@Override
-	public DeviceLimits limits() {
+	public VkPhysicalDeviceLimits limits() {
 		return limits;
 	}
 }

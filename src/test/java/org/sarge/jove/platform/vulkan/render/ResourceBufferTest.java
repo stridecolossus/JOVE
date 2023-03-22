@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 import static org.sarge.jove.platform.vulkan.VkDescriptorType.UNIFORM_BUFFER;
 
 import java.util.Set;
@@ -22,7 +21,7 @@ public class ResourceBufferTest {
 	void before() {
 		// Init device
 		final var dev = new MockDeviceContext();
-		when(dev.limits().value("maxUniformBufferRange")).thenReturn(4);
+		dev.limits().maxUniformBufferRange = 4;
 
 		// Configure resource buffer
 		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()

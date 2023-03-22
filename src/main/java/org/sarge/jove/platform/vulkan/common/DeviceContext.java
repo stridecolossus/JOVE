@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.ReferenceFactory;
 
@@ -32,5 +33,5 @@ public interface DeviceContext {
 	/**
 	 * @return Hardware limits for this device
 	 */
-	DeviceLimits limits();
+	VkPhysicalDeviceLimits limits();
 }

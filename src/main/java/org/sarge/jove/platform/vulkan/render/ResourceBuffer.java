@@ -51,21 +51,21 @@ public final class ResourceBuffer extends VulkanBuffer implements DescriptorReso
 	 * @throws IllegalStateException if this resource is too large for the hardware
 	 */
 	private void validate() {
-		// Determine max property key for this type of buffer
-		final String key = switch(type) {
-			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> "maxUniformBufferRange";
-			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> "maxStorageBufferRange";
-			default -> null;
+		// Determine max buffer length
+		final var limits = this.device().limits();
+		final int max = switch(type) {
+			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> limits.maxUniformBufferRange;
+			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> limits.maxStorageBufferRange;
+			default -> 0;
 		};
 
 		// Ignore if none
-		if(key == null) {
+		if(max == 0) {
 			return;
 		}
 
 		// Validate buffer size
 		final long len = this.length();
-		final int max = this.device().limits().value(key);
 		if(len > max) {
 			throw new IllegalStateException("Buffer too large: length=%d limit=%d".formatted(len, max));
 		}

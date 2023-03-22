@@ -11,8 +11,7 @@ import org.sarge.jove.common.TransientObject;
 /**
  * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
  * <p>
- * This implementation creates a memory pool for <b>each</b> memory type on demand.
- * The pool grows as required according to the {@link AllocationPolicy} specified in the constructor.
+ * This implementation creates a memory pool for <b>each</b> memory type on demand which grows as required.
  * <p>
  * @author Sarge
  */
@@ -24,6 +23,7 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	 * Constructor.
 	 * @param allocator		Delegate allocator
 	 * @param pages			Number of pages to allocate for a new block
+	 * @see #granularity()
 	 */
 	public PoolAllocator(Allocator allocator, int pages) {
 		super(allocator);
@@ -90,8 +90,8 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	}
 
 	@Override
-	protected long quantise(long size) {
-		return super.quantise(size) * pages;
+	protected long pages(long size) {
+		return Math.max(pages, super.pages(size));
 	}
 
 	/**

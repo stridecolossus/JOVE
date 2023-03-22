@@ -68,13 +68,14 @@ public class MemoryPool implements TransientObject {
 				.flatMap(Block::allocations)
 				.filter(Block.ALIVE);
 	}
+	// TODO - public?
 
 	/**
 	 * Adds a memory block to this pool.
 	 * @param block Block to add
 	 * @throws IllegalArgumentException if the block has already been added or is in use
 	 */
-	public void add(Block block) {
+	void add(Block block) {
 		if(block.free() != block.size()) throw new IllegalArgumentException("Cannot add a block in use: " + block);
 		if(blocks.contains(block)) throw new IllegalArgumentException("Block already added: " + block);
 		blocks.add(block);
@@ -95,9 +96,10 @@ public class MemoryPool implements TransientObject {
 	}
 
 	/**
-	 * Reallocates existing memory that has been restored to the pool.
+	 * Reallocates existing memory that has been destroyed.
 	 * @param size Allocation size
 	 * @return Reallocated memory
+	 * @see BlockDeviceMemory#reallocate(long)
 	 */
 	public Optional<DeviceMemory> reallocate(long size) {
 		return blocks
@@ -107,22 +109,8 @@ public class MemoryPool implements TransientObject {
 				.filter(mem -> mem.size() >= size)
 				.sorted(Comparator.comparingLong(DeviceMemory::size))
 				.findAny()
-				.map(this::reallocate);
+				.map(mem -> mem.reallocate(size));
 	}
-
-	private DeviceMemory reallocate(BlockDeviceMemory mem) {
-		// TODO - split, etc
-		throw new UnsupportedOperationException();
-		//return mem;
-	}
-
-//	@Override
-//	public DeviceMemory reallocate() {
-//		if(!destroyed) throw new IllegalStateException("Block allocation cannot be reallocated: " + this);
-//		if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
-//		destroyed = false;
-//		return this;
-//	}
 
 	/**
 	 * Releases <b>all</b> memory allocated back to this pool.

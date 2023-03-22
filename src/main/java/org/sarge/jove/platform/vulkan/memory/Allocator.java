@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.BitField;
 
@@ -53,9 +53,9 @@ public class Allocator {
 		final MemoryType[] types = MemoryType.enumerate(props);
 
 		// Lookup hardware limits
-		final DeviceLimits limits = dev.limits();
-		final int max = limits.value("maxMemoryAllocationCount");
-    	final long page = limits.value("bufferImageGranularity");
+		final VkPhysicalDeviceLimits limits = dev.limits();
+		final int max = limits.maxMemoryAllocationCount;
+    	final long page = limits.bufferImageGranularity;
 
     	// Create allocator
     	return new Allocator(dev, types, max, page);
@@ -63,29 +63,29 @@ public class Allocator {
 
 	private final DeviceContext dev;
 	private final MemoryType[] types;
-	private final long page;
+	private final long granularity;
 	private final int max;
 	private int count;
 
 	/**
 	 * Constructor.
-	 * @param dev		Logical device
-	 * @param types 	Memory types
-	 * @param max		Maximum number of allocations
-	 * @param page		Memory page granularity
+	 * @param dev			Logical device
+	 * @param types 		Memory types
+	 * @param max			Maximum number of allocations
+	 * @param granularity	Memory page granularity
 	 */
-	public Allocator(DeviceContext dev, MemoryType[] types, int max, long page) {
+	public Allocator(DeviceContext dev, MemoryType[] types, int max, long granularity) {
 		this.dev = notNull(dev);
 		this.types = Arrays.copyOf(types, types.length);
 		this.max = oneOrMore(max);
-		this.page = oneOrMore(page);
+		this.granularity = oneOrMore(granularity);
 	}
 
 	/**
 	 * Copy constructor.
 	 */
 	protected Allocator(Allocator allocator) {
-		this(allocator.dev, allocator.types, allocator.max, allocator.page);
+		this(allocator.dev, allocator.types, allocator.max, allocator.granularity);
 	}
 
 	/**
@@ -105,8 +105,8 @@ public class Allocator {
 	/**
 	 * @return Page size granularity
 	 */
-	public final long page() {
-		return page;
+	public final long granularity() {
+		return granularity;
 	}
 
 	/**
@@ -184,9 +184,9 @@ public class Allocator {
 	/**
 	 * Allocates memory of the given type.
 	 * <p>
-	 * The requested memory size is quantised to the optimal {@link #page()} size granularity specified by the hardware.
+	 * The requested memory size is quantised to the optimal page size {@link #granularity()} specified by the hardware.
 	 * Additionally the size of the allocated memory may be larger due to alignment constraints.
-	 * i.e. The actual allocation may be larger than {@link #size} however in either case this is transparent to the resultant device memory instance.
+	 * In either case this is transparent to the resultant device memory instance.
 	 * <p>
 	 * @param type		Memory type
 	 * @param size		Size (bytes)
@@ -199,11 +199,12 @@ public class Allocator {
 		if(count >= max) throw new AllocationException("Number of allocations exceeds the hardware limit".formatted(count, max));
 
 		// Quantise the requested size
-		final long actual = quantise(size);
+		final long pages = pages(size);
+		assert pages > 0;
 
 		// Init memory descriptor
 		final var info = new VkMemoryAllocateInfo();
-		info.allocationSize = oneOrMore(actual);
+		info.allocationSize = granularity * pages;
 		info.memoryTypeIndex = type.index();
 
 		// Allocate memory
@@ -222,12 +223,12 @@ public class Allocator {
 	}
 
 	/**
-	 * Quantises the requested memory size to the configured page size.
+	 * Quantises the requested memory size to the configured page granularity.
 	 * @param size Memory size (bytes)
-	 * @return Quantised size
+	 * @return Number of pages
 	 */
-	protected long quantise(long size) {
-		return (1 + (size / page)) * page;
+	protected long pages(long size) {
+		return Math.min(1, size / granularity);
 	}
 
 	/**
@@ -242,7 +243,7 @@ public class Allocator {
 		return new ToStringBuilder(this)
 				.append("types", types.length)
 				.append("allocations", String.format("%d/%d", count, max))
-				.append("page", page)
+				.append("granularity", granularity)
 				.build();
 	}
 }

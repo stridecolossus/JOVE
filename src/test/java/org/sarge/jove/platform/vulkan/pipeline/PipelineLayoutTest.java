@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 import static org.sarge.jove.platform.vulkan.VkShaderStage.*;
 
 import java.util.*;
@@ -74,7 +74,7 @@ class PipelineLayoutTest {
 			final Range two = new Range(4, 8, Set.of(FRAGMENT));
 
 			// Init push constants max size
-			when(dev.limits().value("maxPushConstantsSize")).thenReturn(12);
+			dev.limits().maxPushConstantsSize = 12;
 
 			// Create layout
 			final PipelineLayout layout = builder

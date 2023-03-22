@@ -46,7 +46,7 @@ class AllocatorTest {
 	void constructor() {
 		assertEquals(0, allocator.count());
 		assertEquals(1, allocator.max());
-		assertEquals(5, allocator.page());
+		assertEquals(5, allocator.granularity());
 	}
 
 	@DisplayName("Memory can be allocated for a matching memory type")

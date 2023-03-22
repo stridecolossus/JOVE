@@ -123,7 +123,7 @@ class Block {
 	 */
 	class BlockDeviceMemory implements DeviceMemory {
 		private final long offset;
-		private final long size;
+		private long size;
 
 		private boolean destroyed;
 
@@ -171,26 +171,23 @@ class Block {
 			return mem.map(offset, size);
 		}
 
-//		@Override
-//		public DeviceMemory reallocate() {
-//			if(!destroyed) throw new IllegalStateException("Block allocation cannot be reallocated: " + this);
-//			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
-//			destroyed = false;
-//			return this;
-//		}
-
-		public void reallocate() {
-			throw new UnsupportedOperationException();
-			//destroyed = false;
-		}
 		/**
-		 * TODO - reallocation
-		 * policy?
-		 * - disable			cannot reallocate once destroyed
-		 * - resize/split		splits into 2 allocations if < size
-		 * - reuse				can only reallocate if = size
-		 * - others?
+		 * Reallocated this device memory.
+		 * @param size New size
+		 * @return Reallocated memory
 		 */
+		BlockDeviceMemory reallocate(long size) {
+			Check.oneOrMore(size);
+			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
+			if(!destroyed) throw new IllegalStateException("Block allocation canot be reallocated: " + this);
+			if(size > this.size) throw new IllegalArgumentException("Reallocation size is larger than this memory: " + this);
+
+			// TODO - essentially orphans unused memory! => remove or resize this memory, and add new instance for remainder
+			this.size = size;
+			destroyed = false;
+
+			return this;
+		}
 
 		@Override
 		public boolean isDestroyed() {
@@ -200,6 +197,10 @@ class Block {
 		@Override
 		public void destroy() {
 			checkAlive();
+			if(mapped == this) {
+				mem.region().get().unmap();
+				mapped = null;
+			}
 			destroyed = true;
 		}
 

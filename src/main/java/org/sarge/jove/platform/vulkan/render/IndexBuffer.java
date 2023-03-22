@@ -71,7 +71,8 @@ public final class IndexBuffer extends VulkanBuffer {
 		}
 
 		// Lookup maximum index length
-		final int max = this.device().limits().value("maxDrawIndexedIndexValue");
+		final var limits = this.device().limits();
+		final int max = limits.maxDrawIndexedIndexValue;
 
 		// Ignore maximum unsigned integer value
 		if(max == -1) {
