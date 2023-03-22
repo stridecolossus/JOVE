@@ -10,6 +10,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.BitMask;
 
 import com.sun.jna.Pointer;
@@ -38,7 +39,7 @@ public interface Command {
 	}
 
 	/**
-	 * A <i>command sequence</i> is a convenience aggregation for a list of commands.
+	 * A <i>command sequence</i> is a convenience abstraction for the process of recording rendering commands for a frame.
 	 */
 	interface Sequence {
 		/**
@@ -326,6 +327,14 @@ public interface Command {
 		 * @return Secondary buffer command sequence
 		 */
 		public Sequence sequence() {
+			return (__, buffer) -> buffer.execute(List.of(this));
+		}
+
+		// TODO
+		public Sequence sequence(Sequence seq, int index, RenderPass pass) {
+			begin(pass.handle());
+			seq.record(index, this);
+			end();
 			return (__, buffer) -> buffer.execute(List.of(this));
 		}
 	}

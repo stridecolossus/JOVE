@@ -16,19 +16,21 @@ title: Enumerations
 
 ## Background
 
-When first using the code generated enumerations we realised there were a couple of flaws in our thinking:
+When first using the code generated enumerations we realised there were several requirements that were not supported:
 
-1. There is also a requirement to map native values _to_ the corresponding enumeration constants, e.g. when retrieving the set of `VkQueueFlag` for a physical device.
+1. There is also the need to map native values _to_ the corresponding enumeration constants, e.g. when retrieving the set of `VkQueueFlag` for a physical device.
 
 2. Additionally many of the enumerations are in fact bit-fields requiring some mechanism to reduce a collection of constants to the native unsigned integer representation (and again to perform the reverse operation).
 
-3. A native enumeration is implemented as an unsigned integer and was being mapped to `int` in the code generated structures and API methods, which is not type-safe and lacks clarity.
+3. A native enumeration is implemented as an unsigned integer and was mapped to `int` in the code generated structures and API methods (since Java has no analog of a native `typedef`).  This is obviously not type-safe, but more importantly it completely obfuscates the purpose of each field.  
 
 For a library with a handful of enumerations this would be a minor issue that could be manually implemented, but for the large number of code-generated Vulkan enumerations something more practical is required that works in __all__ cases.  
 
 ## Solution
 
-We would prefer to avoid abusing the code generator by replicating the same solution in every enumeration class.  What is really needed is some sort of base-class that implements a common solution, but of course enumerations cannot be sub-classed.  However - although it is not common practice - a Java enumeration _can_ implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  This technique is leveraged to define a common abstraction as a basis to support the above requirements.
+We would prefer to avoid abusing the code generator by replicating the same solution in every enumeration class.  What is really needed is some sort of base-class that implements a common solution, but of course enumerations cannot be sub-classed.
+
+However - although it is not common practice - a Java enumeration _can_ implement an interface (indeed our IDE will not code-complete an interface on an enumeration presumably because it thinks it is not legal Java).  This technique is leveraged to define a common abstraction as a basis to support the above requirements.
 
 The [interface](https://github.com/stridecolossus/JOVE/blob/master/src/main/java/org/sarge/jove/util/IntEnum.java) itself is trivial:
 
@@ -111,24 +113,22 @@ static <E extends IntEnum> ReverseMapping<E> mapping(Class<E> clazz) {
 
 ## Bit Masks
 
-For enumerations that are used as bit-fields a second new type is introduced that wraps the underlying mask:
+For enumerations that are used as bit-fields a second new type is introduced that parameterises an integer enumeration and wraps the underlying mask:
 
 ```java
-public final class BitMask<E extends IntEnum> {
-    private final int bits;
+public record BitMask<E extends IntEnum>(int bits) {
 }
 ```
 
-A static factory method can now be implemented to reduce an arbitrary collection of constants to a mask:
+A custom constructor can now be implemented to reduce a collection of constants:
 
 ```java
-public static <E extends IntEnum> BitMask<E> reduce(Collection<E> values) {
-    int bits = values
-        .stream()
-        .mapToInt(IntEnum::value)
-        .reduce(0, (a, b) -> a | b);
+public BitMask(Collection<E> values) {
+    this(reduce(values));
+}
 
-    return new BitMask<>(bits);
+private static int reduce(Collection<? extends IntEnum> values) {
+    return values.stream().mapToInt(IntEnum::value).sum();
 }
 ```
 
@@ -161,17 +161,17 @@ TypeConverter CONVERTER = new TypeConverter() {
 
     @Override
     public Object toNative(Object value, ToNativeContext context) {
-        if(value == null) {
-            return 0;
+        if(value instanceof IntEnum e) {
+            return e.value();
         }
         else {
-            IntEnum e = (IntEnum) value;
-            return e.value();
+            return 0;
         }
     }
 
     @Override
     public Object fromNative(Object nativeValue, FromNativeContext context) {
+        Class<?> type = context.getTargetType();
         ReverseMapping<?> mapping = ReverseMapping.get(type);
         return mapping.map(value);
     }
@@ -187,7 +187,7 @@ public interface VulkanLibrary ... {
     TypeMapper MAPPER = mapper();
 
     private static TypeMapper mapper() {
-        DefaultTypeMapper mapper = new DefaultTypeMapper();
+        var mapper = new DefaultTypeMapper();
         mapper.addTypeConverter(IntEnum.class, IntEnum.CONVERTER);
         mapper.addTypeConverter(BitMask.class, BitMask.CONVERTER);
         ...
@@ -227,24 +227,31 @@ class ReverseMapping<E extends IntEnum> {
     private final E def;
 
     private ReverseMapping(Class<E> clazz) {
-        this.map = ...
+        ...
         this.def = map.getOrDefault(0, array[0]);
     }
+}
 ```
 
-The default value is mapped from the enumeration constant with integer zero if present or is arbitrarily set to the first constant.
+The default value is mapped from the enumeration constant represented by zero if present or is arbitrarily set to the first constant.
 
-In the type converter invalid or unspecified native values can now be safely handled:
+An invalid or unspecified native values can now be safely handled in the type converter:
 
 ```java
 public Object fromNative(Object nativeValue, FromNativeContext context) {
+    Class<?> type = context.getTargetType();
     ReverseMapping<?> mapping = ReverseMapping.get(type);
-    int value = (int) nativeValue;
-    if((value == null) || (value == 0)) {
+    if(nativeValue == null) {
         return mapping.def;
     }
     else {
-        return mapping.map(value);
+        int num = (int) nativeValue;
+        if(num == 0) {
+            return mapping.def;
+        }
+        else {
+            return mapping.map(num);
+        }
     }
 }
 ```

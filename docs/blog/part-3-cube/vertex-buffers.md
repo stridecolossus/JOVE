@@ -49,9 +49,10 @@ The following components will be introduced:
 
 ## Vertex Data
 
-### Vertex
+### Vertices
 
-We start with a definition for an object that can be written to an NIO buffer:
+To construct the vertex data programatically several new types are introduced.
+The first is a definition for an arbitrary data object that can be written to an NIO buffer:
 
 ```java
 public interface Bufferable {
@@ -60,11 +61,6 @@ public interface Bufferable {
      * @param buffer Buffer
      */
     void buffer(ByteBuffer buffer);
-    
-    /**
-     * @return Length of this object (bytes)
-     */
-    long length();
 }
 ```
 
@@ -74,47 +70,18 @@ A _vertex_ is generally comprised of some or all of the following:
 - texture coordinate
 - colour
 
-The vertex implementation is a compound object comprised of an arbitrary group of bufferable data:
-
-```java
-public class Vertex implements Bufferable {
-    private final List<Bufferable> components;
-
-    @Override
-    public int length() {
-        return components.stream().mapToInt(Bufferable::length).sum();
-    }
-
-    @Override
-    public void buffer(ByteBuffer buffer) {
-        for(Bufferable b : components) {
-            b.buffer(buffer);
-        }
-    }
-}
-```
-
-Note that this implementation assumes the vertex data is _interleaved_.
-
 Normals and texture coordinates are not required for the triangle demo so these are glossed over in this chapter.
 
 Positions and vectors are both floating-point tuples with common functionality, here a small hierarchy is introduced with the following base-class:
 
 ```java
 public class Tuple implements Bufferable {
-    public static final int SIZE = 3;
-
     public final float x, y, z;
 
     protected Tuple(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
-    }
-
-    @Override
-    public final long length() {
-        return SIZE * Float.BYTES;
     }
 
     @Override
@@ -147,16 +114,41 @@ public record Colour(float red, float green, float blue, float alpha) implements
     public static final Colour BLACK = new Colour(0, 0, 0, 1);
 
     @Override
-    public final long length() {
-        return 4 * Float.BYTES;
-    }
-
-    @Override
     public void buffer(ByteBuffer buffer) {
         buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
     }
 }
 ```
+
+The vertex implementation itself is a base-class that is assumed to always contain the vertex position:
+
+```java
+public class Vertex implements Bufferable {
+    private final Point pos;
+
+    @Override
+    public void buffer(ByteBuffer bb) {
+        pos.buffer(bb);
+    }
+}
+```
+
+And this is specialised for a vertex that also contains a colour:
+
+
+```java
+public class ColourVertex extends Vertex {
+    private final Colour col;
+
+    @Override
+    public void buffer(ByteBuffer bb) {
+        super.buffer(bb);
+        col.buffer(bb);
+    }
+}
+```
+
+Note that these implementations assume the vertex data is _interleaved_ (the most common approach).
 
 ### Vertex Buffer
 
@@ -477,21 +469,25 @@ The triangle vertices are specified as a simple array (copied from the original 
 
 ```java
 Vertex[] vertices = {
-    Vertex.of(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)),
-    Vertex.of(new Point(0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)),
-    Vertex.of(new Point(-0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)),
+    new ColourVertex(new Point(0, -0.5f, 0), new Colour(1, 0, 0, 1)),
+    new ColourVertex(new Point(0.5f, 0.5f, 0), new Colour(0, 0, 1, 1)),
+    new ColourVertex(new Point(-0.5f, 0.5f, 0), new Colour(0, 1, 0, 1)),
 };
 ```
 
-For the moment we reuse the vertex class to wrap up the array as a single bufferable object:
+For the moment the vertices are simply wrapped into a compound bufferable object:
 
 ```java
-Vertex triangle = new Vertex(Arrays.asList(vertices));
+Bufferable triangle = bb -> {
+    for(Vertex v : vertices) {
+        v.buffer(bb);
+    }
+};
 ```
 
-This will be replaced with a more specialised _model_ implementation later on.
+This will be replaced with a more specialised _mesh_ implementation in a future chapter.
 
-Next a new helper is added to create a staging buffer:
+Next a helper is added to create a staging buffer:
 
 ```java
 public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
@@ -537,9 +533,7 @@ VulkanBuffer vbo = VulkanBuffer.create(dev, allocator, staging.length(), props);
 The triangle data can now be copied from the staging buffer:
 
 ```java
-staging
-    .copy(vbo)
-    .submit(pool);
+staging.copy(vbo).submit(pool);
 ```
 
 And finally the staging buffer is released:
@@ -548,28 +542,28 @@ And finally the staging buffer is released:
 staging.destroy();
 ```
 
-The `submit` method is a helper on a new base-class used by the copy command:
+The `submit` method delegates to the following helper the `Work` class:
 
 ```java
-abstract class ImmediateCommand implements Command {
-    public Buffer submit(Pool pool) {
-        // Allocate and record one-time command
-        Buffer buffer = pool
-            .allocate()
-            .begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-            .add(this)
-            .end();
-    
-        // Submit work
+public static void submit(Command cmd, Pool pool) {
+    // Record command to a one-time buffer
+    Buffer buffer = pool
+        .primary()
+        .begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+        .add(cmd)
+        .end();
+
+    try {
+        // Submit command
         Work work = Work.of(buffer);
-    
+        work.submit();
+
         // Wait for completion
-        pool.waitIdle(); // TODO - synchronise using fence
-    
-        // Release resources
+        // TODO
+        pool.waitIdle();
+    }
+    finally {
         buffer.free();
-    
-        return buffer;
     }
 }
 ```

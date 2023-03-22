@@ -68,15 +68,10 @@ class ModelBuilder {
 Which will create a point-cloud model with colours:
 
 ```java
-public Model build(InputStream in) throws IOException {
-    var builder = new DefaultModel.Builder()
-        .primitive(Primitive.POINTS)
-        .layout(Point.LAYOUT)
-        .layout(Colour.LAYOUT);
-
+public Mesh build(InputStream in) throws IOException {
+    var mesh = new DefaultMesh(Primitive.POINTS, Point.LAYOUT, Colour.LAYOUT);
     ...
-    
-    return builder.build();
+    return mesh;
 }
 ```
 

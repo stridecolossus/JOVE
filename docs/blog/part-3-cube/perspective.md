@@ -560,7 +560,7 @@ public Bufferable vertices() {
     return new Bufferable() {
         @Override
         public int length() {
-            return Layout.stride(layout) * vertices.size();
+            return layout.stride() * vertices.size();
         }
 
         @Override

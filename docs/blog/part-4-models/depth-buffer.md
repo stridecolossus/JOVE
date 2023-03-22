@@ -17,7 +17,9 @@ title: Depth Buffers
 
 In this chapter we will render the chalet model constructed previously and resolve various visual problems that arise.
 
-First we introduce a _camera_ model and a builder for the drawing command.
+Since we are now dealing with a model that has a specific orientation, the current view-transform matrix will be encapsulated into a new _camera_ model that allows the application to more easily configure the view.  This will be extended in the next chapter to allow the camera to be dynamically controlled by the keyboard and mouse.
+
+First we introduce enhancements to the existing geometry classes to more explicitly support normals and the cardinal axes.
 
 Finally various improvements are made to simplify configuration of the presentation process.
 
@@ -25,17 +27,144 @@ Finally various improvements are made to simplify configuration of the presentat
 
 ## Framework
 
-### Camera
+### Normals Redux
 
-Since we are now dealing with a model that has a specific orientation, the current view-transform matrix is encapsulated into a new _camera_ model that allows the application to more easily configure the view.  This will be extended in the next chapter to allow the camera to be dynamically controlled by the keyboard and mouse.
+Currently the application code is responsible for ensuring that vectors have been normalised as appropriate.  This either requires the overhead of checking whether a vector has already been normalised (albeit a relatively trivial test) or relying on documentation hints, neither of which are rigorous or explicit.
+
+A better approach is to _enforce_ this requirement at compile-time, therefore the `Vector` class is extended by the introduction of specialisations for normals and the cardinal axes.
+
+A _normal_ is a unit-vector:
+
+```java
+public class Normal extends Vector implements Component {
+    public static final Layout LAYOUT = Layout.floats(3);
+
+    public Normal(Vector vec) {
+        super(normalize(vec));
+    }
+
+    @Override
+    public final float magnitude() {
+        return 1;
+    }
+
+    @Override
+    public Normal invert() {
+        return new Normal(super.invert());
+    }
+
+    @Override
+    public final Normal normalize() {
+        return this;
+    }
+}
+```
+
+The `normalize` method is moved from the `Vector` class which is refactored accordingly:
+
+```java
+public class Vector {
+    public Normal normalize() {
+        return new Normal(this);
+    }
+}
+```
+
+This new type is further specialised for the cardinal axes:
+
+```java
+public final class Axis extends Normal {
+    public static final Axis
+            X = new Axis(0),
+            Y = new Axis(1),
+            Z = new Axis(2);
+}
+```
+
+The vector of each axis is initialised in the constructor:
+
+```java
+private final int index;
+
+private Axis(int index) {
+    super(axis(index));
+    this.index = index;
+}
+
+private static Vector axis(int index) {
+    float[] axis = new float[SIZE];
+    axis[index] = 1;
+    return new Vector(axis);
+}
+```
+
+The frequently used inverse axes are also pre-calculated and cached:
+
+```java
+private final Normal inv = super.invert();
+
+@Override
+public Normal invert() {
+    return inv;
+}
+```
+
+And finally the code to construct a rotation matrix about one of the cardinal axes is moved from the matrix class:
+
+```java
+public Matrix rotation(float angle) {
+    var matrix = new Matrix.Builder().identity();
+    float sin = MathsUtil.sin(angle);
+    float cos = MathsUtil.cos(angle);
+    switch(index) {
+        case 0 -> matrix.set(...);
+        ...
+    }
+    return matrix.build();
+}
+```
+
+Note that this code switches on the `index` of the axis, this works fine for now but may be replaced later by an internal enumeration.
+
+The purpose of these changes are:
+
+1. The intent of code using the new types is now more expressive and type-safe, e.g. classes that _require_ a unit-vector can now enforce the `Normal` type explicitly.
+
+2. Reduces the reliance on documented assumptions and defensive checks to ensure vectors are normalised as required, e.g. when generating rotation matrices.
+
+3. The overhead of re-normalising is trivial where an already normalized vector is referenced as the base `Vector` type.
+
+4. The hierarchy now supports extension points for further optimisations, e.g. caching of the inverse cardinal axes.
+
+The implementation of the `matrix` method for a quaternion is less performant than the code for the cardinal axes.  For an immutable, one-off rotation this probably would not be a concern, but for frequently reclaculated rotations about the cardinal axes the faster solution is preferable.  Therefore the axis-angle class selects the most appropriate algorithm:
+
+```java
+public class AxisAngle implements Rotation {
+    private final Normal axis;
+    private final float angle;
+
+    public Matrix matrix() {
+        if(axis instanceof Axis cardinal) {
+            return cardinal.rotation(angle);
+        }
+        else {
+            return Quaternion.of(this).matrix();
+        }
+    }
+}
+```
+
+Note that this implementation also now enforces the axis to be a unit-vector, the results for an arbitrary vector would be interesting!
+
+### Camera
 
 The camera is a model class representing the position and orientation of the viewer:
 
 ```java
 public class Camera {
     private Point pos = Point.ORIGIN;
-    private Vector dir = Axis.Z;
-    private Vector up = Axis.Y;
+    private Normal dir = Axis.Z;
+    private Normal up = Axis.Y;
 }
 ```
 
@@ -62,7 +191,7 @@ And a convenience method points the camera at a given target:
 ```java
 public void look(Point pt) {
     if(pos.equals(pt)) throw new IllegalArgumentException();
-    Vector look = Axis.between(pt, pos).normalize();
+    Normal look = Axis.between(pt, pos).normalize();
     direction(look);
 }
 ```
@@ -85,7 +214,7 @@ Next the following transient members are added to the camera class to support th
 ```java
 public class Camera {
     ...
-    private Vector right = Axis.X;
+    private Normal right = Axis.X;
     private Matrix matrix;
     private boolean dirty = true;
 }
@@ -95,9 +224,9 @@ Where:
 
 * The `dirty` flag is signalled in the various mutator methods (not shown) when any of the camera properties are modified.
 
-* The `right` vector is the horizontal axis of the viewport (also used in the `strafe` method).
+* The `right` vector is the horizontal axis of the camera viewport (also used in the `strafe` method).
 
-The view transform matrix for the camera is constructed on demand:
+The view transform for the camera is constructed on demand:
 
 ```java
 public Matrix matrix() {
@@ -121,6 +250,17 @@ private void update() {
 }
 ```
 
+Where the _cross product_ yields the vector perpendicular to two other vectors (using the right-hand rule):
+
+```java
+public Vector cross(Vector vec) {
+    float x = this.y * vec.z - this.z * vec.y;
+    float y = this.z * vec.x - this.x * vec.z;
+    float z = this.x * vec.y - this.y * vec.x;
+    return new Vector(x, y, z);
+}
+```
+
 And finally the matrix is constructed from the translation and rotation components as before:
 
 ```java
@@ -139,58 +279,9 @@ Matrix rot = new Matrix.Builder()
 matrix = rot.multiply(trans);
 ```
 
-The _cross product_ yields the vector perpendicular to two other vectors (using the right-hand rule):
-
-```java
-public Vector cross(Vector vec) {
-    float x = this.y * vec.z - this.z * vec.y;
-    float y = this.z * vec.x - this.x * vec.z;
-    float z = this.x * vec.y - this.y * vec.x;
-    return new Vector(x, y, z);
-}
-```
-
-Many operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
-
-```java
-public Vector normalize() {
-    float len = magnitude();
-    if(MathsUtil.isEqual(1, len)) {
-        return this;
-    }
-    else {
-        float f = MathsUtil.inverseRoot(len);
-        return multiply(f);
-    }
-}
-```
-
-Where `multiply` scales a vector by a given value:
-
-```java
-public Vector multiply(float f) {
-    return new Vector(x * f, y * f, z * f);
-}
-```
-
-A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible.  Additionally many algorithms work irrespective of whether the distance is squared or not.
-
-Therefore the `magnitude` is expressed as the __squared__ length of the vector (which is highlighted in the documentation):
-
-```java
-/**
- * @return Magnitude (or length) <b>squared</b> of this vector
- */
-public float magnitude() {
-    return x * x + y * y + z * z;
-}
-```
-
-Note that the vector class is immutable and all 'mutator' methods create a new instance.
-
 ### Draw Command
 
-The draw command will need to be updated for the indexed model, we take the opportunity to implement a convenience builder on the `DrawCommand` class:
+The draw command will need to be updated for the indexed chalet model, we take the opportunity to implement a convenience builder on the `DrawCommand` class:
 
 ```java
 public static class Builder {
@@ -228,12 +319,12 @@ static DrawCommand indexed(int count) {
 }
 ```
 
-Finally a further helper is implemented to create a draw command for a given model:
+Finally a further helper is implemented to create a draw command for a given mesh:
 
 ```java
-static DrawCommand of(Model model) {
-    int count = model.header().count();
-    if(model.index().isPresent()) {
+static DrawCommand of(Mesh mesh) {
+    int count = mesh.count();
+    if(mesh instanceof IndexedMesh) {
         return indexed(count);
     }
     else {
@@ -245,7 +336,7 @@ static DrawCommand of(Model model) {
 The hard-coded draw command can now be replaced in the render sequence:
 
 ```java
-Command draw = DrawCommand.of(model);
+Command draw = DrawCommand.of(mesh);
 ```
 
 ---
@@ -272,10 +363,10 @@ public class CameraConfiguration {
 And the matrix bean is refactored accordingly:
 
 ```java
-return projection.multiply(cam.matrix()).multiply(model);
+return projection.multiply(cam.matrix()).multiply(mesh);
 ```
 
-The previous VBO configuration is replaced with a new class that loads the persisted model:
+The previous VBO configuration is replaced with a new class that loads the persisted mesh:
 
 ```java
 @Configuration
@@ -292,7 +383,7 @@ public class ModelConfiguration {
 }
 ```
 
-Then the VBO and index buffer objects are created for the model:
+Then the VBO and index buffer objects are created for the mesh:
 
 ```java
 @Bean
@@ -400,7 +491,7 @@ After regenerating the model it now looks to be textured correctly, in particula
 
 ![Less Broken Chalet Model](mess2.png)
 
-### Depth-Stencil Pipeline Stage
+### Depth Test
 
 The second problem is that fragments are being rendered arbitrarily overlapping, either the geometry needs to be ordered by distance from the camera, or the _depth test_ is enabled to ensure that obscured fragments are ignored.  The depth test uses the _depth buffer_ which is a special attachment that records the distance of each rendered fragment, discarding subsequent fragments that are closer to the camera.
 
@@ -420,14 +511,16 @@ public class DepthStencilStageBuilder extends AbstractPipelineBuilder<VkPipeline
 
 In the previous demos the clear value for the colour attachments was hard-coded, with the addition of the depth buffer this functionality now needs to be properly implemented.
 
-Introducing clear values should have been easy, however there was a nasty surprise when adding the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Presumably the original code with a single clear value only worked by luck because the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
+Introducing clear values should have been easy, however there was a nasty surprise when adding the depth-stencil to the demo, with JNA throwing the infamous `Invalid memory access` error.  Eventually we realised that `VkClearValue` and `VkClearColorValue` are in fact __unions__ and not structures.  Vulkan is expecting __either__ a colour array __or__ a depth floating-point value, whereas we are currently sending both for all attachments, probably resulting in some sort of buffer offset problem.
 
-Thankfully JNA supports unions out-of-the-box, the generated code was manually modified as unions.
+> Presumably the original code with a single clear value only worked by luck because the code generator treated the union as a plain structure and the properties for a colour attachment happen to be the first field in each object, i.e. the `color` and `float32` properties.
+
+As far as we can tell this is the __only__ instance of the use of a union in the whole Vulkan API!  Thankfully JNA supports unions out-of-the-box and the generated code could be manually modified.
 
 A clear value is defined by the following abstraction:
 
 ```java
-public sealed interface ClearValue permits ColourClearValue, DepthClearValue {
+public interface ClearValue {
     /**
      * Populates the given clear value descriptor.
      * @param value Descriptor
@@ -468,8 +561,6 @@ record DepthClearValue(Percentile depth) implements ClearValue {
     }
 }
 ```
-
-As far as we can tell this is the __only__ instance in the whole Vulkan API that uses unions!
 
 The clear value now becomes a mutable property of the image view:
 

@@ -51,7 +51,7 @@ public class GridBuilder {
     private Primitive primitive = Primitive.TRIANGLES;
     private IndexFactory index;
 
-    public Model build() {
+    public Mesh build() {
         ...
     }
 }
@@ -92,22 +92,17 @@ static HeightFunction literal(float height) {
 
 Note that this implementation is used to initialise the height of all vertices to zero by default.
 
-The builder first initialises the grid model:
+The builder first initialises the grid mesh:
 
 ```java
-public Model build() {
-    var model = new Model.Builder()
-        .primitive(primitive)
-        .layout(Point.LAYOUT)
-        .layout(Coordinate2D.LAYOUT);
-        
+public Mesh build() {
+    final var mesh = new IndexedMesh(primitive, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
     ...
-        
-    return model.build();
+    return mesh;
 }
 ```
 
-The grid is centred on the origin of the model so the _half distances_ of the vertices are calculated relative to the centre:
+The mesh is centred on the origin of the grid so the _half distances_ of the vertices are calculated relative to the centre:
 
 ```java
 int w = size.width();
@@ -116,7 +111,7 @@ float dx = tile * (w - 1) / 2;
 float dz = tile * (h - 1) / 2;
 ```
 
-Next the builder iterates through the grid to generate the vertices (in column major order):
+Next the code iterates through the grid to generate the vertices (in column major order):
 
 ```java
 for(int row = 0; row < h; ++row) {
@@ -144,8 +139,8 @@ Coordinate coord = new Coordinate2D((float) col / w, (float) row / h);
 Finally each vertex is added to the model:
 
 ```java
-Vertex vertex = new Vertex(pos, coord);
-model.add(vertex);
+Vertex vertex = vertex(pos, coord);
+mesh.add(vertex);
 ```
 
 ### Index Factory

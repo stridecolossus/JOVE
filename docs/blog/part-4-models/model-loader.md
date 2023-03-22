@@ -136,7 +136,7 @@ public class ObjectModelLoader {
 The loader applies the above logic and delegates to a local method to parse each line:
 
 ```java
-public Stream<Model> load(Reader r) throws IOException {
+public Stream<Mesh> load(Reader r) throws IOException {
     // Parse OBJ model
     try(LineNumberReader in = new LineNumberReader(r)) {
         in.lines()
@@ -358,10 +358,10 @@ The OBJ builder constructs the JOVE model(s) from the transient data:
 ```java
 public class ObjectModel {
     ...
-    private final List<Model> models = new ArrayList<>();
-    private Model.Builder builder = new Model.Builder();
+    private final List<DefaultMesh> models = new ArrayList<>();
+    private DefaultMesh model;
 
-    public List<Model> build() {
+    public List<DefaultMesh> build() {
         buildCurrentGroup();
         return new ArrayList<>(models);
     }
@@ -373,19 +373,18 @@ The `buildCurrentGroup` method initialises the layout of the current model and i
 ```java
 private void buildCurrentGroup() {
     // Init model layout
-    builder.layout(Point.LAYOUT);
+    var layout = new ArrayList<Layout>();
+    layout.add(Point.LAYOUT);
     if(!normals.isEmpty()) {
-        builder.layout(Vertex.NORMALS);
+        layout.add(Normal.LAYOUT);
     }
     if(!coords.isEmpty()) {
-        builder.layout(Coordinate2D.LAYOUT);
+        layout.add(Coordinate2D.LAYOUT);
     }
 
-    // Add model
-    models.add(builder.build());
-
     // Start new model
-    builder = new Model.Builder();
+    model = new DefaultMesh(new CompoundLayout(layout));
+    models.add(model);
 }
 ```
 
@@ -424,86 +423,68 @@ Where the `GROUP` parser delegates to the `start` method to begin a new group.
 
 ## Indexed Models
 
-### De-Duplication
+### Duplicate Removal
 
 From the tutorial we know that the chalet model has a large number of duplicate vertices.  An obvious improvement is to de-duplicate the model before rendering and introduce an _index buffer_ to  reduce the total amount of data, at the expense of a second buffer for the index itself.
 
-First an optional index buffer is added to the model definition:
+First the mesh definition is modified to include an optional index buffer:
 
 ```java
-public interface Model {
+public interface Mesh {
     /**
      * @return Index buffer
      */
-    Optional<Bufferable> index();
+    Optional<ByteSizedBufferable> index();
 }
 ```
 
-The index is added to the model builder:
+Next a specialised implementation is introduced for a mesh with an index:
 
 ```java
-public static class Builder {
+public class IndexedMesh extends DefaultMesh {
     private final List<Integer> index = new ArrayList<>();
+    
+    @Override
+    public final int count() {
+        return index.size();
+    }
 
-    public Builder add(int index) {
-        if((index < 0) || (index >= vertices.size())) throw new IllegalArgumentException(...);
+    public IndexedMesh add(int index) {
+        if((index < 0) || (index >= super.count())) throw new IndexOutOfBoundsException();
         this.index.add(index);
         return this;
     }
 }
 ```
 
-The `build` method for the model is refactored to determine the draw count depending on whether a model is indexed:
+The index buffer is generated in a similar fashion to the vertex buffer:
 
 ```java
-public Model build() {
-    // Determine whether indexed
-    int count;
-    Bufferable indices;
-    if(index.isEmpty()) {
-        count = vertices.size();
-        indices = null;
-    }
-    else {
-        count = index.size();
-        indices = index();
+private class IndexBuffer implements ByteSizedBufferable {
+    @Override
+    public int length() {
+        return index.size() * Integer.BYTES;
     }
 
-    // Create model
-    ...
+    @Override
+    public void buffer(ByteBuffer bb) {
+        if(bb.isDirect()) {
+            for(int n : index) {
+                bb.putInt(n);
+            }
+        }
+        else {
+            int[] indices = index.stream().mapToInt(Integer::intValue).toArray();
+            bb.asIntBuffer().put(indices);
+        }
+    }
 }
 ```
 
-The index buffer is generated as follows:
+For the OBJ model a second specialisation performs vertex de-duplication:
 
 ```java
-private Bufferable index() {
-    return new Bufferable() {
-        @Override
-        public int length() {
-            return index.size() * Integer.BYTES;
-        }
-
-        @Override
-        public void buffer(ByteBuffer bb) {
-            if(bb.isDirect()) {
-                for(int n : index) {
-                    bb.putInt(n);
-                }
-            }
-            else {
-                int[] array = index.stream().mapToInt(Integer::intValue).toArray();
-                bb.asIntBuffer().put(array);
-            }
-        }
-    };
-}
-```
-
-Duplicate vertices are handled by a new model builder sub-class:
-
-```java
-public class DuplicateModelBuilder extends Model.Builder {
+class RemoveDuplicateMesh extends IndexedMesh {
     private final Map<Vertex, Integer> map = new HashMap<>();
 }
 ```
@@ -540,11 +521,11 @@ public DuplicateModelBuilder add(Vertex v) {
 
 Note that this implementation assumes that the vertex class has a decently efficient hashing implementation.
 
-The OBJ loader is refactored to use the new builder sub-class which reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
+The OBJ loader is refactored to use the new mesh implementation which reduces the size of the interleaved model from 30Mb to roughly 11Mb (5Mb for the vertex data and 6Mb for the index buffer).  Nice!
 
 ### Index Buffer
 
-An index buffer is similar to the existing implementation but requires a different `bind` method and additionally has a data type (for short or integer indices), therefore a new buffer sub-class is introduced:
+A Vulkan index buffer is similar to the existing implementation but requires a different `bind` method and additionally has a data type (for short or integer indices), therefore a new buffer sub-class is introduced:
 
 ```java
 public class IndexBuffer extends VulkanBuffer {
@@ -614,28 +595,14 @@ Where `map` determines the buffer usage flag for a given type of descriptor:
 public static VkBufferUsageFlag map(VkDescriptorType type) {
     return switch(type) {
         case UNIFORM_BUFFER -> VkBufferUsageFlag.UNIFORM_BUFFER;
-        default -> throw new IllegalArgumentException(...);
+        default -> throw new IllegalArgumentException();
     };
-}
-```
-
-Finally a copy constructor is added to the base-class to support the new buffer implementations:
-
-```java
-public class VulkanBuffer extends AbstractVulkanObject {
-    /**
-     * Copy constructor.
-     * @param buffer Buffer to copy
-     */
-    protected VulkanBuffer(VulkanBuffer buffer) {
-        this(buffer.handle(), buffer.device(), buffer.usage(), buffer.memory(), buffer.length());
-    }
 }
 ```
 
 ### Model Persistence
 
-Although the OBJ loader and indexed builder are relatively efficient, the process of loading the model is now quite slow.  We could attempt to optimise the code but this is usually very time-consuming and often results in complexity, leading to bugs and code that is difficult to maintain.
+Although the OBJ loader and indexed mesh are relatively efficient, the process of loading the model is now quite slow.  We could attempt to optimise the code but this is usually very time-consuming and often results in complexity, leading to bugs and code that is difficult to maintain.
 
 Instead we note that as things stand the following steps in the loading process are repeated _every_ time we run the demo:
 

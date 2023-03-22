@@ -992,109 +992,43 @@ Multiple frames can now be executed in parallel, the introduced synchronisation 
 
 ### Normals
 
-To support rotations the `Vector` class is expanded by the introduction of:
-
-* A specific sub-class for _normal_ vectors.
-
-* A further specialisation for the _cardinal_ axes (replacing the existing constants in the vector class).
-
-* A `sealed` hierarchy for the various `Tuple` implementations.
-
-A _normal_ is a unit-vector:
+Many operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
 
 ```java
-public sealed class Normal extends Vector implements Component permits Axis {
-    public static final Layout LAYOUT = Layout.floats(3);
-
-    public Normal(Vector vec) {
-        super(normalize(vec));
-    }
-
-    @Override
-    public final float magnitude() {
-        return 1;
-    }
-
-    @Override
-    public final Normal normalize() {
+public Vector normalize() {
+    float len = magnitude();
+    if(MathsUtil.isEqual(1, len)) {
         return this;
     }
-}
-```
-
-The `normalize` code is moved from the `Vector` class and the existing method is refactored accordingly:
-
-```java
-public Normal normalize() {
-    return new Normal(this);
-}
-```
-
-Next this new type is sub-classed for the cardinal axes:
-
-```java
-public final class Axis extends Normal {
-    public static final Axis
-            X = new Axis(0),
-            Y = new Axis(1),
-            Z = new Axis(2);
-}
-```
-
-The vector of each axis is initialised in the constructor:
-
-```java
-private final int index;
-
-private Axis(int index) {
-    super(axis(index));
-    this.index = index;
-}
-
-private static Vector axis(int index) {
-    final float[] axis = new float[SIZE];
-    axis[index] = 1;
-    return new Vector(axis);
-}
-```
-
-The frequently used inverse axes are also pre-calculated and cached:
-
-```java
-private final Normal inv = super.invert();
-
-@Override
-public Normal invert() {
-    return inv;
-}
-```
-
-And finally the code to construct a rotation matrix about one of the cardinal axes is moved from the matrix class:
-
-```java
-public Matrix rotation(float angle) {
-    var matrix = new Matrix.Builder().identity();
-    float sin = MathsUtil.sin(angle);
-    float cos = MathsUtil.cos(angle);
-    switch(index) {
-        case 0 -> matrix.set(...);
-        ...
+    else {
+        float f = MathsUtil.inverseRoot(len);
+        return multiply(f);
     }
-    return matrix.build();
 }
 ```
 
-Note that this code switches on the `index` of the axis, this works fine for now but may be replaced later by an internal helper enumeration.
+Where `multiply` scales a vector by a given value:
 
-The purpose of these changes are:
+```java
+public Vector multiply(float f) {
+    return new Vector(x * f, y * f, z * f);
+}
+```
 
-1. The intent of code using the new hierarchy can now be made more expressive and type-safe, e.g. classes that _require_ a unit-vector can now enforce the `Normal` type explicitly.
+A vector has a _magnitude_ (or length) which is calculated using the _Pythagorean_ theorem as the square-root of the _hypotenuse_ of the vector.  Although square-root operations are generally delegated to the hardware and are therefore less expensive than in the past, we prefer to avoid having to perform roots where possible.  Additionally many algorithms work irrespective of whether the distance is squared or not.
 
-2. Reduces the reliance on documented assumptions and defensive checks to ensure vectors are normalised when required, e.g. when generating rotation matrices.
+Therefore the `magnitude` is expressed as the __squared__ length of the vector (which is highlighted in the documentation):
 
-3. The overhead of re-normalising is trivial where an already normalized vector is referenced as the base `Vector` type.
+```java
+/**
+ * @return Magnitude (or length) <b>squared</b> of this vector
+ */
+public float magnitude() {
+    return x * x + y * y + z * z;
+}
+```
 
-4. The hierarchy now supports extension points for further optimisations, e.g. caching of the inverse cardinal axes.
+Note that the vector class is immutable and all 'mutator' methods create a new instance.
 
 ### Rotations
 
@@ -1132,7 +1066,7 @@ The simplest rotation implementation is an axis-angle which specifies a counter-
 
 ```java
 public class AxisAngle implements Rotation {
-    private final Normal axis;
+    private final Vector axis;
     private final float angle;
     
     @Override
@@ -1142,11 +1076,9 @@ public class AxisAngle implements Rotation {
 }
 ```
 
-Note that this implementation enforces the axis to be a unit-vector, the results for an arbitrary vector would be interesting!
-
-The new `Axis` class generates a rotation matrix for the cardinal axes, however the new framework needs to support rotations about an arbitrary axis (which was explicitly disallowed in the original code), rather than composing multiple matrices as in the previous demo.  Implementing code to generate a rotation matrix about an arbitrary axis is relatively straight-forward (if somewhat messy) but a better alternative is to introduce _quaternions_ which also offer additional functionality that will be required in later chapters.
-
 ### Quaternions
+
+The existing matrix code generates a rotation matrix for the cardinal axes, however the new framework needs to support rotations about an arbitrary axis (which is currently explicitly disallowed).  Implementing code to generate a rotation matrix about an arbitrary axis is relatively straight-forward (if somewhat messy) but a better alternative is to introduce _quaternions_ which also offer additional functionality that will be required in later chapters.
 
 A _quaternion_ is a more compact and efficient representation of a rotation often used when multiple rotations are frequently composed (e.g. skeletal animation), but is generally less intuitive to use and comprehend:
 
@@ -1189,35 +1121,17 @@ public AxisAngle toAxisAngle() {
 }
 ```
 
-The implementation of the `matrix` method for a quaternion (not shown) is less performant than the code for the cardinal axes.  For an immutable, one-off rotation this probably would not be a concern, but for rotations about the cardinal axes that are frequently re-calculated the faster solution is obviously preferable.  Therefore the axis-angle class selects the most appropriate implementation:
+The rotation matrix for an axis-angle rotation can now be constructed from a quaternion:
 
 ```java
 public Matrix matrix() {
-    if(axis instanceof Axis cardinal) {
-        return cardinal.rotation(angle);
-    }
-    else {
-        return Quaternion.of(this).matrix();
-    }
+    return Quaternion.of(this).matrix();
 }
 ```
-
-Finally the following mutable sub-class supports animation of a rotation:
-
-```java
-public class MutableRotation extends AxisAngle {
-    @Override
-    public void set(float angle) {
-        super.set(angle);
-    }
-}
-```
-
-Where the `set` method modifies the rotation `angle` (which becomes a mutable but hidden property) and is exposed in this implementation.
 
 ### Player
 
-The final enhancement to the existing code is the implementation of a new framework to support playable media and animations.
+The final enhancement to the existing code is support for playable media and animations.
 
 First the following new abstraction defines a media resource or animation that can be played:
 
@@ -1393,18 +1307,35 @@ Finally the updated position is then applied to the animation:
 animation.update(time / (float) duration);
 ```
 
-The final piece of the jigsaw is the mutable rotation implementation is modified to support animation about the unit-circle:
+### Mutable Rotation
+
+The final piece of the jigsaw is a rotation implementation that can be animated.
 
 ```java
-public class MutableRotation extends AxisAngle implements Animation {
+public class MutableRotation implements Rotation, Animation {
+    private AxisAngle rot;
+
     @Override
-    public void update(float pos) {
-        set(pos * TWO_PI);
+    public Matrix matrix() {
+        return rot.matrix();
+    }
+
+    @Override
+    public AxisAngle toAxisAngle() {
+        return rot;
     }
 }
 ```
 
-Alternatively a separate adapter could have been implemented but that hardly seemed worthwhile for such a relatively trivial case.
+This class provides various mutators (not shown) to set the axis and rotation angle, which are also used when updating a rotation animation:
+
+```java
+@Override
+public void update(float pos) {
+    float angle = pos * TWO_PI;
+    set(angle);
+}
+```
 
 ### Integration
 
@@ -1413,7 +1344,7 @@ In the cube demo the existing hand-crafted matrix code is replaced by a rotation
 ```java
 @Bean
 static MutableRotation rotation() {
-    Normal axis = new Vector(MathsUtil.HALF, 1, 0).normalize();
+    Vector axis = new Vector(MathsUtil.HALF, 1, 0).normalize();
     return new MutableRotation(axis);
 }
 ```
@@ -1463,6 +1394,8 @@ In this chapter the render loop was improved by:
 - Integration of the GLFW window event queue and a means of gracefully terminating the demo.
 
 - Implementation of Vulkan synchronisation to safely utilise the multi-threaded rendering pipeline.
+
+- New geometry code to support unit-vectors and quaternions.
 
 - The addition of a new framework for playable media and animations.
 

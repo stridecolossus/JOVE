@@ -50,13 +50,6 @@ public record BitMask<E extends IntEnum>(int bits) {
 	}
 
 	/**
-	 * @return Native bitfield value
-	 */
-	public int bits() {
-		return bits;
-	}
-
-	/**
 	 * @param mask Mask
 	 * @return Whether this mask contains the given enumeration mask
 	 */
@@ -83,19 +76,6 @@ public record BitMask<E extends IntEnum>(int bits) {
     			.map(BitField::map)
     			.mapToObj(reverse::map)
     			.collect(toSet());
-	}
-
-	@Override
-	public int hashCode() {
-		return bits;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof BitMask<?> that) &&
-				(this.bits == that.bits);
 	}
 
 	@Override

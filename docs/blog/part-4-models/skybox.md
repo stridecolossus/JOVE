@@ -93,7 +93,7 @@ Next a cube model is created for the skybox:
 
 ```java
 @Bean
-public static Model skybox() {
+public static Mesh skybox() {
     return new CubeBuilder(List.of(Point.LAYOUT)).build();
 }
 ```
