@@ -58,11 +58,6 @@ public abstract class AbstractMesh implements Mesh {
 	}
 
 	@Override
-	public boolean isIndexed() {
-		return false;
-	}
-
-	@Override
 	public Optional<ByteSizedBufferable> index() {
 		return Optional.empty();
 	}
@@ -87,7 +82,6 @@ public abstract class AbstractMesh implements Mesh {
 		return new ToStringBuilder(this)
 				.append(primitive)
 				.append("count", count())
-				.append("indexed", isIndexed())
 				.append("layout", layout)
 				.build();
 	}

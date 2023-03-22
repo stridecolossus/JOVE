@@ -3,7 +3,9 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.model.Mesh;
+import org.sarge.jove.common.CompoundLayout;
+import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
 class DrawCommandTest {
@@ -35,13 +37,14 @@ class DrawCommandTest {
 	@DisplayName("Create a draw command for a mesh")
 	@Test
 	void model() {
-		final var mesh = mock(Mesh.class);
-		when(mesh.count()).thenReturn(3);
-		when(mesh.isIndexed()).thenReturn(true);
+		final var mesh = new IndexedMesh(Primitive.POINT, new CompoundLayout(Point.LAYOUT));
+		mesh.add(new Vertex(Point.ORIGIN));
+		mesh.add(0);
+		mesh.add(0);
 
 		final DrawCommand draw = DrawCommand.of(mesh);
 		draw.record(lib, cmd);
-		verify(lib).vkCmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
+		verify(lib).vkCmdDrawIndexed(cmd, 2, 1, 0, 0, 0);
 	}
 
 	@Nested

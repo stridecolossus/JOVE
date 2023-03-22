@@ -30,11 +30,6 @@ public interface Mesh {
 	ByteSizedBufferable vertices();
 
 	/**
-	 * @return Whether this mesh has an index
-	 */
-	boolean isIndexed();
-
-	/**
 	 * @return Index buffer
 	 */
 	Optional<ByteSizedBufferable> index();

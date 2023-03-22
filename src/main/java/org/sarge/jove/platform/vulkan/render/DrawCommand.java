@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.lib.util.Check.*;
 
-import org.sarge.jove.model.Mesh;
+import org.sarge.jove.model.*;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -56,14 +56,13 @@ public interface DrawCommand extends Command {
 	 */
 	static DrawCommand of(Mesh mesh) {
 		final int count = mesh.count();
-		if(mesh.isIndexed()) {
+		if(mesh instanceof IndexedMesh) {
 			return indexed(count);
 		}
 		else {
 			return draw(count);
 		}
 	}
-	// TODO - should this be on mesh?
 
 	/**
 	 * Builder for a draw command.

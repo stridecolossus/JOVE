@@ -53,11 +53,6 @@ public class IndexedMesh extends DefaultMesh {
 	}
 
 	@Override
-	public final boolean isIndexed() {
-		return true;
-	}
-
-	@Override
 	public Vertex vertex(int index) {
 		return super.vertex(this.index.get(index));
 	}

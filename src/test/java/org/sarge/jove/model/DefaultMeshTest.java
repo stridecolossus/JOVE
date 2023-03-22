@@ -28,12 +28,6 @@ public class DefaultMeshTest {
     		assertEquals(new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), mesh.layout());
     	}
 
-    	@DisplayName("is not indexed")
-    	@Test
-    	void unindexed() {
-    		assertEquals(false, mesh.isIndexed());
-    	}
-
     	@DisplayName("initially has no vertex data")
     	@Test
     	void empty() {
@@ -74,7 +68,6 @@ public class DefaultMeshTest {
 		@DisplayName("does not have an index buffer")
 		@Test
 		void index() {
-			assertEquals(false, mesh.isIndexed());
 			assertEquals(Optional.empty(), mesh.index());
 		}
 	}

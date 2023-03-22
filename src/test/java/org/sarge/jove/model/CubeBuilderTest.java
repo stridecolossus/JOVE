@@ -23,7 +23,6 @@ public class CubeBuilderTest {
 		assertEquals(Primitive.TRIANGLE, mesh.primitive());
 		assertEquals(count, mesh.count());
 		assertEquals(layout, mesh.layout());
-		assertEquals(false, mesh.isIndexed());
 		assertEquals(count * layout.stride() , mesh.vertices().length());
 	}
 }

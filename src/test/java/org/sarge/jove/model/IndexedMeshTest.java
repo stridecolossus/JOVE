@@ -21,7 +21,6 @@ public class IndexedMeshTest {
 
 	@Test
 	void constructor() {
-		assertEquals(true, mesh.isIndexed());
 		assertEquals(0, mesh.count());
 	}
 

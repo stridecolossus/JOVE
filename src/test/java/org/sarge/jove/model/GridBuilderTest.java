@@ -24,7 +24,6 @@ class GridBuilderTest {
 		assertEquals(Primitive.PATCH, model.primitive());
 		assertEquals((3 * 3) * 4, model.count());
 		assertEquals(new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT), model.layout());
-		assertEquals(true, model.isIndexed());
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")

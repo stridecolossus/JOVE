@@ -93,7 +93,6 @@ public class ObjectModelTest {
 			assertEquals(Primitive.TRIANGLE, mesh.primitive());
 			assertEquals(3, mesh.count());
 			assertEquals(layout, mesh.layout());
-			assertEquals(true, mesh.isIndexed());
 
 			// Check model data
 			assertEquals((3 + 3 + 2) * Float.BYTES, mesh.vertices().length());
