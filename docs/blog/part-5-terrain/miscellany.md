@@ -1,20 +1,420 @@
 ---
-title: Improvements
+title: Miscellany
 ---
 
 ---
 
 ## Contents
 
-TODO - move pipeline derivation and queries to TERRAIN chapter
+This chapter introduces several largely unrelated Vulkan components that logically follow on from the previous terrain demo chapter:
 
-This chapter introduces various improvements to the pipeline and shader code used in the terrain tesselation demo.
-
+- [Overview](#overview)
+- [Buffer Helper](#buffer-helper)
+- [Push Constants](#push-constants)
+- [Shader Constants](#specialisation-constants)
 - [Pipeline Derivation](#pipeline-derivation)
 - [Pipeline Cache](#pipeline-cache)
 - [Queries](#queries)
 
 ---
+
+## Buffer Helper
+
+All of the following sections rely on the `BufferHelper` which is a new utility class for NIO buffers.
+
+Most Vulkan functionality assumes __direct__ NIO buffers which are created by the following convenience factory:
+
+```java
+public final class BufferHelper {
+    /**
+     * Native byte order for a bufferable object.
+     */
+    public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
+
+    private BufferHelper() {
+    }
+
+    public static ByteBuffer allocate(int len) {
+        return ByteBuffer.allocateDirect(len).order(NATIVE_ORDER);
+    }
+}
+```
+
+The utility class also converts an NIO buffer to a byte array:
+
+```java
+public static byte[] array(ByteBuffer bb) {
+    if(bb.isDirect()) {
+        bb.rewind();
+        int len = bb.limit();
+        byte[] bytes = new byte[len];
+        for(int n = 0; n < len; ++n) {
+            bytes[n] = bb.get();
+        }
+        return bytes;
+    }
+    else {
+        return bb.array();
+    }
+}
+```
+
+And the reverse operation:
+
+```java
+public static ByteBuffer buffer(byte[] array) {
+    ByteBuffer bb = allocate(array.length);
+    if(bb.isDirect()) {
+        for(byte b : array) {
+            bb.put(b);
+        }
+    }
+    else {
+        bb.put(array);
+    }
+    return bb;
+}
+```
+
+Direct NIO buffers generally do not support the optional bulk methods, hence this new helper and the various `isDirect` tests in the code.
+
+Existing code that converts arrays to/from byte buffers is refactored using the new utility methods, e.g. shader SPIV code.
+
+---
+
+## Push Constants
+
+### Introduction
+
+Push constants are an alternative and more efficient mechanism for transferring arbitrary data to shaders with some constraints:
+
+* The maximum amount of data is usually relatively small.
+
+* The data is stored within a command buffer _instance_ which is generally updated per frame.
+
+* Push constants have alignment restrictions on the size and offset of each element.
+
+See [vkCmdPushConstants](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkCmdPushConstants.html).
+
+### Range
+
+A _push constant range_ specifies a portion of the data and the shader stages where it can be used:
+
+```java
+public record Range(int offset, int size, Set<VkShaderStage> stages) {
+    void populate(VkPushConstantRange range) {
+        range.stageFlags = BitMask.reduce(stages);
+        range.size = size;
+        range.offset = offset;
+    }
+}
+```
+
+The _offset_ and _size_ of a push constant range must be a multiple of four bytes which is validated in the constructor by the following helper:
+
+```java
+static void validate(int size) {
+    if((size % 4) != 0) throw new IllegalArgumentException();
+}
+```
+
+The push constant class itself has a set of ranges and a backing NIO data buffer:
+
+```java
+public final class PushConstant {
+    public record Range {
+        ...
+    }
+
+    private final ByteBuffer data;
+    private final List<Range> ranges;
+}
+```
+
+The constructor sizes and allocates the data buffer according to the ranges:
+
+```java
+PushConstant(List<Range> ranges) {
+    int len = ranges.stream().mapToInt(Range::max).reduce(0, Integer::max);
+    this.data = BufferHelper.allocate(len);
+    this.ranges = List.copyOf(ranges);
+}
+```
+
+Where `max` is used to determine the overall size of the data buffer:
+
+```java
+int max() {
+    return offset + size;
+}
+```
+
+Notes:
+
+* Multiple ranges can be specified which allows the application to update some or all of the push constants at different shader stages and also enables the hardware to perform optimisations.
+
+* Ranges can overlap, hence the need to determine the `max` buffer length.
+
+* However the entire backing buffer must be covered by at least one range (validation not shown).
+
+A range of the push constants is updated by the following command implemented as an inner class:
+
+```java
+public final class UpdateCommand implements Command {
+    private final Range range;
+    private final PipelineLayout layout;
+    private final BitMask<VkShaderStage> stages;
+
+    @Override
+    public void record(VulkanLibrary lib, Command.Buffer buffer) {
+        data.position(range.offset);
+        lib.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, data);
+    }
+}
+```
+
+And the new API method is added to the pipeline layout library:
+
+```java
+void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFlags, int offset, int size, ByteBuffer pValues);
+```
+
+Note that the data buffer is rewound before updates are applied, generally Vulkan seems to automatically rewind buffers as required (e.g. for updating the uniform buffer) but not in this case.
+
+### Pipeline Layout
+
+A push constant is added to the pipeline layout and the associated builder is modified to configure the ranges:
+
+```java
+public static class Builder {
+    private final List<Range> ranges = new ArrayList<>();
+
+    public Builder add(Range range) {
+        ranges.add(range);
+        return this;
+    }
+}
+```
+
+The ranges are populated in the `build` method and a push constant instance
+
+TODO
+
+```java
+public PipelineLayout build(DeviceContext dev) {
+    ...
+    
+    var push = new PushConstant(ranges);
+    int len = push.length();
+    if(len > 0) {
+        info.pushConstantRangeCount = ranges.size();
+        info.pPushConstantRanges = StructureCollector.pointer(ranges, new VkPushConstantRange(), Range::populate);
+    }
+    
+    ...
+    
+    return new PipelineLayout(layout.getValue(), dev, push);
+}
+```
+
+### Integration
+
+To use the push constants in the terrain demo the uniform buffer is first replaced with the following layout declaration in the vertex shader:
+
+```glsl
+layout(push_constant) uniform Matrices {
+    mat4 model;
+    mat4 view;
+    mat4 projection;
+};
+```
+
+In the pipeline configuration we remove the uniform buffer and replace it with a single push constant range sized to the three matrices:
+
+```java
+@Bean
+static Range range() {
+    int len = 3 * Matrix.IDENTITY.length();
+    return new Range(0, len, Set.of(VkShaderStage.VERTEX));
+}
+```
+
+Which is registered with the pipeline:
+
+```java
+@Bean
+PipelineLayout layout(DescriptorSet.Layout layout, PushConstant.Range range) {
+    return new PipelineLayout.Builder()
+        .add(layout)
+        .add(range)
+        .build(dev);
+}
+```
+
+Next a command is created to update the whole of the push constants buffer:
+
+```java
+@Bean
+static UpdateCommand update(Range range, PipelineLayout layout) {
+    PushConstant push = layout.push();
+    return push.new UpdateCommand.of(range, layout);
+}
+```
+
+In the camera configuration the push constants are updated once per frame:
+
+```java
+@Bean
+public Task matrix(PushUpdateCommand update) {
+    ByteBuffer data = update.data();
+    return () -> {
+        data.rewind();
+        Matrix.IDENTITY.buffer(data);
+        cam.matrix().buffer(data);
+        projection.buffer(data);
+    };
+}
+```
+
+And finally the update command is added to the render sequence before starting the render pass.
+
+---
+
+## Specialisation Constants
+
+The terrain shaders contain a number of hard coded parameters (such as the tesselation factor and height scalar) which would ideally be programatically configured (possibly from a properties file).
+
+Additionally in general we prefer to centralise common or shared parameters to avoid hard-coding the same information in multiple locations or having to replicate shaders for different parameters.
+
+Vulkan provides _specialisation constants_ for these requirements which parameterise a shader when it is instantiated.
+
+For example in the evaluation shader the hard-coded height scale is replaced with the following constant declaration:
+
+```glsl
+layout(constant_id=1) const float HeightScale = 2.5;
+```
+
+Note that the constant also has a default value if it is not explicitly configured by the application.
+
+The descriptor for a set of specialisation constants is constructed via a new factory method:
+
+```java
+public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
+    // Skip if empty
+    if(constants.isEmpty()) {
+        return null;
+    }
+    ...
+}
+```
+
+Each constant generates a separate child entry:
+
+```java
+var info = new VkSpecializationInfo();
+info.mapEntryCount = constants.size();
+info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
+```
+
+Where `populate` is factored out to the following function:
+
+```java
+var populate = new BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry>() {
+    private int len = 0;
+
+    @Override
+    public void accept(...) {
+        ...
+    }
+};
+```
+
+This function populates the descriptor for each entry and calculates the buffer offset and total length as a side-effect:
+
+```java
+// Init constant
+int size = size(entry.getValue());
+out.size = size;
+out.constantID = entry.getKey();
+
+// Update buffer offset
+out.offset = len;
+len += size;
+```
+
+Where `size` is a local helper:
+
+```java
+int size() {
+    return switch(value) {
+        case Integer n -> Integer.BYTES;
+        case Float f -> Float.BYTES;
+        case Boolean b -> Integer.BYTES;
+        default -> throw new UnsupportedOperationException();
+    };
+}
+```
+
+The constants are then written to a data buffer:
+
+```java
+ByteBuffer buffer = BufferHelper.allocate(populate.len);
+for(Object value : constants.values()) {
+    switch(value) {
+        case Integer n -> buffer.putInt(n);
+        case Float f -> buffer.putFloat(f);
+        case Boolean b -> converter.toNative(b, null);
+        default -> throw new RuntimeException();
+    }
+}
+```
+
+And finally the data is added to the descriptor:
+
+```java
+info.dataSize = populate.len;
+info.pData = buffer;
+```
+
+Notes:
+
+* Only scalar (int, float) and boolean values are supported.
+
+* Booleans are represented as integer values.
+
+Specialisation constants are configured in the pipeline:
+
+```java
+public class ShaderStageBuilder {
+    private VkSpecializationInfo constants;
+    
+    public ShaderStageBuilder constants(VkSpecializationInfo constants) {
+        this.constants = notNull(constants);
+        return this;
+    }
+ 
+    void populate(VkPipelineShaderStageCreateInfo info) {
+        info.pSpecializationInfo = constants;
+    }
+}
+```
+
+The set of constants used in both tesselation shaders is initialised in the pipeline configuration class:
+
+```java
+class PipelineConfiguration {
+    private final VkSpecializationInfo constants = Shader.constants(Map.of(0, 20f, 1, 2.5f));
+}
+```
+
+Finally the relevant shaders are parameterised when the pipeline is constructed, for example:
+
+```java
+shader(VkShaderStage.TESSELLATION_EVALUATION)
+    .shader(evaluation)
+    .constants(constants)
+    .build()
+```
 
 ## Pipeline Derivation
 
@@ -466,7 +866,7 @@ private BitMask<VkQueryResultFlag> validate() {
     }
 
     // Build flags mask
-    return BitMask.reduce(flags);
+    return new BitMask<>(flags);
 }
 ```
 
@@ -486,7 +886,7 @@ public Command build(VulkanBuffer buffer, long offset) {
 
 The query framework is used in the terrain demo to further verify the tesselation process using a pipeline statistics query.
 
-First we create a query pool that counts the number of vertices generated by the tesselator:
+First a query pool is created that counts the number of vertices generated by the tesselator:
 
 ```java
 @Bean
@@ -499,7 +899,7 @@ public Pool queryPool(LogicalDevice dev) {
 }
 ```
 
-Next a query instance is allocated from the pool:
+A query instance is then allocated from the pool:
 
 ```java
 @Bean
@@ -540,19 +940,5 @@ The terrain demo application should now output the number of the vertices genera
 
 ---
 
-## Summary
 
-In this chapter we implemented the following framework enhancements:
-
-* Push constants
-
-* Pipeline derivation
-
-* A persistent pipeline cache.
-
-* Support for specialisation constants.
-
-* A new framework to support pipeline queries.
-
-* Support for device limits.
 

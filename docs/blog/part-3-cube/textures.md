@@ -80,10 +80,10 @@ public interface Coordinate extends Bufferable {
     }
 
     record Coordinate2D(float u, float v) implements Coordinate {
-        @Override
-        public final long length() {
-            return 2 * Float.BYTES;
-        }
+        /**
+         * Layout of a 2D texture coordinate.
+         */
+        public static final Layout LAYOUT = Layout.floats(2);
     
         @Override
         public final void buffer(ByteBuffer buffer) {

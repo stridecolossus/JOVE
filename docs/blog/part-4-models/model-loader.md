@@ -662,7 +662,7 @@ writeBuffer(mesh.vertices(), out);
 Which uses the following helper to output the length of the data followed by the buffer as a byte-array:
 
 ```java
-private static void writeBuffer(Bufferable src, DataOutputStream out) throws IOException {
+private static void writeBuffer(ByteSizedBufferable obj, DataOutputStream out) throws IOException {
     // Output length
     int len = obj.length();
     out.writeInt(len);
@@ -722,20 +722,35 @@ for(int n = 0; n < num; ++n) {
 Next the vertex and index buffers are loaded:
 
 ```java
-Bufferable vertices = loadBuffer(in);
-Bufferable index = loadBuffer(in);
+ByteSizedBufferable vertices = loadBuffer(in);
+ByteSizedBufferable index = loadBuffer(in);
 ```
 
 And finally the mesh is instantiated:
 
 ```java
-return new BufferedMesh(primitive, count, new CompoundLayout(components), vertices, index);
+return new AbstractMesh(primitive, new CompoundLayout(layout)) {
+    @Override
+    public int count() {
+        return count;
+    }
+
+    @Override
+    public ByteSizedBufferable vertices() {
+        return vertices;
+    }
+
+    @Override
+    public Optional<ByteSizedBufferable> index() {
+        return Optional.of(index);
+    }
+};
 ```
 
 The `loadBuffer` helper is the inverse of `writeBuffer` above (with an additional check for an empty buffer):
 
 ```java
-private static Bufferable loadBuffer(DataInputStream in) throws IOException {
+private static ByteSizedBufferable loadBuffer(DataInputStream in) throws IOException {
     // Read buffer size
     int len = in.readInt();
     
@@ -749,7 +764,7 @@ private static Bufferable loadBuffer(DataInputStream in) throws IOException {
     in.readFully(bytes);
 
     // Convert to buffer
-    return Bufferable.of(bytes);
+    return ByteSizedBufferable.of(bytes);
 }
 ```
 

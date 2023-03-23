@@ -556,8 +556,8 @@ public class DefaultMesh extends AbstractMesh {
 The interleaved vertex buffer is generated from the mutable model in the same manner as the hard-coded quad previously:
 
 ```java
-public Bufferable vertices() {
-    return new Bufferable() {
+public ByteSizedBufferable vertices() {
+    return new ByteSizedBufferable() {
         @Override
         public int length() {
             return layout.stride() * vertices.size();

@@ -7,7 +7,7 @@ title: The Render Loop and Synchronisation
 ## Contents
 
 - [Overview](#overview)
-- [Render Loop](#render-loop)
+- [Refactoring](#refactoring)
 - [Synchronisation](#synchronisation)
 - [Rotation and Animation](#rotation-and-animation)
 
@@ -15,13 +15,13 @@ title: The Render Loop and Synchronisation
 
 ## Overview
 
-Before we progress the demo there are several issues with the existing, crude render loop implemented in the previous chapter:
+Before we progress the demo there are several issues with the crude render loop implemented in the previous chapter:
 
 * The rendering code is completely single-threaded.
 
 * The rendering and presentation tasks are 'synchronised' by blocking on the work queues.
 
-* The window event queue is not being polled, meaning the window is inoperable.
+* The window event queue is not being polled, meaning the window cannot be moved or closed.
 
 * There is no mechanism to terminate the application other than the dodgy timer or force-quitting the process.
 
@@ -29,7 +29,7 @@ Before we progress the demo there are several issues with the existing, crude re
 
 In this chapter these issues are addressed by the introduction of the following:
 
-* New JOVE components to separate the various activities into reusable, coherent components.
+* New JOVE components to separate the various activities into reusable, coherent components that can also be unit-tested in isolation.
 
 * Synchronisation to fully utilise the multi-threaded nature of the Vulkan pipeline.
 
@@ -39,259 +39,58 @@ In this chapter these issues are addressed by the introduction of the following:
 
 ---
 
-## Render Loop
-
-### Refactoring
-
-We start by factoring out the various aspects of the render loop into reusable, collaborating components that can more easily be unit-tested.
-
-First the array of frame buffers is wrapped into the following compound object:
-
-```java
-public class FrameSet implements TransientObject {
-    private final Swapchain swapchain;
-    private final List<FrameBuffer> buffers;
-
-    public FrameBuffer buffer(int index) {
-        return buffers.get(index);
-    }
-}
-```
-
-In the constructor a frame buffer is created for each swapchain image:
-
-```java
-public FrameSet(Swapchain swapchain, RenderPass pass, List<View> additional) {
-    List<View> images = swapchain.attachments();
-    Dimensions extents = swapchain.extents();
-    for(View image : images) {
-        // Enumerate attachments
-        var attachments = new ArrayList<View>();
-        attachments.add(image);
-        attachments.addAll(additional);
-
-        // Create buffer
-        FrameBuffer buffer = FrameBuffer.create(pass, extents, attachments);
-        buffers.add(buffer);
-    }
-}
-```
-
-The `additional` attachments are not required for the rotating cube demo but will come into play in later chapters, e.g. depth buffers.
-
-Finally the set of frame buffers can now be properly released on application shutdown:
-
-```java
-public void destroy() {
-    for(FrameBuffer b : buffers) {
-        b.destroy();
-    }
-}
-```
-
-Next the `FrameBuilder` is introduced which is responsible for constructing the command buffer for the rendering work:
-
-```java
-public class FrameBuilder {
-    private final IntFunction<FrameBuffer> frames;
-    private final Supplier<Buffer> factory;
-    private final VkCommandBufferUsage[] flags;
-
-    public Buffer build(int index, RenderSequence seq) {
-        ...
-    }
-}
-```
-
-The `build` method first allocates a command buffer:
-
-```java
-public Buffer build(int index, RenderSequence seq) {
-    Buffer buffer = factory.get();
-    buffer.begin(flags);
-    ...
-    buffer.end();
-    return buffer;
-}
-```
-
-Next a render pass is started for the next framebuffer:
-
-```java
-FrameBuffer fb = frames.apply(index);
-buffer.add(fb.begin());
-...
-buffer.add(FrameBuffer.END);
-```
-
-And finally the render sequence is recorded.  The `build` method now looks like this (indentation added for clarity):
-
-```java
-public Buffer build(int index, RenderSequence seq) {
-    Buffer buffer = factory.get();
-    FrameBuffer fb = frames.apply(index);
-    buffer.begin(flags);
-        buffer.add(fb.begin());
-            seq.record(buffer);
-        buffer.add(FrameBuffer.END);
-    buffer.end();
-    return buffer;
-}
-```
-
-The _render sequence_ is a convenience abstraction for recording a sequence of rendering commands:
-
-```java
-public interface RenderSequence {
-    /**
-     * Records this render sequence to the given command buffer.
-     * @param buffer Render task
-     * @see Buffer#add(Command)
-     */
-    void record(Buffer buffer);
-}
-```
-
-For the moment this simply wraps an arbitrary collection of commands:
-
-```java
-static RenderSequence of(List<Command> commands) {
-    return buffer -> commands.forEach(buffer::add);
-}
-```
-
-### Controller
-
-Next the acquire-render-present process is factored out to a new controller component:
-
-```java
-public class FrameProcessor {
-    private final Swapchain swapchain;
-    private final FrameBuilder builder;
-}
-```
-
-The existing rendering process is moved and refactored accordingly:
-
-```java
-public void render(RenderSequence seq) {
-    // Acquire next frame buffer
-    int index = swapchain.acquire(null, null);
-
-    // Render frame
-    Buffer buffer = builder.build(index, seq);
-    
-    // Submit render task
-    Pool pool = buffer.pool();
-    new Work.Builder(pool)
-        .add(buffer)
-        .build()
-        .submit();
-        
-    // Wait for frame to be rendered
-    pool.waitIdle();
-
-    // Present rendered frame
-    swapchain.present(pool.queue(), index, null);
-    pool.waitIdle();
-}
-```
-
-Next a new listener is introduced for frame completion events:
-
-```java
-@FunctionalInterface
-public interface FrameListener {
-    /**
-     * Notifies a completed frame.
-     */
-    void frame();
-}
-```
-
-Which is registered with the controller:
-
-```java
-public class FrameProcessor {
-    private final Set<Listener> listeners = new HashSet<>();
-
-    public void add(Listener listener) {
-        listeners.add(listener);
-    }
-}
-```
-
-The `render` method is wrapped with an elapsed duration and broadcasts frame completion events:
-
-```java
-public void render(RenderSequence seq) {
-    // Render frame
-    Instant start = Instant.now();
-    ...
-
-    // Notify frame completion
-    Instant end = Instant.now();
-    for(Listener listener : listeners) {
-        listener.frame(start, end);
-    }
-}
-```
+## Refactoring
 
 ### Render Loop
 
-The final piece of the new framework is a render loop that takes advantage of the scheduling functionality in the executor framework:
+We start with a simple utility class that will track the elapsed duration of a rendered frame:
 
 ```java
-public class RenderLoop {
-    private final ScheduledExecutorService executor;
-    private ScheduledFuture<?> future;
-    private long rate;
+public class Frame {
+    private Instant start = Instant.now();
+    private Instant end;
+
+    public Duration elapsed() {
+        return Duration.between(start, end);
+    }
+
+    public void stop() {
+        if(end != null) throw new IllegalStateException();
+        end = Instant.now();
+    }
 }
 ```
 
-Once started this component executes render tasks with a target frame-rate:
+The timer also defines a listener for frame completion events:
 
 ```java
-public void start(Runnable task) {
-    if(future != null) throw new IllegalStateException(...);
-    future = executor.scheduleAtFixedRate(task, 0, rate, TimeUnit.MILLISECONDS);
+@FunctionalInterface
+public interface Listener {
+    /**
+     * Notifies a completed frame.
+     * @param frame Completed frame
+     */
+    void update(Frame frame);
 }
 ```
 
-The frame-rate is a configurable property:
+The following implementation provides a basic FPS counter that can be used to monitor the application:
 
 ```java
-public void rate(int fps) {
-    this.rate = TimeUnit.SECONDS.toMillis(1) / fps;
-}
-```
-
-The render loop can also be terminated:
-
-```java
-public void stop() {
-    if(future == null) throw new IllegalStateException(...);
-    future.cancel(true);
-    future = null;
-}
-```
-
-This new component should allow applications to configure a target frame-rate without having to implement fiddly timing and thread yielding logic.  Note that the executor automatically handles tasks that take longer than the configured period, i.e. if a frame takes longer to render than the specified frame-rate, the next frame starts later, and is not run concurrently.
-
-Finally we implement the following simple FPS counter to verify the render loop:
-
-```java
-public class FrameCounter implements FrameListener {
+public static class Counter implements Listener {
     private Instant next = Instant.EPOCH;
     private int count;
-    private int fps;
+
+    public int fps() {
+        return count;
+    }
 
     @Override
-    public void frame() {
-        Instant now = Instant.now();
+    public void update(Frame frame) {
+        Instant now = frame.time();
         if(now.isAfter(next)) {
             count = 1;
-            next = now.plusSeconds(1);
+            next = now.plusMillis(MILLISECONDS_PER_SECOND);
         }
         else {
             ++count;
@@ -300,63 +99,207 @@ public class FrameCounter implements FrameListener {
 }
 ```
 
+Next the render loop is factored to a new component that repeatedly schedules an arbitrary task:
+
+```java
+public class RenderLoop {
+    private final Set<Listener> listeners = new HashSet<>();
+    private int rate;
+    private Future<?> future;
+    private Consumer<Exception> handler = System.err::println;
+
+    public void start(Runnable task) {
+        if(isRunning()) throw new IllegalStateException();
+        ...
+    }
+}
+```
+
+In the `start` method the given task is wrapped by a frame timer:
+
+```java
+Runnable wrapper = () -> {
+    try {
+        Frame timer = new Frame();
+        task.run();
+        timer.stop();
+        update(timer);
+    }
+    catch(Exception e) {
+        handler.accept(e);
+    }
+};
+```
+
+Where `update` notifies the attached listeners on completion of the task.
+
+The task is then scheduled to run at a configured frame-rate using the executor framework:
+
+```java
+long period = TimeUnit.SECONDS.toMillis(1) / rate;
+ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+future = executor.scheduleAtFixedRate(wrapper, 0, period, TimeUnit.MILLISECONDS);
+```
+
+Finally the loop can be interrupted:
+
+```java
+public void stop() {
+    if(!isRunning()) throw new IllegalStateException();
+    future.cancel(true);
+    future = null;
+}
+```
+
+This new component should allow applications to configure a target frame-rate without having to implement fiddly timing or thread yielding logic.
+
+Notes:
+
+* This implementation assumes that only __one__ task is being executed at any one time, i.e. the executor uses a single thread pool.
+
+* A task that takes longer than the specified period simple backs up the next task, i.e. tasks will not overlap or run concurrently.
+
+* This component is Vulkan agnostic.
+
+* Exceptions thrown by a task are intercepted and handed off to the configured `handler` consumer.
+
+### Render Task
+
+Next a new is task implemented that composes the various collaborating Vulkan components used during rendering of a frame:
+
+```java
+public class VulkanRenderTask {
+    private final List<FrameBuffer> buffers;
+    private final FrameComposer composer;
+    private final Swapchain swapchain;
+}
+```
+
+The acquire-render-present code is factored out to the `render` method:
+
+```java
+public void render() {
+    // Acquire next frame
+    int index = swapchain.acquire(...);
+    FrameBuffer fb = buffers.get(index);
+
+    // Compose render task
+    Command.Buffer render = composer.compose(fb);
+    Command.Pool pool = render.pool();
+    pool.waitIdle();
+
+    // Present rendered frame
+    swapchain.present(pool.queue(), index, null);
+}
+```
+
+The frame composer is responsible for building the rendering command sequence:
+
+```java
+public class FrameComposer {
+    private final Pool pool;
+    private VkCommandBufferUsage[] flags = {VkCommandBufferUsage.ONE_TIME_SUBMIT};
+    private VkSubpassContents contents = VkSubpassContents.INLINE;
+}
+```
+
+And the existing code is moved to the `compose` method:
+
+```java
+public Buffer compose(FrameBuffer frame) {
+    // Allocate a command buffer
+    Buffer buffer = pool.allocate();
+
+    // Start recording
+    buffer.begin(flags);
+
+    // Create a render pass for the given frame buffer
+    Command begin = frame.begin(contents);
+    buffer.add(begin);
+
+    // Record render pass
+    ...
+
+    // Finish recording
+    buffer.add(FrameBuffer.END);
+    buffer.end();
+
+    return buffer;
+}
+```
+
+Finally a new convenience wrapper for a group of frame buffers is introduced:
+
+```java
+public static class Group implements TransientObject {
+    public Group(RenderPass pass, Swapchain swapchain) {
+        var extents = new Rectangle(swapchain.extents());
+        this.buffers = swapchain
+            .attachments()
+            .stream()
+            .map(view -> create(pass, extents, List.of(view)))
+            .toList();
+    }
+
+    @Override
+    public void destroy() {
+        for(var b : buffers) {
+            b.destroy();
+        }
+    }
+}
+```
+
+This should also resolve the Vulkan warnings about orphaned frame buffers when the application shuts down.
+
 ### Integration
 
 The new framework is used to break up the existing demo into simpler components.
-
-First the presentation configuration is modified to create the set of frame buffers:
+First the presentation configuration is modified to create the frame buffer group:
 
 ```java
 @Bean
-public static FrameSet frames(Swapchain swapchain, RenderPass pass) {
-    return new FrameSet(swapchain, pass, List.of());
+static FrameBuffer.Group frames(Swapchain swapchain, RenderPass pass) {
+    return new FrameBuffer.Group(pass, swapchain);
 }
 ```
 
-And the presentation controller:
+The frame composer:
 
 ```java
 @Bean
-public FrameProcessor processor(FrameSet frames, @Qualifier("graphics") Command.Pool pool) {
-    var builder = new FrameBuilder(frames::buffer, pool::allocate, VkCommandBufferUsage.ONE_TIME_SUBMIT);
-    return new FrameProcessor(frames.swapchain(), builder, 2);
+static FrameComposer composer(@Qualifier("graphics") Command.Pool pool) {
+    return new FrameComposer(pool);
 }
 ```
 
-Next the rendering command sequence is wrapped into the new class:
+The render task:
 
 ```java
 @Bean
-public static RenderSequence sequence(List<Command> commands) {
-    return RenderSequence.of(...);
+VulkanRenderTask render(FrameBuffer.Group group, FrameComposer composer, Swapchain swapchain) {
+    return new VulkanRenderTask(group.buffers(), composer, swapchain);
 }
 ```
 
-Where the `commands` have been factored out into separate beans and are automatically aggregated by the container.
-
-A new executor service is added to the main class of the demo:
+And finally the render loop:
 
 ```java
 @Bean
-public static ScheduledExecutorService executor() {
-    return Executors.newSingleThreadScheduledExecutor();
-}
-```
-
-Which is composed with the frame processor and render sequence to initialise and start the render loop:
-
-```java
-@Bean
-public RenderLoop loop(ScheduledExecutorService executor, FrameProcessor proc, RenderSequence seq) {
-    Runnable task = () -> proc.render(seq);
-    RenderLoop loop = new RenderLoop(executor);
+public RenderLoop loop(VulkanRenderTask task, Collection<Frame.Listener> listeners) {
+    var loop = new RenderLoop();
     loop.rate(60);
-    loop.start(task);
+    loop.start(task::render);
+    for(var listener : listeners) {
+        loop.add(listener);
+    }
     return loop;
 }
 ```
 
-Finally the animation logic is factored out into a frame listener:
+Note that Spring auto-magically generates the set of frame `listeners` from those registered with the container.
+
+The last temporary bit of refactoring work is to move the animation logic into a frame listener:
 
 ```java
 @Bean
@@ -379,21 +322,6 @@ public static FrameListener animation(Matrix projection, Matrix view, ResourceBu
 }
 ```
 
-Which is registered with the controller via the following method:
-
-```java
-@Autowired
-void listeners(FrameProcessor proc, Collection<FrameProcessor.Listener> listeners) {
-    listeners.forEach(proc::add);
-}
-```
-
-Notes:
-
-* Spring auto-magically creates the set of listeners from those registered with the container.
-
-* To avoid having to implement messy synchronisation the animation is updated once per frame.
-
 ### Graceful Exit
 
 To gracefully exit the application a GLFW keyboard listener is added to the main configuration class:
@@ -402,7 +330,7 @@ To gracefully exit the application a GLFW keyboard listener is added to the main
 public class RotatingCubeDemo {
     @Bean
     KeyListener exit(Window window) {
-        KeyListener listener = (ptr, key, scancode, action, mods) -> System.exit(0));
+        KeyListener listener = (ptr, key, scancode, action, mods) -> System.exit(0);
         window.desktop().library().glfwSetKeyCallback(window.handle(), listener);
         return listener;
     }
@@ -539,7 +467,7 @@ The Vulkan API provides several synchronisation mechanisms that can be used by t
 The class itself is trivial since semaphores do not have any public functionality:
 
 ```java
-public class Semaphore extends AbstractVulkanObject {
+public class Semaphore extends VulkanObject {
     private Semaphore(Pointer handle, DeviceContext dev) {
         super(handle, dev);
     }
@@ -563,7 +491,7 @@ public static Semaphore create(DeviceContext dev) {
 }
 ```
 
-Two semaphores are created in the constructor of the controller to signal the following conditions:
+Two semaphores are created in the constructor of the render task to signal the following conditions:
 
 1. An acquired swapchain image is `available` for rendering.
 
@@ -584,26 +512,21 @@ swapchain.present(queue, index, ready);
 The `present` method is modified to populate the relevant member of the descriptor:
 
 ```java
-public void present(Queue queue, int index, Semaphore semaphore) {
+public void present(WorkQueue queue, int index, Semaphore semaphore) {
     ...
     info.waitSemaphoreCount = semaphores.size();
     info.pWaitSemaphores = NativeObject.toArray(List.of(semaphore));
 }
 ```
 
-Finally the semaphores are released when the controller is destroyed:
+Finally the semaphores are released when the task is destroyed:
 
 ```java
-public class FrameProcessor implements TransientObject {
-    @Override
-    public void destroy() {
-        available.destroy();
-        ready.destroy();
-    }
+public void destroy() {
+    available.destroy();
+    ready.destroy();
 }
 ```
-
-Note that if the demo is run as it stands (with the work queue blocking still present) there will be additional Vulkan errors because the semaphores are never actually signalled.
 
 ### Work Submission
 
@@ -611,7 +534,6 @@ To integrate the semaphores the work class is extended by adding two new members
 
 ```java
 public class Work {
-    ...
     private final Map<Semaphore, Set<VkPipelineStage>> wait = new LinkedHashMap<>();
     private final Set<Semaphore> signal = new HashSet<>();
 }
@@ -657,7 +579,7 @@ int[] stages = wait.values().stream().map(BitMask::reduce).mapToInt(BitMask::bit
 info.pWaitDstStageMask = new PointerToIntArray(stages);
 ```
 
-Note that although `pWaitDstStageMask` implies this is a bit-field it is in fact a pointer to an integer array.
+Note that although `pWaitDstStageMask` implies this is a bitfield it is in fact a pointer to an integer array.
 
 Here the `PointerToIntArray` helper class is introduced to transform the array of pipeline stages to a contiguous memory block:
 
@@ -696,7 +618,7 @@ However if one were to remove the `waitIdle` calls in the existing render loop t
 To resolve both of these issues the second synchronisation mechanism is introduced which synchronises Vulkan and application code:
 
 ```java
-public class Fence extends AbstractVulkanObject {
+public class Fence extends VulkanObject {
     @Override
     protected Destructor<Fence> destructor(VulkanLibrary lib) {
         return lib::vkDestroyFence;
@@ -771,25 +693,23 @@ public boolean signalled() {
 }
 ```
 
-A fence is created in the constructor of the controller:
+A fence is created in the constructor of the render task:
 
 ```java
-public class FrameProcessor implements TransientObject {
-    ...
+public class VulkanRenderTask {
     private final Fence fence;
 
-    public FrameProcessor(...) {
-        ...
+    public VulkanRenderTask(DeviceContext dev) {
         this.fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
     }
 }
 ```
 
-And the existing code is replaced with a `waitReady` call on the fence to block until the frame has been rendered.
+And the existing blocking code is replaced with a `waitReady` call on the fence to wait until the frame has been rendered.
 
 A further blocking call is introduced at the _start_ of the render process to ensure that the _previous_ frame has been completed, hence the fence is initialised to the `SIGNALED` state.
 
-The final `render` method now looks like this:
+The updated `render` method now looks like this:
 
 ```java
 public void render(RenderSequence seq) {
@@ -799,12 +719,13 @@ public void render(RenderSequence seq) {
 
     // Acquire next frame buffer
     int index = swapchain.acquire(available, null);
+    FrameBuffer fb = buffers.get(index);
 
     // Render frame
-    Buffer buffer = builder.build(index, seq);
-    submit(buffer);
+    Command.Buffer render = composer.compose(fb);
+    submit(render);
 
-    // Block until frame rendered
+    // Wait until frame has been completed
     fence.waitReady();
 
     // Present rendered frame
@@ -930,61 +851,99 @@ This should allow Vulkan to more efficiently use the multi-threaded nature of th
 
 ### Frames In-Flight
 
-The render loop is still likely not fully utilising the pipeline since the code for a frame is essentially single-threaded, whereas Vulkan is designed to allow completed pipeline stages to be used to render the next frame in parallel.  Multiple _in flight_ frames are introduced to take advantage of this feature.
+The new render loop is still not fully utilising the pipeline since the rendering code is still essentially single-threaded, whereas Vulkan is designed to allow completed pipeline stages to be used to render the next frame in parallel.  Multiple _in flight_ frames are introduced to take advantage of this feature.
 
-First the existing render loop and synchronisation primitives are wrapped into an inner class which tracks the in-flight progress of each frame:
+First the existing render task is 'inverted' by factoring out the acquire and presentation logic into a separate object that tracks the state of an in-flight frame:
 
 ```java
-public class FrameProcessor {
-    public class Frame {
-        private final Semaphore available, ready;
-        private final Fence fence;
-    
-        public void render(RenderSequence seq) {
-            ...
+public class VulkanFrame implements TransientObject {
+    private final Semaphore available, ready;
+    private final Fence fence;
+    private int index;
+    private Swapchain swapchain;
+}
+```
+
+The acquire step is factored out into a separate method:
+
+```java
+public int acquire(Swapchain swapchain) {
+    // Wait for completion of the previous frame
+    fence.waitReady();
+    fence.reset();
+
+    // Retrieve frame buffer index
+    this.swapchain = swapchain;
+    index = swapchain.acquire(available, null);
+
+    return index;
+}
+```
+
+And similarly for frame presentation:
+
+```java
+public void present(Command.Buffer render) {
+    // Submit render task
+    submit(render);
+
+    // Wait for render to be completed
+    fence.waitReady();
+
+    // Present completed frame
+    WorkQueue queue = render.pool().queue();
+    swapchain.present(queue, index, ready);
+    swapchain = null;
+}
+```
+
+The render task now comprises an _array_ of in-flight frames:
+
+```java
+public class VulkanRenderTask implements TransientObject {
+    private final VulkanFrame[] frames;
+    private int next;
+
+    @Override
+    public void destroy() {
+        for(var frame : frames) {
+            frame.destroy();
         }
     }
 }
 ```
 
-And the constructor is modified to create an _array_ of frames:
+And the render logic is modified to cycle through the frames on each iteration:
 
 ```java
-public class FrameProcessor implements TransientObject {
-    ...
-    private final Frame[] frames;
-    private int next;
+public void render() {
+    // Select next frame
+    final VulkanFrame frame = frames[next];
 
-    public FrameProcessor(Swapchain swapchain, FrameBuilder builder, int frames) {
-        ...
-        this.frames = new Frame[frames];
-        init();
-    }
+    // Acquire next frame buffer
+    final int index = frame.acquire(swapchain);
+    final FrameBuffer fb = buffers.get(index);
 
-    private void init() {
-        DeviceContext dev = swapchain.device();
-        Arrays.setAll(frames, n -> new Frame(dev));
+    // Compose render task
+    final Command.Buffer render = composer.compose(next, fb);
+
+    // Present rendered frame
+    frame.present(render);
+
+    // Move to next frame
+    if(++next >= frames.length) {
+        next = 0;
     }
 }
 ```
+
+Multiple in-flight frames can now be executed in parallel, the introduced synchronisation better utilises the pipeline, and the overall rendering work is bounded.
 
 Notes:
 
 * The number of in-flight frames does not necessarily have to be the same as the number of swapchains images (though in practice this is generally the case).
 
-* The controller is now a transient object and releases the synchronisation primitives for each frame on destruction.
-
-Finally the `render` method is modified to delegate to the next in-flight frame:
-
-```java
-public void render(RenderSequence seq) {
-    int index = next++ % frames.length;
-    Frame frame = frames[index];
-    ...
-}
-```
-
-Multiple frames can now be executed in parallel, the introduced synchronisation better utilises the pipeline, and the array of in-flight frames bounds the overall work.
+* The render task is now a transient object and releases the synchronisation primitives for each frame on destruction.
 
 ---
 
@@ -992,7 +951,9 @@ Multiple frames can now be executed in parallel, the introduced synchronisation 
 
 ### Normals
 
-Many operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
+The rotation animation in the demo has been factored out to a frame listener component, however the logic itself is still hard-coded and mixes the animation logic, calculation of the various matrices and management of the uniform buffer.  Therefore we introduce an animation framework that separates these activities and provides reusable components for future demo applications.
+
+Many geometric operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
 
 ```java
 public Vector normalize() {
@@ -1222,33 +1183,7 @@ public State state() {
 
 ### Animation
 
-Next a simple stopwatch utility is implemented that records the elapsed duration of a frame:
-
-```java
-public class Frame {
-    @FunctionalInterface
-    public interface Listener {
-        void update(Frame frame);
-    }
-
-    private Instant start = Instant.EPOCH;
-    private Instant end = Instant.EPOCH;
-}
-```
-
-Note that the existing frame listener interface is moved to this new class and modified to accept a `Frame` instance.
-
-The frame provides `start` and `stop` methods to wrap some activity (i.e. rendering) and the elapsed duration can then be queried:
-
-```java
-public Duration elapsed() {
-    return Duration.between(start, end);
-}
-```
-
-The frame processor introduced earlier is modified to include a `Frame` instance and the `render` method is instrumented to record the elapsed duration.
-
-Finally the `Animator` is introduced which interpolates an _animation_ position over a given duration:
+Next the `Animator` is introduced which interpolates an _animation_ position over a given duration:
 
 ```java
 public class Animator extends AbstractPlayable implements Frame.Listener {
@@ -1301,13 +1236,11 @@ if(time > duration) {
 }
 ```
 
-Finally the updated position is then applied to the animation:
+And the updated position is then applied to the animation:
 
 ```java
 animation.update(time / (float) duration);
 ```
-
-### Mutable Rotation
 
 The final piece of the jigsaw is a rotation implementation that can be animated.
 

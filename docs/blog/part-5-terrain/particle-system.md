@@ -216,7 +216,7 @@ public class ParticleModel extends AbstractModel {
     }
 
     @Override
-    public Bufferable vertices() {
+    public ByteSizedBufferable vertices() {
         return vertices;
     }
 }
@@ -225,7 +225,7 @@ public class ParticleModel extends AbstractModel {
 Where the vertex buffer comprises the particles positions:
 
 ```java
-private final Bufferable vertices = new Bufferable() {
+private final ByteSizedBufferable vertices = new ByteSizedBufferable() {
     @Override
     public int length() {
         return sys.size() * LAYOUT.stride();

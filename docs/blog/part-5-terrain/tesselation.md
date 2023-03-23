@@ -208,22 +208,23 @@ default IntStream row(int row, int width) {
 
 Since the index buffer for the grid will often be relatively small this is a good opportunity to implement _short_ index buffers.
 
-First the following helper is added to the model class to determine the type of index based on the draw count:
+First the following helper is added to the indexed mesh class to determine the type of index based on the draw count:
 
 ```java
-public record Header(...) {
+public IndexedMesh {
     /**
-     * Maximum length of a {@code short} index buffer.
+     * Size of a {@code short} index.
      */
-    private static final long SHORT = Mask.unsignedMaximum(Short.SIZE);
+    private static final long SHORT_INDEX = MathsUtil.unsignedMaximum(Short.SIZE);
 
     /**
-     * Determines where the given draw count requires an {@code int} or {@code short} index.
+     * Determines whether the given draw count requires a {@code int} index.
+     * i.e. Whether the number of indices is larger than a {@code short} value.
      * @param count Draw count
-     * @return Index type
+     * @return Whether the index data type is integral
      */
     public static boolean isIntegerIndex(int count) {
-        return count >= SHORT;
+        return count >= SHORT_INDEX;
     }
 }
 ```
@@ -231,33 +232,16 @@ public record Header(...) {
 The length of the index buffer is then calculated based on the appropriate component type:
 
 ```java
-private Bufferable index() {
-    return new Bufferable() {
-        private final boolean integral = Header.isIntegerIndex(index.size());
-
-        public int length() {
-            return index.size() * (integral ? Integer.BYTES: Short.BYTES);
-        }
-    };
-}
-```
-
-Finally an additional clause is added to the method that copies the index to the hardware:
-
-```java
-public void buffer(ByteBuffer bb) {
-    if(integral) {
-        ...
-    }
-    else {
-        for(int n : index) {
-            bb.putShort((short) n);
-        }
+private class IndexBuffer implements ByteSizedBufferable {
+    public int length() {
+        int size = index.size();
+        int bytes = isIntegerIndex(size) ? Integer.BYTES : Short.BYTES;
+        return size * bytes;
     }
 }
 ```
 
-Note the `IndexBuffer` class itself is unchanged, although the next chapter will introduce validation of the size of the index against the device limits.
+And finally the `buffer` method is modified (not shown) to copy the index to the hardware as short or integer values accordingly.
 
 ### Height Maps
 

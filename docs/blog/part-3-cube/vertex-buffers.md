@@ -349,7 +349,7 @@ public class BindingBuilder {
 
 Note that the binding _index_ is initialised to the next available slot but can also be explicitly overridden.
 
-The _stride_ is the number of bytes per vertex (normally the `length` of the vertex).
+The _stride_ is the number of bytes per vertex.
 
 The `populate` method fills an instance of the corresponding Vulkan descriptor for the binding:
 
@@ -478,11 +478,28 @@ Vertex[] vertices = {
 For the moment the vertices are simply wrapped into a compound bufferable object:
 
 ```java
-Bufferable triangle = bb -> {
-    for(Vertex v : vertices) {
-        v.buffer(bb);
+var triangle = new ByteSizedBufferable() {
+    public int length() {
+        return vertices.length * (3 + 4) * Float.BYTES;
+    };
+    
+    public void buffer(ByteBuffer bb) {
+        for(Vertex v : vertices) {
+            v.buffer(bb);
+        }
     }
 };
+```
+
+Which uses a new abstraction for a bufferable object with a byte length:
+
+```java
+public interface ByteSizedBufferable extends Bufferable {
+    /**
+     * @return Length of this bufferable (bytes)
+     */
+    int length();
+}
 ```
 
 This will be replaced with a more specialised _mesh_ implementation in a future chapter.
@@ -490,7 +507,7 @@ This will be replaced with a more specialised _mesh_ implementation in a future 
 Next a helper is added to create a staging buffer:
 
 ```java
-public static VulkanBuffer staging(LogicalDevice dev, Bufferable data) {
+public static VulkanBuffer staging(LogicalDevice dev, ByteSizedBufferable data) {
     var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
         .usage(VkBufferUsageFlag.TRANSFER_SRC)
         .required(VkMemoryProperty.HOST_VISIBLE)
@@ -598,19 +615,21 @@ public Pipeline pipeline(...) {
         .input()
             .binding()
                 .index(0)
-                .stride(Point.LAYOUT.length() + Colour.LAYOUT.length())
+                .stride((3 + 4) * Float.BYTES)
                 .build()
-            .attribute()            // Position
+            .attribute()            
+                // Position            
                 .binding(0)
                 .location(0)
                 .format(VkFormat.R32G32B32_SFLOAT)
                 .offset(0)
                 .build()
-            .attribute()            // Colour
+            .attribute()
+                // Colour
                 .binding(0)
                 .location(1)
                 .format(VkFormat.R32G32B32A32_SFLOAT)
-                .offset(Point.LAYOUT.length())
+                .offset(3 * Float.BYTES)
                 .build()
             .build()
 ```

@@ -402,7 +402,7 @@ public IndexBuffer index(Mesh mesh) {
 Which both delegate to the following helper:
 
 ```java
-private VulkanBuffer buffer(Bufferable data, VkBufferUsage usage) {
+private VulkanBuffer buffer(ByteSizedBufferable data, VkBufferUsage usage) {
     // Create staging buffer
     VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, data);
 
