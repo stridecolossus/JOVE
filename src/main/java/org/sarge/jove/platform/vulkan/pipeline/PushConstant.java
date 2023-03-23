@@ -42,6 +42,8 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public final class PushConstant {
+	public static final PushConstant NONE = new PushConstant();
+
 	private final ByteBuffer data;
 	private final List<Range> ranges;
 
@@ -52,16 +54,16 @@ public final class PushConstant {
 	 * @throws IllegalArgumentException if any segment of the push constant is not covered by at least one range
 	 */
 	PushConstant(List<Range> ranges) {
+   		final int len = ranges.stream().mapToInt(Range::max).reduce(0, Integer::max);
+   		this.data = BufferHelper.allocate(len);
 		this.ranges = List.copyOf(ranges);
-		if(ranges.isEmpty()) {
-			this.data = null;
-		}
-		else {
-    		final int len = ranges.stream().mapToInt(Range::max).reduce(0, Integer::max);
-    		this.data = BufferHelper.allocate(len);
-    		validateStages();
-    		validateCoverage();
-		}
+   		validateStages();
+   		validateCoverage();
+	}
+
+	private PushConstant() {
+		this.data = null;
+		this.ranges = List.of();
 	}
 
 	/**
