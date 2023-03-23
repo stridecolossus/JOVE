@@ -641,7 +641,7 @@ The local `pages` method maps the requested memory size to the page granularity:
 
 ```java
 protected long pages(long size) {
-    return Math.min(1, size / granularity);
+    return Math.max(1, size / granularity);
 }
 ```
 
