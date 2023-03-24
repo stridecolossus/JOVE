@@ -8,7 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.FrameTimer;
+import org.sarge.jove.control.Frame;
 
 @Timeout(1)
 public class RenderLoopTest {
@@ -114,11 +114,11 @@ public class RenderLoopTest {
 	@DisplayName("A frame listener...")
 	@Nested
 	class ListenerTests {
-		private FrameTimer.Listener listener;
+		private Frame.Listener listener;
 
 		@BeforeEach
 		void before() {
-			listener = mock(FrameTimer.Listener.class);
+			listener = mock(Frame.Listener.class);
 			loop.add(listener);
 		}
 
@@ -127,7 +127,7 @@ public class RenderLoopTest {
 		void add() throws InterruptedException {
 			loop.start(task);
 			latch.await();
-			verify(listener, atLeastOnce()).update(any(FrameTimer.class));
+			verify(listener, atLeastOnce()).update(any(Frame.class));
 		}
 
 		@DisplayName("can be removed from the loop")

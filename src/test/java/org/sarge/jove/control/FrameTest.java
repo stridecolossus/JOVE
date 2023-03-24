@@ -6,14 +6,14 @@ import static org.mockito.Mockito.*;
 import java.time.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.FrameTimer.Counter;
+import org.sarge.jove.control.Frame.Counter;
 
-class FrameTimerTest {
-	private FrameTimer frame;
+class FrameTest {
+	private Frame frame;
 
 	@BeforeEach
 	void before() {
-		frame = new FrameTimer();
+		frame = new Frame();
 	}
 
 	@DisplayName("A new frame timer...")
@@ -67,7 +67,7 @@ class FrameTimerTest {
 		@Test
 		void fps() {
 			for(int n = 0; n < 3; ++n) {
-				final var frame = new FrameTimer();
+				final var frame = new Frame();
 				frame.stop();
 				counter.update(frame);
 			}
@@ -77,7 +77,7 @@ class FrameTimerTest {
 		@DisplayName("A frame counter is reset after a second")
 		@Test
 		void reset() throws InterruptedException {
-			frame = mock(FrameTimer.class);
+			frame = mock(Frame.class);
 			when(frame.time()).thenReturn(Instant.now());
 			when(frame.elapsed()).thenReturn(Duration.ofSeconds(1));
 			counter.update(frame);

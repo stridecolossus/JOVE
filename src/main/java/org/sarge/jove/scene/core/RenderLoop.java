@@ -6,8 +6,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-import org.sarge.jove.control.FrameTimer;
-import org.sarge.jove.control.FrameTimer.Listener;
+import org.sarge.jove.control.Frame;
+import org.sarge.jove.control.Frame.Listener;
 import org.sarge.lib.util.Check;
 
 /**
@@ -15,7 +15,7 @@ import org.sarge.lib.util.Check;
  * <p>
  * Note that frame rendering tasks are executed sequentially on a single thread.
  * <p>
- * @see FrameTimer.Listener
+ * @see Frame.Listener
  * @author Sarge
  */
 public class RenderLoop {
@@ -111,7 +111,7 @@ public class RenderLoop {
 	 * @param task Render task
 	 */
 	private void run(Runnable task) {
-		final FrameTimer timer = new FrameTimer();
+		final Frame timer = new Frame();
 		task.run();
 		timer.stop();
 		update(timer);
@@ -121,8 +121,8 @@ public class RenderLoop {
 	 * Notifies listeners of a completed frame.
 	 * @param frame Completed frame
 	 */
-	private void update(FrameTimer frame) {
-		for(FrameTimer.Listener listener : listeners) {
+	private void update(Frame frame) {
+		for(Frame.Listener listener : listeners) {
 			listener.update(frame);
 		}
 	}

@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.FrameTimer;
+import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersected;
 import org.sarge.jove.geometry.Vector;
@@ -36,8 +36,8 @@ import org.sarge.lib.util.Check;
  * <p>
  * @author Sarge
  */
-public class ParticleSystem implements FrameTimer.Listener {
-	private static final float SCALE = 1f / FrameTimer.MILLISECONDS_PER_SECOND;
+public class ParticleSystem implements Frame.Listener {
+	private static final float SCALE = 1f / Frame.MILLISECONDS_PER_SECOND;
 
 	/**
 	 * Characteristic hints for this particle system.
@@ -56,7 +56,7 @@ public class ParticleSystem implements FrameTimer.Listener {
 	private DirectionFactory vector = DirectionFactory.of(Axis.Y);
 	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
 	private int max = 1;
-	private long lifetime = FrameTimer.MILLISECONDS_PER_SECOND;
+	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
 	private List<Particle> particles = new ArrayList<>();
 
 	// Controller
@@ -235,7 +235,7 @@ public class ParticleSystem implements FrameTimer.Listener {
 	}
 
 	@Override
-	public void update(FrameTimer frame) {
+	public void update(Frame frame) {
 		final long time = frame.time().toEpochMilli();
 		final float elapsed = frame.elapsed().toMillis() * SCALE;
 		expire(time);

@@ -12,11 +12,11 @@ import org.sarge.jove.control.Playable.State;
 class AnimatorTest {
 	private Animator animator;
 	private Animation animation;
-	private FrameTimer frame;
+	private Frame frame;
 
 	@BeforeEach
 	void before() {
-		frame = mock(FrameTimer.class);
+		frame = mock(Frame.class);
 		animation = mock(Animation.class);
 		animator = new Animator(animation, Duration.ofSeconds(2));
 	}
