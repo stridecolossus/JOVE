@@ -165,7 +165,8 @@ public class SphereVolume implements Volume {
 				@Override
 				public Normal normal() {
 					// TODO - duplicate code -> Intersection.of()
-					return Vector.between(sphere.centre(), this.point()).normalize();
+					final Vector vec = Vector.between(sphere.centre(), this.point());
+					return new Normal(vec);
 				}
 			};
 			return List.of(intersection);

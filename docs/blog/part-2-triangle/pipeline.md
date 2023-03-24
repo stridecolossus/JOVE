@@ -215,11 +215,11 @@ VkPipelineViewportStateCreateInfo get() {
     // Add viewports
     var info = new VkPipelineViewportStateCreateInfo();
     info.viewportCount = count;
-    info.pViewports = StructureHelper.pointer(viewports, VkViewport::new, Viewport::populate);
+    info.pViewports = StructureCollector.pointer(viewports, new VkViewport(), Viewport::populate);
 
     // Add scissors
     info.scissorCount = count;
-    info.pScissors = StructureHelper.pointer(scissors, VkRect2D.ByReference::new, VulkanHelper::populate);
+    info.pScissors = StructureCollector.pointer(scissors, new VkRect2D.ByReference(), VulkanHelper::populate);
 
     return info;
 }
@@ -360,7 +360,7 @@ And similarly for the programmable stages:
 ```java
 if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException();
 pipeline.stageCount = shaders.size();
-pipeline.pStages = StructureHelper.pointer(shaders.values(), VkPipelineShaderStageCreateInfo::new, ProgrammableShaderStage::populate);
+pipeline.pStages = StructureCollector.pointer(shaders.values(), new VkPipelineShaderStageCreateInfo(), ProgrammableShaderStage::populate);
 ```
 
 Finally the pipeline is instantiated:

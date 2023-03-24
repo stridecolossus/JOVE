@@ -274,7 +274,7 @@ Each constant generates a separate child descriptor:
 ```java
 var info = new VkSpecializationInfo();
 info.mapEntryCount = constants.size();
-info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
+info.pMapEntries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate);
 ```
 
 Where `populate` is factored out to the following function:
@@ -527,7 +527,7 @@ VkPipelineColorBlendStateCreateInfo get() {
 
     // Add attachment descriptors
     info.attachmentCount = attachments.size();
-    info.pAttachments = StructureHelper.pointer(attachments, VkPipelineColorBlendAttachmentState::new, AttachmentBuilder::populate);
+    info.pAttachments = StructureCollector.pointer(attachments, new VkPipelineColorBlendAttachmentState(), AttachmentBuilder::populate);
 
     return info;
 }

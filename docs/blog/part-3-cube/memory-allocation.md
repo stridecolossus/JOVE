@@ -224,7 +224,7 @@ public class Allocator {
     private final MemoryType[] types;
 
     public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-        final MemoryType type = select(reqs, props);
+        MemoryType type = select(reqs, props);
         return allocate(type, reqs.size);
     }
 }
@@ -240,7 +240,7 @@ The Vulkan documentation outlines the suggested approach for selecting the appro
 
 4. Or fall back to the _required_ properties.
 
-This algorithm is implemented in the following local helper that maps the memory requirements filter to candidate memory types and applied a predicate:
+This algorithm is implemented in the following local helper that maps the memory requirements filter to candidate memory types and applies a predicate:
 
 ```java
 private MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
@@ -592,7 +592,7 @@ Notes:
 
 * The pool allocator also exposes methods (not shown) to query the various statistics and release or destroy the pools.
 
-### Pagination
+### Configuration
 
 The `VkPhysicalDeviceLimits` structure contains two properties that can be used to configure memory allocation:
 
@@ -637,11 +637,11 @@ protected DeviceMemory allocate(MemoryType type, long size) throws AllocationExc
 }
 ```
 
-The local `pages` method maps the requested memory size to the page granularity:
+The local `pages` method quantises the requested memory size to the page granularity:
 
 ```java
 protected long pages(long size) {
-    return Math.max(1, size / granularity);
+   return 1 + (size - 1) / granularity;
 }
 ```
 

@@ -65,15 +65,15 @@ class FrustumTest {
 		assertNotNull(frustum);
 
 		// Check planes
-		final var expected = List.of(
+		final Plane[] expected = {
 				new Plane(Z.invert(), 1),			// Near
 				new Plane(Z, 1),					// Far
 				new Plane(X, 1),					// Left
 				new Plane(X.invert(), 1),			// Right
 				new Plane(Y, 1),					// Top
 				new Plane(Y.invert(), 1)			// Bottom
-		);
-		assertEquals(expected, frustum.planes());
+		};
+		assertArrayEquals(expected, frustum.planes().toArray());
 
 		// Frustum from view matrix should be same as identity
 		assertEquals(frustum, Frustum.of(Matrix.IDENTITY));

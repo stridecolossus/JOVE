@@ -123,7 +123,8 @@ public interface Ray {
 			return new DefaultIntersection(ray, dist) {
 				@Override
 				public Normal normal() {
-					return Vector.between(centre, this.point()).normalize();
+					final Vector vec = Vector.between(centre, this.point());
+					return new Normal(vec);
 				}
 			};
 		}

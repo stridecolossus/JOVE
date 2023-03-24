@@ -75,9 +75,9 @@ This new type is further specialised for the cardinal axes:
 ```java
 public final class Axis extends Normal {
     public static final Axis
-            X = new Axis(0),
-            Y = new Axis(1),
-            Z = new Axis(2);
+        X = new Axis(0),
+        Y = new Axis(1),
+        Z = new Axis(2);
 }
 ```
 
@@ -136,7 +136,7 @@ The purpose of these changes are:
 
 4. The hierarchy now supports extension points for further optimisations, e.g. caching of the inverse cardinal axes.
 
-The implementation of the `matrix` method for a quaternion is less performant than the code for the cardinal axes.  For an immutable, one-off rotation this probably would not be a concern, but for frequently reclaculated rotations about the cardinal axes the faster solution is preferable.  Therefore the axis-angle class selects the most appropriate algorithm:
+The implementation of the `matrix` method for a quaternion is less performant than the code for the cardinal axes.  For an immutable, one-off rotation this probably would not be a concern, but for frequently recalculated rotations about the cardinal axes the faster solution is preferable.  Therefore the axis-angle class selects the most appropriate algorithm:
 
 ```java
 public class AxisAngle implements Rotation {
@@ -191,8 +191,8 @@ And a convenience method points the camera at a given target:
 ```java
 public void look(Point pt) {
     if(pos.equals(pt)) throw new IllegalArgumentException();
-    Normal look = Axis.between(pt, pos).normalize();
-    direction(look);
+    Vector look = Axis.between(pt, pos);
+    direction(new Normal(look));
 }
 ```
 
@@ -214,7 +214,7 @@ Next the following transient members are added to the camera class to support th
 ```java
 public class Camera {
     ...
-    private Normal right = Axis.X;
+    private Vector right = Axis.X;
     private Matrix matrix;
     private boolean dirty = true;
 }
@@ -299,10 +299,10 @@ The build method selects the appropriate command variant depending on the suppli
 ```java
 public DrawCommand build() {
     if(indexed) {
-        return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, firstIndex, firstVertex, firstInstance);
+        return (lib, buffer) -> lib.vkCmdDrawIndexed(buffer, count, instanceCount, firstIndex, firstVertex, firstInstance);
     }
     else {
-        return (api, buffer) -> api.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
+        return (lib, buffer) -> lib.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
     }
 }
 ```
@@ -372,7 +372,7 @@ The previous VBO configuration is replaced with a new class that loads the persi
 @Configuration
 public class ModelConfiguration {
     @Autowired private LogicalDevice dev;
-    @Autowired private AllocationService allocator;
+    @Autowired private Allocator allocator;
     @Autowired private Pool graphics;
 
     @Bean
@@ -593,7 +593,7 @@ Collection<ClearValue> clear = attachments
 
 // Init clear values
 info.clearValueCount = clear.size();
-info.pClearValues = StructureHelper.pointer(clear, VkClearValue::new, ClearValue::populate);
+info.pClearValues = StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
 ```
 
 ### Integration #2
@@ -627,7 +627,7 @@ Unlike the swapchain images the application is responsible for creating and mana
 
 ```java
 @Bean
-public View depth(Swapchain swapchain, AllocationService allocator) {
+public View depth(Swapchain swapchain, Allocator allocator) {
     var descriptor = new Image.Descriptor.Builder()
         .aspect(VkImageAspect.DEPTH)
         .extents(swapchain.extents())
@@ -734,7 +734,7 @@ The optimal format can now be selected in the demo when configuring the depth bu
 
 ```java
 @Bean
-public View depth(Swapchain swapchain, AllocationService allocator) {
+public View depth(Swapchain swapchain, Allocator allocator) {
     FormatSelector selector = new FormatSelector(dev.parent(), true, VkFormatFeature.DEPTH_STENCIL_ATTACHMENT);
     VkFormat format = selector.select(VkFormat.D32_SFLOAT, VkFormat.D32_SFLOAT_S8_UINT, VkFormat.D24_UNORM_S8_UINT).orElseThrow();
     ...

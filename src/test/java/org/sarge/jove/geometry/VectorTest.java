@@ -87,7 +87,7 @@ class VectorTest {
 			final Vector expected = new Vector(1 * f, 2 * f, 3 * f);
 			final Vector normal = vec.normalize();
 			assertEquals(expected, normal);
-			assertEquals(1, normal.magnitude());
+			assertTrue(MathsUtil.isEqual(1, normal.magnitude()));
 		}
 	}
 

@@ -17,7 +17,7 @@ This process is implemented in the following new component:
 
 ```java
 public class CaptureTask {
-    private final AllocationService allocator;
+    private final Allocator allocator;
     private final Pool pool;
 
     public Image capture(Swapchain swapchain) {
@@ -90,7 +90,7 @@ Notes:
 Copying from the swapchain to the screenshot image is a new command with a companion builder:
 
 ```java
-public class ImageCopyCommand extends ImmediateCommand {
+public class ImageCopyCommand implements Command {
     private final Image src, dest;
     private final VkImageLayout srcLayout, destLayout;
     private final VkImageCopy[] regions;

@@ -2,7 +2,6 @@ package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Layout.Component;
-import org.sarge.jove.util.MathsUtil;
 
 /**
  * A <i>normal</i> is a unit vector with a magnitude of <b>one</b>.
@@ -19,7 +18,7 @@ public class Normal extends Vector implements Component {
 	 * @param normal Normal
 	 */
 	public Normal(Vector normal) {
-		super(normalize(normal));
+		super(normal.normalize());
 	}
 
 	/**
@@ -28,20 +27,6 @@ public class Normal extends Vector implements Component {
 	 */
 	public Normal(float[] normal) {
 		this(new Vector(normal));
-	}
-
-	/**
-	 * Normalizes the given vector as required.
-	 */
-	private static Vector normalize(Vector vec) {
-		final float len = vec.magnitude();
-		if(MathsUtil.isEqual(1, len)) {
-			return vec;
-		}
-		else {
-    		final float f = MathsUtil.inverseRoot(len);
-    		return vec.multiply(f);
-		}
 	}
 
 	@Override

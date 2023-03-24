@@ -320,7 +320,7 @@ public static void submit(Collection<Work> batch, Fence fence) {
     }
 
     // Submit batch
-    VkSubmitInfo[] array = StructureHelper.array(batch, VkSubmitInfo::new, Work::populate);
+    VkSubmitInfo[] array = StructureCollector.array(batch, new VkSubmitInfo(), Work::populate);
     VulkanLibrary lib = pool.device().library();
     check(lib.vkQueueSubmit(pool.queue(), array.length, array, fence));
 }

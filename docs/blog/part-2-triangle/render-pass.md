@@ -153,7 +153,7 @@ void populate(VkSubpassDescription descriptor) {
 
     // Populate colour attachments
     descriptor.colorAttachmentCount = colour.size();
-    descriptor.pColorAttachments = StructureHelper.pointer(colour, VkAttachmentReference::new, Reference::populate);
+    descriptor.pColorAttachments = StructureCollector.pointer(colour, new VkAttachmentReference(), Reference::populate);
 
     // Populate depth attachment
     if(depth != null) {

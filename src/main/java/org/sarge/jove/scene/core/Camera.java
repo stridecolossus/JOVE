@@ -19,7 +19,7 @@ public class Camera {
 	private Normal up = Axis.Y;
 
 	// Transient view transform
-	private Normal right = Axis.X;
+	private Vector right = Axis.X;
 	private Matrix matrix;
 	private boolean dirty = true;
 
@@ -117,7 +117,7 @@ public class Camera {
 	/**
 	 * @return Camera right axis
 	 */
-	public Normal right() {
+	public Vector right() {
 		return right;
 	}
 
@@ -153,7 +153,7 @@ public class Camera {
 	 */
 	protected void update() {
 		// Determine right axis
-		right = up.cross(dir).normalize();
+		right = up.cross(dir);
 
 		// Determine up axis
 		final Vector y = dir.cross(right).normalize();

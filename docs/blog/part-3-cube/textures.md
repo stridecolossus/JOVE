@@ -185,8 +185,7 @@ public VertexInputStageBuilder add(CompoundLayout layout) {
     var binding = new BindingBuilder();
     int stride = layout.stride();
     binding.stride(stride);
-
-
+    
     ...
 
     // Construct binding
@@ -194,7 +193,7 @@ public VertexInputStageBuilder add(CompoundLayout layout) {
 }
 ```
 
-A vertex attribute is created for layout:
+A vertex attribute is created for each layout element:
 
 ```java
 int offset = 0;
@@ -413,7 +412,7 @@ private static class SwapChainImage implements Image {
 }
 ```
 
-A second implementation can now be implemented to support textures:
+A second implementation can now be created for general images:
 
 ```java
 class DefaultImage extends AbstractVulkanObject implements Image {
@@ -459,7 +458,7 @@ public DefaultImage build(LogicalDevice dev, AllocationService allocator) {
     info.samples = samples;
     info.tiling = tiling;
     info.initialLayout = layout;
-    info.usage = BitMask.reduce(props.usage());
+    info.usage = new BitMask<>(props.usage());
     info.sharingMode = props.mode();
     ...
 }
@@ -582,7 +581,7 @@ A slight irritation that only came to light during this chapter is that there ar
 ```java
 default VkImageSubresourceRange toRange() {
     var range = new VkImageSubresourceRange();
-    range.aspectMask = BitMask.reduce(aspects());
+    range.aspectMask = new BitMask<>(aspects());
     range.baseMipLevel = mipLevel();
     range.levelCount = levelCount();
     range.baseArrayLayer = baseArrayLayer();
@@ -592,7 +591,7 @@ default VkImageSubresourceRange toRange() {
 
 default VkImageSubresourceLayers toLayers() {
     var layers = new VkImageSubresourceLayers();
-    layers.aspectMask = BitMask.reduce(aspects());
+    layers.aspectMask = new BitMask<>(aspects());
     layers.mipLevel = mipLevel();
     layers.baseArrayLayer = baseArrayLayer();
     layers.layerCount = layerCount();
@@ -605,7 +604,7 @@ default VkImageSubresourceLayers toLayers() {
 The process of copying the image data from the staging buffer to the texture is a command:
 
 ```java
-public class ImageCopyCommand extends ImmediateCommand {
+public class ImageCopyCommand implements Command {
     private final Image image;
     private final VulkanBuffer buffer;
     private final VkBufferImageCopy[] regions;
@@ -654,7 +653,7 @@ The builder for the copy command generates the array of copy region descriptors:
 
 ```java
 public ImageCopyCommand build() {
-    VkBufferImageCopy[] array = StructureHelper.array(regions, VkBufferImageCopy::new, CopyRegion::populate);
+    VkBufferImageCopy[] array = StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
     return new ImageCopyCommand(image, buffer, array, layout);
 }
 ```
@@ -735,7 +734,7 @@ public enum AddressMode {
     }
 
     public VkSamplerAddressMode mirror() {
-        if(mirrored == null) throw new IllegalStateException(...);
+        if(mirrored == null) throw new IllegalStateException();
         return mirrored;
     }
 }
@@ -766,13 +765,13 @@ interface Library {
 A _pipeline barrier_ is a command used to synchronise access to images, buffers and memory objects within the pipeline:
 
 ```java
-public class Barrier extends ImmediateCommand {
+public class Barrier implements Command {
     private final BitMask<VkPipelineStage> src, dest;
     private final VkImageMemoryBarrier[] images;
 
     private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, VkImageMemoryBarrier[] images) {
-        this.src = BitMask.reduce(src);
-        this.dest = BitMask.reduce(dest);
+        this.src = new BitMask<>(src);
+        this.dest = new BitMask<>(dest);
         this.images = notNull(images);
     }
 
@@ -798,7 +797,7 @@ public static class Builder {
     private final List<ImageBarrierBuilder> images = new ArrayList<>();
 
     public Barrier build() {
-        var array = StructureHelper.array(images, VkImageMemoryBarrier::new, ImageBarrierBuilder::populate);
+        var array = StructureCollector.array(images, new VkImageMemoryBarrier(), ImageBarrierBuilder::populate);
         return new Barrier(srcStages, destStages, array);
     }
 }
@@ -822,8 +821,8 @@ The Vulkan descriptor for the barrier is populated as follows:
 ```java
 private void populate(VkImageMemoryBarrier barrier) {
     barrier.image = image.handle();
-    barrier.srcAccessMask = BitMask.reduce(src);
-    barrier.dstAccessMask = BitMask.reduce(dest);
+    barrier.srcAccessMask = new BitMask<>(src);
+    barrier.dstAccessMask = new BitMask<>(dest);
     barrier.oldLayout = oldLayout;
     barrier.newLayout = newLayout;
     barrier.subresourceRange = SubResource.toRange(subresource);
@@ -908,7 +907,7 @@ public class TextureConfiguration {
     @Autowired private LogicalDevice dev;
 
     @Bean
-    public View texture(AllocationService allocator, Pool graphics) throws IOException {
+    public View texture(Allocator allocator, Pool graphics) throws IOException {
         ...
     }
 

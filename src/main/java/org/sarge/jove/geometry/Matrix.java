@@ -66,9 +66,17 @@ public final class Matrix implements Transform, Bufferable {
 
 	/**
 	 * Constructor.
+	 * @param matrix Matrix data
+	 */
+	private Matrix(float[][] matrix) {
+		this.matrix = matrix;
+	}
+
+	/**
+	 * Constructor.
 	 * @param order Matrix order
 	 */
-	protected Matrix(int order) {
+	private Matrix(int order) {
 		Check.oneOrMore(order);
 		this.matrix = new float[order][order];
 	}
@@ -102,7 +110,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @return Matrix row
 	 * @throws IndexOutOfBoundsException if the row index is invalid or the matrix is too small
 	 */
-	public final Vector row(int row) throws IndexOutOfBoundsException {
+	public Vector row(int row) throws IndexOutOfBoundsException {
 		final float x = matrix[row][0];
 		final float y = matrix[row][1];
 		final float z = matrix[row][2];
@@ -115,7 +123,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @return Matrix column
 	 * @throws IndexOutOfBoundsException if the column index is invalid or the matrix is too small
 	 */
-	public final Vector column(int col) throws IndexOutOfBoundsException {
+	public Vector column(int col) throws IndexOutOfBoundsException {
 		final float x = matrix[0][col];
 		final float y = matrix[1][col];
 		final float z = matrix[2][col];
@@ -130,7 +138,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @return Submatrix
 	 * @throws IndexOutOfBoundsException if the submatrix is out-of-bounds for this matrix
 	 */
-	public final Matrix submatrix(int row, int col, int order) throws IndexOutOfBoundsException {
+	public Matrix submatrix(int row, int col, int order) throws IndexOutOfBoundsException {
 		final var sub = new Matrix(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
@@ -166,7 +174,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * @return Multiplied matrix
 	 * @throws IllegalArgumentException if the given matrix is not of the same order as this matrix
 	 */
-	public final Matrix multiply(Matrix m) {
+	public Matrix multiply(Matrix m) {
 		// Check same sized matrices
 		final int order = order();
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different orders");
@@ -187,7 +195,7 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public final void buffer(ByteBuffer buffer) {
+	public void buffer(ByteBuffer buffer) {
 		final int order = order();
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
@@ -197,7 +205,7 @@ public final class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public final boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof Matrix that) &&
@@ -241,7 +249,7 @@ public final class Matrix implements Transform, Bufferable {
 	 * Builder for a matrix.
 	 */
 	public static class Builder {
-		private Matrix matrix;
+		private float[][] matrix;
 
 		/**
 		 * Constructor for a matrix of the given order.
@@ -249,7 +257,8 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws IllegalArgumentException for an illogical matrix order
 		 */
 		public Builder(int order) {
-			this.matrix = new Matrix(order);
+			Check.oneOrMore(order);
+			this.matrix = new float[order][order];
 		}
 
 		/**
@@ -263,8 +272,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * Initialises to the identity matrix.
 		 */
 		public Builder identity() {
-			final int order = matrix.order();
-			for(int n = 0; n < order; ++n) {
+			for(int n = 0; n < matrix.length; ++n) {
 				set(n, n, 1);
 			}
 			return this;
@@ -278,7 +286,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @throws IndexOutOfBoundsException if {@link #row} or {@link #col} is out-of-bounds
 		 */
 		public Builder set(int row, int col, float value) {
-			matrix.matrix[row][col] = value;
+			matrix[row][col] = value;
 			return this;
 		}
 
@@ -313,12 +321,7 @@ public final class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			try {
-				return matrix;
-			}
-			finally {
-				matrix = null;
-			}
+			return new Matrix(matrix);
 		}
 	}
 }

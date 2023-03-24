@@ -1,6 +1,6 @@
 package org.sarge.jove.scene.particle;
 
-import org.sarge.jove.geometry.Normal;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Randomiser;
 
 /**
@@ -30,7 +30,10 @@ public interface DirectionFactory {
 	 * @return Random direction factory
 	 */
 	static DirectionFactory random(Randomiser randomiser) {
-		return () -> randomiser.vector().normalize();
+		return () -> {
+			final Vector vec = randomiser.vector();
+			return new Normal(vec);
+		};
 	}
 
 	/**

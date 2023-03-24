@@ -137,7 +137,7 @@ public class Particle implements Ray {
 	 */
 	public void reflect(Point pos, Normal normal) {
 		this.pos = notNull(pos);
-		this.dir = dir.reflect(normal).normalize();
+		this.dir = new Normal(dir.reflect(normal));
 	}
 
 	/**

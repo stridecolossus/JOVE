@@ -73,7 +73,7 @@ public final class Quaternion implements Rotation {
 		final float scale = MathsUtil.inverseRoot(1 - w * w);
 		final float angle = 2 * (float) Math.acos(w);
 		final Vector axis = this.axis().multiply(scale);
-		return new AxisAngle(axis.normalize(), angle);
+		return new AxisAngle(new Normal(axis), angle);
 	}
 
 	/**

@@ -182,9 +182,7 @@ The local `require` helper checks that the buffer supports a given operation, in
 ```java
 public void require(VkBufferUsage... flags) {
     Collection<VkBufferUsage> required = Arrays.asList(flags);
-    if(!usage.containsAll(required)) {
-        throw new IllegalStateException(...);
-    }
+    if(!usage.containsAll(required)) throw new IllegalStateException();
 }
 ```
 
@@ -193,12 +191,12 @@ Copying the vertex data from staging to a device-local buffer is also a command:
 ```java
 public Command copy(VulkanBuffer dest) {
     // Validate
-    if(len > dest.len) throw new IllegalStateException(...);
+    if(len > dest.len) throw new IllegalStateException();
     require(VkBufferUsage.TRANSFER_SRC);
     dest.require(VkBufferUsage.TRANSFER_DST);
 
     // Build copy descriptor
-    VkBufferCopy region = new VkBufferCopy();
+    var region = new VkBufferCopy();
     region.size = len;
 
     // Create copy command
@@ -232,10 +230,10 @@ Creating a Vulkan buffer is comprised of the following steps:
 Instantiating the buffer follows the usual pattern of populating a descriptor and invoking the API:
 
 ```java
-public static VulkanBuffer create(LogicalDevice dev, AllocationService allocator, long len, MemoryProperties<VkBufferUsage> props) {
+public static VulkanBuffer create(LogicalDevice dev, Allocator allocator, long len, MemoryProperties<VkBufferUsage> props) {
     // Build buffer descriptor
     var info = new VkBufferCreateInfo();
-    info.usage = BitMask.reduce(props.usage());
+    info.usage = new BitMask<>(props.usage());
     info.sharingMode = props.mode();
     info.size = oneOrMore(len);
 
@@ -323,11 +321,11 @@ VkPipelineVertexInputStateCreateInfo get() {
 
     // Add binding descriptions
     info.vertexBindingDescriptionCount = bindings.size();
-    info.pVertexBindingDescriptions = StructureHelper.pointer(bindings.values(), VkVertexInputBindingDescription::new, BindingBuilder::populate);
+    info.pVertexBindingDescriptions = StructureCollector.pointer(bindings.values(), new VkVertexInputBindingDescription(), BindingBuilder::populate);
 
     // Add attributes
     info.vertexAttributeDescriptionCount = attributes.size();
-    info.pVertexAttributeDescriptions = StructureHelper.pointer(attributes, VkVertexInputAttributeDescription::new, AttributeBuilder::populate);
+    info.pVertexAttributeDescriptions = StructureCollector.pointer(attributes, new VkVertexInputAttributeDescription(), AttributeBuilder::populate);
 
     return info;
 }
@@ -366,8 +364,8 @@ The `build` method validates the data and returns to the parent builder:
 ```java
 public VertexInputStageBuilder build() {
     // Validate binding description
-    if(bindings.containsKey(index)) throw new IllegalArgumentException(...);
-    if(locations.isEmpty()) throw new IllegalArgumentException(...);
+    if(bindings.containsKey(index)) throw new IllegalArgumentException();
+    if(locations.isEmpty()) throw new IllegalArgumentException();
 
     // Add binding
     bindings.put(index, this);
@@ -415,11 +413,10 @@ Where:
 
 * _offset_ specifies the starting byte of the attribute.
 
-Note that the attribute location is initialised to the next available slot which is tracked in the parent binding builder:
+Again the attribute location is initialised to the next available slot which is tracked in the parent builder:
 
 ```java
 public class BindingBuilder {
-    ...
     private final Set<Integer> locations = new HashSet<>();
 }
 ```
@@ -429,11 +426,11 @@ The build method validates the attribute and returns to the parent builder:
 ```java
 public BindingBuilder build() {
     // Validate attribute
-    if(offset >= binding.stride) throw new IllegalArgumentException(...);
-    if(format == null) throw new IllegalArgumentException(...);
+    if(offset >= binding.stride) throw new IllegalArgumentException();
+    if(format == null) throw new IllegalArgumentException();
 
     // Check location
-    if(binding.locations.contains(loc)) throw new IllegalArgumentException(...);
+    if(binding.locations.contains(loc)) throw new IllegalArgumentException();
     binding.locations.add(loc);
 
     // Add attribute
@@ -459,7 +456,7 @@ public class VertexBufferConfiguration {
     private static final Vertex[] vertices = ...
 
     @Bean
-    public static VulkanBuffer vbo(LogicalDevice dev, AllocationService allocator, Pool pool) {
+    public static VulkanBuffer vbo(LogicalDevice dev, Allocator allocator, Pool pool) {
         ...
     }
 }
@@ -529,7 +526,7 @@ ByteBuffer bb = buffer.memory().map().buffer();
 data.buffer(bb);
 ```
 
-In the new `vbo` bean method the new helper is used to create the staging buffer and copy the interleaved triangle data:
+In the `vbo` bean method the new helper is used to create the staging buffer and copy the interleaved triangle data:
 
 ```java
 VulkanBuffer staging = VulkanBuffer.staging(dev, allocator, triangle);
@@ -553,13 +550,7 @@ The triangle data can now be copied from the staging buffer:
 staging.copy(vbo).submit(pool);
 ```
 
-And finally the staging buffer is released:
-
-```java
-staging.destroy();
-```
-
-The `submit` method delegates to the following helper the `Work` class:
+The `submit` method delegates to the following helper in the `Work` class:
 
 ```java
 public static void submit(Command cmd, Pool pool) {
@@ -586,6 +577,12 @@ public static void submit(Command cmd, Pool pool) {
 ```
 
 Note that this approach currently blocks the work queue, this will be replaced later with proper synchronisation.
+
+Finally the staging buffer can be released:
+
+```java
+staging.destroy();
+```
 
 ### Configuration
 

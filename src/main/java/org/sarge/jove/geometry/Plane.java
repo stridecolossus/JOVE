@@ -57,7 +57,7 @@ public record Plane(Normal normal, float distance) implements Intersected {
 	 */
 	public static Plane of(Triangle triangle) {
 		if(triangle.isDegenerate()) throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
-		final Normal normal = triangle.normal().normalize();
+		final Normal normal = new Normal(triangle.normal());
 		return new Plane(normal, triangle.a());
 	}
 
@@ -90,8 +90,8 @@ public record Plane(Normal normal, float distance) implements Intersected {
 		}
 		else {
 			final float inv = MathsUtil.inverseRoot(len);
-			final Normal n = normal.multiply(inv).normalize();
-			return new Plane(n, distance * inv);
+			final Vector n = normal.multiply(inv).normalize();
+			return new Plane(new Normal(n), distance * inv);
 		}
 	}
 	// TODO - what is this actually doing? need references, is it used anyway?

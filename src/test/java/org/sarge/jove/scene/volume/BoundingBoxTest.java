@@ -114,7 +114,7 @@ class BoundingBoxTest {
 		@DisplayName("A ray crossing a bounding box has two intersections")
 		@Test
 		void intersect() {
-			final Ray ray = new DefaultRay(new Point(0, 2, 0), new Vector(1, 1, 0).normalize());
+			final Ray ray = new DefaultRay(new Point(0, 2, 0), new Normal(new Vector(1, 1, 0)));
 			final float dist = (float) Math.sqrt(2);
 			final Intersection a = Intersection.of(ray, dist, X.invert());
 			final Intersection b = Intersection.of(ray, 2 * dist, Y);
@@ -140,7 +140,7 @@ class BoundingBoxTest {
 		@DisplayName("A ray can intersect a corner of a bounding box")
 		@Test
 		void corner() {
-			final Ray ray = new DefaultRay(new Point(0, 3, 0), new Vector(1, 1, 0).normalize());
+			final Ray ray = new DefaultRay(new Point(0, 3, 0), new Normal(new Vector(1, 1, 0)));
 			final Iterator<Intersection> results = box.intersections(ray).iterator();
 			final Intersection intersection = results.next();
 			assertEquals(Math.sqrt(2), intersection.distance(), 0.001f);

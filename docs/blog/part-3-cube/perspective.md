@@ -86,15 +86,11 @@ public final class Matrix implements Bufferable {
 }
 ```
 
-The matrix data is implemented as a 2D floating-point array, this is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.  Later we will probably refactor the matrix as a one-dimensional column-major array.
+The matrix data is implemented as a 2D floating-point array, this is certainly not the most efficient implementation in terms of memory (since each row is itself an object) but it is the simplest to implement.
 
 A matrix is also a bufferable object:
 
 ```java
-public int length() {
-    return matrix.length * matrix.length * Float.BYTES;
-}
-
 public void buffer(ByteBuffer buffer) {
     int order = order();
     for(int r = 0; r < order; ++r) {
@@ -193,7 +189,7 @@ The matrix is loaded into a uniform buffer:
 
 ```java
 @Bean
-public static VulkanBuffer uniform(LogicalDevice dev, AllocationService allocator, Matrix matrix) {
+public static VulkanBuffer uniform(LogicalDevice dev, Allocator allocator, Matrix matrix) {
     var props = new MemoryProperties.Builder<VkBufferUsage>()
         .usage(VkBufferUsage.UNIFORM_BUFFER)
         .required(VkMemoryProperty.HOST_VISIBLE)
@@ -331,7 +327,7 @@ The view transform matrix is comprised of translation and rotation components mu
 public Matrix multiply(Matrix m) {
     // Check same sized matrices
     int order = order();
-    if(m.order() != order) throw new IllegalArgumentException(...);
+    if(m.order() != order) throw new IllegalArgumentException();
 
     // Multiply matrices
     Matrix result = new Matrix(order);
@@ -736,7 +732,7 @@ return new Pipeline.Builder()
 Finally the draw command is updated in the render sequence:
 
 ```java
-Command draw = (api, handle) -> api.vkCmdDraw(handle, mesh.count(), 1, 0, 0);
+Command draw = (lib, buffer) -> lib.vkCmdDraw(buffer, mesh.count(), 1, 0, 0);
 ```
 
 When we run the demo it should look roughly the same since we will be looking at the front face of the cube.

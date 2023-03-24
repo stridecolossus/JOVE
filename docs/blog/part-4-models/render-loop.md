@@ -21,7 +21,7 @@ Before we progress the demo there are several issues with the crude render loop 
 
 * The rendering and presentation tasks are 'synchronised' by blocking on the work queues.
 
-* The window event queue is not being polled, meaning the window cannot be moved or closed.
+* The GLFW event queue is not being polled, meaning the window cannot be moved or closed.
 
 * There is no mechanism to terminate the application other than the dodgy timer or force-quitting the process.
 
@@ -165,7 +165,7 @@ Notes:
 
 ### Render Task
 
-Next a new is task implemented that composes the various collaborating Vulkan components used during rendering of a frame:
+Next a new task is implemented that composes the various collaborating Vulkan components used during rendering of a frame:
 
 ```java
 public class VulkanRenderTask {
@@ -515,7 +515,7 @@ The `present` method is modified to populate the relevant member of the descript
 public void present(WorkQueue queue, int index, Semaphore semaphore) {
     ...
     info.waitSemaphoreCount = semaphores.size();
-    info.pWaitSemaphores = NativeObject.toArray(List.of(semaphore));
+    info.pWaitSemaphores = NativeObject.array(List.of(semaphore));
 }
 ```
 
@@ -560,7 +560,7 @@ And the populate method of the work class is updated to include the signals:
 
 ```java
 info.signalSemaphoreCount = signal.size();
-info.pSignalSemaphores = NativeObject.toArray(signal);
+info.pSignalSemaphores = NativeObject.array(signal);
 ```
 
 Population of the wait semaphores is slightly more complicated because the two components are separate fields, rather than an array of some child structure.  Therefore the table is a linked map to ensure that both fields are iterated in the same order.
@@ -569,13 +569,13 @@ First the array of semaphores is populated:
 
 ```java
 info.waitSemaphoreCount = wait.size();
-info.pWaitSemaphores = NativeObject.toArray(wait.keySet());
+info.pWaitSemaphores = NativeObject.array(wait.keySet());
 ```
 
 And then the list of pipeline stages for each semaphore:
 
 ```java
-int[] stages = wait.values().stream().map(BitMask::reduce).mapToInt(BitMask::bits).toArray();
+int[] stages = wait.values().stream().map(BitMask::new).mapToInt(BitMask::bits).toArray();
 info.pWaitDstStageMask = new PointerToIntArray(stages);
 ```
 
@@ -632,7 +632,7 @@ Again fences are created via a factory:
 public static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
     // Init descriptor
     var info = new VkFenceCreateInfo();
-    info.flags = BitMask.reduce(flags);
+    info.flags = new BitMask<>(flags);
 
     // Create fence
     VulkanLibrary lib = dev.library();
@@ -648,7 +648,7 @@ Fences are signalled in the same manner as semaphores but can also be explicitly
 
 ```java
 public static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
-    Pointer array = NativeObject.toArray(fences);
+    Pointer array = NativeObject.array(fences);
     VulkanLibrary lib = dev.library();
     check(lib.vkWaitForFences(dev, fences.size(), array, all, timeout));
 }
@@ -660,7 +660,7 @@ A signalled fence can also be reset:
 
 ```java
 public static void reset(DeviceContext dev, Collection<Fence> fences) {
-    Pointer array = NativeObject.toArray(fences);
+    Pointer array = NativeObject.array(fences);
     VulkanLibrary lib = dev.library();
     check(lib.vkResetFences(dev, fences.size(), array));
 }
@@ -800,10 +800,10 @@ Which are populated as follows:
 void populate(VkSubpassDependency info) {
     info.srcSubpass = index;
     info.dstSubpass = Subpass.this.index;
-    info.srcStageMask = BitMask.reduce(src.stages);
-    info.srcAccessMask = BitMask.reduce(src.access);
-    info.dstStageMask = BitMask.reduce(dest.stages);
-    info.dstAccessMask = BitMask.reduce(dest.access);
+    info.srcStageMask = new BitMask<>(src.stages);
+    info.srcAccessMask = new BitMask<>(src.access);
+    info.dstStageMask = new BitMask<>(dest.stages);
+    info.dstAccessMask = new BitMask<>(dest.access);
 }
 ```
 
@@ -918,14 +918,14 @@ And the render logic is modified to cycle through the frames on each iteration:
 ```java
 public void render() {
     // Select next frame
-    final VulkanFrame frame = frames[next];
+    VulkanFrame frame = frames[next];
 
     // Acquire next frame buffer
-    final int index = frame.acquire(swapchain);
-    final FrameBuffer fb = buffers.get(index);
+    int index = frame.acquire(swapchain);
+    FrameBuffer fb = buffers.get(index);
 
     // Compose render task
-    final Command.Buffer render = composer.compose(next, fb);
+    Command.Buffer render = composer.compose(next, fb);
 
     // Present rendered frame
     frame.present(render);

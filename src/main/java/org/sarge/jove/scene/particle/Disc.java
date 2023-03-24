@@ -50,7 +50,7 @@ class Disc {
 	 */
 	public Normal vector() {
 		final Vector vec = new Vector(point());
-		return normal.add(vec).normalize();
+		return new Normal(normal.add(vec));
 	}
 	// TODO - normal?
 
@@ -74,6 +74,6 @@ class Disc {
 	public static Disc load(Element e, Randomiser randomiser) {
 		final Vector normal = e.child("normal").text().transform(Axis::parse);
 		final float radius = e.child("radius").text().transform(Float::parseFloat);
-		return new Disc(normal.normalize(), radius, randomiser);
+		return new Disc(new Normal(normal), radius, randomiser);
 	}
 }

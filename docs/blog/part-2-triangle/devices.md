@@ -488,13 +488,13 @@ public LogicalDevice build() {
 
     // Add queue descriptors
     info.queueCreateInfoCount = queues.size();
-    info.pQueueCreateInfos = StructureHelper.pointer(queues.values(), VkDeviceQueueCreateInfo::new, RequiredQueue::populate);
+    info.pQueueCreateInfos = StructureCollector.pointer(queues.values(), new VkDeviceQueueCreateInfo(), RequiredQueue::populate);
     ...
 }
 ```
 
 JNA requires a native array to be a contiguous memory block (as opposed to a Java array where the memory address of the elements is arbitrary).
-Here we introduce the `StructureHelper` helper class (detailed at the end of the chapter) which handles the transformation of a Java collection to a JNA structure array.
+Here we introduce the `StructureCollector` helper class (detailed at the end of the chapter) which handles the transformation of a Java collection to a JNA structure array.
 
 The `populate` method is invoked by the helper to 'fill' the JNA structure from the domain object:
 
@@ -755,8 +755,8 @@ None of these are particularly difficult issues to overcome, but the number of c
 The following helper allocates and populates a JNA structure array from an arbitrary collection of domain objects, providing a common solution to address these issues:
 
 ```java
-public final class StructureHelper {
-    public static <T, R extends Structure> R[] array(Collection<T> data, Supplier<R> identity, BiConsumer<T, R> populate) {
+public final class StructureCollector {
+    public static <T, R extends Structure> R[] array(Collection<T> data, R identity, BiConsumer<T, R> populate) {
         // Check for empty data
         if(data.isEmpty()) {
             return null;
@@ -764,7 +764,7 @@ public final class StructureHelper {
 
         // Allocate contiguous array
         @SuppressWarnings("unchecked")
-        R[] array = (R[]) identity.get().toArray(data.size());
+        R[] array = (R[]) identity.toArray(data.size());
 
         // Populate array
         Iterator<T> itr = data.iterator();
@@ -814,7 +814,7 @@ Therefore the code generator is modified to identify whether each structure is u
 In the logical device the new helper class is used to build the array of required queue descriptors:
 
 ```java
-info.pQueueCreateInfos = StructureHelper.pointer(queues.entrySet(), VkDeviceQueueCreateInfo::new, Builder::populate);
+info.pQueueCreateInfos = StructureCollector.pointer(queues.entrySet(), new VkDeviceQueueCreateInfo(), Builder::populate);
 ```
 
 Finally a generalised custom stream collector is provided which is more convenient in some cases:

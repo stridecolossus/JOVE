@@ -122,8 +122,15 @@ public class Vector extends Tuple {
 	/**
 	 * @return Normalized (or unit) vector
 	 */
-	public Normal normalize() {
-		return new Normal(this);
+	public Vector normalize() {
+		final float len = this.magnitude();
+		if(MathsUtil.isEqual(1, len)) {
+			return this;
+		}
+		else {
+    		final float f = MathsUtil.inverseRoot(len);
+    		return multiply(f);
+		}
 	}
 
 	/**
@@ -206,7 +213,7 @@ public class Vector extends Tuple {
 	 * @see <a href="https://en.wikipedia.org/wiki/Vector_projection">Wikipedia</a>
 	 */
 	public final Vector project(Vector vec) {
-		final Normal n = vec.normalize();
+		final Vector n = vec.normalize();
 		return n.multiply(n.dot(this));
 	}
 

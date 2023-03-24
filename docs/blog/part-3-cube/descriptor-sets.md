@@ -72,7 +72,7 @@ private void populate(VkDescriptorSetLayoutBinding info) {
     info.binding = binding;
     info.descriptorType = type;
     info.descriptorCount = count;
-    info.stageFlags = BitMask.reduce(stages);
+    info.stageFlags = new BitMask<>(stages);
 }
 ```
 
@@ -83,7 +83,7 @@ public static Layout create(LogicalDevice dev, List<Binding> bindings) {
     // Init layout descriptor
     var info = new VkDescriptorSetLayoutCreateInfo();
     info.bindingCount = bindings.size();
-    info.pBindings = StructureHelper.pointer(bindings, VkDescriptorSetLayoutBinding::new, Binding::populate);
+    info.pBindings = StructureCollector.pointer(bindings, new VkDescriptorSetLayoutBinding(), Binding::populate);
 
     // Allocate layout
     VulkanLibrary lib = dev.library();
@@ -207,9 +207,9 @@ Next the Vulkan descriptor for the pool is configured:
 
 ```java
 var info = new VkDescriptorPoolCreateInfo();
-info.flags = BitMask.reduce(flags);
+info.flags = new BitMask<>(flags);
 info.poolSizeCount = entries.size();
-info.pPoolSizes = StructureHelper.pointer(pool.entrySet(), VkDescriptorPoolSize::new, Builder::populate);
+info.pPoolSizes = StructureCollector.pointer(pool.entrySet(), new VkDescriptorPoolSize(), Builder::populate);
 info.maxSets = max;
 ```
 
@@ -431,7 +431,7 @@ Which is populated in the build method:
 
 ```java
 info.setLayoutCount = sets.size();
-info.pSetLayouts = Handle.toArray(sets);
+info.pSetLayouts = NativeObject.array(sets);
 ```
 
 Finally a new command factory is implemented to bind a group of descriptor sets to the pipeline:
@@ -444,7 +444,7 @@ public static Command bind(Pipeline.Layout layout, Collection<DescriptorSet> set
         layout,
         0,
         sets.size(),
-        NativeObject.toArray(sets),
+        NativeObject.array(sets),
         0,
         null
     );

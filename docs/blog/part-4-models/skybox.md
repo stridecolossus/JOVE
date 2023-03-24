@@ -685,7 +685,7 @@ The previous implementation invoked a copy command for _each_ image.  To support
 First a copy region is defined as a simple transient record with a companion builder:
 
 ```java
-public class ImageCopyCommand extends ImmediateCommand {
+public class ImageCopyCommand implements Command {
     ...
     public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
     }

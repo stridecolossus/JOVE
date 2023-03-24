@@ -10,7 +10,7 @@ This chapter introduces several largely unrelated Vulkan components that logical
 
 - [Buffer Helper](#buffer-helper)
 - [Push Constants](#push-constants)
-- [Shader Constants](#specialisation-constants)
+- [Shader Constants](#shader-constants)
 - [Pipeline Derivation](#pipeline-derivation)
 - [Pipeline Cache](#pipeline-cache)
 - [Queries](#queries)
@@ -288,7 +288,7 @@ And finally the update command is added to the render sequence before starting t
 
 ---
 
-## Specialisation Constants
+## Shader Constants
 
 The terrain shaders contain a number of hard coded parameters (such as the tesselation factor and height scalar) which would ideally be programatically configured (possibly from a properties file).
 
@@ -480,7 +480,7 @@ To support peer derivatives the pipeline builder is refactored to create an arra
 ```java
 public static List<Pipeline> build(List<Builder> builders, PipelineCache cache, DeviceContext dev) {
     // Build array of descriptors
-    VkGraphicsPipelineCreateInfo[] array = StructureHelper.array(builders, VkGraphicsPipelineCreateInfo::new, Builder::populate);
+    VkGraphicsPipelineCreateInfo[] array = StructureCollector.array(builders, new VkGraphicsPipelineCreateInfo(), Builder::populate);
 
     // Allocate pipelines
     VulkanLibrary lib = dev.library();
