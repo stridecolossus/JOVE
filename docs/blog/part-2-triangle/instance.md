@@ -66,14 +66,14 @@ interface VulkanLibrary extends Library {
      * @param instance         Returned instance
      * @return Result
      */
-    int vkCreateInstance(VkInstanceCreateInfo info, Pointer allocator, PointerByReference instance);
+    int vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pInstance);
 
     /**
      * Destroys the vulkan instance.
      * @param instance         Instance handle
      * @param allocator        Allocator
      */
-    void vkDestroyInstance(Pointer instance, Pointer allocator);
+    void vkDestroyInstance(Pointer instance, Pointer pAllocator);
 }
 ```
 
@@ -90,9 +90,11 @@ Notes:
 
 * Only the API methods actually needed at this stage are declared in the JNA library.
 
+* We have intentionally retained the Hungarian notation used in Vulkan parameter names.
+
 * The handle to the newly created instance is returned as a JNA `PointerByReference` object which maps to a native `VkInstance*` return-by-reference type.
 
-* The `allocator` parameter in the API methods is out-of-scope for JOVE and is always set to `null`.
+* The `pAllocator` parameter in the API methods is out-of-scope for JOVE and is always set to `null`.
 
 To instantiate the API itself the following factory method is added to the library:
 
@@ -101,7 +103,7 @@ static VulkanLibrary create() {
     String name = switch(Platform.getOSType()) {
         case Platform.WINDOWS -> "vulkan-1";
         case Platform.LINUX -> "libvulkan";
-        default -> throw new UnsupportedOperationException(...);
+        default -> throw new UnsupportedOperationException();
     }
 
     return Native.load(name, VulkanLibrary.class);
@@ -356,7 +358,6 @@ The _desktop_ service abstracts over the underlying GLFW implementation:
 ```java
 public class Desktop {
     public static Desktop create() {
-        ...
     }
 
     private final DesktopLibrary lib;
@@ -623,10 +624,10 @@ interface VulkanLibrary {
     /**
      * Looks up an instance function.
      * @param instance      Vulkan instance
-     * @param name          Function name
+     * @param pName         Function name
      * @return Function pointer
      */
-    Pointer vkGetInstanceProcAddr(Pointer instance, String name);
+    Pointer vkGetInstanceProcAddr(Pointer instance, String pName);
 }
 ```
 

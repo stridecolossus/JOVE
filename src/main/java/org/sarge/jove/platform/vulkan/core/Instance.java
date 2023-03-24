@@ -215,36 +215,36 @@ public class Instance extends TransientNativeObject {
 	interface Library {
 		/**
 		 * Creates the vulkan instance.
-		 * @param info			Instance descriptor
-		 * @param allocator		Allocator
-		 * @param instance		Returned instance
+		 * @param info				Instance descriptor
+		 * @param pAllocator		Allocator
+		 * @param pInstance			Returned instance
 		 * @return Result
 		 */
-		int vkCreateInstance(VkInstanceCreateInfo info, Pointer allocator, PointerByReference instance);
+		int vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pInstance);
 
 		/**
 		 * Destroys the vulkan instance.
-		 * @param instance		Instance handle
-		 * @param allocator		Allocator
+		 * @param instance			Instance handle
+		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyInstance(Instance instance, Pointer allocator);
+		void vkDestroyInstance(Instance instance, Pointer pAllocator);
 
 		/**
 		 * Enumerates extension properties.
-		 * @param pLayerName	Layer name or {@code null} for extensions provided by the Vulkan implementation
-		 * @param count			Number of extensions
-		 * @param extensions	Extensions (pointer-to-array)
+		 * @param pLayerName		Layer name or {@code null} for extensions provided by the Vulkan implementation
+		 * @param pPropertyCount	Number of extensions
+		 * @param pProperties		Extensions (pointer-to-array)
 		 * @return Result
 		 */
-		int vkEnumerateInstanceExtensionProperties(String pLayerName, IntByReference count, VkExtensionProperties extensions);
+		int vkEnumerateInstanceExtensionProperties(String pLayerName, IntByReference pPropertyCount, VkExtensionProperties pProperties);
 
 		/**
 		 * Enumerates validation layer properties.
-		 * @param count			Number of layers
-		 * @param layers		Layers (pointer-to-array)
+		 * @param pPropertyCount	Number of layers
+		 * @param pProperties		Layers (pointer-to-array)
 		 * @return Result
 		 */
-		int vkEnumerateInstanceLayerProperties(IntByReference count, VkLayerProperties layers);
+		int vkEnumerateInstanceLayerProperties(IntByReference pPropertyCount, VkLayerProperties pProperties);
 
 		/**
 		 * Looks up a function pointer for the given instance.
@@ -252,6 +252,6 @@ public class Instance extends TransientNativeObject {
 		 * @param name			Function name
 		 * @return Function pointer
 		 */
-		Pointer vkGetInstanceProcAddr(Instance instance, String name);
+		Pointer vkGetInstanceProcAddr(Instance instance, String pName);
 	}
 }
