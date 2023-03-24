@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.sarge.jove.platform.vulkan.VkShaderStage.*;
 
@@ -41,20 +41,6 @@ class PipelineLayoutTest {
 	}
 
 	@Nested
-	class PushConstantUpdateCommandTests {
-    	@Test
-    	void update() {
-    		assertNotNull(layout.update(range));
-    	}
-
-    	@Test
-    	void other() {
-    		final Range other = range = new Range(0, 4, Set.of(FRAGMENT));
-    		assertThrows(IllegalStateException.class, () -> layout.update(other));
-    	}
-	}
-
-	@Nested
 	class BuilderTests {
 		private Builder builder;
 
@@ -84,7 +70,6 @@ class PipelineLayoutTest {
 					.build(dev);
 
 			// Check layout
-			assertNotNull(layout);
 			assertNotNull(layout.handle());
 			assertNotNull(layout.push());
 

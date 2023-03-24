@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.pipeline.PushConstant.*;
+import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.*;
 import org.sarge.lib.util.Check;
@@ -42,19 +42,6 @@ public final class PipelineLayout extends VulkanObject {
 	 */
 	public PushConstant push() {
 		return push;
-	}
-
-	/**
-	 * Creates an update command for the given push constant range.
-	 * @param range Push constant range
-	 * @return Update command
-	 * @throws IllegalStateException if the given {@link #range} does not belong to this layout
-	 */
-	public UpdateCommand update(Range range) {
-		if(!push.ranges().contains(range)) {
-			throw new IllegalStateException("Invalid range for push constant: range=%s constant=%s".formatted(range, push));
-		}
-		return push.new UpdateCommand(range, this);
 	}
 
 	@Override
@@ -104,11 +91,17 @@ public final class PipelineLayout extends VulkanObject {
 			info.pSetLayouts = NativeObject.array(sets);
 
 			// Add push constant ranges
-			final var push = new PushConstant(ranges);
-			final int len = push.length();
-			if(len > 0) {
+			final PushConstant push;
+			if(ranges.isEmpty()) {
+				push = PushConstant.NONE;
+			}
+			else {
+				// Create push constant
+				push = new PushConstant(ranges);
+
 				// Check that overall size is supported by the hardware
 				final var limits = dev.limits();
+				final int len = push.length();
 				final int max = limits.maxPushConstantsSize;
 				if(len > max) throw new IllegalArgumentException("Push constant buffer too large: max=%d len=%d".formatted(max, len));
 

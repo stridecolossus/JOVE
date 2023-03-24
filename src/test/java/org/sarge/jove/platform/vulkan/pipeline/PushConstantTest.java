@@ -12,7 +12,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.pipeline.PushConstant.*;
+import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.util.BitMask;
 
 public class PushConstantTest {
@@ -106,12 +106,12 @@ public class PushConstantTest {
 	class UpdateTests {
 		private Command.Buffer cmd;
 		private PipelineLayout layout;
-		private UpdateCommand update;
+		private Command update;
 
 		@BeforeEach
 		void before() {
 			layout = new PipelineLayout(new Handle(2), new MockDeviceContext(), constant);
-			update = constant.new UpdateCommand(one, layout);
+			update = constant.update(one, layout);
 			cmd = new MockCommandBuffer();
 		}
 
@@ -120,6 +120,42 @@ public class PushConstantTest {
 			final var lib = mock(VulkanLibrary.class);
 			update.record(lib, cmd);
 			verify(lib).vkCmdPushConstants(cmd, layout, BitMask.of(VERTEX), 0, 4, constant.buffer());
+		}
+
+		@Test
+		void range() {
+			final Range other = new Range(0, 4, Set.of(ALL));
+			assertThrows(IllegalArgumentException.class, () -> constant.update(other, layout));
+		}
+
+		@Test
+		void whole() {
+			assertThrows(IllegalArgumentException.class, () -> constant.update(layout));
+		}
+
+		@Test
+		void layout() {
+			final var other = new PipelineLayout(new Handle(3), new MockDeviceContext(), PushConstant.NONE);
+			assertThrows(IllegalArgumentException.class, () -> constant.update(one, other));
+		}
+	}
+
+	@Nested
+	class Empty {
+		@Test
+		void length() {
+			assertEquals(0, PushConstant.NONE.length());
+		}
+
+		@Test
+		void buffer() {
+			assertThrows(IllegalStateException.class, () -> PushConstant.NONE.buffer());
+		}
+
+		@Test
+		void update() {
+			final var layout = new PipelineLayout(new Handle(3), new MockDeviceContext(), PushConstant.NONE);
+			assertThrows(IllegalArgumentException.class, () -> PushConstant.NONE.update(layout));
 		}
 	}
 }

@@ -8,7 +8,6 @@ title: Miscellany
 
 This chapter introduces several largely unrelated Vulkan components that logically follow on from the previous terrain demo chapter:
 
-- [Overview](#overview)
 - [Buffer Helper](#buffer-helper)
 - [Push Constants](#push-constants)
 - [Shader Constants](#specialisation-constants)
@@ -157,10 +156,10 @@ Notes:
 
 * However the entire backing buffer must be covered by at least one range (validation not shown).
 
-A range of the push constants is updated by the following command implemented as an inner class:
+A range of the push constants is updated in the render sequence by the following command:
 
 ```java
-public final class UpdateCommand implements Command {
+private final class UpdateCommand implements Command {
     private final Range range;
     private final PipelineLayout layout;
     private final BitMask<VkShaderStage> stages;
@@ -181,6 +180,16 @@ void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, int stageFl
 
 Note that the data buffer is rewound before updates are applied, generally Vulkan seems to automatically rewind buffers as required (e.g. for updating the uniform buffer) but not in this case.
 
+And update commands are created by a factory method:
+
+```java
+public Command update(Range range, PipelineLayout layout) {
+    if(!ranges.contains(range)) throw new IllegalArgumentException();
+    if(layout.push() != this) throw new IllegalArgumentException();
+    return new UpdateCommand(range, layout);
+}
+```
+
 ### Pipeline Layout
 
 A push constant is added to the pipeline layout and the associated builder is modified to configure the ranges:
@@ -196,26 +205,25 @@ public static class Builder {
 }
 ```
 
-The ranges are populated in the `build` method and a push constant instance
-
-TODO
+The push constant is instantiated and the ranges added to the pipeline layout:
 
 ```java
-public PipelineLayout build(DeviceContext dev) {
-    ...
-    
-    var push = new PushConstant(ranges);
-    int len = push.length();
-    if(len > 0) {
-        info.pushConstantRangeCount = ranges.size();
-        info.pPushConstantRanges = StructureCollector.pointer(ranges, new VkPushConstantRange(), Range::populate);
-    }
-    
-    ...
-    
-    return new PipelineLayout(layout.getValue(), dev, push);
+PushConstant push;
+if(ranges.isEmpty()) {
+    push = PushConstant.NONE;
 }
+else {
+    push = new PushConstant(ranges);
+    info.pushConstantRangeCount = ranges.size();
+    info.pPushConstantRanges = StructureCollector.pointer(ranges, new VkPushConstantRange(), Range::populate);
+}
+    
+...
+    
+return new PipelineLayout(layout.getValue(), dev, push);
 ```
+
+Where `NONE` is the empty push constant.
 
 ### Integration
 
@@ -257,7 +265,7 @@ Next a command is created to update the whole of the push constants buffer:
 @Bean
 static UpdateCommand update(Range range, PipelineLayout layout) {
     PushConstant push = layout.push();
-    return push.new UpdateCommand.of(range, layout);
+    return push.update(range, layout);
 }
 ```
 
@@ -296,68 +304,75 @@ layout(constant_id=1) const float HeightScale = 2.5;
 
 Note that the constant also has a default value if it is not explicitly configured by the application.
 
-The descriptor for a set of specialisation constants is constructed via a new factory method:
+Specialisation constants are configured in the pipeline:
 
 ```java
-public static VkSpecializationInfo constants(Map<Integer, Object> constants) {
+public class ProgrammableShaderStage {
+    private VkSpecializationInfo constants;
+
+    public Builder constants(Map<Integer, Object> constants) {
+        this.constants = build(constants);
+        return this;
+    }
+}
+```
+
+Each constant generates a separate entry in the descriptor:
+
+```java
+private static VkSpecializationInfo build(Map<Integer, Object> constants) {
     // Skip if empty
     if(constants.isEmpty()) {
         return null;
     }
-    ...
+    
+    // Populate map entries
+    var entries = constants.entrySet();
+    Populate populate = new Populate();
+    var info = new VkSpecializationInfo();
+    info.mapEntryCount = constants.size();
+    info.pMapEntries = StructureCollector.pointer(entries, new VkSpecializationMapEntry(), populate);
 }
-```
-
-Each constant generates a separate child entry:
-
-```java
-var info = new VkSpecializationInfo();
-info.mapEntryCount = constants.size();
-info.pMapEntries = StructureHelper.pointer(constants.entrySet(), VkSpecializationMapEntry::new, populate);
 ```
 
 Where `populate` is factored out to the following function:
 
 ```java
-var populate = new BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry>() {
+private static class Populate implements BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry> {
     private int len = 0;
 
     @Override
-    public void accept(...) {
+    public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry struct) {
         ...
     }
+}
+```
+
+This function determines the length of each constant in bytes:
+
+```java
+Object value = entry.getValue();
+int size = switch(value) {
+    case Float f -> Float.BYTES;
+    case Integer n -> Integer.BYTES;
+    case Boolean b -> Integer.BYTES;
+    default -> throw new IllegalArgumentException();
 };
 ```
 
-This function populates the descriptor for each entry and calculates the buffer offset and total length as a side-effect:
+And populates the descriptor for each entry calculating the total buffer length as a side-effect:
 
 ```java
-// Init constant
-int size = size(entry.getValue());
 out.size = size;
 out.constantID = entry.getKey();
-
-// Update buffer offset
 out.offset = len;
 len += size;
-```
-
-Where `size` is a local helper:
-
-```java
-int size() {
-    return switch(value) {
-        case Integer n -> Integer.BYTES;
-        case Float f -> Float.BYTES;
-        case Boolean b -> Integer.BYTES;
-        default -> throw new UnsupportedOperationException();
-    };
-}
 ```
 
 The constants are then written to a data buffer:
 
 ```java
+var converter = new NativeBooleanConverter();
 ByteBuffer buffer = BufferHelper.allocate(populate.len);
 for(Object value : constants.values()) {
     switch(value) {
@@ -374,29 +389,6 @@ And finally the data is added to the descriptor:
 ```java
 info.dataSize = populate.len;
 info.pData = buffer;
-```
-
-Notes:
-
-* Only scalar (int, float) and boolean values are supported.
-
-* Booleans are represented as integer values.
-
-Specialisation constants are configured in the pipeline:
-
-```java
-public class ShaderStageBuilder {
-    private VkSpecializationInfo constants;
-    
-    public ShaderStageBuilder constants(VkSpecializationInfo constants) {
-        this.constants = notNull(constants);
-        return this;
-    }
- 
-    void populate(VkPipelineShaderStageCreateInfo info) {
-        info.pSpecializationInfo = constants;
-    }
-}
 ```
 
 The set of constants used in both tesselation shaders is initialised in the pipeline configuration class:

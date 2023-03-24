@@ -42,6 +42,9 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public final class PushConstant {
+	/**
+	 * Empty push constant.
+	 */
 	public static final PushConstant NONE = new PushConstant();
 
 	private final ByteBuffer data;
@@ -61,6 +64,9 @@ public final class PushConstant {
    		validateCoverage();
 	}
 
+	/**
+	 * Constructor for the empty push constant.
+	 */
 	private PushConstant() {
 		this.data = null;
 		this.ranges = List.of();
@@ -122,6 +128,31 @@ public final class PushConstant {
 		return data;
 	}
 
+	/**
+	 * Creates a command to update a range of this push constant.
+	 * @param range			Range
+	 * @param layout		Pipeline layout
+	 * @return Update command
+	 * @throws IllegalArgumentException if the given range is not a member of this push constant
+	 * @throws IllegalArgumentException if this push constant does not belong to the given pipeline layout
+	 */
+	public Command update(Range range, PipelineLayout layout) {
+		if(!ranges.contains(range)) throw new IllegalArgumentException("Invalid range for this push constant");
+		if(layout.push() != this) throw new IllegalArgumentException("Invalid pipeline layout for this push constant");
+		return new UpdateCommand(range, layout);
+	}
+
+	/**
+	 * Convenience method to creates an update command for the whole of this push constant.
+	 * @param layout Pipeline layout
+	 * @return Update command
+	 * @throws IllegalArgumentException if this push constant does not have exactly one range
+	 */
+	public Command update(PipelineLayout layout) {
+		if(ranges.size() != 1) throw new IllegalArgumentException("Expected single push constant range");
+		return update(ranges.get(0), layout);
+	}
+
 	@Override
 	public int hashCode() {
 		return ranges.hashCode();
@@ -181,7 +212,7 @@ public final class PushConstant {
 	/**
 	 * A <i>push constant update command</i> is used to the update a segment of this push constant.
 	 */
-	public final class UpdateCommand implements Command {
+	private final class UpdateCommand implements Command {
 		private final Range range;
 		private final PipelineLayout layout;
 		private final BitMask<VkShaderStage> stages;
@@ -191,7 +222,7 @@ public final class PushConstant {
 		 * @param range			Push constant range to update
 		 * @param layout		Pipeline layout
 		 */
-		UpdateCommand(Range range, PipelineLayout layout) {
+		private UpdateCommand(Range range, PipelineLayout layout) {
 			this.range = notNull(range);
 			this.layout = notNull(layout);
 			this.stages = new BitMask<>(range.stages);
