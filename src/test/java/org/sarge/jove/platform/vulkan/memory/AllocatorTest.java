@@ -27,7 +27,7 @@ class AllocatorTest {
 
 		// Init a memory request matching all types
 		reqs = new VkMemoryRequirements();
-		reqs.size = 2;
+		reqs.size = 3;
 		reqs.memoryTypeBits = 0b11;
 
 		// Init memory properties for the optimal type
@@ -39,14 +39,14 @@ class AllocatorTest {
 
 		// Create allocator
 		dev = new MockDeviceContext();
-		allocator = new Allocator(dev, new MemoryType[]{fallback, optimal}, 1, 5);
+		allocator = new Allocator(dev, new MemoryType[]{fallback, optimal}, 1, 2);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(0, allocator.count());
 		assertEquals(1, allocator.max());
-		assertEquals(5, allocator.granularity());
+		assertEquals(2, allocator.granularity());
 	}
 
 	@DisplayName("Memory can be allocated for a matching memory type")
@@ -54,7 +54,7 @@ class AllocatorTest {
 	void allocate() {
 		final DeviceMemory mem = allocator.allocate(reqs, props);
 		assertEquals(optimal, mem.type());
-		assertEquals(2, mem.size());
+		assertEquals(3, mem.size());
 		assertEquals(false, mem.isDestroyed());
 		assertEquals(1, allocator.count());
 	}
@@ -65,7 +65,7 @@ class AllocatorTest {
 			@Override
 			public boolean equals(Object obj) {
 				final var info = (VkMemoryAllocateInfo) obj;
-				assertEquals(5, info.allocationSize);
+				assertEquals(2 * 2, info.allocationSize);
 				assertEquals(1, info.memoryTypeIndex);
 				return true;
 			}

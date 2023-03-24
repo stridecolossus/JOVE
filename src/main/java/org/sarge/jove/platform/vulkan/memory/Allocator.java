@@ -228,7 +228,7 @@ public class Allocator {
 	 * @return Number of pages
 	 */
 	protected long pages(long size) {
-		return Math.max(1, size / granularity);
+		return 1 + (size - 1) / granularity;
 	}
 
 	/**
