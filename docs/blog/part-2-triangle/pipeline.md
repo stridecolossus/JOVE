@@ -444,6 +444,8 @@ glslc triangle.frag -o spv.triangle.frag
 glslc triangle.vert -o spv.triangle.vert
 ```
 
+Warning: If the SPIV code is part of the IDE demo project (which it is in our case) the compiled file will also need to be refreshed.
+
 ### Configuration
 
 A new configuration class is implemented to load and configure the two shaders:
