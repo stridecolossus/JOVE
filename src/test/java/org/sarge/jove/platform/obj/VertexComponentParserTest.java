@@ -16,7 +16,7 @@ public class VertexComponentParserTest {
 	@BeforeEach
 	void before() {
 		model = new ObjectModel();
-		parser = new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), model.positions());
+		parser = new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), ObjectModel::positions);
 	}
 
 	@Test

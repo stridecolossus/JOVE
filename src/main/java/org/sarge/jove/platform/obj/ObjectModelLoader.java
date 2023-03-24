@@ -35,9 +35,9 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), model.positions()));
-		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), model.coordinates()));
-		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Normal.SIZE, Normal::new), model.normals()));
+		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), ObjectModel::positions));
+		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), ObjectModel::coordinates));
+		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Normal.SIZE, Normal::new), ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

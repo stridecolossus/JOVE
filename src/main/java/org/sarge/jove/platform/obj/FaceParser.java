@@ -1,6 +1,13 @@
 package org.sarge.jove.platform.obj;
 
+import java.nio.ByteBuffer;
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.sarge.jove.geometry.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Vertex;
 
 /**
  * The <i>face parser</i> parses an OBJ face command.
@@ -17,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
  * <li>The normal and texture coordinate are optional</li>
  * <li>Indices start at <b>one</b> and can be negative</li>
  * <li><b>Constraint</b> This implementation assumes all faces are <b>triangles</b></li>
+ * <li>The actual components of a vertex are not validated since the model layout is not known up-front</li>
  * </ul>
  * <p>
  * Face format:
@@ -31,8 +39,7 @@ import org.apache.commons.lang3.StringUtils;
  * f 1/2/3      // Vertex, coordinate and normal
  * f 1//3       // Vertex and normal
  * </pre>
- * @see VertexComponentList#get(int)
- * @see ObjectModel#vertex(int[])
+ * @see VertexComponentList
  * @author Sarge
  */
 class FaceParser implements Parser {
@@ -49,25 +56,84 @@ class FaceParser implements Parser {
 			// Tokenize face
 			final String[] parts = StringUtils.splitPreserveAllTokens(faces[n], '/');
 			if((parts.length == 0) || (parts.length > 3)) {
-				throw new IllegalArgumentException("Invalid number of face components: expected=%d actual=%d".formatted(model.components(), parts.length));
+				throw new IllegalArgumentException("Invalid number of face components: " + parts.length);
 			}
 
-			// Parse mandatory vertex position
-			final int[] components = new int[3];
-			components[0] = Integer.parseInt(parts[0]);
+			// Parse vertex position
+			final Point pos = parse(parts[0], model.positions());
+			final var vertex = new MutableVertex(pos);
+			model.add(vertex);
 
 			// Parse optional texture coordinate
 			if((parts.length > 1) && !parts[1].isEmpty()) {
-				components[1] = Integer.parseInt(parts[1]);
+				final Coordinate2D coord = parse(parts[1], model.coordinates());
+				vertex.coord = coord;
 			}
 
 			// Parse optional vertex normal
 			if(parts.length == 3) {
-				components[2] = Integer.parseInt(parts[2]);
+				final Normal normal = parse(parts[2], model.normals());
+				vertex.normal = normal;
 			}
+		}
+	}
 
-			// Add vertex
-			model.vertex(components);
+	/**
+	 * Parses a vertex component.
+	 */
+	private static <T> T parse(String value, VertexComponentList<T> list) {
+		final int index = Integer.valueOf(value);
+		return list.get(index);
+	}
+
+	/**
+	 * Custom OBJ vertex with optional vertex normal and texture coordinate.
+	 */
+	private static class MutableVertex extends Vertex {
+		private Normal normal;
+		private Coordinate2D coord;
+
+		/**
+		 * Constructor.
+		 * @param pos Vertex position
+		 */
+		MutableVertex(Point pos) {
+			super(pos);
+		}
+
+		@Override
+		public void buffer(ByteBuffer bb) {
+			super.buffer(bb);
+			if(normal != null) {
+				normal.buffer(bb);
+			}
+			if(coord != null) {
+				coord.buffer(bb);
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.position(), normal, coord);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof MutableVertex that) &&
+					this.position().equals(that.position()) &&
+					Objects.equals(this.normal, that.normal) &&
+					Objects.equals(this.coord, that.coord);
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this)
+					.appendSuper(super.toString())
+					.append("normal", normal)
+					.append("coord", coord)
+					.build();
 		}
 	}
 }
