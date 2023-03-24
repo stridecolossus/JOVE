@@ -99,6 +99,65 @@ Q - introduce 'Texture' here?
 
 ---
 
+## Secondary Command Buffers
+
+
+```java
+class PrimaryBuffer extends Buffer {
+    public PrimaryBuffer begin(VkCommandBufferUsage... flags) {
+        super.begin(null, flags);
+        return this;
+    }
+
+    public PrimaryBuffer add(List<SecondaryBuffer> buffers) {
+        validate(State.RECORDING);
+        execute(buffers);
+        return this;
+    }
+}
+```
+
+```java
+protected final void execute(List<SecondaryBuffer> buffers) {
+    // Validate secondary buffers can be executed
+    for(var e : buffers) {
+        e.validate(State.EXECUTABLE);
+    }
+
+    // Record secondary buffers
+    VulkanLibrary lib = this.pool().device().library();
+    Pointer array = NativeObject.array(buffers);
+    lib.vkCmdExecuteCommands(this, buffers.size(), array);
+}
+```
+
+```java
+class SecondaryBuffer extends Buffer {
+    public SecondaryBuffer begin(Handle pass) {
+        // Check can be recorded
+        validate(State.INITIAL);
+
+        // Init inheritance
+        var info = new VkCommandBufferInheritanceInfo();
+        info.renderPass = notNull(pass);
+        info.subpass = 0; // TODO - subpass index, query stuff
+
+        // Begin recording
+        super.begin(info, VkCommandBufferUsage.RENDER_PASS_CONTINUE);
+
+        return this;
+    }
+}
+```
+
+allocation changed
+
+sequence
+
+integration
+
+---
+
 ## Summary
 
 TODO
