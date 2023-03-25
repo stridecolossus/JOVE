@@ -989,7 +989,7 @@ public class DefaultCameraController {
 }
 ```
 
-The `update` method accepts an X-Y coordinate relative to the specified viewport dimensions, i.e. the mouse pointer location.  Note that this method signature matches the handler interface of a `PositionEvent`.
+The `update` method accepts an X-Y coordinate relative to the specified viewport dimensions, i.e. the mouse pointer location.
 
 The view direction of the free-look camera is determined as follows:
 
@@ -1033,7 +1033,7 @@ Notes:
 
 * The ranges of the interpolators are dependant on the algorithm to calculate the point on the unit-sphere (see below).
 
-* The interpolator ranges in future may need to be mutable, i.e. currently we assume the range is the entire viewport.
+* The interpolator ranges in future may need to be mutable, i.e. currently we assume the ranges are linearly interpolated across the entire viewport.
 
 * The interpolator class will be expanded with additional functionality in subsequent chapters.
 
@@ -1092,14 +1092,6 @@ public void update(float x, float y) {
     float pitch = vertical.interpolate(y / dim.height());
     Vector vec = sphere.vector(yaw, pitch);
     cam.direction(vec);
-}
-```
-
-A convenience `update` overload is also added to accept a position event (used below):
-
-```java
-public void update(PositionEvent pos) {
-    update(pos.x(), pos.y());
 }
 ```
 

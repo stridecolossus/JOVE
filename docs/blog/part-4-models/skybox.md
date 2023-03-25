@@ -365,7 +365,7 @@ The `format` accessor is a _hint_ for the Vulkan image format, note however that
 
 A KTX image is a binary format with _little endian_ byte ordering whereas Java is big-endian by default.  The entire file _could_ be loaded into an NIO byte buffer with little endian ordering (which has a similar API to the data stream) but we would prefer to stick with I/O streams for consistency with the existing loaders.  Additionally we anticipate that we will need to support other little endian file formats in the future.
 
-The matter is further complicated when one considers the weird implementation of the `DataInputStream` class where __all__ methods are declared `final` (though not the class itself oddly enough) so it is essentially closed for extension.  This class implements `DataInput` but there is no way to provide a custom implementation of this interface to the stream, so the abstraction is completely pointless.  Therefore we are forced to completely re-implement the whole data stream class rather than building on what is already available - great design!
+The matter is further complicated when one considers the weird implementation of `DataInputStream`.  This class implements `DataInput` but there is no way to provide a custom implementation so the abstraction is completely pointless.  Additionally __all__ the methods are `final` (though not the class itself oddly enough) so it is essentially closed  for extension.  Therefore we are forced to completely re-implement a whole data stream class rather than building on what is already available - great design!
 
 We start with a custom data stream wrapper:
 
@@ -451,7 +451,7 @@ in.readFully(header);
 
 // Validate header
 String str = new String(header);
-if(!str.contains("KTX 20")) throw new IOException(...);
+if(!str.contains("KTX 20")) throw new IOException();
 ```
 
 Next the image details are loaded (comments illustrate the values for the chalet image):
@@ -480,7 +480,7 @@ Notes:
 
 * The KTX format supports image arrays specified by the _layerCount_ field, the loader constrains this value to one.
 
-* There is some overlap in terminology here: A Vulkan image can have multiple _array layers_ which can be used for a cubemap image, the KTX equivalent is the `faceCount`.  However the KTX format also supports multiple _layers_ which would map to one the array types defined in the `VkImageViewType` enumeration.  We try to use the terms appropriate to the loader and the modified image class in each case.
+* There is some overlap in terminology here: A Vulkan image can have multiple _array layers_ which we are using for the cubemap image, the KTX equivalent is the `faceCount`.  However the KTX format also supports multiple _layers_ which map to one of the array types defined in the `VkImageViewType` enumeration.  We try to use the terms appropriate to the loader and the modified image class in each case.
 
 * Vulkan does not support an array of 3D images.
 
@@ -569,7 +569,7 @@ private static char channel(byte channel) {
         case 1 -> 'G';
         case 2 -> 'B';
         case 15 -> 'A';
-        default -> throw new IllegalArgumentException(...);
+        default -> throw new IllegalArgumentException();
     };
 }
 ```
@@ -680,54 +680,21 @@ return new ImageData(size, components, layout, data) {
 
 ### Copy Region
 
-The previous implementation invoked a copy command for _each_ image.  To support the cubemap image the copy command is extended to support _copy regions_ such that each face of the image can be transferred to the corresponding array layer in one operation.
+To support the cubemap image the transfer command is extended to support multiple layers and MIP levels such that the image can be transferred in one operation.
 
-First a copy region is defined as a simple transient record with a companion builder:
-
-```java
-public class ImageCopyCommand implements Command {
-    ...
-    public record CopyRegion(long offset, int length, int height, SubResource res, VkOffset3D imageOffset, Extents extents) {
-    }
-}
-```
-
-Each copy region populates the corresponding descriptor:
-
-```java
-private void populate(VkBufferImageCopy copy) {
-    copy.bufferOffset = offset;
-    copy.bufferRowLength = length;
-    copy.bufferImageHeight = height;
-    copy.imageSubresource = SubResource.toLayers(res);
-    copy.imageOffset = imageOffset;
-    copy.imageExtent = extents.toExtent();
-}
-```
-
-The builder for the copy command is extended to support copy regions:
-
-```java
-public static class Builder {
-    ...
-    private final List<CopyRegion> regions = new ArrayList<>();
-
-    public Builder region(CopyRegion region) {
-        regions.add(region);
-        return this;
-    }
-}
-```
-
-A convenience variant is added to specify a single copy region for an entire image:
+First the `region` method of the builder is modified to iterate through the MIP levels and image layers:
 
 ```java
 public Builder region(ImageData image) {
     Descriptor descriptor = this.image.descriptor();
+    int count = descriptor.layerCount();
     Level[] levels = image.levels().toArray(Level[]::new);
     for(int level = 0; level < levels.length; ++level) {
-        ...
+        for(int layer = 0; layer < count; ++layer) {
+            ...
+        }
     }
+    return this;
 }
 ```
 
@@ -755,16 +722,7 @@ private static int mip(int value, int level) {
 }
 ```
 
-A copy region can then be generated for each face in the MIP level:
-
-```java
-int count = descriptor.layerCount();
-for(int layer = 0; layer < count; ++layer) {
-    ...
-}
-```
-
-First the sub-resource for each copy region is configured for each face and MIP level:
+A sub-resource is configured for each MIP level and layer:
 
 ```java
 SubResource res = new SubResource.Builder(descriptor)
@@ -787,7 +745,7 @@ public int offset(int layer, int count) {
 }
 ```
 
-Finally the copy region is constructed and added to the command:
+Finally a copy region is constructed and added to the command:
 
 ```java
 CopyRegion region = new CopyRegion.Builder()
@@ -801,7 +759,7 @@ CopyRegion region = new CopyRegion.Builder()
 
 Although we should now have all the functionality required to support multiple MIP levels and cubemap images we start with the texture for the chalet model with a single level.
 
-The following command (downloaded from the SDK) is used to generate the KTX file:
+The following command (from the SDK) is used to generate the KTX file:
 
 ```
 toktx --t2 --target_type RGBA chalet.ktx2 chalet.jpg

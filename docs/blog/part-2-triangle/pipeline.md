@@ -209,8 +209,8 @@ Finally the builder populates the Vulkan descriptor for the viewport stage:
 VkPipelineViewportStateCreateInfo get() {
     // Validate
     int count = viewports.size();
-    if(count == 0) throw new IllegalArgumentException(...);
-    if(scissors.size() != count) throw new IllegalArgumentException(...);
+    if(count == 0) throw new IllegalArgumentException();
+    if(scissors.size() != count) throw new IllegalArgumentException();
 
     // Add viewports
     var info = new VkPipelineViewportStateCreateInfo();

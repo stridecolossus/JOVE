@@ -659,12 +659,12 @@ And a view is created with a depth clear value:
 return View.of(image).clear(DepthClearValue.DEFAULT);
 ```
 
-The depth buffer is then added to each frame buffer along with the colour attachment:
+The depth buffer attachment is then added to each frame buffer along with the colour attachments:
 
 ```java
 @Bean
-public static FrameSet frames(Swapchain swapchain, RenderPass pass, View depth) {
-    return new FrameSet(swapchain, pass, List.of(depth));
+public static FrameBuffer.Group frames(Swapchain swapchain, RenderPass pass, View depth) {
+    return new FrameBuffer.Group(swapchain, pass, List.of(depth));
 }
 ```
 
@@ -680,7 +680,7 @@ Notes:
 
 * Depth buffer images do not need to be programatically transitioned as Vulkan automatically manages the image during the render pass.
 
-* The same depth buffer can safely be used in each frame since only a single sub-pass will be executing at any one time in the current render loop.
+* The same depth buffer can safely be used in each frame since only a single subpass will be be rendering at any one time.
 
 With the depth buffer enabled we should finally be able to see the chalet model:
 

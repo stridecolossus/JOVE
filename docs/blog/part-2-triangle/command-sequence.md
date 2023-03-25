@@ -122,7 +122,7 @@ public static Pool create(LogicalDevice dev, WorkQueue queue, VkCommandPoolCreat
     // Init pool descriptor
     var info = new VkCommandPoolCreateInfo();
     info.queueFamilyIndex = queue.family().index();
-    info.flags = BitMask.reduce(flags);
+    info.flags = new BitMask<>(flags);
 
     // Create pool
     VulkanLibrary lib = dev.library();
@@ -178,7 +178,7 @@ Finally the pool can also be reset which recycles resources and restores all all
 
 ```java
 public void reset(VkCommandPoolResetFlag... flags) {
-    BitMask<VkCommandPoolResetFlag> bits = BitMask.reduce(flags);
+    BitMask<VkCommandPoolResetFlag> bits = new BitMask<>(flags);
     DeviceContext dev = super.device();
     check(dev.library().vkResetCommandPool(dev, this, bits));
 }
@@ -211,13 +211,13 @@ The _state_ member tracks whether the buffer has been recorded or is ready for e
 The `begin` method starts the recording of a command sequence:
 
 ```java
-public Recorder begin(VkCommandBufferUsageFlag... flags) {
+public Buffer begin(VkCommandBufferUsageFlag... flags) {
     // Check buffer can be recorded
     if(state != State.INITIAL) throw new IllegalStateException();
 
     // Init descriptor
     var info = new VkCommandBufferBeginInfo();
-    info.flags = BitMask.reduce(flags);
+    info.flags = new BitMask<>(flags);
 
     // Start buffer recording
     VulkanLibrary lib = pool.device().library();
@@ -225,23 +225,19 @@ public Recorder begin(VkCommandBufferUsageFlag... flags) {
 
     // Start recording
     state = State.RECORDING;
-    return new Recorder();
+    
+    return this;
 }
 ```
 
-The `Recorder` is an inner class used to record commands to the sequence:
+Commands can then be recorded to the buffer:
 
 ```java
-public class Recorder {
-    private Recorder() {
-    }
-
-    public Recorder add(Command cmd) {
-        if(state != State.RECORDING) throw new IllegalStateException();
-        VulkanLibrary lib = pool.device().library();
-        cmd.record(lib, Buffer.this);
-        return this;
-    }
+public Buffer add(Command cmd) {
+    if(state != State.RECORDING) throw new IllegalStateException();
+    VulkanLibrary lib = pool.device().library();
+    cmd.record(lib, Buffer.this);
+    return this;
 }
 ```
 
@@ -253,7 +249,7 @@ public Buffer end() {
     VulkanLibrary lib = pool.device().library();
     check(lib.vkEndCommandBuffer(this));
     state = State.EXECUTABLE;
-    return Buffer.this;
+    return this;
 }
 ```
 

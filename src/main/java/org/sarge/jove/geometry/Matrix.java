@@ -62,6 +62,15 @@ public final class Matrix implements Transform, Bufferable {
 				.build();
 	}
 
+	/**
+	 * Creates a 2D matrix array of the given order.
+	 * @param order Matrix order
+	 * @return Matrix
+	 */
+	private static float[][] matrix(int order) {
+		return new float[order][order];
+	}
+
 	private final float[][] matrix;
 
 	/**
@@ -70,15 +79,6 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	private Matrix(float[][] matrix) {
 		this.matrix = matrix;
-	}
-
-	/**
-	 * Constructor.
-	 * @param order Matrix order
-	 */
-	private Matrix(int order) {
-		Check.oneOrMore(order);
-		this.matrix = new float[order][order];
 	}
 
 	/**
@@ -139,14 +139,15 @@ public final class Matrix implements Transform, Bufferable {
 	 * @throws IndexOutOfBoundsException if the submatrix is out-of-bounds for this matrix
 	 */
 	public Matrix submatrix(int row, int col, int order) throws IndexOutOfBoundsException {
-		final var sub = new Matrix(order);
+		Check.oneOrMore(order);
+		final var sub = matrix(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				final float f = this.matrix[r + row][c + col];
-				sub.matrix[r][c] = f;
+				sub[r][c] = f;
 			}
 		}
-		return sub;
+		return new Matrix(sub);
 	}
 
 	/**
@@ -154,13 +155,13 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix transpose() {
 		final int order = this.order();
-		final Matrix transpose = new Matrix(order);
+		final var transpose = matrix(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
-				transpose.matrix[r][c] = this.matrix[c][r];
+				transpose[r][c] = this.matrix[c][r];
 			}
 		}
-		return transpose;
+		return new Matrix(transpose);
 	}
 
 	/**
@@ -176,22 +177,22 @@ public final class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix multiply(Matrix m) {
 		// Check same sized matrices
-		final int order = order();
+		final int order = this.order();
 		if(m.order() != order) throw new IllegalArgumentException("Cannot multiply matrices with different orders");
 
 		// Multiply matrices
-		final Matrix result = new Matrix(order);
+		final var result = matrix(order);
 		for(int r = 0; r < order; ++r) {
 			for(int c = 0; c < order; ++c) {
 				float total = 0;
 				for(int n = 0; n < order; ++n) {
 					total = Math.fma(this.matrix[r][n], m.matrix[n][c], total);
 				}
-				result.matrix[r][c] = total;
+				result[r][c] = total;
 			}
 		}
 
-		return result;
+		return new Matrix(result);
 	}
 
 	@Override
@@ -258,7 +259,7 @@ public final class Matrix implements Transform, Bufferable {
 		 */
 		public Builder(int order) {
 			Check.oneOrMore(order);
-			this.matrix = new float[order][order];
+			this.matrix = matrix(order);
 		}
 
 		/**

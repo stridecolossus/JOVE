@@ -47,7 +47,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, LoadStore attac
 }
 ```
 
-Where _attachment_ and _stencil_ are the load-store operations for the colour/depth and stencil attachments respectively.
+Where _attachment_ and _stencil_ are the load-store operations for the colour and depth-stencil attachments respectively.
 
 When creating the render pass the contiguous array of attachments is populated by the following method:
 
@@ -179,7 +179,7 @@ public class RenderPass extends AbstractVulkanObject {
 }
 ```
 
-We prefer to specify the render pass by an object graph of subpass and attachments, whereas the underlying Vulkan descriptors use indices to refer to attachments (and later on subpass dependencies).  However all of these are transient objects that have no relevance once the render pass has been instantiated.  Additionally the application does not care about the attachment indices, unlike (for example) vertex attributes which are dependant on the shader layout.
+We prefer to specify the render pass by an object graph of subpass and attachments, whereas the underlying Vulkan descriptors use array indices to refer to attachments (and later on subpass dependencies).  However all of these are transient objects that have no relevance once the render pass has been instantiated.  Additionally the application does not care about the attachment indices, unlike (for example) vertex attributes which are dependant on the shader layout.
 
 Therefore the `create` factory method first enumerates the overall set of attachment references used in the render pass:
 
@@ -310,7 +310,7 @@ Swapchain swapchain = new Swapchain.Builder(dev, surface)
     .build();
 ```
 
-The render pass consists of a single colour attachment which is cleared before rendering and transitioned to a layout ready for presentation:
+The render pass consists of a single colour attachment with BGRA pixel components:
 
 ```java
 VkFormat format = new FormatBuilder()
@@ -319,7 +319,11 @@ VkFormat format = new FormatBuilder()
     .signed(false)
     .type(FormatBuilder.Type.NORM)
     .build();
+```
 
+Which is cleared before rendering and transitioned to a layout ready for presentation:
+
+```java
 Attachment attachment = new Attachment.Builder()
     .format(format)
     .load(VkAttachmentLoadOp.CLEAR)
@@ -328,7 +332,7 @@ Attachment attachment = new Attachment.Builder()
     .build();
 ```
 
-The render pass consists of a single sub-pass to render the colour attachment:
+The render pass for the triangle demo consists of a single sub-pass to render the colour attachment:
 
 ```java
 return new RenderPass.Builder()
@@ -338,14 +342,14 @@ return new RenderPass.Builder()
     .build();
 ```
 
-Finally a frame buffer is created:
+And finally a frame buffer is created:
 
 ```java
 View view = swapchain.views().get(0);
 FrameBuffer fb = FrameBuffer.create(pass, swapchain.extents(), view);
 ```
 
-Although the swapchain supports multiple attachments the demo will use a single frame-buffer until a proper rendering loop is implemented later.
+Although the swapchain supports multiple colour attachments the demo will use a single frame-buffer until a proper rendering loop is implemented later.
 
 ---
 
@@ -355,17 +359,18 @@ Although the swapchain supports multiple attachments the demo will use a single 
 
 Although we are perhaps half-way to our goal of rendering a triangle it is already apparent that the demo is becoming unwieldy:
 
-* The main application code is one large, imperative method.
+* The main application code is one large, imperative method that is difficult to navigate.
 
-* The nature of a Vulkan application means that the various collaborating components are inherently highly inter-dependant, we are forced to structure the code based on the inter-dependencies resulting in convoluted and brittle code.
+* The nature of a Vulkan application means that the various collaborating components are inherently highly inter-dependant, we are forced to structure the logic based on the inter-dependencies resulting in convoluted and brittle code.
 
 * All components are created and managed in a single source file rather than being factoring out to discrete, coherent classes.
 
-What we have is a 'God class' which will become harder to navigate and maintain as more code is added to the demo.  
+* The maintenance situation will get worse as more code is added to the demo.
 
-The obvious solution is to use a _dependency injection_ framework that manages the components and dependencies for us, freeing development to focus on each component in relative isolation.  For this we will use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks.
+The obvious solution is to use _dependency injection_ freeing development to focus on each component in relative isolation.
+For this we will use [Spring Boot](https://spring.io/projects/spring-boot) which is one of the most popular and best supported dependency injection frameworks.
 
-Note that only the demo applications will be dependant on this framework and not the JOVE library itself.
+Note that only the demo applications will be dependant on Spring and not the JOVE library itself.
 
 ### Project
 
@@ -426,7 +431,7 @@ Here we can see the benefits of using dependency injection:
 
 * Note that Spring beans are generally singleton instances.
 
-This should result in code that is both simpler to develop and (more importantly) considerably easier to refactor and fix.  In particular we no longer need to be concerned about dependencies when components are added or modified.
+This should result in code that is both simpler to develop and (more importantly) considerably easier to maintain.  In particular we no longer need to be concerned about inter-dependencies when components are added or refactored.
 
 However one disadvantage of this approach is that the swapchain cannot be easily recreated when it is invalidated, e.g. when the window is minimised or resized.  This functionality is deferred to a future chapter.
 
@@ -494,7 +499,7 @@ public PhysicalDevice physical(Instance instance) {
         .filter(graphics)
         .filter(presentation)
         .findAny()
-        .orElseThrow(() -> new RuntimeException("No suitable physical device available"));
+        .orElseThrow(() -> new RuntimeException());
 }
 
 @Bean
@@ -522,7 +527,7 @@ public Queue presentation(LogicalDevice dev) {
 }
 ```
 
-The swapchain, render pass and frame buffers are instantiated similarly.
+The swapchain, render pass and frame buffers are refactored similarly.
 
 ### Cleanup
 

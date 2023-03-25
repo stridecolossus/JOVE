@@ -604,7 +604,7 @@ default VkImageSubresourceLayers toLayers() {
 The process of copying the image data from the staging buffer to the texture is a command:
 
 ```java
-public class ImageCopyCommand implements Command {
+public class ImageTransferCommand implements Command {
     private final Image image;
     private final VulkanBuffer buffer;
     private final VkBufferImageCopy[] regions;
@@ -652,9 +652,9 @@ Where the `toExtent` helper constructs a `VkExtent3D` for the image.
 The builder for the copy command generates the array of copy region descriptors:
 
 ```java
-public ImageCopyCommand build() {
+public ImageTransferCommand build() {
     VkBufferImageCopy[] array = StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
-    return new ImageCopyCommand(image, buffer, array, layout);
+    return new ImageTransferCommand(image, buffer, array, layout);
 }
 ```
 

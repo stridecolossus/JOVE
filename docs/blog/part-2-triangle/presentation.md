@@ -17,7 +17,7 @@ title: Presentation
 
 In the next couple of chapters we will implement the various components required for _presentation_ to the Vulkan surface.
 
-The first of these is the _swapchain_ which is a controller for the process of presenting frames to the display.  The swapchain is comprised of a number of image attachments that are the target of the rendering process.
+The first of these is the _swapchain_ which is the controller for the process of presenting frames to the display.  The swapchain is comprised of a number of image attachments that are the target of the rendering process.
 
 Generally an application will employ a double or triple-buffer strategy where a completed frame is presented while the next is being rendered, the buffers are swapped, and the process repeats for the next frame.  Additionally Vulkan is designed to allow these activities to be performed in parallel.
 
@@ -417,7 +417,7 @@ The `subresourceRange` field of the create descriptor specifies a subset of the 
 
 ```java
 var range = new VkImageSubresourceRange();
-range.aspectMask = BitMask.reduce(image.descriptor().aspects());
+range.aspectMask = new BitMask<>(image.descriptor().aspects());
 range.baseMipLevel = 0;
 range.levelCount = 1;
 range.baseArrayLayer = 0;
