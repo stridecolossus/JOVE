@@ -153,7 +153,7 @@ public class Camera {
 	 */
 	protected void update() {
 		// Determine right axis
-		right = up.cross(dir);
+		right = up.cross(dir).normalize();
 
 		// Determine up axis
 		final Vector y = dir.cross(right).normalize();
