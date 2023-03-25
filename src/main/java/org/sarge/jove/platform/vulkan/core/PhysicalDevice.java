@@ -161,40 +161,42 @@ public class PhysicalDevice implements NativeObject {
 	 * @see #predicate(DeviceFeatures)
 	 */
 	public static Stream<PhysicalDevice> devices(Instance instance) {
-		// Enumerate device handles
+		// Enumerate devices
 		final VulkanFunction<Pointer[]> enumerate = (count, devices) -> instance.library().vkEnumeratePhysicalDevices(instance, count, devices);
 		final IntByReference count = instance.factory().integer();
 		final Pointer[] handles = enumerate.invoke(count, Pointer[]::new);
 
-		// Init device constructor
-		final Function<Handle, PhysicalDevice> ctor = handle -> {
-			// Enumerate queue families for this device (for some reason the return type is void)
-			final StructureVulkanFunction<VkQueueFamilyProperties> func = (n, array) -> {
-				instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, n, array);
-				return VulkanLibrary.SUCCESS;
-			};
-			final IntByReference num = instance.factory().integer();
-			final VkQueueFamilyProperties[] props = func.invoke(num, new VkQueueFamilyProperties());
-
-			// Create queue families
-			final List<Family> families = IntStream
-					.range(0, props.length)
-					.mapToObj(n -> Family.of(n, props[n]))
-					.toList();
-
-			// Retrieve features supported by this device
-			final var features = new VkPhysicalDeviceFeatures();
-			instance.library().vkGetPhysicalDeviceFeatures(handle, features);
-
-			// Create device
-			return new PhysicalDevice(handle, instance, families, new SupportedFeatures(features));
-		};
-
-		// Create devices
+		// Retrieves queues and create devices
 		return Arrays
 				.stream(handles)
 				.map(Handle::new)
-				.map(ctor);
+				.map(handle -> create(handle, instance));
+	}
+
+	/**
+	 * Creates a physical device.
+	 */
+	private static PhysicalDevice create(Handle handle, Instance instance) {
+		// Enumerate queue families for this device
+		final StructureVulkanFunction<VkQueueFamilyProperties> func = (n, array) -> {
+			instance.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, n, array);
+			return VulkanLibrary.SUCCESS; // For some reason the return type is void
+		};
+		final IntByReference num = instance.factory().integer();
+		final VkQueueFamilyProperties[] props = func.invoke(num, new VkQueueFamilyProperties());
+
+		// Create queue families
+		final List<Family> families = IntStream
+				.range(0, props.length)
+				.mapToObj(n -> Family.of(n, props[n]))
+				.toList();
+
+		// Retrieve features supported by this device
+		final var features = new VkPhysicalDeviceFeatures();
+		instance.library().vkGetPhysicalDeviceFeatures(handle, features);
+
+		// Create device
+		return new PhysicalDevice(handle, instance, families, new SupportedFeatures(features));
 	}
 
 	/**

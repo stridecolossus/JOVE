@@ -79,7 +79,7 @@ class ReverseMapping<E extends IntEnum> {
 }
 ```
 
-Note that some enumerations have duplicate entries which are silently ignored when building the reverse mapping.
+Note that some enumerations have duplicate entries (e.g. `VkImageAspect`) which are silently ignored when building the reverse mapping.
 
 The enumeration constant for a given native value can now be looked up from the reverse mapping:
 

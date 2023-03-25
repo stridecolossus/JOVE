@@ -128,7 +128,7 @@ private static PhysicalDevice create(Pointer handle, Instance instance) {
 }
 ```
 
-Note that again the same API method is invoked twice to retrieve the queue families.  However in this case the JNA `toArray` factory method is invoked on an instance of a `VkQueueFamilyProperties` structure to allocate the array and the the _first_ element is passed to the API method (i.e. a native pointer to array of structures).  This common pattern will be abstracted at the end of the chapter.
+Note that again the same API method is invoked twice to retrieve the queue families.  However in this case the JNA `toArray` factory method is invoked on an instance of a `VkQueueFamilyProperties` structure to allocate the array and the _first_ element is passed to the API method (i.e. a native pointer to array of structures).  This common pattern will be abstracted at the end of the chapter.
 
 Another helper is implemented to create a queue family domain object:
 
@@ -166,14 +166,12 @@ public VkPhysicalDeviceProperties properties() {
 }
 ```
 
-A new JNA library is added for the API methods used thus far:
+The new API methods used thus far as added to the JNA library:
 
 ```java
-interface VulkanLibraryPhysicalDevice {
-    int  vkEnumeratePhysicalDevices(Pointer instance, IntByReference count, Pointer[] devices);
-    void vkGetPhysicalDeviceProperties(Pointer device, VkPhysicalDeviceProperties props);
-    void vkGetPhysicalDeviceQueueFamilyProperties(Pointer device, IntByReference count, VkQueueFamilyProperties props);
-}
+int  vkEnumeratePhysicalDevices(Pointer instance, IntByReference count, Pointer[] devices);
+void vkGetPhysicalDeviceProperties(Pointer device, VkPhysicalDeviceProperties props);
+void vkGetPhysicalDeviceQueueFamilyProperties(Pointer device, IntByReference count, VkQueueFamilyProperties props);
 ```
 
 The following temporary code can now be added to the demo to dump the available devices:
@@ -262,7 +260,7 @@ Next the GLFW method is invoked to create the window:
 ```java
 Dimensions size = descriptor.size();
 Pointer window = lib.glfwCreateWindow(size.width(), size.height(), descriptor.title(), null, null);
-if(window == null) throw new RuntimeException(...);
+if(window == null) throw new RuntimeException();
 ```
 
 And finally the domain object is instantiated:
@@ -286,37 +284,35 @@ public Pointer surface(Pointer instance) {
     DesktopLibrary lib = desktop.library();
     PointerByReference ref = new PointerByReference();
     int result = lib.glfwCreateWindowSurface(instance, this.handle(), null, ref);
-    if(result != 0) {
-        throw new RuntimeException(...);
-    }
+    if(result != 0) throw new RuntimeException();
     return ref.getValue();
 }
 ```
 
-In the demo we can now create a native window and retrieve the handle to the Vulkan surface:
+In the demo we can now create a native window:
 
 ```java
-// Create window
 Window window = new Window.Builder()
     .title("demo")
     .size(new Dimensions(1280, 760))
     .hint(Window.Hint.DISABLE_OPENGL)
     .build(desktop);
+```
 
-// Retrieve rendering surface
+And then retrieve the handle to the Vulkan surface:
+
+```java
 Pointer surface = window.surface(instance.handle());
 ```
 
-The API methods for the window and surface are added as a new JNA library:
+The API methods for GLFW windows and the surface are added to the JNA library:
 
 ```java
-interface DesktopLibraryWindow {
-    Pointer glfwCreateWindow(int w, int h, String title, Pointer monitor, Pointer shared);
-    void    glfwDestroyWindow(Pointer window);
-    void    glfwDefaultWindowHints();
-    void    glfwWindowHint(int hint, int value);
-    int     glfwCreateWindowSurface(Pointer instance, Pointer window, Pointer allocator, PointerByReference surface);
-}
+Pointer glfwCreateWindow(int w, int h, String title, Pointer monitor, Pointer shared);
+void    glfwDestroyWindow(Pointer window);
+void    glfwDefaultWindowHints();
+void    glfwWindowHint(int hint, int value);
+int     glfwCreateWindowSurface(Pointer instance, Pointer window, Pointer allocator, PointerByReference surface);
 ```
 
 ### Selector
@@ -455,6 +451,8 @@ public static class Builder {
 }
 ```
 
+Note that extensions and validation layers can be configured at both the instance and device level, however more recent Vulkan implementations will ignore layers specified at the device level (both are retained for backwards compatibility).
+
 The work queues that are required by the logical device are specified by a new transient type:
 
 ```java
@@ -467,9 +465,7 @@ Where:
 
 - The _priorities_ is a list of percentile values that specifies the required number of queues in the family and their relative priorities.
 
-- The `Percentile` class is a custom type for a percentile represented as a 0..1 floating-point value.
-
-Note that extensions and validation layers can be configured at both the instance and device level, however more recent Vulkan implementations will ignore layers specified at the device level (both are retained for backwards compatibility).
+- A `Percentile` is a custom numeric type for a percentile represented as a 0..1 floating-point value.
 
 The `build` method populates the descriptor for the logical device:
 
@@ -493,8 +489,8 @@ public LogicalDevice build() {
 }
 ```
 
-JNA requires a native array to be a contiguous memory block (as opposed to a Java array where the memory address of the elements is arbitrary).
-Here we introduce the `StructureCollector` helper class (detailed at the end of the chapter) which handles the transformation of a Java collection to a JNA structure array.
+JNA requires a native array to be a contiguous memory block as opposed to a Java array where the memory address of each element is arbitrary.
+Here we introduce the `StructureCollector` helper class (detailed at the end of the chapter) which handles the transformation of a Java collection to a contiguous JNA structure array.
 
 The `populate` method is invoked by the helper to 'fill' the JNA structure from the domain object:
 
@@ -585,12 +581,12 @@ Queue graphicsQueue = dev.queue(graphicsFamily);
 Queue presentationQueue = dev.queue(presentationFamily);
 ```
 
-Which uses the following convenience accessor to retrieve the queue for a given family:
+Which uses the following convenience accessor to retrieve the first queue for a given family:
 
 ```java
 public Queue queue(Family family) {
     List<Queue> list = queues.get(family);
-    if((list == null) || list.isEmpty()) throw new IllegalArgumentException(...);
+    if((list == null) || list.isEmpty()) throw new IllegalArgumentException();
     return list.get(0);
 }
 ```
@@ -639,7 +635,7 @@ When enumerating the physical devices we first came across API methods that are 
 
 The process is generally:
 
-1. Invoke an API method with an integer-by-reference _count_ to determine the size of the results (the data argument is `null`).
+1. Invoke an API method with an integer-by-reference _count_ to determine the size of the results, with the data argument set to `null`.
 
 2. Allocate the data or array accordingly.
 
@@ -703,12 +699,12 @@ For an array of JNA structures a second, slightly different implementation is ne
 
 ```java
 interface StructureVulkanFunction<T extends Structure> extends VulkanFunction<T> {
-    default T[] invoke(IntByReference count, Supplier<T> identity) {
+    default T[] invoke(IntByReference count, T identity) {
         // Invoke to determine the length of the array
         check(enumerate(count, null));
     
         // Instantiate the structure array
-        T[] array = (T[]) identity.get().toArray(count.getValue());
+        T[] array = (T[]) identity.toArray(count.getValue());
     
         // Invoke again to populate the array (note passes first element)
         if(array.length > 0) {
@@ -722,7 +718,7 @@ interface StructureVulkanFunction<T extends Structure> extends VulkanFunction<T>
 
 Notes:
 
-* The _identity_ generates an instance of the structure used to allocate the resultant array.
+* The _identity_ is an instance of the structure used to allocate the resultant array.
 
 * In this case the API method accepts a pointer to a structure array which maps to the __first__ element of the allocated Java array.
 
@@ -736,7 +732,7 @@ VkQueueFamilyProperties[] props = func.invoke(count, VkQueueFamilyProperties::ne
 
 ### Structure Collector
 
-Vulkan makes heavy use of structures to configure a variety of objects, however _arrays_ of JNA structures pose a number of problems:
+Vulkan makes heavy use of structures to configure a variety of objects, however _arrays_ of JNA structures pose a number of challenges:
 
 * Unlike a standard POJO an array of JNA structures __must__ be allocated using the JNA `toArray` factory method to create a contiguous block of memory.
 
@@ -784,7 +780,7 @@ Where:
 
 * _R_ is the component type of the resultant array, e.g. `VkDeviceQueueCreateInfo`.
 
-* And _identity_ provides an instance of the structure used to allocate the array.
+* And _identity_ is an instance of the structure used to allocate the array.
 
 The `populate` method 'fills' an element of the array from the corresponding domain object (generally implemented as a hidden helper method on the domain class).  Note that this implementation uses an iterator over the incoming data since there is no simple means of instantiating a generic array and using a simpler loop to walk both.
 
@@ -807,7 +803,7 @@ public static <T, R extends Structure> R pointer(Collection<T> data, Supplier<R>
 
 Note that the `pointer` variant requires the structure to be a JNA `ByReference` type, otherwise an exception is thrown when the structure array is marshalled.
 
-A structure that is accessed _by reference_ is bizarrely identified by JNA via a marker interface, as opposed to (say) a flag on the structure itself.  This forces the developer to implement an entirely new class that provides no additional public functionality, and yet the code is _still_ required to determine whether the structure is being passed by value or by reference.
+A structure that is accessed _by reference_ is bizarrely identified by JNA via a marker interface, as opposed to (say) a flag on the structure itself.  This forces the developer to implement an entirely new class that provides no additional public functionality, and yet application code is _still_ required to determine whether the structure is being passed by value or by reference.
 
 Therefore the code generator is modified to identify whether each structure is used by reference (i.e. it is used as a structure field with a pointer) and implements the marker interface accordingly, working on the assumption that a given structure will _always_ be used similarly.  The only instance where this assumption breaks down is the `VkRect2D` structure which is used both as a value __and__ a reference type, so unfortunately we are forced to manually implement a separate class to support both use-cases.
 
