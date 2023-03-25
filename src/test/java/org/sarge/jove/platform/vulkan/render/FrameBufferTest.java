@@ -31,7 +31,7 @@ public class FrameBufferTest {
 
 		// Create image view
 		image = new MockImage();
-		view = View.of(image);
+		view = new View.Builder(image).build(dev);
 		view.clear(new ColourClearValue(Colour.WHITE));
 
 		// Create render pass

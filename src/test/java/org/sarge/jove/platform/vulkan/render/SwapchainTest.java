@@ -30,7 +30,7 @@ public class SwapchainTest {
 	void before() {
 		dev = new MockDeviceContext();
 		lib = dev.library();
-		view = View.of(new MockImage());
+		view = new View.Builder(new MockImage()).build(dev);
 		extents = new Dimensions(2, 3);
 		swapchain = new Swapchain(new Handle(1), dev, VkFormat.R32G32B32A32_SFLOAT, extents, List.of(view));
 	}

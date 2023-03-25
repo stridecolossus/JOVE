@@ -22,16 +22,6 @@ import com.sun.jna.ptr.PointerByReference;
  * @author Sarge
  */
 public final class View extends VulkanObject {
-	/**
-	 * Helper - Creates a view for the given image with default configuration.
-	 * @param image Image
-	 * @return New image view
-	 * @see Builder
-	 */
-	public static View of(Image image) {
-		return new Builder(image).build();
-	}
-
 	private final Image image;
 	private ClearValue clear;
 	private boolean auto = true;
@@ -172,9 +162,10 @@ public final class View extends VulkanObject {
 
 		/**
 		 * Constructs this image view.
+		 * @param dev Logical device
 		 * @return New image view
 		 */
-		public View build() {
+		public View build(DeviceContext dev) {
 			// Build view descriptor
 			final var info = new VkImageViewCreateInfo();
 			info.viewType = type;
@@ -184,7 +175,6 @@ public final class View extends VulkanObject {
 			info.subresourceRange = SubResource.toRange(subresource);
 
 			// Allocate image view
-			final DeviceContext dev = image.device();
 			final VulkanLibrary lib = dev.library();
 			final PointerByReference ref = dev.factory().pointer();
 			check(lib.vkCreateImageView(dev, info, null, ref));

@@ -48,13 +48,6 @@ public class ViewTest {
 		assertEquals(image, view.image());
 	}
 
-	@DisplayName("A default view can be constructed for a given image")
-	@Test
-	void of() {
-		view = View.of(image);
-		assertEquals(image, view.image());
-	}
-
 	@DisplayName("The clear value for a view...")
 	@Nested
 	class ClearTests {
@@ -120,7 +113,7 @@ public class ViewTest {
 					.type(VkImageViewType.CUBE)
 					.mapping(ComponentMapping.of("BGRA"))
 					.subresource(res)
-					.build();
+					.build(dev);
 
 			// Check view
 			assertNotNull(view.handle());

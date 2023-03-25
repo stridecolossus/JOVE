@@ -470,8 +470,8 @@ public class Swapchain extends VulkanObject {
 			final var views = Arrays
 					.stream(handles)
 					.map(Handle::new)
-					.map(image -> new SwapChainImage(image, dev, descriptor))
-					.map(View::of)
+					.map(image -> new SwapChainImage(image, descriptor))
+					.map(image -> new View.Builder(image).build(dev))
 					.toList();
 
 			// Init clear operation
@@ -486,7 +486,7 @@ public class Swapchain extends VulkanObject {
 		/**
 		 * Implementation for a swapchain image.
 		 */
-		private record SwapChainImage(Handle handle, DeviceContext device, Descriptor descriptor) implements Image {
+		private record SwapChainImage(Handle handle, Descriptor descriptor) implements Image {
 			@Override
 			public boolean equals(Object obj) {
 				return obj == this;

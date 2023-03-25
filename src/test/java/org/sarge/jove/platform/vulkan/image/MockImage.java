@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.image;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 
 public class MockImage implements Image {
 	public final Descriptor.Builder descriptor = new Descriptor.Builder()
@@ -13,11 +12,6 @@ public class MockImage implements Image {
 	@Override
 	public Handle handle() {
 		return new Handle(1);
-	}
-
-	@Override
-	public DeviceContext device() {
-		return new MockDeviceContext();
 	}
 
 	@Override
