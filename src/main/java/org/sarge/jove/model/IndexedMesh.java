@@ -36,7 +36,7 @@ public class IndexedMesh extends DefaultMesh {
 
 	private final List<Integer> index = new ArrayList<>();
 	private int restart;
-	private boolean compact = true;
+	private boolean compact = true;			// TODO - change to short/int?
 
 	/**
 	 * Constructor.

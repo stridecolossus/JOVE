@@ -36,14 +36,15 @@ public record BitField(int mask) {
 	}
 
 	/**
-	 * @return The positive bits of this mask as a stream of index values in the range 0..31
-	 * @see #map(int)
+	 * @return The positive bits of this mask as a stream of indices in the range 0..31, lowest first
 	 */
 	public IntStream stream() {
 		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(mask);
-		return IntStream
-				.range(0, range)
-				.filter(bit -> contains(mask, map(bit)));
+		return IntStream.range(0, range).filter(this::contains);
+	}
+
+	private boolean contains(int index) {
+		return Integer.lowestOneBit(mask >>> index) == 1;
 	}
 
 	@Override

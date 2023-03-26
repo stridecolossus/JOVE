@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Extents;
 import org.sarge.lib.util.Check;
 
 /**

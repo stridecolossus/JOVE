@@ -89,7 +89,7 @@ public class Surface extends TransientNativeObject {
 	}
 
 	/**
-	 * Helper - Selects the preferred surface format that supports the given format and colour-space or falls back to {@link #DEFAULT_SURFACE_FORMAT}.
+	 * Helper - Selects the preferred surface format that supports the given format and colour-space or falls back to the {@link #defaultSurfaceFormat()}.
 	 * @param format		Surface format
 	 * @param space			Colour space
 	 * @param def			Default surface format or {@code null} for the {@link #defaultSurfaceFormat()}
@@ -136,8 +136,8 @@ public class Surface extends TransientNativeObject {
 	}
 
 	/**
-	 * Helper - Selects a preferred presentation mode falling back to {@link #DEFAULT_PRESENTATION_MODE}.
-	 * @param candidates Preferred presentation mode(s)
+	 * Helper - Selects a preferred presentation mode from the given candidates or falls back to the {@link #DEFAULT_PRESENTATION_MODE}.
+	 * @param candidates Preferred presentation modes
 	 * @return Selected presentation mode
 	 */
 	public VkPresentModeKHR mode(VkPresentModeKHR... candidates) {

@@ -10,7 +10,7 @@ import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtil;
 
 /**
- * A <i>sphere volume</i> is a volume adapter for a {@link Sphere}.
+ * A <i>sphere volume</i> is a bounding volume adapter for a {@link Sphere}.
  * @author Sarge
  */
 public class SphereVolume implements Volume {

@@ -59,7 +59,7 @@ public record BitMask<E extends IntEnum>(int bits) {
 
 	/**
 	 * @param value Enumeration constant
-	 * @return Whether this mask contains the given value
+	 * @return Whether this mask contains the given constant
 	 */
 	public boolean contains(E value) {
 		return BitField.contains(bits, value.value());
