@@ -15,7 +15,7 @@ import org.sarge.jove.util.*;
  * Otherwise the matrix is constructed from a {@link Quaternion} instance created on each invocation.
  * <p>
  * The {@link #cosine()} method can be overridden to provide a custom trigonometric function used to calculate the rotation matrix.
- * Alternatively see {@link #of(AxisAngle, Cosine)}
+ * Alternatively see {@link #of(Cosine)}.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
@@ -52,12 +52,12 @@ public class AxisAngle implements Rotation {
 	/**
 	 * @return Rotation angle (radians)
 	 */
-	public float angle() {
+	public final float angle() {
 		return angle;
 	}
 
 	@Override
-	public Matrix matrix() {
+	public final Matrix matrix() {
 		if(axis instanceof Axis cardinal) {
 			return cardinal.rotation(angle, cosine());
 		}
@@ -67,11 +67,12 @@ public class AxisAngle implements Rotation {
 	}
 
 	@Override
-	public AxisAngle toAxisAngle() {
+	public final AxisAngle toAxisAngle() {
 		return this;
 	}
 
 	/**
+	 * Override for a custom cosine function.
 	 * @return Cosine function
 	 */
 	public Cosine cosine() {

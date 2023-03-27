@@ -15,7 +15,7 @@ title: The Render Loop and Synchronisation
 
 ## Overview
 
-Before we progress the demo there are several issues with the crude render loop implemented in the previous chapter:
+Before we wrap up the rotating cube demo there are several outstanding issues with the crude render loop implemented in the previous chapter:
 
 * The rendering code is completely single-threaded.
 
@@ -1328,7 +1328,7 @@ In this chapter the render loop was improved by:
 
 - Implementation of Vulkan synchronisation to safely utilise the multi-threaded rendering pipeline.
 
-- New geometry code to support unit-vectors and quaternions.
+- New geometry code to support unit-vectors, rotations and quaternions.
 
 - The addition of a new framework for playable media and animations.
 

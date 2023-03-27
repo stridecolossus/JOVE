@@ -170,10 +170,10 @@ public class VulkanBuffer extends AbstractVulkanObject {
 The buffer is bound to a pipeline using the following command factory:
 
 ```java
-public Command bind() {
+public Command bind(int binding) {
     require(VkBufferUsage.VERTEX_BUFFER);
     VulkanBuffer[] array = new VulkanBuffer[]{this};
-    return (api, buffer) -> api.vkCmdBindVertexBuffers(buffer, 0, 1, array, new long[]{0});
+    return (lib, buffer) -> lib.vkCmdBindVertexBuffers(buffer, binding, 1, array, new long[]{0});
 }
 ```
 
@@ -200,7 +200,7 @@ public Command copy(VulkanBuffer dest) {
     region.size = len;
 
     // Create copy command
-    return (api, buffer) -> api.vkCmdCopyBuffer(buffer, this, dest, 1, new VkBufferCopy[]{region});
+    return (lib, buffer) -> lib.vkCmdCopyBuffer(buffer, this, dest, 1, new VkBufferCopy[]{region});
 }
 ```
 
@@ -596,7 +596,7 @@ public Buffer sequence(...) {
         .begin()
             .add(frame.begin())
                 .add(pipeline.bind())
-                .add(vbo.bind())
+                .add(vbo.bind(0))
                 .add(draw)
             .add(FrameBuffer.END)
         .end();

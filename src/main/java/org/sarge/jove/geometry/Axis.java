@@ -1,6 +1,5 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.geometry.Matrix.Builder;
 import org.sarge.jove.util.Cosine;
 
 /**
@@ -12,9 +11,7 @@ import org.sarge.jove.util.Cosine;
  * <li>Negative Z points <b>into</b> the screen.</li>
  * </ul>
  * <p>
- * Implementation note:
- * This class has optimised implementations for commonly used methods such as {@link #dot(Tuple)} or {@link #cross(Vector)}.
- * It is generally recommended that vector operations delegate accordingly, e.g. {@code vec.dot(this)} rather than {@code this.dot(vec)}.
+ * This class has optimised implementations for common operations such as {@link #dot(Tuple)} or {@link #cross(Vector)}.
  * <p>
  * @author Sarge
  */
@@ -75,7 +72,7 @@ public final class Axis extends Normal {
 
 	/**
 	 * Constructor.
-	 * @param index Axis index
+	 * @param axis Axis implementation
 	 */
 	private Axis(Instance axis) {
 		super(axis.vector());
@@ -141,7 +138,7 @@ public final class Axis extends Normal {
 	private enum Instance {
 		X {
 			@Override
-			protected void rotation(float sin, float cos, Builder matrix) {
+			protected void rotation(float sin, float cos, Matrix.Builder matrix) {
 				matrix
         				.set(1, 1, cos)
         				.set(1, 2, -sin)
@@ -152,7 +149,7 @@ public final class Axis extends Normal {
 
 		Y {
 			@Override
-			protected void rotation(float sin, float cos, Builder matrix) {
+			protected void rotation(float sin, float cos, Matrix.Builder matrix) {
 				matrix
             			.set(0, 0, cos)
             			.set(0, 2, sin)
@@ -163,7 +160,7 @@ public final class Axis extends Normal {
 
 		Z {
 			@Override
-			protected void rotation(float sin, float cos, Builder matrix) {
+			protected void rotation(float sin, float cos, Matrix.Builder matrix) {
 				matrix
             			.set(0, 0, cos)
             			.set(0, 1, -sin)

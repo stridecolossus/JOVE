@@ -54,7 +54,7 @@ particles
 - or similar to vertex?
 - start/end size => vertex attribute
 - low/high fade, when particles start to fade, high = lifetime
-- storage buffer for particles in compute pipeline
+- storage buffer, for whole scenes (!) or particles in compute pipeline, https://vkguide.dev/docs/chapter-4/storage_buffers/
 
 typedef void (VKAPI_PTR *PFN_vkCmdDispatch)(VkCommandBuffer commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ);
 typedef void (VKAPI_PTR *PFN_vkCmdDispatchIndirect)(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset);

@@ -99,6 +99,7 @@ public static Mesh skybox() {
 ```
 
 Note that we only use the vertex positions in the skybox shader (see below).
+because?
 TODO
 
 Finally a cubemap sampler is created which clamps the texture coordinates:
@@ -114,22 +115,9 @@ public Sampler cubeSampler() {
 
 ### Shaders
 
-In the vertex shader for the skybox the various matrices that were previously multiplied together by the application are separated:
+The camera is at the centre of the skybox and therefore does not need to be moved, but is rotated according to the current view.
 
-```glsl
-#version 450
-
-layout(set=0, binding=1) uniform UniformBuffer {
-    mat4 model;
-    mat4 view;
-    mat4 projection;
-};
-
-layout(location=0) in vec3 inPosition;
-layout(location=0) out vec3 outCoords;
-```
-
-The reason for this change is to allow the vertex positions of the skybox cube to be transformed by the view without being affected by the other components:
+The vertex shader for the skybox uses the `mat3` operator to extract the rotation component of the view transform:
 
 ```glsl
 void main() {
@@ -137,9 +125,7 @@ void main() {
 }
 ```
 
-The built in `mat3` operator is used to extract the rotation component of the view matrix.
-
-The projection transformation sets the last two components to be the same value such that the resultant vertex lies on the far clipping plane, i.e. the skybox is drawn _behind_ the rest of the geometry.
+The projection transformation sets the last two components to be the same value such that the resultant vertex lies on the far clipping plane, i.e. the skybox is always drawn _behind_ the rest of the geometry:
 
 ```glsl
 gl_Position = (projection * vec4(pos, 0.0)).xyzz;
@@ -152,10 +138,10 @@ The full vertex shader is as follows:
 ```glsl
 #version 450
 
-layout(set=0, binding=1) uniform UniformBuffer {
-    mat4 model;
-    mat4 view;
+layout(set=0, binding=1) uniform Matrices {
     mat4 projection;
+    mat4 view;
+    mat4 model;
 };
 
 layout(location=0) in vec3 inPosition;
@@ -173,15 +159,16 @@ Notes:
 
 * The `model` matrix is not used in the skybox shader.
 
-* The existing vertex shader for the chalet model is refactored accordingly (with both pipelines sharing the same layout).
+* The skybox uses the same render pass and pipeline layout as the chalet model.
 
-The fragment shader is the same as the previous demo except the sampler has a `samplerCube` declaration:
+The fragment shader is the same as the previous demo except for the `samplerCube` declaration:
 
 ```glsl
 #version 450
 
-layout(location=0) in vec3 inCoords;
 layout(set=0, binding=0) uniform samplerCube cubemap;
+
+layout(location=0) in vec3 inCoords;
 layout(location=0) out vec4 outColour;
 
 void main() {

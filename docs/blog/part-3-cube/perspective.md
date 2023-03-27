@@ -10,26 +10,25 @@ title: Perspective Projection
 - [View Transformation](#view-transformation)
 - [Cube](#cube)
 - [Integration](#integration)
+- [Instanced Drawing](#instanced-drawing)
 
 ---
 
 ## Overview
 
-In this final chapter of this section we introduce the following:
+This chapter we will extend the previous demo to render a rotating, textured cube.
 
-* A _view transform_ representing the viewers position and orientation.
-
-* _perspective projection_ so that fragments in the scene appear correctly foreshortened.
+First we introduce the _view transform_ representing the viewers position and orientation and _perspective projection_ so that fragments in the scene appear correctly foreshortened.
 
 This will require the following new components:
 
 * The _matrix_ class.
 
-* A perspective projection matrix.
+* The perspective projection matrix.
 
-* A _uniform buffer_ to pass the matrix to the shader.
+* And a Vulkan _uniform buffer_ to pass the matrix to the shader.
 
-The demo will then be extended to render a rotating texture cube which will also require:
+To render and animate the cube we will also implement:
 
 * A builder for a _mesh_ comprising vertex data.
 
@@ -38,6 +37,8 @@ The demo will then be extended to render a rotating texture cube which will also
 * A rotation matrix.
 
 * A simple loop to render multiple frames.
+
+Finally multiple _instances_ of the cube will be rendered using various approaches.
 
 ---
 
@@ -818,7 +819,7 @@ Matrix v = Matrix.rotation(Vector.X, MathsUtil.toRadians(30));
 Matrix model = h.multiply(v);
 ```
 
-The projection-view and model matrices are then composed and loaded to the uniform buffer:
+The projection, view and model matrices are then composed and loaded to the uniform buffer:
 
 ```java
 Matrix m = matrix.multiply(model);
@@ -834,13 +835,182 @@ Hopefully we can now finally see the goal for this chapter: the proverbial rotat
 
 Huzzah!
 
-Note there are a number of problems with this crude render loop that will be addressed in the next few chapters:
+Note there are a number of problems with this crude render loop that will be addressed in the next chapter:
 
 * The GLFW event queue thread is still blocked.
 
 * The render loop will generate validation errors on every frame since synchronisation has not been configured.
 
-* Warnings will also be generated because the array of frame buffers is not automatically released on termination.
+* Warnings will also be generated on application shutdown since the array of frame buffers is not automatically released.
+
+---
+
+## Instanced Drawing
+
+### Instance Index
+
+There are several approaches that can be used to render multiple cube instances.
+
+The simplest approach uses the built-in `gl_InstanceIndex` variable in the vertex shader to index into a hard-coded array.
+
+First the draw command is modified to render four instances:
+
+```java
+Command draw = (lib, buffer) -> lib.vkCmdDraw(buffer, mesh.count(), 4, 0, 0);
+```
+
+In the vertex shader each instance is offset from the centre of screen and arranged as a two-by-two grid:
+
+```glsl
+vec2 offset[4] = vec2[](
+    vec2(-0.5, -0.5),
+    vec2(-0.5, +0.5),
+    vec2(+0.5, -0.5),
+    vec2(+0.5, +0.5)
+);
+```
+
+And the resultant vertex position is fiddled for each instance by indexing into the array:
+
+```glsl
+void main() {
+    gl_Position = matrix * vec4(inPosition, 1);
+    gl_Position += vec4(offset[gl_InstanceIndex], 0, 0);
+    outTexCoord = inTexCoord;
+}
+```
+
+Obviously this is a very quick-and-dirty hack just to test instanced rendering (especially since the offsets are applied _after_ perspective projection).
+
+It may be worth increasing the rotation period (or disabling the animation altogether) to verify the results:
+
+TODO
+
+### Instanced Vertex Attributes
+
+A second approach is to use _per-instance_ vertex attributes to specify the offsets.
+
+First the array is moved to a new method in the vertex buffer configuration class:
+
+```java
+@Bean
+static VertexBuffer offsets(LogicalDevice dev, Allocator allocator, Command.Pool graphics) {
+    Vector[] offsets = {
+        new Vector(-0.5f, -0.5f, 0),
+        new Vector(-0.5f, +0.5f, 0),
+        new Vector(+0.5f, -0.5f, 0),
+        new Vector(+0.5f, +0.5f, 0),
+    };
+    
+    ...
+}
+```
+
+Which is wrapped as a bufferable object:
+
+```java
+ByteSizedBufferable data = new ByteSizedBufferable() {
+    @Override
+    public int length() {
+        return offsets.length * Vector.LAYOUT.stride();
+    }
+
+    @Override
+    public void buffer(ByteBuffer bb) {
+        for(Vector v : offsets) {
+            v.buffer(bb);
+        }
+    }
+};
+```
+
+And a second VBO is created using the same staged approach as the cube and bound to the pipeline.
+
+In the pipeline configuration for the vertex input stage a second binding is added for the new VBO:
+
+```java
+.input()
+    .add(cube.layout())
+    .binding()
+        .index(1)
+        .rate(VkVertexInputRate.INSTANCE)
+        .stride(Vector.LAYOUT.stride())
+        .attribute()
+            .location(2)
+            .format(FormatBuilder.format(Vector.LAYOUT))
+            .build()
+        .build()
+    .build()
+```
+
+Where the `rate` for the offsets vertex attribute is configured as `INSTANCE`, i.e. the data is iterated per-instance rather than per-vertex.
+
+In the vertex shader the new vertex attribute is configured as follows:
+
+```glsl
+layout(location=2) in vec3 offset;
+```
+
+Note that the `location` of each vertex attribute must be unique within the shader and each VBO, however the source of each attribute is opaque to the shader.
+i.e. There is no notion or need for a `binding` parameter in the `layout` specification for a vertex attribute.
+
+Finally the position of each vertex is fiddled by the per-instance offset rather than using the `gl_InstanceIndex` variable index:
+
+```glsl
+gl_Position += vec4(offset, 0);
+```
+
+The results should be the same as the previous hard-coded shader version.
+
+TODO - discussion?
+
+### Instanced Data
+
+The final approach uses a separate model matrix for each instance, which is the general approach that will be used later when we address scene graphs.
+
+In the vertex shader the projection and view matrices are separated and an _array_ of model matrices is introduced:
+
+```glsl
+layout(set=0, binding=1) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+    mat4[] model;
+};
+
+void main() {
+    gl_Position = projection * view * model[gl_InstanceIndex] * vec4(inPosition, 1);
+    ...
+}
+```
+
+The uniform buffer is resized to accommodate six matrices (projection, view and four instances) which are written on each frame:
+
+```java
+ByteBuffer bb = uniform.buffer();
+projection.buffer(bb);
+view.buffer(bb);
+```
+
+Followed by a model matrix for each instance comprising the rotation and an offset translation:
+
+```java
+for(int n = 0; n < instances; ++n) {
+    Matrix trans = Matrix.translation(offset[n]);
+    Matrix model = trans.multiply(rot.matrix());
+    model.buffer(bb);
+}
+bb.rewind();
+```
+
+Notes:
+
+* The rotation of each cube instance is applied first and _then_ the translation offset.
+
+* Alternatively the array could be the actual offset vectors.
+
+* The second VBO and per-instance vertex attribute are removed from the pipeline.
+
+TODO - auto grid, scaled, but mat4[] has to be sized, instances = 1 same as previous
 
 ---
 
@@ -856,4 +1026,7 @@ In this chapter we rendered a 3D rotating textured cube and implementing the fol
 
 * Builders for a vertex mesh and cubes
 
-* A rotation matrix
+* An animated rotation matrix
+
+* Instanced rendering
+
