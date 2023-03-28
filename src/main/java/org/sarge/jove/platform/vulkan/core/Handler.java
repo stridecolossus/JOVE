@@ -145,6 +145,8 @@ public class Handler extends TransientNativeObject {
 			consumer.accept(message);
 			return false;
 		}
+
+		// TODO - could pUserData somehow refer to the consumer? => no need for multiple instances of this callback
 	}
 
 	/**
