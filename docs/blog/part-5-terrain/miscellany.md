@@ -102,7 +102,7 @@ A _push constant range_ specifies a portion of the data and the shader stages wh
 ```java
 public record Range(int offset, int size, Set<VkShaderStage> stages) {
     void populate(VkPushConstantRange range) {
-        range.stageFlags = BitMask.reduce(stages);
+        range.stageFlags = new BitMask<>(stages);
         range.size = size;
         range.offset = offset;
     }
@@ -728,7 +728,7 @@ public static Pool create(DeviceContext dev, VkQueryType type, int slots, VkQuer
     var info = new VkQueryPoolCreateInfo();
     info.queryType = notNull(type);
     info.queryCount = oneOrMore(slots);
-    info.pipelineStatistics = BitMask.reduce(stats);
+    info.pipelineStatistics = new BitMask<>(stats);
 
     // Instantiate query pool
     PointerByReference ref = dev.factory().pointer();
@@ -749,7 +749,7 @@ public DefaultQuery query(int slot) {
     return new DefaultQuery() {
         @Override
         public Command begin(VkQueryControlFlag... flags) {
-            int mask = BitMask.reduce(flags);
+            int mask = new BitMask<>(flags);
             return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
         }
 

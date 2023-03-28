@@ -744,7 +744,7 @@ But by default JNA maps a Java boolean to zero for false but __minus one__ for t
 There are a lot of boolean values used across Vulkan requiring a global solution to over-ride the default JNA mapping.  Again a custom JNA type converter comes to the rescue:
 
 ```java
-public final class VulkanBooleanConverter implements TypeConverter {
+public final class NativeBooleanConverter implements TypeConverter {
     private static final int TRUE = 1;
     private static final int FALSE = 0;
 
@@ -755,7 +755,7 @@ public final class VulkanBooleanConverter implements TypeConverter {
 }
 ```
 
-A Java boolean is marshalled from a native integer that is either one or zero:
+A Java boolean is marshalled from a native integer where a non-zero value is true:
 
 ```java
 @Override
@@ -769,7 +769,7 @@ public Boolean fromNative(Object nativeValue, FromNativeContext context) {
 }
 ```
 
-And similarly when marshalling a boolean to the native layer:
+But explicitly marshals a boolean as either one or zero:
 
 ```java
 @Override

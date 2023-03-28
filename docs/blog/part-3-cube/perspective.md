@@ -331,7 +331,7 @@ public Matrix multiply(Matrix m) {
     if(m.order() != order) throw new IllegalArgumentException();
 
     // Multiply matrices
-    Matrix result = new Matrix(order);
+    var result = new float[order][order];
     for(int r = 0; r < order; ++r) {
         for(int c = 0; c < order; ++c) {
             float total = 0;
@@ -342,7 +342,7 @@ public Matrix multiply(Matrix m) {
         }
     }
 
-    return result;
+    return new Matrix(result);
 }
 ```
 
@@ -458,9 +458,14 @@ public class CameraConfiguration {
     }
 
     @Bean
+    static Matrix view() {
+        return Matrix.IDENTITY;
+    }
+
+    @Bean
     public Matrix matrix() {
         ...
-        return projection.multiply(rot).multiply(trans);
+        return projection.multiply(view);
     }
 }
 ```
@@ -851,7 +856,7 @@ Note there are a number of problems with this crude render loop that will be add
 
 There are several approaches that can be used to render multiple cube instances.
 
-The simplest approach uses the built-in `gl_InstanceIndex` variable in the vertex shader to index into a hard-coded array.
+The simplest uses the built-in `gl_InstanceIndex` variable in the vertex shader to index into a hard-coded array.
 
 First the draw command is modified to render four instances:
 
@@ -859,7 +864,7 @@ First the draw command is modified to render four instances:
 Command draw = (lib, buffer) -> lib.vkCmdDraw(buffer, mesh.count(), 4, 0, 0);
 ```
 
-In the vertex shader each instance is offset from the centre of screen and arranged as a two-by-two grid:
+In the vertex shader each cube instance is arranged as a two-by-two grid:
 
 ```glsl
 vec2 offset[4] = vec2[](
@@ -884,7 +889,7 @@ Obviously this is a very quick-and-dirty hack just to test instanced rendering (
 
 It may be worth increasing the rotation period (or disabling the animation altogether) to verify the results:
 
-TODO
+![Cube Grid](cube.grid.png)
 
 ### Instanced Vertex Attributes
 
@@ -962,7 +967,7 @@ gl_Position += vec4(offset, 0);
 
 The results should be the same as the previous hard-coded shader version.
 
-TODO - discussion?
+Note that there is no `VkFormat` for a matrix type (the largest format is four 32-bit floating-point values) so we cannot represent matrices as vertex attributes directly, at least not without the complexity of compression and the possible loss of precision.
 
 ### Instanced Data
 
@@ -974,7 +979,7 @@ In the vertex shader the projection and view matrices are separated and an _arra
 layout(set=0, binding=1) uniform Matrices {
     mat4 projection;
     mat4 view;
-    mat4[] model;
+    mat4[4] model;
 };
 
 void main() {
@@ -991,7 +996,7 @@ projection.buffer(bb);
 view.buffer(bb);
 ```
 
-Followed by a model matrix for each instance comprising the rotation and an offset translation:
+With a model matrix for each instance comprising the rotation and an offset translation:
 
 ```java
 for(int n = 0; n < instances; ++n) {
@@ -1004,13 +1009,38 @@ bb.rewind();
 
 Notes:
 
+* The (maximum) size of the model matrix array __must__ be specified in the shader.
+
 * The rotation of each cube instance is applied first and _then_ the translation offset.
 
-* Alternatively the array could be the actual offset vectors.
+* The second VBO and per-instance vertex attribute were removed.
 
-* The second VBO and per-instance vertex attribute are removed from the pipeline.
+* The model matrices use the same uniform buffer as the projection and view but could have been stored in a different uniform or a storage buffer (which will be used in a later chapter).
 
-TODO - auto grid, scaled, but mat4[] has to be sized, instances = 1 same as previous
+* GLSL version 460 supports the `gl_BaseInstance` which is the index of the first instance passed to the draw command.
+
+An alternative approach could be to pass the offset vectors in the uniform buffer and construct a translation matrix in the shader:
+
+```glsl
+layout(set=0, binding=1) uniform Matrices {
+    mat4 projection;
+    mat4 view;
+    mat4 model;
+    vec3[4] offsets;
+};
+
+void main() {
+    mat4 trans = mat4(
+        vec4(1, 0, 0, 0),
+        vec4(0, 1, 0, 0),
+        vec4(0, 0, 1, 0),
+        vec4(offsets[gl_InstanceIndex], 1)
+    );
+
+    gl_Position = projection * view * trans * model * vec4(inPosition, 1);
+    ...
+}
+```
 
 ---
 

@@ -245,7 +245,7 @@ This algorithm is implemented in the following local helper that maps the memory
 ```java
 private MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
     var matcher = new FallbackMatcher();
-    return new Mask(reqs.memoryTypeBits)
+    return new BitField(reqs.memoryTypeBits)
         .stream()
         .mapToObj(n -> types[n])
         .filter(matcher)

@@ -20,8 +20,9 @@ class NativeBooleanConverterTest {
 	@Test
 	void fromNative() {
 		assertEquals(true, converter.fromNative(1, null));
+		assertEquals(true, converter.fromNative(2, null));
+		assertEquals(true, converter.fromNative(-1, null));
 		assertEquals(false, converter.fromNative(0, null));
-		assertEquals(false, converter.fromNative(-1, null));
 		assertEquals(false, converter.fromNative(null, null));
 	}
 

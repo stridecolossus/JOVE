@@ -22,7 +22,7 @@ public class NativeBooleanConverter implements TypeConverter {
 	@Override
 	public Boolean fromNative(Object nativeValue, FromNativeContext context) {
 		if(nativeValue instanceof Integer n) {
-			return n == TRUE;
+			return n != FALSE;
 		}
 		else {
 			return false;

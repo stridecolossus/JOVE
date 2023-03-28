@@ -394,11 +394,6 @@ public interface Image extends NativeObject {
      * @return Descriptor for this image
      */
     Descriptor descriptor();
-
-    /**
-     * @return Device context for this image
-     */
-    DeviceContext device();
 }
 ```
 

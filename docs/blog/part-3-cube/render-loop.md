@@ -1302,10 +1302,10 @@ public static Player player(Animator animator) {
 }
 ```
 
-And finally the code to update the uniform buffer is refactored accordingly:
+And finally the code to update the uniform buffer is refactored accordingly (for the non-instanced version):
 
 ```java
-public static FrameListener update(ResourceBuffer uniform, Matrix projection, Matrix view, MutableRotation rot) {
+public static Frame.Listener update(ResourceBuffer uniform, Matrix projection, Matrix view, MutableRotation rot) {
     ByteBuffer bb = uniform.buffer();
     return frame -> {
         Matrix model = rot.rotation().matrix();

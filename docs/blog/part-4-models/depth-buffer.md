@@ -656,7 +656,7 @@ Image image = new Image.Builder()
 And a view is created with a depth clear value:
 
 ```java
-return View.of(image).clear(DepthClearValue.DEFAULT);
+return new View.Builder(image).clear(DepthClearValue.DEFAULT).build();
 ```
 
 The depth buffer attachment is then added to each frame buffer along with the colour attachments:

@@ -322,7 +322,12 @@ public final class Matrix implements Transform, Bufferable {
 		 * @return New matrix
 		 */
 		public Matrix build() {
-			return new Matrix(matrix);
+			try {
+				return new Matrix(matrix);
+			}
+			finally {
+				matrix = null;
+			}
 		}
 	}
 }
