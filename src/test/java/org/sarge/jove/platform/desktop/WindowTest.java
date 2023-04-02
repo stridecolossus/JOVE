@@ -54,35 +54,11 @@ class WindowTest {
 		assertThrows(RuntimeException.class, () -> builder.build(desktop));
 	}
 
-	@Nested
-	class WindowDimensionsTests {
-		@DisplayName("The dimensions of a window can be retrieved")
-    	@Test
-    	void size() {
-    		assertEquals(new Dimensions(1, 1), window.size());
-    		verify(lib).glfwGetWindowSize(window, factory.integer(), factory.integer());
-    	}
-
-		@DisplayName("A window can be resized")
-    	@Test
-    	void resize() {
-    		window.size(new Dimensions(2, 3));
-    		verify(lib).glfwSetWindowSize(window, 2, 3);
-    	}
-
-		@DisplayName("A window can optionally be closed by the user")
-    	@Test
-    	void isCloseable() {
-    		assertEquals(false, window.isCloseable());
-    		verify(lib).glfwWindowShouldClose(window);
-    	}
-
-		@DisplayName("A window can configured to be closeable by the user")
-    	@Test
-    	void setCloseable() {
-    		window.setCloseable(true);
-    		verify(lib).glfwSetWindowShouldClose(window, true);
-    	}
+	@DisplayName("A window can be resized")
+	@Test
+	void resize() {
+		window.size(new Dimensions(2, 3));
+		verify(lib).glfwSetWindowSize(window, 2, 3);
 	}
 
 	@DisplayName("The window title can be reset")
@@ -137,6 +113,7 @@ class WindowTest {
     			case ENTER -> verify(lib).glfwSetCursorEnterCallback(eq(window), captor.capture());
     			case FOCUS -> verify(lib).glfwSetWindowFocusCallback(eq(window), captor.capture());
     			case ICONIFIED -> verify(lib).glfwSetWindowIconifyCallback(eq(window), captor.capture());
+    			case CLOSED -> verify(lib).glfwSetWindowCloseCallback(eq(window), captor.capture());
     		}
 
     		// Check listener
@@ -204,7 +181,7 @@ class WindowTest {
 			final Pointer ptr = new Pointer(1);
 			when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(ptr);
 
-			// Construct window
+			// Construct a window without decorations
 			window = builder
 					.title("title")
 					.size(new Dimensions(640, 480))
@@ -212,10 +189,9 @@ class WindowTest {
 					.build(desktop);
 
 			// Check window
-			assertNotNull(window);
 			assertEquals(new Handle(ptr), window.handle());
 			assertEquals(false, window.isDestroyed());
-			verify(lib).glfwWindowHint(0x00020005, 1);
+			verify(lib).glfwWindowHint(0x00020005, 0);
 		}
 	}
 }

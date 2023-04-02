@@ -95,9 +95,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		return list.get(0);
 	}
 
-	/**
-	 * Waits for this device to become idle.
-	 */
+	@Override
 	public void waitIdle() {
 		check(library().vkDeviceWaitIdle(this));
 	}

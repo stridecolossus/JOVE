@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
 
@@ -11,7 +11,7 @@ import com.sun.jna.ptr.PointerByReference;
  * A <i>semaphore</i> is used to synchronise operations within or across command queues.
  * @author Sarge
  */
-public final class Semaphore extends VulkanObject {
+public interface Semaphore extends NativeObject, TransientObject {
 	/**
 	 * Creates a new semaphore.
 	 * @param dev Logical device
@@ -22,21 +22,19 @@ public final class Semaphore extends VulkanObject {
 		final VulkanLibrary lib = dev.library();
 		final PointerByReference ref = dev.factory().pointer();
 		VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, ref));
-		return new Semaphore(new Handle(ref), dev);
-	}
 
-	Semaphore(Handle handle, DeviceContext dev) {
-		super(handle, dev);
-	}
+		class DefaultSemaphore extends VulkanObject implements Semaphore {
+			private DefaultSemaphore() {
+				super(new Handle(ref), dev);
+			}
 
-	@Override
-	protected Destructor<Semaphore> destructor(VulkanLibrary lib) {
-		return lib::vkDestroySemaphore;
-	}
+			@Override
+			protected Destructor<DefaultSemaphore> destructor(VulkanLibrary lib) {
+				return lib::vkDestroySemaphore;
+			}
+		}
 
-	@Override
-	public boolean equals(Object obj) {
-		return obj == this;
+		return new DefaultSemaphore();
 	}
 
 	/**

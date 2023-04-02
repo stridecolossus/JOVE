@@ -37,12 +37,6 @@ public class VulkanBufferTest {
 	}
 
 	@Test
-	void copy() {
-		final VulkanBuffer copy = new VulkanBuffer(buffer);
-		assertEquals(buffer, copy);
-	}
-
-	@Test
 	void checkOffset() {
 		buffer.checkOffset(0);
 		buffer.checkOffset(1);

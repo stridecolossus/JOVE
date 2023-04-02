@@ -21,7 +21,7 @@ Since we are now dealing with a model that has a specific orientation, the curre
 
 First we introduce enhancements to the existing geometry classes to more explicitly support normals and the cardinal axes.
 
-Finally various improvements are made to simplify configuration of the presentation process.
+Finally we will address swapchain recreation and also implement various improvements to simplify configuration of the presentation process.
 
 ---
 
@@ -687,6 +687,284 @@ With the depth buffer enabled we should finally be able to see the chalet model:
 ![Chalet Model](chalet.png)
 
 Ta-da!
+
+---
+
+## Swapchain Recreation
+
+### Overview
+
+So far we have avoided the case where the swapchain has been invalidated (when the window is resized or minimised), signalled by the `SwapchainInvalidated` exception in the acquire and presentation steps of the rendering process.
+
+This is because management of the swapchain (and therefore also the frame buffers) is a responsibility of the application, there is no Vulkan method to simply recreate the swapchain for example.
+A new swapchain _instance_ and set of frame buffers has to be created whenever the rendering surface has become invalid.
+
+The obvious implication is that we cannot simply pass around a singleton reference (as we currently do in the Spring based demo application) but instead need a level of indirection.
+Therefore we will introduce a new management component that is responsible for creating a swapchain and frame buffer group on demand.
+
+Note that it is possible for the swapchain image format to change during the applications lifetime (e.g. when moving the window to a higher dynamic range monitor), which would also require recreation of the render pass.  This requirement will remain out-of-scope for the forseeable future.
+
+### Swapchain Adapter
+
+The following new component replaces the previous frame buffer `Group` and composes a builder for the swapchain:
+
+```java
+public class SwapchainAdapter implements TransientObject {
+    private final RenderPass pass;
+    private final Swapchain.Builder builder;
+    private final List<View> additional;
+    private FrameBuffer[] buffers;
+    private Swapchain swapchain;
+
+    public SwapchainAdapter(...) {
+        ...
+        createSwapchain();
+        createBuffers();
+    }
+}
+```
+
+The constructor instantiates a new swapchain on demand:
+
+```java
+private void createSwapchain() {
+    swapchain = builder.build(pass.device());
+}
+```
+
+And similarly for the frame buffers:
+
+```java
+private void createBuffers() {
+    var extents = new Rectangle(swapchain.extents());
+    buffers = swapchain
+        .attachments()
+        .stream()
+        .map(this::attachments)
+        .map(attachments -> FrameBuffer.create(pass, extents, attachments))
+        .toArray(FrameBuffer[]::new);
+}
+```
+
+Where the `attachments` is the aggregated set of image views for each swapchain buffer:
+
+```java
+private List<View> attachments(View col) {
+    List<View> attachments = new ArrayList<>();
+    attachments.add(col);
+    attachments.addAll(additional);
+    return attachments;
+}
+```
+
+The following method can then be invoked to recreate the swapchain and frame buffers as required:
+
+```java
+public void recreate() {
+    // Wait for all rendering work to complete
+    swapchain.device().waitIdle();
+
+    // Release swapchain and buffers
+    destroy();
+
+    // Recreate swapchain
+    createSwapchain();
+    createBuffers();
+}
+```
+
+Note that the `recreate` method waits for any existing work to complete.
+
+Finally the transient data is released on shutdown or whenever the swapchain is recreated:
+
+```java
+public void destroy() {
+    swapchain.destroy();
+    for(FrameBuffer fb : buffers) {
+        fb.destroy();
+    }
+}
+```
+
+In the `VulkanRenderTask` the only modification required is a handler that creates the swapchain and frame buffers when the surface has been invalidated:
+
+```java
+public void render() {
+    try {
+        frame();
+    }
+    catch(SwapchainInvalidated e) {
+        adapter.recreate();
+    }
+}
+```
+
+In the demo application the existing swapchain and frame buffer group are replaced by a new bean for a swapchain adapter.
+However note that the swapchain should never actually need to be recreated in the existing demo since the window dimensions are fixed.
+
+### Minimised Windows
+
+The application is still required to handle the case where the window is minimised.  In this situation the render loop essentially needs to be paused until the window is restored.
+
+First a new GLFW callback is defined for a minimised window (or _iconified_ in GLFW terms):
+
+```java
+interface DesktopLibraryWindow {
+    @FunctionalInterface
+    interface WindowStateListener extends Callback {
+        /**
+         * Notifies that a window state change.
+         * @param window        Window
+         * @param state         State
+         */
+        void state(Pointer window, int state);
+    }
+    
+    /**
+     * Sets the iconify listener of a window.
+     * @param window        Window
+     * @param listener      Iconify listener
+     */
+    void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
+}
+```
+
+We note that there are several other GLFW window states that follow the same pattern, so we might as well implement a common solution:
+
+```java
+void glfwSetWindowCloseCallback(Window window, WindowStateListener listener);
+void glfwSetWindowFocusCallback(Window window, WindowStateListener listener);
+void glfwSetCursorEnterCallback(Window window, WindowStateListener listener);
+```
+
+Note that although GLFW has different callback definitions for each window state, the method signature is the same in all cases and is defined by the `WindowStateListener` interface.
+
+Next a new abstraction is introduced for the various window states:
+
+```java
+public interface WindowListener {
+    public enum Type {
+        ENTER,
+        FOCUS,
+        ICONIFIED,
+        CLOSE
+    }
+
+    /**
+     * Notifies a window state change.
+     * @param type      State change type
+     * @param state     State
+     */
+    void state(Type type, boolean state);
+}
+```
+
+Which can then be used in the following method to register a listener on the window for all supported events:
+
+```java
+@MainThread
+public void listener(WindowListener.Type type, WindowListener listener) {
+    DesktopLibrary lib = desktop.library();
+    BiConsumer<Window, WindowStateListener> method = switch(type) {
+        case ENTER -> lib::glfwSetCursorEnterCallback;
+        case FOCUS -> lib::glfwSetWindowFocusCallback;
+        case ICONIFIED -> lib::glfwSetWindowIconifyCallback;
+        case CLOSED -> lib::glfwSetWindowCloseCallback;
+    };
+    ...
+}
+```
+
+Which delegates to the relevant GLFW method:
+
+```java
+if(listener == null) {
+    method.accept(this, null);
+    register(type, null);
+}
+else {
+    WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.of(state));
+    method.accept(this, adapter);
+    register(type, adapter);
+}
+```
+
+The local `register` method holds a weak-reference to an attached listener:
+
+```java
+class Window {
+    private final Map<Object, Callback> registry = new WeakHashMap<>();
+
+    protected void register(Object key, Callback callback) {
+        if(callback == null) {
+            registry.remove(key);
+        }
+        else {
+            registry.put(key, callback);
+        }
+    }
+}
+```
+
+This prevents the listener being garbage collected and therefore de-registered, since it is out-of-scope at the end of the `listener` method.
+This approach removes the responsibility for managing the listeners from the application, which we had to do explicitly for the key listener previously.
+
+Next the render loop is refactored to promote the `executor` and render `task` to class members and to add a new `paused` flag:
+
+```java
+public class RenderLoop {
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private Runnable task;
+    private boolean paused;
+}
+```
+
+The `pause` method essentially cancels the scheduler:
+
+```java
+public void pause() {
+    if(!isRunning()) throw new IllegalStateException();
+    if(paused) throw new IllegalStateException();
+    future.cancel(true);
+    paused = true;
+}
+```
+
+Which is restarted in the inverse method:
+
+```java
+public void restart() {
+    if(!paused) throw new IllegalStateException();
+    schedule();
+    paused = false;
+}
+```
+
+The `DesktopConfiguration` is modified to register the minimise event which delegates to the modified render loop:
+
+```java
+@Autowired
+void pause(RenderLoop loop, Window window) {
+    WindowListener minimised = (__, state) -> {
+        if(state) {
+            loop.pause();
+        }
+        else {
+            loop.restart();
+        }
+    };
+    window.listener(WindowListener.Type.ICONIFIED, minimised);
+}
+```
+
+And a close handler is also registered so we can finally close the window via the widget or menu:
+
+```java
+@Autowired
+void close(Window window) {
+    window.listener(WindowListener.Type.CLOSED, (type, state) -> System.exit(0));
+}
+```
 
 ---
 

@@ -47,6 +47,15 @@ public class Surface extends TransientNativeObject {
 		return struct;
 	}
 
+	/**
+	 * Helper - Converts the given Vulkan extents to a dimensions.
+	 * @param extents Extents
+	 * @return Dimensions
+	 */
+	public static Dimensions dimensions(VkExtent2D extents) {
+		return new Dimensions(extents.width, extents.height);
+	}
+
 	private final PhysicalDevice dev;
 
 	/**

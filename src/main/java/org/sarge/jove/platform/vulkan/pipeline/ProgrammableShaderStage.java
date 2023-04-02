@@ -122,7 +122,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     		info.pMapEntries = StructureCollector.pointer(entries, new VkSpecializationMapEntry(), populate);
 
     		// Build constants data buffer
-    		final var converter = new NativeBooleanConverter();
+    		final var converter = new NativeBooleanConverter(); // TODO - overkill?
     		final ByteBuffer buffer = BufferHelper.allocate(populate.len);
     		for(var entry : entries) {
     			switch(entry.getValue()) {

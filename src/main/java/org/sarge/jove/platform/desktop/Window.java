@@ -9,6 +9,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
+import org.sarge.jove.util.NativeBooleanConverter;
 import org.sarge.lib.util.*;
 
 import com.sun.jna.*;
@@ -46,12 +47,7 @@ public final class Window extends TransientNativeObject {
 		/**
 		 * Disables creation of the OpenGL context for this window.
 		 */
-		DISABLE_OPENGL(0x00022001) {
-			@Override
-			protected int argument() {
-				return 0;
-			}
-		};
+		DISABLE_OPENGL(0x00022001);
 
 		private final int hint;
 
@@ -59,16 +55,12 @@ public final class Window extends TransientNativeObject {
 			this.hint = hint;
 		}
 
-		protected int argument() {
-			return 1;
-		}
-
 		/**
 		 * Applies this hint.
 		 * @param lib Desktop library
 		 */
 		void apply(DesktopLibrary lib) {
-			lib.glfwWindowHint(hint, argument());
+			lib.glfwWindowHint(hint, NativeBooleanConverter.FALSE);
 		}
 	}
 
@@ -129,21 +121,6 @@ public final class Window extends TransientNativeObject {
 	}
 
 	/**
-	 * @return Whether this window can be closed by the user
-	 */
-	public boolean isCloseable() {
-		return desktop.library().glfwWindowShouldClose(this);
-	}
-
-	/**
-	 * Sets whether this window can be closed by the user.
-	 * @param closeable Whether window can be closed
-	 */
-	public void setCloseable(boolean closeable) {
-		desktop.library().glfwSetWindowShouldClose(this, closeable);
-	}
-
-	/**
 	 * Resets the window title.
 	 * @param title New title
 	 */
@@ -185,6 +162,7 @@ public final class Window extends TransientNativeObject {
 			case ENTER -> lib::glfwSetCursorEnterCallback;
 			case FOCUS -> lib::glfwSetWindowFocusCallback;
 			case ICONIFIED -> lib::glfwSetWindowIconifyCallback;
+			case CLOSED -> lib::glfwSetWindowCloseCallback;
 		};
 
 		// Register listener
@@ -193,7 +171,7 @@ public final class Window extends TransientNativeObject {
 			register(type, null);
 		}
 		else {
-			final WindowStateListener adapter = (ptr, state) -> listener.state(type, state == 1);
+			final WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.of(state));
 			method.accept(this, adapter);
 			register(type, adapter);
 		}

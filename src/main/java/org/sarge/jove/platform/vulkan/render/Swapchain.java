@@ -74,6 +74,7 @@ public class Swapchain extends VulkanObject {
 	public Dimensions extents() {
 		return extents;
 	}
+	// TODO - mutable?
 
 	/**
 	 * @return Colour attachments
@@ -242,9 +243,9 @@ public class Swapchain extends VulkanObject {
 	public static class Builder {
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private final Surface surface;
-		private final VkSurfaceCapabilitiesKHR caps;
 		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
+		private VkSurfaceCapabilitiesKHR caps;
 		private ColourClearValue clear;
 
 		/**
@@ -253,15 +254,20 @@ public class Swapchain extends VulkanObject {
 		 */
 		public Builder(Surface surface) {
 			this.surface = notNull(surface);
-			this.caps = surface.capabilities();
+			update();
 			init();
+		}
+
+		// TODO - IF we recreate the swapchain then the surface capabilities need to be refreshed
+		public void update() {
+			caps = surface.capabilities();
 		}
 
 		/**
 		 * Initialises the swapchain descriptor.
 		 */
 		private void init() {
-			set(toDimensions(caps.currentExtent));
+			set(Surface.dimensions(caps.currentExtent));
 			count(caps.minImageCount);
 			transform(caps.currentTransform);
 			format(Surface.defaultSurfaceFormat());
@@ -271,10 +277,6 @@ public class Swapchain extends VulkanObject {
 			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
 			presentation(Surface.DEFAULT_PRESENTATION_MODE);
 			clipped(true);
-		}
-
-		private static Dimensions toDimensions(VkExtent2D extents) {
-			return new Dimensions(extents.width, extents.height);
 		}
 
 		private static <E extends IntEnum> void validate(BitMask<E> mask, E e) {
@@ -327,11 +329,11 @@ public class Swapchain extends VulkanObject {
 		 */
 		public Builder extent(Dimensions extents) {
 			// Check minimum extent
-			final Dimensions min = toDimensions(caps.minImageExtent);
+			final Dimensions min = Surface.dimensions(caps.minImageExtent);
 			if(min.compareTo(extents) < 0) throw new IllegalArgumentException("Extent is smaller than the supported minimum");
 
 			// Check maximum extent
-			final Dimensions max = toDimensions(caps.maxImageExtent);
+			final Dimensions max = Surface.dimensions(caps.maxImageExtent);
 			if(extents.compareTo(max) > 0) throw new IllegalArgumentException("Extent is larger than the supported maximum");
 
 			// Populate extents

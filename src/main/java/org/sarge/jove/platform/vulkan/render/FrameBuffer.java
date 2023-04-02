@@ -153,60 +153,6 @@ public class FrameBuffer extends VulkanObject {
 	}
 
 	/**
-	 * A <i>frame buffer group</i> aggregates a set of frame buffers used during rendering.
-	 */
-	public static class Group implements TransientObject {
-		private final List<FrameBuffer> buffers;
-
-    	/**
-    	 * Constructor.
-    	 * @param pass				Render pass
-    	 * @param swapchain			Swapchain
-    	 * @param additional		Additional attachments
-    	 */
-    	public Group(RenderPass pass, Swapchain swapchain, List<View> additional) {
-    		final var extents = new Rectangle(swapchain.extents());  // TODO - configurable
-    		this.buffers = swapchain
-    				.attachments()
-    				.stream()
-    				.map(col -> join(col, additional))
-    				.map(list -> create(pass, extents, list))
-    				.toList();
-    	}
-
-    	/**
-    	 * Convenience constructor for a group of frame buffers with an additional depth-stencil attachment.
-    	 * @param pass				Render pass
-    	 * @param swapchain			Swapchain
-    	 * @param depth				Depth-stencil attachment
-    	 */
-    	public Group(RenderPass pass, Swapchain swapchain, View depth) {
-    		this(pass, swapchain, List.of(depth));
-    	}
-
-    	private static List<View> join(View col, List<View> additional) {
-    		final List<View> list = new ArrayList<>();
-    		list.add(col);
-    		list.addAll(additional);
-    		return list;
-    	}
-
-    	/**
-    	 * @return Frame buffers in this group
-    	 */
-    	public List<FrameBuffer> buffers() {
-			return buffers;
-		}
-
-    	@Override
-    	public void destroy() {
-    		for(var b : buffers) {
-    			b.destroy();
-    		}
-    	}
-	}
-
-	/**
 	 * Frame buffer API.
 	 */
 	interface Library {

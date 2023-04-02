@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
@@ -89,8 +89,8 @@ public class WorkTest {
 
 		@BeforeEach
 		void before() {
-			wait = new Semaphore(new Handle(1), dev);
-			signal = new Semaphore(new Handle(2), dev);
+			wait = mock(Semaphore.class);
+			signal = mock(Semaphore.class);
 			builder = new Work.Builder();
 		}
 
