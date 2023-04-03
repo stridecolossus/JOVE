@@ -185,7 +185,7 @@ class WindowTest {
 			window = builder
 					.title("title")
 					.size(new Dimensions(640, 480))
-					.hint(Window.Hint.DECORATED)
+					.hint(Window.Hint.DECORATED, false)
 					.build(desktop);
 
 			// Check window

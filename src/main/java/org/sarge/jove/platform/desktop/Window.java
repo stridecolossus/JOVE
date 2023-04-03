@@ -23,44 +23,47 @@ public final class Window extends TransientNativeObject {
 	/**
 	 * Window creation hints.
 	 */
+	@SuppressWarnings("unused") // TODO - use enabled to toggle?
 	public enum Hint {
 		/**
 		 * Window can be resized.
 		 */
-		RESIZABLE(0x00020003),
+		RESIZABLE(0x00020003, true),
 
 		/**
 		 * Window has standard decorations (border, close icon, etc).
 		 */
-		DECORATED(0x00020005),
+		DECORATED(0x00020005, true),
 
 		/**
 		 * Full screen windows are iconified on focus loss.
 		 */
-		AUTO_ICONIFY(0x00020006),
+		AUTO_ICONIFY(0x00020006, true),
 
 		/**
 		 * Window is initially maximised (ignores dimensions).
 		 */
-		MAXIMISED(0x00020008),
+		MAXIMISED(0x00020008, false),
 
 		/**
-		 * Disables creation of the OpenGL context for this window.
+		 * Client API for this window, e.g. OpenGL context.
 		 */
-		DISABLE_OPENGL(0x00022001);
+		CLIENT_API(0x00022001, false); // TODO - 0x00030001 = OPENGL_API
 
 		private final int hint;
+		private final boolean enabled;
 
-		private Hint(int hint) {
+		private Hint(int hint, boolean enabled) {
 			this.hint = hint;
+			this.enabled = enabled;
 		}
 
 		/**
 		 * Applies this hint.
 		 * @param lib Desktop library
 		 */
-		void apply(DesktopLibrary lib) {
-			lib.glfwWindowHint(hint, NativeBooleanConverter.FALSE);
+		void apply(DesktopLibrary lib, int arg) {
+			lib.glfwWindowHint(hint, arg);
 		}
 	}
 
@@ -171,7 +174,7 @@ public final class Window extends TransientNativeObject {
 			register(type, null);
 		}
 		else {
-			final WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.of(state));
+			final WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.toBoolean(state));
 			method.accept(this, adapter);
 			register(type, adapter);
 		}
@@ -241,7 +244,7 @@ public final class Window extends TransientNativeObject {
 	public static class Builder {
 		private String title;
 		private Dimensions size;
-		private final Set<Hint> hints = new HashSet<>();
+		private final Map<Hint, Integer> hints = new HashMap<>();
 		private Monitor monitor;
 
 		/**
@@ -266,9 +269,15 @@ public final class Window extends TransientNativeObject {
 		 * Adds a window hint.
 		 * @param hint Window hint
 		 */
-		public Builder hint(Hint hint) {
-			hints.add(notNull(hint));
+		public Builder hint(Hint hint, int argument) {
+			Check.notNull(hint);
+			hints.put(hint, argument);
 			return this;
+		}
+		// TODO - error if arg=1 and enabled by default? or add all enabled and REMOVE? i.e. toggles
+
+		public Builder hint(Hint hint, boolean enable) {
+			return hint(hint, NativeBooleanConverter.toInteger(enable));
 		}
 
 		/**
@@ -291,8 +300,10 @@ public final class Window extends TransientNativeObject {
 			// Apply window hints
 			final DesktopLibrary lib = desktop.library();
 			lib.glfwDefaultWindowHints();
-			for(Hint hint : hints) {
-				hint.apply(lib);
+			for(var entry : hints.entrySet()) {
+				final Hint hint = entry.getKey();
+				final int arg = entry.getValue();
+				hint.apply(lib, arg);
 			}
 
 			// Create window

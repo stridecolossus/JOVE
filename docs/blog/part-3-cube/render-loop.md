@@ -707,7 +707,9 @@ public class VulkanRenderTask {
 
 And the existing blocking code is replaced with a `waitReady` call on the fence to wait until the frame has been rendered.
 
-A further blocking call is introduced at the _start_ of the render process to ensure that the _previous_ frame has been completed, hence the fence is initialised to the `SIGNALED` state.
+Note that the swapchain could acquire frame buffers out of order, or even return the same buffer for consecutive frames.
+Therefore a further blocking call is introduced at the _start_ of the render process to ensure that the _previous_ frame for a given buffer has been completed.
+For this reason the fence is initialised to the `SIGNALED` state.
 
 The updated `render` method now looks like this:
 

@@ -9,6 +9,7 @@ title: Depth Buffers
 - [Overview](#overview)
 - [Camera](#camera)
 - [Depth Buffer](#depth-buffer)
+- [Swapchain Recreation](#swapchain-recreation)
 - [Improvements](#improvements)
 
 ---
@@ -998,7 +999,7 @@ The following factory method creates a format predicate for optimal or linear ti
 
 ```java
 public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> features) {
-    BitMask<VkFormatFeature> mask = BitMask.reduce(required);
+    BitMask<VkFormatFeature> mask = new BitMask<>(required);
     return props -> {
         BitMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
         return supported.contains(mask);
