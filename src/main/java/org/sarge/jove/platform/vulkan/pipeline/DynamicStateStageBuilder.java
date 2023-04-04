@@ -6,8 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.util.BitMask;
-import org.sarge.jove.util.NativeHelper.PointerToIntArray;
+import org.sarge.jove.util.*;
 
 /**
  * Builder for the dynamic state pipeline stage.

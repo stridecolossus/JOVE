@@ -65,6 +65,7 @@ public class SwapchainAdapter implements TransientObject {
 		destroy();
 
 		// Recreate swapchain
+		builder.update(); // TODO - nasty
 		createSwapchain();
 		createBuffers();
 	}

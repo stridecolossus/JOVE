@@ -6,7 +6,7 @@ import static org.sarge.jove.platform.audio.AudioParameter.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
+import org.sarge.jove.util.PointerToFloatArray;
 
 class AudioListenerTest {
 	private AudioListener listener;

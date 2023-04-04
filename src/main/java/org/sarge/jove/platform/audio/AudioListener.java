@@ -4,7 +4,7 @@ import static org.sarge.jove.platform.audio.AudioParameter.*;
 import static org.sarge.lib.util.Check.notNull;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
+import org.sarge.jove.util.PointerToFloatArray;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;

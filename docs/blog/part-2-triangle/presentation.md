@@ -338,13 +338,13 @@ The _image descriptor_ specifies the static properties of an image:
 record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levels, int layers)
 ```
 
-And the _extents_ are the dimensions of the image:
+Where the _extents_ are the dimensions of the image:
 
 ```java
 record Extents(Dimensions dimensions, int depth)
 ```
 
-Where `Dimensions` is a simple record for the size of an arbitrary 2D rectangle:
+And `Dimensions` is a simple record for the size of an arbitrary 2D rectangle:
 
 ```java
 public record Dimensions(int width, int height)
@@ -554,22 +554,12 @@ Descriptor descriptor = new Descriptor.Builder()
 Which is used when creating the view for each image:
 
 ```java
-var views = Arrays
+List<View> views = Arrays
     .stream(handles)
     .map(Handle::new)
-    .map(image -> new Image(image, dev, descriptor))
-    .map(View::of)
+    .map(handle -> new Image(handle, dev, descriptor))
+    .map(image -> new View.Builder(image).build())
     .toList();
-```
-
-Where the convenience `of` factory method constructs a default view for a given image:
-
-```java
-public class View {
-    public static View of(Image image) {
-        return new Builder(image).build();
-    }
-}    
 ```
 
 Finally the swapchain domain object is instantiated:
@@ -741,7 +731,8 @@ Development of the swapchain was the first time that a boolean value (whether th
 In summary: a Vulkan boolean is represented as zero (for false) or one (for true) - so far so logical.
 But by default JNA maps a Java boolean to zero for false but __minus one__ for true!  WTF!
 
-There are a lot of boolean values used across Vulkan requiring a global solution to over-ride the default JNA mapping.  Again a custom JNA type converter comes to the rescue:
+There are a lot of boolean values used across Vulkan requiring a global solution to over-ride the default JNA mapping (which is unfortunately hard coded).
+Again a custom JNA type converter comes to the rescue:
 
 ```java
 public final class NativeBooleanConverter implements TypeConverter {

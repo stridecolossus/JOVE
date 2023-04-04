@@ -1,6 +1,5 @@
 demo
 - skydome
-- instancing, cubes then tree model
 - lighting, materials
 - solar system
 
@@ -27,12 +26,10 @@ features todo
 - enhance Work to chain sequences + sync, e.g. for loading a texture, Q - use semaphores, or fence for each step, both?
 - custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - degenerate triangles for strip?
-- re-build swapchain and pipeline after window viewport/focus change
 - normals via geometry shader
 - mesh shader
 - dynamic descriptors sets and uniform buffers (?)
-- OpenAL streaming audio (queue)
-- https://github.com/kcat/openal-soft/wiki/Programmer%27s-Guide#queuing-buffers-on-a-source
+- OpenAL streaming audio (queue) https://github.com/kcat/openal-soft/wiki/Programmer%27s-Guide#queuing-buffers-on-a-source
 - memory region rounding if not host coherent
 
 blog
@@ -41,7 +38,7 @@ blog
 
 improvements
 - cube builder optional normals, review mesh compute normals, also parallel stream
-- sort out maths stuff: cosine, inverse root, acos? atan? others?  Inject into normalize() and converter methods as appropriate, or uses default (which should be class not interface?) 
+- sort out / aggregate maths stuff: cosine, inverse root, acos? atan? others?  Inject into normalize() and converter methods as appropriate, or uses default (which should be class not interface?) 
 - pipeline cache could use Java prefs? and/or user home folder?
 - interpolator revamp
 - joystick from desktop service

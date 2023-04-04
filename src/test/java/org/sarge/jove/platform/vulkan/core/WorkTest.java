@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.NativeHelper.PointerToIntArray;
+import org.sarge.jove.util.PointerToIntArray;
 
 import com.sun.jna.Structure;
 

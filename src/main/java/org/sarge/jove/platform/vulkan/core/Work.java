@@ -10,7 +10,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.*;
-import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 import org.sarge.lib.util.Check;
 
 /**

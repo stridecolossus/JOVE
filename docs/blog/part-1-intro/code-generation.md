@@ -22,31 +22,33 @@ The previous project was implemented using [LWJGL](https://www.lwjgl.org/) which
 
 However things did not work out as hoped.  Not at all.
 
-Progressing through the [tutorial](https://vulkan-tutorial.com/) we realised more time was being spent trying to understand LWJGL than learning how to use Vulkan, with each step forward leading to some mystifying situation or another road-block.
+Our progress through the [tutorial](https://vulkan-tutorial.com/) was glacially slow, with more time being spent trying to understand what LWJGL was up to, instead of learning how to use Vulkan.  Each step forward seemed to lead to some mystifying situation or road-block that side-tracked any progress.
 
-There were a variety of reasons for this:
+There were several reasons for this:
 
-* The Vulkan API makes heavy use of structures to configure Vulkan components, which are implemented by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members, there are multiple setters for each field, and a slew of allocation methods implemented on every structure.  Finding the right field becomes error-prone and time-consuming.  This is repeated for every field, for every structure, for every use-case involving structures (which is almost all of them).
+* The Vulkan API makes heavy use of structures to configure Vulkan components, which are surfaced by LWJGL as Java classes with (as a nice touch) a fluid builder-like interface.  However all the internals are exposed as __public__ members, there are multiple setters for each field, and a slew of allocation methods implemented on every structure.  Finding the right field becomes error-prone and time-consuming.  This is repeated for every field, for every structure, for every use-case involving structures (which is almost all of them).
 
-* The API contains a huge number of enumerations all of which are bundled as old school integer constants into a __single__ class with several __thousand__ members.  Besides the likelihood of accidentally using the wrong enumeration and the obvious type safety issues, finding an enumeration constant is virtually impossible and makes the IDE code assist feature practically redundant.
+* The API also uses a large number of enumerations all of which are bundled as old school integer constants into a __single__ class (along with the API methods) resulting in several __thousand__ members.  Besides the likelihood of accidentally using the wrong enumeration and the obvious type safety issues, finding an enumeration constant is virtually impossible and makes the IDE code assist feature practically redundant.
 
-* The paucity of decent examples and tutorials only exacerbated matters: those we found were basically just C code masquerading as Java with little or no documentation or modularity, essentially a wall-o-code that was very difficult to navigate and practically worthless as an exemplar.
+* The paucity of decent (or indeed any) documentation, examples or tutorials only exacerbated matters: those we found were basically just C code masquerading as Java with little or no documentation or modularity, essentially a wall-o-code that was very difficult to navigate and practically worthless as an exemplar.
 
 A couple of examples:
 
 The first task for a Vulkan application is to create the _instance_ which involves populating a couple of structures and invoking the relevant API method.  The `VkApplicationInfo` structure specifies some properties of the application and the required API version.  The native structure has six fields whereas the LWJGL implementation has over 70 class members, the code assist popup in our IDE has scroll-bars, and this is one of the simplest structures.
 
-One of the fields in this structure is the application name which is a string (mapping to a native pointer to a null-terminated character array).  In the LWJGL implementation we had to instantiate a memory stack object, use that on a different static helper method to allocate an NIO buffer for the string, and pass _that_ to the structure.  Presumably there are logical reasons for this (off-heap performance or thread safety perhaps) but there was no clue as to _why_ this had to be done, whether there were alternatives, was the application responsible for releasing resources later, etc.  If the binding is not responsible for marshalling Java types to native equivalents what is it actually for?
+One of the fields in this structure is the application name which is a string (mapping to a native pointer to a null-terminated character array).  In the LWJGL implementation we had to instantiate a memory stack object, invoke a static method on a different utility class passing the stack and the string to allocate an NIO buffer, and then pass _that_ to the structure.  Presumably there are logical reasons for this (off-heap performance or thread safety perhaps) but there was no clue as to _why_ this had to be done, whether there were alternatives, was the application responsible for releasing resources later, etc.
 
-Obviously the LWJGL port was code-generated from the Vulkan header, therefore it is to be expected that there are oddities and compromises in the resultant API which would never be as 'clean' as a totally hand-crafted solution.  This is not intended to be a negative 'review' but our experience was frankly irritating for the reasons stated above: everything seemed to take an age to implement, much of the code was basically a mystery, and we had barely scratched the surface of Vulkan.  Eventually we lost interest and gave up.
+Obviously the LWJGL port was code-generated from the Vulkan header, and it is to be expected that there are oddities and compromises in the resultant API which could never be as 'clean' as a totally hand-crafted solution.  This is not intended to be a negative 'review' but an illustration of our concerns: everything took an age to implement, much of the code was basically a mystery, and we had barely scratched the surface of Vulkan.  Given how difficult and tedious it had been to implement even the most basic Vulkan demo using LWJGL, the prospect of doing the same for the much more complicated stuff later on was not appealing.  Eventually we just lost interest and gave up.
 
 ### Alternatives
 
-Sometime later we were encouraged by a friend to make a second attempt.  Our first design decision was that unless LWJGL had materially changed we would look for alternative bindings.  Unfortunately there were none (that we could find) so our focus shifted to implementing custom bindings to the native Vulkan library.
+Sometime later we were encouraged by a friend to make a second attempt.  Our first design decision was that unless LWJGL had materially changed we would look for alternative bindings.
+
+Unfortunately there were none (that we could find) so our focus shifted to implementing custom bindings to the native Vulkan library.
 
 Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.  Additionally JNI offered nothing to support the large number of enumerations and structures used by Vulkan.
 
-There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to support much of what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer, and at the time of writing there was little in the way of tutorials or examples.
+There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to support much of what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer.  Also at the time of writing the library was still in a relatively immature and fluid state, required an incubator JVM build, and there was little in the way of tutorials or examples.
 
 Next we considered SWIG which is the code-generation technology used by LWJGL.  Again we were not encouraged, proprietary descriptors are required to bind to the native layer and we have already covered our issues with the resultant code.
 

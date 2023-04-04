@@ -15,7 +15,6 @@ import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
-import org.sarge.jove.util.NativeHelper.PointerToIntArray;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
