@@ -121,7 +121,8 @@ public final class Work {
 		final Pool pool = work.next().pool();
 		final WorkQueue queue = pool.queue();
 		while(work.hasNext()) {
-			if(!queue.equals(work.next().pool().queue())) {
+			final var family = work.next().pool().queue().family();
+			if(!family.equals(queue.family())) {
 				throw new IllegalArgumentException(String.format("Work batch does not submit to the same queue family: queue=%s work=%s", queue, work));
 			}
 		}
@@ -224,7 +225,7 @@ public final class Work {
 				queue = that;
 			}
 			else {
-    			if(!queue.equals(that)) {
+    			if(!queue.family().equals(that.family())) {
     				throw new IllegalArgumentException("Command buffer must submit to the queue family of this work: buffer=%s expected=%s".formatted(buffer, queue));
     			}
 			}

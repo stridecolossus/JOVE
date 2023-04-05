@@ -304,7 +304,141 @@ layout(constant_id=1) const float HeightScale = 2.5;
 
 Note that the constant also has a default value if it is not explicitly configured by the application.
 
-Specialisation constants are configured in the pipeline:
+First a new type is implemented as a wrapper for a set of constants:
+
+```java
+public final class SpecialisationConstants {
+    private final Map<Integer, Constant> constants;
+}
+```
+
+Where a specialisation constant is defined as follows:
+
+```java
+public sealed interface Constant {
+    /**
+     * @return Size of this constant (bytes)
+     */
+    int size();
+
+    /**
+     * Writes this constant to the given buffer.
+     * @param bb Buffer
+     */
+    void buffer(ByteBuffer bb);
+}
+```
+
+We can now implement the supported constant types, starting with integer values:
+
+```java
+record IntegerConstant(int value) implements Constant {
+    @Override
+    public int size() {
+        return Integer.BYTES;
+    }
+
+    @Override
+    public void buffer(ByteBuffer bb) {
+        bb.putInt(value);
+    }
+}
+```
+
+Floating-point values:
+
+```java
+record FloatConstant(float value) implements Constant {
+    @Override
+    public int size() {
+        return Float.BYTES;
+    }
+
+    @Override
+    public void buffer(ByteBuffer bb) {
+        bb.putFloat(value);
+    }
+}
+```
+
+And finally boolean values:
+
+```java
+record BooleanConstant(boolean value) implements Constant {
+    @Override
+    public int size() {
+        return Integer.BYTES;
+    }
+
+    @Override
+    public void buffer(ByteBuffer bb) {
+        int n = NativeBooleanConverter.toInteger(value);
+        bb.putInt(n);
+    }
+}
+```
+
+A convenience builder (not shown) is also implemented to construct a set of shader constants.
+
+The Vulkan descriptor for a set of specialisation constants consists of two components:
+
+1. A data buffer containing the actual values of the constants.
+
+2. A list of entries specifying the constant identifiers and offsets into the data buffer.
+
+First the constants are transformed to an array of entries:
+
+```java
+VkSpecializationInfo build() {
+    Populate populate = new Populate();
+    VkSpecializationMapEntry entries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate::populate);
+    ...
+}
+```
+
+Where the `Populate` helper class builds the entry for each constant and calculates the offset and the overall buffer length as a side-effect:
+
+```java
+private static class Populate {
+    private int len;
+
+    void populate(Entry<Integer, Constant> entry, VkSpecializationMapEntry out) {
+        // Determine the size of this constant
+        Constant constant = entry.getValue();
+        int size = constant.size();
+
+        // Populate the entry for this constant
+        out.constantID = entry.getKey();
+        out.offset = len;
+        out.size = size;
+
+        // Calculate the overall buffer length
+        len += size;
+    }
+}
+```
+
+Now the data buffer can be allocated and populated from the constant values:
+
+```java
+var bb = BufferHelper.allocate(populate.len);
+for(Constant c : constants.values()) {
+    c.buffer(bb);
+}
+```
+
+And finally the Vulkan descriptor for the set of constants is constructed:
+
+```java
+var info = new VkSpecializationInfo();
+info.mapEntryCount = constants.size();
+info.pMapEntries = entries;
+info.dataSize = populate.len;
+info.pData = bb;
+return info;
+```
+
+Specialisation constants are configured in the programmable shader stages of the pipeline:
 
 ```java
 public class ProgrammableShaderStage {
@@ -315,80 +449,6 @@ public class ProgrammableShaderStage {
         return this;
     }
 }
-```
-
-Each constant generates a separate entry in the descriptor:
-
-```java
-private static VkSpecializationInfo build(Map<Integer, Object> constants) {
-    // Skip if empty
-    if(constants.isEmpty()) {
-        return null;
-    }
-    
-    // Populate map entries
-    var entries = constants.entrySet();
-    Populate populate = new Populate();
-    var info = new VkSpecializationInfo();
-    info.mapEntryCount = constants.size();
-    info.pMapEntries = StructureCollector.pointer(entries, new VkSpecializationMapEntry(), populate);
-}
-```
-
-Where `populate` is factored out to the following function:
-
-```java
-private static class Populate implements BiConsumer<Entry<Integer, Object>, VkSpecializationMapEntry> {
-    private int len = 0;
-
-    @Override
-    public void accept(Entry<Integer, Object> entry, VkSpecializationMapEntry struct) {
-        ...
-    }
-}
-```
-
-This function determines the length of each constant in bytes:
-
-```java
-Object value = entry.getValue();
-int size = switch(value) {
-    case Float f -> Float.BYTES;
-    case Integer n -> Integer.BYTES;
-    case Boolean b -> Integer.BYTES;
-    default -> throw new IllegalArgumentException();
-};
-```
-
-And populates the descriptor for each entry calculating the total buffer length as a side-effect:
-
-```java
-out.size = size;
-out.constantID = entry.getKey();
-out.offset = len;
-len += size;
-```
-
-The constants are then written to a data buffer:
-
-```java
-var converter = new NativeBooleanConverter();
-ByteBuffer buffer = BufferHelper.allocate(populate.len);
-for(Object value : constants.values()) {
-    switch(value) {
-        case Integer n -> buffer.putInt(n);
-        case Float f -> buffer.putFloat(f);
-        case Boolean b -> converter.toNative(b, null);
-        default -> throw new RuntimeException();
-    }
-}
-```
-
-And finally the data is added to the descriptor:
-
-```java
-info.dataSize = populate.len;
-info.pData = buffer;
 ```
 
 The set of constants used in both tesselation shaders is initialised in the pipeline configuration class:

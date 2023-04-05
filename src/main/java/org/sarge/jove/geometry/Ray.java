@@ -28,6 +28,8 @@ public interface Ray {
 	 */
 	float length();
 
+	// TODO - should direction be a plain vector? therefore no need for separate length() => may need normalize() across all use-cases!
+
 	/**
 	 * Default implementation for an infinitely long ray.
 	 */

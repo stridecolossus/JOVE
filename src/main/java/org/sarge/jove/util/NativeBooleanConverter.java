@@ -14,6 +14,24 @@ public class NativeBooleanConverter implements TypeConverter {
 	private static final int TRUE = 1;
 	private static final int FALSE = 0;
 
+	/**
+	 * Converts the given native integer to a Java boolean.
+	 * @param value Native boolean value
+	 * @return Boolean
+	 */
+	public static boolean toBoolean(int value) {
+		return value != FALSE;
+	}
+
+	/**
+	 * Converts the given Java boolean to the equivalent native integer.
+	 * @param value Boolean value
+	 * @return Native integer
+	 */
+	public static int toInteger(boolean value) {
+		return value ? TRUE : FALSE;
+	}
+
 	@Override
 	public Class<?> nativeType() {
 		return Integer.class;

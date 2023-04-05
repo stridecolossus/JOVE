@@ -1242,10 +1242,10 @@ And the updated position is then applied to the animation:
 animation.update(time / (float) duration);
 ```
 
-The final piece of the jigsaw is a rotation implementation that can be animated.
+The final piece of the jigsaw is a mutable rotation implementation that can also be animated.
 
 ```java
-public class MutableRotation implements Rotation, Animation {
+public class MutableRotation implements Rotation {
     private AxisAngle rot;
 
     @Override
@@ -1260,13 +1260,16 @@ public class MutableRotation implements Rotation, Animation {
 }
 ```
 
-This class provides various mutators (not shown) to set the axis and rotation angle, which are also used when updating a rotation animation:
+This class provides various mutators (not shown) to set the axis and rotation angle, and the following adapter to animate the rotation:
+
+which are also used when updating a rotation animation:
 
 ```java
-@Override
-public void update(float pos) {
-    float angle = pos * TWO_PI;
-    set(angle);
+public Animation animation() {
+    return pos -> {
+        final float angle = pos * Trigonometric.TWO_PI;
+        set(angle);
+    };
 }
 ```
 
@@ -1286,8 +1289,8 @@ The animation and timing logic is replaced by an animator:
 
 ```java
 @Bean
-static Animator animator(Animation rot, ApplicationConfiguration cfg) {
-    return new Animator(rot, cfg.getPeriod());
+static Animator animator(MutableRotation rot, ApplicationConfiguration cfg) {
+    return new Animator(rot.animation(), cfg.getPeriod());
 }
 ```
 

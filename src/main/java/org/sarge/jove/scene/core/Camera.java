@@ -8,7 +8,7 @@ import org.sarge.jove.geometry.*;
 /**
  * A <i>camera</i> models the viewers position and orientation.
  * <p>
- * Note that the camera points in the opposite direction to the view, i.e. the {@link #direction()} points <b>out</b> of the screen.
+ * Note that the camera points in the opposite direction to the view, i.e. the {@link #direction()} points <b>out</b> of the screen in the {@link Axis#Z} direction.
  * <p>
  * @author Sarge
  */

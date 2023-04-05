@@ -11,7 +11,7 @@ import org.sarge.jove.util.*;
  * A <i>mutable rotation</i> is a specialised rotation about an axis.
  * @author Sarge
  */
-public class MutableRotation implements Rotation, Animation {
+public class MutableRotation implements Rotation {
 	private AxisAngle rot;
 
 	/**
@@ -70,10 +70,15 @@ public class MutableRotation implements Rotation, Animation {
 		rot = updated.of(cos);
 	}
 
-	@Override
-	public void update(float pos) {
-		final float angle = pos * Trigonometric.TWO_PI;
-		set(angle);
+	/**
+	 * Creates an animation adapter for this rotation.
+	 * @return Rotation animation
+	 */
+	public Animation animation() {
+		return pos -> {
+			final float angle = pos * Trigonometric.TWO_PI;
+			set(angle);
+		};
 	}
 
 	@Override

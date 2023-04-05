@@ -30,7 +30,7 @@ public class WorkTest {
 		lib = dev.library();
 
 		// Create work queue
-		final Family family = new Family(0, 1, Set.of());
+		final Family family = new Family(2, 3, Set.of());
 		queue = new WorkQueue(new Handle(1), family);
 
 		// Create command buffer

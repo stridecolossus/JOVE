@@ -318,9 +318,9 @@ public void set(DescriptorResource res) {
 
 Applying the updated resources to the descriptor sets is slightly complicated:
 
-1. Each modified descriptor set requires a separate `VkWriteDescriptorSet` structure.
+1. Each modified resource requires a separate `VkWriteDescriptorSet` structure.
 
-2. The Vulkan descriptor for each update is dependant on the descriptor set, the binding _and_ the resource.
+2. This structure is dependant on the modified entry, the parent descriptor set _and_ the binding.
 
 3. Updates are applied as a batch operation.
 
