@@ -11,7 +11,8 @@ public interface WindowListener {
 	public enum Type {
 		ENTER,
 		FOCUS,
-		ICONIFIED
+		ICONIFIED,
+		CLOSED
 	}
 
 	/**

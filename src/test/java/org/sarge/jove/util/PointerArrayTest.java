@@ -3,11 +3,10 @@ package org.sarge.jove.util;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.util.NativeHelper.*;
 
 import com.sun.jna.Pointer;
 
-public class NativeHelperTest {
+class PointerArrayTest {
 	@Test
 	void ints() {
 		final var array = new PointerToIntArray(new int[]{2, 3});

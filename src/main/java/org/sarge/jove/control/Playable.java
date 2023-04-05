@@ -51,7 +51,7 @@ public class Playable {
 	 * @throws IllegalStateException if {@link #state} is invalid for this playable
 	 * @see State#isValidTransition(State)
 	 */
-	public void apply(State state) {
+	protected void apply(State state) {
 		if(!this.state.isValidTransition(state)) throw new IllegalStateException("Invalid state transition: this=%s next=%s".formatted(this, state));
 		this.state = notNull(state);
 	}

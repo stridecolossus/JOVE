@@ -9,9 +9,9 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.control.Playable;
 import org.sarge.jove.control.Playable.State;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.platform.audio.AudioSource.AudioSourcePlayable;
 
 import com.sun.jna.ptr.IntByReference;
 
@@ -20,7 +20,7 @@ class AudioSourceTest {
 	private AudioDevice dev;
 	private AudioLibrary lib;
 	private AudioBuffer buffer;
-	private Playable playable;
+	private AudioSourcePlayable playable;
 
 	@BeforeEach
 	void before() {

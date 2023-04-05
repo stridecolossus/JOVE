@@ -290,12 +290,10 @@ And finally the update command is added to the render sequence before starting t
 
 ## Shader Constants
 
-The terrain shaders contain a number of hard coded parameters (such as the tesselation factor and height scalar) which would ideally be programatically configured (possibly from a properties file).
-
+The terrain shaders contain a number of hard coded parameters (such as the tesselation factor and height scalar) which would ideally be programatically configured, possibly from a properties file.
 Additionally in general we prefer to centralise common or shared parameters to avoid hard-coding the same information in multiple locations or having to replicate shaders for different parameters.
 
 Vulkan provides _specialisation constants_ for these requirements which parameterise a shader when it is instantiated.
-
 For example in the evaluation shader the hard-coded height scale is replaced with the following constant declaration:
 
 ```glsl
@@ -442,24 +440,26 @@ Specialisation constants are configured in the programmable shader stages of the
 
 ```java
 public class ProgrammableShaderStage {
-    private VkSpecializationInfo constants;
+    private SpecialisationConstants constants;
 
-    public Builder constants(Map<Integer, Object> constants) {
-        this.constants = build(constants);
-        return this;
+    void populate(VkPipelineShaderStageCreateInfo info) {
+        ...
+        if(constants != null) {
+            info.pSpecializationInfo = constants.build();
+        }
     }
 }
 ```
 
-The set of constants used in both tesselation shaders is initialised in the pipeline configuration class:
+A set of specialisation constants can be now be configured for use in both tesselation shaders:
 
 ```java
 class PipelineConfiguration {
-    private final VkSpecializationInfo constants = Shader.constants(Map.of(0, 20f, 1, 2.5f));
+    private final SpecialisationConstants constants = new SpecialisationConstants(Map.of(0, 20f, 1, 2.5f));
 }
 ```
 
-Finally the relevant shaders are parameterised when the pipeline is constructed, for example:
+And finally the relevant shaders are parameterised when the pipeline is constructed, for example:
 
 ```java
 shader(VkShaderStage.TESSELLATION_EVALUATION)

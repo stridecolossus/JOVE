@@ -205,21 +205,7 @@ public final void bind(Consumer<Event> handler) {
 }
 ```
 
-Note that the binding is also registered to the window instance:
-
-```java
-class Window ... {
-    private final Map<Object, Set<Callback>> registry = new WeakHashMap<>();
-    ...
-
-    protected void register(Object key, Callback listener) {
-        Set<Callback> set = registry.computeIfAbsent(key, ignored -> new HashSet<>());
-        set.add(listener);
-    }
-}
-```
-
-This prevents an active listener from being garbage collected and de-registered by GLFW, since the listener is otherwise out-of-scope at the end of the `bind` method.  The binding from the event handler and the GLFW listener is a weak reference such that stale bindings are automatically removed.
+Note that the binding is also registered to the window instance to prevent an active listener from being garbage collected and automatically de-registered by GLFW.
 
 ### Axis
 

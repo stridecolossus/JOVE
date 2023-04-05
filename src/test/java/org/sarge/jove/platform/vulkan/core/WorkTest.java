@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.NativeHelper.PointerToIntArray;
+import org.sarge.jove.util.PointerToIntArray;
 
 import com.sun.jna.Structure;
 
@@ -89,8 +89,8 @@ public class WorkTest {
 
 		@BeforeEach
 		void before() {
-			wait = new Semaphore(new Handle(1), dev);
-			signal = new Semaphore(new Handle(2), dev);
+			wait = mock(Semaphore.class);
+			signal = mock(Semaphore.class);
 			builder = new Work.Builder();
 		}
 

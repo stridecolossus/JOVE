@@ -97,7 +97,7 @@ public class AudioSource extends TransientNativeObject {
 	/**
 	 *
 	 */
-	private class AudioSourcePlayable extends Playable {
+	public class AudioSourcePlayable extends Playable {
 		@Override
 		public boolean isPlaying() {
     		final var ref = new IntByReference();
@@ -136,7 +136,7 @@ public class AudioSource extends TransientNativeObject {
 	/**
 	 * @return This source as a playable instance
 	 */
-	public Playable playable() {
+	public AudioSourcePlayable playable() {
 		return playable;
 	}
 

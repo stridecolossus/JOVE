@@ -70,12 +70,4 @@ public class ResourceBufferTest {
 	void offset() {
 		assertThrows(IllegalArgumentException.class, () -> res.offset(4L));
 	}
-
-	@Test
-	void equals() {
-		assertEquals(true, res.equals(res));
-		assertEquals(true, res.equals(new ResourceBuffer(buffer, UNIFORM_BUFFER, 0)));
-		assertEquals(false, res.equals(null));
-		assertEquals(false, res.equals(new ResourceBuffer(buffer, UNIFORM_BUFFER, 1)));
-	}
 }

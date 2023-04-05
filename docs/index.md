@@ -16,7 +16,7 @@ The [introduction](blog/part-1-intro/introduction) in the first section outlines
 
 - Part 1 - Background
     - [Introduction](blog/part-1-intro/introduction)
-    - [Code Generation](blog/part-1-intro/generation)
+    - [Code Generation](blog/part-1-intro/code-generation)
     - [Enumerations](blog/part-1-intro/enumerations)
 
 - Part 2 - Rendering a Triangle

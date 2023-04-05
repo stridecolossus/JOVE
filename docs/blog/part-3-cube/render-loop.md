@@ -707,7 +707,9 @@ public class VulkanRenderTask {
 
 And the existing blocking code is replaced with a `waitReady` call on the fence to wait until the frame has been rendered.
 
-A further blocking call is introduced at the _start_ of the render process to ensure that the _previous_ frame has been completed, hence the fence is initialised to the `SIGNALED` state.
+Note that the swapchain could acquire frame buffers out of order, or even return the same buffer for consecutive frames.
+Therefore a further blocking call is introduced at the _start_ of the render process to ensure that the _previous_ frame for a given buffer has been completed.
+For this reason the fence is initialised to the `SIGNALED` state.
 
 The updated `render` method now looks like this:
 
@@ -859,8 +861,6 @@ First the existing render task is 'inverted' by factoring out the acquire and pr
 public class VulkanFrame implements TransientObject {
     private final Semaphore available, ready;
     private final Fence fence;
-    private int index;
-    private Swapchain swapchain;
 }
 ```
 
@@ -870,17 +870,20 @@ The acquire step is factored out into a separate method:
 public int acquire(Swapchain swapchain) {
     // Wait for completion of the previous frame
     fence.waitReady();
-    fence.reset();
 
     // Retrieve frame buffer index
-    this.swapchain = swapchain;
-    index = swapchain.acquire(available, null);
+    int index = swapchain.acquire(available, null);
+
+    // Ensure still waiting if the swapchain has been invalidated
+    fence.reset();
 
     return index;
 }
 ```
 
-And similarly for frame presentation:
+Note that the fence is only reset _after_ the acquire step which may fail with a `SwapchainInvalidated` exception, preventing a potential deadlock scenario.
+
+The presentation step is factored out similarly:
 
 ```java
 public void present(Command.Buffer render) {

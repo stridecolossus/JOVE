@@ -19,10 +19,13 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class RenderLoop {
+	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 	private final Set<Listener> listeners = new HashSet<>();
 	private int rate;
+	private Runnable task;
 	private Future<?> future;
-	private Consumer<Exception> handler = System.err::println;
+	private Consumer<Exception> handler = Exception::printStackTrace;
+	private boolean paused;
 
 	/**
 	 * Constructor.
@@ -87,32 +90,33 @@ public class RenderLoop {
 	 * @throws IllegalStateException if rendering has already been started
 	 */
 	public void start(Runnable task) {
-		Check.notNull(task);
-		if(isRunning()) {
-			throw new IllegalStateException("Render loop has already been started");
-		}
+		if(isRunning()) throw new IllegalStateException("Loop is already running");
+		this.task = notNull(task);
+		schedule();
+	}
 
-		final Runnable wrapper = () -> {
-			try {
-				run(task);
-			}
-			catch(Exception e) {
-				handler.accept(e);
-			}
-		};
-
+	/**
+	 * Starts scheduling of the render task.
+	 */
+	private void schedule() {
+		assert task != null;
 		final long period = TimeUnit.SECONDS.toMillis(1) / rate;
-		final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-		future = executor.scheduleAtFixedRate(wrapper, 0, period, TimeUnit.MILLISECONDS);
+		future = executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MILLISECONDS);
 	}
 
 	/**
 	 * Runs the given render task and tracks the elapsed duration.
 	 * @param task Render task
 	 */
-	private void run(Runnable task) {
+	private void run() {
 		final Frame timer = new Frame();
-		task.run();
+		try {
+			task.run();
+			// TODO - latch?
+		}
+		catch(Exception e) {
+			handler.accept(e);
+		}
 		timer.stop();
 		update(timer);
 	}
@@ -128,14 +132,34 @@ public class RenderLoop {
 	}
 
 	/**
+	 * Pauses the render loop.
+	 * @throws IllegalStateException if the loop is not running or is already paused
+	 */
+	public void pause() {
+		if(!isRunning()) throw new IllegalStateException("Loop has not been started");
+		if(paused) throw new IllegalStateException("Loop is already paused");
+		future.cancel(true);
+		paused = true;
+	}
+
+	/**
+	 * Restarts a paused render loop.
+	 * @throws IllegalStateException if the loop is not paused
+	 */
+	public void restart() {
+		if(!paused) throw new IllegalStateException("Loop is not paused");
+		schedule();
+		paused = false;
+	}
+
+	/**
 	 * Stops the render loop.
 	 * @throws IllegalStateException if rendering has not been started
 	 */
 	public void stop() {
-		if(!isRunning()) {
-			throw new IllegalStateException("Render loop has not been started");
-		}
+		if(!isRunning()) throw new IllegalStateException("Loop has not been started");
 		future.cancel(true);
 		future = null;
+		paused = false;
 	}
 }

@@ -2,7 +2,7 @@ package org.sarge.jove.common;
 
 import java.util.Collection;
 
-import org.sarge.jove.util.NativeHelper.PointerToPointerArray;
+import org.sarge.jove.util.PointerToPointerArray;
 
 import com.sun.jna.*;
 

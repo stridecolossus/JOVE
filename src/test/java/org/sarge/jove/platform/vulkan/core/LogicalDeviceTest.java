@@ -12,8 +12,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.util.MockReferenceFactory;
-import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
+import org.sarge.jove.util.*;
 import org.sarge.lib.util.Percentile;
 
 public class LogicalDeviceTest {

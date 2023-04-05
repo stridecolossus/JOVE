@@ -15,7 +15,6 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.*;
-import org.sarge.jove.util.NativeHelper.PointerToFloatArray;
 import org.sarge.lib.util.*;
 
 import com.sun.jna.*;
@@ -95,9 +94,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		return list.get(0);
 	}
 
-	/**
-	 * Waits for this device to become idle.
-	 */
+	@Override
 	public void waitIdle() {
 		check(library().vkDeviceWaitIdle(this));
 	}

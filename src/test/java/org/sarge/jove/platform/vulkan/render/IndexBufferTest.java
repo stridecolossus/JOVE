@@ -91,12 +91,4 @@ public class IndexBufferTest {
 			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT16);
 		}
 	}
-
-	@Test
-	void equals() {
-		assertEquals(true, index.equals(index));
-		assertEquals(true, index.equals(new IndexBuffer(index, VkIndexType.UINT32)));
-		assertEquals(false, index.equals(null));
-		assertEquals(false, index.equals(new IndexBuffer(index, VkIndexType.UINT16)));
-	}
 }

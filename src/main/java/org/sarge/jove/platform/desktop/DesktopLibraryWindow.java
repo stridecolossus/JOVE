@@ -55,13 +55,13 @@ interface DesktopLibraryWindow {
 	 */
 	boolean glfwWindowShouldClose(Window window);
 
-	/**
-	 * Sets whether the given window can be closed by the user.
-	 * @param window		Window
-	 * @param close			Whether the window can be closed
-	 * @return Result
-	 */
-	int glfwSetWindowShouldClose(Window window, boolean close);
+//	/**
+//	 * Sets whether the given window can be closed by the user.
+//	 * @param window		Window
+//	 * @param close			Whether the window can be closed
+//	 * @return Result
+//	 */
+//	int glfwSetWindowShouldClose(Window window, boolean close);
 
 	/**
 	 * Sets the title of a window.
@@ -105,6 +105,8 @@ interface DesktopLibraryWindow {
 		 */
 		void state(Pointer window, int state);
 	}
+
+	void glfwSetWindowCloseCallback(Window window, WindowStateListener listener);
 
 	/**
 	 * Sets the focus listener of a window.

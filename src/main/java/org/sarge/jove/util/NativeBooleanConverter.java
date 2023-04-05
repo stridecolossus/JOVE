@@ -11,8 +11,26 @@ import com.sun.jna.*;
  * @author Sarge
  */
 public class NativeBooleanConverter implements TypeConverter {
-	private static final int TRUE = 1;
-	private static final int FALSE = 0;
+	public static final int TRUE = 1;
+	public static final int FALSE = 0;
+
+	/**
+	 * Converts the given native integer to a Java boolean.
+	 * @param value Native boolean value
+	 * @return Boolean
+	 */
+	public static boolean toBoolean(int value) {
+		return value != FALSE;
+	}
+
+	/**
+	 * Converts the given Java boolean to the equivalent native integer.
+	 * @param value Boolean value
+	 * @return Native integer
+	 */
+	public static int toInteger(boolean value) {
+		return value ? TRUE : FALSE;
+	}
 
 	/**
 	 * Converts the given native integer to a Java boolean.
@@ -40,7 +58,7 @@ public class NativeBooleanConverter implements TypeConverter {
 	@Override
 	public Boolean fromNative(Object nativeValue, FromNativeContext context) {
 		if(nativeValue instanceof Integer n) {
-			return n != FALSE;
+			return toBoolean(n);
 		}
 		else {
 			return false;
@@ -50,7 +68,7 @@ public class NativeBooleanConverter implements TypeConverter {
 	@Override
 	public Integer toNative(Object value, ToNativeContext context) {
 		if(value instanceof Boolean b) {
-			return b.booleanValue() ? TRUE : FALSE;
+			return toInteger(b);
 		}
 		else {
 			return FALSE;

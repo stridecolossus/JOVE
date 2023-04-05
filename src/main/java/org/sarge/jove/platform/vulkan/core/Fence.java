@@ -76,59 +76,40 @@ public interface Fence extends NativeObject, TransientObject {
 		check(lib.vkCreateFence(dev, info, null, ref));
 
 		// Create domain object
-		return new DefaultFence(new Handle(ref), dev);
-	}
+		class DefaultFence extends VulkanObject implements Fence {
+			private DefaultFence() {
+				super(new Handle(ref), dev);
+			}
 
-	/**
-	 * Default implementation.
-	 */
-	final class DefaultFence extends VulkanObject implements Fence {
-    	/**
-    	 * Constructor.
-    	 * @param handle		Handle
-    	 * @param dev			Logical device
-    	 */
-    	DefaultFence(Handle handle, DeviceContext dev) {
-    		super(handle, dev);
-    	}
+	    	@Override
+			public boolean signalled() {
+	    		final DeviceContext dev = this.device();
+	    		final VulkanLibrary lib = dev.library();
+	    		final VkResult result = lib.vkGetFenceStatus(dev, this);
+	    		return switch(result) {
+	    			case SUCCESS -> true;
+	    			case NOT_READY -> false;
+	    			default -> throw new VulkanException(result);
+	    		};
+	    	}
 
-    	/**
-    	 * @return Whether this fence has been signalled
-    	 */
-    	@Override
-		public boolean signalled() {
-    		final DeviceContext dev = this.device();
-    		final VulkanLibrary lib = dev.library();
-    		final VkResult result = lib.vkGetFenceStatus(dev, this);
-    		return switch(result) {
-    			case SUCCESS -> true;
-    			case NOT_READY -> false;
-    			default -> throw new VulkanException(result);
-    		};
-    	}
+	    	@Override
+			public void reset() {
+	    		Fence.reset(device(), Set.of(this));
+	    	}
 
-    	/**
-    	 * Resets this fence.
-    	 * @see Fence#reset(LogicalDevice, Collection)
-    	 */
-    	@Override
-		public void reset() {
-    		Fence.reset(device(), Set.of(this));
-    	}
+	    	@Override
+			public void waitReady() {
+	    		Fence.wait(device(), Set.of(this), true, Long.MAX_VALUE);
+	    	}
 
-    	/**
-    	 * Waits for this fence.
-    	 * @see Fence#wait(LogicalDevice, Collection, boolean, long)
-    	 */
-    	@Override
-		public void waitReady() {
-    		Fence.wait(device(), Set.of(this), true, Long.MAX_VALUE);
-    	}
+	    	@Override
+	    	protected Destructor<DefaultFence> destructor(VulkanLibrary lib) {
+	    		return lib::vkDestroyFence;
+	    	}
+		}
 
-    	@Override
-    	protected Destructor<DefaultFence> destructor(VulkanLibrary lib) {
-    		return lib::vkDestroyFence;
-    	}
+		return new DefaultFence();
 	}
 
 	/**

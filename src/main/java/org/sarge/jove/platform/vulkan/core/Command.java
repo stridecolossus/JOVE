@@ -111,7 +111,7 @@ public interface Command {
 		 * @param handle 		Command buffer handle
 		 * @param pool			Parent pool
 		 */
-		protected Buffer(Handle handle, Pool pool) { //, boolean primary) {
+		protected Buffer(Handle handle, Pool pool) {
 			this.handle = notNull(handle);
 			this.pool = notNull(pool);
 		}

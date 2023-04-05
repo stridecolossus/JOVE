@@ -14,8 +14,7 @@ import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
-import org.sarge.jove.util.BitMask;
-import org.sarge.jove.util.NativeHelper.PointerToIntArray;
+import org.sarge.jove.util.*;
 
 import com.sun.jna.Pointer;
 

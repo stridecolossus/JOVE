@@ -34,4 +34,9 @@ public interface DeviceContext {
 	 * @return Hardware limits for this device
 	 */
 	VkPhysicalDeviceLimits limits();
+
+	/**
+	 * Waits for this device to become idle.
+	 */
+	void waitIdle();
 }

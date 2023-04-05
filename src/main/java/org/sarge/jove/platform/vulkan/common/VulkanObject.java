@@ -68,4 +68,14 @@ public abstract class VulkanObject extends TransientNativeObject {
 	protected void release() {
 		// Does nowt
 	}
+
+	@Override
+	public int hashCode() {
+		return handle.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
+	}
 }

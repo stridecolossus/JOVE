@@ -37,4 +37,9 @@ public class MockDeviceContext implements DeviceContext {
 	public VkPhysicalDeviceLimits limits() {
 		return limits;
 	}
+
+	@Override
+	public void waitIdle() {
+		// Does nowt
+	}
 }
