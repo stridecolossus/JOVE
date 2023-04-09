@@ -169,9 +169,10 @@ public final class Window extends TransientNativeObject {
 		};
 
 		// Register listener
+		final String key = "state";
 		if(listener == null) {
 			method.accept(this, null);
-			register(type, null);
+			remove(key);
 		}
 		else {
 			final WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.toBoolean(state));
@@ -190,7 +191,7 @@ public final class Window extends TransientNativeObject {
 		final DesktopLibrary lib = desktop.library();
 		if(listener == null) {
 			lib.glfwSetWindowSizeCallback(this, null);
-			register(key, null);
+			remove(key);
 		}
 		else {
 			final WindowResizeListener adapter = (ptr, w, h) -> listener.applyAsInt(w, h);
@@ -208,12 +209,15 @@ public final class Window extends TransientNativeObject {
 	 * @param callback 		Callback listener
 	 */
 	protected void register(Object key, Callback callback) {
-		if(callback == null) {
-			registry.remove(key);
-		}
-		else {
-			registry.put(key, callback);
-		}
+		registry.put(key, callback);
+	}
+
+	/**
+	 * Removes a registry entry.
+	 * @param key Key
+	 */
+	protected void remove(Object key) {
+		registry.remove(key);
 	}
 
 	/**

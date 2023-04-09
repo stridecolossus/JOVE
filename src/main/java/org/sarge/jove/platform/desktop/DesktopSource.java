@@ -51,6 +51,7 @@ interface DesktopSource<T extends Callback, E extends Event> extends Source<E> {
 		// Register listener
 		if(handler == null) {
 			method.accept(window, null);
+			window.remove(handler);
 			return null;
 		}
 		else {
