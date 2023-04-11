@@ -169,7 +169,7 @@ public static class Builder {
 }
 ```
 
-The _pool_ member is a table specifying the available number of each type of descriptor set:
+The _pool_ member is a table specifying the available number of each type of resource:
 
 ```java
 public Builder add(VkDescriptorType type, int count) {

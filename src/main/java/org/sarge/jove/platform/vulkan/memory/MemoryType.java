@@ -1,10 +1,12 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import java.util.Set;
+import java.util.*;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.IntEnum;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 import org.sarge.lib.util.Check;
 
 /**
@@ -60,25 +62,54 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	 * @see PhysicalDevice#memory()
 	 */
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
-		// Extract heaps
-		final var heaps = new Heap[descriptor.memoryHeapCount];
-		final var heapMapper = IntEnum.reverse(VkMemoryHeapFlag.class);
-		for(int n = 0; n < heaps.length; ++n) {
-			final VkMemoryHeap heap = descriptor.memoryHeaps[n];
-			final Set<VkMemoryHeapFlag> flags = heap.flags.enumerate(heapMapper);
-			heaps[n] = new Heap(heap.size, flags);
+		class Helper {
+			private final ReverseMapping<VkMemoryHeapFlag> mapper = IntEnum.reverse(VkMemoryHeapFlag.class);
+			private final ReverseMapping<VkMemoryProperty> properties = IntEnum.reverse(VkMemoryProperty.class);
+			private final List<Heap> heaps;
+
+			/**
+			 * Constructor.
+			 * Enumerates the memory heaps.
+			 */
+			Helper() {
+				heaps = Arrays
+						.stream(descriptor.memoryHeaps)
+						.map(this::heap)
+						.toList();
+			}
+
+			/**
+			 * Loads a memory heap.
+			 */
+			private Heap heap(VkMemoryHeap heap) {
+				final Set<VkMemoryHeapFlag> flags = heap.flags.enumerate(mapper);
+				return new Heap(heap.size, flags);
+			}
+
+			/**
+			 * @return Memory types
+			 */
+			MemoryType[] types() {
+				return IntStream
+						.range(0, descriptor.memoryTypeCount)
+						.mapToObj(this::type)
+						.toArray(MemoryType[]::new);
+			}
+
+			/**
+			 * Loads a memory type.
+			 * @param index Memory type index
+			 * @return Memory type
+			 */
+			private MemoryType type(int index) {
+				final VkMemoryType type = descriptor.memoryTypes[index];
+				final Heap heap = heaps.get(type.heapIndex);
+				final Set<VkMemoryProperty> props = type.propertyFlags.enumerate(properties);
+				return new MemoryType(index, heap, props);
+			}
 		}
 
-		// Extract memory types
-		final var types = new MemoryType[descriptor.memoryTypeCount];
-		final var typeMapper = IntEnum.reverse(VkMemoryProperty.class);
-		for(int n = 0; n < types.length; ++n) {
-			final VkMemoryType type = descriptor.memoryTypes[n];
-			final Heap heap = heaps[type.heapIndex];
-			final Set<VkMemoryProperty> props = type.propertyFlags.enumerate(typeMapper);
-			types[n] = new MemoryType(n, heap, props);
-		}
-
-		return types;
+		final Helper helper = new Helper();
+		return helper.types();
 	}
 }

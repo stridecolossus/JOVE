@@ -52,6 +52,7 @@ The following components will be introduced:
 ### Vertices
 
 To construct the vertex data programatically several new types are introduced.
+
 The first is a definition for an arbitrary data object that can be written to an NIO buffer:
 
 ```java
@@ -86,7 +87,10 @@ public class Tuple implements Bufferable {
 
     @Override
     public void buffer(ByteBuffer buffer) {
-        buffer.putFloat(x).putFloat(y).putFloat(z);
+        buffer
+            .putFloat(x)
+            .putFloat(y)
+            .putFloat(z);
     }
 }
 ```
@@ -115,7 +119,11 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
     @Override
     public void buffer(ByteBuffer buffer) {
-        buffer.putFloat(red).putFloat(green).putFloat(blue).putFloat(alpha);
+        buffer
+            .putFloat(red)
+            .putFloat(green)
+            .putFloat(blue)
+            .putFloat(alpha);
     }
 }
 ```
@@ -134,7 +142,6 @@ public class Vertex implements Bufferable {
 ```
 
 And this is specialised for a vertex that also contains a colour:
-
 
 ```java
 public class ColourVertex extends Vertex {
@@ -297,7 +304,7 @@ To use the vertex buffer in the shader the structure of the data must be configu
 
 1. A _binding_ that specifies the vertex data to be passed to the shader.
 
-2. A number of _vertex attributes_ that define the structure of the data, i.e. the layout of each component of a vertex.
+2. A number of _vertex attributes_ that define the structure of that data, i.e. the layout of each vertex component.
 
 The new pipeline stage is implemented with nested builders for the bindings and attributes:
 
@@ -379,8 +386,10 @@ public VertexInputStageBuilder build() {
 Vertex attributes are configured via the following factory method:
 
 ```java
-public AttributeBuilder attribute() {
-    return new AttributeBuilder(this);
+public class BindingBuilder {
+    public AttributeBuilder attribute() {
+        return new AttributeBuilder(this);
+    }
 }
 ```
 
@@ -409,9 +418,9 @@ public class AttributeBuilder {
 
 Where:
 
-* _loc_ corresponds to the _layout_ directives in the GLSL shader (see below).
+* _loc_ corresponds to the _layout_ directives in the shader (see below).
 
-* _offset_ specifies the starting byte of the attribute.
+* _offset_ specifies the starting byte of each attribute.
 
 Again the attribute location is initialised to the next available slot which is tracked in the parent builder:
 
@@ -504,14 +513,13 @@ This will be replaced with a more specialised _mesh_ implementation in a future 
 Next a helper is added to create a staging buffer:
 
 ```java
-public static VulkanBuffer staging(LogicalDevice dev, ByteSizedBufferable data) {
+public static VulkanBuffer staging(LogicalDevice dev, Allocator allocator, ByteSizedBufferable data) {
     var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
         .usage(VkBufferUsageFlag.TRANSFER_SRC)
         .required(VkMemoryProperty.HOST_VISIBLE)
         .build();
 
-    int len = data.length();
-    VulkanBuffer buffer = create(dev, len, props);
+    VulkanBuffer buffer = create(dev, allocator, data.length(), props);
 
     ...
 }

@@ -313,7 +313,7 @@ The following changes are required:
 First the general image abstraction is modified to support multiple layers and MIP levels:
 
 ```java
-public interface ImageData {
+public class ImageData {
     /**
      * @return Image depth
      */

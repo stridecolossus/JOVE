@@ -170,30 +170,57 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 }
 ```
 
-The memory types and heaps are enumerated from the two arrays in the structure by the following factory method:
+The memory types and heaps are enumerated from the structure via the following factory method:
 
 ```java
-public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties props) {
-    // Extract heaps
-    Heap[] heaps = new Heap[props.memoryHeapCount];
-    var heapMapper = IntEnum.mapping(VkMemoryHeapFlag.class);
-    for(int n = 0; n < heaps.length; ++n) {
-        VkMemoryHeap heap = props.memoryHeaps[n];
-        Set<VkMemoryHeapFlag> flags = heapMapper.enumerate(heap.flags);
-        heaps[n] = new Heap(heap.size, flags);
+public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
+    class Helper {
+        ...
+    }
+    
+    Helper helper = new Helper();
+    return helper.types();
+}
+```
+
+The local helper class wraps up the extraction process by first retrieving the array of memory heaps:
+
+```java
+class Helper {
+    private final ReverseMapping<VkMemoryHeapFlag> mapper = IntEnum.reverse(VkMemoryHeapFlag.class);
+    private final List<Heap> heaps;
+
+    Helper() {
+        heaps = Arrays
+                .stream(descriptor.memoryHeaps)
+                .map(this::heap)
+                .toList();
     }
 
-    // Extract memory types
-    MemoryType[] types = new MemoryType[props.memoryTypeCount];
-    var typeMapper = IntEnum.mapping(VkMemoryProperty.class);
-    for(int n = 0; n < types.length; ++n) {
-        VkMemoryType type = props.memoryTypes[n];
-        Heap heap = heaps[type.heapIndex];
-        Set<VkMemoryProperty> properties = typeMapper.enumerate(type.propertyFlags);
-        types[n] = new MemoryType(n, heap, properties);
+    private Heap heap(VkMemoryHeap heap) {
+        Set<VkMemoryHeapFlag> flags = heap.flags.enumerate(mapper);
+        return new Heap(heap.size, flags);
     }
+}
+```
 
-    return types;
+Followed by the memory types:
+
+```java
+private final ReverseMapping<VkMemoryProperty> properties = IntEnum.reverse(VkMemoryProperty.class);
+
+MemoryType[] types() {
+    return IntStream
+            .range(0, descriptor.memoryTypeCount)
+            .mapToObj(this::type)
+            .toArray(MemoryType[]::new);
+}
+
+private MemoryType type(int index) {
+    VkMemoryType type = descriptor.memoryTypes[index];
+    Heap heap = heaps.get(type.heapIndex);
+    Set<VkMemoryProperty> props = type.propertyFlags.enumerate(properties);
+    return new MemoryType(index, heap, props);
 }
 ```
 

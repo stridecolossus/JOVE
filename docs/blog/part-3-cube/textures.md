@@ -80,11 +80,6 @@ public interface Coordinate extends Bufferable {
     }
 
     record Coordinate2D(float u, float v) implements Coordinate {
-        /**
-         * Layout of a 2D texture coordinate.
-         */
-        public static final Layout LAYOUT = Layout.floats(2);
-    
         @Override
         public final void buffer(ByteBuffer buffer) {
             buffer.putFloat(u).putFloat(v);
@@ -115,7 +110,7 @@ new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT)
 
 ### Component Layout
 
-As noted in the previous chapter the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coded the vertex attribute formats.
+As noted in the previous chapter the configuration of the vertex input pipeline stage is currently quite laborious and requires hard-coding the vertex attribute formats.
 However the necessary information is already implicit in the vertex components which just needs to be made explicit.
 
 A new type is introduced to represent the data layout of some arbitrary object:
@@ -155,11 +150,11 @@ public static Layout floats(int size) {
 }
 ```
 
-Layout constants are added for the existing types, for example an RGBA colour:
+Layout constants are added for the existing types and the new texture coordinate class, for example:
 
 ```java
-public record Colour(...) {
-    public static final Layout LAYOUT = Layout.floats(4);
+record Coordinate2D ... {
+    public static final Layout LAYOUT = Layout.floats(2);
 }
 ```
 

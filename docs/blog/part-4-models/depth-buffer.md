@@ -61,16 +61,6 @@ public class Normal extends Vector implements Component {
 }
 ```
 
-The `normalize` method is moved from the `Vector` class which is refactored accordingly:
-
-```java
-public class Vector {
-    public Normal normalize() {
-        return new Normal(this);
-    }
-}
-```
-
 This new type is further specialised for the cardinal axes:
 
 ```java
@@ -266,7 +256,7 @@ And finally the matrix is constructed from the translation and rotation componen
 
 ```java
 // Build translation component
-Matrix trans = Matrix.translation(new Vector(pos));
+Matrix trans = Matrix.translation(new Vector(pos).invert());
 
 // Build rotation component
 Matrix rot = new Matrix.Builder()
@@ -316,7 +306,7 @@ static DrawCommand draw(int count) {
 }
 
 static DrawCommand indexed(int count) {
-    return new Builder().indexed(0).count(count).build();
+    return new Builder().indexed().count(count).build();
 }
 ```
 
@@ -1124,7 +1114,7 @@ The implementation is relatively trivial:
 ```java
 public Viewport flip() {
     int y = rectangle.y() + rectangle.height();
-    int h = - rectangle.height();
+    int h = -rectangle.height();
     Rectangle flip = new Rectangle(rectangle.x(), y, rectangle.width(), h);
     return new Viewport(flip, min, max);
 }

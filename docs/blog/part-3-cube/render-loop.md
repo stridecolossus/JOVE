@@ -956,7 +956,9 @@ Notes:
 
 The rotation animation in the demo has been factored out to a frame listener component, however the logic itself is still hard-coded and mixes the animation logic, calculation of the various matrices and management of the uniform buffer.  Therefore we introduce an animation framework that separates these activities and provides reusable components for future demo applications.
 
-Many geometric operations assume that a vector has been _normalized_ to _unit length_ (with possibly undefined results if the assumption is invalid).  This responsibility is left to the application which can use the following method to normalize a vector as required:
+First the vector class is modified to support normals (or unit vectors) which will be used by the new framework.
+
+Many geometric operations assume that a vector has been _normalized_ to _unit length_ with possibly undefined results if the assumption is invalid.  This responsibility is left to the application which can use the following method to normalize a vector as required:
 
 ```java
 public Vector normalize() {
@@ -1263,14 +1265,12 @@ public class MutableRotation implements Rotation {
 }
 ```
 
-This class provides various mutators (not shown) to set the axis and rotation angle, and the following adapter to animate the rotation:
-
-which are also used when updating a rotation animation:
+This class provides various mutators (not shown) to set the axis and rotation angle which are used by the following animation adapter:
 
 ```java
 public Animation animation() {
     return pos -> {
-        final float angle = pos * Trigonometric.TWO_PI;
+        float angle = pos * Trigonometric.TWO_PI;
         set(angle);
     };
 }
@@ -1338,4 +1338,4 @@ In this chapter the render loop was improved by:
 
 - The addition of a new framework for playable media and animations.
 
-This might appear a lot of work for little benefit, however we now have a framework which can be more easily extended in future chapters, in particular when input devices and scene graphs are introduced in later chapters.
+This might appear a lot of work for little benefit, however we now a basis that can be more easily extended in future chapters, in particular when input devices and scene graphs are introduced in later chapters.
