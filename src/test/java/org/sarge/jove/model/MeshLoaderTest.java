@@ -32,13 +32,14 @@ class MeshLoaderTest {
 	@Test
 	void load() throws IOException {
 		// Create an indexed mesh
-		final var mesh = new IndexedMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT));
-		mesh.add(new Vertex(Point.ORIGIN));
-		mesh.add(0);
-		mesh.add(0);
-		mesh.add(0);
+		final var builder = new IndexedMeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT));
+		builder.add(new Vertex(Point.ORIGIN));
+		builder.add(0);
+		builder.add(0);
+		builder.add(0);
 
 		// Write mesh
+		final Mesh mesh = builder.mesh();
 		loader.save(mesh, new DataOutputStream(out));
 
 		// Reload and check is same

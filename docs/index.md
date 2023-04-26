@@ -10,12 +10,15 @@ The content is organised into chapters that cover a specific piece of Vulkan fun
 
 The [introduction](blog/part-1-intro/introduction) in the first section outlines the goals and aims of the project, the development approach, the rationale for the various technology choices, etc.
 
+The [Vulkan Object Index](blog/part-1-intro/vulkan-index) links to the relevant chapter(s) that introduce or extend the various Vulkan objects and concepts.
+
 ---
 
 ## Contents
 
 - Part 1 - Background
     - [Introduction](blog/part-1-intro/introduction)
+    - [Vulkan Object Index](blog/part-1-intro/vulkan-index)
     - [Code Generation](blog/part-1-intro/code-generation)
     - [Enumerations](blog/part-1-intro/enumerations)
 

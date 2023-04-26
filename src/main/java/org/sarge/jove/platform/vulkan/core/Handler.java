@@ -146,7 +146,7 @@ public class Handler extends TransientNativeObject {
 			return false;
 		}
 
-		// TODO - could pUserData somehow refer to the consumer? => no need for multiple instances of this callback
+		// TODO - could pUserData somehow refer to the consumer? => no need for multiple instances of this callback, possibly using custom type mapper?
 	}
 
 	/**

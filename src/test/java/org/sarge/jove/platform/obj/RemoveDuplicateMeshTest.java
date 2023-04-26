@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Vertex;
+import org.sarge.jove.model.*;
 
 class RemoveDuplicateMeshTest {
-	private RemoveDuplicateMesh model;
+	private RemoveDuplicateMeshBuilder builder;
 
 	@BeforeEach
 	void before() {
-		model = new RemoveDuplicateMesh(new CompoundLayout(Point.LAYOUT));
+		builder = new RemoveDuplicateMeshBuilder(new CompoundLayout(Point.LAYOUT));
 	}
 
 	@Test
@@ -22,14 +22,15 @@ class RemoveDuplicateMeshTest {
 		final Vertex other = new Vertex(new Point(1, 2, 3));
 
 		// Build an indexed mesh that re-uses some vertices
-		model
+		builder
 				.add(vertex)
 				.add(other)
 				.add(vertex);
 
 		// Verify the de-duplicated model
-		assertEquals(3, model.count());
-		assertEquals(2 * 3 * Float.BYTES, model.vertices().length());
-		assertEquals(3 * Short.BYTES, model.index().get().length());
+		final Mesh mesh = builder.mesh();
+		assertEquals(3, mesh.count());
+		assertEquals(2 * 3 * Float.BYTES, mesh.vertices().length());
+		assertEquals(3 * Short.BYTES, mesh.index().get().length());
 	}
 }

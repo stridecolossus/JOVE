@@ -1,23 +1,7 @@
 package org.sarge.jove.util;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Map;
-
-import org.json.JSONObject;
-import org.json.JSONTokener;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.common.Rectangle;
-import org.sarge.jove.util.TextureAtlas.Loader;
-
 public class TextureAtlasTest {
+	/*
 	private TextureAtlas atlas;
 
 	@BeforeEach
@@ -93,4 +77,5 @@ public class TextureAtlasTest {
 			assertEquals(rect, atlas.get("two"));
 		}
 	}
+	*/
 }

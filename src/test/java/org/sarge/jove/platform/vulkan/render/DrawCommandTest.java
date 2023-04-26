@@ -37,12 +37,12 @@ class DrawCommandTest {
 	@DisplayName("Create a draw command for a mesh")
 	@Test
 	void model() {
-		final var mesh = new IndexedMesh(Primitive.POINT, new CompoundLayout(Point.LAYOUT));
-		mesh.add(new Vertex(Point.ORIGIN));
-		mesh.add(0);
-		mesh.add(0);
+		final var builder = new IndexedMeshBuilder(Primitive.POINT, new CompoundLayout(Point.LAYOUT));
+		builder.add(new Vertex(Point.ORIGIN));
+		builder.add(0);
+		builder.add(0);
 
-		final DrawCommand draw = DrawCommand.of(mesh);
+		final DrawCommand draw = DrawCommand.of(builder.mesh());
 		draw.record(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 2, 1, 0, 0, 0);
 	}

@@ -14,39 +14,48 @@ import org.sarge.jove.scene.volume.Bounds;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>default mesh</i> is a mutable implementation used to construct a renderable model.
+ * A <i>mesh builder</i> is used to construct a renderable model.
  * <p>
  * Vertex normals can be automatically computed using the {@link #compute()} method.
  * <p>
- * @see IndexedMesh
+ * @see IndexedMeshBuilder
  * @author Sarge
  */
-public class DefaultMesh extends AbstractMesh {
+public class MeshBuilder {
 	private final List<Vertex> vertices = new ArrayList<>();
+	private final Mesh mesh;
 
 	/**
 	 * Constructor.
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
-	 * @throws IllegalArgumentException if the layout contains {@link Normal#LAYOUT} but the drawing primitive is not {@link Primitive#isTriangle()}
+	 * @see Mesh
 	 */
-	public DefaultMesh(Primitive primitive, CompoundLayout layout) {
-		super(primitive, layout);
+	public MeshBuilder(Primitive primitive, CompoundLayout layout) {
+		this.mesh = new Mesh(primitive, layout, () -> count(), new VertexBuffer(), index());
 	}
 
 	/**
 	 * Adds a vertex to this mesh.
 	 * @param vertex Vertex to add
 	 */
-	public DefaultMesh add(Vertex vertex) {
+	public MeshBuilder add(Vertex vertex) {
 		Check.notNull(vertex);
 		vertices.add(vertex);
 		return this;
 	}
-	// TODO - validation (by length?)
 
-	@Override
-	public int count() {
+	/**
+	 * @return Mesh
+	 */
+	public Mesh mesh() {
+		return mesh;
+	}
+
+	/**
+	 * @return Draw count
+	 */
+	protected int count() {
 		return vertices.size();
 	}
 
@@ -60,21 +69,28 @@ public class DefaultMesh extends AbstractMesh {
 		return vertices.get(index);
 	}
 
-	@Override
-	public final ByteSizedBufferable vertices() {
-		return new ByteSizedBufferable() {
-    		@Override
-    		public int length() {
-    			return vertices.size() * DefaultMesh.this.layout().stride();
-    		}
+	/**
+	 * Mesh vertices as an NIO vertex buffer.
+	 */
+	private class VertexBuffer implements ByteSizedBufferable {
+		@Override
+		public int length() {
+			return vertices.size() * mesh.layout().stride();
+		}
 
-    		@Override
-    		public void buffer(ByteBuffer bb) {
-    			for(Vertex v : vertices) {
-    				v.buffer(bb);
-    			}
-    		}
-    	};
+		@Override
+		public void buffer(ByteBuffer bb) {
+			for(Vertex v : vertices) {
+				v.buffer(bb);
+			}
+		}
+	}
+
+	/**
+	 * @return Index buffer
+	 */
+	protected ByteSizedBufferable index() {
+		return null;
 	}
 
 	/**
@@ -84,7 +100,7 @@ public class DefaultMesh extends AbstractMesh {
 	 * @throws IllegalStateException if {@link #count()} is not valid for the drawing primitive
 	 */
 	public final Bounds bounds() {
-		checkMesh();
+		mesh.validate();
 		return vertices
 				.parallelStream()
 				.map(Vertex::position)
@@ -98,15 +114,11 @@ public class DefaultMesh extends AbstractMesh {
 	 * @throws IllegalStateException if {@link #count()} is not valid for the drawing primitive
 	 */
 	public void compute() {
-		// Validate mesh
-		checkMesh();
-
-		// Check primitive supports normals
-		final Primitive primitive = this.primitive();
-		if(!primitive.isTriangle()) throw new IllegalStateException("Cannot compute normals for non-triangular primitive: " + primitive);
+		// Check mesh can be rendered
+		mesh.validate();
 
 		// Determine number of triangles
-		final int faces = primitive.faces(this.count());
+		final int faces = mesh.primitive().faces(this.count());
 
 		// Compute normals
 		IntStream
@@ -161,9 +173,6 @@ public class DefaultMesh extends AbstractMesh {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("vertices", vertices.size())
-				.build();
+		return new ToStringBuilder(this).append(mesh).build();
 	}
 }

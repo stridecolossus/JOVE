@@ -6,6 +6,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.MathsUtil;
+import org.sarge.lib.util.Check;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
@@ -77,6 +78,7 @@ public interface Coordinate extends Bufferable, Component {
 		 * Texture coordinates for a quad with a counter-clockwise winding order.
 		 */
 		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT);
+		// TODO - wrong!?
 
 		@Override
 		public Layout layout() {
@@ -96,6 +98,37 @@ public interface Coordinate extends Bufferable, Component {
 					(obj instanceof Coordinate2D that) &&
 					MathsUtil.isEqual(this.u, that.u) &&
 					MathsUtil.isEqual(this.v, that.v);
+		}
+
+		/**
+		 * A pair of <i>corners</i> define a texture coordinate rectangle.
+		 */
+		public record Corners(Coordinate2D topLeft, Coordinate2D bottomRight) {
+			/**
+			 * Constructor.
+			 * @param topLeft			Top-left coordinate
+			 * @param bottomRight		Bottom-right coordinate
+			 */
+			public Corners {
+				Check.notNull(topLeft);
+				Check.notNull(bottomRight);
+			}
+
+			/**
+			 * Default constructor.
+			 */
+			public Corners() {
+				this(TOP_LEFT, BOTTOM_RIGHT);
+			}
+
+//			/**
+//			 * @return This pair of corners as a quad
+//			 */
+//			public Quad<Coordinate2D> quad() {
+//				final var bottomLeft = new Coordinate2D(topLeft.u, bottomRight.v);
+//				final var topRight = new Coordinate2D(bottomRight.u, topLeft.v);
+//				return new Quad<>(List.of(topLeft, bottomLeft, topRight, bottomRight));
+//			}
 		}
 	}
 

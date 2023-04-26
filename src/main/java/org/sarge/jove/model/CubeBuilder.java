@@ -27,6 +27,32 @@ public class CubeBuilder {
 			new Point(-1, +1, -1),
 	};
 
+	/**
+	 *
+	 * TODO - use bit pattern
+	 *
+	 * range 0..7
+	 * bits -Z X Y
+	 * generates front face (at least) with counter-clockwise order
+	 *
+	 * =>
+	 *
+	 * no need for array of positions or face indices
+	 * and probably ditto normals?
+	 *
+	 */
+
+//	@Test
+//	void test() {
+//		for(int n = 0; n < 8; ++n) {
+//			float x = (n & 2) != 0 ? +1 : -1;
+//			float y = (n & 1) != 0 ? +1 : -1;
+//			float z = (n & 4) != 0 ? -1 : +1;
+//			System.out.println(n+" "+x+","+y+","+z);
+//		}
+//	}
+
+
 	// Face indices
 	private static final int[][] FACES = {
 			{ 0, 1, 2, 3 }, // Front
@@ -66,8 +92,8 @@ public class CubeBuilder {
 	 * @return Cube mesh
 	 * @see #vertex(Point, Normal, Coordinate2D)
 	 */
-	public DefaultMesh build() {
-		final DefaultMesh mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+	public Mesh build() {
+		final MeshBuilder builder = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -80,10 +106,11 @@ public class CubeBuilder {
 
 				// Build vertex
 				final Vertex vertex = vertex(pos, normal, coord);
-				mesh.add(vertex);
+				builder.add(vertex);
 			}
 		}
-		return mesh;
+
+		return builder.mesh();
 	}
 
 	/**

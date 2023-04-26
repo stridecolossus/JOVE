@@ -9,14 +9,16 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 
 public class IndexedMeshTest {
-	private IndexedMesh mesh;
+	private IndexedMeshBuilder builder;
+	private Mesh mesh;
 	private Vertex vertex;
 
 	@BeforeEach
 	void before() {
 		vertex = new Vertex(Point.ORIGIN);
-		mesh = new IndexedMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT));
-		mesh.add(vertex);
+		builder = new IndexedMeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT));
+		builder.add(vertex);
+		mesh = builder.mesh();
 	}
 
 	@Test
@@ -27,22 +29,22 @@ public class IndexedMeshTest {
 	@DisplayName("Vertex indices can be added to an indexed mesh")
 	@Test
 	void add() {
-		mesh.add(0);
+		builder.add(0);
 		assertEquals(1, mesh.count());
 	}
 
 	@DisplayName("An invalid vertex index cannot be added to the mesh")
 	@Test
 	void invalid() {
-		assertThrows(IndexOutOfBoundsException.class, () -> mesh.add(-1));
-		assertThrows(IndexOutOfBoundsException.class, () -> mesh.add(1));
+		assertThrows(IndexOutOfBoundsException.class, () -> builder.add(-1));
+		assertThrows(IndexOutOfBoundsException.class, () -> builder.add(1));
 	}
 
 	@DisplayName("The index can be restarted")
 	@Test
 	void restart() {
-		mesh.add(0);
-		mesh.restart();
+		builder.add(0);
+		builder.restart();
 		assertEquals(1, mesh.count());
 	}
 
@@ -50,9 +52,9 @@ public class IndexedMeshTest {
 	@Test
 	void shorts() {
 		// Create index
-		mesh.add(0);
-		mesh.add(0);
-		mesh.add(0);
+		builder.add(0);
+		builder.add(0);
+		builder.add(0);
 
 		// Check index buffer
 		final int len = 3 * Short.BYTES;
@@ -62,7 +64,7 @@ public class IndexedMeshTest {
 		index.buffer(bb);
 		assertEquals(0, bb.remaining());
 
-		mesh.compact(false);
+		builder.compact(false);
 		assertEquals(3 * Integer.BYTES, index.length());
 	}
 
@@ -72,7 +74,7 @@ public class IndexedMeshTest {
 		// Create an index larger than the size of a short value
 		final int size = 65535;
 		for(int n = 0; n < size; ++n) {
-			mesh.add(0);
+			builder.add(0);
 		}
 
 		// Check index is integral

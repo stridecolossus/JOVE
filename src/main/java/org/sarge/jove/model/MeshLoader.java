@@ -40,22 +40,7 @@ public class MeshLoader implements ResourceLoader<DataInputStream, Mesh> {
 		final ByteSizedBufferable index = helper.buffer(in);
 
 		// Create mesh
-		return new AbstractMesh(primitive, new CompoundLayout(layout)) {
-			@Override
-			public int count() {
-				return count;
-			}
-
-			@Override
-			public ByteSizedBufferable vertices() {
-				return vertices;
-			}
-
-			@Override
-			public Optional<ByteSizedBufferable> index() {
-				return Optional.of(index);
-			}
-		};
+		return new Mesh(primitive, new CompoundLayout(layout), () -> count, vertices, index);
 	}
 
 	/**

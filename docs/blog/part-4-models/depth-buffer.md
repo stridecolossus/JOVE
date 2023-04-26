@@ -432,8 +432,8 @@ Finally the `update` method is refactored as follows:
 @Bean
 public FrameListener update(ResourceBuffer uniform) {
     return frame -> {
-        Matrix tilt = Rotation.of(Axis.X, MathsUtil.toRadians(-90)).matrix();
-        Matrix rot = Rotation.of(Axis.Y, MathsUtil.toRadians(120)).matrix();
+        Matrix tilt = new AxisAngle(Axis.X, MathsUtil.toRadians(-90)).matrix();
+        Matrix rot = new AxisAngle(Axis.Y, MathsUtil.toRadians(120)).matrix();
         Matrix model = rot.multiply(tilt);
         Matrix matrix = projection.multiply(cam.matrix()).multiply(model);
         matrix.buffer(uniform.buffer());

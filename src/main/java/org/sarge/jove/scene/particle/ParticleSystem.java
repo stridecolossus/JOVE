@@ -380,17 +380,7 @@ public class ParticleSystem implements Frame.Listener {
 		};
 
 		// Create mesh
-		return new AbstractMesh(Primitive.POINT, layout) {
-			@Override
-			public int count() {
-				return particles.size();
-			}
-
-			@Override
-			public ByteSizedBufferable vertices() {
-				return vertices;
-			}
-		};
+		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
 	}
 
 	@Override

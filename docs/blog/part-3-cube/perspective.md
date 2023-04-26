@@ -16,7 +16,7 @@ title: Perspective Projection
 
 ## Overview
 
-This chapter we will extend the previous demo to render a rotating, textured cube.
+In this chapter we will extend the previous demo to render a rotating, textured cube.
 
 First we introduce the _view transform_ representing the viewers position and orientation and _perspective projection_ so that fragments in the scene appear correctly foreshortened.
 

@@ -15,8 +15,8 @@ class ObjectModel {
 	private final VertexComponentList<Point> positions = new VertexComponentList<>();
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
-	private final List<DefaultMesh> meshes = new ArrayList<>();
-	private DefaultMesh mesh;
+	private final List<Mesh> meshes = new ArrayList<>();
+	private MeshBuilder builder;
 
 	/**
 	 * Starts a new object group.
@@ -51,8 +51,8 @@ class ObjectModel {
 		}
 
 		// Start new model
-		mesh = new RemoveDuplicateMesh(new CompoundLayout(layout));
-		meshes.add(mesh);
+		builder = new RemoveDuplicateMeshBuilder(new CompoundLayout(layout));
+		meshes.add(builder.mesh());
 	}
 
 	/**
@@ -80,7 +80,7 @@ class ObjectModel {
 	 * Adds a model vertex.
 	 */
 	public void add(Vertex vertex) {
-		mesh.add(vertex);
+		builder.add(vertex);
 	}
 
 	/**
@@ -88,7 +88,6 @@ class ObjectModel {
 	 * @return Model(s)
 	 */
 	public List<Mesh> models() {
-//		build();
 		return new ArrayList<>(meshes);
 	}
 	// TODO - check all groups have same layout

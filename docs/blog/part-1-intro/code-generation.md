@@ -236,7 +236,7 @@ public class Processor {
 }
 ```
 
-The Vulkan enumeration constant names are often extremely long since (with a couple of exceptions) _every_ value is prefixed with the enumeration name.  We therefore build a _prefix_ so that the values can be truncated:
+The Vulkan enumeration constant names are often extremely long since (with a couple of exceptions) _every_ value is prefixed with the enumeration name.  This is because a native `typedef` is essentially a synonym rather than an actual 'type', hence each constant has to be globally unique.  This is obviously not the case for a Java enumeration where the constants only need to be distinct within that type, therefore we build a _prefix_ so that the names can be truncated:
 
 ```java
 public void enumeration(String name, Map<String, Long> values) {
@@ -330,7 +330,7 @@ public Generator() {
 }
 ```
 
-The generate method loads the template and injects a map of arguments:
+The `generate` method loads the template and injects a map of arguments:
 
 ```java
 public String generate(String name, Map<String, ? extends Object> data) {
@@ -357,7 +357,7 @@ map.put("name", name);
 map.put("values", transformed);
 ```
 
-And finally the generator applies to template to generate the source file:
+And finally the generator applies the template to generate the source file:
 
 ```java
 String source = proc.generate("enumeration.template.txt", map);
@@ -388,7 +388,7 @@ public enum $name implements IntEnum {
 }
 ```
 
-Notes:
+Where:
 
 * The tokens prefixed by the dollar character are the injected arguments.
 

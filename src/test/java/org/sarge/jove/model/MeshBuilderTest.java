@@ -1,7 +1,9 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
@@ -9,35 +11,46 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.scene.volume.Bounds;
 
-public class DefaultMeshTest {
-	private DefaultMesh mesh;
+public class MeshBuilderTest {
+	private MeshBuilder builder;
+	private Mesh mesh;
 	private Vertex vertex;
 
 	@BeforeEach
 	void before() {
-		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT));
 		vertex = new Vertex(Point.ORIGIN);
+		builder = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT));
+		mesh = builder.mesh();
 	}
 
-	@DisplayName("A new mesh...")
+	@DisplayName("A new mesh builder...")
 	@Nested
 	class New {
+    	@DisplayName("can construct a mesh")
     	@Test
-    	void constructor() {
+    	void mesh() {
+    		assertNotNull(mesh);
+    		assertNotNull(mesh.vertices());
     		assertEquals(Primitive.TRIANGLE, mesh.primitive());
-    		assertEquals(new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), mesh.layout());
+    		assertEquals(new CompoundLayout(Point.LAYOUT), mesh.layout());
     	}
 
-    	@DisplayName("initially has no vertex data")
+    	@DisplayName("has no vertex data")
     	@Test
     	void empty() {
     		assertEquals(0, mesh.count());
     	}
 
-    	@DisplayName("can have vertex data added")
+    	@DisplayName("does not have an index")
+    	@Test
+    	void index() {
+    		assertEquals(Optional.empty(), mesh.index());
+    	}
+
+    	@DisplayName("can add vertices")
     	@Test
     	void add() {
-    		mesh.add(vertex);
+    		builder.add(vertex);
     	}
 	}
 
@@ -46,23 +59,26 @@ public class DefaultMeshTest {
 	class VertexData {
 		@BeforeEach
 		void before() {
-			mesh.add(vertex);
-			mesh.add(vertex);
-			mesh.add(vertex);
+			builder.add(vertex);
+			builder.add(vertex);
+			builder.add(vertex);
 		}
 
 		@DisplayName("has a draw count depending on the number of vertices")
 		@Test
 		void add() {
-			assertEquals(3, mesh.count());
+			assertEquals(3, builder.count());
 		}
 
-		@DisplayName("can construct the vertex buffer")
+		@DisplayName("generates a vertex buffer")
 		@Test
 		void vertices() {
 			final ByteSizedBufferable vertices = mesh.vertices();
-			final int len = 3 * (3 + 3) * Float.BYTES;
-			assertEquals(len, vertices.length());
+			final var bb = mock(ByteBuffer.class);
+			final int len = 3 * 3;
+			assertEquals(len * Float.BYTES, vertices.length());
+			vertices.buffer(bb);
+			verify(bb, times(len)).putFloat(0);
 		}
 
 		@DisplayName("does not have an index buffer")
@@ -79,26 +95,26 @@ public class DefaultMeshTest {
 		@Test
 		void bounds() {
 			final Point point = new Point(1, 2, 3);
-			mesh.add(vertex);
-			mesh.add(vertex);
-			mesh.add(new Vertex(point));
-			assertEquals(new Bounds(Point.ORIGIN, point), mesh.bounds());
+			builder.add(vertex);
+			builder.add(vertex);
+			builder.add(new Vertex(point));
+			assertEquals(new Bounds(Point.ORIGIN, point), builder.bounds());
 		}
 
-		@DisplayName("is empty of the mesh contains the same vertex")
+		@DisplayName("is empty if the mesh contains the same vertex")
 		@Test
 		void empty() {
-			mesh.add(vertex);
-			mesh.add(vertex);
-			mesh.add(vertex);
-			assertEquals(Bounds.EMPTY, mesh.bounds());
+			builder.add(vertex);
+			builder.add(vertex);
+			builder.add(vertex);
+			assertEquals(Bounds.EMPTY, builder.bounds());
 		}
 
 		@DisplayName("cannot be generated if the mesh layout does not contain a vertex position")
 		@Test
 		void layout() {
-			mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Normal.LAYOUT));
-			assertThrows(IllegalStateException.class, () -> mesh.bounds());
+			builder = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout());
+			assertThrows(IllegalStateException.class, () -> builder.bounds());
 		}
 	}
 
@@ -117,11 +133,11 @@ public class DefaultMeshTest {
 
     		// Populate model
     		for(Vertex v : vertices) {
-    			mesh.add(v);
+    			builder.add(v);
     		}
 
     		// Compute normals
-    		mesh.compute();
+    		builder.compute();
 
     		// Check vertex normals
     		for(var v : vertices) {
@@ -129,18 +145,11 @@ public class DefaultMeshTest {
     		}
     	}
 
-    	@DisplayName("cannot be computed if the mesh does not contain vertex data")
-    	@Test
-    	void vertices() {
-    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Normal.LAYOUT));
-    		assertThrows(IllegalStateException.class, () -> mesh.compute());
-    	}
-
     	@DisplayName("cannot be computed if the mesh does not contain vertex normals")
     	@Test
     	void normals() {
-    		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout());
-    		assertThrows(IllegalStateException.class, () -> mesh.compute());
+    		builder = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout());
+    		assertThrows(IllegalStateException.class, () -> builder.compute());
     	}
     }
 }

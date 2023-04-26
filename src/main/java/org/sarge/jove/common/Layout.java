@@ -5,23 +5,23 @@ import org.sarge.lib.util.Check;
 /**
  * A <i>layout</i> describes the structure and format of common data tuples such as image pixels or vertex components.
  * <p>
- * A component is comprised of:
+ * A layout is comprised of:
  * <ul>
- * <li>The {@link #size} number of elements in the component, e.g. 3 for a vertex normal</li>
- * <li>The {@link #type} of the component, e.g. {@link ByteSized.Type#FLOAT}</li>
+ * <li>The {@link #size} number of data elements, e.g. 3 for a vertex normal</li>
+ * <li>The {@link #type} of the data, e.g. {@link ByteSized.Type#FLOAT}</li>
  * <li>Whether the data is {@link #signed}</li>
  * <li>The number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
  * </ul>
  * <p>
- * Example component layout for a floating-point 3-tuple normal: <pre>new Component(3, Type.FLOAT, true, Float.BYTES)</pre>
+ * Example layout for a floating-point 3-tuple normal: <pre>new Component(3, Type.FLOAT, true, Float.BYTES)</pre>
  * <p>
- * The {@link #toString()} representation of a component is a compacted string with a {@code U} suffix for unsigned types.
+ * The {@link #toString()} representation of a layout is a compacted string with a {@code U} suffix for unsigned types.
  * For example the above layout is represented as {@code 3-FLOAT4}.
  * <p>
  */
 public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 	/**
-	 * A <i>component</i> is a data type with a specified layout.
+	 * A <i>component</i> defines a data type with a layout.
 	 */
 	public interface Component {
 		/**

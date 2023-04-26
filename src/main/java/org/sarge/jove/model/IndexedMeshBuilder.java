@@ -18,7 +18,7 @@ import org.sarge.jove.util.BitField;
  * <p>
  * @author Sarge
  */
-public class IndexedMesh extends DefaultMesh {
+public class IndexedMeshBuilder extends MeshBuilder {
 	/**
 	 * Size of a {@code short} index.
 	 */
@@ -43,7 +43,7 @@ public class IndexedMesh extends DefaultMesh {
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
 	 */
-	public IndexedMesh(Primitive primitive, CompoundLayout layout) {
+	public IndexedMeshBuilder(Primitive primitive, CompoundLayout layout) {
 		super(primitive, layout);
 	}
 
@@ -62,7 +62,7 @@ public class IndexedMesh extends DefaultMesh {
 	 * @param index Vertex index
 	 * @throws IndexOutOfBoundsException if {@link #index} is not a valid vertex index
 	 */
-	public IndexedMesh add(int index) {
+	public IndexedMeshBuilder add(int index) {
 		if((index < 0) || (index >= super.count())) throw new IndexOutOfBoundsException(index);
 		this.index.add(index);
 		return this;
@@ -71,7 +71,7 @@ public class IndexedMesh extends DefaultMesh {
 	/**
 	 * Restarts the index.
 	 */
-	public IndexedMesh restart() {
+	public IndexedMeshBuilder restart() {
 		index.add(-1);
 		++restart;
 		return this;
@@ -87,14 +87,14 @@ public class IndexedMesh extends DefaultMesh {
 	 * @param compact Whether to use compact indices
 	 * @see #isIntegerIndex(int)
 	 */
-	public IndexedMesh compact(boolean compact) {
+	public IndexedMeshBuilder compact(boolean compact) {
 		this.compact = compact;
 		return this;
 	}
 
 	@Override
-	public Optional<ByteSizedBufferable> index() {
-		return Optional.of(new IndexBuffer());
+	protected ByteSizedBufferable index() {
+		return new IndexBuffer();
 	}
 
 	/**

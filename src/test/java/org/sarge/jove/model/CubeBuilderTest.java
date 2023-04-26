@@ -17,12 +17,22 @@ public class CubeBuilderTest {
 
 	@Test
 	void build() {
-		final DefaultMesh mesh = builder.size(2).build();
+		final Mesh mesh = builder.size(2).build();
 		final int count = 6 * 2 * 3;
 		final var layout = new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 		assertEquals(Primitive.TRIANGLE, mesh.primitive());
 		assertEquals(count, mesh.count());
 		assertEquals(layout, mesh.layout());
 		assertEquals(count * layout.stride() , mesh.vertices().length());
+	}
+
+	@Test
+	void test() {
+		for(int n = 0; n < 8; ++n) {
+			float x = (n & 2) != 0 ? +1 : -1;
+			float y = (n & 1) != 0 ? +1 : -1;
+			float z = (n & 4) != 0 ? -1 : +1;
+			System.out.println(n+" "+x+","+y+","+z);
+		}
 	}
 }

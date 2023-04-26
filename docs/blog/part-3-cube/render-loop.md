@@ -886,7 +886,7 @@ Note that the fence is only reset _after_ the acquire step which may fail with a
 The presentation step is factored out similarly:
 
 ```java
-public void present(Command.Buffer render) {
+public void present(Command.Buffer render, int index, Swapchain swapchain) {
     // Submit render task
     submit(render);
 
@@ -896,7 +896,6 @@ public void present(Command.Buffer render) {
     // Present completed frame
     WorkQueue queue = render.pool().queue();
     swapchain.present(queue, index, ready);
-    swapchain = null;
 }
 ```
 
