@@ -8,30 +8,27 @@ import org.junit.jupiter.api.*;
 
 class GlyphTest {
 	private Glyph glyph;
-	private Glyph kerning;
 
 	@BeforeEach
 	void before() {
-		glyph = new Glyph(3);
-		kerning = glyph.kerning(Map.of('W', 4f));
+		glyph = new Glyph(3, Map.of('W', 4f));
 	}
 
+	@DisplayName("A glyph has a character advance")
 	@Test
 	void advance() {
 		assertEquals(3f, glyph.advance());
-		assertEquals(3f, glyph.advance('W'));
 	}
 
+	@DisplayName("A glyph has a character advance to the next character")
+	@Test
+	void next() {
+		assertEquals(3f, glyph.advance('?'));
+	}
+
+	@DisplayName("A glyph can override the character advance for kerning pairs")
 	@Test
 	void kerning() {
-		assertEquals(3f, kerning.advance());
-		assertEquals(3f, kerning.advance('?'));
-		assertEquals(4f, kerning.advance('W'));
-	}
-
-	@Test
-	void write() {
-		assertEquals(Map.of("advance", 3f), glyph.write());
-		assertEquals(Map.of("advance", 3f, "kerning", Map.of('W', 4f)), kerning.write());
+		assertEquals(4f, glyph.advance('W'));
 	}
 }

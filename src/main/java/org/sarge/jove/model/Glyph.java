@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import java.util.*;
+import java.util.Map;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.util.Check;
@@ -25,25 +25,20 @@ public record Glyph(float advance, Map<Character, Float> kerning) {
 	}
 
 	/**
+	 * Constructor for a glyph without kerning metadata.
+	 * @param advance Character advance
+	 */
+	public Glyph(float advance) {
+		this(advance, DEFAULT_KERNING);
+	}
+
+	/**
 	 * Advance from this glyph to the next character taking into account kerning pairs.
 	 * @param next Next character
 	 * @return Character advance
 	 */
 	public float advance(char next) {
 		return kerning.getOrDefault(next, advance);
-	}
-
-	/**
-	 * Writes this glyph as a YAML document.
-	 * @return Glyph document
-	 */
-	public Map<String, Object> write() {
-		final var map = new HashMap<String, Object>();
-		map.put("advance", advance);
-		if(!kerning.isEmpty()) {
-			map.put("kerning", kerning);
-		}
-		return map;
 	}
 
 	@Override

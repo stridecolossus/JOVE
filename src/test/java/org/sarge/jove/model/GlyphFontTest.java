@@ -15,35 +15,35 @@ class GlyphFontTest {
 
 	@BeforeEach
 	void before() {
-		glyph = new Glyph(2);
-		font = new GlyphFont(3, List.of(glyph), 4);
+		glyph = new Glyph(2, Map.of('W', 3f));
+		font = new GlyphFont(4, List.of(glyph), 5);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(3, font.start());
 		assertEquals(1, font.glyphs());
-		assertEquals(4, font.tiles());
+		assertEquals(4, font.start());
+		assertEquals(5, font.tiles());
 	}
 
 	@DisplayName("A glyph can be retrieved by character")
 	@Test
 	void glyph() {
-		assertEquals(glyph, font.glyph((char) 3));
+		assertEquals(glyph, font.glyph((char) 4));
 	}
 
 	@DisplayName("A glyph index must be within the available character range")
 	@Test
 	void bounds() {
-		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 2));
-		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 4));
+		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 3));
+		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 5));
 	}
 
 	@DisplayName("The number of glyphs must fit within the texture tiles")
 	@Test
 	void tiles() {
-		final var glyphs = Collections.nCopies(17, glyph);
-		assertThrows(IllegalStateException.class, () -> new GlyphFont(3, glyphs, 4));
+		final var glyphs = Collections.nCopies(26, glyph);
+		assertThrows(IllegalStateException.class, () -> new GlyphFont(4, glyphs, 5));
 	}
 
 	@Nested
@@ -58,30 +58,21 @@ class GlyphFontTest {
 		@Test
 		void load() throws Exception {
 			final Element root = new Element.Builder()
-					.child("start", 3)
-					.child("tiles", 4)
+					.child("start", 4)
+					.child("tiles", 5)
 					.child()
 						.name("glyphs")
 						.child()
-							.child("advance", 5)
-							.end()
-						.child()
-							.child("advance", 6)
+							.child("advance", 2)
 							.child()
 								.name("kerning")
-								.child("W", 7)
+								.child("W", 3)
 								.end()
 							.end()
 						.end()
 					.build();
 
-			font = loader.load(root);
-			assertEquals(2, font.glyphs());
-			assertEquals(3, font.start());
-			assertEquals(4, font.tiles());
-
-			assertEquals(new Glyph(5), font.glyph((char) 3));
-			assertEquals(new Glyph(6).kerning(Map.of('W', 7f)), font.glyph((char) 4));
+			assertEquals(font, loader.load(root));
 		}
 
 		@Test

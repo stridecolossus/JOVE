@@ -32,6 +32,9 @@ public class GlyphMeshBuilder {
 		this.font = notNull(font);
 		this.tiles = font.tiles();
 		this.size = 1f / tiles;
+
+// TODO
+cursor = new Point(-0.9f, 0, 0);
 	}
 
 	/**
@@ -95,18 +98,30 @@ public class GlyphMeshBuilder {
 	}
 
 	// TODO
+
+	private Glyph prev;
+
 	public GlyphMeshBuilder insert(int index, char ch) {
 		// Lookup glyph for this character
 		final Glyph glyph = font.glyph(ch);
+
+		if(prev != null) {
+			final float advance = prev.advance(ch) * scale;
+			cursor = new Point(cursor.x + advance, cursor.y, cursor.z);
+		}
+		prev = glyph;
 
 		// Render glyph
 		if(!Character.isWhitespace(ch)) {
 			render(ch);
 		}
 
-		// Advance cursor for next character
-		cursor = new Point(cursor.x, cursor.y, cursor.z);
-		//x += glyph.advance();
+//		// Advance cursor for next character
+//		glyph.advance(ch)
+//
+//		cursor = new Point(cursor.x + glyph.advance() * scale, cursor.y, cursor.z);
+////		cursor = new Point(cursor.x + 1/20f, cursor.y, cursor.z);
+//		//x += glyph.advance();
 
 		return this;
 	}

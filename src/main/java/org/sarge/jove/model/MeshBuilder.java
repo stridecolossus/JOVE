@@ -14,7 +14,7 @@ import org.sarge.jove.scene.volume.Bounds;
 import org.sarge.lib.util.Check;
 
 /**
- * A <i>mesh builder</i> is used to construct a renderable model.
+ * A <i>mesh builder</i> is used to construct a renderable {@link Mesh}.
  * <p>
  * Vertex normals can be automatically computed using the {@link #compute()} method.
  * <p>

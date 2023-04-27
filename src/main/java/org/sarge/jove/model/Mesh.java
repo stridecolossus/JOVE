@@ -10,7 +10,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 
 /**
- * A <i>mesh</i> is a renderable model comprising a vertex buffer and an optional index.
+ * A <i>mesh</i> is a renderable model comprising a vertex buffer and optional index.
  * @author Sarge
  */
 public final class Mesh {

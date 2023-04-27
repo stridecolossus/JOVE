@@ -1,9 +1,11 @@
 package org.sarge.jove.model;
 
+import static java.util.stream.Collectors.toMap;
 import static org.sarge.lib.util.Check.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.io.ResourceLoader;
@@ -109,28 +111,41 @@ public class GlyphFont {
 		}
 
 		@Override
-		public GlyphFont load(Element data) throws Exception {
-			final int start = data.text("start").map(Integer::parseInt).orElse(0);
-			final int tiles = data.text("tiles").map(Integer::parseInt).orElse(16);
-			final List<Glyph> glyphs = data.child("glyphs").children().map(Loader::glyph).toList();
+		public GlyphFont load(Element doc) throws Exception {
+			final int start = doc.text("start").map(Integer::parseInt).orElse(0);
+			final int tiles = doc.text("tiles").map(Integer::parseInt).orElse(16);
+			final List<Glyph> glyphs = doc.child("glyphs").children().map(Loader::glyph).toList();
 			return new GlyphFont(start, glyphs, tiles);
 		}
 
 		/**
 		 * Loads glyph metrics.
 		 */
-		private static Glyph glyph(Element data) {
-			final float advance = data.child("advance").transform(Float::parseFloat);
-			final var kerning = data.optional("kerning").map(Loader::kerning).orElse(Glyph.DEFAULT_KERNING);
+		private static Glyph glyph(Element doc) {
+			if(doc.name().equals("advance")) {
+				return new Glyph(doc.text().transform(Float::parseFloat));
+			}
+
+			final float advance = doc.child("advance").transform(Float::parseFloat);
+			final var kerning = doc.optional("kerning").map(Loader::kerning).orElse(Glyph.DEFAULT_KERNING);
 			return new Glyph(advance, kerning);
 		}
 
 		/**
 		 * Loads the kerning pairs for a glyph.
 		 */
-		private static Map<Character, Float> kerning(Element data) {
-			// TODO
-			return null;
+		private static Map<Character, Float> kerning(Element doc) {
+			return doc
+					.children()
+					.map(Loader::pair)
+					.collect(toMap(Entry::getKey, Entry::getValue));
+		}
+
+		private static Entry<Character, Float> pair(Element doc) {
+			final String name = doc.name();
+			if(name.length() != 1) throw new IllegalArgumentException("Expected single character for kerning pair: " + name);
+			final float advance = doc.text().transform(Float::parseFloat);
+			return Map.entry(name.charAt(0), advance);
 		}
 
 		/**
@@ -142,7 +157,7 @@ public class GlyphFont {
 			// Write glyph metadata
 			final var glyphs = font.glyphs
 					.stream()
-					.map(Glyph::write)
+					.map(Loader::write)
 					.toList();
 
 			// Write font metadata
@@ -155,6 +170,24 @@ public class GlyphFont {
 			// Output to a YAML document
 			final Yaml yaml = new Yaml();
 			yaml.dump(data, out);
+		}
+
+		/**
+		 * Outputs a glyph.
+		 */
+		private static Object write(Glyph glyph) {
+			// Output glyph metadata
+			final var map = new HashMap<String, Object>();
+//			map.put("char", glyph);
+			map.put("advance", glyph.advance());
+
+			// Output kerning pairs
+			final var kerning = glyph.kerning();
+			if(!kerning.isEmpty()) {
+				map.put("kerning", kerning);
+			}
+
+			return map;
 		}
 	}
 }

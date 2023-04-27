@@ -18,6 +18,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 
 	public ColourBlendStageBuilder() {
 		info.flags = 0;			// Reserved
+		info.logicOpEnable = false;
 		info.logicOp = VkLogicOp.COPY;
 		Arrays.fill(info.blendConstants, 1);
 	}
@@ -29,11 +30,12 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	public AttachmentBuilder attachment() {
 		final var builder = new AttachmentBuilder();
 		builder.enabled = true;
+		attachments.add(builder);
 		return builder;
 	}
 
 	/**
-	 * Enables colour blending.
+	 * Enables global bitwise colour blending.
 	 */
 	public ColourBlendStageBuilder enable() {
 		info.logicOpEnable = true;
@@ -65,16 +67,12 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 
 	@Override
 	VkPipelineColorBlendStateCreateInfo get() {
-		// Init default attachment if none specified
 		if(attachments.isEmpty()) {
-			final var builder = new AttachmentBuilder();
-			builder.build();
+			attachments.add(new AttachmentBuilder());
 		}
 
-		// Add attachment descriptors
 		info.attachmentCount = attachments.size();
 		info.pAttachments = StructureCollector.pointer(attachments, new VkPipelineColorBlendAttachmentState(), AttachmentBuilder::populate);
-
 		return info;
 	}
 
@@ -91,18 +89,25 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	}
 
 	/**
-	 * Nested builder for a colour-blend attachment.
+	 * Builder for a colour-blend attachment.
 	 */
 	public class AttachmentBuilder {
 		/**
 		 * Blend operation builder.
 		 */
 		public class BlendOperationBuilder {
-			private VkBlendFactor src = VkBlendFactor.ONE;
-			private VkBlendFactor dest = VkBlendFactor.ZERO;
+			private VkBlendFactor src;
+			private VkBlendFactor dest;
 			private VkBlendOp blend = VkBlendOp.ADD;
 
-			private BlendOperationBuilder() {
+			/**
+			 * Constructor.
+			 * @param src		Source factor
+			 * @param dest		Destination factor
+			 */
+			private BlendOperationBuilder(VkBlendFactor src, VkBlendFactor dest) {
+				source(src);
+				destination(dest);
 			}
 
 			/**
@@ -142,13 +147,12 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 
 		private static final List<VkColorComponent> MASK = Arrays.asList(VkColorComponent.values());
 
-		private boolean enabled;
+		private final BlendOperationBuilder colour = new BlendOperationBuilder(VkBlendFactor.SRC_ALPHA, VkBlendFactor.ONE_MINUS_SRC_ALPHA);
+		private final BlendOperationBuilder alpha = new BlendOperationBuilder(VkBlendFactor.ONE, VkBlendFactor.ZERO);
 		private List<VkColorComponent> mask = MASK;
-		private final BlendOperationBuilder colour = new BlendOperationBuilder();
-		private final BlendOperationBuilder alpha = new BlendOperationBuilder();
+		private boolean enabled;
 
 		private AttachmentBuilder() {
-			attachments.add(this);
 		}
 
 		/**

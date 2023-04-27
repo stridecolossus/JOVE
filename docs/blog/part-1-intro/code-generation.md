@@ -46,9 +46,11 @@ Sometime later we were encouraged by a friend to make a second attempt.  Our fir
 
 Unfortunately there were none (that we could find) so our focus shifted to implementing custom bindings to the native Vulkan library.
 
-Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.  Additionally JNI offered nothing to support the large number of enumerations and structures used by Vulkan.
+Straight JNI we immediately discounted - no one in their right mind would choose to implement JNI bindings for an API as large as Vulkan.  It had also been (thankfully) many years since we wrote any C/C++ code and we certainly didn't intend starting now.  Additionally JNI offers nothing to support the large number of enumerations and structures used by Vulkan.
 
-There is a on-going JSR for a pure-Java alternative to JNI (project [Panama](https://openjdk.java.net/projects/panama/)).  Although it appears to support much of what we want there are some misgivings, the API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer.  Also at the time of writing the library was still in a relatively immature and fluid state, required an incubator JVM build, and there was little in the way of tutorials or examples.
+Project [Panama](https://openjdk.java.net/projects/panama/) is an on-going JSR for a programmatic pure-Java alternative to JNI, in particular it provides the `jextract` tool that generates an API from a native header file.  This is perfect for our requirements but there are some misgivings.  The API is _extremely_ complicated with a morass of code required to perform even the simplest call to the native layer.  Also at the time of writing the technology was still in a relatively immature and fluid state, required an incubator JVM build, and there was little in the way of tutorials or examples.
+
+> If and when Panama becomes a fully fledged part of the JDK and there is more support in terms of documentation, tutorials, etc. then it it likely to be the best solution to our problem.
 
 Next we considered SWIG which is the code-generation technology used by LWJGL.  Again we were not encouraged, proprietary descriptors are required to bind to the native layer and we have already covered our issues with the resultant code.
 
