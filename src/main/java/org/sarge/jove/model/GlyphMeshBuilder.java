@@ -113,7 +113,7 @@ cursor = new Point(-0.9f, 0, 0);
 
 		// Render glyph
 		if(!Character.isWhitespace(ch)) {
-			render(ch);
+			render(ch - font.start());
 		}
 
 //		// Advance cursor for next character
@@ -145,9 +145,9 @@ cursor = new Point(-0.9f, 0, 0);
 	 * others calculated from font height & advance
 	 *
 	 */
-	private void render(char ch) {
+	private void render(int index) {
 
-		final Corners corners = corners(ch);
+		final Corners corners = corners(index);
 		final float w = size * scale;
 
 		final var bl = new Coordinate2D(corners.topLeft().u(), corners.bottomRight().v());

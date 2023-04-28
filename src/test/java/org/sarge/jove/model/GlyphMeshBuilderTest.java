@@ -19,7 +19,7 @@ class GlyphMeshBuilderTest {
 
 	@BeforeEach
 	void before() {
-		glyph = new Glyph(3);
+		glyph = new Glyph('A', 3);
 		font = new GlyphFont(0, Collections.nCopies(256, glyph), 16);
 		builder = new GlyphMeshBuilder(font);
 		mesh = builder.mesh();

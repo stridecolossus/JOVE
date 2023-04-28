@@ -9,17 +9,19 @@ import org.sarge.lib.util.Check;
  * A <i>glyph</i> defines the layout properties of a character in a {@link GlyphFont}.
  * @author Sarge
  */
-public record Glyph(float advance, Map<Character, Float> kerning) {
+public record Glyph(int code, float advance, Map<Integer, Float> kerning) {
 	/**
 	 * Empty kerning pairs.
 	 */
-	public static final Map<Character, Float> DEFAULT_KERNING = Map.of();
+	public static final Map<Integer, Float> DEFAULT_KERNING = Map.of();
 
 	/**
 	 * Constructor.
-	 * @param advance Character advance
+	 * @param code			Code-point
+	 * @param advance 		Character advance
 	 */
 	public Glyph {
+		Check.zeroOrMore(code);
 		Check.zeroOrMore(advance);
 		kerning = Map.copyOf(kerning);
 	}
@@ -28,8 +30,8 @@ public record Glyph(float advance, Map<Character, Float> kerning) {
 	 * Constructor for a glyph without kerning metadata.
 	 * @param advance Character advance
 	 */
-	public Glyph(float advance) {
-		this(advance, DEFAULT_KERNING);
+	public Glyph(int index, float advance) {
+		this(index, advance, DEFAULT_KERNING);
 	}
 
 	/**
@@ -37,13 +39,14 @@ public record Glyph(float advance, Map<Character, Float> kerning) {
 	 * @param next Next character
 	 * @return Character advance
 	 */
-	public float advance(char next) {
+	public float advance(int next) {
 		return kerning.getOrDefault(next, advance);
 	}
 
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
+				.append("code", code)
 				.append("advance", advance)
 				.append("kerning", kerning.size())
 				.build();

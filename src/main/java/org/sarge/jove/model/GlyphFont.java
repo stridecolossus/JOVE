@@ -122,30 +122,26 @@ public class GlyphFont {
 		 * Loads glyph metrics.
 		 */
 		private static Glyph glyph(Element doc) {
-			if(doc.name().equals("advance")) {
-				return new Glyph(doc.text().transform(Float::parseFloat));
-			}
-
+			final int code = doc.child("code").transform(Integer::parseInt);
 			final float advance = doc.child("advance").transform(Float::parseFloat);
 			final var kerning = doc.optional("kerning").map(Loader::kerning).orElse(Glyph.DEFAULT_KERNING);
-			return new Glyph(advance, kerning);
+			return new Glyph(code, advance, kerning);
 		}
 
 		/**
 		 * Loads the kerning pairs for a glyph.
 		 */
-		private static Map<Character, Float> kerning(Element doc) {
+		private static Map<Integer, Float> kerning(Element doc) {
 			return doc
 					.children()
 					.map(Loader::pair)
 					.collect(toMap(Entry::getKey, Entry::getValue));
 		}
 
-		private static Entry<Character, Float> pair(Element doc) {
-			final String name = doc.name();
-			if(name.length() != 1) throw new IllegalArgumentException("Expected single character for kerning pair: " + name);
+		private static Entry<Integer, Float> pair(Element doc) {
+			final int code = doc.name().transform(Integer::parseInt);
 			final float advance = doc.text().transform(Float::parseFloat);
-			return Map.entry(name.charAt(0), advance);
+			return Map.entry(code, advance);
 		}
 
 		/**
@@ -178,7 +174,7 @@ public class GlyphFont {
 		private static Object write(Glyph glyph) {
 			// Output glyph metadata
 			final var map = new HashMap<String, Object>();
-//			map.put("char", glyph);
+			map.put("code", glyph.code());
 			map.put("advance", glyph.advance());
 
 			// Output kerning pairs

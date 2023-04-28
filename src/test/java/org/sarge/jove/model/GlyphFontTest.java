@@ -15,35 +15,35 @@ class GlyphFontTest {
 
 	@BeforeEach
 	void before() {
-		glyph = new Glyph(2, Map.of('W', 3f));
-		font = new GlyphFont(4, List.of(glyph), 5);
+		glyph = new Glyph('A', 3, Map.of((int) 'W', 4f));
+		font = new GlyphFont('A', List.of(glyph), 16);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(1, font.glyphs());
-		assertEquals(4, font.start());
-		assertEquals(5, font.tiles());
+		assertEquals('A', font.start());
+		assertEquals(16, font.tiles());
 	}
 
 	@DisplayName("A glyph can be retrieved by character")
 	@Test
 	void glyph() {
-		assertEquals(glyph, font.glyph((char) 4));
+		assertEquals(glyph, font.glyph('A'));
 	}
 
 	@DisplayName("A glyph index must be within the available character range")
 	@Test
 	void bounds() {
-		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 3));
-		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 5));
+		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 31));
+		assertThrows(IndexOutOfBoundsException.class, () -> font.glyph((char) 999));
 	}
 
 	@DisplayName("The number of glyphs must fit within the texture tiles")
 	@Test
 	void tiles() {
-		final var glyphs = Collections.nCopies(26, glyph);
-		assertThrows(IllegalStateException.class, () -> new GlyphFont(4, glyphs, 5));
+		final var glyphs = Collections.nCopies(256 + 1, glyph);
+		assertThrows(IllegalStateException.class, () -> new GlyphFont(0, glyphs, 16));
 	}
 
 	@Nested
@@ -58,15 +58,16 @@ class GlyphFontTest {
 		@Test
 		void load() throws Exception {
 			final Element root = new Element.Builder()
-					.child("start", 4)
-					.child("tiles", 5)
+					.child("start", (int) 'A')
+					.child("tiles", 16)
 					.child()
 						.name("glyphs")
 						.child()
-							.child("advance", 2)
+							.child("code", (int) 'A')
+							.child("advance", 3)
 							.child()
 								.name("kerning")
-								.child("W", 3)
+								.child(String.valueOf((int) 'W'), "4")
 								.end()
 							.end()
 						.end()
