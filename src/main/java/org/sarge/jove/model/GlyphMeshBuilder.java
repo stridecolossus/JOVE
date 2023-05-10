@@ -3,50 +3,63 @@ package org.sarge.jove.model;
 import static org.sarge.lib.util.Check.*;
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.regex.*;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.Coordinate.Coordinate2D.Corners;
+import org.sarge.jove.model.TextureFont.Metrics;
 
 /**
  * A <i>glyph mesh builder</i> is used to construct the vertex data for multi-line text comprising glyph quads.
  * @author Sarge
  */
 public class GlyphMeshBuilder {
-	private final GlyphFont font;
+	private static final Pattern PATTERN = Pattern.compile("\\S+");
+
+	private final TextureFont font;
 	private final MeshBuilder mesh = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
 	private final int tiles;
 	private final float size;
 	private float scale = 1;
-//	private float x, y;
-	private Point cursor = Point.ORIGIN;
+	private float x, y;
 	private float margin = Float.MAX_VALUE;
 
 	/**
 	 * Constructor.
-	 * @param atlas Glyph atlas for this mesh
+	 * @param font Texture font for this mesh
 	 */
-	public GlyphMeshBuilder(GlyphFont font) {
+	public GlyphMeshBuilder(TextureFont font) {
 		this.font = notNull(font);
 		this.tiles = font.tiles();
 		this.size = 1f / tiles;
-
-// TODO
-cursor = new Point(-0.9f, 0, 0);
 	}
 
 	/**
 	 * @return Position of the next character
 	 */
 	public Point cursor() {
-		return cursor; // new Point(x, y, 0);
+		return new Point(x, y, 0);
 	}
 
-	public GlyphMeshBuilder cursor(Point cursor) {
-		this.cursor = notNull(cursor);
+	/**
+	 * Sets the cursor position.
+	 */
+	public GlyphMeshBuilder cursor(float x, float y) {
+		this.x = x;
+		this.y = y;
 		return this;
+	}
+
+	/**
+	 * @return Whether words are line-wrapped by this builder
+	 * @see #margin(float)
+	 */
+	public boolean isLineWrapping() {
+		return margin < Float.MAX_VALUE;
 	}
 
 	/**
@@ -59,7 +72,7 @@ cursor = new Point(-0.9f, 0, 0);
 	}
 
 	/**
-	 * Sets the glyph size scale for this mesh.
+	 * Sets the glyph size scale for this mesh (default is no scaling).
 	 * @param scale Glyph scale
 	 */
 	public GlyphMeshBuilder scale(float scale) {
@@ -68,100 +81,116 @@ cursor = new Point(-0.9f, 0, 0);
 	}
 
 	/**
-	 * @return Glyph mesh
+	 * @return Underlying glyph mesh
 	 */
 	public Mesh mesh() {
 		return mesh.mesh();
 	}
 
 	/**
-	 * Appends a character to this mesh.
-	 * TODO - White-space characters
-	 * @param ch Character to add
-	 * @see GlyphFont#glyph(char)
+	 * Adds texture glyphs for the given text.
+	 * <p>
+	 * Notes:
+	 * <ul>
+	 * <li>Text is line-wrapped about the {@link #margin(float)} if configured</li>
+	 * <li>Glyphs are not generated for white-space characters</li>
+	 * <li>The {@link #cursor()} position is updated to the end of the new text</li>
+	 * </ul>
+	 * <p>
+	 * @param text Text to add
+	 * @see TextureFont#metrics(String)
 	 */
-	public GlyphMeshBuilder add(char ch) {
-//		return insert(vertices.size(), ch);
-		return insert(0, ch); // TODO
-	}
+	public GlyphMeshBuilder add(String text) {
+		final boolean wrap = isLineWrapping();
+		final Matcher matcher = PATTERN.matcher(text);
+		int prev = 0;
+		while(matcher.find()) {
+			// Determine total advance of the next word
+			final int start = matcher.start();
+			final int end = matcher.end();
+			final String word = text.substring(start, end);
+			final List<Metrics> metrics = font.metrics(word);
+			final float advance = advance(metrics);
 
-	/**
-	 * Appends a string to this mesh.
-	 * @param str String to append
-	 * @see #add(char)
-	 */
-	public GlyphMeshBuilder add(String str) {
-		for(char ch : str.toCharArray()) {
-			add(ch);
+			// Determine total advance of the whitespace before this word
+			final String whitespace = text.substring(prev, start);
+			final float spacing = advance(font.metrics(whitespace));
+
+			// Line wrap as required
+			if(wrap && isMarginExceeded(spacing + advance)) {
+				newline();
+			}
+			else {
+				advance(spacing);
+			}
+
+			// Build character glyphs
+			for(Metrics m : metrics) {
+				add(m.coordinates());
+				advance(m.advance() * scale);
+			}
+
+			// Note start of next whitespace group
+			prev = end;
 		}
+
 		return this;
 	}
 
-	// TODO
-
-	private Glyph prev;
-
-	public GlyphMeshBuilder insert(int index, char ch) {
-		// Lookup glyph for this character
-		final Glyph glyph = font.glyph(ch);
-
-		if(prev != null) {
-			final float advance = prev.advance(ch) * scale;
-			cursor = new Point(cursor.x + advance, cursor.y, cursor.z);
-		}
-		prev = glyph;
-
-		// Render glyph
-		if(!Character.isWhitespace(ch)) {
-			render(ch - font.start());
-		}
-
-//		// Advance cursor for next character
-//		glyph.advance(ch)
-//
-//		cursor = new Point(cursor.x + glyph.advance() * scale, cursor.y, cursor.z);
-////		cursor = new Point(cursor.x + 1/20f, cursor.y, cursor.z);
-//		//x += glyph.advance();
-
-		return this;
+	/**
+	 * @param metrics Word metrics
+	 * @return Total advance of the given glyph metrics
+	 */
+	private float advance(List<Metrics> metrics) {
+		return Metrics.advance(metrics) * scale;
 	}
 
 	/**
-	 * Calculates the texture coordinate for the given glyph index.
-	 * @param index Glyph index
-	 * @return Glyph coordinates
+	 * Determines whether the given advance would exceed the configured margin requiring a new line of text.
+	 * @param advance Word advance
+	 * @return Whether to start a new line
+	 * @see #newline()
 	 */
-	private Corners corners(int index) {
-		final float x = (index % tiles) * size;
-		final float y = (index / tiles) * size;
-		final var topLeft = new Coordinate2D(x, y);
-		final var bottomRight = new Coordinate2D(x + size, y + size);
-		return new Corners(topLeft, bottomRight);
+	private boolean isMarginExceeded(float advance) {
+		return x + advance > margin;
 	}
 
 	/**
-	 * TODO
-	 * x/y = top-left
-	 * others calculated from font height & advance
-	 *
+	 * Starts a new line of text.
 	 */
-	private void render(int index) {
+	public void newline() {
+		x = 0;
+		y += (font.height() + font.leading()) * scale;
+	}
 
-		final Corners corners = corners(index);
+	/**
+	 * Advances the cursor position.
+	 * @param advance Advance
+	 */
+	private void advance(float advance) {
+		assert advance > 0;
+		x += advance;
+	}
+
+	/**
+	 * Adds a character glyph to this mesh at the current cursor position.
+	 * @param corners Glyph texture coordinates
+	 */
+	private void add(Corners corners) {
 		final float w = size * scale;
 
 		final var bl = new Coordinate2D(corners.topLeft().u(), corners.bottomRight().v());
 		final var tr = new Coordinate2D(corners.bottomRight().u(), corners.topLeft().v());
 
-		final var bottomLeft = new GlyphVertex(new Point(cursor.x, cursor.y + w, 0), bl);
-		final var topRight = new GlyphVertex(new Point(cursor.x + w, cursor.y, 0), tr);
+		final var bottomLeft = new GlyphVertex(new Point(x, y + w, 0), bl);
+		final var topRight = new GlyphVertex(new Point(x + w, y, 0), tr);
 
-		mesh.add(new GlyphVertex(new Point(cursor.x, cursor.y, 0), corners.topLeft()));
+		mesh.add(new GlyphVertex(new Point(x, y, 0), corners.topLeft()));
 		mesh.add(bottomLeft);
 		mesh.add(topRight);
 
 		mesh.add(bottomLeft);
-		mesh.add(new GlyphVertex(new Point(cursor.x + w, cursor.y + w, 0), corners.bottomRight()));
+		mesh.add(new GlyphVertex(new Point(x + w, y + w, 0), corners.bottomRight()));
 		mesh.add(topRight);
 	}
 
@@ -198,67 +227,12 @@ cursor = new Point(-0.9f, 0, 0);
 		}
 	}
 
-	/**
-	 * Deletes a portion of this mesh.
-	 * @param start		Starting index
-	 * @param num		Number of glyphs to delete
-	 * @throws IndexOutOfBoundsException if the range is out-of-bounds for this mesh
-	 */
-	public GlyphMeshBuilder delete(int start, int num) {
-//		// TODO - this is awful
-//		for(int n = start; n < num; ++n) {
-//			vertices.remove(start);
-//		}
-		return this;
-	}
-
-	public GlyphMeshBuilder delete(int index) {
-		return delete(index, 1);
-	}
-
-	/**
-	 * Clears this mesh.
-	 */
-	public GlyphMeshBuilder clear() {
-//		x = 0;
-//		y = 0;
-		cursor = Point.ORIGIN;
-//		vertices.clear();
-		return this;
-	}
-
-//	@Override
-//	public int count() {
-//		return vertices.size();
-//	}
-//
-//	@Override
-//	public ByteSizedBufferable vertices() {
-//		return new ByteSizedBufferable() {
-//			@Override
-//			public int length() {
-//				return vertices.size() * LAYOUT.stride();
-//			}
-//
-//			@Override
-//			public void buffer(ByteBuffer bb) {
-//				for(Vertex v : vertices) {
-//					v.buffer(bb);
-//				}
-//			}
-//		};
-//	}
-//
-//	@Override
-//	public Optional<ByteSizedBufferable> index() {
-//		return Optional.empty();
-//	}
-
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this)
 				.append(font)
 				.append("cursor", this.cursor())
+				.append("scale", scale)
 				.append("margin", margin)
 				.append(mesh)
 				.build();

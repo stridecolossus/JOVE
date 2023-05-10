@@ -53,6 +53,7 @@ assumptions
 
 exclusions
 - ligatures
+- unicode
 
 
 ---
@@ -199,7 +200,7 @@ Cool.
 
 ### Mesh Builder
 
-The font is composed into a new mesh builder implementation for glyph-based text:
+The vertex buffer for a texture font is constructed by a new builder:
 
 ```java
 public class GlyphMeshBuilder {
@@ -285,7 +286,7 @@ The VBO is configured with a hard-coded texture font for the moment:
 @Configuration
 public class VertexBufferConfiguration {
     @Bean
-    static Mesh mesh(GlyphFont font) {
+    static Mesh mesh() {
         return new GlyphMeshBuilder(16)
             .scale(2)
             .add("Hello, world!")
@@ -295,7 +296,7 @@ public class VertexBufferConfiguration {
 
 Running the new demo should generate a fairly simple (if ugly) piece of text:
 
-![Text Rendering Example](text.monospaced.png)
+![First Ugly Attempt](text.monospace.png)
 
 The demo has managed to render _something_ but there are several obvious visual problems:
 
@@ -359,7 +360,19 @@ public class AttachmentBuilder {
 }
 ```
 
-Which populates the relevant structure as follows:
+Where the `BlendOperationBuilder` is a further nested builder for the blending properties of the colour and alpha channels:
+
+```java
+public class AttachmentBuilder {
+    public class BlendOperationBuilder {
+        private VkBlendFactor src;
+        private VkBlendFactor dest;
+        private VkBlendOp blend = VkBlendOp.ADD;
+    }
+}
+```
+
+The structure for the frame buffer attachment is populated as follows:
 
 ```java
 private void populate(VkPipelineColorBlendAttachmentState info) {
@@ -381,7 +394,7 @@ private void populate(VkPipelineColorBlendAttachmentState info) {
 }
 ```
 
-And is added to the global settings:
+Which is added to the global blending configuration:
 
 ```java
 VkPipelineColorBlendStateCreateInfo get() {
@@ -435,7 +448,7 @@ public class GlyphFont {
 }
 ```
 
-Where _tiles_ specifies the granularity of the texture font, i.e. the number of rows and columns in the grid.
+Where _tiles_ specifies the granularity of the texture font (replacing the equivalent property of the mesh builder).
 
 The _start_ property is the index of first character in the font, glyphs can then be retrieved relative to this offset:
 
@@ -538,7 +551,7 @@ public Integer call() throws Exception {
 }
 ```
 
-The persistence code is wrapped into a new loader components that will be used by the mesh builder:
+The persistence code is wrapped into a new loader component that will be used by the mesh builder:
 
 ```java
 public static class Loader implements ResourceLoader<Element, GlyphFont> {
@@ -675,7 +688,7 @@ private static boolean isValid(int ch) {
 }
 ```
 
-Next each valid combination of characters is iterated over:
+The following loop then iterates of each valid pair of characters:
 
 ```java
 int end = end();
@@ -689,7 +702,7 @@ for(char next = start; next < end; ++next) {
 }
 ```
 
-And the total advance of the character pair is calculated from the font metrics:
+And the total advance of both is calculated from the font metrics:
 
 ```java
 str.setCharAt(1, next);
