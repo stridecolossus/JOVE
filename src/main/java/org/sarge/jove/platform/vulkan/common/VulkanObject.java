@@ -20,30 +20,30 @@ public abstract class VulkanObject extends TransientNativeObject {
 	public interface Destructor<T extends VulkanObject> {
 		/**
 		 * Destroys this object.
-		 * @param dev			Logical device
-		 * @param obj			Native object to destroy
+		 * @param device		Logical device
+		 * @param object		Native object to destroy
 		 * @param allocator		Vulkan memory allocator (always {@code null})
 		 */
-		void destroy(DeviceContext dev, T obj, Pointer allocator);
+		void destroy(DeviceContext device, T object, Pointer allocator);
 	}
 
-	private final DeviceContext dev;
+	private final DeviceContext device;
 
 	/**
 	 * Constructor.
 	 * @param handle		Object handle
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 */
-	protected VulkanObject(Handle handle, DeviceContext dev) {
+	protected VulkanObject(Handle handle, DeviceContext device) {
 		super(handle);
-		this.dev = notNull(dev);
+		this.device = notNull(device);
 	}
 
 	/**
 	 * @return Logical device
 	 */
 	public final DeviceContext device() {
-		return dev;
+		return device;
 	}
 
 	/**
@@ -59,8 +59,8 @@ public abstract class VulkanObject extends TransientNativeObject {
 	@SuppressWarnings("unchecked")
 	public final void destroy() {
 		@SuppressWarnings("rawtypes")
-		final Destructor destructor = destructor(dev.library());
-		destructor.destroy(dev, this, null);
+		final Destructor destructor = destructor(device.library());
+		destructor.destroy(device, this, null);
 		super.destroy();
 	}
 

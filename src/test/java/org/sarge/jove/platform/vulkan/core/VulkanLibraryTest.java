@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.Map;
 
@@ -15,7 +14,6 @@ import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.Library;
-import com.sun.jna.ptr.IntByReference;
 
 class VulkanLibraryTest {
 	@DisplayName("The Vulkan library has an implementation version number")
@@ -41,15 +39,6 @@ class VulkanLibraryTest {
 	@Test
 	void create() {
 		VulkanLibrary.create();
-	}
-
-	@DisplayName("The supported extensions can be retrieved for the local platform")
-	@Test
-	void extensions() {
-		final var lib = mock(VulkanLibrary.class);
-		final var count = new IntByReference(1);
-		assertNotNull(VulkanLibrary.extensions(lib, count));
-		verify(lib).vkEnumerateInstanceExtensionProperties(null, count, null);
 	}
 
 	@DisplayName("A Vulkan API method that returns...")

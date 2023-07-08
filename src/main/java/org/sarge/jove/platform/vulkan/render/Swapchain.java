@@ -48,13 +48,13 @@ public class Swapchain extends VulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle 			Swapchain handle
-	 * @param dev				Logical device
+	 * @param device			Logical device
 	 * @param format			Image format
 	 * @param extents			Image extents
 	 * @param attachments		Attachments
 	 */
-	Swapchain(Handle handle, DeviceContext dev, VkFormat format, Dimensions extents, List<View> attachments) {
-		super(handle, dev);
+	Swapchain(Handle handle, DeviceContext device, VkFormat format, Dimensions extents, List<View> attachments) {
+		super(handle, device);
 		this.format = notNull(format);
 		this.extents = notNull(extents);
 		this.attachments = List.copyOf(attachments);
@@ -455,9 +455,9 @@ public class Swapchain extends VulkanObject {
 
 			// Retrieve swapchain images
 			final Handle handle = new Handle(ref);
-			final VulkanFunction<Pointer[]> func = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, handle, count, array);
+			final VulkanFunction<Pointer[]> images = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, handle, count, array);
 			final IntByReference count = factory.integer();
-			final Pointer[] handles = func.invoke(count, Pointer[]::new);
+			final Pointer[] handles = VulkanFunction.invoke(images, count, Pointer[]::new);
 
 			// Init swapchain image descriptor
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);

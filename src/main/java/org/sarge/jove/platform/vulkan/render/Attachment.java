@@ -8,13 +8,13 @@ import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.Check;
 
 /**
- * An <i>attachment</i> defines a target for a render pass such as colour or depth-stencil images.
+ * An <i>attachment</i> defines a target for a render pass such as a colour or depth-stencil image.
  * @see VkAttachmentDescription
  * @author Sarge
  */
 public record Attachment(VkFormat format, VkSampleCount samples, Attachment.LoadStore attachment, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
 	/**
-	 * Convenience wrapper for a load-store operations pair.
+	 * Convenience wrapper for a load-store pair.
 	 */
 	public record LoadStore(VkAttachmentLoadOp load, VkAttachmentStoreOp store) {
 		/**
@@ -90,17 +90,17 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 
 	/**
 	 * Populates the Vulkan descriptor for this attachment.
-	 * @param desc Attachment descriptor
+	 * @param descriptor Attachment descriptor
 	 */
-	void populate(VkAttachmentDescription desc) {
-		desc.format = format;
-		desc.samples = samples;
-		desc.loadOp = attachment.load;
-		desc.storeOp = attachment.store;
-		desc.stencilLoadOp = stencil.load;
-		desc.stencilStoreOp = stencil.store;
-		desc.initialLayout = initialLayout;
-		desc.finalLayout = finalLayout;
+	void populate(VkAttachmentDescription descriptor) {
+		descriptor.format = format;
+		descriptor.samples = samples;
+		descriptor.loadOp = attachment.load;
+		descriptor.storeOp = attachment.store;
+		descriptor.stencilLoadOp = stencil.load;
+		descriptor.stencilStoreOp = stencil.store;
+		descriptor.initialLayout = initialLayout;
+		descriptor.finalLayout = finalLayout;
 	}
 
 	/**

@@ -7,7 +7,7 @@ import static org.sarge.jove.util.Trigonometric.PI;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.util.Cosine;
 
-public class AxisTest {
+class AxisTest {
 	@Test
 	void vectors() {
 		assertEquals(new Vector(1, 0, 0), X);

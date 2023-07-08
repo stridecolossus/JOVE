@@ -25,7 +25,7 @@ import com.sun.jna.ptr.IntByReference;
  * The method is invoked <b>twice</b> to retrieve the data from the native API method:
  * <ol>
  * <li>retrieve the length of the data (the <i>data</i> argument is {@code null})</li>
- * <li>populate the data (passing back <i>count</i>)</li>
+ * <li>populate the data (passing back the <i>count</i>)</li>
  * </ol>
  * @param <T> Data type
  * @author Sarge
@@ -41,7 +41,7 @@ public interface VulkanFunction<T> {
 	int enumerate(IntByReference count, T data);
 
 	/**
-	 * Invokes this function using the <i>two-stage invocation</i> approach.
+	 * Invokes a Vulkan function using the <i>two-stage invocation</i> approach.
 	 * <p>
 	 * Example to retrieve an array of pointers:
 	 * <pre>
@@ -51,24 +51,19 @@ public interface VulkanFunction<T> {
 	 * </pre>
 	 * This method is equivalent to the following:
 	 * <pre>
-	 * // Count number of results
-	 * IntegerByReference count = new IntegerByReference();
 	 * lib.someFunction(count, null);
-	 *
-	 * // Allocate data
 	 * Pointer[] array = new Pointer[count.getValue()];
-	 *
-	 * // Populate array
 	 * lib.someFunction(count, array);
 	 * </pre>
 	 * @param <T> Data type
+	 * @param function		Vulkan function
 	 * @param count			Size of the data
 	 * @param factory		Creates the resultant data object
 	 * @return Function result
 	 */
-	default T invoke(IntByReference count, IntFunction<T> factory) {
+	static <T> T invoke(VulkanFunction<T> function, IntByReference count, IntFunction<T> factory) {
 		// Invoke to determine the size of the data
-		check(enumerate(count, null));
+		check(function.enumerate(count, null));
 
 		// Instantiate the data object
 		final int size = count.getValue();
@@ -76,60 +71,49 @@ public interface VulkanFunction<T> {
 
 		// Invoke again to populate the data object
 		if(size > 0) {
-			check(enumerate(count, data));
+			check(function.enumerate(count, data));
 		}
 
 		return data;
 	}
 
 	/**
-	 * Adapter for a Vulkan function that retrieves an <b>array</b> of JNA structures.
-	 * @param <T> Vulkan structure
+	 * Invokes a Vulkan function using the <i>two-stage invocation</i> approach to retrieve an array of JNA structures.
+	 * <p>
+	 * Note that a JNA structure array <b>must</b> be a contiguous block of memory allocated via the {@link Structure#toArray(int)} helper.
+	 * <p>
+	 * Usage:
+	 * <pre>
+	 * VulkanLibrary lib = ...
+	 * VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array);
+	 * SomeStructure[] array = func.invoke(new IntegerByReference(), SomeStructure::new);
+	 * </pre>
+	 * This adapter is equivalent to the following:
+	 * <pre>
+	 * lib.someFunction(count, null);
+	 * SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
+	 * lib.someFunction(count, array[0]);
+	 * </pre>
+	 * <p>
+	 * @param <T> Structure type
+	 * @param function		Vulkan function
+	 * @param count			Array size
+	 * @param identity		Identity structure
+	 * @return JNA structure array
 	 */
-	interface StructureVulkanFunction<T extends VulkanStructure> extends VulkanFunction<T> {
-		/**
-		 * Invokes this function using the <i>two-stage invocation</i> approach to retrieve an array of JNA structures.
-		 * <p>
-		 * Note that a JNA structure array <b>must</b> be a contiguous block of memory allocated via the {@link Structure#toArray(int)} helper.
-		 * <p>
-		 * Usage:
-		 * <pre>
-		 * VulkanLibrary lib = ...
-		 * VulkanFunction&lt;SomeStructure&gt; func = (count, array) -> lib.someFunction(count, array);
-		 * SomeStructure[] array = func.invoke(new IntegerByReference(), SomeStructure::new);
-		 * </pre>
-		 * This adapter is equivalent to the following:
-		 * <pre>
-		 * // Count number of results
-		 * IntegerByReference count = new IntegerByReference();
-		 * lib.someFunction(count, null);
-		 *
-		 * // Allocate JNA array
-		 * SomeStructure[] array = (SomeStructure[]) new SomeStructure().toArray(count.getValue());
-		 *
-		 * // Populate array (note passes first element)
-		 * lib.someFunction(count, array[0]);
-		 * </pre>
-		 * <p>
-		 * @param <T> Structure type
-		 * @param count			Array size
-		 * @param identity		Identity structure
-		 * @return JNA structure array
-		 */
-		default T[] invoke(IntByReference count, T identity) {
-			// Invoke to determine the length of the array
-			check(enumerate(count, null));
+	static <T extends VulkanStructure> T[] invoke(VulkanFunction<T> function, IntByReference count, T identity) {
+		// Invoke to determine the length of the array
+		check(function.enumerate(count, null));
 
-			// Instantiate the structure array
-			@SuppressWarnings("unchecked")
-			final T[] array = (T[]) identity.toArray(count.getValue());
+		// Instantiate the structure array
+		@SuppressWarnings("unchecked")
+		final T[] array = (T[]) identity.toArray(count.getValue());
 
-			// Invoke again to populate the array (note passes first element)
-			if(array.length > 0) {
-				check(enumerate(count, array[0]));
-			}
-
-			return array;
+		// Invoke again to populate the array (note passes first element)
+		if(array.length > 0) {
+			check(function.enumerate(count, array[0]));
 		}
+
+		return array;
 	}
 }

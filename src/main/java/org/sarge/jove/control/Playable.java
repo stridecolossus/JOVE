@@ -1,63 +1,29 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
- * A <i>playable</i> object is a media file or animation that can be controlled by a {@link Player}.
+ * A <i>playable</i> object is a media file or animation that can be played, paused and stopped.
  * @author Sarge
  */
-public class Playable {
+public interface Playable {
 	/**
-	 * Playable states/operations.
+	 * @return Whether this object is currently playing
 	 */
-	public enum State {
-		STOP,
-		PLAY,
-		PAUSE;
-
-		/**
-		 * Validates a playable state transition.
-		 * @param next Next state
-		 * @return Whether {@link #next} is a valid transition from this state
-		 */
-		public boolean isValidTransition(State next) {
-			if(this == next) return false;
-			if((next == PAUSE) && (this != PLAY)) return false;
-			return true;
-		}
-	}
-
-	private State state = State.STOP;
+	boolean isPlaying();
 
 	/**
-	 * @return Current state of this playable object
+	 * Starts playing.
+	 * @throws IllegalStateException if already playing
 	 */
-	public State state() {
-		return state;
-	}
+	void play();
 
 	/**
-	 * @return Whether this playable object is currently playing
+	 * Pauses playing.
+	 * @throws IllegalStateException if not playing
 	 */
-	public boolean isPlaying() {
-		return state == State.PLAY;
-	}
+	void pause();
 
 	/**
-	 * Sets the state of this playable.
-	 * @param state New state
-	 * @throws IllegalStateException if {@link #state} is invalid for this playable
-	 * @see State#isValidTransition(State)
+	 * Stops playing.
 	 */
-	protected void apply(State state) {
-		if(!this.state.isValidTransition(state)) throw new IllegalStateException("Invalid state transition: this=%s next=%s".formatted(this, state));
-		this.state = notNull(state);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(state).build();
-	}
+	void stop();
 }

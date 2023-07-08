@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.stream.Collectors.toSet;
-
 import java.util.*;
 
 import org.sarge.jove.common.*;
@@ -11,12 +9,10 @@ import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderLibrary;
-import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.*;
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * Vulkan API.
@@ -87,14 +83,14 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 
 	/**
 	 * Populates a 2D Vulkan rectangle.
-	 * @param rect			Rectangle
-	 * @param struct		Vulkan rectangle
+	 * @param rectangle			JOVE Rectangle
+	 * @param structure			Vulkan rectangle
 	 */
-	static void populate(Rectangle rect, VkRect2D struct) {
-		struct.offset.x = rect.x();
-		struct.offset.y = rect.y();
-		struct.extent.width = rect.width();
-		struct.extent.height = rect.height();
+	static void populate(Rectangle rectangle, VkRect2D structure) {
+		structure.offset.x = rectangle.x();
+		structure.offset.y = rectangle.y();
+		structure.extent.width = rectangle.width();
+		structure.extent.height = rectangle.height();
 	}
 
 	/**
@@ -105,32 +101,6 @@ public interface VulkanLibrary extends Library, DeviceLibrary, GraphicsLibrary, 
 		if((size % 4) != 0) {
 			throw new IllegalArgumentException("Buffer offset/size must be a multiple of four bytes");
 		}
-	}
-
-	/**
-	 * Enumerates supported extensions for the Vulkan platform or a physical device.
-	 * @param count		Count
-	 * @param func 		Extensions function
-	 * @return Supported extensions
-	 */
-	static Set<String> extensions(IntByReference count, StructureVulkanFunction<VkExtensionProperties> func) {
-		return Arrays
-				.stream(func.invoke(count, new VkExtensionProperties()))
-				.map(e -> e.extensionName)
-				.map(String::new)
-				.collect(toSet());
-	}
-
-	/**
-	 * Enumerates extensions supported by this platform.
-	 * @param lib		Vulkan
-	 * @param count		Count
-	 * @return Extensions supported by this platform
-	 * @see #extensions(IntByReference, VulkanFunction)
-	 */
-	static Set<String> extensions(VulkanLibrary lib, IntByReference count) {
-		final StructureVulkanFunction<VkExtensionProperties> func = (ref, array) -> lib.vkEnumerateInstanceExtensionProperties(null, ref, array);
-		return extensions(count, func);
 	}
 }
 

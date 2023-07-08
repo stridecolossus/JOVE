@@ -7,10 +7,10 @@ import java.util.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * A <i>player</i> is a controller for playable media and animations.
+ * A <i>player</i> is an adapter for a {@link Playable} that notifies interested listeners on state transitions.
  * @author Sarge
  */
-public class Player extends Playable {
+public class Player implements Playable {
 	/**
 	 * Listener for player state changes.
 	 */
@@ -23,47 +23,44 @@ public class Player extends Playable {
 		void update(Player player);
 	}
 
-	private Playable playable;
+	private final Playable playable;
 	private final Collection<Listener> listeners = new HashSet<>();
 
 	/**
 	 * Constructor.
-	 * @param playable Playable object
+	 * @param playable Underlying playable
 	 */
 	public Player(Playable playable) {
-		set(playable);
+		this.playable = notNull(playable);
 	}
 
 	/**
-	 * @return Playable object controlled by this player
+	 * @return Underlying playable
 	 */
 	public Playable playable() {
 		return playable;
 	}
 
-	/**
-	 * Sets the playable object being controlled by this player.
-	 * @param playable Playable object
-	 */
-	public void set(Playable playable) {
-		this.playable = notNull(playable);
+	@Override
+	public boolean isPlaying() {
+		return playable.isPlaying();
 	}
 
 	@Override
-	public State state() {
-		final State state = super.state();
-		if((state == State.PLAY) && !playable.isPlaying()) {
-			super.apply(State.STOP);
-			update();
-			return State.STOP;
-		}
-		return state;
+	public void play() {
+		playable.play();
+		update();
 	}
 
 	@Override
-	public void apply(State state) {
-		super.apply(state);
-		playable.apply(state);
+	public void pause() {
+		playable.pause();
+		update();
+	}
+
+	@Override
+	public void stop() {
+		playable.stop();
 		update();
 	}
 

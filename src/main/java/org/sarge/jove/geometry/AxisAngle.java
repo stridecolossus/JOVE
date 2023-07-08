@@ -38,8 +38,7 @@ public class AxisAngle implements Rotation {
 	 * Copy constructor.
 	 */
 	protected AxisAngle(AxisAngle that) {
-		this.axis = that.axis();
-		this.angle = that.angle();
+		this(that.axis(), that.angle());
 	}
 
 	/**

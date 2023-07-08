@@ -65,11 +65,11 @@ public interface Command {
 
 		/**
 		 * Creates a single command sequence.
-		 * @param cmd Command
+		 * @param command Command
 		 * @return Single command sequence
 		 */
-		static Sequence of(Command cmd) {
-			return of(List.of(cmd));
+		static Sequence of(Command command) {
+			return of(List.of(command));
 		}
 
 		/**
@@ -173,15 +173,15 @@ public interface Command {
 
 		/**
 		 * Records a command to this buffer.
-		 * @param cmd Command
+		 * @param command Command
 		 * @throws IllegalStateException if this buffer is not recording
 		 * @throws IllegalArgumentException if the given command is for a {@link SecondaryBufferCommand} but this is not a primary command buffer
 		 * @see Command#record(VulkanLibrary, Buffer)
 		 */
-		public final Buffer add(Command cmd) {
+		public final Buffer add(Command command) {
 			final VulkanLibrary lib = pool.device().library();
 			validate(State.RECORDING);
-			cmd.record(lib, Buffer.this);
+			command.record(lib, Buffer.this);
 			return this;
 		}
 
@@ -331,9 +331,9 @@ public interface Command {
 		}
 
 		// TODO
-		public Sequence sequence(Sequence seq, int index, RenderPass pass) {
+		public Sequence sequence(Sequence sequence, int index, RenderPass pass) {
 			begin(pass.handle());
-			seq.record(index, this);
+			sequence.record(index, this);
 			end();
 			return (__, buffer) -> buffer.execute(List.of(this));
 		}

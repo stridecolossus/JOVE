@@ -52,7 +52,6 @@ public class Vector extends Tuple {
 
 	/**
 	 * @return Magnitude (or length) <b>squared</b> of this vector
-	 * @see #dot(Tuple)
 	 */
 	public float magnitude() {
 		return dot(this);
@@ -67,14 +66,14 @@ public class Vector extends Tuple {
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>
-	 * Some properties of the dot product:
+	 * The dot product is:
 	 * <ul>
-	 * <li>zero if the vectors are orthogonal (i.e. perpendicular, or at right angles)</li>
+	 * <li>zero if the vectors are orthogonal, i.e. perpendicular (at right angles)</li>
 	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
 	 * <li>negative if the angle is greater than 90 degrees</li>
 	 * <li>commutative {@code a.b = b.a}</li>
 	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
-	 * <li>is the <i>magnitude</i> of a vector when applied to itself</li>
+	 * <li>the <i>magnitude</i> of a vector when applied to itself</li>
 	 * </ul>
 	 * <p>
 	 * @param that Tuple

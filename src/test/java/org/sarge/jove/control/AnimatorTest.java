@@ -7,7 +7,6 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Animator.Animation;
-import org.sarge.jove.control.Playable.State;
 
 class AnimatorTest {
 	private Animator animator;
@@ -49,7 +48,7 @@ class AnimatorTest {
 		@DisplayName("can be started")
 		@Test
 		void play() {
-			animator.apply(State.PLAY);
+			animator.play();
 			assertEquals(true, animator.isPlaying());
 		}
 	}
@@ -59,7 +58,7 @@ class AnimatorTest {
 	class Playing {
 		@BeforeEach
 		void before() {
-			animator.apply(State.PLAY);
+			animator.play();
 		}
 
 		@DisplayName("is updated on frame completion")
@@ -87,23 +86,23 @@ class AnimatorTest {
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			animator.apply(State.STOP);
+			animator.stop();
 			animator.update(frame);
 			assertEquals(false, animator.isPlaying());
 			verifyNoMoreInteractions(animation);
 		}
 	}
 
-	@DisplayName("An animation that has reached the end of the duration...")
+	@DisplayName("An animation that has reached the end of its duration...")
 	@Nested
 	class Finished {
 		@BeforeEach
 		void before() {
 			when(frame.elapsed()).thenReturn(Duration.ofSeconds(3));
-			animator.apply(State.PLAY);
+			animator.play();
 		}
 
-		@DisplayName("stops the animator if it is not repeated")
+		@DisplayName("stops if it does not repeat")
 		@Test
 		void finished() {
 			animator.repeat(false);
@@ -113,7 +112,7 @@ class AnimatorTest {
 			verify(animation).update(1f);
 		}
 
-		@DisplayName("cycles the animation position if the animator is repeating")
+		@DisplayName("cycles the animation if it is repeating")
 		@Test
 		void cycle() {
 			animator.repeat(true);

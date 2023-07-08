@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.Playable;
+import org.sarge.jove.control.AbstractPlayable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.lib.util.Check;
@@ -97,7 +97,7 @@ public class AudioSource extends TransientNativeObject {
 	/**
 	 *
 	 */
-	public class AudioSourcePlayable extends Playable {
+	public class AudioSourcePlayable extends AbstractPlayable {
 		@Override
 		public boolean isPlaying() {
     		final var ref = new IntByReference();
@@ -106,30 +106,22 @@ public class AudioSource extends TransientNativeObject {
 		}
 
 		@Override
-		public void apply(State state) {
-			super.apply(state);
-			switch(state) {
-        		case PLAY -> {
-        			if(buffers.isEmpty()) throw new IllegalStateException("No buffer(s) to play: " + this);
-        			lib.alSourcePlay(AudioSource.this);
-        		}
-        		case PAUSE -> {
-        			lib.alSourcePause(AudioSource.this);
-        		}
-        		case STOP -> {
-        			lib.alSourceStop(AudioSource.this);
-        		}
-    		}
-			dev.check();
+		public void play() {
+			if(buffers.isEmpty()) throw new IllegalStateException("No buffer(s) to play: " + this);
+			super.play();
+			lib.alSourcePlay(AudioSource.this);
 		}
 
-		/**
-		 * Interrupts this audio source if playing.
-		 */
-		private void stop() {
-			if(this.state() != State.STOP) {
-				apply(State.STOP);
-			}
+		@Override
+		public void pause() {
+			super.pause();
+			lib.alSourcePause(AudioSource.this);
+		}
+
+		@Override
+		public void stop() {
+			super.stop();
+			lib.alSourceStop(AudioSource.this);
 		}
 	}
 

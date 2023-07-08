@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 import org.sarge.lib.util.Check;
 
 import com.sun.jna.ptr.IntByReference;
@@ -78,13 +77,13 @@ public record ValidationLayer(String name, int version) {
 	 * <p>
 	 * The {@link Set#contains(Object)} method considers a layer to be a member if a matching entry with an equal or greater version number is present.
 	 * <p>
-	 * @param count			Number of layers
-	 * @param func			Layers function
+	 * @param count				Number of layers
+	 * @param function			Layers function
 	 * @return Validation layers
 	 */
-	public static Set<ValidationLayer> layers(IntByReference count, StructureVulkanFunction<VkLayerProperties> func) {
+	public static Set<ValidationLayer> layers(IntByReference count, VulkanFunction<VkLayerProperties> function) {
 		return Arrays
-				.stream(func.invoke(count, new VkLayerProperties()))
+				.stream(VulkanFunction.invoke(function, count, new VkLayerProperties()))
 				.map(ValidationLayer::of)
 				.collect(toCollection(ValidationLayerSet::new));
 	}
@@ -96,7 +95,7 @@ public record ValidationLayer(String name, int version) {
 	 * @return Validation layers supported by this platform
 	 */
 	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count) {
-		final StructureVulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
+		final VulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
 		return layers(count, func);
 	}
 }

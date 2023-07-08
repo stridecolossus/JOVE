@@ -1,13 +1,13 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
+import org.sarge.jove.util.MockStructure;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
 @SuppressWarnings("unchecked")
@@ -21,9 +21,8 @@ class VulkanFunctionTest {
 
 	@Test
 	void array() {
-		final VulkanFunction<byte[]> func = spy(VulkanFunction.class);
-		final byte[] array = func.invoke(count, byte[]::new);
-		assertNotNull(array);
+		final VulkanFunction<Pointer[]> func = mock(VulkanFunction.class);
+		final Pointer[] array = VulkanFunction.invoke(func, count, Pointer[]::new);
 		assertEquals(2, array.length);
 		verify(func).enumerate(count, null);
 		verify(func).enumerate(count, array);
@@ -31,16 +30,11 @@ class VulkanFunctionTest {
 
 	@Test
 	void structure() {
-		// Create identity instance
-		final var struct = mock(VulkanStructure.class);
-		final var array = new VulkanStructure[]{struct, struct};
-		when(struct.toArray(2)).thenReturn(array);
-
-		// Invoke and check resultant array
-		final StructureVulkanFunction<VulkanStructure> func = spy(StructureVulkanFunction.class);
-		final VulkanStructure[] result = func.invoke(count, struct);
-		assertEquals(array, result);
+		final var structure = new MockStructure();
+		final VulkanFunction<VulkanStructure> func = mock(VulkanFunction.class);
+		final VulkanStructure[] result = VulkanFunction.invoke(func, count, structure);
+		assertEquals(2, result.length);
 		verify(func).enumerate(count, null);
-		verify(func).enumerate(count, struct);
+		verify(func).enumerate(count, structure);
 	}
 }

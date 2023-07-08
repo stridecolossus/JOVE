@@ -39,50 +39,6 @@ public class LayoutTest {
 		assertEquals(new Layout(3, Type.FLOAT, true, Float.BYTES), Layout.floats(3));
 	}
 
-	@Nested
-	class TypeTests {
-		@Test
-		void floats() {
-			assertEquals(new Layout(1, Type.FLOAT, true, Float.BYTES), Layout.of(Float.class));
-			assertEquals(new Layout(1, Type.FLOAT, true, Float.BYTES), Layout.of(float.class));
-		}
-
-		@Test
-		void longs() {
-			assertEquals(new Layout(1, Type.INTEGER, true, Long.BYTES), Layout.of(Long.class));
-			assertEquals(new Layout(1, Type.INTEGER, true, Long.BYTES), Layout.of(long.class));
-		}
-
-		@Test
-		void integers() {
-			assertEquals(new Layout(1, Type.INTEGER, true, Integer.BYTES), Layout.of(Integer.class));
-			assertEquals(new Layout(1, Type.INTEGER, true, Integer.BYTES), Layout.of(int.class));
-		}
-
-		@Test
-		void shorts() {
-			assertEquals(new Layout(1, Type.INTEGER, true, Short.BYTES), Layout.of(Short.class));
-			assertEquals(new Layout(1, Type.INTEGER, true, Short.BYTES), Layout.of(short.class));
-		}
-
-		@Test
-		void bytes() {
-			assertEquals(new Layout(1, Type.INTEGER, true, 1), Layout.of(Byte.class));
-			assertEquals(new Layout(1, Type.INTEGER, true, 1), Layout.of(byte.class));
-		}
-
-		@Test
-		void booleans() {
-			assertEquals(new Layout(1, Type.INTEGER, false, 1), Layout.of(Boolean.class));
-			assertEquals(new Layout(1, Type.INTEGER, false, 1), Layout.of(boolean.class));
-		}
-
-		@Test
-		void unsupported() {
-			assertThrows(IllegalArgumentException.class, () -> Layout.of(String.class));
-		}
-	}
-
 	@Test
 	void equals() {
 		assertEquals(component, component);

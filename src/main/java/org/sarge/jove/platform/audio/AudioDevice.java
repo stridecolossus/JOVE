@@ -9,7 +9,6 @@ import javax.sound.sampled.AudioSystem;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.Playable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.platform.audio.AudioListener.DistanceModel;
@@ -194,7 +193,7 @@ public class AudioDevice extends TransientNativeObject {
 
 		System.out.println("Playing...");
 		final AudioSourcePlayable playable = queue.playable();
-		playable.apply(Playable.State.PLAY);
+		playable.play();
 		while(playable.isPlaying()) {
 			Thread.sleep(50);
 			queue.processed();

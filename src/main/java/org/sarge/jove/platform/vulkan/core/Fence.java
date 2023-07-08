@@ -31,13 +31,13 @@ public interface Fence extends NativeObject, TransientObject {
 
 	/**
 	 * Resets a group of fences.
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param fences		Fences to reset
 	 */
-	static void reset(DeviceContext dev, Collection<Fence> fences) {
+	static void reset(DeviceContext device, Collection<Fence> fences) {
 		final Pointer array = NativeObject.array(fences);
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkResetFences(dev, fences.size(), array));
+		final VulkanLibrary lib = device.library();
+		check(lib.vkResetFences(device, fences.size(), array));
 	}
 
 	/**
@@ -48,37 +48,37 @@ public interface Fence extends NativeObject, TransientObject {
 
 	/**
 	 * Waits for a group of fences.
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param fences		Fences
 	 * @param all			Whether to wait for all or any fence
 	 * @param timeout		Timeout (nanoseconds)
 	 */
-	static void wait(DeviceContext dev, Collection<Fence> fences, boolean all, long timeout) {
+	static void wait(DeviceContext device, Collection<Fence> fences, boolean all, long timeout) {
 		final Pointer array = NativeObject.array(fences);
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkWaitForFences(dev, fences.size(), array, all, timeout));
+		final VulkanLibrary lib = device.library();
+		check(lib.vkWaitForFences(device, fences.size(), array, all, timeout));
 	}
 
 	/**
 	 * Creates a fence.
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param flags			Creation flags
 	 * @return Fence
 	 */
-	static Fence create(DeviceContext dev, VkFenceCreateFlag... flags) {
+	static Fence create(DeviceContext device, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
 		info.flags = BitMask.of(flags);
 
 		// Create fence
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkCreateFence(dev, info, null, ref));
+		final VulkanLibrary lib = device.library();
+		final PointerByReference ref = device.factory().pointer();
+		check(lib.vkCreateFence(device, info, null, ref));
 
 		// Create domain object
 		class DefaultFence extends VulkanObject implements Fence {
 			private DefaultFence() {
-				super(new Handle(ref), dev);
+				super(new Handle(ref), device);
 			}
 
 	    	@Override

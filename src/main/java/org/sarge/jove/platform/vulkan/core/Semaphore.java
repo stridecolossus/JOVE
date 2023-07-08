@@ -14,18 +14,18 @@ import com.sun.jna.ptr.PointerByReference;
 public interface Semaphore extends NativeObject, TransientObject {
 	/**
 	 * Creates a new semaphore.
-	 * @param dev Logical device
+	 * @param device Logical device
 	 * @return New semaphore
 	 */
-	public static Semaphore create(DeviceContext dev) {
+	public static Semaphore create(DeviceContext device) {
 		final var info = new VkSemaphoreCreateInfo();
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		VulkanLibrary.check(lib.vkCreateSemaphore(dev, info, null, ref));
+		final VulkanLibrary lib = device.library();
+		final PointerByReference ref = device.factory().pointer();
+		VulkanLibrary.check(lib.vkCreateSemaphore(device, info, null, ref));
 
 		class DefaultSemaphore extends VulkanObject implements Semaphore {
 			private DefaultSemaphore() {
-				super(new Handle(ref), dev);
+				super(new Handle(ref), device);
 			}
 
 			@Override

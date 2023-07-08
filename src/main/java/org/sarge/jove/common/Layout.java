@@ -49,32 +49,6 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 	}
 
 	/**
-	 * Creates a layout for the given Java type.
-	 * <p>
-	 * The following primitive and wrapper types are supported:
-	 * <ul>
-	 * <li>floating-point</li>
-	 * <li>integral numbers: long, integer, short, byte</li>
-	 * <li>boolean (represented as an unsigned byte)</li>
-	 * </ul>
-	 * <p>
-	 * @param type Type
-	 * @return Layout
-	 * @throws IllegalArgumentException for an unsupported type
-	 */
-	public static Layout of(Class<?> type) {
-		return switch(type.getSimpleName().toLowerCase()) {
-			case "float" 			-> new Layout(1, Type.FLOAT, true, Float.BYTES);
-			case "integer", "int"	-> new Layout(1, Type.INTEGER, true, Integer.BYTES);
-			case "long" 			-> new Layout(1, Type.INTEGER, true, Long.BYTES);
-			case "short" 			-> new Layout(1, Type.INTEGER, true, Short.BYTES);
-			case "byte"	 			-> new Layout(1, Type.INTEGER, true, 1);
-			case "boolean" 			-> new Layout(1, Type.INTEGER, false, 1);
-			default -> throw new IllegalArgumentException("Unsupported component type: " + type);
-		};
-	}
-
-	/**
 	 * Constructor.
 	 * @param count			Number of elements
 	 * @param type			Data type

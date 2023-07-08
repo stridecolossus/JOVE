@@ -11,7 +11,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction.StructureVulkanFunction;
 import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.util.LazySupplier;
 
@@ -56,21 +55,21 @@ public class Surface extends TransientNativeObject {
 		return new Dimensions(extents.width, extents.height);
 	}
 
-	private final PhysicalDevice dev;
+	private final PhysicalDevice device;
 
 	/**
 	 * Constructor.
 	 * @param surface		Surface handle
-	 * @param dev			Physical device
+	 * @param device		Physical device
 	 */
-	public Surface(Handle surface, PhysicalDevice dev) {
+	public Surface(Handle surface, PhysicalDevice device) {
 		super(surface);
-		this.dev = notNull(dev);
+		this.device = notNull(device);
 	}
 
 	@Override
 	protected void release() {
-		final Instance instance = dev.instance();
+		final Instance instance = device.instance();
 		final VulkanLibrary lib = instance.library();
 		lib.vkDestroySurfaceKHR(instance, this, null);
 	}
@@ -79,9 +78,9 @@ public class Surface extends TransientNativeObject {
 	 * @return Capabilities of this surface
 	 */
 	public VkSurfaceCapabilitiesKHR capabilities() {
-		final VulkanLibrary lib = dev.instance().library();
+		final VulkanLibrary lib = device.instance().library();
 		final var caps = new VkSurfaceCapabilitiesKHR();
-		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, this, caps));
+		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, this, caps));
 		return caps;
 	}
 
@@ -89,24 +88,24 @@ public class Surface extends TransientNativeObject {
 	 * @return Formats supported by this surface
 	 */
 	public List<VkSurfaceFormatKHR> formats() {
-		final Instance instance = dev.instance();
+		final Instance instance = device.instance();
 		final VulkanLibrary lib = instance.library();
-		final StructureVulkanFunction<VkSurfaceFormatKHR> func = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(dev, this, count, array);
+		final VulkanFunction<VkSurfaceFormatKHR> formats = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(device, this, count, array);
 		final IntByReference count = instance.factory().integer();
-		final VkSurfaceFormatKHR[] array = func.invoke(count, new VkSurfaceFormatKHR());
+		final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(formats, count, new VkSurfaceFormatKHR());
 		return Arrays.asList(array);
 	}
 
 	/**
 	 * Helper - Selects the preferred surface format that supports the given format and colour-space or falls back to the {@link #defaultSurfaceFormat()}.
-	 * @param format		Surface format
-	 * @param space			Colour space
-	 * @param def			Default surface format or {@code null} for the {@link #defaultSurfaceFormat()}
+	 * @param format				Surface format
+	 * @param space					Colour space
+	 * @param defaultFormat			Default surface format or {@code null} for the {@link #defaultSurfaceFormat()}
 	 * @return Selected surface format
 	 */
-	public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space, VkSurfaceFormatKHR def) {
+	public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space, VkSurfaceFormatKHR defaultFormat) {
 		return format(format, space)
-				.or(() -> Optional.ofNullable(def))
+				.or(() -> Optional.ofNullable(defaultFormat))
 				.orElseGet(Surface::defaultSurfaceFormat);
 	}
 
@@ -130,11 +129,11 @@ public class Surface extends TransientNativeObject {
 	 */
 	public Set<VkPresentModeKHR> modes() {
 		// Retrieve array of presentation modes
-		final Instance instance = dev.instance();
+		final Instance instance = device.instance();
 		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<int[]> func = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(dev, this, count, array);
+		final VulkanFunction<int[]> modes = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(device, this, count, array);
 		final IntByReference count = instance.factory().integer();
-		final int[] array = func.invoke(count, int[]::new);
+		final int[] array = VulkanFunction.invoke(modes, count, int[]::new);
 
 		// Convert to enumeration
 		final var mapping = IntEnum.reverse(VkPresentModeKHR.class);
@@ -163,7 +162,7 @@ public class Surface extends TransientNativeObject {
 	 * @return Cached surface
 	 */
 	public Surface cached() {
-		return new Surface(handle, dev) {
+		return new Surface(handle, device) {
 			private final Supplier<VkSurfaceCapabilitiesKHR> caps = new LazySupplier<>(super::capabilities);
 			private final Supplier<List<VkSurfaceFormatKHR>> formats = new LazySupplier<>(super::formats);
 			private final Supplier<Set<VkPresentModeKHR>> modes = new LazySupplier<>(super::modes);

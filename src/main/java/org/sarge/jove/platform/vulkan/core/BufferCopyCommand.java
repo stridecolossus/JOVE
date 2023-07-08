@@ -158,6 +158,7 @@ public final class BufferCopyCommand implements Command {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Create copy command
+			//final VkBufferCopy[] array = regions.stream().collect(StructureCollector.array(new VkBufferCopy(), CopyRegion::populate));
 			final VkBufferCopy[] array = StructureCollector.array(regions, new VkBufferCopy(), CopyRegion::populate);
 			return new BufferCopyCommand(src, dest, array);
 		}

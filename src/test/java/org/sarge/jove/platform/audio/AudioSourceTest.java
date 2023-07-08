@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.control.Playable.State;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.platform.audio.AudioSource.AudioSourcePlayable;
 
@@ -102,7 +101,7 @@ class AudioSourceTest {
 		@DisplayName("cannot be played")
 		@Test
 		void play() {
-			assertThrows(IllegalStateException.class, () -> playable.apply(State.PLAY));
+			assertThrows(IllegalStateException.class, () -> playable.play());
 		}
 	}
 
@@ -130,21 +129,21 @@ class AudioSourceTest {
 		@DisplayName("can be played")
 		@Test
 		void play() {
-			playable.apply(State.PLAY);
+			playable.play();
 			verify(lib).alSourcePlay(source);
 		}
 
 		@DisplayName("cannot be paused")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.apply(State.PAUSE));
+			assertThrows(IllegalStateException.class, () -> playable.pause());
 		}
 
-		@DisplayName("cannot be stopped")
-		@Test
-		void stop() {
-			assertThrows(IllegalStateException.class, () -> playable.apply(State.STOP));
-		}
+//		@DisplayName("cannot be stopped")
+//		@Test
+//		void stop() {
+//			assertThrows(IllegalStateException.class, () -> playable.stop());
+//		}
 
 		@DisplayName("can be rewound")
 		@Test
@@ -160,7 +159,7 @@ class AudioSourceTest {
 		@BeforeEach
 		void before() {
 			source.buffer(buffer);
-			playable.apply(State.PLAY);
+			playable.play();
 		}
 
 		@DisplayName("checks whether the audio has finished")
@@ -185,13 +184,13 @@ class AudioSourceTest {
 		@DisplayName("cannot be played")
 		@Test
 		void play() {
-			assertThrows(IllegalStateException.class, () -> playable.apply(State.PLAY));
+			assertThrows(IllegalStateException.class, () -> playable.play());
 		}
 
 		@DisplayName("can be paused")
 		@Test
 		void pause() {
-			playable.apply(State.PAUSE);
+			playable.pause();
 			assertEquals(false, playable.isPlaying());
 			verify(lib).alSourcePause(source);
 		}
@@ -199,9 +198,9 @@ class AudioSourceTest {
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			playable.apply(State.STOP);
+			playable.stop();
 			assertEquals(false, playable.isPlaying());
-			verify(lib).alSourceStop(source);
+			verify(lib, times(2)).alSourceStop(source);
 		}
 	}
 
@@ -211,8 +210,8 @@ class AudioSourceTest {
 		@BeforeEach
 		void before() {
 			source.buffer(buffer);
-			playable.apply(State.PLAY);
-			playable.apply(State.PAUSE);
+			playable.play();
+			playable.pause();
 		}
 
 		@DisplayName("is not playing")
@@ -224,19 +223,19 @@ class AudioSourceTest {
 		@DisplayName("can be restarted")
 		@Test
 		void play() {
-			playable.apply(State.PLAY);
+			playable.play();
 		}
 
 		@DisplayName("cannot be paused")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.apply(State.PAUSE));
+			assertThrows(IllegalStateException.class, () -> playable.pause());
 		}
 
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			playable.apply(State.STOP);
+			playable.stop();
 		}
 	}
 

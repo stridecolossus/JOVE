@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.*;
 
-public class TupleTest {
+class TupleTest {
 	private Tuple tuple;
 
 	@BeforeEach

@@ -69,9 +69,9 @@ public final class PipelineCache extends VulkanObject {
 	 */
 	public ByteBuffer data() {
 		final DeviceContext dev = super.device();
-		final VulkanFunction<ByteBuffer> func = (count, data) -> dev.library().vkGetPipelineCacheData(dev, this, count, data);
+		final VulkanFunction<ByteBuffer> cache = (count, data) -> dev.library().vkGetPipelineCacheData(dev, this, count, data);
 		final IntByReference count = dev.factory().integer();
-		return func.invoke(count, BufferHelper::allocate);
+		return VulkanFunction.invoke(cache, count, BufferHelper::allocate);
 	}
 
 	/**

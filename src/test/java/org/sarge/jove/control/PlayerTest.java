@@ -4,98 +4,49 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Playable.State;
 import org.sarge.jove.control.Player.Listener;
 
 class PlayerTest {
 	private Player player;
 	private Playable playable;
-	private boolean playing;
+	private Listener listener;
 
 	@BeforeEach
 	void before() {
-		playable = new Playable();
-		playing = true;
-		player = new Player(playable) {
-			@Override
-			public boolean isPlaying() {
-				return playing && (super.state() == State.PLAY);
-			}
-		};
+		playable = spy(AbstractPlayable.class);
+		listener = mock(Listener.class);
+		player = new Player(playable);
+		player.add(listener);
 	}
 
-	@DisplayName("A new player is initially stopped")
 	@Test
 	void constructor() {
 		assertEquals(false, player.isPlaying());
-		assertEquals(playable, player.playable());
 	}
 
-	@DisplayName("A player...")
-	@Nested
-	class PlayerTests {
-		@BeforeEach
-		void before() {
-			player.apply(State.PLAY);
-		}
-
-		@DisplayName("can be played")
-		@Test
-		void play() {
-			assertEquals(true, player.isPlaying());
-			assertEquals(State.PLAY, playable.state());
-		}
-
-		@DisplayName("can be paused")
-		@Test
-		void pause() {
-			player.apply(State.PAUSE);
-			assertEquals(false, player.isPlaying());
-			assertEquals(State.PAUSE, playable.state());
-		}
-
-		@DisplayName("can be stopped")
-		@Test
-		void stop() {
-			player.apply(State.STOP);
-			assertEquals(false, player.isPlaying());
-			assertEquals(State.STOP, playable.state());
-		}
-
-		@DisplayName("is stopped if the underlying playable is stopped")
-		@Test
-		void stopped() {
-			playing = false;
-			assertEquals(false, player.isPlaying());
-		}
+	@Test
+	void play() {
+		player.play();
+		assertEquals(true, player.isPlaying());
+		verify(playable).play();
+		verify(listener).update(player);
 	}
 
-	@DisplayName("A player state change listener...")
-	@Nested
-	class ListenerTests {
-		private Listener listener;
+	@Test
+	void pause() {
+		player.play();
+		player.pause();
+		assertEquals(false, player.isPlaying());
+		verify(playable).pause();
+		verify(listener, times(2)).update(player);
+	}
 
-		@BeforeEach
-		void before() {
-			listener = mock(Listener.class);
-			player.add(listener);
-		}
-
-		@DisplayName("is notified when the player is played")
-		@Test
-		void play() {
-			player.apply(State.PLAY);
-			player.apply(State.PAUSE);
-			player.apply(State.STOP);
-			verify(listener, times(3)).update(player);
-		}
-
-		@DisplayName("can be removed from the player")
-		@Test
-		void remove() {
-			player.remove(listener);
-			player.apply(State.PLAY);
-			verifyNoInteractions(listener);
-		}
+	@Test
+	void stop() {
+		player.play();
+		player.stop();
+		assertEquals(false, player.isPlaying());
+		verify(playable).stop();
+		verify(listener, times(2)).update(player);
 	}
 }
