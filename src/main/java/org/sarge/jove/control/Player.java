@@ -3,6 +3,7 @@ package org.sarge.jove.control;
 import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -11,20 +12,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author Sarge
  */
 public class Player implements Playable {
-	/**
-	 * Listener for player state changes.
-	 */
-	@FunctionalInterface
-	public interface Listener {
-		/**
-		 * Notifies a player state change.
-		 * @param player Player
-		 */
-		void update(Player player);
-	}
-
 	private final Playable playable;
-	private final Collection<Listener> listeners = new HashSet<>();
+	private final Collection<Consumer<Player>> listeners = new HashSet<>();
 
 	/**
 	 * Constructor.
@@ -68,8 +57,8 @@ public class Player implements Playable {
 	 * Notifies listeners of a state change.
 	 */
 	private void update() {
-		for(Listener listener : listeners) {
-			listener.update(this);
+		for(Consumer<Player> listener : listeners) {
+			listener.accept(this);
 		}
 	}
 
@@ -77,7 +66,7 @@ public class Player implements Playable {
 	 * Adds a state change listener.
 	 * @param listener State change listener
 	 */
-	public void add(Listener listener) {
+	public void add(Consumer<Player> listener) {
 		listeners.add(notNull(listener));
 	}
 
@@ -85,7 +74,7 @@ public class Player implements Playable {
 	 * Removes a state change listener.
 	 * @param listener Listener to remove
 	 */
-	public void remove(Listener listener) {
+	public void remove(Consumer<Player> listener) {
 		listeners.remove(listener);
 	}
 

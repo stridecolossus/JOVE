@@ -22,34 +22,6 @@ import org.sarge.lib.util.Check;
  */
 public record Plane(Normal normal, float distance) implements Intersected {
 	/**
-	 * The <i>half space</i> defines the <i>sides</i> of this plane with respect to the normal.
-	 * The {@link #POSITIVE} half-space is in <i>front</i> of the plane and {@link #NEGATIVE} is <i>behind</i>.
-	 */
-	public enum HalfSpace {
-		POSITIVE,
-		NEGATIVE,
-		INTERSECT;
-
-		/**
-		 * Determines the half-space of the given distance relative to this plane.
-		 * @param d Distance to plane
-		 * @return Half-space
-		 */
-		public static HalfSpace of(float d) {
-			if(d < 0) {
-				return NEGATIVE;
-			}
-			else
-			if(d > 0) {
-				return POSITIVE;
-			}
-			else {
-				return INTERSECT;
-			}
-		}
-	}
-
-	/**
 	 * Creates a plane from the given triangle of points.
 	 * @param triangle Triangle
 	 * @return New plane
@@ -64,7 +36,7 @@ public record Plane(Normal normal, float distance) implements Intersected {
 	/**
 	 * Constructor.
 	 * @param normal		Plane normal
-	 * @param dist			Distance of the plane from the origin
+	 * @param distance		Distance of the plane from the origin
 	 */
 	public Plane {
 		Check.notNull(normal);
@@ -103,6 +75,34 @@ public record Plane(Normal normal, float distance) implements Intersected {
 	 */
 	public float distance(Point p) {
 		return normal.dot(p) + distance;
+	}
+
+	/**
+	 * The <i>half space</i> defines the <i>sides</i> of this plane with respect to the normal.
+	 * The {@link #POSITIVE} half-space is in <i>front</i> of the plane and {@link #NEGATIVE} is <i>behind</i>.
+	 */
+	public enum HalfSpace {
+		POSITIVE,
+		NEGATIVE,
+		INTERSECT;
+
+		/**
+		 * Determines the half-space of the given distance relative to this plane.
+		 * @param d Distance to plane
+		 * @return Half-space
+		 */
+		public static HalfSpace of(float d) {
+			if(d < 0) {
+				return NEGATIVE;
+			}
+			else
+			if(d > 0) {
+				return POSITIVE;
+			}
+			else {
+				return INTERSECT;
+			}
+		}
 	}
 
 	/**

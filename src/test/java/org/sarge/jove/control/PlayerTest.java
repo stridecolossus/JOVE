@@ -3,18 +3,20 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import java.util.function.Consumer;
+
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Player.Listener;
 
 class PlayerTest {
 	private Player player;
 	private Playable playable;
-	private Listener listener;
+	private Consumer<Player> listener;
 
+	@SuppressWarnings("unchecked")
 	@BeforeEach
 	void before() {
 		playable = spy(AbstractPlayable.class);
-		listener = mock(Listener.class);
+		listener = mock(Consumer.class);
 		player = new Player(playable);
 		player.add(listener);
 	}
@@ -29,7 +31,7 @@ class PlayerTest {
 		player.play();
 		assertEquals(true, player.isPlaying());
 		verify(playable).play();
-		verify(listener).update(player);
+		verify(listener).accept(player);
 	}
 
 	@Test
@@ -38,7 +40,7 @@ class PlayerTest {
 		player.pause();
 		assertEquals(false, player.isPlaying());
 		verify(playable).pause();
-		verify(listener, times(2)).update(player);
+		verify(listener, times(2)).accept(player);
 	}
 
 	@Test
@@ -47,6 +49,6 @@ class PlayerTest {
 		player.stop();
 		assertEquals(false, player.isPlaying());
 		verify(playable).stop();
-		verify(listener, times(2)).update(player);
+		verify(listener, times(2)).accept(player);
 	}
 }

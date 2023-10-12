@@ -1,7 +1,7 @@
 package org.sarge.jove.common;
 
 /**
- * 2D rectangle.
+ * 2D rectangle with integer components.
  * @author Sarge
  */
 public record Rectangle(int x, int y, int width, int height) {
