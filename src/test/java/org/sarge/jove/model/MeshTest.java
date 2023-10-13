@@ -10,20 +10,20 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 
 class MeshTest {
-	private Mesh mesh;
-	private ByteSizedBufferable data;
+	private DefaultMesh mesh;
+	private ByteSizedBufferable vertices;
 
 	@BeforeEach
 	void before() {
-		data = mock(ByteSizedBufferable.class);
-		mesh = new Mesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), () -> 3, data, null);
+		vertices = mock(ByteSizedBufferable.class);
+		mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), 3, vertices, null);
 	}
 
 	@Test
 	void constructor() {
 		assertEquals(Primitive.TRIANGLE, mesh.primitive());
 		assertEquals(new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), mesh.layout());
-		assertEquals(data, mesh.vertices());
+		assertEquals(vertices, mesh.vertices());
 	}
 
 	@DisplayName("A mesh has a draw count")
@@ -35,34 +35,36 @@ class MeshTest {
 	@DisplayName("The layout for a mesh must contain vertex positions")
 	@Test
 	void missingVertexPosition() {
-		assertThrows(IllegalStateException.class, () -> new Mesh(Primitive.TRIANGLE, new CompoundLayout(), () -> 3, data, null));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(), 3, vertices, null));
 	}
 
 	@DisplayName("The draw count must match the primitive")
 	@Test
 	void invalidDrawCount() {
-		assertThrows(IllegalStateException.class, () -> new Mesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT), () -> 2, data, null));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT), 2, vertices, null));
 	}
 
 	@DisplayName("A mesh containing vertex normals must be supported by the drawing primitive")
 	@Test
 	void invalidPrimitiveForNormals() {
-		assertThrows(IllegalStateException.class, () -> new Mesh(Primitive.LINE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), () -> 2, data, null));
+		assertThrows(IllegalArgumentException.class, () -> new DefaultMesh(Primitive.LINE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT), 2, vertices, null));
 	}
 
 	@DisplayName("A default mesh does not have an index buffer")
 	@Test
 	void isIndexed() {
-		assertEquals(false, mesh.isIndexed());
 		assertEquals(Optional.empty(), mesh.index());
 	}
 
 	@DisplayName("An indexed mesh...")
 	@Nested
 	class IndexedMeshTests {
+		private ByteSizedBufferable index;
+
 		@BeforeEach
 		void before() {
-			mesh = new Mesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT), () -> 3, data, data);
+			index = mock(ByteSizedBufferable.class);
+			mesh = new DefaultMesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT), 3, vertices, index);
 		}
 
 		@DisplayName("has a draw count")
@@ -74,14 +76,7 @@ class MeshTest {
 		@DisplayName("has an index buffer")
 		@Test
 		void isIndexed() {
-			assertEquals(true, mesh.isIndexed());
-			assertEquals(Optional.of(data), mesh.index());
+			assertEquals(Optional.of(index), mesh.index());
 		}
-	}
-
-	@Test
-	void equals() {
-		assertEquals(mesh, mesh);
-		assertNotEquals(mesh, null);
 	}
 }

@@ -1,21 +1,13 @@
 package org.sarge.jove.io;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.nio.*;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
 class BufferHelperTest {
 	private static final byte[] BYTES = {1, 2, 3};
-
-	private ByteBuffer bb;
-
-	@BeforeEach
-	void before() {
-		bb = mock(ByteBuffer.class);
-	}
 
 	@Test
 	void allocate() {
@@ -29,17 +21,22 @@ class BufferHelperTest {
 
 	@Test
 	void write() {
+		final ByteBuffer bb = BufferHelper.allocate(3);
 		BufferHelper.write(BYTES, bb);
-		verify(bb).put(BYTES);
+		bb.rewind();
+		assertEquals(1, bb.get());
+		assertEquals(2, bb.get());
+		assertEquals(3, bb.get());
 	}
 
 	@Test
 	void writeDirect() {
-		when(bb.isDirect()).thenReturn(true);
+		final ByteBuffer bb = ByteBuffer.allocateDirect(3);
 		BufferHelper.write(BYTES, bb);
-		verify(bb).put((byte) 1);
-		verify(bb).put((byte) 2);
-		verify(bb).put((byte) 3);
+		bb.rewind();
+		assertEquals(1, bb.get());
+		assertEquals(2, bb.get());
+		assertEquals(3, bb.get());
 	}
 
 	@Test
@@ -51,13 +48,13 @@ class BufferHelperTest {
 
 	@Test
 	void array() {
-		bb = ByteBuffer.allocate(3).put(BYTES);
+		final ByteBuffer bb = ByteBuffer.allocate(3).put(BYTES);
 		assertArrayEquals(BYTES, BufferHelper.array(bb));
 	}
 
 	@Test
 	void arrayDirect() {
-		bb = ByteBuffer.allocateDirect(3).put(BYTES);
+		final ByteBuffer bb = ByteBuffer.allocateDirect(3).put(BYTES);
 		assertArrayEquals(BYTES, BufferHelper.array(bb));
 	}
 }

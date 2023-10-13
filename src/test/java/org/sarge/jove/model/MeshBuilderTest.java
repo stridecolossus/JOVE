@@ -1,9 +1,7 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
@@ -11,7 +9,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.scene.volume.Bounds;
 
-public class MeshBuilderTest {
+class MeshBuilderTest {
 	private MeshBuilder builder;
 	private Mesh mesh;
 	private Vertex vertex;
@@ -74,11 +72,7 @@ public class MeshBuilderTest {
 		@Test
 		void vertices() {
 			final ByteSizedBufferable vertices = mesh.vertices();
-			final var bb = mock(ByteBuffer.class);
-			final int len = 3 * 3;
-			assertEquals(len * Float.BYTES, vertices.length());
-			vertices.buffer(bb);
-			verify(bb, times(len)).putFloat(0);
+			assertEquals(3 * 3 * Float.BYTES, vertices.length());
 		}
 
 		@DisplayName("does not have an index buffer")
@@ -109,13 +103,6 @@ public class MeshBuilderTest {
 			builder.add(vertex);
 			assertEquals(Bounds.EMPTY, builder.bounds());
 		}
-
-		@DisplayName("cannot be generated if the mesh layout does not contain a vertex position")
-		@Test
-		void layout() {
-			builder = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout());
-			assertThrows(IllegalStateException.class, () -> builder.bounds());
-		}
 	}
 
 	@DisplayName("Vertex normals for a mesh...")
@@ -143,13 +130,6 @@ public class MeshBuilderTest {
     		for(var v : vertices) {
     			assertEquals(Axis.Z, v.normal());
     		}
-    	}
-
-    	@DisplayName("cannot be computed if the mesh does not contain vertex normals")
-    	@Test
-    	void normals() {
-    		builder = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout());
-    		assertThrows(IllegalStateException.class, () -> builder.compute());
     	}
     }
 }

@@ -11,7 +11,7 @@ import java.util.function.IntBinaryOperator;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.ArgumentCaptor;
+import org.mockito.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
@@ -86,7 +86,7 @@ class WindowTest {
 		@DisplayName("A fullscreen window has a monitor")
 		@Test
 		void monitor() {
-			when(lib.glfwGetWindowMonitor(window)).thenReturn(monitor);
+			Mockito.when(lib.glfwGetWindowMonitor(window)).thenReturn(monitor);
 			assertEquals(Optional.of(monitor), window.monitor());
 		}
 

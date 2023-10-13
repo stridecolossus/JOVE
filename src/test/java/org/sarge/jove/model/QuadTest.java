@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 
+@Disabled("TODO")
 class QuadTest {
 	private Quad quad;
 

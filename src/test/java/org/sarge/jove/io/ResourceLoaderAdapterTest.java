@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.io.*;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 
 @SuppressWarnings({"resource", "unchecked"})
 public class ResourceLoaderAdapterTest {
@@ -40,19 +41,19 @@ public class ResourceLoaderAdapterTest {
 
 	@Test
 	void loadDataSourceError() throws IOException {
-		when(src.input(NAME)).thenThrow(IOException.class);
+		Mockito.when(src.input(NAME)).thenThrow(IOException.class);
 		assertThrows(RuntimeException.class, () -> adapter.load(NAME));
 	}
 
 	@Test
 	void loadMapperError() throws Exception {
-		when(loader.map(in)).thenThrow(Exception.class);
+		Mockito.when(loader.map(in)).thenThrow(Exception.class);
 		assertThrows(RuntimeException.class, () -> adapter.load(NAME));
 	}
 
 	@Test
 	void loadLoaderError() throws Exception {
-		when(loader.load(in)).thenThrow(Exception.class);
+		Mockito.when(loader.load(in)).thenThrow(Exception.class);
 		assertThrows(RuntimeException.class, () -> adapter.load(NAME));
 	}
 }

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
 import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
@@ -60,7 +61,7 @@ class MonitorTest {
 
 	@Test
 	void current() {
-		when(lib.glfwGetVideoMode(monitor)).thenReturn(struct);
+		Mockito.when(lib.glfwGetVideoMode(monitor)).thenReturn(struct);
 		assertEquals(mode, monitor.mode(desktop));
 	}
 

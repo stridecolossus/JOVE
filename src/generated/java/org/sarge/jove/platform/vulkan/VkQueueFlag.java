@@ -11,7 +11,10 @@ public enum VkQueueFlag implements IntEnum {
  	COMPUTE(2),
  	TRANSFER(4),
  	SPARSE_BINDING(8),
- 	PROTECTED(16);
+ 	PROTECTED(16),
+ 	VIDEO_DECODE_KHR(32),
+ 	VIDEO_ENCODE_KHR(64),
+ 	OPTICAL_FLOW_NV(128);
 
 	private final int value;
 

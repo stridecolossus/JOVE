@@ -40,7 +40,7 @@ public class MeshLoader implements ResourceLoader<DataInputStream, Mesh> {
 		final ByteSizedBufferable index = helper.buffer(in);
 
 		// Create mesh
-		return new Mesh(primitive, new CompoundLayout(layout), () -> count, vertices, index);
+		return new DefaultMesh(primitive, new CompoundLayout(layout), count, vertices, index);
 	}
 
 	/**

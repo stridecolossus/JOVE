@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.mockito.AdditionalAnswers;
+import org.mockito.*;
 import org.sarge.jove.common.*;
 
 public class DataHelperTest {
@@ -24,13 +24,13 @@ public class DataHelperTest {
 
 	@Test
 	void loadVersionNumber() throws IOException {
-		when(in.readInt()).thenReturn(2);
+		Mockito.when(in.readInt()).thenReturn(2);
 		assertEquals(2, helper.version(in));
 	}
 
 	@Test
 	void loadVersionNumberInvalid() throws IOException {
-		when(in.readInt()).thenReturn(3);
+		Mockito.when(in.readInt()).thenReturn(3);
 		assertThrows(UnsupportedOperationException.class, () -> helper.version(in));
 	}
 
@@ -55,7 +55,7 @@ public class DataHelperTest {
 
 	@Test
 	void loadBufferableEmpty() throws IOException {
-		when(in.readInt()).thenReturn(0);
+		Mockito.when(in.readInt()).thenReturn(0);
 		assertEquals(null, helper.buffer(in));
 	}
 
@@ -70,9 +70,9 @@ public class DataHelperTest {
 	@Test
 	void loadLayout() throws IOException {
 		// Init layout data
-		when(in.readUTF()).thenReturn("FLOAT");
-		when(in.readInt()).then(AdditionalAnswers.returnsElementsOf(List.of(3, 4)));
-		when(in.readBoolean()).thenReturn(true);
+		Mockito.when(in.readUTF()).thenReturn("FLOAT");
+		Mockito.when(in.readInt()).then(AdditionalAnswers.returnsElementsOf(List.of(3, 4)));
+		Mockito.when(in.readBoolean()).thenReturn(true);
 
 		// Load layout
 		final Layout layout = helper.layout(in);

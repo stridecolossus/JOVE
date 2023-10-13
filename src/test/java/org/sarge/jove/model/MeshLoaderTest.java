@@ -44,7 +44,9 @@ class MeshLoaderTest {
 
 		// Reload and check is same
 		final Mesh result = read();
-		assertEquals(mesh, result);
+		assertEquals(Primitive.TRIANGLE, result.primitive());
+		assertEquals(new CompoundLayout(Point.LAYOUT), result.layout());
+		assertEquals(3, result.count());
 
 		// Check vertices
 		final ByteSizedBufferable vertices = result.vertices();

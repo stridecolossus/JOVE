@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentCaptor;
+import org.mockito.*;
 import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
 import org.sarge.jove.util.*;
 
@@ -40,7 +40,7 @@ public class DesktopTest {
 
 	@Test
 	void isVulkanSupported() {
-		when(lib.glfwVulkanSupported()).thenReturn(true);
+		Mockito.when(lib.glfwVulkanSupported()).thenReturn(true);
 		assertEquals(true, desktop.isVulkanSupported());
 	}
 

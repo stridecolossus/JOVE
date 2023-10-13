@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 
@@ -32,7 +33,7 @@ class DefaultVulkanFrameTest {
 
 	@Test
 	void invalidated() {
-		when(swapchain.acquire(available, null)).thenThrow(SwapchainInvalidated.class);
+		Mockito.when(swapchain.acquire(available, null)).thenThrow(SwapchainInvalidated.class);
 		assertThrows(SwapchainInvalidated.class, () -> frame.acquire(swapchain));
 		verify(fence).waitReady();
 		verify(fence, never()).reset();

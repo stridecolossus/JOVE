@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.common.Handle;
 
 class AudioDeviceTest {
@@ -28,13 +29,13 @@ class AudioDeviceTest {
 
 	@Test
 	void failed() {
-		when(lib.alcOpenDevice(null)).thenReturn(null);
+		Mockito.when(lib.alcOpenDevice(null)).thenReturn(null);
 		assertThrows(RuntimeException.class, () -> AudioDevice.create(null, lib));
 	}
 
 	@Test
 	void devices() {
-		when(lib.alcGetString(null, AudioParameter.DEVICE_SPECIFIER)).thenReturn("one" + (char) 0 + "two");
+		Mockito.when(lib.alcGetString(null, AudioParameter.DEVICE_SPECIFIER)).thenReturn("one" + (char) 0 + "two");
 		when(lib.alcOpenDevice(anyString())).thenReturn(new Handle(1));
 		assertEquals(2, AudioDevice.devices(lib).size());
 	}
@@ -53,13 +54,13 @@ class AudioDeviceTest {
 
 	@Test
 	void check() {
-		when(lib.alGetError()).thenReturn(AudioParameter.INVALID_OPERATION.value());
+		Mockito.when(lib.alGetError()).thenReturn(AudioParameter.INVALID_OPERATION.value());
 		assertThrows(RuntimeException.class, () -> dev.check());
 	}
 
 	@Test
 	void destroy() {
-		when(lib.alcCloseDevice(dev)).thenReturn(true);
+		Mockito.when(lib.alcCloseDevice(dev)).thenReturn(true);
 		dev.destroy();
 		assertEquals(true, dev.isDestroyed());
 	}

@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 
@@ -48,7 +49,7 @@ class VulkanRenderTaskTest {
 
 	@Test
 	void recreate() {
-		when(frame.acquire(swapchain)).thenThrow(SwapchainInvalidated.class);
+		Mockito.when(frame.acquire(swapchain)).thenThrow(SwapchainInvalidated.class);
 		task.render();
 		verify(adapter).recreate();
 		verifyNoMoreInteractions(swapchain);

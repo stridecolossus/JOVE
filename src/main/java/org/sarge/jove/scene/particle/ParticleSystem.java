@@ -357,7 +357,7 @@ public class ParticleSystem implements Frame.Listener {
 
 	/**
 	 * Creates a buffered mesh for this particle system.
-	 * Note that changes to the particle system are reflected in the returned mesh.
+	 * Note that subsequent changes to the particle system are reflected in the returned mesh.
 	 * @return Buffered mesh
 	 */
 	public Mesh mesh() {
@@ -380,7 +380,12 @@ public class ParticleSystem implements Frame.Listener {
 		};
 
 		// Create mesh
-		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
+		return new AbstractMesh(Primitive.POINT, layout, vertices) {
+			@Override
+			public int count() {
+				return particles.size();
+			}
+		};
 	}
 
 	@Override

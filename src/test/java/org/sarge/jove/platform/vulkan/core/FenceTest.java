@@ -1,11 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -26,6 +27,10 @@ public class FenceTest {
 		fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
 	}
 
+	private void status(VkResult result) {
+		Mockito.when(lib.vkGetFenceStatus(dev, fence)).thenReturn(result);
+	}
+
 	@Test
 	void create() {
 		final var expected = new VkFenceCreateInfo() {
@@ -43,8 +48,8 @@ public class FenceTest {
 	class Signalled {
 		@DisplayName("can test whether it is signalled")
 		@Test
-		void status() {
-			when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.SUCCESS);
+		void signalled() {
+			status(VkResult.SUCCESS);
 			assertEquals(true, fence.signalled());
 		}
 
@@ -62,7 +67,7 @@ public class FenceTest {
 		@DisplayName("can test whether it is signalled")
 		@Test
 		void signalled() {
-			when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.NOT_READY);
+			status(VkResult.NOT_READY);
 			assertEquals(false, fence.signalled());
 		}
 
@@ -77,7 +82,7 @@ public class FenceTest {
 	@DisplayName("An invalid fence cannot be tested for whether it is signalled")
 	@Test
 	void error() {
-		when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.ERROR_DEVICE_LOST);
+		status(VkResult.ERROR_DEVICE_LOST);
 		assertThrows(VulkanException.class, () -> fence.signalled());
 	}
 

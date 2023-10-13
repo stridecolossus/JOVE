@@ -6,6 +6,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.geometry.Point;
 
 /**
  * Data resource loader utilities.
@@ -81,12 +82,12 @@ public class DataHelper {
 
 	/**
 	 * Writes a bufferable object.
-	 * @param obj	Bufferable object to write
+	 * @param data	Bufferable to write
 	 * @param out	Output stream
 	 */
-	public void write(ByteSizedBufferable obj, DataOutput out) throws IOException {
+	public void write(ByteSizedBufferable data, DataOutput out) throws IOException {
 		// Output length
-		final int len = obj.length();
+		final int len = data.length();
 		out.writeInt(len);
 
 		// Stop if empty buffer
@@ -96,7 +97,7 @@ public class DataHelper {
 
 		// Write buffer
 		final ByteBuffer bb = ByteBuffer.allocate(len).order(BufferHelper.NATIVE_ORDER);
-		obj.buffer(bb);
+		data.buffer(bb);
 		out.write(bb.array());
 	}
 
@@ -111,7 +112,14 @@ public class DataHelper {
 		final var type = Layout.Type.valueOf(in.readUTF());
 		final boolean signed = in.readBoolean();
 		final int bytes = in.readInt();
-		return new Layout(size, type, signed, bytes);
+
+		final Layout layout = new Layout(size, type, signed, bytes);
+		if(Point.LAYOUT.equals(layout)) {
+			return Point.LAYOUT;
+		}
+		else {
+			return layout;
+		}
 	}
 
 	/**

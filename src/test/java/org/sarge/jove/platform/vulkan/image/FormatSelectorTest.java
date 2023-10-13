@@ -1,12 +1,13 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import java.util.*;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.BitMask;
@@ -27,13 +28,13 @@ public class FormatSelectorTest {
 
 	@Test
 	void select() {
-		when(dev.properties(FORMAT)).thenReturn(props);
+		Mockito.when(dev.properties(FORMAT)).thenReturn(props);
 		assertEquals(Optional.of(FORMAT), selector.select(FORMAT));
 	}
 
 	@Test
 	void candidates() {
-		when(dev.properties(FORMAT)).thenReturn(props);
+		Mockito.when(dev.properties(FORMAT)).thenReturn(props);
 		assertEquals(Optional.of(FORMAT), selector.select(VkFormat.A1R5G5B5_UNORM_PACK16, FORMAT));
 	}
 

@@ -1,17 +1,16 @@
 package org.sarge.jove.model;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>mesh builder</i> is used to construct a renderable {@link Mesh}.
@@ -22,17 +21,21 @@ import org.sarge.lib.util.Check;
  * @author Sarge
  */
 public class MeshBuilder {
+	private final Primitive primitive;
+	private final CompoundLayout layout;
 	private final List<Vertex> vertices = new ArrayList<>();
-	private final Mesh mesh;
 
 	/**
 	 * Constructor.
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
-	 * @see Mesh
+	 * @throws IllegalArgumentException if the layout does not contain a vertex position
+	 * @throws IllegalArgumentException if the layout contains {@link Normal#LAYOUT} but the drawing primitive is not {@link Primitive#isTriangle()}
 	 */
 	public MeshBuilder(Primitive primitive, CompoundLayout layout) {
-		this.mesh = new Mesh(primitive, layout, () -> count(), new VertexBuffer(), index());
+		this.primitive = requireNonNull(primitive);
+		this.layout = requireNonNull(layout);
+		Mesh.validate(primitive, layout);
 	}
 
 	/**
@@ -40,16 +43,27 @@ public class MeshBuilder {
 	 * @param vertex Vertex to add
 	 */
 	public MeshBuilder add(Vertex vertex) {
-		Check.notNull(vertex);
+		requireNonNull(vertex);
 		vertices.add(vertex);
 		return this;
 	}
 
 	/**
+	 * Constructs this mesh.
 	 * @return Mesh
 	 */
 	public Mesh mesh() {
-		return mesh;
+		return new AbstractMesh(primitive, layout, new VertexBuffer()) {
+			@Override
+			public int count() {
+				return MeshBuilder.this.count();
+			}
+
+			@Override
+			public Optional<ByteSizedBufferable> index() {
+				return Optional.ofNullable(MeshBuilder.this.index());
+			}
+		};
 	}
 
 	/**
@@ -75,7 +89,7 @@ public class MeshBuilder {
 	private class VertexBuffer implements ByteSizedBufferable {
 		@Override
 		public int length() {
-			return vertices.size() * mesh.layout().stride();
+			return vertices.size() * layout.stride();
 		}
 
 		@Override
@@ -100,7 +114,11 @@ public class MeshBuilder {
 	 * @throws IllegalStateException if {@link #count()} is not valid for the drawing primitive
 	 */
 	public final Bounds bounds() {
-		mesh.validate();
+
+
+
+
+//		mesh.validate();
 		return vertices
 				.parallelStream()
 				.map(Vertex::position)
@@ -115,10 +133,10 @@ public class MeshBuilder {
 	 */
 	public void compute() {
 		// Check mesh can be rendered
-		mesh.validate();
+//		mesh.validate();
 
 		// Determine number of triangles
-		final int faces = mesh.primitive().faces(this.count());
+		final int faces = primitive.faces(this.count());
 
 		// Compute normals
 		IntStream
@@ -169,10 +187,5 @@ public class MeshBuilder {
 		final Triangle triangle = new Triangle(points);
 		final Vector normal = triangle.normal();
 		return vertices.stream().map(v -> new VertexNormal(v, normal));
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(mesh).build();
 	}
 }

@@ -12,10 +12,16 @@ class AnimatorTest {
 	private Animator animator;
 	private Animation animation;
 	private Frame frame;
+	private long elapsed;
 
 	@BeforeEach
 	void before() {
-		frame = mock(Frame.class);
+		frame = new Frame() {
+			@Override
+			public Duration elapsed() {
+				return Duration.ofSeconds(elapsed);
+			}
+		};
 		animation = mock(Animation.class);
 		animator = new Animator(animation, Duration.ofSeconds(2));
 	}
@@ -64,7 +70,7 @@ class AnimatorTest {
 		@DisplayName("is updated on frame completion")
 		@Test
 		void update() {
-			when(frame.elapsed()).thenReturn(Duration.ofSeconds(1));
+			elapsed = 1;
 			animator.update(frame);
 			assertEquals(Duration.ofSeconds(1), animator.time());
 			assertEquals(true, animator.isPlaying());
@@ -74,7 +80,7 @@ class AnimatorTest {
 		@DisplayName("has a position scaled by the animator speed")
 		@Test
 		void speed() {
-			when(frame.elapsed()).thenReturn(Duration.ofSeconds(2));
+			elapsed = 2;
 			animator.speed(0.5f);
 			animator.update(frame);
 			assertEquals(Duration.ofSeconds(1), animator.time());
@@ -98,7 +104,7 @@ class AnimatorTest {
 	class Finished {
 		@BeforeEach
 		void before() {
-			when(frame.elapsed()).thenReturn(Duration.ofSeconds(3));
+			elapsed = 3;
 			animator.play();
 		}
 

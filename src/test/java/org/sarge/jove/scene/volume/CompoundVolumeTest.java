@@ -1,15 +1,13 @@
 package org.sarge.jove.scene.volume;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.scene.volume.*;
 
 class CompoundVolumeTest {
 	private Volume vol;
@@ -28,7 +26,7 @@ class CompoundVolumeTest {
 
 	@Test
 	void contains() {
-		when(vol.contains(Point.ORIGIN)).thenReturn(true);
+		Mockito.when(vol.contains(Point.ORIGIN)).thenReturn(true);
 		assertEquals(true, compound.contains(Point.ORIGIN));
 	}
 

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -59,10 +60,14 @@ public class SwapchainTest {
 			fence = Fence.create(dev);
 		}
 
+		private void result(VkResult result) {
+			Mockito.when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, dev.factory().integer())).thenReturn(result);
+		}
+
 		@DisplayName("The next image to be rendered can be acquired from the swapchain")
 		@Test
 		void acquire() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, dev.factory().integer())).thenReturn(VkResult.SUCCESS);
+			result(VkResult.SUCCESS);
 			assertEquals(1, swapchain.acquire(semaphore, fence));
 		}
 
@@ -75,15 +80,15 @@ public class SwapchainTest {
 		@DisplayName("The next image cannot be acquired if the swapchain has become invalid")
 		@Test
 		void error() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, dev.factory().integer())).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR);
-			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, null));
+			result(VkResult.ERROR_OUT_OF_DATE_KHR);
+			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, fence));
 		}
 
 		@DisplayName("The next image can be acquired if the swapchain is sub-optimal")
 		@Test
 		void suboptimal() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, dev.factory().integer())).thenReturn(VkResult.SUBOPTIMAL_KHR);
-			swapchain.acquire(null, fence);
+			result(VkResult.SUBOPTIMAL_KHR);
+			swapchain.acquire(semaphore, fence);
 		}
 	}
 

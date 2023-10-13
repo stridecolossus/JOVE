@@ -56,7 +56,7 @@ public interface DrawCommand extends Command {
 	 */
 	static DrawCommand of(Mesh mesh) {
 		final int count = mesh.count();
-		if(mesh.isIndexed()) {
+		if(mesh.index().isPresent()) {
 			return indexed(count);
 		}
 		else {

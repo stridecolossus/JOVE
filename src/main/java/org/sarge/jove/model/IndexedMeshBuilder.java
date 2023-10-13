@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.util.BitField;
 
@@ -48,11 +47,6 @@ public class IndexedMeshBuilder extends MeshBuilder {
 	}
 
 	@Override
-	public final int count() {
-		return index.size() - restart;
-	}
-
-	@Override
 	public Vertex vertex(int index) {
 		return super.vertex(this.index.get(index));
 	}
@@ -85,7 +79,6 @@ public class IndexedMeshBuilder extends MeshBuilder {
 	 * Note that an index that includes {@link #restart()} ignores this setting.
 	 * <p>
 	 * @param compact Whether to use compact indices
-	 * @see #isIntegerIndex(int)
 	 */
 	public IndexedMeshBuilder compact(boolean compact) {
 		this.compact = compact;
@@ -93,7 +86,12 @@ public class IndexedMeshBuilder extends MeshBuilder {
 	}
 
 	@Override
-	protected ByteSizedBufferable index() {
+	protected final int count() {
+		return index.size() - restart;
+	}
+
+	@Override
+	protected final ByteSizedBufferable index() {
 		return new IndexBuffer();
 	}
 
@@ -147,14 +145,5 @@ public class IndexedMeshBuilder extends MeshBuilder {
     //			bb.position(bb.position() + indices.length * Integer.BYTES);
     		}
 		}
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("compact", compact)
-				.append("restart", restart)
-				.build();
 	}
 }

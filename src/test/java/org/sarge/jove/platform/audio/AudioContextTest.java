@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.sarge.jove.common.Handle;
 
 class AudioContextTest {
@@ -28,7 +29,7 @@ class AudioContextTest {
 
 	@Test
 	void failed() {
-		when(lib.alcCreateContext(dev, new int[0])).thenReturn(null);
+		Mockito.when(lib.alcCreateContext(dev, new int[0])).thenReturn(null);
 		assertThrows(RuntimeException.class, () -> AudioContext.create(dev));
 	}
 
