@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
 
@@ -17,7 +17,7 @@ public class TesselationStageBuilder extends AbstractStageBuilder<VkPipelineTess
 	 * @param points Number of control points
 	 */
 	public TesselationStageBuilder points(int points) {
-		this.points = oneOrMore(points);
+		this.points = requireOneOrMore(points);
 		return this;
 	}
 

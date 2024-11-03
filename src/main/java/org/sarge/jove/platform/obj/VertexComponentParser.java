@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.obj;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.function.Function;
 
@@ -22,8 +22,8 @@ class VertexComponentParser<T extends Bufferable> implements Parser {
 	 * @param mapper		Vertex components
 	 */
 	public VertexComponentParser(FloatArrayConverter<T> converter, Function<ObjectModel, VertexComponentList<T>> mapper) {
-		this.converter = notNull(converter);
-		this.mapper = notNull(mapper);
+		this.converter = requireNonNull(converter);
+		this.mapper = requireNonNull(mapper);
 	}
 
 	@Override

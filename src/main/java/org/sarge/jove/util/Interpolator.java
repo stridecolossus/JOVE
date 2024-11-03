@@ -1,9 +1,6 @@
 package org.sarge.jove.util;
 
-import java.util.Iterator;
-
 import org.sarge.jove.util.FloatSupport.FloatUnaryOperator;
-import org.sarge.lib.element.Element;
 
 /**
  * An <i>interpolator</i> is a floating-point function applied to a percentile value, used for animation, easing, etc.
@@ -68,7 +65,7 @@ public interface Interpolator extends FloatUnaryOperator {
 	 */
 	default Interpolator mirror() {
 		return t -> {
-			if(t <= MathsUtil.HALF) {
+			if(t <= MathsUtility.HALF) {
 				return apply(t * 2);
 			}
 			else {
@@ -130,38 +127,6 @@ public interface Interpolator extends FloatUnaryOperator {
 	 * @see #mix(Interpolator, Interpolator, float)
 	 */
 	static Interpolator mix(Interpolator start, Interpolator end) {
-		return mix(start, end, MathsUtil.HALF);
-	}
-
-	/**
-	 * Loads an interpolator from the given element.
-	 * @param e Element
-	 * @return Interpolator
-	 */
-	static Interpolator load(Element e) {
-		return switch(e.name()) {
-			case "identity" -> Interpolator.LINEAR;
-
-			case "quadratic", "square", "squared" -> Interpolator.QUADRATIC;
-
-			case "smooth", "smoothstep" -> Interpolator.SMOOTH;
-
-			case "linear" -> {
-				final float start = e.child("start").text().transform(Float::parseFloat);
-				final float end = e.child("end").text().transform(Float::parseFloat);
-				yield linear(start, end);
-			}
-
-			case "mix" -> {
-				// TODO - nasty 1. uses iterator 2. assumes element order
-				final Iterator<Element> itr = e.children().iterator();
-				final Interpolator start = load(itr.next());
-				final Interpolator end = load(itr.next());
-				final float weight = e.text("weight").map(Float::parseFloat).orElse(MathsUtil.HALF);
-				yield mix(start, end, weight);
-			}
-
-			default -> throw e.exception("Unknown interpolator: " + e.name());
-		};
+		return mix(start, end, MathsUtility.HALF);
 	}
 }

@@ -1,9 +1,8 @@
 package org.sarge.jove.model;
 
-import java.util.Map;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.lib.util.Check;
+import java.util.Map;
 
 /**
  * A <i>glyph</i> defines the layout properties of a character in a {@link GlyphFont}.
@@ -21,8 +20,8 @@ public record Glyph(int code, float advance, Map<Integer, Float> kerning) {
 	 * @param advance 		Character advance
 	 */
 	public Glyph {
-		Check.zeroOrMore(code);
-		Check.zeroOrMore(advance);
+		requireZeroOrMore(code);
+		requireZeroOrMore(advance);
 		kerning = Map.copyOf(kerning);
 	}
 
@@ -41,14 +40,5 @@ public record Glyph(int code, float advance, Map<Integer, Float> kerning) {
 	 */
 	public float advance(int next) {
 		return kerning.getOrDefault(next, advance);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("code", code)
-				.append("advance", advance)
-				.append("kerning", kerning.size())
-				.build();
 	}
 }

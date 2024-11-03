@@ -2,7 +2,6 @@ package org.sarge.jove.platform.obj;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
@@ -43,7 +42,7 @@ public class FaceParserTest {
 
 	@Test
 	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(StringUtils.EMPTY, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse("", model));
 		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 1", model));
 		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 1 1 1", model));
 	}

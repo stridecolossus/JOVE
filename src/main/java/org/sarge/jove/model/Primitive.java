@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 /**
  * A <i>primitive</i> defines the characteristics of the common drawing primitives.
@@ -32,7 +32,7 @@ public enum Primitive {
 	 * @param size Number of vertices per primitive
 	 */
 	private Primitive(int size) {
-		this.size = zeroOrMore(size);
+		this.size = requireZeroOrMore(size);
 	}
 
 	/**

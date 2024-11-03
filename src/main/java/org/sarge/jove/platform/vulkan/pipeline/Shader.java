@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.io.*;
 
@@ -65,7 +65,7 @@ public final class Shader extends VulkanObject {
 		 * @param dev Logical device
 		 */
 		public Loader(DeviceContext dev) {
-			this.dev = notNull(dev);
+			this.dev = requireNonNull(dev);
 		}
 
 		@Override

@@ -3,8 +3,6 @@ package org.sarge.jove.scene.graph;
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * The <i>root node</i>
  * TODO
@@ -61,13 +59,5 @@ public class RootNode extends GroupNode {
 	public void clear() {
 		super.clear();
 		nodes.clear();
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("queues", nodes.size())
-				.build();
 	}
 }

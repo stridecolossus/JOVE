@@ -1,6 +1,6 @@
 package org.sarge.jove.scene.graph;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.scene.volume.*;
 
@@ -33,7 +33,7 @@ public class LocalVolume {
 	 * @param vol Bounding volume
 	 */
 	public void set(Volume vol) {
-		this.vol = notNull(vol);
+		this.vol = requireNonNull(vol);
 	}
 
 	/**

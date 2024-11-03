@@ -1,13 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.StructureCollector;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>buffer copy command</i> is used to transfer data between Vulkan buffers.
@@ -40,9 +39,9 @@ public final class BufferCopyCommand implements Command {
 	 * @param regions		Copy regions
 	 */
 	private BufferCopyCommand(VulkanBuffer src, VulkanBuffer dest, VkBufferCopy[] regions) {
-		this.src = notNull(src);
-		this.dest = notNull(dest);
-		this.regions = notNull(regions);
+		this.src = requireNonNull(src);
+		this.dest = requireNonNull(dest);
+		this.regions = requireNonNull(regions);
 	}
 
 	@Override
@@ -61,15 +60,6 @@ public final class BufferCopyCommand implements Command {
 		return new BufferCopyCommand(dest, src, regions);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("src", src)
-				.append("dest", dest)
-				.append("regions", regions.length)
-				.build();
-	}
-
 	/**
 	 * Builder for a buffer copy command.
 	 */
@@ -79,9 +69,9 @@ public final class BufferCopyCommand implements Command {
 		 */
 		private record CopyRegion(long srcOffset, long destOffset, long size) {
 			private CopyRegion {
-				Check.zeroOrMore(srcOffset);
-				Check.zeroOrMore(destOffset);
-				Check.zeroOrMore(size);
+				requireZeroOrMore(srcOffset);
+				requireZeroOrMore(destOffset);
+				requireZeroOrMore(size);
 			}
 
 			private void populate(VkBufferCopy copy) {
@@ -101,7 +91,7 @@ public final class BufferCopyCommand implements Command {
 		 */
 		public Builder source(VulkanBuffer src) {
 			src.require(VkBufferUsageFlag.TRANSFER_SRC);
-			this.src = notNull(src);
+			this.src = requireNonNull(src);
 			return this;
 		}
 
@@ -112,7 +102,7 @@ public final class BufferCopyCommand implements Command {
 		 */
 		public Builder destination(VulkanBuffer dest) {
 			dest.require(VkBufferUsageFlag.TRANSFER_DST);
-			this.dest = notNull(dest);
+			this.dest = requireNonNull(dest);
 			return this;
 		}
 
@@ -125,7 +115,7 @@ public final class BufferCopyCommand implements Command {
 		 */
 		public Builder region(long srcOffset, long destOffset, long size) {
 			// Validate
-			Check.oneOrMore(size);
+			requireOneOrMore(size);
 			src.checkOffset(srcOffset + size - 1);
 			dest.checkOffset(destOffset + size - 1);
 
@@ -152,8 +142,8 @@ public final class BufferCopyCommand implements Command {
 		 */
 		public BufferCopyCommand build() {
 			// Validate
-			Check.notNull(src);
-			Check.notNull(dest);
+			requireNonNull(src);
+			requireNonNull(dest);
 			if(src == dest) throw new IllegalArgumentException("Cannot copy to self");
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 

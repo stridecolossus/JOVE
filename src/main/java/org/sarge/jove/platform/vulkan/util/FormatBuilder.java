@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
@@ -124,7 +125,7 @@ public final class FormatBuilder {
 	 */
 	public FormatBuilder components(String components) {
 		if(components.length() > 4) throw new IllegalArgumentException(String.format("Invalid components [%s]", components));
-		this.components = notEmpty(components);
+		this.components = requireNotEmpty(components);
 		return count(components.length());
 	}
 
@@ -171,7 +172,7 @@ public final class FormatBuilder {
 	 * @param numeric Numeric format (default is {@link NumericFormat#FLOAT})
 	 */
 	public FormatBuilder type(NumericFormat numeric) {
-		this.numeric = notNull(numeric);
+		this.numeric = requireNonNull(numeric);
 		return this;
 	}
 

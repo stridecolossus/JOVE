@@ -1,11 +1,10 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Optional;
 import java.util.function.IntSupplier;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 
@@ -31,10 +30,10 @@ public final class Mesh {
 	 * @throws IllegalStateException if the draw count is not valid for the rendering primitive
 	 */
 	public Mesh(Primitive primitive, CompoundLayout layout, IntSupplier count, ByteSizedBufferable vertices, ByteSizedBufferable index) {
-		this.primitive = notNull(primitive);
-		this.layout = notNull(layout);
-		this.count = notNull(count);
-		this.vertices = notNull(vertices);
+		this.primitive = requireNonNull(primitive);
+		this.layout = requireNonNull(layout);
+		this.count = requireNonNull(count);
+		this.vertices = requireNonNull(vertices);
 		this.index = index;
 		validateNormals();
 	}
@@ -110,14 +109,5 @@ public final class Mesh {
 				(this.primitive == that.primitive()) &&
 				(this.count() == that.count()) &&
 				this.layout.equals(that.layout());
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(primitive)
-				.append("count", count())
-				.append("layout", layout)
-				.build();
 	}
 }

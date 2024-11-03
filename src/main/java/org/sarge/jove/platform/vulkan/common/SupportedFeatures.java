@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.common;
 
 import static java.util.stream.Collectors.toSet;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Set;
 
@@ -20,7 +20,7 @@ public final class SupportedFeatures {
 	 * @param features Supported device features
 	 */
 	public SupportedFeatures(VkPhysicalDeviceFeatures features) {
-		this.features = notNull(features);
+		this.features = requireNonNull(features);
 		this.features.write();
 	}
 

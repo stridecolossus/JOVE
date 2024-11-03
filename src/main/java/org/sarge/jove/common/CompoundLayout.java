@@ -2,8 +2,6 @@ package org.sarge.jove.common;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * A <i>compound layout</i> specifies the structure of compound data types such as vertices.
  * @author Sarge
@@ -65,6 +63,6 @@ public final class CompoundLayout {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append(layout).build();
+		return layout.toString();
 	}
 }

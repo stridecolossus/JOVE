@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
 import java.util.Map;
@@ -76,8 +76,8 @@ public final class Desktop implements TransientObject {
 	 * @param factory		Reference factory
 	 */
 	Desktop(DesktopLibrary lib, ReferenceFactory factory) {
-		this.lib = notNull(lib);
-		this.factory = notNull(factory);
+		this.lib = requireNonNull(lib);
+		this.factory = requireNonNull(factory);
 	}
 
 	/**

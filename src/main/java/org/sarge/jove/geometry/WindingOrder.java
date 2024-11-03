@@ -7,23 +7,5 @@ package org.sarge.jove.geometry;
 public enum WindingOrder {
 	CLOCKWISE,
 	COUNTER_CLOCKWISE,
-	COLINEAR;
-
-	/**
-	 * Determines the winding order for the given <i>determinant</i> of a polygon.
-	 * @param det Determinant
-	 * @return Winding order
-	 */
-	public static WindingOrder of(float det) {
-		if(det > 0) {
-			return COUNTER_CLOCKWISE;
-		}
-		else
-		if(det < 0) {
-			return CLOCKWISE;
-		}
-		else {
-			return COLINEAR;
-		}
-	}
+	COLINEAR
 }

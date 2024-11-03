@@ -1,11 +1,10 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientObject;
 
 /**
@@ -27,7 +26,7 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	 */
 	public PoolAllocator(Allocator allocator, int pages) {
 		super(allocator);
-		this.pages = oneOrMore(pages);
+		this.pages = requireOneOrMore(pages);
 	}
 
 	/**
@@ -108,14 +107,5 @@ public class PoolAllocator extends Allocator implements TransientObject {
 		super.reset();
 		assert size() == 0;
 		assert free() == 0;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("pools", pools.size())
-				.append("pages", pages)
-				.build();
 	}
 }

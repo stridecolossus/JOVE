@@ -1,8 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.model.IndexedMeshBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -27,7 +26,7 @@ public final class IndexBuffer extends VulkanBuffer {
 	public IndexBuffer(VulkanBuffer buffer, VkIndexType type) {
 		super(buffer);
 		if(type == VkIndexType.NONE_NV) throw new IllegalArgumentException("Invalid index type: " + type);
-		this.type = notNull(type);
+		this.type = requireNonNull(type);
 		require(VkBufferUsageFlag.INDEX_BUFFER);
 	}
 
@@ -94,13 +93,5 @@ public final class IndexBuffer extends VulkanBuffer {
 				(obj instanceof IndexBuffer that) &&
 				(this.type == that.type()) &&
 				super.equals(obj);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(type)
-				.build();
 	}
 }

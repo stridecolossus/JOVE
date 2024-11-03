@@ -1,11 +1,10 @@
 package org.sarge.jove.scene.particle;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.scene.volume.Bounds;
 import org.sarge.jove.util.*;
-import org.sarge.lib.element.Element;
 
 /**
  * The <i>box position factory</i> generates particles randomly within a box (or rectangle).
@@ -23,30 +22,17 @@ public class BoxPositionFactory implements PositionFactory {
 	 */
 	public BoxPositionFactory(Bounds box, Randomiser randomiser) {
 		this.centre = box.centre();
-		this.range = Vector.between(box.min(), box.max()).multiply(MathsUtil.HALF);
-		this.randomiser = notNull(randomiser);
+		this.range = Vector.between(box.min(), box.max()).multiply(MathsUtility.HALF);
+		this.randomiser = requireNonNull(randomiser);
 	}
 
 	@Override
 	public Point position() {
-		final Vector vec = randomiser.vector().multiply(range);
-		return new Point(vec).add(centre);
-	}
-
-	/**
-	 * Loads a box position factory from the given element.
-	 * @param e					Element
-	 * @param randomiser		Randomiser
-	 * @return Box position factory
-	 */
-	public static PositionFactory load(Element e, Randomiser randomiser) {
-		final Point min = point(e, "min");
-		final Point max = point(e, "min");
-		final Bounds bounds = new Bounds(min, max);
-		return new BoxPositionFactory(bounds, randomiser);
-	}
-
-	private static Point point(Element e, String name) {
-		return e.child(name).text().transform(Point.CONVERTER);
+		// TODO - revert to component-wise multiply() on vector?
+		final Vector vec = randomiser.vector();
+		final float x = vec.x * range.x;
+		final float y = vec.y * range.y;
+		final float z = vec.z * range.z;
+		return centre.add(new Vector(x, y, z));
 	}
 }

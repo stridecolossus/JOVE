@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.awt.MouseInfo;
 import java.util.Set;
@@ -27,7 +27,7 @@ public class MouseDevice implements Device {
 	 * @param window Parent window
 	 */
 	MouseDevice(Window window) {
-		this.window = notNull(window);
+		this.window = requireNonNull(window);
 	}
 
 	@Override

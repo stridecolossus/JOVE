@@ -1,7 +1,5 @@
 package org.sarge.jove.control;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * Skeleton implementation.
  * @author Sarge
@@ -29,10 +27,5 @@ public abstract class AbstractPlayable implements Playable {
 	@Override
 	public void stop() {
 		playing = false;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append("playing", playing).build();
 	}
 }

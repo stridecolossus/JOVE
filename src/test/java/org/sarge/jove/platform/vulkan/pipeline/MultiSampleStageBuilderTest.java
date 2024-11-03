@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.PointerToIntArray;
-import org.sarge.lib.util.Percentile;
+import org.sarge.lib.Percentile;
 
 public class MultiSampleStageBuilderTest {
 	private MultiSampleStageBuilder builder;

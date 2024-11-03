@@ -1,5 +1,4 @@
 package org.sarge.jove.control;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.Event.Source;
 
 /**
@@ -32,10 +31,5 @@ public abstract class AxisControl implements Event, Source<AxisControl> {
 	@Override
 	public boolean equals(Object obj) {
 		return (obj == this);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(value).build();
 	}
 }

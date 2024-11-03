@@ -2,12 +2,9 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.model.GlyphFont.Loader;
-import org.sarge.lib.element.Element;
 
 class GlyphFontTest {
 	private GlyphFont font;
@@ -44,48 +41,5 @@ class GlyphFontTest {
 	void tiles() {
 		final var glyphs = Collections.nCopies(256 + 1, glyph);
 		assertThrows(IllegalStateException.class, () -> new GlyphFont(0, glyphs, 16));
-	}
-
-	@Nested
-	class LoaderTests {
-		private Loader loader;
-
-		@BeforeEach
-		void before() {
-			loader = new Loader();
-		}
-
-		@Test
-		void load() throws Exception {
-			final Element root = new Element.Builder()
-					.child("start", (int) 'A')
-					.child("tiles", 16)
-					.child()
-						.name("glyphs")
-						.child()
-							.child("code", (int) 'A')
-							.child("advance", 3)
-							.child()
-								.name("kerning")
-								.child(String.valueOf((int) 'W'), "4")
-								.end()
-							.end()
-						.end()
-					.build();
-
-			assertEquals(font, loader.load(root));
-		}
-
-		@Test
-		void write() throws Exception {
-			// Output font
-			final StringWriter out = new StringWriter();
-			Loader.write(font, out);
-
-			// Load back in and validate
-			final var in = new ByteArrayInputStream(out.toString().getBytes());
-			final Element data = loader.map(in);
-			assertEquals(font, loader.load(data));
-		}
 	}
 }

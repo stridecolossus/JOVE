@@ -1,6 +1,7 @@
 package org.sarge.jove.scene.particle;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import org.sarge.jove.geometry.Vector;
 
@@ -19,8 +20,8 @@ public class WaveInfluence implements Influence {
 	 * @param wave			Wave (or amplitude) vector
 	 */
 	public WaveInfluence(long period, Vector wave) {
-		this.period = oneOrMore(period);
-		this.wave = notNull(wave);
+		this.period = requireOneOrMore(period);
+		this.wave = requireNonNull(wave);
 	}
 
 	@Override

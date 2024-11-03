@@ -1,21 +1,21 @@
 package org.sarge.jove.scene.particle;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersected;
+import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.Intersection.Surface;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>particle system</i> is a controller for a particle animation.
@@ -62,7 +62,7 @@ public class ParticleSystem implements Frame.Listener {
 	// Controller
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
-	private final Map<Intersected, Collision> surfaces = new HashMap<>();
+	private final Map<Surface, Collision> surfaces = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -91,7 +91,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param pos Starting position factory
 	 */
 	public ParticleSystem position(PositionFactory pos) {
-		this.position = notNull(pos);
+		this.position = requireNonNull(pos);
 		return this;
 	}
 
@@ -100,7 +100,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param vec Movement vector factory
 	 */
 	public ParticleSystem vector(DirectionFactory vec) {
-		this.vector = notNull(vec);
+		this.vector = requireNonNull(vec);
 		return this;
 	}
 
@@ -109,7 +109,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param colour Colour factory
 	 */
 	public ParticleSystem colour(ColourFactory colour) {
-		this.colour = notNull(colour);
+		this.colour = requireNonNull(colour);
 		return this;
 	}
 
@@ -125,7 +125,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param max Maximum number of particles
 	 */
 	public ParticleSystem max(int max) {
-		this.max = oneOrMore(max);
+		this.max = requireOneOrMore(max);
 		return this;
 	}
 
@@ -174,7 +174,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param policy Growth policy
 	 */
 	public ParticleSystem policy(GenerationPolicy policy) {
-		this.policy = notNull(policy);
+		this.policy = requireNonNull(policy);
 		return this;
 	}
 
@@ -190,7 +190,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param lifetime Lifetime
 	 */
 	public ParticleSystem lifetime(Duration lifetime) {
-		this.lifetime = oneOrMore(lifetime.toMillis());
+		this.lifetime = requireOneOrMore(lifetime.toMillis());
 		return this;
 	}
 
@@ -199,7 +199,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param influence Particle influence
 	 */
 	public ParticleSystem add(Influence influence) {
-		influences.add(notNull(influence));
+		influences.add(requireNonNull(influence));
 		return this;
 	}
 
@@ -218,9 +218,9 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param action		Collision action
 	 * @see Characteristic#CULL
 	 */
-	public ParticleSystem add(Intersected surface, Collision action) {
-		Check.notNull(surface);
-		Check.notNull(action);
+	public ParticleSystem add(Surface surface, Collision action) {
+		requireNonNull(surface);
+		requireNonNull(action);
 		surfaces.put(surface, action);
 		return this;
 	}
@@ -229,7 +229,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * Removes a collision surface.
 	 * @param surface Surface to remove
 	 */
-	public ParticleSystem remove(Intersected surface) {
+	public ParticleSystem remove(Surface surface) {
 		surfaces.remove(surface);
 		return this;
 	}
@@ -303,7 +303,7 @@ public class ParticleSystem implements Frame.Listener {
 			 * Move each particle.
 			 */
 			private void move(Particle p) {
-				final Vector vec = p.direction().multiply(elapsed);
+				final Vector vec = p.ray().direction().multiply(elapsed);
 				p.move(vec);
 			}
 		}
@@ -321,9 +321,9 @@ public class ParticleSystem implements Frame.Listener {
 	 */
 	private void collide(Particle p) {
 		for(var entry : surfaces.entrySet()) {
-			final Intersected surface = entry.getKey();
-			final var results = surface.intersections(p);
-			if(results != Intersected.NONE) {
+			final Surface surface = entry.getKey();
+			final var results = surface.intersections(p.ray());
+			if(results != Intersection.NONE) {
 				final Collision collision = entry.getValue();
 				collision.collide(p, results.iterator().next());
 				break;
@@ -381,20 +381,5 @@ public class ParticleSystem implements Frame.Listener {
 
 		// Create mesh
 		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("count", String.format("%d/%d", size(), max))
-				.append(policy)
-				.append("lifetime", lifetime)
-				.append(position)
-				.append(vector)
-				.append(colour)
-				.append("characteristics", chars)
-				.append("influences", influences.size())
-				.append("surfaces", surfaces.size())
-				.build();
 	}
 }

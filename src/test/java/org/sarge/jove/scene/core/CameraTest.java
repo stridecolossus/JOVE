@@ -97,7 +97,7 @@ class CameraTest {
 	@Test
 	void matrix() {
 		// Create camera rotation
-		final Matrix rot = new Matrix.Builder()
+		final Matrix rot = new Matrix.Builder(4)
 				.identity()
 				.row(0, X)
 				.row(1, Y)
@@ -105,7 +105,7 @@ class CameraTest {
 				.build();
 
 		// Create camera translation one unit out of the screen
-		final Matrix trans = Matrix.translation(new Vector(0, 0, -1));
+		final Matrix trans = Transform.translation(new Vector(0, 0, -1));
 
 		// Init camera and check matrix
 		cam.move(new Point(0, 0, 1));

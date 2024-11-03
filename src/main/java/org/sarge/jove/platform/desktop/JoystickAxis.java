@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.util.function.Consumer;
 
 import org.sarge.jove.control.AxisControl;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>joystick axis</i> is a controller for a ranged value such as a HOTAS throttle.
@@ -21,7 +21,7 @@ class JoystickAxis extends AxisControl {
 	 * @param value Initial position
 	 */
 	JoystickAxis(int index, float value) {
-		this.index = zeroOrMore(index);
+		this.index = requireZeroOrMore(index);
 		update(value);
 	}
 
@@ -39,7 +39,7 @@ class JoystickAxis extends AxisControl {
 	@Override
 	public void update(float value) {
 		// Ignore if not modified
-		if(MathsUtil.isEqual(this.value(), value)) {
+		if(MathsUtility.isApproxEqual(this.value(), value)) {
 			return;
 		}
 

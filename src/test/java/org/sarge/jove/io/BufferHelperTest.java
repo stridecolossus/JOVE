@@ -1,7 +1,6 @@
 package org.sarge.jove.io;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.nio.*;
 
@@ -14,7 +13,7 @@ class BufferHelperTest {
 
 	@BeforeEach
 	void before() {
-		bb = mock(ByteBuffer.class);
+		bb = ByteBuffer.allocate(3);
 	}
 
 	@Test
@@ -30,16 +29,7 @@ class BufferHelperTest {
 	@Test
 	void write() {
 		BufferHelper.write(BYTES, bb);
-		verify(bb).put(BYTES);
-	}
-
-	@Test
-	void writeDirect() {
-		when(bb.isDirect()).thenReturn(true);
-		BufferHelper.write(BYTES, bb);
-		verify(bb).put((byte) 1);
-		verify(bb).put((byte) 2);
-		verify(bb).put((byte) 3);
+		assertArrayEquals(BYTES, bb.array());
 	}
 
 	@Test

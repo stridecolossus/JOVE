@@ -1,11 +1,11 @@
 package org.sarge.jove.util;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.function.Function;
 
-import org.apache.commons.lang3.StringUtils;
-import org.sarge.lib.util.Converter;
+import org.sarge.lib.Converter;
 
 /**
  * Converter for a floating-point tuple specified as a whitespace or comma-delimited string.
@@ -21,14 +21,21 @@ public class FloatArrayConverter<T> implements Converter<T> {
 	 * @param ctor			Constructor
 	 */
 	public FloatArrayConverter(int size, Function<float[], T> ctor) {
-		this.size = oneOrMore(size);
-		this.ctor = notNull(ctor);
+		this.size = requireOneOrMore(size);
+		this.ctor = requireNonNull(ctor);
 	}
 
 	@Override
 	public T apply(String str) throws NumberFormatException {
 		// Tokenize
-		final String[] parts = StringUtils.split(str.trim(), " ,");
+		// TODO
+		final String[] parts;
+		if(str.indexOf(',') > 0) {
+			parts = str.trim().split(",");
+		}
+		else {
+			parts = str.trim().split(" ");
+		}
 		if(parts.length != size) {
 			throw new IllegalArgumentException("Invalid tuple length: actual=%d expected=%d".formatted(parts.length, size));
 		}

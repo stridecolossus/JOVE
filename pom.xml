@@ -7,7 +7,7 @@
 	<description>JOVE</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>22</java.version>
     </properties>
 
     <build>
@@ -17,9 +17,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <release>18</release>
-                    <source>18</source>
-                    <target>18</target>
+                    <release>22</release>
+                    <source>22</source>
+                    <target>22</target>
                     <compilerArgs>
                         --enable-preview
                     </compilerArgs>
@@ -34,18 +34,6 @@
 			<artifactId>lib</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 	   </dependency>
-	
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-collections4</artifactId>
-			<version>4.4</version>
-		</dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.11</version>
-        </dependency>
 
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>
@@ -53,41 +41,6 @@
 			<version>5.3.0</version>
 		</dependency>
 
-		<dependency>
-		    <groupId>org.json</groupId>
-		    <artifactId>json</artifactId>
-		    <version>20210307</version>
-		</dependency>
-<!--
-		<dependency>
-		    <groupId>org.apache.velocity</groupId>
-		    <artifactId>velocity</artifactId>
-		    <version>1.7</version>
-		    <exclusions>
-		    	<exclusion>
-		    		<groupId>commons-lang</groupId>
-		    		<artifactId>commons-lang</artifactId>
-		    	</exclusion>
-		    	<exclusion>
-		    		<groupId>commons-collections</groupId>
-		    		<artifactId>commons-collections</artifactId>
-		    	</exclusion>
-		    </exclusions>
-		</dependency>
-		
-		<dependency>
-		     <groupId>org.apache.velocity</groupId>
-		     <artifactId>velocity-tools</artifactId>
-		     <version>2.0</version>
-		     <exclusions>
-		     	<exclusion>
-		     		<groupId>commons-collections</groupId>
-		     		<artifactId>commons-collections</artifactId>
-		     	</exclusion>
-		     </exclusions>
-		</dependency>
- -->
-		
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
@@ -98,7 +51,7 @@
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
-			<version>4.0.0</version>
+			<version>5.7.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

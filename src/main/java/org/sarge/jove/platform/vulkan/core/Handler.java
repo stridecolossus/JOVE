@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.joining;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -11,7 +11,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -36,7 +36,7 @@ public class Handler extends TransientNativeObject {
 	 */
 	Handler(Handle handle, Instance instance) {
 		super(handle);
-		this.instance = notNull(instance);
+		this.instance = requireNonNull(instance);
 	}
 
 	@Override
@@ -69,9 +69,9 @@ public class Handler extends TransientNativeObject {
 		 * @param data			Message data
 		 */
 		public Message {
-			Check.notNull(severity);
-			Check.notEmpty(types);
-			Check.notNull(data);
+			requireNonNull(severity);
+			requireNotEmpty(types);
+			requireNonNull(data);
 		}
 
 		/**
@@ -176,7 +176,7 @@ public class Handler extends TransientNativeObject {
 		 * @param consumer Message consumer
 		 */
 		public Builder consumer(Consumer<Message> consumer) {
-			this.consumer = notNull(consumer);
+			this.consumer = requireNonNull(consumer);
 			return this;
 		}
 
@@ -185,7 +185,7 @@ public class Handler extends TransientNativeObject {
 		 * @param severity Message severity
 		 */
 		public Builder severity(VkDebugUtilsMessageSeverity severity) {
-			this.severity.add(notNull(severity));
+			this.severity.add(requireNonNull(severity));
 			return this;
 		}
 
@@ -194,7 +194,7 @@ public class Handler extends TransientNativeObject {
 		 * @param type Message type
 		 */
 		public Builder type(VkDebugUtilsMessageType type) {
-			types.add(notNull(type));
+			types.add(requireNonNull(type));
 			return this;
 		}
 

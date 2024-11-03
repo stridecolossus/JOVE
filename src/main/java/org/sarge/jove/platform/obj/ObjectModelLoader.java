@@ -1,18 +1,18 @@
 package org.sarge.jove.platform.obj;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.io.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.Mesh;
 import org.sarge.jove.util.FloatArrayConverter;
-import org.sarge.lib.util.Check;
 
 /**
  * Loader for an OBJ model.
@@ -37,11 +37,15 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	private void init() {
 		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), ObjectModel::positions));
 		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), ObjectModel::coordinates));
-		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Normal.SIZE, Normal::new), ObjectModel::normals));
+		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Normal.SIZE, ObjectModelLoader::normal), ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);
 		add("s", Parser.IGNORE);
+	}
+
+	private static Normal normal(float[] array) {
+		return new Normal(new Vector(array));
 	}
 
 	/**
@@ -50,8 +54,8 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * @param parser		Parser
 	 */
 	public void add(String token, Parser parser) {
-		Check.notEmpty(token);
-		Check.notNull(parser);
+		requireNotEmpty(token);
+		requireNonNull(parser);
 		parsers.put(token, parser);
 	}
 
@@ -69,7 +73,7 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * @param handler Unknown command handler
 	 */
 	public void setUnknownCommandHandler(Consumer<String> handler) {
-		this.handler = notNull(handler);
+		this.handler = requireNonNull(handler);
 	}
 
 	@Override
@@ -89,7 +93,7 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 */
 	private void parse(String line) {
 		// Tokenize to command and arguments
-		final String[] parts = StringUtils.split(line, null, 2);
+		final String[] parts = line.split(" ", 2); // StringUtils.split(line, null, 2);
 
 		// Lookup command parser
 		final Parser parser = parsers.get(parts[0]);

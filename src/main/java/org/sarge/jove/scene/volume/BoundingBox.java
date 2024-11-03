@@ -1,14 +1,13 @@
 package org.sarge.jove.scene.volume;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
-import org.sarge.jove.geometry.Ray.*;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>bounding box</i> is an axis-aligned rectilinear volume implemented as an adapter for a {@link Bounds}.
@@ -22,7 +21,7 @@ public class BoundingBox implements Volume {
 	 * @param bounds Bounds
 	 */
 	public BoundingBox(Bounds bounds) {
-		this.bounds = notNull(bounds);
+		this.bounds = requireNonNull(bounds);
 	}
 
 	@Override
@@ -70,10 +69,10 @@ public class BoundingBox implements Volume {
 		float n = Float.NEGATIVE_INFINITY;
 		float f = Float.POSITIVE_INFINITY;
 		for(int c = 0; c < Vector.SIZE; ++c) {
-			if(MathsUtil.isZero(dir[c])) {
+			if(MathsUtility.isApproxZero(dir[c])) {
 				// Check for parallel ray
 				if((origin[c] < min[c]) || (origin[c] > max[c])) {
-					return Intersected.NONE;
+					return Intersection.NONE;
 				}
 			}
 			else {
@@ -87,24 +86,24 @@ public class BoundingBox implements Volume {
 
 				// Check for ray missing the box
 				if(n > f) {
-					return Intersected.NONE;
+					return Intersection.NONE;
 				}
 
 				// Check for box behind ray
 				if(f < 0) {
-					return Intersected.NONE;
+					return Intersection.NONE;
 				}
 			}
 		}
 
 		// Build results
 		final Point centre = bounds.centre();
-		final var far = Intersection.of(ray, f, centre);
-		if((n < 0) || MathsUtil.isEqual(n, f)) {
+		final var far = ray.intersection(f, centre);
+		if((n < 0) || MathsUtility.isApproxEqual(n, f)) {
 			return List.of(far);
 		}
 		else {
-			final var near = Intersection.of(ray, n, centre);
+			final var near = ray.intersection(n, centre);
 			return List.of(near, far);
 		}
 	}
@@ -132,10 +131,5 @@ public class BoundingBox implements Volume {
 				(obj == this) ||
 				(obj instanceof BoundingBox that) &&
 				this.bounds.equals(that.bounds);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(bounds).build();
 	}
 }

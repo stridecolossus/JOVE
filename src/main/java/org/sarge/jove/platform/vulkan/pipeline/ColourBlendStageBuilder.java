@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
@@ -47,7 +47,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 	 * @param op Colour-blending operation
 	 */
 	public ColourBlendStageBuilder operation(VkLogicOp op) {
-		info.logicOp = notNull(op);
+		info.logicOp = requireNonNull(op);
 		return this;
 	}
 
@@ -115,7 +115,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 			 * @param src Source colour blend factor
 			 */
 			public BlendOperationBuilder source(VkBlendFactor src) {
-				this.src = notNull(src);
+				this.src = requireNonNull(src);
 				return this;
 			}
 
@@ -124,7 +124,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 			 * @param dest Destination colour blend factor
 			 */
 			public BlendOperationBuilder destination(VkBlendFactor dest) {
-				this.dest = notNull(dest);
+				this.dest = requireNonNull(dest);
 				return this;
 			}
 
@@ -133,7 +133,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 			 * @param blend Colour blend operation
 			 */
 			public BlendOperationBuilder operation(VkBlendOp blend) {
-				this.blend = notNull(blend);
+				this.blend = requireNonNull(blend);
 				return this;
 			}
 

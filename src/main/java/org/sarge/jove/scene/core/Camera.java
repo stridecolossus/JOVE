@@ -1,8 +1,7 @@
 package org.sarge.jove.scene.core;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 
 /**
@@ -32,38 +31,38 @@ public class Camera {
 
 	/**
 	 * Moves the camera to a new position.
-	 * @param pos New position
+	 * @param position New position
 	 */
-	public void move(Point pos) {
-		this.pos = notNull(pos);
+	public void move(Point position) {
+		this.pos = requireNonNull(position);
 		dirty();
 	}
 
 	/**
 	 * Moves the camera by the given vector.
-	 * @param vec Movement vector
+	 * @param vector Movement vector
 	 */
-	public void move(Vector vec) {
-		pos = pos.add(vec);
+	public void move(Vector vector) {
+		pos = pos.add(vector);
 		dirty();
 	}
 
 	/**
 	 * Moves the camera by the given distance in the current view direction.
-	 * @param dist Distance to move
+	 * @param distance Distance to move
 	 * @see #direction()
 	 */
-	public void move(float dist) {
-		move(dir.multiply(dist));
+	public void move(float distance) {
+		move(dir.multiply(distance));
 	}
 
 	/**
 	 * Moves the camera by the given distance along the current right axis.
-	 * @param dist Distance to strafe
+	 * @param distance Distance to strafe
 	 * @see #right()
 	 */
-	public void strafe(float dist) {
-		move(right.multiply(dist));
+	public void strafe(float distance) {
+		move(right.multiply(distance));
 	}
 
 	/**
@@ -80,7 +79,7 @@ public class Camera {
 	 */
 	public void direction(Normal dir) {
 		validate(dir, up);
-		this.dir = notNull(dir);
+		this.dir = requireNonNull(dir);
 		dirty();
 	}
 
@@ -103,7 +102,7 @@ public class Camera {
 	 */
 	public void up(Normal up) {
 		validate(dir, up);
-		this.up = notNull(up);
+		this.up = requireNonNull(up);
 		dirty();
 	}
 
@@ -159,10 +158,10 @@ public class Camera {
 		final Vector y = dir.cross(right).normalize();
 
 		// Build translation component
-		final Matrix trans = Matrix.translation(new Vector(pos).invert());
+		final Matrix trans = Transform.translation(new Vector(pos).invert());
 
 		// Build rotation component
-		final Matrix rot = new Matrix.Builder()
+		final Matrix rot = new Matrix.Builder(4)
 				.identity()
 				.row(0, right)
 				.row(1, y)
@@ -171,14 +170,5 @@ public class Camera {
 
 		// Create camera matrix
 		matrix = rot.multiply(trans);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("pos", pos)
-				.append("dir", dir)
-				.append("up", up)
-				.build();
 	}
 }

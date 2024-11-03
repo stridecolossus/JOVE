@@ -1,13 +1,12 @@
 package org.sarge.jove.platform.audio;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.io.File;
 import java.util.*;
 
 import javax.sound.sampled.AudioSystem;
 
-import org.apache.commons.lang3.StringUtils;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
@@ -41,8 +40,25 @@ public class AudioDevice extends TransientNativeObject {
 	 */
 	public static List<AudioDevice> devices(AudioLibrary lib) {
 		final String str = lib.alcGetString(null, AudioParameter.DEVICE_SPECIFIER);
-		final String[] array = StringUtils.split(str, (char) 0);
-		return Arrays.stream(array).map(dev -> create(dev, lib)).toList();
+		final List<String> parts = split(str); // TODO
+		return parts.stream().map(dev -> create(dev, lib)).toList();
+	}
+
+	private static List<String> split(String str) {
+		final List<String> list = new ArrayList<>();
+		int prev = 0;
+		for(int n = 0; n < str.length(); ++n) {
+			if(str.charAt(n) == 0) {
+				final String part = str.substring(prev, n);
+				list.add(part);
+				prev = n + 1;
+			}
+		}
+		if(prev < str.length()) {
+			final String part = str.substring(prev, str.length());
+			list.add(part);
+		}
+		return list;
 	}
 
 	private final AudioLibrary lib;
@@ -54,7 +70,7 @@ public class AudioDevice extends TransientNativeObject {
 	 */
 	private AudioDevice(Handle handle, AudioLibrary lib) {
 		super(handle);
-		this.lib = notNull(lib);
+		this.lib = requireNonNull(lib);
 	}
 
 	/**

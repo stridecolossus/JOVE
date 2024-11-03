@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.util.BitField;
 
@@ -147,14 +146,5 @@ public class IndexedMeshBuilder extends MeshBuilder {
     //			bb.position(bb.position() + indices.length * Integer.BYTES);
     		}
 		}
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("compact", compact)
-				.append("restart", restart)
-				.build();
 	}
 }

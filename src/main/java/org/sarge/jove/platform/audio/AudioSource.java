@@ -1,17 +1,15 @@
 package org.sarge.jove.platform.audio;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.audio.AudioParameter.*;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.AbstractPlayable;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -46,7 +44,7 @@ public class AudioSource extends TransientNativeObject {
 	 */
 	private AudioSource(Handle handle, AudioDevice dev) {
 		super(handle);
-		this.dev = notNull(dev);
+		this.dev = requireNonNull(dev);
 		this.lib = dev.library();
 	}
 
@@ -77,7 +75,7 @@ public class AudioSource extends TransientNativeObject {
 	 * @param buffer Audio buffer
 	 */
 	public void buffer(AudioBuffer buffer) {
-		Check.notNull(buffer);
+		requireNonNull(buffer);
 		lib.alSourcei(this, BUFFER, buffer);
 		dev.check();
 		buffers.add(buffer);
@@ -164,7 +162,7 @@ public class AudioSource extends TransientNativeObject {
 	 * @param pos Source position
 	 */
 	public void position(Point pos) {
-		Check.notNull(pos);
+		requireNonNull(pos);
 		lib.alSource3f(this, POSITION, pos.x, pos.y, pos.z);
 		dev.check();
 	}
@@ -174,7 +172,7 @@ public class AudioSource extends TransientNativeObject {
 	 * @param dir Source direction
 	 */
 	public void direction(Vector dir) {
-		Check.notNull(dir);
+		requireNonNull(dir);
 		lib.alSource3f(this, DIRECTION, dir.x, dir.y, dir.z);
 		dev.check();
 	}
@@ -184,7 +182,7 @@ public class AudioSource extends TransientNativeObject {
 	 * @param velocity Source velocity
 	 */
 	public void velocity(Vector velocity) {
-		Check.notNull(velocity);
+		requireNonNull(velocity);
 		lib.alSource3f(this, VELOCITY, velocity.x, velocity.y, velocity.z);
 		dev.check();
 	}
@@ -204,15 +202,6 @@ public class AudioSource extends TransientNativeObject {
     	final Pointer sources = NativeObject.array(List.of(this));
     	lib.alDeleteSources(1, sources);
     	dev.check();
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(playable)
-				.append("buffers", buffers.size())
-				.build();
 	}
 
 	/**

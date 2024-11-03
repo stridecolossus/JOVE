@@ -1,8 +1,10 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
+
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.util.Check;
 
 /**
  * The <i>extents</i> specifies the size and depth of an image.
@@ -20,8 +22,8 @@ public record Extents(Dimensions size, int depth) {
 	 * @param depth		Depth
 	 */
 	public Extents {
-		Check.notNull(size);
-		Check.zeroOrMore(depth);
+		requireNonNull(size);
+		requireZeroOrMore(depth);
 	}
 
 	/**
@@ -77,7 +79,7 @@ public record Extents(Dimensions size, int depth) {
 			return this;
 		}
 		else {
-			Check.oneOrMore(level);
+			requireOneOrMore(level);
 			final int w = mip(size.width(), level);
 			final int h = mip(size.height(), level);
 			return new Extents(new Dimensions(w, h), depth);

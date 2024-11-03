@@ -1,13 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -37,10 +36,10 @@ public class PhysicalDevice implements NativeObject {
 	 * @param features		Features supported by this device
 	 */
 	PhysicalDevice(Handle handle, Instance instance, List<Family> families, SupportedFeatures features) {
-		this.handle = notNull(handle);
-		this.instance = notNull(instance);
+		this.handle = requireNonNull(handle);
+		this.instance = requireNonNull(instance);
 		this.families = List.copyOf(families);
-		this.features = notNull(features);
+		this.features = requireNonNull(features);
 	}
 
 	@Override
@@ -138,15 +137,6 @@ public class PhysicalDevice implements NativeObject {
 		final var props = new VkFormatProperties();
 		instance.library().vkGetPhysicalDeviceFormatProperties(this, format, props);
 		return props;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("handle", handle)
-				.append("instance", instance)
-				.append("families", families.size())
-				.build();
 	}
 
 	/**
@@ -276,7 +266,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param predicate Queue family predicate
 		 */
 		public Selector(BiPredicate<PhysicalDevice, Family> predicate) {
-			this.predicate = notNull(predicate);
+			this.predicate = requireNonNull(predicate);
 		}
 
 		@Override

@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 import com.sun.jna.ptr.IntByReference;
 
@@ -35,7 +35,7 @@ public record ValidationLayer(String name, int version) {
 	 * @param version			Version number
 	 */
 	public ValidationLayer {
-		Check.notEmpty(name);
+		requireNotEmpty(name);
 	}
 
 	/**

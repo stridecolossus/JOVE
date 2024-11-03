@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
@@ -36,7 +36,7 @@ public abstract class VulkanObject extends TransientNativeObject {
 	 */
 	protected VulkanObject(Handle handle, DeviceContext device) {
 		super(handle);
-		this.device = notNull(device);
+		this.device = requireNonNull(device);
 	}
 
 	/**

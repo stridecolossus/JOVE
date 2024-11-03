@@ -44,23 +44,13 @@ class PointTest {
 
 	@Test
 	void add() {
-		assertEquals(new Point(5, 7, 9), pos.add(new Point(4, 5, 6)));
-	}
-
-	@Test
-	void multiply() {
-		assertEquals(new Point(2, 4, 6), pos.multiply(2));
+		assertEquals(new Point(5, 7, 9), pos.add(new Vector(4, 5, 6)));
 	}
 
 	@Test
 	void layout() {
 		assertEquals(Layout.floats(3), Point.LAYOUT);
 		assertEquals(Point.LAYOUT, pos.layout());
-	}
-
-	@Test
-	void converter() {
-		assertEquals(pos, Point.CONVERTER.apply("1, 2, 3"));
 	}
 
 	@Test

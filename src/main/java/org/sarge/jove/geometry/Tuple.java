@@ -1,18 +1,18 @@
 package org.sarge.jove.geometry;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Objects;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.MathsUtility;
 
 /**
- * A <i>tuple</i> is the base-class for 3-component floating-point values.
+ * A <i>tuple</i> is the base class for 3D points and vectors.
  * @author Sarge
  */
 class Tuple implements Bufferable {
 	/**
-	 * Size of a tuple.
+	 * Number of components in a tuple.
 	 */
 	public static final int SIZE = 3;
 
@@ -29,40 +29,34 @@ class Tuple implements Bufferable {
 
 	/**
 	 * Copy constructor.
-	 * @param tuple Tuple to copy
+	 * @param that Tuple to copy
 	 */
-	protected Tuple(Tuple tuple) {
-		this(tuple.x, tuple.y, tuple.z);
+	protected Tuple(Tuple that) {
+		this(that.x, that.y, that.z);
 	}
 
 	/**
 	 * Array constructor.
 	 * @param array Tuple array
-	 * @throws IllegalArgumentException if the array is not comprised of three elements
+	 * @throws ArrayIndexOutOfBoundsException if the array does not contain at least three elements
 	 */
 	protected Tuple(float[] array) {
-		if(array.length != SIZE) throw new IllegalArgumentException("Invalid array length: " + array.length);
-		x = array[0];
-		y = array[1];
-		z = array[2];
+		this(array[0], array[1], array[2]);
 	}
 
 	/**
 	 * @return This tuple as an array
 	 */
-	public final float[] toArray() {
-		final float[] array = new float[SIZE];
-		array[0] = x;
-		array[1] = y;
-		array[2] = z;
-		return array;
+	public float[] toArray() {
+		return new float[]{x, y, z};
 	}
 
 	@Override
 	public final void buffer(ByteBuffer buffer) {
-		buffer.putFloat(x);
-		buffer.putFloat(y);
-		buffer.putFloat(z);
+		buffer
+				.putFloat(x)
+				.putFloat(y)
+				.putFloat(z);
 	}
 
 	@Override
@@ -72,25 +66,18 @@ class Tuple implements Bufferable {
 
 	@Override
 	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Tuple that) &&
-				isEqual(that);
+		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @param that Tuple
-	 * @return Whether this and the given tuple are equal
-	 */
 	protected final boolean isEqual(Tuple that) {
 		return
-				MathsUtil.isEqual(this.x, that.x) &&
-				MathsUtil.isEqual(this.y, that.y) &&
-				MathsUtil.isEqual(this.z, that.z);
+				MathsUtility.isApproxEqual(this.x, that.x) &&
+				MathsUtility.isApproxEqual(this.y, that.y) &&
+				MathsUtility.isApproxEqual(this.z, that.z);
 	}
 
 	@Override
-	public final String toString() {
-		return Arrays.toString(toArray());
+	public String toString() {
+		return MathsUtility.format(x, y, z);
 	}
 }

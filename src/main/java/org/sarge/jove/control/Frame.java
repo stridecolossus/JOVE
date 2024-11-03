@@ -3,8 +3,6 @@ package org.sarge.jove.control;
 import java.time.*;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * A <i>frame</i> is a simple stopwatch timer for the elapsed duration of a rendered frame.
  * @author Sarge
@@ -93,11 +91,6 @@ public class Frame {
 			else {
 				++count;
 			}
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this).append("count", count).build();
 		}
 	}
 }

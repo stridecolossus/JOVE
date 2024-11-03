@@ -1,10 +1,9 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.*;
 
@@ -21,7 +20,7 @@ public class Vertex implements Bufferable {
 	 * @param pos Vertex position
 	 */
 	public Vertex(Point pos) {
-		this.pos = notNull(pos);
+		this.pos = requireNonNull(pos);
 	}
 
 	/**
@@ -56,10 +55,5 @@ public class Vertex implements Bufferable {
 				(obj == this) ||
 				(obj instanceof Vertex that) &&
 				this.pos.equals(that.position());
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append("pos", pos).build();
 	}
 }

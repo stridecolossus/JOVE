@@ -1,13 +1,14 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
+import static org.sarge.lib.Validation.*;
 
 import java.util.Set;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntEnum;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>work queue</i> is used to submit tasks to the hardware.
@@ -20,8 +21,8 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 	 * @param family	Family that this queue belongs to
 	 */
 	public WorkQueue {
-		Check.notNull(handle);
-		Check.notNull(family);
+		requireNonNull(handle);
+		requireNonNull(family);
 	}
 
 	/**
@@ -60,8 +61,8 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 		 * @param flags		Queue flags
 		 */
 		public Family {
-			Check.zeroOrMore(index);
-			Check.oneOrMore(count);
+			requireZeroOrMore(index);
+			requireOneOrMore(count);
 			flags = Set.copyOf(flags);
 		}
 	}

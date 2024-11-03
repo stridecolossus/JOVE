@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.*;
 
 import org.sarge.jove.model.Mesh;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
@@ -80,7 +80,7 @@ public interface DrawCommand extends Command {
 		 * @see #indexed()
 		 */
 		public Builder count(int count) {
-			this.count = zeroOrMore(count);
+			this.count = requireZeroOrMore(count);
 			return this;
 		}
 
@@ -97,7 +97,7 @@ public interface DrawCommand extends Command {
 		 * @param firstIndex First index
 		 */
 		public Builder indexed(int firstIndex) {
-			this.index = zeroOrMore(firstIndex);
+			this.index = requireZeroOrMore(firstIndex);
 			return this;
 		}
 
@@ -106,7 +106,7 @@ public interface DrawCommand extends Command {
 		 * @param firstVertex First vertex
 		 */
 		public Builder firstVertex(int firstVertex) {
-			this.firstVertex = zeroOrMore(firstVertex);
+			this.firstVertex = requireZeroOrMore(firstVertex);
 			return this;
 		}
 
@@ -115,7 +115,7 @@ public interface DrawCommand extends Command {
 		 * @param instanceCount Number of instances
 		 */
 		public Builder instances(int instanceCount) {
-			this.instanceCount = oneOrMore(instanceCount);
+			this.instanceCount = requireOneOrMore(instanceCount);
 			return this;
 		}
 
@@ -124,7 +124,7 @@ public interface DrawCommand extends Command {
 		 * @param firstInstance First instance
 		 */
 		public Builder firstInstance(int firstInstance) {
-			this.firstInstance = zeroOrMore(firstInstance);
+			this.firstInstance = requireZeroOrMore(firstInstance);
 			return this;
 		}
 
@@ -164,7 +164,7 @@ public interface DrawCommand extends Command {
 		 * @param offset Buffer offset
 		 */
 		public IndirectBuilder offset(long offset) {
-			this.offset = zeroOrMore(offset);
+			this.offset = requireZeroOrMore(offset);
 			return this;
 		}
 
@@ -173,7 +173,7 @@ public interface DrawCommand extends Command {
 		 * @param count Draw count
 		 */
 		public IndirectBuilder count(int count) {
-			this.count = zeroOrMore(count);
+			this.count = requireZeroOrMore(count);
 			return this;
 		}
 
@@ -182,7 +182,7 @@ public interface DrawCommand extends Command {
 		 * @param stride Vertex stride
 		 */
 		public IndirectBuilder stride(int stride) {
-			this.stride = zeroOrMore(stride);
+			this.stride = requireZeroOrMore(stride);
 			return this;
 		}
 

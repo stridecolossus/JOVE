@@ -1,10 +1,10 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
@@ -29,7 +29,7 @@ public class GlyphMeshBuilder {
 	 * @param atlas Glyph atlas for this mesh
 	 */
 	public GlyphMeshBuilder(GlyphFont font) {
-		this.font = notNull(font);
+		this.font = requireNonNull(font);
 		this.tiles = font.tiles();
 		this.size = 1f / tiles;
 
@@ -45,7 +45,7 @@ cursor = new Point(-0.9f, 0, 0);
 	}
 
 	public GlyphMeshBuilder cursor(Point cursor) {
-		this.cursor = notNull(cursor);
+		this.cursor = requireNonNull(cursor);
 		return this;
 	}
 
@@ -54,7 +54,7 @@ cursor = new Point(-0.9f, 0, 0);
 	 * @param margin Margin width
 	 */
 	public GlyphMeshBuilder margin(float margin) {
-		this.margin = zeroOrMore(margin);
+		this.margin = requireZeroOrMore(margin);
 		return this;
 	}
 
@@ -188,14 +188,6 @@ cursor = new Point(-0.9f, 0, 0);
 					super.equals(obj) &&
 					this.coord.equals(that.coord);
 		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.appendSuper(super.toString())
-					.append("coord", coord)
-					.build();
-		}
 	}
 
 	/**
@@ -253,14 +245,4 @@ cursor = new Point(-0.9f, 0, 0);
 //	public Optional<ByteSizedBufferable> index() {
 //		return Optional.empty();
 //	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(font)
-				.append("cursor", this.cursor())
-				.append("margin", margin)
-				.append(mesh)
-				.build();
-	}
 }

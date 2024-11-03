@@ -1,6 +1,6 @@
 package org.sarge.jove.util;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
 
@@ -14,7 +14,7 @@ public class PointerToIntArray extends Memory {
 
 	public PointerToIntArray(int[] array) {
 		super(array.length * Integer.BYTES);
-		this.array = notNull(array);
+		this.array = requireNonNull(array);
 		for(int n = 0; n < array.length; ++n) {
 			setInt(n * Integer.BYTES, array[n]);
 		}

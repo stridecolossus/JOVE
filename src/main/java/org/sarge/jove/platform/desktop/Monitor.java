@@ -1,5 +1,8 @@
 package org.sarge.jove.platform.desktop;
 
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
+
 import java.util.*;
 import java.util.function.Function;
 
@@ -7,7 +10,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
 import org.sarge.jove.util.ReferenceFactory;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -30,8 +32,8 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 		 */
 		public DisplayMode {
 			if(depth.size() != 3) throw new IllegalArgumentException("Invalid RGB bit depth array");
-			Check.notNull(size);
-			Check.oneOrMore(refresh);
+			requireNonNull(size);
+			requireOneOrMore(refresh);
 			depth = List.copyOf(depth);
 		}
 
@@ -52,9 +54,9 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 	 * @param modes		Display modes supported by this monitor
 	 */
 	public Monitor {
-		Check.notNull(handle);
-		Check.notEmpty(name);
-		Check.notNull(size);
+		requireNonNull(handle);
+		requireNotEmpty(name);
+		requireNonNull(size);
 		modes = List.copyOf(modes);
 	}
 

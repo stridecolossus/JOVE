@@ -3,7 +3,6 @@ package org.sarge.jove.model;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 
 /**
@@ -57,13 +56,5 @@ public class MutableNormalVertex extends Vertex {
 				(obj instanceof MutableNormalVertex that) &&
 				this.position().equals(that.position()) &&
 				this.normal().equals(that.normal());
-	}
-
-    @Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("normal", normal())
-				.build();
 	}
 }

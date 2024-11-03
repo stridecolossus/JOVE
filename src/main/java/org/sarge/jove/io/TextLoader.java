@@ -1,6 +1,6 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.zeroOrMore;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.io.*;
 import java.util.Set;
@@ -47,7 +47,7 @@ public class TextLoader {
 	 * @param skip Number of lines to skip
 	 */
 	public void setSkipHeaderLines(int skip) {
-		this.skip = zeroOrMore(skip);
+		this.skip = requireZeroOrMore(skip);
 	}
 
 	/**

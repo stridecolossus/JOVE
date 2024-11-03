@@ -1,14 +1,14 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -16,7 +16,6 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -76,9 +75,9 @@ public final class DescriptorSet implements NativeObject {
 		 */
 		public Binding {
 			if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");
-			Check.zeroOrMore(index);
-			Check.notNull(type);
-			Check.oneOrMore(count);
+			requireZeroOrMore(index);
+			requireNonNull(type);
+			requireOneOrMore(count);
 			stages = Set.copyOf(stages);
 		}
 
@@ -106,7 +105,7 @@ public final class DescriptorSet implements NativeObject {
 			 * @param binding Binding index
 			 */
 			public Builder binding(int binding) {
-				this.binding = zeroOrMore(binding);
+				this.binding = requireZeroOrMore(binding);
 				return this;
 			}
 
@@ -115,7 +114,7 @@ public final class DescriptorSet implements NativeObject {
 			 * @param type Descriptor type
 			 */
 			public Builder type(VkDescriptorType type) {
-				this.type = notNull(type);
+				this.type = requireNonNull(type);
 				return this;
 			}
 
@@ -124,7 +123,7 @@ public final class DescriptorSet implements NativeObject {
 			 * @param count Array count
 			 */
 			public Builder count(int count) {
-				this.count = oneOrMore(count);
+				this.count = requireOneOrMore(count);
 				return this;
 			}
 
@@ -133,7 +132,7 @@ public final class DescriptorSet implements NativeObject {
 			 * @param stage Shader stage
 			 */
 			public Builder stage(VkShaderStage stage) {
-				stages.add(notNull(stage));
+				stages.add(requireNonNull(stage));
 				return this;
 			}
 
@@ -157,7 +156,7 @@ public final class DescriptorSet implements NativeObject {
 		private boolean dirty = true;
 
 		private Entry(Binding binding) {
-			this.binding = notNull(binding);
+			this.binding = requireNonNull(binding);
 		}
 
 		/**
@@ -176,7 +175,7 @@ public final class DescriptorSet implements NativeObject {
 			if(binding.type() != res.type()) {
     			throw new IllegalArgumentException("Invalid resource for this binding: binding=%s res=%s".formatted(binding, res));
     		}
-			this.res = notNull(res);
+			this.res = requireNonNull(res);
 			dirty = true;
 		}
 
@@ -222,8 +221,8 @@ public final class DescriptorSet implements NativeObject {
 	 * @param layout Layout
 	 */
 	DescriptorSet(Handle handle, Layout layout) {
-		this.handle = notNull(handle);
-		this.layout = notNull(layout);
+		this.handle = requireNonNull(handle);
+		this.layout = requireNonNull(layout);
 		this.entries = layout.bindings.stream().collect(toMap(Function.identity(), Entry::new));
 	}
 
@@ -328,14 +327,6 @@ public final class DescriptorSet implements NativeObject {
 		);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(handle)
-				.append(entries)
-				.build();
-	}
-
 	/**
 	 * A <i>descriptor set layout</i> specifies the resource bindings for a descriptor set.
 	 */
@@ -378,7 +369,7 @@ public final class DescriptorSet implements NativeObject {
 		 */
 		Layout(Handle handle, DeviceContext dev, Collection<Binding> bindings) {
 			super(handle, dev);
-			Check.notEmpty(bindings);
+			requireNotEmpty(bindings);
 			this.bindings = List.copyOf(bindings);
 		}
 
@@ -406,14 +397,6 @@ public final class DescriptorSet implements NativeObject {
 					(obj instanceof Layout that) &&
 					this.bindings.equals(that.bindings());
 		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.appendSuper(super.toString())
-					.append(bindings)
-					.build();
-		}
 	}
 
 	/**
@@ -430,7 +413,7 @@ public final class DescriptorSet implements NativeObject {
 		 */
 		Pool(Handle handle, DeviceContext dev, int max) {
 			super(handle, dev);
-			this.max = oneOrMore(max);
+			this.max = requireOneOrMore(max);
 		}
 
 		/**
@@ -446,7 +429,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @return New descriptor sets
 		 */
 		public Collection<DescriptorSet> allocate(List<Layout> layouts) {
-			Check.notEmpty(layouts);
+			requireNotEmpty(layouts);
 
 			// Build allocation descriptor
 			final int count = layouts.size();
@@ -509,14 +492,6 @@ public final class DescriptorSet implements NativeObject {
 			return lib::vkDestroyDescriptorPool;
 		}
 
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.appendSuper(super.toString())
-					.append("max", max)
-					.build();
-		}
-
 		/**
 		 * Builder for a descriptor set pool.
 		 */
@@ -531,8 +506,8 @@ public final class DescriptorSet implements NativeObject {
 			 * @param count		Number of available sets of this type
 			 */
 			public Builder add(VkDescriptorType type, int count) {
-				Check.notNull(type);
-				Check.oneOrMore(count);
+				requireNonNull(type);
+				requireOneOrMore(count);
 				pool.put(type, count);
 				return this;
 			}
@@ -542,7 +517,7 @@ public final class DescriptorSet implements NativeObject {
 			 * @param max Maximum number of sets
 			 */
 			public Builder max(int max) {
-				this.max = oneOrMore(max);
+				this.max = requireOneOrMore(max);
 				return this;
 			}
 
@@ -551,7 +526,7 @@ public final class DescriptorSet implements NativeObject {
 			 * @param flag Flag
 			 */
 			public Builder flag(VkDescriptorPoolCreateFlag flag) {
-				flags.add(notNull(flag));
+				flags.add(requireNonNull(flag));
 				return this;
 			}
 

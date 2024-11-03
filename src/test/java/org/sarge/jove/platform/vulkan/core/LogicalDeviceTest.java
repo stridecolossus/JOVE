@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Percentile;
+import org.sarge.lib.Percentile;
 
 public class LogicalDeviceTest {
 	private LogicalDevice device;

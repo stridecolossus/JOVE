@@ -1,16 +1,15 @@
 package org.sarge.jove.platform.vulkan.memory;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -33,8 +32,8 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	 */
 	DefaultDeviceMemory(Handle handle, DeviceContext dev, MemoryType type, long size) {
 		super(handle, dev);
-		this.type = notNull(type);
-		this.size = oneOrMore(size);
+		this.type = requireNonNull(type);
+		this.size = requireOneOrMore(size);
 	}
 
 	@Override
@@ -67,9 +66,9 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		 * @param size				Size of this region
 		 */
 		private DefaultRegion(Pointer ptr, long offset, long size) {
-			this.ptr = notNull(ptr);
-			this.offset = zeroOrMore(offset);
-			this.segment = oneOrMore(size);
+			this.ptr = requireNonNull(ptr);
+			this.offset = requireZeroOrMore(offset);
+			this.segment = requireOneOrMore(size);
 		}
 
 		@Override
@@ -111,22 +110,13 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 					(this.segment == that.segment) &&
 					this.ptr.equals(that.ptr);
 		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.appendSuper(super.toString())
-					.append("offset", offset)
-					.append("size", segment)
-					.build();
-		}
 	}
 
 	@Override
 	public Region map(long offset, long size) {
 		// Validate
-		Check.zeroOrMore(offset);
-		Check.oneOrMore(size);
+		requireZeroOrMore(offset);
+		requireOneOrMore(size);
 		checkAlive();
 		if(region != null) {
 			throw new IllegalStateException("Device memory has already been mapped: " + this);
@@ -193,15 +183,5 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 				(this.type == that.type) &&
 				(this.size == that.size) &&
 				this.handle.equals(that.handle);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("type", type)
-				.append("size", size)
-				.append("mapped", region)
-				.build();
 	}
 }

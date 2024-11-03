@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.audio;
 
 import static org.sarge.jove.platform.audio.AudioParameter.*;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.PointerToFloatArray;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 import com.sun.jna.Pointer;
 
@@ -22,7 +22,7 @@ public class AudioListener {
 	 * @param dev Audio device
 	 */
 	public AudioListener(AudioDevice dev) {
-		this.dev = notNull(dev);
+		this.dev = requireNonNull(dev);
 		this.lib = dev.library();
 	}
 
@@ -60,7 +60,7 @@ public class AudioListener {
 	 * @param gain Gain
 	 */
 	public void gain(float gain) {
-		Check.zeroOrMore(gain);
+		requireZeroOrMore(gain);
 		lib.alListenerf(GAIN, gain);
 		dev.check();
 	}
@@ -70,7 +70,7 @@ public class AudioListener {
 	 * @param factor Doppler shift factor
 	 */
 	public void dopplerFactor(float factor) {
-		Check.zeroOrMore(factor);
+		requireZeroOrMore(factor);
 		lib.alDopplerFactor(factor);
 		dev.check();
 	}
@@ -80,7 +80,7 @@ public class AudioListener {
 	 * @param velocity Doppler velocity
 	 */
 	public void dopplerVelocity(float velocity) {
-		Check.zeroOrMore(velocity);
+		requireZeroOrMore(velocity);
 		lib.alDopplerVelocity(velocity);
 		dev.check();
 	}
@@ -90,7 +90,7 @@ public class AudioListener {
 	 * @param speed Speed-of-sound (metres-per-second)
 	 */
 	public void speed(float speed) {
-		Check.zeroOrMore(speed);
+		requireZeroOrMore(speed);
 		lib.alSpeedOfSound(speed);
 		dev.check();
 	}

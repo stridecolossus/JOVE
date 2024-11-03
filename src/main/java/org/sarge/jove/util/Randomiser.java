@@ -1,6 +1,6 @@
 package org.sarge.jove.util;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Random;
 
@@ -22,7 +22,7 @@ public class Randomiser {
 	 * @param random Randomiser
 	 */
 	public Randomiser(Random random) {
-		this.random = notNull(random);
+		this.random = requireNonNull(random);
 	}
 
 	/**
@@ -41,7 +41,7 @@ public class Randomiser {
 
 	/**
 	 * Generates a random floating-point percentile value.
-	 * @return Random value
+	 * @return Random value [0..1]
 	 * @see Random#nextFloat()
 	 */
 	public float next() {

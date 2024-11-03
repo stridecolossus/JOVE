@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.util.*;
 
@@ -9,9 +10,8 @@ import org.sarge.jove.io.ImageData;
 import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.Image.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.util.StructureCollector;
-import org.sarge.lib.util.Check;
 
 /**
  * An <i>image transfer command</i> is used to copy an image to/from a Vulkan buffer.
@@ -34,11 +34,11 @@ public final class ImageTransferCommand implements Command {
 	 * @throws IllegalStateException if the {@link #buffer} or the image {@link #layout} are not valid for this transfer operation
 	 */
 	ImageTransferCommand(Image image, VulkanBuffer buffer, boolean write, VkBufferImageCopy[] regions, VkImageLayout layout) {
-		this.image = notNull(image);
-		this.buffer = notNull(buffer);
+		this.image = requireNonNull(image);
+		this.buffer = requireNonNull(buffer);
 		this.write = write;
 		this.regions = Arrays.copyOf(regions, regions.length);
-		this.layout = notNull(layout);
+		this.layout = requireNonNull(layout);
 		validateBuffer();
 		validateLayout();
 	}
@@ -103,11 +103,11 @@ public final class ImageTransferCommand implements Command {
 		 * @throws IllegalArgumentException if the sub-resource has more than one aspect
 		 */
 		public CopyRegion {
-			Check.zeroOrMore(offset);
-			Check.notNull(row);
-			Check.notNull(subresource);
-			Check.notNull(imageOffset);
-			Check.notNull(extents);
+			requireZeroOrMore(offset);
+			requireNonNull(row);
+			requireNonNull(subresource);
+			requireNonNull(imageOffset);
+			requireNonNull(extents);
 			if(subresource.aspects().size() != 1) {
 				throw new IllegalArgumentException("Sub-resource must have a single aspect: " + subresource);
 			}
@@ -153,7 +153,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param offset Buffer offset (bytes)
 			 */
 			public Builder offset(long offset) {
-				this.offset = zeroOrMore(offset);
+				this.offset = requireZeroOrMore(offset);
 				return this;
 			}
 
@@ -162,7 +162,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param length Row length (texels)
 			 */
 			public Builder length(int length) {
-				this.length = zeroOrMore(length);
+				this.length = requireZeroOrMore(length);
 				return this;
 			}
 
@@ -171,7 +171,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param height Image height (texels)
 			 */
 			public Builder height(int height) {
-				this.height = zeroOrMore(height);
+				this.height = requireZeroOrMore(height);
 				return this;
 			}
 
@@ -181,7 +181,7 @@ public final class ImageTransferCommand implements Command {
 			 * @throws IndexOutOfBoundsException if the offset array does not contain three values
 			 */
 			public Builder imageOffsets(Extents imageOffsets) {
-				this.imageOffsets = notNull(imageOffsets);
+				this.imageOffsets = requireNonNull(imageOffsets);
 				return this;
 			}
 
@@ -190,7 +190,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param extents Image extents
 			 */
 			public Builder extents(Extents extents) {
-				this.extents = notNull(extents);
+				this.extents = requireNonNull(extents);
 				return this;
 			}
 
@@ -209,7 +209,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param subresource Sub-resource
 			 */
 			public Builder subresource(SubResource subresource) {
-				this.subresource = notNull(subresource);
+				this.subresource = requireNonNull(subresource);
 				return this;
 			}
 
@@ -238,7 +238,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param buffer Buffer
 		 */
 		public Builder buffer(VulkanBuffer buffer) {
-			this.buffer = notNull(buffer);
+			this.buffer = requireNonNull(buffer);
 			return this;
 		}
 
@@ -247,7 +247,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param image Image
 		 */
 		public Builder image(Image image) {
-			this.image = notNull(image);
+			this.image = requireNonNull(image);
 			return this;
 		}
 
@@ -265,7 +265,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param layout Image layout
 		 */
 		public Builder layout(VkImageLayout layout) {
-			this.layout = notNull(layout);
+			this.layout = requireNonNull(layout);
 			return this;
 		}
 
@@ -274,7 +274,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param region Copy region
 		 */
 		public Builder region(CopyRegion region) {
-			regions.add(notNull(region));
+			regions.add(requireNonNull(region));
 			return this;
 		}
 
@@ -326,9 +326,9 @@ public final class ImageTransferCommand implements Command {
 		 */
 		public ImageTransferCommand build() {
 			// Validate
-			Check.notNull(image);
-			Check.notNull(buffer);
-			Check.notNull(layout);
+			requireNonNull(image);
+			requireNonNull(buffer);
+			requireNonNull(layout);
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Populate copy regions

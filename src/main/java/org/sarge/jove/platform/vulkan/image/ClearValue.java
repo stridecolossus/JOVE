@@ -1,8 +1,10 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static java.util.Objects.requireNonNull;
+
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.util.*;
+import org.sarge.lib.Percentile;
 
 /**
  * A <i>clear value</i> specifies the clearing operation for an attachment before a render pass starts.
@@ -29,7 +31,7 @@ public interface ClearValue {
 		 * @param colour Clear colour
 		 */
 		public ColourClearValue {
-			Check.notNull(colour);
+			requireNonNull(colour);
 		}
 
 		@Override
@@ -59,7 +61,7 @@ public interface ClearValue {
 		 * @param depth Depth value
 		 */
 		public DepthClearValue {
-			Check.notNull(depth);
+			requireNonNull(depth);
 		}
 
 		@Override

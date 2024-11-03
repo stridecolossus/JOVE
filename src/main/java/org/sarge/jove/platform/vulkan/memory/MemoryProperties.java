@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * A set of <i>memory properties</i> specifies the purpose and requirements of a memory request.
@@ -37,8 +37,8 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
 	 */
 	public MemoryProperties {
-		Check.notNull(mode);
-		Check.notEmpty(usage);
+		requireNonNull(mode);
+		requireNotEmpty(usage);
 		usage = Set.copyOf(usage);
 		required = Set.copyOf(required);
 		optimal = Set.copyOf(optimal);
@@ -67,7 +67,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * @param prop Required memory property
 		 */
 		public Builder<T> required(VkMemoryProperty prop) {
-			required.add(notNull(prop));
+			required.add(requireNonNull(prop));
 			return this;
 		}
 
@@ -76,7 +76,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * @param prop Optimal memory property
 		 */
 		public Builder<T> optimal(VkMemoryProperty prop) {
-			optimal.add(notNull(prop));
+			optimal.add(requireNonNull(prop));
 			return this;
 		}
 
@@ -85,7 +85,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * @param usage Memory usage flag
 		 */
 		public Builder<T> usage(T usage) {
-			this.usage.add(notNull(usage));
+			this.usage.add(requireNonNull(usage));
 			return this;
 		}
 
@@ -94,7 +94,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * @param mode Sharing mode
 		 */
 		public Builder<T> mode(VkSharingMode mode) {
-			this.mode = notNull(mode);
+			this.mode = requireNonNull(mode);
 			return this;
 		}
 

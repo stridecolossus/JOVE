@@ -1,6 +1,7 @@
 package org.sarge.jove.scene.core;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -8,7 +9,6 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.control.Frame;
 import org.sarge.jove.control.Frame.Listener;
-import org.sarge.lib.util.Check;
 
 /**
  * The <i>render loop</i> performs frame rendering according to a configured frame rate.
@@ -56,7 +56,7 @@ public class RenderLoop {
 	 */
 	public void rate(int rate) {
 		if(isRunning()) throw new IllegalStateException("Cannot set frame rate while running");
-		this.rate = oneOrMore(rate);
+		this.rate = requireOneOrMore(rate);
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class RenderLoop {
 	 * @param listener Listener to add
 	 */
 	public void add(Listener listener) {
-		Check.notNull(listener);
+		requireNonNull(listener);
 		listeners.add(listener);
 	}
 
@@ -81,7 +81,7 @@ public class RenderLoop {
 	 * @param handler Exception handler
 	 */
 	public void handler(Consumer<Exception> handler) {
-		this.handler = notNull(handler);
+		this.handler = requireNonNull(handler);
 	}
 
 	/**
@@ -91,7 +91,7 @@ public class RenderLoop {
 	 */
 	public void start(Runnable task) {
 		if(isRunning()) throw new IllegalStateException("Loop is already running");
-		this.task = notNull(task);
+		this.task = requireNonNull(task);
 		schedule();
 	}
 

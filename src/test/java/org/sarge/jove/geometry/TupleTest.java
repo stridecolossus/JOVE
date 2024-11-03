@@ -26,20 +26,19 @@ class TupleTest {
 	@DisplayName("A tuple can be copied from an existing tuple")
 	@Test
 	void copy() {
-		assertEquals(tuple, new Tuple(tuple));
+		assertEquals(true, tuple.isEqual(new Tuple(tuple)));
 	}
 
 	@DisplayName("A tuple can be created from an array")
 	@Test
 	void array() {
-		assertEquals(tuple, new Tuple(new float[]{1, 2, 3}));
+		assertEquals(true, tuple.isEqual(new Tuple(new float[]{1, 2, 3})));
 	}
 
 	@DisplayName("A tuple cannot be created from an array that does not comprise XYZ components")
 	@Test
 	void arrayInvalidLength() {
-		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[0]));
-		assertThrows(IllegalArgumentException.class, () -> new Tuple(new float[]{1, 2, 3, 4}));
+		assertThrows(ArrayIndexOutOfBoundsException.class, () -> new Tuple(new float[0]));
 	}
 
 	@DisplayName("A tuple can be converted to an array")
@@ -70,9 +69,13 @@ class TupleTest {
 
 	@Test
 	void equals() {
-		assertEquals(tuple, tuple);
-		assertEquals(tuple, new Tuple(1, 2, 3));
-		assertNotEquals(tuple, null);
-		assertNotEquals(tuple, new Tuple(4, 5, 6));
+		assertTrue(tuple.isEqual(tuple));
+		assertTrue(tuple.isEqual(new Tuple(1, 2, 3)));
+		assertEquals(false, tuple.isEqual(new Tuple(4, 5, 6)));
+	}
+
+	@Test
+	void string() {
+		assertEquals("[1, 2, 3]", tuple.toString());
 	}
 }

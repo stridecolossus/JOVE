@@ -1,6 +1,7 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.Objects;
 
@@ -40,8 +41,8 @@ public class Button<T> implements Event {
 	 * @param action		Button action
 	 */
 	public Button(String id, T action) {
-		this.id = notEmpty(id);
-		this.action = notNull(action);
+		this.id = requireNotEmpty(id);
+		this.action = requireNonNull(action);
 	}
 
 	/**

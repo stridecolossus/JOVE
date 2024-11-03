@@ -1,21 +1,20 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 import java.util.stream.*;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.*;
+import org.sarge.lib.Percentile;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -40,9 +39,9 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	 */
 	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, VkPhysicalDeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
 		super(handle);
-		this.parent = notNull(parent);
-		this.features = notNull(features);
-		this.limits = notNull(limits);
+		this.parent = requireNonNull(parent);
+		this.features = requireNonNull(features);
+		this.limits = requireNonNull(limits);
 		this.queues = Map.copyOf(queues);
 	}
 
@@ -104,15 +103,6 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		library().vkDestroyDevice(this, null);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("parent", parent)
-				.append("queues", queues.size())
-				.build();
-	}
-
 	/**
 	 * A <i>required queue</i> is a transient descriptor for a work queue.
 	 */
@@ -124,8 +114,8 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
 		 */
 		public RequiredQueue {
-			Check.notNull(family);
-			Check.notEmpty(priorities);
+			requireNonNull(family);
+			requireNotEmpty(priorities);
 			if(priorities.size() > family.count()) {
 				throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.size()));
 			}
@@ -154,15 +144,16 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 */
 		private void populate(VkDeviceQueueCreateInfo info) {
 			// Convert to floating-point array
-			final Float[] array = priorities
-					.stream()
-					.map(Percentile::floatValue)
-					.toArray(Float[]::new);
+			// TODO - urgh
+			final float[] array = new float[priorities.size()];
+			for(int n = 0; n < array.length; ++n) {
+				array[n] = priorities.get(n).floatValue();
+			}
 
 			// Populate queue descriptor
 			info.queueCount = array.length;
 			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = new PointerToFloatArray(ArrayUtils.toPrimitive(array));
+			info.pQueuePriorities = new PointerToFloatArray(array);
 		}
 	}
 
@@ -199,7 +190,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @param parent Parent physical device
 		 */
 		public Builder(PhysicalDevice parent) {
-			this.parent = notNull(parent);
+			this.parent = requireNonNull(parent);
 		}
 
 		/**
@@ -208,7 +199,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @throws IllegalArgumentException for {@link Handler#EXTENSION_DEBUG_UTILS}
 		 */
 		public Builder extension(String ext) {
-			Check.notEmpty(ext);
+			requireNotEmpty(ext);
 			if(Handler.EXTENSION.equals(ext)) throw new IllegalArgumentException("Invalid extension for logical device: " + ext);
 			extensions.add(ext);
 			return this;

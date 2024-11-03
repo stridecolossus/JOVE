@@ -1,12 +1,13 @@
 package org.sarge.jove.scene.volume;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Arrays;
 import java.util.stream.Collector;
 import java.util.stream.Collector.Characteristics;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>bounds</i> defines an axis-aligned rectilinear volume specified by min/max points.
@@ -23,15 +24,16 @@ public record Bounds(Point min, Point max) {
 	 * Constructor.
 	 */
 	public Bounds {
-		Check.notNull(min);
-		Check.notNull(max);
+		requireNonNull(min);
+		requireNonNull(max);
 	}
 
 	/**
 	 * @return Centre point of this bounds
 	 */
 	public Point centre() {
-		return min.add(max).multiply(MathsUtil.HALF);
+		final Vector v = Vector.between(min, max);
+		return min.add(v.multiply(MathsUtility.HALF));
 	}
 
 	/**
@@ -43,15 +45,15 @@ public record Bounds(Point min, Point max) {
 	}
 
 	/**
-	 * Tests whether this bounds contains the given point.
-	 * @param pt Point
+	 * Tests whether these bounds contain the given point.
+	 * @param p Point
 	 * @return Whether contained
 	 */
-	public boolean contains(Point pt) {
+	public boolean contains(Point p) {
 		return
-				contains(pt.x, min.x, max.y) &&
-				contains(pt.y, min.y, max.y) &&
-				contains(pt.z, min.z, max.z);
+				contains(p.x, min.x, max.y) &&
+				contains(p.y, min.y, max.y) &&
+				contains(p.z, min.z, max.z);
 	}
 
 	private static boolean contains(float f, float min, float max) {
@@ -59,44 +61,44 @@ public record Bounds(Point min, Point max) {
 	}
 
 	/**
-	 * Determines the vertex of this bounds nearest to the given point.
-	 * @param pt Point
+	 * Determines the vertex of these bounds nearest to the given point.
+	 * @param p Point
 	 * @return Nearest point
 	 */
-	public Point nearest(Point pt) {
-		final float x = nearest(pt.x, min.x, max.x);
-		final float y = nearest(pt.y, min.y, max.y);
-		final float z = nearest(pt.z, min.z, max.z);
-		return new Point(x, y, z);
-	}
-
-	private static float nearest(float value, float min, float max) {
-		return Math.max(min, Math.min(value, max));
+	public Point nearest(Point p) {
+		final float[] point = p.toArray();
+		final float[] a = min.toArray();
+		final float[] b = max.toArray();
+		final float[] nearest = new float[Point.SIZE];
+		for(int n = 0; n < Point.SIZE; ++n) {
+			nearest[n] = Math.max(a[n], Math.min(point[n], b[n]));
+		}
+		return new Point(nearest);
 	}
 
 	/**
-	 * Calculates the <i>positive</i> vertex of this bounds, i.e. the <b>furthest</b> vertex in the direction of the given normal.
-	 * @param normal Normal
+	 * Calculates the <i>positive</i> vertex of this bounds, i.e. the <b>furthest</b> vertex in the direction of the given vector.
+	 * @param vector Vector
 	 * @return Positive vertex
 	 */
-	public Point positive(Vector normal) {
+	public Point positive(Vector vector) {
 		return new Point(
-				normal.x < 0 ? min.x : max.x,
-				normal.y < 0 ? min.y : max.y,
-				normal.z < 0 ? min.z : max.z
+				vector.x < 0 ? min.x : max.x,
+				vector.y < 0 ? min.y : max.y,
+				vector.z < 0 ? min.z : max.z
 		);
 	}
 
 	/**
-	 * Calculates the <i>negative</i> vertex of this bounds, i.e. the <b>nearest</b> vertex in the direction of the given normal.
-	 * @param normal Normal
+	 * Calculates the <i>negative</i> vertex of this bounds, i.e. the <b>nearest</b> vertex in the direction of the given vector.
+	 * @param vector Vector
 	 * @return Negative vertex
 	 */
-	public Point negative(Vector normal) {
+	public Point negative(Vector vector) {
 		return new Point(
-				normal.x > 0 ? min.x : max.x,
-				normal.y > 0 ? min.y : max.y,
-				normal.z > 0 ? min.z : max.z
+				vector.x > 0 ? min.x : max.x,
+				vector.y > 0 ? min.y : max.y,
+				vector.z > 0 ? min.z : max.z
 		);
 	}
 

@@ -1,10 +1,9 @@
 package org.sarge.jove.scene.core;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * An <i>orbital camera controller</i> rotates the camera about a <i>target</i> position at a specified <i>radius</i>.
@@ -67,8 +66,8 @@ public class OrbitalCameraController extends CameraController {
 	 */
 	public void target(Point target) {
 		// TODO - test
-		final float r = MathsUtil.sqrt(cam.position().distance(target));
-		this.radius = MathsUtil.clamp(r, min, max);
+		final float r = MathsUtility.sqrt(cam.position().distance(target));
+		this.radius = MathsUtility.clamp(r, min, max);
 		this.target = target;
 		init();
 		cam.look(target);
@@ -120,7 +119,7 @@ public class OrbitalCameraController extends CameraController {
 	 * @see #scale(float)
 	 */
 	public void zoom(float inc) {
-		this.radius = MathsUtil.clamp(radius - inc * scale, min, max);
+		this.radius = MathsUtility.clamp(radius - inc * scale, min, max);
 		init();
 	}
 
@@ -138,14 +137,5 @@ public class OrbitalCameraController extends CameraController {
 		final Point pos = target.add(dir.multiply(radius));
 		cam.move(pos);
 		cam.direction(dir);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("target", target)
-				.append("radius", radius)
-				.append("camera", cam)
-				.build();
 	}
 }

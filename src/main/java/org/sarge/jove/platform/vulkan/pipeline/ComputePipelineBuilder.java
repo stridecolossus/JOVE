@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
@@ -22,7 +22,7 @@ public class ComputePipelineBuilder implements DelegatePipelineBuilder<VkCompute
 	 * @param shader Compute shader
 	 */
 	protected ComputePipelineBuilder(ProgrammableShaderStage shader) {
-		this.shader = notNull(shader);
+		this.shader = requireNonNull(shader);
 	}
 
 	@Override

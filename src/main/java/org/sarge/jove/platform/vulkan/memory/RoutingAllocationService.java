@@ -48,8 +48,8 @@ public class RoutingAllocationService extends Allocator {
 //	 */
 //	private record Route(Predicate<MemoryProperties<?>> predicate, Allocator allocator) {
 //		private Route {
-//			Check.notNull(predicate);
-//			Check.notNull(allocator);
+//			requireNonNull(predicate);
+//			requireNonNull(allocator);
 //		}
 //	}
 //

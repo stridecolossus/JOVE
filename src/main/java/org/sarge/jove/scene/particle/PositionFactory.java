@@ -1,6 +1,6 @@
 package org.sarge.jove.scene.particle;
 
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.geometry.*;
 
 /**
  * A <i>position factory</i> generates the starting position of a {@link Particle}.
@@ -34,6 +34,6 @@ public interface PositionFactory {
 	 * @return Disc position factory
 	 */
 	static PositionFactory circle(Point origin, Disc disc) {
-		return () -> origin.add(disc.point());
+		return () -> origin.add(new Vector(disc.point()));
 	}
 }

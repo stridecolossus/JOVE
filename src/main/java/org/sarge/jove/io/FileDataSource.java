@@ -1,6 +1,6 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +38,7 @@ public class FileDataSource implements DataSource {
 	 */
 	public FileDataSource(Path root) {
 		if(!Files.exists(root)) throw new IllegalArgumentException("Data-source root does not exist: " + root);
-		this.root = notNull(root);
+		this.root = requireNonNull(root);
 	}
 
 	/**

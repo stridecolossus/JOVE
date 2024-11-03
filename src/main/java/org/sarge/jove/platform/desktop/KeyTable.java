@@ -1,40 +1,41 @@
 package org.sarge.jove.platform.desktop;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.io.*;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
-import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
-import org.apache.commons.lang3.StringUtils;
+import org.sarge.lib.Utility;
 
 /**
  * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
  * @author Sarge
  */
-class KeyTable {
-	private static final KeyTable INSTANCE = new KeyTable(); // TODO - lazy init?
+enum KeyTable {
+	INSTANCE;
 
-	/**
-	 * @return Singleton key-table instance
-	 */
-	public static final KeyTable instance() {
-		return INSTANCE;
+	private final Map<Integer, String> keys;
+	private final Map<String, Integer> codes;
+
+	private KeyTable() {
+		this.keys = load();
+		this.codes = keys.keySet().stream().collect(toMap(keys::get, Function.identity()));
 	}
 
 	/**
 	 * Loads the key table.
 	 * @return Key table
 	 */
-	private static BidiMap<Integer, String> load() {
+	private static Map<Integer, String> load() {
 		try(final InputStream in = KeyTable.class.getResourceAsStream("key.table.txt")) {
 			return new BufferedReader(new InputStreamReader(in))
 					.lines()
 					.map(String::trim)
-					.map(StringUtils::split)
+					.map(str -> str.split(Utility.WHITE_SPACE))
 					.map(KeyTable::load)
-					.collect(Collectors.collectingAndThen(Collectors.toMap(Entry::getKey, Entry::getValue), DualHashBidiMap::new));
+					.collect(toMap(Entry::getKey, Entry::getValue));
 		}
 		catch(IOException e) {
 			throw new RuntimeException(e);
@@ -50,11 +51,6 @@ class KeyTable {
 		return Map.entry(code, name);
 	}
 
-	private final BidiMap<Integer, String> keys = load();
-
-	private KeyTable() {
-	}
-
 	/**
 	 * Looks up a keyboard key name.
 	 * @param key GLFW key code
@@ -68,9 +64,10 @@ class KeyTable {
 	 * Looks up the key code for the given keyboard key name.
 	 * @param name Key name
 	 * @return GLFW key code
+	 * @throws IllegalArgumentException for an unknown key
 	 */
 	public int code(String name) {
-		final Integer code = keys.inverseBidiMap().get(name);
+		final Integer code = codes.get(name);
 		if(code == null) throw new IllegalArgumentException("Unknown key name: " + name);
 		return code;
 	}

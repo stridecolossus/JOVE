@@ -1,13 +1,13 @@
 package org.sarge.jove.scene.volume;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersected;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 /**
  * A <i>bounding volume</i> defines an abstract space for frustum culling, intersection tests and ray-picking.
  * @author Sarge
  */
-public interface Volume extends Intersected {
+public interface Volume extends Intersection.Surface {
 	/**
 	 * @return Bounds of this volume
 	 */

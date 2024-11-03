@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 
@@ -9,7 +10,6 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Structure;
 
@@ -105,7 +105,7 @@ public final class Barrier implements Command {
 		 * @param stage Source pipeline stage
 		 */
 		public Builder source(VkPipelineStage stage) {
-			Check.notNull(stage);
+			requireNonNull(stage);
 			srcStages.add(stage);
 			return this;
 		}
@@ -115,7 +115,7 @@ public final class Barrier implements Command {
 		 * @param stage Destination pipeline stage
 		 */
 		public Builder destination(VkPipelineStage stage) {
-			Check.notNull(stage);
+			requireNonNull(stage);
 			destStages.add(stage);
 			return this;
 		}
@@ -125,7 +125,7 @@ public final class Barrier implements Command {
 		 * @param flag Dependency flag
 		 */
 		public Builder dependency(VkDependencyFlag flag) {
-			Check.notNull(flag);
+			requireNonNull(flag);
 			flags.add(flag);
 			return this;
 		}
@@ -144,7 +144,7 @@ public final class Barrier implements Command {
 		 * @return Buffer barrier builder
 		 */
 		public BufferBarrierBuilder buffer(VulkanBuffer buffer) {
-			Check.notNull(buffer);
+			requireNonNull(buffer);
 			return new BufferBarrierBuilder(buffer);
 		}
 
@@ -154,7 +154,7 @@ public final class Barrier implements Command {
 		 * @return Image barrier builder
 		 */
 		public ImageBarrierBuilder image(Image image) {
-			Check.notNull(image);
+			requireNonNull(image);
 			return new ImageBarrierBuilder(image);
 		}
 
@@ -185,7 +185,7 @@ public final class Barrier implements Command {
 			 */
 			@SuppressWarnings("unchecked")
 			public T source(VkAccess flag) {
-				Check.notNull(flag);
+				requireNonNull(flag);
 				srcAccess.add(flag);
 				return (T) this;
 			}
@@ -196,7 +196,7 @@ public final class Barrier implements Command {
 			 */
 			@SuppressWarnings("unchecked")
 			public T destination(VkAccess flag) {
-				Check.notNull(flag);
+				requireNonNull(flag);
 				destAccess.add(flag);
 				return (T) this;
 			}
@@ -255,7 +255,7 @@ public final class Barrier implements Command {
 			private long size = VulkanBuffer.VK_WHOLE_SIZE;
 
 			private BufferBarrierBuilder(VulkanBuffer buffer) {
-				this.buffer = notNull(buffer);
+				this.buffer = requireNonNull(buffer);
 			}
 
 			/**
@@ -264,7 +264,7 @@ public final class Barrier implements Command {
 			 * @throws IllegalArgumentException if the given offset is larger than the buffers memory
 			 */
 			public BufferBarrierBuilder offset(long offset) {
-				this.offset = zeroOrMore(offset);
+				this.offset = requireZeroOrMore(offset);
 				validate(offset + 1);
 				return this;
 			}
@@ -275,7 +275,7 @@ public final class Barrier implements Command {
 			 * @throws IllegalArgumentException if the given size is larger than the buffers memory
 			 */
 			public BufferBarrierBuilder size(long size) {
-				this.size = oneOrMore(size);
+				this.size = requireOneOrMore(size);
 				validate(size);
 				return this;
 			}
@@ -325,7 +325,7 @@ public final class Barrier implements Command {
 			private SubResource subresource;
 
 			private ImageBarrierBuilder(Image image) {
-				this.image = notNull(image);
+				this.image = requireNonNull(image);
 				this.subresource = image.descriptor();
 			}
 
@@ -334,7 +334,7 @@ public final class Barrier implements Command {
 			 * @param oldLayout Previous layout
 			 */
 			public ImageBarrierBuilder oldLayout(VkImageLayout oldLayout) {
-				this.oldLayout = notNull(oldLayout);
+				this.oldLayout = requireNonNull(oldLayout);
 				return this;
 			}
 
@@ -343,7 +343,7 @@ public final class Barrier implements Command {
 			 * @param newLayout New layout
 			 */
 			public ImageBarrierBuilder newLayout(VkImageLayout newLayout) {
-				this.newLayout = notNull(newLayout);
+				this.newLayout = requireNonNull(newLayout);
 				return this;
 			}
 
@@ -352,7 +352,7 @@ public final class Barrier implements Command {
 			 * @param subresource Sub-resource
 			 */
 			public ImageBarrierBuilder subresource(SubResource subresource) {
-				this.subresource = notNull(subresource);
+				this.subresource = requireNonNull(subresource);
 				return this;
 			}
 

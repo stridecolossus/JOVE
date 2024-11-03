@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -30,8 +31,8 @@ class JoystickButtonSource implements Source<Button<Action>> {
 	 * @param desktop	Desktop service
 	 */
 	JoystickButtonSource(int id, Desktop desktop) {
-		this.id = zeroOrMore(id);
-		this.desktop = notNull(desktop);
+		this.id = requireZeroOrMore(id);
+		this.desktop = requireNonNull(desktop);
 		this.buttons = initButtons();
 //		this.hats = initHats();
 	}

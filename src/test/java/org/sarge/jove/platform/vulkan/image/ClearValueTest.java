@@ -6,7 +6,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
-import org.sarge.lib.util.Percentile;
+import org.sarge.lib.Percentile;
 
 public class ClearValueTest {
 	private VkClearValue value;

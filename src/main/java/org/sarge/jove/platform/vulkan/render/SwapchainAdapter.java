@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
@@ -29,8 +29,8 @@ public class SwapchainAdapter implements TransientObject {
 	 * @param additional		Additional attachments
 	 */
 	public SwapchainAdapter(Swapchain.Builder builder, RenderPass pass, List<View> additional) {
-		this.pass = notNull(pass);
-		this.builder = notNull(builder);
+		this.pass = requireNonNull(pass);
+		this.builder = requireNonNull(builder);
 		this.additional = List.copyOf(additional);
 		createSwapchain();
 		createBuffers();

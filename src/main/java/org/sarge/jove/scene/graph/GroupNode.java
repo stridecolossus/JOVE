@@ -1,10 +1,9 @@
 package org.sarge.jove.scene.graph;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.*;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>group node</i>
@@ -40,7 +39,7 @@ public class GroupNode extends Node {
 	 * @param node Node to attach
 	 */
 	protected final void attach(Node node) {
-		Check.notNull(node);
+		requireNonNull(node);
 		assert !nodes.contains(node);
 		nodes.add(node);
 	}
@@ -52,7 +51,7 @@ public class GroupNode extends Node {
 	 */
 	protected void detach(Node node) {
 		if(node.parent() != this) throw new IllegalArgumentException("Not a member of this group: " + node);
-		Check.notNull(node);
+		requireNonNull(node);
 		nodes.remove(node);
 	}
 
@@ -64,13 +63,5 @@ public class GroupNode extends Node {
 			n.detach();
 		}
 		nodes.clear();
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("nodes", nodes.size())
-				.build();
 	}
 }

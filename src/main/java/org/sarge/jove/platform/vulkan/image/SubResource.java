@@ -1,10 +1,10 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.util.BitMask;
@@ -92,7 +92,7 @@ public interface SubResource {
 		 * @param parent Parent image descriptor
 		 */
 		public Builder(Descriptor descriptor) {
-			this.descriptor = notNull(descriptor);
+			this.descriptor = requireNonNull(descriptor);
 		}
 
 		/**
@@ -117,7 +117,7 @@ public interface SubResource {
 			if(mipLevel >= descriptor.levelCount()) {
 				throw new IllegalArgumentException(String.format("Invalid mip level: %d/%d", mipLevel, descriptor.levelCount()));
 			}
-			this.mipLevel = zeroOrMore(mipLevel);
+			this.mipLevel = requireZeroOrMore(mipLevel);
 			return this;
 		}
 
@@ -130,7 +130,7 @@ public interface SubResource {
 			if(levelCount > descriptor.levelCount()) {
 				throw new IllegalArgumentException(String.format("Invalid level count: count=%d parent=%d", levelCount, descriptor.levelCount()));
 			}
-			this.levelCount = oneOrMore(levelCount);
+			this.levelCount = requireOneOrMore(levelCount);
 			return this;
 		}
 
@@ -143,7 +143,7 @@ public interface SubResource {
 			if(baseArrayLayer >= descriptor.layerCount()) {
 				throw new IllegalArgumentException(String.format("Invalid base array: %d/%d", baseArrayLayer, descriptor.layerCount()));
 			}
-			this.baseArrayLayer = zeroOrMore(baseArrayLayer);
+			this.baseArrayLayer = requireZeroOrMore(baseArrayLayer);
 			return this;
 		}
 
@@ -156,7 +156,7 @@ public interface SubResource {
 			if(layerCount > descriptor.layerCount()) {
 				throw new IllegalArgumentException(String.format("Invalid layer count: count=%d parent=%d", layerCount, descriptor.layerCount()));
 			}
-			this.layerCount = oneOrMore(layerCount);
+			this.layerCount = requireOneOrMore(layerCount);
 			return this;
 		}
 
@@ -172,14 +172,14 @@ public interface SubResource {
 
 			// Private implementation
 			record DefaultSubResource(Set<VkImageAspect> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) implements SubResource {
-				@Override
-				public String toString() {
-					return new ToStringBuilder(this)
-							.append(aspects)
-							.append(String.format("levels %d/%d", mipLevel, levelCount))
-							.append(String.format("layers %d/%d", baseArrayLayer, layerCount))
-							.build();
-				}
+//				@Override
+//				public String toString() {
+//					return new ToStringBuilder(this)
+//							.append(aspects)
+//							.append(String.format("levels %d/%d", mipLevel, levelCount))
+//							.append(String.format("layers %d/%d", baseArrayLayer, layerCount))
+//							.build();
+//				}
 			}
 
 			// Create sub-resource

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -34,7 +34,7 @@ public final class PipelineLayout extends VulkanObject {
 	 */
 	PipelineLayout(Handle handle, DeviceContext dev, PushConstant push) {
 		super(handle, dev);
-		this.push = notNull(push);
+		this.push = requireNonNull(push);
 	}
 
 	/**
@@ -61,7 +61,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param layout Descriptor set layout
 		 */
 		public Builder add(DescriptorSet.Layout layout) {
-			Check.notNull(layout);
+			requireNonNull(layout);
 			sets.add(layout);
 			return this;
 		}
@@ -71,7 +71,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param range Push constant range
 		 */
 		public Builder add(Range range) {
-			Check.notNull(range);
+			requireNonNull(range);
 			ranges.add(range);
 			return this;
 		}

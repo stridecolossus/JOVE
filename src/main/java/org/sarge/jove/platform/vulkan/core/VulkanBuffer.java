@@ -1,19 +1,18 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.BitMask;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -42,9 +41,9 @@ public class VulkanBuffer extends VulkanObject {
 	 */
 	protected VulkanBuffer(Handle handle, DeviceContext device, Set<VkBufferUsageFlag> usage, DeviceMemory memory, long length) {
 		super(handle, device);
-		this.usage = Set.copyOf(notEmpty(usage));
-		this.memory = notNull(memory);
-		this.length = oneOrMore(length);
+		this.usage = Set.copyOf(requireNotEmpty(usage));
+		this.memory = requireNonNull(memory);
+		this.length = requireOneOrMore(length);
 	}
 
 	/**
@@ -82,7 +81,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @throws IllegalArgumentException if the {@link #offset} exceeds the {@link #length()} of this buffer
 	 */
 	public void checkOffset(long offset) {
-		Check.zeroOrMore(offset);
+		requireZeroOrMore(offset);
 		if(offset >= length) throw new IllegalArgumentException("Invalid buffer offset: offset=%d buffer=%s".formatted(offset, this));
 	}
 
@@ -134,7 +133,7 @@ public class VulkanBuffer extends VulkanObject {
 		checkOffset(offset);
 		VulkanLibrary.checkAlignment(offset);
 		if(size != VK_WHOLE_SIZE) {
-			Check.oneOrMore(size);
+			requireOneOrMore(size);
 			VulkanLibrary.checkAlignment(size);
 		}
 		require(VkBufferUsageFlag.TRANSFER_DST);
@@ -165,16 +164,6 @@ public class VulkanBuffer extends VulkanObject {
 				super.equals(obj);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("len", length)
-				.append("usage", usage)
-				.append("mem", memory)
-				.build();
-	}
-
 	/**
 	 * Creates a buffer.
 	 * @param device			Logical device
@@ -195,7 +184,7 @@ public class VulkanBuffer extends VulkanObject {
 		final var info = new VkBufferCreateInfo();
 		info.usage = new BitMask<>(properties.usage());
 		info.sharingMode = properties.mode();
-		info.size = oneOrMore(length);
+		info.size = requireOneOrMore(length);
 		// TODO - queue families
 
 		// Allocate buffer

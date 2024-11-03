@@ -67,18 +67,6 @@ public class BufferCopyCommandTest {
 		}
 
 		@Test
-		void buildMissingSource() {
-			builder.destination(dest);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
-		void buildMissingDestination() {
-			builder.source(src);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@Test
 		void buildCopySelf() {
 			builder.source(src);
 			builder.destination(src);

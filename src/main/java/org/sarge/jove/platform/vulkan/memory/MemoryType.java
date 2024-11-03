@@ -1,5 +1,8 @@
 package org.sarge.jove.platform.vulkan.memory;
 
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
+
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -7,7 +10,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.IntEnum;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>memory type</i> specifies the properties of the memory heaps supported by the hardware.
@@ -21,7 +23,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	 * @param properties		Memory properties
 	 */
 	public MemoryType {
-		Check.notNull(heap);
+		requireNonNull(heap);
 		properties = Set.copyOf(properties);
 	}
 
@@ -50,7 +52,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 		 * @param flags		Flags
 		 */
 		public Heap {
-			Check.zeroOrMore(size);
+			requireZeroOrMore(size);
 			flags = Set.copyOf(flags);
 		}
 	}

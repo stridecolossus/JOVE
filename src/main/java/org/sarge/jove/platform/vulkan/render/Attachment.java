@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.sarge.jove.platform.vulkan.VkAttachmentLoadOp.LOAD;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntEnum;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * An <i>attachment</i> defines a target for a render pass such as a colour or depth-stencil image.
@@ -23,8 +23,8 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param store		Store operation
 		 */
 		public LoadStore {
-			Check.notNull(load);
-			Check.notNull(store);
+			requireNonNull(load);
+			requireNonNull(store);
 		}
 	}
 
@@ -65,12 +65,12 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	 * @throws IllegalArgumentException if {@link #initialLayout} is undefined and the load operation is {@link VkAttachmentLoadOp#LOAD}
 	 */
 	public Attachment {
-		Check.notNull(format);
-		Check.notNull(samples);
-		Check.notNull(attachment);
-		Check.notNull(stencil);
-		Check.notNull(initialLayout);
-		Check.notNull(finalLayout);
+		requireNonNull(format);
+		requireNonNull(samples);
+		requireNonNull(attachment);
+		requireNonNull(stencil);
+		requireNonNull(initialLayout);
+		requireNonNull(finalLayout);
 
 		if(format == VkFormat.UNDEFINED) throw new IllegalArgumentException("Format cannot be undefined");
 
@@ -121,7 +121,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param format Image format
 		 */
 		public Builder(VkFormat format) {
-			this.format = notNull(format);
+			this.format = requireNonNull(format);
 		}
 
 		/**
@@ -129,7 +129,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param samples Number of samples
 		 */
 		public Builder samples(VkSampleCount samples) {
-			this.samples = notNull(samples);
+			this.samples = requireNonNull(samples);
 			return this;
 		}
 
@@ -149,7 +149,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param load Attachment operations
 		 */
 		public Builder attachment(LoadStore attachment) {
-			this.attachment = notNull(attachment);
+			this.attachment = requireNonNull(attachment);
 			return this;
 		}
 
@@ -158,7 +158,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param stencil Stencil operation
 		 */
 		public Builder stencil(LoadStore stencil) {
-			this.stencil = notNull(stencil);
+			this.stencil = requireNonNull(stencil);
 			return this;
 		}
 
@@ -167,7 +167,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param layout Initial image layout
 		 */
 		public Builder initialLayout(VkImageLayout layout) {
-			this.initialLayout = notNull(layout);
+			this.initialLayout = requireNonNull(layout);
 			return this;
 		}
 
@@ -176,7 +176,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param layout Final image layout
 		 */
 		public Builder finalLayout(VkImageLayout layout) {
-			this.finalLayout = notNull(layout);
+			this.finalLayout = requireNonNull(layout);
 			return this;
 		}
 

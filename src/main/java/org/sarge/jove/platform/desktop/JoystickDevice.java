@@ -1,10 +1,10 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.control.Event.*;
 
@@ -33,8 +33,8 @@ public class JoystickDevice implements Device {
 	JoystickDevice(int id, String name, Desktop desktop) {
 		if((id < 0) || (id >= 16)) throw new IllegalArgumentException("Invalid joystick index: " + id);
 		this.id = id;
-		this.name = notEmpty(name);
-		this.desktop = notNull(desktop);
+		this.name = requireNotEmpty(name);
+		this.desktop = requireNonNull(desktop);
 		this.axes = initAxes();
 		this.buttons = new JoystickButtonSource(id, desktop);
 	}
@@ -125,13 +125,5 @@ public class JoystickDevice implements Device {
 				(obj == this) ||
 				(obj instanceof JoystickDevice that) &&
 				(this.id == that.id);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(id)
-				.append(name)
-				.build();
 	}
 }

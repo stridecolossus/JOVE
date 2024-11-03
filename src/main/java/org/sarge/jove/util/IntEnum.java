@@ -49,12 +49,12 @@ public interface IntEnum {
 	 * Retrieves the reverse mapping for the given integer enumeration.
 	 * This method is thread-safe.
 	 * @param <E> Enumeration
-	 * @param clazz Enumeration class
+	 * @param type Enumeration class
 	 * @return Reverse mapping
 	 */
 	@SuppressWarnings("unchecked")
-	static <E extends IntEnum> ReverseMapping<E> reverse(Class<E> clazz) {
-		return (ReverseMapping<E>) ReverseMapping.get(clazz);
+	static <E extends IntEnum> ReverseMapping<E> reverse(Class<E> type) {
+		return (ReverseMapping<E>) ReverseMapping.get(type);
 	}
 
 	/**
@@ -123,10 +123,10 @@ public interface IntEnum {
 
 		/**
 		 * Constructor.
-		 * @param clazz Integer enumeration class
+		 * @param type Integer enumeration class
 		 */
-		private ReverseMapping(Class<E> clazz) {
-			final E[] array = clazz.getEnumConstants();
+		private ReverseMapping(Class<E> type) {
+			final E[] array = type.getEnumConstants();
 			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (a, b) -> a));
 			this.def = map.getOrDefault(0, array[0]);
 		}

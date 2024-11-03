@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
@@ -22,7 +22,7 @@ abstract class AbstractStageBuilder<R extends VulkanStructure> {
 	 * @param parent Parent builder
 	 */
 	final void parent(GraphicsPipelineBuilder parent) {
-		this.parent = notNull(parent);
+		this.parent = requireNonNull(parent);
 	}
 
 	/**

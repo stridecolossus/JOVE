@@ -2,84 +2,59 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.Y;
-import static org.sarge.jove.util.Trigonometric.PI;
+import static org.sarge.jove.util.MathsUtility.PI;
 
 import org.junit.jupiter.api.*;
 
 public class QuaternionTest {
+	private AxisAngle rot;
 	private Quaternion quaternion;
 
 	@BeforeEach
 	void before() {
-		quaternion = new Quaternion(0, 0, 1, 0);
+		rot = new AxisAngle(Y, PI);
+		quaternion = Quaternion.of(rot);
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(0, quaternion.w);
-		assertEquals(0, quaternion.x);
-		assertEquals(1, quaternion.y);
-		assertEquals(0, quaternion.z);
-	}
-
-	@Test
-	void axis() {
-		assertEquals(quaternion, new Quaternion(0, Axis.Y));
-	}
-
-	@Test
-	void of() {
-		assertEquals(quaternion, Quaternion.of(new AxisAngle(Y, PI)));
-	}
-
-	@Test
-	void magnitude() {
-		assertEquals(1, quaternion.magnitude());
-	}
-
-	@Test
-	void array() {
-		assertArrayEquals(new float[]{0, 0, 1, 0}, quaternion.array());
-	}
-
-	@Test
-	void matrix() {
-		final Rotation rot = new AxisAngle(Y, PI);
-		assertEquals(rot.matrix(), quaternion.matrix());
-	}
-
-	@Test
-	void normalize() {
-		assertEquals(quaternion, quaternion.normalize());
-		assertEquals(quaternion, new Quaternion(0, 0, 42, 0).normalize());
+	void toAxisAngle() {
+		assertEquals(rot, quaternion.toAxisAngle());
 	}
 
 	@Test
 	void conjugate() {
-		assertEquals(new Quaternion(0, 0, -1, 0), quaternion.conjugate());
+		final Quaternion conjugate = quaternion.conjugate();
+		assertEquals(new AxisAngle(Y.invert(), PI), conjugate.toAxisAngle());
 	}
 
 	@Test
-	void rotation() {
-		assertEquals(new AxisAngle(Y, PI), quaternion.toAxisAngle());
-	}
-
-	@Test
-	void rotate() {
-		final Vector vec = new Vector(1, 0, 0);
-		assertEquals(new Vector(-1, 0, 0), quaternion.rotate(vec));
+	void inverse() {
+		assertEquals(quaternion, quaternion.conjugate().conjugate());
 	}
 
 	@Test
 	void multiply() {
-		assertEquals(new Quaternion(-1, 0, 0, 0), quaternion.multiply(quaternion));
+		final var x = new AxisAngle(Axis.X, PI);
+		final var result = quaternion.multiply(Quaternion.of(x));
+		final Matrix expected = rot.matrix().multiply(x.matrix());
+		assertEquals(expected, result.matrix());
+	}
+
+	@Test
+	void matrix() {
+		assertEquals(rot.matrix(), quaternion.matrix());
+	}
+
+	@Test
+	void rotate() {
+		assertEquals(new Vector(-1, 0, 0), quaternion.rotate(new Vector(1, 0, 0)));
 	}
 
 	@Test
 	void equals() {
-		assertEquals(true, quaternion.equals(quaternion));
-		assertEquals(true, quaternion.equals(new Quaternion(0, 0, 1, 0)));
-		assertEquals(false, quaternion.equals(null));
-		assertEquals(false, quaternion.equals(new Quaternion(0, 1, 0, 0)));
+		assertEquals(quaternion, quaternion);
+		assertEquals(quaternion, Quaternion.of(rot));
+		assertNotEquals(quaternion, null);
+		assertNotEquals(quaternion, Quaternion.IDENTITY);
 	}
 }

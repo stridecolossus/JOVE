@@ -1,17 +1,16 @@
 package org.sarge.jove.model;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>mesh builder</i> is used to construct a renderable {@link Mesh}.
@@ -40,7 +39,7 @@ public class MeshBuilder {
 	 * @param vertex Vertex to add
 	 */
 	public MeshBuilder add(Vertex vertex) {
-		Check.notNull(vertex);
+		requireNonNull(vertex);
 		vertices.add(vertex);
 		return this;
 	}
@@ -169,10 +168,5 @@ public class MeshBuilder {
 		final Triangle triangle = new Triangle(points);
 		final Vector normal = triangle.normal();
 		return vertices.stream().map(v -> new VertexNormal(v, normal));
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(mesh).build();
 	}
 }

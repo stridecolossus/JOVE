@@ -1,6 +1,6 @@
 package org.sarge.jove.common;
 
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 /**
  * General 2D dimensions.
@@ -13,8 +13,8 @@ public record Dimensions(int width, int height) implements Comparable<Dimensions
 	 * @param height	Height
 	 */
 	public Dimensions {
-		Check.zeroOrMore(width);
-		Check.zeroOrMore(height);
+		requireZeroOrMore(width);
+		requireZeroOrMore(height);
 	}
 
 	/**

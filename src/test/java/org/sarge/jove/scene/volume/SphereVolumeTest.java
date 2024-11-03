@@ -8,8 +8,8 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.*;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.util.MathsUtility;
 
 class SphereVolumeTest {
 	private static final float RADIUS = 3;
@@ -113,7 +113,7 @@ class SphereVolumeTest {
 		@DisplayName("Non-intersecting spheres")
 		@Test
 		void outside() {
-			assertEquals(false, sphere.intersects(new SphereVolume(new Sphere(outside, MathsUtil.HALF))));
+			assertEquals(false, sphere.intersects(new SphereVolume(new Sphere(outside, MathsUtility.HALF))));
 		}
 	}
 
@@ -154,23 +154,23 @@ class SphereVolumeTest {
     		@DisplayName("does not intersect if the ray originates outside the sphere")
     		@Test
     		void outside() {
-    			final Ray ray = new DefaultRay(new Point(OUTSIDE, 0, 0), X);
-    			assertEquals(Intersected.NONE, sphere.intersections(ray));
+    			final Ray ray = new Ray(new Point(OUTSIDE, 0, 0), X);
+    			assertEquals(Intersection.NONE, sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects if the ray originates inside the sphere")
     		@Test
     		void inside() {
-    			final Ray ray = new DefaultRay(new Point(1, 0, 0), X);
-    			final Intersection intersection = Intersection.of(ray, 2, X);
+    			final Ray ray = new Ray(new Point(1, 0, 0), X);
+    			final Intersection intersection = ray.intersection(2, X);
     			assertEquals(List.of(intersection), sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects if the ray originates on the sphere surface")
     		@Test
     		void touching() {
-    			final Ray ray = new DefaultRay(new Point(RADIUS, 0, 0), X);
-    			final Intersection intersection = Intersection.of(ray, 0, X);
+    			final Ray ray = new Ray(new Point(RADIUS, 0, 0), X);
+    			final Intersection intersection = ray.intersection(0, X);
     			assertEquals(List.of(intersection), sphere.intersections(ray));
     		}
 		}
@@ -181,15 +181,15 @@ class SphereVolumeTest {
     		@DisplayName("does not intersect if the ray originates outside of the sphere")
     		@Test
     		void outside() {
-    			final Ray ray = new DefaultRay(new Point(-OUTSIDE, +OUTSIDE, 0), X);
-    			assertEquals(Intersected.NONE, sphere.intersections(ray));
+    			final Ray ray = new Ray(new Point(-OUTSIDE, +OUTSIDE, 0), X);
+    			assertEquals(Intersection.NONE, sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects if the ray originates inside the sphere")
     		@Test
     		void inside() {
-    			final Ray ray = new DefaultRay(new Point(-1, 0, 0), X);
-    			final Intersection intersection = Intersection.of(ray, 4, X);
+    			final Ray ray = new Ray(new Point(-1, 0, 0), X);
+    			final Intersection intersection = ray.intersection(4, X);
     			final Iterator<Intersection> itr = sphere.intersections(ray).iterator();
     			assertEquals(intersection, itr.next());
     			assertEquals(false, itr.hasNext());
@@ -198,20 +198,20 @@ class SphereVolumeTest {
     		@DisplayName("intersects twice if the ray crosses the sphere")
     		@Test
     		void intersects() {
-    			final Ray ray = new DefaultRay(new Point(-OUTSIDE, 0, 0), X);
+    			final Ray ray = new Ray(new Point(-OUTSIDE, 0, 0), X);
     			final Iterator<Intersection> itr = sphere.intersections(ray).iterator();
-    			assertEquals(Intersection.of(ray, 1, X.invert()), itr.next());
-    			assertEquals(Intersection.of(ray, 7, X), itr.next());
+    			assertEquals(ray.intersection(1, X.invert()), itr.next());
+    			assertEquals(ray.intersection(7, X), itr.next());
     			assertEquals(false, itr.hasNext());
     		}
 
     		@DisplayName("intersects twice if the ray originates on the sphere surface")
     		@Test
     		void touching() {
-    			final Ray ray = new DefaultRay(new Point(-RADIUS, 0, 0), X);
+    			final Ray ray = new Ray(new Point(-RADIUS, 0, 0), X);
     			final Iterator<Intersection> itr = sphere.intersections(ray).iterator();
-    			assertEquals(Intersection.of(ray, 0, X.invert()), itr.next());
-    			assertEquals(Intersection.of(ray, 6, X), itr.next());
+    			assertEquals(ray.intersection(0, X.invert()), itr.next());
+    			assertEquals(ray.intersection(6, X), itr.next());
     			assertEquals(false, itr.hasNext());
     		}
     	}

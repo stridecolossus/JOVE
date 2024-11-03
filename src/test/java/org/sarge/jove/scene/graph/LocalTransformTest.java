@@ -15,7 +15,7 @@ class LocalTransformTest {
 	void before() {
 		node = new Node();
 		transform = node.transform();
-		matrix = Matrix.translation(Axis.X);
+		matrix = Transform.translation(Axis.X);
 	}
 
 	@DisplayName("A new local transform...")
@@ -54,7 +54,7 @@ class LocalTransformTest {
 
 		@BeforeEach
 		void before() {
-			other = Matrix.translation(Axis.Y);
+			other = Transform.translation(Axis.Y);
 			transform.set(matrix);
 			transform.update(node);
 		}

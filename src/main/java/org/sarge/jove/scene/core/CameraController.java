@@ -1,12 +1,12 @@
 package org.sarge.jove.scene.core;
 
-import static org.sarge.jove.util.Trigonometric.*;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.MathsUtility.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Sphere.NormalFactory;
 import org.sarge.jove.util.Interpolator;
 
 /**
@@ -16,18 +16,25 @@ import org.sarge.jove.util.Interpolator;
 public class CameraController {
 	protected final Camera cam;
 	private final Dimensions dim;
+	private final NormalFactory factory;
 	private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
 	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
 	// TODO - make interpolator ranges mutable?
 
 	/**
 	 * Constructor.
-	 * @param cam 	Camera
-	 * @param dim 	View dimensions
+	 * @param camera 	Camera
+	 * @param dim 		View dimensions
+	 * @param factory	Sphere normals factory
 	 */
-	public CameraController(Camera cam, Dimensions dim) {
-		this.cam = notNull(cam);
-		this.dim = notNull(dim);
+	public CameraController(Camera camera, Dimensions dim, NormalFactory factory) {
+		this.cam = requireNonNull(camera);
+		this.dim = requireNonNull(dim);
+		this.factory = factory.rotate();
+	}
+
+	public CameraController(Camera camera, Dimensions dim) {
+		this(camera, dim, new NormalFactory());
 	}
 
 	/**
@@ -38,7 +45,7 @@ public class CameraController {
 		// TODO - prepare inverse and multiply, move to helper?
 		final float yaw = horizontal.apply(x / dim.width());
 		final float pitch = vertical.apply(y / dim.height());
-		final Vector vec = Sphere.vector(yaw, pitch);
+		final Vector vec = factory.vector(yaw, pitch);
 		update(new Normal(vec));
 	}
 
@@ -57,10 +64,5 @@ public class CameraController {
 	 */
 	protected void update(Normal dir) {
 		cam.direction(dir);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(cam).build();
 	}
 }

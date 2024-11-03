@@ -83,13 +83,8 @@ class ColourTest {
 	@DisplayName("A colour can be converted to an RGBA array")
 	@Test
 	void toArray() {
-		final float[] array = col.toArray();
-		assertArrayEquals(new float[]{0.1f, 0.2f, 0.3f, 1}, array);
-	}
-
-	@Test
-	void converter() {
-		assertEquals(col, Colour.CONVERTER.apply("0.1, 0.2, 0.3, 1"));
+		final float[] expected = {0.1f, 0.2f, 0.3f, 1};
+		assertArrayEquals(expected, col.toArray());
 	}
 
 	@Test

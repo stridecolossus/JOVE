@@ -1,23 +1,22 @@
 package org.sarge.jove.scene.particle;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.common.Colour;
+import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>particle</i> is a mutable record for the position and direction of a vertex in a particle system.
  * @author Sarge
  */
-public class Particle implements Ray {
+public class Particle implements Bufferable {
 	private final long created;
-	private Point pos;
-	private Normal dir;
+	private Ray ray;
 	private Colour col = Colour.WHITE;
 	private float velocity = 1;
 
@@ -28,9 +27,8 @@ public class Particle implements Ray {
 	 * @param dir			Initial direction
 	 */
 	protected Particle(long created, Point pos, Normal dir) {
-		this.created = zeroOrMore(created);
-		this.pos = notNull(pos);
-		this.dir = notNull(dir);
+		this.created = requireZeroOrMore(created);
+		this.ray = new Ray(pos, dir);
 	}
 
 	/**
@@ -40,19 +38,11 @@ public class Particle implements Ray {
 		return created;
 	}
 
-	@Override
-	public Point origin() {
-		return pos;
-	}
-
-	@Override
-	public Normal direction() {
-		return dir;
-	}
-
-	@Override
-	public float length() {
-		return velocity;
+	/**
+	 * @return This particle as a ray
+	 */
+	public Ray ray() {
+		return ray;
 	}
 
 	/**
@@ -60,7 +50,7 @@ public class Particle implements Ray {
 	 * @see #stop()
 	 */
 	public boolean isIdle() {
-		return dir == null;
+		return velocity == 0;
 	}
 
 	/**
@@ -71,7 +61,7 @@ public class Particle implements Ray {
 	 */
 	public void stop() {
 		if(isIdle()) throw new IllegalStateException();
-		dir = null;
+		velocity = 0;
 	}
 
 	/**
@@ -82,7 +72,7 @@ public class Particle implements Ray {
 	 */
 	public void stop(Point pos) {
 		stop();
-		this.pos = notNull(pos);
+		ray = new Ray(pos, ray.direction());
 	}
 
 	/**
@@ -90,7 +80,7 @@ public class Particle implements Ray {
 	 * @see #destroy()
 	 */
 	public boolean isAlive() {
-		return pos != null;
+		return ray != null;
 	}
 
 	/**
@@ -100,15 +90,16 @@ public class Particle implements Ray {
 	 */
 	public void destroy() {
 		if(!isAlive()) throw new IllegalStateException();
-		pos = null;
+		ray = null;
 	}
 
 	/**
 	 * Moves this particle by the given vector.
-	 * @param vec Vector
+	 * @param vector Vector
 	 */
-	public void move(Vector vec) {
-		pos = pos.add(vec);
+	public void move(Vector vector) {
+		final Point pos = new Point(ray.origin()).add(vector);
+		ray = new Ray(pos, ray.direction());
 	}
 
 	/**
@@ -116,7 +107,7 @@ public class Particle implements Ray {
 	 * @param dir Particle direction
 	 */
 	public void direction(Normal dir) {
-		this.dir = notNull(dir);
+		ray = new Ray(ray.origin(), dir);
 	}
 
 	/**
@@ -125,8 +116,8 @@ public class Particle implements Ray {
 	 * @throws IllegalArgumentException if {@link #velocity} is zero
 	 */
 	public void velocity(float velocity) {
-		if(MathsUtil.isZero(velocity)) throw new IllegalArgumentException();
-		this.velocity *= velocity;
+		if(MathsUtility.isApproxZero(velocity)) throw new IllegalArgumentException();
+		this.velocity = this.velocity * velocity;
 	}
 
 	/**
@@ -136,8 +127,15 @@ public class Particle implements Ray {
 	 * @param normal	Surface normal at this intersection
 	 */
 	public void reflect(Point pos, Normal normal) {
-		this.pos = notNull(pos);
-		this.dir = new Normal(dir.reflect(normal));
+		final Vector dir = ray.direction().reflect(normal);
+		ray = new Ray(pos, dir);
+	}
+
+	/**
+	 * @return Particle colour
+	 */
+	public Colour colour() {
+		return col;
 	}
 
 	/**
@@ -145,22 +143,19 @@ public class Particle implements Ray {
 	 * @param col Particle colour
 	 */
 	public void colour(Colour col) {
-		this.col = notNull(col);
+		this.col = requireNonNull(col);
 	}
 
-	/**
-	 * Writes this particle to the given buffer.
-	 * @param bb Buffer
-	 */
-	void buffer(ByteBuffer bb) {
+	@Override
+	public void buffer(ByteBuffer bb) {
 		// TODO - depends on layout, optionally also timestamp => function?
-		pos.buffer(bb);
+		ray.origin().buffer(bb);
 		col.buffer(bb);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(created, pos, dir, col, velocity);
+		return Objects.hash(created, ray, col, velocity);
 	}
 
 	@Override
@@ -169,20 +164,8 @@ public class Particle implements Ray {
 				(obj == this) ||
 				(obj instanceof Particle that) &&
 				(this.created == that.created) &&
-				this.pos.equals(that.pos) &&
-				this.dir.equals(that.dir) &&
+				Objects.equals(this.ray, that.ray) &&
 				this.col.equals(that.col) &&
-				MathsUtil.isEqual(this.velocity, that.velocity);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("pos", pos)
-				.append("dir", dir)
-				.append("velocity", velocity)
-				.append("col", col)
-				.append("created", created)
-				.build();
+				MathsUtility.isApproxEqual(this.velocity, that.velocity);
 	}
 }

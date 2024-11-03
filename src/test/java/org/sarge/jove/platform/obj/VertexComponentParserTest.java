@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.util.FloatArrayConverter;
@@ -27,7 +26,7 @@ public class VertexComponentParserTest {
 
 	@Test
 	void parseInvalidArrayLength() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(StringUtils.EMPTY, model));
+		assertThrows(IllegalArgumentException.class, () -> parser.parse("", model));
 		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 2", model));
 	}
 }

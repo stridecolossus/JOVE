@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
-import org.sarge.lib.util.Check;
 
 /**
  * Builder for the rasterizer pipeline stage.
@@ -47,7 +47,7 @@ public class RasterizerStageBuilder extends AbstractStageBuilder<VkPipelineRaste
 	 */
 	@RequiredFeature(field="polygonMode", feature="fillModeNonSolid")
 	public RasterizerStageBuilder polygon(VkPolygonMode polygonMode) {
-		info.polygonMode = notNull(polygonMode);
+		info.polygonMode = requireNonNull(polygonMode);
 		return this;
 	}
 
@@ -56,7 +56,7 @@ public class RasterizerStageBuilder extends AbstractStageBuilder<VkPipelineRaste
 	 * @param cullMode Face culling mode
 	 */
 	public RasterizerStageBuilder cull(VkCullMode cullMode) {
-		info.cullMode = notNull(cullMode);
+		info.cullMode = requireNonNull(cullMode);
 		return this;
 	}
 
@@ -65,7 +65,7 @@ public class RasterizerStageBuilder extends AbstractStageBuilder<VkPipelineRaste
 	 * @param frontFace Winding order
 	 */
 	public RasterizerStageBuilder winding(VkFrontFace frontFace) {
-		info.frontFace = notNull(frontFace);
+		info.frontFace = requireNonNull(frontFace);
 		return this;
 	}
 
@@ -93,7 +93,7 @@ public class RasterizerStageBuilder extends AbstractStageBuilder<VkPipelineRaste
 	 */
 	@RequiredFeature(field="lineWidth", feature="wideLines")
 	public RasterizerStageBuilder lineWidth(float lineWidth) {
-		info.lineWidth = oneOrMore(lineWidth);
+		info.lineWidth = requireOneOrMore(lineWidth);
 		return this;
 	}
 
@@ -109,7 +109,7 @@ public class RasterizerStageBuilder extends AbstractStageBuilder<VkPipelineRaste
 	 */
 	@RequiredFeature(field="lineWidth", feature="wideLines")
 	public Command setDynamicLineWidth(float w) {
-		Check.oneOrMore(w);
+		requireOneOrMore(w);
 		return (lib, cmd) -> lib.vkCmdSetLineWidth(cmd, w);
 	}
 }

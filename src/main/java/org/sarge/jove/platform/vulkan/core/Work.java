@@ -1,16 +1,16 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>work</i> instance represents a group of tasks to be submitted to a {@link WorkQueue}.
@@ -143,16 +143,6 @@ public final class Work {
 				this.signal.equals(that.signal);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("pool", pool())
-				.append("buffers", buffers.size())
-				.append("waits", wait.size())
-				.append("signals", signal.size())
-				.build();
-	}
-
 	/**
 	 * Helper - Submits the given command as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} primary command buffer and waits for completion.
 	 * @param cmd		Command
@@ -243,8 +233,8 @@ public final class Work {
 		 * @throws IllegalArgumentException for a duplicate semaphore
 		 */
 		public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
-			Check.notNull(semaphore);
-			Check.notEmpty(stages);
+			requireNonNull(semaphore);
+			requireNotEmpty(stages);
 			if(work.wait.containsKey(semaphore)) {
 				throw new IllegalArgumentException(String.format("Duplicate wait semaphore: %s (%s)", semaphore, stages));
 			}
@@ -264,7 +254,7 @@ public final class Work {
 		 * @param semaphore Semaphore to be signalled
 		 */
 		public Builder signal(Semaphore semaphore) {
-			Check.notNull(semaphore);
+			requireNonNull(semaphore);
 			work.signal.add(semaphore);
 			return this;
 		}

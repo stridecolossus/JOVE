@@ -1,10 +1,10 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.List;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
 import org.sarge.jove.util.StructureCollector;
-import org.sarge.lib.util.*;
+import org.sarge.lib.Utility;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -49,7 +49,7 @@ public final class RenderPass extends VulkanObject {
 	 * @return Next subpass command
 	 */
 	public static Command next(VkSubpassContents contents) {
-		Check.notNull(contents);
+		requireNonNull(contents);
 		return (lib, buffer) -> lib.vkCmdNextSubpass(buffer, contents);
 	}
 
@@ -84,14 +84,6 @@ public final class RenderPass extends VulkanObject {
 	@Override
 	protected Destructor<RenderPass> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyRenderPass;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(attachments)
-				.build();
 	}
 
 	/**

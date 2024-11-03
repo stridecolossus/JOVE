@@ -1,5 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
@@ -7,7 +10,6 @@ import java.util.Map.Entry;
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
 
 /**
  * A set of <i>specialisation constants</i> are used to parameterise shader programs.
@@ -137,7 +139,7 @@ public final class SpecialisationConstants {
 				return
 						(obj == this) ||
 						(obj instanceof FloatConstant that) &&
-						MathsUtil.isEqual(this.value, that.value);
+						MathsUtility.isApproxEqual(this.value, that.value);
 			}
 		}
 
@@ -172,8 +174,8 @@ public final class SpecialisationConstants {
 		 * @param constant		Constant
 		 */
 		public SpecialisationConstants.Builder add(int id, Constant constant) {
-			Check.zeroOrMore(id);
-			Check.notNull(constant);
+			requireZeroOrMore(id);
+			requireNonNull(constant);
 			constants.put(id, constant);
 			return this;
 		}

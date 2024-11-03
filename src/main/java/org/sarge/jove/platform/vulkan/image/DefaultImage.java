@@ -1,11 +1,10 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -13,7 +12,6 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.*;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -33,8 +31,8 @@ public final class DefaultImage extends VulkanObject implements Image {
 	 */
 	DefaultImage(Handle handle, DeviceContext dev, Descriptor descriptor, DeviceMemory mem) {
 		super(handle, dev);
-		this.descriptor = notNull(descriptor);
-		this.mem = notNull(mem);
+		this.descriptor = requireNonNull(descriptor);
+		this.mem = requireNonNull(mem);
 	}
 
 	@Override
@@ -61,15 +59,6 @@ public final class DefaultImage extends VulkanObject implements Image {
 		}
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(descriptor)
-				.append(mem)
-				.build();
-	}
-
 	/**
 	 * Builder for a default image.
 	 */
@@ -86,7 +75,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @param descriptor Image descriptor
 		 */
 		public Builder descriptor(Descriptor descriptor) {
-			this.descriptor = notNull(descriptor);
+			this.descriptor = requireNonNull(descriptor);
 			return this;
 		}
 		// TODO - ctor
@@ -96,7 +85,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @param props Memory properties
 		 */
 		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
-			this.props = notNull(props);
+			this.props = requireNonNull(props);
 			return this;
 		}
 		// TODO - ctor
@@ -106,7 +95,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @param flag Image creation flag
 		 */
 		public Builder flag(VkImageCreateFlag flag) {
-			flags.add(notNull(flag));
+			flags.add(requireNonNull(flag));
 			return this;
 		}
 
@@ -133,7 +122,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @param tiling Tiling arrangement
 		 */
 		public Builder tiling(VkImageTiling tiling) {
-			this.tiling = notNull(tiling);
+			this.tiling = requireNonNull(tiling);
 			return this;
 		}
 
@@ -148,7 +137,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 				default -> false;
 			};
 			if(!valid) throw new IllegalArgumentException("Invalid initial layout: " + layout);
-			this.layout = notNull(layout);
+			this.layout = requireNonNull(layout);
 			return this;
 		}
 

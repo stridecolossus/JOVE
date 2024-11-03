@@ -4,14 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Ray.*;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 class RayTest {
 	private Ray ray;
 
 	@BeforeEach
 	void before() {
-		ray = new DefaultRay(Point.ORIGIN, Axis.X);
+		ray = new Ray(Point.ORIGIN, Axis.X);
 	}
 
 	@Test
@@ -23,7 +23,7 @@ class RayTest {
 	@Test
 	void equals() {
 		assertEquals(ray, ray);
-		assertEquals(ray, new DefaultRay(Point.ORIGIN, Axis.X));
+		assertEquals(ray, new Ray(Point.ORIGIN, Axis.X));
 		assertNotEquals(ray, null);
 		assertNotEquals(ray, mock(Ray.class));
 	}
@@ -31,7 +31,7 @@ class RayTest {
 	@DisplayName("A simple intersection result can be constructed with a single intersection and surface normal")
 	@Test
 	void of() {
-		final Intersection result = Intersection.of(ray, 1, Axis.Y);
+		final Intersection result = ray.intersection(1, Axis.Y);
 		assertEquals(1f, result.distance());
 		assertEquals(new Point(Axis.X), result.point());
 		assertEquals(Axis.Y, result.normal());
@@ -40,7 +40,7 @@ class RayTest {
 	@DisplayName("An intersection result can be constructed with a surface normal relative to the centre of the intresected volume")
 	@Test
 	void centre() {
-		final Intersection result = Intersection.of(ray, 1, Point.ORIGIN);
+		final Intersection result = ray.intersection(1, Point.ORIGIN);
 		assertEquals(1f, result.distance());
 		assertEquals(new Point(Axis.X), result.point());
 		assertEquals(Axis.X, result.normal());
@@ -49,18 +49,18 @@ class RayTest {
 	@DisplayName("An empty intersection result has no values")
 	@Test
 	void none() {
-		final var results = Intersected.NONE.iterator();
+		final var results = Intersection.NONE.iterator();
 		assertEquals(false, results.hasNext());
 	}
 
 	@DisplayName("An intersection...")
 	@Nested
 	class DefaultIntersectionTests {
-		private DefaultIntersection intersection;
+		private Intersection intersection;
 
 		@BeforeEach
 		void before() {
-			intersection = new DefaultIntersection(ray, 1);
+			intersection = ray.intersection(1, Axis.Y);
 		}
 
 		@DisplayName("has an intersection point on the given ray")

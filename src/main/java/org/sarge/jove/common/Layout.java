@@ -1,6 +1,7 @@
 package org.sarge.jove.common;
 
-import org.sarge.lib.util.Check;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 /**
  * A <i>layout</i> describes the structure and format of common data tuples such as image pixels or vertex components.
@@ -56,9 +57,9 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 	 * @param bytes			Number of bytes per element
 	 */
 	public Layout {
-		Check.oneOrMore(count);
-		Check.notNull(type);
-		Check.oneOrMore(bytes);
+		requireOneOrMore(count);
+		requireNonNull(type);
+		requireOneOrMore(bytes);
 	}
 
 	/**

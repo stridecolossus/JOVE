@@ -1,14 +1,13 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>block</i> is an area of device memory managed by a {@link MemoryPool} from which allocations can be served.
@@ -33,7 +32,7 @@ class Block {
 	 * @param mem Memory block
 	 */
 	Block(DeviceMemory mem) {
-		this.mem = notNull(mem);
+		this.mem = requireNonNull(mem);
 	}
 
 	/**
@@ -74,7 +73,7 @@ class Block {
 	 */
 	BlockDeviceMemory allocate(long size) {
 		// Validate
-		Check.oneOrMore(size);
+		requireOneOrMore(size);
 		if(mem.isDestroyed()) throw new IllegalStateException("Memory block has been released: " + this);
 		if(next + size > mem.size()) throw new IllegalArgumentException(String.format("Allocation size exceeds free space: size=%d block=%s", size, this));
 
@@ -106,16 +105,6 @@ class Block {
 	@Override
 	public boolean equals(Object obj) {
 		return obj == this;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("mem", mem)
-				.append("next", next)
-				.append("allocations", allocations.size())
-				.append("mapped", mapped)
-				.build();
 	}
 
 	/**
@@ -177,7 +166,7 @@ class Block {
 		 * @return Reallocated memory
 		 */
 		BlockDeviceMemory reallocate(long size) {
-			Check.oneOrMore(size);
+			requireOneOrMore(size);
 			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
 			if(!destroyed) throw new IllegalStateException("Block allocation canot be reallocated: " + this);
 			if(size > this.size) throw new IllegalArgumentException("Reallocation size is larger than this memory: " + this);
@@ -221,16 +210,6 @@ class Block {
 					(this.size == that.size) &&
 					(this.offset == that.offset) &&
 					this.handle().equals(that.handle());
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("offset", offset)
-					.append("size", size)
-					.append("mapped", mapped == this)
-					.append("mem", mem)
-					.build();
 		}
 	}
 }

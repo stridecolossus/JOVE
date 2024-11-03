@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.sarge.jove.platform.vulkan.VkAccess.*;
 import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 import static org.sarge.jove.platform.vulkan.VkPipelineStage.TRANSFER;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -32,7 +32,7 @@ public class CaptureTask {
 	 * @param pool Transfer command pool
 	 */
 	public CaptureTask(Pool pool) {
-		this.pool = notNull(pool);
+		this.pool = requireNonNull(pool);
 	}
 
 	/**

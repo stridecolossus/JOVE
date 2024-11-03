@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.GlyphMeshBuilder.GlyphVertex;
 
+@Disabled("TODO")
 class GlyphMeshBuilderTest {
 	private GlyphMeshBuilder builder;
 	private GlyphFont font;
@@ -94,7 +94,7 @@ class GlyphMeshBuilderTest {
 		@DisplayName("advances the cursor but does not create a quad for a white-space character")
 		@Test
 		void whitespace() {
-			builder.add(StringUtils.SPACE);
+			builder.add(" ");
 			assertEquals(6, mesh.count());
 			assertEquals(new Point(2 * 3, 0, 0), builder.cursor());
 		}

@@ -91,9 +91,12 @@ public class Frustum {
 	}
 
 	/**
-	 * Extracts a frustum from the given matrix.
+	 * Extracts a frustum from the given projection matrix.
 	 * <p>
 	 * For a given matrix M comprised of the projection matrix P and modelview matrix MV the space of the resultant frustum clipping planes is as follows:
+	 *
+	 * TODO - nasty javadoc
+	 *
 	 * <p>
 	 * <table border=1>
 	 * <tr>
@@ -118,13 +121,13 @@ public class Frustum {
 	 */
 	public static Frustum of(Matrix matrix) {
 		// Extract plane vectors
-		final Vector x = matrix.row(0);
-		final Vector y = matrix.row(1);
-		final Vector z = matrix.row(2);
-		final Vector w = matrix.row(3);
+		final Vector x = row(0, matrix);
+		final Vector y = row(1, matrix);
+		final Vector z = row(2, matrix);
+		final Vector w = row(3, matrix);
 
 		// Extract distances from the origin
-		final Vector dist = matrix.column(3);
+		final Vector dist = distance(matrix);
 		final float d = matrix.get(3, 3);
 
 		// TODO - extracting planes is now a bit messy with all the normals stuff
@@ -153,5 +156,19 @@ public class Frustum {
 
 		// Create frustum
 		return new Frustum(planes);
+	}
+
+	private static Vector row(int row, Matrix matrix) {
+		final float x = matrix.get(row, 0);
+		final float y = matrix.get(row, 1);
+		final float z = matrix.get(row, 2);
+		return new Vector(x, y, z);
+	}
+
+	private static Vector distance(Matrix matrix) {
+		final float x = matrix.get(0, 3);
+		final float y = matrix.get(1, 3);
+		final float z = matrix.get(2, 3);
+		return new Vector(x, y, z);
 	}
 }

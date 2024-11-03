@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.util.Check;
 
 /**
  * A Vulkan <i>image</i> is a texture or data image stored on the hardware.
@@ -52,12 +52,12 @@ public interface Image extends NativeObject {
 		 */
 		public Descriptor {
 			// Validate
-			Check.notNull(type);
-			Check.notNull(format);
-			Check.notNull(extents);
+			requireNonNull(type);
+			requireNonNull(format);
+			requireNonNull(extents);
 			aspects = Set.copyOf(aspects);
-			Check.oneOrMore(levelCount);
-			Check.oneOrMore(layerCount);
+			requireOneOrMore(levelCount);
+			requireOneOrMore(layerCount);
 
 			// Validate extents
 			if(!extents.isValid(type)) {
@@ -102,7 +102,7 @@ public interface Image extends NativeObject {
 			 * @param type Image type
 			 */
 			public Builder type(VkImageType type) {
-				this.type = notNull(type);
+				this.type = requireNonNull(type);
 				return this;
 			}
 
@@ -111,7 +111,7 @@ public interface Image extends NativeObject {
 			 * @param format Image format
 			 */
 			public Builder format(VkFormat format) {
-				this.format = notNull(format);
+				this.format = requireNonNull(format);
 				return this;
 			}
 
@@ -120,7 +120,7 @@ public interface Image extends NativeObject {
 			 * @param size Image dimensions
 			 */
 			public Builder extents(Extents extents) {
-				this.extents = notNull(extents);
+				this.extents = requireNonNull(extents);
 				return this;
 			}
 
@@ -137,7 +137,7 @@ public interface Image extends NativeObject {
 			 * @param aspect Image aspect
 			 */
 			public Builder aspect(VkImageAspect aspect) {
-				aspects.add(notNull(aspect));
+				aspects.add(requireNonNull(aspect));
 				return this;
 			}
 
@@ -146,7 +146,7 @@ public interface Image extends NativeObject {
 			 * @param levels Number of mip levels
 			 */
 			public Builder mipLevels(int levels) {
-				this.levels = oneOrMore(levels);
+				this.levels = requireOneOrMore(levels);
 				return this;
 			}
 
@@ -155,7 +155,7 @@ public interface Image extends NativeObject {
 			 * @param levels Number of array levels
 			 */
 			public Builder arrayLayers(int layers) {
-				this.layers = oneOrMore(layers);
+				this.layers = requireOneOrMore(layers);
 				return this;
 			}
 

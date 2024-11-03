@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -75,10 +75,10 @@ public class Allocator {
 	 * @param granularity	Memory page granularity
 	 */
 	public Allocator(DeviceContext dev, MemoryType[] types, int max, long granularity) {
-		this.dev = notNull(dev);
+		this.dev = requireNonNull(dev);
 		this.types = Arrays.copyOf(types, types.length);
-		this.max = oneOrMore(max);
-		this.granularity = oneOrMore(granularity);
+		this.max = requireOneOrMore(max);
+		this.granularity = requireOneOrMore(granularity);
 	}
 
 	/**
@@ -236,14 +236,5 @@ public class Allocator {
 	 */
 	protected final void reset() {
 		count = 0;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("types", types.length)
-				.append("allocations", String.format("%d/%d", count, max))
-				.append("granularity", granularity)
-				.build();
 	}
 }

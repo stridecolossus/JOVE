@@ -1,8 +1,6 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyFloat;
-import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 
@@ -38,10 +36,10 @@ class MutableNormalVertexTest {
 
 	@Test
 	void buffer() {
-		final var buffer = mock(ByteBuffer.class);
+		final var buffer = ByteBuffer.allocate(2 * 3 * 4);
 		vertex.add(Axis.Y);
 		vertex.buffer(buffer);
-		verify(buffer, times(6)).putFloat(anyFloat());
+		assertEquals(2 * 3 * 4, buffer.position());
 	}
 
 	@Test

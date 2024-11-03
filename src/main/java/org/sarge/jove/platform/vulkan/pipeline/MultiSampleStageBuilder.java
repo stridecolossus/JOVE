@@ -1,10 +1,10 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Percentile;
+import org.sarge.lib.Percentile;
 
 /**
  * Builder for the multi-sample pipeline stage.
@@ -28,7 +28,7 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * @see #samples(int)
 	 */
 	public MultiSampleStageBuilder rasterizationSamples(VkSampleCount rasterizationSamples) {
-		info.rasterizationSamples = notNull(rasterizationSamples);
+		info.rasterizationSamples = requireNonNull(rasterizationSamples);
 		return this;
 	}
 

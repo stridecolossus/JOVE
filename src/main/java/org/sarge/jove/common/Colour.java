@@ -1,12 +1,14 @@
 package org.sarge.jove.common;
 
+import static org.sarge.lib.Percentile.validate;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.FloatSupport.FloatFunction;
-import org.sarge.lib.util.*;
+import org.sarge.lib.Percentile;
 
 /**
  * RGBA colour.
@@ -39,11 +41,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	public static final Layout LAYOUT = Layout.floats(SIZE);
 
 	/**
-	 * Colour converter.
-	 */
-	public static final Converter<Colour> CONVERTER = new FloatArrayConverter<>(SIZE, Colour::of);
-
-	/**
 	 * Creates a colour from the given floating-point array representing an RGBA colour <b>or</b> an RGB colour with the alpha value initialised to <b>one</b>.
 	 * @param array Colour array
 	 * @return Colour
@@ -68,10 +65,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		validate(green);
 		validate(blue);
 		validate(alpha);
-	}
-
-	private static void validate(float f) {
-		if(!Percentile.isValid(f)) throw new IllegalArgumentException("Invalid colour component: " + f);
 	}
 
 	/**
@@ -130,6 +123,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 
 	@Override
 	public String toString() {
-		return Arrays.toString(toArray());
+		return MathsUtility.format(toArray());
 	}
 }

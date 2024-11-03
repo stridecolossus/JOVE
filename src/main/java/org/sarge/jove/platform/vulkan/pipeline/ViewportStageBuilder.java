@@ -1,5 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
+
 import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
@@ -7,7 +10,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.StructureCollector;
-import org.sarge.lib.util.*;
+import org.sarge.lib.Percentile;
 
 /**
  * Builder for the viewport pipeline stage.
@@ -26,9 +29,9 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 		 * @param max			Maximum depth
 		 */
 		public Viewport {
-			Check.notNull(rectangle);
-			Check.notNull(min);
-			Check.notNull(max);
+			requireNonNull(rectangle);
+			requireNonNull(min);
+			requireNonNull(max);
 		}
 
 		/**
@@ -74,7 +77,7 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 	 */
 	@RequiredFeature(field="viewportCount", feature="multiViewport")
 	public ViewportStageBuilder viewport(Viewport viewport) {
-		Check.notNull(viewport);
+		requireNonNull(viewport);
 		viewports.add(viewport);
 		return this;
 	}
@@ -84,7 +87,7 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 	 * @param rect Scissor rectangle
 	 */
 	public ViewportStageBuilder scissor(Rectangle rect) {
-		Check.notNull(rect);
+		requireNonNull(rect);
 		scissors.add(rect);
 		return this;
 	}
@@ -157,8 +160,8 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 	 * @throws IllegalArgumentException for an invalid dynamic state command
 	 */
 	private void validate(int start, List<?> list) {
-		Check.zeroOrMore(start);
-		Check.notEmpty(list);
+		requireZeroOrMore(start);
+		requireNotEmpty(list);
 		if(start + list.size() > viewports.size()) throw new IllegalArgumentException("Invalid viewport/scissor range");
 	}
 }

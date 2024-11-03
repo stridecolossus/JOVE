@@ -1,78 +1,49 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
+import org.sarge.jove.util.MathsUtility;
 
 /**
- * A <i>ray</i> is a vector relative to an originating point, used for intersection tests, picking, etc.
+ * A <i>ray</i> is a vector relative to an originating point used for frustum culling, intersection tests, and picking.
  * @author Sarge
  */
-public interface Ray {
+public record Ray(Point origin, Vector direction) {
 	/**
-	 * @return Ray origin
+	 * Constructor.
+	 * @param origin			Ray origin
+	 * @param direction			Direction
 	 */
-	Point origin();
-
-	/**
-	 * @return Ray direction
-	 */
-	Normal direction();
-
-	/**
-	 * @return Length of this ray
-	 */
-	float length();
-
-	// TODO - should direction be a plain vector? therefore no need for separate length() => may need normalize() across all use-cases!
-
-	/**
-	 * Default implementation for an infinitely long ray.
-	 */
-	record DefaultRay(Point origin, Normal direction) implements Ray {
-		/**
-		 * Constructor.
-		 * @param origin			Ray origin
-		 * @param direction			Direction
-		 */
-		public DefaultRay {
-			Check.notNull(origin);
-			Check.notNull(direction);
-		}
-
-		@Override
-		public float length() {
-			return Float.POSITIVE_INFINITY;
-		}
+	public Ray {
+		requireNonNull(origin);
+		requireNonNull(direction);
 	}
 
 	/**
-	 * An <i>intersected</i> surface can be tested for intersections with a ray.
+	 * An <i>intersection</i> specifies the point(s) at which this ray intersects a {@link Surface}.
 	 */
-	interface Intersected {
+	public interface Intersection extends Comparable<Intersection> {
 		/**
-		 * Calculates the intersections of this surface with the given ray.
-		 * @param ray Ray
-		 * @return Intersections
+		 * An <i>intersection surface</i> can be tested for intersections with this ray.
 		 */
-		Iterable<Intersection> intersections(Ray ray);
+		public interface Surface {
+			/**
+			 * Determines the intersections of the given ray with this surface.
+			 * @param ray Ray
+			 * @return Intersections
+			 */
+			Iterable<Intersection> intersections(Ray ray);
+		}
 
 		/**
-		 * Empty result.
+		 * Empty intersections.
 		 */
 		Iterable<Intersection> NONE = List.of();
-	}
 
-	/**
-	 * An <i>intersection</i> specifies a point where this ray intersects an {@link Intersected} surface.
-	 */
-	interface Intersection {
 		/**
-		 * Orders intersections by distance from the ray origin.
+		 * Orders intersections by distance from the origin of this ray.
 		 */
 		Comparator<Intersection> COMPARATOR = Comparator.comparing(Intersection::distance);
 
@@ -82,7 +53,7 @@ public interface Ray {
 		float distance();
 
 		/**
-		 * Calculates the intersection point on the ray, i.e. solves the line equation for this {@link #distance()}.
+		 * Calculates the intersection point on this ray, i.e. solves the line equation at this intersection.
 		 * @return Intersection point
 		 */
 		Point point();
@@ -90,84 +61,83 @@ public interface Ray {
 		/**
 		 * Determines the surface normal at this intersection.
 		 * @return Surface normal
-		 * @throws UnsupportedOperationException if the normal is undefined
 		 */
-		default Normal normal() {
-			throw new UnsupportedOperationException();
-		}
-
-		/**
-		 * Creates a simple intersection result.
-		 * @param ray			Ray
-		 * @param dist			Distance
-		 * @param normal		Surface normal
-		 * @return Intersection
-		 */
-		static Intersection of(Ray ray, float dist, Normal normal) {
-			Check.notNull(normal);
-			return new DefaultIntersection(ray, dist) {
-				@Override
-				public Normal normal() {
-					return normal;
-				}
-			};
-		}
-
-		/**
-		 * Creates an intersection for the common case of a surface normal relative to the centre of the {@link Intersected} volume.
-		 * @param ray		Ray
-		 * @param dist		Distance
-		 * @param centre	Centre of the intersected volume
-		 * @return Intersection
-		 */
-		static Intersection of(Ray ray, float dist, Point centre) {
-			Check.notNull(centre);
-			return new DefaultIntersection(ray, dist) {
-				@Override
-				public Normal normal() {
-					final Vector vec = Vector.between(centre, this.point());
-					return new Normal(vec);
-				}
-			};
-		}
+		Normal normal();
 	}
 
 	/**
-	 * Default implementation for an intersection with an undefined surface normal.
+	 * Creates an intersection on this ray at the given distance with the given surface normal.
+	 * @param distance		Intersection distance
+	 * @param normal		Surface normal
+	 * @return Intersection
 	 */
-	class DefaultIntersection implements Intersection {
-		private final Ray ray;
-		private final float dist;
-		private transient Point pos;
+	public Intersection intersection(float distance, Normal normal) {
+		requireNonNull(normal);
+
+		return new AbstractIntersection() {
+			@Override
+			public float distance() {
+				return distance;
+			}
+
+			@Override
+			public Normal normal() {
+				return normal;
+			}
+		};
+	}
+
+	/**
+	 * Creates an intersection on this ray at the given distance relative to the given volume centre point.
+	 * @param distance		Intersection distance
+	 * @param centre		Centre point
+	 * @return Intersection
+	 * @see AbstractIntersection#normal(Point)
+	 */
+	public Intersection intersection(float distance, Point centre) {
+		requireNonNull(centre);
+
+		return new AbstractIntersection() {
+			@Override
+			public float distance() {
+				return distance;
+			}
+
+			@Override
+			public Normal normal() {
+				return normal(centre);
+			}
+		};
+	}
+
+	/**
+	 * Skeleton implementation.
+	 */
+	public abstract class AbstractIntersection implements Intersection {
+		@Override
+		public Point point() {
+			final Vector v = direction.multiply(this.distance());
+			return origin.add(v);
+		}
 
 		/**
-		 * Constructor.
-		 * @param ray 		Ray
-		 * @param dist		Intersection distance
+		 * Helper - Calculates the surface normal at this intersection relative to the given centre point of the intersected volume.
+		 * @param centre Centre point
+		 * @return Surface normal
 		 */
-		protected DefaultIntersection(Ray ray, float dist) {
-			this.ray = notNull(ray);
-			this.dist = dist;
+		protected final Normal normal(Point centre) {
+			final Vector v = Vector.between(centre, this.point());
+			return new Normal(v);
 		}
 
 		@Override
-		public float distance() {
-			return dist;
-		}
-
-		@Override
-		public final Point point() {
-			if(pos == null) {
-				final Point origin = ray.origin();
-				final Normal dir = ray.direction();
-				pos = origin.add(dir.multiply(dist));
-			}
-			return pos;
+		public int compareTo(Intersection that) {
+			return Float.compare(this.distance(), that.distance());
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(ray, dist);
+			return Float.hashCode(this.distance());
 		}
 
 		@Override
@@ -175,15 +145,13 @@ public interface Ray {
 			return
 					(obj == this) ||
 					(obj instanceof Intersection that) &&
-					MathsUtil.isEqual(this.dist, that.distance());
+					MathsUtility.isApproxEqual(this.distance(), that.distance()) &&
+					this.normal().equals(that.normal());
 		}
 
 		@Override
 		public String toString() {
-			return new ToStringBuilder(this)
-					.append(ray)
-					.append("dist", dist)
-					.build();
+			return String.format("Intersection[%s]", MathsUtility.format(this.distance()));
 		}
 	}
 }

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 import java.util.function.BiFunction;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -112,8 +112,8 @@ public interface Command {
 		 * @param pool			Parent pool
 		 */
 		protected Buffer(Handle handle, Pool pool) {
-			this.handle = notNull(handle);
-			this.pool = notNull(pool);
+			this.handle = requireNonNull(handle);
+			this.pool = requireNonNull(pool);
 		}
 
 		@Override
@@ -236,15 +236,6 @@ public interface Command {
 		public final void free() {
 			pool.free(Set.of(this));
 		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append(handle)
-					.append(state)
-					.append(pool)
-					.build();
-		}
 	}
 
 	/**
@@ -313,7 +304,7 @@ public interface Command {
 
 			// Init inheritance
 			final var info = new VkCommandBufferInheritanceInfo();
-			info.renderPass = notNull(pass);
+			info.renderPass = requireNonNull(pass);
 			info.subpass = 0; // TODO - subpass index, query stuff
 
 			// Begin recording
@@ -374,7 +365,7 @@ public interface Command {
 		 */
 		Pool(Handle handle, DeviceContext dev, WorkQueue queue) {
 			super(handle, dev);
-			this.queue = notNull(queue);
+			this.queue = requireNonNull(queue);
 		}
 
 		/**
@@ -429,7 +420,7 @@ public interface Command {
 			// Init descriptor
 			final var info = new VkCommandBufferAllocateInfo();
 			info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
-			info.commandBufferCount = oneOrMore(num);
+			info.commandBufferCount = requireOneOrMore(num);
 			info.commandPool = this.handle();
 
 			// Allocate buffers
@@ -468,14 +459,6 @@ public interface Command {
 		@Override
 		protected Destructor<Pool> destructor(VulkanLibrary lib) {
 			return lib::vkDestroyCommandPool;
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.appendSuper(super.toString())
-					.append("queue", queue)
-					.build();
 		}
 	}
 

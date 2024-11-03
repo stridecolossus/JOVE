@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.BitMask;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * A <i>format selector</i> is a helper utility used to choose an appropriate format from a list of candidates.
@@ -34,7 +34,7 @@ public class FormatSelector {
 	 * @return Format filter
 	 */
 	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> required) {
-		Check.notEmpty(required);
+		requireNotEmpty(required);
 		final BitMask<VkFormatFeature> mask = new BitMask<>(required);
 		return props -> {
 			final BitMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
@@ -52,8 +52,8 @@ public class FormatSelector {
 	 * @param filter		Format selector
 	 */
 	public FormatSelector(PhysicalDevice dev, Predicate<VkFormatProperties> filter) {
-		this.dev = notNull(dev);
-		this.filter = notNull(filter);
+		this.dev = requireNonNull(dev);
+		this.filter = requireNonNull(filter);
 	}
 
 	/**

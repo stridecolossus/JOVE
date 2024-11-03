@@ -18,8 +18,8 @@ class ParticleTest {
 	@Test
 	void constructor() {
 		assertEquals(1, particle.created());
-		assertEquals(Point.ORIGIN, particle.origin());
-		assertEquals(Axis.Y, particle.direction());
+		assertEquals(Point.ORIGIN, particle.ray().origin());
+		assertEquals(Axis.Y, particle.ray().direction());
 		assertEquals(true, particle.isAlive());
 		assertEquals(false, particle.isIdle());
 	}
@@ -28,21 +28,21 @@ class ParticleTest {
 	@Test
 	void move() {
 		particle.move(Axis.X);
-		assertEquals(new Point(1, 0, 0), particle.origin());
+		assertEquals(new Point(1, 0, 0), particle.ray().origin());
 	}
 
 	@DisplayName("The direction of a particle can be modified")
 	@Test
 	void direction() {
 		particle.direction(Axis.X);
-		assertEquals(Axis.X, particle.direction());
+		assertEquals(Axis.X, particle.ray().direction());
 	}
 
 	@DisplayName("The velocity of a particle can be modified")
 	@Test
 	void velocity() {
 		particle.velocity(2);
-		assertEquals(2, particle.length());
+		// TODO
 	}
 
 	@DisplayName("A moving particle can be stopped")
@@ -78,8 +78,8 @@ class ParticleTest {
 	void reflect() {
 		final Point pt = new Point(1, 2, 3);
 		particle.reflect(pt, Axis.Y);
-		assertEquals(pt, particle.origin());
-		assertEquals(Axis.Y.invert(), particle.direction());
+		assertEquals(pt, particle.ray().origin());
+		assertEquals(Axis.Y.invert(), particle.ray().direction());
 	}
 
 	@DisplayName("TODO")

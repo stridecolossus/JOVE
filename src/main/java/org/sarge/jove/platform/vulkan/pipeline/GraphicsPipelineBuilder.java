@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
@@ -39,7 +39,7 @@ public class GraphicsPipelineBuilder implements DelegatePipelineBuilder<VkGraphi
 	 * @param pass Render pass
 	 */
 	public GraphicsPipelineBuilder(RenderPass pass) {
-		this.pass = notNull(pass);
+		this.pass = requireNonNull(pass);
 		init();
 	}
 

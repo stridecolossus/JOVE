@@ -4,29 +4,21 @@ import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Layout.Component;
 
 /**
- * A <i>normal</i> is a unit vector with a magnitude of <b>one</b>.
+ * A <i>normal</i> is a unit vector.
  * @author Sarge
  */
 public class Normal extends Vector implements Component {
 	/**
-	 * Layout for a vertex normal.
+	 * Vertex normal layout.
 	 */
-	public static final Layout LAYOUT = Layout.floats(3);
+	public static final Layout LAYOUT = Layout.floats(Point.SIZE);
 
 	/**
 	 * Constructor.
-	 * @param normal Normal
+	 * @param vector Vector to normalise
 	 */
-	public Normal(Vector normal) {
-		super(normal.normalize());
-	}
-
-	/**
-	 * Array constructor.
-	 * @param normal Normal as a floating-point array
-	 */
-	public Normal(float[] normal) {
-		this(new Vector(normal));
+	public Normal(Vector vector) {
+		super(vector.normalize());
 	}
 
 	@Override
@@ -45,7 +37,7 @@ public class Normal extends Vector implements Component {
 	}
 
 	@Override
-	public final Layout layout() {
+	public Layout layout() {
 		return LAYOUT;
 	}
 }

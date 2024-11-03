@@ -1,28 +1,20 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class KeyTableTest {
 	private KeyTable table;
 
 	@BeforeEach
 	void before() {
-		table = KeyTable.instance();
+		table = KeyTable.INSTANCE;
 	}
 
 	@Test
 	void constructor() {
 		assertNotNull(table);
-	}
-
-	@Test
-	void instance() {
-		assertEquals(table, KeyTable.instance());
 	}
 
 	@Test

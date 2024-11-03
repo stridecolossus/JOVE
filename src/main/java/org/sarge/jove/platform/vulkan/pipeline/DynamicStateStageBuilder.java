@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
@@ -21,7 +21,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 	 * @param state Dynamic state
 	 */
 	public DynamicStateStageBuilder state(VkDynamicState state) {
-		states.add(notNull(state));
+		states.add(requireNonNull(state));
 		return this;
 	}
 

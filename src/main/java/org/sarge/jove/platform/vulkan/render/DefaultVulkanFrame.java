@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
@@ -35,9 +35,9 @@ public class DefaultVulkanFrame implements VulkanFrame {
 	 */
 	public DefaultVulkanFrame(Semaphore available, Semaphore ready, Fence fence) {
 		if(available.equals(ready)) throw new IllegalArgumentException("Available and ready semaphores cannot be the same instance");
-		this.available = notNull(available);
-		this.ready = notNull(ready);
-		this.fence = notNull(fence);
+		this.available = requireNonNull(available);
+		this.ready = requireNonNull(ready);
+		this.fence = requireNonNull(fence);
 	}
 
 	@Override

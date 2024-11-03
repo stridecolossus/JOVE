@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -39,7 +38,7 @@ class SpecialisationConstantsTest {
 
 		@BeforeEach
 		void before() {
-			bb = mock(ByteBuffer.class);
+			bb = ByteBuffer.allocate(4);
 		}
 
     	@Test
@@ -47,7 +46,8 @@ class SpecialisationConstantsTest {
     		final var constant = new IntegerConstant(1);
     		assertEquals(4, constant.size());
     		constant.buffer(bb);
-    		verify(bb).putInt(1);
+    		bb.flip();
+    		assertEquals(1, bb.getInt());
     	}
 
     	@Test
@@ -55,7 +55,8 @@ class SpecialisationConstantsTest {
     		final var constant = new FloatConstant(2);
     		assertEquals(4, constant.size());
     		constant.buffer(bb);
-    		verify(bb).putFloat(2f);
+    		bb.flip();
+    		assertEquals(2f, bb.getFloat());
     	}
 
     	@Test
@@ -63,7 +64,8 @@ class SpecialisationConstantsTest {
     		final var constant = new BooleanConstant(true);
     		assertEquals(4, constant.size());
     		constant.buffer(bb);
-    		verify(bb).putInt(1);
+    		bb.flip();
+    		assertEquals(1, bb.getInt());
     	}
     }
 

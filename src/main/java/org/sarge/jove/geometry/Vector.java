@@ -1,7 +1,6 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.util.*;
-import org.sarge.lib.util.Converter;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>vector</i> is a direction in 3D space.
@@ -9,12 +8,7 @@ import org.sarge.lib.util.Converter;
  */
 public class Vector extends Tuple {
 	/**
-	 * Converter for a vector.
-	 */
-	public static final Converter<Vector> CONVERTER = new FloatArrayConverter<>(SIZE, Vector::new);
-
-	/**
-	 * Creates the vector between the given points, i.e. <code>end - start</code>.
+	 * Creates the vector between the given points, i.e. {@code end - start}.
 	 * @param start		Starting point
 	 * @param end		End point
 	 * @return Vector between the given points
@@ -35,16 +29,16 @@ public class Vector extends Tuple {
 
 	/**
 	 * Copy constructor.
-	 * @param tuple Tuple to copy
+	 * @param that Tuple to copy
 	 */
-	public Vector(Tuple tuple) {
-		super(tuple);
+	public Vector(Tuple that) {
+		super(that);
 	}
 
 	/**
 	 * Array constructor.
-	 * @param array Vector array
-	 * @throws IllegalArgumentException if the array is not comprised of three elements
+	 * @param Vector array
+	 * @throws ArrayIndexOutOfBoundsException if the array does not have three elements
 	 */
 	public Vector(float[] array) {
 		super(array);
@@ -60,9 +54,8 @@ public class Vector extends Tuple {
 	/**
 	 * Calculates the <i>dot</i> product of two vectors.
 	 * <p>
-	 * The dot product is also known as the <i>inner</i> or <i>scalar</i> vector product.
-	 * <p>
-	 * The resultant value expresses the angular relationship between two vectors represented mathematically as:
+	 * The dot product (also known as the <i>inner</i> or <i>scalar</i> vector product) expresses the angular relationship between two vectors.
+	 * This is represented mathematically as:
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>
@@ -71,17 +64,17 @@ public class Vector extends Tuple {
 	 * <li>zero if the vectors are orthogonal, i.e. perpendicular (at right angles)</li>
 	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
 	 * <li>negative if the angle is greater than 90 degrees</li>
-	 * <li>commutative {@code a.b = b.a}</li>
+	 * <li>commutative, i.e. {@code a.b = b.a}</li>
 	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
 	 * <li>the <i>magnitude</i> of a vector when applied to itself</li>
 	 * </ul>
 	 * <p>
-	 * @param that Tuple
+	 * @param that Vector
 	 * @return Dot product
 	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
 	 */
-	public float dot(Tuple that) {
-		return x * that.x + y * that.y + z * that.z;
+	public float dot(Vector that) {
+		return this.x * that.x + this.y * that.y + this.z * that.z;
 	}
 
 	/**
@@ -93,11 +86,15 @@ public class Vector extends Tuple {
 
 	/**
 	 * Adds the given vector to this vector.
-	 * @param vec Vector to add
+	 * @param that Vector to add
 	 * @return Added vector
 	 */
-	public final Vector add(Vector vec) {
-		return new Vector(x + vec.x, y + vec.y, z + vec.z);
+	public final Vector add(Vector that) {
+		return new Vector(
+				this.x + that.x,
+				this.y + that.y,
+				this.z + that.z
+		);
 	}
 
 	/**
@@ -110,48 +107,39 @@ public class Vector extends Tuple {
 	}
 
 	/**
-	 * Multiplies this vector <i>component wise</i> by the given vector.
-	 * @param vec Vector
-	 * @return Multiplied vector
-	 */
-	public final Vector multiply(Vector vec) {
-		return new Vector(x * vec.x, y * vec.y, z * vec.z);
-	}
-
-	/**
 	 * @return Normalized (or unit) vector
+	 * @see Normal
 	 */
 	public Vector normalize() {
 		final float len = this.magnitude();
-		if(MathsUtil.isEqual(1, len)) {
+		if(MathsUtility.isApproxEqual(1, len)) {
 			return this;
 		}
 		else {
-    		final float f = MathsUtil.inverseRoot(len);
+    		final float f = MathsUtility.inverseSquareRoot(len);
     		return multiply(f);
 		}
 	}
 
 	/**
 	 * Calculates the angle between this and the given vector.
-	 * @param vec Vector
-	 * @return Angle between vectors (radians)
-	 * @see #dot(Tuple)
+	 * @param that Vector
+	 * @return Angle between the vectors (radians)
+	 * @see #dot(Vector)
 	 */
-	public final float angle(Vector vec) {
-		final float dot = this.dot(vec);
+	public final float angle(Vector that) {
+		final float dot = this.dot(that);
 		if(dot < -1) {
-			return Trigonometric.PI;
+			return MathsUtility.PI;
 		}
 		else
 		if(dot > 1) {
 			return 0;
 		}
 		else {
-			return (float) Math.acos(dot);
+			return (float) Math.acos(dot);		// TODO
 		}
 	}
-	// TODO - should this actually be MathsUtil.acos()
 
 	/**
 	 * Calculates the <i>cross product</i> of this and the given vector.
@@ -174,14 +162,14 @@ public class Vector extends Tuple {
 	 * <li>by convention the direction of the resultant vector is determined by the <i>right-hand rule</i></li>
 	 * </ul>
 	 * <p>
-	 * @param vec Vector
+	 * @param that Vector
 	 * @return Cross product
 	 * @see <a href="https://en.wikipedia.org/wiki/Cross_product">Wikipedia</a>
 	 */
-	public Vector cross(Vector vec) {
-		final float x = this.y * vec.z - this.z * vec.y;
-		final float y = this.z * vec.x - this.x * vec.z;
-		final float z = this.x * vec.y - this.y * vec.x;
+	public Vector cross(Vector that) {
+		final float x = this.y * that.z - this.z * that.y;
+		final float y = this.z * that.x - this.x * that.z;
+		final float z = this.x * that.y - this.y * that.x;
 		return new Vector(x, y, z);
 	}
 
@@ -192,28 +180,28 @@ public class Vector extends Tuple {
 	 */
 	public final Point nearest(Point p) {
 		final Vector v = new Vector(p);
-		final Vector n = v.project(this);
+		final Vector n = v.project(new Normal(this));
 		return new Point(n);
 	}
+	// TODO - specialise in Normal?
 
 	/**
-	 * Projects this vector onto a given vector.
+	 * Projects this vector onto the given normal.
 	 * <p>
 	 * The vector projection of a vector V onto U is: <pre>projU(V) = (U.V) U / mag</pre>
 	 * where:
 	 * <ul>
 	 * <li>V is <b>this</b> vector</li>
-	 * <li>U is assumed to be normalised</li>
+	 * <li>U is the normal to be projected onto</li>
 	 * <li><i>mag</i> is the magnitude of U squared (and is therefore ignored by this implementation)</li>
 	 * </ul>
 	 * <p>
-	 * @param vec Vector to project onto (assumes normalised)
+	 * @param normal Vector to project onto
 	 * @return Projected vector
 	 * @see <a href="https://en.wikipedia.org/wiki/Vector_projection">Wikipedia</a>
 	 */
-	public final Vector project(Vector vec) {
-		final Vector n = vec.normalize();
-		return n.multiply(n.dot(this));
+	public final Vector project(Normal normal) {
+		return normal.multiply(normal.dot(this));
 	}
 
 	/**
@@ -230,10 +218,10 @@ public class Vector extends Tuple {
 	}
 
 	@Override
-	public final boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof Vector that) &&
-				isEqual(that);
+				super.isEqual(that);
 	}
 }

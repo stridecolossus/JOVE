@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.MathsUtility;
 
 class VectorTest {
 	private Vector vec;
@@ -42,13 +42,6 @@ class VectorTest {
 			assertEquals(vec, Vector.between(new Point(1, 2, 3), new Point(2, 4, 6)));
 		}
 
-		@DisplayName("can be parsed from a delimited string")
-		@Test
-		void converter() {
-			assertEquals(vec, Vector.CONVERTER.apply("1 2 3"));
-			assertEquals(vec, Vector.CONVERTER.apply("1,2,3"));
-		}
-
 		@DisplayName("has a magnitude which is the squared length of the vector")
 		@Test
 		void magnitude() {
@@ -73,13 +66,6 @@ class VectorTest {
 			assertEquals(new Vector(2, 4, 6), vec.multiply(2));
 		}
 
-		@DisplayName("can be multiplied component-wise")
-		@Test
-		void multiply() {
-			assertEquals(new Vector(1, 4, 9), vec.multiply(vec));
-			assertEquals(X, vec.multiply(X));
-		}
-
 		@DisplayName("can be normalized to the unit-vector in the same direction")
 		@Test
 		void normalize() {
@@ -87,7 +73,7 @@ class VectorTest {
 			final Vector expected = new Vector(1 * f, 2 * f, 3 * f);
 			final Vector normal = vec.normalize();
 			assertEquals(expected, normal);
-			assertTrue(MathsUtil.isEqual(1, normal.magnitude()));
+			assertTrue(MathsUtility.isApproxEqual(1, normal.magnitude()));
 		}
 	}
 
@@ -123,7 +109,7 @@ class VectorTest {
 		@Test
 		void self() {
 			final Vector unit = vec.normalize();
-			assertTrue(MathsUtil.isEqual(1, unit.dot(unit)));
+			assertTrue(MathsUtility.isApproxEqual(1, unit.dot(unit)));
 		}
 	}
 
@@ -139,13 +125,13 @@ class VectorTest {
 		@DisplayName("is the maximum angle for opposite vectors")
 		@Test
 		void opposite() {
-			assertEquals(Trigonometric.PI, vec.angle(vec.invert()));
+			assertEquals(MathsUtility.PI, vec.angle(vec.invert()));
 		}
 
 		@DisplayName("can be calculated for acute or obtuse angles")
 		@Test
 		void orthogonal() {
-			assertEquals(Trigonometric.HALF_PI, Axis.X.angle(Axis.Y));
+			assertEquals(MathsUtility.HALF_PI, X.angle(Y));
 		}
 	}
 
@@ -164,7 +150,7 @@ class VectorTest {
 		@DisplayName("of two unit-vectors is a vector perpendicular to both")
 		@Test
 		void cross() {
-			assertTrue(MathsUtil.isZero(unit.dot(cross)));
+			assertTrue(MathsUtility.isApproxZero(unit.dot(cross)));
 		}
 
 		@DisplayName("points in the opposite direction if the operation is reversed")
@@ -187,7 +173,7 @@ class VectorTest {
 		final Point p = new Point(9, 8, 7);
 		final Point nearest = vec.nearest(p);
 		final Vector normal = Vector.between(p, nearest).normalize();
-		assertTrue(MathsUtil.isZero(vec.normalize().dot(normal)));
+		assertTrue(MathsUtility.isApproxZero(vec.normalize().dot(normal)));
 	}
 
 	@DisplayName("A vector projected...")
@@ -204,7 +190,7 @@ class VectorTest {
 		@DisplayName("onto itself is the same vector")
 		@Test
 		void self() {
-			assertEquals(vec, vec.project(vec));
+			assertEquals(vec, vec.project(new Normal(vec)));
 		}
 	}
 

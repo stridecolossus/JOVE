@@ -1,6 +1,6 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.oneOrMore;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -31,7 +31,7 @@ public class DataHelper {
 	 * @param ver Supported version number
 	 */
 	public DataHelper(int ver) {
-		this.ver = oneOrMore(ver);
+		this.ver = requireOneOrMore(ver);
 	}
 
 	/**

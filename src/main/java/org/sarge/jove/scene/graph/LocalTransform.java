@@ -1,6 +1,6 @@
 package org.sarge.jove.scene.graph;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.stream.Stream;
 
@@ -29,7 +29,7 @@ public class LocalTransform {
 	 * @param transform Local transform
 	 */
 	public void set(Transform transform) {
-		this.transform = notNull(transform);
+		this.transform = requireNonNull(transform);
 	}
 
 	/**

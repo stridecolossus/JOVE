@@ -6,7 +6,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.graph.*;
 
 public class CameraControllerTest {
 	private Camera cam;

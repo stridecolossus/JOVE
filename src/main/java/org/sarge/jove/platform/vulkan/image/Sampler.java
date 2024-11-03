@@ -1,7 +1,8 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 
@@ -11,7 +12,6 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.BitMask;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -82,7 +82,7 @@ public final class Sampler extends VulkanObject {
 		private final VkSamplerAddressMode mode, mirrored;
 
 		private AddressMode(VkSamplerAddressMode mode, VkSamplerAddressMode mirrored) {
-			this.mode = notNull(mode);
+			this.mode = requireNonNull(mode);
 			this.mirrored = mirrored;
 		}
 
@@ -131,7 +131,7 @@ public final class Sampler extends VulkanObject {
 		 * @param flag Creation flag
 		 */
 		public Builder flag(VkSamplerCreateFlag flag) {
-			Check.notNull(flag);
+			requireNonNull(flag);
 			this.flags.add(flag);
 			return this;
 		}
@@ -141,7 +141,7 @@ public final class Sampler extends VulkanObject {
 		 * @param min Magnification filter (default is {@link VkFilter#LINEAR})
 		 */
 		public Builder mag(VkFilter mag) {
-			info.magFilter = notNull(mag);
+			info.magFilter = requireNonNull(mag);
 			return this;
 		}
 
@@ -150,7 +150,7 @@ public final class Sampler extends VulkanObject {
 		 * @param min Minification filter (default is {@link VkFilter#LINEAR})
 		 */
 		public Builder min(VkFilter min) {
-			info.minFilter = notNull(min);
+			info.minFilter = requireNonNull(min);
 			return this;
 		}
 
@@ -159,7 +159,7 @@ public final class Sampler extends VulkanObject {
 		 * @param mode Mipmap mode (default is {@link VkSamplerMipmapMode#LINEAR})
 		 */
 		public Builder mipmap(VkSamplerMipmapMode mode) {
-			info.mipmapMode = notNull(mode);
+			info.mipmapMode = requireNonNull(mode);
 			return this;
 		}
 
@@ -178,7 +178,7 @@ public final class Sampler extends VulkanObject {
 		 * @param minLod Minimum LOD
 		 */
 		public Builder minLod(float minLod) {
-			info.minLod = zeroOrMore(minLod);
+			info.minLod = requireZeroOrMore(minLod);
 			return this;
 		}
 
@@ -188,7 +188,7 @@ public final class Sampler extends VulkanObject {
 		 * @see Sampler#VK_LOD_CLAMP_NONE
 		 */
 		public Builder maxLod(float maxLod) {
-			info.maxLod = zeroOrMore(maxLod);
+			info.maxLod = requireZeroOrMore(maxLod);
 			return this;
 		}
 
@@ -200,7 +200,7 @@ public final class Sampler extends VulkanObject {
 		 * @see AddressingMode#mode(boolean)
 		 */
 		public Builder mode(int component, VkSamplerAddressMode mode) {
-			Check.notNull(mode);
+			requireNonNull(mode);
 			switch(component) {
 				case 0 -> info.addressModeU = mode;
 				case 1 -> info.addressModeV = mode;
@@ -229,7 +229,7 @@ public final class Sampler extends VulkanObject {
 		 * @see #mode(VkSamplerAddressMode)
 		 */
 		public Builder border(VkBorderColor border) {
-			info.borderColor = notNull(border);
+			info.borderColor = requireNonNull(border);
 			return this;
 		}
 
@@ -239,7 +239,7 @@ public final class Sampler extends VulkanObject {
 		 */
 		@RequiredFeature(field="maxAnisotropy", feature="samplerAnisotropy")
 		public Builder anisotropy(float anisotropy) {
-			info.maxAnisotropy = oneOrMore(anisotropy);
+			info.maxAnisotropy = requireOneOrMore(anisotropy);
 			info.anisotropyEnable = anisotropy > 1;
 			return this;
 		}
@@ -249,7 +249,7 @@ public final class Sampler extends VulkanObject {
 		 * @param op Comparison operation
 		 */
 		public Builder compare(VkCompareOp op) {
-			info.compareOp = notNull(op);
+			info.compareOp = requireNonNull(op);
 			info.compareEnable = true;
 			return this;
 		}

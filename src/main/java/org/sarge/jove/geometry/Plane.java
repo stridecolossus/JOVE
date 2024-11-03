@@ -1,10 +1,11 @@
 package org.sarge.jove.geometry;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.List;
 
-import org.sarge.jove.geometry.Ray.*;
-import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
+import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>plane</i> defines a flat surface in 3D space.
@@ -20,7 +21,7 @@ import org.sarge.lib.util.Check;
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
  */
-public record Plane(Normal normal, float distance) implements Intersected {
+public record Plane(Normal normal, float distance) implements Intersection.Surface {
 	/**
 	 * Creates a plane from the given triangle of points.
 	 * @param triangle Triangle
@@ -30,16 +31,16 @@ public record Plane(Normal normal, float distance) implements Intersected {
 	public static Plane of(Triangle triangle) {
 		if(triangle.isDegenerate()) throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
 		final Normal normal = new Normal(triangle.normal());
-		return new Plane(normal, triangle.a());
+		return new Plane(normal, triangle.vertices().getFirst());
 	}
 
 	/**
 	 * Constructor.
 	 * @param normal		Plane normal
-	 * @param distance		Distance of the plane from the origin
+	 * @param distance		Distance of this plane from the origin
 	 */
 	public Plane {
-		Check.notNull(normal);
+		requireNonNull(normal);
 	}
 
 	/**
@@ -48,7 +49,7 @@ public record Plane(Normal normal, float distance) implements Intersected {
 	 * @param p Point on this plane
 	 */
 	public Plane(Normal n, Point p) {
-		this(n, -n.dot(p));
+		this(n, -n.dot(new Vector(p)));
 	}
 
 	/**
@@ -57,11 +58,11 @@ public record Plane(Normal normal, float distance) implements Intersected {
 	 */
 	public Plane normalize() {
 		final float len = normal.magnitude();
-		if(MathsUtil.isEqual(len, 1)) {
+		if(MathsUtility.isApproxEqual(len, 1)) {
 			return this;
 		}
 		else {
-			final float inv = MathsUtil.inverseRoot(len);
+			final float inv = MathsUtility.inverseSquareRoot(len);
 			final Vector n = normal.multiply(inv).normalize();
 			return new Plane(new Normal(n), distance * inv);
 		}
@@ -74,7 +75,7 @@ public record Plane(Normal normal, float distance) implements Intersected {
 	 * @return Distance to the given point
 	 */
 	public float distance(Point p) {
-		return normal.dot(p) + distance;
+		return normal.dot(new Vector(p)) + distance;
 	}
 
 	/**
@@ -121,20 +122,20 @@ public record Plane(Normal normal, float distance) implements Intersected {
 		final float denom = normal.dot(ray.direction());
 
 		// Orthogonal ray does not intersect
-		if(MathsUtil.isZero(denom)) {
-			return Intersected.NONE;
+		if(MathsUtility.isApproxZero(denom)) {
+			return Intersection.NONE;
 		}
 
-		// Calc intersection distance
+		// Calculate closest intersection distance
 		final float dist = -distance(ray.origin()) / denom;
 
-		// Check for intersection
-		if((dist < 0) || (dist > ray.length())) {
-			return Intersected.NONE;
+		// Check whether intersects
+		if((dist < 0) || (dist * dist > ray.direction().magnitude())) {
+			return Intersection.NONE;
 		}
 
 		// Build intersection result
-		return List.of(Intersection.of(ray, dist, normal));
+		return List.of(ray.intersection(dist, normal));
 	}
 
 	@Override
@@ -143,6 +144,6 @@ public record Plane(Normal normal, float distance) implements Intersected {
 				(obj == this) ||
 				(obj instanceof Plane that) &&
 				this.normal.equals(that.normal) &&
-				MathsUtil.isEqual(this.distance, that.distance);
+				MathsUtility.isApproxEqual(this.distance, that.distance);
 	}
 }

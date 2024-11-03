@@ -35,13 +35,15 @@ class MeshTest {
 	@DisplayName("The layout for a mesh must contain vertex positions")
 	@Test
 	void missingVertexPosition() {
-		assertThrows(IllegalStateException.class, () -> new Mesh(Primitive.TRIANGLE, new CompoundLayout(), () -> 3, data, null));
+		// TODO - validate()
+		assertThrows(IllegalStateException.class, () -> new Mesh(Primitive.TRIANGLE, new CompoundLayout(), () -> 3, data, null).validate());
 	}
 
 	@DisplayName("The draw count must match the primitive")
 	@Test
 	void invalidDrawCount() {
-		assertThrows(IllegalStateException.class, () -> new Mesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT), () -> 2, data, null));
+		// TODO - validate()
+		assertThrows(IllegalStateException.class, () -> new Mesh(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT), () -> 2, data, null).validate());
 	}
 
 	@DisplayName("A mesh containing vertex normals must be supported by the drawing primitive")

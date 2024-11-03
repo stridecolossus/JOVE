@@ -1,11 +1,10 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -15,7 +14,6 @@ import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.*;
@@ -55,8 +53,8 @@ public class Swapchain extends VulkanObject {
 	 */
 	Swapchain(Handle handle, DeviceContext device, VkFormat format, Dimensions extents, List<View> attachments) {
 		super(handle, device);
-		this.format = notNull(format);
-		this.extents = notNull(extents);
+		this.format = requireNonNull(format);
+		this.extents = requireNonNull(extents);
 		this.attachments = List.copyOf(attachments);
 	}
 
@@ -188,7 +186,7 @@ public class Swapchain extends VulkanObject {
 		 * @param semaphore Wait semaphore
 		 */
 		public PresentTaskBuilder wait(Semaphore semaphore) {
-			semaphores.add(notNull(semaphore));
+			semaphores.add(requireNonNull(semaphore));
 			return this;
 		}
 
@@ -226,16 +224,6 @@ public class Swapchain extends VulkanObject {
 		attachments.forEach(View::destroy);
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("extents", extents)
-				.append("format", format)
-				.append("attachments", attachments.size())
-				.build();
-	}
-
 	/**
 	 * Builder for a swap chain.
 	 */
@@ -252,7 +240,7 @@ public class Swapchain extends VulkanObject {
 		 * @param surface Rendering surface
 		 */
 		public Builder(Surface surface) {
-			this.surface = notNull(surface);
+			this.surface = requireNonNull(surface);
 			update();
 			init();
 		}
@@ -289,7 +277,7 @@ public class Swapchain extends VulkanObject {
 		 * @param flag Creation flag
 		 */
 		public Builder flag(VkSwapchainCreateFlagKHR flag) {
-			Check.notNull(flag);
+			requireNonNull(flag);
 			flags.add(flag);
 			return this;
 		}
@@ -317,8 +305,8 @@ public class Swapchain extends VulkanObject {
 			if(surface.format(format.format, format.colorSpace).isEmpty()) {
 				throw new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", format.format, format.colorSpace));
 			}
-			info.imageFormat = notNull(format.format);
-			info.imageColorSpace = notNull(format.colorSpace);
+			info.imageFormat = requireNonNull(format.format);
+			info.imageColorSpace = requireNonNull(format.colorSpace);
 			return this;
 		}
 
@@ -374,7 +362,7 @@ public class Swapchain extends VulkanObject {
 		 * @param mode Sharing mode
 		 */
 		public Builder mode(VkSharingMode mode) {
-			info.imageSharingMode = notNull(mode);
+			info.imageSharingMode = requireNonNull(mode);
 			return this;
 		}
 
@@ -385,7 +373,7 @@ public class Swapchain extends VulkanObject {
 		 */
 		public Builder transform(VkSurfaceTransformFlagKHR transform) {
 			validate(caps.supportedTransforms, transform);
-			info.preTransform = notNull(transform);
+			info.preTransform = requireNonNull(transform);
 			return this;
 		}
 
@@ -396,7 +384,7 @@ public class Swapchain extends VulkanObject {
 		 */
 		public Builder alpha(VkCompositeAlphaFlagKHR alpha) {
 			validate(caps.supportedCompositeAlpha, alpha);
-			info.compositeAlpha = notNull(alpha);
+			info.compositeAlpha = requireNonNull(alpha);
 			return this;
 		}
 
@@ -408,7 +396,7 @@ public class Swapchain extends VulkanObject {
 		 */
 		public Builder presentation(VkPresentModeKHR mode) {
 			if(!surface.modes().contains(mode)) throw new IllegalArgumentException("Unsupported presentation mode: " + mode);
-			info.presentMode = notNull(mode);
+			info.presentMode = requireNonNull(mode);
 			return this;
 		}
 

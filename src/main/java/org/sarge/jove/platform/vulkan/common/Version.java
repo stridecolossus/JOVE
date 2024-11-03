@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.*;
 
 /**
  * Vulkan version number.
@@ -16,9 +16,9 @@ public record Version(int major, int minor, int patch) implements Comparable<Ver
 	 * Constructor.
 	 */
 	public Version {
-		oneOrMore(major);
-		zeroOrMore(minor);
-		zeroOrMore(patch);
+		requireOneOrMore(major);
+		requireZeroOrMore(minor);
+		requireZeroOrMore(patch);
 	}
 
 	/**

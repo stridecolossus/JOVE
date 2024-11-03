@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
@@ -27,8 +27,8 @@ public class FrameComposer {
 	 * @param sequence		Render sequence
 	 */
 	public FrameComposer(Pool pool, Sequence sequence) {
-		this.pool = notNull(pool);
-		this.sequence = notNull(sequence);
+		this.pool = requireNonNull(pool);
+		this.sequence = requireNonNull(sequence);
 	}
 
 	/**
@@ -37,7 +37,7 @@ public class FrameComposer {
 	 * @param flags Creation flags
 	 */
 	public void flags(VkCommandBufferUsage... flags) {
-		this.flags = notNull(flags);
+		this.flags = requireNonNull(flags);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class FrameComposer {
 	 * @param contents Subpass contents
 	 */
 	public void contents(VkSubpassContents contents) {
-		this.contents = notNull(contents);
+		this.contents = requireNonNull(contents);
 	}
 
 	/**

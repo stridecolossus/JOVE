@@ -1,11 +1,9 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.function.Consumer;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * A <i>player</i> is an adapter for a {@link Playable} that notifies interested listeners on state transitions.
@@ -20,7 +18,7 @@ public class Player implements Playable {
 	 * @param playable Underlying playable
 	 */
 	public Player(Playable playable) {
-		this.playable = notNull(playable);
+		this.playable = requireNonNull(playable);
 	}
 
 	/**
@@ -67,7 +65,7 @@ public class Player implements Playable {
 	 * @param listener State change listener
 	 */
 	public void add(Consumer<Player> listener) {
-		listeners.add(notNull(listener));
+		listeners.add(requireNonNull(listener));
 	}
 
 	/**
@@ -76,14 +74,5 @@ public class Player implements Playable {
 	 */
 	public void remove(Consumer<Player> listener) {
 		listeners.remove(listener);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(playable)
-				.append("listeners", listeners.size())
-				.build();
 	}
 }

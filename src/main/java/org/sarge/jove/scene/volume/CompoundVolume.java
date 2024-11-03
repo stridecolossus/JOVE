@@ -2,7 +2,6 @@ package org.sarge.jove.scene.volume;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
@@ -82,10 +81,5 @@ public class CompoundVolume implements Volume {
 	@Override
 	public boolean equals(Object obj) {
 		return (obj == this) || (obj instanceof CompoundVolume that) && this.volumes.equals(that.volumes);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(volumes).build();
 	}
 }

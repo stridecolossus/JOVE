@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.audio;
 
 import static org.sarge.jove.platform.audio.AudioParameter.*;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class AudioBuffer extends TransientNativeObject {
 	 */
 	private AudioBuffer(Handle handle, AudioDevice dev) {
 		super(handle);
-		this.dev = notNull(dev);
+		this.dev = requireNonNull(dev);
 	}
 
 	/**

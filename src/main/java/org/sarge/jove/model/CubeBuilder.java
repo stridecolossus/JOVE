@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * Builder for a cube constructed with {@link Primitive#TRIANGLES}.
@@ -76,7 +76,7 @@ public class CubeBuilder {
 	// Indices for the two counter-clockwise triangles of each face
 	private static final int[] TRIANGLES = IndexFactory.TRIANGLES.indices(1).toArray();
 
-	private float size = MathsUtil.HALF;
+	private float size = MathsUtility.HALF;
 
 	/**
 	 * Sets the size of this cube.
@@ -100,7 +100,7 @@ public class CubeBuilder {
 				final int index = FACES[face][corner];
 
 				// Lookup vertex components
-				final Point pos = VERTICES[index].multiply(size);
+				final Point pos = position(index);
 				final Normal normal = NORMALS[face];
 				final Coordinate2D coord = Coordinate2D.QUAD.get(corner);
 
@@ -111,6 +111,11 @@ public class CubeBuilder {
 		}
 
 		return builder.mesh();
+	}
+
+	private Point position(int index) {
+		final Point p = VERTICES[index];
+		return new Point(p.x * size, p.y * size, p.z * size);
 	}
 
 	/**
@@ -126,7 +131,7 @@ public class CubeBuilder {
 		return new Vertex(pos) {
 			@Override
 			public void buffer(ByteBuffer bb) {
-				pos.buffer(bb);
+				super.buffer(bb);
 				normal.buffer(bb);
 				coord.buffer(bb);
 			}

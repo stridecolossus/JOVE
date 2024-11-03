@@ -1,6 +1,6 @@
 package org.sarge.jove.util;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
 
@@ -14,7 +14,7 @@ public class PointerToFloatArray extends Memory {
 
 	public PointerToFloatArray(float[] array) {
 		super(array.length * Float.BYTES);
-		this.array = notNull(array);
+		this.array = requireNonNull(array);
 		for(int n = 0; n < array.length; ++n) {
 			setFloat(n * Float.BYTES, array[n]);
 		}

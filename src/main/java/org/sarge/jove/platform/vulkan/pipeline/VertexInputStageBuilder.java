@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 
@@ -102,7 +103,7 @@ public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVert
 		 * @param binding Binding index
 		 */
 		public BindingBuilder index(int binding) {
-			this.index = zeroOrMore(binding);
+			this.index = requireZeroOrMore(binding);
 			return this;
 		}
 
@@ -111,7 +112,7 @@ public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVert
 		 * @param stride Vertex stride (bytes)
 		 */
 		public BindingBuilder stride(int stride) {
-			this.stride = oneOrMore(stride);
+			this.stride = requireOneOrMore(stride);
 			return this;
 		}
 
@@ -120,7 +121,7 @@ public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVert
 		 * @param rate Input rate (default is {@link VkVertexInputRate#VERTEX})
 		 */
 		public BindingBuilder rate(VkVertexInputRate rate) {
-			this.rate = notNull(rate);
+			this.rate = requireNonNull(rate);
 			return this;
 		}
 
@@ -173,7 +174,7 @@ public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVert
 		 * @param loc Shader location
 		 */
 		public AttributeBuilder location(int loc) {
-			this.loc = zeroOrMore(loc);
+			this.loc = requireZeroOrMore(loc);
 			return this;
 		}
 
@@ -182,7 +183,7 @@ public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVert
 		 * @param format Attribute format
 		 */
 		public AttributeBuilder format(VkFormat format) {
-			this.format = notNull(format);
+			this.format = requireNonNull(format);
 			return this;
 		}
 
@@ -191,7 +192,7 @@ public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVert
 		 * @param offset Attribute offset (bytes)
 		 */
 		public AttributeBuilder offset(int offset) {
-			this.offset = zeroOrMore(offset);
+			this.offset = requireZeroOrMore(offset);
 			return this;
 		}
 

@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -41,9 +41,9 @@ public class FrameBuffer extends VulkanObject {
 	 */
 	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Rectangle extents) {
 		super(handle, dev);
-		this.pass = notNull(pass);
-		this.attachments = List.copyOf(notEmpty(attachments));
-		this.extents = notNull(extents);
+		this.pass = requireNonNull(pass);
+		this.attachments = List.copyOf(requireNotEmpty(attachments));
+		this.extents = requireNonNull(extents);
 	}
 
 	/**
@@ -88,16 +88,6 @@ public class FrameBuffer extends VulkanObject {
 	@Override
 	protected Destructor<FrameBuffer> destructor(VulkanLibrary lib) {
 		return lib::vkDestroyFramebuffer;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("pass", pass)
-				.append("extents", extents)
-				.append("attachments", attachments)
-				.build();
 	}
 
 	/**

@@ -1,11 +1,10 @@
 package org.sarge.jove.scene.volume;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>capsule</i> is a <i>swept sphere</i> volume specified as a given radius about a line segment.
@@ -25,8 +24,8 @@ public class Capsule implements Volume {
 	 * @param radius		Radius
 	 */
 	public Capsule(Point top, Point bottom, float radius) {
-		this.top = notNull(top);
-		this.bottom = notNull(bottom);
+		this.top = requireNonNull(top);
+		this.bottom = requireNonNull(bottom);
 		this.radius = radius;
 	}
 
@@ -56,7 +55,7 @@ public class Capsule implements Volume {
 
 		final float t = Vector.between(a, p).dot(ab) / ab.dot(ab);
 //		p.subtract(a).dot(ab) / ab.dot(ab);
-		final Point n = a.add(ab.multiply(MathsUtil.saturate(t)));
+		final Point n = a.add(ab.multiply(MathsUtility.saturate(t)));
 
 		return n.distance(p) < radius * radius;
 	}
@@ -85,14 +84,5 @@ public class Capsule implements Volume {
 	public Iterable<Intersection> intersections(Ray ray) {
 		// TODO
 		return null;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("start", top)
-				.append("end", bottom)
-				.append("r", radius)
-				.build();
 	}
 }

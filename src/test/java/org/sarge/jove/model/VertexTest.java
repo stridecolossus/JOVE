@@ -1,7 +1,6 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 
@@ -28,9 +27,9 @@ class VertexTest {
 
 	@Test
 	void buffer() {
-		final var buffer = mock(ByteBuffer.class);
+		final var buffer = ByteBuffer.allocate(3 * 4);
 		vertex.buffer(buffer);
-		verify(buffer, times(3)).putFloat(0f);
+		assertEquals(3 * 4, buffer.position());
 	}
 
 	@Test

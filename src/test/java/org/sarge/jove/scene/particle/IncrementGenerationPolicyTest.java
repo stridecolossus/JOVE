@@ -2,11 +2,7 @@ package org.sarge.jove.scene.particle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.*;
-import org.sarge.jove.scene.particle.*;
-import org.sarge.lib.element.Element;
 
 public class IncrementGenerationPolicyTest {
 	private GenerationPolicy policy;
@@ -27,12 +23,5 @@ public class IncrementGenerationPolicyTest {
 	void accumulate() {
 		assertEquals(0, policy.count(0, 0.5f));
 		assertEquals(1, policy.count(0, 0.5f));
-	}
-
-	@Test
-	void load() {
-		final Element root = new Element("fixed", Map.of(), "3");
-		policy = IncrementGenerationPolicy.load(root);
-		assertEquals(3, policy.count(0, 1));
 	}
 }

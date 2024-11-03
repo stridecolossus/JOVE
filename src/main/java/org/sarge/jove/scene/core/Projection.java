@@ -2,7 +2,7 @@ package org.sarge.jove.scene.core;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.util.Trigonometric;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>view projection</i> generates the projection matrix.
@@ -22,7 +22,7 @@ public interface Projection {
 	/**
 	 * Perspective projection with a 60 degree FOV.
 	 */
-	Projection DEFAULT = perspective(Trigonometric.toRadians(60));
+	Projection DEFAULT = perspective(MathsUtility.toRadians(60));
 
 	/**
 	 * Creates a perspective projection.
@@ -31,7 +31,7 @@ public interface Projection {
 	static Projection perspective(float fov) {
 		final float scale = 1 / (float) Math.tan(fov / 2);
 		return (near, far, dim) -> {
-			return new Matrix.Builder()
+			return new Matrix.Builder(4)
 					.set(0, 0, scale / dim.ratio())
 					.set(1, 1, -scale)
 					.set(2, 2, far / (near - far))
@@ -53,7 +53,7 @@ public interface Projection {
 		final float bottom = dim.height();
 
 		// Build projection matrix
-		return new Matrix.Builder()
+		return new Matrix.Builder(4)
 				.identity()
 				.set(0, 0, 2f / (right - left))
 				.set(1, 1, 2f / (top - bottom))

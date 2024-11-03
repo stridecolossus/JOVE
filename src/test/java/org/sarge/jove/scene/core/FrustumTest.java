@@ -10,7 +10,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.scene.volume.Volume;
-import org.sarge.jove.util.Trigonometric;
+import org.sarge.jove.util.MathsUtility;
 
 class FrustumTest {
 	private Frustum frustum;
@@ -53,7 +53,7 @@ class FrustumTest {
 	@Test
 	void extract() {
 		// Construct a view matrix
-		final Matrix m = new Matrix.Builder()
+		final Matrix m = new Matrix.Builder(4)
 				.identity()
 				.row(0, X)
 				.row(1, Y)		// Note this test does not invert the Y axis
@@ -81,7 +81,7 @@ class FrustumTest {
 
 	@Test
 	void extractProjection() {
-		final Projection projection = Projection.perspective(Trigonometric.HALF_PI);
+		final Projection projection = Projection.perspective(MathsUtility.HALF_PI);
 		final Matrix m = projection.matrix(0, 1, new Dimensions(1, 1));
 		frustum = Frustum.of(m);
 		assertNotNull(frustum);

@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>programmable shader stage</i> defines a pipeline stage implemented by a {@link Shader} module.
@@ -29,9 +29,9 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	 * @param constants		Optional specialisation constants
 	 */
 	public ProgrammableShaderStage {
-		Check.notNull(stage);
-		Check.notNull(shader);
-		Check.notEmpty(name);
+		requireNonNull(stage);
+		requireNonNull(shader);
+		requireNotEmpty(name);
 	}
 
 	/**
@@ -61,7 +61,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 		 * @param stage Shader stage
 		 */
 		public Builder(VkShaderStage stage) {
-			this.stage = notNull(stage);
+			this.stage = requireNonNull(stage);
 		}
 
 		/**
@@ -69,7 +69,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param shader Shader module
     	 */
     	public Builder shader(Shader shader) {
-    		this.shader = notNull(shader);
+    		this.shader = requireNonNull(shader);
     		return this;
     	}
 
@@ -78,7 +78,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param name Shader method name
     	 */
     	public Builder name(String name) {
-    		this.name = notEmpty(name);
+    		this.name = requireNotEmpty(name);
     		return this;
     	}
 
@@ -87,7 +87,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param constants Specialisation constants
     	 */
     	public Builder constants(SpecialisationConstants constants) {
-    		this.constants = notNull(constants);
+    		this.constants = requireNonNull(constants);
     		return this;
     	}
 

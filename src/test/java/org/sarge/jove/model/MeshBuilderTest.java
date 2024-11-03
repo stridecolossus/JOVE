@@ -1,7 +1,6 @@
 package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -74,11 +73,11 @@ public class MeshBuilderTest {
 		@Test
 		void vertices() {
 			final ByteSizedBufferable vertices = mesh.vertices();
-			final var bb = mock(ByteBuffer.class);
-			final int len = 3 * 3;
-			assertEquals(len * Float.BYTES, vertices.length());
+			final int len = 3 * 3 * Float.BYTES;
+			final var bb = ByteBuffer.allocate(len);
+			assertEquals(len, vertices.length());
 			vertices.buffer(bb);
-			verify(bb, times(len)).putFloat(0);
+			assertEquals(len, bb.position());
 		}
 
 		@DisplayName("does not have an index buffer")

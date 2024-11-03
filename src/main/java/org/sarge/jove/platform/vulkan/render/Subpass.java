@@ -1,15 +1,14 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>sub-pass</i> is a transient, mutable specification for the stage of a {@link RenderPass}.
@@ -32,7 +31,7 @@ public class Subpass {
 	 */
 	void init(int index) {
 		assert this.index == null;
-		this.index = zeroOrMore(index);
+		this.index = requireZeroOrMore(index);
 	}
 
 	/**
@@ -99,8 +98,8 @@ public class Subpass {
 		 * @param layout			Image layout
 		 */
 		public Reference(Attachment attachment, VkImageLayout layout) {
-			this.attachment = notNull(attachment);
-			this.layout = notNull(layout);
+			this.attachment = requireNonNull(attachment);
+			this.layout = requireNonNull(layout);
 		}
 
 		/**
@@ -116,7 +115,7 @@ public class Subpass {
 		 */
 		void init(int index) {
 			assert num == null;
-			num = zeroOrMore(index);
+			num = requireZeroOrMore(index);
 		}
 
 		/**
@@ -139,15 +138,6 @@ public class Subpass {
 					(obj instanceof Reference that) &&
 					this.attachment.equals(that.attachment) &&
 					(this.layout == that.layout);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append(attachment)
-					.append(layout)
-					.append("index", num)
-					.build();
 		}
 	}
 
@@ -178,7 +168,7 @@ public class Subpass {
 	 */
 	public Subpass depth(Reference ref) {
 		if(this.depth != null) throw new IllegalArgumentException("Depth-stencil attachment has already been specified");
-		this.depth = notNull(ref);
+		this.depth = requireNonNull(ref);
 		return this;
 	}
 
@@ -235,7 +225,7 @@ public class Subpass {
 		 * @param dependency Dependant subpass
 		 */
 		public Dependency subpass(Subpass dependency) {
-			this.dependency = notNull(dependency);
+			this.dependency = requireNonNull(dependency);
 			return this;
 		}
 
@@ -253,7 +243,7 @@ public class Subpass {
 		 * @param flag Dependency flag
 		 */
 		public Dependency flag(VkDependencyFlag flag) {
-			Check.notNull(flag);
+			requireNonNull(flag);
 			flags.add(flag);
 			return this;
 		}
@@ -270,7 +260,7 @@ public class Subpass {
 			 * @param stage Pipeline stage
 			 */
 			public Properties stage(VkPipelineStage stage) {
-				Check.notNull(stage);
+				requireNonNull(stage);
 				this.stages.add(stage);
 				return this;
 			}
@@ -280,7 +270,7 @@ public class Subpass {
 			 * @param access Access flag
 			 */
 			public Properties access(VkAccess access) {
-				Check.notNull(access);
+				requireNonNull(access);
 				this.access.add(access);
 				return this;
 			}

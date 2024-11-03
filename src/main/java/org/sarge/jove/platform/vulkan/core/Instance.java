@@ -1,7 +1,8 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
@@ -10,7 +11,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.ReferenceFactory;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.*;
@@ -33,8 +33,8 @@ public class Instance extends TransientNativeObject {
 	 */
 	Instance(Handle handle, VulkanLibrary lib, ReferenceFactory factory) {
 		super(handle);
-		this.lib = notNull(lib);
-		this.factory = notNull(factory);
+		this.lib = requireNonNull(lib);
+		this.factory = requireNonNull(factory);
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class Instance extends TransientNativeObject {
 	 * Attaches a diagnostic handler to this instance.
 	 */
 	void attach(Handler handler) {
-		Check.notNull(handler);
+		requireNonNull(handler);
 		handlers.add(handler);
 	}
 
@@ -107,7 +107,7 @@ public class Instance extends TransientNativeObject {
 		 * @param name Application name
 		 */
 		public Builder name(String name) {
-			this.name = notEmpty(name);
+			this.name = requireNotEmpty(name);
 			return this;
 		}
 
@@ -116,7 +116,7 @@ public class Instance extends TransientNativeObject {
 		 * @param ver Application version
 		 */
 		public Builder version(Version ver) {
-			this.ver = notNull(ver);
+			this.ver = requireNonNull(ver);
 			return this;
 		}
 
@@ -129,7 +129,7 @@ public class Instance extends TransientNativeObject {
 			if(api.compareTo(VulkanLibrary.VERSION) > 0) {
 				throw new IllegalStateException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, VulkanLibrary.VERSION));
 			}
-			this.api = notNull(api);
+			this.api = requireNonNull(api);
 			return this;
 		}
 
@@ -138,7 +138,7 @@ public class Instance extends TransientNativeObject {
 		 * @param ext Extension name
 		 */
 		public Builder extension(String ext) {
-			Check.notEmpty(ext);
+			requireNotEmpty(ext);
 			extensions.add(ext);
 			return this;
 		}
@@ -159,7 +159,7 @@ public class Instance extends TransientNativeObject {
 		 * @param layer Validation layer descriptor
 		 */
 		public Builder layer(ValidationLayer layer) {
-			Check.notNull(layer);
+			requireNonNull(layer);
 			layers.add(layer.name());
 			return this;
 		}
@@ -170,7 +170,7 @@ public class Instance extends TransientNativeObject {
 		 * @see ReferenceFactory#DEFAULT
 		 */
 		public Builder factory(ReferenceFactory factory) {
-			this.factory = notNull(factory);
+			this.factory = requireNonNull(factory);
 			return this;
 		}
 

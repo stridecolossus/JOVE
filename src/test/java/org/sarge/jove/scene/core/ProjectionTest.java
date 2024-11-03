@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Matrix;
-import org.sarge.jove.util.Trigonometric;
+import org.sarge.jove.util.MathsUtility;
 
 public class ProjectionTest {
 	private Dimensions dim;
@@ -17,7 +17,7 @@ public class ProjectionTest {
 
 	@Test
 	public void perspective() {
-		final Matrix expected = new Matrix.Builder()
+		final Matrix expected = new Matrix.Builder(4)
 				.set(0, 0, 0.75f)
 				.set(1, 1, -1)
 				.set(2, 2, -1.0001f)
@@ -25,7 +25,7 @@ public class ProjectionTest {
 				.set(3, 2, -1)
 				.build();
 
-		final Projection proj = Projection.perspective(Trigonometric.HALF_PI);
+		final Projection proj = Projection.perspective(MathsUtility.HALF_PI);
 //		assertEquals(1, proj.height(dim));
 		assertEquals(expected, proj.matrix(0.1f, 1000f, dim));
 	}

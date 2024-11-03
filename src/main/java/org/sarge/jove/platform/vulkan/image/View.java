@@ -1,12 +1,11 @@
 package org.sarge.jove.platform.vulkan.image;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.nio.Buffer;
 import java.util.Optional;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -34,7 +33,7 @@ public final class View extends VulkanObject {
 	 */
 	View(Handle handle, DeviceContext dev, Image image) {
 		super(handle, dev);
-		this.image = notNull(image);
+		this.image = requireNonNull(image);
 	}
 
 	/**
@@ -92,15 +91,6 @@ public final class View extends VulkanObject {
 		}
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append("image", image)
-				.append("clear", clear)
-				.build();
-	}
-
 	/**
 	 * Builder for an image view.
 	 */
@@ -128,7 +118,7 @@ public final class View extends VulkanObject {
 		 * @param image Image
 		 */
 		public Builder(Image image) {
-			this.image = notNull(image);
+			this.image = requireNonNull(image);
 			this.type = type(image);
 			this.subresource = image.descriptor();
 		}
@@ -138,7 +128,7 @@ public final class View extends VulkanObject {
 		 * @param type View type
 		 */
 		public Builder type(VkImageViewType type) {
-			this.type = notNull(type);
+			this.type = requireNonNull(type);
 			return this;
 		}
 
@@ -147,7 +137,7 @@ public final class View extends VulkanObject {
 		 * @param mapping Component mapping
 		 */
 		public Builder mapping(ComponentMapping mapping) {
-			this.mapping = notNull(mapping);
+			this.mapping = requireNonNull(mapping);
 			return this;
 		}
 
@@ -156,7 +146,7 @@ public final class View extends VulkanObject {
 		 * @param subresource Image sub-resource
 		 */
 		public Builder subresource(SubResource subresource) {
-			this.subresource = notNull(subresource);
+			this.subresource = requireNonNull(subresource);
 			return this;
 		}
 

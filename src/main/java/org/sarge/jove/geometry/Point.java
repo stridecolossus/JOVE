@@ -2,28 +2,21 @@ package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Layout.Component;
-import org.sarge.jove.util.FloatArrayConverter;
-import org.sarge.lib.util.Converter;
 
 /**
  * A <i>point</i> is a position in 3D space.
  * @author Sarge
  */
-public final class Point extends Tuple implements Component {
+public class Point extends Tuple implements Component {
 	/**
 	 * Origin point.
 	 */
 	public static final Point ORIGIN = new Point(0, 0, 0);
 
 	/**
-	 * Layout for a point.
+	 * Layout for a vertex position.
 	 */
 	public static final Layout LAYOUT = Layout.floats(SIZE);
-
-	/**
-	 * Point converter.
-	 */
-	public static final Converter<Point> CONVERTER = new FloatArrayConverter<>(Point.SIZE, Point::new);
 
 	/**
 	 * Constructor.
@@ -42,8 +35,8 @@ public final class Point extends Tuple implements Component {
 
 	/**
 	 * Array constructor.
-	 * @param array Point array
-	 * @throws IllegalArgumentException if the array is not comprised of three elements
+	 * @param array Point as an array
+	 * @throws ArrayIndexOutOfBoundsException if the given array does not contain three elements
 	 */
 	public Point(float[] array) {
 		super(array);
@@ -59,21 +52,16 @@ public final class Point extends Tuple implements Component {
 	}
 
 	/**
-	 * Adds the given tuple to this point.
-	 * @param that Tuple to add
-	 * @return Added point
+	 * Moves this point by the given vector.
+	 * @param vector Vector
+	 * @return Moved point
 	 */
-	public Point add(Tuple that) {
-		return new Point(x + that.x, y + that.y, z + that.z);
-	}
-
-	/**
-	 * Multiplies this point by the given scalar.
-	 * @param f Scalar
-	 * @return Multiplied point
-	 */
-	public Point multiply(float f) {
-		return new Point(x * f, y * f, z * f);
+	public Point add(Vector vector) {
+		return new Point(
+				x + vector.x,
+				y + vector.y,
+				z + vector.z
+		);
 	}
 
 	@Override
@@ -86,6 +74,6 @@ public final class Point extends Tuple implements Component {
 		return
 				(obj == this) ||
 				(obj instanceof Point that) &&
-				isEqual(that);
+				super.isEqual(that);
 	}
 }

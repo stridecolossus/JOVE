@@ -1,10 +1,8 @@
 package org.sarge.jove.scene.graph;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * A <i>node</i> is an element of a scene graph.
@@ -21,7 +19,7 @@ public class Node {
 	 * @param parent Parent node
 	 */
 	protected Node(GroupNode parent) {
-		this.parent = notNull(parent);
+		this.parent = requireNonNull(parent);
 		parent.attach(this);
 	}
 
@@ -78,13 +76,5 @@ public class Node {
 	@Override
 	public final boolean equals(Object obj) {
 		return obj == this;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(transform)
-				.append(vol)
-				.build();
 	}
 }

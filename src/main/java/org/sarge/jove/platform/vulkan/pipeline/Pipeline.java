@@ -1,12 +1,11 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlag.*;
-import static org.sarge.lib.util.Check.notNull;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -35,8 +34,8 @@ public final class Pipeline extends VulkanObject {
 	 */
 	Pipeline(Handle handle, DeviceContext dev, VkPipelineBindPoint type, PipelineLayout layout, boolean parent) {
 		super(handle, dev);
-		this.type = notNull(type);
-		this.layout = notNull(layout);
+		this.type = requireNonNull(type);
+		this.layout = requireNonNull(layout);
 		this.parent = parent;
 	}
 
@@ -75,16 +74,6 @@ public final class Pipeline extends VulkanObject {
 		return lib::vkDestroyPipeline;
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(type)
-				.append(layout)
-				.append("parent", parent)
-				.build();
-	}
-
 	/**
 	 * Builder for an array of pipelines.
 	 * <p>
@@ -115,7 +104,7 @@ public final class Pipeline extends VulkanObject {
     	 * @param delegate Delegate pipeline builder
     	 */
     	public Builder(DelegatePipelineBuilder<T> delegate) {
-    		this.delegate = notNull(delegate);
+    		this.delegate = requireNonNull(delegate);
     		this.builders.add(this);
     	}
 
@@ -135,7 +124,7 @@ public final class Pipeline extends VulkanObject {
     	 * @param flag Pipeline creation flag
     	 */
     	public Builder<T> flag(VkPipelineCreateFlag flag) {
-    		this.flags.add(notNull(flag));
+    		this.flags.add(requireNonNull(flag));
     		return this;
     	}
 
@@ -182,7 +171,7 @@ public final class Pipeline extends VulkanObject {
     	public Builder<T> derive(Builder<T> parent) {
     		if(parent == this) throw new IllegalArgumentException("Cannot derive from self");
     		if(!parent.flags.contains(ALLOW_DERIVATIVES)) throw new IllegalArgumentException("Invalid peer pipeline: " + parent);
-    		this.parent = notNull(parent);
+    		this.parent = requireNonNull(parent);
     		add(parent);
     		derive();
     		return this;

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.*;
 import org.sarge.jove.util.StructureCollector;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * An <i>image copy command</i> is used to copy between images.
@@ -42,10 +42,10 @@ public final class ImageCopyCommand implements Command {
 	 * @param regions		Copy regions
 	 */
 	private ImageCopyCommand(Image src, Image dest, VkImageLayout srcLayout, VkImageLayout destLayout, VkImageCopy[] regions) {
-		this.src = notNull(src);
-		this.dest = notNull(dest);
-		this.srcLayout = notNull(srcLayout);
-		this.destLayout = notNull(destLayout);
+		this.src = requireNonNull(src);
+		this.dest = requireNonNull(dest);
+		this.srcLayout = requireNonNull(srcLayout);
+		this.destLayout = requireNonNull(destLayout);
 		this.regions = regions.clone();
 	}
 
@@ -67,11 +67,11 @@ public final class ImageCopyCommand implements Command {
 		 * @param extents			Copy extents
 		 */
 		public CopyRegion {
-			Check.notNull(src);
-			Check.notNull(srcOffset);
-			Check.notNull(dest);
-			Check.notNull(destOffset);
-			Check.notNull(extents);
+			requireNonNull(src);
+			requireNonNull(srcOffset);
+			requireNonNull(dest);
+			requireNonNull(destOffset);
+			requireNonNull(extents);
 		}
 
 		/**
@@ -102,8 +102,8 @@ public final class ImageCopyCommand implements Command {
 		 */
 		public Builder(Image src, Image dest) {
 			if(src == dest) throw new IllegalArgumentException("Cannot copy to self");
-			this.src = notNull(src);
-			this.dest = notNull(dest);
+			this.src = requireNonNull(src);
+			this.dest = requireNonNull(dest);
 		}
 		// TODO - check format features of the images?
 
@@ -113,7 +113,7 @@ public final class ImageCopyCommand implements Command {
 		 */
 		public Builder source(VkImageLayout srcLayout) {
 			validate(srcLayout, TRANSFER_SRC_OPTIMAL);
-			this.srcLayout = notNull(srcLayout);
+			this.srcLayout = requireNonNull(srcLayout);
 			return this;
 		}
 
@@ -123,7 +123,7 @@ public final class ImageCopyCommand implements Command {
 		 */
 		public Builder destination(VkImageLayout destLayout) {
 			validate(destLayout, TRANSFER_DST_OPTIMAL);
-			this.destLayout = notNull(destLayout);
+			this.destLayout = requireNonNull(destLayout);
 			return this;
 		}
 
@@ -140,7 +140,7 @@ public final class ImageCopyCommand implements Command {
 		 * @param region Copy region
 		 */
 		public Builder region(CopyRegion region) {
-			regions.add(notNull(region));
+			regions.add(requireNonNull(region));
 			return this;
 		}
 

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.audio;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.common.*;
 
@@ -32,7 +32,7 @@ public class AudioContext extends TransientNativeObject {
 	 */
 	private AudioContext(Handle handle, AudioDevice dev) {
 		super(handle);
-		this.dev = notNull(dev);
+		this.dev = requireNonNull(dev);
 		this.lib = dev.library();
 	}
 

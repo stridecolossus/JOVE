@@ -9,7 +9,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
-import org.sarge.jove.util.MathsUtil;
+import org.sarge.jove.util.MathsUtility;
 
 import com.sun.jna.Pointer;
 
@@ -94,7 +94,7 @@ public class SamplerTest {
 					.border(VkBorderColor.FLOAT_TRANSPARENT_BLACK)
 					.minLod(2)
 					.maxLod(3)
-					.mipLodBias(MathsUtil.HALF)
+					.mipLodBias(MathsUtility.HALF)
 					.anisotropy(4)
 					.compare(VkCompareOp.GREATER)
 					.unnormalizedCoordinates(true)
@@ -109,7 +109,7 @@ public class SamplerTest {
 					assertEquals(VkFilter.LINEAR, info.minFilter);
 					assertEquals(VkFilter.NEAREST, info.magFilter);
 					assertEquals(VkSamplerMipmapMode.NEAREST, info.mipmapMode);
-					assertEquals(MathsUtil.HALF, info.mipLodBias);
+					assertEquals(MathsUtility.HALF, info.mipLodBias);
 					assertEquals(2f, info.minLod);
 					assertEquals(3f, info.maxLod);
 					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeU);

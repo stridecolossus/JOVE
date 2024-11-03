@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
-import org.sarge.jove.geometry.Ray.*;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 class PlaneTest {
 	private Plane plane;
@@ -83,7 +83,7 @@ class PlaneTest {
 		@DisplayName("A ray crossing the plane is intersecting")
 		@Test
 		void intersect() {
-			final Ray ray = new DefaultRay(Point.ORIGIN, Y);
+			final Ray ray = new Ray(Point.ORIGIN, Y);
 			final Iterator<Intersection> results = plane.intersections(ray).iterator();
 			final Intersection intersection = results.next();
 			assertEquals(1f, intersection.distance());
@@ -94,7 +94,7 @@ class PlaneTest {
 		@DisplayName("A ray touching the plane is intersecting")
 		@Test
 		void touching() {
-			final Ray ray = new DefaultRay(new Point(0, 1, 0), Y);
+			final Ray ray = new Ray(new Point(0, 1, 0), Y);
 			final Iterator<Intersection> results = plane.intersections(ray).iterator();
 			final Intersection intersection = results.next();
 			assertEquals(-0f, intersection.distance());
@@ -105,15 +105,15 @@ class PlaneTest {
 		@DisplayName("A ray orthogonal to the plane is not intersecting")
 		@Test
 		void orthogonal() {
-			assertEquals(Intersected.NONE, plane.intersections(new DefaultRay(Point.ORIGIN, X)));
-			assertEquals(Intersected.NONE, plane.intersections(new DefaultRay(Point.ORIGIN, Z)));
+			assertEquals(Intersection.NONE, plane.intersections(new Ray(Point.ORIGIN, X)));
+			assertEquals(Intersection.NONE, plane.intersections(new Ray(Point.ORIGIN, Z)));
 		}
 
 		@DisplayName("A ray pointing away from the plane is not intersecting")
 		@Test
 		void missing() {
-			assertEquals(Intersected.NONE, plane.intersections(new DefaultRay(new Point(0, 2, 0), Y)));
-			assertEquals(Intersected.NONE, plane.intersections(new DefaultRay(Point.ORIGIN, Y.invert())));
+			assertEquals(Intersection.NONE, plane.intersections(new Ray(new Point(0, 2, 0), Y)));
+			assertEquals(Intersection.NONE, plane.intersections(new Ray(Point.ORIGIN, Y.invert())));
 		}
 	}
 }

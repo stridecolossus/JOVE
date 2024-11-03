@@ -236,7 +236,7 @@ public class ImageTransferCommandTest {
 		void image() {
 			builder.buffer(dest);
 			builder.layout(VkImageLayout.GENERAL);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(NullPointerException.class, () -> builder.build());
 		}
 
 		@DisplayName("must have a buffer configured")
@@ -244,7 +244,7 @@ public class ImageTransferCommandTest {
 		void buffer() {
 			builder.image(image);
 			builder.layout(VkImageLayout.GENERAL);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(NullPointerException.class, () -> builder.build());
 		}
 
 		@DisplayName("must have an image layout configured")
@@ -252,7 +252,7 @@ public class ImageTransferCommandTest {
 		void layout() {
 			builder.image(image);
 			builder.buffer(dest);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(NullPointerException.class, () -> builder.build());
 		}
 
 		@DisplayName("must have at least one copy region")

@@ -3,8 +3,6 @@ package org.sarge.jove.platform.obj;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.Vertex;
@@ -46,7 +44,7 @@ class FaceParser implements Parser {
 	@Override
 	public void parse(String args, ObjectModel model) {
 		// Tokenize
-		final String[] faces = StringUtils.split(args);
+		final String[] faces = args.split(" "); // StringUtils.split(args);
 		if(faces.length != 3) {
 			throw new IllegalArgumentException("Expected triangle face");
 		}
@@ -54,7 +52,7 @@ class FaceParser implements Parser {
 		// Parse vertices for this face
 		for(int n = 0; n < faces.length; ++n) {
 			// Tokenize face
-			final String[] parts = StringUtils.splitPreserveAllTokens(faces[n], '/');
+			final String[] parts = faces[n].split("/"); // StringUtils.splitPreserveAllTokens(faces[n], '/');
 			if((parts.length == 0) || (parts.length > 3)) {
 				throw new IllegalArgumentException("Invalid number of face components: " + parts.length);
 			}
@@ -125,15 +123,6 @@ class FaceParser implements Parser {
 					this.position().equals(that.position()) &&
 					Objects.equals(this.normal, that.normal) &&
 					Objects.equals(this.coord, that.coord);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.appendSuper(super.toString())
-					.append("normal", normal)
-					.append("coord", coord)
-					.build();
 		}
 	}
 }

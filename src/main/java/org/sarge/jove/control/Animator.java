@@ -1,10 +1,9 @@
 package org.sarge.jove.control;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.time.Duration;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * An <i>animator</i> is a specialised playable for an {@link Animation} interpolated over a given duration.
@@ -36,8 +35,8 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	 * @param duration		Duration
 	 */
 	public Animator(Animation animation, Duration duration) {
-		this.animation = notNull(animation);
-		this.duration = oneOrMore(duration.toMillis());
+		this.animation = requireNonNull(animation);
+		this.duration = requireOneOrMore(duration.toMillis());
 	}
 
 	/**
@@ -118,16 +117,5 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 
 		// Update animation
 		animation.update(time / (float) duration);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(String.format("%s/%s", time, duration))
-				.append("speed", speed)
-				.append("repeat", repeat)
-				.append(animation)
-				.build();
 	}
 }

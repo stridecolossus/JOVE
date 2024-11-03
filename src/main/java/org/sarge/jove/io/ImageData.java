@@ -1,12 +1,11 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
 
 import java.util.List;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.*;
-import org.sarge.lib.util.Check;
 
 /**
  * An <i>image data</i> is a wrapper for a general image comprising multiple array layers and MIP levels.
@@ -29,8 +28,8 @@ public class ImageData {
 		 * @param length		Length of this level
 		 */
 		public Level {
-			Check.zeroOrMore(offset);
-			Check.oneOrMore(length);
+			requireZeroOrMore(offset);
+			requireOneOrMore(length);
 		}
 
 		/**
@@ -72,10 +71,10 @@ public class ImageData {
 	 * @throws IllegalArgumentException if the length of the {@link #data} does not match the number of MIP levels and array layers
 	 */
 	public ImageData(Dimensions size, String channels, Layout layout, byte[] data) {
-		this.size = notNull(size);
-		this.channels = notEmpty(channels);
-		this.layout = notNull(layout);
-		this.data = notNull(data);
+		this.size = requireNonNull(size);
+		this.channels = requireNotEmpty(channels);
+		this.layout = requireNonNull(layout);
+		this.data = requireNonNull(data);
 		validate();
 	}
 
@@ -177,18 +176,5 @@ public class ImageData {
 	 */
 	protected int pixel(int index) {
 		return data[index];
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append(size)
-				.append("depth", depth())
-				.append(channels)
-				.append(layout)
-				.append("levels", levels().size())
-				.append("layers", layers())
-				.append("format", format())
-				.build();
 	}
 }

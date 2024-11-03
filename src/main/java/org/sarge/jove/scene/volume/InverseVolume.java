@@ -1,10 +1,9 @@
 package org.sarge.jove.scene.volume;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
@@ -20,7 +19,7 @@ public class InverseVolume implements Volume {
 	 * @param vol Volume
 	 */
 	public InverseVolume(Volume vol) {
-		this.vol = notNull(vol);
+		this.vol = requireNonNull(vol);
 	}
 
 	@Override
@@ -56,10 +55,5 @@ public class InverseVolume implements Volume {
 	@Override
 	public boolean equals(Object obj) {
 		return (obj == this) || (obj instanceof InverseVolume that) && this.vol.equals(that.vol);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(vol).build();
 	}
 }

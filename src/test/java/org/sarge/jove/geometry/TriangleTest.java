@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.geometry.Axis.Z;
 
 import java.util.*;
 
@@ -16,7 +17,7 @@ public class TriangleTest {
 
 	@Test
 	void invalid() {
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> new Triangle(List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new Triangle(List.of()));
 		assertThrows(IllegalArgumentException.class, () -> new Triangle(Collections.nCopies(4, Point.ORIGIN)));
 	}
 
@@ -31,13 +32,15 @@ public class TriangleTest {
 	}
 
 	@Test
-	void winding() {
-		assertEquals(WindingOrder.COUNTER_CLOCKWISE, triangle.winding(Axis.Z));
-	}
-
-	@Test
 	void isDegenerate() {
 		assertEquals(false, triangle.isDegenerate());
 		assertEquals(true, new Triangle(Collections.nCopies(3, Point.ORIGIN)).isDegenerate());
+	}
+
+	@Test
+	void winding() {
+		assertEquals(WindingOrder.COUNTER_CLOCKWISE, triangle.winding(Z));
+		assertEquals(WindingOrder.CLOCKWISE, triangle.winding(Z.invert()));
+		assertEquals(WindingOrder.COLINEAR, triangle.winding(Axis.X));
 	}
 }

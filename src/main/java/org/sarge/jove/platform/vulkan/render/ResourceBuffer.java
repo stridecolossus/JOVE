@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
@@ -26,8 +26,8 @@ public final class ResourceBuffer extends VulkanBuffer implements DescriptorReso
 	 */
 	public ResourceBuffer(VulkanBuffer buffer, VkDescriptorType type, long offset) {
 		super(buffer);
-		this.type = notNull(type);
-		this.offset = zeroOrMore(offset);
+		this.type = requireNonNull(type);
+		this.offset = requireZeroOrMore(offset);
 		require(map(type));
 		checkOffset(offset);
 		validate();
@@ -102,14 +102,5 @@ public final class ResourceBuffer extends VulkanBuffer implements DescriptorReso
 				(this.type == that.type()) &&
 				(this.offset == that.offset) &&
 				super.equals(obj);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(type)
-				.append("offset", offset)
-				.build();
 	}
 }

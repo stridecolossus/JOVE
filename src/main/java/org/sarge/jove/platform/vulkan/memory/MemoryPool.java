@@ -1,11 +1,10 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 
@@ -35,7 +34,7 @@ public class MemoryPool implements TransientObject {
 	 * @param type Memory type for this pool
 	 */
 	public MemoryPool(MemoryType type) {
-		this.type = notNull(type);
+		this.type = requireNonNull(type);
 	}
 
 	/**
@@ -129,15 +128,5 @@ public class MemoryPool implements TransientObject {
 		blocks.clear();
 		total = 0;
 		assert free() == 0;
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.append("type", type)
-				.append("size", total)
-				.append("free", free())
-				.append("blocks", blocks.size())
-				.build();
 	}
 }

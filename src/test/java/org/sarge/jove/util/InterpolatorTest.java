@@ -3,8 +3,6 @@ package org.sarge.jove.util;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.lib.element.Element;
-import org.sarge.lib.element.Element.ElementException;
 
 public class InterpolatorTest {
 	@Test
@@ -86,57 +84,6 @@ public class InterpolatorTest {
 		assertEquals(0.5f, mix.apply(0));
 		assertEquals(0.5f, mix.apply(0.5f));
 		assertEquals(0.5f, mix.apply(1));
-	}
-
-	@Nested
-	class LoaderTests {
-		@Test
-		void identity() {
-			assertEquals(Interpolator.LINEAR, Interpolator.load(new Element("identity")));
-		}
-
-		@Test
-		void quadratic() {
-			assertEquals(Interpolator.QUADRATIC, Interpolator.load(new Element("quadratic")));
-			assertEquals(Interpolator.QUADRATIC, Interpolator.load(new Element("squared")));
-		}
-
-		@Test
-		void smooth() {
-			assertEquals(Interpolator.SMOOTH, Interpolator.load(new Element("smooth")));
-			assertEquals(Interpolator.SMOOTH, Interpolator.load(new Element("smoothstep")));
-		}
-
-		@Test
-		void linear() {
-			final Element e = new Element.Builder()
-					.name("linear")
-					.child("start", "1")
-					.child("end", "2")
-					.build();
-
-			final Interpolator linear = Interpolator.load(e);
-			assertEquals(1, linear.apply(0));
-			assertEquals(2, linear.apply(1));
-		}
-
-		@Test
-		void mix() {
-			final Element e = new Element.Builder()
-					.name("mix")
-					.child(new Element("identity"))
-					.child(new Element("identity"))
-					.child("weight", "0.5")
-					.build();
-
-			final Interpolator mix = Interpolator.load(e);
-			assertNotNull(mix);
-		}
-
-		@Test
-		void unknown() {
-			assertThrows(ElementException.class, () -> Interpolator.load(new Element("cobblers")));
-		}
 	}
 }
 

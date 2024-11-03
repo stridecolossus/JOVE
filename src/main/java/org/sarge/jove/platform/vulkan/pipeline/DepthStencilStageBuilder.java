@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Set;
 
@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.BitMask;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * Builder for the depth-stencil pipeline stage.
@@ -69,7 +69,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	 * @param depthCompareOp Comparison function
 	 */
 	public DepthStencilStageBuilder compare(VkCompareOp depthCompareOp) {
-		info.depthCompareOp = notNull(depthCompareOp);
+		info.depthCompareOp = requireNonNull(depthCompareOp);
 		return this;
 	}
 
@@ -80,8 +80,8 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	 */
 	public DepthStencilStageBuilder stencil(VkStencilOpState front, VkStencilOpState back) {
 		info.stencilTestEnable = true;
-		info.front = notNull(front);
-		info.back = notNull(back);
+		info.front = requireNonNull(front);
+		info.back = requireNonNull(back);
 		return this;
 	}
 	// TODO - front/back defaults?
@@ -115,7 +115,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 		 * @param op Fail operation
 		 */
 		public StencilStateBuilder fail(VkStencilOp op) {
-			state.failOp = notNull(op);
+			state.failOp = requireNonNull(op);
 			return this;
 		}
 
@@ -124,7 +124,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 		 * @param op Pass operation
 		 */
 		public StencilStateBuilder pass(VkStencilOp op) {
-			state.passOp = notNull(op);
+			state.passOp = requireNonNull(op);
 			return this;
 		}
 
@@ -133,7 +133,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 		 * @param op Depth-fail operation
 		 */
 		public StencilStateBuilder depthFail(VkStencilOp op) {
-			state.depthFailOp = notNull(op);
+			state.depthFailOp = requireNonNull(op);
 			return this;
 		}
 
@@ -169,7 +169,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	 * @throws IllegalArgumentException if {@link #face} is empty
 	 */
 	public Command setDynamicStencilCompareMask(StencilMaskType type, Set<VkStencilFaceFlag> face, int mask) {
-		Check.notEmpty(face);
+		requireNotEmpty(face);
 		final var faceMask = new BitMask<>(face);
 		return (lib, buffer) -> {
 			switch(type) {

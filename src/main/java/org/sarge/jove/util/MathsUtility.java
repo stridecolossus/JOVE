@@ -1,5 +1,8 @@
 package org.sarge.jove.util;
 
+import java.text.DecimalFormat;
+import java.util.StringJoiner;
+
 /**
  * Maths utilities.
  * <p>
@@ -7,25 +10,42 @@ package org.sarge.jove.util;
  * <ul>
  * <li>General mathematics helper methods</li>
  * <li>Wrapper methods for square-root and inverse-root operations (should optimised implementations be required)</li>
- * <li>A suite of floating-point comparison operators that offer approximate equivalence, e.g. {@link #isEqual(float, float)}</li>
+ * <li>A suite of floating-point comparison operators that offer approximate equivalence, e.g. {@link #isApproxEqual(float, float)}</li>
  * </ul>
  * <p>
  * The accuracy of the approximation methods can be configured via the {@code jove.accuracy} system property.
  * <p>
  * @author Sarge
  */
-public final class MathsUtil {
+public final class MathsUtility {
 	/**
 	 * Accuracy for floating-point comparisons.
 	 */
 	private static final float ACCURACY = Float.parseFloat(System.getProperty("jove.accuracy", "0.0001"));
+
+	public static final DecimalFormat FORMATTER = new DecimalFormat("#.####");
 
 	/**
 	 * Half value.
 	 */
 	public static final float HALF = 0.5f;
 
-	private MathsUtil() {
+	/**
+	 * PI (or 180 degrees).
+	 */
+	public static final float PI = (float) Math.PI;
+
+	/**
+	 * Half-PI (or 90 degrees).
+	 */
+	public static final float HALF_PI = PI / 2;
+
+	/**
+	 * Double PI (or 360 degrees).
+	 */
+	public static final float TWO_PI = 2 * PI;
+
+	private MathsUtility() {
 	}
 
 	/**
@@ -33,50 +53,33 @@ public final class MathsUtil {
 	 * TODO - infinity
 	 * @return Whether the given values are approximately equal
 	 */
-	public static boolean isEqual(float a, float b) {
+	public static boolean isApproxEqual(float a, float b) {
 		if(Float.isInfinite(a)) {
 			return Float.isInfinite(b);
 		}
 		else {
-			return isZero(a - b);
+			return isApproxZero(a - b);
 		}
-	}
-
-	/**
-	 * @return Whether the given floating-point arrays are approximately equal
-	 */
-	public static boolean isEqual(float[] a, float[] b) {
-		if(a.length != b.length) {
-			return false;
-		}
-
-		for(int n = 0; n < a.length; ++n) {
-			if(!isEqual(a[n], b[n])) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	/**
 	 * @param f Float
 	 * @return Whether the given number is approximately zero
 	 */
-	public static boolean isZero(float f) {
+	public static boolean isApproxZero(float f) {
 		return Math.abs(f) < ACCURACY;
 	}
 
 	/**
-	 * @param num Number
+	 * @param n Number
 	 * @return Whether the given integer is a power-of-two
 	 */
-	public static boolean isPowerOfTwo(int num) {
-		if(num == 0) {
+	public static boolean isPowerOfTwo(int n) {
+		if(n == 0) {
 			return false;
 		}
 		else {
-			return (num & (num - 1)) == 0;
+			return (n & (n - 1)) == 0;
 		}
 	}
 
@@ -110,6 +113,22 @@ public final class MathsUtil {
 	}
 
 	/**
+	 * @param radians Angle in radians
+	 * @return Angle in degrees
+	 */
+	public static float toDegrees(float radians) {
+		return (float) Math.toDegrees(radians);
+	}
+
+	/**
+	 * @param degrees Angle in degrees
+	 * @return Angle in radians
+	 */
+	public static float toRadians(float degrees) {
+		return (float) Math.toRadians(degrees);
+	}
+
+	/**
 	 * @param f Value
 	 * @return Square root
 	 */
@@ -121,7 +140,19 @@ public final class MathsUtil {
 	 * @param f Value
 	 * @return Inverse square root
 	 */
-	public static float inverseRoot(float f) {
+	public static float inverseSquareRoot(float f) {
 		return 1 / sqrt(f);
+	}
+
+	public static String format(float f) {
+		return FORMATTER.format(f);
+	}
+
+	public static String format(float... values) {
+		final var str = new StringJoiner(", ", "[", "]");
+		for(int n = 0; n < values.length; ++n) {
+			str.add(format(values[n]));
+		}
+		return str.toString();
 	}
 }

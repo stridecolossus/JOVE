@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 
@@ -50,7 +49,7 @@ class ComponentMappingTest {
 	@DisplayName("A component mapping string cannot be empty")
 	@Test
 	void empty() {
-		assertThrows(IllegalArgumentException.class, () -> ComponentMapping.of(StringUtils.EMPTY));
+		assertThrows(IllegalArgumentException.class, () -> ComponentMapping.of(""));
 	}
 
 	@DisplayName("A component mapping string cannot be longer than 4 characters")

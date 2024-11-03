@@ -1,19 +1,18 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.*;
+import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.BitMask;
-import org.sarge.lib.util.Check;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
@@ -115,8 +114,8 @@ public interface Query {
 
 			// Init create descriptor
 			final var info = new VkQueryPoolCreateInfo();
-			info.queryType = notNull(type);
-			info.queryCount = oneOrMore(slots);
+			info.queryType = requireNonNull(type);
+			info.queryCount = requireOneOrMore(slots);
 			info.pipelineStatistics = BitMask.of(stats);
 
 			// Instantiate query pool
@@ -140,8 +139,8 @@ public interface Query {
 		 */
 		Pool(Handle handle, DeviceContext dev, VkQueryType type, int slots) {
 			super(handle, dev);
-			this.type = notNull(type);
-			this.slots = oneOrMore(slots);
+			this.type = requireNonNull(type);
+			this.slots = requireOneOrMore(slots);
 		}
 
 		/**
@@ -155,7 +154,7 @@ public interface Query {
 		 * @throws IllegalArgumentException if the slot is invalid for this pool
 		 */
 		private void validate(int slot) {
-			Check.zeroOrMore(slot);
+			requireZeroOrMore(slot);
 			if(slot >= slots) throw new IllegalArgumentException(String.format("Invalid query slot: slot=%d pool=%s", slot, this));
 		}
 
@@ -202,7 +201,7 @@ public interface Query {
 
 				@Override
 				public Command timestamp(VkPipelineStage stage) {
-					Check.notNull(stage);
+					requireNonNull(stage);
 					return (lib, buffer) -> lib.vkCmdWriteTimestamp(buffer, stage, Pool.this, slot);
 				}
 			};
@@ -216,7 +215,7 @@ public interface Query {
 		 * @throws IllegalArgumentException if the given range is out-of-bounds for this pool
 		 */
 		public Command reset(int start, int num) {
-			Check.zeroOrMore(start);
+			requireZeroOrMore(start);
 			validate(start + num - 1);
 			return (lib, buffer) -> lib.vkCmdResetQueryPool(buffer, this, start, num);
 		}
@@ -241,15 +240,6 @@ public interface Query {
 		@Override
 		protected Destructor<Pool> destructor(VulkanLibrary lib) {
 			return lib::vkDestroyQueryPool;
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.appendSuper(super.toString())
-					.append(type)
-					.append("slots", slots)
-					.build();
 		}
 	}
 
@@ -304,7 +294,7 @@ public interface Query {
 		 */
 		public ResultBuilder start(int start) {
 			pool.validate(start);
-			this.start = zeroOrMore(start);
+			this.start = requireZeroOrMore(start);
 			return this;
 		}
 
@@ -315,7 +305,7 @@ public interface Query {
 		 */
 		public ResultBuilder count(int count) {
 			pool.validate(count);
-			this.count = oneOrMore(count);
+			this.count = requireOneOrMore(count);
 			return this;
 		}
 
@@ -324,7 +314,7 @@ public interface Query {
 		 * @param stride Results stride (bytes)
 		 */
 		public ResultBuilder stride(long stride) {
-			this.stride = oneOrMore(stride);
+			this.stride = requireOneOrMore(stride);
 			return this;
 		}
 
@@ -333,7 +323,7 @@ public interface Query {
 		 * @param flag Query flag
 		 */
 		public ResultBuilder flag(VkQueryResultFlag flag) {
-			flags.add(notNull(flag));
+			flags.add(requireNonNull(flag));
 			return this;
 		}
 
@@ -385,8 +375,8 @@ public interface Query {
 		 */
 		public Command build(VulkanBuffer buffer, long offset) {
 			// Validate buffer
-			Check.notNull(buffer);
-			Check.zeroOrMore(offset);
+			requireNonNull(buffer);
+			requireZeroOrMore(offset);
 			buffer.require(VkBufferUsageFlag.TRANSFER_DST);
 			buffer.checkOffset(offset - 1 + count * stride);
 
@@ -418,16 +408,6 @@ public interface Query {
 
 			// Build flags mask
 			return new BitMask<>(flags);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("start", start)
-					.append("count", count)
-					.append("stride", stride)
-					.append(pool)
-					.build();
 		}
 	}
 

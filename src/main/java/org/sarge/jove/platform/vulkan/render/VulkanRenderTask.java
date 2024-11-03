@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
 
@@ -38,8 +38,8 @@ public class VulkanRenderTask implements TransientObject {
 	 * @param frames		Frame trackers
 	 */
 	public VulkanRenderTask(FrameComposer composer, SwapchainAdapter adapter, VulkanFrame[] frames) {
-		this.composer = notNull(composer);
-		this.adapter = notNull(adapter);
+		this.composer = requireNonNull(composer);
+		this.adapter = requireNonNull(adapter);
 		this.frames = Arrays.copyOf(frames, frames.length);
 	}
 

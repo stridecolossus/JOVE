@@ -1,10 +1,9 @@
 package org.sarge.jove.scene.graph;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.model.Mesh;
 
 /**
@@ -24,8 +23,8 @@ public class MeshNode extends Node implements Renderable {
 	 */
 	public MeshNode(GroupNode parent, Mesh mesh, Material mat) {
 		super(parent);
-		this.mesh = notNull(mesh);
-		this.mat = notNull(mat);
+		this.mesh = requireNonNull(mesh);
+		this.mat = requireNonNull(mat);
 		attach();
 	}
 
@@ -58,14 +57,5 @@ public class MeshNode extends Node implements Renderable {
 	@Override
 	public int hashCode() {
 		return Objects.hash(mesh, mat);
-	}
-
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this)
-				.appendSuper(super.toString())
-				.append(mesh)
-				.append(mat)
-				.build();
 	}
 }

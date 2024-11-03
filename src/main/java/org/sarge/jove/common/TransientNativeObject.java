@@ -1,6 +1,6 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Template implementation for a native object managed by the application.
@@ -16,7 +16,7 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 	 * @param handle Handle
 	 */
 	protected TransientNativeObject(Handle handle) {
-		this.handle = notNull(handle);
+		this.handle = requireNonNull(handle);
 	}
 
 	@Override

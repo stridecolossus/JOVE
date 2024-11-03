@@ -1,17 +1,16 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.BitMask;
-import org.sarge.lib.util.Check;
 
 /**
  * A <i>push constant</i> comprises the ranges and backing data buffer for the push constants of a pipeline.
@@ -166,11 +165,6 @@ public final class PushConstant {
 				this.ranges.equals(that.ranges());
 	}
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this).append(ranges).build();
-	}
-
 	/**
 	 * A <i>push constant range</i> specifies a segment of this push constant.
 	 * @see <A href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPushConstantRange.html">Push Constants</a>
@@ -184,11 +178,11 @@ public final class PushConstant {
 		 * @throws IllegalArgumentException if {@link #offset} or {@link #size} do not satisfy the alignment rules for push constants
 		 */
 		public Range {
-			Check.zeroOrMore(offset);
-			Check.oneOrMore(size);
+			requireZeroOrMore(offset);
+			requireOneOrMore(size);
 			VulkanLibrary.checkAlignment(offset);
 			VulkanLibrary.checkAlignment(size);
-			Check.notEmpty(stages);
+			requireNotEmpty(stages);
 			stages = Set.copyOf(stages);
 		}
 
@@ -223,8 +217,8 @@ public final class PushConstant {
 		 * @param layout		Pipeline layout
 		 */
 		private UpdateCommand(Range range, PipelineLayout layout) {
-			this.range = notNull(range);
-			this.layout = notNull(layout);
+			this.range = requireNonNull(range);
+			this.layout = requireNonNull(layout);
 			this.stages = new BitMask<>(range.stages);
 			assert ranges.contains(range);
 		}
@@ -233,14 +227,6 @@ public final class PushConstant {
 		public void record(VulkanLibrary lib, Buffer buffer) {
 			data.position(range.offset);
 			lib.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, data);
-		}
-
-		@Override
-		public String toString() {
-			return new ToStringBuilder(this)
-					.append("constant", PushConstant.this)
-					.append("range", range)
-					.build();
 		}
 	}
 }

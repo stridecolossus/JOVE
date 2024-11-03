@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersected;
+import org.sarge.jove.geometry.Ray.Intersection;
 
 class ParticleSystemTest {
 	private ParticleSystem sys;
@@ -78,8 +78,8 @@ class ParticleSystemTest {
 		@Test
 		void defaults() {
 			final Particle p = create();
-			assertEquals(Point.ORIGIN, p.origin());
-			assertEquals(Axis.Y, p.direction());
+			assertEquals(Point.ORIGIN, p.ray().origin());
+			assertEquals(Axis.Y, p.ray().direction());
 		}
 	}
 
@@ -94,8 +94,8 @@ class ParticleSystemTest {
 			sys.vector(DirectionFactory.of(Axis.X));
 
 			final Particle p = create();
-			assertEquals(pos, p.origin());
-			assertEquals(Axis.X, p.direction());
+			assertEquals(pos, p.ray().origin());
+			assertEquals(Axis.X, p.ray().direction());
 		}
 
 		@DisplayName("has a creation timestamp")
@@ -110,7 +110,7 @@ class ParticleSystemTest {
 		void update() {
 			final Particle p = create();
 			sys.update(frame);
-			assertEquals(new Point(0, 2, 0), p.origin());
+			assertEquals(new Point(0, 2, 0), p.ray().origin());
 		}
 
 		@DisplayName("is modified by the configured influences on each frame")
@@ -148,13 +148,13 @@ class ParticleSystemTest {
 		@Test
 		void update() {
 			sys.update(frame);
-			assertEquals(Point.ORIGIN, p.origin());
+			assertEquals(Point.ORIGIN, p.ray().origin());
 		}
 
 		@DisplayName("is not tested for collisions")
 		@Test
 		void collide() {
-			final Intersected surface = mock(Intersected.class);
+			final var surface = mock(Intersection.Surface.class);
 			sys.add(surface, Collision.DESTROY);
 			sys.update(frame);
 			verifyNoInteractions(surface);
@@ -175,7 +175,7 @@ class ParticleSystemTest {
 		@DisplayName("is not updated by the particle system")
 		@Test
 		void update() {
-			final Intersected surface = mock(Intersected.class);
+			final var surface = mock(Intersection.Surface.class);
 			sys.add(surface, Collision.DESTROY);
 			sys.update(frame);
 			assertEquals(false, p.isAlive());

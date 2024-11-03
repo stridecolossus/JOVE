@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.stream.IntStream;
@@ -10,7 +10,7 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.util.BitField;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * The <i>grid builder</i> constructs a grid of vertices in the X-Z plane with an optional index buffer.
@@ -63,7 +63,7 @@ public class GridBuilder {
 		 */
 		static HeightFunction heightmap(Dimensions size, ImageData image, int component, float scale) {
 			// Validate
-			Check.zeroOrMore(component);
+			requireZeroOrMore(component);
 			if(component >= image.channels().length()) throw new IllegalArgumentException(String.format("Invalid component index: component=%d image=%s", component, image));
 
 			// Map grid coordinates to image dimensions
@@ -100,7 +100,7 @@ public class GridBuilder {
 	 */
 	public GridBuilder size(Dimensions size) {
 		if((size.width() < 2) || (size.height() < 2)) throw new IllegalArgumentException("Size must be greater than one");
-		this.size = notNull(size);
+		this.size = requireNonNull(size);
 		return this;
 	}
 
@@ -118,7 +118,7 @@ public class GridBuilder {
 	 * @param height Height function
 	 */
 	public GridBuilder height(HeightFunction height) {
-		this.height = notNull(height);
+		this.height = requireNonNull(height);
 		return this;
 	}
 
@@ -127,7 +127,7 @@ public class GridBuilder {
 	 * @param primitive Drawing primitive
 	 */
 	public GridBuilder primitive(Primitive primitive) {
-		this.primitive = notNull(primitive);
+		this.primitive = requireNonNull(primitive);
 		return this;
 	}
 
@@ -136,7 +136,7 @@ public class GridBuilder {
 	 * @param index Index factory
 	 */
 	public GridBuilder index(IndexFactory index) {
-		this.index = notNull(index);
+		this.index = requireNonNull(index);
 		return this;
 	}
 

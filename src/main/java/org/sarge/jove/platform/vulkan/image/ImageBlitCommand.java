@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.StructureCollector;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * The <i>image blit command</i> copies regions of an image, potentially performing format conversion, scaling and filtering.
@@ -30,12 +30,12 @@ public final class ImageBlitCommand implements Command {
 	 * @param filter		Filter
 	 */
 	ImageBlitCommand(Image src, VkImageLayout srcLayout, Image dest, VkImageLayout destLayout, VkImageBlit[] regions, VkFilter filter) {
-		this.src = notNull(src);
-		this.srcLayout = notNull(srcLayout);
-		this.dest = notNull(dest);
-		this.destLayout = notNull(destLayout);
+		this.src = requireNonNull(src);
+		this.srcLayout = requireNonNull(srcLayout);
+		this.dest = requireNonNull(dest);
+		this.destLayout = requireNonNull(destLayout);
 		this.regions = Arrays.copyOf(regions, regions.length);
-		this.filter = notNull(filter);
+		this.filter = requireNonNull(filter);
 	}
 
 	@Override
@@ -67,9 +67,9 @@ public final class ImageBlitCommand implements Command {
 			 * @param max				Maximum offset
 			 */
 			public BlitRegion {
-				Check.notNull(subresource);
-				Check.notNull(min);
-				Check.notNull(max);
+				requireNonNull(subresource);
+				requireNonNull(min);
+				requireNonNull(max);
 			}
 		}
 
@@ -84,7 +84,7 @@ public final class ImageBlitCommand implements Command {
 		 * @param src Source image
 		 */
 		public Builder source(Image src) {
-			this.src = notNull(src);
+			this.src = requireNonNull(src);
 			return this;
 		}
 
@@ -93,7 +93,7 @@ public final class ImageBlitCommand implements Command {
 		 * @param dest Destination image
 		 */
 		public Builder destination(Image dest) {
-			this.dest = notNull(dest);
+			this.dest = requireNonNull(dest);
 			return this;
 		}
 
@@ -103,8 +103,8 @@ public final class ImageBlitCommand implements Command {
 		 * @param dest Destination blit region
 		 */
 		public Builder region(BlitRegion src, BlitRegion dest) {
-			Check.notNull(src);
-			Check.notNull(dest);
+			requireNonNull(src);
+			requireNonNull(dest);
 			regions.put(src, dest);
 			return this;
 		}
@@ -122,7 +122,7 @@ public final class ImageBlitCommand implements Command {
 		 * @param filter Filter
 		 */
 		public Builder filter(VkFilter filter) {
-			this.filter = notNull(filter);
+			this.filter = requireNonNull(filter);
 			return this;
 		}
 

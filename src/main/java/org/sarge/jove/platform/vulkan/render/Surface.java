@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.IntEnum;
-import org.sarge.lib.util.LazySupplier;
+import org.sarge.lib.LazySupplier;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -64,7 +64,7 @@ public class Surface extends TransientNativeObject {
 	 */
 	public Surface(Handle surface, PhysicalDevice device) {
 		super(surface);
-		this.device = notNull(device);
+		this.device = requireNonNull(device);
 	}
 
 	@Override

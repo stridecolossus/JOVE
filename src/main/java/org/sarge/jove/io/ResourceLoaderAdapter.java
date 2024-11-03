@@ -1,6 +1,6 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.io.InputStream;
 
@@ -32,8 +32,8 @@ public class ResourceLoaderAdapter<T, R> {
 	 * @param loader		Resource loader
 	 */
 	public ResourceLoaderAdapter(DataSource src, ResourceLoader<T, R> loader) {
-		this.src = notNull(src);
-		this.loader = notNull(loader);
+		this.src = requireNonNull(src);
+		this.loader = requireNonNull(loader);
 	}
 
 	/**

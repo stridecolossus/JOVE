@@ -1,18 +1,19 @@
 package org.sarge.jove.model;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Layout.Component;
-import org.sarge.jove.util.MathsUtil;
-import org.sarge.lib.util.Check;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public interface Coordinate extends Bufferable, Component {
+public sealed interface Coordinate extends Bufferable, Component {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
@@ -52,7 +53,7 @@ public interface Coordinate extends Bufferable, Component {
 			return
 					(obj == this) ||
 					(obj instanceof Coordinate1D that) &&
-					MathsUtil.isEqual(this.u, that.u);
+					MathsUtility.isApproxEqual(this.u, that.u);
 		}
 	}
 
@@ -96,8 +97,8 @@ public interface Coordinate extends Bufferable, Component {
 			return
 					(obj == this) ||
 					(obj instanceof Coordinate2D that) &&
-					MathsUtil.isEqual(this.u, that.u) &&
-					MathsUtil.isEqual(this.v, that.v);
+					MathsUtility.isApproxEqual(this.u, that.u) &&
+					MathsUtility.isApproxEqual(this.v, that.v);
 		}
 
 		/**
@@ -110,8 +111,8 @@ public interface Coordinate extends Bufferable, Component {
 			 * @param bottomRight		Bottom-right coordinate
 			 */
 			public Corners {
-				Check.notNull(topLeft);
-				Check.notNull(bottomRight);
+				requireNonNull(topLeft);
+				requireNonNull(bottomRight);
 			}
 
 			/**
@@ -158,9 +159,9 @@ public interface Coordinate extends Bufferable, Component {
 			return
 					(obj == this) ||
 					(obj instanceof Coordinate3D that) &&
-					MathsUtil.isEqual(this.u, that.u) &&
-					MathsUtil.isEqual(this.v, that.v) &&
-					MathsUtil.isEqual(this.w, that.w);
+					MathsUtility.isApproxEqual(this.u, that.u) &&
+					MathsUtility.isApproxEqual(this.v, that.v) &&
+					MathsUtility.isApproxEqual(this.w, that.w);
 		}
 	}
 }

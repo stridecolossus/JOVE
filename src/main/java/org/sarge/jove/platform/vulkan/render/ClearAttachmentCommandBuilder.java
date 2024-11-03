@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue;
 import org.sarge.jove.util.*;
-import org.sarge.lib.util.Check;
+import static org.sarge.lib.Validation.*;
 
 /**
  * Builder for a command to clear attachments during a render pass.
@@ -23,7 +23,7 @@ public class ClearAttachmentCommandBuilder {
 	 * @param pass Render pass
 	 */
 	public ClearAttachmentCommandBuilder(RenderPass pass) {
-		this.pass = notNull(pass);
+		this.pass = requireNonNull(pass);
 	}
 
 	/**
@@ -44,12 +44,12 @@ public class ClearAttachmentCommandBuilder {
 		 * @throws IllegalArgumentException if {@link #clear} is not the expected type for the attachment format
 		 */
 		public ClearAttachment(Attachment attachment, Set<VkImageAspect> aspects, ClearValue clear) {
-			Check.notNull(attachment);
-			Check.notEmpty(aspects);
+			requireNonNull(attachment);
+			requireNotEmpty(aspects);
 			if(!aspects.contains(clear.aspect())) throw new IllegalArgumentException("Invalid clear value %s for attachment aspects %s".formatted(clear, aspects));
 			this.index = index(attachment);
 			this.aspects = Set.copyOf(aspects);
-			this.clear = notNull(clear);
+			this.clear = requireNonNull(clear);
 		}
 
 		private int index(Attachment attachment) {
@@ -78,9 +78,9 @@ public class ClearAttachmentCommandBuilder {
 		 * @param layerCount			Image layer count
 		 */
 		public Region {
-			Check.notNull(rect);
-			Check.zeroOrMore(baseArrayLayer);
-			Check.oneOrMore(layerCount);
+			requireNonNull(rect);
+			requireZeroOrMore(baseArrayLayer);
+			requireOneOrMore(layerCount);
 		}
 
 		void populate(VkClearRect clear) {
@@ -98,7 +98,7 @@ public class ClearAttachmentCommandBuilder {
 	 * @param attachment Clear attachment descriptor
 	 */
 	public ClearAttachmentCommandBuilder attachment(ClearAttachment attachment) {
-		Check.notNull(attachment);
+		requireNonNull(attachment);
 		entries.add(attachment);
 		return this;
 	}
@@ -108,7 +108,7 @@ public class ClearAttachmentCommandBuilder {
 	 * @param region Region to clear
 	 */
 	public ClearAttachmentCommandBuilder region(Region region) {
-		Check.notNull(region);
+		requireNonNull(region);
 		regions.add(region);
 		return this;
 	}

@@ -1,10 +1,9 @@
 package org.sarge.jove.scene.particle;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.*;
-import org.sarge.lib.element.Element;
 
 /**
  * A <i>disc</i> is a helper class for generating points and vectors on a disc.
@@ -27,11 +26,11 @@ class Disc {
 	 * @param randomiser		Randomiser
 	 */
 	public Disc(Normal normal, float radius, Randomiser randomiser) {
-		this.normal = notNull(normal);
+		this.normal = requireNonNull(normal);
 		this.x = this.normal.cross(Axis.minimal(normal));
 		this.y = x.cross(this.normal);
 		this.radius = Interpolator.linear(-radius, +radius);
-		this.randomiser = notNull(randomiser);
+		this.randomiser = requireNonNull(randomiser);
 	}
 
 	/**
@@ -64,16 +63,4 @@ class Disc {
 		return axis.multiply(r);
 	}
 	// TODO - normal?
-
-	/**
-	 * Loads a disc from the given element.
-	 * @param e					Element
-	 * @param randomiser		Randomiser
-	 * @return Disc
-	 */
-	public static Disc load(Element e, Randomiser randomiser) {
-		final Vector normal = e.child("normal").text().transform(Axis::parse);
-		final float radius = e.child("radius").text().transform(Float::parseFloat);
-		return new Disc(new Normal(normal), radius, randomiser);
-	}
 }

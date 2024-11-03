@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.*;
+import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 import java.util.function.*;
@@ -10,7 +11,7 @@ import org.sarge.jove.control.WindowListener;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
 import org.sarge.jove.util.NativeBooleanConverter;
-import org.sarge.lib.util.*;
+import org.sarge.lib.LazySupplier;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.*;
@@ -79,7 +80,7 @@ public final class Window extends TransientNativeObject {
 	 */
 	Window(Handle window, Desktop desktop) {
 		super(window);
-		this.desktop = notNull(desktop);
+		this.desktop = requireNonNull(desktop);
 	}
 
 	/**
@@ -129,7 +130,7 @@ public final class Window extends TransientNativeObject {
 	 */
 	@MainThread
 	public void title(String title) {
-		Check.notNull(title);
+		requireNonNull(title);
 		desktop.library().glfwSetWindowTitle(this, title);
 	}
 
@@ -256,7 +257,7 @@ public final class Window extends TransientNativeObject {
 		 * @param title Title
 		 */
 		public Builder title(String title) {
-			this.title = notEmpty(title);
+			this.title = requireNotEmpty(title);
 			return this;
 		}
 
@@ -265,7 +266,7 @@ public final class Window extends TransientNativeObject {
 		 * @param size Window size
 		 */
 		public Builder size(Dimensions size) {
-			this.size = notNull(size);
+			this.size = requireNonNull(size);
 			return this;
 		}
 
@@ -274,7 +275,7 @@ public final class Window extends TransientNativeObject {
 		 * @param hint Window hint
 		 */
 		public Builder hint(Hint hint, int argument) {
-			Check.notNull(hint);
+			requireNonNull(hint);
 			hints.put(hint, argument);
 			return this;
 		}
@@ -290,7 +291,7 @@ public final class Window extends TransientNativeObject {
 		 * @see Monitor#monitors(Desktop)
 		 */
 		public Builder monitor(Monitor monitor) {
-			this.monitor = notNull(monitor);
+			this.monitor = requireNonNull(monitor);
 			return this;
 		}
 

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -40,7 +40,7 @@ public class JoystickManager {
 	 * @param desktop Desktop service
 	 */
 	public JoystickManager(Desktop desktop) {
-		this.desktop = notNull(desktop);
+		this.desktop = requireNonNull(desktop);
 		init();
 	}
 

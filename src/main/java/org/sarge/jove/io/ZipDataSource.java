@@ -1,6 +1,6 @@
 package org.sarge.jove.io;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +20,7 @@ public class ZipDataSource implements DataSource {
 	 * @param file ZIP archive
 	 */
 	public ZipDataSource(ZipFile file) {
-		this.file = notNull(file);
+		this.file = requireNonNull(file);
 	}
 
 	@Override

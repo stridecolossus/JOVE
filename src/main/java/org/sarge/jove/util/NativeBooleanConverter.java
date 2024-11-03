@@ -5,8 +5,8 @@ import com.sun.jna.*;
 /**
  * The <i>native boolean converter</i> is a custom JNA type converter for boolean values used by the native layer.
  * <p>
- * This converter marshals a Java boolean as a native integer that is <i>explicitly</i> integer one for {@code true} and zero for {@code false}.
- * This overrides the default JNA mapping which assumes an <i>arbitrary non-zero</i> value for {@code true}.
+ * This converter marshals a Java boolean as a native integer that is explicitly integer <b>one</b> for {@code true} and zero for {@code false}.
+ * This overrides the default JNA mapping which assumes an arbitrary non-zero value for {@code true}.
  * <p>
  * @author Sarge
  */

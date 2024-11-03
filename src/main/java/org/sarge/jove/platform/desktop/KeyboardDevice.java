@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Set;
 import java.util.function.*;
@@ -17,14 +17,14 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
 public class KeyboardDevice implements Device {
 	private final Window window;
 	private final KeyboardSource keyboard = new KeyboardSource();
-	private final KeyTable table = KeyTable.instance();
+	private final KeyTable table = KeyTable.INSTANCE;
 
 	/**
 	 * Constructor.
 	 * @param window Window
 	 */
 	KeyboardDevice(Window window) {
-		this.window = notNull(window);
+		this.window = requireNonNull(window);
 	}
 
 	@Override

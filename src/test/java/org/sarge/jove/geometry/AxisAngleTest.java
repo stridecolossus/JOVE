@@ -1,52 +1,48 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.sarge.jove.geometry.Axis.Y;
-import static org.sarge.jove.util.Trigonometric.PI;
+import static org.sarge.jove.util.MathsUtility.PI;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.Cosine;
 
 class AxisAngleTest {
+	private Normal axis;
 	private AxisAngle rot;
 
 	@BeforeEach
 	void before() {
-		rot = new AxisAngle(Y, PI);
-	}
-
-	@Test
-	void constructor() {
-		assertEquals(Y, rot.axis());
-		assertEquals(PI, rot.angle());
-		assertEquals(Cosine.DEFAULT, rot.cosine());
-	}
-
-	@Test
-	void rotation() {
-		assertEquals(rot, rot.toAxisAngle());
+		axis = new Normal(new Vector(1, 1, 0));
+		rot = new AxisAngle(axis, PI);
 	}
 
 	@Test
 	void matrix() {
-		assertEquals(Y.rotation(PI, Cosine.DEFAULT), rot.matrix());
+		final Matrix expected = new Matrix.Builder(4)
+				.set(0, 1, +1)
+				.set(1, 0, +1)
+				.set(2, 2, -1)
+				.set(3, 3, +1)
+				.build();
+
+		assertEquals(expected, rot.matrix());
 	}
 
 	@Test
-	void of() {
-		final Cosine cos = mock(Cosine.class);
-		rot = rot.of(cos);
-		assertEquals(cos, rot.cosine());
-		rot.matrix();
-		verify(cos).cos(PI);
+	void cardinal() {
+		rot = new AxisAngle(Axis.Y, PI);
+		assertEquals(Axis.Y.rotation(new Angle(PI)), rot.matrix());
+	}
+
+	@Test
+	void rotate() {
+		assertEquals(new Vector(0, 1, 0), rot.rotate(new Vector(1, 0, 0)));
 	}
 
 	@Test
 	void equals() {
 		assertEquals(rot, rot);
-		assertEquals(rot, new AxisAngle(Y, PI));
+		assertEquals(rot, new AxisAngle(axis, PI));
 		assertNotEquals(rot, null);
-		assertNotEquals(rot, new AxisAngle(Y, 0));
+		assertNotEquals(rot, new AxisAngle(axis, 0));
 	}
 }

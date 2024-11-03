@@ -68,8 +68,8 @@ class AttachmentTest {
 		@DisplayName("The image format of an attachment cannot be undefined")
 		@Test
 		void undefined() {
-			assertThrows(IllegalArgumentException.class, () -> new Attachment.Builder(null).build());
-			assertThrows(IllegalArgumentException.class, () -> new Attachment.Builder(VkFormat.UNDEFINED).build());
+			assertThrows(NullPointerException.class, () -> new Attachment.Builder(null).build());
+			assertThrows(NullPointerException.class, () -> new Attachment.Builder(VkFormat.UNDEFINED).build());
 		}
 
 		@DisplayName("The final image layout of an attachment cannot be undefined")
@@ -83,8 +83,8 @@ class AttachmentTest {
 		@Test
 		void load() {
 			final LoadStore load = new LoadStore(VkAttachmentLoadOp.LOAD, VkAttachmentStoreOp.DONT_CARE);
-			assertThrows(IllegalArgumentException.class, () -> builder.attachment(load).build());
-			assertThrows(IllegalArgumentException.class, () -> builder.stencil(load).build());
+			assertThrows(NullPointerException.class, () -> builder.attachment(load).build());
+			assertThrows(NullPointerException.class, () -> builder.stencil(load).build());
 		}
 	}
 }
