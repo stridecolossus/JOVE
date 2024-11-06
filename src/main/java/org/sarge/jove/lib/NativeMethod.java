@@ -6,99 +6,139 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
- * A <i>native method</i> composes a native method handle and the associated mappers.
+ * A <i>native method</i> abstracts a native method handle.
+ * TODO - marshalling
  * @author Sarge
  */
 public class NativeMethod {
+	private final Method method;
 	private final MethodHandle handle;
-	private final NativeMapper<?>[] mappers;
-	private final NativeMapper<?> returnMapper;
+	private final NativeMapper[] signature;
+	private final NativeMapper returnMapper;
 
 	/**
 	 * Constructor.
-	 * @param handle			Native method
-	 * @param mappers			Parameter mappers
+	 * @param method			API method
+	 * @param handle 			Native method handle
+	 * @param signature			Parameter mappers
 	 * @param returnMapper		Optional return type mapper
+	 * @throws IllegalArgumentException if the {@link #signature} or {@link #returnMapper} does not match the native method
 	 */
-	NativeMethod(MethodHandle handle, List<? extends NativeMapper<?>> mappers, NativeMapper<?> returnMapper) {
+	NativeMethod(Method method, MethodHandle handle, List<NativeMapper> signature, NativeMapper returnMapper) {
+		if(signature.size() != method.getParameterCount()) throw new IllegalArgumentException("Mismatched method signature");
+		if((method.getReturnType() == void.class) ^ (returnMapper == null)) throw new IllegalArgumentException("Mismatched return type mapper");
+
+		this.method = requireNonNull(method);
 		this.handle = requireNonNull(handle);
-		this.mappers = mappers.toArray(NativeMapper[]::new);
+		this.signature = signature.toArray(NativeMapper[]::new);
 		this.returnMapper = returnMapper;
 	}
 
+	// https://dev.java/learn/introduction_to_method_handles/
+
 	/**
-	 * Invokes this native method with the given parameters.
+	 * Invokes this native method with the given arguments.
 	 * TODO - marshalling
-	 * @param args Arguments
-	 * @return Return value
-	 * @throws RuntimeException if the method fails
+	 * @param args 		Arguments
+	 * @param arena		Arena
+	 * @return Return value or {@code null} for a {@code void} method
+	 * @throws RuntimeException if the native method fails
 	 */
-	public Object invoke(Object[] args) {
-		final Object[] mapped = toNative(args);
-		final Object value = execute(mapped);
-		return fromNative(value);
+	public Object invoke(Object[] args, Arena arena) {
+		final Object[] actual = marshal(args, arena);
+		final Object result = execute(actual);
+		return marshalReturnValue(result);
 	}
 
 	/**
-	 * Marshals the method arguments to native types.
+	 * Maps arguments to the native representation.
+	 * @param args			Arguments
+	 * @param arena			Arena
+	 * @return Mapped arguments
 	 */
-	private Object[] toNative(Object[] args) {
+	@SuppressWarnings("unchecked")
+	private Object[] marshal(Object[] args, Arena arena) {
 		if(args == null) {
 			return null;
 		}
 
-		final Object[] mapped = new Object[args.length];
-		for(int n = 0; n < args.length; ++n) {
-			final var mapper = mappers[n];
-			final var arg = mapper.toNative(args[n], null);
-			mapped[n] = arg;
+		final Object[] mapped = Arrays.copyOf(args, args.length);
+		final Parameter[] parameters = method.getParameters();
+		for(int n = 0; n < mapped.length; ++n) {
+			if(signature[n] instanceof NativeTypeConverter c) {
+				mapped[n] = c.toNative(args[n], parameters[n].getType(), arena);
+			}
 		}
 
 		return mapped;
 	}
 
 	/**
-	 * Invokes this native method.
+	 * Executes this native method with the given mapped arguments.
+	 * @param args Mapped arguments
+	 * @return Return value
 	 */
 	private Object execute(Object[] args) {
 		try {
 			return handle.invokeWithArguments(args);
 		}
 		catch(Throwable e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Error invoking native method: " + this, e);
 		}
 	}
 
 	/**
-	 * Marshals the return value.
+	 * Maps the return value of this method.
+	 * @param value Return value
+	 * @return Mapped return value
 	 */
-	private Object fromNative(Object value) {
-    	if(returnMapper == null) {
-    		assert value == null;
-    		return null;
-    	}
-    	else {
-    		return returnMapper.fromNative(value);
-    	}
+	@SuppressWarnings("unchecked")
+	private Object marshalReturnValue(Object value) {
+		if(returnMapper instanceof NativeTypeConverter converter) {
+			return converter.fromNative(value, method.getReturnType());
+		}
+		else {
+			return value;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return method.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof NativeMethod that) &&
+				this.method.equals(that.method);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("NativeMethod[%s]", method);
 	}
 
 	/**
-	 * Builder for a native method.
+	 * Factory for native methods.
 	 */
-	public static class Builder {
+	public static class Factory {
+		private final Linker linker = Linker.nativeLinker();		// TODO - from NativeFactory? mutable?
 		private final SymbolLookup lookup;
-		private final NativeContext context;
+		private final NativeMapperRegistry registry;
 
 		/**
 		 * Constructor.
 		 * @param lookup		Symbol lookup
-		 * @param context		Native context
+		 * @param registry		Mapper registry
 		 */
-		public Builder(SymbolLookup lookup, NativeContext context) {
+		public Factory(SymbolLookup lookup, NativeMapperRegistry registry) {
 			this.lookup = requireNonNull(lookup);
-			this.context = requireNonNull(context);
+			this.registry = requireNonNull(registry);
 		}
 
 		/**
@@ -108,63 +148,81 @@ public class NativeMethod {
 		 * @throws IllegalArgumentException for an unknown method or an unsupported parameter or return type
 		 */
 		public NativeMethod build(Method method) {
-			// Lookup the method symbol
-			final MemorySegment address = lookup
-        			.find(method.getName())
-        			.orElseThrow(() -> new IllegalArgumentException("Unknown method: " + method));
+			final MemorySegment symbol = symbol(method);
 
-			// Map parameters
-			final var mappers = Arrays
+			final List<NativeMapper> signature = Arrays
 					.stream(method.getParameters())
 					.map(this::mapper)
 					.toList();
 
 			// Map return type
-			final NativeMapper<?> returnMapper = returnMapper(method);
+			final NativeMapper returnMapper = returnMapper(method);
 
-			// Create method handle
-			final FunctionDescriptor descriptor = descriptor(mappers, returnMapper);
-			final MethodHandle handle = context.linker().downcallHandle(address, descriptor);
+			// Build the native method handle
+			final FunctionDescriptor descriptor = descriptor(signature, returnMapper);
+			final MethodHandle handle = linker.downcallHandle(symbol, descriptor);
 
-			// Builds native method wrapper
-			return new NativeMethod(handle, mappers, returnMapper);
+			// Create native method wrapper
+			return new NativeMethod(method, handle, signature, returnMapper);
+		}
+
+		/**
+		 * Looks up the method symbol from the native library.
+		 * @param method API method
+		 * @return Native method symbol
+		 * @throws IllegalArgumentException if the given method is not present in the API
+		 */
+		private MemorySegment symbol(Method method) {
+			return lookup
+        			.find(method.getName())
+        			.orElseThrow(() -> new IllegalArgumentException("Unknown method: " + method));
 		}
 
 		/**
 		 * Looks up the native mapper for the given parameter.
 		 */
-		private NativeMapper<?> mapper(Parameter parameter) {
-			return context
-					.registry()
-					.mapper(parameter.getType())
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + parameter));
+		private NativeMapper mapper(Parameter parameter) {
+			return map(parameter.getType(), () -> new IllegalArgumentException(String.format("Unsupported parameter type %s in %s", parameter.getType(), parameter.getDeclaringExecutable())));
 		}
 
 		/**
 		 * Looks up the native mapper for the optional method return type.
 		 */
-		private NativeMapper<?> returnMapper(Method method) {
+		private NativeMapper returnMapper(Method method) {
 			final Class<?> returnType = method.getReturnType();
 			if(returnType == void.class) {
 				return null;
 			}
 			else {
-				return context
-						.registry()
-						.mapper(returnType)
-						.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method));
+				return map(returnType, () -> new IllegalArgumentException(String.format("Unsupported return type %s for %s", returnType, method)));
 			}
 		}
 
 		/**
-		 * Builds the function descriptor for the given signature.
+		 * Looks up the native mapper for the given Java type.
+		 * @param type		Java type
+		 * @param error		Exception supplier
+		 * @return Native mapper
+		 * @throws IllegalArgumentException if the given type is not supported
 		 */
-		private static FunctionDescriptor descriptor(List<? extends NativeMapper<?>> signature, NativeMapper<?> returnType) {
+		private NativeMapper map(Class<?> type, Supplier<IllegalArgumentException> error) {
+			return registry.mapper(type).orElseThrow(error);
+		}
+
+		/**
+		 * Builds the native function descriptor for the given mapped method signature.
+		 * @param signature			Method signature
+		 * @param returnType		Return type
+		 * @return Native function descriptor
+		 */
+		private static FunctionDescriptor descriptor(List<NativeMapper> signature, NativeMapper returnType) {
+			// Map method signature to parameter layouts
 			final MemoryLayout[] layouts = signature
 					.stream()
 					.map(NativeMapper::layout)
 					.toArray(MemoryLayout[]::new);
 
+			// Determine native function descriptor
 			if(returnType == null) {
 				return FunctionDescriptor.ofVoid(layouts);
 			}

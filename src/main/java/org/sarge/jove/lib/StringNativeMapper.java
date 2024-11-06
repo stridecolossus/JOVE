@@ -2,31 +2,35 @@ package org.sarge.jove.lib;
 
 import java.lang.foreign.*;
 
-public class StringNativeMapper implements NativeMapper<String> {
-	@Override
-	public Class<String> type() {
-		return String.class;
+/**
+ * The <i>string native mapper</i> marshals a Java string as a native pointer to a null-terminated character array.
+ * @author Sarge
+ */
+public class StringNativeMapper extends DefaultNativeMapper implements NativeTypeConverter<String, MemorySegment> {
+	/**
+	 * Constructor.
+	 */
+	public StringNativeMapper() {
+		super(String.class, ValueLayout.ADDRESS);
 	}
 
 	@Override
-	public ValueLayout layout() {
-		return ValueLayout.ADDRESS;
+	public MemorySegment toNative(String string, Class<?> __, Arena arena) {
+		if(string == null) {
+			return MemorySegment.NULL;
+		}
+		else {
+			return arena.allocateFrom(string);
+		}
 	}
 
 	@Override
-	public Object toNative(Object value, Arena arena) {
-
-		arena.allocate
-
-		return null;
-	}
-
-	@Override
-	public String fromNative(Object value) {
-
-		final var segment = (MemorySegment) value;
-		final String str = segment.reinterpret(Integer.MAX_VALUE).getString(0);
-
-		return null;
+	public String fromNative(MemorySegment address, Class<?> __) {
+		if((address == null) || MemorySegment.NULL.equals(address)) {
+			return null;
+		}
+		else {
+    		return address.reinterpret(Integer.MAX_VALUE).getString(0);
+		}
 	}
 }

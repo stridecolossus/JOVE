@@ -1,34 +1,19 @@
 package org.sarge.jove.lib;
 
-import java.lang.foreign.*;
+import java.lang.foreign.ValueLayout;
 
 /**
- * A <i>native mapper</i> marshals a Java type to/from the native representation.
+ * A <i>native mapper</i> maps a Java type to its native representation.
  * @author Sarge
  */
-public interface NativeMapper<T> {
+public interface NativeMapper {
 	/**
 	 * @return Java type
 	 */
-	Class<T> type();
+	Class<?> type();
 
 	/**
 	 * @return Native type
 	 */
 	ValueLayout layout();
-
-	/**
-	 * Marshals the given Java type to its native representation.
-	 * @param value Java value
-	 * @param arena Arena
-	 * @return Native value
-	 */
-	Object toNative(Object value, Arena arena);
-
-	/**
-	 * Marshals the given native value to the Java equivalent.
-	 * @param value Native value
-	 * @return Java value
-	 */
-	Object fromNative(Object value);
 }

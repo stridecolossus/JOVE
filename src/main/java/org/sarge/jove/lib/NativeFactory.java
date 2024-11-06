@@ -3,7 +3,7 @@ package org.sarge.jove.lib;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
-import java.lang.foreign.SymbolLookup;
+import java.lang.foreign.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Function;
@@ -13,22 +13,15 @@ import java.util.function.Function;
  * @author Sarge
  */
 public class NativeFactory {
-	private final NativeContext context;
+	private final NativeMapperRegistry registry;
 	private final ClassLoader loader = this.getClass().getClassLoader(); // TODO - mutable?
 
-	/**
-	 * Constructor.
-	 * @param context Native context
-	 */
-	public NativeFactory(NativeContext context) {
-		this.context = requireNonNull(context);
+	public NativeFactory() {
+		this(NativeMapperRegistry.create());
 	}
 
-	/**
-	 * Default constructor.
-	 */
-	public NativeFactory() {
-		this(new NativeContext());
+	public NativeFactory(NativeMapperRegistry registry) {
+		this.registry = requireNonNull(registry);
 	}
 
 	/**
@@ -44,7 +37,7 @@ public class NativeFactory {
 		if(!api.isInterface()) throw new IllegalArgumentException("Native API must be specified by an interface: " + api);
 
 		// Init native method builder
-		final var builder = new NativeMethod.Builder(lookup, context);
+		final var builder = new NativeMethod.Factory(lookup, registry);
 
 		// Build native methods for this API
 		final Map<Method, NativeMethod> methods = Arrays
@@ -57,7 +50,9 @@ public class NativeFactory {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				final NativeMethod delegate = methods.get(method);
-				return delegate.invoke(args);
+				try(final Arena arena = Arena.ofConfined()) {
+					return delegate.invoke(args, arena);
+				}
 			}
 		};
 

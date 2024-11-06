@@ -114,7 +114,8 @@ public interface IntEnum {
 		 * @return Reverse mapping
 		 */
 		@SuppressWarnings("unchecked")
-		private static ReverseMapping<?> get(Class<?> clazz) {
+//		private
+		public static ReverseMapping<?> get(Class<?> clazz) {
 			return CACHE.computeIfAbsent(clazz, ReverseMapping::new);
 		}
 
@@ -129,6 +130,11 @@ public interface IntEnum {
 			final E[] array = type.getEnumConstants();
 			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (a, b) -> a));
 			this.def = map.getOrDefault(0, array[0]);
+		}
+
+		// TODO
+		public E defaultValue() {
+			return def;
 		}
 
 		/**

@@ -2,7 +2,7 @@ package org.sarge.jove.lib;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.lang.foreign.*;
+import java.lang.foreign.ValueLayout;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
@@ -22,45 +22,18 @@ class NativeMapperRegistryTest {
 
 	@Test
 	void add() {
-		final var mapper = new IntegerNativeMapper();
+		final var mapper = new DefaultNativeMapper(int.class, ValueLayout.JAVA_INT);
 		registry.add(mapper);
 		assertEquals(Optional.of(mapper), registry.mapper(int.class));
 	}
 
-	@Test
-	void defaults() {
-
-	}
-
 	@Nested
 	class DerivedTypeTests {
-		private static class MockNativeMapper implements NativeMapper<Number> {
-			@Override
-			public Class<Number> type() {
-				return Number.class;
-			}
-
-			@Override
-			public ValueLayout layout() {
-				return null;
-			}
-
-			@Override
-			public Object toNative(Object value, Arena arena) {
-				return null;
-			}
-
-			@Override
-			public Number fromNative(Object value) {
-				return null;
-			}
-		}
-
-		private NativeMapper<Number> mapper;
+		private NativeMapper mapper;
 
 		@BeforeEach
     	void before() {
-    		mapper = new MockNativeMapper();
+    		mapper = new DefaultNativeMapper(Number.class, ValueLayout.JAVA_INT);
     		registry.add(mapper);
     	}
 
