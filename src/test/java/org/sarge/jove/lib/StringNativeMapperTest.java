@@ -25,13 +25,13 @@ class StringNativeMapperTest {
 
 	@Test
 	void toNative() {
-		final MemorySegment segment = mapper.toNative(string, String.class, arena);
+		final MemorySegment segment = mapper.toNative(string, arena);
 		assertEquals(string, segment.getString(0));
 	}
 
 	@Test
 	void toNativeNull() {
-		assertEquals(MemorySegment.NULL, mapper.toNative(null, String.class, arena));
+		assertEquals(MemorySegment.NULL, mapper.toNativeNull(String.class));
 	}
 
 	@Test
@@ -42,7 +42,6 @@ class StringNativeMapperTest {
 
 	@Test
 	void fromNativeNull() {
-		assertEquals(null, mapper.fromNative(null, String.class));
 		assertEquals(null, mapper.fromNative(MemorySegment.NULL, String.class));
 	}
 }

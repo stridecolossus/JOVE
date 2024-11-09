@@ -8,9 +8,6 @@ import java.util.*;
 import org.sarge.jove.control.AxisControl;
 import org.sarge.jove.control.Event.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-
 /**
  * A <i>joystick device</i> represents a joystick or HOTAS controller.
  * @author Sarge
@@ -109,9 +106,10 @@ public class JoystickDevice implements Device {
 	 * Queries the axis values for this joystick.
 	 */
 	private float[] getAxisArray() {
-		final IntByReference count = desktop.factory().integer();
-		final Pointer ptr = desktop.library().glfwGetJoystickAxes(id, count);
-		return ptr.getFloatArray(0, count.getValue());
+//		final IntByReference count = desktop.factory().integer();
+//		final Pointer ptr = desktop.library().glfwGetJoystickAxes(id, count);
+//		return ptr.getFloatArray(0, count.getValue());
+		return null; // TODO
 	}
 
 	@Override

@@ -3,16 +3,11 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.List;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
-import org.sarge.jove.util.ReferenceFactory;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>monitor</i> describes a physical monitor attached to this system.
@@ -67,8 +62,9 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 	 */
 	@MainThread
 	public DisplayMode mode(Desktop desktop) {
-		final DesktopDisplayMode mode = desktop.library().glfwGetVideoMode(this);
-		return DisplayMode.of(mode);
+//		final DesktopDisplayMode mode = desktop.library().glfwGetVideoMode(this);
+//		return DisplayMode.of(mode);
+		return null;
 	}
 
 	/**
@@ -79,36 +75,37 @@ public record Monitor(Handle handle, String name, Dimensions size, List<Monitor.
 	 */
 	@MainThread
 	public static List<Monitor> monitors(Desktop desktop) {
-		// Enumerate monitors
-		final DesktopLibraryMonitor lib = desktop.library();
-		final ReferenceFactory factory = desktop.factory();
-		final IntByReference count = factory.integer();
-		final Pointer[] monitors = lib.glfwGetMonitors(count).getPointerArray(0, count.getValue());
-
-		// Creates a monitor
-		final Function<Pointer, Monitor> create = ptr -> {
-			// Retrieve monitor name
-			final String name = lib.glfwGetMonitorName(ptr);
-
-			// Retrieve monitor dimensions
-			final IntByReference w = factory.integer();
-			final IntByReference h = factory.integer();
-			lib.glfwGetMonitorPhysicalSize(ptr, w, h);		// TODO - millimetres?
-
-			// Retrieve display modes
-			final DesktopDisplayMode first = lib.glfwGetVideoModes(ptr, count);
-			final DesktopDisplayMode[] array = (DesktopDisplayMode[]) first.toArray(count.getValue());
-			final List<DisplayMode> modes = Arrays.stream(array).map(DisplayMode::of).toList();
-
-			// Create monitor
-			final var size = new Dimensions(w.getValue(), h.getValue());
-			return new Monitor(new Handle(ptr), name, size, modes);
-		};
-
-		// Create monitors
-		return Arrays
-				.stream(monitors)
-				.map(create)
-				.toList();
+//		// Enumerate monitors
+//		final DesktopLibraryMonitor lib = desktop.library();
+//		final ReferenceFactory factory = desktop.factory();
+//		final IntByReference count = factory.integer();
+//		final Pointer[] monitors = lib.glfwGetMonitors(count).getPointerArray(0, count.getValue());
+//
+//		// Creates a monitor
+//		final Function<Pointer, Monitor> create = ptr -> {
+//			// Retrieve monitor name
+//			final String name = lib.glfwGetMonitorName(ptr);
+//
+//			// Retrieve monitor dimensions
+//			final IntByReference w = factory.integer();
+//			final IntByReference h = factory.integer();
+//			lib.glfwGetMonitorPhysicalSize(ptr, w, h);		// TODO - millimetres?
+//
+//			// Retrieve display modes
+//			final DesktopDisplayMode first = lib.glfwGetVideoModes(ptr, count);
+//			final DesktopDisplayMode[] array = (DesktopDisplayMode[]) first.toArray(count.getValue());
+//			final List<DisplayMode> modes = Arrays.stream(array).map(DisplayMode::of).toList();
+//
+//			// Create monitor
+//			final var size = new Dimensions(w.getValue(), h.getValue());
+//			return new Monitor(new Handle(ptr), name, size, modes);
+//		};
+//
+//		// Create monitors
+//		return Arrays
+//				.stream(monitors)
+//				.map(create)
+//				.toList();
+		return null;
 	}
 }

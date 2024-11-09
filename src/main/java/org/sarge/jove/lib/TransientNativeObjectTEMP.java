@@ -1,14 +1,14 @@
-package org.sarge.jove.common;
+package org.sarge.jove.lib;
 
 import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.TransientObject;
 
 /**
  * Template implementation for a native object managed by the application.
  * @author Sarge
  */
-public abstract class TransientNativeObject implements NativeObject, TransientObject {
+public abstract class TransientNativeObjectTEMP implements NativeObjectTEMP, TransientObject {
 	protected final Handle handle;
 
 	private boolean destroyed;
@@ -17,7 +17,7 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 	 * Constructor.
 	 * @param handle Handle
 	 */
-	protected TransientNativeObject(Handle handle) {
+	protected TransientNativeObjectTEMP(Handle handle) {
 		this.handle = requireNonNull(handle);
 	}
 
@@ -33,7 +33,7 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 
 	@Override
 	public void destroy() {
-		if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
+		if(destroyed) throw new IllegalStateException("Transient object has already been destroyed: " + this);
 		release();
 		destroyed = true;
 	}
@@ -53,7 +53,7 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof TransientNativeObject that) &&
+				(obj instanceof TransientNativeObjectTEMP that) &&
 				this.handle.equals(that.handle());
 	}
 

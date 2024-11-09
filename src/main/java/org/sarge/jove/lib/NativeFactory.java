@@ -16,10 +16,10 @@ public class NativeFactory {
 	private final NativeMapperRegistry registry;
 	private final ClassLoader loader = this.getClass().getClassLoader(); // TODO - mutable?
 
-	public NativeFactory() {
-		this(NativeMapperRegistry.create());
-	}
-
+	/**
+	 * Constructor.
+	 * @param registry Registry of supported native mappers
+	 */
 	public NativeFactory(NativeMapperRegistry registry) {
 		this.registry = requireNonNull(registry);
 	}
@@ -61,6 +61,21 @@ public class NativeFactory {
 		final T proxy = (T) Proxy.newProxyInstance(loader, new Class<?>[]{api}, handler);
 
 		return proxy;
+	}
+
+	/**
+	 * Constructs a proxy implementation for the given native library.
+	 * @param <T> Native API
+	 * @param name		Native library name
+	 * @param api		Native API
+	 * @see #build(SymbolLookup, Class)
+	 */
+	public <T> T build(String name, Class<T> api) {
+		final Arena arena = Arena.ofAuto(); // TODO - context
+//		try(final Arena arena = Arena.ofConfined()) {
+			final var lookup = SymbolLookup.libraryLookup(name, arena);
+			return build(lookup, api);
+//		}
 	}
 
 	/**

@@ -70,7 +70,8 @@ public class KeyboardDevice implements Device {
 
 		@Override
 		public BiConsumer<Window, KeyListener> method(DesktopLibrary lib) {
-			return lib::glfwSetKeyCallback;
+			//return lib::glfwSetKeyCallback;
+			return null;
 		}
 	}
 }

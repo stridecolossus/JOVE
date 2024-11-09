@@ -1,8 +1,9 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -11,7 +12,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
-import static org.sarge.lib.Validation.*;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;

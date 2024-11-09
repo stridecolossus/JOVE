@@ -8,16 +8,19 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Supplier;
 
+import org.sarge.jove.lib.NativeMapper.ReturnMapper;
+
 /**
  * A <i>native method</i> abstracts a native method handle.
  * TODO - marshalling
  * @author Sarge
  */
+@SuppressWarnings("rawtypes")
 public class NativeMethod {
 	private final Method method;
 	private final MethodHandle handle;
 	private final NativeMapper[] signature;
-	private final NativeMapper returnMapper;
+	private final ReturnMapper returnMapper;
 
 	/**
 	 * Constructor.
@@ -28,16 +31,25 @@ public class NativeMethod {
 	 * @throws IllegalArgumentException if the {@link #signature} or {@link #returnMapper} does not match the native method
 	 */
 	NativeMethod(Method method, MethodHandle handle, List<NativeMapper> signature, NativeMapper returnMapper) {
-		if(signature.size() != method.getParameterCount()) throw new IllegalArgumentException("Mismatched method signature");
-		if((method.getReturnType() == void.class) ^ (returnMapper == null)) throw new IllegalArgumentException("Mismatched return type mapper");
-
+		if(signature.size() != method.getParameterCount()) throw new IllegalArgumentException("Mismatched method signature: " + method);
 		this.method = requireNonNull(method);
 		this.handle = requireNonNull(handle);
 		this.signature = signature.toArray(NativeMapper[]::new);
-		this.returnMapper = returnMapper;
+		this.returnMapper = returnMapper(returnMapper, method);
 	}
 
-	// https://dev.java/learn/introduction_to_method_handles/
+	private static ReturnMapper returnMapper(NativeMapper mapper, Method method) {
+		if((method.getReturnType() == void.class) ^ (mapper == null)) {
+			throw new IllegalArgumentException("Mismatched return type mapper: " + method);
+		}
+
+		if(mapper instanceof ReturnMapper returnMapper) {
+			return returnMapper;
+		}
+		else {
+			return null;
+		}
+	}
 
 	/**
 	 * Invokes this native method with the given arguments.
@@ -54,26 +66,41 @@ public class NativeMethod {
 	}
 
 	/**
-	 * Maps arguments to the native representation.
+	 * Maps arguments to the corresponding native representations.
 	 * @param args			Arguments
 	 * @param arena			Arena
 	 * @return Mapped arguments
 	 */
-	@SuppressWarnings("unchecked")
 	private Object[] marshal(Object[] args, Arena arena) {
 		if(args == null) {
 			return null;
 		}
 
-		final Object[] mapped = Arrays.copyOf(args, args.length);
-		final Parameter[] parameters = method.getParameters();
+		final Object[] mapped = new Object[args.length];
+		final Class<?>[] parameters = method.getParameterTypes();
 		for(int n = 0; n < mapped.length; ++n) {
-			if(signature[n] instanceof NativeTypeConverter c) {
-				mapped[n] = c.toNative(args[n], parameters[n].getType(), arena);
-			}
+			mapped[n] = marshal(args[n], signature[n], parameters[n], arena);
 		}
 
 		return mapped;
+	}
+
+	/**
+	 * Marshals an argument.
+	 * @param arg			Argument
+	 * @param mapper		Native mapper
+	 * @param type			Target type
+	 * @param arena			Arena
+	 * @return Native argument
+	 */
+	@SuppressWarnings("unchecked")
+	private static Object marshal(Object arg, NativeMapper mapper, Class<?> type, Arena arena) {
+		if(arg == null) {
+			return mapper.toNativeNull(type);
+		}
+		else {
+			return mapper.toNative(arg, arena);
+		}
 	}
 
 	/**
@@ -97,11 +124,11 @@ public class NativeMethod {
 	 */
 	@SuppressWarnings("unchecked")
 	private Object marshalReturnValue(Object value) {
-		if(returnMapper instanceof NativeTypeConverter converter) {
-			return converter.fromNative(value, method.getReturnType());
+		if(returnMapper == null) {
+			return value;
 		}
 		else {
-			return value;
+			return returnMapper.fromNative(value, method.getReturnType());
 		}
 	}
 
@@ -186,7 +213,7 @@ public class NativeMethod {
 		}
 
 		/**
-		 * Looks up the native mapper for the optional method return type.
+		 * Looks up the native mapper for the method return type.
 		 */
 		private NativeMapper returnMapper(Method method) {
 			final Class<?> returnType = method.getReturnType();

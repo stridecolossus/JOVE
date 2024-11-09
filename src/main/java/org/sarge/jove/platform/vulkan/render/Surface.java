@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 import java.util.function.Supplier;

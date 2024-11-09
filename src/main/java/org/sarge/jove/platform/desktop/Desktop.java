@@ -3,16 +3,10 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
-import org.sarge.jove.util.ReferenceFactory;
-
-import com.sun.jna.*;
-import com.sun.jna.Native;
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.lib.*;
+import org.sarge.jove.lib.NativeObjectTEMP.NativeObjectMapper;
 
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
@@ -28,34 +22,39 @@ import com.sun.jna.ptr.IntByReference;
 public final class Desktop implements TransientObject {
 	/**
 	 * Creates the desktop service.
-	 * @return New desktop service
-	 * @throws RuntimeException if the GLFW native library cannot be found or cannot be initialised
-	 * @throws UnsatisfiedLinkError if the native library cannot be instantiated
+	 * @return Desktop service
+	 * @throws RuntimeException if GLFW cannot be loaded or initialised
 	 */
 	@MainThread
 	public static Desktop create() {
-		// Determine library name
-		final String name = switch(Platform.getOSType()) {
-			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO - path!
-			case Platform.LINUX -> "libglfw";
-			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
-		};
+//		// Determine library name
+//		final String name = switch(Platform.getOSType()) {
+//			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO - path!
+//			case Platform.LINUX -> "libglfw";
+//			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
+//		};
 
-		// Init type mapper
-		final var mapper = new DefaultTypeMapper();
-		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
-		mapper.addTypeConverter(Window.class, NativeObject.CONVERTER);
+//		// Init type mapper
+//		final var mapper = new DefaultTypeMapper();
+//		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
+//		mapper.addTypeConverter(Window.class, NativeObject.CONVERTER);
+
+		final var registry = NativeMapperRegistry.create();
+		registry.add(new NativeObjectMapper());
+		//registry.add(new DefaultNativeMapper<>(null, null)
+		// TODO - window mapper?
 
 		// Load native library
-		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
-		JoystickManager.init(lib);
+		final var factory = new NativeFactory(registry);
+		final DesktopLibrary lib = factory.build("C:/GLFW/lib-mingw-w64/glfw3.dll", DesktopLibrary.class); // TODO - name
+		// TODO - JoystickManager.init(lib);
 
 		// Init GLFW
 		final int result = lib.glfwInit();
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
 
 		// Create desktop service
-		return new Desktop(lib, new ReferenceFactory());
+		return new Desktop(lib, new DefaultReferenceFactory());
 	}
 
 	/**
@@ -120,23 +119,23 @@ public final class Desktop implements TransientObject {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-		final IntByReference size = factory.integer();
-		final Pointer ptr = lib.glfwGetRequiredInstanceExtensions(size);
-		return ptr.getStringArray(0, size.getValue());
+		final IntegerReference count = factory.integer();
+		final StringArray extensions = lib.glfwGetRequiredInstanceExtensions(count);
+		return extensions.array(count.value());
 	}
 
-	/**
-	 * Sets a handler for GLFW errors.
-	 * @param handler Error handler
-	 */
-	@MainThread
-	public void setErrorHandler(Consumer<String> handler) {
-		final ErrorCallback callback = (error, description) -> {
-			final String message = String.format("GLFW error: [%d] %s", error, description);
-			handler.accept(message);
-		};
-		lib.glfwSetErrorCallback(callback);
-	}
+//	/**
+//	 * Sets a handler for GLFW errors.
+//	 * @param handler Error handler
+//	 */
+//	@MainThread
+//	public void setErrorHandler(Consumer<String> handler) {
+//		final ErrorCallback callback = (error, description) -> {
+//			final String message = String.format("GLFW error: [%d] %s", error, description);
+//			handler.accept(message);
+//		};
+//		lib.glfwSetErrorCallback(callback);
+//	}
 
 	@Override
 	@MainThread

@@ -1,54 +1,24 @@
 package org.sarge.jove.lib;
 
-import static java.util.Objects.requireNonNull;
-
-import java.lang.foreign.ValueLayout;
-import java.util.Objects;
+import java.lang.foreign.*;
 
 /**
- * The <i>default native mapper</i> maps built-in Java types and primitives to/from the equivalent native representation.
+ * A <i>default native mapper</i> defines a type that has a native layout but is marshalled as-is, i.e. primitive or wrapper types that are automagically handled by FFM.
+ * @param <T> Type
  * @author Sarge
  */
-public class DefaultNativeMapper implements NativeMapper {
-	private final Class<?> type;
-	private final ValueLayout layout;
-
+public class DefaultNativeMapper<T> extends AbstractNativeMapper<T> {
 	/**
 	 * Constructor.
-	 * @param type			Java type
-	 * @param layout		Native layout
+	 * @param type		Type
+	 * @param layout	Native layout
 	 */
-	public DefaultNativeMapper(Class<?> type, ValueLayout layout) {
-		this.type = requireNonNull(type);
-		this.layout = requireNonNull(layout);
+	public DefaultNativeMapper(Class<T> type, MemoryLayout layout) {
+		super(type, layout);
 	}
 
 	@Override
-	public Class<?> type() {
-		return type;
-	}
-
-	@Override
-	public ValueLayout layout() {
-		return layout;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(type, layout);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof NativeMapper that) &&
-				this.type.equals(that.type()) &&
-				this.layout.equals(that.layout());
-	}
-
-	@Override
-	public String toString() {
-		return String.format("NativeMapper[%s -> %s]", type, layout);
+	public Object toNative(T value, Arena arena) {
+		return value;
 	}
 }

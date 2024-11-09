@@ -4,27 +4,24 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Supplier;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.control.WindowListener;
+import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.lib.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
-import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
-import org.sarge.jove.util.NativeBooleanConverter;
 import org.sarge.lib.LazySupplier;
-
-import com.sun.jna.*;
-import com.sun.jna.ptr.*;
 
 /**
  * Native window implemented using GLFW.
  * @author Sarge
  */
-public final class Window extends TransientNativeObject {
+public final class Window extends TransientNativeObjectTEMP {
 	/**
 	 * Window creation hints.
 	 */
-	@SuppressWarnings("unused") // TODO - use enabled to toggle?
+	@SuppressWarnings("unused")
+	// TODO - use enabled to toggle?
+	// TODO - to IntEnum?
 	public enum Hint {
 		/**
 		 * Window can be resized.
@@ -71,7 +68,7 @@ public final class Window extends TransientNativeObject {
 	private final Desktop desktop;
 	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
 	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
-	private final Map<Object, Callback> registry = new WeakHashMap<>();
+	//private final Map<Object, Callback> registry = new WeakHashMap<>();
 
 	/**
 	 * Constructor.
@@ -109,10 +106,10 @@ public final class Window extends TransientNativeObject {
 	 */
 	@MainThread
 	public Dimensions size() {
-		final IntByReference w = desktop.factory().integer();
-		final IntByReference h = desktop.factory().integer();
+		final IntegerReference w = desktop.factory().integer();
+		final IntegerReference h = desktop.factory().integer();
 		desktop.library().glfwGetWindowSize(this, w, h);
-		return new Dimensions(w.getValue(), h.getValue());
+		return new Dimensions(w.value(), h.value());
 	}
 
 	/**
@@ -134,92 +131,92 @@ public final class Window extends TransientNativeObject {
 		desktop.library().glfwSetWindowTitle(this, title);
 	}
 
-	/**
-	 * @return Monitor for a full screen window
-	 */
-	@MainThread
-	public Optional<Monitor> monitor() {
-		final Monitor monitor =	desktop.library().glfwGetWindowMonitor(this);
-		return Optional.ofNullable(monitor);
-	}
-
-	/**
-	 * Sets this as a full screen window.
-	 */
-	@MainThread
-	public void full() {
-		// TODO - GLFWAPI void glfwSetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int xpos, int ypos, int width, int height, int refreshRate);
-		// monitor = null for windowed
-		// rate can be GLFW_DONTCARE
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * Sets the listener for window state changes.
-	 * @param listener Listener for window state changes or {@code null} to remove the listener
-	 */
-	@MainThread
-	public void listener(WindowListener.Type type, WindowListener listener) {
-		// Determine listener registration method
-		final DesktopLibrary lib = desktop.library();
-		final BiConsumer<Window, WindowStateListener> method = switch(type) {
-			case ENTER -> lib::glfwSetCursorEnterCallback;
-			case FOCUS -> lib::glfwSetWindowFocusCallback;
-			case ICONIFIED -> lib::glfwSetWindowIconifyCallback;
-			case CLOSED -> lib::glfwSetWindowCloseCallback;
-		};
-
-		// Register listener
-		final String key = "state";
-		if(listener == null) {
-			method.accept(this, null);
-			remove(key);
-		}
-		else {
-			final WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.toBoolean(state));
-			method.accept(this, adapter);
-			register(type, adapter);
-		}
-	}
-
-	/**
-	 * Sets the listener for window resize events.
-	 * @param listener Resize listener or {@code null} to remove the listener
-	 */
-	@MainThread
-	public void resize(IntBinaryOperator listener) {
-		final String key = "resize";
-		final DesktopLibrary lib = desktop.library();
-		if(listener == null) {
-			lib.glfwSetWindowSizeCallback(this, null);
-			remove(key);
-		}
-		else {
-			final WindowResizeListener adapter = (ptr, w, h) -> listener.applyAsInt(w, h);
-			lib.glfwSetWindowSizeCallback(this, adapter);
-			register(key, adapter);
-		}
-	}
-
-	/**
-	 * Registers a JNA callback listener attached to this window.
-	 * <p>
-	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus de-registered by GLFW.
-	 * <p>
-	 * @param key			Key
-	 * @param callback 		Callback listener
-	 */
-	protected void register(Object key, Callback callback) {
-		registry.put(key, callback);
-	}
-
-	/**
-	 * Removes a registry entry.
-	 * @param key Key
-	 */
-	protected void remove(Object key) {
-		registry.remove(key);
-	}
+//	/**
+//	 * @return Monitor for a full screen window
+//	 */
+//	@MainThread
+//	public Optional<Monitor> monitor() {
+//		final Monitor monitor =	desktop.library().glfwGetWindowMonitor(this);
+//		return Optional.ofNullable(monitor);
+//	}
+//
+//	/**
+//	 * Sets this as a full screen window.
+//	 */
+//	@MainThread
+//	public void full() {
+//		// TODO - GLFWAPI void glfwSetWindowMonitor(GLFWwindow* window, GLFWmonitor* monitor, int xpos, int ypos, int width, int height, int refreshRate);
+//		// monitor = null for windowed
+//		// rate can be GLFW_DONTCARE
+//		throw new UnsupportedOperationException();
+//	}
+//
+//	/**
+//	 * Sets the listener for window state changes.
+//	 * @param listener Listener for window state changes or {@code null} to remove the listener
+//	 */
+//	@MainThread
+//	public void listener(WindowListener.Type type, WindowListener listener) {
+//		// Determine listener registration method
+//		final DesktopLibrary lib = desktop.library();
+//		final BiConsumer<Window, WindowStateListener> method = switch(type) {
+//			case ENTER -> lib::glfwSetCursorEnterCallback;
+//			case FOCUS -> lib::glfwSetWindowFocusCallback;
+//			case ICONIFIED -> lib::glfwSetWindowIconifyCallback;
+//			case CLOSED -> lib::glfwSetWindowCloseCallback;
+//		};
+//
+//		// Register listener
+//		final String key = "state";
+//		if(listener == null) {
+//			method.accept(this, null);
+//			remove(key);
+//		}
+//		else {
+//			final WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.toBoolean(state));
+//			method.accept(this, adapter);
+////			register(type, adapter);
+//		}
+//	}
+//
+//	/**
+//	 * Sets the listener for window resize events.
+//	 * @param listener Resize listener or {@code null} to remove the listener
+//	 */
+//	@MainThread
+//	public void resize(IntBinaryOperator listener) {
+//		final String key = "resize";
+//		final DesktopLibrary lib = desktop.library();
+//		if(listener == null) {
+//			lib.glfwSetWindowSizeCallback(this, null);
+//			remove(key);
+//		}
+//		else {
+//			final WindowResizeListener adapter = (ptr, w, h) -> listener.applyAsInt(w, h);
+//			lib.glfwSetWindowSizeCallback(this, adapter);
+////			register(key, adapter);
+//		}
+//	}
+//
+//	/**
+//	 * Registers a JNA callback listener attached to this window.
+//	 * <p>
+//	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus de-registered by GLFW.
+//	 * <p>
+//	 * @param key			Key
+//	 * @param callback 		Callback listener
+//	 */
+////	protected void register(Object key, Callback callback) {
+////		registry.put(key, callback);
+////	}
+//
+//	/**
+//	 * Removes a registry entry.
+//	 * @param key Key
+//	 */
+//	protected void remove(Object key) {
+////		registry.remove(key);
+//	}
 
 	/**
 	 * Creates a Vulkan rendering surface for this window.
@@ -229,12 +226,12 @@ public final class Window extends TransientNativeObject {
 	 */
 	public Handle surface(Handle instance) {
 		final DesktopLibrary lib = desktop.library();
-		final PointerByReference ref = desktop.factory().pointer();
+		final PointerReference ref = desktop.factory().pointer();
 		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
 		if(result != 0) {
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
-		return new Handle(ref.getValue());
+		return ref.handle();
 	}
 
 	@Override
@@ -250,7 +247,7 @@ public final class Window extends TransientNativeObject {
 		private String title;
 		private Dimensions size;
 		private final Map<Hint, Integer> hints = new HashMap<>();
-		private Monitor monitor;
+//		private Monitor monitor;
 
 		/**
 		 * Sets the window title.
@@ -281,19 +278,19 @@ public final class Window extends TransientNativeObject {
 		}
 		// TODO - error if arg=1 and enabled by default? or add all enabled and REMOVE? i.e. toggles
 
-		public Builder hint(Hint hint, boolean enable) {
-			return hint(hint, NativeBooleanConverter.toInteger(enable));
-		}
+//		public Builder hint(Hint hint, boolean enable) {
+//			return hint(hint, NativeBooleanConverter.toInteger(enable));
+//		}
 
-		/**
-		 * Sets the monitor for a full screen window.
-		 * @param monitor Monitor
-		 * @see Monitor#monitors(Desktop)
-		 */
-		public Builder monitor(Monitor monitor) {
-			this.monitor = requireNonNull(monitor);
-			return this;
-		}
+//		/**
+//		 * Sets the monitor for a full screen window.
+//		 * @param monitor Monitor
+//		 * @see Monitor#monitors(Desktop)
+//		 */
+//		public Builder monitor(Monitor monitor) {
+//			this.monitor = requireNonNull(monitor);
+//			return this;
+//		}
 
 		/**
 		 * Constructs this window.
@@ -312,11 +309,11 @@ public final class Window extends TransientNativeObject {
 			}
 
 			// Create window
-			final Pointer window = lib.glfwCreateWindow(size.width(), size.height(), title, monitor, null);
+			final Handle window = lib.glfwCreateWindow(size.width(), size.height(), title, null/*monitor*/, null);
 			if(window == null) throw new RuntimeException("Window cannot be created");
 
 			// Create domain object
-			return new Window(new Handle(window), desktop);
+			return new Window(window, desktop);
 		}
 	}
 }

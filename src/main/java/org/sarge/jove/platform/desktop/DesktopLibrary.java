@@ -1,13 +1,12 @@
 package org.sarge.jove.platform.desktop;
 
-import com.sun.jna.*;
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.lib.*;
 
 /**
  * GLFW API.
  * @author Sarge
  */
-interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMonitor, DesktopLibraryDevice, DesktopLibraryJoystick {
+interface DesktopLibrary extends DesktopLibraryWindow, DesktopLibraryDevice { // TODO , DesktopLibraryMonitor, DesktopLibraryJoystick {
 	/**
 	 * Sets an initialisation hint.
 	 * @param hint		Hint
@@ -26,23 +25,24 @@ interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMo
 	 */
 	void glfwTerminate();
 
-	/**
-	 * Error callback.
-	 */
-	interface ErrorCallback extends Callback {
-		/**
-		 * Notifies a GLFW error.
-		 * @param error				Error code
-		 * @param description		Description
-		 */
-		void error(int error, String description);
-	}
-
-	/**
-	 * Registers an error handler.
-	 * @param callback Error handler
-	 */
-	void glfwSetErrorCallback(ErrorCallback callback);
+//	/**
+//	 * Error callback.
+//	 */
+//	interface ErrorCallback extends Callback {
+//		/**
+//		 * Notifies a GLFW error.
+//		 * @param error				Error code
+//		 * @param description		Description
+//		 */
+//		void error(int error, String description);
+//	}
+//
+//	/**
+//	 * Registers an error handler.
+//	 * @param callback Error handler
+//	 */
+//	void glfwSetErrorCallback(ErrorCallback callback);
+// TODO
 
 	/**
 	 * @return GLFW version
@@ -56,8 +56,8 @@ interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMo
 
 	/**
 	 * Enumerates the required vulkan extensions for this platform.
-	 * @param count Number of results
-	 * @return Vulkan extensions (pointer to array of strings)
+	 * @param count Number of extensions
+	 * @return Vulkan extensions
 	 */
-	Pointer glfwGetRequiredInstanceExtensions(IntByReference count);
+	StringArray glfwGetRequiredInstanceExtensions(IntegerReference count);
 }

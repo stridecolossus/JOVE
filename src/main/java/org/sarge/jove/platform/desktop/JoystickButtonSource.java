@@ -9,9 +9,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.Source;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.lib.IntegerReference;
 
 /**
  * Event source for joystick buttons.
@@ -73,9 +71,10 @@ class JoystickButtonSource implements Source<Button<Action>> {
 	 * Queries the button values for this joystick.
 	 */
 	private byte[] getButtonArray() {
-		final IntByReference count = desktop.factory().integer();
-		final Pointer ptr = desktop.library().glfwGetJoystickButtons(id, count);
-		return ptr.getByteArray(0, count.getValue());
+		final IntegerReference count = desktop.factory().integer();
+		//final Pointer ptr = desktop.library().glfwGetJoystickButtons(id, count);
+		//return ptr.getByteArray(0, count.getValue());
+		return null; // TODO
 	}
 
 	/**

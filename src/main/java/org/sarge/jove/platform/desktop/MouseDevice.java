@@ -85,7 +85,8 @@ public class MouseDevice implements Device {
 
 		@Override
 		public BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
-			return lib::glfwSetCursorPosCallback;
+//			return lib::glfwSetCursorPosCallback;
+			return null;
 		}
 	}
 
@@ -119,7 +120,8 @@ public class MouseDevice implements Device {
 
 		@Override
 		public BiConsumer<Window, MouseButtonListener> method(DesktopLibrary lib) {
-			return lib::glfwSetMouseButtonCallback;
+//			return lib::glfwSetMouseButtonCallback;
+			return null;
 		}
 	}
 
@@ -147,7 +149,8 @@ public class MouseDevice implements Device {
 
 		@Override
 		public BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
-			return lib::glfwSetScrollCallback;
+//			return lib::glfwSetScrollCallback;
+			return null;
 		}
 	}
 }

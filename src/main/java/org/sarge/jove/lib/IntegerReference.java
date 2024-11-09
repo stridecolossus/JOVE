@@ -1,27 +1,35 @@
 package org.sarge.jove.lib;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
-import java.lang.foreign.*;
+import java.lang.foreign.Arena;
 
 /**
- * An <i>integer reference</i> maps a mutable integer to a native integer-by-reference.
+ * An <i>integer reference</i> maps to a native integer-by-reference value.
  * @author Sarge
  */
-public class IntegerReference {
-	private final MemorySegment address;
-
+public final class IntegerReference extends Address {
+	/**
+	 * Constructor.
+	 * @param arena Arena
+	 */
 	public IntegerReference(Arena arena) {
-		this.address = arena.allocate(JAVA_INT);
+		super(arena.allocate(ADDRESS));
 	}
 
+	/**
+	 * @return Integer value
+	 */
 	public int value() {
-		return address.get(JAVA_INT, 0);
+		return this.address().get(JAVA_INT, 0);
 	}
 
-	@Override
-	public int hashCode() {
-		return address.hashCode();
+	/**
+	 * Sets this integer reference.
+	 * @param value Integer reference
+	 */
+	public void set(int value) {
+		this.address().set(JAVA_INT, 0, value);
 	}
 
 	@Override
@@ -32,25 +40,20 @@ public class IntegerReference {
 				(this.value() == that.value());
 	}
 
+	@Override
+	public String toString() {
+		return String.format("IntegerReference[%d]", value());
+	}
+
 	/**
-	 * Native mapper for an integer reference.
+	 * Native mapper for an integer-by-reference value.
 	 */
-	public static class IntegerReferenceNativeMapper extends DefaultNativeMapper implements NativeTypeConverter<IntegerReference, MemorySegment> {
+	public static final class IntegerReferenceNativeMapper extends AddressNativeMapper<IntegerReference> {
 		/**
 		 * Constructor.
 		 */
 		public IntegerReferenceNativeMapper() {
-			super(IntegerReference.class, ValueLayout.ADDRESS);
-		}
-
-		@Override
-		public MemorySegment toNative(IntegerReference ref, Class<?> type, Arena arena) {
-			return ref.address;
-		}
-
-		@Override
-		public IntegerReference fromNative(MemorySegment value, Class<?> type) {
-			throw new UnsupportedOperationException();
+			super(IntegerReference.class);
 		}
 	}
 }

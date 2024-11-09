@@ -1,9 +1,8 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.common.Handle;
+import javax.security.auth.callback.Callback;
 
-import com.sun.jna.*;
-import com.sun.jna.ptr.*;
+import org.sarge.jove.lib.*;
 
 /**
  * GLFW window API.
@@ -19,7 +18,7 @@ interface DesktopLibraryWindow {
 	 * @param shared		Optional shared window
 	 * @return Window handle
 	 */
-	Pointer glfwCreateWindow(int w, int h, String title, Monitor monitor, Window shared);
+	Handle glfwCreateWindow(int w, int h, String title, Handle /*Monitor*/ monitor, Window shared);
 
 	/**
 	 * Destroys a window.
@@ -47,7 +46,7 @@ interface DesktopLibraryWindow {
 	 * @param surface			Returned surface handle
 	 * @return Result
 	 */
-	int glfwCreateWindowSurface(Handle instance, Window window, Pointer allocator, PointerByReference surface);
+	int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, PointerReference surface);
 
 	/**
 	 * @param window Window
@@ -76,7 +75,7 @@ interface DesktopLibraryWindow {
 	 * @param w			Width
 	 * @param h			Height
 	 */
-	void glfwGetWindowSize(Window window, IntByReference w, IntByReference h);
+	void glfwGetWindowSize(Window window, IntegerReference w, IntegerReference h);
 
 	/**
 	 * Sets the window dimensions.
@@ -86,12 +85,12 @@ interface DesktopLibraryWindow {
 	 */
 	void glfwSetWindowSize(Window window, int w, int h);
 
-	/**
-	 * Retrieves the monitor for a full sized window.
-	 * @param window Window
-	 * @return Monitor or {@code null} if not full screen
-	 */
-	Monitor glfwGetWindowMonitor(Window window);
+//	/**
+//	 * Retrieves the monitor for a full sized window.
+//	 * @param window Window
+//	 * @return Monitor or {@code null} if not full screen
+//	 */
+//	Monitor glfwGetWindowMonitor(Window window);
 
 	/**
 	 * Listener for window events represented by a boolean state, e.g. window focus.
@@ -103,31 +102,31 @@ interface DesktopLibraryWindow {
 		 * @param window		Window
 		 * @param state			State
 		 */
-		void state(Pointer window, int state);
+		void state(Handle window, int state);
 	}
 
-	void glfwSetWindowCloseCallback(Window window, WindowStateListener listener);
-
-	/**
-	 * Sets the focus listener of a window.
-	 * @param window		Window
-	 * @param listener		Focus listener
-	 */
-	void glfwSetWindowFocusCallback(Window window, WindowStateListener listener);
-
-	/**
-	 * Registers a cursor enter/leave listener.
-	 * @param window		Window
-	 * @param listener		Cursor listener
-	 */
-	void glfwSetCursorEnterCallback(Window window, WindowStateListener listener);
-
-	/**
-	 * Sets the iconify listener of a window.
-	 * @param window		Window
-	 * @param listener		Iconify listener
-	 */
-	void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
+//	void glfwSetWindowCloseCallback(Window window, WindowStateListener listener);
+//
+//	/**
+//	 * Sets the focus listener of a window.
+//	 * @param window		Window
+//	 * @param listener		Focus listener
+//	 */
+//	void glfwSetWindowFocusCallback(Window window, WindowStateListener listener);
+//
+//	/**
+//	 * Registers a cursor enter/leave listener.
+//	 * @param window		Window
+//	 * @param listener		Cursor listener
+//	 */
+//	void glfwSetCursorEnterCallback(Window window, WindowStateListener listener);
+//
+//	/**
+//	 * Sets the iconify listener of a window.
+//	 * @param window		Window
+//	 * @param listener		Iconify listener
+//	 */
+//	void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
 
 	/**
 	 * Listener for window resize events.
@@ -139,13 +138,13 @@ interface DesktopLibraryWindow {
 		 * @param width			Width
 		 * @param height		Height
 		 */
-		void resize(Pointer window, int width, int height);
+		void resize(Handle window, int width, int height);
 	}
 
-	/**
-	 * Sets the resize listener of a window.
-	 * @param window		Window
-	 * @param listener		Resize listener
-	 */
-	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
+//	/**
+//	 * Sets the resize listener of a window.
+//	 * @param window		Window
+//	 * @param listener		Resize listener
+//	 */
+//	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
 }

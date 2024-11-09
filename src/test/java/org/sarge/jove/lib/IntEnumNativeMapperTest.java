@@ -1,6 +1,6 @@
 package org.sarge.jove.lib;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.ValueLayout;
 
@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.util.IntEnum;
 
 class IntEnumNativeMapperTest {
-
 	private static enum MockEnum implements IntEnum {
 		INSTANCE;
 
@@ -37,12 +36,12 @@ class IntEnumNativeMapperTest {
 
 	@Test
 	void toNative() {
-		assertEquals(42, mapper.toNative(MockEnum.INSTANCE, IntEnum.class, null));
+		assertEquals(42, mapper.toNative(MockEnum.INSTANCE, null));
 	}
 
 	@Test
 	void toNativeNull() {
-		assertEquals(42, mapper.toNative(MockEnum.INSTANCE, IntEnum.class, null));
+		assertEquals(42, mapper.toNativeNull(MockEnum.class));
 	}
 
 	@Test
@@ -52,6 +51,6 @@ class IntEnumNativeMapperTest {
 
 	@Test
 	void fromNativeNull() {
-		assertEquals(MockEnum.INSTANCE, mapper.fromNative(null, MockEnum.class));
+		assertThrows(NullPointerException.class, () -> mapper.fromNative(null, MockEnum.class));
 	}
 }

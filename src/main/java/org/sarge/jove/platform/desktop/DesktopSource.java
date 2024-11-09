@@ -2,10 +2,10 @@ package org.sarge.jove.platform.desktop;
 
 import java.util.function.*;
 
+import javax.security.auth.callback.Callback;
+
 import org.sarge.jove.control.Event;
 import org.sarge.jove.control.Event.Source;
-
-import com.sun.jna.Callback;
 
 /**
  * A <i>desktop source</i> is a template for an event source based on a GLFW callback.
@@ -21,7 +21,7 @@ import com.sun.jna.Callback;
  * @param <E> Event type
  * @author Sarge
  */
-interface DesktopSource<T extends Callback, E extends Event> extends Source<E> {
+interface DesktopSource<T /*extends Callback*/, E extends Event> extends Source<E> {
 	/**
 	 * @return Parent window
 	 */
@@ -51,13 +51,13 @@ interface DesktopSource<T extends Callback, E extends Event> extends Source<E> {
 		// Register listener
 		if(handler == null) {
 			method.accept(window, null);
-			window.remove(handler);
+//			window.remove(handler);
 			return null;
 		}
 		else {
 			final T listener = listener(handler);
 			method.accept(window, listener);
-			window.register(handler, listener);
+//			window.register(handler, listener);
 			return listener;
 		}
 	}

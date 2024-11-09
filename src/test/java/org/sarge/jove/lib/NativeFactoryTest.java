@@ -12,10 +12,13 @@ class NativeFactoryTest {
 
 	@BeforeEach
 	void before() {
+		final var registry = new NativeMapperRegistry();
+		registry.add(new DefaultNativeMapper<>(int.class, ValueLayout.JAVA_INT));
 		lookup = Linker.nativeLinker().defaultLookup();
-		factory = new NativeFactory();
+		factory = new NativeFactory(registry);
 	}
 
+	@DisplayName("A proxy for a native API can be constructed by the factory")
 	@Test
 	void build() {
 		@SuppressWarnings("unused")
@@ -27,6 +30,16 @@ class NativeFactoryTest {
 		assertEquals(42, lib.abs(-42));
 	}
 
+	@DisplayName("A native API method must use supported parameter and return types")
+	@Test
+	void unsupported() {
+		interface Unsupported {
+			void doh(String s);
+		}
+		assertThrows(IllegalArgumentException.class, () -> factory.build(lookup, Unsupported.class));
+	}
+
+	@DisplayName("A native API must be defined by an interface")
 	@Test
 	void invalid() {
 		assertThrows(IllegalArgumentException.class, () -> factory.build(lookup, Object.class));

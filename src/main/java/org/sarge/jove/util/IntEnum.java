@@ -57,6 +57,10 @@ public interface IntEnum {
 		return (ReverseMapping<E>) ReverseMapping.get(type);
 	}
 
+	/////////////////////
+
+	// TODO
+
 	/**
 	 * JNA type converter for an integer enumeration.
 	 */
@@ -68,55 +72,59 @@ public interface IntEnum {
 
 		@Override
 		public Object toNative(Object value, ToNativeContext context) {
-			if(value instanceof IntEnum e) {
-				return e.value();
-			}
-			else {
-				return 0;
-			}
+//			if(value instanceof IntEnum e) {
+//				return e.value();
+//			}
+//			else {
+//				return 0;
+//			}
+			return null;
 		}
 
 		@Override
 		public Object fromNative(Object nativeValue, FromNativeContext context) {
-			// Validate enumeration
-			final Class<?> type = context.getTargetType();
-			if(!IntEnum.class.isAssignableFrom(type)) throw new RuntimeException("Invalid native enumeration class: " + type.getSimpleName());
-
-			// Map native value
-			final ReverseMapping<?> mapping = ReverseMapping.get(type);
-			if(nativeValue == null) {
-				return mapping.def;
-			}
-			else {
-				final int num = (int) nativeValue;
-				if(num == 0) {
-					return mapping.def;
-				}
-				else {
-					return mapping.map(num);
-				}
-			}
+			return null;
+//			// Validate enumeration
+//			final Class<?> type = context.getTargetType();
+//			if(!IntEnum.class.isAssignableFrom(type)) throw new RuntimeException("Invalid native enumeration class: " + type.getSimpleName());
+//
+//			// Map native value
+//			final ReverseMapping<?> mapping = ReverseMapping.get(type);
+//			if(nativeValue == null) {
+//				return mapping.def;
+//			}
+//			else {
+//				final int num = (int) nativeValue;
+//				if(num == 0) {
+//					return mapping.def;
+//				}
+//				else {
+//					return mapping.map(num);
+//				}
+//			}
 		}
 	};
+
+	/////////////////////
 
 	/**
 	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers <i>to</i> the enumeration constants.
 	 * Note that constants with duplicate values within an enumeration are silently ignored by this implementation.
 	 * @param <E> Integer enumeration
 	 */
-	final class ReverseMapping<E extends IntEnum> {
+	public final class ReverseMapping<E extends IntEnum> {
 		private static final Map<Class<?>, ReverseMapping<?>> CACHE = new ConcurrentHashMap<>();
 
 		/**
 		 * Looks up the reverse mapping for the given enumeration.
+		 * This method is thread-safe.
 		 * @param <E> Enumeration
-		 * @param clazz Enumeration class
+		 * @param type Enumeration class
 		 * @return Reverse mapping
 		 */
 		@SuppressWarnings("unchecked")
-//		private
-		public static ReverseMapping<?> get(Class<?> clazz) {
-			return CACHE.computeIfAbsent(clazz, ReverseMapping::new);
+		public static ReverseMapping<?> get(Class<?> type) {
+			return CACHE.computeIfAbsent(type, ReverseMapping::new);
 		}
 
 		private final Map<Integer, E> map;
@@ -132,20 +140,24 @@ public interface IntEnum {
 			this.def = map.getOrDefault(0, array[0]);
 		}
 
-		// TODO
+		/**
+		 * @return Default value for this enumeration
+		 */
 		public E defaultValue() {
 			return def;
 		}
 
 		/**
 		 * Maps an enumeration literal to the corresponding enumeration constant.
-		 * @param value Literal
+		 * @param value Native literal
 		 * @return Constant
 		 * @throws IllegalArgumentException if the enumeration does not contain the given value
 		 */
 		public E map(int value) {
 			final E constant = map.get(value);
-			if(constant == null) throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass().getSimpleName()));
+			if(constant == null) {
+				throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass()));
+			}
 			return constant;
 		}
 	}

@@ -22,18 +22,18 @@ class NativeMapperRegistryTest {
 
 	@Test
 	void add() {
-		final var mapper = new DefaultNativeMapper(int.class, ValueLayout.JAVA_INT);
+		final var mapper = new DefaultNativeMapper<>(int.class, ValueLayout.JAVA_INT);
 		registry.add(mapper);
 		assertEquals(Optional.of(mapper), registry.mapper(int.class));
 	}
 
 	@Nested
 	class DerivedTypeTests {
-		private NativeMapper mapper;
+		private NativeMapper<?> mapper;
 
 		@BeforeEach
     	void before() {
-    		mapper = new DefaultNativeMapper(Number.class, ValueLayout.JAVA_INT);
+    		mapper = new DefaultNativeMapper<>(Number.class, ValueLayout.JAVA_INT);
     		registry.add(mapper);
     	}
 

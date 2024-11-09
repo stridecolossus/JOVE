@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.audio;
 
-import static org.sarge.jove.platform.audio.AudioParameter.*;
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.audio.AudioParameter.*;
 
 import java.util.List;
 

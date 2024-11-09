@@ -20,10 +20,12 @@ class NativeMethodTest {
 	}
 
 	private Arena arena;
+	private NativeMapper<?> mapper;
 
 	@BeforeEach
 	void before() {
 		arena = Arena.ofAuto();
+		mapper = new DefaultNativeMapper<>(int.class, ValueLayout.JAVA_INT);
 	}
 
 	@DisplayName("The number of native mappers must match the method signature")
@@ -39,7 +41,6 @@ class NativeMethodTest {
 	void missingReturnType() throws Exception {
 		final Method method = MockLibrary.class.getMethod("abs", int.class);
 		final MethodHandle handle = MethodHandles.lookup().unreflect(method);
-		final var mapper = new DefaultNativeMapper(int.class, ValueLayout.JAVA_INT);
 		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(method, handle, List.of(mapper), null));
 	}
 
@@ -48,7 +49,6 @@ class NativeMethodTest {
 	void superfluousReturnType() throws Exception {
 		final Method method = MockLibrary.class.getMethod("cobblers");
 		final MethodHandle handle = MethodHandles.lookup().unreflect(method);
-		final var mapper = new DefaultNativeMapper(int.class, ValueLayout.JAVA_INT);
 		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(method, handle, List.of(), mapper));
 	}
 
@@ -64,7 +64,6 @@ class NativeMethodTest {
 		final MethodHandle handle = linker.downcallHandle(abs, descriptor);
 
 		// Create native method wrapper
-		final var mapper = new DefaultNativeMapper(int.class, ValueLayout.JAVA_INT);
 		final var wrapper = new NativeMethod(method, handle, List.of(mapper), mapper);
 
 		// Invoke
@@ -80,7 +79,7 @@ class NativeMethodTest {
 		@BeforeEach
 		void before() {
 			registry = new NativeMapperRegistry();
-			registry.add(new DefaultNativeMapper(int.class, ValueLayout.JAVA_INT));
+			registry.add(mapper);
 			lookup = Linker.nativeLinker().defaultLookup();
 			factory = new Factory(lookup, registry);
 		}

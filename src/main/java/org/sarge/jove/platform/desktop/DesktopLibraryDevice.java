@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import com.sun.jna.*;
+import org.sarge.jove.lib.Handle;
 
 /**
  * GLFW device API.
@@ -23,7 +23,7 @@ interface DesktopLibraryDevice {
 	/**
 	 * Listener for key events.
 	 */
-	interface KeyListener extends Callback {
+	interface KeyListener { // extends Callback {
 		/**
 		 * Notifies a key event.
 		 * @param window			Window
@@ -32,7 +32,7 @@ interface DesktopLibraryDevice {
 		 * @param action			Key action
 		 * @param mods				Modifiers
 		 */
-		void key(Pointer window, int key, int scancode, int action, int mods);
+		void key(Handle window, int key, int scancode, int action, int mods);
 	}
 
 	/**
@@ -40,19 +40,19 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Key listener
 	 */
-	void glfwSetKeyCallback(Window window, KeyListener listener);
+//	void glfwSetKeyCallback(Window window, KeyListener listener);
 
 	/**
 	 * Listener for mouse pointer and scroll wheel events.
 	 */
-	interface MouseListener extends Callback {
+	interface MouseListener { // extends Callback {
 		/**
 		 * Notifies a mouse event.
 		 * @param window	Window
 		 * @param x			X coordinate
 		 * @param y			Y coordinate
 		 */
-		void event(Pointer window, double x, double y);
+		void event(Handle window, double x, double y);
 	}
 
 	/**
@@ -60,19 +60,19 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse movement listener
 	 */
-	void glfwSetCursorPosCallback(Window window, MouseListener listener);
+//	void glfwSetCursorPosCallback(Window window, MouseListener listener);
 
 	/**
 	 * Registers a mouse scroll listener.
 	 * @param window		Window
 	 * @param listener		Mouse scroll listener
 	 */
-	void glfwSetScrollCallback(Window window, MouseListener listener);
+//	void glfwSetScrollCallback(Window window, MouseListener listener);
 
 	/**
 	 * Listener for mouse button events.
 	 */
-	interface MouseButtonListener extends Callback {
+	interface MouseButtonListener { // extends Callback {
 		/**
 		 * Notifies a mouse button event.
 		 * @param window	window
@@ -80,7 +80,7 @@ interface DesktopLibraryDevice {
 		 * @param action	Button action
 		 * @param mods		Modifiers
 		 */
-		void button(Pointer window, int button, int action, int mods);
+		void button(Handle window, int button, int action, int mods);
 	}
 
 	/**
@@ -88,5 +88,5 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse button listener
 	 */
-	void glfwSetMouseButtonCallback(Window window, MouseButtonListener listener);
+//	void glfwSetMouseButtonCallback(Window window, MouseButtonListener listener);
 }
