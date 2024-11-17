@@ -1,5 +1,7 @@
 package org.sarge.jove.lib;
 
+import static java.util.Objects.requireNonNull;
+
 import java.lang.foreign.*;
 import java.util.*;
 
@@ -33,13 +35,39 @@ public abstract class NativeStructure {
 	 * The <i>structure native mapper</i> marshals a {@link NativeStructure} to/from its native representation.
 	 */
 	public static class StructureNativeMapper extends DefaultNativeMapper<NativeStructure, MemorySegment> {
-	    private final Map<Class<? extends NativeStructure>, List<FieldMapping>> mappings = new HashMap<>();
+		/**
+		 * Structure metadata.
+		 */
+		private record Entry(StructLayout layout, List<FieldMapping> mappings) {
+		}
+
+		private final Map<Class<? extends NativeStructure>, Entry> entries = new HashMap<>();
+		private final NativeMapperRegistry registry;
 
 	    /**
 		 * Constructor.
+		 * @param registry Native mappers
 		 */
-		public StructureNativeMapper() {
+		public StructureNativeMapper(NativeMapperRegistry registry) {
 			super(NativeStructure.class, ValueLayout.ADDRESS);
+			this.registry = requireNonNull(registry);
+		}
+
+		/**
+		 * Retrieves the metadata for the given structure.
+		 */
+		private Entry entry(NativeStructure structure) {
+			return entries.computeIfAbsent(structure.getClass(), __ -> create(structure));
+		}
+
+		/**
+		 * Builds the metadata for the given structure.
+		 */
+		private Entry create(NativeStructure structure) {
+			final StructLayout layout = structure.layout();
+			final Class<? extends NativeStructure> type = structure.getClass();
+			final List<FieldMapping> mappings = FieldMapping.build(layout, type, registry);
+			return new Entry(layout, mappings);
 		}
 
 		@Override
@@ -51,27 +79,46 @@ public abstract class NativeStructure {
 			return pointer.address();
 		}
 
+		/**
+		 * Marshals the given structure to off-heap memory.
+		 */
 		private void populate(NativeStructure structure, NativeContext context) {
 			// Allocate off-heap structure memory
-			final StructLayout layout = structure.layout();
-			final MemorySegment address = structure.pointer.allocate(layout, context);
+			final Entry entry = entry(structure);
+			final MemorySegment address = structure.pointer.allocate(entry.layout, context);
 
-			// Build field mappings
-			final Class<? extends NativeStructure> type = structure.getClass();
-			final List<FieldMapping> map = mappings.computeIfAbsent(type, __ -> FieldMapping.build(layout, type, context.registry()));
-
-			// Populate memory from structure fields
-			for(FieldMapping m : map) {
+			// Populate off-heap memory from structure
+			for(FieldMapping m : entry.mappings) {
 				m.toNative(structure, address, context);
 			}
 		}
 
 		@Override
-		public Object fromNative(MemorySegment value, Class<? extends NativeStructure> type) {
-//			final Class<? extends NativeStructure> type = this.getClass();
-//			final List<FieldMapping> map = mappings.computeIfAbsent(type, __ -> FieldMapping.build(layout, type, context.registry()));
-			// TODO
-			throw new UnsupportedOperationException();
+		public Object fromNative(MemorySegment address, Class<? extends NativeStructure> type) {
+			// Create new structure and lookup metadata
+			final var structure = create(type);
+			final Entry entry = entry(structure);
+
+			// Populate structure from off-heap memory
+			final MemorySegment pointer = address.reinterpret(entry.layout.byteSize());
+			for(FieldMapping m : entry.mappings) {
+				m.fromNative(pointer, structure);
+			}
+			// TODO - reset pointer?
+
+			return structure;
+		}
+
+		/**
+		 * Instantiates a new structure instance of the given type.
+		 */
+		private static NativeStructure create(Class<? extends NativeStructure> type) {
+			try {
+				return type.getDeclaredConstructor().newInstance();
+			}
+			catch(Exception e) {
+				throw new RuntimeException("Error creating structure return value: " + type, e);
+			}
 		}
 	}
 }

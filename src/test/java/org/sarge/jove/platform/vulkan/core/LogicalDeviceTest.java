@@ -168,7 +168,7 @@ public class LogicalDeviceTest {
 		@DisplayName("A required extension must be available to the logical device")
 		@Test
 		void invalidExtension() {
-			assertThrows(IllegalArgumentException.class, () -> builder.extension(Handler.EXTENSION));
+			assertThrows(IllegalArgumentException.class, () -> builder.extension(DiagnosticHandler.EXTENSION));
 		}
 	}
 }

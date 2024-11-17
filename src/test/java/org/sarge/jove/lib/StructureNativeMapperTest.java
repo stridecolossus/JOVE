@@ -9,11 +9,20 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.lib.NativeStructure.StructureNativeMapper;
 
 class StructureNativeMapperTest {
+	protected static class MockStructure extends NativeStructure {
+		public int field = 2;
+
+		@Override
+		public StructLayout layout() {
+			return MemoryLayout.structLayout(JAVA_INT.withName("field"));
+		}
+	}
+
 	private StructureNativeMapper mapper;
 
 	@BeforeEach
 	void before() {
-		mapper = new StructureNativeMapper();
+		mapper = new StructureNativeMapper(NativeMapperRegistry.create());
 	}
 
 	@Test
@@ -24,16 +33,7 @@ class StructureNativeMapperTest {
 
 	@Test
 	void toNative() {
-		final var structure = new NativeStructure() {
-			@SuppressWarnings("unused")
-			public int field = 2;
-
-			@Override
-			public StructLayout layout() {
-				return MemoryLayout.structLayout(JAVA_INT.withName("field"));
-			}
-		};
-		final MemorySegment address = mapper.toNative(structure, new NativeContext());
+		final MemorySegment address = mapper.toNative(new MockStructure(), new NativeContext());
 		assertEquals(2, address.get(JAVA_INT, 0));
 	}
 
@@ -44,6 +44,8 @@ class StructureNativeMapperTest {
 
 	@Test
 	void fromNative() {
-		// TODO
+		final MemorySegment address = mapper.toNative(new MockStructure(), new NativeContext());
+		final var result = (MockStructure) mapper.fromNative(address, MockStructure.class);
+		assertEquals(2, result.field);
 	}
 }

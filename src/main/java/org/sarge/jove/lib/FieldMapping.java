@@ -8,6 +8,8 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.*;
 import java.util.*;
 
+import org.sarge.jove.lib.NativeMapper.ReturnMapper;
+
 /**
  * A <i>field mapping</i> is used to marshal a structure field to/from its native representation.
  * @author Sarge
@@ -30,9 +32,9 @@ class FieldMapping {
 	}
 
 	/**
-	 * Marshals the fields of the given structure.
+	 * Marshals the fields of the given structure to off-heap memory.
 	 * @param structure		Structure
-	 * @param address		Off-heap instance
+	 * @param address		Off-heap memory
 	 * @param context		Context
 	 */
 	void toNative(NativeStructure structure, MemorySegment address, NativeContext context) {
@@ -40,10 +42,6 @@ class FieldMapping {
 		final Object actual = context.toNative(mapper, value, field.getType());
 //System.out.println("field " + field + " [" + value + "] -> [" + actual + "]");
 		handle.set(address, 0L, actual);
-	}
-
-	void fromNative(MemorySegment address, NativeStructure structure) {
-		// TODO
 	}
 
 	/**
@@ -56,12 +54,34 @@ class FieldMapping {
 			return field.get(structure);
 		}
 		catch(Exception e) {
-			throw new RuntimeException(String.format("Cannot retrieve structure field %s.%s", structure, field), e);
+			throw new RuntimeException(String.format("Cannot retrieve structure field %s.%s", structure, field.getName()), e);
 		}
 	}
 
+	/**
+	 * Marshals off-heap memory to the given structure.
+	 * @param address		Off-heap memory
+	 * @param structure		Structure
+	 */
+	void fromNative(MemorySegment address, NativeStructure structure) {
+		final Object value = handle.get(address, 0L);
+		final var m = (ReturnMapper) mapper;
+		final Object actual = m.fromNative(value, field.getType());
+		set(structure, actual);
+	}
+
+	/**
+	 * Populates a structure field.
+	 * @param structure		Structure
+	 * @param value			Field value
+	 */
 	private void set(NativeStructure structure, Object value) {
-		// TODO
+		try {
+			field.set(structure, value);
+		}
+		catch(Exception e) {
+			throw new RuntimeException(String.format("Cannot populated structure field %s.%s with %s", structure, field.getName(), value), e);
+		}
 	}
 
 	@Override
@@ -121,7 +141,7 @@ class FieldMapping {
 					return layout.varHandle(PathElement.groupElement(name));
 				}
 				catch(IllegalArgumentException e) {
-					throw new IllegalArgumentException(String.format("%s for structure field %s.%s", e, name, type));
+					throw new IllegalArgumentException(String.format("Error establishing handle for structure field %s.%s", name, type), e);
 				}
 			}
 		};

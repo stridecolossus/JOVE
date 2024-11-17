@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.util.ValidationLayer;
  */
 public class Instance extends TransientNativeObjectTEMP {
 	private final Vulkan vulkan;
-	private final Collection<Handler> handlers = new ArrayList<>();
+	private final Collection<DiagnosticHandler> handlers = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -67,11 +67,11 @@ public class Instance extends TransientNativeObjectTEMP {
 	 * Creates a builder for a diagnostic handler to attach to this instance.
 	 * @return Diagnostic handler builder
 	 */
-	public Handler.Builder handler() {
-		return new Handler.Builder(this) {
+	public DiagnosticHandler.Builder handler() {
+		return new DiagnosticHandler.Builder(this) {
 			@Override
-			public Handler build() {
-				final Handler handler = super.build();
+			public DiagnosticHandler build() {
+				final DiagnosticHandler handler = super.build();
 				handlers.add(handler);
 				return handler;
 			}
@@ -80,7 +80,7 @@ public class Instance extends TransientNativeObjectTEMP {
 
 	@Override
 	protected void release() {
-		for(Handler handler : handlers) {
+		for(DiagnosticHandler handler : handlers) {
 			//handler.destroy();
 		}
 		handlers.clear();

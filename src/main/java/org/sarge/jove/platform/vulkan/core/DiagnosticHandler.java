@@ -6,12 +6,12 @@ import static java.util.stream.Collectors.joining;
 import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.lang.foreign.*;
-import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.invoke.*;
 import java.util.*;
 import java.util.function.Consumer;
 
 import org.sarge.jove.lib.*;
+import org.sarge.jove.lib.NativeStructure.StructureNativeMapper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -20,7 +20,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * A <i>handler</i> is a consumer for Vulkan diagnostic messages.
  * @author Sarge
  */
-public class Handler extends TransientNativeObjectTEMP {
+public class DiagnosticHandler extends TransientNativeObjectTEMP {
 	/**
 	 * Debug utility extension name.
 	 */
@@ -33,7 +33,7 @@ public class Handler extends TransientNativeObjectTEMP {
 	 * @param handle 		Handle
 	 * @param instance		Parent instance
 	 */
-	Handler(Handle handle, Instance instance) {
+	DiagnosticHandler(Handle handle, Instance instance) {
 		super(handle);
 		this.instance = requireNonNull(instance);
 	}
@@ -51,7 +51,7 @@ public class Handler extends TransientNativeObjectTEMP {
 	 * @return Destroy method for this handler
 	 */
 	private static NativeMethod destroy(MemorySegment address, NativeMapperRegistry registry) {
-		final Class<?>[] signature = {Instance.class, Handler.class, Handle.class};
+		final Class<?>[] signature = {Instance.class, DiagnosticHandler.class, Handle.class};
 		return new NativeMethod.Builder(registry)
 				.address(address)
 				.signature(signature)
@@ -125,7 +125,7 @@ public class Handler extends TransientNativeObjectTEMP {
 	/**
 	 * Message callback.
 	 * <p>
-	 * Note that callback signature is not defined in the Vulkan API.
+	 * Note that the callback signature is not defined in the Vulkan API.
 	 * <p>
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
@@ -134,9 +134,16 @@ public class Handler extends TransientNativeObjectTEMP {
 		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = IntEnum.reverse(VkDebugUtilsMessageType.class);
 
 		private final Consumer<Message> consumer;
+		private final StructureNativeMapper mapper;
 
-		MessageCallback(Consumer<Message> consumer) {
+		/**
+		 * Constructor.
+		 * @param consumer		Message handler
+		 * @param registry		Native mappers
+		 */
+		MessageCallback(Consumer<Message> consumer, NativeMapperRegistry registry) {
 			this.consumer = requireNonNull(consumer);
+			this.mapper = new StructureNativeMapper(registry);
 		}
 
 		/**
@@ -145,24 +152,20 @@ public class Handler extends TransientNativeObjectTEMP {
 		 * @param type				Message type(s) bitfield
 		 * @param pCallbackData		Data
 		 * @param pUserData			Optional user data (always {@code null})
-		 * @return Whether to continue execution (always {@code false})
+		 * @return {@code false}
 		 */
 		@SuppressWarnings("unused")
 		public boolean message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
+			// Transform the message properties
 			final var types = new BitMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
 			final var level = SEVERITY.map(severity);
-			System.out.println(types);
-			System.out.println(level);
-//			final Message message = new Message(SEVERITY.map(severity), types, pCallbackData);
-			// TODO - unmarshal
-//			consumer.accept(message);
 
-			final StructLayout layout = new VkDebugUtilsMessengerCallbackData().layout();
-			final VarHandle msg = layout.varHandle(PathElement.groupElement("pMessage"));
-			pCallbackData = pCallbackData.reinterpret(layout.byteSize());
-			System.out.println("msg="+((MemorySegment) msg.get(pCallbackData, 0)).getString(0));
+			// Unmarshal the message structure
+			final var data = mapper.fromNative(pCallbackData, VkDebugUtilsMessengerCallbackData.class);
 
-			//new Message(level, types, null);
+			// Handle message
+			final Message message = new Message(level, types, (VkDebugUtilsMessengerCallbackData) data);
+			consumer.accept(message);
 
 			return false;
 		}
@@ -279,12 +282,12 @@ public class Handler extends TransientNativeObjectTEMP {
 		/**
 		 * Builds this handler and attaches it to the given instance.
 		 */
-		public Handler build() {
+		public DiagnosticHandler build() {
 			init();
-			final var callback = new MessageCallback(consumer);
+			final var callback = new MessageCallback(consumer, registry);
 			final var info = populate(callback.address());
 			final Handle handle = create(info);
-			return new Handler(handle, instance);
+			return new DiagnosticHandler(handle, instance);
 		}
 
 		/**
@@ -329,7 +332,7 @@ public class Handler extends TransientNativeObjectTEMP {
 		private PointerReference invoke(NativeMethod method, VkDebugUtilsMessengerCreateInfoEXT info) {
     		final PointerReference ref = instance.vulkan().factory().pointer();
     		final Object[] args = {instance, info, null, ref};
-    		Vulkan.check((int) Handler.invoke(instance, method, args, registry));
+    		Vulkan.check((int) DiagnosticHandler.invoke(instance, method, args, registry));
     		return ref;
 		}
 	}

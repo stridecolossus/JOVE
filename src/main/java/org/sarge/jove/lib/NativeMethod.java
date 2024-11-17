@@ -75,7 +75,7 @@ public class NativeMethod {
 	public Object invoke(Object[] args, NativeContext context) {
 		final Object[] actual = marshal(args, context);
 		final Object result = execute(actual);
-		return marshalReturnValue(result);
+		return marshalReturnValue(result, context);
 	}
 
 	/**
@@ -114,7 +114,7 @@ public class NativeMethod {
 	/**
 	 * Marshals the return value of this method.
 	 */
-	private Object marshalReturnValue(Object value) {
+	private Object marshalReturnValue(Object value, NativeContext context) {
 		if(returnType == null) {
 			assert value == null;
 			return null;
@@ -124,12 +124,12 @@ public class NativeMethod {
 			return null;
 		}
 		else {
-			return marshalReturnValue(value, returnType);
+			return marshalReturnValue(value, returnType, context);
 		}
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	private static Object marshalReturnValue(Object value, ReturnType returnType) {
+	private static Object marshalReturnValue(Object value, ReturnType returnType, NativeContext context) {
 		return returnType.mapper.fromNative(value, returnType.type);
 	}
 

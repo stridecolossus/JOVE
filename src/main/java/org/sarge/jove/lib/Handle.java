@@ -91,12 +91,12 @@ public final class Handle {
 		}
 
 		@Override
-		public MemorySegment toNative(Handle handle, NativeContext __) {
+		public MemorySegment toNative(Handle handle, NativeContext context) {
 			return handle.address;
 		}
 
 		@Override
-		public Handle fromNative(MemorySegment address, Class<? extends Handle> __) {
+		public Handle fromNative(MemorySegment address, Class<? extends Handle> type) {
 			return new Handle(address);
 		}
 	}

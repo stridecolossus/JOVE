@@ -102,7 +102,7 @@ public class NativeMapperRegistry {
 				new NativeObjectMapper(),
 				new IntegerReferenceNativeMapper(),
 				new PointerReferenceNativeMapper(),
-				new StructureNativeMapper(),
+				new StructureNativeMapper(registry),
 				new StringArrayNativeMapper(), // TODO
 		};
 		for(NativeMapper<?> m : reference) {

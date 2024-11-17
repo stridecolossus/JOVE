@@ -329,7 +329,6 @@ The factory next creates a _invocation handler_ that delegates API calls to the 
 var handler = new InvocationHandler() {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        System.out.println(method);
         NativeMethod delegate = methods.get(method);
         return delegate.invoke(args);
     }
@@ -343,7 +342,7 @@ ClassLoader loader = this.getClass().getClassLoader();
 return (T) Proxy.newProxyInstance(loader, new Class<?>[]{api}, handler);
 ```
 
-This proxy approach enables the API to be defined in terms of Java and JOVE types, while the underlying native methods are implemented using FFM.  The remainder of the framework is concerned with marshalling between these two layers.
+This proxy approach enables the API to be expressed in terms of Java and JOVE types, while the underlying native methods are implemented using FFM.  The remainder of the framework is concerned with marshalling between these two layers.
 
 ### Native Methods
 
@@ -438,8 +437,8 @@ interface API {
     int         glfwInit();
     void        glfwTerminate();
     int         glfwVulkanSupported();
-    //String      glfwGetVersionString();
-    //String[]    glfwGetRequiredInstanceExtensions(&int count);
+    //String    glfwGetVersionString();
+    //String[]  glfwGetRequiredInstanceExtensions(&int count);
 }
 ```
 
@@ -516,7 +515,7 @@ The registered native mapper for a given type can be looked up from the registry
 
 ```java
 public Optional<NativeMapper<?>> mapper(Class<?> type) {
-    final NativeMapper<?> mapper = mappers.get(type);
+    NativeMapper<?> mapper = mappers.get(type);
     if(mapper == null) {
         return find(type);
     }
@@ -526,20 +525,20 @@ public Optional<NativeMapper<?>> mapper(Class<?> type) {
 }
 ```
 
-Or a mapper can be found for a supported subclass (the majority of the JOVE domain types):
+Or a mapper can be found for a subclass of a supported type (the majority of the JOVE domain types):
 
 ```java
 private Optional<NativeMapper<?>> find(Class<?> type) {
     return mappers
-            .values()
-            .stream()
-            .filter(e -> e.type().isAssignableFrom(type))
-            .findAny()
-            .map(m -> register(m, type));
+        .values()
+        .stream()
+        .filter(e -> e.type().isAssignableFrom(type))
+        .findAny()
+        .map(m -> register(m, type));
 }
 ```
 
-With the mapper for a subclass being registered as a side-effect:
+Where the subclass mapper is registered as a side-effect:
 
 ```java
 private NativeMapper<?> register(NativeMapper<?> mapper, Class type) {
@@ -548,7 +547,7 @@ private NativeMapper<?> register(NativeMapper<?> mapper, Class type) {
 }
 ```
 
-A native type can also optionally be unmarshalled from native methods that have return values:
+A native type can also optionally be unmarshalled from a native method with a return value:
 
 ```java
 interface ReturnMapper<T, R> extends NativeMapper<T> {
@@ -865,11 +864,11 @@ public final class PointerReference {
 }
 ```
 
-Note that the framework assumes that integer and pointer references cannot logically be `null` or returned from a native method.
+Note that we assume that integer and pointer references cannot logically be `null` or returned from a native method.
 
 ### Strings
 
-A Java string is the only non-JOVE type required to support the new framework (other than primitives).  Therefore the native mapper is stand-alone rather than a _companion_ class in this case:
+A Java string is the only non-JOVE type required to support the new framework (other than primitives).  Therefore the native mapper is stand-alone rather than a companion class in this case:
 
 ```java
 public final class StringNativeMapper extends DefaultNativeMapper<String, MemorySegment> {
@@ -982,8 +981,6 @@ This iterative approach implies:
 
 * Much of the GLFW library will need to be temporarily removed since is very dependant on callbacks (up-call stubs in FFM parlance).
 
-TODO - GLFW callbacks
-
 ### Vulkan
 
 As a quick diversion, the following new type is introduced to compose the various parts of the Vulkan implementation that were previously separate fields of the instance:
@@ -1040,62 +1037,40 @@ public abstract class NativeStructure {
 }
 ```
 
-The memory layout of a native structure could theoretically be derived from the structure class itself (via reflection).  However the fields of a reflected Java class are (irritatingly) unordered (hence the `@FieldOrder` annotation required by JNA structures), therefore the `layout` method is introduced that explicitly declares the native field order.  Eventually the structure layout will be constructed _once_ by the code generator (where the actual field order is available), for the moment the relevant structures will be fiddled manually.
+The memory layout of a native structure could theoretically be derived from the structure class itself (via reflection).  However the fields of a reflected Java class are (irritatingly) unordered (hence the `@FieldOrder` annotation required by JNA structures), therefore the abstract `layout` method is introduced that explicitly declares the native field order.  Eventually the structure layout will be constructed by the code generator (where the actual field order is available), for the moment the layouts are hand-crafted.
 
-The companion native mapper is responsible for marshalling the structure as well as allocating its memory pointer on-demand:
+The companion native mapper maintains a cache of the _metadata_ for each structure type:
 
 ```java
 public static class StructureNativeMapper extends DefaultNativeMapper<NativeStructure, MemorySegment> {
-    private final Map<Class<? extends NativeStructure>, List<FieldMapping>> mappings = new HashMap<>();
+    private record Entry(StructLayout layout, List<FieldMapping> mappings) {
+    }
+
+    private final Map<Class<? extends NativeStructure>, Entry> entries = new HashMap<>();
+    private final NativeMapperRegistry registry;
 
     public StructureNativeMapper() {
         super(NativeStructure.class, ValueLayout.ADDRESS);
     }
 
-    @Override
-    public MemorySegment toNative(NativeStructure structure, NativeContext context) {
-        Pointer pointer = structure.pointer;
-        if(!pointer.isAllocated()) {
-            populate(structure, context);
-        }
-        return pointer.address();
-    }
-
-    private void populate(NativeStructure structure, NativeContext context) {
-        ...
+    private Entry entry(NativeStructure structure) {
+        return entries.computeIfAbsent(structure.getClass(), __ -> create(structure));
     }
 }
 ```
 
-The `populate` method first allocates off-heap memory specified by the `layout` of the structure:
+The `Entry` record composes the layout and _field mappings_ of a structure:
 
 ```java
-StructLayout layout = structure.layout();
-MemorySegment address = structure.pointer.allocate(layout, context);
-```
-
-Next the _field mappings_ for the structure class are constructed from the layout:
-
-```java
-Class<? extends NativeStructure> type = structure.getClass();
-List<FieldMapping> map = mappings.computeIfAbsent(type, _ -> FieldMapping.build(layout, type, context.registry()));
-```
-
-And finally the field values are written to the off-heap memory:
-
-```java
-for(FieldMapping m : map) {
-    m.toNative(structure, address, context);
+private Entry create(NativeStructure structure) {
+    StructLayout layout = structure.layout();
+    Class<? extends NativeStructure> type = structure.getClass();
+    List<FieldMapping> mappings = FieldMapping.build(layout, type, registry);
+    return new Entry(layout, mappings);
 }
 ```
 
-Notes:
-
-* The `populate` method is essentially recursive since structures can be a graph of objects.
-
-* Field mappings are constructed _once_ per structure type and cached.
-
-A structure _field mapping_ encapsulates the mapping between a structure field and the corresponding off-heap field:
+A _field mapping_ encapsulates the mapping between a structure field and the corresponding off-heap field:
 
 ```java
 class FieldMapping {
@@ -1106,8 +1081,11 @@ class FieldMapping {
 ```
 
 Where:
+
 * _field_ is a reflected structure field.
+
 * _handle_ is the associated off-heap field.
+
 * and _mapper_ is used to marshal field values.
 
 The field mappings for a given native structure are enumerated via reflection:
@@ -1145,15 +1123,42 @@ FieldMapping build(Field field) {
 }
 ```
 
-The process of marshalling a structure field is:
+The mapper marshals a structure to the off-heap memory on-demand:
 
-1. Retrieve the field value from the steucture.
+```java
+public MemorySegment toNative(NativeStructure structure, NativeContext context) {
+    Pointer pointer = structure.pointer;
+    if(!pointer.isAllocated()) {
+        populate(structure, context);
+    }
+    return pointer.address();
+}
+```
+
+The `populate` method first allocates off-heap memory for the structure and then marshals each field:
+
+```java
+private void populate(NativeStructure structure, NativeContext context) {
+    // Allocate off-heap structure memory
+    Entry entry = entry(structure);
+    MemorySegment address = structure.pointer.allocate(entry.layout, context);
+
+    // Populate off-heap memory from structure
+    for(FieldMapping m : entry.mappings) {
+        m.toNative(structure, address, context);
+    }
+}
+```
+
+The process of marshalling each structure field is:
+
+1. Retrieve the field value from the structure.
 
 2. Marshal the value via the native mapper.
 
 3. Set the native value in the off-heap memory.
 
-Which is performed by the following method:
+This is performed by the following method on the field mapping class:
 
 ```java
 void toNative(NativeStructure structure, MemorySegment address, NativeContext context) {
@@ -1163,11 +1168,43 @@ void toNative(NativeStructure structure, MemorySegment address, NativeContext co
 }
 ```
 
-TODO - not mutable after populate
+In the reverse operation where a structure is returned from a native method, a new instance is created and the fields are copied from the off-heap address:
+
+```java
+public Object fromNative(MemorySegment address, Class<? extends NativeStructure> type) {
+    // Create new structure
+    var structure = type.getDeclaredConstructor().newInstance();
+    Entry entry = entry(structure);
+
+    // Populate structure from off-heap memory
+    MemorySegment pointer = address.reinterpret(entry.layout.byteSize());
+    for(FieldMapping m : entry.mappings) {
+        m.fromNative(pointer, structure);
+    }
+
+    return structure;
+}
+```
+
+Which delegates to the corresponding field mapping method:
+
+```
+void fromNative(MemorySegment address, NativeStructure structure) {
+    Object value = handle.get(address, 0L);
+    Object actual = mapper.fromNative(value, field.getType());
+    set(structure, actual);
+}
+```
+
+Notes:
+
+* Marshalling is recursive since structures can be a graph of objects.
+
+* As things stand a structure is essentially immutable once it has been marshalled to the native layer since the `populate` method is only invoked _once_ when the off-heap memory is allocated.  Native structures are really only intended to be transient carrier objects during an API call, however it is possible to modify structure data after it has been marshalled (which would be silently ignored).  This is an outstanding issue (or possibly a requirement) to be addressed in the future.
 
 ### Instance
 
-The `Instance` domain class is refactored to use the new `Vulkan` root object:
+Now that structures can be marshalled the `Instance` domain class can be refactored to use the new `Vulkan` root object:
 
 ```java
 public class Instance extends TransientNativeObject {
@@ -1184,15 +1221,15 @@ Along with the following temporary modifications:
 
 * Extensions and validation layers are uninitialised.
 
-The final step is to refactor the two structures required to configure the instance which requires:
+The final step is to refactor the two structures used to configure the instance which requires:
 
-* Refactoring the structure to inherit the new `NativeStucture` type.
+* Refactoring the structures to inherit the new `NativeStucture` type.
 
 * Removing any legacy JNA artifacts such the `FieldOrder` annotation or `ByReference` markers.
 
-* Declaration of the FFM memory layout of the structure.
+* Declaration of the FFM memory layouts.
 
-Determining the structure layout requires the following:
+Determining a structure layout requires the following:
 
 * Deriving the FFM layout from each structure field.
 
@@ -1279,11 +1316,11 @@ Refactoring the diagnostic handler presents a couple of problems:
 
 * The native methods to create and destroy a handler must be created programatically, since the address is a _function pointer_ instead of a symbol looked up from the native library.
 
-* A handler requires an FFM callback stub in order to report diagnostics.
-
 * Ideally the handler methods would reuse the existing native framework, in particular the support for structures when creating the handler and unmarshalling of diagnostic reports.
 
-The majority of the existing handler code remains as-is except for:
+* A handler requires an FFM callback stub in order to report diagnostic messages.
+
+The majority of the existing handler code can remain as-is except for:
 
 * Invocation of the create and destroy function pointers.
 
@@ -1301,7 +1338,7 @@ public Handle function(String name) {
 }
 ```
 
-This is used to retrieve the function pointer to create a handler:
+This is used to retrieve the function pointer that creates the handler:
 
 ```java
 private Handle create(VkDebugUtilsMessengerCreateInfoEXT info) {
@@ -1352,21 +1389,10 @@ The handler is destroyed in a similar fashion:
 protected void release() {
     Handle function = instance.function("vkDestroyDebugUtilsMessengerEXT");
     NativeMapperRegistry registry = instance.vulkan().registry();
-    NativeMethod destroy = destroy(function.address(), registry);
+    Class<?>[] signature = {Instance.class, Handler.class, Handle.class};
+    NativeMethod destroy = new NativeMethod.Builder(registry).address(address).signature(signature).build();
     Object[] args = {instance, this, null};
     invoke(instance, destroy, args, registry);
-}
-```
-
-Using the following helper to build the destroy method handle:
-
-```java
-private static NativeMethod destroy(MemorySegment address, NativeMapperRegistry registry) {
-    Class<?>[] signature = {Instance.class, Handler.class, Handle.class};
-    return new NativeMethod.Builder(registry)
-        .address(address)
-        .signature(signature)
-        .build();
 }
 ```
 
@@ -1376,6 +1402,9 @@ To build the callback a new method is added to the existing class that provides 
 
 ```java
 private static class MessageCallback {
+    private final Consumer<Message> consumer;
+    private final StructureNativeMapper mapper;
+
     MemorySegment address() {
         MethodHandle handle = handle();
         return link(handle.bindTo(this));
@@ -1401,39 +1430,38 @@ private static MemorySegment link(MethodHandle handle) {
 }
 ```
 
-Finally the `build` method of the handler is modified to write the _address_ of the callback to the descriptor:
+Finally the `build` method of the handler is modified to write the _address_ of the callback into the descriptor:
 
 ```java
 public Handler build() {
     init();
-    var callback = new MessageCallback(consumer);
+    var callback = new MessageCallback(consumer, registry);
     var info = populate(callback.address());
     Handle handle = create(info);
     return new Handler(handle, instance);
 }
 ```
 
-The last required code change is to unmarshal the diagnostic reports received by the `message` callback method:
-
-TODO
+The last required code change is to unmarshal the diagnostic report received by the `message` callback method and delegate to the message handler:
 
 ```java
 public boolean message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
+    // Transform the message properties
     var types = new BitMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
     var level = SEVERITY.map(severity);
-    // TODO
+
+    // Unmarshal the message structure
+    var data = mapper.fromNative(pCallbackData, VkDebugUtilsMessengerCallbackData.class);
+
+    // Handle message
+    Message message = new Message(level, types, (VkDebugUtilsMessengerCallbackData) data);
+    consumer.accept(message);
+
     return false;
 }
 ```
 
 Diagnostic handlers can now be attached to the instance as before.  A good test is to temporarily remove the code that releases the attached handlers when the instance is destroyed, which should result in Vulkan complaining about orphaned diagnostics handlers.
 
-### TODO
+---
 
-///////////////
-
-Additionally JNA mandated that an arrays of structures was implemented as the _first_ element of the array when the method is invoked.  We take the opportunity to also refactor 
-
-mapped to a native pointer-to-array was implemented 
-
-as the _first_ element of the array.  We will also refactor

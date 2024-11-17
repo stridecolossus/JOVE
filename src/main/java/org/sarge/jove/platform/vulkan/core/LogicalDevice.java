@@ -196,11 +196,11 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		/**
 		 * Adds an extension required for this device.
 		 * @param ext Extension name
-		 * @throws IllegalArgumentException for {@link Handler#EXTENSION_DEBUG_UTILS}
+		 * @throws IllegalArgumentException for {@link DiagnosticHandler#EXTENSION_DEBUG_UTILS}
 		 */
 		public Builder extension(String ext) {
 			requireNotEmpty(ext);
-			if(Handler.EXTENSION.equals(ext)) throw new IllegalArgumentException("Invalid extension for logical device: " + ext);
+			if(DiagnosticHandler.EXTENSION.equals(ext)) throw new IllegalArgumentException("Invalid extension for logical device: " + ext);
 			extensions.add(ext);
 			return this;
 		}

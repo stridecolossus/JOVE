@@ -9,13 +9,13 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Handler.*;
+import org.sarge.jove.platform.vulkan.core.DiagnosticHandler.*;
 import org.sarge.jove.util.*;
 
 import com.sun.jna.*;
 
-public class HandlerTest {
-	private Handler handler;
+public class DiagnosticHandlerTest {
+	private DiagnosticHandler handler;
 	private Instance instance;
 	private VulkanLibrary lib;
 	private Function function;
@@ -33,7 +33,7 @@ public class HandlerTest {
 				return function;
 			}
 		};
-		handler = new Handler(new Handle(2), instance);
+		handler = new DiagnosticHandler(new Handle(2), instance);
 	}
 
 	@Test
@@ -111,7 +111,7 @@ public class HandlerTest {
 			when(function.invoke(Integer.class, args, options)).thenReturn(0);
 
 			// Build handler
-			final Handler handler = builder
+			final DiagnosticHandler handler = builder
 					.severity(VkDebugUtilsMessageSeverity.ERROR)
 					.type(VkDebugUtilsMessageType.GENERAL)
 					.consumer(consumer)
