@@ -57,6 +57,11 @@ public interface IntEnum {
 		return (ReverseMapping<E>) ReverseMapping.get(type);
 	}
 
+	// TODO - get rid of static / thread-safe cache?
+	// used by:
+	// - mapper / structures => cache locally without need for locking
+	// - custom use-cases, e.g. physical device queue flags (?) => one-off
+
 	/////////////////////
 
 	// TODO
@@ -124,6 +129,10 @@ public interface IntEnum {
 		 */
 		@SuppressWarnings("unchecked")
 		public static ReverseMapping<?> get(Class<?> type) {
+
+			// TODO
+			if(type == IntEnum.class) throw new IllegalArgumentException();
+
 			return CACHE.computeIfAbsent(type, ReverseMapping::new);
 		}
 

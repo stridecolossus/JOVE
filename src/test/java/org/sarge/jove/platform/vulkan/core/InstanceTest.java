@@ -4,33 +4,30 @@ import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import java.lang.foreign.MemorySegment;
+
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.lib.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
 
 class InstanceTest {
 	private Instance instance;
-	private VulkanLibrary lib;
-	private ReferenceFactory factory;
+	private Vulkan vulkan;
 
 	@BeforeEach
 	void before() {
-		lib = mock(VulkanLibrary.class);
-		factory = new MockReferenceFactory();
-		instance = new Instance(new Handle(1), lib, factory);
+		vulkan = new MockVulkan();
+		instance = new Instance(new Handle(1), vulkan);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(lib, instance.library());
+//		assertEquals(lib, instance.library());
+//		assertNotNull(instance.factory());
 		assertEquals(new Handle(1), instance.handle());
-		assertNotNull(instance.factory());
 		assertEquals(false, instance.isDestroyed());
 	}
 
@@ -38,31 +35,28 @@ class InstanceTest {
 	@Test
 	void destroy() {
 		instance.destroy();
-		verify(lib).vkDestroyInstance(instance, null);
+		verify(vulkan.library()).vkDestroyInstance(instance, null);
 	}
 
-	@DisplayName("A diagnostics handler can be attached to the instance and is automatically destroyed when the instance is released")
-	@Test
-	void attach() {
-		final Handler handler = mock(Handler.class);
-		instance.attach(handler);
-		instance.destroy();
-		verify(handler).destroy();
-	}
+	@Nested
+	class FunctionPointerTests {
+		@BeforeEach
+		void before() {
+    		final var address = MemorySegment.ofAddress(2);
+    		when(vulkan.library().vkGetInstanceProcAddr(instance, "function")).thenReturn(new Handle(address));
+		}
 
-	@DisplayName("A function pointer can be looked up from the instance")
-	@Test
-	void function() {
-		final Pointer func = new Pointer(2);
-		final String name = "name";
-		when(lib.vkGetInstanceProcAddr(instance, name)).thenReturn(func);
-		assertEquals(func, instance.function(name));
-	}
+    	@DisplayName("A function pointer can be looked up from the instance")
+    	@Test
+    	void function() {
+    		assertNotNull(instance.function("function"));
+    	}
 
-	@DisplayName("An unknown function pointer cannot be looked up from the instance")
-	@Test
-	void unknown() {
-		assertThrows(RuntimeException.class, () -> instance.function("cobblers"));
+    	@DisplayName("An unknown function pointer cannot be looked up from the instance")
+    	@Test
+    	void unknown() {
+    		assertThrows(IllegalArgumentException.class, () -> instance.function("cobblers"));
+    	}
 	}
 
 	@Nested
@@ -87,11 +81,10 @@ class InstanceTest {
 				.api(new Version(1, 0, 1))
 				.extension("ext")
 				.layer(layer)
-				.factory(factory)
-				.build(lib);
+				.build(vulkan);
 
 			// Check instance
-			assertEquals(lib, instance.library());
+//			assertEquals(lib, instance.library());
 			assertEquals(false, instance.isDestroyed());
 
 			// Check API
@@ -117,7 +110,7 @@ class InstanceTest {
 					return true;
 				}
 			};
-			verify(lib).vkCreateInstance(expected, null, factory.pointer());
+			verify(vulkan.library()).vkCreateInstance(expected, null, vulkan.factory().pointer());
 		}
 
 		@Test

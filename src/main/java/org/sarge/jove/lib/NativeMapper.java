@@ -3,7 +3,7 @@ package org.sarge.jove.lib;
 import java.lang.foreign.*;
 
 /**
- * A <i>native mapper</i> defines a domain type that can be marshalled to its corresponding native representation.
+ * A <i>native mapper</i> defines a domain type that can be marshalled to/from a corresponding native representation.
  * @param <T> Type
  * @author Sarge
  */
@@ -14,37 +14,39 @@ public interface NativeMapper<T> {
 	Class<T> type();
 
 	/**
-	 * @return Native type
+	 * @return Native type layout
 	 */
 	MemoryLayout layout();
 
 	/**
 	 * Marshals the given value to its native representation.
-	 * @param value		Value to marshal
-	 * @param arena		Arena
+	 * @param value 		Value to marshal
+	 * @param context		Native context
 	 * @return Native value
 	 */
-	Object toNative(T value, Arena arena);
+	Object toNative(T value, NativeContext context);
 
 	/**
-	 * Marshals a {@code null} value.
+	 * Marshals a {@code null} value to its native representation.
 	 * @param type Target type
-	 * @return Native {@code null} value
-	 * @throws UnsupportedOperationException if this type cannot be {@code null}
+	 * @return Native value
 	 */
-	Object toNativeNull(Class<?> type);
+	default Object toNativeNull(Class<? extends T> type) {
+		return MemorySegment.NULL;
+	}
 
 	/**
 	 * A <i>return converter</i> denotes a type that can also be returned from a native method.
+	 * @param <T> Type
 	 * @param <R> Native return type
 	 */
-	interface ReturnMapper<R> {
+	interface ReturnMapper<T, R> extends NativeMapper<T> {
     	/**
     	 * Unmarshals a native return value.
-    	 * @param value		Native return value to unmarshal
+    	 * @param value 	Native return value
     	 * @param type		Target type
-    	 * @return Return value
+    	 * @return Marshalled return value
     	 */
-		Object fromNative(R value, Class<?> type);
+		Object fromNative(R value, Class<? extends T> type);
 	}
 }

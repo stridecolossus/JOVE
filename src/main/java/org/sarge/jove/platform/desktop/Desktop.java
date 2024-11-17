@@ -54,7 +54,7 @@ public final class Desktop implements TransientObject {
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
 
 		// Create desktop service
-		return new Desktop(lib, new DefaultReferenceFactory());
+		return new Desktop(lib, new ReferenceFactory());
 	}
 
 	/**
@@ -119,9 +119,10 @@ public final class Desktop implements TransientObject {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-		final IntegerReference count = factory.integer();
-		final StringArray extensions = lib.glfwGetRequiredInstanceExtensions(count);
-		return extensions.array(count.value());
+//		final IntegerReference count = factory.integer();
+//		final StringArray extensions = lib.glfwGetRequiredInstanceExtensions(count);
+//		return extensions.array(count.value());
+		return new String[0];
 	}
 
 //	/**

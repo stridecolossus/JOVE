@@ -1,35 +1,39 @@
 package org.sarge.jove.lib;
 
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 
 /**
  * An <i>integer reference</i> maps to a native integer-by-reference value.
  * @author Sarge
  */
-public final class IntegerReference extends Address {
-	/**
-	 * Constructor.
-	 * @param arena Arena
-	 */
-	public IntegerReference(Arena arena) {
-		super(arena.allocate(ADDRESS));
-	}
+public final class IntegerReference {
+	private final Pointer pointer = new Pointer();
 
 	/**
 	 * @return Integer value
 	 */
 	public int value() {
-		return this.address().get(JAVA_INT, 0);
+		if(pointer.isAllocated()) {
+			return pointer.address().get(JAVA_INT, 0);
+		}
+		else {
+			return 0;
+		}
 	}
 
 	/**
 	 * Sets this integer reference.
 	 * @param value Integer reference
 	 */
-	public void set(int value) {
-		this.address().set(JAVA_INT, 0, value);
+	void set(int value) {
+		pointer.address().set(JAVA_INT, 0, value);
+	}
+
+	@Override
+	public int hashCode() {
+		return pointer.hashCode();
 	}
 
 	@Override
@@ -37,7 +41,7 @@ public final class IntegerReference extends Address {
 		return
 				(obj == this) ||
 				(obj instanceof IntegerReference that) &&
-				(this.value() == that.value());
+				this.pointer.equals(that.pointer);
 	}
 
 	@Override
@@ -48,12 +52,22 @@ public final class IntegerReference extends Address {
 	/**
 	 * Native mapper for an integer-by-reference value.
 	 */
-	public static final class IntegerReferenceNativeMapper extends AddressNativeMapper<IntegerReference> {
+	public static final class IntegerReferenceNativeMapper extends AbstractNativeMapper<IntegerReference> {
 		/**
 		 * Constructor.
 		 */
 		public IntegerReferenceNativeMapper() {
-			super(IntegerReference.class);
+			super(IntegerReference.class, JAVA_INT);
+		}
+
+		@Override
+		public MemorySegment toNative(IntegerReference value, NativeContext context) {
+			return value.pointer.allocate(JAVA_INT, context);
+		}
+
+		@Override
+		public MemorySegment toNativeNull(Class<? extends IntegerReference> type) {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

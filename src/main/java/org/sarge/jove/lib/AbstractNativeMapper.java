@@ -33,12 +33,6 @@ public abstract class AbstractNativeMapper<T> implements NativeMapper<T> {
 		return layout;
 	}
 
-
-	@Override
-	public Object toNativeNull(Class<?> type) {
-		throw new UnsupportedOperationException();
-	}
-
 	@Override
 	public int hashCode() {
 		return Objects.hash(type, layout);

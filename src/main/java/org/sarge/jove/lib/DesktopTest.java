@@ -1,7 +1,6 @@
 package org.sarge.jove.lib;
 
 import java.lang.foreign.*;
-import java.util.Arrays;
 
 import org.sarge.jove.util.IntEnum;
 
@@ -24,7 +23,7 @@ public class DesktopTest {
 			void			glfwTerminate();
 			boolean			glfwVulkanSupported();
 			String			glfwGetVersionString();
-			StringArray		glfwGetRequiredInstanceExtensions(IntegerReference count);
+//			StringArray		glfwGetRequiredInstanceExtensions(IntegerReference count);
 		}
 
 		try(final Arena arena = Arena.ofConfined()) {
@@ -42,11 +41,11 @@ public class DesktopTest {
     		System.out.println("Vulkan="+desktop.glfwVulkanSupported());
     		System.out.println("version="+desktop.glfwGetVersionString());
 
-    		final var count = new IntegerReference(arena);
-    		final StringArray array = desktop.glfwGetRequiredInstanceExtensions(count);
-    		System.out.println("extensions="+Arrays.toString(array.array(count.value())));
+//    		final var count = new IntegerReference();
+//    		final StringArray array = desktop.glfwGetRequiredInstanceExtensions(count);
+//    		System.out.println("extensions="+Arrays.toString(array.array(count.value())));
 
-    		System.out.println("Invoking...");
+    		System.out.println("Closing...");
     		desktop.glfwTerminate();
 
     		System.out.println("DONE");

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static java.util.stream.Collectors.toCollection;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import static org.sarge.lib.Validation.*;
 
 import com.sun.jna.ptr.IntByReference;
 
@@ -95,7 +95,9 @@ public record ValidationLayer(String name, int version) {
 	 * @return Validation layers supported by this platform
 	 */
 	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count) {
-		final VulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
-		return layers(count, func);
+//		final VulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
+//		return layers(count, func);
+		// TODO
+		return null;
 	}
 }

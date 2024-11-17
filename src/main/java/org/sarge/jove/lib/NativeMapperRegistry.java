@@ -5,6 +5,8 @@ import java.util.*;
 
 import org.sarge.jove.lib.Handle.HandleNativeMapper;
 import org.sarge.jove.lib.IntegerReference.IntegerReferenceNativeMapper;
+import org.sarge.jove.lib.NativeObjectTEMP.NativeObjectMapper;
+import org.sarge.jove.lib.NativeStructure.StructureNativeMapper;
 import org.sarge.jove.lib.PointerReference.PointerReferenceNativeMapper;
 import org.sarge.jove.lib.StringArray.StringArrayNativeMapper;
 
@@ -30,8 +32,16 @@ public class NativeMapperRegistry {
 	 * Looks up the native mapper for the given Java type.
 	 * @param type Java type
 	 * @return Native mapper
+	 * @throws IllegalArgumentException if the type is not supported by this registry
 	 */
 	public Optional<NativeMapper<?>> mapper(Class<?> type) {
+
+		// TODO
+		if(type.isArray()) {
+			//throw new UnsupportedOperationException();
+			return mapper(type.componentType());
+		}
+
 		final NativeMapper<?> mapper = mappers.get(type);
 		if(mapper == null) {
 			return find(type);
@@ -45,12 +55,15 @@ public class NativeMapperRegistry {
 	 * Finds a native mapper for the given super-type and registers the mapping as a side-effect.
 	 */
 	private Optional<NativeMapper<?>> find(Class<?> type) {
-		return mappers
+		final Optional<NativeMapper<?>> mapper = mappers
 				.values()
 				.stream()
 				.filter(e -> e.type().isAssignableFrom(type))
-				.peek(e -> mappers.put(e.type(), e))
 				.findAny();
+
+		mapper.ifPresent(m -> mappers.put(type, m));
+
+		return mapper;
 	}
 
 	/**
@@ -74,26 +87,28 @@ public class NativeMapperRegistry {
 		);
 		for(final Class<?> type : primitives.keySet()) {
 			final ValueLayout layout = primitives.get(type);
-			final var mapper = new DefaultNativeMapper<>(type, layout);
+			final var mapper = new DefaultNativeMapper<>(type, layout); // TODO - nulls?
 			registry.add(mapper);
 		}
+
+//		registry.add(new DefaultNativeMapper<>(Integer.class, ValueLayout.JAVA_INT)); // TODO - nulls?
 
 		// Register reference types
 		final NativeMapper<?>[] reference = {
 				new IntEnumNativeMapper(),
+				new BitMaskNativeMapper(),
 				new StringNativeMapper(),
 				new HandleNativeMapper(),
+				new NativeObjectMapper(),
 				new IntegerReferenceNativeMapper(),
 				new PointerReferenceNativeMapper(),
-				new StringArrayNativeMapper(),
+				new StructureNativeMapper(),
+				new StringArrayNativeMapper(), // TODO
 		};
 		for(NativeMapper<?> m : reference) {
 			registry.add(m);
 		}
-
-		// TODO
-		// - structures
-		// - arrays?
+		// TODO - arrays?
 
 		return registry;
 	}

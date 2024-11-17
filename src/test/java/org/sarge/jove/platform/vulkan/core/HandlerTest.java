@@ -29,11 +29,11 @@ public class HandlerTest {
 		function = mock(Function.class);
 		instance = new Instance(new Handle(1), lib, new MockReferenceFactory()) {
 			@Override
-			public Function function(String name) {
+			public Handle function(String name) {
 				return function;
 			}
 		};
-		handler = new Handler(new Handle(1), instance);
+		handler = new Handler(new Handle(2), instance);
 	}
 
 	@Test

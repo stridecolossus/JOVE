@@ -31,27 +31,31 @@ class HandleTest {
 	@Nested
 	class MapperTests {
 		private HandleNativeMapper mapper;
-		private Arena arena;
 
 		@BeforeEach
 		void before() {
-			arena = Arena.ofAuto();
 			mapper = new HandleNativeMapper();
 		}
 
 		@Test
+		void mapper() {
+			assertEquals(Handle.class, mapper.type());
+			assertEquals(ValueLayout.ADDRESS, mapper.layout());
+		}
+
+		@Test
 		void toNative() {
-			assertEquals(MemorySegment.ofAddress(3), mapper.toNative(handle, arena));
+			assertEquals(MemorySegment.ofAddress(3), mapper.toNative(handle, new NativeContext()));
 		}
 
 		@Test
 		void toNativeNull() {
-			assertEquals(MemorySegment.NULL, mapper.toNativeNull(Handle.class));
+			assertEquals(MemorySegment.NULL, mapper.toNativeNull(null));
 		}
 
 		@Test
 		void fromNative() {
-			assertEquals(handle, mapper.fromNative(MemorySegment.ofAddress(3), Handle.class));
+			assertEquals(handle, mapper.fromNative(MemorySegment.ofAddress(3), null));
 		}
 	}
 }

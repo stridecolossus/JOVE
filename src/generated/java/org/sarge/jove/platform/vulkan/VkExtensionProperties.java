@@ -1,18 +1,20 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import java.lang.foreign.StructLayout;
 
-import com.sun.jna.Structure.FieldOrder;
+import org.sarge.jove.lib.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"extensionName",
-	"specVersion"
-})
-public class VkExtensionProperties extends VulkanStructure {
+public class VkExtensionProperties extends NativeStructure {
 	public byte[] extensionName = new byte[256];
 	public int specVersion;
+
+	@Override
+	protected StructLayout layout() {
+		// TODO
+		return null;
+	}
 }

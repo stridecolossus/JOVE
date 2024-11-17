@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.lib.*;
-
 /**
  * GLFW API.
  * @author Sarge
@@ -59,5 +57,5 @@ interface DesktopLibrary extends DesktopLibraryWindow, DesktopLibraryDevice { //
 	 * @param count Number of extensions
 	 * @return Vulkan extensions
 	 */
-	StringArray glfwGetRequiredInstanceExtensions(IntegerReference count);
+	//StringArray glfwGetRequiredInstanceExtensions(IntegerReference count);
 }

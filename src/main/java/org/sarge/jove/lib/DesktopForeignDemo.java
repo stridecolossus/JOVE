@@ -37,7 +37,7 @@ public class DesktopForeignDemo {
 			System.out.println("glfwVulkanSupported=" + demo.invoke("glfwVulkanSupported", null, ValueLayout.JAVA_BOOLEAN));
 
 			// Query Vulkan extensions
-			final MemorySegment ref = arena.allocate(JAVA_INT);
+			final MemorySegment ref = arena.allocate(JAVA_INT);		// TODO - address or int? matters?
 			final MemorySegment extensions = (MemorySegment) demo.invoke("glfwGetRequiredInstanceExtensions", new Object[]{ref}, ADDRESS, ADDRESS);
 			final int count = ref.get(JAVA_INT, 0);
 			System.out.println("glfwGetRequiredInstanceExtensions=" + count);

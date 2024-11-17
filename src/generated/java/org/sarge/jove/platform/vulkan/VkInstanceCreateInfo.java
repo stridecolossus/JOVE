@@ -1,31 +1,40 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.lib.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"pApplicationInfo",
-	"enabledLayerCount",
-	"ppEnabledLayerNames",
-	"enabledExtensionCount",
-	"ppEnabledExtensionNames"
-})
-public class VkInstanceCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.INSTANCE_CREATE_INFO;
-	public Pointer pNext;
+public class VkInstanceCreateInfo extends NativeStructure {
+	public final VkStructureType sType = VkStructureType.INSTANCE_CREATE_INFO;
+	public Handle pNext;
 	public int flags;
 	public VkApplicationInfo pApplicationInfo;
 	public int enabledLayerCount;
-	public Pointer ppEnabledLayerNames;
+	public StringArray ppEnabledLayerNames;
 	public int enabledExtensionCount;
-	public Pointer ppEnabledExtensionNames;
+	public StringArray ppEnabledExtensionNames;
+
+	@Override
+	public StructLayout layout() {
+		return MemoryLayout.structLayout(
+    			JAVA_INT.withName("sType"),
+    			PADDING,
+    			POINTER.withName("pNext"),
+    			JAVA_INT.withName("flags"),
+    			PADDING,
+    			POINTER.withName("pApplicationInfo"),
+    			JAVA_INT.withName("enabledLayerCount"),
+    			PADDING,
+    			POINTER.withName("ppEnabledLayerNames"),
+    			JAVA_INT.withName("enabledExtensionCount"),
+    			PADDING,
+    			POINTER.withName("ppEnabledExtensionNames")
+		);
+	}
 }

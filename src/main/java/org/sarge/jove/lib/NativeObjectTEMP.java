@@ -12,7 +12,10 @@ public interface NativeObjectTEMP {
 	 */
 	Handle handle();
 
-	static class NativeObjectMapper extends AbstractNativeMapper<NativeObjectTEMP> {
+	/**
+	 *
+	 */
+	static class NativeObjectMapper extends DefaultNativeMapper<NativeObjectTEMP, MemorySegment> {
 		// TODO - should be AddressNativeMapper?
 
 		public NativeObjectMapper() {
@@ -20,13 +23,8 @@ public interface NativeObjectTEMP {
 		}
 
 		@Override
-		public Object toNative(NativeObjectTEMP obj, Arena arena) {
+		public MemorySegment toNative(NativeObjectTEMP obj, NativeContext __) {
 			return obj.handle().address();
-		}
-
-		@Override
-		public Object toNativeNull(Class<?> type) {
-			return MemorySegment.NULL;
 		}
 	}
 

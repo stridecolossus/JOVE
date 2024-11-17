@@ -1,25 +1,14 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import java.lang.foreign.StructLayout;
 
-import com.sun.jna.Structure.FieldOrder;
+import org.sarge.jove.lib.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"apiVersion",
-	"driverVersion",
-	"vendorID",
-	"deviceID",
-	"deviceType",
-	"deviceName",
-	"pipelineCacheUUID",
-	"limits",
-	"sparseProperties"
-})
-public class VkPhysicalDeviceProperties extends VulkanStructure {
+public class VkPhysicalDeviceProperties extends NativeStructure {
 	public int apiVersion;
 	public int driverVersion;
 	public int vendorID;
@@ -29,4 +18,10 @@ public class VkPhysicalDeviceProperties extends VulkanStructure {
 	public byte[] pipelineCacheUUID = new byte[16];
 	public VkPhysicalDeviceLimits limits;
 	public VkPhysicalDeviceSparseProperties sparseProperties;
+
+	@Override
+	protected StructLayout layout() {
+		// TODO
+		return null;
+	}
 }

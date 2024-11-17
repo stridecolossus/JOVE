@@ -1,24 +1,32 @@
 package org.sarge.jove.lib;
 
-import java.lang.foreign.*;
+import java.lang.foreign.MemoryLayout;
+import java.util.Objects;
+
+import org.sarge.jove.lib.NativeMapper.ReturnMapper;
 
 /**
- * A <i>default native mapper</i> defines a type that has a native layout but is marshalled as-is, i.e. primitive or wrapper types that are automagically handled by FFM.
- * @param <T> Type
+ * TODO
  * @author Sarge
  */
-public class DefaultNativeMapper<T> extends AbstractNativeMapper<T> {
+public class DefaultNativeMapper<T, R> extends AbstractNativeMapper<T> implements ReturnMapper<T, R> {
 	/**
 	 * Constructor.
-	 * @param type		Type
-	 * @param layout	Native layout
+	 * @param type			Java type
+	 * @param layout		Native layout
 	 */
 	public DefaultNativeMapper(Class<T> type, MemoryLayout layout) {
 		super(type, layout);
 	}
 
 	@Override
-	public Object toNative(T value, Arena arena) {
+	public Object toNative(T value, NativeContext context) {
+		assert Objects.nonNull(value);
+		return value;
+	}
+
+	@Override
+	public Object fromNative(R value, Class<? extends T> type) {
 		return value;
 	}
 }

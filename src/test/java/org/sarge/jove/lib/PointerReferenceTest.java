@@ -3,32 +3,29 @@ package org.sarge.jove.lib;
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.*;
+import java.lang.foreign.MemorySegment;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.lib.PointerReference.PointerReferenceNativeMapper;
 
 class PointerReferenceTest {
 	private PointerReference ref;
-	private Arena arena;
 
 	@BeforeEach
 	void before() {
-		arena = Arena.ofAuto();
-		ref = new PointerReference(arena);
+		ref = new PointerReference();
 	}
 
 	@Test
 	void handle() {
-		final Handle handle = ref.handle();
-		assertNotNull(handle.address());
+		assertThrows(IllegalStateException.class, () -> ref.handle());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(ref, ref);
 		assertNotEquals(ref, null);
-		assertNotEquals(ref, new PointerReference(arena));
+		assertNotEquals(ref, new PointerReference());
 	}
 
 	@Nested
@@ -48,13 +45,14 @@ class PointerReferenceTest {
 
 		@Test
 		void toNative() {
-			final MemorySegment address = mapper.toNative(ref, arena);
-			assertEquals(ref.handle().address(), address);
+			final MemorySegment address = mapper.toNative(ref, new NativeContext());
+			final Handle handle = new Handle(address);
+			assertEquals(handle.address(), address);
 		}
 
 		@Test
 		void toNativeNull() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.toNativeNull(PointerReference.class));
+			assertThrows(UnsupportedOperationException.class, () -> mapper.toNativeNull(null));
 		}
 	}
 }

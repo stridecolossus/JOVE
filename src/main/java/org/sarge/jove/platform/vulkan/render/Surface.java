@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.lib.IntegerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.*;
@@ -196,7 +197,7 @@ public class Surface extends TransientNativeObject {
 		 * @param supported				Returned boolean flag
 		 * @return Result
 		 */
-		int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntByReference supported);
+		int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported);
 
 		/**
 		 * Retrieves the capabilities of a surface.

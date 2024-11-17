@@ -1,6 +1,6 @@
 package org.sarge.jove.lib;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.*;
 
@@ -8,40 +8,41 @@ import org.junit.jupiter.api.*;
 
 class StringNativeMapperTest {
 	private StringNativeMapper mapper;
-	private Arena arena;
 	private String string;
 
 	@BeforeEach
 	void before() {
 		mapper = new StringNativeMapper();
-		arena = Arena.ofAuto();
 		string = "string";
 	}
 
 	@Test
-	void type() {
+	void mapper() {
 		assertEquals(String.class, mapper.type());
+		assertEquals(ValueLayout.ADDRESS, mapper.layout());
 	}
 
 	@Test
 	void toNative() {
-		final MemorySegment segment = mapper.toNative(string, arena);
+		final MemorySegment segment = mapper.toNative(string, new NativeContext());
 		assertEquals(string, segment.getString(0));
 	}
 
 	@Test
+	void cached() {
+		final MemorySegment segment = mapper.toNative(string, new NativeContext());
+		assertSame(segment, mapper.toNative(string, new NativeContext()));
+	}
+
+	@Test
 	void toNativeNull() {
-		assertEquals(MemorySegment.NULL, mapper.toNativeNull(String.class));
+		assertEquals(MemorySegment.NULL, mapper.toNativeNull(null));
 	}
 
 	@Test
 	void fromNative() {
-		final MemorySegment segment = arena.allocateFrom(string);
-		assertEquals(string, mapper.fromNative(segment, String.class));
-	}
-
-	@Test
-	void fromNativeNull() {
-		assertEquals(null, mapper.fromNative(MemorySegment.NULL, String.class));
+		@SuppressWarnings("resource")
+		final MemorySegment address = Arena.global().allocateFrom(string);
+		assertEquals(string, mapper.fromNative(address, null));
 	}
 }

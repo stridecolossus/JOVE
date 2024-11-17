@@ -1,12 +1,11 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.*;
 
 import java.util.Set;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.lib.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntEnum;
 
@@ -14,7 +13,7 @@ import org.sarge.jove.util.IntEnum;
  * A <i>work queue</i> is used to submit tasks to the hardware.
  * @author Sarge
  */
-public record WorkQueue(Handle handle, WorkQueue.Family family) implements NativeObject {
+public record WorkQueue(Handle handle, WorkQueue.Family family) implements NativeObjectTEMP {
 	/**
 	 * Constructor.
 	 * @param handle	Handle
@@ -30,7 +29,7 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 	 * @param lib Vulkan API
 	 */
 	public void waitIdle(VulkanLibrary lib) {
-		check(lib.vkQueueWaitIdle(this));
+		Vulkan.check(lib.vkQueueWaitIdle(this));
 	}
 
 	/**

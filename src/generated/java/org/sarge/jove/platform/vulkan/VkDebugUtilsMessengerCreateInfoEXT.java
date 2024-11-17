@@ -1,30 +1,41 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitMask;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.lib.*;
+import org.sarge.jove.util.BitMask;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"messageSeverity",
-	"messageType",
-	"pfnUserCallback",
-	"pUserData"
-})
-public class VkDebugUtilsMessengerCreateInfoEXT extends VulkanStructure {
+public class VkDebugUtilsMessengerCreateInfoEXT extends NativeStructure {
 	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	public Pointer pNext;
+	public Handle pNext;
 	public int flags;
 	public BitMask<VkDebugUtilsMessageSeverity> messageSeverity;
 	public BitMask<VkDebugUtilsMessageType> messageType;
-	public Callback pfnUserCallback;
-	public Pointer pUserData;
+	public Handle pfnUserCallback;
+	public Handle pUserData;
+
+	@Override
+	public StructLayout layout() {
+		return MemoryLayout.structLayout(
+				JAVA_INT.withName("sType"),
+				PADDING,
+				POINTER.withName("pNext"),
+				JAVA_INT.withName("flags"),
+//				PADDING,
+				JAVA_INT.withName("messageSeverity"),
+//				PADDING,
+				JAVA_INT.withName("messageType"),
+				PADDING,
+				POINTER.withName("pfnUserCallback"),
+				POINTER.withName("pUserData")
+		);
+	}
 }
+
+// TODO - how were we meant to know that there is NO padding above 1. after flags and 2. after severity!!!

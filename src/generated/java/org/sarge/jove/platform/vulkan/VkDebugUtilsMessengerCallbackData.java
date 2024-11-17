@@ -1,39 +1,50 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.lib.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"pMessageIdName",
-	"messageIdNumber",
-	"pMessage",
-	"queueLabelCount",
-	"pQueueLabels",
-	"cmdBufLabelCount",
-	"pCmdBufLabels",
-	"objectCount",
-	"pObjects"
-})
-public class VkDebugUtilsMessengerCallbackData extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
-	public Pointer pNext;
+public class VkDebugUtilsMessengerCallbackData extends NativeStructure {
+	public /*final*/ VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
+	public Handle pNext;
 	public int flags;
 	public String pMessageIdName;
 	public int messageIdNumber;
 	public String pMessage;
 	public int queueLabelCount;
-	public Pointer pQueueLabels;
+	public Handle pQueueLabels;
 	public int cmdBufLabelCount;
-	public Pointer pCmdBufLabels;
+	public Handle pCmdBufLabels;
 	public int objectCount;
-	public Pointer pObjects;
+	public Handle pObjects;
+
+	@Override
+	public StructLayout layout() {
+		return MemoryLayout.structLayout(
+                JAVA_INT.withName("sType"),
+                PADDING,
+                POINTER.withName("pNext"),
+                JAVA_INT.withName("flags"),
+                PADDING,
+                POINTER.withName("pMessageIdName"),
+                JAVA_INT.withName("messageIdNumber"),
+                PADDING,
+                POINTER.withName("pMessage"),
+                JAVA_INT.withName("queueLabelCount"),
+                PADDING,
+                POINTER.withName("pQueueLabels"),
+                JAVA_INT.withName("cmdBufLabelCount"),
+                PADDING,
+                POINTER.withName("pCmdBufLabels"),
+                JAVA_INT.withName("objectCount"),
+                PADDING,
+                POINTER.withName("pObjects")
+		);
+	}
 }
