@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan;
 
-import java.lang.foreign.StructLayout;
+import java.lang.foreign.*;
 
 import org.sarge.jove.lib.NativeStructure;
 
@@ -22,6 +22,6 @@ public class VkPhysicalDeviceProperties extends NativeStructure {
 	@Override
 	protected StructLayout layout() {
 		// TODO
-		return null;
+		return MemoryLayout.structLayout();
 	}
 }

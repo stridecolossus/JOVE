@@ -16,9 +16,9 @@ public class VkInstanceCreateInfo extends NativeStructure {
 	public int flags;
 	public VkApplicationInfo pApplicationInfo;
 	public int enabledLayerCount;
-	public StringArray ppEnabledLayerNames;
+	public String[] ppEnabledLayerNames;
 	public int enabledExtensionCount;
-	public StringArray ppEnabledExtensionNames;
+	public String[] ppEnabledExtensionNames;
 
 	@Override
 	public StructLayout layout() {

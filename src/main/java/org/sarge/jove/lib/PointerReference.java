@@ -9,15 +9,15 @@ import java.lang.foreign.MemorySegment;
  * @author Sarge
  */
 public final class PointerReference {
-	private final Pointer pointer = new Pointer();
+	private MemorySegment address;
 
 	/**
 	 * @return This reference as an opaque handle
 	 * @throws IllegalStateException if this pointer has not been initialised from the native layer
 	 */
 	public Handle handle() {
-		if(!pointer.isAllocated()) throw new IllegalStateException("Pointer reference has not been initialised from the native layer");
-   		final MemorySegment handle = pointer.address().get(ADDRESS, 0);
+		if(address == null) throw new IllegalStateException("Pointer reference has not been initialised from the native layer");
+   		final MemorySegment handle = address.get(ADDRESS, 0);
    		return new Handle(handle);
 	}
 
@@ -29,16 +29,19 @@ public final class PointerReference {
 		 * Constructor.
 		 */
 		public PointerReferenceNativeMapper() {
-			super(PointerReference.class, ADDRESS);
+			super(PointerReference.class);
 		}
 
 		@Override
-		public MemorySegment toNative(PointerReference ref, NativeContext context) {
-			return ref.pointer.allocate(ADDRESS, context);
+		public MemorySegment marshal(PointerReference ref, NativeContext context) {
+			if(ref.address == null) {
+				ref.address = context.allocator().allocate(ADDRESS);
+			}
+			return ref.address;
 		}
 
 		@Override
-		public MemorySegment toNativeNull(Class<? extends PointerReference> type) {
+		public MemorySegment marshalNull(Class<? extends PointerReference> type) {
 			throw new UnsupportedOperationException();
 		}
 	}

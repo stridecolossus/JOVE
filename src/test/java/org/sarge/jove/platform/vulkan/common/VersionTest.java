@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 
-public class VersionTest {
+class VersionTest {
 	private Version ver;
 
 	@BeforeEach
@@ -13,20 +13,13 @@ public class VersionTest {
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(1, ver.major());
-		assertEquals(2, ver.minor());
-		assertEquals(3, ver.patch());
-	}
-
-	@Test
-	void def() {
-		assertEquals(new Version(1, 0, 0), Version.DEFAULT);
-	}
-
-	@Test
 	void toInteger() {
-		assertEquals((1 << 22) | (2 << 12) | 3, ver.toInteger());
+		assertEquals(4202499, ver.toInteger());
+	}
+
+	@Test
+	void of() {
+		assertEquals(ver, Version.of(4202499));
 	}
 
 	@Test
@@ -34,7 +27,7 @@ public class VersionTest {
 		assertEquals(ver, ver);
 		assertEquals(ver, new Version(1, 2, 3));
 		assertNotEquals(ver, null);
-		assertNotEquals(ver, new Version(4, 5,6));
+		assertNotEquals(ver, new Version(4, 5, 6));
 	}
 
 	@Test
@@ -47,7 +40,7 @@ public class VersionTest {
 		assertEquals(0, ver.compareTo(ver));
 		assertEquals(-1, ver.compareTo(new Version(1, 2, 4)));
 		assertEquals(+1, ver.compareTo(new Version(1, 2, 2)));
-		assertEquals(-4096, ver.compareTo(new Version(1, 3, 3)));
-		assertEquals(+4096, ver.compareTo(new Version(1, 1, 3)));
+		assertEquals(-1, ver.compareTo(new Version(1, 3, 3)));
+		assertEquals(+1, ver.compareTo(new Version(1, 1, 3)));
 	}
 }

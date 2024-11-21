@@ -3,7 +3,7 @@ package org.sarge.jove.lib;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.lib.IntegerReference.IntegerReferenceNativeMapper;
@@ -41,19 +41,19 @@ class IntegerReferenceTest {
 		@Test
 		void mapper() {
 			assertEquals(IntegerReference.class, mapper.type());
-			assertEquals(JAVA_INT, mapper.layout());
+			assertEquals(ValueLayout.ADDRESS, mapper.layout(null));
 		}
 
 		@Test
 		void toNative() {
-			final MemorySegment address = mapper.toNative(ref, new NativeContext());
+			final MemorySegment address = mapper.marshal(ref, new NativeContext());
 			ref.set(3);
 			assertEquals(3, address.get(JAVA_INT, 0));
 		}
 
 		@Test
 		void toNativeNull() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.toNativeNull(null));
+			assertThrows(UnsupportedOperationException.class, () -> mapper.marshalNull(null));
 		}
 	}
 }

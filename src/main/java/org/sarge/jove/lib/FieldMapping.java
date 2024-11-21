@@ -6,29 +6,47 @@ import java.lang.foreign.*;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.List;
 
 import org.sarge.jove.lib.NativeMapper.ReturnMapper;
 
 /**
- * A <i>field mapping</i> is used to marshal a structure field to/from its native representation.
+ * A <i>field mapping</i> marshals a structure field to/from its native representation.
  * @author Sarge
  */
 class FieldMapping {
+	/**
+	 * FFM marshalling adapter for off-heap structure fields.
+	 */
+	private interface FieldAdapter {
+		void marshal(Object actual, MemorySegment address);
+		Object unmarshal(MemorySegment address);
+	}
+
 	private final Field field;
-	private final VarHandle handle;
 	private final NativeMapper<?> mapper;
+	private final FieldAdapter handle;
 
 	/**
 	 * Constructor.
 	 * @param field		Field
-	 * @param handle	Native field handle
-	 * @param mapper	Native mapper for this field
+	 * @param mapper	Native mapper for this structure field
+	 * @param handle	Marshalling adapter for the off-heap field
+	 * @throws IllegalArgumentException if {@link #field} is not a valid structure field
 	 */
-	FieldMapping(Field field, VarHandle handle, NativeMapper<?> mapper) {
+	FieldMapping(Field field, NativeMapper<?> mapper, FieldAdapter handle) {
+		if(!isStructureField(field)) throw new IllegalArgumentException("Invalid structure field: " + field);
 		this.field = requireNonNull(field);
-		this.handle = requireNonNull(handle);
 		this.mapper = requireNonNull(mapper);
+		this.handle = requireNonNull(handle);
+	}
+
+	/**
+	 * @return Whether the given field is a valid structure member
+	 */
+	private static boolean isStructureField(Field field) {
+		final int modifiers = field.getModifiers();
+		return Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers);
 	}
 
 	/**
@@ -36,52 +54,26 @@ class FieldMapping {
 	 * @param structure		Structure
 	 * @param address		Off-heap memory
 	 * @param context		Context
+	 * @throws Exception if the field cannot be marshalled
 	 */
-	void toNative(NativeStructure structure, MemorySegment address, NativeContext context) {
-		final Object value = get(structure);
-		final Object actual = context.toNative(mapper, value, field.getType());
-//System.out.println("field " + field + " [" + value + "] -> [" + actual + "]");
-		handle.set(address, 0L, actual);
-	}
-
-	/**
-	 * Retrieves the field value for this mapping.
-	 * @param structure Structure instance
-	 * @return Field value
-	 */
-	private Object get(NativeStructure structure) {
-		try {
-			return field.get(structure);
-		}
-		catch(Exception e) {
-			throw new RuntimeException(String.format("Cannot retrieve structure field %s.%s", structure, field.getName()), e);
-		}
+	public void marshal(NativeStructure structure, MemorySegment address, NativeContext context) throws Exception {
+		final Object value = field.get(structure);
+		final Object actual = context.marshal(mapper, value, field.getType());
+		handle.marshal(actual, address);
 	}
 
 	/**
 	 * Marshals off-heap memory to the given structure.
 	 * @param address		Off-heap memory
 	 * @param structure		Structure
+	 * @throws Exception if the field cannot be unmarshalled
 	 */
-	void fromNative(MemorySegment address, NativeStructure structure) {
-		final Object value = handle.get(address, 0L);
-		final var m = (ReturnMapper) mapper;
-		final Object actual = m.fromNative(value, field.getType());
-		set(structure, actual);
-	}
-
-	/**
-	 * Populates a structure field.
-	 * @param structure		Structure
-	 * @param value			Field value
-	 */
-	private void set(NativeStructure structure, Object value) {
-		try {
-			field.set(structure, value);
-		}
-		catch(Exception e) {
-			throw new RuntimeException(String.format("Cannot populated structure field %s.%s with %s", structure, field.getName(), value), e);
-		}
+	public void unmarshal(MemorySegment address, NativeStructure structure) throws Exception {
+		final Object value = handle.unmarshal(address);
+		if(!(mapper instanceof ReturnMapper m)) throw new IllegalArgumentException();
+		@SuppressWarnings("unchecked")
+		final Object actual = m.unmarshal(value, field.getType());
+		field.set(structure, actual);
 	}
 
 	@Override
@@ -105,57 +97,115 @@ class FieldMapping {
 
 	/**
 	 * Builds the field mappings for the given structure.
-	 * @param layout		Structure layout
+	 * @param structure		Structure layout
 	 * @param type			Structure type
 	 * @param registry		Native mappers
 	 * @return Field mappings
 	 * @throws IllegalArgumentException for an unknown or unsupported field
 	 */
-	protected static List<FieldMapping> build(StructLayout layout, Class<? extends NativeStructure> type, NativeMapperRegistry registry) {
-		// Init field mapping builder
+	protected static List<FieldMapping> build(StructLayout structure, Class<? extends NativeStructure> type, NativeMapperRegistry registry) {
+		/**
+		 * Helper for building the field mappings.
+		 */
 		final var builder = new Object() {
 			/**
-			 * Builds the field mapping for the given structure field.
-			 * @param field Structure field
-			 * @return Field mapping
+			 * Builds the field mapping for the given memory layout.
 			 */
-			FieldMapping build(Field field) {
-				final VarHandle handle = handle(field.getName());
-				final NativeMapper<?> mapper = mapper(field);
-				return new FieldMapping(field, handle, mapper);
+			FieldMapping build(MemoryLayout layout) {
+				final String name = layout.name().get();
+				try {
+					return build(name, layout);
+				}
+				catch(Exception e) {
+					throw new IllegalArgumentException(String.format("Cannot build mapping for structure field [%s.%s]", type.getName(), name), e);
+				}
 			}
 
+			/**
+			 * Builds the field mapping.
+			 */
+			private FieldMapping build(String name, MemoryLayout layout) throws Exception {
+				final var path = PathElement.groupElement(name);
+				final FieldAdapter adapter = adapter(path, layout);
+				final Field field = type.getField(name);
+				final NativeMapper<?> mapper = mapper(field);
+				return new FieldMapping(field, mapper, adapter);
+			}
+
+			/**
+			 * Creates the adapter for the off-heap field.
+			 */
+			private FieldAdapter adapter(PathElement path, MemoryLayout layout) {
+				if(layout instanceof SequenceLayout sequence) {
+					return array(path, sequence);
+				}
+				else {
+					return varHandle(path);
+				}
+			}
+
+			/**
+			 * Creates a field adapter for an address or primitive layout implemented using a {@link VarHandle}.
+			 */
+			private FieldAdapter varHandle(PathElement path) {
+				// TODO - insertCoordinates
+				return new FieldAdapter() {
+					private final VarHandle handle = structure.varHandle(path);
+
+					@Override
+					public void marshal(Object arg, MemorySegment address) {
+						handle.set(address, 0L, arg);
+					}
+
+					@Override
+					public Object unmarshal(MemorySegment address) {
+						return handle.get(address, 0L);
+					}
+				};
+			}
+
+			/**
+			 * Creates a field adapter for an array implemented using {@link MemorySegment#asSlice(long)}.
+			 */
+			private FieldAdapter array(PathElement path, SequenceLayout sequence) {
+				final long size = sequence.byteSize();
+				if(size == 0) {
+					// https://docs.oracle.com/en/java/javase/23/docs/api/java.base/java/lang/foreign/MemoryLayout.html#layout-align
+					throw new UnsupportedOperationException(); // TODO
+				}
+
+				return new FieldAdapter() {
+					private final long offset = structure.byteOffset(path);
+
+					@Override
+					public void marshal(Object actual, MemorySegment address) {
+						// TODO
+						System.err.println("marshal array="+path);
+					}
+
+					@Override
+					public Object unmarshal(MemorySegment address) {
+						return address.asSlice(offset, size);
+					}
+				};
+			}
+
+			/**
+			 * @return Native mapper for the given structure field
+			 */
 			private NativeMapper<?> mapper(Field field) {
 				return registry
 						.mapper(field.getType())
-						.orElseThrow(() -> new IllegalArgumentException("Unsupported structure field: " + field));
-			}
-
-			/**
-			 * Creates a handle to an off-heap structure field.
-			 * @param name Field name
-			 * @return Field handle
-			 */
-			private VarHandle handle(String name) {
-				try {
-					return layout.varHandle(PathElement.groupElement(name));
-				}
-				catch(IllegalArgumentException e) {
-					throw new IllegalArgumentException(String.format("Error establishing handle for structure field %s.%s", name, type), e);
-				}
+						.orElseThrow(() -> new IllegalArgumentException("Unsupported structure field type: " + field.getType()));
 			}
 		};
 
-		// Build mapping for each top-level public field in the structure
-		return Arrays
-				.stream(type.getDeclaredFields())
-				.filter(FieldMapping::isStructureField)
+		// Build mapping for each declared structure field
+		return structure
+				.memberLayouts()
+				.stream()
+				.filter(e -> e.name().isPresent())
 				.map(builder::build)
 				.toList();
-	}
-
-	private static boolean isStructureField(Field field) {
-		final int modifiers = field.getModifiers();
-		return Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers);
 	}
 }

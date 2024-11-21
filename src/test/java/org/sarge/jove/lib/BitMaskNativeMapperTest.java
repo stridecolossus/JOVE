@@ -20,21 +20,21 @@ class BitMaskNativeMapperTest {
 	@Test
 	void mapper() {
 		assertEquals(BitMask.class, mapper.type());
-		assertEquals(ValueLayout.JAVA_INT, mapper.layout());
+		assertEquals(ValueLayout.JAVA_INT, mapper.layout(null));
 	}
 
 	@Test
-	void toNative() {
-		assertEquals(3, mapper.toNative(mask, new NativeContext()));
+	void marshal() {
+		assertEquals(3, mapper.marshal(mask, new NativeContext()));
 	}
 
 	@Test
-	void toNativeNull() {
-		assertEquals(0, mapper.toNativeNull(null));
+	void marshalNull() {
+		assertEquals(0, mapper.marshalNull(BitMask.class));
 	}
 
 	@Test
-	void fromNative() {
-		assertEquals(mask, mapper.fromNative(3, null));
+	void unmarshal() {
+		assertEquals(mask, mapper.unmarshal(3, BitMask.class));
 	}
 }

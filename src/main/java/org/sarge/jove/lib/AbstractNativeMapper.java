@@ -2,8 +2,7 @@ package org.sarge.jove.lib;
 
 import static java.util.Objects.requireNonNull;
 
-import java.lang.foreign.MemoryLayout;
-import java.util.Objects;
+import java.lang.foreign.*;
 
 /**
  * Skeleton implementation.
@@ -11,16 +10,13 @@ import java.util.Objects;
  */
 public abstract class AbstractNativeMapper<T> implements NativeMapper<T> {
 	private final Class<T> type;
-	private final MemoryLayout layout;
 
 	/**
 	 * Constructor.
-	 * @param type			Java type
-	 * @param layout		Native layout
+	 * @param type Java type
 	 */
-	protected AbstractNativeMapper(Class<T> type, MemoryLayout layout) {
+	protected AbstractNativeMapper(Class<T> type) {
 		this.type = requireNonNull(type);
-		this.layout = requireNonNull(layout);
 	}
 
 	@Override
@@ -29,13 +25,18 @@ public abstract class AbstractNativeMapper<T> implements NativeMapper<T> {
 	}
 
 	@Override
-	public final MemoryLayout layout() {
-		return layout;
+	public MemoryLayout layout(Class<? extends T> type) {
+		return AddressLayout.ADDRESS;
+	}
+
+	@Override
+	public Object marshalNull(Class<? extends T> type) {
+		return MemorySegment.NULL;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(type, layout);
+		return type.hashCode();
 	}
 
 	@Override
@@ -43,12 +44,11 @@ public abstract class AbstractNativeMapper<T> implements NativeMapper<T> {
 		return
 				(obj == this) ||
 				(obj instanceof NativeMapper that) &&
-				this.type.equals(that.type()) &&
-				this.layout.equals(that.layout());
+				this.type.equals(that.type());
 	}
 
 	@Override
 	public String toString() {
-		return String.format("NativeMapper[%s -> %s]", type, layout);
+		return String.format("NativeMapper[%s]", type);
 	}
 }

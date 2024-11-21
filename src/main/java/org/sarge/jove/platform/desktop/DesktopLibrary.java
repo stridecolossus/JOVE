@@ -57,5 +57,5 @@ interface DesktopLibrary extends DesktopLibraryWindow, DesktopLibraryDevice { //
 	 * @param count Number of extensions
 	 * @return Vulkan extensions
 	 */
-	//StringArray glfwGetRequiredInstanceExtensions(IntegerReference count);
+//	NativeArray<String> glfwGetRequiredInstanceExtensions(IntegerReference count);
 }

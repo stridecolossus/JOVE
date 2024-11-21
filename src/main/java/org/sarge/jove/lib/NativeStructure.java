@@ -5,12 +5,14 @@ import static java.util.Objects.requireNonNull;
 import java.lang.foreign.*;
 import java.util.*;
 
+import org.sarge.jove.lib.NativeMapper.ReturnMapper;
+
 /**
  * A <i>native structure</i> represents a native structure or union.
  * TODO
  * - public fields
  * - mapping to layout
- * - modify issues, i.e. ignored after allocated!!!
+ * - modify issues, i.e. ignored after allocate => (re)marshals every time
  * @author Sarge
  */
 public abstract class NativeStructure {
@@ -24,7 +26,7 @@ public abstract class NativeStructure {
      */
     protected static final MemoryLayout PADDING = MemoryLayout.paddingLayout(4);
 
-    private final Pointer pointer = new Pointer();
+    private MemorySegment address;
 
     /**
 	 * @return Memory layout of this structure
@@ -34,7 +36,7 @@ public abstract class NativeStructure {
 	/**
 	 * The <i>structure native mapper</i> marshals a {@link NativeStructure} to/from its native representation.
 	 */
-	public static class StructureNativeMapper extends DefaultNativeMapper<NativeStructure, MemorySegment> {
+	public static class StructureNativeMapper extends AbstractNativeMapper<NativeStructure> implements ReturnMapper<NativeStructure, MemorySegment> { // , ReturnedParameterMapper<NativeStructure> {
 		/**
 		 * Structure metadata.
 		 */
@@ -49,65 +51,81 @@ public abstract class NativeStructure {
 		 * @param registry Native mappers
 		 */
 		public StructureNativeMapper(NativeMapperRegistry registry) {
-			super(NativeStructure.class, ValueLayout.ADDRESS);
+			super(NativeStructure.class);
 			this.registry = requireNonNull(registry);
 		}
 
 		/**
 		 * Retrieves the metadata for the given structure.
 		 */
-		private Entry entry(NativeStructure structure) {
-			return entries.computeIfAbsent(structure.getClass(), __ -> create(structure));
+		private Entry entry(Class<? extends NativeStructure> type) {
+			return entries.computeIfAbsent(type, this::register);
 		}
 
-		/**
-		 * Builds the metadata for the given structure.
-		 */
-		private Entry create(NativeStructure structure) {
-			final StructLayout layout = structure.layout();
-			final Class<? extends NativeStructure> type = structure.getClass();
+		private Entry register(Class<? extends NativeStructure> type) {
+			final NativeStructure instance = create(type);
+			final StructLayout layout = instance.layout();
 			final List<FieldMapping> mappings = FieldMapping.build(layout, type, registry);
 			return new Entry(layout, mappings);
 		}
 
 		@Override
-		public MemorySegment toNative(NativeStructure structure, NativeContext context) {
-			final Pointer pointer = structure.pointer;
-			if(!pointer.isAllocated()) {
-				populate(structure, context);
-			}
-			return pointer.address();
+		public MemoryLayout layout(Class<? extends NativeStructure> type) {
+			final Entry entry = entry(type);
+			return entry.layout;
 		}
 
-		/**
-		 * Marshals the given structure to off-heap memory.
-		 */
-		private void populate(NativeStructure structure, NativeContext context) {
-			// Allocate off-heap structure memory
-			final Entry entry = entry(structure);
-			final MemorySegment address = structure.pointer.allocate(entry.layout, context);
+		// TODO - factor out allocation & marshalling to structure class? just have entry() here?
 
-			// Populate off-heap memory from structure
-			for(FieldMapping m : entry.mappings) {
-				m.toNative(structure, address, context);
+		@Override
+		public MemorySegment marshal(NativeStructure structure, NativeContext context) {
+			// Allocate off-heap memory as required
+			final Entry entry = entry(structure.getClass());
+			if(structure.address == null) {
+				structure.address = context.allocator().allocate(entry.layout);
 			}
+
+			// Marshal structure to off-heap memory
+			try {
+    			for(FieldMapping m : entry.mappings) {
+    				m.marshal(structure, structure.address, context);
+    			}
+			}
+			catch(Exception e) {
+				throw new RuntimeException("Error marshalling structure: " + structure, e);
+			}
+
+			return structure.address;
 		}
 
 		@Override
-		public Object fromNative(MemorySegment address, Class<? extends NativeStructure> type) {
-			// Create new structure and lookup metadata
-			final var structure = create(type);
-			final Entry entry = entry(structure);
+		public NativeStructure unmarshal(MemorySegment address, Class<? extends NativeStructure> type) {
+			// Instantiate structure
+			final NativeStructure structure = create(type);
+			final Entry entry = entry(structure.getClass());
 
-			// Populate structure from off-heap memory
+			// Unmarshal off-heap memory to structure
 			final MemorySegment pointer = address.reinterpret(entry.layout.byteSize());
-			for(FieldMapping m : entry.mappings) {
-				m.fromNative(pointer, structure);
+			try {
+    			for(FieldMapping m : entry.mappings) {
+    				m.unmarshal(pointer, structure);
+    			}
 			}
-			// TODO - reset pointer?
+			catch(Exception e) {
+				throw new RuntimeException("Error unmarshalling structure: " + structure, e);
+			}
 
 			return structure;
 		}
+
+//		@Override
+//		public void unmarshal(MemorySegment address, NativeStructure structure) {
+//			final Entry entry = entry(structure.getClass());
+//			final MemorySegment pointer = address.reinterpret(entry.layout.byteSize());
+//			for(FieldMapping m : entry.mappings) {
+//				m.unmarshal(pointer, structure);
+//			}
+//		}
 
 		/**
 		 * Instantiates a new structure instance of the given type.

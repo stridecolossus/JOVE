@@ -51,7 +51,7 @@ public class DesktopTest {
 		final String[] extensions = {"ext"};
 		final IntegerReference count = factory.integer();
 		count.set(1);
-		when(lib.glfwGetRequiredInstanceExtensions(count)).thenReturn(new StringArray(extensions, Arena.ofAuto()));
+		when(lib.glfwGetRequiredInstanceExtensions(count)).thenReturn(new NativeArray(extensions, Arena.ofAuto()));
 		assertArrayEquals(extensions, desktop.extensions());
 	}
 

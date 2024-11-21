@@ -1,6 +1,5 @@
 package org.sarge.jove.lib;
 
-import java.lang.foreign.ValueLayout;
 import java.util.*;
 
 import org.sarge.jove.lib.Handle.HandleNativeMapper;
@@ -8,7 +7,6 @@ import org.sarge.jove.lib.IntegerReference.IntegerReferenceNativeMapper;
 import org.sarge.jove.lib.NativeObjectTEMP.NativeObjectMapper;
 import org.sarge.jove.lib.NativeStructure.StructureNativeMapper;
 import org.sarge.jove.lib.PointerReference.PointerReferenceNativeMapper;
-import org.sarge.jove.lib.StringArray.StringArrayNativeMapper;
 
 /**
  * The <i>native mapper registry</i> is used to lookup supported native mappers.
@@ -36,11 +34,27 @@ public class NativeMapperRegistry {
 	 */
 	public Optional<NativeMapper<?>> mapper(Class<?> type) {
 
-		// TODO
 		if(type.isArray()) {
-			//throw new UnsupportedOperationException();
-			return mapper(type.componentType());
+
+			// TODO - is this right? shouldn't the code generator decide how Java/JOVE types map to an array?
+			if(byte[].class.equals(type)) {
+				return Optional.of(new StringNativeMapper());
+			}
+
+			// TODO - recurse
+			return Optional.of(new NativeArrayMapper());
 		}
+
+//		if(Collection.class.isAssignableFrom(type)) {
+//			System.out.println("collection "+type);
+//			for(var p : type.getTypeParameters()) {
+//				System.out.println("name"+p.getName());
+//				System.out.println("typename="+p.getTypeName());
+//				System.out.println("generic="+p.getGenericDeclaration());
+//				System.out.println("bounds="+Arrays.toString(p.getBounds()));
+//			}
+//			return Optional.of(new NativeArrayMapper());
+//		}
 
 		final NativeMapper<?> mapper = mappers.get(type);
 		if(mapper == null) {
@@ -74,36 +88,19 @@ public class NativeMapperRegistry {
 		final var registry = new NativeMapperRegistry();
 
 		// Register primitive types
-		// TODO - constant/helper?
-		final var primitives = Map.of(
-				byte.class,		ValueLayout.JAVA_BYTE,
-				char.class,		ValueLayout.JAVA_CHAR,
-				boolean.class,	ValueLayout.JAVA_BOOLEAN,
-				int.class,		ValueLayout.JAVA_INT,
-				short.class,	ValueLayout.JAVA_SHORT,
-				long.class,		ValueLayout.JAVA_LONG,
-				float.class,	ValueLayout.JAVA_FLOAT,
-				double.class,	ValueLayout.JAVA_DOUBLE
-		);
-		for(final Class<?> type : primitives.keySet()) {
-			final ValueLayout layout = primitives.get(type);
-			final var mapper = new DefaultNativeMapper<>(type, layout); // TODO - nulls?
-			registry.add(mapper);
-		}
-
-//		registry.add(new DefaultNativeMapper<>(Integer.class, ValueLayout.JAVA_INT)); // TODO - nulls?
+		PrimitiveNativeMapper.mappers().forEach(registry::add);
 
 		// Register reference types
 		final NativeMapper<?>[] reference = {
 				new IntEnumNativeMapper(),
 				new BitMaskNativeMapper(),
 				new StringNativeMapper(),
+				//new ArrayNativeMapper(),
 				new HandleNativeMapper(),
 				new NativeObjectMapper(),
 				new IntegerReferenceNativeMapper(),
 				new PointerReferenceNativeMapper(),
 				new StructureNativeMapper(registry),
-				new StringArrayNativeMapper(), // TODO
 		};
 		for(NativeMapper<?> m : reference) {
 			registry.add(m);

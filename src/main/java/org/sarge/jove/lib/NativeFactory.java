@@ -122,9 +122,15 @@ public class NativeFactory {
 		 */
 		private NativeMethod build(MemorySegment address, Method method) {
 			// Init method builder
-			final var builder = new NativeMethod.Builder(registry)
-					.address(address)
-					.signature(method.getParameterTypes());
+			final var builder = new NativeMethod.Builder(registry);
+			builder.address(address);
+
+			// Define method signature
+			for(Parameter p : method.getParameters()) {
+				final boolean returned = p.isAnnotationPresent(Returned.class);
+//System.out.println("parameter type="+p.getType()+" param="+p.getParameterizedType());
+				builder.parameter(p.getType(), returned);
+			}
 
 			// Set return type
 			final Class<?> returnType = method.getReturnType();

@@ -119,14 +119,14 @@ public final class Desktop implements TransientObject {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-//		final IntegerReference count = factory.integer();
-//		final StringArray extensions = lib.glfwGetRequiredInstanceExtensions(count);
-//		return extensions.array(count.value());
-		return new String[0];
+		final IntegerReference count = factory.integer();
+//		final NativeArray<String> array = lib.glfwGetRequiredInstanceExtensions(count);
+//		return array.get(count.value());
+		return null;
 	}
 
 //	/**
-//	 * Sets a handler for GLFW errors.
+//	 * Sets the handler for GLFW errors.
 //	 * @param handler Error handler
 //	 */
 //	@MainThread

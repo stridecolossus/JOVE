@@ -14,39 +14,48 @@ public interface NativeMapper<T> {
 	Class<T> type();
 
 	/**
-	 * @return Native type layout
+	 * @param type Target type
+	 * @return Native layout for the given type
 	 */
-	MemoryLayout layout();
+	MemoryLayout layout(Class<? extends T> type);
 
 	/**
 	 * Marshals the given value to its native representation.
-	 * @param value 		Value to marshal
+	 * @param instance		Instance to marshal
 	 * @param context		Native context
 	 * @return Native value
 	 */
-	Object toNative(T value, NativeContext context);
+	Object marshal(T instance, NativeContext context);
 
 	/**
 	 * Marshals a {@code null} value to its native representation.
 	 * @param type Target type
 	 * @return Native value
 	 */
-	default Object toNativeNull(Class<? extends T> type) {
-		return MemorySegment.NULL;
-	}
+	Object marshalNull(Class<? extends T> type);
 
 	/**
-	 * A <i>return converter</i> denotes a type that can also be returned from a native method.
+	 * A <i>return mapper</i> unmarshals method return values and pass-by-reference parameters.
 	 * @param <T> Type
 	 * @param <R> Native return type
 	 */
-	interface ReturnMapper<T, R> extends NativeMapper<T> {
+	interface ReturnMapper<T, R> {
     	/**
-    	 * Unmarshals a native return value.
+    	 * Unmarshals a native return value to a new instance.
     	 * @param value 	Native return value
     	 * @param type		Target type
     	 * @return Marshalled return value
     	 */
-		Object fromNative(R value, Class<? extends T> type);
+		T unmarshal(R value, Class<? extends T> type);
+	}
+
+	// TODO
+	interface ReturnedParameterMapper<T> {
+		/**
+		 * Unmarshals a by-reference return value to the given instance.
+		 * @param value			Native by-reference return value
+		 * @param instance		Instance to populate
+		 */
+		void unmarshal(MemorySegment value, T instance);
 	}
 }

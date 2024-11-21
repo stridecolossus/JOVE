@@ -10,7 +10,7 @@ import org.sarge.jove.lib.NativeStructure.StructureNativeMapper;
 
 class StructureNativeMapperTest {
 	protected static class MockStructure extends NativeStructure {
-		public int field = 2;
+		public int field;
 
 		@Override
 		public StructLayout layout() {
@@ -19,33 +19,51 @@ class StructureNativeMapperTest {
 	}
 
 	private StructureNativeMapper mapper;
+	private MockStructure structure;
+	private NativeContext context;
 
 	@BeforeEach
 	void before() {
-		mapper = new StructureNativeMapper(NativeMapperRegistry.create());
+		final var registry = new NativeMapperRegistry();
+		registry.add(new PrimitiveNativeMapper<>(int.class));
+		mapper = new StructureNativeMapper(registry);
+		context = new NativeContext(Arena.ofAuto(), registry);
+		structure = new MockStructure();
 	}
 
 	@Test
 	void mapper() {
 		assertEquals(NativeStructure.class, mapper.type());
-		assertEquals(ValueLayout.ADDRESS, mapper.layout());
+		assertEquals(structure.layout(), mapper.layout(MockStructure.class));
 	}
 
 	@Test
-	void toNative() {
-		final MemorySegment address = mapper.toNative(new MockStructure(), new NativeContext());
+	void marshal() {
+		structure.field = 2;
+		final MemorySegment address = mapper.marshal(structure, context);
 		assertEquals(2, address.get(JAVA_INT, 0));
 	}
 
 	@Test
-	void toNativeNull() {
-		assertEquals(MemorySegment.NULL, mapper.toNativeNull(null));
+	void marshalNull() {
+		assertEquals(MemorySegment.NULL, mapper.marshalNull(MockStructure.class));
 	}
 
 	@Test
-	void fromNative() {
-		final MemorySegment address = mapper.toNative(new MockStructure(), new NativeContext());
-		final var result = (MockStructure) mapper.fromNative(address, MockStructure.class);
-		assertEquals(2, result.field);
+	void unmarshal() {
+		final var structure = new MockStructure();
+		final MemorySegment address = context.allocator().allocate(structure.layout());
+		address.set(JAVA_INT, 0, 3);
+		final var result = (MockStructure) mapper.unmarshal(address, MockStructure.class);
+		assertEquals(3, result.field);
+	}
+
+	@Test
+	void unmarshalInstance() {
+//		final var structure = new MockStructure();
+//		final MemorySegment address = context.allocator().allocate(structure.layout());
+//		address.set(JAVA_INT, 0, 4);
+//		mapper.unmarshal(address, structure);
+//		assertEquals(4, structure.field);
 	}
 }

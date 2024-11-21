@@ -27,26 +27,26 @@ class IntEnumNativeMapperTest {
 	@Test
 	void mapper() {
 		assertEquals(IntEnum.class, mapper.type());
-		assertEquals(ValueLayout.JAVA_INT, mapper.layout());
+		assertEquals(ValueLayout.JAVA_INT, mapper.layout(null));
 	}
 
 	@Test
-	void toNative() {
-		assertEquals(42, mapper.toNative(MockEnum.INSTANCE, new NativeContext()));
+	void marshal() {
+		assertEquals(42, mapper.marshal(MockEnum.INSTANCE, new NativeContext()));
 	}
 
 	@Test
-	void toNativeNull() {
-		assertEquals(42, mapper.toNativeNull(MockEnum.class));
+	void marshalNull() {
+		assertEquals(42, mapper.marshalNull(MockEnum.class));
 	}
 
 	@Test
-	void fromNative() {
-		assertEquals(MockEnum.INSTANCE, mapper.fromNative(42, MockEnum.class));
+	void unmarshal() {
+		assertEquals(MockEnum.INSTANCE, mapper.unmarshal(42, MockEnum.class));
 	}
 
 	@Test
-	void fromNativeDefault() {
-		assertEquals(MockEnum.INSTANCE, mapper.fromNative(0, MockEnum.class));
+	void unmarshalDefault() {
+		assertEquals(MockEnum.INSTANCE, mapper.unmarshal(0, MockEnum.class));
 	}
 }

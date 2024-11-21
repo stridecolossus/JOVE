@@ -81,7 +81,7 @@ public class Instance extends TransientNativeObjectTEMP {
 	@Override
 	protected void release() {
 		for(DiagnosticHandler handler : handlers) {
-			//handler.destroy();
+			handler.destroy();
 		}
 		handlers.clear();
 		vulkan.library().vkDestroyInstance(this, null);
@@ -180,11 +180,11 @@ public class Instance extends TransientNativeObjectTEMP {
 			info.pApplicationInfo = app;
 
 			// Populate required extensions
-			info.ppEnabledExtensionNames = new StringArray(extensions);
+			info.ppEnabledExtensionNames = extensions.toArray(String[]::new);		// TODO - helper class/method or collection?
 			info.enabledExtensionCount = extensions.size();
 
 			// Populate required layers
-			info.ppEnabledLayerNames = new StringArray(layers);
+			info.ppEnabledLayerNames = layers.toArray(String[]::new);				// TODO - helper class/method or collection?
 			info.enabledLayerCount = layers.size();
 
 			// Create instance
@@ -223,7 +223,7 @@ public class Instance extends TransientNativeObjectTEMP {
 		 * @param pProperties		Extensions
 		 * @return Result
 		 */
-		int vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, VkExtensionProperties[] pProperties);
+		int vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, @Returned VkExtensionProperties[] pProperties);
 
 		/**
 		 * Enumerates validation layer properties.
@@ -231,7 +231,7 @@ public class Instance extends TransientNativeObjectTEMP {
 		 * @param pProperties		Layers
 		 * @return Result
 		 */
-		int vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, VkLayerProperties[] pProperties);
+		int vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, @Returned VkLayerProperties[] pProperties);
 
 		/**
 		 * Looks up a function pointer of this instance.

@@ -40,19 +40,19 @@ class PointerReferenceTest {
 		@Test
 		void mapper() {
 			assertEquals(PointerReference.class, mapper.type());
-			assertEquals(ADDRESS, mapper.layout());
+			assertEquals(ADDRESS, mapper.layout(null));
 		}
 
 		@Test
 		void toNative() {
-			final MemorySegment address = mapper.toNative(ref, new NativeContext());
+			final MemorySegment address = mapper.marshal(ref, new NativeContext());
 			final Handle handle = new Handle(address);
 			assertEquals(handle.address(), address);
 		}
 
 		@Test
 		void toNativeNull() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.toNativeNull(null));
+			assertThrows(UnsupportedOperationException.class, () -> mapper.marshalNull(null));
 		}
 	}
 }

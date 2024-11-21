@@ -1,7 +1,8 @@
 package org.sarge.jove.lib;
 
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
 
+import org.sarge.jove.lib.NativeMapper.ReturnMapper;
 import org.sarge.jove.util.BitMask;
 
 /**
@@ -9,26 +10,31 @@ import org.sarge.jove.util.BitMask;
  * @author Sarge
  */
 @SuppressWarnings("rawtypes")
-public class BitMaskNativeMapper extends DefaultNativeMapper<BitMask, Integer> {
+public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask> implements ReturnMapper<BitMask, Integer> {
 	/**
 	 * Constructor.
 	 */
 	public BitMaskNativeMapper() {
-		super(BitMask.class, ValueLayout.JAVA_INT);
+		super(BitMask.class);
 	}
 
 	@Override
-	public Integer toNative(BitMask value, NativeContext __) {
+	public MemoryLayout layout(Class<? extends BitMask> type) {
+		return ValueLayout.JAVA_INT;
+	}
+
+	@Override
+	public Integer marshal(BitMask value, NativeContext __) {
 		return value.bits();
 	}
 
 	@Override
-	public Integer toNativeNull(Class<? extends BitMask> type) {
+	public Integer marshalNull(Class<? extends BitMask> type) {
 		return 0;
 	}
 
 	@Override
-	public BitMask<?> fromNative(Integer value, Class<? extends BitMask> type) {
+	public BitMask<?> unmarshal(Integer value, Class<? extends BitMask> type) {
 		return new BitMask<>(value);
 	}
 }

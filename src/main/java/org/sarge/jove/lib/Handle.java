@@ -1,8 +1,8 @@
 package org.sarge.jove.lib;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
-
 import java.lang.foreign.MemorySegment;
+
+import org.sarge.jove.lib.NativeMapper.ReturnMapper;
 
 /**
  * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
@@ -52,52 +52,30 @@ public final class Handle {
 		return String.format("Handle[%s]", address);
 	}
 
-	///////////
-
-//	public static final class HandleArrayNativeMapper extends DefaultNativeMapper<Handle[]> {
-//
-//		public static MemorySegment ref;
-//
-//		public HandleArrayNativeMapper() {
-//			super(Handle[].class, ADDRESS);
-//		}
-//
-//		@Override
-//		public Object toNative(Handle[] value, SegmentAllocator allocator) {
-//			final MemorySegment root = allocator.allocate(ADDRESS, value.length);
-//System.out.println("root="+root);
-//			for(int n = 0; n < value.length; ++n) {
-//				final MemorySegment e = allocator.allocate(ADDRESS);
-//System.out.println("before="+e);
-//				root.setAtIndex(ADDRESS, n, e);
-//				value[n] = new Handle(e);
-//			}
-//			ref = root;
-//			return root;
-//		}
-//	}
-
-	///////////
-
 	/**
 	 * Native mapper for a handle.
 	 */
-	public static final class HandleNativeMapper extends DefaultNativeMapper<Handle, MemorySegment> {
+	public static final class HandleNativeMapper extends AbstractNativeMapper<Handle> implements ReturnMapper<Handle, MemorySegment> {
 		/**
 		 * Constructor.
 		 */
 		public HandleNativeMapper() {
-			super(Handle.class, ADDRESS);
+			super(Handle.class);
 		}
 
 		@Override
-		public MemorySegment toNative(Handle handle, NativeContext context) {
+		public MemorySegment marshal(Handle handle, NativeContext context) {
 			return handle.address;
 		}
 
 		@Override
-		public Handle fromNative(MemorySegment address, Class<? extends Handle> type) {
+		public Handle unmarshal(MemorySegment address, Class<? extends Handle> type) {
 			return new Handle(address);
 		}
+
+//		@Override
+//		public Handle unmarshal(MemorySegment address, Class<? extends Handle> type) {
+//			return new Handle(address);
+//		}
 	}
 }

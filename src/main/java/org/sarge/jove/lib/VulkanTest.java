@@ -25,14 +25,6 @@ public class VulkanTest {
 //				.hint(Hint.CLIENT_API, 0)
 //				.build(desktop);
 
-//		System.out.println("Initialising Vulkan...");
-//		final var registry = NativeMapperRegistry.create();
-//		registry.add(new NativeObjectTEMP.NativeObjectMapper());
-//		registry.add(new StructureNativeMapper());
-//
-//		final var factory = new NativeFactory(registry);
-//		final var vulkan = factory.build("vulkan-1", VulkanLibraryTEMP.class);
-
 		System.out.println("Initialising Vulkan...");
 		final Vulkan vulkan = Vulkan.create();
 
@@ -40,26 +32,28 @@ public class VulkanTest {
 		final Instance instance = new Instance.Builder()
 				.name("VulkanTest")
 				.extension("VK_EXT_debug_utils")
-				.extensions(extensions)
+//				.extensions(extensions)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build(vulkan);
 
 		System.out.println("Attaching diagnostic handler...");
 		instance.handler().build();
-//		final Handler handler = new Handler.Builder().build(instance);
 
 		/*
-		System.out.println("Enumerating devices...");
-		final var devices = PhysicalDevice.devices(instance).toList();
-		devices.forEach(System.out::println);
+		System.out.println("Layers...");
+		final var count = new IntegerReference();
+		vulkan.library().vkEnumerateInstanceLayerProperties(count, null);
 
-		System.out.println("properties");
-		System.out.println("  "+devices.getFirst().properties());
-	 */
+		final var layers = new VkLayerProperties[count.value()];
+//		Arrays.setAll(layers, __ -> new VkLayerProperties());
+		vulkan.library().vkEnumerateInstanceLayerProperties(count, layers);
+		for(var layer : layers) {
+			System.out.println(layer);
+		}
+//		System.out.println("layers"+Arrays.toString(layers));
+		*/
 
 		System.out.println("Cleanup...");
-
-//		handler.destroy();
 		instance.destroy();
 //		window.destroy();
 		desktop.destroy();

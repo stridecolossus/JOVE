@@ -3,23 +3,24 @@ package org.sarge.jove.lib;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 import java.lang.foreign.MemorySegment;
+import java.util.Objects;
 
 /**
  * An <i>integer reference</i> maps to a native integer-by-reference value.
  * @author Sarge
  */
 public final class IntegerReference {
-	private final Pointer pointer = new Pointer();
+	private MemorySegment address;
 
 	/**
 	 * @return Integer value
 	 */
 	public int value() {
-		if(pointer.isAllocated()) {
-			return pointer.address().get(JAVA_INT, 0);
+		if(address == null) {
+			return 0;
 		}
 		else {
-			return 0;
+			return address.get(JAVA_INT, 0);
 		}
 	}
 
@@ -28,12 +29,12 @@ public final class IntegerReference {
 	 * @param value Integer reference
 	 */
 	void set(int value) {
-		pointer.address().set(JAVA_INT, 0, value);
+		address.set(JAVA_INT, 0, value);
 	}
 
 	@Override
 	public int hashCode() {
-		return pointer.hashCode();
+		return Objects.hashCode(address);
 	}
 
 	@Override
@@ -41,7 +42,7 @@ public final class IntegerReference {
 		return
 				(obj == this) ||
 				(obj instanceof IntegerReference that) &&
-				this.pointer.equals(that.pointer);
+				Objects.equals(this.address, that.address);
 	}
 
 	@Override
@@ -57,16 +58,19 @@ public final class IntegerReference {
 		 * Constructor.
 		 */
 		public IntegerReferenceNativeMapper() {
-			super(IntegerReference.class, JAVA_INT);
+			super(IntegerReference.class);
 		}
 
 		@Override
-		public MemorySegment toNative(IntegerReference value, NativeContext context) {
-			return value.pointer.allocate(JAVA_INT, context);
+		public MemorySegment marshal(IntegerReference ref, NativeContext context) {
+			if(ref.address == null) {
+				ref.address = context.allocator().allocate(JAVA_INT);
+			}
+			return ref.address;
 		}
 
 		@Override
-		public MemorySegment toNativeNull(Class<? extends IntegerReference> type) {
+		public MemorySegment marshalNull(Class<? extends IntegerReference> type) {
 			throw new UnsupportedOperationException();
 		}
 	}

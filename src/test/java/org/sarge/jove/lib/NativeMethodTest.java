@@ -18,7 +18,7 @@ class NativeMethodTest {
 
 	@BeforeEach
 	void before() {
-		final var mapper = new DefaultNativeMapper<>(int.class, ValueLayout.JAVA_INT);
+		final var mapper = new PrimitiveNativeMapper<>(int.class);
 		final var registry = new NativeMapperRegistry();
 		registry.add(mapper);
 		context = new NativeContext(Arena.ofAuto(), registry);

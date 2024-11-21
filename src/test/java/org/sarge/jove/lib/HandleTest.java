@@ -40,22 +40,22 @@ class HandleTest {
 		@Test
 		void mapper() {
 			assertEquals(Handle.class, mapper.type());
-			assertEquals(ValueLayout.ADDRESS, mapper.layout());
+			assertEquals(ValueLayout.ADDRESS, mapper.layout(null));
 		}
 
 		@Test
-		void toNative() {
-			assertEquals(MemorySegment.ofAddress(3), mapper.toNative(handle, new NativeContext()));
+		void marshal() {
+			assertEquals(MemorySegment.ofAddress(3), mapper.marshal(handle, new NativeContext()));
 		}
 
 		@Test
-		void toNativeNull() {
-			assertEquals(MemorySegment.NULL, mapper.toNativeNull(null));
+		void marshalNull() {
+			assertEquals(MemorySegment.NULL, mapper.marshalNull(Handle.class));
 		}
 
 		@Test
-		void fromNative() {
-			assertEquals(handle, mapper.fromNative(MemorySegment.ofAddress(3), null));
+		void unmarshal() {
+			assertEquals(handle, mapper.unmarshal(MemorySegment.ofAddress(3), Handle.class));
 		}
 	}
 }

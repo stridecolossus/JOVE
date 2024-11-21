@@ -1,6 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
-import java.lang.foreign.StructLayout;
+import static java.lang.foreign.ValueLayout.*;
+
+import java.lang.foreign.*;
 
 import org.sarge.jove.lib.NativeStructure;
 
@@ -9,14 +11,18 @@ import org.sarge.jove.lib.NativeStructure;
  * This class has been code-generated.
  */
 public class VkLayerProperties extends NativeStructure {
-	public byte[] layerName = new byte[256];
+	public String layerName;
 	public int specVersion;
 	public int implementationVersion;
-	public byte[] description = new byte[256];
+	public String description;
 
 	@Override
 	protected StructLayout layout() {
-		// TODO
-		return null;
+		return MemoryLayout.structLayout(
+		        MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("layerName"),
+		        JAVA_INT.withName("specVersion"),
+		        JAVA_INT.withName("implementationVersion"),
+		        MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("description")
+		);
 	}
 }

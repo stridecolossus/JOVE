@@ -19,12 +19,12 @@ public record NativeContext(SegmentAllocator allocator, NativeMapperRegistry reg
 	 * @return Native value
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public Object toNative(NativeMapper mapper, Object value, Class<?> type) {
+	Object marshal(NativeMapper mapper, Object value, Class<?> type) {
 		if(value == null) {
-			return mapper.toNativeNull(type);
+			return mapper.marshalNull(type);
 		}
 		else {
-			return mapper.toNative(value, this);
+			return mapper.marshal(value, this);
 		}
 	}
 }

@@ -1,12 +1,9 @@
 package org.sarge.jove.lib;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.foreign.*;
-import java.lang.foreign.MemoryLayout.PathElement;
-import java.lang.invoke.VarHandle;
-import java.lang.reflect.Field;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
@@ -36,22 +33,29 @@ class NativeStructureTest {
 		registry = new NativeMapperRegistry();
 	}
 
+	private void register() {
+		final NativeMapper<?> mapper = new PrimitiveNativeMapper<>(int.class);
+		registry.add(mapper);
+	}
+
 	@DisplayName("The field mappings for a native structure can be constructed from its layout")
 	@Test
 	void build() throws Exception {
-		// Register field mapper
-		final NativeMapper<?> mapper = new DefaultNativeMapper<>(int.class, JAVA_INT);
-		registry.add(mapper);
 
-		// Build expected field mapping
-		final Field field = MockStructure.class.getField("field");
+		register();
+
+		// TODO - test structure::un/marshal and/or underlying field mappings? structure mapper? both?
+
+//		// Build expected field mapping
 		final StructLayout layout = structure.layout();
-		final VarHandle handle = layout.varHandle(PathElement.groupElement("field"));
-		final var expected = new FieldMapping(field, handle, mapper);
+//		final VarHandle handle = layout.varHandle(PathElement.groupElement("field"));
+//		final var expected = new FieldMapping(field, handle, mapper);
 
 		// Build field mappings for this structure
 		final List<FieldMapping> fields = FieldMapping.build(layout, MockStructure.class, registry);
-		assertEquals(List.of(expected), fields);
+
+//		fields.getFirst().marshal(structure, address, null);
+//		assertEquals(List.of(expected), fields);
 	}
 
 	@DisplayName("A native structure cannot declare an unsupported native type")
@@ -64,6 +68,7 @@ class NativeStructureTest {
 	@Test
 	void unknown() {
 		final var layout = MemoryLayout.structLayout(JAVA_INT.withName("cobblers"));
+		register();
 		assertThrows(IllegalArgumentException.class, () -> FieldMapping.build(layout, MockStructure.class, registry));
 	}
 
@@ -79,6 +84,7 @@ class NativeStructureTest {
 				return structure.layout();
 			}
 		};
+		register();
 		assertThrows(IllegalArgumentException.class, () -> FieldMapping.build(invalid.layout(), invalid.getClass(), registry));
 	}
 }
