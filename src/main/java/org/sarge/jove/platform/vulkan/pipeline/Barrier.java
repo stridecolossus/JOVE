@@ -9,9 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Structure;
+import org.sarge.jove.util.BitMask;
 
 /**
  * A <i>pipeline barrier</i> is a command used to synchronize access to memory resources within the pipeline.
@@ -80,7 +78,7 @@ public final class Barrier implements Command {
 	/**
 	 * @return Length of the given array
 	 */
-	private static int length(Structure[] array) {
+	private static int length(Object[] array) {
 		if(array == null) {
 			return 0;
 		}
@@ -163,10 +161,12 @@ public final class Barrier implements Command {
 		 * @return New barrier
 		 */
 		public Barrier build() {
-			final var memoryArray = StructureCollector.array(memory, new VkMemoryBarrier(), MemoryBarrierBuilder::populate);
-			final var bufferArray = StructureCollector.array(buffers, new VkBufferMemoryBarrier(), BufferBarrierBuilder::populate);
-			final var imagesArray = StructureCollector.array(images, new VkImageMemoryBarrier(), ImageBarrierBuilder::populate);
-			return new Barrier(srcStages, destStages, flags, memoryArray, bufferArray, imagesArray);
+			// TODO
+//			final var memoryArray = null; // StructureCollector.array(memory, new VkMemoryBarrier(), MemoryBarrierBuilder::populate);
+//			final var bufferArray = null; // StructureCollector.array(buffers, new VkBufferMemoryBarrier(), BufferBarrierBuilder::populate);
+//			final var imagesArray = null; // StructureCollector.array(images, new VkImageMemoryBarrier(), ImageBarrierBuilder::populate);
+//			return new Barrier(srcStages, destStages, flags, memoryArray, bufferArray, imagesArray);
+			return new Barrier(srcStages, destStages, flags, null, null, null);
 		}
 
 		/**

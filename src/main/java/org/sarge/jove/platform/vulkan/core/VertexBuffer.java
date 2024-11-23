@@ -2,10 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import java.util.*;
 
-import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-
-import com.sun.jna.Pointer;
 
 /**
  * A <i>vertex buffer</i> binds vertex data to the pipeline.
@@ -39,8 +36,7 @@ public final class VertexBuffer extends VulkanBuffer {
 	 * @return Bind command
 	 */
 	public static Command bind(int start, Collection<VertexBuffer> buffers) {
-		final Pointer array = NativeObject.array(buffers);
-		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, start, buffers.size(), array, new long[]{0});
+		return (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, start, buffers.size(), buffers, new long[]{0});
 	}
 	// TODO - offsets
 }

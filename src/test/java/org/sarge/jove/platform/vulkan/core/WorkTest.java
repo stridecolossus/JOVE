@@ -85,12 +85,12 @@ public class WorkTest {
 	@Nested
 	class BuilderTest {
 		private Work.Builder builder;
-		private Semaphore wait, signal;
+		private VulkanSemaphore wait, signal;
 
 		@BeforeEach
 		void before() {
-			wait = mock(Semaphore.class);
-			signal = mock(Semaphore.class);
+			wait = mock(VulkanSemaphore.class);
+			signal = mock(VulkanSemaphore.class);
 			builder = new Work.Builder();
 		}
 

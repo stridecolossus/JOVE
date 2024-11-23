@@ -1,16 +1,13 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
-import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.*;
-import org.sarge.jove.util.*;
 
 /**
  * A <i>work</i> instance represents a group of tasks to be submitted to a {@link WorkQueue}.
@@ -62,8 +59,8 @@ public final class Work {
 	}
 
 	private final List<Buffer> buffers = new ArrayList<>();
-	private final Map<Semaphore, Set<VkPipelineStage>> wait = new LinkedHashMap<>();
-	private final Set<Semaphore> signal = new HashSet<>();
+	private final Map<VulkanSemaphore, Set<VkPipelineStage>> wait = new LinkedHashMap<>();
+	private final Set<VulkanSemaphore> signal = new HashSet<>();
 
 	private Work() {
 	}
@@ -75,28 +72,30 @@ public final class Work {
 		return buffers.get(0).pool();
 	}
 
-	/**
-	 * Populates the submission descriptor for this work.
-	 */
-	private void populate(VkSubmitInfo info) {
-		// Populate command buffers
-		info.commandBufferCount = buffers.size();
-		info.pCommandBuffers = NativeObject.array(buffers);
-
-		if(!wait.isEmpty()) {
-			// Populate wait semaphores
-			info.waitSemaphoreCount = wait.size();
-			info.pWaitSemaphores = NativeObject.array(wait.keySet());
-
-			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
-			final int[] stages = wait.values().stream().map(BitMask::new).mapToInt(BitMask::bits).toArray();
-			info.pWaitDstStageMask = new PointerToIntArray(stages);
-		}
-
-		// Populate signal semaphores
-		info.signalSemaphoreCount = signal.size();
-		info.pSignalSemaphores = NativeObject.array(signal);
-	}
+//	/**
+//	 * Populates the submission descriptor for this work.
+//	 */
+//	private void populate(VkSubmitInfo info) {
+//		// TODO
+//
+//		// Populate command buffers
+//		info.commandBufferCount = buffers.size();
+//		info.pCommandBuffers = NativeObject.array(buffers);
+//
+//		if(!wait.isEmpty()) {
+//			// Populate wait semaphores
+//			info.waitSemaphoreCount = wait.size();
+//			info.pWaitSemaphores = NativeObject.array(wait.keySet());
+//
+//			// Populate pipeline stage flags (which for some reason is a pointer to an integer array)
+//			final int[] stages = wait.values().stream().map(BitMask::new).mapToInt(BitMask::bits).toArray();
+//			info.pWaitDstStageMask = new PointerToIntArray(stages);
+//		}
+//
+//		// Populate signal semaphores
+//		info.signalSemaphoreCount = signal.size();
+//		info.pSignalSemaphores = NativeObject.array(signal);
+//	}
 
 	/**
 	 * Submits this work for execution.
@@ -116,6 +115,7 @@ public final class Work {
 	 */
 	public static void submit(Collection<Work> batch, Fence fence) {
 		// Check batch submits to same queue
+		// TODO - integrate into build()?
 		final Iterator<Work> work = batch.iterator();
 		final Pool pool = work.next().pool();
 		final WorkQueue queue = pool.queue();
@@ -126,10 +126,21 @@ public final class Work {
 			}
 		}
 
+		// Build batch descriptors
+		final Collection<VkSubmitInfo> info = batch
+				.stream()
+				.map(Work::build)
+				.toList();
+
 		// Submit batch
-		final VkSubmitInfo[] array = StructureCollector.array(batch, new VkSubmitInfo(), Work::populate);
-		final VulkanLibrary lib = pool.device().library();
-		check(lib.vkQueueSubmit(queue, array.length, array, fence));
+		final VulkanLibrary lib = pool.device().vulkan().library();
+		lib.vkQueueSubmit(queue, info.size(), info, fence);
+	}
+
+	private static VkSubmitInfo build(Work work) {
+		final var info = new VkSubmitInfo();
+		// TODO
+		return info;
 	}
 
 	@Override
@@ -232,7 +243,7 @@ public final class Work {
 		 * @throws IllegalArgumentException if {@code stages} is empty
 		 * @throws IllegalArgumentException for a duplicate semaphore
 		 */
-		public Builder wait(Semaphore semaphore, Set<VkPipelineStage> stages) {
+		public Builder wait(VulkanSemaphore semaphore, Set<VkPipelineStage> stages) {
 			requireNonNull(semaphore);
 			requireNotEmpty(stages);
 			if(work.wait.containsKey(semaphore)) {
@@ -243,9 +254,9 @@ public final class Work {
 		}
 
 		/**
-		 * @see #wait(Semaphore, Collection)
+		 * @see #wait(VulkanSemaphore, Collection)
 		 */
-		public Builder wait(Semaphore semaphore, VkPipelineStage... stages) {
+		public Builder wait(VulkanSemaphore semaphore, VkPipelineStage... stages) {
 			return wait(semaphore, Set.of(stages));
 		}
 
@@ -253,7 +264,7 @@ public final class Work {
 		 * Adds a semaphore to be signalled when this batch has completed execution.
 		 * @param semaphore Semaphore to be signalled
 		 */
-		public Builder signal(Semaphore semaphore) {
+		public Builder signal(VulkanSemaphore semaphore) {
 			requireNonNull(semaphore);
 			work.signal.add(semaphore);
 			return this;

@@ -1,19 +1,16 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.nio.Buffer;
 import java.util.Optional;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * An <i>image view</i> is a reference to an {@link Image} used as a frame buffer <i>attachment</i>.
@@ -143,10 +140,10 @@ public final class View extends VulkanObject {
 
 		/**
 		 * Sets the image sub-resource for this view.
-		 * @param subresource Image sub-resource
+		 * @param sub Image sub-resource
 		 */
-		public Builder subresource(SubResource subresource) {
-			this.subresource = requireNonNull(subresource);
+		public Builder subresource(SubResource sub) {
+			this.subresource = requireNonNull(sub);
 			return this;
 		}
 
@@ -165,12 +162,12 @@ public final class View extends VulkanObject {
 			info.subresourceRange = SubResource.toRange(subresource);
 
 			// Allocate image view
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateImageView(dev, info, null, ref));
+			final Vulkan vulkan = dev.vulkan();
+			final PointerReference ref = vulkan.factory().pointer();
+			vulkan.library().vkCreateImageView(dev, info, null, ref);
 
 			// Create image view
-			return new View(new Handle(ref), dev, image);
+			return new View(ref.handle(), dev, image);
 		}
 	}
 
@@ -186,7 +183,7 @@ public final class View extends VulkanObject {
 		 * @param pView				Returned image view
 		 * @return Result
 		 */
-		int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pView);
+		int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, PointerReference pView);
 
 		/**
 		 * Destroys an image view.
@@ -194,7 +191,7 @@ public final class View extends VulkanObject {
 		 * @param imageView			Image view
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyImageView(DeviceContext device, View imageView, Pointer pAllocator);
+		void vkDestroyImageView(DeviceContext device, View imageView, Handle pAllocator);
 
 		/**
 		 * Clears a colour attachment.
@@ -205,7 +202,7 @@ public final class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange pRanges);
+		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 		// TODO - these can only be done outside of a render pass? what are they for?
 
@@ -218,7 +215,7 @@ public final class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
+		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 	}
 }

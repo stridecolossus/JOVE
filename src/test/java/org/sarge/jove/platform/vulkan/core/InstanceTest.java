@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.lang.foreign.MemorySegment;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.lib.Handle;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.core.Instance.Builder;

@@ -4,7 +4,7 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.lib.NativeStructure;
+import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.util.BitMask;
 
 /**
@@ -15,10 +15,7 @@ public class VkQueueFamilyProperties extends NativeStructure {
 	public BitMask<VkQueueFlag> queueFlags;
 	public int queueCount;
 	public int timestampValidBits;
-//	public VkExtent3D minImageTransferGranularity;
-	public int width;
-	public int height;
-	public int depth;
+	public VkExtent3D minImageTransferGranularity;
 
 	@Override
 	protected StructLayout layout() {
@@ -26,11 +23,13 @@ public class VkQueueFamilyProperties extends NativeStructure {
 				JAVA_INT.withName("queueFlags"),
 				JAVA_INT.withName("queueCount"),
 				JAVA_INT.withName("timestampValidBits"),
-//				MemoryLayout.structLayout(
+				MemoryLayout.structLayout(
 		            JAVA_INT.withName("width"),
 		            JAVA_INT.withName("height"),
 		            JAVA_INT.withName("depth")
-//		        ) // .withName("minImageTransferGranularity")
+				).withName("minImageTransferGranularity")
 		);
 	}
 }
+
+// TODO - VkExtent3D is 'embedded' rather than POINTER? how can layout be constructed: 1. don't have extent instance -> layout 2. no by-value?

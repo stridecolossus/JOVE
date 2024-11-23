@@ -4,7 +4,8 @@ import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.lib.NativeStructure;
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.platform.vulkan.common.Version;
 
 /**
  * Vulkan structure.
@@ -24,5 +25,11 @@ public class VkLayerProperties extends NativeStructure {
 		        JAVA_INT.withName("implementationVersion"),
 		        MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("description")
 		);
+	}
+
+	// TODO
+	@Override
+	public String toString() {
+		return String.format("VkLayerProperties[%s spec=%s ver=%s]", layerName, Version.of(specVersion), implementationVersion);
 	}
 }

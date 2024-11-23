@@ -201,12 +201,13 @@ public interface DrawCommand extends Command {
 
 			// Check indirect multi-draw is supported
 			final DeviceContext dev = buffer.device();
-			dev.features().require("multiDrawIndirect");
-
-			// Check the indirect draw count is supported by the hardware
-			final var limits = dev.limits();
-			final int max = limits.maxDrawIndirectCount;
-			if(count > max) throw new IllegalArgumentException("Invalid indirect draw count: count=%d max=%d".formatted(count, max));
+// TODO
+//			dev.features().require("multiDrawIndirect");
+//
+//			// Check the indirect draw count is supported by the hardware
+//			final var limits = dev.limits();
+//			final int max = limits.maxDrawIndirectCount;
+//			if(count > max) throw new IllegalArgumentException("Invalid indirect draw count: count=%d max=%d".formatted(count, max));
 
 			// Create command
 			if(indexed) {

@@ -1,22 +1,35 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"memoryTypeCount",
-	"memoryTypes",
-	"memoryHeapCount",
-	"memoryHeaps"
-})
-public class VkPhysicalDeviceMemoryProperties extends VulkanStructure {
+public class VkPhysicalDeviceMemoryProperties extends NativeStructure {
 	public int memoryTypeCount;
 	public VkMemoryType[] memoryTypes = new VkMemoryType[32];
 	public int memoryHeapCount;
 	public VkMemoryHeap[] memoryHeaps = new VkMemoryHeap[16];
+
+	@Override
+	protected StructLayout layout() {
+		return MemoryLayout.structLayout(
+	            JAVA_INT.withName("memoryTypeCount"),
+	            MemoryLayout.sequenceLayout(32, MemoryLayout.structLayout(
+	                JAVA_INT.withName("propertyFlags"),
+	                JAVA_INT.withName("heapIndex")
+	            )).withName("memoryTypes"),
+	            JAVA_INT.withName("memoryHeapCount"),
+	            MemoryLayout.sequenceLayout(16, MemoryLayout.structLayout(
+	                JAVA_LONG.withName("size"),
+	                JAVA_INT.withName("flags"),
+	                PADDING
+	            )).withName("memoryHeaps")
+        );
+	}
 }

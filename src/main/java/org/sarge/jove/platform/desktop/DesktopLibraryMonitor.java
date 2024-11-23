@@ -1,8 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.foreign.IntegerReference;
 
 /**
  * GLFW monitor API.
@@ -12,8 +10,7 @@ interface DesktopLibraryMonitor {
 	/**
 	 * GLFW display mode.
 	 */
-	@FieldOrder({"width", "height", "red", "green", "blue", "refresh"})
-	class DesktopDisplayMode extends Structure {
+	class DesktopDisplayMode {
 		public int width;
 		public int height;
 		public int red;
@@ -27,7 +24,8 @@ interface DesktopLibraryMonitor {
 	 * @param count Number of monitors
 	 * @return Pointer to array of monitors
 	 */
-	Pointer glfwGetMonitors(IntByReference count);
+	Monitor[] glfwGetMonitors(IntegerReference count);
+	// TODO - cannot return array
 
 	/**
 	 * Enumerates the video modes supported by the given monitor.
@@ -35,7 +33,7 @@ interface DesktopLibraryMonitor {
 	 * @param count			Number of modes
 	 * @return Display modes for the given monitor
 	 */
-	DesktopDisplayMode glfwGetVideoModes(Pointer monitor, IntByReference count);
+	DesktopDisplayMode glfwGetVideoModes(Monitor monitor, IntegerReference count);
 
 	/**
 	 * Retrieves the current video mode of the given monitor.
@@ -50,12 +48,12 @@ interface DesktopLibraryMonitor {
 	 * @param w				Returned width
 	 * @param h				Returned height
 	 */
-	void glfwGetMonitorPhysicalSize(Pointer monitor, IntByReference w, IntByReference h);
+	void glfwGetMonitorPhysicalSize(Monitor monitor, IntegerReference w, IntegerReference h);
 
 	/**
 	 * Retrieves the name of the given monitor.
 	 * @param monitor Monitor
 	 * @return Monitor name
 	 */
-	String glfwGetMonitorName(Pointer monitor);
+	String glfwGetMonitorName(Monitor monitor);
 }

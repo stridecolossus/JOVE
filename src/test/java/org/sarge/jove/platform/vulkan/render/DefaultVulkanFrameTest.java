@@ -10,14 +10,14 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 class DefaultVulkanFrameTest {
 	private DefaultVulkanFrame frame;
 	private Swapchain swapchain;
-	private Semaphore available, ready;
+	private VulkanSemaphore available, ready;
 	private Fence fence;
 
 	@BeforeEach
 	void before() {
 		swapchain = mock(Swapchain.class);
-		available = mock(Semaphore.class);
-		ready = mock(Semaphore.class);
+		available = mock(VulkanSemaphore.class);
+		ready = mock(VulkanSemaphore.class);
 		fence = mock(Fence.class);
 		frame = new DefaultVulkanFrame(available, ready, fence);
 		when(swapchain.acquire(available, null)).thenReturn(2);

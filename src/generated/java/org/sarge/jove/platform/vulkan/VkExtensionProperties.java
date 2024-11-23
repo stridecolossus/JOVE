@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import java.lang.foreign.StructLayout;
 
-import org.sarge.jove.lib.NativeStructure;
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.

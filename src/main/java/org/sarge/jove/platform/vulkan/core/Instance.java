@@ -5,7 +5,8 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
-import org.sarge.jove.lib.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
@@ -14,7 +15,7 @@ import org.sarge.jove.platform.vulkan.util.ValidationLayer;
  * The <i>instance</i> is the root object for a Vulkan application.
  * @author Sarge
  */
-public class Instance extends TransientNativeObjectTEMP {
+public class Instance extends TransientNativeObject {
 	private final Vulkan vulkan;
 	private final Collection<DiagnosticHandler> handlers = new ArrayList<>();
 
@@ -34,22 +35,6 @@ public class Instance extends TransientNativeObjectTEMP {
 	public Vulkan vulkan() {
 		return vulkan;
 	}
-
-	/**
-	 * @return Vulkan library
-	 */
-	public VulkanLibrary library() {
-		throw new UnsupportedOperationException();
-	}
-	// TODO - remove
-
-	/**
-	 * @return Reference factory
-	 */
-	public org.sarge.jove.util.ReferenceFactory factory() {
-		throw new UnsupportedOperationException();
-	}
-	// TODO - remove
 
 	/**
 	 * Looks up a function pointer in this instance.
@@ -97,7 +82,7 @@ public class Instance extends TransientNativeObjectTEMP {
 		private Version ver = Version.DEFAULT;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
-		private Version api = VulkanLibraryTEMP.VERSION;
+		private Version api = VulkanLibrary.VERSION;
 
 		/**
 		 * Sets the application name.
@@ -189,7 +174,7 @@ public class Instance extends TransientNativeObjectTEMP {
 
 			// Create instance
 			final PointerReference ref = vulkan.factory().pointer();
-			Vulkan.check(vulkan.library().vkCreateInstance(info, null, ref));
+			vulkan.library().vkCreateInstance(info, null, ref);
 
 			// Create instance domain wrapper
 			return new Instance(ref.handle(), vulkan);
@@ -218,7 +203,7 @@ public class Instance extends TransientNativeObjectTEMP {
 
 		/**
 		 * Enumerates extension properties.
-		 * @param pLayerName		Layer name or {@code null} for extensions provided by the Vulkan implementation
+		 * @param pLayerName		Optional layer name
 		 * @param pPropertyCount	Number of extensions
 		 * @param pProperties		Extensions
 		 * @return Result

@@ -8,7 +8,6 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder;
-import org.sarge.jove.util.StructureCollector;
 
 /**
  * Builder for the vertex input pipeline stage descriptor.
@@ -77,11 +76,11 @@ public class VertexInputStageBuilder extends AbstractStageBuilder<VkPipelineVert
 
 		// Add binding descriptions
 		info.vertexBindingDescriptionCount = bindings.size();
-		info.pVertexBindingDescriptions = StructureCollector.pointer(bindings.values(), new VkVertexInputBindingDescription(), BindingBuilder::populate);
+		info.pVertexBindingDescriptions = null; // StructureCollector.pointer(bindings.values(), new VkVertexInputBindingDescription(), BindingBuilder::populate);
 
 		// Add attributes
 		info.vertexAttributeDescriptionCount = attributes.size();
-		info.pVertexAttributeDescriptions = StructureCollector.pointer(attributes, new VkVertexInputAttributeDescription(), AttributeBuilder::populate);
+		info.pVertexAttributeDescriptions = null; // StructureCollector.pointer(attributes, new VkVertexInputAttributeDescription(), AttributeBuilder::populate);
 
 		return info;
 	}

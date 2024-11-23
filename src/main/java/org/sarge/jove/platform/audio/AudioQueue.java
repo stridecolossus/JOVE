@@ -2,9 +2,7 @@ package org.sarge.jove.platform.audio;
 
 import java.util.List;
 
-import org.sarge.jove.common.NativeObject;
-
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.foreign.IntegerReference;
 
 /**
  * An <i>audio queue</i> is a source that streams multiple buffers.
@@ -33,9 +31,9 @@ public class AudioQueue extends AudioSource {
 	 */
 	public List<AudioBuffer> processed() {
 		// Count number of processed buffers
-		final var count = new IntByReference();
+		final var count = new IntegerReference();
 		lib.alGetSourcei(this, AudioParameter.BUFFERS_PROCESSED, count);
-		System.out.println(count.getValue());
+		System.out.println(count.value());
 
 //		// Skip if none
 //		if(count.getValue() == 0) {
@@ -59,7 +57,7 @@ public class AudioQueue extends AudioSource {
 	 */
 	public void queue(List<AudioBuffer> buffers) {
 		// TODO - check format
-		lib.alSourceQueueBuffers(this, buffers.size(), NativeObject.array(buffers));
+//		lib.alSourceQueueBuffers(this, buffers.size(), NativeObject.array(buffers));
 		dev.check();
 		this.buffers.addAll(buffers);
 	}
@@ -71,7 +69,7 @@ public class AudioQueue extends AudioSource {
 	 */
 	public void dequeue(List<AudioBuffer> buffers) {
 		if(!this.buffers.containsAll(buffers)) throw new IllegalArgumentException("Invalid buffers for this queue");
-		lib.alSourceUnqueueBuffers(this, buffers.size(), NativeObject.array(buffers));
+//		lib.alSourceUnqueueBuffers(this, buffers.size(), NativeObject.array(buffers));
 		dev.check();
 		this.buffers.removeAll(buffers);
 	}

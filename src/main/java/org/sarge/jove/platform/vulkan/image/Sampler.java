@@ -1,20 +1,17 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>sampler</i> is used to sample from a texture image.
@@ -279,12 +276,12 @@ public final class Sampler extends VulkanObject {
 			info.flags = new BitMask<>(flags);
 
 			// Instantiate sampler
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateSampler(dev, info, null, ref));
+			final Vulkan vulkan = dev.vulkan();
+			final PointerReference ref = vulkan.factory().pointer();
+			vulkan.library().vkCreateSampler(dev, info, null, ref);
 
 			// Create domain object
-			return new Sampler(new Handle(ref), dev);
+			return new Sampler(ref.handle(), dev);
 		}
 	}
 
@@ -300,7 +297,7 @@ public final class Sampler extends VulkanObject {
 		 * @param pSampler			Returned sampler
 		 * @return Result
 		 */
-		int vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
+		int vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, PointerReference pSampler);
 
 		/**
 		 * Destroys a sampler.
@@ -308,6 +305,6 @@ public final class Sampler extends VulkanObject {
 		 * @param sampler			Sampler
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySampler(DeviceContext device, Sampler sampler, Pointer pAllocator);
+		void vkDestroySampler(DeviceContext device, Sampler sampler, Handle pAllocator);
 	}
 }

@@ -1,14 +1,12 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * Vulkan image API.
@@ -23,7 +21,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param pImage			Returned image
 	 * @return Result
 	 */
-	int vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pImage);
+	int vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Handle pAllocator, PointerReference pImage);
 
 	/**
 	 * Destroys an image.
@@ -31,7 +29,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param image				Image
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyImage(DeviceContext device, Image image, Pointer pAllocator);
+	void vkDestroyImage(DeviceContext device, Image image, Handle pAllocator);
 
 	/**
 	 * Retrieves the memory requirements for the given image.
@@ -39,7 +37,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param image					Image
 	 * @param pMemoryRequirements	Returned memory requirements
 	 */
-	void vkGetImageMemoryRequirements(DeviceContext device, Handle image, VkMemoryRequirements pMemoryRequirements);
+	void vkGetImageMemoryRequirements(DeviceContext device, Handle image, @Returned VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds image memory.

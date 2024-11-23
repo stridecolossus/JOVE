@@ -5,15 +5,17 @@ import static org.sarge.lib.Validation.*;
 
 import java.util.Set;
 
-import org.sarge.jove.lib.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntEnum;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>work queue</i> is used to submit tasks to the hardware.
  * @author Sarge
  */
-public record WorkQueue(Handle handle, WorkQueue.Family family) implements NativeObjectTEMP {
+public record WorkQueue(Handle handle, WorkQueue.Family family) implements NativeObject {
 	/**
 	 * Constructor.
 	 * @param handle	Handle
@@ -42,14 +44,18 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 		public static final int IGNORED = (~0);
 
 		/**
+		 * Queue flag mapper.
+		 */
+		private static final ReverseMapping<VkQueueFlag> MAPPING = IntEnum.reverse(VkQueueFlag.class);
+
+		/**
 		 * Helper - Creates a new queue family from the given descriptor.
 		 * @param index		Family index
 		 * @param props		Descriptor
 		 * @return New queue family
 		 */
 		public static Family of(int index, VkQueueFamilyProperties props) {
-			final var mapping = IntEnum.reverse(VkQueueFlag.class);
-			final Set<VkQueueFlag> flags = props.queueFlags.enumerate(mapping);
+			final Set<VkQueueFlag> flags = props.queueFlags.enumerate(MAPPING);
 			return new Family(index, props.queueCount, flags);
 		}
 

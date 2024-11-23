@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.BitMask;
 
 /**
  * A <i>sub-pass</i> is a transient, mutable specification for the stage of a {@link RenderPass}.
@@ -65,7 +65,7 @@ public class Subpass {
 
 		// Populate colour attachments
 		descriptor.colorAttachmentCount = colour.size();
-		descriptor.pColorAttachments = StructureCollector.pointer(colour, new VkAttachmentReference(), Reference::populate);
+		descriptor.pColorAttachments = null; // StructureCollector.pointer(colour, new VkAttachmentReference(), Reference::populate);
 
 		// Populate depth attachment
 		if(depth != null) {

@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static java.util.Objects.requireNonNull;
 
 import java.io.*;
@@ -8,15 +7,13 @@ import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.util.Collection;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.*;
 
 /**
  * A <i>pipeline cache</i> allows the result of pipeline construction to be reused between pipelines and runs of an application.
@@ -41,12 +38,12 @@ public final class PipelineCache extends VulkanObject {
 		// TODO - info.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT
 
 		// Create cache
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkCreatePipelineCache(dev, info, null, ref));
+		final Vulkan vulkan = dev.vulkan();
+		final PointerReference ref = vulkan.factory().pointer();
+		vulkan.library().vkCreatePipelineCache(dev, info, null, ref);
 
 		// Create domain object
-		return new PipelineCache(new Handle(ref), dev);
+		return new PipelineCache(ref.handle(), dev);
 	}
 
 	/**
@@ -69,9 +66,9 @@ public final class PipelineCache extends VulkanObject {
 	 */
 	public ByteBuffer data() {
 		final DeviceContext dev = super.device();
-		final VulkanFunction<ByteBuffer> cache = (count, data) -> dev.library().vkGetPipelineCacheData(dev, this, count, data);
-		final IntByReference count = dev.factory().integer();
-		return VulkanFunction.invoke(cache, count, BufferHelper::allocate);
+		final Vulkan vulkan = dev.vulkan();
+		final VulkanFunction<ByteBuffer> cache = (count, data) -> vulkan.library().vkGetPipelineCacheData(dev, this, count, data);
+		return vulkan.invoke(cache, BufferHelper::allocate);
 	}
 
 	/**
@@ -80,8 +77,7 @@ public final class PipelineCache extends VulkanObject {
 	 */
 	public void merge(Collection<PipelineCache> caches) {
 		final DeviceContext dev = super.device();
-		final VulkanLibrary lib = dev.library();
-		check(lib.vkMergePipelineCaches(dev, this, caches.size(), NativeObject.array(caches)));
+		dev.vulkan().library().vkMergePipelineCaches(dev, this, caches.size(), caches);
 	}
 
 	/**
@@ -151,7 +147,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pPipelineCache	Returned pipeline cache
 		 * @return Result
 		 */
-		int vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineCache);
+		int vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Handle pAllocator, PointerReference pPipelineCache);
 
 		/**
 		 * Merges pipeline caches.
@@ -161,7 +157,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pSrcCaches		Array of caches to merge
 		 * @return Result
 		 */
-		int vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, Pointer pSrcCaches);
+		int vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, Collection<PipelineCache> pSrcCaches);
 
 		/**
 		 * Retrieves a pipeline cache.
@@ -171,7 +167,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pData				Cache data
 		 * @return Result
 		 */
-		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntByReference pDataSize, ByteBuffer pData);
+		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntegerReference pDataSize, ByteBuffer pData); // TODO - data blob?
 
 		/**
 		 * Destroys a pipeline cache.
@@ -179,6 +175,6 @@ public final class PipelineCache extends VulkanObject {
 		 * @param cache				Pipeline cache to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipelineCache(DeviceContext device, PipelineCache cache, Pointer pAllocator);
+		void vkDestroyPipelineCache(DeviceContext device, PipelineCache cache, Handle pAllocator);
 	}
 }

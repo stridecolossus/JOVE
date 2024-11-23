@@ -3,11 +3,7 @@ package org.sarge.jove.platform.audio;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.audio.AudioParameter.*;
 
-import java.util.List;
-
 import org.sarge.jove.common.*;
-
-import com.sun.jna.Pointer;
 
 /**
  * An <i>audio buffer</i> contains data to be played by a {@link AudioSource}.
@@ -27,7 +23,7 @@ public class AudioBuffer extends TransientNativeObject {
     	final int[] id = new int[1];
     	lib.alGenBuffers(1, id);
     	dev.check();
-		return new AudioBuffer(new Handle(new Pointer(id[0])), dev);
+		return new AudioBuffer(new Handle(id[0]), dev);
 	}
 
 	private final AudioDevice dev;
@@ -77,8 +73,8 @@ public class AudioBuffer extends TransientNativeObject {
 	@Override
 	protected void release() {
     	final Library lib = dev.library();
-    	final Pointer buffers = NativeObject.array(List.of(this));
-    	lib.alDeleteBuffers(1, buffers);
+//    	final Pointer buffers = NativeObject.array(List.of(this));
+//    	lib.alDeleteBuffers(1, new );
     	dev.check();
 	}
 
@@ -98,7 +94,7 @@ public class AudioBuffer extends TransientNativeObject {
 		 * @param count			Number of buffers to delete
 		 * @param buffers		Buffer handles
 		 */
-		void alDeleteBuffers(int n, Pointer buffers);
+		void alDeleteBuffers(int n, int[] buffers);
 
 		/**
 		 * Loads the given audio data to this buffer.

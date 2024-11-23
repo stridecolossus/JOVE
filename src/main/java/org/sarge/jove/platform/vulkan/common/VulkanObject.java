@@ -5,8 +5,6 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 
-import com.sun.jna.Pointer;
-
 /**
  * A <i>Vulkan object</i> is a template base-class for objects derived from the logical device.
  * @author Sarge
@@ -24,7 +22,7 @@ public abstract class VulkanObject extends TransientNativeObject {
 		 * @param object		Native object to destroy
 		 * @param allocator		Vulkan memory allocator (always {@code null})
 		 */
-		void destroy(DeviceContext device, T object, Pointer allocator);
+		void destroy(DeviceContext device, T object, Handle allocator);
 	}
 
 	private final DeviceContext device;
@@ -53,16 +51,25 @@ public abstract class VulkanObject extends TransientNativeObject {
 	 */
 	protected abstract Destructor<?> destructor(VulkanLibrary lib);
 
-	// TODO - all refer to compound VulkanLibrary, could it be parameterized?
-
-	@Override
 	@SuppressWarnings("unchecked")
+	@Override
 	public final void destroy() {
+//		try {
+//			final Method method = VulkanLibrary.class.getDeclaredMethod(destructor(), DeviceContext.class, this.getClass(), Handle.class);
+//			method.invoke(device, this, null);
+//		}
+//		catch(Exception e) {
+//			throw new IllegalArgumentException();
+//		}
+
 		@SuppressWarnings("rawtypes")
-		final Destructor destructor = destructor(device.library());
+		final Destructor destructor = destructor(device.vulkan().library());
 		destructor.destroy(device, this, null);
-		super.destroy();
+
+		super.destroy(); // TODO - should be done before?
 	}
+
+//	protected abstract String destructor();
 
 	@Override
 	protected void release() {

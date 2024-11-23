@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.BitMask;
 
 /**
  * Builder for the colour-blend pipeline stage.
@@ -72,7 +72,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 		}
 
 		info.attachmentCount = attachments.size();
-		info.pAttachments = StructureCollector.pointer(attachments, new VkPipelineColorBlendAttachmentState(), AttachmentBuilder::populate);
+		info.pAttachments = null; // TODO StructureCollector.pointer(attachments, new VkPipelineColorBlendAttachmentState(), AttachmentBuilder::populate);
 		return info;
 	}
 

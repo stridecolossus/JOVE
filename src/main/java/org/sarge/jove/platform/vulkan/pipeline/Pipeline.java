@@ -4,16 +4,13 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlag.*;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
+import org.sarge.jove.util.BitMask;
 
 /**
  * A <i>pipeline</i> defines the configuration for graphics rendering or compute shaders.
@@ -185,29 +182,32 @@ public final class Pipeline extends VulkanObject {
     	 * @return New pipelines
     	 */
     	public List<Pipeline> build(DeviceContext dev, PipelineLayout layout, PipelineCache cache) {
-    		// Build descriptors and patch peer indices
-    		final BiConsumer<Builder<T>, T> populate = (builder, out) -> {
-    			final var flags = new BitMask<>(builder.flags);
-    			final int index = builder.parent == null ? -1 : builders.indexOf(builder.parent);
-    			delegate.populate(flags, layout, builder.base, index, out);
-    		};
-    		final T[] array = StructureCollector.array(builders, delegate.identity(), populate);
+//    		// Build descriptors and patch peer indices
+//    		final BiConsumer<Builder<T>, T> populate = (builder, out) -> {
+//    			final var flags = new BitMask<>(builder.flags);
+//    			final int index = builder.parent == null ? -1 : builders.indexOf(builder.parent);
+//    			delegate.populate(flags, layout, builder.base, index, out);
+//    		};
+//    		final T[] array = StructureCollector.array(builders, delegate.identity(), populate);
+//
+//    		// Instantiate pipelines
+//    		final Handle[] handles = new Handle[builders.size()];
+//    		final int result = delegate.create(dev, cache, array, handles);
+//    		VulkanLibrary.check(result);
+//
+//    		// Create pipelines
+//    		final VkPipelineBindPoint type = delegate.type();
+//    		final Pipeline[] pipelines = new Pipeline[array.length];
+//    		for(int n = 0; n < array.length; ++n) {
+//    			final Builder<T> builder = builders.get(n);
+//    			final Handle handle = new Handle(handles[n]);
+//    			final boolean parent = builder.flags.contains(ALLOW_DERIVATIVES);
+//    			pipelines[n] = new Pipeline(handle, dev, type, layout, parent);
+//    		}
+//    		return Arrays.asList(pipelines);
 
-    		// Instantiate pipelines
-    		final Pointer[] handles = new Pointer[builders.size()];
-    		final int result = delegate.create(dev, cache, array, handles);
-    		VulkanLibrary.check(result);
-
-    		// Create pipelines
-    		final VkPipelineBindPoint type = delegate.type();
-    		final Pipeline[] pipelines = new Pipeline[array.length];
-    		for(int n = 0; n < array.length; ++n) {
-    			final Builder<T> builder = builders.get(n);
-    			final Handle handle = new Handle(handles[n]);
-    			final boolean parent = builder.flags.contains(ALLOW_DERIVATIVES);
-    			pipelines[n] = new Pipeline(handle, dev, type, layout, parent);
-    		}
-    		return Arrays.asList(pipelines);
+    		// TODO
+    		return List.of();
     	}
     }
 
@@ -225,7 +225,7 @@ public final class Pipeline extends VulkanObject {
 		 * @param pPipelines		Returned pipeline(s)
 		 * @return Result
 		 */
-		int vkCreateGraphicsPipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+		int vkCreateGraphicsPipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines);
 
 		/**
 		 * Creates an array of compute pipelines.
@@ -237,7 +237,7 @@ public final class Pipeline extends VulkanObject {
 		 * @param pPipelines		Returned pipeline(s)
 		 * @return Result
 		 */
-		int vkCreateComputePipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Pointer pAllocator, Pointer[] pPipelines);
+		int vkCreateComputePipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines);
 
 		/**
 		 * Destroys a pipeline.
@@ -245,7 +245,7 @@ public final class Pipeline extends VulkanObject {
 		 * @param pipeline			Pipeline
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipeline(DeviceContext device, Pipeline pipeline, Pointer pAllocator);
+		void vkDestroyPipeline(DeviceContext device, Pipeline pipeline, Handle pAllocator);
 
 		/**
 		 * Binds a pipeline to the render sequence.

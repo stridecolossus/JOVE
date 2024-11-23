@@ -1,15 +1,13 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.util.StructureCollector;
-import static org.sarge.lib.Validation.*;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 
 /**
  * An <i>image copy command</i> is used to copy between images.
@@ -151,7 +149,7 @@ public final class ImageCopyCommand implements Command {
 		 */
 		public ImageCopyCommand build() {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
-			final VkImageCopy[] array = StructureCollector.array(regions, new VkImageCopy(), CopyRegion::populate);
+			final VkImageCopy[] array = null; // TODO StructureCollector.array(regions, new VkImageCopy(), CopyRegion::populate);
 			return new ImageCopyCommand(src, dest, srcLayout, destLayout, array);
 		}
 	}

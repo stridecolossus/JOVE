@@ -41,8 +41,8 @@ public interface ClearValue {
 
 		@Override
 		public void populate(VkClearValue value) {
-			value.setType("color");
-			value.color.setType("float32");
+//			value.setType("color");
+//			value.color.setType("float32");
 			value.color.float32 = colour.toArray();
 		}
 	}
@@ -71,7 +71,7 @@ public interface ClearValue {
 
 		@Override
 		public void populate(VkClearValue value) {
-			value.setType("depthStencil");
+//			value.setType("depthStencil");
 			value.depthStencil.depth = depth.floatValue();
 			value.depthStencil.stencil = 0;
 		}

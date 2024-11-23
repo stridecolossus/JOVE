@@ -2,12 +2,12 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.mockito.Mockito.mock;
 
-import org.sarge.jove.lib.*;
+import org.sarge.jove.foreign.*;
 
 public class MockVulkan extends Vulkan {
 	public MockVulkan() {
 		super(
-				mock(VulkanLibraryTEMP.class),
+				mock(VulkanLibrary.class),
 				NativeMapperRegistry.create(),
 				new MockReferenceFactory()
 		);

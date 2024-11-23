@@ -1,20 +1,17 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 import java.util.function.BiFunction;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>command</i> defines an operation performed on a work queue.
@@ -162,8 +159,8 @@ public interface Command {
 			info.pInheritanceInfo = inheritance;
 
 			// Start buffer recording
-			final VulkanLibrary lib = pool.device().library();
-			check(lib.vkBeginCommandBuffer(this, info));
+			final VulkanLibrary lib = pool.device().vulkan().library();
+			lib.vkBeginCommandBuffer(this, info);
 
 			// Start recording
 			state = State.RECORDING;
@@ -179,9 +176,8 @@ public interface Command {
 		 * @see Command#record(VulkanLibrary, Buffer)
 		 */
 		public final Buffer add(Command command) {
-			final VulkanLibrary lib = pool.device().library();
 			validate(State.RECORDING);
-			command.record(lib, Buffer.this);
+			command.record(pool.library(), Buffer.this);
 			return this;
 		}
 
@@ -197,9 +193,8 @@ public interface Command {
     		}
 
 			// Record secondary buffers
-    		final VulkanLibrary lib = this.pool().device().library();
-			final Pointer array = NativeObject.array(buffers);
-    		lib.vkCmdExecuteCommands(this, buffers.size(), array);
+    		final Library lib = pool.library();
+    		lib.vkCmdExecuteCommands(this, buffers.size(), buffers);
     	}
 
 		/**
@@ -208,8 +203,7 @@ public interface Command {
 		 */
 		public final Buffer end() {
 			validate(State.RECORDING);
-			final VulkanLibrary lib = pool.device().library();
-			check(lib.vkEndCommandBuffer(Buffer.this));
+			pool.library().vkEndCommandBuffer(Buffer.this);
 			state = State.EXECUTABLE;
 			return Buffer.this;
 		}
@@ -223,8 +217,7 @@ public interface Command {
 			validate(State.EXECUTABLE);
 			// TODO - check pool has flag
 			final BitMask<VkCommandBufferResetFlag> mask = BitMask.of(flags);
-			final VulkanLibrary lib = pool.device().library();
-			check(lib.vkResetCommandBuffer(this, mask));
+			pool.library().vkResetCommandBuffer(this, mask);
 			state = State.INITIAL;
 		}
 		// TODO - should allocated buffers be invalidated? (ditto free)
@@ -347,12 +340,12 @@ public interface Command {
 			info.flags = BitMask.of(flags);
 
 			// Create pool
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference pool = dev.factory().pointer();
-			check(lib.vkCreateCommandPool(dev, info, null, pool));
+			final Vulkan vulkan = dev.vulkan();
+			final PointerReference pool = vulkan.factory().pointer();
+			vulkan.library().vkCreateCommandPool(dev, info, null, pool);
 
-			// Create pool
-			return new Pool(new Handle(pool), dev, queue);
+			// Create domain object
+			return new Pool(pool.handle(), dev, queue);
 		}
 
 		private final WorkQueue queue;
@@ -373,6 +366,10 @@ public interface Command {
 		 */
 		public WorkQueue queue() {
 			return queue;
+		}
+
+		public VulkanLibrary library() {
+			return this.device().vulkan().library();
 		}
 
 		/**
@@ -425,14 +422,12 @@ public interface Command {
 
 			// Allocate buffers
 			final DeviceContext dev = super.device();
-			final VulkanLibrary lib = dev.library();
-			final Pointer[] handles = new Pointer[num];
-			check(lib.vkAllocateCommandBuffers(dev, info, handles));
+			final Handle[] handles = new Handle[num];
+			dev.vulkan().library().vkAllocateCommandBuffers(dev, info, handles);
 
 			// Create buffers
 			return Arrays
 					.stream(handles)
-					.map(Handle::new)
 					.map(handle -> constructor.apply(handle, this))
 					.toList();
 		}
@@ -444,7 +439,7 @@ public interface Command {
 		public void reset(VkCommandPoolResetFlag... flags) {
 			final var bits = BitMask.of(flags);
 			final DeviceContext dev = super.device();
-			check(dev.library().vkResetCommandPool(dev, this, bits));
+			this.library().vkResetCommandPool(dev, this, bits);
 		}
 
 		/**
@@ -453,7 +448,7 @@ public interface Command {
 		 */
 		public void free(Collection<Buffer> buffers) {
 			final DeviceContext dev = super.device();
-			dev.library().vkFreeCommandBuffers(dev, this, buffers.size(), NativeObject.array(buffers));
+			this.library().vkFreeCommandBuffers(dev, this, buffers.size(), buffers);
 		}
 
 		@Override
@@ -474,7 +469,7 @@ public interface Command {
 		 * @param pCommandPool		Returned command pool
 		 * @return Result
 		 */
-		int vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pCommandPool);
+		int vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, PointerReference pCommandPool);
 
 		/**
 		 * Destroys a command pool (and its buffers).
@@ -482,7 +477,7 @@ public interface Command {
 		 * @param commandPool		Command pool
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyCommandPool(DeviceContext device, Pool commandPool, Pointer pAllocator);
+		void vkDestroyCommandPool(DeviceContext device, Pool commandPool, Handle pAllocator);
 
 		/**
 		 * Resets a command pool.
@@ -497,10 +492,10 @@ public interface Command {
 		 * Allocates a number of command buffers.
 		 * @param device			Logical device
 		 * @param pAllocateInfo		Descriptor
-		 * @param pCommandBuffers	Returned buffer handles
+		 * @param pCommandBuffers	Buffer handles
 		 * @return Result
 		 */
-		int vkAllocateCommandBuffers(DeviceContext device, VkCommandBufferAllocateInfo pAllocateInfo, Pointer[] pCommandBuffers);
+		int vkAllocateCommandBuffers(DeviceContext device, VkCommandBufferAllocateInfo pAllocateInfo, @Returned Handle[] pCommandBuffers);
 
 		/**
 		 * Releases a set of command buffers back to the pool.
@@ -509,7 +504,7 @@ public interface Command {
 		 * @param commandBufferCount	Number of buffers
 		 * @param pCommandBuffers		Buffer handles
 		 */
-		void vkFreeCommandBuffers(DeviceContext device, Pool commandPool, int commandBufferCount, Pointer pCommandBuffers);
+		void vkFreeCommandBuffers(DeviceContext device, Pool commandPool, int commandBufferCount, Collection<Buffer> pCommandBuffers);
 
 		/**
 		 * Starts recording.
@@ -540,6 +535,6 @@ public interface Command {
 		 * @param commandBufferCount	Number of secondary buffers
 		 * @param pCommandBuffers		Secondary buffers to execute
 		 */
-		void vkCmdExecuteCommands(Buffer commandBuffer, int commandBufferCount, Pointer pCommandBuffers);
+		void vkCmdExecuteCommands(Buffer commandBuffer, int commandBufferCount, List<? extends Buffer> pCommandBuffers);
 	}
 }

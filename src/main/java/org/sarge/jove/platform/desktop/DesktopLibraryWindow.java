@@ -2,7 +2,8 @@ package org.sarge.jove.platform.desktop;
 
 import javax.security.auth.callback.Callback;
 
-import org.sarge.jove.lib.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 
 /**
  * GLFW window API.

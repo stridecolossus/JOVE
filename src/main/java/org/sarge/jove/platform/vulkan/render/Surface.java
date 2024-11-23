@@ -1,22 +1,16 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toSet;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.*;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.lib.IntegerReference;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.LazySupplier;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>surface</i> defines the capabilities of a Vulkan rendering surface.
@@ -68,20 +62,16 @@ public class Surface extends TransientNativeObject {
 		this.device = requireNonNull(device);
 	}
 
-	@Override
-	protected void release() {
-		final Instance instance = device.instance();
-		final VulkanLibrary lib = instance.library();
-		lib.vkDestroySurfaceKHR(instance, this, null);
+	private Vulkan vulkan() {
+		return device.instance().vulkan();
 	}
 
 	/**
 	 * @return Capabilities of this surface
 	 */
 	public VkSurfaceCapabilitiesKHR capabilities() {
-		final VulkanLibrary lib = device.instance().library();
 		final var caps = new VkSurfaceCapabilitiesKHR();
-		check(lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, this, caps));
+		this.vulkan().library().vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, this, caps);
 		return caps;
 	}
 
@@ -89,11 +79,9 @@ public class Surface extends TransientNativeObject {
 	 * @return Formats supported by this surface
 	 */
 	public List<VkSurfaceFormatKHR> formats() {
-		final Instance instance = device.instance();
-		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<VkSurfaceFormatKHR> formats = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(device, this, count, array);
-		final IntByReference count = instance.factory().integer();
-		final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(formats, count, new VkSurfaceFormatKHR());
+		final Vulkan vulkan = this.vulkan();
+		final VulkanFunction<VkSurfaceFormatKHR[]> formats = (count, array) -> vulkan.library().vkGetPhysicalDeviceSurfaceFormatsKHR(device, this, count, array);
+		final VkSurfaceFormatKHR[] array = vulkan.invoke(formats, VkSurfaceFormatKHR[]::new);
 		return Arrays.asList(array);
 	}
 
@@ -129,19 +117,11 @@ public class Surface extends TransientNativeObject {
 	 * @return Presentation modes supported by this surface
 	 */
 	public Set<VkPresentModeKHR> modes() {
-		// Retrieve array of presentation modes
-		final Instance instance = device.instance();
-		final VulkanLibrary lib = instance.library();
-		final VulkanFunction<int[]> modes = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(device, this, count, array);
-		final IntByReference count = instance.factory().integer();
-		final int[] array = VulkanFunction.invoke(modes, count, int[]::new);
-
-		// Convert to enumeration
-		final var mapping = IntEnum.reverse(VkPresentModeKHR.class);
-		return Arrays
-				.stream(array)
-				.mapToObj(mapping::map)
-				.collect(toSet());
+		final Vulkan vulkan = this.vulkan();
+		final Library lib = vulkan.library();
+		final VulkanFunction<VkPresentModeKHR[]> modes = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(device, this, count, array);
+		final VkPresentModeKHR[] array = vulkan.invoke(modes, VkPresentModeKHR[]::new);
+		return new HashSet<>(Arrays.asList(array));
 	}
 
 	/**
@@ -156,6 +136,11 @@ public class Surface extends TransientNativeObject {
 				.filter(available::contains)
 				.findAny()
 				.orElse(DEFAULT_PRESENTATION_MODE);
+	}
+
+	@Override
+	protected void release() {
+		this.vulkan().library().vkDestroySurfaceKHR(device.instance(), this, null);
 	}
 
 	/**
@@ -201,12 +186,12 @@ public class Surface extends TransientNativeObject {
 
 		/**
 		 * Retrieves the capabilities of a surface.
-		 * @param device			Physical device
-		 * @param surface			Surface handle
-		 * @param caps				Returned capabilities
+		 * @param device					Physical device
+		 * @param surface					Surface
+		 * @param pSurfaceCapabilities		Returned capabilities
 		 * @return Result
 		 */
-		int vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, VkSurfaceCapabilitiesKHR caps);
+		int vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, Surface surface, @Returned VkSurfaceCapabilitiesKHR pSurfaceCapabilities);
 
 		/**
 		 * Queries the supported surface formats.
@@ -216,7 +201,7 @@ public class Surface extends TransientNativeObject {
 		 * @param formats			Supported formats
 		 * @return Result
 		 */
-		int vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntByReference count, VkSurfaceFormatKHR formats);
+		int vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntegerReference count, @Returned VkSurfaceFormatKHR[] formats);
 
 		/**
 		 * Queries the supported presentation modes.
@@ -227,7 +212,7 @@ public class Surface extends TransientNativeObject {
 		 * @return Result
 		 * @see VkPresentModeKHR
 		 */
-		int vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntByReference count, int[] modes);
+		int vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntegerReference count, VkPresentModeKHR[] modes);
 
 		/**
 		 * Destroys a surface.
@@ -235,6 +220,6 @@ public class Surface extends TransientNativeObject {
 		 * @param surface			Surface
 		 * @param allocator			Allocator
 		 */
-		void vkDestroySurfaceKHR(Instance instance, Surface surface, Pointer allocator);
+		void vkDestroySurfaceKHR(Instance instance, Surface surface, Handle allocator);
 	}
 }

@@ -2,9 +2,11 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.lib.*;
+import java.util.function.IntFunction;
+
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.platform.vulkan.util.*;
 
 /**
  * The <i>Vulkan</i> service
@@ -14,6 +16,7 @@ import org.sarge.jove.platform.vulkan.util.VulkanException;
 public class Vulkan {
 	/**
 	 * Creates the Vulkan service.
+	 * The success code of <b>all</b> native methods is validated by {@link #check(int)}.
 	 * @return Vulkan
 	 * @throws RuntimeException if Vulkan cannot be instantiated
 	 */
@@ -26,15 +29,18 @@ public class Vulkan {
 //		registry.add(new HandleArrayNativeMapper());
 		//////////
 
-		// Instantiate API
+		// Create API factory
 		final var factory = new NativeFactory(registry);
-		final var lib = factory.build("vulkan-1", VulkanLibraryTEMP.class);
+		factory.setIntegerReturnHandler(Vulkan::check);
+
+		// Instantiate API
+		final var lib = factory.build("vulkan-1", VulkanLibrary.class);
 
 		// Create wrapper
 		return new Vulkan(lib, registry, new ReferenceFactory());
 	}
 
-	private final VulkanLibraryTEMP lib;
+	private final VulkanLibrary lib;
 	private final NativeMapperRegistry registry;
 	private final ReferenceFactory factory;
 
@@ -44,7 +50,7 @@ public class Vulkan {
 	 * @param registry		Mapper registry
 	 * @param factory		Reference factory
 	 */
-	public Vulkan(VulkanLibraryTEMP lib, NativeMapperRegistry registry, ReferenceFactory factory) {
+	public Vulkan(VulkanLibrary lib, NativeMapperRegistry registry, ReferenceFactory factory) {
 		this.lib = requireNonNull(lib);
 		this.registry = requireNonNull(registry);
 		this.factory = requireNonNull(factory);
@@ -53,7 +59,7 @@ public class Vulkan {
 	/**
 	 * @return Vulkan API
 	 */
-	public VulkanLibraryTEMP library() {
+	public VulkanLibrary library() {
 		return lib;
 	}
 
@@ -72,35 +78,77 @@ public class Vulkan {
 	}
 
 	/**
-	 * Enumerates the extensions supported by this Vulkan platform.
+	 * Checks the result of a Vulkan API method.
+	 * @param result Result code
+	 * @throws VulkanException if the given result is not {@link VkResult#SUCCESS}
+	 */
+	public static void check(int result) throws VulkanException {
+		if(result != VulkanLibrary.SUCCESS) {
+			throw new VulkanException(result);
+		}
+	}
+
+	/**
+	 * @param size Buffer offset or size
+	 * @throws IllegalArgumentException if the given size is not a multiple of 4 bytes
+	 */
+	public static void checkAlignment(long size) {
+		if((size % 4) != 0) {
+			throw new IllegalArgumentException("Expected 4-byte alignment");
+		}
+	}
+
+	// TODO - JDK23 markdown
+	/**
+	 * Invokes a Vulkan function using the <i>two-stage invocation</i> approach.
+	 * <p>
+	 * This method is equivalent to the following:
+	 * <pre>
+	 * var count = new IntegerReference();
+	 * lib.someFunction(count, null);
+	 * Handle[] array = new Handle[count.getValue()];
+	 * lib.someFunction(count, array);
+	 * </pre>
+	 * @param <T> Data type
+	 * @param function		Vulkan function
+	 * @param create		Creates the resultant data object
+	 * @return Function result
+	 */
+	public <T> T invoke(VulkanFunction<T> function, IntFunction<T> create) {
+		// Allocate size reference
+		final var count = factory.integer();
+
+		// Invoke to determine the size of the data
+		function.enumerate(count, null);
+
+		// Instantiate the data object
+		final int size = count.value();
+		final T data = create.apply(size);
+
+		// Invoke again to populate the data object
+		if(size > 0) {
+			function.enumerate(count, data);
+		}
+
+		return data;
+	}
+
+	/**
+	 * Enumerates the extensions supported by the given layer.
+	 * @param name Layer name or {@code null} for extensions provided by the Vulkan implementation and any implicit layers
 	 * @return Supported extensions
 	 */
-	public VkExtensionProperties extensions() {
-
-		// lib.vkEnumerateInstanceExtensionProperties(null, count, null);
-
-		// TODO
-		return null;
+	public VkExtensionProperties[] extensions(String name) {
+		final VulkanFunction<VkExtensionProperties[]> function = (count, array) -> lib.vkEnumerateInstanceExtensionProperties(name, count, array);
+		return invoke(function, VkExtensionProperties[]::new);
 	}
 
 	/**
 	 * Enumerates the validation layers supported by this Vulkan platform.
 	 * @return Supported layers
 	 */
-	public VkLayerProperties layers() {
-		// TODO
-		return null;
+	public VkLayerProperties[] layers() {
+		final VulkanFunction<VkLayerProperties[]> function = (count, array) -> lib.vkEnumerateInstanceLayerProperties(count, array);
+		return invoke(function, VkLayerProperties[]::new);
 	}
-
-	/**
-	 * Checks the result of a Vulkan API method.
-	 * @param result Result code
-	 * @throws VulkanException if the given result is not {@link VkResult#SUCCESS}
-	 */
-	public static void check(int result) throws VulkanException {
-		if(result != VulkanLibraryTEMP.SUCCESS) {
-			throw new VulkanException(result);
-		}
-	}
-	// TODO - can we adapt the proxy thing to do this as well?
 }

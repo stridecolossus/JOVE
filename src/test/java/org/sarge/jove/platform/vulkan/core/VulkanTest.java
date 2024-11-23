@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.platform.vulkan.util.*;
 
 class VulkanTest {
 	private Vulkan vulkan;
@@ -14,26 +14,7 @@ class VulkanTest {
 	}
 
 	@Test
-	void library() {
-		assertNotNull(vulkan.library());
-	}
-
-	@Test
-	void registry() {
-		assertNotNull(vulkan.registry());
-	}
-
-	@Test
-	void factory() {
-		assertNotNull(vulkan.factory());
-	}
-
-	@Test
-	void layers() {
-	}
-
-	@Test
-	void extensions() {
+	void create() {
 	}
 
 	@Test
@@ -47,6 +28,36 @@ class VulkanTest {
 	}
 
 	@Test
-	void create() {
+	void function() {
+		final VulkanFunction<String[]> function = (count, data) -> {
+			if(data == null) {
+				assertEquals(1, count.value());
+			}
+			else {
+				data[0] = "string";
+			}
+			return 0;
+		};
+		assertArrayEquals(new String[]{"string"}, vulkan.invoke(function, String[]::new));
+	}
+
+	@Test
+	void alignment() {
+		Vulkan.checkAlignment(0);
+		Vulkan.checkAlignment(4);
+		Vulkan.checkAlignment(8);
+		assertThrows(IllegalArgumentException.class, () -> Vulkan.checkAlignment(1));
+		assertThrows(IllegalArgumentException.class, () -> Vulkan.checkAlignment(2));
+		assertThrows(IllegalArgumentException.class, () -> Vulkan.checkAlignment(3));
+	}
+
+	@Test
+	void layers() {
+	}
+	// TODO - how
+	//when(vulkan.library().vkEnumerateInstanceLayerProperties(null, null))
+
+	@Test
+	void extensions() {
 	}
 }

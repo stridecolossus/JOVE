@@ -50,22 +50,4 @@ class BitMaskTest {
 		assertNotEquals(mask, null);
 		assertNotEquals(mask, BitMask.of(MockEnum.B));
 	}
-
-	@Nested
-	class ConverterTests {
-		@Test
-		void type() {
-			assertEquals(Integer.class, BitMask.CONVERTER.nativeType());
-		}
-
-		@Test
-		void toNative() {
-			assertEquals(1, BitMask.CONVERTER.toNative(BitMask.of(MockEnum.A), null));
-		}
-
-		@Test
-		void fromNative() {
-			assertEquals(BitMask.of(MockEnum.A), BitMask.CONVERTER.fromNative(1, null));
-		}
-	}
 }

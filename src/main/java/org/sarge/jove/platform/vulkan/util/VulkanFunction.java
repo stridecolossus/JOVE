@@ -1,11 +1,6 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static org.sarge.jove.platform.vulkan.core.Vulkan.check;
-
-import java.util.function.IntFunction;
-
-import org.sarge.jove.lib.IntegerReference;
-
+import org.sarge.jove.foreign.IntegerReference;
 
 /**
  * A <i>Vulkan function</i> abstracts an API method used to retrieve data from Vulkan via the <i>two-stage invocation</i> approach.
@@ -37,44 +32,46 @@ public interface VulkanFunction<T> {
 	 * @return Vulkan result code
 	 */
 	int enumerate(IntegerReference count, T data);
-
-	/**
-	 * Invokes a Vulkan function using the <i>two-stage invocation</i> approach.
-	 * <p>
-	 * Example to retrieve an array of pointers:
-	 * <pre>
-	 * VulkanLibrary lib = ...
-	 * VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array);
-	 * Pointer[] array = func.invoke(new IntegerByReference(), Pointer[]::new);
-	 * </pre>
-	 * This method is equivalent to the following:
-	 * <pre>
-	 * lib.someFunction(count, null);
-	 * Pointer[] array = new Pointer[count.getValue()];
-	 * lib.someFunction(count, array);
-	 * </pre>
-	 * @param <T> Data type
-	 * @param function		Vulkan function
-	 * @param count			Size of the data
-	 * @param factory		Creates the resultant data object
-	 * @return Function result
-	 */
-	static <T> T invoke(VulkanFunction<T> function, IntegerReference count, IntFunction<T> factory) {
-		// Invoke to determine the size of the data
-		check(function.enumerate(count, null));
-
-		// Instantiate the data object
-		final int size = count.value();
-		final T data = factory.apply(size);
-
-		// Invoke again to populate the data object
-		if(size > 0) {
-			check(function.enumerate(count, data));
-		}
-
-		return data;
-	}
 }
+
+//
+//	/**
+//	 * Invokes a Vulkan function using the <i>two-stage invocation</i> approach.
+//	 * <p>
+//	 * Example to retrieve an array of pointers:
+//	 * <pre>
+//	 * VulkanLibrary lib = ...
+//	 * VulkanFunction&lt;Pointer[]&gt; func = (count, array) -> lib.someFunction(count, array);
+//	 * Pointer[] array = func.invoke(new IntegerByReference(), Pointer[]::new);
+//	 * </pre>
+//	 * This method is equivalent to the following:
+//	 * <pre>
+//	 * lib.someFunction(count, null);
+//	 * Pointer[] array = new Pointer[count.getValue()];
+//	 * lib.someFunction(count, array);
+//	 * </pre>
+//	 * @param <T> Data type
+//	 * @param function		Vulkan function
+//	 * @param count			Size of the data
+//	 * @param factory		Creates the resultant data object
+//	 * @return Function result
+//	 */
+//	static <T> T invoke(VulkanFunction<T> function, IntegerReference count, IntFunction<T> factory) {
+//		// Invoke to determine the size of the data
+//		function.enumerate(count, null);
+//
+//		// Instantiate the data object
+//		final int size = count.value();
+//		final T data = factory.apply(size);
+//
+//		// Invoke again to populate the data object
+//		if(size > 0) {
+//			function.enumerate(count, data);
+//		}
+//
+//		return data;
+//	}
+//}
 
 //
 //	/**

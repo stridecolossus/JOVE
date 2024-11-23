@@ -1,58 +1,63 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Handle.HandleNativeMapper;
+import org.sarge.jove.foreign.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
-
-public class HandleTest {
+class HandleTest {
 	private Handle handle;
-	private Pointer ptr;
 
 	@BeforeEach
 	void before() {
-		ptr = new Pointer(42);
-		handle = new Handle(ptr);
+		handle = new Handle(3);
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(ptr.hashCode(), handle.hashCode());
-	}
-
-	@Test
-	void reference() {
-		final var ref = new PointerByReference(new Pointer(42));
-		assertEquals(handle, new Handle(ref));
+	void address() {
+		assertEquals(MemorySegment.ofAddress(3), handle.address());
 	}
 
 	@Test
 	void equals() {
-		assertEquals(true, handle.equals(handle));
-		assertEquals(true, handle.equals(new Handle(new Pointer(42))));
-		assertEquals(false, handle.equals(null));
-		assertEquals(false, handle.equals(new Handle(new Pointer(999))));
+		assertEquals(handle, handle);
+		assertEquals(handle, new Handle(3));
+		assertNotEquals(handle, null);
+		assertNotEquals(handle, new Handle(4));
 	}
 
 	@Nested
-	class ConverterTests {
-		@Test
-		void nativeType() {
-			assertEquals(Pointer.class, Handle.CONVERTER.nativeType());
+	class MapperTests {
+		private HandleNativeMapper mapper;
+
+		@BeforeEach
+		void before() {
+			mapper = new HandleNativeMapper();
 		}
 
 		@Test
-		void toNative() {
-			assertEquals(ptr, Handle.CONVERTER.toNative(handle, null));
-			assertEquals(null, Handle.CONVERTER.toNative(null, null));
+		void mapper() {
+			assertEquals(Handle.class, mapper.type());
+			assertEquals(ValueLayout.ADDRESS, mapper.layout(null));
 		}
 
 		@Test
-		void fromNative() {
-			assertEquals(handle, Handle.CONVERTER.fromNative(ptr, null));
-			assertEquals(null, Handle.CONVERTER.fromNative(null, null));
+		void marshal() {
+			assertEquals(MemorySegment.ofAddress(3), mapper.marshal(handle, new NativeContext()));
+		}
+
+		@Test
+		void marshalNull() {
+			assertEquals(MemorySegment.NULL, mapper.marshalNull(Handle.class));
+		}
+
+		@Test
+		void unmarshal() {
+			assertEquals(handle, mapper.unmarshal(MemorySegment.ofAddress(3), Handle.class));
 		}
 	}
 }

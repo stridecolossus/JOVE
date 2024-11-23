@@ -32,9 +32,10 @@ public class DeviceFeatures {
 	 */
 	public VkPhysicalDeviceFeatures structure() {
 		final var struct = new VkPhysicalDeviceFeatures();
-		for(String key : features) {
-			struct.writeField(key, Boolean.TRUE);
-		}
+// TODO
+//		for(String key : features) {
+//			struct.writeField(key, Boolean.TRUE);
+//		}
 		return struct;
 	}
 

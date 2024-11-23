@@ -7,12 +7,9 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.ViewportStageBuilder.Viewport;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
+import org.sarge.jove.util.BitMask;
 
 /**
  * Builder for a graphics pipeline.
@@ -160,7 +157,7 @@ public class GraphicsPipelineBuilder implements DelegatePipelineBuilder<VkGraphi
 		// Init shader pipeline stages
 		if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 		info.stageCount = shaders.size();
-		info.pStages = StructureCollector.pointer(shaders.values(), new VkPipelineShaderStageCreateInfo(), ProgrammableShaderStage::populate);
+		info.pStages = null; // TODO StructureCollector.pointer(shaders.values(), new VkPipelineShaderStageCreateInfo(), ProgrammableShaderStage::populate);
 
 		// Init fixed function stages
 		info.pVertexInputState = input.get();
@@ -179,8 +176,7 @@ public class GraphicsPipelineBuilder implements DelegatePipelineBuilder<VkGraphi
 	}
 
 	@Override
-	public int create(DeviceContext dev, PipelineCache cache, VkGraphicsPipelineCreateInfo[] array, Pointer[] handles) {
-		final VulkanLibrary lib = dev.library();
-		return lib.vkCreateGraphicsPipelines(dev, cache, array.length, array, null, handles);
+	public int create(DeviceContext dev, PipelineCache cache, VkGraphicsPipelineCreateInfo[] array, Handle[] handles) {
+		return dev.vulkan().library().vkCreateGraphicsPipelines(dev, cache, array.length, array, null, handles);
 	}
 }

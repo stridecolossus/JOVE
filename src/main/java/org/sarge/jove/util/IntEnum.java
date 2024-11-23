@@ -6,8 +6,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import com.sun.jna.*;
-
 /**
  * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
  * <p>
@@ -61,56 +59,6 @@ public interface IntEnum {
 	// used by:
 	// - mapper / structures => cache locally without need for locking
 	// - custom use-cases, e.g. physical device queue flags (?) => one-off
-
-	/////////////////////
-
-	// TODO
-
-	/**
-	 * JNA type converter for an integer enumeration.
-	 */
-	TypeConverter CONVERTER = new TypeConverter() {
-		@Override
-		public Class<?> nativeType() {
-			return Integer.class;
-		}
-
-		@Override
-		public Object toNative(Object value, ToNativeContext context) {
-//			if(value instanceof IntEnum e) {
-//				return e.value();
-//			}
-//			else {
-//				return 0;
-//			}
-			return null;
-		}
-
-		@Override
-		public Object fromNative(Object nativeValue, FromNativeContext context) {
-			return null;
-//			// Validate enumeration
-//			final Class<?> type = context.getTargetType();
-//			if(!IntEnum.class.isAssignableFrom(type)) throw new RuntimeException("Invalid native enumeration class: " + type.getSimpleName());
-//
-//			// Map native value
-//			final ReverseMapping<?> mapping = ReverseMapping.get(type);
-//			if(nativeValue == null) {
-//				return mapping.def;
-//			}
-//			else {
-//				final int num = (int) nativeValue;
-//				if(num == 0) {
-//					return mapping.def;
-//				}
-//				else {
-//					return mapping.map(num);
-//				}
-//			}
-		}
-	};
-
-	/////////////////////
 
 	/**
 	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers <i>to</i> the enumeration constants.

@@ -2,7 +2,7 @@ package org.sarge.jove.common;
 
 import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 
 /**
  * Template implementation for a native object managed by the application.
@@ -33,7 +33,7 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 
 	@Override
 	public void destroy() {
-		if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
+		if(destroyed) throw new IllegalStateException("Transient object has already been destroyed: " + this);
 		release();
 		destroyed = true;
 	}

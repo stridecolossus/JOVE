@@ -1,23 +1,19 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
-import org.sarge.jove.util.*;
-import static org.sarge.lib.Validation.*;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.util.BitMask;
 
 /**
  * A <i>pipeline layout</i> specifies the resources used by a pipeline.
@@ -88,7 +84,7 @@ public final class PipelineLayout extends VulkanObject {
 
 			// Add descriptor set layouts
 			info.setLayoutCount = sets.size();
-			info.pSetLayouts = NativeObject.array(sets);
+			info.pSetLayouts = NativeObject.handles(sets);
 
 			// Add push constant ranges
 			final PushConstant push;
@@ -100,23 +96,24 @@ public final class PipelineLayout extends VulkanObject {
 				push = new PushConstant(ranges);
 
 				// Check that overall size is supported by the hardware
-				final var limits = dev.limits();
-				final int len = push.length();
-				final int max = limits.maxPushConstantsSize;
-				if(len > max) throw new IllegalArgumentException("Push constant buffer too large: max=%d len=%d".formatted(max, len));
+// TODO
+//				final var limits = dev.limits();
+//				final int len = push.length();
+//				final int max = limits.maxPushConstantsSize;
+//				if(len > max) throw new IllegalArgumentException("Push constant buffer too large: max=%d len=%d".formatted(max, len));
 
 				// Add push constant ranges
 				info.pushConstantRangeCount = ranges.size();
-				info.pPushConstantRanges = StructureCollector.pointer(ranges, new VkPushConstantRange(), Range::populate);
+				info.pPushConstantRanges = null; // TODO StructureCollector.pointer(ranges, new VkPushConstantRange(), Range::populate);
 			}
 
 			// Allocate layout
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreatePipelineLayout(dev, info, null, ref));
+			final Vulkan vulkan = dev.vulkan();
+			final PointerReference ref = vulkan.factory().pointer();
+			vulkan.library().vkCreatePipelineLayout(dev, info, null, ref);
 
 			// Create layout
-			return new PipelineLayout(new Handle(ref), dev, push);
+			return new PipelineLayout(ref.handle(), dev, push);
 		}
 	}
 
@@ -132,7 +129,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Returned pipeline layout
 		 * @return Result
 		 */
-		int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pPipelineLayout);
+		int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerReference pPipelineLayout);
 
 		/**
 		 * Destroys a pipeline layout.
@@ -140,7 +137,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Pipeline layout
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Pointer pAllocator);
+		void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Handle pAllocator);
 
 		/**
 		 * Updates a push constant range.

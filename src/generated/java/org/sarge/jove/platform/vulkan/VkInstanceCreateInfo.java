@@ -4,7 +4,8 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.lib.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 
 /**
  * Vulkan structure.

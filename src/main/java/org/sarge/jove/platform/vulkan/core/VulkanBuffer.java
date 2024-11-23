@@ -1,21 +1,18 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
-import java.util.Set;
+import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>Vulkan buffer</i> is used to store arbitrary data on the hardware and to perform copy operations.
@@ -131,10 +128,10 @@ public class VulkanBuffer extends VulkanObject {
 	 */
 	public Command fill(long offset, long size, int value) {
 		checkOffset(offset);
-		VulkanLibrary.checkAlignment(offset);
+		Vulkan.checkAlignment(offset);
 		if(size != VK_WHOLE_SIZE) {
 			requireOneOrMore(size);
-			VulkanLibrary.checkAlignment(size);
+			Vulkan.checkAlignment(size);
 		}
 		require(VkBufferUsageFlag.TRANSFER_DST);
 
@@ -188,12 +185,13 @@ public class VulkanBuffer extends VulkanObject {
 		// TODO - queue families
 
 		// Allocate buffer
-		final VulkanLibrary lib = device.library();
-		final PointerByReference ref = device.factory().pointer();
-		check(lib.vkCreateBuffer(device, info, null, ref));
+		final Vulkan vulkan = device.vulkan();
+		final Library lib = vulkan.library();
+		final PointerReference ref = vulkan.factory().pointer();
+		lib.vkCreateBuffer(device, info, null, ref);
 
 		// Query memory requirements
-		final Handle handle = new Handle(ref);
+		final Handle handle = ref.handle();
 		final var reqs = new VkMemoryRequirements();
 		lib.vkGetBufferMemoryRequirements(device, handle, reqs);
 
@@ -201,7 +199,7 @@ public class VulkanBuffer extends VulkanObject {
 		final DeviceMemory mem = allocator.allocate(reqs, properties);
 
 		// Bind memory
-		check(lib.vkBindBufferMemory(device, handle, mem, 0L));
+		lib.vkBindBufferMemory(device, handle, mem, 0L);
 
 		// Create buffer
 		return new VulkanBuffer(handle, device, properties.usage(), mem, length);
@@ -246,7 +244,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer			Returned buffer
 		 * @return Result
 		 */
-		int vkCreateBuffer(DeviceContext device, VkBufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pBuffer);
+		int vkCreateBuffer(DeviceContext device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, PointerReference pBuffer);
 
 		/**
 		 * Destroys a buffer.
@@ -254,7 +252,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer			Buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyBuffer(DeviceContext device, VulkanBuffer pBuffer, Pointer pAllocator);
+		void vkDestroyBuffer(DeviceContext device, VulkanBuffer pBuffer, Handle pAllocator);
 
 		/**
 		 * Queries the memory requirements of the given buffer.
@@ -282,7 +280,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffers			Buffer(s)
 		 * @param pOffsets			Buffer offset(s)
 		 */
-		void vkCmdBindVertexBuffers(Buffer commandBuffer, int firstBinding, int bindingCount, Pointer pBuffers, long[] pOffsets);
+		void vkCmdBindVertexBuffers(Buffer commandBuffer, int firstBinding, int bindingCount, Collection<VertexBuffer> pBuffers, long[] pOffsets);
 
 		/**
 		 * Binds an index buffer.

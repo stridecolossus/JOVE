@@ -11,7 +11,6 @@ import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.StructureCollector;
 
 /**
  * An <i>image transfer command</i> is used to copy an image to/from a Vulkan buffer.
@@ -332,7 +331,7 @@ public final class ImageTransferCommand implements Command {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Populate copy regions
-			final VkBufferImageCopy[] array = StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
+			final VkBufferImageCopy[] array = null; // TODO StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
 
 			// Create copy command
 			return new ImageTransferCommand(image, buffer, write, array, layout);

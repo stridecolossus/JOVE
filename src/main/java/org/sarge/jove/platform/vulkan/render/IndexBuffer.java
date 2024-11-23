@@ -69,21 +69,23 @@ public final class IndexBuffer extends VulkanBuffer {
 			return;
 		}
 
-		// Lookup maximum index length
-		final var limits = this.device().limits();
-		final int max = limits.maxDrawIndexedIndexValue;
+		// TODO...
 
-		// Ignore maximum unsigned integer value
-		if(max == -1) {
-			return;
-		}
-
-		// Validate size of this index
-		final long count = this.length() / Integer.BYTES;
-		if(count > max) {
-			throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
-		}
-		// TODO - mod by offset?
+//		// Lookup maximum index length
+//		final var limits = this.device().limits();
+//		final int max = limits.maxDrawIndexedIndexValue;
+//
+//		// Ignore maximum unsigned integer value
+//		if(max == -1) {
+//			return;
+//		}
+//
+//		// Validate size of this index
+//		final long count = this.length() / Integer.BYTES;
+//		if(count > max) {
+//			throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
+//		}
+//		// TODO - mod by offset?
 	}
 
 	@Override

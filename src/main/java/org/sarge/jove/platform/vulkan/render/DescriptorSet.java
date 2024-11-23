@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.*;
 
 import java.util.*;
@@ -10,15 +9,13 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.util.BitMask;
 
 /**
  * A <i>descriptor set</i> specifies resources used during rendering, such as samplers and uniform buffers.
@@ -286,15 +283,15 @@ public final class DescriptorSet implements NativeObject {
 		}
 
 		// Apply updates
-		final VkWriteDescriptorSet[] writes = StructureCollector.array(updates, new VkWriteDescriptorSet(), Entry::populate);
-		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+		final Collection<VkWriteDescriptorSet> writes = List.of(); // TODO StructureCollector.array(updates, new VkWriteDescriptorSet(), Entry::populate);
+		dev.vulkan().library().vkUpdateDescriptorSets(dev, writes.size(), writes, 0, null);
 
 		// Mark entries as updated
 		for(Entry e : updates) {
 			e.dirty = false;
 		}
 
-		return writes.length;
+		return writes.size();
 	}
 
 	/**
@@ -313,15 +310,14 @@ public final class DescriptorSet implements NativeObject {
 	 * @param sets			Descriptor sets
 	 * @return New bind command
 	 */
-	public static Command bind(PipelineLayout layout, Collection<DescriptorSet> sets) {
-		final Pointer array = NativeObject.array(sets);
+	public static Command bind(PipelineLayout layout, List<DescriptorSet> sets) {
 		return (api, cmd) -> api.vkCmdBindDescriptorSets(
 				cmd,
 				VkPipelineBindPoint.GRAPHICS,
 				layout,
 				0,					// First set
 				sets.size(),
-				array,
+				sets,
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);
@@ -348,15 +344,15 @@ public final class DescriptorSet implements NativeObject {
 			// Init layout descriptor
 			final var info = new VkDescriptorSetLayoutCreateInfo();
 			info.bindingCount = bindings.size();
-			info.pBindings = StructureCollector.pointer(bindings, new VkDescriptorSetLayoutBinding(), Binding::populate);
+			info.pBindings = null; // TODO StructureCollector.pointer(bindings, new VkDescriptorSetLayoutBinding(), Binding::populate);
 
 			// Allocate layout
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateDescriptorSetLayout(dev, info, null, ref));
+			final Vulkan vulkan = dev.vulkan();
+			final PointerReference ref = vulkan.factory().pointer();
+			vulkan.library().vkCreateDescriptorSetLayout(dev, info, null, ref);
 
 			// Create layout
-			return new Layout(new Handle(ref), dev, bindings);
+			return new Layout(ref.handle(), dev, bindings);
 		}
 
 		private final Collection<Binding> bindings;
@@ -436,18 +432,18 @@ public final class DescriptorSet implements NativeObject {
 			final var info = new VkDescriptorSetAllocateInfo();
 			info.descriptorPool = this.handle();
 			info.descriptorSetCount = count;
-			info.pSetLayouts = NativeObject.array(layouts);
+			info.pSetLayouts = NativeObject.handles(layouts);
 
 			// Allocate descriptors sets
 			final DeviceContext dev = this.device();
-			final VulkanLibrary lib = dev.library();
-			final Pointer[] pointers = new Pointer[count];
-			check(lib.vkAllocateDescriptorSets(dev, info, pointers));
+			final Vulkan vulkan = dev.vulkan();
+			final Handle[] handles = new Handle[count];
+			vulkan.library().vkAllocateDescriptorSets(dev, info, handles);
 
 			// Create descriptor sets
 			return IntStream
 					.range(0, count)
-					.mapToObj(n -> new DescriptorSet(new Handle(pointers[n]), layouts.get(n)))
+					.mapToObj(n -> new DescriptorSet(handles[n], layouts.get(n)))
 					.toList();
 		}
 
@@ -474,8 +470,7 @@ public final class DescriptorSet implements NativeObject {
 		 */
 		public void free(Collection<DescriptorSet> sets) {
 			final DeviceContext dev = this.device();
-			final Library lib = dev.library();
-			check(lib.vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.array(sets)));
+			dev.vulkan().library().vkFreeDescriptorSets(dev, this, sets.size(), sets);
 		}
 
 		/**
@@ -483,8 +478,7 @@ public final class DescriptorSet implements NativeObject {
 		 */
 		public void reset() {
 			final DeviceContext dev = this.device();
-			final Library lib = dev.library();
-			check(lib.vkResetDescriptorPool(dev, this, 0));
+			dev.vulkan().library().vkResetDescriptorPool(dev, this, 0);
 		}
 
 		@Override
@@ -558,16 +552,16 @@ public final class DescriptorSet implements NativeObject {
 				final var info = new VkDescriptorPoolCreateInfo();
 				info.flags = new BitMask<>(flags);
 				info.poolSizeCount = pool.size();
-				info.pPoolSizes = StructureCollector.pointer(pool.entrySet(), new VkDescriptorPoolSize(), Builder::populate);
+				info.pPoolSizes = null; // TODO StructureCollector.pointer(pool.entrySet(), new VkDescriptorPoolSize(), Builder::populate);
 				info.maxSets = max;
 
 				// Allocate pool
-				final VulkanLibrary lib = dev.library();
-				final PointerByReference ref = dev.factory().pointer();
-				check(lib.vkCreateDescriptorPool(dev, info, null, ref));
+				final Vulkan vulkan = dev.vulkan();
+				final PointerReference ref = vulkan.factory().pointer();
+				vulkan.library().vkCreateDescriptorPool(dev, info, null, ref);
 
 				// Create pool
-				return new Pool(new Handle(ref), dev, max);
+				return new Pool(ref.handle(), dev, max);
 			}
 
 			/**
@@ -592,7 +586,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pSetLayout			Returned layout handle
 		 * @return Result
 		 */
-		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
+		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerReference pSetLayout);
 
 		/**
 		 * Destroys a descriptor set layout.
@@ -600,7 +594,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param descriptorSetLayout	Layout
 		 * @param pAllocator			Allocator
 		 */
-		void vkDestroyDescriptorSetLayout(DeviceContext device, Layout descriptorSetLayout, Pointer pAllocator);
+		void vkDestroyDescriptorSetLayout(DeviceContext device, Layout descriptorSetLayout, Handle pAllocator);
 
 		/**
 		 * Creates a descriptor set pool.
@@ -610,7 +604,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pDescriptorPool		Returned pool
 		 * @return Result
 		 */
-		int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
+		int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, PointerReference pDescriptorPool);
 
 		/**
 		 * Destroys a descriptor set pool.
@@ -618,7 +612,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param descriptorPool		Pool
 		 * @param pAllocator			Allocator
 		 */
-		void vkDestroyDescriptorPool(DeviceContext device, Pool descriptorPool, Pointer pAllocator);
+		void vkDestroyDescriptorPool(DeviceContext device, Pool descriptorPool, Handle pAllocator);
 
 		/**
 		 * Allocates a number of descriptor sets from a given pool.
@@ -627,7 +621,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pDescriptorSets		Returned descriptor set handles
 		 * @return Result
 		 */
-		int vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
+		int vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, @Returned Handle[] pDescriptorSets);
 
 		/**
 		 * Resets all descriptor sets in the given pool, i.e. recycles the resources back to the pool and releases the descriptor sets.
@@ -643,10 +637,10 @@ public final class DescriptorSet implements NativeObject {
 		 * @param device				Logical device
 		 * @param descriptorPool		Descriptor set pool
 		 * @param descriptorSetCount	Number of descriptor sets
-		 * @param pDescriptorSets		Descriptor set handles
+		 * @param pDescriptorSets		Descriptor sets
 		 * @return Result
 		 */
-		int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
+		int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, Collection<DescriptorSet> pDescriptorSets);
 
 		/**
 		 * Updates the resources for one-or-more descriptor sets.
@@ -656,7 +650,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param descriptorCopyCount	Number of copies
 		 * @param pDescriptorCopies		Copy descriptors
 		 */
-		void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
+		void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, Collection<VkWriteDescriptorSet> pDescriptorWrites, int descriptorCopyCount, Collection<VkCopyDescriptorSet> pDescriptorCopies);
 
 		/**
 		 * Binds one-or-more descriptor sets to the given pipeline.
@@ -669,6 +663,6 @@ public final class DescriptorSet implements NativeObject {
 		 * @param dynamicOffsetCount	Number of dynamic offsets
 		 * @param pDynamicOffsets		Dynamic offsets
 		 */
-		void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, Pointer pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+		void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, List<DescriptorSet> pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 	}
 }

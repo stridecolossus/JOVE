@@ -1,21 +1,17 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.StructureCollector;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
@@ -79,7 +75,7 @@ public class FrameBuffer extends VulkanObject {
 
 		// Init clear values
 		info.clearValueCount = clear.size();
-		info.pClearValues = StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
+		info.pClearValues = null; // TODO StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
 
 		// Create command
 		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, contents);
@@ -127,19 +123,19 @@ public class FrameBuffer extends VulkanObject {
 		final var info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
 		info.attachmentCount = attachments.size();
-		info.pAttachments = NativeObject.array(attachments);
+		info.pAttachments = null; // TODO NativeObject.array(attachments);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO - layers?
 
 		// Allocate frame buffer
 		final DeviceContext dev = pass.device();
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkCreateFramebuffer(dev, info, null, ref));
+		final Vulkan vulkan = dev.vulkan();
+		final PointerReference ref = vulkan.factory().pointer();
+		vulkan.library().vkCreateFramebuffer(dev, info, null, ref);
 
 		// Create frame buffer
-		return new FrameBuffer(new Handle(ref), dev, pass, attachments, extents);
+		return new FrameBuffer(ref.handle(), dev, pass, attachments, extents);
 	}
 
 	/**
@@ -154,7 +150,7 @@ public class FrameBuffer extends VulkanObject {
 		 * @param pFramebuffer		Returned frame buffer
 		 * @return Result
 		 */
-		int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pFramebuffer);
+		int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, PointerReference pFramebuffer);
 
 		/**
 		 * Destroys a frame buffer.
@@ -162,6 +158,6 @@ public class FrameBuffer extends VulkanObject {
 		 * @param framebuffer		Frame buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyFramebuffer(DeviceContext device, FrameBuffer framebuffer, Pointer pAllocator);
+		void vkDestroyFramebuffer(DeviceContext device, FrameBuffer framebuffer, Handle pAllocator);
 	}
 }

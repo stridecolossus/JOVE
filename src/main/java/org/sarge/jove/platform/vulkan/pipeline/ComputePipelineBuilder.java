@@ -5,10 +5,7 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.Pointer;
 
 /**
  * Builder for a compute pipeline.
@@ -51,8 +48,7 @@ public class ComputePipelineBuilder implements DelegatePipelineBuilder<VkCompute
 	}
 
 	@Override
-	public int create(DeviceContext dev, PipelineCache cache, VkComputePipelineCreateInfo[] array, Pointer[] handles) {
-		final VulkanLibrary lib = dev.library();
-		return lib.vkCreateComputePipelines(dev, cache, array.length, array, null, handles);
+	public int create(DeviceContext dev, PipelineCache cache, VkComputePipelineCreateInfo[] array, Handle[] handles) {
+		return dev.vulkan().library().vkCreateComputePipelines(dev, cache, array.length, array, null, handles);
 	}
 }

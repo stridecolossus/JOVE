@@ -1,15 +1,15 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.*;
 
 import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.image.ClearValue;
-import org.sarge.jove.util.*;
-import static org.sarge.lib.Validation.*;
+import org.sarge.jove.util.BitMask;
 
 /**
  * Builder for a command to clear attachments during a render pass.
@@ -84,7 +84,8 @@ public class ClearAttachmentCommandBuilder {
 		}
 
 		void populate(VkClearRect clear) {
-			VulkanLibrary.populate(rect, clear.rect);
+// TODO
+//			VulkanLibrary.populate(rect, clear.rect);
 			clear.baseArrayLayer = baseArrayLayer;
 			clear.layerCount = layerCount;
 		}
@@ -118,8 +119,9 @@ public class ClearAttachmentCommandBuilder {
 	 * @return New clear attachments command
 	 */
 	public Command build() {
-		final VkClearAttachment attachments = StructureCollector.pointer(entries, new VkClearAttachment(), ClearAttachment::populate);
-		final VkClearRect rects = StructureCollector.pointer(regions, new VkClearRect(), Region::populate);
+		// TODO
+		final VkClearAttachment[] attachments = null; // StructureCollector.pointer(entries, new VkClearAttachment(), ClearAttachment::populate);
+		final VkClearRect[] rects = null; // StructureCollector.pointer(regions, new VkClearRect(), Region::populate);
 		return (lib, buffer) -> lib.vkCmdClearAttachments(buffer, entries.size(), attachments, regions.size(), rects);
 	}
 }

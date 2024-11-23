@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static java.util.stream.Collectors.toSet;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Set;
@@ -21,18 +20,20 @@ public final class SupportedFeatures {
 	 */
 	public SupportedFeatures(VkPhysicalDeviceFeatures features) {
 		this.features = requireNonNull(features);
-		this.features.write();
+//		this.features.write();
 	}
 
 	/**
 	 * @return Feature names
 	 */
 	public Set<String> features() {
-		return features
-				.getFieldOrder()
-				.stream()
-				.filter(this::isEnabled)
-				.collect(toSet());
+//		return features
+//				.getFieldOrder()
+//				.stream()
+//				.filter(this::isEnabled)
+//				.collect(toSet());
+		// TODO
+		return null;
 	}
 
 	/**
@@ -40,7 +41,8 @@ public final class SupportedFeatures {
 	 * @return Whether the given feature is supported by the hardware
 	 */
 	public boolean isEnabled(String feature) {
-		return features.readField(feature) == Boolean.TRUE;
+		//return features.readField(feature) == Boolean.TRUE;
+		return false;
 	}
 
 	/**

@@ -10,8 +10,9 @@ import java.lang.invoke.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-import org.sarge.jove.lib.*;
-import org.sarge.jove.lib.NativeStructure.StructureNativeMapper;
+import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeStructure.StructureNativeMapper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -20,7 +21,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * A <i>handler</i> is a consumer for Vulkan diagnostic messages.
  * @author Sarge
  */
-public class DiagnosticHandler extends TransientNativeObjectTEMP {
+public class DiagnosticHandler extends TransientNativeObject {
 	/**
 	 * Debug utility extension name.
 	 */

@@ -180,8 +180,8 @@ public final class PushConstant {
 		public Range {
 			requireZeroOrMore(offset);
 			requireOneOrMore(size);
-			VulkanLibrary.checkAlignment(offset);
-			VulkanLibrary.checkAlignment(size);
+			Vulkan.checkAlignment(offset);
+			Vulkan.checkAlignment(size);
 			requireNotEmpty(stages);
 			stages = Set.copyOf(stages);
 		}

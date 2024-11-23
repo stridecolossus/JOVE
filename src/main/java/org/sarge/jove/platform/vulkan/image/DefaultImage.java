@@ -1,18 +1,16 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.*;
-
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>default image</i> is a Vulkan image or texture managed by the application.
@@ -169,12 +167,13 @@ public final class DefaultImage extends VulkanObject implements Image {
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateImage(dev, info, null, ref));
+			final Vulkan vulkan = dev.vulkan();
+			final ImageLibrary lib = vulkan.library();
+			final PointerReference ref = vulkan.factory().pointer();
+			lib.vkCreateImage(dev, info, null, ref);
 
 			// Retrieve image memory requirements
-			final Handle handle = new Handle(ref);
+			final Handle handle = ref.handle();
 			final var reqs = new VkMemoryRequirements();
 			lib.vkGetImageMemoryRequirements(dev, handle, reqs);
 
@@ -182,7 +181,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 			final DeviceMemory mem = allocator.allocate(reqs, props);
 
 			// Bind memory to image
-			check(lib.vkBindImageMemory(dev, handle, mem, 0));
+			lib.vkBindImageMemory(dev, handle, mem, 0);
 
 			// Create image
 			return new DefaultImage(handle, dev, descriptor, mem);

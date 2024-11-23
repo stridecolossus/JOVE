@@ -1,19 +1,25 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitMask;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.util.BitMask;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"propertyFlags",
-	"heapIndex"
-})
-public class VkMemoryType extends VulkanStructure {
+public class VkMemoryType extends NativeStructure {
 	public BitMask<VkMemoryProperty> propertyFlags;
 	public int heapIndex;
+
+	@Override
+	protected StructLayout layout() {
+		return MemoryLayout.structLayout(
+				JAVA_INT.withName("propertyFlags"),
+				JAVA_INT.withName("heapIndex")
+		);
+	}
 }

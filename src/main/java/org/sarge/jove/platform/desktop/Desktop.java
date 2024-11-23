@@ -5,8 +5,8 @@ import static java.util.Objects.requireNonNull;
 import java.lang.annotation.*;
 
 import org.sarge.jove.common.TransientObject;
-import org.sarge.jove.lib.*;
-import org.sarge.jove.lib.NativeObjectTEMP.NativeObjectMapper;
+import org.sarge.jove.common.NativeObject.NativeObjectMapper;
+import org.sarge.jove.foreign.*;
 
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.

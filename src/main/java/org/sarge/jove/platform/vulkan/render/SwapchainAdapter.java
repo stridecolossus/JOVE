@@ -59,7 +59,8 @@ public class SwapchainAdapter implements TransientObject {
 	 */
 	public void recreate() {
 		// Wait for all rendering work to complete
-		swapchain.device().waitIdle();
+		// TODO
+		// swapchain.device().waitIdle();
 
 		// Release swapchain and buffers
 		destroy();

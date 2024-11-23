@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -15,9 +15,6 @@ import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.*;
-
 /**
  * A <i>swapchain</i> presents rendered images to a {@link Surface}.
  * <p>
@@ -26,7 +23,7 @@ import com.sun.jna.ptr.*;
  * <p>
  * The process of rendering a frame is comprised of two operations:
  * <ol>
- * <li>Acquire the index of the next swapchain image using {@link #acquire(Semaphore, Fence)}</li>
+ * <li>Acquire the index of the next swapchain image using {@link #acquire(VulkanSemaphore, Fence)}</li>
  * <li>Present a rendered frame to the surface using {@link #present(WorkQueue, int, Set)}</li>
  * </ol>
  * <p>
@@ -104,7 +101,7 @@ public class Swapchain extends VulkanObject {
 	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
 	 * @throws SwapchainInvalidated if the swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR}
 	 */
-	public int acquire(Semaphore semaphore, Fence fence) throws SwapchainInvalidated {
+	public int acquire(VulkanSemaphore semaphore, Fence fence) throws SwapchainInvalidated {
 		// Validate
 		if((semaphore == null) && (fence == null)) {
 			throw new IllegalArgumentException("Either a semaphore or fence must be provided");
@@ -112,13 +109,13 @@ public class Swapchain extends VulkanObject {
 
 		// Retrieve next image index
 		final DeviceContext dev = super.device();
-		final VulkanLibrary lib = dev.library();
-		final IntByReference index = dev.factory().integer();
-		final VkResult result = lib.vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
+		final Vulkan vulkan = dev.vulkan();
+		final IntegerReference index = vulkan.factory().integer();
+		final VkResult result = vulkan.library().vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
 
 		// Check result
 		switch(result) {
-			case SUCCESS, SUBOPTIMAL_KHR -> latest = index.getValue();
+			case SUCCESS, SUBOPTIMAL_KHR -> latest = index.value();
 			case ERROR_OUT_OF_DATE_KHR -> throw new SwapchainInvalidated(result);
 			default -> throw new VulkanException(result);
 		}
@@ -135,7 +132,7 @@ public class Swapchain extends VulkanObject {
 	 * @see PresentTaskBuilder
 	 * @see #present(DeviceContext, WorkQueue, VkPresentInfoKHR)
 	 */
-	public void present(WorkQueue queue, int index, Semaphore semaphore) throws SwapchainInvalidated {
+	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws SwapchainInvalidated {
 		final VkPresentInfoKHR info = new PresentTaskBuilder()
 				.image(this, index)
 				.wait(semaphore)
@@ -153,11 +150,10 @@ public class Swapchain extends VulkanObject {
 	 * @see PresentTaskBuilder
 	 */
 	public static void present(DeviceContext dev, WorkQueue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
-		final VulkanLibrary lib = dev.library();
-		final VkResult result = lib.vkQueuePresentKHR(queue, info);
+		final VkResult result = dev.vulkan().library().vkQueuePresentKHR(queue, info);
 		switch(result) {
 			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new SwapchainInvalidated(result);
-			default -> check(result.value());
+			default -> Vulkan.check(result.value());
 		}
 	}
 
@@ -167,7 +163,7 @@ public class Swapchain extends VulkanObject {
 	 */
 	public static class PresentTaskBuilder {
 		private final Map<Swapchain, Integer> images = new LinkedHashMap<>();
-		private final Set<Semaphore> semaphores = new HashSet<>();
+		private final Set<VulkanSemaphore> semaphores = new HashSet<>();
 
 		/**
 		 * Adds a swapchain image to be presented.
@@ -185,7 +181,7 @@ public class Swapchain extends VulkanObject {
 		 * Adds a wait semaphore.
 		 * @param semaphore Wait semaphore
 		 */
-		public PresentTaskBuilder wait(Semaphore semaphore) {
+		public PresentTaskBuilder wait(VulkanSemaphore semaphore) {
 			semaphores.add(requireNonNull(semaphore));
 			return this;
 		}
@@ -200,15 +196,17 @@ public class Swapchain extends VulkanObject {
 
 			// Populate wait semaphores
 			info.waitSemaphoreCount = semaphores.size();
-			info.pWaitSemaphores = NativeObject.array(semaphores);
+			info.pWaitSemaphores = null; // TODO NativeObject.array(semaphores);
 
 			// Populate swapchain
 			info.swapchainCount = images.size();
-			info.pSwapchains = NativeObject.array(images.keySet());
+			info.pSwapchains = null; // TODO NativeObject.array(images.keySet());
 
 			// Set image indices
 			final int[] array = images.values().stream().mapToInt(Integer::intValue).toArray();
-			info.pImageIndices = new PointerToIntArray(array);
+			info.pImageIndices = array; // TODO - new PointerToIntArray(array);
+
+			// TODO - what is pResults for?
 
 			return info;
 		}
@@ -436,16 +434,15 @@ public class Swapchain extends VulkanObject {
 			info.pQueueFamilyIndices = null;
 
 			// Create swapchain
-			final VulkanLibrary lib = dev.library();
-			final ReferenceFactory factory = dev.factory();
-			final PointerByReference ref = factory.pointer();
-			check(lib.vkCreateSwapchainKHR(dev, info, null, ref));
+			final Vulkan vulkan = dev.vulkan();
+			final Library lib = vulkan.library();
+			final PointerReference ref = vulkan.factory().pointer();
+			lib.vkCreateSwapchainKHR(dev, info, null, ref);
 
 			// Retrieve swapchain images
-			final Handle handle = new Handle(ref);
-			final VulkanFunction<Pointer[]> images = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, handle, count, array);
-			final IntByReference count = factory.integer();
-			final Pointer[] handles = VulkanFunction.invoke(images, count, Pointer[]::new);
+			final Handle handle = ref.handle();
+			final VulkanFunction<Handle[]> images = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, handle, count, array);
+			final Handle[] handles = vulkan.invoke(images, Handle[]::new);
 
 			// Init swapchain image descriptor
 			final Dimensions extents = new Dimensions(info.imageExtent.width, info.imageExtent.height);
@@ -458,7 +455,6 @@ public class Swapchain extends VulkanObject {
 			// Create image views
 			final var views = Arrays
 					.stream(handles)
-					.map(Handle::new)
 					.map(image -> new SwapChainImage(image, descriptor))
 					.map(image -> new View.Builder(image).build(dev))
 					.toList();
@@ -495,7 +491,7 @@ public class Swapchain extends VulkanObject {
 		 * @param pSwapchain		Returned swapchain
 		 * @return Result
 		 */
-		int vkCreateSwapchainKHR(DeviceContext device, VkSwapchainCreateInfoKHR pCreateInfo, Pointer pAllocator, PointerByReference pSwapchain);
+		int vkCreateSwapchainKHR(DeviceContext device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, PointerReference pSwapchain);
 
 		/**
 		 * Destroys a swapchain.
@@ -503,7 +499,7 @@ public class Swapchain extends VulkanObject {
 		 * @param swapchain			Swapchain
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySwapchainKHR(DeviceContext device, Swapchain swapchain, Pointer pAllocator);
+		void vkDestroySwapchainKHR(DeviceContext device, Swapchain swapchain, Handle pAllocator);
 
 		/**
 		 * Retrieves swapchain image handles.
@@ -513,7 +509,7 @@ public class Swapchain extends VulkanObject {
 		 * @param pSwapchainImages			Image handles
 		 * @return Result code
 		 */
-		int vkGetSwapchainImagesKHR(DeviceContext device, Handle swapchain, IntByReference pSwapchainImageCount, Pointer[] pSwapchainImages);
+		int vkGetSwapchainImagesKHR(DeviceContext device, Handle swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages);
 
 		/**
 		 * Acquires the next image in the swapchain.
@@ -525,7 +521,7 @@ public class Swapchain extends VulkanObject {
 		 * @param pImageIndex			Returned image index
 		 * @return Result
 		 */
-		VkResult vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, Semaphore semaphore, Fence fence, IntByReference pImageIndex);
+		VkResult vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex);
 
 		/**
 		 * Presents to the swapchain.

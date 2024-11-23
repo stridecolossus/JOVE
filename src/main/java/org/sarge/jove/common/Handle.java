@@ -1,42 +1,43 @@
 package org.sarge.jove.common;
 
-import com.sun.jna.*;
-import com.sun.jna.ptr.PointerByReference;
+import java.lang.foreign.MemorySegment;
+
+import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
 
 /**
- * A <i>handle</i> is an opaque wrapper for a JNA pointer.
+ * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
  * @author Sarge
  */
 public final class Handle {
-	private final Pointer ptr;
+	private final MemorySegment address;
 
 	/**
 	 * Constructor.
-	 * @param ptr Native pointer
+	 * @param address Memory address
 	 */
-	public Handle(Pointer ptr) {
-		this(Pointer.nativeValue(ptr));
+	public Handle(MemorySegment address) {
+		this.address = address.asReadOnly();
 	}
 
 	/**
-	 * Constructor.
-	 * @param peer Peer memory pointer
+	 * Constructor given a literal address.
+	 * @param address Memory address
 	 */
-	public Handle(long peer) {
-		this.ptr = new Pointer(peer);
+	public Handle(long address) {
+		this(MemorySegment.ofAddress(address));
 	}
 
 	/**
-	 * Convenience constructor given a pointer returned from the native layer.
-	 * @param ref Pointer reference
+	 * @return Underlying memory address
 	 */
-	public Handle(PointerByReference ref) {
-		this(ref.getValue());
+	public MemorySegment address() {
+		return MemorySegment.ofAddress(address.address());
 	}
 
 	@Override
 	public int hashCode() {
-		return ptr.hashCode();
+		return address.hashCode();
 	}
 
 	@Override
@@ -44,42 +45,38 @@ public final class Handle {
 		return
 				(obj == this) ||
 				(obj instanceof Handle that) &&
-				this.ptr.equals(that.ptr);
+				this.address.equals(that.address);
 	}
 
 	@Override
 	public String toString() {
-		return ptr.toString();
+		return String.format("Handle[%s]", address);
 	}
 
 	/**
-	 * JNA type converter for this handle.
+	 * Native mapper for a handle.
 	 */
-	public static final TypeConverter CONVERTER = new TypeConverter() {
-		@Override
-		public Class<?> nativeType() {
-			return Pointer.class;
+	public static final class HandleNativeMapper extends AbstractNativeMapper<Handle> implements ReturnMapper<Handle, MemorySegment> { // , ReturnedParameterMapper<Handle> {
+		/**
+		 * Constructor.
+		 */
+		public HandleNativeMapper() {
+			super(Handle.class);
 		}
 
 		@Override
-		public Object toNative(Object value, ToNativeContext context) {
-			if(value == null) {
-				return null;
-			}
-			else {
-				final Handle handle = (Handle) value;
-				return handle.ptr;
-			}
+		public MemorySegment marshal(Handle handle, NativeContext context) {
+			return handle.address;
 		}
 
 		@Override
-		public Object fromNative(Object value, FromNativeContext context) {
-			if(value == null) {
-				return null;
-			}
-			else {
-				return new Handle((Pointer) value);
-			}
+		public Handle unmarshal(MemorySegment address, Class<? extends Handle> type) {
+			return new Handle(address);
 		}
-	};
+
+//		@Override
+//		public Handle unmarshal(MemorySegment address, Class<? extends Handle> type) {
+//			return new Handle(address);
+//		}
+	}
 }

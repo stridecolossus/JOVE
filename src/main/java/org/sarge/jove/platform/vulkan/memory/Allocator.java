@@ -6,13 +6,11 @@ import static org.sarge.lib.Validation.requireOneOrMore;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.BitField;
-
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * An <i>allocator</i> is responsible for allocating device memory for a given request.
@@ -208,18 +206,20 @@ public class Allocator {
 		info.memoryTypeIndex = type.index();
 
 		// Allocate memory
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		final int result = lib.vkAllocateMemory(dev, info, null, ref);
+		final Vulkan vulkan = dev.vulkan();
+		final PointerReference ref = vulkan.factory().pointer();
+		// final int result =
+		// TODO - why specific check?
+		vulkan.library().vkAllocateMemory(dev, info, null, ref);
 
-		// Check allocated
-		if(result != VulkanLibrary.SUCCESS) {
-			throw new AllocationException("Cannot allocate memory: type=%s size=%d error=%d".formatted(type, size, result));
-		}
+//		// Check allocated
+//		if(result != VulkanLibrary.SUCCESS) {
+//			throw new AllocationException("Cannot allocate memory: type=%s size=%d error=%d".formatted(type, size, result));
+//		}
 
 		// Create device memory
 		++count;
-		return new DefaultDeviceMemory(new Handle(ref), dev, type, size);
+		return new DefaultDeviceMemory(ref.handle(), dev, type, size);
 	}
 
 	/**

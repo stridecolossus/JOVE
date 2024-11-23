@@ -1,10 +1,9 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.control.Button;
+import javax.security.auth.callback.Callback;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.control.Button;
+import org.sarge.jove.foreign.IntegerReference;
 
 /**
  * GLFW joystick library.
@@ -35,7 +34,8 @@ interface DesktopLibraryJoystick {
 	 * @param count		Number of axes
 	 * @return Axis states
 	 */
-	Pointer glfwGetJoystickAxes(int id, IntByReference count);
+	float[] glfwGetJoystickAxes(int id, IntegerReference count);
+	// TODO - cannot return array
 
 	/**
 	 * Retrieves the button states of a joystick.
@@ -48,7 +48,8 @@ interface DesktopLibraryJoystick {
 	 * @param count		Number of buttons
 	 * @return Button states
 	 */
-	Pointer glfwGetJoystickButtons(int id, IntByReference count);
+	float[] glfwGetJoystickButtons(int id, IntegerReference count);
+	// TODO - cannot return array
 
 	/**
 	 * Retrieves the hat states of a joystick.
@@ -60,7 +61,8 @@ interface DesktopLibraryJoystick {
 	 * @return Hat states
 	 * @see Hat
 	 */
-	Pointer glfwGetJoystickHats(int id, IntByReference count);
+	float[] glfwGetJoystickHats(int id, IntegerReference count);
+	// TODO - cannot return array
 
 	/**
 	 * Listener for joystick connection events.

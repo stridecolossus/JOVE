@@ -1,21 +1,17 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.List;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
-import org.sarge.jove.util.StructureCollector;
 import org.sarge.lib.Utility;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>render pass</i> is comprised of a number of sub passes that render to the frame buffer.
@@ -75,9 +71,8 @@ public final class RenderPass extends VulkanObject {
 	 */
 	public VkExtent2D granularity() {
 		final DeviceContext dev = this.device();
-		final Library lib = dev.library();
 		final var area = new VkExtent2D();
-		lib.vkGetRenderAreaGranularity(dev, this, area);
+		dev.vulkan().library().vkGetRenderAreaGranularity(dev, this, area);
 		return area;
 	}
 
@@ -129,24 +124,24 @@ public final class RenderPass extends VulkanObject {
 
 		// Add attachments
 		info.attachmentCount = attachments.size();
-		info.pAttachments = StructureCollector.pointer(attachments, new VkAttachmentDescription(), Attachment::populate);
+		info.pAttachments = null; // TODO StructureCollector.pointer(attachments, new VkAttachmentDescription(), Attachment::populate);
 
 		// Add sub-passes
 		info.subpassCount = subpasses.size();
-		info.pSubpasses = StructureCollector.pointer(subpasses, new VkSubpassDescription(), Subpass::populate);
+		info.pSubpasses = null; // TODO StructureCollector.pointer(subpasses, new VkSubpassDescription(), Subpass::populate);
 
 		// Add dependencies
 		final List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
 		info.dependencyCount = dependencies.size();
-		info.pDependencies = StructureCollector.pointer(dependencies, new VkSubpassDependency(), Dependency::populate);
+		info.pDependencies = null; // TODO StructureCollector.pointer(dependencies, new VkSubpassDependency(), Dependency::populate);
 
 		// Allocate render pass
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkCreateRenderPass(dev, info, null, ref));
+		final Vulkan vulkan= dev.vulkan();
+		final PointerReference ref = vulkan.factory().pointer();
+		vulkan.library().vkCreateRenderPass(dev, info, null, ref);
 
 		// Create render pass
-		return new RenderPass(new Handle(ref), dev, attachments);
+		return new RenderPass(ref.handle(), dev, attachments);
 	}
 
 	/**
@@ -161,7 +156,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param pRenderPass		Returned render pass
 		 * @return Result
 		 */
-		int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pRenderPass);
+		int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, PointerReference pRenderPass);
 
 		/**
 		 * Destroys a render pass.
@@ -169,7 +164,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param renderPass		Render pass
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyRenderPass(DeviceContext device, RenderPass renderPass, Pointer pAllocator);
+		void vkDestroyRenderPass(DeviceContext device, RenderPass renderPass, Handle pAllocator);
 
 		/**
 		 * Begins a render pass.
@@ -198,7 +193,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param renderPass			Render pass
 		 * @param pGranularity			Returned render area granularity
 		 */
-		void vkGetRenderAreaGranularity(DeviceContext dev, RenderPass renderPass, VkExtent2D pGranularity);
+		void vkGetRenderAreaGranularity(DeviceContext dev, RenderPass renderPass, @Returned VkExtent2D pGranularity);
 
 		/**
 		 * Clears attachments in this render pass.
@@ -208,7 +203,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param rectCount				Number of clear regions
 		 * @param pRects				Clear regions
 		 */
-		void vkCmdClearAttachments(Buffer commandBuffer, int attachmentCount, VkClearAttachment pAttachments, int rectCount, VkClearRect pRects);
+		void vkCmdClearAttachments(Buffer commandBuffer, int attachmentCount, VkClearAttachment[] pAttachments, int rectCount, VkClearRect[] pRects);
 
 //		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange pRanges);
 //		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);

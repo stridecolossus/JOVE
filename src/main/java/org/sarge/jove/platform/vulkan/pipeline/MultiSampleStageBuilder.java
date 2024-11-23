@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.IntEnum;
 import org.sarge.lib.Percentile;
 
 /**
@@ -67,7 +67,7 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 */
 	public MultiSampleStageBuilder sampleMask(int[] mask) {
 		// TODO - length = samples / 32
-		info.pSampleMask = new PointerToIntArray(mask);
+		info.pSampleMask = mask; // TODO new PointerToIntArray(mask);
 		return this;
 	}
 

@@ -5,8 +5,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.util.BitMask;
 
-import com.sun.jna.Pointer;
-
 /**
  * A <i>delegate pipeline builder</i> is used to configure and create a pipeline.
  * @see Pipeline.Builder
@@ -40,7 +38,7 @@ public interface DelegatePipelineBuilder<T extends VulkanStructure> {
 	 * @param handles		Returned pipelines
 	 * @return Result
 	 */
-	int create(DeviceContext dev, PipelineCache cache, T[] array, Pointer[] handles);
+	int create(DeviceContext dev, PipelineCache cache, T[] array, Handle[] handles);
 
 	/**
 	 * Convenience short-cut method to create a single pipeline from this builder.

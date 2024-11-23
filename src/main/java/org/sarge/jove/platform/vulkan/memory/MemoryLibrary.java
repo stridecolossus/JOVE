@@ -1,10 +1,9 @@
 package org.sarge.jove.platform.vulkan.memory;
 
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * Vulkan memory API.
@@ -19,7 +18,7 @@ public interface MemoryLibrary {
 	 * @param pMemory			Returned memory
 	 * @return Result
 	 */
-	int vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
+	int vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Handle pAllocator, PointerReference pMemory);
 
 	/**
 	 * Releases memory.
@@ -27,7 +26,7 @@ public interface MemoryLibrary {
 	 * @param memory			Memory
 	 * @param pAllocator		Allocator
 	 */
-	void vkFreeMemory(DeviceContext device, DeviceMemory memory, Pointer pAllocator);
+	void vkFreeMemory(DeviceContext device, DeviceMemory memory, Handle pAllocator);
 
 	/**
 	 * Maps a region of memory.
@@ -39,7 +38,7 @@ public interface MemoryLibrary {
 	 * @param ppData			Returned pointer to the memory
 	 * @return Result
 	 */
-	int vkMapMemory(DeviceContext device, DeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
+	int vkMapMemory(DeviceContext device, DeviceMemory memory, long offset, long size, int flags, PointerReference ppData);
 
 	/**
 	 * Unmaps a memory region.

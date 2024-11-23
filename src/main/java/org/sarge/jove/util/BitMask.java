@@ -6,8 +6,6 @@ import java.util.*;
 
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
-import com.sun.jna.*;
-
 /**
  * A <i>bit mask</i> is a wrapper for a native integer bitfield representing a set of enumeration constants.
  * <p>
@@ -82,34 +80,4 @@ public record BitMask<E extends IntEnum>(int bits) {
 	public String toString() {
 		return Integer.toBinaryString(bits);
 	}
-
-	/**
-	 * JNA type converter for a bit mask.
-	 */
-	public static final TypeConverter CONVERTER = new TypeConverter() {
-		@Override
-		public Class<?> nativeType() {
-			return Integer.class;
-		}
-
-		@Override
-		public Object fromNative(Object nativeValue, FromNativeContext context) {
-			if(nativeValue instanceof Integer n) {
-				return new BitMask<>(n);
-			}
-			else {
-				return null;
-			}
-		}
-
-		@Override
-		public Object toNative(Object value, ToNativeContext context) {
-			if(value instanceof BitMask<?> bitfield) {
-				return bitfield.bits;
-			}
-			else {
-				return 0;
-			}
-		}
-	};
 }

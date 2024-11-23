@@ -1,35 +1,44 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"queueCreateInfoCount",
-	"pQueueCreateInfos",
-	"enabledLayerCount",
-	"ppEnabledLayerNames",
-	"enabledExtensionCount",
-	"ppEnabledExtensionNames",
-	"pEnabledFeatures"
-})
-public class VkDeviceCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.DEVICE_CREATE_INFO;
-	public Pointer pNext;
+public class VkDeviceCreateInfo extends NativeStructure {
+	public final VkStructureType sType = VkStructureType.DEVICE_CREATE_INFO;
+	public Handle pNext;
 	public int flags;
 	public int queueCreateInfoCount;
 	public VkDeviceQueueCreateInfo pQueueCreateInfos;
 	public int enabledLayerCount;
-	public Pointer ppEnabledLayerNames;
+	public String[] ppEnabledLayerNames;
 	public int enabledExtensionCount;
-	public Pointer ppEnabledExtensionNames;
+	public String[] ppEnabledExtensionNames;
 	public VkPhysicalDeviceFeatures pEnabledFeatures;
+
+	@Override
+	protected StructLayout layout() {
+		return MemoryLayout.structLayout(
+				JAVA_INT.withName("sType"),
+				PADDING,
+				POINTER.withName("pNext"),
+				JAVA_INT.withName("flags"),
+				JAVA_INT.withName("queueCreateInfoCount"),
+				POINTER.withName("pQueueCreateInfos"),
+				JAVA_INT.withName("enabledLayerCount"),
+				PADDING,
+				POINTER.withName("ppEnabledLayerNames"),
+				JAVA_INT.withName("enabledExtensionCount"),
+				PADDING,
+				POINTER.withName("ppEnabledExtensionNames"),
+				POINTER.withName("pEnabledFeatures")
+		);
+	}
 }

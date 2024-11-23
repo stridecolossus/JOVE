@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A set of <i>specialisation constants</i> are used to parameterise shader programs.
@@ -33,7 +33,7 @@ public final class SpecialisationConstants {
 	VkSpecializationInfo build() {
 		// Populate the list of entries
 		final Populate populate = new Populate();
-		final VkSpecializationMapEntry entries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate::populate);
+		final VkSpecializationMapEntry entries = null; // TODO StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate::populate);
 
 		// Build the data buffer
 		final var bb = BufferHelper.allocate(populate.len);
@@ -155,7 +155,7 @@ public final class SpecialisationConstants {
 
 			@Override
 			public void buffer(ByteBuffer bb) {
-				final int n = NativeBooleanConverter.toInteger(value);
+				final int n = value ? 1 : 0; // TODO NativeBooleanConverter.toInteger(value);
 				bb.putInt(n);
 			}
 		}

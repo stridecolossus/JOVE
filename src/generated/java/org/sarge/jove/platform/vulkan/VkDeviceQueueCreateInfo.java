@@ -1,28 +1,26 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitMask;
+import java.lang.foreign.StructLayout;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.util.BitMask;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"queueFamilyIndex",
-	"queueCount",
-	"pQueuePriorities"
-})
-public class VkDeviceQueueCreateInfo extends VulkanStructure implements ByReference {
-	public VkStructureType sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
-	public Pointer pNext;
+public class VkDeviceQueueCreateInfo extends NativeStructure {
+	public final VkStructureType sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
+	public Handle pNext;
 	public BitMask<VkDeviceQueueCreateFlag> flags;
 	public int queueFamilyIndex;
 	public int queueCount;
-	public Pointer pQueuePriorities;
+	public float[] pQueuePriorities;
+
+	@Override
+	protected StructLayout layout() {
+		// TODO
+		return null;
+	}
 }

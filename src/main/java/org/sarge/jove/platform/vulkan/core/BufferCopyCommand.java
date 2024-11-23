@@ -6,7 +6,6 @@ import static org.sarge.lib.Validation.*;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.StructureCollector;
 
 /**
  * A <i>buffer copy command</i> is used to transfer data between Vulkan buffers.
@@ -149,7 +148,7 @@ public final class BufferCopyCommand implements Command {
 
 			// Create copy command
 			//final VkBufferCopy[] array = regions.stream().collect(StructureCollector.array(new VkBufferCopy(), CopyRegion::populate));
-			final VkBufferCopy[] array = StructureCollector.array(regions, new VkBufferCopy(), CopyRegion::populate);
+			final VkBufferCopy[] array = null; // TODO StructureCollector.array(regions, new VkBufferCopy(), CopyRegion::populate);
 			return new BufferCopyCommand(src, dest, array);
 		}
 	}

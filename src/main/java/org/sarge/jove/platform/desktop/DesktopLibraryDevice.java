@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.lib.Handle;
+import org.sarge.jove.common.Handle;
 
 /**
  * GLFW device API.

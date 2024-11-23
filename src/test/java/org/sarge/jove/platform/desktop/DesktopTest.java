@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.lang.foreign.Arena;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.lib.*;
+import org.sarge.jove.foreign.*;
 
 public class DesktopTest {
 	private Desktop desktop;

@@ -1,21 +1,27 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitMask;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.util.BitMask;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"linearTilingFeatures",
-	"optimalTilingFeatures",
-	"bufferFeatures"
-})
-public class VkFormatProperties extends VulkanStructure {
+public class VkFormatProperties extends NativeStructure {
 	public BitMask<VkFormatFeature> linearTilingFeatures;
 	public BitMask<VkFormatFeature> optimalTilingFeatures;
 	public BitMask<VkFormatFeature> bufferFeatures;
+
+	@Override
+	protected StructLayout layout() {
+		return MemoryLayout.structLayout(
+				JAVA_INT.withName("linearTilingFeatures"),
+				JAVA_INT.withName("optimalTilingFeatures"),
+				JAVA_INT.withName("bufferFeatures")
+		);
+	}
 }

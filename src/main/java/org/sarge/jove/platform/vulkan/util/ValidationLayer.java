@@ -1,14 +1,10 @@
 package org.sarge.jove.platform.vulkan.util;
 
-import static java.util.stream.Collectors.toCollection;
 import static org.sarge.lib.Validation.requireNotEmpty;
 
-import java.util.*;
+import java.util.HashSet;
 
 import org.sarge.jove.platform.vulkan.VkLayerProperties;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * A <i>validation layer</i> specifies a Vulkan diagnostics or interceptor layer.
@@ -68,36 +64,5 @@ public record ValidationLayer(String name, int version) {
 			// Layer not present
 			return false;
 		}
-	}
-
-	/**
-	 * Enumerates validation layers supported by the platform or a physical device.
-	 * <p>
-	 * Note that validation layers at the device level are deprecated.
-	 * <p>
-	 * The {@link Set#contains(Object)} method considers a layer to be a member if a matching entry with an equal or greater version number is present.
-	 * <p>
-	 * @param count				Number of layers
-	 * @param function			Layers function
-	 * @return Validation layers
-	 */
-	public static Set<ValidationLayer> layers(IntByReference count, VulkanFunction<VkLayerProperties> function) {
-		return Arrays
-				.stream(VulkanFunction.invoke(function, count, new VkLayerProperties()))
-				.map(ValidationLayer::of)
-				.collect(toCollection(ValidationLayerSet::new));
-	}
-
-	/**
-	 * Enumerates validation layers supported by this platform.
-	 * @param lib 			Vulkan library
-	 * @param count			Number of layers
-	 * @return Validation layers supported by this platform
-	 */
-	public static Set<ValidationLayer> layers(VulkanLibrary lib, IntByReference count) {
-//		final VulkanFunction<VkLayerProperties> func = (c, array) -> lib.vkEnumerateInstanceLayerProperties(c, array);
-//		return layers(count, func);
-		// TODO
-		return null;
 	}
 }

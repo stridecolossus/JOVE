@@ -1,18 +1,15 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static java.util.Objects.requireNonNull;
 
 import java.io.*;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * A <i>shader</i> is a Vulkan shader module used to implement a programmable pipeline stage.
@@ -32,12 +29,12 @@ public final class Shader extends VulkanObject {
 		info.pCode = BufferHelper.buffer(code);
 
 		// Allocate shader
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkCreateShaderModule(dev, info, null, ref));
+		final Vulkan vulkan = dev.vulkan();
+		final PointerReference ref = vulkan.factory().pointer();
+		vulkan.library().vkCreateShaderModule(dev, info, null, ref);
 
 		// Create shader
-		return new Shader(new Handle(ref), dev);
+		return new Shader(ref.handle(), dev);
 	}
 
 	/**
@@ -92,7 +89,7 @@ public final class Shader extends VulkanObject {
 		 * @param shader			Returned shader module
 		 * @return Result
 		 */
-		int vkCreateShaderModule(DeviceContext device, VkShaderModuleCreateInfo info, Pointer pAllocator, PointerByReference shader);
+		int vkCreateShaderModule(DeviceContext device, VkShaderModuleCreateInfo info, Handle pAllocator, PointerReference shader);
 
 		/**
 		 * Destroys a shader.
@@ -100,6 +97,6 @@ public final class Shader extends VulkanObject {
 		 * @param shader			Shader module
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyShaderModule(DeviceContext device, Shader shader, Pointer pAllocator);
+		void vkDestroyShaderModule(DeviceContext device, Shader shader, Handle pAllocator);
 	}
 }

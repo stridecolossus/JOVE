@@ -8,11 +8,9 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.AbstractPlayable;
+import org.sarge.jove.foreign.IntegerReference;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.geometry.Vector;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 
 /**
  * An <i>audio source</i> plays an {@link AudioBuffer}.
@@ -29,7 +27,7 @@ public class AudioSource extends TransientNativeObject {
 		final int[] ids = new int[1];
 		lib.alGenSources(1, ids);
 		dev.check();
-		return new AudioSource(new Handle(new Pointer(ids[0])), dev);
+		return new AudioSource(new Handle(ids[0]), dev);
 	}
 
 	protected final AudioDevice dev;
@@ -98,9 +96,9 @@ public class AudioSource extends TransientNativeObject {
 	public class AudioSourcePlayable extends AbstractPlayable {
 		@Override
 		public boolean isPlaying() {
-    		final var ref = new IntByReference();
+    		final var ref = new IntegerReference();
     		lib.alGetSourcei(AudioSource.this, SOURCE_STATE, ref);
-    		return ref.getValue() == PLAYING.value();
+    		return ref.value() == PLAYING.value();
 		}
 
 		@Override
@@ -199,8 +197,8 @@ public class AudioSource extends TransientNativeObject {
 	@Override
 	protected void release() {
     	final Library lib = dev.library();
-    	final Pointer sources = NativeObject.array(List.of(this));
-    	lib.alDeleteSources(1, sources);
+//    	final Pointer sources = NativeObject.array(List.of(this));
+//    	lib.alDeleteSources(1, sources);
     	dev.check();
 	}
 
@@ -209,9 +207,9 @@ public class AudioSource extends TransientNativeObject {
 	 */
 	interface Library {
 		void alGenSources(int n, int[] sources);
-		void alDeleteSources(int n, Pointer sources);
+		void alDeleteSources(int n, int[] sources);
 
-		void alGetSourcei(AudioSource source, AudioParameter param, IntByReference value);
+		void alGetSourcei(AudioSource source, AudioParameter param, IntegerReference value);
 		void alSourcef(AudioSource source, AudioParameter param, float value);
 		void alSource3f(AudioSource source, AudioParameter param, float value1, float value2, float value3);
 		void alSourcei(AudioSource source, AudioParameter param, boolean value);
@@ -223,9 +221,9 @@ public class AudioSource extends TransientNativeObject {
 		void alSourceStop(AudioSource source);
 		void alSourceRewind(AudioSource source);
 
-		void alGetSourceiv(AudioSource source, AudioParameter param, int[] values); // PointerByReference values);
-		void alSourceQueueBuffers(AudioSource source, int numEntries, Pointer buffers);
-		void alSourceUnqueueBuffers(AudioSource source, int numEntries, Pointer buffers);
+		void alGetSourceiv(AudioSource source, AudioParameter param, int[] values);
+		void alSourceQueueBuffers(AudioSource source, int numEntries, int[] buffers);
+		void alSourceUnqueueBuffers(AudioSource source, int numEntries, int[] buffers);
 	}
 
 // TODO

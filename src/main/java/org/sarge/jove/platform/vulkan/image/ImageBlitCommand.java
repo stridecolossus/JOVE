@@ -7,8 +7,6 @@ import java.util.Map.Entry;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.util.StructureCollector;
-import static org.sarge.lib.Validation.*;
 
 /**
  * The <i>image blit command</i> copies regions of an image, potentially performing format conversion, scaling and filtering.
@@ -163,7 +161,7 @@ public final class ImageBlitCommand implements Command {
 			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
 
 			// Create copy regions array
-			final VkImageBlit[] array = StructureCollector.array(regions.entrySet(), new VkImageBlit(), this::populate);
+			final VkImageBlit[] array = null; // TODO StructureCollector.array(regions.entrySet(), new VkImageBlit(), this::populate);
 
 			// Create command
 			return new ImageBlitCommand(src, srcLayout, dest, destLayout, array, filter);

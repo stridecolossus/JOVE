@@ -17,13 +17,13 @@ public class DefaultVulkanFrame implements VulkanFrame {
 	 * @param dev Logical device
 	 */
 	public static DefaultVulkanFrame create(DeviceContext dev) {
-		final var available = Semaphore.create(dev);
-		final var ready = Semaphore.create(dev);
+		final var available = VulkanSemaphore.create(dev);
+		final var ready = VulkanSemaphore.create(dev);
 		final var fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
 		return new DefaultVulkanFrame(available, ready, fence);
 	}
 
-	private final Semaphore available, ready;
+	private final VulkanSemaphore available, ready;
 	private final Fence fence;
 
 	/**
@@ -33,7 +33,7 @@ public class DefaultVulkanFrame implements VulkanFrame {
 	 * @param fence			Synchronises execution of the rendering work
 	 * @throws IllegalArgumentException if {@link #available} and {@link #ready} are the same semaphore
 	 */
-	public DefaultVulkanFrame(Semaphore available, Semaphore ready, Fence fence) {
+	public DefaultVulkanFrame(VulkanSemaphore available, VulkanSemaphore ready, Fence fence) {
 		if(available.equals(ready)) throw new IllegalArgumentException("Available and ready semaphores cannot be the same instance");
 		this.available = requireNonNull(available);
 		this.ready = requireNonNull(ready);

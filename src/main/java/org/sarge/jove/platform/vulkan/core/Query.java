@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
@@ -9,13 +8,11 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
 
 /**
  * A <i>query</i> is used to retrieve statistics from Vulkan during a render pass.
@@ -119,12 +116,12 @@ public interface Query {
 			info.pipelineStatistics = BitMask.of(stats);
 
 			// Instantiate query pool
-			final PointerByReference ref = dev.factory().pointer();
-			final VulkanLibrary lib = dev.library();
-			check(lib.vkCreateQueryPool(dev, info, null, ref));
+			final Vulkan vulkan = dev.vulkan();
+			final PointerReference ref = vulkan.factory().pointer();
+			vulkan.library().vkCreateQueryPool(dev, info, null, ref);
 
 			// Create pool
-			return new Pool(new Handle(ref), dev, type, slots);
+			return new Pool(ref.handle(), dev, type, slots);
 		}
 
 		private final VkQueryType type;
@@ -349,7 +346,7 @@ public interface Query {
 
 			// Init library
 			final DeviceContext dev = pool.device();
-			final Library lib = dev.library();
+			final Library lib = dev.vulkan().library();
 
 			// Create accessor
 			return buffer -> {
@@ -359,7 +356,7 @@ public interface Query {
 				pool.validate(start + count - 1);
 
 				// Execute query
-				check(lib.vkGetQueryPoolResults(dev, pool, start, count, size, buffer, stride, mask));
+				lib.vkGetQueryPoolResults(dev, pool, start, count, size, buffer, stride, mask);
 			};
 		}
 
@@ -423,7 +420,7 @@ public interface Query {
 		 * @param pQueryPool		Returned query pool
 		 * @return Result
 		 */
-		int vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pQueryPool);
+		int vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, PointerReference pQueryPool);
 
 		/**
 		 * Destroys a query pool.
@@ -431,7 +428,7 @@ public interface Query {
 		 * @param queryPool			Query pool to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyQueryPool(DeviceContext device, Pool queryPool, Pointer pAllocator);
+		void vkDestroyQueryPool(DeviceContext device, Pool queryPool, Handle pAllocator);
 
 		/**
 		 * Command to reset a query pool.

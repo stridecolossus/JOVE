@@ -1,18 +1,15 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * Default implementation.
@@ -55,17 +52,17 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	 * Mapped region implementation.
 	 */
 	private class DefaultRegion implements Region {
-		private final Pointer ptr;
+		private final Handle ptr;
 		private final long segment;
 		private final long offset;
 
 		/**
 		 * Constructor.
-		 * @param ptr				Region memory pointer
-		 * @param offset			Offset
-		 * @param size				Size of this region
+		 * @param ptr		Region memory pointer
+		 * @param offset	Offset
+		 * @param size		Size of this region
 		 */
-		private DefaultRegion(Pointer ptr, long offset, long size) {
+		private DefaultRegion(Handle ptr, long offset, long size) {
 			this.ptr = requireNonNull(ptr);
 			this.offset = requireZeroOrMore(offset);
 			this.segment = requireOneOrMore(size);
@@ -83,7 +80,9 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			if(offset + size > segment) {
 				throw new IllegalArgumentException("Buffer offset/length larger than region: offset=%d size=%d region=%s".formatted(offset, size, this));
 			}
-			return ptr.getByteBuffer(offset, size);
+			// TODO
+			//return handle.getByteBuffer(offset, size);
+			return null;
 		}
 
 		@Override
@@ -94,8 +93,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 			// Release mapping
 			final DeviceContext dev = device();
-			final VulkanLibrary lib = dev.library();
-			lib.vkUnmapMemory(dev, DefaultDeviceMemory.this);
+			dev.vulkan().library().vkUnmapMemory(dev, DefaultDeviceMemory.this);
 
 			// Clear mapping
 			region = null;
@@ -130,12 +128,12 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 		// Map memory
 		final DeviceContext dev = this.device();
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkMapMemory(dev, this, offset, size, 0, ref));
+		final Vulkan vulkan = dev.vulkan();
+		final PointerReference ref = vulkan.factory().pointer();
+		vulkan.library().vkMapMemory(dev, this, offset, size, 0, ref);
 
 		// Create mapped region
-		region = new DefaultRegion(ref.getValue(), offset, size);
+		region = new DefaultRegion(ref.handle(), offset, size);
 
 		return region;
 	}

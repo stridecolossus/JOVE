@@ -50,12 +50,12 @@ public class SwapchainTest {
 
 	@Nested
 	class AcquireFrameTests {
-		private Semaphore semaphore;
+		private VulkanSemaphore semaphore;
 		private Fence fence;
 
 		@BeforeEach
 		void before() {
-			semaphore = Semaphore.create(dev);
+			semaphore = VulkanSemaphore.create(dev);
 			fence = Fence.create(dev);
 		}
 
@@ -90,12 +90,12 @@ public class SwapchainTest {
 	@Nested
 	class PresentationTests {
 		private WorkQueue queue;
-		private Semaphore semaphore;
+		private VulkanSemaphore semaphore;
 
 		@BeforeEach
 		void before() {
 			queue = new WorkQueue(new Handle(2), new Family(0, 1, Set.of()));
-			semaphore = Semaphore.create(dev);
+			semaphore = VulkanSemaphore.create(dev);
 		}
 
 		@DisplayName("A rendered swapchain image can be presented to the swapchain")

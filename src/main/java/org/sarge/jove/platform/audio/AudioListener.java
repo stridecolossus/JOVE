@@ -1,13 +1,10 @@
 package org.sarge.jove.platform.audio;
 
-import static org.sarge.jove.platform.audio.AudioParameter.*;
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.audio.AudioParameter.*;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.PointerToFloatArray;
-import static org.sarge.lib.Validation.*;
-
-import com.sun.jna.Pointer;
 
 /**
  * The <i>audio listener</i> is used to configure the properties of the audio output device.
@@ -51,7 +48,7 @@ public class AudioListener {
 	 */
 	public void orientation(Vector forward, Vector up) {
 		final float[] array = {forward.x, forward.y, forward.z, up.x, up.y, up.z};
-		lib.alListenerfv(ORIENTATION, new PointerToFloatArray(array));
+		lib.alListenerfv(ORIENTATION, array);
 		dev.check();
 	}
 
@@ -130,7 +127,7 @@ public class AudioListener {
 		void alListeneri(AudioParameter param, int value);
 		void alListenerf(AudioParameter param, float value);
 		void alListener3f(AudioParameter param, float value1, float value2, float value3);
-		void alListenerfv(AudioParameter param, Pointer values);
+		void alListenerfv(AudioParameter param, float[] values);
 		void alDopplerFactor(float dopplerFactor);
 		void alDopplerVelocity(float velocity);
 		void alSpeedOfSound(float speed);

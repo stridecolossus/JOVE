@@ -6,8 +6,8 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import java.util.*;
 import java.util.function.Supplier;
 
-import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.lib.*;
+import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.lib.LazySupplier;
 
@@ -15,7 +15,7 @@ import org.sarge.lib.LazySupplier;
  * Native window implemented using GLFW.
  * @author Sarge
  */
-public final class Window extends TransientNativeObjectTEMP {
+public final class Window extends TransientNativeObject {
 	/**
 	 * Window creation hints.
 	 */
