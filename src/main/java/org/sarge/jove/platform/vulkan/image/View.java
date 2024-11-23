@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
 
-import java.nio.Buffer;
 import java.util.Optional;
 
 import org.sarge.jove.common.*;
@@ -202,7 +201,7 @@ public final class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
+		void vkCmdClearColorImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 		// TODO - these can only be done outside of a render pass? what are they for?
 
@@ -215,7 +214,7 @@ public final class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
+		void vkCmdClearDepthStencilImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 	}
 }

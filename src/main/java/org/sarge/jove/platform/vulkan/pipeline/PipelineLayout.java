@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.*;
@@ -148,6 +147,6 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param size					Size of the range (bytes)
 		 * @param pValues				Push constants data buffer
 		 */
-		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, BitMask<VkShaderStage> stageFlags, int offset, int size, ByteBuffer pValues);
+		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, BitMask<VkShaderStage> stageFlags, int offset, int size, Handle /*ByteBuffer*/ pValues);
 	}
 }

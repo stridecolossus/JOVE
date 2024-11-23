@@ -1,35 +1,16 @@
 package org.sarge.jove.platform.vulkan;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"imageType",
-	"format",
-	"extent",
-	"mipLevels",
-	"arrayLayers",
-	"samples",
-	"tiling",
-	"usage",
-	"sharingMode",
-	"queueFamilyIndexCount",
-	"pQueueFamilyIndices",
-	"initialLayout"
-})
 public class VkImageCreateInfo extends VulkanStructure {
 	public VkStructureType sType = VkStructureType.IMAGE_CREATE_INFO;
-	public Pointer pNext;
+	public Handle pNext;
 	public BitMask<VkImageCreateFlag> flags;
 	public VkImageType imageType;
 	public VkFormat format;
@@ -41,6 +22,6 @@ public class VkImageCreateInfo extends VulkanStructure {
 	public BitMask<VkImageUsageFlag> usage;
 	public VkSharingMode sharingMode;
 	public int queueFamilyIndexCount;
-	public Pointer pQueueFamilyIndices;
+	public int[] pQueueFamilyIndices;
 	public VkImageLayout initialLayout;
 }

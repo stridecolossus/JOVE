@@ -35,7 +35,7 @@ public class NativeMapperRegistry {
 	 */
 	public Optional<NativeMapper<?>> mapper(Class<?> type) {
 
-		if(type.isArray()) {
+		if(type.isArray() || Collection.class.isAssignableFrom(type)) {
 
 			// TODO - is this right? shouldn't the code generator decide how Java/JOVE types map to an array?
 			if(byte[].class.equals(type)) {

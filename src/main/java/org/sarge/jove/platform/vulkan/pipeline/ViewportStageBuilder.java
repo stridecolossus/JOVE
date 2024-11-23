@@ -91,19 +91,19 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 		return this;
 	}
 
-	/**
-	 * Populates viewport descriptors.
-	 */
-	private static VkViewport viewports(List<Viewport> viewports) {
-		return null; // StructureCollector.pointer(viewports, new VkViewport(), Viewport::populate);
-	}
-
-	/**
-	 * Populates scissor rectangle descriptors.
-	 */
-	private static VkRect2D.ByReference scissors(List<Rectangle> scissors) {
-		return null; // StructureCollector.pointer(scissors, new VkRect2D.ByReference(), VulkanLibrary::populate);
-	}
+//	/**
+//	 * Populates viewport descriptors.
+//	 */
+//	private static VkViewport viewports(List<Viewport> viewports) {
+//		return null; // StructureCollector.pointer(viewports, new VkViewport(), Viewport::populate);
+//	}
+//
+//	/**
+//	 * Populates scissor rectangle descriptors.
+//	 */
+//	private static VkRect2D scissors(List<Rectangle> scissors) {
+//		return null; // StructureCollector.pointer(scissors, new VkRect2D.ByReference(), VulkanLibrary::populate);
+//	}
 
 	@Override
 	VkPipelineViewportStateCreateInfo get() {
@@ -118,11 +118,11 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 
 		// Add viewports
 		info.viewportCount = count;
-		info.pViewports = viewports(viewports);
+		info.pViewports = viewports.toArray(VkViewport[]::new);
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = scissors(scissors);
+		info.pScissors = null; // TODO viewports.toArray(VkScissViewport[]::new);
 
 		return info;
 	}
@@ -137,7 +137,7 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 	@RequiredFeature(field="start", feature="multiViewport")
 	public Command setDynamicViewport(int start, List<Viewport> viewports) {
 		validate(start, viewports);
-		final VkViewport array = viewports(viewports);
+		final VkViewport array = null; // TODO viewports(viewports);
 		return (lib, buffer) -> lib.vkCmdSetViewport(buffer, start, viewports.size(), array);
 	}
 
@@ -151,7 +151,7 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 	@RequiredFeature(field="start", feature="multiViewport")
 	public Command setDynamicScissor(int start, List<Rectangle> scissors) {
 		validate(start, scissors);
-		final VkRect2D array = scissors(scissors);
+		final VkRect2D array = null; // TODO scissors(scissors);
 		return (lib, buffer) -> lib.vkCmdSetScissor(buffer, start, scissors.size(), array);
 	}
 

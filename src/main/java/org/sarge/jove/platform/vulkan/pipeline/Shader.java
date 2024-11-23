@@ -6,7 +6,7 @@ import java.io.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.PointerReference;
-import org.sarge.jove.io.*;
+import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -26,7 +26,7 @@ public final class Shader extends VulkanObject {
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
-		info.pCode = BufferHelper.buffer(code);
+		info.pCode = requireNonNull(code);
 
 		// Allocate shader
 		final Vulkan vulkan = dev.vulkan();

@@ -33,7 +33,7 @@ public final class PipelineCache extends VulkanObject {
 		final var info = new VkPipelineCacheCreateInfo();
 		if(data != null) {
 			info.initialDataSize = data.length;
-			info.pInitialData = BufferHelper.buffer(data);
+			info.pInitialData = requireNonNull(data);
 		}
 		// TODO - info.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT
 
@@ -67,7 +67,7 @@ public final class PipelineCache extends VulkanObject {
 	public ByteBuffer data() {
 		final DeviceContext dev = super.device();
 		final Vulkan vulkan = dev.vulkan();
-		final VulkanFunction<ByteBuffer> cache = (count, data) -> vulkan.library().vkGetPipelineCacheData(dev, this, count, data);
+		final VulkanFunction<ByteBuffer> cache = (count, data) -> vulkan.library().vkGetPipelineCacheData(dev, this, count, null); // TODO data);
 		return vulkan.invoke(cache, BufferHelper::allocate);
 	}
 
@@ -167,7 +167,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pData				Cache data
 		 * @return Result
 		 */
-		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntegerReference pDataSize, ByteBuffer pData); // TODO - data blob?
+		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntegerReference pDataSize, Handle pData); // ByteBuffer pData); // TODO - data blob?
 
 		/**
 		 * Destroys a pipeline cache.

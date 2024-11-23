@@ -2,70 +2,11 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
-import com.sun.jna.Structure.*;
-
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"robustBufferAccess",
-	"fullDrawIndexUint32",
-	"imageCubeArray",
-	"independentBlend",
-	"geometryShader",
-	"tessellationShader",
-	"sampleRateShading",
-	"dualSrcBlend",
-	"logicOp",
-	"multiDrawIndirect",
-	"drawIndirectFirstInstance",
-	"depthClamp",
-	"depthBiasClamp",
-	"fillModeNonSolid",
-	"depthBounds",
-	"wideLines",
-	"largePoints",
-	"alphaToOne",
-	"multiViewport",
-	"samplerAnisotropy",
-	"textureCompressionETC2",
-	"textureCompressionASTC_LDR",
-	"textureCompressionBC",
-	"occlusionQueryPrecise",
-	"pipelineStatisticsQuery",
-	"vertexPipelineStoresAndAtomics",
-	"fragmentStoresAndAtomics",
-	"shaderTessellationAndGeometryPointSize",
-	"shaderImageGatherExtended",
-	"shaderStorageImageExtendedFormats",
-	"shaderStorageImageMultisample",
-	"shaderStorageImageReadWithoutFormat",
-	"shaderStorageImageWriteWithoutFormat",
-	"shaderUniformBufferArrayDynamicIndexing",
-	"shaderSampledImageArrayDynamicIndexing",
-	"shaderStorageBufferArrayDynamicIndexing",
-	"shaderStorageImageArrayDynamicIndexing",
-	"shaderClipDistance",
-	"shaderCullDistance",
-	"shaderFloat64",
-	"shaderInt64",
-	"shaderInt16",
-	"shaderResourceResidency",
-	"shaderResourceMinLod",
-	"sparseBinding",
-	"sparseResidencyBuffer",
-	"sparseResidencyImage2D",
-	"sparseResidencyImage3D",
-	"sparseResidency2Samples",
-	"sparseResidency4Samples",
-	"sparseResidency8Samples",
-	"sparseResidency16Samples",
-	"sparseResidencyAliased",
-	"variableMultisampleRate",
-	"inheritedQueries"
-})
-public class VkPhysicalDeviceFeatures extends VulkanStructure implements ByReference {
+public class VkPhysicalDeviceFeatures extends VulkanStructure {
 	public boolean robustBufferAccess;
 	public boolean fullDrawIndexUint32;
 	public boolean imageCubeArray;

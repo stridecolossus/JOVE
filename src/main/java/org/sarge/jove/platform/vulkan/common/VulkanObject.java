@@ -10,21 +10,6 @@ import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
  * @author Sarge
  */
 public abstract class VulkanObject extends TransientNativeObject {
-	/**
-	 * A <i>destructor</i> abstracts the API method used to destroy this object.
-	 * @see VulkanObject#destructor(VulkanLibrary)
-	 */
-	@FunctionalInterface
-	public interface Destructor<T extends VulkanObject> {
-		/**
-		 * Destroys this object.
-		 * @param device		Logical device
-		 * @param object		Native object to destroy
-		 * @param allocator		Vulkan memory allocator (always {@code null})
-		 */
-		void destroy(DeviceContext device, T object, Handle allocator);
-	}
-
 	private final DeviceContext device;
 
 	/**
@@ -45,6 +30,21 @@ public abstract class VulkanObject extends TransientNativeObject {
 	}
 
 	/**
+	 * A <i>destructor</i> abstracts the API method used to destroy this object.
+	 * @see VulkanObject#destructor(VulkanLibrary)
+	 */
+	@FunctionalInterface
+	protected interface Destructor<T extends VulkanObject> {
+		/**
+		 * Destroys this object.
+		 * @param device		Logical device
+		 * @param object		Native object to destroy
+		 * @param allocator		Vulkan memory allocator (always {@code null})
+		 */
+		void destroy(DeviceContext device, T object, Handle allocator);
+	}
+
+	/**
 	 * Provides the <i>destructor</i> API method for this object.
 	 * @param lib Vulkan API
 	 * @return Destructor method
@@ -54,22 +54,11 @@ public abstract class VulkanObject extends TransientNativeObject {
 	@SuppressWarnings("unchecked")
 	@Override
 	public final void destroy() {
-//		try {
-//			final Method method = VulkanLibrary.class.getDeclaredMethod(destructor(), DeviceContext.class, this.getClass(), Handle.class);
-//			method.invoke(device, this, null);
-//		}
-//		catch(Exception e) {
-//			throw new IllegalArgumentException();
-//		}
-
 		@SuppressWarnings("rawtypes")
 		final Destructor destructor = destructor(device.vulkan().library());
 		destructor.destroy(device, this, null);
-
 		super.destroy(); // TODO - should be done before?
 	}
-
-//	protected abstract String destructor();
 
 	@Override
 	protected void release() {
@@ -81,6 +70,7 @@ public abstract class VulkanObject extends TransientNativeObject {
 		return handle.hashCode();
 	}
 
+	// TODO - bad
 	@Override
 	public boolean equals(Object obj) {
 		return obj == this;

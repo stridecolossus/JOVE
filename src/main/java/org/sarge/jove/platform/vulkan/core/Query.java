@@ -356,7 +356,7 @@ public interface Query {
 				pool.validate(start + count - 1);
 
 				// Execute query
-				lib.vkGetQueryPoolResults(dev, pool, start, count, size, buffer, stride, mask);
+				lib.vkGetQueryPoolResults(dev, pool, start, count, size, null /* TODO buffer*/, stride, mask);
 			};
 		}
 
@@ -477,7 +477,7 @@ public interface Query {
 		 * @param flags				Query flags
 		 * @return Result
 		 */
-		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, ByteBuffer pData, long stride, BitMask<VkQueryResultFlag> flags);
+		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, PointerReference /*ByteBuffer*/ pData, long stride, BitMask<VkQueryResultFlag> flags);
 
 		/**
 		 * Writes query results to a Vulkan buffer.
