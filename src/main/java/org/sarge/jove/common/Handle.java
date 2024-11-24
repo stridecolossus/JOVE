@@ -1,9 +1,9 @@
 package org.sarge.jove.common;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
+import java.util.function.*;
 
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
 
 /**
  * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
@@ -53,15 +53,31 @@ public final class Handle {
 		return String.format("Handle[%s]", address);
 	}
 
+	// TODO
+	public <T> T[] array(int length, MemoryLayout layout, IntFunction<T[]> factory, Function<MemorySegment, T> mapper) {
+		// Resize handle to array layout
+		final long size = layout.byteSize();
+		final MemorySegment segment = address.reinterpret(size * length);
+
+		// Allocate array
+		final T[] array = factory.apply(length);
+
+		// Extract elements
+		for(int n = 0; n < length; ++n) {
+			final MemorySegment e = segment.getAtIndex(ValueLayout.ADDRESS, n);
+			array[n] = mapper.apply(e);
+		}
+
+		return array;
+	}
+
 	/**
 	 * Native mapper for a handle.
 	 */
-	public static final class HandleNativeMapper extends AbstractNativeMapper<Handle> implements ReturnMapper<Handle, MemorySegment> { // , ReturnedParameterMapper<Handle> {
-		/**
-		 * Constructor.
-		 */
-		public HandleNativeMapper() {
-			super(Handle.class);
+	public static final class HandleNativeMapper extends AbstractNativeMapper<Handle, MemorySegment> {
+		@Override
+		public Class<Handle> type() {
+			return Handle.class;
 		}
 
 		@Override
@@ -70,13 +86,8 @@ public final class Handle {
 		}
 
 		@Override
-		public Handle unmarshal(MemorySegment address, Class<? extends Handle> type) {
-			return new Handle(address);
+		public Function<MemorySegment, Handle> returns(Class<? extends Handle> target) {
+			return Handle::new;
 		}
-
-//		@Override
-//		public Handle unmarshal(MemorySegment address, Class<? extends Handle> type) {
-//			return new Handle(address);
-//		}
 	}
 }

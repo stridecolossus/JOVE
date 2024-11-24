@@ -1,9 +1,10 @@
 package org.sarge.jove.foreign;
 
+import static java.util.Objects.requireNonNull;
+
 import java.lang.foreign.*;
 import java.util.*;
-
-import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
+import java.util.function.Function;
 
 /**
  *
@@ -11,7 +12,7 @@ import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
  * @param <R>
  * @author Sarge
  */
-public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T> implements ReturnMapper<T, T> {
+public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T, T> {
 	private static final Map<Class<?>, ValueLayout> PRIMITIVES = Map.of(
         	byte.class,		ValueLayout.JAVA_BYTE,
         	char.class,		ValueLayout.JAVA_CHAR,
@@ -35,8 +36,8 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T> implements
 	/**
 	 * @return Native mappers for all Java primitive types
 	 */
-	@SuppressWarnings("unchecked")
-	public static Collection<? extends NativeMapper<?>> mappers() {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static Collection<? extends NativeMapper> mappers() {
 		return PRIMITIVES
 				.keySet()
 				.stream()
@@ -44,6 +45,7 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T> implements
 				.toList();
 	}
 
+	private final Class<T> type;
 	private final ValueLayout layout;
 
 	/**
@@ -52,9 +54,14 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T> implements
 	 * @throws IllegalArgumentException if {@link #type} is not primitive
 	 */
 	public PrimitiveNativeMapper(Class<T> type) {
-		super(type);
 		if(!type.isPrimitive()) throw new IllegalArgumentException("Not a primitive: " + type);
+		this.type = requireNonNull(type);
 		this.layout = PRIMITIVES.get(type);
+	}
+
+	@Override
+	public Class<T> type() {
+		return type;
 	}
 
 	@Override
@@ -63,8 +70,8 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T> implements
 	}
 
 	@Override
-	public Object marshal(T instance, NativeContext context) {
-		return instance;
+	public Object marshal(T value, NativeContext context) {
+		return value;
 	}
 
 	@Override
@@ -74,7 +81,12 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T> implements
 	}
 
 	@Override
-	public T unmarshal(T value, Class<? extends T> type) {
-		return value;
+	public Function<T, T> returns(Class<? extends T> target) {
+		return Function.identity();
+	}
+
+	@Override
+	public String toString() {
+		return String.format("PrimitiveNativeMapper[%s]", type);
 	}
 }

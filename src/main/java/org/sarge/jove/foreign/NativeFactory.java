@@ -161,7 +161,7 @@ public class NativeFactory {
 
 			// Define method signature
 			for(Parameter p : method.getParameters()) {
-				final boolean returned = p.isAnnotationPresent(Returned.class);
+				final boolean returned = p.isAnnotationPresent(Returned.class) || isReferenceType(p.getType());
 				builder.parameter(p.getType(), returned);
 			}
 
@@ -182,5 +182,9 @@ public class NativeFactory {
 	private static boolean isNativeMethod(Method method) {
 		final int modifiers = method.getModifiers();
 		return !Modifier.isStatic(modifiers);
+	}
+
+	private static boolean isReferenceType(Class<?> type) {
+		return IntegerReference.class.equals(type) || PointerReference.class.equals(type);
 	}
 }

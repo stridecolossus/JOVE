@@ -8,7 +8,6 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.*;
 import java.util.List;
 
-import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
 import org.sarge.jove.foreign.NativeStructure.StructureNativeMapper;
 
 /**
@@ -25,7 +24,7 @@ class FieldMapping {
 	}
 
 	private final Field field;
-	private final NativeMapper<?> mapper;
+	private final NativeMapper mapper;
 	private final FieldAdapter adapter;
 
 	/**
@@ -35,7 +34,7 @@ class FieldMapping {
 	 * @param adapter	Marshalling adapter for the off-heap field
 	 * @throws IllegalArgumentException if {@link #field} is not a valid structure field
 	 */
-	FieldMapping(Field field, NativeMapper<?> mapper, FieldAdapter adapter) {
+	FieldMapping(Field field, NativeMapper mapper, FieldAdapter adapter) {
 		if(!isStructureField(field)) throw new IllegalArgumentException("Invalid structure field: " + field);
 		this.field = requireNonNull(field);
 		this.mapper = requireNonNull(mapper);
@@ -75,10 +74,12 @@ class FieldMapping {
 			field.set(structure, child);
 		}
 		else {
-    		if(!(mapper instanceof ReturnMapper m)) throw new IllegalArgumentException();
-    		@SuppressWarnings("unchecked")
-    		final Object actual = m.unmarshal(value, field.getType());
+			final Object actual = mapper.returns(field.getType()).apply(value);
     		field.set(structure, actual);
+//    		if(!(mapper instanceof ReturnMapper m)) throw new IllegalArgumentException();
+//    		@SuppressWarnings("unchecked")
+//    		final Object actual = m.unmarshal(value, field.getType());
+//    		field.set(structure, actual);
 		}
 	}
 
@@ -134,7 +135,7 @@ class FieldMapping {
 				final var path = PathElement.groupElement(name);
 				final Field field = type.getField(name);
 				final FieldAdapter adapter = adapter(path, field.getType(), layout);
-				final NativeMapper<?> mapper = mapper(field);
+				final NativeMapper mapper = mapper(field);
 				return new FieldMapping(field, mapper, adapter);
 			}
 
@@ -164,7 +165,7 @@ class FieldMapping {
 					@SuppressWarnings({"unchecked", "rawtypes"})
 					@Override
 					public Object unmarshal(MemorySegment address) throws Exception {
-						return mapper.unmarshal(address, (Class) type);
+						return mapper.returns((Class) type).apply(address);
 					}
 				};
 			}
@@ -218,7 +219,7 @@ class FieldMapping {
 			/**
 			 * @return Native mapper for the given structure field
 			 */
-			private NativeMapper<?> mapper(Field field) {
+			private NativeMapper mapper(Field field) {
 				return registry
 						.mapper(field.getType())
 						.orElseThrow(() -> new IllegalArgumentException("Unsupported structure field type: " + field.getType()));

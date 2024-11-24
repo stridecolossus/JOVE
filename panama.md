@@ -1641,7 +1641,7 @@ blob                ???
 
 - collapse all un/marshal methods to one type and get rid of all the nasty instanceof/casts/checks
 - maybe add characteristics?
-- NativeMapper specified as Object *but* Abstract<T> => implementation are type-safe but usage is Object based?
+- [CANNOT] NativeMapper specified as Object *but* Abstract<T> => implementation are type-safe but usage is Object based?
 - too many: mapper, NativeType, FieldMapping, adapter
 - parameter mapper = extends mapper + target type, by-ref annotation
 - return mapper = extends mapper + return type

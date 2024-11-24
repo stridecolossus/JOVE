@@ -43,6 +43,9 @@ public final class Window extends TransientNativeObject {
 		 */
 		MAXIMISED(0x00020008, false),
 
+		// TODO
+		VISIBLE(0x00020004, true),
+
 		/**
 		 * Client API for this window, e.g. OpenGL context.
 		 */
@@ -229,6 +232,9 @@ public final class Window extends TransientNativeObject {
 		final PointerReference ref = desktop.factory().pointer();
 		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
 		if(result != 0) {
+////			//System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
+//			final int code = lib.glfwGetError(null);
+//			System.out.println(code);
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
 		return ref.handle();

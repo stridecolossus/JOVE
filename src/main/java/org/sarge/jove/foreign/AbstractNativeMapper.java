@@ -1,29 +1,13 @@
 package org.sarge.jove.foreign;
 
-import static java.util.Objects.requireNonNull;
-
 import java.lang.foreign.*;
+import java.util.function.*;
 
 /**
  * Skeleton implementation.
  * @author Sarge
  */
-public abstract class AbstractNativeMapper<T> implements NativeMapper<T> {
-	private final Class<T> type;
-
-	/**
-	 * Constructor.
-	 * @param type Java type
-	 */
-	protected AbstractNativeMapper(Class<T> type) {
-		this.type = requireNonNull(type);
-	}
-
-	@Override
-	public final Class<T> type() {
-		return type;
-	}
-
+public abstract class AbstractNativeMapper<T, R> implements NativeMapper<T, R> {
 	@Override
 	public MemoryLayout layout(Class<? extends T> type) {
 		return AddressLayout.ADDRESS;
@@ -35,8 +19,18 @@ public abstract class AbstractNativeMapper<T> implements NativeMapper<T> {
 	}
 
 	@Override
+	public Function<R, T> returns(Class<? extends T> target) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public BiConsumer<R, T> unmarshal(Class<? extends T> target) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public int hashCode() {
-		return type.hashCode();
+		return this.type().hashCode();
 	}
 
 	@Override
@@ -44,11 +38,11 @@ public abstract class AbstractNativeMapper<T> implements NativeMapper<T> {
 		return
 				(obj == this) ||
 				(obj instanceof NativeMapper that) &&
-				this.type.equals(that.type());
+				this.type().equals(that.type());
 	}
 
 	@Override
 	public String toString() {
-		return String.format("NativeMapper[%s]", type);
+		return String.format("NativeMapper[%s]", this.type());
 	}
 }

@@ -30,13 +30,14 @@ public interface NativeObject {
 	/**
 	 *
 	 */
-	public static class NativeObjectMapper extends AbstractNativeMapper<NativeObject> {
-		public NativeObjectMapper() {
-			super(NativeObject.class);
+	public static class NativeObjectMapper extends AbstractNativeMapper<NativeObject, MemorySegment> {
+		@Override
+		public Class<NativeObject> type() {
+			return NativeObject.class;
 		}
 
 		@Override
-		public MemorySegment marshal(NativeObject obj, NativeContext __) {
+		public MemorySegment marshal(NativeObject obj, NativeContext context) {
 			return obj.handle().address();
 		}
 	}

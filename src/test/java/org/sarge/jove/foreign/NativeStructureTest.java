@@ -7,7 +7,6 @@ import java.lang.foreign.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.*;
 
 class NativeStructureTest {
 	@SuppressWarnings("unused")
@@ -35,7 +34,7 @@ class NativeStructureTest {
 	}
 
 	private void register() {
-		final NativeMapper<?> mapper = new PrimitiveNativeMapper<>(int.class);
+		final NativeMapper mapper = new PrimitiveNativeMapper<>(int.class);
 		registry.add(mapper);
 	}
 

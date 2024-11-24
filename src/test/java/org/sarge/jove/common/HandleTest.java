@@ -5,29 +5,30 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Handle.HandleNativeMapper;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeContext;
 
 class HandleTest {
 	private Handle handle;
+	private MemorySegment address;
 
 	@BeforeEach
 	void before() {
-		handle = new Handle(3);
+		address = MemorySegment.ofAddress(42);
+		handle = new Handle(42);
 	}
 
 	@Test
 	void address() {
-		assertEquals(MemorySegment.ofAddress(3), handle.address());
+		assertEquals(address, handle.address());
 	}
 
 	@Test
 	void equals() {
 		assertEquals(handle, handle);
-		assertEquals(handle, new Handle(3));
+		assertEquals(handle, new Handle(42));
 		assertNotEquals(handle, null);
-		assertNotEquals(handle, new Handle(4));
+		assertNotEquals(handle, new Handle(999));
 	}
 
 	@Nested
@@ -47,7 +48,7 @@ class HandleTest {
 
 		@Test
 		void marshal() {
-			assertEquals(MemorySegment.ofAddress(3), mapper.marshal(handle, new NativeContext()));
+			assertEquals(address, mapper.marshal(handle, new NativeContext()));
 		}
 
 		@Test
@@ -56,8 +57,13 @@ class HandleTest {
 		}
 
 		@Test
+		void returns() {
+			assertEquals(new Handle(address), mapper.returns(Handle.class).apply(address));
+		}
+
+		@Test
 		void unmarshal() {
-			assertEquals(handle, mapper.unmarshal(MemorySegment.ofAddress(3), Handle.class));
+			assertThrows(UnsupportedOperationException.class, () -> mapper.unmarshal(Handle.class));
 		}
 	}
 }

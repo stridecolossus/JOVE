@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import org.junit.jupiter.api.extension.Extensions;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
@@ -144,42 +145,49 @@ public class PhysicalDevice implements NativeObject {
 	 * @see #predicate(DeviceFeatures)
 	 */
 	public static Stream<PhysicalDevice> devices(Instance instance) {
-		// Enumerate device handles
+		// Enumerate physical devices
 		final Vulkan vulkan = instance.vulkan();
 		final VulkanFunction<Handle[]> enumerate = (count, devices) -> vulkan.library().vkEnumeratePhysicalDevices(instance, count, devices);
 		final Handle[] handles = vulkan.invoke(enumerate, Handle[]::new);
 
-		// Instantiate devices
+		// Helper
+		final var builder = new Object() {
+			/**
+			 * @return Physical device
+			 */
+			PhysicalDevice device(Handle handle) {
+				final List<Family> families = families(handle);
+				final SupportedFeatures features = features(handle);
+				return new PhysicalDevice(handle, instance, families, features);
+			}
+
+			/**
+			 * @return Queue families for the given device
+			 */
+			private List<Family> families(Handle handle) {
+				final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> vulkan.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
+				final VkQueueFamilyProperties[] properties = vulkan.invoke(function, VkQueueFamilyProperties[]::new);
+				return IntStream
+						.range(0, properties.length)
+						.mapToObj(n -> Family.of(n, properties[n]))
+						.toList();
+			}
+
+			/**
+			 * @return Supported features of the given device
+			 */
+			private SupportedFeatures features(Handle handle) {
+				final var features = new VkPhysicalDeviceFeatures();
+				// TODO
+				//lib.vkGetPhysicalDeviceFeatures(handle, features);
+				return new SupportedFeatures(features);
+			}
+		};
+
+		// Build physical devices
 		return Arrays
 				.stream(handles)
-				.map(dev -> device(dev, instance));
-	}
-
-	/**
-	 * Creates a physical device.
-	 */
-	private static PhysicalDevice device(Handle handle, Instance instance) {
-		// Enumerate queue properties for this device
-		final Vulkan vulkan = instance.vulkan();
-		final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> {
-			vulkan.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
-			return VulkanLibrary.SUCCESS;
-		};
-		final VkQueueFamilyProperties[] properties = vulkan.invoke(function, VkQueueFamilyProperties[]::new);
-
-		// Convert to queue families
-		final List<Family> families = IntStream
-				.range(0, properties.length)
-				.mapToObj(n -> Family.of(n, properties[n]))
-				.toList();
-
-		// Retrieve features supported by this device
-		final var features = new VkPhysicalDeviceFeatures();
-		// TODO
-		//lib.vkGetPhysicalDeviceFeatures(handle, features);
-
-		// Create device
-		return new PhysicalDevice(handle, instance, families, new SupportedFeatures(features));
+				.map(builder::device);
 	}
 
 	/**

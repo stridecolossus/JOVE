@@ -25,8 +25,8 @@ import java.util.*;
  */
 public class NativeMethod {
 	private final MethodHandle handle;
-	private final NativeType[] signature;
-	private final NativeType returns;
+	private final NativeParameter[] signature;
+	private final NativeParameter returns;
 
 	/**
 	 * Constructor.
@@ -36,7 +36,7 @@ public class NativeMethod {
 	 * @throws IllegalArgumentException if the {@link #signature} does not contain the expected number of parameters
 	 * @throws IllegalArgumentException if a {@link #returnType} is not provided for a method with a return type or is superfluous
 	 */
-	private NativeMethod(MethodHandle handle, List<NativeType> signature, NativeType returns) {
+	private NativeMethod(MethodHandle handle, List<NativeParameter> signature, NativeParameter returns) {
 		final MethodType type = handle.type();
 		if((type.returnType() == void.class) ^ (returns == null)) {
 			throw new IllegalArgumentException("Mismatched or superfluous return type");
@@ -46,7 +46,7 @@ public class NativeMethod {
 		}
 
 		this.handle = requireNonNull(handle);
-		this.signature = signature.toArray(NativeType[]::new);
+		this.signature = signature.toArray(NativeParameter[]::new);
 		this.returns = returns;
 	}
 
@@ -105,9 +105,9 @@ public class NativeMethod {
 		}
 
 		for(int n = 0; n < args.length; ++n) {
-			final NativeType type = signature[n];
-			if(type.isReturnType() && Objects.nonNull(args[n])) {
-				type.unmarshal(actual[n], args[n]);
+			final NativeParameter type = signature[n];
+			if(type.isReturnedParameter() && Objects.nonNull(args[n])) {
+				type.unmarshal((MemorySegment) actual[n], args[n]);
 			}
 		}
 	}
@@ -123,7 +123,7 @@ public class NativeMethod {
 			return null;
 		}
 		else {
-			return returns.unmarshal(value);
+			return returns.returns(value);
 		}
 	}
 
@@ -153,8 +153,8 @@ public class NativeMethod {
 		private final NativeMapperRegistry registry;
 
 		private MemorySegment address;
-		private NativeType returns;
-		private final List<NativeType> signature = new ArrayList<>();
+		private NativeParameter returns;
+		private final List<NativeParameter> signature = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -191,12 +191,12 @@ public class NativeMethod {
 		 */
 		public Builder parameter(Class<?> type, boolean returned) {
 			// Lookup native mapper
-			final NativeMapper<?> mapper = registry
+			final NativeMapper mapper = registry
 					.mapper(type)
 					.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + type));
 
 			// Add parameter wrapper
-			final var parameter = new NativeType(type, mapper, returned);
+			final var parameter = new NativeParameter(type, mapper, returned);
 			signature.add(parameter);
 
 			return this;
@@ -219,13 +219,20 @@ public class NativeMethod {
 		 * @throws IllegalArgumentException if the type is not supported or cannot be returned from a native method
 		 */
 		public Builder returns(Class<?> type) {
+
+//			if(ArrayReturnValue.class.equals(type)) {
+//				final var mapper = new ArrayReturnValueMapper(registry);
+//				this.returns = new NativeType(type, mapper, true);
+//				return this;
+//			}
+
 			// Lookup native mapper
-			final NativeMapper<?> mapper = registry
+			final NativeMapper mapper = registry
 					.mapper(type)
 					.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + type));
 
 			// Create return type wrapper
-			this.returns = new NativeType(type, mapper, true);
+			this.returns = new NativeParameter(type, mapper, true);
 
 			return this;
 		}
@@ -233,7 +240,7 @@ public class NativeMethod {
 		/**
 		 * Constructs this native method.
 		 * @return Native method
-		 * @see NativeMethod#NativeMethod(MethodHandle, List, NativeType)
+		 * @see NativeMethod#NativeMethod(MethodHandle, List, NativeParameter)
 		 */
 		public NativeMethod build() {
 			final MemoryLayout[] layout = layout();
@@ -250,7 +257,7 @@ public class NativeMethod {
 					.stream()
 					//.map(p -> p.mapper)
 					//.map(NativeMapper::layout)
-					.map(NativeType::layout)
+					.map(NativeParameter::layout)
 					.toArray(MemoryLayout[]::new);
 		}
 

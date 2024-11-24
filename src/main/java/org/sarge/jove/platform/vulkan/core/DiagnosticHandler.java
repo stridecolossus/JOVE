@@ -162,10 +162,10 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final var level = SEVERITY.map(severity);
 
 			// Unmarshal the message structure
-			final var data = mapper.unmarshal(pCallbackData, VkDebugUtilsMessengerCallbackData.class);
+			final var data = (VkDebugUtilsMessengerCallbackData) mapper.returns(VkDebugUtilsMessengerCallbackData.class).apply(pCallbackData);
 
 			// Handle message
-			final Message message = new Message(level, types, (VkDebugUtilsMessengerCallbackData) data);
+			final Message message = new Message(level, types, data);
 			consumer.accept(message);
 
 			return false;
@@ -310,7 +310,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 		private Handle create(VkDebugUtilsMessengerCreateInfoEXT info) {
 			final Handle create = instance.function("vkCreateDebugUtilsMessengerEXT");
 			final NativeMethod method = method(create.address());
-			final PointerReference ref = invoke(method, info);
+    		final PointerReference ref = instance.vulkan().factory().pointer();
+			create(method, info, ref);
     		return ref.handle();
 		}
 
@@ -318,23 +319,22 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * Builds the native method to create this handler.
 		 */
 		private NativeMethod method(MemorySegment address) {
-    		final Class<?>[] signature = {Instance.class, VkDebugUtilsMessengerCreateInfoEXT.class, Handle.class, PointerReference.class};
-
     		return new NativeMethod.Builder(registry)
     				.address(address)
     				.returns(int.class)
-    				.signature(signature)
+    				.parameter(Instance.class)
+    				.parameter(VkDebugUtilsMessengerCreateInfoEXT.class)
+    				.parameter(Handle.class)
+    				.parameter(PointerReference.class, true)
     				.build();
 		}
 
 		/**
 		 * Invokes the create function.
 		 */
-		private PointerReference invoke(NativeMethod method, VkDebugUtilsMessengerCreateInfoEXT info) {
-    		final PointerReference ref = instance.vulkan().factory().pointer();
+		private void create(NativeMethod method, VkDebugUtilsMessengerCreateInfoEXT info, PointerReference ref) {
     		final Object[] args = {instance, info, null, ref};
     		Vulkan.check((int) DiagnosticHandler.invoke(method, args, registry));
-    		return ref;
 		}
 	}
 }

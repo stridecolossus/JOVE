@@ -3,6 +3,7 @@ package org.sarge.jove.foreign;
 import static java.lang.foreign.ValueLayout.ADDRESS;
 
 import java.lang.foreign.MemorySegment;
+import java.util.function.BiConsumer;
 
 import org.sarge.jove.common.Handle;
 
@@ -12,26 +13,26 @@ import org.sarge.jove.common.Handle;
  */
 public final class PointerReference {
 	private MemorySegment address;
+	private Handle handle;
 
 	/**
 	 * @return This reference as an opaque handle
-	 * @throws IllegalStateException if this pointer has not been initialised from the native layer
 	 */
 	public Handle handle() {
-		if(address == null) throw new IllegalStateException("Pointer reference has not been initialised from the native layer");
-   		final MemorySegment handle = address.get(ADDRESS, 0);
-   		return new Handle(handle);
+		return handle;
+	}
+
+	protected void set(MemorySegment ptr) {
+		handle = new Handle(ptr);
 	}
 
 	/**
 	 * Native mapper for an pointer -by-reference value.
 	 */
-	public static final class PointerReferenceNativeMapper extends AbstractNativeMapper<PointerReference> {
-		/**
-		 * Constructor.
-		 */
-		public PointerReferenceNativeMapper() {
-			super(PointerReference.class);
+	public static class PointerReferenceMapper extends AbstractNativeMapper<PointerReference, MemorySegment> {
+		@Override
+		public Class<PointerReference> type() {
+			return PointerReference.class;
 		}
 
 		@Override
@@ -45,6 +46,15 @@ public final class PointerReference {
 		@Override
 		public MemorySegment marshalNull(Class<? extends PointerReference> type) {
 			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public BiConsumer<MemorySegment, PointerReference> unmarshal(Class<? extends PointerReference> target) {
+			return (address, ref) -> {
+				assert address == ref.address;
+				final MemorySegment ptr = address.get(ADDRESS, 0);
+				ref.set(ptr);
+			};
 		}
 	}
 }

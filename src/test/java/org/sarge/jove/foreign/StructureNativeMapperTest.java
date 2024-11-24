@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.*;
 import org.sarge.jove.foreign.NativeStructure.StructureNativeMapper;
 
 class StructureNativeMapperTest {
@@ -50,21 +49,25 @@ class StructureNativeMapperTest {
 		assertEquals(MemorySegment.NULL, mapper.marshalNull(MockStructure.class));
 	}
 
-	@Test
-	void unmarshal() {
+	private static MemorySegment address() {
 		final var structure = new MockStructure();
-		final MemorySegment address = context.allocator().allocate(structure.layout());
+		final MemorySegment address = Arena.ofAuto().allocate(structure.layout());
 		address.set(JAVA_INT, 0, 3);
-		final var result = (MockStructure) mapper.unmarshal(address, MockStructure.class);
+		return address;
+	}
+
+	@Test
+	void returns() {
+		final MemorySegment address = address();
+		final var result = (MockStructure) mapper.returns(MockStructure.class).apply(address);
 		assertEquals(3, result.field);
 	}
 
 	@Test
-	void unmarshalInstance() {
-//		final var structure = new MockStructure();
-//		final MemorySegment address = context.allocator().allocate(structure.layout());
-//		address.set(JAVA_INT, 0, 4);
-//		mapper.unmarshal(address, structure);
-//		assertEquals(4, structure.field);
+	void unmarshal() {
+		final var structure = new MockStructure();
+		final MemorySegment address = address();
+		mapper.unmarshal(MockStructure.class).accept(address, structure);
+		assertEquals(3, structure.field);
 	}
 }

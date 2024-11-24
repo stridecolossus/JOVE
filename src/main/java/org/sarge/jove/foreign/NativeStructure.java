@@ -4,8 +4,8 @@ import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
 import java.util.*;
+import java.util.function.*;
 
-import org.sarge.jove.foreign.NativeMapper.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 
 /**
@@ -34,10 +34,6 @@ public abstract class NativeStructure {
 	 */
 	protected abstract StructLayout layout();
 
-//	public void allocate(MemorySegment address) {
-//		this.address = address;
-//	}
-
 	/**
 	 * Instantiates a new structure instance of the given type.
 	 */
@@ -50,10 +46,22 @@ public abstract class NativeStructure {
 		}
 	}
 
+	@Override
+	public int hashCode() {
+		// TODO - fields by reflection?
+		return super.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// TODO - compare fields by reflection?
+		return super.equals(obj);
+	}
+
 	/**
 	 * The <i>structure native mapper</i> marshals a {@link NativeStructure} to/from its native representation.
 	 */
-	public static class StructureNativeMapper extends AbstractNativeMapper<NativeStructure> implements ReturnMapper<NativeStructure, MemorySegment>, ReturnedParameterMapper<NativeStructure> {
+	public static class StructureNativeMapper extends AbstractNativeMapper<NativeStructure, MemorySegment> {
 		/**
 		 * Structure metadata.
 		 */
@@ -68,8 +76,12 @@ public abstract class NativeStructure {
 		 * @param registry Native mappers
 		 */
 		public StructureNativeMapper(NativeMapperRegistry registry) {
-			super(NativeStructure.class);
 			this.registry = requireNonNull(registry);
+		}
+
+		@Override
+		public Class<NativeStructure> type() {
+			return NativeStructure.class;
 		}
 
 		/**
@@ -119,14 +131,20 @@ public abstract class NativeStructure {
 		}
 
 		@Override
-		public NativeStructure unmarshal(MemorySegment address, Class<? extends NativeStructure> type) {
-			final NativeStructure structure = create(type);
-			unmarshal(address, structure);
-			return structure;
+		public Function<MemorySegment, NativeStructure> returns(Class<? extends NativeStructure> target) {
+			return address -> {
+				final NativeStructure structure = create(target);
+				unmarshal(address, structure);
+				return structure;
+			};
 		}
 
 		@Override
-		public void unmarshal(MemorySegment address, NativeStructure structure) {
+		public BiConsumer<MemorySegment, NativeStructure> unmarshal(Class<? extends NativeStructure> target) {
+			return this::unmarshal;
+		}
+
+		private void unmarshal(MemorySegment address, NativeStructure structure) {
 			// Resize address
 			// TODO - always needs to be done?
 			final Entry entry = entry(structure.getClass());

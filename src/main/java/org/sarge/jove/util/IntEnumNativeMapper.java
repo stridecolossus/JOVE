@@ -1,21 +1,19 @@
 package org.sarge.jove.util;
 
 import java.lang.foreign.*;
+import java.util.function.Function;
 
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * The <i>integer enumeration native mapper</i> marshals an enumeration to/from its native integer representation.
  * @author Sarge
  */
-public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum> implements ReturnMapper<IntEnum, Integer> {
-	/**
-	 * Constructor.
-	 */
-	public IntEnumNativeMapper() {
-		super(IntEnum.class);
+public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum, Integer> {
+	@Override
+	public Class<IntEnum> type() {
+		return IntEnum.class;
 	}
 
 	@Override
@@ -37,13 +35,15 @@ public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum> implement
 	}
 
 	@Override
-	public IntEnum unmarshal(Integer value, Class<? extends IntEnum> type) {
-		final ReverseMapping<?> mapping = ReverseMapping.get(type);
-		if(value == 0) {
-			return mapping.defaultValue();
-		}
-		else {
-			return mapping.map(value);
-		}
+	public Function<Integer, IntEnum> returns(Class<? extends IntEnum> target) {
+		final ReverseMapping<?> mapping = ReverseMapping.get(target);
+		return value -> {
+			if(value == 0) {
+				return mapping.defaultValue();
+			}
+			else {
+				return mapping.map(value);
+			}
+		};
 	}
 }

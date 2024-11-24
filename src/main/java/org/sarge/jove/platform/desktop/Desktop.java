@@ -3,8 +3,9 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
+import java.lang.foreign.ValueLayout;
 
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.common.NativeObject.NativeObjectMapper;
 import org.sarge.jove.foreign.*;
 
@@ -120,10 +121,30 @@ public final class Desktop implements TransientObject {
 	 */
 	public String[] extensions() {
 		final IntegerReference count = factory.integer();
-//		final NativeArray<String> array = lib.glfwGetRequiredInstanceExtensions(count);
-//		return array.get(count.value());
-		return null;
+		final Handle handle = lib.glfwGetRequiredInstanceExtensions(count);
+		return handle.array(count.value(), ValueLayout.ADDRESS, String[]::new, StringNativeMapper::unmarshal);
+		// TODO
+//		final ArrayReturnValue<String> value = lib.glfwGetRequiredInstanceExtensions(count);
+//		return value.array(count.value(), String[]::new);
 	}
+
+//		final MemorySegment address = array.address().reinterpret(ValueLayout.ADDRESS.byteSize() * count.value());
+//
+//		final String[] str = new String[count.value()];
+//		for(int n = 0; n < count.value(); ++n) {
+//
+//			final MemorySegment e = address.getAtIndex(ValueLayout.ADDRESS, n);
+//			str[n ] = StringNativeMapper.unmarshal(e);
+//
+//					//root.getString(n * ValueLayout.ADDRESS.byteSize());
+//					//getAtIndex(ValueLayout.ADDRESS, n).getString(0);
+//		}
+//
+////		return array.get(count.value());
+////		return new String[]{"", ""};
+//
+//		return str;
+//	}
 
 //	/**
 //	 * Sets the handler for GLFW errors.

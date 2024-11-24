@@ -4,24 +4,24 @@ import static java.lang.foreign.ValueLayout.ADDRESS;
 
 import java.lang.foreign.*;
 import java.util.*;
-
-import org.sarge.jove.foreign.NativeMapper.*;
+import java.util.function.BiConsumer;
 
 /**
  *
  * @author Sarge
  */
-public class NativeArrayMapper extends AbstractNativeMapper<Object[]> implements ReturnMapper<Object[], MemorySegment>, ReturnedParameterMapper<Object[]> {
+public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegment> {
 	/**
 	 * Array instance wrapper.
 	 */
-	private record Entry(NativeType delegate, MemorySegment address) {
+	private record Entry(NativeParameter delegate, MemorySegment address) {
 	}
 
 	private final Map<Object[], Entry> cache = new WeakHashMap<>();
 
-	public NativeArrayMapper() {
-		super(Object[].class);
+	@Override
+	public Class<Object[]> type() {
+		return Object[].class;
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
@@ -35,7 +35,7 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[]> implements
 		final MemorySegment address = context.allocator().allocate(layout, array.length);
 
 		// Create array wrapper
-		final NativeType type = new NativeType(component, mapper, true);
+		final NativeParameter type = new NativeParameter(component, mapper, true);
 		return new Entry(type, address);
 	}
 
@@ -62,33 +62,32 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[]> implements
 	}
 
 	@Override
-	public Object[] unmarshal(MemorySegment address, Class<? extends Object[]> type) {
-		return null;
+	public BiConsumer<MemorySegment, Object[]> unmarshal(Class<? extends Object[]> target) {
+		return (address, array) -> {
+    		// Retrieve array instance
+    		final Entry entry = cache.get(array);
+    		if(entry == null) throw new RuntimeException();
+
+    		// Unmarshal array elements
+    		final MemoryLayout layout = entry.delegate.layout();
+    		for(int n = 0; n < array.length; ++n) {			// TODO - loop per case? wrap into some helper function? nasty
+
+    			final MemorySegment element = switch(layout) {
+    				case AddressLayout __ -> address.getAtIndex(ADDRESS, n);
+    				case StructLayout struct -> address.asSlice(n * struct.byteSize(), struct);
+    				default -> throw new UnsupportedOperationException();
+    			};
+
+    			if(array[n] == null) {
+    				array[n] = entry.delegate.returns(element);
+    			}
+    			else {
+    				entry.delegate.unmarshal(element, array[n]);
+    			}
+    		}
+		};
 	}
-
-	@Override
-	public void unmarshal(MemorySegment address, Object[] array) {
-		// Retrieve array instance
-		final Entry entry = cache.get(array);
-		if(entry == null) throw new RuntimeException();
-
-		// Unmarshal array elements
-		final MemoryLayout layout = entry.delegate.layout();
-		for(int n = 0; n < array.length; ++n) {			// TODO - loop per case? wrap into some helper function? nasty
-
-			final MemorySegment element = switch(layout) {
-				case AddressLayout __ -> address.getAtIndex(ADDRESS, n);
-				case StructLayout struct -> address.asSlice(n * struct.byteSize(), struct);
-				default -> throw new UnsupportedOperationException();
-			};
-
-			if(array[n] == null) {
-				array[n] = entry.delegate.unmarshal(element);
-			}
-			else {
-				entry.delegate.unmarshal(element, array[n]);
-			}
-		}
+}
 
 //    			if(layout instanceof AddressLayout) {
 //    				final MemorySegment element = address.getAtIndex(ADDRESS, n);
@@ -107,5 +106,3 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[]> implements
 //    			}
 //			}
 //		}
-	}
-}

@@ -14,10 +14,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.WindowListener;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
 
 class WindowTest {
 	private Window window;

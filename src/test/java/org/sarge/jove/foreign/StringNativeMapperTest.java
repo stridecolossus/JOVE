@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.*;
 
 class StringNativeMapperTest {
 	private StringNativeMapper mapper;
@@ -59,11 +58,10 @@ class StringNativeMapperTest {
 		assertEquals(MemorySegment.NULL, mapper.marshalNull(String.class));
 	}
 
-	@DisplayName("A string can be unmarshalled from off-heap memory")
+	@DisplayName("A string can be returned from a native method")
 	@Test
-	void unmarshal() {
-		@SuppressWarnings("resource")
+	void returns() {
 		final MemorySegment address = Arena.ofAuto().allocateFrom(string);
-		assertEquals(string, mapper.unmarshal(address, String.class));
+		assertEquals(string, mapper.returns(String.class).apply(address));
 	}
 }

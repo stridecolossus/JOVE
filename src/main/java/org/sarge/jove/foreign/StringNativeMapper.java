@@ -2,8 +2,7 @@ package org.sarge.jove.foreign;
 
 import java.lang.foreign.MemorySegment;
 import java.util.*;
-
-import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
+import java.util.function.Function;
 
 /**
  * The <i>string native mapper</i> marshals a string as a native pointer to a null-terminated character array.
@@ -12,8 +11,9 @@ import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
  * <p>
  * @author Sarge
  */
-public final class StringNativeMapper extends AbstractNativeMapper<String> implements ReturnMapper<String, MemorySegment> {
+public final class StringNativeMapper extends AbstractNativeMapper<String, MemorySegment> { // implements ReturnMapper<String, MemorySegment> {
 	// TODO - soft cache: https://www.javaspecialists.eu/archive/Issue098-References.html
+	// TODO - adapter class?
 	private final Map<String, MemorySegment> cache = new WeakHashMap<>() {
 		@Override
 		public MemorySegment get(Object key) {
@@ -32,8 +32,9 @@ public final class StringNativeMapper extends AbstractNativeMapper<String> imple
 		}
 	};
 
-	public StringNativeMapper() {
-		super(String.class);
+	@Override
+	public Class<String> type() {
+		return String.class;
 	}
 
 	@Override
@@ -43,8 +44,9 @@ public final class StringNativeMapper extends AbstractNativeMapper<String> imple
 	}
 
 	@Override
-	public String unmarshal(MemorySegment address, Class<? extends String> type) {
-		return unmarshal(address);
+	public Function<MemorySegment, String> returns(Class<? extends String> target) {
+		// TODO - also cache?
+		return StringNativeMapper::unmarshal;
 	}
 
 	/**
@@ -52,7 +54,7 @@ public final class StringNativeMapper extends AbstractNativeMapper<String> imple
 	 * @param address Memory address
 	 * @return String at the given address or {@code null} for a {@link MemorySegment#NULL} address
 	 */
-	protected static String unmarshal(MemorySegment address) {
+	public static String unmarshal(MemorySegment address) {
 		return address.reinterpret(Integer.MAX_VALUE).getString(0);
 	}
 }

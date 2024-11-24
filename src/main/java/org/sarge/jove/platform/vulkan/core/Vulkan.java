@@ -98,34 +98,36 @@ public class Vulkan {
 		}
 	}
 
-	// TODO - JDK23 markdown
 	/**
-	 * Invokes a Vulkan function using the <i>two-stage invocation</i> approach.
+	 * Invokes a Vulkan function using the <i>two stage invocation</i> approach.
 	 * <p>
 	 * This method is equivalent to the following:
 	 * <pre>
+	 * // Determine number of results
 	 * var count = new IntegerReference();
 	 * lib.someFunction(count, null);
+	 *
+	 * // Allocate container
 	 * Handle[] array = new Handle[count.getValue()];
+	 *
+	 * // Populate container
 	 * lib.someFunction(count, array);
 	 * </pre>
 	 * @param <T> Data type
 	 * @param function		Vulkan function
-	 * @param create		Creates the resultant data object
+	 * @param create		Creates the by-reference container
 	 * @return Function result
 	 */
 	public <T> T invoke(VulkanFunction<T> function, IntFunction<T> create) {
-		// Allocate size reference
+		// Determine the result size
 		final var count = factory.integer();
-
-		// Invoke to determine the size of the data
 		function.enumerate(count, null);
 
-		// Instantiate the data object
+		// Instantiate the container
 		final int size = count.value();
 		final T data = create.apply(size);
 
-		// Invoke again to populate the data object
+		// Invoke again to populate the container
 		if(size > 0) {
 			function.enumerate(count, data);
 		}

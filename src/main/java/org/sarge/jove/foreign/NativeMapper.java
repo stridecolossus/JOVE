@@ -1,13 +1,14 @@
 package org.sarge.jove.foreign;
 
-import java.lang.foreign.*;
+import java.lang.foreign.MemoryLayout;
+import java.util.function.*;
 
 /**
  * A <i>native mapper</i> defines a domain type that can be marshalled to/from a corresponding native representation.
  * @param <T> Type
  * @author Sarge
  */
-public interface NativeMapper<T> {
+public interface NativeMapper<T, R> {
 	/**
 	 * @return Type
 	 */
@@ -17,7 +18,7 @@ public interface NativeMapper<T> {
 	 * @param type Target type
 	 * @return Native memory layout for the given type
 	 */
-	MemoryLayout layout(Class<? extends T> type);
+	MemoryLayout layout(Class<? extends T> target);
 
 	/**
 	 * Marshals the given value to its native representation.
@@ -29,33 +30,23 @@ public interface NativeMapper<T> {
 
 	/**
 	 * Marshals a {@code null} value to its native representation.
-	 * @param type Target type
+	 * @param target Target type
 	 * @return Native value
 	 */
-	Object marshalNull(Class<? extends T> type);
+	Object marshalNull(Class<? extends T> target);
 
 	/**
-	 * A <i>return mapper</i> unmarshals method return values and pass-by-reference parameters.
-	 * @param <T> Type
-	 * @param <R> Native return type
+	 * Provides a mapper for a return value of this native type.
+	 * @param target Target type
+	 * @return Return value mapper
 	 */
-	interface ReturnMapper<T, R> {
-    	/**
-    	 * Unmarshals a native return value to a new instance.
-    	 * @param value 	Native return value
-    	 * @param type		Target type
-    	 * @return Marshalled return value
-    	 */
-		T unmarshal(R value, Class<? extends T> type);
-	}
+	Function<R, T> returns(Class<? extends T> target);
 
-	// TODO
-	interface ReturnedParameterMapper<T> {
-		/**
-		 * Unmarshals a by-reference return value to the given instance.
-		 * @param value			Native by-reference return value
-		 * @param instance		Instance to populate
-		 */
-		void unmarshal(MemorySegment value, T instance);
-	}
+	/**
+	 * Provides a mapper for a by-reference parameter for this native type.
+	 * @param target Target type
+	 * @return Returned parameter mapper
+	 * @see Returned
+	 */
+	BiConsumer<R, T> unmarshal(Class<? extends T> target);
 }

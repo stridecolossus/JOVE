@@ -1,21 +1,19 @@
 package org.sarge.jove.util;
 
 import java.lang.foreign.*;
+import java.util.function.Function;
 
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeMapper.ReturnMapper;
 
 /**
  * The <i>bit mask native mapper</i> marshals an integer enumeration bit mask to/from its native integer representation.
  * @author Sarge
  */
 @SuppressWarnings("rawtypes")
-public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask> implements ReturnMapper<BitMask, Integer> {
-	/**
-	 * Constructor.
-	 */
-	public BitMaskNativeMapper() {
-		super(BitMask.class);
+public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask, Integer> {
+	@Override
+	public Class<BitMask> type() {
+		return BitMask.class;
 	}
 
 	@Override
@@ -24,7 +22,7 @@ public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask> implement
 	}
 
 	@Override
-	public Integer marshal(BitMask value, NativeContext __) {
+	public Integer marshal(BitMask value, NativeContext context) {
 		return value.bits();
 	}
 
@@ -34,7 +32,7 @@ public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask> implement
 	}
 
 	@Override
-	public BitMask<?> unmarshal(Integer value, Class<? extends BitMask> type) {
-		return new BitMask<>(value);
+	public Function<Integer, BitMask> returns(Class<? extends BitMask> target) {
+		return BitMask::new;
 	}
 }

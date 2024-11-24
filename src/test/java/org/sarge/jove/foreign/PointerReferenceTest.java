@@ -3,12 +3,11 @@ package org.sarge.jove.foreign;
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.PointerReference.PointerReferenceNativeMapper;
+import org.sarge.jove.foreign.PointerReference.PointerReferenceMapper;
 
 class PointerReferenceTest {
 	private PointerReference ref;
@@ -16,11 +15,6 @@ class PointerReferenceTest {
 	@BeforeEach
 	void before() {
 		ref = new PointerReference();
-	}
-
-	@Test
-	void handle() {
-		assertThrows(IllegalStateException.class, () -> ref.handle());
 	}
 
 	@Test
@@ -32,11 +26,11 @@ class PointerReferenceTest {
 
 	@Nested
 	class MapperTests {
-		private PointerReferenceNativeMapper mapper;
+		private PointerReferenceMapper mapper;
 
 		@BeforeEach
 		void before() {
-			mapper = new PointerReferenceNativeMapper();
+			mapper = new PointerReferenceMapper();
 		}
 
 		@Test
@@ -46,15 +40,27 @@ class PointerReferenceTest {
 		}
 
 		@Test
-		void toNative() {
-			final MemorySegment address = mapper.marshal(ref, new NativeContext());
-			final Handle handle = new Handle(address);
-			assertEquals(handle.address(), address);
+		void marshal() {
+			mapper.marshal(ref, new NativeContext());
 		}
 
 		@Test
-		void toNativeNull() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.marshalNull(null));
+		void marshalNull() {
+			assertThrows(UnsupportedOperationException.class, () -> mapper.marshalNull(PointerReference.class));
+		}
+
+		@Test
+		void returns() {
+			assertThrows(UnsupportedOperationException.class, () -> mapper.returns(PointerReference.class));
+		}
+
+		@Test
+		void unmarshal() {
+			final MemorySegment address = mapper.marshal(ref, new NativeContext());
+			final MemorySegment ptr = Arena.ofAuto().allocate(ADDRESS);
+			address.set(ADDRESS, 0, ptr);
+			mapper.unmarshal(PointerReference.class).accept(address, ref);
+			assertEquals(new Handle(ptr), ref.handle());
 		}
 	}
 }
