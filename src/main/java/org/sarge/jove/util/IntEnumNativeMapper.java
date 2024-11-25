@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 import java.lang.foreign.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.AbstractNativeMapper;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -17,33 +17,36 @@ public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum, Integer> 
 	}
 
 	@Override
-	public MemoryLayout layout(Class<? extends IntEnum> type) {
+	public MemoryLayout layout() {
 		return ValueLayout.JAVA_INT;
 	}
 
 	@Override
-	public Integer marshal(IntEnum e, NativeContext context) {
+	public Integer marshal(IntEnum e, SegmentAllocator allocator) {
 		return e.value();
 	}
 
 	@Override
-	public Integer marshalNull(Class<? extends IntEnum> type) {
-		return ReverseMapping
-				.get(type)
-				.defaultValue()
-				.value();
-	}
+	public IntEnumNativeMapper derive(Class<? extends IntEnum> target) {
+		return new IntEnumNativeMapper() {
+    		private final ReverseMapping<?> mapping = ReverseMapping.get(target);
 
-	@Override
-	public Function<Integer, IntEnum> returns(Class<? extends IntEnum> target) {
-		final ReverseMapping<?> mapping = ReverseMapping.get(target);
-		return value -> {
-			if(value == 0) {
-				return mapping.defaultValue();
-			}
-			else {
-				return mapping.map(value);
-			}
-		};
+    		@Override
+        	public Integer marshalNull() {
+        		return mapping.defaultValue().value();
+        	}
+
+        	@Override
+        	public Function<Integer, IntEnum> returns() {
+        		return value -> {
+        			if(value == 0) {
+        				return mapping.defaultValue();
+        			}
+        			else {
+        				return mapping.map(value);
+        			}
+        		};
+        	}
+        };
 	}
 }

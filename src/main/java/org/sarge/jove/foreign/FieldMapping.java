@@ -1,25 +1,25 @@
 package org.sarge.jove.foreign;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.foreign.NativeStructure.isStructureField;
 
 import java.lang.foreign.*;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.invoke.VarHandle;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.List;
-
-import org.sarge.jove.foreign.NativeStructure.StructureNativeMapper;
 
 /**
  * A <i>field mapping</i> marshals a structure field to/from its native representation.
  * @author Sarge
  */
+@SuppressWarnings("rawtypes")
 class FieldMapping {
 	/**
 	 * FFM marshalling adapter for off-heap structure fields.
 	 */
 	private interface FieldAdapter {
-		void marshal(Object actual, MemorySegment address, NativeContext context) throws Exception;
+		void marshal(Object actual, MemorySegment address, SegmentAllocator allocator) throws Exception;
 		Object unmarshal(MemorySegment address) throws Exception;
 	}
 
@@ -42,24 +42,25 @@ class FieldMapping {
 	}
 
 	/**
-	 * @return Whether the given field is a valid structure member
-	 */
-	private static boolean isStructureField(Field field) {
-		final int modifiers = field.getModifiers();
-		return Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers);
-	}
-
-	/**
 	 * Marshals the fields of the given structure to off-heap memory.
 	 * @param structure		Structure
 	 * @param address		Off-heap memory
 	 * @param context		Context
 	 * @throws Exception if the field cannot be marshalled
 	 */
-	public void marshal(NativeStructure structure, MemorySegment address, NativeContext context) throws Exception {
-		final Object value = field.get(structure);
-		final Object actual = context.marshal(mapper, value, field.getType());
-		adapter.marshal(actual, address, context);
+	@SuppressWarnings("unchecked")
+	public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) throws Exception {
+		final Object value = structure.get(field);
+		// TODO - helper
+		final Object actual;
+		if(value == null) {
+			actual = mapper.marshalNull();
+		}
+		else {
+			actual = mapper.marshal(value, allocator);
+		}
+//		final Object actual = context.marshal(mapper, value, field.getType());
+		adapter.marshal(actual, address, allocator);
 	}
 
 	/**
@@ -70,16 +71,14 @@ class FieldMapping {
 	 */
 	public void unmarshal(MemorySegment address, NativeStructure structure) throws Exception {
 		final Object value = adapter.unmarshal(address);
+		// TODO - ???
 		if(value instanceof NativeStructure child) {
 			field.set(structure, child);
 		}
 		else {
-			final Object actual = mapper.returns(field.getType()).apply(value);
+			@SuppressWarnings("unchecked")
+			final Object actual = mapper.returns().apply(value);
     		field.set(structure, actual);
-//    		if(!(mapper instanceof ReturnMapper m)) throw new IllegalArgumentException();
-//    		@SuppressWarnings("unchecked")
-//    		final Object actual = m.unmarshal(value, field.getType());
-//    		field.set(structure, actual);
 		}
 	}
 
@@ -133,39 +132,43 @@ class FieldMapping {
 			 */
 			private FieldMapping build(String name, MemoryLayout layout) throws Exception {
 				final var path = PathElement.groupElement(name);
-				final Field field = type.getField(name);
-				final FieldAdapter adapter = adapter(path, field.getType(), layout);
+				final Field field = type.getDeclaredField(name);
+				final FieldAdapter adapter = adapter(field, path, layout);
 				final NativeMapper mapper = mapper(field);
 				return new FieldMapping(field, mapper, adapter);
 			}
 
+			// TODO - uses slices for all fields?
+
 			/**
 			 * Creates the adapter for the off-heap field.
 			 */
-			private FieldAdapter adapter(PathElement path, Class<?> type, MemoryLayout layout) {
+			private FieldAdapter adapter(Field field, PathElement path, MemoryLayout layout) {
 				return switch(layout) {
     				case AddressLayout __		-> handle(path);
     				case ValueLayout __			-> handle(path);
 					case SequenceLayout seq		-> array(path, seq);
-					case StructLayout __		-> structure(type);
+					case StructLayout __		-> structure(field);
 					default -> throw new RuntimeException();
 				};
 			}
 
-			private FieldAdapter structure(Class<?> type) {
+			private FieldAdapter structure(Field field) {
+				//private final StructureNativeMapper root = new StructureNativeMapper(registry);
+
 				return new FieldAdapter() {
-					private final StructureNativeMapper mapper = new StructureNativeMapper(registry);
+					private final NativeMapper mapper = mapper(field);
 
 					@Override
-					public void marshal(Object structure, MemorySegment address, NativeContext context) throws Exception {
+					public void marshal(Object structure, MemorySegment address, SegmentAllocator allocator) throws Exception {
+						throw new UnsupportedOperationException("???");
 						// TODO - is this correct? address unused!
-						context.marshal(mapper, structure, type);
+//						context.marshal(mapper, structure, type);
 					}
 
-					@SuppressWarnings({"unchecked", "rawtypes"})
 					@Override
 					public Object unmarshal(MemorySegment address) throws Exception {
-						return mapper.returns((Class) type).apply(address);
+						return mapper.returns().apply(address);
 					}
 				};
 			}
@@ -179,7 +182,7 @@ class FieldMapping {
 					private final VarHandle handle = structure.varHandle(path);
 
 					@Override
-					public void marshal(Object arg, MemorySegment address, NativeContext context) {
+					public void marshal(Object arg, MemorySegment address, SegmentAllocator allocator) {
 						handle.set(address, 0L, arg);
 					}
 
@@ -204,7 +207,7 @@ class FieldMapping {
 					private final long offset = structure.byteOffset(path);
 
 					@Override
-					public void marshal(Object actual, MemorySegment address, NativeContext context) {
+					public void marshal(Object actual, MemorySegment address, SegmentAllocator allocator) {
 						// TODO
 						System.err.println("marshal array="+path);
 					}

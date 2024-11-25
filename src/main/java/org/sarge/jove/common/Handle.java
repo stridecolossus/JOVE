@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.lang.foreign.*;
 import java.util.function.*;
 
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.AbstractNativeMapper;
 
 /**
  * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
@@ -81,12 +81,12 @@ public final class Handle {
 		}
 
 		@Override
-		public MemorySegment marshal(Handle handle, NativeContext context) {
+		public MemorySegment marshal(Handle handle, SegmentAllocator allocator) {
 			return handle.address;
 		}
 
 		@Override
-		public Function<MemorySegment, Handle> returns(Class<? extends Handle> target) {
+		public Function<MemorySegment, Handle> returns() {
 			return Handle::new;
 		}
 	}

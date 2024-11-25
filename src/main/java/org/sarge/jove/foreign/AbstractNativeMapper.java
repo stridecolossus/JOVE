@@ -9,22 +9,27 @@ import java.util.function.*;
  */
 public abstract class AbstractNativeMapper<T, R> implements NativeMapper<T, R> {
 	@Override
-	public MemoryLayout layout(Class<? extends T> type) {
+	public NativeMapper<? extends T, R> derive(Class<? extends T> target) {
+		return this;
+	}
+
+	@Override
+	public MemoryLayout layout() {
 		return AddressLayout.ADDRESS;
 	}
 
 	@Override
-	public Object marshalNull(Class<? extends T> type) {
+	public Object marshalNull() {
 		return MemorySegment.NULL;
 	}
 
 	@Override
-	public Function<R, T> returns(Class<? extends T> target) {
+	public Function<R, T> returns() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public BiConsumer<R, T> unmarshal(Class<? extends T> target) {
+	public BiConsumer<R, T> reference() {
 		throw new UnsupportedOperationException();
 	}
 

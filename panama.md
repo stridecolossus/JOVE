@@ -35,10 +35,6 @@ public class DesktopForeignDemo {
     private final Linker linker = Linker.nativeLinker();
     private final SymbolLookup lookup;
 
-    public DesktopForeignDemo(SymbolLookup lookup) {
-        this.lookup = lookup;
-    }
-
     public static void main(String[] args) throws Throwable {
         try(Arena arena = Arena.ofConfined()) {
             // Init lookup service
@@ -54,7 +50,7 @@ public class DesktopForeignDemo {
 
 The process of invoking a native method using FFM is:
 
-1. Lookup the symbol for the method by name.
+1. Lookup the symbol for the method.
 2. Build a `FunctionDescriptor` specifying the method signature.
 3. Combine both of these to link a `MethodHandle` to the native method.
 4. Invoke the method with an array of the appropriate arguments.
@@ -129,7 +125,7 @@ Generating the FFM bindings is relatively trivial and takes a couple of seconds:
 
 With some experience of using FFM and the `jextract` generated Vulkan API, we can attempt to extrapolate how JOVE could be refactored and make some observations.
 
-The advantages of jextract are obvious:
+The advantages of `jextract` are obvious:
 
 * Proven and supported technology.
 
@@ -145,7 +141,7 @@ However there are some disadvantages:
 
 * Means throwing away the existing code generated enumerations and structures.
 
-Alternatively a _proxy_ implementation of a given native API could abstrac over custom FFM bindings, with a new framework to marshal between these two layers.
+Alternatively a _proxy_ implementation of a given native API could abstract over custom FFM bindings, with a new framework to marshal between these two layers.
 
 The advantages of this approach are:
 
@@ -161,7 +157,7 @@ On the other hand:
 
 * Proprietary solution with the potential for unknown problems further down the line.
 
-Despite the advantages of jextract the hybrid solution is preferred:
+Despite the advantages of `jextract` the hybrid solution is preferred:
 
 * Retains the large number of code generated enumerations and structures (and especially the type-safety and self-documentation aspects).
 
@@ -212,7 +208,7 @@ From the above the following observations can be made:
 
 4. Structures will require a `StructLayout` derived from its fields.
 
-5. Native structures are really intended only as data carriers during marshalling, however a structure essentially becomes 'fixed' once its off-heap memory has been allocated and populated by the framework, any subsequent field modifications would be silently ignored (since the fields are public).  This feels like a problem waiting to happen, particularly if a structure is exposed to the application.  We could take the opportunity to refactor _all_ structures to properly encapsulate the fields and possibly introduce code-generated builders.  For the moment the code-generated structures will remain as-is, the framework could by changed to _always_ populate the off-heap data if this does become an issue.
+5. Native structures are really intended only as data carriers during marshalling, however a structure essentially becomes 'fixed' once its off-heap memory has been allocated and populated by the framework, any subsequent field modifications would be silently ignored (since the fields are public).  This feels like a problem waiting to happen, particularly if a structure is exposed to the application.  We could take the opportunity to refactor _all_ structures to properly encapsulate the fields and possibly introduce code-generated builders.  For the moment the code-generated structures will remain as-is and the framework will _always_ populate the off-heap data on each use.
 
 6. Structures and arrays are compound types that will require 'recursive' marshalling.
 
@@ -222,17 +218,17 @@ From the above the following observations can be made:
 
 9. Finally there are a couple of other edge-cases for by-reference parameters which are discussed in the next section.
 
-Note that the notion of native mappers to transform method arguments is already sort of provided by Panama.  Native methods are implemented as general method handles which support mutating method arguments and return values out of the box.  The original intention was to make use of this functionality, unfortunately it proved very difficult in practice for all but the most trivial cases, most examples do not get any further than simple static method adapters probably for this reason.  However this is definitely an option to revisit when the refactoring process (and our understanding) is more mature.
+Note that the notion of native mappers to transform method arguments is already sort of provided by Panama.  Native methods are implemented as method handles which support mutating method arguments and return values out of the box.  The original intention was to make use of this functionality, unfortunately it proved very difficult in practice for all but the most trivial cases, most examples do not get any further than simple static method adapters probably for this reason.  However this is definitely an option to revisit when the refactoring process (and our understanding) is more mature.
 
 ## Reference Types
 
 There are two edge-cases for by-reference parameters:
 
-* A structure parameter can be returned by-reference, e.g. `vkGetPhysicalDeviceProperties` returns a `VkPhysicalDeviceProperties` instance.  An 'empty' structure instance is created by the application and the native library assumes that the off-heap memory has been allocated as required.
+* A structure parameter can be returned by-reference, e.g. `vkGetPhysicalDeviceProperties` populates a `VkPhysicalDeviceProperties` instance.  An 'empty' structure instance is created by the application and the native library assumes that the off-heap memory has been allocated as required.
 
 * Similarly for the elements of an array, e.g. `vkEnumeratePhysicalDevices` returns an array of device handles.  The application creates an empty array which is sized accordingly beforehand (generally via the _two stage invocation_ mechanism) with off-heap memory allocated for each element.  Note that memory is assumed to be a contiguous block in this case.
 
-In both cases the Java type is instantiated by the application but is _populated_ by the native layer.  This implies that the off-heap memory is allocated by the framework but the actual data is empty (default structure fields, null array elements), with the returned data being demarshalled _after_ the method invocation.  Additionally there is presumably no point in marshalling an empty structure or array to the native layer.
+In both cases the Java type is instantiated by the application but is _populated_ by the native layer.  This implies that the off-heap memory is allocated by the framework but the actual data is empty (default structure fields, null array elements), with the returned data being unmarshalled _after_ the method invocation.  Additionally there is presumably no point in marshalling an empty structure or array to the native layer.
 
 The problem here is that one cannot determine from the method signature whether a parameter is being passed _by value_ (i.e. data populated by the application which is essentially immutable as far as marshalling is concerned) or is intended to be passed _by reference_ and populated by the native layer.  JNA used the rather cumbersome `ByReference` marker interface, which required _every_ structure to also have by-value and by-reference implementations, combined with fiddly special-case application code to switch behaviour depending on each use-case.
 
@@ -349,7 +345,6 @@ The factory next creates an _invocation handler_ that delegates API calls to the
 
 ```java
 var handler = new InvocationHandler() {
-    @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         NativeMethod delegate = methods.get(method);
         return delegate.invoke(args);
@@ -498,7 +493,7 @@ desktop.glfwTerminate();
 The final piece of the framework is the _native mapper_ which defines a Java or JOVE type that can be marshalled to a native type:
 
 ```java
-public interface NativeMapper<T> {
+public interface NativeMapper<T, R> {
     /**
      * @return Type
      */
@@ -508,7 +503,13 @@ public interface NativeMapper<T> {
      * @return Native memory layout
      */
     MemoryLayout layout();
-    
+}
+```
+
+A native mapper can marshal an object to its native representation
+
+```java
+public interface NativeMapper<T, R> {
     /**
      * Marshals the given value to its native representation.
      * @param value         Value to marshal
@@ -519,25 +520,35 @@ public interface NativeMapper<T> {
 }
 ```
 
-Where the `NativeContext` composes the services required to allocate off-heap memory during marshalling:
+And optionally unmarshal a return value:
+    
+```java
+/**
+ * Provides a mapper for a return value of this native type.
+ * @return Return value mapper
+ */
+Function<R, T> returns();
+```
+
+The `NativeContext` composes the services required to allocate off-heap memory during marshalling:
 
 ```java
 public record NativeContext(SegmentAllocator allocator, NativeMapperRegistry registry)
 ```
 
-The framework can now be made configurable by the introduction of a _registry_ of supported native mappers:
+The framework is made configurable by the introduction of a _registry_ of supported native mappers:
 
 ```java
 public class NativeMapperRegistry {
-    private final Map<Class<?>, NativeMapper<?>> mappers = new HashMap<>();
+    private final Map<Class<?>, NativeMapper> mappers = new HashMap<>();
 
-    public void add(NativeMapper<?> mapper) {
+    public void add(NativeMapper mapper) {
         Class<?> type = mapper.type();
         if(type == null) throw new IllegalArgumentException(...);
         mappers.put(type, mapper);
     }
 
-    public Optional<NativeMapper<?>> mapper(Class<?> type) {
+    public Optional<NativeMapper> mapper(Class<?> type) {
         ...
     }
 }
@@ -546,8 +557,8 @@ public class NativeMapperRegistry {
 The native mapper for a given type can be looked up from the registry:
 
 ```java
-public Optional<NativeMapper<?>> mapper(Class<?> type) {
-    NativeMapper<?> mapper = mappers.get(type);
+public Optional<NativeMapper> mapper(Class<?> type) {
+    NativeMapper mapper = mappers.get(type);
     if(mapper == null) {
         return find(type);
     }
@@ -560,7 +571,7 @@ public Optional<NativeMapper<?>> mapper(Class<?> type) {
 Or a mapper can be found for a subclass of a supported type (the majority of the JOVE domain types):
 
 ```java
-private Optional<NativeMapper<?>> find(Class<?> type) {
+private Optional<NativeMapper> find(Class<?> type) {
     return mappers
         .values()
         .stream()
@@ -570,35 +581,22 @@ private Optional<NativeMapper<?>> find(Class<?> type) {
 }
 ```
 
-Where the subclass mapper is registered as a side-effect:
+Where a subclass mapper is registered as a side-effect:
 
 ```java
-private NativeMapper<?> register(NativeMapper<?> mapper, Class type) {
+private NativeMapper register(NativeMapper mapper, Class type) {
     mappers.put(type, mapper);
     return mapper;
 }
 ```
 
-A native type can also be unmarshalled from a native method with a return value:
-
-```java
-interface ReturnMapper<T, R> {
-    /**
-     * Unmarshals a native return value.
-     * @param value Native return value
-     * @return Return value
-     */
-    Object unmarshal(R value);
-}
-```
-
-The native method is first extended to also compose mappers for the method signature and the optional return type:
+The native method class is extended with mappers for the method signature and the optional return type:
 
 ```java
 public class NativeMethod {
     private final MethodHandle handle;
     private final NativeMapper[] signature;
-    private final ReturnMapper returns;
+    private final NativeMapper returns;
 }    
 ```
 
@@ -612,7 +610,7 @@ public Object invoke(Object[] args, NativeContext context) {
 }
 ```
 
-Which delegates to the following helper to marshal the arguments:
+Which delegates to the following helper:
 
 ```java
 private Object[] marshal(Object[] args, NativeContext context) {
@@ -622,9 +620,7 @@ private Object[] marshal(Object[] args, NativeContext context) {
 
     Object[] mapped = new Object[args.length];
     for(int n = 0; n < mapped.length; ++n) {
-        if(args[n] != null) {
-            mapped[n] = signature[n].marshal(args[n], context);
-        }
+        mapped[n] = signature[n].marshal(args[n], context);
     }
 
     return mapped;
@@ -639,7 +635,7 @@ private Object unmarshalReturnValue(Object value) {
         return null;
     }
     else {
-        return returns.returns().get().unmarshal(value);
+        return returns.returns().apply(value);
     }
 }
 ```
@@ -648,7 +644,7 @@ The builder is refactored accordingly to lookup the mapper for each parameter (a
 
 ```java
 public Builder parameter(Class<?> type) {
-    NativeMapper<?> mapper = registry.mapper(type).orElseThrow(...);
+    NativeMapper mapper = registry.mapper(type).orElseThrow(...);
     signature.add(mapper);
     return this;
 }
@@ -681,30 +677,34 @@ private FunctionDescriptor descriptor(MemoryLayout[] layout) {
 
 ### Null
 
-Thus far the framework assumes all marshalled values are non-null, which is fine for primitives but needs to be explicitly handled for reference types.
+Thus far the framework assumes all marshalled values are non-null, which is fine for primitives but needs explicit handling for reference types.
 
-A second method is added to the native mapper which marshals a `null` domain value:
+A second method is added to the native mapper to marshal a `null` domain value:
 
 ```java
-default Object marshallNull(Class<?> extends T> type) {
-    return MemorySegment.NULL;
+public interface NativeMapper {
+    Object marshallNull();
 }
 ```
 
-A helper method is added to the context class to switch accordingly:
+And the native method switches accordingly when marshalling to the native layer:
 
 ```java
-public Object marshal(NativeMapper mapper, Object value, Class<?> type) {
-    if(value == null) {
-        return mapper.marshallNull(type);
+private Object[] marshal(Object[] args, NativeContext context) {
+    ...
+    for(int n = 0; n < mapped.length; ++n) {
+        if(args[n] == null) {
+            mapped[n] = signature[n].marshalNull();
+        }
+        else {
+            mapped[n] = signature[n].marshal(args[n], context);
+        }
     }
-    else {
-        return mapper.marshal(value, this);
-    }
+    ...
 }
 ```
 
-Finally the marshalling of the return value is also extended to handle null values:
+Finally the marshalling of the return value is also extended to handle null values in the native method class:
 
 ```java
 private Object marshalReturnValue(Object value) {
@@ -823,31 +823,28 @@ public final class Handle {
 With a companion native mapper:
 
 ```java
-public static final class HandleNativeMapper extends AbstractNativeMapper<Handle> implements ReturnMapper<Handle, MemorySegment> {
-    public HandleNativeMapper() {
-        super(Handle.class);
-    }
-
-    @Override
+public static class HandleNativeMapper extends AbstractNativeMapper<Handle, MemorySegment> {
     public MemorySegment marshal(Handle handle, NativeContext context) {
         return handle.address;
     }
 
-    @Override
-    public Handle unmarshal(MemorySegment address, Class<? extends Handle> type) {
-        return new Handle(address);
+    public Function<MemorySegment, Handle> returns() {
+        return Handle::new;
     }
 }
 ```
+
+Where `AbstractNativeMapper` is a template base-class (not shown) with default implementations of the various methods.
 
 ### Reference Types
 
 The replacement for a by-reference integer is as follows:
 
 ```java
-public final class IntegerReference {
+public class IntegerReference {
     private MemorySegment address;
-
+    private int value;
+    
     public int value() {
         if(address == null) {
             return 0;
@@ -862,12 +859,7 @@ public final class IntegerReference {
 And the companion native mapper allocates the off-heap memory as required:
 
 ```java
-public static final class IntegerReferenceNativeMapper extends AbstractNativeMapper<IntegerReference> {
-    public IntegerReferenceNativeMapper() {
-        super(IntegerReference.class);
-    }
-
-    @Override
+public static class IntegerReferenceNativeMapper extends AbstractNativeMapper<IntegerReference, MemorySegment> {
     public MemorySegment marshal(IntegerReference ref, NativeContext context) {
         if(ref.address == null) {
             ref.address = context.allocator().allocate(JAVA_INT);
@@ -875,8 +867,7 @@ public static final class IntegerReferenceNativeMapper extends AbstractNativeMap
         return ref.address;
     }
 
-    @Override
-    public MemorySegment marshalNull(Class<? extends IntegerReference> type) {
+    public MemorySegment marshalNull() {
         throw new UnsupportedOperationException();
     }
 }
@@ -894,11 +885,7 @@ public final class PointerReference {
         return new Handle(handle);
     }
 
-    public static final class PointerReferenceNativeMapper extends AbstractNativeMapper<PointerReference> {
-        public PointerReferenceNativeMapper() {
-            super(PointerReference.class, ADDRESS);
-        }
-
+    public static class PointerReferenceNativeMapper extends AbstractNativeMapper<PointerReference, MemorySegment> {
         @Override
         public MemorySegment marshal(IntegerReference ref, NativeContext context) {
             if(ref.address == null) {
@@ -906,8 +893,6 @@ public final class PointerReference {
             }
             return ref.address;
         }
-
-        ...
     }
 }
 ```
@@ -928,74 +913,36 @@ public final class StringNativeMapper extends AbstractNativeMapper<String> imple
         super(String.class, ValueLayout.ADDRESS);
     }
 
-    @Override
     public MemorySegment marshal(String str, NativeContext context) {
         ...
     }
 
-    @Override
-    public String unmarshal(MemorySegment address, Class<? extends String> type) {
+    public Function<MemorySegment, String> returns(Class<? extends String> target) {
+        return StringNativeMapper::unmarshal;
+    }
+
+    public static String unmarshal(MemorySegment address) {
         return address.reinterpret(Integer.MAX_VALUE).getString(0);
     }
 }
 ```
 
-The mapper caches strings that have been marshalled to the native layer:
-
-```java
-public MemorySegment marshal(String str, NativeContext context) {
-    var allocator = context.allocator();
-    return cache.computeIfAbsent(str, allocator::allocateFrom);
-}
-```
-
-Cached entries are removed if the off-heap memory has dropped out of scope:
-
-```java
-private final WeakHashMap<String, MemorySegment> cache = new WeakHashMap<>() {
-    @Override
-    public MemorySegment get(Object key) {
-        MemorySegment address = super.get(key);
-        if(address == null) {
-            return null;
-        }
-        else
-        if(!address.scope().isAlive()) {
-            remove(key);
-            return null;
-        }
-        else {
-            return address;
-        }
-    }
-};
-```
-
-Eventually the cache will be re-implemented using soft references (to reduce memory consumption) which will also likely require synchronisation.
-
 ### Enumerations
 
-Integer enumerations are slightly different to the other JOVE types in that the values are reference types but the native representation is a primitive integer.  Additionally the mapper needs to account for default or `null` enumeration constants, implying that it must also be privy to the actual _target_ type of a method parameter or return value.  Therefore the `marshalNull` and `unmarshal` methods are altered to provide the target type.
+Integer enumerations are slightly different to the other JOVE types in that the values are reference types but the native representation is a primitive integer.  Additionally the mapper needs to account for default or `null` enumeration constants, implying that it must also be privy to the actual _target_ type of a method parameter or return value.  Therefore the relevant methods of the native mapper interface are altered to provide the target type.
 
 Otherwise the mapper essentially clones the existing JNA type converter:
 
 ```java
-public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum> implements ReturnMapper<IntEnum, Integer> {
-    public IntEnumNativeMapper() {
-        super(IntEnum.class);
-    }
-
-    @Override
+public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum, Integer> {
     public MemoryLayout layout(Class<? extends IntEnum> type) {
         return ValueLayout.JAVA_INT;
     }
 
-    @Override
     public Integer marshal(IntEnum e, NativeContext context) {
         return e.value();
     }
 
-    @Override
     public Integer marshalNull(Class<? extends IntEnum> type) {
         return ReverseMapping
             .get(type)
@@ -1003,25 +950,30 @@ public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum> implement
             .value();
     }
 
-    @Override
-    public IntEnum unmarshal(Integer value, Class<? extends IntEnum> type) {
-        ReverseMapping<?> mapping = ReverseMapping.get(type);
-        if(value == 0) {
-            return mapping.defaultValue();
-        }
-        else {
-            return mapping.map(value);
-        }
+    public Function<Integer, IntEnum> returns(Class<? extends IntEnum> target) {
+        final ReverseMapping<?> mapping = ReverseMapping.get(target);
+        return value -> {
+            if(value == 0) {
+                return mapping.defaultValue();
+            }
+            else {
+                return mapping.map(value);
+            }
+        };
     }
 }
 ```
 
-To support the target type the native method is yet again refactored by the introduction of the following new adapter type:
+To record the target type of the parameters and return value the 
+
+TODO...
+
+type the native method is yet again refactored by the introduction of the following new adapter type:
 
 ```java
 private static class NativeType {
     private final Class<?> type;
-    private final NativeMapper<?> mapper;
+    private final NativeMapper mapper;
     private final ReturnMapper returnMapper;
 }
 ```
@@ -1031,7 +983,7 @@ This composes the native mapper and the target type for _both_ method parameters
 The return mapper can also be conveniently retrieved _once_ in the constructor:
 
 ```java
-NativeType(Class<?> type, NativeMapper<?> mapper, boolean returns) {
+NativeType(Class<?> type, NativeMapper mapper, boolean returns) {
     ...
     if(returns) {
         this.returnMapper = (ReturnMapper) mapper;
@@ -1042,32 +994,26 @@ NativeType(Class<?> type, NativeMapper<?> mapper, boolean returns) {
 }
 ```
 
+...TODO
+
 The mapper for an enumeration bit mask is relatively trivial since the 'default' value is always zero and the actual target type has no relevance:
 
 ```java
-public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask> implements ReturnMapper<BitMask, Integer> {
-    public BitMaskNativeMapper() {
-        super(BitMask.class);
-    }
-
-    @Override
+public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask, Integer> {
     public MemoryLayout layout(Class<? extends BitMask> type) {
         return ValueLayout.JAVA_INT;
     }
 
-    @Override
     public Integer marshal(BitMask value, NativeContext context) {
         return value.bits();
     }
 
-    @Override
     public Integer marshalNull(Class<? extends BitMask> type) {
         return 0;
     }
 
-    @Override
-    public BitMask<?> unmarshal(Integer value, Class<? extends BitMask> type) {
-        return new BitMask<>(value);
+    public Function<Integer, BitMask> returns(Class<? extends BitMask> target) {
+        return BitMask::new;
     }
 }
 ```
@@ -1151,7 +1097,7 @@ A new type is created as a base-class for all native structures:
 
 ```java
 public abstract class NativeStructure {
-    private final Pointer pointer = new Pointer();
+    private MemorySegment address;
 
     /**
      * @return Memory layout of this structure
@@ -1165,16 +1111,12 @@ The memory layout of a native structure could theoretically be derived from the 
 The companion native mapper maintains a cache of the _metadata_ for each structure type:
 
 ```java
-public static class StructureNativeMapper extends AbstractNativeMapper<NativeStructure> implements ReturnMapper<NativeStructure, MemorySegment> {
+public static class StructureNativeMapper extends AbstractNativeMapper<NativeStructure, MemorySegment> {
     private record Entry(StructLayout layout, List<FieldMapping> mappings) {
     }
 
     private final Map<Class<? extends NativeStructure>, Entry> entries = new HashMap<>();
     private final NativeMapperRegistry registry;
-
-    public StructureNativeMapper() {
-        super(NativeStructure.class);
-    }
 
     private Entry entry(NativeStructure structure) {
         return entries.computeIfAbsent(structure.getClass(), __ -> create(structure));
@@ -1199,7 +1141,7 @@ A _field mapping_ encapsulates the mapping between a structure field and the cor
 class FieldMapping {
     private final Field field;
     private final VarHandle handle;
-    private final NativeMapper<?> mapper;
+    private final NativeMapper mapper;
 }
 ```
 
@@ -1211,7 +1153,7 @@ Where:
 
 * and _mapper_ is used to marshal field values.
 
-The field mappings for a given native structure are enumerated via reflection:
+The field mappings for a given native structure are enumerated from the layout (ensuring the correct field order):
 
 ```java
 protected static List<FieldMapping> build(StructLayout layout, Class<? extends NativeStructure> type, NativeMapperRegistry registry) {
@@ -1219,13 +1161,16 @@ protected static List<FieldMapping> build(StructLayout layout, Class<? extends N
         ...
     };
     
-    return Arrays
-        .stream(type.getDeclaredFields())
-        .filter(FieldMapping::isStructureField)
+    return structure
+        .memberLayouts()
+        .stream()
+        .filter(e -> e.name().isPresent())
         .map(builder::build)
         .toList();
 }
 ```
+
+TODO...
 
 Where a structure field is defined as a public, top-level member:
 
@@ -1241,7 +1186,7 @@ The local, anonymous `builder` is responsible for constructing each field mappin
 ```java
 FieldMapping build(Field field) {
     VarHandle handle = layout.varHandle(PathElement.groupElement(field.getName());
-    NativeMapper<?> mapper = registry.mapper(field).orElseThrow(...);
+    NativeMapper mapper = registry.mapper(field).orElseThrow(...);
     return new FieldMapping(field, handle, mapper);
 }
 ```
@@ -1257,6 +1202,8 @@ public MemorySegment marshal(NativeStructure structure, NativeContext context) {
     return pointer.address();
 }
 ```
+
+...TODO
 
 The `populate` method first allocates off-heap memory for the structure and then marshals each field:
 
@@ -1418,7 +1365,7 @@ return MemoryLayout.structLayout(
 );
 ```
 
-These layouts were essentially copied from the equivalent code generated by the `jextract` tool earlier.  The code generator will also need to track the byte alignment of each structure and inject padding as required.
+These layouts were essentially copied from the equivalent code generated by the `jextract` tool earlier.  The code generator will need to track the byte alignment of each structure and inject padding as required.
 
 In the demo application the Vulkan instance should now be successfully instantiated and configured using the new framework.
 
@@ -1575,6 +1522,74 @@ public boolean message(int severity, int typeMask, MemorySegment pCallbackData, 
 ```
 
 Diagnostic handlers can now be attached to the instance as before, which is important given the invasive changes being made to JOVE.  A good test of the message callback is to temporarily remove the code that releases the attached handlers when the instance is destroyed, which should result in Vulkan complaining about orphaned objects.
+
+
+### Method Success Codes
+
+The approach of using a proxy for the native libraries enables the new framework to validate _all_ Vulkan return codes in one place, previously every native method call had to be wrapped which was ugly and slightly tedious.
+
+First a handler for return values is added to the factory that generates the proxy:
+
+```java
+public class NativeFactory {
+    private Consumer<Object> check = result -> { /* Ignored */ };
+}
+```
+
+The invocation handler simply delegates return values to the configured handler:
+
+```java
+var handler = new InvocationHandler() {
+    public Object invoke(...) {
+        ...
+        check.accept(result);
+        return result;
+    }
+};
+```
+
+As a convenience an integer success code handler can be configured:
+
+```java
+public void setIntegerReturnHandler(IntConsumer check) {
+    final Consumer<Object> handler = result -> {
+        if(result instanceof Integer code) {
+            check.accept(code);
+        }
+    };
+    setReturnHandler(handler);
+}
+```
+
+And this new feature is utilised by the Vulkan implementation accordingly:
+
+```java
+public static Vulkan create() {
+    ...
+    var factory = new NativeFactory(registry);
+    factory.setIntegerReturnHandler(Vulkan::check);
+    ...
+}
+```
+
+Nice.
+
+### by reference parameters
+
+@Returned
+returned flag
+also int/ptr
+unmarshal()
+
+### arrays
+
+array parameters
+structure arrays?
+by reference arrays
+
+### returned arrays
+
+
 
 ---
 

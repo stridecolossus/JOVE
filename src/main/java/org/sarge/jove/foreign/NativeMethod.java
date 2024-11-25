@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * A <i>native method</i> abstracts a native method handle.
@@ -23,22 +24,67 @@ import java.util.*;
  * <p>
  * @author Sarge
  */
+@SuppressWarnings("rawtypes")
 public class NativeMethod {
+	/**
+	 * Native parameter mapper optionally for a by-reference parameter.
+	 */
+	private record NativeParameter(NativeMapper mapper, boolean returned) {
+		/**
+		 * @return Memory layout of this parameter
+		 */
+		MemoryLayout layout() {
+			return mapper.layout();
+		}
+
+		/**
+		 * Marshals this parameter.
+		 */
+		@SuppressWarnings("unchecked")
+		Object marshal(Object arg, SegmentAllocator allocator) {
+			if(arg == null) {
+				return mapper.marshalNull();
+			}
+			else {
+				return mapper.marshal(arg, allocator);
+			}
+		}
+
+		/**
+		 * Unmarshals a by-reference parameter.
+		 */
+		@SuppressWarnings("unchecked")
+		void unmarshal(Object actual, Object arg) {
+			// Skip if not by-reference parameter
+			if(!returned) {
+				return;
+			}
+
+			// Skip if empty
+			if(arg == null) {
+				return;
+			}
+
+			// Otherwise return by-reference
+			mapper.reference().accept(actual, arg);
+		}
+	}
+
 	private final MethodHandle handle;
 	private final NativeParameter[] signature;
-	private final NativeParameter returns;
+	private final Function returns;
 
 	/**
 	 * Constructor.
 	 * @param handle 			Native method handle
 	 * @param signature			Native parameters
-	 * @param returnMapper		Optional return type
+	 * @param returnMapper		Optional return value mapper
 	 * @throws IllegalArgumentException if the {@link #signature} does not contain the expected number of parameters
-	 * @throws IllegalArgumentException if a {@link #returnType} is not provided for a method with a return type or is superfluous
+	 * @throws IllegalArgumentException if a {@link #returns} is not provided for a method with a return type or is superfluous
 	 */
-	private NativeMethod(MethodHandle handle, List<NativeParameter> signature, NativeParameter returns) {
+	private NativeMethod(MethodHandle handle, List<NativeParameter> signature, Function returns) {
 		final MethodType type = handle.type();
-		if((type.returnType() == void.class) ^ (returns == null)) {
+		if((type.returnType() == void.class) ^ Objects.isNull(returns)) {
 			throw new IllegalArgumentException("Mismatched or superfluous return type");
 		}
 		if(type.parameterCount() != signature.size()) {
@@ -57,8 +103,8 @@ public class NativeMethod {
 	 * @return Return value or {@code null} for a {@code void} method
 	 * @throws RuntimeException if the native method fails
 	 */
-	public Object invoke(Object[] args, NativeContext context) {
-		final Object[] actual = marshal(args, context);
+	public Object invoke(Object[] args, SegmentAllocator allocator) {
+		final Object[] actual = marshal(args, allocator);
 		final Object result = execute(actual);
 		unmarshal(args, actual);
 		return unmarshalReturnValue(result);
@@ -70,14 +116,14 @@ public class NativeMethod {
 	 * @param context		Native context
 	 * @return Marshalled arguments
 	 */
-	private Object[] marshal(Object[] args, NativeContext context) {
+	private Object[] marshal(Object[] args, SegmentAllocator allocator) {
 		if(args == null) {
 			return null;
 		}
 
 		final Object[] mapped = new Object[args.length];
 		for(int n = 0; n < mapped.length; ++n) {
-			mapped[n] = signature[n].marshal(args[n], context);
+			mapped[n] = signature[n].marshal(args[n], allocator);
 		}
 
 		return mapped;
@@ -98,17 +144,18 @@ public class NativeMethod {
 		}
 	}
 
-	// TODO
+	/**
+	 * Unmarshals by-reference parameters after invocation.
+	 * @param args		Method arguments
+	 * @param actual	Marshalled arguments
+	 */
 	private void unmarshal(Object[] args, Object[] actual) {
 		if(args == null) {
 			return;
 		}
 
 		for(int n = 0; n < args.length; ++n) {
-			final NativeParameter type = signature[n];
-			if(type.isReturnedParameter() && Objects.nonNull(args[n])) {
-				type.unmarshal((MemorySegment) actual[n], args[n]);
-			}
+			signature[n].unmarshal(actual[n], args[n]);
 		}
 	}
 
@@ -117,13 +164,14 @@ public class NativeMethod {
 	 * @param value Native return value
 	 * @return Unmarshalled return value
 	 */
+	@SuppressWarnings("unchecked")
 	private Object unmarshalReturnValue(Object value) {
 		if(returns == null) {
 			assert value == null;
 			return null;
 		}
 		else {
-			return returns.returns(value);
+			return returns.apply(value);
 		}
 	}
 
@@ -153,8 +201,8 @@ public class NativeMethod {
 		private final NativeMapperRegistry registry;
 
 		private MemorySegment address;
-		private NativeParameter returns;
 		private final List<NativeParameter> signature = new ArrayList<>();
+		private NativeMapper returns;
 
 		/**
 		 * Constructor.
@@ -196,7 +244,7 @@ public class NativeMethod {
 					.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + type));
 
 			// Add parameter wrapper
-			final var parameter = new NativeParameter(type, mapper, returned);
+			final var parameter = new NativeParameter(mapper, returned);
 			signature.add(parameter);
 
 			return this;
@@ -219,20 +267,9 @@ public class NativeMethod {
 		 * @throws IllegalArgumentException if the type is not supported or cannot be returned from a native method
 		 */
 		public Builder returns(Class<?> type) {
-
-//			if(ArrayReturnValue.class.equals(type)) {
-//				final var mapper = new ArrayReturnValueMapper(registry);
-//				this.returns = new NativeType(type, mapper, true);
-//				return this;
-//			}
-
-			// Lookup native mapper
-			final NativeMapper mapper = registry
+			this.returns = registry
 					.mapper(type)
 					.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + type));
-
-			// Create return type wrapper
-			this.returns = new NativeParameter(type, mapper, true);
 
 			return this;
 		}
@@ -246,7 +283,8 @@ public class NativeMethod {
 			final MemoryLayout[] layout = layout();
 			final FunctionDescriptor descriptor = descriptor(layout);
 			final MethodHandle handle = linker.downcallHandle(address, descriptor);
-			return new NativeMethod(handle, signature, returns);
+			final Function mapper = Objects.isNull(returns) ? null : returns.returns();
+			return new NativeMethod(handle, signature, mapper);
 		}
 
 		/**
@@ -255,8 +293,6 @@ public class NativeMethod {
 		private MemoryLayout[] layout() {
 			return signature
 					.stream()
-					//.map(p -> p.mapper)
-					//.map(NativeMapper::layout)
 					.map(NativeParameter::layout)
 					.toArray(MemoryLayout[]::new);
 		}

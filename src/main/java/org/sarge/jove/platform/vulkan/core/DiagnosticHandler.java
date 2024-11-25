@@ -45,7 +45,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		final NativeMapperRegistry registry = instance.vulkan().registry();
 		final NativeMethod destroy = destroy(function.address(), registry);
 		final Object[] args = {instance, this, null};
-		invoke(destroy, args, registry);
+		invoke(destroy, args);
 	}
 
 	/**
@@ -63,12 +63,10 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * Helper - Invokes a function pointer.
 	 * @param method		Native method
 	 * @param args			Arguments
-	 * @param registry		Native Mappers
 	 * @return Return value
 	 */
-	private static Object invoke(NativeMethod method, Object[] args, NativeMapperRegistry registry) {
-		final var context = new NativeContext(Arena.ofAuto(), registry);
-		return method.invoke(args, context);
+	private static Object invoke(NativeMethod method, Object[] args) {
+		return method.invoke(args, Arena.ofAuto());
 	}
 
 	/**
@@ -162,7 +160,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final var level = SEVERITY.map(severity);
 
 			// Unmarshal the message structure
-			final var data = (VkDebugUtilsMessengerCallbackData) mapper.returns(VkDebugUtilsMessengerCallbackData.class).apply(pCallbackData);
+			final var data = (VkDebugUtilsMessengerCallbackData) mapper.returns().apply(pCallbackData);
 
 			// Handle message
 			final Message message = new Message(level, types, data);
@@ -334,7 +332,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		private void create(NativeMethod method, VkDebugUtilsMessengerCreateInfoEXT info, PointerReference ref) {
     		final Object[] args = {instance, info, null, ref};
-    		Vulkan.check((int) DiagnosticHandler.invoke(method, args, registry));
+    		Vulkan.check((int) DiagnosticHandler.invoke(method, args));
 		}
 	}
 }

@@ -1,7 +1,8 @@
 package org.sarge.jove.foreign;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 import java.lang.foreign.*;
 import java.util.List;
@@ -31,6 +32,14 @@ class NativeStructureTest {
 	void before() {
 		structure = new MockStructure();
 		registry = new NativeMapperRegistry();
+	}
+
+	@Test
+	void equals() {
+		assertEquals(structure, structure);
+		assertEquals(structure, new MockStructure());
+		assertNotEquals(structure, null);
+		assertNotEquals(structure, mock(NativeStructure.class));
 	}
 
 	private void register() {

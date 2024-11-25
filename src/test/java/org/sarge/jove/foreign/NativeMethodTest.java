@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.*;
 
 class NativeMethodTest {
 	interface MockLibrary {
@@ -15,14 +14,14 @@ class NativeMethodTest {
 
 	private NativeMethod.Builder builder;
 	private SymbolLookup lookup;
-	private NativeContext context;
+	private Arena arena;
 
 	@BeforeEach
 	void before() {
 		final var mapper = new PrimitiveNativeMapper<>(int.class);
 		final var registry = new NativeMapperRegistry();
 		registry.add(mapper);
-		context = new NativeContext(Arena.ofAuto(), registry);
+		arena = Arena.ofAuto();
 		lookup = Linker.nativeLinker().defaultLookup();
 		builder = new NativeMethod.Builder(registry);
 	}
@@ -36,7 +35,7 @@ class NativeMethodTest {
 				.returns(int.class)
 				.parameter(int.class)
 				.build();
-		assertEquals(2, method.invoke(new Object[]{-2}, context));
+		assertEquals(2, method.invoke(new Object[]{-2}, arena));
 	}
 
 	@DisplayName("A native method can be constructed for an API method without a return value")
@@ -47,7 +46,7 @@ class NativeMethodTest {
 				.address(address)
 				.parameter(int.class)
 				.build();
-		assertEquals(null, method.invoke(new Object[]{3}, context));
+		assertEquals(null, method.invoke(new Object[]{3}, arena));
 	}
 
 	@DisplayName("A native method cannot be constructed for an unsupported parameter type")

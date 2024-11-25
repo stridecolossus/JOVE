@@ -3,8 +3,10 @@ package org.sarge.jove.foreign;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.Stream;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceMemoryProperties;
 
@@ -34,10 +36,50 @@ public abstract class NativeStructure {
 	 */
 	protected abstract StructLayout layout();
 
+	protected Object get(Field field) {
+		try {
+			return field.get(this);
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private Stream<Field> fields() {
+		final Field[] fields = this.getClass().getDeclaredFields();
+		return Arrays
+				.stream(fields)
+				.filter(NativeStructure::isStructureField);
+	}
+
+	@Override
+	public int hashCode() {
+		return this
+				.fields()
+				.map(this::get)
+				.mapToInt(Object::hashCode)
+				.sum();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof NativeStructure that) &&
+				this.getClass().isAssignableFrom(that.getClass()) &&
+				isEqual(that);
+	}
+
+	private boolean isEqual(NativeStructure that) {
+		return this
+				.fields()
+				.allMatch(f -> Objects.equals(this.get(f), that.get(f)));
+	}
+
 	/**
 	 * Instantiates a new structure instance of the given type.
 	 */
-	static NativeStructure create(Class<? extends NativeStructure> type) {
+	private static NativeStructure create(Class<? extends NativeStructure> type) {
 		try {
 			return type.getDeclaredConstructor().newInstance();
 		}
@@ -46,16 +88,12 @@ public abstract class NativeStructure {
 		}
 	}
 
-	@Override
-	public int hashCode() {
-		// TODO - fields by reflection?
-		return super.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		// TODO - compare fields by reflection?
-		return super.equals(obj);
+	/**
+	 * @return Whether the given field is a valid structure member
+	 */
+	protected static boolean isStructureField(Field field) {
+		final int modifiers = field.getModifiers();
+		return Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers);
 	}
 
 	/**
@@ -80,6 +118,26 @@ public abstract class NativeStructure {
 		}
 
 		@Override
+		public StructureNativeMapper derive(Class<? extends NativeStructure> target) {
+			return new StructureNativeMapper(registry) {
+				@Override
+				public MemoryLayout layout() {
+					final Entry entry = entry(target);
+					return entry.layout;
+				}
+
+				@Override
+				public Function<MemorySegment, NativeStructure> returns() {
+					return address -> {
+						final NativeStructure structure = create(target);
+						unmarshal(address, structure);
+						return structure;
+					};
+				}
+			};
+		}
+
+		@Override
 		public Class<NativeStructure> type() {
 			return NativeStructure.class;
 		}
@@ -99,17 +157,11 @@ public abstract class NativeStructure {
 		}
 
 		@Override
-		public MemoryLayout layout(Class<? extends NativeStructure> type) {
-			final Entry entry = entry(type);
-			return entry.layout;
-		}
-
-		@Override
-		public MemorySegment marshal(NativeStructure structure, NativeContext context) {
+		public MemorySegment marshal(NativeStructure structure, SegmentAllocator allocator) {
 			// Allocate off-heap memory as required
 			final Entry entry = entry(structure.getClass());
 			if(structure.address == null) {
-				structure.address = context.allocator().allocate(entry.layout);
+				structure.address = allocator.allocate(entry.layout);
 			}
 
 			if(structure instanceof VkPhysicalDeviceMemoryProperties) {
@@ -120,7 +172,7 @@ public abstract class NativeStructure {
 			// Marshal structure fields
 			try {
     			for(FieldMapping m : entry.mappings) {
-    				m.marshal(structure, structure.address, context);
+    				m.marshal(structure, structure.address, allocator);
     			}
 			}
 			catch(Exception e) {
@@ -131,16 +183,7 @@ public abstract class NativeStructure {
 		}
 
 		@Override
-		public Function<MemorySegment, NativeStructure> returns(Class<? extends NativeStructure> target) {
-			return address -> {
-				final NativeStructure structure = create(target);
-				unmarshal(address, structure);
-				return structure;
-			};
-		}
-
-		@Override
-		public BiConsumer<MemorySegment, NativeStructure> unmarshal(Class<? extends NativeStructure> target) {
+		public BiConsumer<MemorySegment, NativeStructure> reference() {
 			return this::unmarshal;
 		}
 

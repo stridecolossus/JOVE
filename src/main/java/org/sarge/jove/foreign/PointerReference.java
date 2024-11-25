@@ -2,7 +2,7 @@ package org.sarge.jove.foreign;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 import java.util.function.BiConsumer;
 
 import org.sarge.jove.common.Handle;
@@ -36,20 +36,20 @@ public final class PointerReference {
 		}
 
 		@Override
-		public MemorySegment marshal(PointerReference ref, NativeContext context) {
+		public MemorySegment marshal(PointerReference ref, SegmentAllocator allocator) {
 			if(ref.address == null) {
-				ref.address = context.allocator().allocate(ADDRESS);
+				ref.address = allocator.allocate(ADDRESS);
 			}
 			return ref.address;
 		}
 
 		@Override
-		public MemorySegment marshalNull(Class<? extends PointerReference> type) {
-			throw new UnsupportedOperationException();
+		public MemorySegment marshalNull() {
+			throw new NullPointerException();
 		}
 
 		@Override
-		public BiConsumer<MemorySegment, PointerReference> unmarshal(Class<? extends PointerReference> target) {
+		public BiConsumer<MemorySegment, PointerReference> reference() {
 			return (address, ref) -> {
 				assert address == ref.address;
 				final MemorySegment ptr = address.get(ADDRESS, 0);

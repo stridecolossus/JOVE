@@ -6,7 +6,6 @@ import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle.HandleNativeMapper;
-import org.sarge.jove.foreign.NativeContext;
 
 class HandleTest {
 	private Handle handle;
@@ -43,27 +42,28 @@ class HandleTest {
 		@Test
 		void mapper() {
 			assertEquals(Handle.class, mapper.type());
-			assertEquals(ValueLayout.ADDRESS, mapper.layout(null));
+			assertEquals(ValueLayout.ADDRESS, mapper.layout());
+			assertEquals(mapper, mapper.derive(null));
 		}
 
 		@Test
 		void marshal() {
-			assertEquals(address, mapper.marshal(handle, new NativeContext()));
+			assertEquals(address, mapper.marshal(handle, null));
 		}
 
 		@Test
 		void marshalNull() {
-			assertEquals(MemorySegment.NULL, mapper.marshalNull(Handle.class));
+			assertEquals(MemorySegment.NULL, mapper.marshalNull());
 		}
 
 		@Test
 		void returns() {
-			assertEquals(new Handle(address), mapper.returns(Handle.class).apply(address));
+			assertEquals(new Handle(address), mapper.returns().apply(address));
 		}
 
 		@Test
 		void unmarshal() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.unmarshal(Handle.class));
+			assertThrows(UnsupportedOperationException.class, () -> mapper.reference());
 		}
 	}
 }

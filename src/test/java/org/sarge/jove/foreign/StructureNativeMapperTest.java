@@ -20,33 +20,31 @@ class StructureNativeMapperTest {
 
 	private StructureNativeMapper mapper;
 	private MockStructure structure;
-	private NativeContext context;
 
 	@BeforeEach
 	void before() {
 		final var registry = new NativeMapperRegistry();
 		registry.add(new PrimitiveNativeMapper<>(int.class));
-		mapper = new StructureNativeMapper(registry);
-		context = new NativeContext(Arena.ofAuto(), registry);
+		mapper = new StructureNativeMapper(registry).derive(MockStructure.class);
 		structure = new MockStructure();
 	}
 
 	@Test
 	void mapper() {
 		assertEquals(NativeStructure.class, mapper.type());
-		assertEquals(structure.layout(), mapper.layout(MockStructure.class));
+		assertEquals(structure.layout(), mapper.layout());
 	}
 
 	@Test
 	void marshal() {
 		structure.field = 2;
-		final MemorySegment address = mapper.marshal(structure, context);
+		final MemorySegment address = mapper.marshal(structure, Arena.ofAuto());
 		assertEquals(2, address.get(JAVA_INT, 0));
 	}
 
 	@Test
 	void marshalNull() {
-		assertEquals(MemorySegment.NULL, mapper.marshalNull(MockStructure.class));
+		assertEquals(MemorySegment.NULL, mapper.marshalNull());
 	}
 
 	private static MemorySegment address() {
@@ -59,7 +57,7 @@ class StructureNativeMapperTest {
 	@Test
 	void returns() {
 		final MemorySegment address = address();
-		final var result = (MockStructure) mapper.returns(MockStructure.class).apply(address);
+		final var result = (MockStructure) mapper.returns().apply(address);
 		assertEquals(3, result.field);
 	}
 
@@ -67,7 +65,7 @@ class StructureNativeMapperTest {
 	void unmarshal() {
 		final var structure = new MockStructure();
 		final MemorySegment address = address();
-		mapper.unmarshal(MockStructure.class).accept(address, structure);
+		mapper.reference().accept(address, structure);
 		assertEquals(3, structure.field);
 	}
 }

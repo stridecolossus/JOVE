@@ -65,23 +65,23 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T, T> {
 	}
 
 	@Override
-	public MemoryLayout layout(Class<? extends T> type) {
+	public MemoryLayout layout() {
 		return layout;
 	}
 
 	@Override
-	public Object marshal(T value, NativeContext context) {
+	public Object marshal(T value, SegmentAllocator allocator) {
 		return value;
 	}
 
 	@Override
-	public Object marshalNull(Class<? extends T> type) {
+	public Object marshalNull() {
 		// TODO - or return zero? or separate wrapper implementation?
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Function<T, T> returns(Class<? extends T> target) {
+	public Function<T, T> returns() {
 		return Function.identity();
 	}
 

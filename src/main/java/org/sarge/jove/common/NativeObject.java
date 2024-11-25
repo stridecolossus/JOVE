@@ -1,9 +1,9 @@
 package org.sarge.jove.common;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 import java.util.Collection;
 
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.AbstractNativeMapper;
 
 /**
  * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
@@ -37,7 +37,7 @@ public interface NativeObject {
 		}
 
 		@Override
-		public MemorySegment marshal(NativeObject obj, NativeContext context) {
+		public MemorySegment marshal(NativeObject obj, SegmentAllocator allocator) {
 			return obj.handle().address();
 		}
 	}

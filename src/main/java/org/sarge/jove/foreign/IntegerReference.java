@@ -2,7 +2,7 @@ package org.sarge.jove.foreign;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
@@ -19,6 +19,24 @@ public class IntegerReference {
 	 */
 	public int value() {
 		return value;
+	}
+
+	/**
+	 * Marshals this integer reference.
+	 */
+	private MemorySegment marshal(SegmentAllocator allocator) {
+		if(address == null) {
+			address = allocator.allocate(JAVA_INT);
+		}
+		address.set(JAVA_INT, 0, value);
+		return address;
+	}
+
+	/**
+	 * Unmarshals this reference.
+	 */
+	private void unmarshal(MemorySegment address) {
+		this.value = address.get(JAVA_INT, 0);
 	}
 
 	/**
@@ -57,27 +75,18 @@ public class IntegerReference {
 		}
 
 		@Override
-		public MemorySegment marshal(IntegerReference ref, NativeContext context) {
-			if(ref.address == null) {
-				ref.address = context.allocator().allocate(JAVA_INT);
-			}
-
-			ref.address.set(JAVA_INT, 0, ref.value);
-
-			return ref.address;
+		public MemorySegment marshal(IntegerReference ref, SegmentAllocator allocator) {
+			return ref.marshal(allocator);
 		}
 
 		@Override
-		public MemorySegment marshalNull(Class<? extends IntegerReference> target) {
-			throw new UnsupportedOperationException();
+		public MemorySegment marshalNull() {
+			throw new NullPointerException();
 		}
 
 		@Override
-		public BiConsumer<MemorySegment, IntegerReference> unmarshal(Class<? extends IntegerReference> target) {
-			return (address, ref) -> {
-				final int value = address.get(JAVA_INT, 0);
-				ref.set(value);
-			};
+		public BiConsumer<MemorySegment, IntegerReference> reference() {
+			return (address, ref) -> ref.unmarshal(address);
 		}
 	}
 }

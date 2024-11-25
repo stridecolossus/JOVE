@@ -1,9 +1,9 @@
 package org.sarge.jove.foreign;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
+import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
-import java.util.*;
 import java.util.function.BiConsumer;
 
 /**
@@ -11,38 +11,38 @@ import java.util.function.BiConsumer;
  * @author Sarge
  */
 public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegment> {
-	/**
-	 * Array instance wrapper.
-	 */
-	private record Entry(NativeParameter delegate, MemorySegment address) {
-	}
+	private final NativeMapperRegistry registry;
 
-	private final Map<Object[], Entry> cache = new WeakHashMap<>();
+	/**
+     * Constructor.
+     * @param registry
+     */
+    public NativeArrayMapper(NativeMapperRegistry registry) {
+    	this.registry = requireNonNull(registry);
+    }
 
 	@Override
 	public Class<Object[]> type() {
 		return Object[].class;
 	}
 
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private static Entry allocate(Object[] array, NativeContext context) {
-		// Lookup mapper for the array elements
-		final Class<?> component = array.getClass().getComponentType();
-		final NativeMapper mapper = context.registry().mapper(component).orElseThrow();
+	@SuppressWarnings("rawtypes")
+	private NativeMapper mapper(Object[] array) {
+		final Class<?> component = array
+				.getClass()
+				.getComponentType();
 
-		// Allocate off-heap memory
-		final MemoryLayout layout = mapper.layout(component);
-		final MemorySegment address = context.allocator().allocate(layout, array.length);
-
-		// Create array wrapper
-		final NativeParameter type = new NativeParameter(component, mapper, true);
-		return new Entry(type, address);
+		return registry
+    			.mapper(component)
+    			.orElseThrow(() -> new IllegalArgumentException("Unsupported array component type: " + component));
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
-	public Object marshal(Object[] array, NativeContext context) {
+	public Object marshal(Object[] array, SegmentAllocator allocator) {
 		// Allocate off-heap memory for this array
-		final Entry entry = cache.computeIfAbsent(array, __ -> allocate(array, context));
+		final NativeMapper mapper = mapper(array);
+		final MemorySegment address = allocator.allocate(mapper.layout(), array.length);
 
 		// Marshal array elements
 		for(int n = 0; n < array.length; ++n) {
@@ -51,58 +51,51 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegm
 				continue;
 			}
 
-			final MemorySegment element = (MemorySegment) entry.delegate.marshal(array[n], context);
-			if(Objects.nonNull(element)) {
-				// TODO - switch(layout) as below, need to overwrite structure address with slice?
-				entry.address.setAtIndex(ADDRESS, n, element);
+			// Marshal array element
+			@SuppressWarnings("unchecked")
+			final MemorySegment element = (MemorySegment) mapper.marshal(array[n], allocator);
+
+			// Skip if empty
+			if(MemorySegment.NULL.equals(element)) {
+				continue;
 			}
+
+			// Populate off-heap array element
+			// TODO - switch(layout) as below, need to overwrite structure address with slice?
+			address.setAtIndex(ADDRESS, n, element);
 		}
 
-		return entry.address;
+		return address;
 	}
 
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Override
-	public BiConsumer<MemorySegment, Object[]> unmarshal(Class<? extends Object[]> target) {
+	public BiConsumer<MemorySegment, Object[]> reference() {
 		return (address, array) -> {
-    		// Retrieve array instance
-    		final Entry entry = cache.get(array);
-    		if(entry == null) throw new RuntimeException();
-
-    		// Unmarshal array elements
-    		final MemoryLayout layout = entry.delegate.layout();
+			final NativeMapper mapper = mapper(array);
+    		final MemoryLayout layout = mapper.layout();
     		for(int n = 0; n < array.length; ++n) {			// TODO - loop per case? wrap into some helper function? nasty
-
+    			// Extract array element
     			final MemorySegment element = switch(layout) {
     				case AddressLayout __ -> address.getAtIndex(ADDRESS, n);
+    				case ValueLayout __ -> throw new UnsupportedOperationException(); // TODO - primitive array
     				case StructLayout struct -> address.asSlice(n * struct.byteSize(), struct);
-    				default -> throw new UnsupportedOperationException();
+    				default -> throw new RuntimeException();
     			};
 
+    			// Skip if empty
+    			if(MemorySegment.NULL.equals(element)) {
+    				continue;
+    			}
+
+    			// Unmarshal array element
     			if(array[n] == null) {
-    				array[n] = entry.delegate.returns(element);
+    				array[n] = mapper.returns().apply(element);
     			}
     			else {
-    				entry.delegate.unmarshal(element, array[n]);
+    				mapper.reference().accept(element, array[n]);
     			}
     		}
 		};
 	}
 }
-
-//    			if(layout instanceof AddressLayout) {
-//    				final MemorySegment element = address.getAtIndex(ADDRESS, n);
-//    			}
-//    			else
-//    			if(layout instanceof StructLayout structLayout) {
-//    				final MemorySegment element = address.asSlice(n * structLayout.byteSize(), structLayout);
-////    				if(array[n] == null) {
-////    					array[n] = NativeStructure.create((Class<? extends NativeStructure>) array.getClass().getComponentType());
-////    				}
-//    				entry.delegate.unmarshal(element, array[n]);
-//    			}
-//    			else {
-//    				// TODO
-//    				throw new UnsupportedOperationException();
-//    			}
-//			}
-//		}

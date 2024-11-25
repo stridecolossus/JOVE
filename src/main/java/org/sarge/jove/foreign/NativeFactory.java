@@ -105,8 +105,7 @@ public class NativeFactory {
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				final NativeMethod delegate = methods.get(method);
-				final var context = new NativeContext(Arena.ofAuto(), registry);
-				final Object result = delegate.invoke(args, context);
+				final Object result = delegate.invoke(args, Arena.ofAuto());
 				check.accept(result);
 				return result;
 			}

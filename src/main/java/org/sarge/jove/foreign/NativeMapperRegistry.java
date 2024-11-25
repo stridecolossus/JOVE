@@ -13,8 +13,10 @@ import org.sarge.jove.util.*;
  * The <i>native mapper registry</i> is used to lookup supported native mappers.
  * @author Sarge
  */
+@SuppressWarnings("rawtypes")
 public class NativeMapperRegistry {
 	private final Map<Class<?>, NativeMapper> mappers = new HashMap<>();
+	private final Optional<NativeMapper> array = Optional.of(new NativeArrayMapper(this));
 
 	/**
 	 * Registers a native mapper.
@@ -34,28 +36,9 @@ public class NativeMapperRegistry {
 	 * @throws IllegalArgumentException if the type is not supported by this registry
 	 */
 	public Optional<NativeMapper> mapper(Class<?> type) {
-
 		if(type.isArray() || Collection.class.isAssignableFrom(type)) {
-
-			// TODO - is this right? shouldn't the code generator decide how Java/JOVE types map to an array?
-			if(byte[].class.equals(type)) {
-				return Optional.of(new StringNativeMapper());
-			}
-
-			// TODO - recurse
-			return Optional.of(new NativeArrayMapper());
+			return array;
 		}
-
-//		if(Collection.class.isAssignableFrom(type)) {
-//			System.out.println("collection "+type);
-//			for(var p : type.getTypeParameters()) {
-//				System.out.println("name"+p.getName());
-//				System.out.println("typename="+p.getTypeName());
-//				System.out.println("generic="+p.getGenericDeclaration());
-//				System.out.println("bounds="+Arrays.toString(p.getBounds()));
-//			}
-//			return Optional.of(new NativeArrayMapper());
-//		}
 
 		final NativeMapper mapper = mappers.get(type);
 		if(mapper == null) {
@@ -67,18 +50,29 @@ public class NativeMapperRegistry {
 	}
 
 	/**
-	 * Finds a native mapper for the given super-type and registers the mapping as a side-effect.
+	 * Finds a native mapper for the given subclass.
 	 */
+	@SuppressWarnings("unchecked")
 	private Optional<NativeMapper> find(Class<?> type) {
-		final Optional<NativeMapper> mapper = mappers
+		return mappers
 				.values()
 				.stream()
 				.filter(e -> e.type().isAssignableFrom(type))
-				.findAny();
+				.findAny()
+				.map(m -> derive(m, type));
+	}
 
-		mapper.ifPresent(m -> mappers.put(type, m));
-
-		return mapper;
+	/**
+	 * Derives the native mapper for the given subclass and registers as a side-effect.
+	 * @param mapper	Super-type mapper
+	 * @param type		Subclass type
+	 * @return Derived mapper
+	 */
+	private NativeMapper derive(NativeMapper mapper, Class<?> type) {
+		@SuppressWarnings("unchecked")
+		final NativeMapper derived = mapper.derive(type);
+		mappers.put(type, derived);
+		return derived;
 	}
 
 	/**
@@ -86,27 +80,24 @@ public class NativeMapperRegistry {
 	 * @return Default mapper registry
 	 */
 	public static NativeMapperRegistry create() {
-		final var registry = new NativeMapperRegistry();
-
 		// Register primitive types
+		final var registry = new NativeMapperRegistry();
 		PrimitiveNativeMapper.mappers().forEach(registry::add);
 
 		// Register reference types
-		final NativeMapper[] reference = {
+		final NativeMapper[] mappers = {
 				new IntEnumNativeMapper(),
 				new BitMaskNativeMapper(),
 				new StringNativeMapper(),
-				//new ArrayNativeMapper(),
 				new HandleNativeMapper(),
 				new NativeObjectMapper(),
 				new IntegerReferenceMapper(),
 				new PointerReferenceMapper(),
 				new StructureNativeMapper(registry),
 		};
-		for(NativeMapper m : reference) {
+		for(var m : mappers) {
 			registry.add(m);
 		}
-		// TODO - arrays?
 
 		return registry;
 	}

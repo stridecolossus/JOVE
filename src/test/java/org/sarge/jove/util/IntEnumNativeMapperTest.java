@@ -1,11 +1,10 @@
 package org.sarge.jove.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.ValueLayout;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeContext;
 
 class IntEnumNativeMapperTest {
 	private static enum MockEnum implements IntEnum {
@@ -21,32 +20,37 @@ class IntEnumNativeMapperTest {
 
 	@BeforeEach
 	void before() {
-		mapper = new IntEnumNativeMapper();
+		mapper = new IntEnumNativeMapper().derive(MockEnum.class);
 	}
 
 	@Test
 	void mapper() {
 		assertEquals(IntEnum.class, mapper.type());
-		assertEquals(ValueLayout.JAVA_INT, mapper.layout(null));
+		assertEquals(ValueLayout.JAVA_INT, mapper.layout());
 	}
 
 	@Test
 	void marshal() {
-		assertEquals(42, mapper.marshal(MockEnum.INSTANCE, new NativeContext()));
+		assertEquals(42, mapper.marshal(MockEnum.INSTANCE, null));
 	}
 
 	@Test
 	void marshalNull() {
-		assertEquals(42, mapper.marshalNull(MockEnum.class));
+		assertEquals(42, mapper.marshalNull());
 	}
 
 	@Test
-	void unmarshal() {
-		assertEquals(MockEnum.INSTANCE, mapper.unmarshal(42, MockEnum.class));
+	void returned() {
+		assertEquals(MockEnum.INSTANCE, mapper.returns().apply(42));
 	}
 
 	@Test
-	void unmarshalDefault() {
-		assertEquals(MockEnum.INSTANCE, mapper.unmarshal(0, MockEnum.class));
+	void returnedDefault() {
+		assertEquals(MockEnum.INSTANCE, mapper.returns().apply(0));
+	}
+
+	@Test
+	void reference() {
+		assertThrows(UnsupportedOperationException.class, () -> mapper.reference());
 	}
 }

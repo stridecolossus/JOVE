@@ -10,9 +10,11 @@ import org.sarge.jove.foreign.IntegerReference.IntegerReferenceMapper;
 
 class IntegerReferenceTest {
 	private IntegerReference ref;
+	private Arena arena;
 
 	@BeforeEach
 	void before() {
+		arena = Arena.ofAuto();
 		ref = new IntegerReference();
 	}
 
@@ -40,32 +42,36 @@ class IntegerReferenceTest {
 		@Test
 		void mapper() {
 			assertEquals(IntegerReference.class, mapper.type());
-			assertEquals(ADDRESS, mapper.layout(null));
+			assertEquals(ADDRESS, mapper.layout());
+			assertEquals(mapper, mapper.derive(null));
 		}
 
 		@Test
 		void marshal() {
 			ref.set(3);
-			final MemorySegment address = mapper.marshal(ref, new NativeContext());
+			final MemorySegment address = mapper.marshal(ref, arena);
 			assertEquals(3, address.get(JAVA_INT, 0));
 		}
 
 		@Test
 		void marshalNull() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.marshalNull(IntegerReference.class));
+			assertThrows(NullPointerException.class, () -> mapper.marshalNull());
 		}
 
 		@Test
 		void returns() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.returns(IntegerReference.class));
+			assertThrows(UnsupportedOperationException.class, () -> mapper.returns());
 		}
 
 		@Test
 		void unmarshal() {
-			final MemorySegment address = Arena.ofAuto().allocate(ADDRESS);
+			final MemorySegment address = arena.allocate(ADDRESS);
 			address.set(JAVA_INT, 0, 4);
-			mapper.unmarshal(IntegerReference.class).accept(address, ref);
-			assertEquals(4, ref.value());
+
+			final var other = new IntegerReference();
+			mapper.marshal(other, arena);
+			mapper.reference().accept(address, other);
+			assertEquals(4, other.value());
 		}
 	}
 }

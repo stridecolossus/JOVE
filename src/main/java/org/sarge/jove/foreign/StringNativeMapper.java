@@ -1,6 +1,6 @@
 package org.sarge.jove.foreign;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 import java.util.*;
 import java.util.function.Function;
 
@@ -38,13 +38,12 @@ public final class StringNativeMapper extends AbstractNativeMapper<String, Memor
 	}
 
 	@Override
-	public MemorySegment marshal(String str, NativeContext context) {
-		final var allocator = context.allocator();
+	public MemorySegment marshal(String str, SegmentAllocator allocator) {
 		return cache.computeIfAbsent(str, allocator::allocateFrom);
 	}
 
 	@Override
-	public Function<MemorySegment, String> returns(Class<? extends String> target) {
+	public Function<MemorySegment, String> returns() {
 		// TODO - also cache?
 		return StringNativeMapper::unmarshal;
 	}
