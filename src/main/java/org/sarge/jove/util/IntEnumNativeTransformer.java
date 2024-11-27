@@ -7,10 +7,10 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
- * The <i>integer enumeration native mapper</i> marshals an enumeration to/from its native integer representation.
+ * The <i>integer enumeration native transform</i> maps an enumeration to/from its native integer representation.
  * @author Sarge
  */
-public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum, Integer> {
+public class IntEnumNativeTransformer extends AbstractNativeTransformer<IntEnum, Integer> {
 	@Override
 	public Class<IntEnum> type() {
 		return IntEnum.class;
@@ -22,13 +22,13 @@ public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum, Integer> 
 	}
 
 	@Override
-	public Object marshal(IntEnum e, SegmentAllocator allocator) {
+	public Object transform(IntEnum e, SegmentAllocator allocator) {
 		return e.value();
 	}
 
 	@Override
-	public IntEnumNativeMapper derive(Class<? extends IntEnum> target, NativeMapperRegistry registry) {
-		return new IntEnumNativeMapper() {
+	public IntEnumNativeTransformer derive(Class<? extends IntEnum> target, TransformerRegistry registry) {
+		return new IntEnumNativeTransformer() {
     		private final ReverseMapping<?> mapping = ReverseMapping.get(target);
 
     		@Override

@@ -25,12 +25,12 @@ class NativeStructureTest {
 	}
 
 	private MockStructure structure;
-	private NativeMapperRegistry registry;
+	private TransformerRegistry registry;
 
 	@BeforeEach
 	void before() {
 		structure = new MockStructure();
-		registry = new NativeMapperRegistry();
+		registry = new TransformerRegistry();
 	}
 
 	@Test
@@ -42,8 +42,9 @@ class NativeStructureTest {
 	}
 
 	private void register() {
-		final NativeMapper mapper = new PrimitiveNativeMapper<>(int.class);
-		registry.add(mapper);
+		@SuppressWarnings("rawtypes")
+		final NativeTransformer transformer = new PrimitiveNativeTransformer<>(int.class);
+		registry.add(transformer);
 	}
 
 	@DisplayName("The field mappings for a native structure can be constructed from its layout")

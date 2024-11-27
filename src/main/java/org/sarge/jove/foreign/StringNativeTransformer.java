@@ -5,13 +5,10 @@ import java.util.*;
 import java.util.function.Function;
 
 /**
- * The <i>string native mapper</i> marshals a string as a native pointer to a null-terminated character array.
- * <p>
- * Note that since a Java string is an immutable type, the {@link #marshal(String, NativeContext)} method maintains a soft cache of marshalled strings.
- * <p>
+ * The <i>string transform</i> maps a Java string to a native <i>pointer-to-null-terminated character array</i>.
  * @author Sarge
  */
-public final class StringNativeMapper extends AbstractNativeMapper<String, MemorySegment> {
+public final class StringNativeTransformer extends AbstractNativeTransformer<String, MemorySegment> {
 	// TODO - soft cache: https://www.javaspecialists.eu/archive/Issue098-References.html
 	// TODO - adapter class?
 	private final Map<String, MemorySegment> cache = new WeakHashMap<>() {
@@ -38,14 +35,14 @@ public final class StringNativeMapper extends AbstractNativeMapper<String, Memor
 	}
 
 	@Override
-	public MemorySegment marshal(String string, SegmentAllocator allocator) {
+	public MemorySegment transform(String string, SegmentAllocator allocator) {
 		return cache.computeIfAbsent(string, allocator::allocateFrom);
 	}
 
 	@Override
 	public Function<MemorySegment, String> returns() {
 		// TODO - also cache?
-		return StringNativeMapper::unmarshal;
+		return StringNativeTransformer::unmarshal;
 	}
 
 	/**

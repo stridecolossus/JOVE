@@ -38,14 +38,14 @@ public final class PointerReference {
 	/**
 	 * Native mapper for an pointer -by-reference value.
 	 */
-	public static class PointerReferenceMapper extends AbstractNativeMapper<PointerReference, MemorySegment> {
+	public static class PointerReferenceTransform extends AbstractNativeTransformer<PointerReference, MemorySegment> {
 		@Override
 		public Class<PointerReference> type() {
 			return PointerReference.class;
 		}
 
 		@Override
-		public MemorySegment marshal(PointerReference ref, SegmentAllocator allocator) {
+		public MemorySegment transform(PointerReference ref, SegmentAllocator allocator) {
 			return ref.allocate(allocator);
 		}
 
@@ -55,7 +55,7 @@ public final class PointerReference {
 		}
 
 		@Override
-		public BiConsumer<MemorySegment, PointerReference> reference() {
+		public BiConsumer<MemorySegment, PointerReference> update() {
 			return (address, ref) -> {
 				assert address == ref.address;
 				final MemorySegment ptr = address.get(ADDRESS, 0);

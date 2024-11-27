@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.IntegerReference.IntegerReferenceMapper;
+import org.sarge.jove.foreign.IntegerReference.IntegerReferenceTransform;
 
 class IntegerReferenceTest {
 	private IntegerReference ref;
@@ -32,44 +32,44 @@ class IntegerReferenceTest {
 
 	@Nested
 	class MapperTests {
-		private IntegerReferenceMapper mapper;
+		private IntegerReferenceTransform transformer;
 
 		@BeforeEach
 		void before() {
-			mapper = new IntegerReferenceMapper();
+			transformer = new IntegerReferenceTransform();
 		}
 
 		@Test
-		void mapper() {
-			assertEquals(IntegerReference.class, mapper.type());
-			assertEquals(ADDRESS, mapper.layout());
+		void constructor() {
+			assertEquals(IntegerReference.class, transformer.type());
+			assertEquals(ADDRESS, transformer.layout());
 		}
 
 		@Test
-		void marshal() {
+		void transform() {
 			ref.set(3);
-			final MemorySegment address = mapper.marshal(ref, arena);
+			final MemorySegment address = transformer.transform(ref, arena);
 			assertEquals(3, address.get(JAVA_INT, 0));
 		}
 
 		@Test
 		void empty() {
-			assertThrows(NullPointerException.class, () -> mapper.empty());
+			assertThrows(NullPointerException.class, () -> transformer.empty());
 		}
 
 		@Test
 		void returns() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.returns());
+			assertThrows(UnsupportedOperationException.class, () -> transformer.returns());
 		}
 
 		@Test
-		void unmarshal() {
+		void update() {
 			final MemorySegment address = arena.allocate(ADDRESS);
 			address.set(JAVA_INT, 0, 4);
 
 			final var other = new IntegerReference();
-			mapper.marshal(other, arena);
-			mapper.reference().accept(address, other);
+			transformer.transform(other, arena);
+			transformer.update().accept(address, other);
 			assertEquals(4, other.value());
 		}
 	}

@@ -19,8 +19,8 @@ class NativeFactoryTest {
 
 	@BeforeEach
 	void before() {
-		final var registry = new NativeMapperRegistry();
-		registry.add(new PrimitiveNativeMapper<>(int.class));
+		final var registry = new TransformerRegistry();
+		registry.add(new PrimitiveNativeTransformer<>(int.class));
 		lookup = Linker.nativeLinker().defaultLookup();
 		factory = new NativeFactory(registry);
 	}

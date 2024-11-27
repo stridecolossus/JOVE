@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle.HandleNativeMapper;
+import org.sarge.jove.common.Handle.HandleNativeTransformer;
 
 class HandleTest {
 	private Handle handle;
@@ -31,39 +31,44 @@ class HandleTest {
 	}
 
 	@Nested
-	class MapperTests {
-		private HandleNativeMapper mapper;
+	class TransformerTests {
+		private HandleNativeTransformer transformer;
 
 		@BeforeEach
 		void before() {
-			mapper = new HandleNativeMapper();
+			transformer = new HandleNativeTransformer();
 		}
 
 		@Test
-		void mapper() {
-			assertEquals(Handle.class, mapper.type());
-			assertEquals(ValueLayout.ADDRESS, mapper.layout());
-			assertEquals(mapper, mapper.derive(null, null));
+		void constructor() {
+			assertEquals(Handle.class, transformer.type());
+			assertEquals(ValueLayout.ADDRESS, transformer.layout());
+			assertEquals(transformer, transformer.derive(null, null));
 		}
 
+		@DisplayName("A handle can be transformed to a memory address")
 		@Test
-		void marshal() {
-			assertEquals(address, mapper.marshal(handle, null));
+		void transform() {
+			assertEquals(address, transformer.transform(handle, null));
 		}
 
+		@DisplayName("An empty handle can be transformed to a null memory address")
 		@Test
-		void marshalNull() {
-			assertEquals(MemorySegment.NULL, mapper.empty());
+		void empty() {
+			assertEquals(MemorySegment.NULL, transformer.empty());
 		}
 
+		@DisplayName("A handle can be returned by a native method")
 		@Test
 		void returns() {
-			assertEquals(new Handle(address), mapper.returns().apply(address));
+			assertEquals(new Handle(address), transformer.returns().apply(address));
+			assertEquals(new Handle(MemorySegment.NULL), transformer.returns().apply(MemorySegment.NULL));
 		}
 
+		@DisplayName("A handle cannot be returned as a by-reference parameter")
 		@Test
-		void unmarshal() {
-			assertThrows(UnsupportedOperationException.class, () -> mapper.reference());
+		void update() {
+			assertThrows(UnsupportedOperationException.class, () -> transformer.update());
 		}
 	}
 }

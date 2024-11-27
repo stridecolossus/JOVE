@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeStructure.StructureNativeMapper;
+import org.sarge.jove.foreign.NativeStructure.StructureNativeTransformer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -42,7 +42,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	@Override
 	protected void release() {
 		final Handle function = instance.function("vkDestroyDebugUtilsMessengerEXT");
-		final NativeMapperRegistry registry = instance.vulkan().registry();
+		final TransformerRegistry registry = instance.vulkan().registry();
 		final NativeMethod destroy = destroy(function.address(), registry);
 		final Object[] args = {instance, this, null};
 		invoke(destroy, args);
@@ -51,7 +51,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	/**
 	 * @return Destroy method for this handler
 	 */
-	private static NativeMethod destroy(MemorySegment address, NativeMapperRegistry registry) {
+	private static NativeMethod destroy(MemorySegment address, TransformerRegistry registry) {
 		final Class<?>[] signature = {Instance.class, DiagnosticHandler.class, Handle.class};
 		return new NativeMethod.Builder(registry)
 				.address(address)
@@ -133,16 +133,16 @@ public class DiagnosticHandler extends TransientNativeObject {
 		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = IntEnum.reverse(VkDebugUtilsMessageType.class);
 
 		private final Consumer<Message> consumer;
-		private final StructureNativeMapper mapper;
+		private final StructureNativeTransformer transformer;
 
 		/**
 		 * Constructor.
 		 * @param consumer		Message handler
 		 * @param registry		Native mappers
 		 */
-		MessageCallback(Consumer<Message> consumer, NativeMapperRegistry registry) {
+		MessageCallback(Consumer<Message> consumer, TransformerRegistry registry) {
 			this.consumer = requireNonNull(consumer);
-			this.mapper = new StructureNativeMapper().derive(VkDebugUtilsMessengerCallbackData.class, registry);
+			this.transformer = new StructureNativeTransformer().derive(VkDebugUtilsMessengerCallbackData.class, registry);
 		}
 
 		/**
@@ -160,7 +160,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final var level = SEVERITY.map(severity);
 
 			// Unmarshal the message structure
-			final var data = (VkDebugUtilsMessengerCallbackData) mapper.returns().apply(pCallbackData);
+			final var data = (VkDebugUtilsMessengerCallbackData) transformer.returns().apply(pCallbackData);
 
 			// Handle message
 			final Message message = new Message(level, types, data);
@@ -223,7 +223,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 */
 	public static class Builder {
 		private final Instance instance;
-		private final NativeMapperRegistry registry;
+		private final TransformerRegistry registry;
 		private final Set<VkDebugUtilsMessageSeverity> severity = new HashSet<>();
 		private final Set<VkDebugUtilsMessageType> types = new HashSet<>();
 		private Consumer<Message> consumer = System.err::println;

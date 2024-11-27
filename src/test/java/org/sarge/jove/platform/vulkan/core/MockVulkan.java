@@ -8,7 +8,7 @@ public class MockVulkan extends Vulkan {
 	public MockVulkan() {
 		super(
 				mock(VulkanLibrary.class),
-				NativeMapperRegistry.create(),
+				TransformerRegistry.create(),
 				new MockReferenceFactory()
 		);
 	}

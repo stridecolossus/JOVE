@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.lang.foreign.*;
 import java.util.Collection;
 
-import org.sarge.jove.foreign.AbstractNativeMapper;
+import org.sarge.jove.foreign.AbstractNativeTransformer;
 
 /**
  * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
@@ -26,18 +26,19 @@ public interface NativeObject {
 				.map(NativeObject::handle)
 				.toArray(Handle[]::new);
 	}
+	// TODO - used? needed? here?
 
 	/**
-	 *
+	 * Native transformer for the handle of a native object.
 	 */
-	public static class NativeObjectMapper extends AbstractNativeMapper<NativeObject, MemorySegment> {
+	public static class NativeObjectTransformer extends AbstractNativeTransformer<NativeObject, MemorySegment> {
 		@Override
 		public Class<NativeObject> type() {
 			return NativeObject.class;
 		}
 
 		@Override
-		public MemorySegment marshal(NativeObject obj, SegmentAllocator allocator) {
+		public MemorySegment transform(NativeObject obj, SegmentAllocator allocator) {
 			return obj.handle().address();
 		}
 	}

@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeStructure.StructureNativeMapper;
+import org.sarge.jove.foreign.NativeStructure.StructureNativeTransformer;
 
-class StructureNativeMapperTest {
+class StructureNativeTransformerTest {
 	protected static class MockStructure extends NativeStructure {
 		public int field;
 
@@ -18,33 +18,33 @@ class StructureNativeMapperTest {
 		}
 	}
 
-	private StructureNativeMapper mapper;
+	private StructureNativeTransformer transformer;
 	private MockStructure structure;
 
 	@BeforeEach
 	void before() {
-		final var registry = new NativeMapperRegistry();
-		registry.add(new PrimitiveNativeMapper<>(int.class));
-		mapper = new StructureNativeMapper().derive(MockStructure.class, registry);
+		final var registry = new TransformerRegistry();
+		registry.add(new PrimitiveNativeTransformer<>(int.class));
+		transformer = new StructureNativeTransformer().derive(MockStructure.class, registry);
 		structure = new MockStructure();
 	}
 
 	@Test
-	void mapper() {
-		assertEquals(NativeStructure.class, mapper.type());
-		assertEquals(structure.layout(), mapper.layout());
+	void constructor() {
+		assertEquals(NativeStructure.class, transformer.type());
+		assertEquals(structure.layout(), transformer.layout());
 	}
 
 	@Test
-	void marshal() {
+	void transform() {
 		structure.field = 2;
-		final MemorySegment address = mapper.marshal(structure, Arena.ofAuto());
+		final MemorySegment address = transformer.transform(structure, Arena.ofAuto());
 		assertEquals(2, address.get(JAVA_INT, 0));
 	}
 
 	@Test
 	void empty() {
-		assertEquals(MemorySegment.NULL, mapper.empty());
+		assertEquals(MemorySegment.NULL, transformer.empty());
 	}
 
 	private static MemorySegment address() {
@@ -57,15 +57,15 @@ class StructureNativeMapperTest {
 	@Test
 	void returns() {
 		final MemorySegment address = address();
-		final var result = (MockStructure) mapper.returns().apply(address);
+		final var result = (MockStructure) transformer.returns().apply(address);
 		assertEquals(3, result.field);
 	}
 
 	@Test
-	void unmarshal() {
+	void update() {
 		final var structure = new MockStructure();
 		final MemorySegment address = address();
-		mapper.reference().accept(address, structure);
+		transformer.update().accept(address, structure);
 		assertEquals(3, structure.field);
 	}
 }

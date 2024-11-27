@@ -103,9 +103,9 @@ public abstract class NativeStructure {
 	/**
 	 * The <i>structure native mapper</i> marshals a {@link NativeStructure} to/from its native representation.
 	 */
-	public static class StructureNativeMapper extends AbstractNativeMapper<NativeStructure, MemorySegment> {
+	public static class StructureNativeTransformer extends AbstractNativeTransformer<NativeStructure, MemorySegment> {
 		@Override
-		public StructureNativeMapper derive(Class<? extends NativeStructure> target, NativeMapperRegistry registry) {
+		public StructureNativeTransformer derive(Class<? extends NativeStructure> target, TransformerRegistry registry) {
 			final NativeStructure instance = create(target);
 			final StructLayout layout = instance.layout();
 			final StructureFieldMapping mappings = StructureFieldMapping.build(layout, 0, target, registry);
@@ -118,7 +118,7 @@ public abstract class NativeStructure {
 		}
 
 		@Override
-		public MemorySegment marshal(NativeStructure instance, SegmentAllocator allocator) {
+		public MemorySegment transform(NativeStructure instance, SegmentAllocator allocator) {
 			throw new RuntimeException();
 		}
 
@@ -138,21 +138,21 @@ public abstract class NativeStructure {
 	/**
 	 * Structure subclass mapper.
 	 */
-	private static class Instance extends StructureNativeMapper {
+	private static class Instance extends StructureNativeTransformer {
 		private final Class<? extends NativeStructure> type;
 		private final StructLayout layout;
-		private final StructureFieldMapping marshaller;
+		private final StructureFieldMapping mappings;
 
 		/**
 		 * Constructor.
 		 * @param type				Target type
 		 * @param layout			Structure layout
-		 * @param marshaller		Field marshaller
+		 * @param mappings			Field mappings
 		 */
-		public Instance(Class<? extends NativeStructure> type, StructLayout layout, StructureFieldMapping marshaller) {
+		public Instance(Class<? extends NativeStructure> type, StructLayout layout, StructureFieldMapping mappings) {
 			this.type = requireNonNull(type);
 			this.layout = requireNonNull(layout);
-			this.marshaller = requireNonNull(marshaller);
+			this.mappings = requireNonNull(mappings);
 		}
 
 		@Override
@@ -161,9 +161,9 @@ public abstract class NativeStructure {
 		}
 
 		@Override
-		public MemorySegment marshal(NativeStructure structure, SegmentAllocator allocator) {
+		public MemorySegment transform(NativeStructure structure, SegmentAllocator allocator) {
 			structure.allocate(layout, allocator);
-			marshaller.marshal(structure, structure.address, allocator);
+			mappings.marshal(structure, structure.address, allocator);
 			return structure.address;
 		}
 
@@ -177,7 +177,7 @@ public abstract class NativeStructure {
 		}
 
 		@Override
-		public BiConsumer<MemorySegment, NativeStructure> reference() {
+		public BiConsumer<MemorySegment, NativeStructure> update() {
 			return this::unmarshal;
 		}
 
@@ -187,7 +187,7 @@ public abstract class NativeStructure {
 		private void unmarshal(MemorySegment address, NativeStructure structure) {
 			// TODO - always needs to be done?
 			final MemorySegment segment = address.reinterpret(layout.byteSize());
-			marshaller.unmarshal(segment, structure);
+			mappings.unmarshal(segment, structure);
 		}
 	}
 }

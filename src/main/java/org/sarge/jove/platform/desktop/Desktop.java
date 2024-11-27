@@ -6,7 +6,7 @@ import java.lang.annotation.*;
 import java.lang.foreign.ValueLayout;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.NativeObject.NativeObjectMapper;
+import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
 import org.sarge.jove.foreign.*;
 
 /**
@@ -40,8 +40,8 @@ public final class Desktop implements TransientObject {
 //		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
 //		mapper.addTypeConverter(Window.class, NativeObject.CONVERTER);
 
-		final var registry = NativeMapperRegistry.create();
-		registry.add(new NativeObjectMapper());
+		final var registry = TransformerRegistry.create();
+		registry.add(new NativeObjectTransformer());
 		//registry.add(new DefaultNativeMapper<>(null, null)
 		// TODO - window mapper?
 
@@ -122,7 +122,7 @@ public final class Desktop implements TransientObject {
 	public String[] extensions() {
 		final IntegerReference count = factory.integer();
 		final Handle handle = lib.glfwGetRequiredInstanceExtensions(count);
-		return handle.array(count.value(), ValueLayout.ADDRESS, String[]::new, StringNativeMapper::unmarshal);
+		return handle.array(count.value(), ValueLayout.ADDRESS, String[]::new, StringNativeTransformer::unmarshal);
 		// TODO
 //		final ArrayReturnValue<String> value = lib.glfwGetRequiredInstanceExtensions(count);
 //		return value.array(count.value(), String[]::new);

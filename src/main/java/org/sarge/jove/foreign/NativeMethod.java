@@ -29,32 +29,33 @@ public class NativeMethod {
 	/**
 	 * Native parameter mapper optionally for a by-reference parameter.
 	 */
-	private record NativeParameter(NativeMapper mapper, boolean returned) {
+	private record NativeParameter(NativeTransformer transformer, boolean returned) {
 		/**
 		 * @return Memory layout of this parameter
 		 */
 		MemoryLayout layout() {
-			return mapper.layout();
+			return transformer.layout();
 		}
 
 		/**
-		 * Marshals an argument.
+		 * Transforms a method argument.
 		 * @param arg			Argument
 		 * @param allocator		Allocator
 		 * @return Marshalled argument
 		 */
-		Object marshal(Object arg, SegmentAllocator allocator) {
-			return NativeMapper.marshal(arg, mapper, allocator);
+		Object transform(Object arg, SegmentAllocator allocator) {
+			return NativeTransformer.transform(arg, transformer, allocator);
 		}
 
 		/**
-		 * Unmarshals a by-reference argument.
+		 * Updates a by-reference argument.
 		 * @param value		Native value
-		 * @param arg		Argument
+		 * @param arg		By-reference argument
 		 */
 		@SuppressWarnings("unchecked")
-		void unmarshal(Object value, Object arg) {
-			mapper.reference().accept(value, arg);
+		void update(Object value, Object arg) {
+			assert returned;
+			transformer.update().accept(value, arg);
 		}
 	}
 
@@ -92,34 +93,34 @@ public class NativeMethod {
 	 * @throws RuntimeException if the native method fails
 	 */
 	public Object invoke(Object[] args, SegmentAllocator allocator) {
-		final Object[] actual = marshal(args, allocator);
+		final Object[] actual = transform(args, allocator);
 		final Object result = execute(actual);
-		unmarshal(args, actual);
-		return unmarshalReturnValue(result);
+		update(args, actual);
+		return transform(result);
 	}
 
 	/**
-	 * Marshals the given method arguments to the corresponding native representations.
+	 * Transform the given method arguments to the corresponding native representation.
 	 * @param args			Arguments
 	 * @param context		Native context
-	 * @return Marshalled arguments
+	 * @return Transformed arguments
 	 */
-	private Object[] marshal(Object[] args, SegmentAllocator allocator) {
+	private Object[] transform(Object[] args, SegmentAllocator allocator) {
 		if(args == null) {
 			return null;
 		}
 
-		final Object[] mapped = new Object[args.length];
-		for(int n = 0; n < mapped.length; ++n) {
-			mapped[n] = signature[n].marshal(args[n], allocator);
+		final Object[] transformed = new Object[args.length];
+		for(int n = 0; n < transformed.length; ++n) {
+			transformed[n] = signature[n].transform(args[n], allocator);
 		}
 
-		return mapped;
+		return transformed;
 	}
 
 	/**
-	 * Executes this native method with the given marshalled arguments.
-	 * @param args Marshalled arguments
+	 * Executes this native method with the given transformed arguments.
+	 * @param args Transformed arguments
 	 * @return Return value
 	 */
 	private Object execute(Object[] args) {
@@ -133,11 +134,11 @@ public class NativeMethod {
 	}
 
 	/**
-	 * Unmarshals by-reference parameters after invocation.
+	 * Updates by-reference parameters after invocation.
 	 * @param args		Method arguments
-	 * @param actual	Marshalled arguments
+	 * @param actual	Transformed arguments
 	 */
-	private void unmarshal(Object[] args, Object[] actual) {
+	private void update(Object[] args, Object[] actual) {
 		if(args == null) {
 			return;
 		}
@@ -146,18 +147,18 @@ public class NativeMethod {
 			final NativeParameter p = signature[n];
 			final Object arg = args[n];
 			if(p.returned && Objects.nonNull(arg)) {
-				p.unmarshal(actual[n], arg);
+				p.update(actual[n], arg);
 			}
 		}
 	}
 
 	/**
-	 * Unmarshals the return value of this method.
+	 * Transforms the return value of this method.
 	 * @param value Native return value
-	 * @return Unmarshalled return value
+	 * @return Transformed return value
 	 */
 	@SuppressWarnings("unchecked")
-	private Object unmarshalReturnValue(Object value) {
+	private Object transform(Object value) {
 		if(returns == null) {
 			assert value == null;
 			return null;
@@ -190,17 +191,17 @@ public class NativeMethod {
 	 */
 	public static class Builder {
 		private final Linker linker = Linker.nativeLinker();
-		private final NativeMapperRegistry registry;
+		private final TransformerRegistry registry;
 
 		private MemorySegment address;
 		private final List<NativeParameter> signature = new ArrayList<>();
-		private NativeMapper returns;
+		private NativeTransformer returns;
 
 		/**
 		 * Constructor.
-		 * @param registry Native mappers
+		 * @param registry Native transformers
 		 */
-		public Builder(NativeMapperRegistry registry) {
+		public Builder(TransformerRegistry registry) {
 			this.registry = requireNonNull(registry);
 		}
 
@@ -230,7 +231,7 @@ public class NativeMethod {
 		 * @see Returned
 		 */
 		public Builder parameter(Class<?> type, boolean returned) {
-			final NativeMapper mapper = registry.mapper(type);
+			final NativeTransformer mapper = registry.get(type);
 			signature.add(new NativeParameter(mapper, returned));
 			return this;
 		}
@@ -252,21 +253,20 @@ public class NativeMethod {
 		 * @throws IllegalArgumentException if the type is not supported or cannot be returned from a native method
 		 */
 		public Builder returns(Class<?> type) {
-			this.returns = registry.mapper(type);
+			this.returns = registry.get(type);
 			return this;
 		}
 
 		/**
 		 * Constructs this native method.
 		 * @return Native method
-		 * @see NativeMethod#NativeMethod(MethodHandle, List, NativeParameter)
+		 * @see NativeMethod#NativeMethod(MethodHandle, List, Function)
 		 */
 		public NativeMethod build() {
 			final MemoryLayout[] layout = layout();
 			final FunctionDescriptor descriptor = descriptor(layout);
 			final MethodHandle handle = linker.downcallHandle(address, descriptor);
-			final Function mapper = Objects.isNull(returns) ? null : returns.returns();
-			return new NativeMethod(handle, signature, mapper);
+			return new NativeMethod(handle, signature, returns());
 		}
 
 		/**
@@ -289,6 +289,18 @@ public class NativeMethod {
 			else {
 				final MemoryLayout m = returns.layout();
 				return FunctionDescriptor.of(m, layout);
+			}
+		}
+
+		/**
+		 * @return Return value transformer
+		 */
+		private Function returns() {
+			if(returns == null) {
+				return null;
+			}
+			else {
+				return returns.returns();
 			}
 		}
 	}

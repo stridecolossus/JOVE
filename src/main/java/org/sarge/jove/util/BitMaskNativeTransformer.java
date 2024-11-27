@@ -3,14 +3,14 @@ package org.sarge.jove.util;
 import java.lang.foreign.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.AbstractNativeMapper;
+import org.sarge.jove.foreign.AbstractNativeTransformer;
 
 /**
- * The <i>bit mask native mapper</i> marshals an integer enumeration bit mask to/from its native integer representation.
+ * The <i>bit mask native mapper</i> maps an bit mask to/from its native integer representation.
  * @author Sarge
  */
 @SuppressWarnings("rawtypes")
-public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask, Integer> {
+public class BitMaskNativeTransformer extends AbstractNativeTransformer<BitMask, Integer> {
 	@Override
 	public Class<BitMask> type() {
 		return BitMask.class;
@@ -22,7 +22,7 @@ public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask, Integer> 
 	}
 
 	@Override
-	public Integer marshal(BitMask value, SegmentAllocator allocator) {
+	public Integer transform(BitMask value, SegmentAllocator allocator) {
 		return value.bits();
 	}
 

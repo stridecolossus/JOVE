@@ -12,7 +12,7 @@ import java.util.function.Function;
  * @param <R>
  * @author Sarge
  */
-public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T, T> {
+public class PrimitiveNativeTransformer<T> extends AbstractNativeTransformer<T, T> {
 	private static final Map<Class<?>, ValueLayout> PRIMITIVES = Map.of(
         	byte.class,		ValueLayout.JAVA_BYTE,
         	char.class,		ValueLayout.JAVA_CHAR,
@@ -37,11 +37,11 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T, T> {
 	 * @return Native mappers for all Java primitive types
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static Collection<? extends NativeMapper> mappers() {
+	public static Collection<? extends NativeTransformer> mappers() {
 		return PRIMITIVES
 				.keySet()
 				.stream()
-				.map(PrimitiveNativeMapper::new)
+				.map(PrimitiveNativeTransformer::new)
 				.toList();
 	}
 
@@ -53,7 +53,7 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T, T> {
 	 * @param type Primitive type
 	 * @throws IllegalArgumentException if {@link #type} is not primitive
 	 */
-	public PrimitiveNativeMapper(Class<T> type) {
+	public PrimitiveNativeTransformer(Class<T> type) {
 		if(!type.isPrimitive()) throw new IllegalArgumentException("Not a primitive: " + type);
 		this.type = requireNonNull(type);
 		this.layout = PRIMITIVES.get(type);
@@ -70,7 +70,7 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T, T> {
 	}
 
 	@Override
-	public Object marshal(T value, SegmentAllocator allocator) {
+	public Object transform(T value, SegmentAllocator allocator) {
 		return value;
 	}
 

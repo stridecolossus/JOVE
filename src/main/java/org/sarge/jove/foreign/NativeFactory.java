@@ -9,27 +9,24 @@ import java.util.*;
 import java.util.function.*;
 
 /**
- * The <i>native factory</i> is used to instantiate a native library.
- *
- * construct a proxy API for a native library.
+ * The <i>native factory</i> construct a proxy API for a native library.
  * <p>
  * The {@link #build(SymbolLookup, Class)} method constructs a proxy implementation of a given native API.
  * Each public, non-static method of the API generates a {@link NativeMethod} with a method handle retrieved from the given symbol lookup.
- * The method parameters and optional return type are mapped to the corresponding native mappers via the {@link NativeMapperRegistry} provided in the constructor.
+ * The method parameters and optional return type are mapped to the corresponding native transformers via the {@link TransformerRegistry} provided in the constructor.
  * <p>
  * @author Sarge
  */
 public class NativeFactory {
 	private final ClassLoader loader = this.getClass().getClassLoader(); // TODO - mutable?
-	private final NativeMapperRegistry registry;
+	private final TransformerRegistry registry;
 	private Consumer<Object> check = result -> { /* Ignored */ };
 
 	/**
 	 * Constructor.
-	 * @param registry		Supported native mappers
-	 * @param handler			Optional method success code validator
+	 * @param registry Supported native transformers
 	 */
-	public NativeFactory(NativeMapperRegistry registry) {
+	public NativeFactory(TransformerRegistry registry) {
 		this.registry = requireNonNull(registry);
 	}
 

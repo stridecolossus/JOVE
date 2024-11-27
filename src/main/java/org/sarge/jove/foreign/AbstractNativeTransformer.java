@@ -7,9 +7,9 @@ import java.util.function.*;
  * Skeleton implementation.
  * @author Sarge
  */
-public abstract class AbstractNativeMapper<T, R> implements NativeMapper<T, R> {
+public abstract class AbstractNativeTransformer<T, R> implements NativeTransformer<T, R> {
 	@Override
-	public NativeMapper<? extends T, R> derive(Class<? extends T> target, NativeMapperRegistry registry) {
+	public NativeTransformer<? extends T, R> derive(Class<? extends T> target, TransformerRegistry registry) {
 		return this;
 	}
 
@@ -29,7 +29,7 @@ public abstract class AbstractNativeMapper<T, R> implements NativeMapper<T, R> {
 	}
 
 	@Override
-	public BiConsumer<R, T> reference() {
+	public BiConsumer<R, T> update() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -42,12 +42,12 @@ public abstract class AbstractNativeMapper<T, R> implements NativeMapper<T, R> {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof NativeMapper that) &&
+				(obj instanceof NativeTransformer that) &&
 				this.type().equals(that.type());
 	}
 
 	@Override
 	public String toString() {
-		return String.format("NativeMapper[%s]", this.type());
+		return String.format("NativeTransformer[%s]", this.type());
 	}
 }

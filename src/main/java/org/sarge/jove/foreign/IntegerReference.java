@@ -66,26 +66,26 @@ public class IntegerReference {
 	}
 
 	/**
-	 * Native mapper for an integer reference.
+	 * Native transform for an integer reference.
 	 */
-	public static class IntegerReferenceMapper extends AbstractNativeMapper<IntegerReference, MemorySegment> {
+	public static class IntegerReferenceTransform extends AbstractNativeTransformer<IntegerReference, MemorySegment> {
 		@Override
 		public Class<IntegerReference> type() {
 			return IntegerReference.class;
 		}
 
 		@Override
-		public MemorySegment marshal(IntegerReference ref, SegmentAllocator allocator) {
+		public MemorySegment transform(IntegerReference ref, SegmentAllocator allocator) {
 			return ref.init(allocator);
 		}
 
 		@Override
 		public MemorySegment empty() {
-			throw new NullPointerException("A by-reference pointer cannot be null");
+			throw new NullPointerException("A by-reference integer cannot be null");
 		}
 
 		@Override
-		public BiConsumer<MemorySegment, IntegerReference> reference() {
+		public BiConsumer<MemorySegment, IntegerReference> update() {
 			return (address, ref) -> ref.update(address);
 		}
 	}

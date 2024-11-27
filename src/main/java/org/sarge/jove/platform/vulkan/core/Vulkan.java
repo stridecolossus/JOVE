@@ -22,7 +22,7 @@ public class Vulkan {
 	 */
 	public static Vulkan create() {
 		// Register Vulkan type mappers
-		final var registry = NativeMapperRegistry.create();
+		final var registry = TransformerRegistry.create();
 //		registry.add(new StructureNativeMapper(registry));
 
 		//////////
@@ -41,7 +41,7 @@ public class Vulkan {
 	}
 
 	private final VulkanLibrary lib;
-	private final NativeMapperRegistry registry;
+	private final TransformerRegistry registry;
 	private final ReferenceFactory factory;
 
 	/**
@@ -50,7 +50,7 @@ public class Vulkan {
 	 * @param registry		Mapper registry
 	 * @param factory		Reference factory
 	 */
-	public Vulkan(VulkanLibrary lib, NativeMapperRegistry registry, ReferenceFactory factory) {
+	public Vulkan(VulkanLibrary lib, TransformerRegistry registry, ReferenceFactory factory) {
 		this.lib = requireNonNull(lib);
 		this.registry = requireNonNull(registry);
 		this.factory = requireNonNull(factory);
@@ -66,7 +66,7 @@ public class Vulkan {
 	/**
 	 * @return Vulkan mapper registry
 	 */
-	public NativeMapperRegistry registry() {
+	public TransformerRegistry registry() {
 		return registry;
 	}
 

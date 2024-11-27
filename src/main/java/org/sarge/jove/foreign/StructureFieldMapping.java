@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 /**
- * A <i>structure field mapping</i> composes the enumerated structure fields to be marshalled to/from off-heap memory.
+ * A <i>structure field mapping</i> marshals structure fields to/from off-heap memory.
  * @author Sarge
  */
 record StructureFieldMapping(long offset, long size, List<StructureField> fields) implements FieldMapping<NativeStructure> {
@@ -16,7 +16,7 @@ record StructureFieldMapping(long offset, long size, List<StructureField> fields
 	 * A <i>structure field</i> marshals a structure field to/from off-heap memory.
 	 */
 	@SuppressWarnings("rawtypes")
-	private record StructureField(Field field, NativeMapper mapper, FieldMapping mapping) {
+	private record StructureField(Field field, NativeTransformer transformer, FieldMapping mapping) {
 		/**
 		 * Marshals a structure field.
 		 * @param structure		Structure
@@ -26,7 +26,7 @@ record StructureFieldMapping(long offset, long size, List<StructureField> fields
 		@SuppressWarnings("unchecked")
 		public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
 			final Object value = structure.get(field);
-			final Object foreign = NativeMapper.marshal(value, mapper, allocator);
+			final Object foreign = NativeTransformer.transform(value, transformer, allocator);
 			mapping.marshal(foreign, address, allocator);
 		}
 
@@ -45,7 +45,7 @@ record StructureFieldMapping(long offset, long size, List<StructureField> fields
 
 			// Retrieve the native field from the off-heap memory
 			final Object foreign = mapping.unmarshal(address, structure);
-			final Object value = mapper.returns().apply(foreign);
+			final Object value = transformer.returns().apply(foreign);
 			set(value, structure);
 		}
 
@@ -104,7 +104,7 @@ record StructureFieldMapping(long offset, long size, List<StructureField> fields
 	 * @return Field mappings
 	 * @throws IllegalArgumentException for an unknown or unsupported field
 	 */
-	static StructureFieldMapping build(StructLayout layout, long offset, Class<? extends NativeStructure> type, NativeMapperRegistry registry) {
+	static StructureFieldMapping build(StructLayout layout, long offset, Class<? extends NativeStructure> type, TransformerRegistry registry) {
 		// Init builder for structure fields
 		final var builder = new Object() {
 			/**
@@ -116,8 +116,8 @@ record StructureFieldMapping(long offset, long size, List<StructureField> fields
 				final String name = member.name().get();
 				final Field field = field(name);
 				final FieldMapping<?> marshaller = marshaller(field, member);
-				final NativeMapper<?, ?> mapper = registry.mapper(field.getType());
-				return new StructureField(field, mapper, marshaller);
+				final NativeTransformer<?, ?> transformer = registry.get(field.getType());
+				return new StructureField(field, transformer, marshaller);
 			}
 
 			/**
@@ -166,7 +166,7 @@ record StructureFieldMapping(long offset, long size, List<StructureField> fields
 		};
 
 		// Enumerate structure fields specified by the memory layout
-		final List<StructureField> mappings = layout
+		final List<StructureField> fields = layout
 				.memberLayouts()
 				.stream()
 				.filter(e -> e.name().isPresent())
@@ -175,6 +175,6 @@ record StructureFieldMapping(long offset, long size, List<StructureField> fields
 
 		// Create structure mapping
 		final long size = layout.byteSize();
-		return new StructureFieldMapping(offset, size, mappings);
+		return new StructureFieldMapping(offset, size, fields);
 	}
 }

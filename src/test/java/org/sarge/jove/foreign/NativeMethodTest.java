@@ -18,8 +18,8 @@ class NativeMethodTest {
 
 	@BeforeEach
 	void before() {
-		final var mapper = new PrimitiveNativeMapper<>(int.class);
-		final var registry = new NativeMapperRegistry();
+		final var mapper = new PrimitiveNativeTransformer<>(int.class);
+		final var registry = new TransformerRegistry();
 		registry.add(mapper);
 		arena = Arena.ofAuto();
 		lookup = Linker.nativeLinker().defaultLookup();

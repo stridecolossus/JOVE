@@ -10,14 +10,14 @@ import java.util.function.BiConsumer;
  *
  * @author Sarge
  */
-public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegment> {
-	private final NativeMapperRegistry registry;
+public class ArrayNativeTransformer extends AbstractNativeTransformer<Object[], MemorySegment> {
+	private final TransformerRegistry registry;
 
 	/**
      * Constructor.
      * @param registry
      */
-    public NativeArrayMapper(NativeMapperRegistry registry) {
+    public ArrayNativeTransformer(TransformerRegistry registry) {
     	this.registry = requireNonNull(registry);
     }
 
@@ -27,16 +27,16 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegm
 	}
 
 	@SuppressWarnings("rawtypes")
-	private NativeMapper mapper(Object[] array) {
+	private NativeTransformer mapper(Object[] array) {
 		final Class<?> component = array.getClass().getComponentType();
-		return registry.mapper(component);
+		return registry.get(component);
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public Object marshal(Object[] array, SegmentAllocator allocator) {
+	public Object transform(Object[] array, SegmentAllocator allocator) {
 		// Allocate off-heap memory for this array
-		final NativeMapper mapper = mapper(array);
+		final NativeTransformer mapper = mapper(array);
 		final MemorySegment address = allocator.allocate(mapper.layout(), array.length);
 
 		// Marshal array elements
@@ -48,7 +48,7 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegm
 
 			// Marshal array element
 			@SuppressWarnings("unchecked")
-			final MemorySegment element = (MemorySegment) mapper.marshal(array[n], allocator);
+			final MemorySegment element = (MemorySegment) mapper.transform(array[n], allocator);
 
 			// Skip if empty
 			if(MemorySegment.NULL.equals(element)) {
@@ -65,9 +65,9 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegm
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Override
-	public BiConsumer<MemorySegment, Object[]> reference() {
+	public BiConsumer<MemorySegment, Object[]> update() {
 		return (address, array) -> {
-			final NativeMapper mapper = mapper(array);
+			final NativeTransformer mapper = mapper(array);
     		final MemoryLayout layout = mapper.layout();
     		for(int n = 0; n < array.length; ++n) {			// TODO - loop per case? wrap into some helper function? nasty
     			// Extract array element
@@ -88,7 +88,7 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegm
     				array[n] = mapper.returns().apply(element);
     			}
     			else {
-    				mapper.reference().accept(element, array[n]);
+    				mapper.update().accept(element, array[n]);
     			}
     		}
 		};

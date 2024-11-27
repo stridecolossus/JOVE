@@ -16,41 +16,46 @@ class IntEnumNativeMapperTest {
 		}
 	}
 
-	private IntEnumNativeMapper mapper;
+	private IntEnumNativeTransformer transformer;
 
 	@BeforeEach
 	void before() {
-		mapper = new IntEnumNativeMapper().derive(MockEnum.class);
+		transformer = new IntEnumNativeTransformer().derive(MockEnum.class, null);
 	}
 
 	@Test
 	void mapper() {
-		assertEquals(IntEnum.class, mapper.type());
-		assertEquals(ValueLayout.JAVA_INT, mapper.layout());
+		assertEquals(IntEnum.class, transformer.type());
+		assertEquals(ValueLayout.JAVA_INT, transformer.layout());
 	}
 
+	@DisplayName("An integer enumeration value is transformed to a native integer")
 	@Test
-	void marshal() {
-		assertEquals(42, mapper.marshal(MockEnum.INSTANCE, null));
+	void transform() {
+		assertEquals(42, transformer.transform(MockEnum.INSTANCE, null));
 	}
 
+	@DisplayName("An empty integer enumeration value is the default value of the enumeration")
 	@Test
-	void marshalNull() {
-		assertEquals(42, mapper.marshalNull());
+	void empty() {
+		assertEquals(42, transformer.empty());
 	}
 
+	@DisplayName("An integer enumeration can be returned from a native method")
 	@Test
 	void returned() {
-		assertEquals(MockEnum.INSTANCE, mapper.returns().apply(42));
+		assertEquals(MockEnum.INSTANCE, transformer.returns().apply(42));
 	}
 
+	@DisplayName("An integer enumeration can be returned from a native method as the default value")
 	@Test
 	void returnedDefault() {
-		assertEquals(MockEnum.INSTANCE, mapper.returns().apply(0));
+		assertEquals(MockEnum.INSTANCE, transformer.returns().apply(0));
 	}
 
+	@DisplayName("An integer enumeration cannot be passed as a by-reference parameter")
 	@Test
-	void reference() {
-		assertThrows(UnsupportedOperationException.class, () -> mapper.reference());
+	void update() {
+		assertThrows(UnsupportedOperationException.class, () -> transformer.update());
 	}
 }
