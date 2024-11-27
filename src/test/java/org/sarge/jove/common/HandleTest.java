@@ -43,7 +43,7 @@ class HandleTest {
 		void mapper() {
 			assertEquals(Handle.class, mapper.type());
 			assertEquals(ValueLayout.ADDRESS, mapper.layout());
-			assertEquals(mapper, mapper.derive(null));
+			assertEquals(mapper, mapper.derive(null, null));
 		}
 
 		@Test
@@ -53,7 +53,7 @@ class HandleTest {
 
 		@Test
 		void marshalNull() {
-			assertEquals(MemorySegment.NULL, mapper.marshalNull());
+			assertEquals(MemorySegment.NULL, mapper.empty());
 		}
 
 		@Test

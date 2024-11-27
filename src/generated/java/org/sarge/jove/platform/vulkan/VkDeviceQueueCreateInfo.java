@@ -1,6 +1,8 @@
 package org.sarge.jove.platform.vulkan;
 
-import java.lang.foreign.StructLayout;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+
+import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
@@ -20,7 +22,15 @@ public class VkDeviceQueueCreateInfo extends NativeStructure {
 
 	@Override
 	protected StructLayout layout() {
-		// TODO
-		return null;
+		return MemoryLayout.structLayout(
+				JAVA_INT.withName("sType"),
+				PADDING,
+				POINTER.withName("pNext"),
+				JAVA_INT.withName("flags"),
+				JAVA_INT.withName("queueFamilyIndex"),
+				JAVA_INT.withName("queueCount"),
+				PADDING,
+				POINTER.withName("pQueuePriorities")
+		);
 	}
 }

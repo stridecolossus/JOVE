@@ -10,14 +10,7 @@ import java.util.function.*;
  */
 public interface NativeMapper<T, R> {
 	/**
-	 * Derives a native mapper for the native type subclass.
-	 * @param target Target type
-	 * @return Derived native mapper
-	 */
-	NativeMapper<? extends T, R> derive(Class<? extends T> target);
-
-	/**
-	 * @return Type
+	 * @return Domain type
 	 */
 	Class<T> type();
 
@@ -27,29 +20,53 @@ public interface NativeMapper<T, R> {
 	MemoryLayout layout();
 
 	/**
+	 * Derives a native mapper for the subclass.
+	 * @param target 		Target type
+	 * @param registry		Native mappers
+	 * @return Derived mapper
+	 */
+	NativeMapper<? extends T, R> derive(Class<? extends T> target, NativeMapperRegistry registry);
+
+	/**
 	 * Marshals the given value to its native representation.
-	 * @param instance		Instance to marshal
-	 * @param allocator		Allocator for off-heap memory
-	 * @return Native value
+	 * @param instance		Data to marshal
+	 * @param allocator		Allocator
 	 */
 	Object marshal(T instance, SegmentAllocator allocator);
 
 	/**
-	 * Marshals a {@code null} value to its native representation.
-	 * @return Native value
-	 * @throws NullPointerException if this mapper does not support {@code null} native values
+	 * Marshals an empty value to its native representation, i.e. {@code null} for reference types.
+	 * @return Empty native value
+	 * @throws NullPointerException if this mapper does not support empty values
 	 */
-	Object marshalNull();
+	Object empty();
 
 	/**
-	 * Provides the mapper for a return value of this native type.
+	 * Helper - Marshals a value to its native representation (including {@link #empty()} values).
+	 * @param arg			Value to marshal
+	 * @param mapper		Native mapper
+	 * @param allocator		Allocator
+	 * @return Marshalled value
+	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	static Object marshal(Object arg, NativeMapper mapper, SegmentAllocator allocator) {
+		if(arg == null) {
+			return mapper.empty();
+		}
+		else {
+			return mapper.marshal(arg, allocator);
+		}
+	}
+
+	/**
+	 * Provides the mapper for a native return value.
 	 * @return Return value mapper
 	 * @throws UnsupportedOperationException if this type cannot be returned from a native method
 	 */
 	Function<R, T> returns();
 
 	/**
-	 * Provides the mapper for a by-reference parameter of this native type.
+	 * Provides the mapper for a by-reference parameter.
 	 * @return Returned parameter mapper
 	 * @throws UnsupportedOperationException if this type cannot be returned as a by-reference parameter
 	 * @see Returned

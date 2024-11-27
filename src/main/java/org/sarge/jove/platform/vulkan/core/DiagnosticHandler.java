@@ -142,7 +142,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		MessageCallback(Consumer<Message> consumer, NativeMapperRegistry registry) {
 			this.consumer = requireNonNull(consumer);
-			this.mapper = new StructureNativeMapper(registry);
+			this.mapper = new StructureNativeMapper().derive(VkDebugUtilsMessengerCallbackData.class, registry);
 		}
 
 		/**

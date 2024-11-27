@@ -17,13 +17,22 @@ public final class PointerReference {
 
 	/**
 	 * @return This reference as an opaque handle
+	 * @throws IllegalStateException if this reference has not been initialised
 	 */
 	public Handle handle() {
+		if(handle == null) throw new IllegalStateException("Pointer has not been initialised");
 		return handle;
 	}
 
 	protected void set(MemorySegment ptr) {
 		handle = new Handle(ptr);
+	}
+
+	private MemorySegment allocate(SegmentAllocator allocator) {
+		if(address == null) {
+			address = allocator.allocate(ADDRESS);
+		}
+		return address;
 	}
 
 	/**
@@ -37,15 +46,12 @@ public final class PointerReference {
 
 		@Override
 		public MemorySegment marshal(PointerReference ref, SegmentAllocator allocator) {
-			if(ref.address == null) {
-				ref.address = allocator.allocate(ADDRESS);
-			}
-			return ref.address;
+			return ref.allocate(allocator);
 		}
 
 		@Override
-		public MemorySegment marshalNull() {
-			throw new NullPointerException();
+		public MemorySegment empty() {
+			throw new NullPointerException("A pointer reference cannot be null");
 		}
 
 		@Override

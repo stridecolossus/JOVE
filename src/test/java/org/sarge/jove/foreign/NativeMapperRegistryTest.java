@@ -1,11 +1,10 @@
 package org.sarge.jove.foreign;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Optional;
+import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.*;
 
 class NativeMapperRegistryTest {
 	private NativeMapperRegistry registry;
@@ -16,35 +15,33 @@ class NativeMapperRegistryTest {
 	}
 
 	@Test
-	void unsupported() {
-		assertEquals(true, registry.mapper(Integer.class).isEmpty());
-	}
-
-	@Test
 	void add() {
 		final var mapper = new PrimitiveNativeMapper<>(int.class);
 		registry.add(mapper);
-		assertEquals(Optional.of(mapper), registry.mapper(int.class));
+		assertEquals(mapper, registry.mapper(int.class));
 	}
 
-//	@Nested
-//	class DerivedTypeTests {
-//		private NativeMapper<?> mapper;
-//
-//		@BeforeEach
-//    	void before() {
-//    		mapper = new DefaultNativeMapper<>(Number.class, ValueLayout.JAVA_INT);
-//    		registry.add(mapper);
-//    	}
-//
-//    	@Test
-//    	void derived() {
-//    		assertEquals(Optional.of(mapper), registry.mapper(Number.class));
-//    	}
-//
-//    	@Test
-//    	void wrapper() {
-//    		assertEquals(Optional.of(mapper), registry.mapper(Integer.class));
-//    	}
-//	}
+	@Test
+	void derived() {
+		final var mapper = new AbstractNativeMapper<Number, MemorySegment>() {
+			@Override
+			public Class<Number> type() {
+				return Number.class;
+			}
+
+			@Override
+			public Object marshal(Number instance, SegmentAllocator allocator) {
+				return instance;
+			}
+		};
+		registry.add(mapper);
+
+		final var derived = registry.mapper(Integer.class);
+		assertEquals(Number.class, derived.type());
+	}
+
+	@Test
+	void unsupported() {
+		assertThrows(IllegalArgumentException.class, () -> registry.mapper(int.class));
+	}
 }

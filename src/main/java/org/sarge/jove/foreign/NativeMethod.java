@@ -38,35 +38,23 @@ public class NativeMethod {
 		}
 
 		/**
-		 * Marshals this parameter.
+		 * Marshals an argument.
+		 * @param arg			Argument
+		 * @param allocator		Allocator
+		 * @return Marshalled argument
 		 */
-		@SuppressWarnings("unchecked")
 		Object marshal(Object arg, SegmentAllocator allocator) {
-			if(arg == null) {
-				return mapper.marshalNull();
-			}
-			else {
-				return mapper.marshal(arg, allocator);
-			}
+			return NativeMapper.marshal(arg, mapper, allocator);
 		}
 
 		/**
-		 * Unmarshals a by-reference parameter.
+		 * Unmarshals a by-reference argument.
+		 * @param value		Native value
+		 * @param arg		Argument
 		 */
 		@SuppressWarnings("unchecked")
-		void unmarshal(Object actual, Object arg) {
-			// Skip if not by-reference parameter
-			if(!returned) {
-				return;
-			}
-
-			// Skip if empty
-			if(arg == null) {
-				return;
-			}
-
-			// Otherwise return by-reference
-			mapper.reference().accept(actual, arg);
+		void unmarshal(Object value, Object arg) {
+			mapper.reference().accept(value, arg);
 		}
 	}
 
@@ -155,7 +143,11 @@ public class NativeMethod {
 		}
 
 		for(int n = 0; n < args.length; ++n) {
-			signature[n].unmarshal(actual[n], args[n]);
+			final NativeParameter p = signature[n];
+			final Object arg = args[n];
+			if(p.returned && Objects.nonNull(arg)) {
+				p.unmarshal(actual[n], arg);
+			}
 		}
 	}
 
@@ -238,15 +230,8 @@ public class NativeMethod {
 		 * @see Returned
 		 */
 		public Builder parameter(Class<?> type, boolean returned) {
-			// Lookup native mapper
-			final NativeMapper mapper = registry
-					.mapper(type)
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + type));
-
-			// Add parameter wrapper
-			final var parameter = new NativeParameter(mapper, returned);
-			signature.add(parameter);
-
+			final NativeMapper mapper = registry.mapper(type);
+			signature.add(new NativeParameter(mapper, returned));
 			return this;
 		}
 
@@ -267,10 +252,7 @@ public class NativeMethod {
 		 * @throws IllegalArgumentException if the type is not supported or cannot be returned from a native method
 		 */
 		public Builder returns(Class<?> type) {
-			this.returns = registry
-					.mapper(type)
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + type));
-
+			this.returns = registry.mapper(type);
 			return this;
 		}
 

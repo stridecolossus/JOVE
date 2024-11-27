@@ -51,6 +51,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	/**
 	 * @return Vulkan
 	 */
+	@Override
 	public Vulkan vulkan() {
 		return parent.instance().vulkan();
 	}
@@ -150,6 +151,8 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			info.queueCount = array.length;
 			info.queueFamilyIndex = family.index();
 			info.pQueuePriorities = array;
+
+			throw new UnsupportedOperationException(); // TODO - pQueuePriorities: primitive array => pointer?
 		}
 	}
 

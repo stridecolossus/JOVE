@@ -22,9 +22,9 @@ public class IntegerReference {
 	}
 
 	/**
-	 * Marshals this integer reference.
+	 * Initialises this reference before transformation.
 	 */
-	private MemorySegment marshal(SegmentAllocator allocator) {
+	private MemorySegment init(SegmentAllocator allocator) {
 		if(address == null) {
 			address = allocator.allocate(JAVA_INT);
 		}
@@ -33,9 +33,9 @@ public class IntegerReference {
 	}
 
 	/**
-	 * Unmarshals this reference.
+	 * Updates this reference after invocation.
 	 */
-	private void unmarshal(MemorySegment address) {
+	private void update(MemorySegment address) {
 		this.value = address.get(JAVA_INT, 0);
 	}
 
@@ -76,17 +76,17 @@ public class IntegerReference {
 
 		@Override
 		public MemorySegment marshal(IntegerReference ref, SegmentAllocator allocator) {
-			return ref.marshal(allocator);
+			return ref.init(allocator);
 		}
 
 		@Override
-		public MemorySegment marshalNull() {
-			throw new NullPointerException();
+		public MemorySegment empty() {
+			throw new NullPointerException("A by-reference pointer cannot be null");
 		}
 
 		@Override
 		public BiConsumer<MemorySegment, IntegerReference> reference() {
-			return (address, ref) -> ref.unmarshal(address);
+			return (address, ref) -> ref.update(address);
 		}
 	}
 }

@@ -16,7 +16,7 @@ import org.sarge.jove.util.*;
 @SuppressWarnings("rawtypes")
 public class NativeMapperRegistry {
 	private final Map<Class<?>, NativeMapper> mappers = new HashMap<>();
-	private final Optional<NativeMapper> array = Optional.of(new NativeArrayMapper(this));
+	private final NativeMapper array = new NativeArrayMapper(this);
 
 	/**
 	 * Registers a native mapper.
@@ -35,7 +35,7 @@ public class NativeMapperRegistry {
 	 * @return Native mapper
 	 * @throws IllegalArgumentException if the type is not supported by this registry
 	 */
-	public Optional<NativeMapper> mapper(Class<?> type) {
+	public NativeMapper mapper(Class<?> type) {
 		if(type.isArray() || Collection.class.isAssignableFrom(type)) {
 			return array;
 		}
@@ -45,7 +45,7 @@ public class NativeMapperRegistry {
 			return find(type);
 		}
 		else {
-			return Optional.of(mapper);
+			return mapper;
 		}
 	}
 
@@ -53,13 +53,14 @@ public class NativeMapperRegistry {
 	 * Finds a native mapper for the given subclass.
 	 */
 	@SuppressWarnings("unchecked")
-	private Optional<NativeMapper> find(Class<?> type) {
+	private NativeMapper find(Class<?> type) {
 		return mappers
 				.values()
 				.stream()
 				.filter(e -> e.type().isAssignableFrom(type))
 				.findAny()
-				.map(m -> derive(m, type));
+				.map(m -> derive(m, type))
+				.orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + type));
 	}
 
 	/**
@@ -70,7 +71,8 @@ public class NativeMapperRegistry {
 	 */
 	private NativeMapper derive(NativeMapper mapper, Class<?> type) {
 		@SuppressWarnings("unchecked")
-		final NativeMapper derived = mapper.derive(type);
+		final NativeMapper derived = mapper.derive(type, this);
+		if(derived == null) throw new NullPointerException("Native mapper returned null for subclass: " + type);
 		mappers.put(type, derived);
 		return derived;
 	}
@@ -93,7 +95,7 @@ public class NativeMapperRegistry {
 				new NativeObjectMapper(),
 				new IntegerReferenceMapper(),
 				new PointerReferenceMapper(),
-				new StructureNativeMapper(registry),
+				new StructureNativeMapper(),
 		};
 		for(var m : mappers) {
 			registry.add(m);

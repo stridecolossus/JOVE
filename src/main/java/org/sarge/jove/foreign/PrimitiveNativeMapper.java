@@ -75,7 +75,7 @@ public class PrimitiveNativeMapper<T> extends AbstractNativeMapper<T, T> {
 	}
 
 	@Override
-	public Object marshalNull() {
+	public Object empty() {
 		// TODO - or return zero? or separate wrapper implementation?
 		throw new UnsupportedOperationException();
 	}

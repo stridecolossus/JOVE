@@ -27,7 +27,7 @@ public class BitMaskNativeMapper extends AbstractNativeMapper<BitMask, Integer> 
 	}
 
 	@Override
-	public Integer marshalNull() {
+	public Integer empty() {
 		return 0;
 	}
 

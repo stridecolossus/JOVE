@@ -25,7 +25,7 @@ class StringNativeMapperTest {
 	void mapper() {
 		assertEquals(String.class, mapper.type());
 		assertEquals(ValueLayout.ADDRESS, mapper.layout());
-		assertEquals(mapper, mapper.derive(null));
+		assertEquals(mapper, mapper.derive(null, null));
 	}
 
 	@DisplayName("A string can be marshalled to off-heap memory")
@@ -45,7 +45,7 @@ class StringNativeMapperTest {
 	@DisplayName("A null string can be marshalled")
 	@Test
 	void marshalNull() {
-		assertEquals(MemorySegment.NULL, mapper.marshalNull());
+		assertEquals(MemorySegment.NULL, mapper.empty());
 	}
 
 	@DisplayName("A string can be returned from a native method")

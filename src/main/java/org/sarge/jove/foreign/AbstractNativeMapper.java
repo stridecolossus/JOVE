@@ -9,7 +9,7 @@ import java.util.function.*;
  */
 public abstract class AbstractNativeMapper<T, R> implements NativeMapper<T, R> {
 	@Override
-	public NativeMapper<? extends T, R> derive(Class<? extends T> target) {
+	public NativeMapper<? extends T, R> derive(Class<? extends T> target, NativeMapperRegistry registry) {
 		return this;
 	}
 
@@ -19,7 +19,7 @@ public abstract class AbstractNativeMapper<T, R> implements NativeMapper<T, R> {
 	}
 
 	@Override
-	public Object marshalNull() {
+	public Object empty() {
 		return MemorySegment.NULL;
 	}
 

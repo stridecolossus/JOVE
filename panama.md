@@ -1635,6 +1635,23 @@ structure[]         fields              n * layout          x
 primitive array     ???                 ???                 x
 blob                ???                 ???                 x
 
+marshal structure fields:
+-                   layout          adapter
+primitive           value           var handle
+string              address         var handle
+enum                value(int)      var handle         
+handle              address         var handle
+structure(value)    struct          special             assumes address already allocated?
+structure(ptr)      struct          ???                 allocate during marshal?
+structure[]         struct          ???                 allocate during marshal / fixed sized => already allocated?
+primitive array     sequence        ???
+array               sequence        ???
+
+=>
+
+- ALL use var handle EXCEPT structures & arrays?
+- essentially ignore marshalling of structure itself and recurse to fields
+
 unmarshal return value:
 -                   unmarshal           null
 primitive           primitive           -
@@ -1662,3 +1679,42 @@ blob                ???
 - return mapper = extends mapper + return type
 - structure field mapper extends mapper + field, byte offset/size (remove handles altogether?)
 - array component mapper?
+
+------
+
+parameters:
+
+primitive
+    [does not allocate]
+    marshal identity
+    handle.set(value)
+
+string
+    marshal / allocateFrom(string)
+    handle.set(string)
+
+int enum
+    [does not allocate]
+    marshal e.value()
+    handle.set(int)
+
+int ref
+    allocate = int, init value
+    handle.set(value)
+    unmarshal
+
+structure (by value)
+    allocate layout
+    populate = fields *
+    
+primitive array (sized)
+    ???
+    
+handle[]
+    allocate N address
+    populate = handle.populate
+
+structure[]
+    allocate N layout
+    populate = structure.populate
+

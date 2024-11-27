@@ -15,7 +15,7 @@ public class VkQueueFamilyProperties extends NativeStructure {
 	public BitMask<VkQueueFlag> queueFlags;
 	public int queueCount;
 	public int timestampValidBits;
-	public VkExtent3D minImageTransferGranularity;
+	public VkExtent3D minImageTransferGranularity = new VkExtent3D();
 
 	@Override
 	protected StructLayout layout() {
@@ -31,5 +31,3 @@ public class VkQueueFamilyProperties extends NativeStructure {
 		);
 	}
 }
-
-// TODO - VkExtent3D is 'embedded' rather than POINTER? how can layout be constructed: 1. don't have extent instance -> layout 2. no by-value?

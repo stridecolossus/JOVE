@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 import java.lang.foreign.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.AbstractNativeMapper;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -22,17 +22,17 @@ public class IntEnumNativeMapper extends AbstractNativeMapper<IntEnum, Integer> 
 	}
 
 	@Override
-	public Integer marshal(IntEnum e, SegmentAllocator allocator) {
+	public Object marshal(IntEnum e, SegmentAllocator allocator) {
 		return e.value();
 	}
 
 	@Override
-	public IntEnumNativeMapper derive(Class<? extends IntEnum> target) {
+	public IntEnumNativeMapper derive(Class<? extends IntEnum> target, NativeMapperRegistry registry) {
 		return new IntEnumNativeMapper() {
     		private final ReverseMapping<?> mapping = ReverseMapping.get(target);
 
     		@Override
-        	public Integer marshalNull() {
+        	public Integer empty() {
         		return mapping.defaultValue().value();
         	}
 

@@ -20,6 +20,11 @@ class PointerReferenceTest {
 	}
 
 	@Test
+	void unitialised() {
+		assertThrows(IllegalStateException.class, () -> ref.handle());
+	}
+
+	@Test
 	void equals() {
 		assertEquals(ref, ref);
 		assertNotEquals(ref, null);
@@ -39,7 +44,7 @@ class PointerReferenceTest {
 		void mapper() {
 			assertEquals(PointerReference.class, mapper.type());
 			assertEquals(ADDRESS, mapper.layout());
-			assertEquals(mapper, mapper.derive(null));
+			assertEquals(mapper, mapper.derive(null, null));
 		}
 
 		@Test
@@ -48,8 +53,8 @@ class PointerReferenceTest {
 		}
 
 		@Test
-		void marshalNull() {
-			assertThrows(NullPointerException.class, () -> mapper.marshalNull());
+		void empty() {
+			assertThrows(NullPointerException.class, () -> mapper.empty());
 		}
 
 		@Test

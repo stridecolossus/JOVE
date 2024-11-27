@@ -19,7 +19,7 @@ class IntegerReferenceTest {
 	}
 
 	@Test
-	void def() {
+	void value() {
 		assertEquals(0, ref.value());
 	}
 
@@ -43,7 +43,6 @@ class IntegerReferenceTest {
 		void mapper() {
 			assertEquals(IntegerReference.class, mapper.type());
 			assertEquals(ADDRESS, mapper.layout());
-			assertEquals(mapper, mapper.derive(null));
 		}
 
 		@Test
@@ -54,8 +53,8 @@ class IntegerReferenceTest {
 		}
 
 		@Test
-		void marshalNull() {
-			assertThrows(NullPointerException.class, () -> mapper.marshalNull());
+		void empty() {
+			assertThrows(NullPointerException.class, () -> mapper.empty());
 		}
 
 		@Test

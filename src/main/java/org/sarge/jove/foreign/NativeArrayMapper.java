@@ -28,13 +28,8 @@ public class NativeArrayMapper extends AbstractNativeMapper<Object[], MemorySegm
 
 	@SuppressWarnings("rawtypes")
 	private NativeMapper mapper(Object[] array) {
-		final Class<?> component = array
-				.getClass()
-				.getComponentType();
-
-		return registry
-    			.mapper(component)
-    			.orElseThrow(() -> new IllegalArgumentException("Unsupported array component type: " + component));
+		final Class<?> component = array.getClass().getComponentType();
+		return registry.mapper(component);
 	}
 
 	@SuppressWarnings("rawtypes")

@@ -25,7 +25,7 @@ class StructureNativeMapperTest {
 	void before() {
 		final var registry = new NativeMapperRegistry();
 		registry.add(new PrimitiveNativeMapper<>(int.class));
-		mapper = new StructureNativeMapper(registry).derive(MockStructure.class);
+		mapper = new StructureNativeMapper().derive(MockStructure.class, registry);
 		structure = new MockStructure();
 	}
 
@@ -43,8 +43,8 @@ class StructureNativeMapperTest {
 	}
 
 	@Test
-	void marshalNull() {
-		assertEquals(MemorySegment.NULL, mapper.marshalNull());
+	void empty() {
+		assertEquals(MemorySegment.NULL, mapper.empty());
 	}
 
 	private static MemorySegment address() {

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 import java.lang.foreign.*;
-import java.util.List;
 
 import org.junit.jupiter.api.*;
 
@@ -61,7 +60,7 @@ class NativeStructureTest {
 //		final var expected = new FieldMapping(field, handle, mapper);
 
 		// Build field mappings for this structure
-		final List<FieldMapping> fields = FieldMapping.build(layout, MockStructure.class, registry);
+		final StructureFieldMapping fields = StructureFieldMapping.build(layout, 0, MockStructure.class, registry);
 
 //		fields.getFirst().marshal(structure, address, null);
 //		assertEquals(List.of(expected), fields);
@@ -70,7 +69,7 @@ class NativeStructureTest {
 	@DisplayName("A native structure cannot declare an unsupported native type")
 	@Test
 	void unsupported() {
-		assertThrows(IllegalArgumentException.class, () -> FieldMapping.build(structure.layout(), MockStructure.class, registry));
+		assertThrows(IllegalArgumentException.class, () -> StructureFieldMapping.build(structure.layout(), 0, MockStructure.class, registry));
 	}
 
 	@DisplayName("A native structure cannot define a layout that does not match its fields")
@@ -78,7 +77,7 @@ class NativeStructureTest {
 	void unknown() {
 		final var layout = MemoryLayout.structLayout(JAVA_INT.withName("cobblers"));
 		register();
-		assertThrows(IllegalArgumentException.class, () -> FieldMapping.build(layout, MockStructure.class, registry));
+		assertThrows(IllegalArgumentException.class, () -> StructureFieldMapping.build(layout, 0, MockStructure.class, registry));
 	}
 
 	@DisplayName("A native structure cannot contain a public field that is not declared in its layout")
@@ -94,6 +93,6 @@ class NativeStructureTest {
 			}
 		};
 		register();
-		assertThrows(IllegalArgumentException.class, () -> FieldMapping.build(invalid.layout(), invalid.getClass(), registry));
+		assertThrows(IllegalArgumentException.class, () -> StructureFieldMapping.build(invalid.layout(), 0, invalid.getClass(), registry));
 	}
 }

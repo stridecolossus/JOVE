@@ -11,7 +11,7 @@ import java.util.function.Function;
  * <p>
  * @author Sarge
  */
-public final class StringNativeMapper extends AbstractNativeMapper<String, MemorySegment> { // implements ReturnMapper<String, MemorySegment> {
+public final class StringNativeMapper extends AbstractNativeMapper<String, MemorySegment> {
 	// TODO - soft cache: https://www.javaspecialists.eu/archive/Issue098-References.html
 	// TODO - adapter class?
 	private final Map<String, MemorySegment> cache = new WeakHashMap<>() {
@@ -38,8 +38,8 @@ public final class StringNativeMapper extends AbstractNativeMapper<String, Memor
 	}
 
 	@Override
-	public MemorySegment marshal(String str, SegmentAllocator allocator) {
-		return cache.computeIfAbsent(str, allocator::allocateFrom);
+	public MemorySegment marshal(String string, SegmentAllocator allocator) {
+		return cache.computeIfAbsent(string, allocator::allocateFrom);
 	}
 
 	@Override
