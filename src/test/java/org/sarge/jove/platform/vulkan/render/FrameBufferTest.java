@@ -63,7 +63,7 @@ public class FrameBufferTest {
 	void begin() {
 		// Start render pass
 		final Command begin = buffer.begin(VkSubpassContents.INLINE);
-		final Command.Buffer cmd = mock(Command.Buffer.class);
+		final Command.CommandBuffer cmd = mock(Command.CommandBuffer.class);
 		begin.record(lib, cmd);
 
 		// Check API
@@ -101,7 +101,7 @@ public class FrameBufferTest {
 	@DisplayName("A frame buffer can be created to complete the render pass")
 	@Test
 	void end() {
-		final Command.Buffer cmd = mock(Command.Buffer.class);
+		final Command.CommandBuffer cmd = mock(Command.CommandBuffer.class);
 		FrameBuffer.END.record(lib, cmd);
 		verify(lib).vkCmdEndRenderPass(cmd);
 	}

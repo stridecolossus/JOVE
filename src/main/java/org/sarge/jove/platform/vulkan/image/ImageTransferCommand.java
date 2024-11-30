@@ -57,7 +57,7 @@ public final class ImageTransferCommand implements Command {
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, Command.Buffer cmd) {
+	public void record(VulkanLibrary lib, Command.CommandBuffer cmd) {
 		if(write) {
 			lib.vkCmdCopyBufferToImage(cmd, buffer, image, layout, regions.length, regions);
 		}

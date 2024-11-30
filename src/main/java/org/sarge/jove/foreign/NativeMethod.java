@@ -112,7 +112,8 @@ public class NativeMethod {
 
 		final Object[] transformed = new Object[args.length];
 		for(int n = 0; n < transformed.length; ++n) {
-			transformed[n] = signature[n].transform(args[n], allocator);
+			final NativeParameter p = signature[n];
+			transformed[n] = p.transform(args[n], allocator);
 		}
 
 		return transformed;

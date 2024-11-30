@@ -64,7 +64,7 @@ public final class Barrier implements Command {
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, Buffer buffer) {
+	public void record(VulkanLibrary lib, CommandBuffer buffer) {
 		lib.vkCmdPipelineBarrier(
 				buffer,
 				src, dest,

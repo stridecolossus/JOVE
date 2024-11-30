@@ -1,7 +1,6 @@
 package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
-import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -9,26 +8,6 @@ import java.util.function.Function;
  * @author Sarge
  */
 public final class StringNativeTransformer extends AbstractNativeTransformer<String, MemorySegment> {
-	// TODO - soft cache: https://www.javaspecialists.eu/archive/Issue098-References.html
-	// TODO - adapter class?
-	private final Map<String, MemorySegment> cache = new WeakHashMap<>() {
-		@Override
-		public MemorySegment get(Object key) {
-			final MemorySegment address = super.get(key);
-			if(address == null) {
-				return null;
-			}
-			else
-			if(!address.scope().isAlive()) {
-				remove(key);
-				return null;
-			}
-			else {
-				return address;
-			}
-		}
-	};
-
 	@Override
 	public Class<String> type() {
 		return String.class;
@@ -36,12 +15,11 @@ public final class StringNativeTransformer extends AbstractNativeTransformer<Str
 
 	@Override
 	public MemorySegment transform(String string, SegmentAllocator allocator) {
-		return cache.computeIfAbsent(string, allocator::allocateFrom);
+		return allocator.allocateFrom(string);
 	}
 
 	@Override
 	public Function<MemorySegment, String> returns() {
-		// TODO - also cache?
 		return StringNativeTransformer::unmarshal;
 	}
 

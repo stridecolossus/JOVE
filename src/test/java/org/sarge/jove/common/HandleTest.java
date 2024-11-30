@@ -43,7 +43,7 @@ class HandleTest {
 		void constructor() {
 			assertEquals(Handle.class, transformer.type());
 			assertEquals(ValueLayout.ADDRESS, transformer.layout());
-			assertEquals(transformer, transformer.derive(null, null));
+			assertEquals(transformer, transformer.derive(null));
 		}
 
 		@DisplayName("A handle can be transformed to a memory address")

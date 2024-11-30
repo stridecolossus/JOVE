@@ -76,8 +76,9 @@ public final class PipelineCache extends VulkanObject {
 	 * @param caches Caches to merge
 	 */
 	public void merge(Collection<PipelineCache> caches) {
+		final var array = caches.toArray(PipelineCache[]::new);
 		final DeviceContext dev = super.device();
-		dev.vulkan().library().vkMergePipelineCaches(dev, this, caches.size(), caches);
+		dev.vulkan().library().vkMergePipelineCaches(dev, this, array.length, array);
 	}
 
 	/**
@@ -157,7 +158,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pSrcCaches		Array of caches to merge
 		 * @return Result
 		 */
-		int vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, Collection<PipelineCache> pSrcCaches);
+		int vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, PipelineCache[] pSrcCaches);
 
 		/**
 		 * Retrieves a pipeline cache.

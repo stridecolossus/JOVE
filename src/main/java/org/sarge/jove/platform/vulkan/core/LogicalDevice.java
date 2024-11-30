@@ -372,7 +372,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @param fence					Optional fence
 		 * @return Result
 		 */
-		int vkQueueSubmit(WorkQueue queue, int submitCount, Collection<VkSubmitInfo> pSubmits, Fence fence);
+		int vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 
 		/**
 		 * Waits for the given queue to become idle.

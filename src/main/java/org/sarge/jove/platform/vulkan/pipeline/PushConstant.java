@@ -224,7 +224,7 @@ public final class PushConstant {
 		}
 
 		@Override
-		public void record(VulkanLibrary lib, Buffer buffer) {
+		public void record(VulkanLibrary lib, CommandBuffer buffer) {
 			data.position(range.offset);
 			lib.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, null); // TOOD data);
 		}

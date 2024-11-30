@@ -5,13 +5,13 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkDeviceCreateInfo extends NativeStructure {
+public class VkDeviceCreateInfo implements NativeStructure {
 	public final VkStructureType sType = VkStructureType.DEVICE_CREATE_INFO;
 	public Handle pNext;
 	public int flags;
@@ -24,7 +24,7 @@ public class VkDeviceCreateInfo extends NativeStructure {
 	public VkPhysicalDeviceFeatures pEnabledFeatures;
 
 	@Override
-	protected StructLayout layout() {
+	public StructLayout layout() {
 		return MemoryLayout.structLayout(
 				JAVA_INT.withName("sType"),
 				PADDING,

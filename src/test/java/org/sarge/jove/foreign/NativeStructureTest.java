@@ -2,98 +2,112 @@ package org.sarge.jove.foreign;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.foreign.NativeStructure.StructureNativeTransformer;
 
 class NativeStructureTest {
 	@SuppressWarnings("unused")
-	private static class MockStructure extends NativeStructure {
+	static class MockStructure implements NativeStructure {
 		public int field;
 		private int ignored;
 		public static final int IGNORED = 0;
 
 		@Override
 		public StructLayout layout() {
-			return MemoryLayout.structLayout(
-					JAVA_INT.withName("field"),
-					MemoryLayout.paddingLayout(4)
-			);
+			return MemoryLayout.structLayout(JAVA_INT.withName("field"));
 		}
 	}
 
 	private MockStructure structure;
-	private TransformerRegistry registry;
 
 	@BeforeEach
 	void before() {
 		structure = new MockStructure();
-		registry = new TransformerRegistry();
 	}
 
-	@Test
-	void equals() {
-		assertEquals(structure, structure);
-		assertEquals(structure, new MockStructure());
-		assertNotEquals(structure, null);
-		assertNotEquals(structure, mock(NativeStructure.class));
-	}
+//	@Test
+//	void equals() {
+//		assertEquals(structure, structure);
+//		assertEquals(structure, new MockStructure());
+//		assertNotEquals(structure, null);
+//		assertNotEquals(structure, mock(NativeStructure.class));
+//	}
 
-	private void register() {
-		@SuppressWarnings("rawtypes")
-		final NativeTransformer transformer = new PrimitiveNativeTransformer<>(int.class);
-		registry.add(transformer);
-	}
+	@Nested
+	class TransformerTests {
+		private NativeTransformer<NativeStructure, MemorySegment> transformer;
+		private TransformerRegistry registry;
+		private Arena arena;
 
-	@DisplayName("The field mappings for a native structure can be constructed from its layout")
-	@Test
-	void build() throws Exception {
+		@BeforeEach
+		void before() {
+			arena = Arena.ofAuto();
+			registry = new TransformerRegistry();
+			registry.add(new PrimitiveNativeTransformer<>(int.class));
+			transformer = new StructureNativeTransformer(registry).derive(MockStructure.class);
+		}
 
-		register();
+		@Test
+		void constructor() {
+			assertEquals(MockStructure.class, transformer.type());
+			assertEquals(structure.layout(), transformer.layout());
+		}
 
-		// TODO - test structure::un/marshal and/or underlying field mappings? structure mapper? both?
+		@Test
+		void transform() {
+			structure.field = 2;
+			final MemorySegment address = (MemorySegment) transformer.transform(structure, arena);
+			assertEquals(2, address.get(JAVA_INT, 0));
+		}
 
-//		// Build expected field mapping
-		final StructLayout layout = structure.layout();
-//		final VarHandle handle = layout.varHandle(PathElement.groupElement("field"));
-//		final var expected = new FieldMapping(field, handle, mapper);
+		@Test
+		void empty() {
+			assertEquals(MemorySegment.NULL, transformer.empty());
+		}
 
-		// Build field mappings for this structure
-		final StructureFieldMapping fields = StructureFieldMapping.build(layout, 0, MockStructure.class, registry);
+		private MemorySegment address() {
+			final var structure = new MockStructure();
+			final MemorySegment address = arena.allocate(structure.layout());
+			address.set(JAVA_INT, 0, 3);
+			return address;
+		}
 
-//		fields.getFirst().marshal(structure, address, null);
-//		assertEquals(List.of(expected), fields);
-	}
+		@Test
+		void returns() {
+			final MemorySegment address = address();
+			final var result = (MockStructure) transformer.returns().apply(address);
+			assertEquals(3, result.field);
+		}
 
-	@DisplayName("A native structure cannot declare an unsupported native type")
-	@Test
-	void unsupported() {
-		assertThrows(IllegalArgumentException.class, () -> StructureFieldMapping.build(structure.layout(), 0, MockStructure.class, registry));
-	}
+		@Test
+		void update() {
+			final var structure = new MockStructure();
+			final MemorySegment address = address();
+			transformer.update().accept(address, structure);
+			assertEquals(3, structure.field);
+		}
 
-	@DisplayName("A native structure cannot define a layout that does not match its fields")
-	@Test
-	void unknown() {
-		final var layout = MemoryLayout.structLayout(JAVA_INT.withName("cobblers"));
-		register();
-		assertThrows(IllegalArgumentException.class, () -> StructureFieldMapping.build(layout, 0, MockStructure.class, registry));
-	}
+		@Test
+		void unsupported() {
+			final var registry = new TransformerRegistry();
+			assertThrows(IllegalArgumentException.class, () -> new StructureNativeTransformer(registry).derive(MockStructure.class));
+		}
 
-	@DisplayName("A native structure cannot contain a public field that is not declared in its layout")
-	@Test
-	void undeclared() {
-		@SuppressWarnings("unused")
-		final var invalid = new NativeStructure() {
-			public int doh;
+		static class Invalid implements NativeStructure {
+			public int field;
 
 			@Override
 			public StructLayout layout() {
-				return structure.layout();
+				return MemoryLayout.structLayout(JAVA_INT.withName("cobblers"));
 			}
-		};
-		register();
-		assertThrows(IllegalArgumentException.class, () -> StructureFieldMapping.build(invalid.layout(), 0, invalid.getClass(), registry));
+		}
+
+		@Test
+		void unknown() {
+			assertThrows(IllegalArgumentException.class, () -> new StructureNativeTransformer(registry).derive(Invalid.class));
+		}
 	}
 }

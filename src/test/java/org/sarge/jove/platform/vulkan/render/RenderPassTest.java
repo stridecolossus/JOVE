@@ -35,7 +35,7 @@ class RenderPassTest {
 	@DisplayName("A render pass can be advanced to the next subpass")
 	@Test
 	void next() {
-		final var buffer = mock(Command.Buffer.class);
+		final var buffer = mock(Command.CommandBuffer.class);
 		final Command next = RenderPass.next();
 		next.record(lib, buffer);
 		verify(lib).vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);

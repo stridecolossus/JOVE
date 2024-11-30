@@ -83,12 +83,12 @@ class DepthStencilStageBuilderTest {
 	@Nested
 	class DynamicStateTests {
 		private VulkanLibrary lib;
-		private Command.Buffer buffer;
+		private Command.CommandBuffer buffer;
 
 		@BeforeEach
 		void before() {
 			lib = mock(VulkanLibrary.class);
-			buffer = mock(Command.Buffer.class);
+			buffer = mock(Command.CommandBuffer.class);
 		}
 
     	@Test

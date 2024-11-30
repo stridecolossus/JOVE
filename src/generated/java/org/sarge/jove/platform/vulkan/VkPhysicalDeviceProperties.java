@@ -8,7 +8,7 @@ import org.sarge.jove.foreign.NativeStructure;
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkPhysicalDeviceProperties extends NativeStructure {
+public class VkPhysicalDeviceProperties implements NativeStructure {
 	public int apiVersion;
 	public int driverVersion;
 	public int vendorID;
@@ -20,7 +20,7 @@ public class VkPhysicalDeviceProperties extends NativeStructure {
 	public VkPhysicalDeviceSparseProperties sparseProperties;
 
 	@Override
-	protected StructLayout layout() {
+	public StructLayout layout() {
 		// TODO
 		return MemoryLayout.structLayout();
 	}

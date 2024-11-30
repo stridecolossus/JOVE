@@ -4,7 +4,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 
@@ -59,7 +59,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param regionCount		Number of regions
 	 * @param pRegions			Regions
 	 */
-	void vkCmdCopyImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageCopy[] pRegions);
+	void vkCmdCopyImage(CommandBuffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageCopy[] pRegions);
 
 	/**
 	 * Copies a buffer to an image.
@@ -70,7 +70,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param regionCount		Number of regions
 	 * @param pRegions			Regions
 	 */
-	void vkCmdCopyBufferToImage(Buffer commandBuffer, VulkanBuffer srcBuffer, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
+	void vkCmdCopyBufferToImage(CommandBuffer commandBuffer, VulkanBuffer srcBuffer, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
 
 	/**
 	 * Copies an image to a buffer.
@@ -81,7 +81,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param regionCount		Number of regions
 	 * @param pRegions			Regions
 	 */
-	void vkCmdCopyImageToBuffer(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
+	void vkCmdCopyImageToBuffer(CommandBuffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
 
 	/**
 	 * Performs an image blit operation.
@@ -94,5 +94,5 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param pRegions			Copy regions
 	 * @param filter			Filtering option
 	 */
-	void vkCmdBlitImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageBlit[] pRegions, VkFilter filter);
+	void vkCmdBlitImage(CommandBuffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageBlit[] pRegions, VkFilter filter);
 }

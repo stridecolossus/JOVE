@@ -9,7 +9,7 @@ import org.sarge.jove.model.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
 class DrawCommandTest {
-	private Command.Buffer cmd;
+	private Command.CommandBuffer cmd;
 	private VulkanLibrary lib;
 
 	@BeforeEach

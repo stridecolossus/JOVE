@@ -25,7 +25,7 @@ class StringNativeTransformerTest {
 	void mapper() {
 		assertEquals(String.class, transformer.type());
 		assertEquals(ValueLayout.ADDRESS, transformer.layout());
-		assertEquals(transformer, transformer.derive(null, null));
+		assertEquals(transformer, transformer.derive(null));
 	}
 
 	@DisplayName("A string can be transformed to a native address")

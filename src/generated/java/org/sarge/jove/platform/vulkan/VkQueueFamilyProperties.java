@@ -11,14 +11,14 @@ import org.sarge.jove.util.BitMask;
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkQueueFamilyProperties extends NativeStructure {
+public class VkQueueFamilyProperties implements NativeStructure {
 	public BitMask<VkQueueFlag> queueFlags;
 	public int queueCount;
 	public int timestampValidBits;
 	public VkExtent3D minImageTransferGranularity = new VkExtent3D();
 
 	@Override
-	protected StructLayout layout() {
+	public StructLayout layout() {
 		return MemoryLayout.structLayout(
 				JAVA_INT.withName("queueFlags"),
 				JAVA_INT.withName("queueCount"),

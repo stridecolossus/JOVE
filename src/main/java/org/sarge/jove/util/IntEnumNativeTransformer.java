@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 import java.lang.foreign.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.AbstractNativeTransformer;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -27,7 +27,7 @@ public class IntEnumNativeTransformer extends AbstractNativeTransformer<IntEnum,
 	}
 
 	@Override
-	public IntEnumNativeTransformer derive(Class<? extends IntEnum> target, TransformerRegistry registry) {
+	public IntEnumNativeTransformer derive(Class<? extends IntEnum> target) {
 		return new IntEnumNativeTransformer() {
     		private final ReverseMapping<?> mapping = ReverseMapping.get(target);
 

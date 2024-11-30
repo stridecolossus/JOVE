@@ -31,7 +31,7 @@ class VulkanRenderTaskTest {
 		when(adapter.buffer(2)).thenReturn(buffer);
 
 		// Init render sequence
-		final var render = mock(Command.Buffer.class);
+		final var render = mock(Command.CommandBuffer.class);
 		when(composer.compose(2, buffer)).thenReturn(render);
 
 		// Render frame

@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.memory.*;
 public class IndexBufferTest {
 	private IndexBuffer index;
 	private MockDeviceContext dev;
-	private Command.Buffer cmd;
+	private Command.CommandBuffer cmd;
 
 	@BeforeEach
 	void before() {

@@ -64,7 +64,7 @@ public class DescriptorSetTest {
 	void bind() {
 		final var pipeline = new PipelineLayout.Builder().build(dev);
 		final Command bind = descriptor.bind(pipeline);
-		final var buffer = mock(Command.Buffer.class);
+		final var buffer = mock(Command.CommandBuffer.class);
 		bind.record(lib, buffer);
 		verify(lib).vkCmdBindDescriptorSets(buffer, VkPipelineBindPoint.GRAPHICS, pipeline, 0, 1, NativeObject.array(List.of(descriptor)), 0, null);
 	}

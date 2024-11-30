@@ -14,9 +14,9 @@ public class MockCommandBuffer extends PrimaryBuffer {
 		super(new Handle(1), create());
 	}
 
-	private static Command.Pool create() {
+	private static Command.CommandPool create() {
 		final var family = new WorkQueue.Family(0, 1, Set.of());
 		final var queue = new WorkQueue(new Handle(2), family);
-		return new Command.Pool(new Handle(3), new MockDeviceContext(), queue);
+		return new Command.CommandPool(new Handle(3), new MockDeviceContext(), queue);
 	}
 }

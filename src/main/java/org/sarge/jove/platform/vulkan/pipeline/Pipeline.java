@@ -9,7 +9,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.util.BitMask;
 
 /**
@@ -253,7 +253,7 @@ public final class Pipeline extends VulkanObject {
 		 * @param pipelineBindPoint		Bind-point
 		 * @param pipeline				Pipeline to bind
 		 */
-		void vkCmdBindPipeline(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pipeline pipeline);
+		void vkCmdBindPipeline(CommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pipeline pipeline);
 
 		/**
 		 * Command to apply a pipeline barrier.
@@ -268,6 +268,6 @@ public final class Pipeline extends VulkanObject {
 		 * @param imageMemoryBarrierCount			Number of image barriers
 		 * @param pImageMemoryBarriers				Image barriers
 		 */
-		void vkCmdPipelineBarrier(Buffer commandBuffer, BitMask<VkPipelineStage> srcStageMask, BitMask<VkPipelineStage> dstStageMask, BitMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
+		void vkCmdPipelineBarrier(CommandBuffer commandBuffer, BitMask<VkPipelineStage> srcStageMask, BitMask<VkPipelineStage> dstStageMask, BitMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 	}
 }

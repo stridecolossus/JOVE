@@ -201,7 +201,7 @@ public final class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearColorImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
+		void vkCmdClearColorImage(Command.CommandBuffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 		// TODO - these can only be done outside of a render pass? what are they for?
 
@@ -214,7 +214,7 @@ public final class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearDepthStencilImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
+		void vkCmdClearDepthStencilImage(Command.CommandBuffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 	}
 }

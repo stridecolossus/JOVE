@@ -144,7 +144,7 @@ public class VulkanBufferTest {
     	@Test
     	void fill() {
     		final Command fill = buffer.fill(0, VulkanBuffer.VK_WHOLE_SIZE, 42);
-    		final var cmd = mock(Command.Buffer.class);
+    		final var cmd = mock(Command.CommandBuffer.class);
     		fill.record(lib, cmd);
     		verify(lib).vkCmdFillBuffer(cmd, buffer, 0, VulkanBuffer.VK_WHOLE_SIZE, 42);
     	}

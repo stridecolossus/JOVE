@@ -17,7 +17,7 @@ public class ImageTransferCommandTest {
 	private static final VkBufferImageCopy[] REGIONS = new VkBufferImageCopy[0];
 
 	private Image image;
-	private Command.Buffer cmd;
+	private Command.CommandBuffer cmd;
 	private VulkanBuffer src, dest;
 	private Image.Descriptor descriptor;
 	private DeviceContext dev;

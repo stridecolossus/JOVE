@@ -17,8 +17,8 @@ import com.sun.jna.Structure;
 
 public class WorkTest {
 	private WorkQueue queue;
-	private Pool pool;
-	private Buffer buffer;
+	private CommandPool pool;
+	private CommandBuffer buffer;
 	private Work work;
 	private DeviceContext dev;
 	private VulkanLibrary lib;
@@ -34,7 +34,7 @@ public class WorkTest {
 		queue = new WorkQueue(new Handle(1), family);
 
 		// Create command buffer
-		pool = new Command.Pool(new Handle(2), dev, queue);
+		pool = new Command.CommandPool(new Handle(2), dev, queue);
 		buffer = pool.primary().begin().end();
 
 		// Create work instance
@@ -111,8 +111,8 @@ public class WorkTest {
 		@Test
 		void addInvalidQueueFamily() {
 			final var other = new WorkQueue(new Handle(1), new Family(999, 2, Set.of()));
-			final Pool otherPool = new Command.Pool(new Handle(2), dev, other);
-			final Buffer invalid = otherPool.primary().begin().end();
+			final CommandPool otherPool = new Command.CommandPool(new Handle(2), dev, other);
+			final CommandBuffer invalid = otherPool.primary().begin().end();
 			builder.add(buffer);
 			assertThrows(IllegalArgumentException.class, () -> builder.add(invalid));
 		}

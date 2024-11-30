@@ -11,7 +11,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.PointerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.util.BitMask;
 
 /**
@@ -437,7 +437,7 @@ public interface Query {
 		 * @param firstQuery		Index of the first query slot
 		 * @param queryCount		Number of query slots to reset
 		 */
-		void vkCmdResetQueryPool(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount);
+		void vkCmdResetQueryPool(CommandBuffer commandBuffer, Pool queryPool, int firstQuery, int queryCount);
 
 		/**
 		 * Starts a query.
@@ -446,7 +446,7 @@ public interface Query {
 		 * @param query				Query slot
 		 * @param flags				Flags
 		 */
-		void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, BitMask<VkQueryControlFlag> flags);
+		void vkCmdBeginQuery(CommandBuffer commandBuffer, Pool queryPool, int query, BitMask<VkQueryControlFlag> flags);
 
 		/**
 		 * Ends a query.
@@ -454,7 +454,7 @@ public interface Query {
 		 * @param queryPool			Query pool
 		 * @param query				Query slot
 		 */
-		void vkCmdEndQuery(Buffer commandBuffer, Pool queryPool, int query);
+		void vkCmdEndQuery(CommandBuffer commandBuffer, Pool queryPool, int query);
 
 		/**
 		 * Writes the device timestamp at the given pipeline stage to the query results.
@@ -463,7 +463,7 @@ public interface Query {
 		 * @param queryPool			Query pool
 		 * @param query				Query slot
 		 */
-		void vkCmdWriteTimestamp(Buffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
+		void vkCmdWriteTimestamp(CommandBuffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
 
 		/**
 		 * Retrieves query results.
@@ -490,6 +490,6 @@ public interface Query {
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
 		 */
-		void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, BitMask<VkQueryResultFlag> flags);
+		void vkCmdCopyQueryPoolResults(CommandBuffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, BitMask<VkQueryResultFlag> flags);
 	}
 }

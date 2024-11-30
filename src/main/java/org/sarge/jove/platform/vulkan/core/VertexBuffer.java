@@ -36,7 +36,8 @@ public final class VertexBuffer extends VulkanBuffer {
 	 * @return Bind command
 	 */
 	public static Command bind(int start, Collection<VertexBuffer> buffers) {
-		return (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, start, buffers.size(), buffers, new long[]{0});
+		final var array = buffers.toArray(VertexBuffer[]::new);
+		return (lib, cmd) -> lib.vkCmdBindVertexBuffers(cmd, start, array.length, array, new long[]{0});
 	}
 	// TODO - offsets
 }

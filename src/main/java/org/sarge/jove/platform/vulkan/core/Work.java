@@ -54,11 +54,11 @@ public final class Work {
 	 * @param buffer Command buffer
 	 * @return Work
 	 */
-	public static Work of(Buffer buffer) {
+	public static Work of(CommandBuffer buffer) {
 		return Builder.of(buffer).build();
 	}
 
-	private final List<Buffer> buffers = new ArrayList<>();
+	private final List<CommandBuffer> buffers = new ArrayList<>();
 	private final Map<VulkanSemaphore, Set<VkPipelineStage>> wait = new LinkedHashMap<>();
 	private final Set<VulkanSemaphore> signal = new HashSet<>();
 
@@ -68,7 +68,7 @@ public final class Work {
 	/**
 	 * @return Command pool for this submission
 	 */
-	public Pool pool() {
+	public CommandPool pool() {
 		return buffers.get(0).pool();
 	}
 
@@ -117,7 +117,7 @@ public final class Work {
 		// Check batch submits to same queue
 		// TODO - integrate into build()?
 		final Iterator<Work> work = batch.iterator();
-		final Pool pool = work.next().pool();
+		final CommandPool pool = work.next().pool();
 		final WorkQueue queue = pool.queue();
 		while(work.hasNext()) {
 			final var family = work.next().pool().queue().family();
@@ -127,14 +127,14 @@ public final class Work {
 		}
 
 		// Build batch descriptors
-		final Collection<VkSubmitInfo> info = batch
+		final VkSubmitInfo[] info = batch
 				.stream()
 				.map(Work::build)
-				.toList();
+				.toArray(VkSubmitInfo[]::new);
 
 		// Submit batch
 		final VulkanLibrary lib = pool.device().vulkan().library();
-		lib.vkQueueSubmit(queue, info.size(), info, fence);
+		lib.vkQueueSubmit(queue, info.length, info, fence);
 	}
 
 	private static VkSubmitInfo build(Work work) {
@@ -159,10 +159,10 @@ public final class Work {
 	 * @param cmd		Command
 	 * @param pool		Pool
 	 * @return Allocated command buffer
-	 * @see #submit(Buffer)
+	 * @see #submit(CommandBuffer)
 	 */
-	public static Buffer submit(Command cmd, Pool pool) {
-		final Buffer buffer = pool
+	public static CommandBuffer submit(Command cmd, CommandPool pool) {
+		final CommandBuffer buffer = pool
 				.primary()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 				.add(cmd)
@@ -176,9 +176,9 @@ public final class Work {
 	/**
 	 * Helper - Submits the given command buffer and waits for completion.
 	 * @param buffer Command buffer
-	 * @see #submit(Command, Pool)
+	 * @see #submit(Command, CommandPool)
 	 */
-	public static void submit(Buffer buffer) {
+	public static void submit(CommandBuffer buffer) {
 		final DeviceContext dev = buffer.pool().device();
 		final Fence fence = Fence.create(dev);
 		try {
@@ -200,7 +200,7 @@ public final class Work {
 		 * @param buffer Command buffer
 		 * @return New work builder
 		 */
-		public static Builder of(Buffer buffer) {
+		public static Builder of(CommandBuffer buffer) {
 			return new Builder().add(buffer);
 		}
 
@@ -213,7 +213,7 @@ public final class Work {
 		 * @throws IllegalStateException if the command buffer has not been recorded
 		 * @throws IllegalArgumentException if {@link #buffer} does not match the queue family for this work
 		 */
-		public Builder add(Buffer buffer) {
+		public Builder add(CommandBuffer buffer) {
 			// Check buffer has been recorded
 			if(!buffer.isReady()) {
 				throw new IllegalStateException("Command buffer has not been recorded: " + buffer);

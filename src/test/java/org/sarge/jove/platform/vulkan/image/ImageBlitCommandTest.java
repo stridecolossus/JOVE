@@ -29,7 +29,7 @@ public class ImageBlitCommandTest {
 
 	@Test
 	void execute() {
-		final var buffer = mock(Command.Buffer.class);
+		final var buffer = mock(Command.CommandBuffer.class);
 		blit.record(lib, buffer);
 		verify(lib).vkCmdBlitImage(buffer, image, VkImageLayout.TRANSFER_SRC_OPTIMAL, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkImageBlit[]{region}, VkFilter.LINEAR);
 	}
@@ -85,7 +85,7 @@ public class ImageBlitCommandTest {
 			};
 
 			// Check command
-			final var buffer = mock(Command.Buffer.class);
+			final var buffer = mock(Command.CommandBuffer.class);
 			assertNotNull(blit);
 			blit.record(lib, buffer);
 			verify(lib).vkCmdBlitImage(buffer, image, VkImageLayout.TRANSFER_SRC_OPTIMAL, image, VkImageLayout.TRANSFER_DST_OPTIMAL, 1, new VkImageBlit[]{expected}, VkFilter.NEAREST);

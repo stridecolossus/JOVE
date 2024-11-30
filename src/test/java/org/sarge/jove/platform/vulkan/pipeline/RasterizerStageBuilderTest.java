@@ -61,7 +61,7 @@ public class RasterizerStageBuilderTest {
 
 	@Test
 	void setDynamicLineWidth() {
-		final var buffer = mock(Command.Buffer.class);
+		final var buffer = mock(Command.CommandBuffer.class);
 		final var lib = mock(VulkanLibrary.class);
 		final Command cmd = builder.setDynamicLineWidth(2);
 		cmd.record(lib, buffer);

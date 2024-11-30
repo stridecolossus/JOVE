@@ -4,9 +4,9 @@ import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
 
-public abstract class VulkanStructure extends NativeStructure {
+public abstract class VulkanStructure implements NativeStructure {
 	@Override
-	protected StructLayout layout() {
+	public StructLayout layout() {
 		return MemoryLayout.structLayout(
 		);
 	}

@@ -6,7 +6,7 @@ import java.lang.foreign.ValueLayout;
 
 import org.junit.jupiter.api.*;
 
-class IntEnumNativeMapperTest {
+class IntEnumNativeTransformerTest {
 	private static enum MockEnum implements IntEnum {
 		INSTANCE;
 
@@ -20,7 +20,7 @@ class IntEnumNativeMapperTest {
 
 	@BeforeEach
 	void before() {
-		transformer = new IntEnumNativeTransformer().derive(MockEnum.class, null);
+		transformer = new IntEnumNativeTransformer().derive(MockEnum.class);
 	}
 
 	@Test

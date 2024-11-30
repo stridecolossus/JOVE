@@ -22,7 +22,7 @@ public class BarrierTest {
 	private Barrier.Builder builder;
 	private Family srcFamily, destFamily;
 	private VulkanLibrary lib;
-	private Command.Buffer cmd;
+	private Command.CommandBuffer cmd;
 
 	@BeforeEach
 	void before() {

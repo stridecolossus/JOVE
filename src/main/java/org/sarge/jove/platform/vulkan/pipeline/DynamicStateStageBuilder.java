@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.util.BitMask;
 
 /**
@@ -55,7 +55,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param viewportCount			Number of viewports
 		 * @param pViewports			Dynamic viewports
 		 */
-		void vkCmdSetViewport(Buffer commandBuffer, int firstViewport, int viewportCount, VkViewport pViewports);
+		void vkCmdSetViewport(CommandBuffer commandBuffer, int firstViewport, int viewportCount, VkViewport pViewports);
 
 		/**
 		 * Set dynamic scissor rectangles.
@@ -64,24 +64,24 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param scissorCount			Number of scissors
 		 * @param pScissors				Dynamic scissors
 		 */
-		void vkCmdSetScissor(Buffer commandBuffer, int firstScissor, int scissorCount, VkRect2D pScissors);
+		void vkCmdSetScissor(CommandBuffer commandBuffer, int firstScissor, int scissorCount, VkRect2D pScissors);
 
 		/**
 		 * Sets the line width.
 		 * @param commandBuffer			Command buffer
 		 * @param lineWidth				Line width
 		 */
-		void vkCmdSetLineWidth(Buffer commandBuffer, float lineWidth);
+		void vkCmdSetLineWidth(CommandBuffer commandBuffer, float lineWidth);
 
 		// TODO
-		void vkCmdSetDepthBias(Buffer commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor);
+		void vkCmdSetDepthBias(CommandBuffer commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor);
 
 		/**
 		 * Sets the colour blend constants.
 		 * @param commandBuffer			Command buffer
 		 * @param blendConstants		Blend constants
 		 */
-		void vkCmdSetBlendConstants(Buffer commandBuffer, float blendConstants[]);
+		void vkCmdSetBlendConstants(CommandBuffer commandBuffer, float blendConstants[]);
 
 		/**
 		 * Sets the bounds for the depth test.
@@ -89,7 +89,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param minDepthBounds		Minimum depth
 		 * @param maxDepthBounds		Maximum depth
 		 */
-		void vkCmdSetDepthBounds(Buffer commandBuffer, float minDepthBounds, float maxDepthBounds);
+		void vkCmdSetDepthBounds(CommandBuffer commandBuffer, float minDepthBounds, float maxDepthBounds);
 
 		/**
 		 * Sets the stencil compare mask.
@@ -97,7 +97,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param faceMask				Face flags
 		 * @param compareMask			Compare mask
 		 */
-		void vkCmdSetStencilCompareMask(Buffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int compareMask);
+		void vkCmdSetStencilCompareMask(CommandBuffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int compareMask);
 
 		/**
 		 * Sets the stencil write mask.
@@ -105,7 +105,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param faceMask				Face flags
 		 * @param writeMask				Write mask
 		 */
-		void vkCmdSetStencilWriteMask(Buffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int writeMask);
+		void vkCmdSetStencilWriteMask(CommandBuffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int writeMask);
 
 		/**
 		 * Sets the stencil reference.
@@ -113,6 +113,6 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param faceMask				Face flags
 		 * @param reference				Reference value
 		 */
-		void vkCmdSetStencilReference(Buffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int reference);
+		void vkCmdSetStencilReference(CommandBuffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int reference);
 	}
 }

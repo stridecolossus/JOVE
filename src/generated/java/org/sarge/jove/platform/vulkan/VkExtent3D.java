@@ -10,13 +10,13 @@ import org.sarge.jove.foreign.NativeStructure;
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkExtent3D extends NativeStructure {
+public class VkExtent3D implements NativeStructure {
 	public int width;
 	public int height;
 	public int depth;
 
 	@Override
-	protected StructLayout layout() {
+	public StructLayout layout() {
 		return MemoryLayout.structLayout(
                 JAVA_INT.withName("width"),
                 JAVA_INT.withName("height"),

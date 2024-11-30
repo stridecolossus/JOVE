@@ -20,7 +20,7 @@ import com.sun.jna.Structure;
 
 public class QueryTest {
 	private Pool pool;
-	private Command.Buffer buffer;
+	private Command.CommandBuffer buffer;
 	private DeviceContext dev;
 	private VulkanLibrary lib;
 
@@ -28,7 +28,7 @@ public class QueryTest {
 	void before() {
 		dev = new MockDeviceContext();
 		lib = dev.library();
-		buffer = mock(Command.Buffer.class);
+		buffer = mock(Command.CommandBuffer.class);
 	}
 
 	@DisplayName("A measurement query...")

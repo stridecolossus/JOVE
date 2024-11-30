@@ -12,7 +12,7 @@ import org.sarge.jove.util.BitMask;
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkDeviceQueueCreateInfo extends NativeStructure {
+public class VkDeviceQueueCreateInfo implements NativeStructure {
 	public final VkStructureType sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
 	public Handle pNext;
 	public BitMask<VkDeviceQueueCreateFlag> flags;
@@ -21,7 +21,7 @@ public class VkDeviceQueueCreateInfo extends NativeStructure {
 	public float[] pQueuePriorities;
 
 	@Override
-	protected StructLayout layout() {
+	public StructLayout layout() {
 		return MemoryLayout.structLayout(
 				JAVA_INT.withName("sType"),
 				PADDING,

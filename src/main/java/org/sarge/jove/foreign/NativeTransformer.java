@@ -13,7 +13,7 @@ public interface NativeTransformer<T, R> {
 	/**
 	 * @return Domain type
 	 */
-	Class<T> type();
+	Class<? extends T> type();
 
 	/**
 	 * @return Native memory layout
@@ -22,11 +22,10 @@ public interface NativeTransformer<T, R> {
 
 	/**
 	 * Derives a transformer for the given target subclass.
-	 * @param target 		Target type
-	 * @param registry		Native transformers
-	 * @return Derived mapper
+	 * @param target Target type
+	 * @return Derived transformer
 	 */
-	NativeTransformer<? extends T, R> derive(Class<? extends T> target, TransformerRegistry registry);
+	NativeTransformer<? extends T, R> derive(Class<? extends T> target);
 
 	/**
 	 * Transforms the given value to its native representation.
@@ -35,6 +34,10 @@ public interface NativeTransformer<T, R> {
 	 * @return Native value
 	 */
 	Object transform(T instance, SegmentAllocator allocator);
+
+	// TODO - ugly, only used for structure[]
+	// TODO - could it just allocate anyway and copy segment???
+	void transform(T instance, MemorySegment address, SegmentAllocator allocator);
 
 	/**
 	 * Transforms an <i>empty</i> value to its native representation, i.e. {@code null}.

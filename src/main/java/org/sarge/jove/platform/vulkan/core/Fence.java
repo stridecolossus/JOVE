@@ -78,7 +78,8 @@ public class Fence extends VulkanObject {
 	 * @param fences		Fences to reset
 	 */
 	static void reset(DeviceContext device, Collection<Fence> fences) {
-		device.vulkan().library().vkResetFences(device, fences.size(), fences);
+		final Fence[] array = fences.toArray(Fence[]::new);
+		device.vulkan().library().vkResetFences(device, array.length, array);
 	}
 
 	/**
@@ -89,7 +90,8 @@ public class Fence extends VulkanObject {
 	 * @param timeout		Timeout (nanoseconds)
 	 */
 	static void wait(DeviceContext device, Collection<Fence> fences, boolean all, long timeout) {
-		device.vulkan().library().vkWaitForFences(device, fences.size(), fences, all, timeout);
+		final Fence[] array = fences.toArray(Fence[]::new);
+		device.vulkan().library().vkWaitForFences(device, array.length, array, all, timeout);
 	}
 
 	/**
@@ -121,7 +123,7 @@ public class Fence extends VulkanObject {
 		 * @param pFences			Fences
 		 * @return Result
 		 */
-		int vkResetFences(DeviceContext device, int fenceCount, Collection<Fence> pFences);
+		int vkResetFences(DeviceContext device, int fenceCount, Fence[] pFences);
 
 		/**
 		 * Retrieves the status of a given fence.
@@ -141,6 +143,6 @@ public class Fence extends VulkanObject {
 		 * @param timeout			Timeout or {@link Long#MAX_VALUE} (nanoseconds)
 		 * @return Result
 		 */
-		int vkWaitForFences(DeviceContext device, int fenceCount, Collection<Fence> pFences, boolean waitAll, long timeout);
+		int vkWaitForFences(DeviceContext device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout);
 	}
 }

@@ -18,7 +18,7 @@ import com.sun.jna.*;
 class CommandTest {
 	private Command cmd;
 	private WorkQueue queue;
-	private Pool pool;
+	private CommandPool pool;
 	private DeviceContext dev;
 	private VulkanLibrary lib;
 
@@ -27,14 +27,14 @@ class CommandTest {
 		dev = new MockDeviceContext();
 		lib = dev.library();
 		queue = new WorkQueue(new Handle(1), new Family(2, 1, Set.of()));
-		pool = Pool.create(dev, queue);
+		pool = CommandPool.create(dev, queue);
 		cmd = spy(Command.class);
 	}
 
 	@DisplayName("A command can be submitted as a one-off operation")
 	@Test
 	void submit() {
-		final Buffer buffer = cmd.submit(pool);
+		final CommandBuffer buffer = cmd.submit(pool);
 		verify(cmd).record(lib, buffer);
 	}
 
@@ -250,7 +250,7 @@ class CommandTest {
 
 		@Test
 		void free() {
-			final Buffer buffer = pool.primary();
+			final CommandBuffer buffer = pool.primary();
 			final Memory array = NativeObject.array(List.of(buffer));
 			pool.free(Set.of(buffer));
 			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);

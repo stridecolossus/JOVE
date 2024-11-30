@@ -104,7 +104,7 @@ public class PushConstantTest {
 	@DisplayName("A push constant update command...")
 	@Nested
 	class UpdateTests {
-		private Command.Buffer cmd;
+		private Command.CommandBuffer cmd;
 		private PipelineLayout layout;
 		private Command update;
 

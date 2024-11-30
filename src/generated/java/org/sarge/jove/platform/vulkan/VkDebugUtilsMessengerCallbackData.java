@@ -5,13 +5,13 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkDebugUtilsMessengerCallbackData extends NativeStructure {
+public class VkDebugUtilsMessengerCallbackData implements NativeStructure {
 	public /*final*/ VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
 	public Handle pNext;
 	public int flags;

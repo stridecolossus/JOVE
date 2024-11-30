@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.*;
 
@@ -39,7 +39,7 @@ public class ImageCopyCommandTest {
 	@Test
 	void copy() {
 		final ImageCopyCommand copy = ImageCopyCommand.of(src, dest);
-		final Buffer buffer = mock(Buffer.class);
+		final CommandBuffer buffer = mock(CommandBuffer.class);
 		final var region = new VkImageCopy() {
 			@Override
 			public boolean equals(Object obj) {

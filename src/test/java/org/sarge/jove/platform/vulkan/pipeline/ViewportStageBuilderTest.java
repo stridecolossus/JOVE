@@ -74,12 +74,12 @@ class ViewportStageBuilderTest {
 	@Nested
 	class DynamicState {
 		private VulkanLibrary lib;
-		private Command.Buffer buffer;
+		private Command.CommandBuffer buffer;
 
 		@BeforeEach
 		void before() {
 			lib = mock(VulkanLibrary.class);
-			buffer = mock(Command.Buffer.class);
+			buffer = mock(Command.CommandBuffer.class);
 		}
 
 		@DisplayName("A viewport can be configured dynamically")

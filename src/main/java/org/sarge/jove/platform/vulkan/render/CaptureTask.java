@@ -8,7 +8,7 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.Pool;
+import org.sarge.jove.platform.vulkan.core.Command.CommandPool;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
@@ -25,13 +25,13 @@ import org.sarge.jove.platform.vulkan.pipeline.Barrier;
  * @author Sarge
  */
 public class CaptureTask {
-	private final Pool pool;
+	private final CommandPool pool;
 
 	/**
 	 * Constructor.
 	 * @param pool Transfer command pool
 	 */
-	public CaptureTask(Pool pool) {
+	public CaptureTask(CommandPool pool) {
 		this.pool = requireNonNull(pool);
 	}
 
@@ -52,7 +52,7 @@ public class CaptureTask {
 		final Command copy = ImageCopyCommand.of(image, screenshot);
 
 		// Build screenshot task
-		final Command.Buffer buffer = pool
+		final Command.CommandBuffer buffer = pool
 				.primary()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
 					.add(destination(screenshot))

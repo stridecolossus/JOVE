@@ -133,7 +133,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = IntEnum.reverse(VkDebugUtilsMessageType.class);
 
 		private final Consumer<Message> consumer;
-		private final StructureNativeTransformer transformer;
+		private final NativeTransformer<NativeStructure, MemorySegment> transformer;
 
 		/**
 		 * Constructor.
@@ -142,7 +142,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		MessageCallback(Consumer<Message> consumer, TransformerRegistry registry) {
 			this.consumer = requireNonNull(consumer);
-			this.transformer = new StructureNativeTransformer().derive(VkDebugUtilsMessengerCallbackData.class, registry);
+			this.transformer = new StructureNativeTransformer(registry).derive(VkDebugUtilsMessengerCallbackData.class);
 		}
 
 		/**
@@ -155,6 +155,9 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		@SuppressWarnings("unused")
 		public boolean message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
+			// TODO - remove once completely satisfied unmarshalling works ok
+			System.err.println("VULKAN ERROR...");
+
 			// Transform the message properties
 			final var types = new BitMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
 			final var level = SEVERITY.map(severity);

@@ -44,7 +44,7 @@ class PointerReferenceTest {
 		void constructor() {
 			assertEquals(PointerReference.class, transformer.type());
 			assertEquals(ADDRESS, transformer.layout());
-			assertEquals(transformer, transformer.derive(null, null));
+			assertEquals(transformer, transformer.derive(null));
 		}
 
 		@Test

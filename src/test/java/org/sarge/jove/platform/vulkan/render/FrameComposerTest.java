@@ -9,12 +9,12 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.Pool;
+import org.sarge.jove.platform.vulkan.core.Command.CommandPool;
 
 class FrameComposerTest {
 	private DeviceContext dev;
 	private FrameComposer composer;
-	private Pool pool;
+	private CommandPool pool;
 	private Command.Sequence seq;
 
 	@BeforeEach
@@ -24,7 +24,7 @@ class FrameComposerTest {
 
 		// Create a command pool
 		final WorkQueue queue = new WorkQueue(new Handle(1), new WorkQueue.Family(1, 2, Set.of(VkQueueFlag.GRAPHICS)));
-		pool = Command.Pool.create(dev, queue);
+		pool = Command.CommandPool.create(dev, queue);
 
 		// Init render sequence factory
 		seq = mock(Command.Sequence.class);

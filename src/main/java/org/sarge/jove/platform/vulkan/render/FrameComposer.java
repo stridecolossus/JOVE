@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.core.Command.*;
  * @author Sarge
  */
 public class FrameComposer {
-	private final Pool pool;
+	private final CommandPool pool;
 	private final Sequence sequence;
 
 	private VkCommandBufferUsage[] flags = {VkCommandBufferUsage.ONE_TIME_SUBMIT};
@@ -26,7 +26,7 @@ public class FrameComposer {
 	 * @param pool 			Command pool
 	 * @param sequence		Render sequence
 	 */
-	public FrameComposer(Pool pool, Sequence sequence) {
+	public FrameComposer(CommandPool pool, Sequence sequence) {
 		this.pool = requireNonNull(pool);
 		this.sequence = requireNonNull(sequence);
 	}
@@ -55,7 +55,7 @@ public class FrameComposer {
 	 * @param frame Frame buffer
 	 * @return Render task
 	 */
-	public Buffer compose(int index, FrameBuffer frame) {
+	public CommandBuffer compose(int index, FrameBuffer frame) {
 		// Allocate a primary command buffer
 		final PrimaryBuffer buffer = pool.primary();
 

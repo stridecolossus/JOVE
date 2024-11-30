@@ -5,13 +5,13 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkApplicationInfo extends NativeStructure {
+public class VkApplicationInfo implements NativeStructure {
 	public final VkStructureType sType = VkStructureType.APPLICATION_INFO;
 	public Handle pNext;
 	public String pApplicationName;

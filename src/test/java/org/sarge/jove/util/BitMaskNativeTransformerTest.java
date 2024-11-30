@@ -6,7 +6,7 @@ import java.lang.foreign.ValueLayout;
 
 import org.junit.jupiter.api.*;
 
-class BitMaskNativeMapperTest {
+class BitMaskNativeTransformerTest {
 	private BitMaskNativeTransformer transformer;
 	private BitMask<?> mask;
 
@@ -20,7 +20,7 @@ class BitMaskNativeMapperTest {
 	void constructor() {
 		assertEquals(BitMask.class, transformer.type());
 		assertEquals(ValueLayout.JAVA_INT, transformer.layout());
-		assertEquals(transformer, transformer.derive(null, null));
+		assertEquals(transformer, transformer.derive(null));
 	}
 
 	@Test

@@ -11,16 +11,15 @@ import org.sarge.jove.util.BitMask;
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkMemoryHeap extends NativeStructure {
+public class VkMemoryHeap implements NativeStructure {
 	public long size;
 	public BitMask<VkMemoryHeapFlag> flags;
 
 	@Override
-	protected StructLayout layout() {
+	public StructLayout layout() {
 		return MemoryLayout.structLayout(
-				JAVA_LONG.withName("propertyFlags"),
-				JAVA_INT.withName("heapIndex"),
-                PADDING
+				JAVA_LONG.withName("size"),
+				JAVA_INT.withName("flags")
 		);
 	}
 }

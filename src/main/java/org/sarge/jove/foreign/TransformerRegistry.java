@@ -1,5 +1,6 @@
 package org.sarge.jove.foreign;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.sarge.jove.common.Handle.HandleNativeTransformer;
@@ -11,21 +12,23 @@ import org.sarge.jove.util.*;
 
 /**
  * The <i>native mapper registry</i> is used to lookup supported native mappers.
+ * TODO - not object, collections
  * @author Sarge
  */
 @SuppressWarnings("rawtypes")
 public class TransformerRegistry {
 	private final Map<Class<?>, NativeTransformer> registry = new HashMap<>();
-	private final NativeTransformer array = new ArrayNativeTransformer(this);
+	private final NativeTransformer<Object[], MemorySegment> array = new ArrayNativeTransformer(this);
 
 	/**
 	 * Registers a native transformer.
 	 * @param transformer Native transformer
-	 * @throws IllegalArgumentException if the type of the given mapper is {@code null}
+	 * @throws IllegalArgumentException if {@link #type} is {@code null} or cannot be transformed
 	 */
 	public void add(NativeTransformer transformer) {
 		final Class<?> type = transformer.type();
 		if(type == null) throw new IllegalArgumentException("Transformer must have a Java type: " + transformer);
+		validate(type);
 		registry.put(type, transformer);
 	}
 
@@ -36,16 +39,18 @@ public class TransformerRegistry {
 	 * @throws IllegalArgumentException if the type is not supported by this registry
 	 */
 	public NativeTransformer get(Class<?> type) {
-		if(type.isArray() || Collection.class.isAssignableFrom(type)) {
-			return array;
-		}
-
-		final NativeTransformer transform = registry.get(type);
-		if(transform == null) {
-			return find(type);
+		validate(type);
+		final NativeTransformer transformer = registry.get(type);
+		if(transformer == null) {
+			if(type.isArray()) {
+				return derive(array, type);
+			}
+			else {
+				return find(type);
+			}
 		}
 		else {
-			return transform;
+			return transformer;
 		}
 	}
 
@@ -64,16 +69,25 @@ public class TransformerRegistry {
 	}
 
 	/**
-	 * Derives a native transformer for the given subclass and registers as a side-effect.
-	 * @param transformer	Super-type transformer
-	 * @param type		Subclass type
+	 * Derives a native transformer for the given subclass which is also registered as a side-effect.
+	 * @param transformer	Base transformer
+	 * @param type			Subclass
 	 * @return Derived mapper
 	 */
 	private NativeTransformer derive(NativeTransformer transformer, Class<?> type) {
 		@SuppressWarnings("unchecked")
-		final NativeTransformer derived = transformer.derive(type, this);
+		final NativeTransformer derived = transformer.derive(type);
 		add(derived);
 		return derived;
+	}
+
+	/**
+	 * @throws IllegalArgumentException if the given type cannot be transformed
+	 */
+	private static void validate(Class<?> type) {
+		if(Collection.class.isAssignableFrom(type)) {
+			throw new IllegalArgumentException("Collections cannot be transformed");
+		}
 	}
 
 	/**
@@ -94,7 +108,7 @@ public class TransformerRegistry {
 				new NativeObjectTransformer(),
 				new IntegerReferenceTransform(),
 				new PointerReferenceTransform(),
-				new StructureNativeTransformer(),
+				new StructureNativeTransformer(registry),
 		};
 		for(var m : mappers) {
 			registry.add(m);

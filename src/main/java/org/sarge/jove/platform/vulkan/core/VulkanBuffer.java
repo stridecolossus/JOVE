@@ -4,13 +4,13 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Set;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.BitMask;
 
@@ -260,7 +260,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer					Buffer
 		 * @param pMemoryRequirements		Returned memory requirements
 		 */
-		void vkGetBufferMemoryRequirements(DeviceContext device, Handle pBuffer, VkMemoryRequirements pMemoryRequirements);
+		void vkGetBufferMemoryRequirements(DeviceContext device, Handle pBuffer, @Returned VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds the memory for the given buffer.
@@ -280,7 +280,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffers			Buffer(s)
 		 * @param pOffsets			Buffer offset(s)
 		 */
-		void vkCmdBindVertexBuffers(Buffer commandBuffer, int firstBinding, int bindingCount, Collection<VertexBuffer> pBuffers, long[] pOffsets);
+		void vkCmdBindVertexBuffers(CommandBuffer commandBuffer, int firstBinding, int bindingCount, VertexBuffer[] pBuffers, long[] pOffsets);
 
 		/**
 		 * Binds an index buffer.
@@ -289,7 +289,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param offset			Offset
 		 * @param indexType			Index data-type
 		 */
-		void vkCmdBindIndexBuffer(Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType);
+		void vkCmdBindIndexBuffer(CommandBuffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType);
 
 		/**
 		 * Copies a buffer.
@@ -299,7 +299,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param regionCount		Number of regions
 		 * @param pRegions			Region descriptor(s)
 		 */
-		void vkCmdCopyBuffer(Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions);
+		void vkCmdCopyBuffer(CommandBuffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions);
 
 		/**
 		 * Fills a buffer with a given value.
@@ -309,6 +309,6 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param size				Number of bytes to fill
 		 * @param data				Value to fill
 		 */
-		void vkCmdFillBuffer(Buffer commandBuffer, VulkanBuffer dstBuffer, long dstOffset, long size, int data);
+		void vkCmdFillBuffer(CommandBuffer commandBuffer, VulkanBuffer dstBuffer, long dstOffset, long size, int data);
 	}
 }

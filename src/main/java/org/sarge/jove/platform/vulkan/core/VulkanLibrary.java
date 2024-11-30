@@ -2,16 +2,12 @@ package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.Version;
-import org.sarge.jove.platform.vulkan.image.ImageLibrary;
-import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
-import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
-import org.sarge.jove.platform.vulkan.render.RenderLibrary;
 
 /**
  * The <i>Vulkan library</i> is an aggregated interface defining the Vulkan API.
  * @author Sarge
  */
-public interface VulkanLibrary extends DeviceLibrary, PipelineLibrary, RenderLibrary, MemoryLibrary, VulkanBuffer.Library, ImageLibrary, GeneralLibrary {
+public interface VulkanLibrary extends DeviceLibrary { // , PipelineLibrary, RenderLibrary, MemoryLibrary, VulkanBuffer.Library, ImageLibrary, GeneralLibrary {
 	/**
 	 * Vulkan API version.
 	 */

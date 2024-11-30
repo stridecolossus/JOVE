@@ -13,7 +13,7 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.util.BitMask;
 
@@ -177,15 +177,29 @@ public final class DescriptorSet implements NativeObject {
 		}
 
 		/**
-		 * Populates the Vulkan structure for this update.
+		 * @return Whether this entry is pending an update
 		 */
-		private void populate(VkWriteDescriptorSet write) {
+		boolean isDirty() {
+			if(dirty) {
+				dirty = false;
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+
+		/**
+		 * Builds the descriptor for this update.
+		 */
+		VkWriteDescriptorSet descriptor() {
 			// Validate
 			if(res == null) {
 				throw new IllegalStateException("Resource not populated: set=%s binding=%s".formatted(DescriptorSet.this, binding));
 			}
 
 			// Init write descriptor
+			final var write = new VkWriteDescriptorSet();
 			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
 			write.dstBinding = binding.index();
 			write.descriptorType = binding.type();
@@ -200,6 +214,8 @@ public final class DescriptorSet implements NativeObject {
 				default -> throw new UnsupportedOperationException("Unsupported resource descriptor: " + res);
 			}
 			// TODO - pTexelBuffer
+
+			return write;
 		}
 
 		@Override
@@ -271,27 +287,22 @@ public final class DescriptorSet implements NativeObject {
 	 */
 	public static int update(DeviceContext dev, Collection<DescriptorSet> descriptors) {
 		// Enumerate pending updates
-		final List<Entry> updates = descriptors
+		final VkWriteDescriptorSet[] updates = descriptors
 				.stream()
 				.flatMap(e -> e.entries.values().stream())
-				.filter(e -> e.dirty)
-				.toList();
+				.filter(Entry::isDirty)
+				.map(Entry::descriptor)
+				.toArray(VkWriteDescriptorSet[]::new);
 
 		// Ignore if nothing to update
-		if(updates.isEmpty()) {
+		if(updates.length == 0) {
 			return 0;
 		}
 
 		// Apply updates
-		final Collection<VkWriteDescriptorSet> writes = List.of(); // TODO StructureCollector.array(updates, new VkWriteDescriptorSet(), Entry::populate);
-		dev.vulkan().library().vkUpdateDescriptorSets(dev, writes.size(), writes, 0, null);
+		dev.vulkan().library().vkUpdateDescriptorSets(dev, updates.length, updates, 0, null);
 
-		// Mark entries as updated
-		for(Entry e : updates) {
-			e.dirty = false;
-		}
-
-		return writes.size();
+		return updates.length;
 	}
 
 	/**
@@ -317,7 +328,7 @@ public final class DescriptorSet implements NativeObject {
 				layout,
 				0,					// First set
 				sets.size(),
-				sets,
+				sets.toArray(DescriptorSet[]::new),
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);
@@ -469,8 +480,9 @@ public final class DescriptorSet implements NativeObject {
 		 * @param sets Sets to release
 		 */
 		public void free(Collection<DescriptorSet> sets) {
+			final DescriptorSet[] array = sets.toArray(DescriptorSet[]::new);
 			final DeviceContext dev = this.device();
-			dev.vulkan().library().vkFreeDescriptorSets(dev, this, sets.size(), sets);
+			dev.vulkan().library().vkFreeDescriptorSets(dev, this, array.length, array);
 		}
 
 		/**
@@ -640,7 +652,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pDescriptorSets		Descriptor sets
 		 * @return Result
 		 */
-		int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, Collection<DescriptorSet> pDescriptorSets);
+		int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, DescriptorSet[] pDescriptorSets);
 
 		/**
 		 * Updates the resources for one-or-more descriptor sets.
@@ -650,7 +662,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param descriptorCopyCount	Number of copies
 		 * @param pDescriptorCopies		Copy descriptors
 		 */
-		void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, Collection<VkWriteDescriptorSet> pDescriptorWrites, int descriptorCopyCount, Collection<VkCopyDescriptorSet> pDescriptorCopies);
+		void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, VkWriteDescriptorSet pDescriptorWrites[], int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
 
 		/**
 		 * Binds one-or-more descriptor sets to the given pipeline.
@@ -663,6 +675,6 @@ public final class DescriptorSet implements NativeObject {
 		 * @param dynamicOffsetCount	Number of dynamic offsets
 		 * @param pDynamicOffsets		Dynamic offsets
 		 */
-		void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, List<DescriptorSet> pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+		void vkCmdBindDescriptorSets(CommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, DescriptorSet[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 	}
 }

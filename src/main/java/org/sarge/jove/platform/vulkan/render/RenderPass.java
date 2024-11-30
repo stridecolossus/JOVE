@@ -9,7 +9,7 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
 import org.sarge.lib.Utility;
 
@@ -172,20 +172,20 @@ public final class RenderPass extends VulkanObject {
 		 * @param pRenderPassBegin		Descriptor
 		 * @param contents				Sub-pass contents
 		 */
-		void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
+		void vkCmdBeginRenderPass(CommandBuffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
 
 		/**
 		 * Ends a render pass.
 		 * @param commandBuffer Command buffer
 		 */
-		void vkCmdEndRenderPass(Buffer commandBuffer);
+		void vkCmdEndRenderPass(CommandBuffer commandBuffer);
 
 		/**
 		 * Starts the next sub-pass.
 		 * @param commandBuffer			Command buffer
 		 * @param contents				Sub-pass contents
 		 */
-		void vkCmdNextSubpass(Buffer commandBuffer, VkSubpassContents contents);
+		void vkCmdNextSubpass(CommandBuffer commandBuffer, VkSubpassContents contents);
 
 		/**
 		 * Queries the render area granularity for a render pass.
@@ -203,7 +203,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param rectCount				Number of clear regions
 		 * @param pRects				Clear regions
 		 */
-		void vkCmdClearAttachments(Buffer commandBuffer, int attachmentCount, VkClearAttachment[] pAttachments, int rectCount, VkClearRect[] pRects);
+		void vkCmdClearAttachments(CommandBuffer commandBuffer, int attachmentCount, VkClearAttachment[] pAttachments, int rectCount, VkClearRect[] pRects);
 
 //		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange pRanges);
 //		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
