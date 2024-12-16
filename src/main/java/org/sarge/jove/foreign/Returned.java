@@ -3,7 +3,8 @@ package org.sarge.jove.foreign;
 import java.lang.annotation.*;
 
 /**
- * The <i>returned</i> annotation denotes a method parameter that is passed <i>by reference</i> to the native layer.
+ * The <i>returned</i> annotation denotes a parameter that is returned <i>by reference</i> from a native method.
+ * @see NativeTransformer#update()
  * @author Sarge
  */
 @Retention(RetentionPolicy.RUNTIME)

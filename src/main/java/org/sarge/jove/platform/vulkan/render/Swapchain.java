@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -153,7 +152,7 @@ public class Swapchain extends VulkanObject {
 		final VkResult result = dev.vulkan().library().vkQueuePresentKHR(queue, info);
 		switch(result) {
 			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new SwapchainInvalidated(result);
-			default -> Vulkan.check(result.value());
+			default -> result.value();
 		}
 	}
 

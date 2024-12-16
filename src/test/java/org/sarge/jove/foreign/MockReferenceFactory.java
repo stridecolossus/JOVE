@@ -1,24 +1,47 @@
 package org.sarge.jove.foreign;
 
-import org.sarge.jove.foreign.*;
+import java.lang.foreign.MemorySegment;
 
-public class MockReferenceFactory extends ReferenceFactory {
-	public IntegerReference integer = new IntegerReference() {
-		@Override
-		public int value() {
-			return 1;
-		}
-	};
+import org.sarge.jove.common.Handle;
 
-	public PointerReference pointer = new PointerReference();
+public class MockReferenceFactory extends NativeReference.Factory {
+//	public IntegerReference integer = new IntegerReference() {
+//		@Override
+//		public int value() {
+//			return 1;
+//		}
+//	};
+//
+//	public PointerReference pointer = new PointerReference();
+//
+//	@Override
+//	public IntegerReference integer() {
+//		return integer;
+//	}
+//
+//	@Override
+//	public PointerReference pointer() {
+//		return pointer;
+//	}
 
 	@Override
-	public IntegerReference integer() {
-		return integer;
+	public NativeReference<Integer> integer() {
+		return new NativeReference<>() {
+            @Override
+            public Integer get() {
+            	return null;
+            }
+
+			@Override
+			protected void update(MemorySegment address) {
+			}
+		};
+//		return integer;
 	}
 
 	@Override
-	public PointerReference pointer() {
-		return pointer;
+	public NativeReference<Handle> pointer() {
+		return null;
+//		return pointer;
 	}
 }

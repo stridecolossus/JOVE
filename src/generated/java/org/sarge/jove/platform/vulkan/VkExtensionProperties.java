@@ -11,7 +11,7 @@ import org.sarge.jove.foreign.NativeStructure;
  * This class has been code-generated.
  */
 public class VkExtensionProperties implements NativeStructure {
-	public byte[] extensionName = new byte[256];
+	public String extensionName; // byte[] extensionName = new byte[256];
 	public int specVersion;
 
 	@Override

@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 import org.sarge.lib.LazySupplier;
 
@@ -109,10 +109,10 @@ public final class Window extends TransientNativeObject {
 	 */
 	@MainThread
 	public Dimensions size() {
-		final IntegerReference w = desktop.factory().integer();
-		final IntegerReference h = desktop.factory().integer();
+		final NativeReference<Integer> w = desktop.factory().integer();
+		final NativeReference<Integer> h = desktop.factory().integer();
 		desktop.library().glfwGetWindowSize(this, w, h);
-		return new Dimensions(w.value(), h.value());
+		return new Dimensions(w.get(), h.get());
 	}
 
 	/**
@@ -229,7 +229,7 @@ public final class Window extends TransientNativeObject {
 	 */
 	public Handle surface(Handle instance) {
 		final DesktopLibrary lib = desktop.library();
-		final PointerReference ref = desktop.factory().pointer();
+		final NativeReference<Handle> ref = desktop.factory().pointer();
 		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
 		if(result != 0) {
 ////			//System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
@@ -237,7 +237,7 @@ public final class Window extends TransientNativeObject {
 //			System.out.println(code);
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
-		return ref.handle();
+		return ref.get();
 	}
 
 	@Override

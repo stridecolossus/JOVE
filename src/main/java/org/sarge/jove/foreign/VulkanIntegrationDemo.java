@@ -1,16 +1,23 @@
 package org.sarge.jove.foreign;
 
 import java.util.Arrays;
+import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 public class VulkanIntegrationDemo {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		System.out.println("Initialising logging...");
+		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
+			LogManager.getLogManager().readConfiguration(config);
+		}
+
 		System.out.println("Initialising GLFW...");
 		final var desktop = Desktop.create();
 
@@ -46,17 +53,27 @@ public class VulkanIntegrationDemo {
 		instance.handler().build();
 
 		System.out.println("Enumerating devices...");
-		final PhysicalDevice dev = PhysicalDevice.devices(instance).toList().getFirst();
+		final PhysicalDevice physical = PhysicalDevice.devices(instance).toList().getFirst();
+		for(var family : physical.families()) {
+			System.out.println("  " + family);
+		}
 
 		System.out.println("Retrieving surface...");
 		final Handle surface = window.surface(instance.handle());
-		System.out.println("presentation=" + dev.isPresentationSupported(surface, dev.families().getFirst()));
+		System.out.println("presentation=" + physical.isPresentationSupported(surface, physical.families().getFirst()));
 
-//		final var props = dev.memory();
-//		System.out.println("types="+props.memoryTypeCount);
-//		System.out.println("heaps="+props.memoryHeapCount);
+//		System.out.println("Retrieving device memory properties...");
+//		final var memory = physical.memory();
+//		System.out.println("types=" + memory.memoryTypeCount);
+//		System.out.println("heaps=" + memory.memoryHeapCount);
+
+		System.out.println("Creating logical device...");
+		final var dev = new LogicalDevice.Builder(physical)
+				.queue(new RequiredQueue(physical.families().getFirst()))
+				.build();
 
 		System.out.println("Cleanup...");
+		dev.destroy();
 		instance.destroy();
 		window.destroy();
 		desktop.destroy();

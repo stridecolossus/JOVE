@@ -5,76 +5,58 @@ import java.util.function.*;
 
 /**
  * A <i>native transformer</i> defines a domain type that can be transformed to/from its corresponding FFM representation.
+ * <p>
+ * The {@link #transform(Object, ParameterMode, SegmentAllocator)} method is responsible for allocation and population of the associated off-heap memory (if any).
+ * <p>
+ * A type that can be returned from a native method should implement the {@link #returns(Class)} factory method.
+ * <p>
+ * Similarly a type that can be returned as a <i>by reference</i> parameter implements the {@link #update()} method.
+ * <p>
  * @param <T> Domain type
  * @param <R> Native type
+ * @see Returned
  * @author Sarge
  */
 public interface NativeTransformer<T, R> {
 	/**
-	 * @return Domain type
-	 */
-	Class<? extends T> type();
-
-	/**
 	 * @return Native memory layout
 	 */
-	MemoryLayout layout();
-
-	/**
-	 * Derives a transformer for the given target subclass.
-	 * @param target Target type
-	 * @return Derived transformer
-	 */
-	NativeTransformer<? extends T, R> derive(Class<? extends T> target);
-
-	/**
-	 * Transforms the given value to its native representation.
-	 * @param instance		Data to transform
-	 * @param allocator		Allocator
-	 * @return Native value
-	 */
-	Object transform(T instance, SegmentAllocator allocator);
-
-	// TODO - ugly, only used for structure[]
-	// TODO - could it just allocate anyway and copy segment???
-	void transform(T instance, MemorySegment address, SegmentAllocator allocator);
-
-	/**
-	 * Transforms an <i>empty</i> value to its native representation, i.e. {@code null}.
-	 * @return Empty native value
-	 * @throws NullPointerException if this transformer does not support empty values
-	 */
-	Object empty();
-
-	/**
-	 * Helper - Transforms a value to its native representation (including {@link #empty()} values).
-	 * @param value			Value to transform
-	 * @param transform		Transformer
-	 * @param allocator		Allocator
-	 * @return Native value
-	 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	static Object transform(Object value, NativeTransformer transform, SegmentAllocator allocator) {
-		if(value == null) {
-			return transform.empty();
-		}
-		else {
-			return transform.transform(value, allocator);
-		}
+	default MemoryLayout layout() {
+		return ValueLayout.ADDRESS;
 	}
 
 	/**
-	 * Provides the inverse transformer for a method return value.
+	 * The <i>parameter mode</i> specifies whether a native parameter is passed <i>by value</i> or returned <i>by reference</i> (indicated by the {@link Returned} annotation).
+	 */
+	enum ParameterMode {
+		VALUE,
+		REFERENCE
+	}
+
+	/**
+	 * Transforms a domain object to its native representation and allocates off-heap memory as required.
+	 * @param value			Domain value
+	 * @param mode 			Parameter mode
+	 * @param allocator		Allocator
+	 * @return Native value
+	 */
+	R transform(T value, ParameterMode mode, SegmentAllocator allocator);
+
+	/**
+	 * Provides the inverse transformer for a method return value of this type.
 	 * @return Return value transformer
-	 * @throws UnsupportedOperationException if the domain type cannot be returned from a native method
+	 * @throws UnsupportedOperationException if this type cannot be returned from a native method
 	 */
 	Function<R, T> returns();
 
 	/**
-	 * Provides a consumer to update a by-reference parameter after method invocation.
-	 * @return Returned parameter update consumer
-	 * @throws UnsupportedOperationException if the domain type cannot be returned as a by-reference parameter
+	 * Provides a handler to update a by-reference argument.
+	 * @return Update handler
+	 * @throws UnsupportedOperationException if this type cannot be returned by-reference
+	 * @see ParameterMode#REFERENCE
 	 * @see Returned
 	 */
-	BiConsumer<R, T> update();
+	default BiConsumer<R, T> update() {
+		throw new UnsupportedOperationException();
+	}
 }

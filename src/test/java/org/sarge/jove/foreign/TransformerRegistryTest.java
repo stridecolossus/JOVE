@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.*;
 import java.util.Collection;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.*;
 
@@ -18,58 +19,51 @@ class TransformerRegistryTest {
 	@DisplayName("A transformer can be registered")
 	@Test
 	void add() {
-		final var mapper = new PrimitiveNativeTransformer<>(int.class);
+		final var mapper = new StringNativeTransformer();
 		registry.add(mapper);
-		assertEquals(mapper, registry.get(int.class));
+		assertEquals(mapper, registry.get(String.class));
+	}
+
+	@DisplayName("An array can be transformed if its component type is supported")
+	@Test
+	void array() {
+		final var transformer = new StringNativeTransformer();
+		registry.add(transformer);
+		registry.get(String[].class);
 	}
 
 	@DisplayName("The transformer for an unsupported type cannot be retrieved from the registry")
 	@Test
 	void unsupported() {
-		assertThrows(IllegalArgumentException.class, () -> registry.get(int.class));
-		assertThrows(IllegalArgumentException.class, () -> registry.get(int[].class));
+		assertThrows(IllegalArgumentException.class, () -> registry.get(String.class));
+		assertThrows(IllegalArgumentException.class, () -> registry.get(String[].class));
 	}
 
 	@DisplayName("A transformer can be specialised to a given subclass")
 	@Test
 	void derived() {
-		final var transformer = new AbstractNativeTransformer<Number, MemorySegment>() {
-			@Override
-			public Class<Number> type() {
-				return Number.class;
-			}
-
-			@Override
-			public Object transform(Number instance, SegmentAllocator allocator) {
-				return instance;
-			}
-		};
+		final var transformer = new IdentityNativeTransformer<>(Number.class, ValueLayout.JAVA_INT);
 		registry.add(transformer);
-
-		final var derived = registry.get(Integer.class);
-		assertEquals(Number.class, derived.type());
+		assertEquals(transformer, registry.get(Long.class));
 	}
 
-	@DisplayName("An array can be transformed if its component type is supported")
+	@DisplayName("Collections cannot be transformed")
 	@Test
-	void arrays() {
-		final var mapper = new PrimitiveNativeTransformer<>(int.class);
-		registry.add(mapper);
-		registry.get(int[].class);
-	}
-
-	@DisplayName("A collection cannot be transformed")
-	@Test
-	void collections() {
-		@SuppressWarnings("rawtypes")
-		final var transformer = new AbstractNativeTransformer<Collection, Object>() {
+	void collection() {
+		final var transformer = new NativeTransformer<Collection<Object>, MemorySegment>() {
+			@SuppressWarnings({"unchecked", "rawtypes"})
 			@Override
-			public Class<? extends Collection> type() {
+			public Class type() {
 				return Collection.class;
 			}
 
 			@Override
-			public Object transform(Collection collection, SegmentAllocator allocator) {
+			public MemorySegment transform(Collection<Object> value, ParameterMode mode, SegmentAllocator allocator) {
+				return null;
+			}
+
+			@Override
+			public Function<MemorySegment, Collection<Object>> returns(Class<? extends Collection<Object>> type) {
 				return null;
 			}
 		};

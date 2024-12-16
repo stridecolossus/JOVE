@@ -121,9 +121,9 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public boolean isPresentationSupported(Handle surface, Family family) {
 		final Vulkan vulkan = instance.vulkan();
-		final IntegerReference supported = vulkan.factory().integer();
+		final NativeReference<Integer> supported = vulkan.factory().integer();
 		instance.vulkan().library().vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported);
-		return supported.value() == 1;
+		return supported.get() == 1;
 	}
 
 	/**
@@ -318,12 +318,12 @@ public class PhysicalDevice implements NativeObject {
 	interface Library {
 		/**
 		 * Enumerates the physical devices on this platform.
-		 * @param instance		Vulkan instance
-		 * @param count			Number of devices
-		 * @param devices		Device handles
+		 * @param instance					Vulkan instance
+		 * @param pPhysicalDeviceCount		Number of devices
+		 * @param devices					Device handles
 		 * @return Result
 		 */
-		int vkEnumeratePhysicalDevices(Instance instance, IntegerReference count, @Returned Handle[] devices);
+		int vkEnumeratePhysicalDevices(Instance instance, NativeReference<Integer> pPhysicalDeviceCount, @Returned Handle[] devices);
 
 		/**
 		 * Retrieves the properties of the given physical device.
@@ -348,11 +348,11 @@ public class PhysicalDevice implements NativeObject {
 
 		/**
 		 * Enumerates the queue families of a device.
-		 * @param device		Device handle
-		 * @param count			Number of properties
-		 * @param props			Queue family properties
+		 * @param device						Device handle
+		 * @param pQueueFamilyPropertyCount		Number of queues family properties
+		 * @param props							Queue family properties
 		 */
-		void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, IntegerReference count, @Returned VkQueueFamilyProperties[] props);
+		void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, NativeReference<Integer> pQueueFamilyPropertyCount, @Returned VkQueueFamilyProperties[] props);
 
 		/**
 		 * Enumerates device-specific extension properties.
@@ -363,7 +363,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @return Result
 		 * @see Instance.Library#vkEnumerateInstanceExtensionProperties(String, IntByReference, VkExtensionProperties)
 		 */
-//		int vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, IntegerReference count, @Returned VkExtensionProperties[] extensions);
+//		int vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, NativeReference<Integer> count, @Returned VkExtensionProperties[] extensions);
 
 		/**
 		 * Enumerates device-specific validation layers.
@@ -375,7 +375,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @see Instance.Library#vkEnumerateInstanceLayerProperties(IntByReference, VkLayerProperties)
 		 */
 //		@Deprecated
-//		int vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntegerReference count, @Returned VkLayerProperties[] layers);
+//		int vkEnumerateDeviceLayerProperties(PhysicalDevice device, NativeReference<Integer> count, @Returned VkLayerProperties[] layers);
 
 		/**
 		 * Retrieves supported properties of the given format.
@@ -386,6 +386,6 @@ public class PhysicalDevice implements NativeObject {
 		void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, @Returned VkFormatProperties props);
 
 		// TODO - temp copied from surface
-		int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported);
+		int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, NativeReference<Integer> supported);
 	}
 }

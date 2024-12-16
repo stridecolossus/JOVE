@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.IntegerReference;
+import org.sarge.jove.foreign.*;
 
 /**
  * GLFW API.
@@ -58,9 +57,9 @@ interface DesktopLibrary extends DesktopLibraryWindow, DesktopLibraryDevice { //
 	boolean glfwVulkanSupported();
 
 	/**
-	 * Enumerates the required vulkan extensions for this platform.
+	 * Enumerates the required Vulkan extensions for this platform.
 	 * @param count Number of extensions
 	 * @return Vulkan extensions
 	 */
-	Handle glfwGetRequiredInstanceExtensions(IntegerReference count);
+	ArrayReturnValue<String> glfwGetRequiredInstanceExtensions(NativeReference<Integer> count);
 }

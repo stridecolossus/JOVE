@@ -1,84 +1,62 @@
 package org.sarge.jove.foreign;
 
-import java.lang.foreign.MemorySegment;
-import java.util.*;
+import static java.util.Objects.requireNonNull;
 
+import java.util.*;
+import java.util.logging.Logger;
+
+import org.sarge.jove.common.*;
 import org.sarge.jove.common.Handle.HandleNativeTransformer;
 import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
-import org.sarge.jove.foreign.IntegerReference.IntegerReferenceTransform;
+import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 import org.sarge.jove.foreign.NativeStructure.StructureNativeTransformer;
-import org.sarge.jove.foreign.PointerReference.PointerReferenceTransform;
 import org.sarge.jove.util.*;
 
 /**
- * The <i>native mapper registry</i> is used to lookup supported native mappers.
- * TODO - not object, collections
+ * The <i>transformer registry</i> is used to retrieve the transformer for supported native types.
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>An <i>array</i> of a registered type is automatically also supported</li>
+ * <li>Collection types cannot be supported (due to type-erasure)</li>
+ * </ul>
  * @author Sarge
  */
 @SuppressWarnings("rawtypes")
 public class TransformerRegistry {
-	private final Map<Class<?>, NativeTransformer> registry = new HashMap<>();
-	private final NativeTransformer<Object[], MemorySegment> array = new ArrayNativeTransformer(this);
+	public interface Factory<T> {
+
+		NativeTransformer<T, ?> transformer(Class<T> type, TransformerRegistry registry);
+
+		static <T> Factory<T> of(NativeTransformer<T, ?> transformer) {
+			return (type, registry) -> transformer;
+		}
+	}
+
+	private final Logger log = Logger.getLogger(TransformerRegistry.class.getName());
+	private final Map<Class<?>, Factory<?>> registry = new HashMap<>();
 
 	/**
 	 * Registers a native transformer.
 	 * @param transformer Native transformer
-	 * @throws IllegalArgumentException if {@link #type} is {@code null} or cannot be transformed
+	 * @throws IllegalArgumentException if {@link #type} is {@code null} or cannot be supported
 	 */
-	public void add(NativeTransformer transformer) {
-		final Class<?> type = transformer.type();
-		if(type == null) throw new IllegalArgumentException("Transformer must have a Java type: " + transformer);
+	public <T> void register(Class<T> type, NativeTransformer<T, ?> transformer) {
+		register(type, Factory.of(transformer));
+	}
+
+	/**
+	 *
+	 * @param <T>
+	 * @param type
+	 * @param factory
+	 */
+	public <T> void register(Class<T> type, Factory<T> factory) {
+		requireNonNull(type);
+		requireNonNull(factory);
 		validate(type);
-		registry.put(type, transformer);
-	}
-
-	/**
-	 * Looks up the native transformer for the given Java type.
-	 * @param type Java type
-	 * @return Transformer
-	 * @throws IllegalArgumentException if the type is not supported by this registry
-	 */
-	public NativeTransformer get(Class<?> type) {
-		validate(type);
-		final NativeTransformer transformer = registry.get(type);
-		if(transformer == null) {
-			if(type.isArray()) {
-				return derive(array, type);
-			}
-			else {
-				return find(type);
-			}
-		}
-		else {
-			return transformer;
-		}
-	}
-
-	/**
-	 * Finds a native transformer for the given subclass.
-	 */
-	@SuppressWarnings("unchecked")
-	private NativeTransformer find(Class<?> type) {
-		return registry
-				.values()
-				.stream()
-				.filter(e -> e.type().isAssignableFrom(type))
-				.findAny()
-				.map(m -> derive(m, type))
-				.orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + type));
-	}
-
-	/**
-	 * Derives a native transformer for the given subclass which is also registered as a side-effect.
-	 * @param transformer	Base transformer
-	 * @param type			Subclass
-	 * @return Derived mapper
-	 */
-	private NativeTransformer derive(NativeTransformer transformer, Class<?> type) {
-		@SuppressWarnings("unchecked")
-		final NativeTransformer derived = transformer.derive(type);
-		add(derived);
-		return derived;
+		log.info("Register: " + type.getName());
+		add(type, factory);
 	}
 
 	/**
@@ -91,28 +69,103 @@ public class TransformerRegistry {
 	}
 
 	/**
+	 * Registers a transformer.
+	 * @param type			Domain type
+	 * @param factory		Transformer factory
+	 */
+	private void add(Class<?> type, Factory<?> factory) {
+		registry.put(type, factory);
+	}
+
+	/**
+	 * Looks up the native transformer for the given Java type.
+	 * @param type Java type
+	 * @return Transformer
+	 * @throws IllegalArgumentException if the type is not supported by this registry
+	 */
+	public NativeTransformer get(Class<?> type) {
+		validate(type);
+		final Factory factory = factory(type);
+		return factory.transformer(type, this);
+	}
+
+	private Factory<?> factory(Class<?> type) {
+		final Factory factory = registry.get(type);
+//		final NativeTransformer transformer = registry.get(type);
+		if(factory == null) {
+			if(type.isArray()) {
+				// TODO - multi-dimension arrays???
+				final var component = type.getComponentType();
+				final var delegate = get(component);
+				final var transformer = new ArrayNativeTransformer(type, delegate);
+				final Factory array = Factory.of(transformer);
+				log.info("Register array: %s[] -> %s".formatted(component.getName(), delegate));
+				add(type, array);
+				return array;
+			}
+			else {
+				//final NativeTransformer derived = find(type);
+				final Factory derived = find(type);
+				log.info("Register subclass: %s -> %s".formatted(type.getName(), derived)); // derived.type().getName()));
+				add(type, derived);
+				//registry.put(type, derived);
+				return derived;
+			}
+		}
+		else {
+			return factory;
+		}
+	}
+
+	/**
+	 * Finds a native transformer for the given subclass.
+	 */
+//	@SuppressWarnings("unchecked")
+	private Factory find(Class<?> type) {
+		return registry
+				.keySet()
+				.stream()
+				.filter(e -> e.isAssignableFrom(type))
+				.map(registry::get)
+				.findAny()
+				.orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + type));
+	}
+
+	/**
 	 * Creates a registry with support for all standard built-in types.
 	 * @return Default mapper registry
 	 */
 	public static TransformerRegistry create() {
-		// Register primitive types
-		final var registry = new TransformerRegistry();
-		PrimitiveNativeTransformer.mappers().forEach(registry::add);
 
-		// Register reference types
-		final NativeTransformer[] mappers = {
-				new IntEnumNativeTransformer(),
-				new BitMaskNativeTransformer(),
-				new StringNativeTransformer(),
-				new HandleNativeTransformer(),
-				new NativeObjectTransformer(),
-				new IntegerReferenceTransform(),
-				new PointerReferenceTransform(),
-				new StructureNativeTransformer(registry),
-		};
-		for(var m : mappers) {
-			registry.add(m);
-		}
+		final var registry = new TransformerRegistry();
+		PrimitiveNativeTransformer.register(registry); // TODO
+		registry.register(String.class, new StringNativeTransformer());
+		registry.register(NativeReference.class, new NativeReferenceTransformer());
+		registry.register(IntEnum.class, IntEnumNativeTransformer.FACTORY);
+		registry.register(BitMask.class, new BitMaskNativeTransformer());
+		registry.register(Handle.class, new HandleNativeTransformer());
+		registry.register(NativeObject.class, new NativeObjectTransformer());
+		registry.register(NativeStructure.class, StructureNativeTransformer.FACTORY);
+
+		//////////////
+
+//		// Register primitive types
+//		final var registry = new TransformerRegistry();
+//		//PrimitiveNativeTransformer.primitives().forEach(e -> register registry::register);
+//
+//		// Register reference types
+//		final NativeTransformer[] mappers = {
+//				new IntEnumNativeTransformer(),
+//				new BitMaskNativeTransformer(),
+//				new StringNativeTransformer(),
+//				new NativeReferenceTransformer(),
+//				new HandleNativeTransformer(),
+//				new NativeObjectTransformer(),
+//				new StructureNativeTransformer(registry),
+//		};
+//		for(var m : mappers) {
+//			registry.add(m);
+//		}
 
 		return registry;
 	}

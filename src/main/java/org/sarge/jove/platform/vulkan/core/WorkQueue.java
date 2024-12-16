@@ -6,7 +6,6 @@ import static org.sarge.lib.Validation.*;
 import java.util.Set;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntEnum;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -27,11 +26,11 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 	}
 
 	/**
-	 * Waits for this queue to become idle.
+	 * Blocks until this queue becomes idle.
 	 * @param lib Vulkan API
 	 */
 	public void waitIdle(VulkanLibrary lib) {
-		Vulkan.check(lib.vkQueueWaitIdle(this));
+		lib.vkQueueWaitIdle(this);
 	}
 
 	/**

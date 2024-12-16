@@ -1,19 +1,33 @@
 package org.sarge.jove.util;
 
+import static java.util.Objects.requireNonNull;
+
 import java.lang.foreign.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.AbstractNativeTransformer;
+import org.sarge.jove.foreign.NativeTransformer;
+import org.sarge.jove.foreign.TransformerRegistry.Factory;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
- * The <i>integer enumeration native transform</i> maps an enumeration to/from its native integer representation.
+ * The <i>integer enumeration native transformer</i> converts an enumeration to/from its native integer representation.
  * @author Sarge
  */
-public class IntEnumNativeTransformer extends AbstractNativeTransformer<IntEnum, Integer> {
-	@Override
-	public Class<IntEnum> type() {
-		return IntEnum.class;
+public record IntEnumNativeTransformer(ReverseMapping<?> mapping) implements NativeTransformer<IntEnum, Integer> {
+	/**
+	 * Transformer factory for an integer enumeration.
+	 */
+	public static final Factory<IntEnum> FACTORY = (type, registry) -> {
+		final ReverseMapping<?> mapping = ReverseMapping.get(type);
+		return new IntEnumNativeTransformer(mapping);
+	};
+
+	/**
+	 * Constructor.
+	 * @param mapping Enumeration reverse mapping
+	 */
+	public IntEnumNativeTransformer {
+		requireNonNull(mapping);
 	}
 
 	@Override
@@ -22,31 +36,17 @@ public class IntEnumNativeTransformer extends AbstractNativeTransformer<IntEnum,
 	}
 
 	@Override
-	public Object transform(IntEnum e, SegmentAllocator allocator) {
-		return e.value();
+	public Integer transform(IntEnum e, ParameterMode parameter, SegmentAllocator allocator) {
+		if(e == null) {
+			return mapping.defaultValue().value();
+		}
+		else {
+			return e.value();
+		}
 	}
 
 	@Override
-	public IntEnumNativeTransformer derive(Class<? extends IntEnum> target) {
-		return new IntEnumNativeTransformer() {
-    		private final ReverseMapping<?> mapping = ReverseMapping.get(target);
-
-    		@Override
-        	public Integer empty() {
-        		return mapping.defaultValue().value();
-        	}
-
-        	@Override
-        	public Function<Integer, IntEnum> returns() {
-        		return value -> {
-        			if(value == 0) {
-        				return mapping.defaultValue();
-        			}
-        			else {
-        				return mapping.map(value);
-        			}
-        		};
-        	}
-        };
+	public Function<Integer, IntEnum> returns() {
+		return value -> (value == 0) ? mapping.defaultValue() : mapping.map(value);
 	}
 }

@@ -165,19 +165,19 @@ public class Instance extends TransientNativeObject {
 			info.pApplicationInfo = app;
 
 			// Populate required extensions
-			info.ppEnabledExtensionNames = extensions.toArray(String[]::new);		// TODO - helper class/method or collection?
+			info.ppEnabledExtensionNames = extensions.toArray(String[]::new);
 			info.enabledExtensionCount = extensions.size();
 
 			// Populate required layers
-			info.ppEnabledLayerNames = layers.toArray(String[]::new);				// TODO - helper class/method or collection?
+			info.ppEnabledLayerNames = layers.toArray(String[]::new);
 			info.enabledLayerCount = layers.size();
 
 			// Create instance
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			vulkan.library().vkCreateInstance(info, null, ref);
 
 			// Create instance domain wrapper
-			return new Instance(ref.handle(), vulkan);
+			return new Instance(ref.get(), vulkan);
 		}
 	}
 
@@ -192,7 +192,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pInstance			Returned instance handle
 		 * @return Result
 		 */
-		int vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, PointerReference pInstance);
+		int vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pInstance);
 
 		/**
 		 * Destroys the vulkan instance.
@@ -208,7 +208,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Extensions
 		 * @return Result
 		 */
-		int vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, @Returned VkExtensionProperties[] pProperties);
+		int vkEnumerateInstanceExtensionProperties(String pLayerName, NativeReference<Integer> pPropertyCount, @Returned VkExtensionProperties[] pProperties);
 
 		/**
 		 * Enumerates validation layer properties.
@@ -216,7 +216,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Layers
 		 * @return Result
 		 */
-		int vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, @Returned VkLayerProperties[] pProperties);
+		int vkEnumerateInstanceLayerProperties(NativeReference<Integer> pPropertyCount, @Returned VkLayerProperties[] pProperties);
 
 		/**
 		 * Looks up a function pointer of this instance.

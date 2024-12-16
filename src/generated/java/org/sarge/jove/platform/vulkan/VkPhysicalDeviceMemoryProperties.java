@@ -12,9 +12,9 @@ import org.sarge.jove.foreign.NativeStructure;
  */
 public class VkPhysicalDeviceMemoryProperties implements NativeStructure {
 	public int memoryTypeCount;
-	public VkMemoryType[] memoryTypes = new VkMemoryType[32];
+	public VkMemoryType[] memoryTypes; // = new VkMemoryType[32];
 	public int memoryHeapCount;
-	public VkMemoryHeap[] memoryHeaps = new VkMemoryHeap[16];
+	public VkMemoryHeap[] memoryHeaps; // = new VkMemoryHeap[16];
 
 	@Override
 	public StructLayout layout() {

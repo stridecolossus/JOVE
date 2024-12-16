@@ -37,12 +37,12 @@ public class Vulkan {
 		final var lib = factory.build("vulkan-1", VulkanLibrary.class);
 
 		// Create wrapper
-		return new Vulkan(lib, registry, new ReferenceFactory());
+		return new Vulkan(lib, registry, new NativeReference.Factory());
 	}
 
 	private final VulkanLibrary lib;
 	private final TransformerRegistry registry;
-	private final ReferenceFactory factory;
+	private final NativeReference.Factory factory;
 
 	/**
 	 * Constructor.
@@ -50,7 +50,7 @@ public class Vulkan {
 	 * @param registry		Mapper registry
 	 * @param factory		Reference factory
 	 */
-	public Vulkan(VulkanLibrary lib, TransformerRegistry registry, ReferenceFactory factory) {
+	public Vulkan(VulkanLibrary lib, TransformerRegistry registry, NativeReference.Factory factory) {
 		this.lib = requireNonNull(lib);
 		this.registry = requireNonNull(registry);
 		this.factory = requireNonNull(factory);
@@ -73,7 +73,7 @@ public class Vulkan {
 	/**
 	 * @return Reference factory
 	 */
-	public ReferenceFactory factory() {
+	public NativeReference.Factory factory() {
 		return factory;
 	}
 
@@ -124,7 +124,7 @@ public class Vulkan {
 		function.enumerate(count, null);
 
 		// Instantiate the container
-		final int size = count.value();
+		final int size = count.get();
 		final T data = create.apply(size);
 
 		// Invoke again to populate the container

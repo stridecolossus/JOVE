@@ -7,17 +7,23 @@ import java.lang.foreign.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
+import java.util.logging.Logger;
+
+import org.sarge.jove.foreign.NativeTransformer.ParameterMode;
 
 /**
- * The <i>native factory</i> construct a proxy API for a native library.
+ * The <i>native factory</i> constructs a proxy implementation of a native library implemented using FFM.
  * <p>
  * The {@link #build(SymbolLookup, Class)} method constructs a proxy implementation of a given native API.
  * Each public, non-static method of the API generates a {@link NativeMethod} with a method handle retrieved from the given symbol lookup.
  * The method parameters and optional return type are mapped to the corresponding native transformers via the {@link TransformerRegistry} provided in the constructor.
  * <p>
+ * The {@link #setReturnHandler(Consumer)} and {@link #setIntegerReturnHandler(IntConsumer)} methods can be used to configure validation or logging of native method returns values.
+ * <p>
  * @author Sarge
  */
 public class NativeFactory {
+	private final Logger log = Logger.getLogger(NativeFactory.class.getName());
 	private final ClassLoader loader = this.getClass().getClassLoader(); // TODO - mutable?
 	private final TransformerRegistry registry;
 	private Consumer<Object> check = result -> { /* Ignored */ };
@@ -154,11 +160,13 @@ public class NativeFactory {
 			// Init method builder
 			final var builder = new NativeMethod.Builder(registry);
 			builder.address(address);
+			log.info("Building %s::%s()".formatted(method.getDeclaringClass().getName(), method.getName()));
 
 			// Define method signature
 			for(Parameter p : method.getParameters()) {
-				final boolean returned = p.isAnnotationPresent(Returned.class) || isReferenceType(p.getType());
-				builder.parameter(p.getType(), returned);
+				final boolean ref = p.isAnnotationPresent(Returned.class) || NativeReference.class.isAssignableFrom(p.getType());
+				final var mode = ref ? ParameterMode.REFERENCE : ParameterMode.VALUE;
+				builder.parameter(p.getType(), mode);
 			}
 
 			// Set return type
@@ -178,9 +186,5 @@ public class NativeFactory {
 	private static boolean isNativeMethod(Method method) {
 		final int modifiers = method.getModifiers();
 		return !Modifier.isStatic(modifiers);
-	}
-
-	private static boolean isReferenceType(Class<?> type) {
-		return IntegerReference.class.equals(type) || PointerReference.class.equals(type);
 	}
 }

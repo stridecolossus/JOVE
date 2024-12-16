@@ -8,14 +8,16 @@ import java.lang.foreign.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Handle.HandleNativeTransformer;
+import org.sarge.jove.foreign.NativeTransformer.ParameterMode;
 
 class ArrayNativeTransformerTest {
-	@SuppressWarnings("rawtypes")
-	private NativeTransformer transformer;
+	private ArrayNativeTransformer transformer;
 	private Handle[] array;
 	private Arena arena;
 
-	// TODO - need to check structure[] and primitive[]
+	// TODO
+	// - check structure[] and primitive[]
+	// - check by-reference variants
 
 	@BeforeEach
 	void before() {
@@ -23,12 +25,12 @@ class ArrayNativeTransformerTest {
 		registry.add(new HandleNativeTransformer());
 		arena = Arena.ofAuto();
 		array = new Handle[1];
-		transformer = new ArrayNativeTransformer(registry).derive(Handle[].class);
+		transformer = new ArrayNativeTransformer(registry);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(ADDRESS, transformer.layout());
+		assertEquals(ADDRESS, transformer.layout(Object[].class));
 		assertEquals(Handle[].class, transformer.type());
 	}
 
@@ -37,26 +39,24 @@ class ArrayNativeTransformerTest {
 		final Handle handle = new Handle(42);
 		array[0] = handle;
 
-		@SuppressWarnings("unchecked")
-		final MemorySegment address = (MemorySegment) transformer.transform(array, arena);
+		final MemorySegment address = transformer.transform(array, ParameterMode.VALUE, null);
 		assertEquals(handle.address(), address.getAtIndex(ADDRESS, 0));
 	}
 
 	@Test
 	void empty() {
-		assertEquals(MemorySegment.NULL, transformer.empty());
+		assertEquals(MemorySegment.NULL, transformer.empty(Object[].class));
 	}
 
 	@Test
 	void transformNullElement() {
-		@SuppressWarnings("unchecked")
-		final MemorySegment address = (MemorySegment) transformer.transform(array, arena);
+		final MemorySegment address = transformer.transform(array, ParameterMode.VALUE, null);
 		assertEquals(MemorySegment.NULL, address.getAtIndex(ADDRESS, 0));
 	}
 
 	@Test
 	void returns() {
-		assertThrows(UnsupportedOperationException.class, () -> transformer.returns());
+		assertThrows(UnsupportedOperationException.class, () -> transformer.returns(Object[].class));
 	}
 
 	private MemorySegment create() {
@@ -66,7 +66,6 @@ class ArrayNativeTransformerTest {
 		return address;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	void update() {
 		final MemorySegment address = create();

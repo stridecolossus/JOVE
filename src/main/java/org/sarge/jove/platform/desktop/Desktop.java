@@ -3,10 +3,8 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
-import java.lang.foreign.ValueLayout;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
+import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.foreign.*;
 
 /**
@@ -41,8 +39,6 @@ public final class Desktop implements TransientObject {
 //		mapper.addTypeConverter(Window.class, NativeObject.CONVERTER);
 
 		final var registry = TransformerRegistry.create();
-		registry.add(new NativeObjectTransformer());
-		//registry.add(new DefaultNativeMapper<>(null, null)
 		// TODO - window mapper?
 
 		// Load native library
@@ -55,7 +51,7 @@ public final class Desktop implements TransientObject {
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
 
 		// Create desktop service
-		return new Desktop(lib, new ReferenceFactory());
+		return new Desktop(lib, new NativeReference.Factory());
 	}
 
 	/**
@@ -68,14 +64,14 @@ public final class Desktop implements TransientObject {
 	}
 
 	private final DesktopLibrary lib;
-	private final ReferenceFactory factory;
+	private final NativeReference.Factory factory;
 
 	/**
 	 * Constructor.
 	 * @param lib 			GLFW library
 	 * @param factory		Reference factory
 	 */
-	Desktop(DesktopLibrary lib, ReferenceFactory factory) {
+	Desktop(DesktopLibrary lib, NativeReference.Factory factory) {
 		this.lib = requireNonNull(lib);
 		this.factory = requireNonNull(factory);
 	}
@@ -90,7 +86,7 @@ public final class Desktop implements TransientObject {
 	/**
 	 * @return Reference factory
 	 */
-	ReferenceFactory factory() {
+	NativeReference.Factory factory() {
 		return factory;
 	}
 
@@ -120,31 +116,10 @@ public final class Desktop implements TransientObject {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-		final IntegerReference count = factory.integer();
-		final Handle handle = lib.glfwGetRequiredInstanceExtensions(count);
-		return handle.array(count.value(), ValueLayout.ADDRESS, String[]::new, StringNativeTransformer::unmarshal);
-		// TODO
-//		final ArrayReturnValue<String> value = lib.glfwGetRequiredInstanceExtensions(count);
-//		return value.array(count.value(), String[]::new);
+		final NativeReference<Integer> count = factory.integer();
+		final ArrayReturnValue<String> array = lib.glfwGetRequiredInstanceExtensions(count);
+		return array.array(count.get(), String[]::new);
 	}
-
-//		final MemorySegment address = array.address().reinterpret(ValueLayout.ADDRESS.byteSize() * count.value());
-//
-//		final String[] str = new String[count.value()];
-//		for(int n = 0; n < count.value(); ++n) {
-//
-//			final MemorySegment e = address.getAtIndex(ValueLayout.ADDRESS, n);
-//			str[n ] = StringNativeMapper.unmarshal(e);
-//
-//					//root.getString(n * ValueLayout.ADDRESS.byteSize());
-//					//getAtIndex(ValueLayout.ADDRESS, n).getString(0);
-//		}
-//
-////		return array.get(count.value());
-////		return new String[]{"", ""};
-//
-//		return str;
-//	}
 
 //	/**
 //	 * Sets the handler for GLFW errors.

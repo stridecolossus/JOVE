@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.foreign.NativeStructure.StructureNativeTransformer;
+import org.sarge.jove.foreign.NativeTransformer.ParameterMode;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -128,22 +129,9 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * <p>
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
-	private static class MessageCallback {
+	private record MessageCallback(Consumer<Message> consumer, StructureNativeTransformer transformer) {
 		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = IntEnum.reverse(VkDebugUtilsMessageSeverity.class);
 		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = IntEnum.reverse(VkDebugUtilsMessageType.class);
-
-		private final Consumer<Message> consumer;
-		private final NativeTransformer<NativeStructure, MemorySegment> transformer;
-
-		/**
-		 * Constructor.
-		 * @param consumer		Message handler
-		 * @param registry		Native mappers
-		 */
-		MessageCallback(Consumer<Message> consumer, TransformerRegistry registry) {
-			this.consumer = requireNonNull(consumer);
-			this.transformer = new StructureNativeTransformer(registry).derive(VkDebugUtilsMessengerCallbackData.class);
-		}
 
 		/**
 		 * Callback handler method.
@@ -155,15 +143,14 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		@SuppressWarnings("unused")
 		public boolean message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
-			// TODO - remove once completely satisfied unmarshalling works ok
-			System.err.println("VULKAN ERROR...");
-
 			// Transform the message properties
 			final var types = new BitMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
 			final var level = SEVERITY.map(severity);
 
 			// Unmarshal the message structure
-			final var data = (VkDebugUtilsMessengerCallbackData) transformer.returns().apply(pCallbackData);
+			final long size = transformer.layout().byteSize();
+			final var segment = pCallbackData.reinterpret(size);
+			final var data = (VkDebugUtilsMessengerCallbackData) transformer.returns().apply(segment);
 
 			// Handle message
 			final Message message = new Message(level, types, data);
@@ -286,7 +273,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		public DiagnosticHandler build() {
 			init();
-			final var callback = new MessageCallback(consumer, registry);
+			final var transformer = (StructureNativeTransformer) registry.get(VkDebugUtilsMessengerCallbackData.class);
+			final var callback = new MessageCallback(consumer, transformer);
 			final var info = populate(callback.address());
 			final Handle handle = create(info);
 			return new DiagnosticHandler(handle, instance);
@@ -311,9 +299,9 @@ public class DiagnosticHandler extends TransientNativeObject {
 		private Handle create(VkDebugUtilsMessengerCreateInfoEXT info) {
 			final Handle create = instance.function("vkCreateDebugUtilsMessengerEXT");
 			final NativeMethod method = method(create.address());
-    		final PointerReference ref = instance.vulkan().factory().pointer();
+    		final NativeReference<Handle> ref = instance.vulkan().factory().pointer();
 			create(method, info, ref);
-    		return ref.handle();
+    		return ref.get();
 		}
 
 		/**
@@ -326,14 +314,14 @@ public class DiagnosticHandler extends TransientNativeObject {
     				.parameter(Instance.class)
     				.parameter(VkDebugUtilsMessengerCreateInfoEXT.class)
     				.parameter(Handle.class)
-    				.parameter(PointerReference.class, true)
+    				.parameter(NativeReference.class, ParameterMode.REFERENCE)
     				.build();
 		}
 
 		/**
 		 * Invokes the create function.
 		 */
-		private void create(NativeMethod method, VkDebugUtilsMessengerCreateInfoEXT info, PointerReference ref) {
+		private void create(NativeMethod method, VkDebugUtilsMessengerCreateInfoEXT info, NativeReference<Handle> ref) {
     		final Object[] args = {instance, info, null, ref};
     		Vulkan.check((int) DiagnosticHandler.invoke(method, args));
 		}

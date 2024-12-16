@@ -31,6 +31,7 @@ public class VkDeviceQueueCreateInfo implements NativeStructure {
 				JAVA_INT.withName("queueCount"),
 				PADDING,
 				POINTER.withName("pQueuePriorities")
+//			    ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Integer.MAX_VALUE, ValueLayout.JAVA_FLOAT)).withName("pQueuePriorities")
 		);
 	}
 }

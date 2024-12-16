@@ -16,7 +16,7 @@ public class VkDeviceCreateInfo implements NativeStructure {
 	public Handle pNext;
 	public int flags;
 	public int queueCreateInfoCount;
-	public VkDeviceQueueCreateInfo pQueueCreateInfos;
+	public VkDeviceQueueCreateInfo[] pQueueCreateInfos;
 	public int enabledLayerCount;
 	public String[] ppEnabledLayerNames;
 	public int enabledExtensionCount;

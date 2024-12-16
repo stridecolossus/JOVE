@@ -4,18 +4,18 @@ import java.lang.foreign.*;
 import java.util.function.Function;
 
 /**
- * The <i>string transform</i> maps a Java string to a native <i>pointer-to-null-terminated character array</i>.
+ * The <i>string native transformer</i> converts a Java string to a native pointer to a null-terminated character array, i.e. {@code char*}.
  * @author Sarge
  */
-public final class StringNativeTransformer extends AbstractNativeTransformer<String, MemorySegment> {
+public record StringNativeTransformer() implements NativeTransformer<String, MemorySegment> {
 	@Override
-	public Class<String> type() {
-		return String.class;
-	}
-
-	@Override
-	public MemorySegment transform(String string, SegmentAllocator allocator) {
-		return allocator.allocateFrom(string);
+	public MemorySegment transform(String string, ParameterMode __, SegmentAllocator allocator) {
+		if(string == null) {
+			return MemorySegment.NULL;
+		}
+		else {
+			return allocator.allocateFrom(string);
+		}
 	}
 
 	@Override
@@ -29,6 +29,6 @@ public final class StringNativeTransformer extends AbstractNativeTransformer<Str
 	 * @return String at the given address or {@code null} for a {@link MemorySegment#NULL} address
 	 */
 	public static String unmarshal(MemorySegment address) {
-		return address.reinterpret(Integer.MAX_VALUE).getString(0);
+		return address.reinterpret(Integer.MAX_VALUE).getString(0L);
 	}
 }

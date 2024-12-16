@@ -3,17 +3,17 @@ package org.sarge.jove.foreign;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
-import java.util.*;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
- *
- * @param <T>
- * @param <R>
+ * The <i>identity native transformer</i> does <b>not</b> apply any transformation to native method arguments.
+ * This class is intended for primitives or raw pointers (i.e. a {@link MemorySegment}).
  * @author Sarge
  */
-public class PrimitiveNativeTransformer<T> extends AbstractNativeTransformer<T, T> {
-	private static final Map<Class<?>, ValueLayout> PRIMITIVES = Map.of(
+public record PrimitiveNativeTransformer<T>(ValueLayout layout) implements NativeTransformer<T, T> {
+	@SuppressWarnings("rawtypes")
+	private static final Map<Class, ValueLayout> PRIMITIVES = Map.of(
         	byte.class,		ValueLayout.JAVA_BYTE,
         	char.class,		ValueLayout.JAVA_CHAR,
         	boolean.class,	ValueLayout.JAVA_BOOLEAN,
@@ -25,68 +25,49 @@ public class PrimitiveNativeTransformer<T> extends AbstractNativeTransformer<T, 
     );
 
 	/**
-	 * Maps the given type to its corresponding native FFM layout.
-	 * @param type Java or JOVE type
-	 * @return FFM layout
+	 * Creates a transformer for the given primitive type.
+	 * @param <T> Primitive type
+	 * @param type Primitive type
+	 * @return Primitive transformer
+	 * @throws IllegalArgumentException if the given type is not a supported primitive
 	 */
-	public static MemoryLayout map(Class<?> type) {
-		return PRIMITIVES.getOrDefault(type, AddressLayout.ADDRESS);
+	public static <T> PrimitiveNativeTransformer<T> of(Class<T> type) {
+		final ValueLayout layout = PRIMITIVES.get(type);
+		if(layout == null) throw new IllegalArgumentException("Not a supported primitive: " + type);
+		return new PrimitiveNativeTransformer<>(layout);
 	}
-
-	/**
-	 * @return Native mappers for all Java primitive types
-	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static Collection<? extends NativeTransformer> mappers() {
-		return PRIMITIVES
-				.keySet()
-				.stream()
-				.map(PrimitiveNativeTransformer::new)
-				.toList();
-	}
-
-	private final Class<T> type;
-	private final ValueLayout layout;
 
 	/**
 	 * Constructor.
-	 * @param type Primitive type
-	 * @throws IllegalArgumentException if {@link #type} is not primitive
+	 * @param layout Primitive memory layout
 	 */
-	public PrimitiveNativeTransformer(Class<T> type) {
-		if(!type.isPrimitive()) throw new IllegalArgumentException("Not a primitive: " + type);
-		this.type = requireNonNull(type);
-		this.layout = PRIMITIVES.get(type);
+	public PrimitiveNativeTransformer {
+		requireNonNull(layout);
 	}
 
-	@Override
-	public Class<T> type() {
-		return type;
+	// TODO
+	/**
+	 * Register transformers for the built-in primitive types.
+	 * @param registry TODO
+	 */
+	@SuppressWarnings("unchecked")
+	public static void register(TransformerRegistry registry) {
+		for(var e : PRIMITIVES.entrySet()) {
+			final Class<?> type = e.getKey();
+			final var transformer = PrimitiveNativeTransformer.of(e.getKey());
+			registry.register(type, transformer);
+		}
 	}
 
-	@Override
-	public MemoryLayout layout() {
-		return layout;
-	}
 
 	@Override
-	public Object transform(T value, SegmentAllocator allocator) {
+	public T transform(T value, ParameterMode parameter, SegmentAllocator allocator) {
+		if(value == null) throw new IllegalArgumentException("Primitive values cannot be NULL");
 		return value;
-	}
-
-	@Override
-	public Object empty() {
-		// TODO - or return zero? or separate wrapper implementation?
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Function<T, T> returns() {
 		return Function.identity();
-	}
-
-	@Override
-	public String toString() {
-		return String.format("PrimitiveNativeMapper[%s]", type);
 	}
 }

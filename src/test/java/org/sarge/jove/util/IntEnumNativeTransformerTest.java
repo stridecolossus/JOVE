@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.ValueLayout;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.foreign.NativeTransformer.ParameterMode;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 class IntEnumNativeTransformerTest {
 	private static enum MockEnum implements IntEnum {
@@ -20,25 +22,24 @@ class IntEnumNativeTransformerTest {
 
 	@BeforeEach
 	void before() {
-		transformer = new IntEnumNativeTransformer().derive(MockEnum.class);
+		transformer = new IntEnumNativeTransformer(ReverseMapping.get(MockEnum.class));
 	}
 
 	@Test
-	void mapper() {
-		assertEquals(IntEnum.class, transformer.type());
+	void layout() {
 		assertEquals(ValueLayout.JAVA_INT, transformer.layout());
 	}
 
 	@DisplayName("An integer enumeration value is transformed to a native integer")
 	@Test
 	void transform() {
-		assertEquals(42, transformer.transform(MockEnum.INSTANCE, null));
+		assertEquals(42, transformer.transform(MockEnum.INSTANCE, ParameterMode.VALUE, null));
 	}
 
 	@DisplayName("An empty integer enumeration value is the default value of the enumeration")
 	@Test
 	void empty() {
-		assertEquals(42, transformer.empty());
+		assertEquals(42, transformer.transform(null, ParameterMode.VALUE, null));
 	}
 
 	@DisplayName("An integer enumeration can be returned from a native method")

@@ -6,6 +6,7 @@ import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle.HandleNativeTransformer;
+import org.sarge.jove.foreign.NativeTransformer.ParameterMode;
 
 class HandleTest {
 	private Handle handle;
@@ -40,29 +41,28 @@ class HandleTest {
 		}
 
 		@Test
-		void constructor() {
-			assertEquals(Handle.class, transformer.type());
+		void layout() {
 			assertEquals(ValueLayout.ADDRESS, transformer.layout());
-			assertEquals(transformer, transformer.derive(null));
 		}
 
 		@DisplayName("A handle can be transformed to a memory address")
 		@Test
 		void transform() {
-			assertEquals(address, transformer.transform(handle, null));
+			assertEquals(address, transformer.transform(handle, ParameterMode.VALUE, null));
 		}
 
 		@DisplayName("An empty handle can be transformed to a null memory address")
 		@Test
 		void empty() {
-			assertEquals(MemorySegment.NULL, transformer.empty());
+			assertEquals(MemorySegment.NULL, transformer.transform(null, ParameterMode.VALUE, null));
 		}
 
 		@DisplayName("A handle can be returned by a native method")
 		@Test
 		void returns() {
-			assertEquals(new Handle(address), transformer.returns().apply(address));
-			assertEquals(new Handle(MemorySegment.NULL), transformer.returns().apply(MemorySegment.NULL));
+			final var returns = transformer.returns();
+			assertEquals(new Handle(address), returns.apply(address));
+			assertEquals(new Handle(MemorySegment.NULL), returns.apply(MemorySegment.NULL));
 		}
 
 		@DisplayName("A handle cannot be returned as a by-reference parameter")
