@@ -21,7 +21,7 @@
                     <source>22</source>
                     <target>22</target>
                     <compilerArgs>
-                        --enable-preview --enable-native-access=ALL-UNNAMED
+                        --enable-preview
                     </compilerArgs>
                 </configuration>
             </plugin>
