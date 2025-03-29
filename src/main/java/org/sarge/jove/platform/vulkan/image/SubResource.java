@@ -7,7 +7,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * An <i>image sub-resource</i> defines a subset of the aspects, mip levels and array layers of an image.
@@ -54,7 +54,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceRange toRange(SubResource res) {
 		final var range = new VkImageSubresourceRange();
-		range.aspectMask = new BitMask<>(res.aspects());
+		range.aspectMask = new EnumMask<>(res.aspects());
 		range.baseMipLevel = res.mipLevel();
 		range.levelCount = res.levelCount();
 		range.baseArrayLayer = res.baseArrayLayer();
@@ -69,7 +69,7 @@ public interface SubResource {
 	 */
 	static VkImageSubresourceLayers toLayers(SubResource res) {
 		final var layers = new VkImageSubresourceLayers();
-		layers.aspectMask = new BitMask<>(res.aspects());
+		layers.aspectMask = new EnumMask<>(res.aspects());
 		layers.mipLevel = res.mipLevel();
 		layers.baseArrayLayer = res.baseArrayLayer();
 		layers.layerCount = res.layerCount();

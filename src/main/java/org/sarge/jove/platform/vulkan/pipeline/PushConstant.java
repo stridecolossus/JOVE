@@ -10,7 +10,7 @@ import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>push constant</i> comprises the ranges and backing data buffer for the push constants of a pipeline.
@@ -197,7 +197,7 @@ public final class PushConstant {
 		 * Populates a push constant range descriptor.
 		 */
 		void populate(VkPushConstantRange range) {
-			range.stageFlags = new BitMask<>(stages);
+			range.stageFlags = new EnumMask<>(stages);
 			range.size = size;
 			range.offset = offset;
 		}
@@ -209,7 +209,7 @@ public final class PushConstant {
 	private final class UpdateCommand implements Command {
 		private final Range range;
 		private final PipelineLayout layout;
-		private final BitMask<VkShaderStage> stages;
+		private final EnumMask<VkShaderStage> stages;
 
 		/**
 		 * Constructor.
@@ -219,7 +219,7 @@ public final class PushConstant {
 		private UpdateCommand(Range range, PipelineLayout layout) {
 			this.range = requireNonNull(range);
 			this.layout = requireNonNull(layout);
-			this.stages = new BitMask<>(range.stages);
+			this.stages = new EnumMask<>(range.stages);
 			assert ranges.contains(range);
 		}
 

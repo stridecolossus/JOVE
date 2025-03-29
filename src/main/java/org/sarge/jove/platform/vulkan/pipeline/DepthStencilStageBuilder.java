@@ -7,7 +7,7 @@ import java.util.Set;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 import static org.sarge.lib.Validation.*;
 
 /**
@@ -170,7 +170,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	 */
 	public Command setDynamicStencilCompareMask(StencilMaskType type, Set<VkStencilFaceFlag> face, int mask) {
 		requireNotEmpty(face);
-		final var faceMask = new BitMask<>(face);
+		final var faceMask = new EnumMask<>(face);
 		return (lib, buffer) -> {
 			switch(type) {
     			case COMPARE 	-> lib.vkCmdSetStencilCompareMask(buffer, faceMask, mask);

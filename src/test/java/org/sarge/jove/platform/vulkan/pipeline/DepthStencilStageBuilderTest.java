@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.DepthStencilStageBuilder.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 class DepthStencilStageBuilderTest {
 	private DepthStencilStageBuilder builder;
@@ -102,7 +102,7 @@ class DepthStencilStageBuilderTest {
     	void setDynamicStencilCompareMask() {
     		final Command cmd = builder.setDynamicStencilCompareMask(StencilMaskType.WRITE, Set.of(VkStencilFaceFlag.FRONT), 42);
     		cmd.record(lib, buffer);
-    		verify(lib).vkCmdSetStencilWriteMask(buffer, BitMask.of(VkStencilFaceFlag.FRONT), 42);
+    		verify(lib).vkCmdSetStencilWriteMask(buffer, EnumMask.of(VkStencilFaceFlag.FRONT), 42);
     	}
     }
 }

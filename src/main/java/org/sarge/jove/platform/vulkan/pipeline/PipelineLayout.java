@@ -5,14 +5,14 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>pipeline layout</i> specifies the resources used by a pipeline.
@@ -108,11 +108,11 @@ public final class PipelineLayout extends VulkanObject {
 
 			// Allocate layout
 			final Vulkan vulkan = dev.vulkan();
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			vulkan.library().vkCreatePipelineLayout(dev, info, null, ref);
 
 			// Create layout
-			return new PipelineLayout(ref.handle(), dev, push);
+			return new PipelineLayout(ref.get(), dev, push);
 		}
 	}
 
@@ -128,7 +128,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Returned pipeline layout
 		 * @return Result
 		 */
-		int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerReference pPipelineLayout);
+		int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pPipelineLayout);
 
 		/**
 		 * Destroys a pipeline layout.
@@ -147,6 +147,6 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param size					Size of the range (bytes)
 		 * @param pValues				Push constants data buffer
 		 */
-		void vkCmdPushConstants(CommandBuffer commandBuffer, PipelineLayout layout, BitMask<VkShaderStage> stageFlags, int offset, int size, Handle /*ByteBuffer*/ pValues);
+		void vkCmdPushConstants(CommandBuffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStage> stageFlags, int offset, int size, Handle pValues);
 	}
 }

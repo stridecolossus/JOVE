@@ -2,39 +2,23 @@ package org.sarge.jove.util;
 
 import static java.util.stream.Collectors.toMap;
 
+import java.lang.foreign.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import org.sarge.jove.foreign.NativeTransformer;
+
 /**
- * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
+ * An <i>integer enumeration</i> is a type definition for an enumeration mapped to a native <b>typedef enum</b>.
  * <p>
- * An integer enumeration has a {@link ReverseMapping} which maps integer literals to the corresponding enumeration constants.
- * <p>
- * Example usage:
- * <p>
- * {@snippet lang="java" :
- * // Create integer enumeration
- * enum Thing implements IntEnum {
- *     ONE(1),
- *     TWO(2),
- *     ...
+ * An integer enumeration can be treated as bi-directional by constructing
  *
- *     private final int value;
- *
- *     @Override
- *     public int value() {
- *         return value;
- *     }
- * }
- *
- * // Map literal to enumeration
- * ReverseMapping<Thing> mapping = IntEnum.mapping(Thing.class);
- * Thing one = mapping.map(1);
+ * A {@link ReverseMapping} can be constructed for a given enumeration
  * <p>
- * Integer enumerations can be used in JNA methods and structures by registering the custom {@link #CONVERTER} with the relevant JNA library.
+ * The {@link IntEnumNativeTransformer} is used to marshal enumerations to/from the native layer.
  * <p>
- * @see BitMask
+ * @see EnumMask
  * @author Sarge
  */
 public interface IntEnum {
@@ -65,7 +49,7 @@ public interface IntEnum {
 	 * Note that constants with duplicate values within an enumeration are silently ignored by this implementation.
 	 * @param <E> Integer enumeration
 	 */
-	public final class ReverseMapping<E extends IntEnum> {
+	class ReverseMapping<E extends IntEnum> {
 		private static final Map<Class<?>, ReverseMapping<?>> CACHE = new ConcurrentHashMap<>();
 
 		/**
@@ -116,6 +100,49 @@ public interface IntEnum {
 				throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass()));
 			}
 			return constant;
+		}
+	}
+
+	/**
+	 * Native transformer for integer enumerations.
+	 */
+	class IntEnumNativeTransformer implements NativeTransformer<IntEnum> {
+		private final ReverseMapping<?> mapping;
+
+		/**
+		 * Constructor.
+		 * @param type Enumeration type
+		 */
+		public IntEnumNativeTransformer(Class<? extends IntEnum> type) {
+			this.mapping = new ReverseMapping<>(type);
+		}
+
+		@Override
+		public MemoryLayout layout() {
+			return ValueLayout.JAVA_INT;
+		}
+
+		@Override
+		public Integer marshal(IntEnum e, SegmentAllocator allocator) {
+			if(e == null) {
+				return mapping.defaultValue().value();
+			}
+			else {
+				return e.value();
+			}
+		}
+
+		@Override
+		public Function<Integer, IntEnum> unmarshal() {
+			// TODO - getOrDefault()
+			return value -> {
+				if(value == 0) {
+					return mapping.defaultValue();
+				}
+				else {
+					return mapping.map(value);
+				}
+			};
 		}
 	}
 }

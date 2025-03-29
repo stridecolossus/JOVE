@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Builder for a compute pipeline.
@@ -33,7 +33,7 @@ public class ComputePipelineBuilder implements DelegatePipelineBuilder<VkCompute
 	}
 
 	@Override
-	public void populate(BitMask<VkPipelineCreateFlag> flags, PipelineLayout layout, Handle base, int parent, VkComputePipelineCreateInfo info) {
+	public void populate(EnumMask<VkPipelineCreateFlag> flags, PipelineLayout layout, Handle base, int parent, VkComputePipelineCreateInfo info) {
 		// Init descriptor
 		info.flags = flags;
 		info.layout = layout.handle();

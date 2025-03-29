@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>descriptor set</i> specifies resources used during rendering, such as samplers and uniform buffers.
@@ -85,7 +85,7 @@ public final class DescriptorSet implements NativeObject {
 			info.binding = index;
 			info.descriptorType = type;
 			info.descriptorCount = count;
-			info.stageFlags = new BitMask<>(stages);
+			info.stageFlags = new EnumMask<>(stages);
 		}
 
 		/**
@@ -359,11 +359,11 @@ public final class DescriptorSet implements NativeObject {
 
 			// Allocate layout
 			final Vulkan vulkan = dev.vulkan();
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			vulkan.library().vkCreateDescriptorSetLayout(dev, info, null, ref);
 
 			// Create layout
-			return new Layout(ref.handle(), dev, bindings);
+			return new Layout(ref.get(), dev, bindings);
 		}
 
 		private final Collection<Binding> bindings;
@@ -562,18 +562,18 @@ public final class DescriptorSet implements NativeObject {
 
 				// Init pool descriptor
 				final var info = new VkDescriptorPoolCreateInfo();
-				info.flags = new BitMask<>(flags);
+				info.flags = new EnumMask<>(flags);
 				info.poolSizeCount = pool.size();
 				info.pPoolSizes = null; // TODO StructureCollector.pointer(pool.entrySet(), new VkDescriptorPoolSize(), Builder::populate);
 				info.maxSets = max;
 
 				// Allocate pool
 				final Vulkan vulkan = dev.vulkan();
-				final PointerReference ref = vulkan.factory().pointer();
+				final NativeReference<Handle> ref = vulkan.factory().pointer();
 				vulkan.library().vkCreateDescriptorPool(dev, info, null, ref);
 
 				// Create pool
-				return new Pool(ref.handle(), dev, max);
+				return new Pool(ref.get(), dev, max);
 			}
 
 			/**
@@ -598,7 +598,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pSetLayout			Returned layout handle
 		 * @return Result
 		 */
-		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, PointerReference pSetLayout);
+		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSetLayout);
 
 		/**
 		 * Destroys a descriptor set layout.
@@ -613,10 +613,10 @@ public final class DescriptorSet implements NativeObject {
 		 * @param device				Logical device
 		 * @param pCreateInfo			Descriptor
 		 * @param pAllocator			Allocator
-		 * @param pDescriptorPool		Returned pool
+		 * @param pDescriptorPool		Returned pool handle
 		 * @return Result
 		 */
-		int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, PointerReference pDescriptorPool);
+		int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pDescriptorPool);
 
 		/**
 		 * Destroys a descriptor set pool.

@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Builder for the colour-blend pipeline stage.
@@ -202,7 +202,7 @@ public class ColourBlendStageBuilder extends AbstractStageBuilder<VkPipelineColo
 			info.alphaBlendOp = alpha.blend;
 
 			// Init colour write mask
-			info.colorWriteMask = new BitMask<>(mask);
+			info.colorWriteMask = new EnumMask<>(mask);
 		}
 
 		/**

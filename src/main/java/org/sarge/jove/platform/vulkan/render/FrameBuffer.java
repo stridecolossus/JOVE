@@ -6,7 +6,7 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -131,11 +131,11 @@ public class FrameBuffer extends VulkanObject {
 		// Allocate frame buffer
 		final DeviceContext dev = pass.device();
 		final Vulkan vulkan = dev.vulkan();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		vulkan.library().vkCreateFramebuffer(dev, info, null, ref);
 
 		// Create frame buffer
-		return new FrameBuffer(ref.handle(), dev, pass, attachments, extents);
+		return new FrameBuffer(ref.get(), dev, pass, attachments, extents);
 	}
 
 	/**
@@ -147,10 +147,10 @@ public class FrameBuffer extends VulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
-		 * @param pFramebuffer		Returned frame buffer
+		 * @param pFramebuffer		Returned frame buffer handle
 		 * @return Result
 		 */
-		int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, PointerReference pFramebuffer);
+		int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pFramebuffer);
 
 		/**
 		 * Destroys a frame buffer.

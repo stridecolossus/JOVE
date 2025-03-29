@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.VkPushConstantRange;
 import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 public class PushConstantTest {
 	private PushConstant constant;
@@ -97,7 +97,7 @@ public class PushConstantTest {
 			two.populate(struct);
 			assertEquals(4, struct.offset);
 			assertEquals(8, struct.size);
-			assertEquals(BitMask.of(FRAGMENT), struct.stageFlags);
+			assertEquals(EnumMask.of(FRAGMENT), struct.stageFlags);
 		}
 	}
 
@@ -119,7 +119,7 @@ public class PushConstantTest {
 		void record() {
 			final var lib = mock(VulkanLibrary.class);
 			update.record(lib, cmd);
-			verify(lib).vkCmdPushConstants(cmd, layout, BitMask.of(VERTEX), 0, 4, constant.buffer());
+			verify(lib).vkCmdPushConstants(cmd, layout, EnumMask.of(VERTEX), 0, 4, constant.buffer());
 		}
 
 		@Test

@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 class DefaultImageTest {
 	private DefaultImage image;
@@ -103,7 +103,7 @@ class DefaultImageTest {
 					return dataEquals((VkImageCreateInfo) obj, true);
 				}
 			};
-			info.flags = BitMask.of(VkImageCreateFlag.CUBE_COMPATIBLE);
+			info.flags = EnumMask.of(VkImageCreateFlag.CUBE_COMPATIBLE);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
@@ -112,7 +112,7 @@ class DefaultImageTest {
 			info.samples = VkSampleCount.COUNT_4;
 			info.tiling = VkImageTiling.LINEAR;
 			info.initialLayout = VkImageLayout.PREINITIALIZED;
-			info.usage = new BitMask<>(props.usage());
+			info.usage = new EnumMask<>(props.usage());
 			info.sharingMode = props.mode();
 
 			// Check API

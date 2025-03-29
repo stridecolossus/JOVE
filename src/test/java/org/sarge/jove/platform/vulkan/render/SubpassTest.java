@@ -8,7 +8,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 @Nested
 class SubpassTest {
@@ -149,13 +149,13 @@ class SubpassTest {
 
 			// Check descriptor
 			dependency.populate(desc);
-			assertEquals(BitMask.of(VkDependencyFlag.VIEW_LOCAL), desc.dependencyFlags);
+			assertEquals(EnumMask.of(VkDependencyFlag.VIEW_LOCAL), desc.dependencyFlags);
 			assertEquals(1, desc.srcSubpass);
 			assertEquals(2, desc.dstSubpass);
-			assertEquals(BitMask.of(VkPipelineStage.VERTEX_SHADER), desc.srcStageMask);
-			assertEquals(BitMask.of(), desc.srcAccessMask);
-			assertEquals(BitMask.of(VkPipelineStage.FRAGMENT_SHADER), desc.dstStageMask);
-			assertEquals(BitMask.of(VkAccess.SHADER_READ), desc.dstAccessMask);
+			assertEquals(EnumMask.of(VkPipelineStage.VERTEX_SHADER), desc.srcStageMask);
+			assertEquals(EnumMask.of(), desc.srcAccessMask);
+			assertEquals(EnumMask.of(VkPipelineStage.FRAGMENT_SHADER), desc.dstStageMask);
+			assertEquals(EnumMask.of(VkAccess.SHADER_READ), desc.dstAccessMask);
 		}
 
 		@DisplayName("can depend on the implicit subpass before or after the render pass")

@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>pipeline</i> defines the configuration for graphics rendering or compute shaders.
@@ -268,6 +268,6 @@ public final class Pipeline extends VulkanObject {
 		 * @param imageMemoryBarrierCount			Number of image barriers
 		 * @param pImageMemoryBarriers				Image barriers
 		 */
-		void vkCmdPipelineBarrier(CommandBuffer commandBuffer, BitMask<VkPipelineStage> srcStageMask, BitMask<VkPipelineStage> dstStageMask, BitMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
+		void vkCmdPipelineBarrier(CommandBuffer commandBuffer, EnumMask<VkPipelineStage> srcStageMask, EnumMask<VkPipelineStage> dstStageMask, EnumMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 	}
 }

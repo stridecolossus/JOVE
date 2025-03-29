@@ -10,7 +10,7 @@ import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 import com.sun.jna.Structure;
 
@@ -34,7 +34,7 @@ public class FenceTest {
 				return dataEquals((Structure) obj);
 			}
 		};
-		expected.flags = BitMask.of(VkFenceCreateFlag.SIGNALED);
+		expected.flags = EnumMask.of(VkFenceCreateFlag.SIGNALED);
 		verify(lib).vkCreateFence(dev, expected, null, dev.factory().pointer());
 	}
 

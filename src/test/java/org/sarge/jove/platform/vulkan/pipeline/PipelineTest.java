@@ -11,7 +11,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 import com.sun.jna.Pointer;
 
@@ -80,7 +80,7 @@ class PipelineTest {
     		void derive() {
     			builder.derive(base);
     			builder.build(dev, layout, null);
-    			verify(delegate).populate(BitMask.of(DERIVATIVE), layout, base.handle(), -1, info);
+    			verify(delegate).populate(EnumMask.of(DERIVATIVE), layout, base.handle(), -1, info);
     		}
 
     		@DisplayName("A pipeline cannot be derived from a pipeline that does not allow derivatives")
@@ -129,7 +129,7 @@ class PipelineTest {
 				peer.allowDerivatives();
 				builder.derive(peer);
 				assertEquals(2, builder.build(dev, layout, null).size());
-    			verify(delegate).populate(BitMask.of(DERIVATIVE), layout, null, 1, info);
+    			verify(delegate).populate(EnumMask.of(DERIVATIVE), layout, null, 1, info);
 			}
 
     		@DisplayName("A pipeline cannot be derived from a peer that does not allow derivatives")

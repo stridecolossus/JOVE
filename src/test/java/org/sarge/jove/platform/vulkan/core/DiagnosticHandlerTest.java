@@ -95,8 +95,8 @@ public class DiagnosticHandlerTest {
 				public boolean equals(Object obj) {
 					final var info = (VkDebugUtilsMessengerCreateInfoEXT) obj;
 					assertEquals(0, info.flags);
-					assertEquals(BitMask.of(VkDebugUtilsMessageSeverity.ERROR), info.messageSeverity);
-					assertEquals(BitMask.of(VkDebugUtilsMessageType.GENERAL), info.messageType);
+					assertEquals(EnumMask.of(VkDebugUtilsMessageSeverity.ERROR), info.messageSeverity);
+					assertEquals(EnumMask.of(VkDebugUtilsMessageType.GENERAL), info.messageType);
 					assertNotNull(info.pfnUserCallback);
 					assertNull(info.pUserData);
 					return true;

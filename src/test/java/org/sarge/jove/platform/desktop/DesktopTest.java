@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.MockReferenceFactory;
 
 public class DesktopTest {
 	private Desktop desktop;

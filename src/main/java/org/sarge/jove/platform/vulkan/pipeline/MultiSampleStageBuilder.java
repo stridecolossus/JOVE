@@ -57,7 +57,7 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * @param minSampleShading Minimum sample shading fraction
 	 */
 	public MultiSampleStageBuilder minSampleShading(Percentile minSampleShading) {
-		info.minSampleShading = minSampleShading.floatValue();
+		info.minSampleShading = minSampleShading.value();
 		return this;
 	}
 

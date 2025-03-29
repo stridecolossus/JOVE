@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>delegate pipeline builder</i> is used to configure and create a pipeline.
@@ -28,7 +28,7 @@ public interface DelegatePipelineBuilder<T extends VulkanStructure> {
 	 * @param parent		Parent index
 	 * @param info			Pipeline create descriptor
 	 */
-	void populate(BitMask<VkPipelineCreateFlag> flags, PipelineLayout layout, Handle base, int parent, T info);
+	void populate(EnumMask<VkPipelineCreateFlag> flags, PipelineLayout layout, Handle base, int parent, T info);
 
 	/**
 	 * Create an array of pipelines.

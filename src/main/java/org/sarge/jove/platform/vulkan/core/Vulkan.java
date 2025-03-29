@@ -4,9 +4,16 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.function.IntFunction;
 
+import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle.HandleNativeTransformer;
+import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.*;
+import org.sarge.jove.util.*;
+import org.sarge.jove.util.EnumMask.EnumMaskNativeTransformer;
+import org.sarge.jove.util.IntEnum.IntEnumNativeTransformer;
 
 /**
  * The <i>Vulkan</i> service
@@ -17,31 +24,33 @@ public class Vulkan {
 	/**
 	 * Creates the Vulkan service.
 	 * The success code of <b>all</b> native methods is validated by {@link #check(int)}.
-	 * @return Vulkan
+	 * @return Vulkan service
 	 * @throws RuntimeException if Vulkan cannot be instantiated
 	 */
 	public static Vulkan create() {
-		// Register Vulkan type mappers
-		final var registry = TransformerRegistry.create();
-//		registry.add(new StructureNativeMapper(registry));
+		// Register Vulkan types
+		final var registry = NativeRegistry.create();
+		registry.add(String.class, new StringNativeTransformer());
+		registry.add(NativeReference.class, new NativeReferenceTransformer());
+		registry.add(Handle.class, new HandleNativeTransformer());
+		registry.add(NativeObject.class, new NativeObjectTransformer());
+		registry.add(IntEnum.class, IntEnumNativeTransformer::new);
+		registry.add(EnumMask.class, new EnumMaskNativeTransformer());
+		registry.add(NativeStructure.class, NativeStructureTransformer.factory(registry));
 
-		//////////
-//		registry.add(new HandleArrayNativeMapper());
-		//////////
+		// Init API factory
+		final var factory = new NativeLibraryBuilder("vulkan-1", registry);
+		factory.setReturnValueHandler(Vulkan::check);
 
-		// Create API factory
-		final var factory = new NativeFactory(registry);
-		factory.setIntegerReturnHandler(Vulkan::check);
-
-		// Instantiate API
-		final var lib = factory.build("vulkan-1", VulkanLibrary.class);
+		// Build API proxy
+		final var lib = factory.build(VulkanLibrary.class);
 
 		// Create wrapper
 		return new Vulkan(lib, registry, new NativeReference.Factory());
 	}
 
 	private final VulkanLibrary lib;
-	private final TransformerRegistry registry;
+	private final NativeRegistry registry;
 	private final NativeReference.Factory factory;
 
 	/**
@@ -50,7 +59,7 @@ public class Vulkan {
 	 * @param registry		Mapper registry
 	 * @param factory		Reference factory
 	 */
-	public Vulkan(VulkanLibrary lib, TransformerRegistry registry, NativeReference.Factory factory) {
+	public Vulkan(VulkanLibrary lib, NativeRegistry registry, NativeReference.Factory factory) {
 		this.lib = requireNonNull(lib);
 		this.registry = requireNonNull(registry);
 		this.factory = requireNonNull(factory);
@@ -64,9 +73,9 @@ public class Vulkan {
 	}
 
 	/**
-	 * @return Vulkan mapper registry
+	 * @return Native transformer registry
 	 */
-	public TransformerRegistry registry() {
+	public NativeRegistry registry() {
 		return registry;
 	}
 
@@ -141,8 +150,9 @@ public class Vulkan {
 	 * @return Supported extensions
 	 */
 	public VkExtensionProperties[] extensions(String name) {
-		final VulkanFunction<VkExtensionProperties[]> function = (count, array) -> lib.vkEnumerateInstanceExtensionProperties(name, count, array);
-		return invoke(function, VkExtensionProperties[]::new);
+//		final VulkanFunction<VkExtensionProperties[]> function = (count, array) -> lib.vkEnumerateInstanceExtensionProperties(name, count, array);
+//		return invoke(function, VkExtensionProperties[]::new);
+		return null; // TODO
 	}
 
 	/**
@@ -150,7 +160,8 @@ public class Vulkan {
 	 * @return Supported layers
 	 */
 	public VkLayerProperties[] layers() {
-		final VulkanFunction<VkLayerProperties[]> function = (count, array) -> lib.vkEnumerateInstanceLayerProperties(count, array);
-		return invoke(function, VkLayerProperties[]::new);
+//		final VulkanFunction<VkLayerProperties[]> function = (count, array) -> lib.vkEnumerateInstanceLayerProperties(count, array);
+//		return invoke(function, VkLayerProperties[]::new);
+		return null; // TODO
 	}
 }

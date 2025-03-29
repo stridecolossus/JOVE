@@ -137,11 +137,11 @@ public final class RenderPass extends VulkanObject {
 
 		// Allocate render pass
 		final Vulkan vulkan= dev.vulkan();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		vulkan.library().vkCreateRenderPass(dev, info, null, ref);
 
 		// Create render pass
-		return new RenderPass(ref.handle(), dev, attachments);
+		return new RenderPass(ref.get(), dev, attachments);
 	}
 
 	/**
@@ -153,10 +153,10 @@ public final class RenderPass extends VulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
-		 * @param pRenderPass		Returned render pass
+		 * @param pRenderPass		Returned render pass handle
 		 * @return Result
 		 */
-		int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, PointerReference pRenderPass);
+		int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pRenderPass);
 
 		/**
 		 * Destroys a render pass.

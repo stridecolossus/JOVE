@@ -354,7 +354,7 @@ public class DescriptorSetTest {
 					public boolean equals(Object obj) {
 						final var info = (VkDescriptorPoolCreateInfo) obj;
 						assertEquals(3, info.maxSets);
-						assertEquals(BitMask.of(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET), info.flags);
+						assertEquals(EnumMask.of(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET), info.flags);
 						assertEquals(1, info.poolSizeCount);
 						assertNotNull(info.pPoolSizes);
 						return true;

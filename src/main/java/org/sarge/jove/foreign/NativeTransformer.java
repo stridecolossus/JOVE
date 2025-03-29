@@ -1,62 +1,46 @@
 package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
-import java.util.function.*;
+import java.util.function.Function;
 
 /**
- * A <i>native transformer</i> defines a domain type that can be transformed to/from its corresponding FFM representation.
- * <p>
- * The {@link #transform(Object, ParameterMode, SegmentAllocator)} method is responsible for allocation and population of the associated off-heap memory (if any).
- * <p>
- * A type that can be returned from a native method should implement the {@link #returns(Class)} factory method.
- * <p>
- * Similarly a type that can be returned as a <i>by reference</i> parameter implements the {@link #update()} method.
- * <p>
- * @param <T> Domain type
- * @param <R> Native type
- * @see Returned
+ * A <i>native transformer</i> maps a Java argument to/from its corresponding native type.
+ * @param <T> Java type
  * @author Sarge
  */
-public interface NativeTransformer<T, R> {
+public interface NativeTransformer<T> {
 	/**
-	 * @return Native memory layout
+	 * @return Off-heap memory layout
 	 */
-	default MemoryLayout layout() {
-		return ValueLayout.ADDRESS;
-	}
+	MemoryLayout layout();
 
 	/**
-	 * The <i>parameter mode</i> specifies whether a native parameter is passed <i>by value</i> or returned <i>by reference</i> (indicated by the {@link Returned} annotation).
-	 */
-	enum ParameterMode {
-		VALUE,
-		REFERENCE
-	}
-
-	/**
-	 * Transforms a domain object to its native representation and allocates off-heap memory as required.
-	 * @param value			Domain value
-	 * @param mode 			Parameter mode
-	 * @param allocator		Allocator
+	 * Marshals the given argument to the corresponding native type.
+	 * @param arg 			Java argument
+	 * @param allocator		Native allocator
 	 * @return Native value
+	 * @throws IllegalArgumentException if the argument cannot be transformed
 	 */
-	R transform(T value, ParameterMode mode, SegmentAllocator allocator);
+	Object marshal(T arg, SegmentAllocator allocator);
 
 	/**
-	 * Provides the inverse transformer for a method return value of this type.
-	 * @return Return value transformer
-	 * @throws UnsupportedOperationException if this type cannot be returned from a native method
+	 * Provides a function to unmarshal a native type.
+	 * @return Unmarshalling function
+	 * @throws UnsupportedOperationException if this type cannot logically be returned from a native method
 	 */
-	Function<R, T> returns();
+	Function<? extends Object, T> unmarshal();
 
 	/**
-	 * Provides a handler to update a by-reference argument.
-	 * @return Update handler
-	 * @throws UnsupportedOperationException if this type cannot be returned by-reference
-	 * @see ParameterMode#REFERENCE
-	 * @see Returned
+	 * A <i>native transformer factory</i> generates a transformer for a sub-class of a given type.
+	 * @param <T> Domain type
 	 */
-	default BiConsumer<R, T> update() {
-		throw new UnsupportedOperationException();
+	@FunctionalInterface
+	interface Factory<T> {
+		/**
+		 * Creates a transformer for the given type.
+		 * @param type Type
+		 * @return Transformer
+		 */
+		NativeTransformer<T> create(Class<? extends T> type);
 	}
 }

@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
@@ -129,11 +129,11 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		// Map memory
 		final DeviceContext dev = this.device();
 		final Vulkan vulkan = dev.vulkan();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		vulkan.library().vkMapMemory(dev, this, offset, size, 0, ref);
 
 		// Create mapped region
-		region = new DefaultRegion(ref.handle(), offset, size);
+		region = new DefaultRegion(ref.get(), offset, size);
 
 		return region;
 	}

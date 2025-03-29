@@ -160,11 +160,11 @@ public class SwapchainTest {
 
 			// Init surface capabilities
 			final var caps = new VkSurfaceCapabilitiesKHR();
-			caps.supportedTransforms = BitMask.of(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
+			caps.supportedTransforms = EnumMask.of(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
 			caps.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 			caps.maxImageArrayLayers = 1;
-			caps.supportedUsageFlags = BitMask.of(VkImageUsageFlag.COLOR_ATTACHMENT);
-			caps.supportedCompositeAlpha = BitMask.of(VkCompositeAlphaFlagKHR.OPAQUE);
+			caps.supportedUsageFlags = EnumMask.of(VkImageUsageFlag.COLOR_ATTACHMENT);
+			caps.supportedCompositeAlpha = EnumMask.of(VkCompositeAlphaFlagKHR.OPAQUE);
 			when(surface.capabilities()).thenReturn(caps);
 
 			// Init attachment extents

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 public class SubResourceTest {
 	private Descriptor descriptor;
@@ -48,7 +48,7 @@ public class SubResourceTest {
 	void toLayers() {
 		final VkImageSubresourceLayers layers = SubResource.toLayers(res);
 		assertNotNull(layers);
-		assertEquals(BitMask.of(VkImageAspect.DEPTH), layers.aspectMask);
+		assertEquals(EnumMask.of(VkImageAspect.DEPTH), layers.aspectMask);
 		assertEquals(1, layers.mipLevel);
 		assertEquals(2, layers.baseArrayLayer);
 		assertEquals(3, layers.layerCount);
@@ -59,7 +59,7 @@ public class SubResourceTest {
 	void toRange() {
 		final VkImageSubresourceRange range = SubResource.toRange(res);
 		assertNotNull(range);
-		assertEquals(BitMask.of(VkImageAspect.DEPTH), range.aspectMask);
+		assertEquals(EnumMask.of(VkImageAspect.DEPTH), range.aspectMask);
 		assertEquals(1, range.baseMipLevel);
 		assertEquals(2, range.levelCount);
 		assertEquals(2, range.baseArrayLayer);

@@ -6,7 +6,7 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
@@ -49,24 +49,17 @@ public class Instance extends TransientNativeObject {
 	}
 
 	/**
-	 * Creates a builder for a diagnostic handler to attach to this instance.
-	 * @return Diagnostic handler builder
+	 * Attaches a diagnostic handler.
+	 * @param handler Handler to attach
 	 */
-	public DiagnosticHandler.Builder handler() {
-		return new DiagnosticHandler.Builder(this) {
-			@Override
-			public DiagnosticHandler build() {
-				final DiagnosticHandler handler = super.build();
-				handlers.add(handler);
-				return handler;
-			}
-		};
+	void attach(DiagnosticHandler handler) {
+		handlers.add(handler);
 	}
 
 	@Override
 	protected void release() {
 		for(DiagnosticHandler handler : handlers) {
-			handler.destroy();
+//			handler.destroy();
 		}
 		handlers.clear();
 		vulkan.library().vkDestroyInstance(this, null);
@@ -208,7 +201,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Extensions
 		 * @return Result
 		 */
-		int vkEnumerateInstanceExtensionProperties(String pLayerName, NativeReference<Integer> pPropertyCount, @Returned VkExtensionProperties[] pProperties);
+		//int vkEnumerateInstanceExtensionProperties(String pLayerName, NativeReference<Integer> pPropertyCount, @Returned VkExtensionProperties[] pProperties);
 
 		/**
 		 * Enumerates validation layer properties.
@@ -216,7 +209,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Layers
 		 * @return Result
 		 */
-		int vkEnumerateInstanceLayerProperties(NativeReference<Integer> pPropertyCount, @Returned VkLayerProperties[] pProperties);
+		//int vkEnumerateInstanceLayerProperties(NativeReference<Integer> pPropertyCount, @Returned VkLayerProperties[] pProperties);
 
 		/**
 		 * Looks up a function pointer of this instance.

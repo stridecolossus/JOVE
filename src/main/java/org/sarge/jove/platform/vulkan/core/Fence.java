@@ -3,11 +3,11 @@ package org.sarge.jove.platform.vulkan.core;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>fence</i> is used to synchronise between application code and Vulkan.
@@ -23,15 +23,15 @@ public class Fence extends VulkanObject {
 	public static Fence create(DeviceContext device, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
-		info.flags = BitMask.of(flags);
+		info.flags = EnumMask.of(flags);
 
 		// Create fence
 		final Vulkan vulkan = device.vulkan();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		vulkan.library().vkCreateFence(device, info, null, ref);
 
 		// Create domain object
-		return new Fence(ref.handle(), device);
+		return new Fence(ref.get(), device);
 	}
 
 	Fence(Handle handle, DeviceContext device) {
@@ -106,7 +106,7 @@ public class Fence extends VulkanObject {
 		 * @param pFence			Returned fence
 		 * @return Result
 		 */
-		int vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, PointerReference pFence);
+		int vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pFence);
 
 		/**
 		 * Destroys a fence.

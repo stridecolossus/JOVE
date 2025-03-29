@@ -1,107 +1,114 @@
 package org.sarge.jove.foreign;
 
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.*;
+import java.lang.invoke.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
-import org.sarge.jove.foreign.NativeTransformer.ParameterMode;
+import org.sarge.jove.foreign.NativeMethod.Factory;
 
 class NativeMethodTest {
-	interface MockLibrary {
-		int abs(int n);
-		void srand(int seed);
-		double frexp(double x, NativeReference<Integer> exponent);
-	}
-
-	private NativeMethod.Builder builder;
-	private TransformerRegistry registry;
-	private SymbolLookup lookup;
-	private Arena arena;
+	private IdentityNativeTransformer<Integer> integer;
 
 	@BeforeEach
 	void before() {
-		registry = new TransformerRegistry();
-		registry.register(int.class, new PrimitiveNativeTransformer<>(ValueLayout.JAVA_INT));
-		arena = Arena.ofAuto();
-		lookup = Linker.nativeLinker().defaultLookup();
-		builder = new NativeMethod.Builder(registry);
+		integer = new IdentityNativeTransformer<>(JAVA_INT);
 	}
 
-	@DisplayName("A native method can be constructed for an API method")
 	@Test
-	void build() throws Exception {
-		final MemorySegment address = lookup.find("abs").orElseThrow();
-		final NativeMethod method = builder
-				.address(address)
-				.returns(int.class)
-				.parameter(int.class)
-				.build();
-		assertEquals(2, method.invoke(new Object[]{-2}, arena));
+	void invoke() {
+		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class));
+		final NativeMethod method = new NativeMethod(handle, null, List.of());
+		assertEquals(null, method.invoke(null));
 	}
 
-	@DisplayName("A native method can be constructed for a void API method")
+// TODO
+	@Disabled
 	@Test
-	void voidMethod() throws Exception {
-		final MemorySegment address = lookup.find("srand").orElseThrow();
-		final NativeMethod method = builder
-				.address(address)
-				.parameter(int.class)
-				.build();
-		assertEquals(null, method.invoke(new Object[]{3}, arena));
+	void empty() {
+		final var transformer = new StringNativeTransformer();
+		final MethodHandle handle = MethodHandles.identity(String.class);
+		final NativeMethod method = new NativeMethod(handle, transformer, List.of(transformer));
+		assertEquals(MemorySegment.NULL, method.invoke(new Object[]{null}));
+		assertEquals("string", method.invoke(new Object[]{"string"}));
 	}
 
-	@DisplayName("A native method can be constructed that uses supported by-reference parameters")
 	@Test
-	void reference() {
-		registry.register(double.class, new PrimitiveNativeTransformer<>(ValueLayout.JAVA_DOUBLE));
-		registry.register(NativeReference.class, new NativeReferenceTransformer());
-
-		final MemorySegment address = lookup.find("frexp").orElseThrow();
-
-		final NativeMethod method = builder
-				.address(address)
-				.returns(double.class)
-				.parameter(double.class)
-				.parameter(NativeReference.class, ParameterMode.REFERENCE)
-				.build();
-
-		final var factory = new NativeReference.Factory();
-		final var exponent = factory.integer();
-		assertEquals(0.5d, method.invoke(new Object[]{4, exponent}, arena));
-		assertEquals(3, exponent.get());
+	void returns() {
+		final MethodHandle handle = MethodHandles.constant(int.class, 42);
+		final NativeMethod method = new NativeMethod(handle, integer, List.of());
+		assertEquals(42, method.invoke(null));
 	}
 
-	// TODO
-	@DisplayName("A native method returns a wrapper for the special case of a returned array")
 	@Test
-	void array() {
+	void returnsRequiresTransformer() {
+		final MethodHandle handle = MethodHandles.zero(int.class);
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of()));
 	}
 
-	@DisplayName("The number of arguments supplied to a native method must match the expected parameter count")
 	@Test
-	void invalidArgumentCount() throws Exception {
-		final MemorySegment address = lookup.find("srand").orElseThrow();
-		final NativeMethod method = builder
-				.address(address)
-				.parameter(int.class)
-				.build();
-
-		assertThrows(IllegalArgumentException.class, () -> method.invoke(new Object[]{1, 2}, arena));
-		assertThrows(IllegalArgumentException.class, () -> method.invoke(new Object[]{}, arena));
-		assertThrows(IllegalArgumentException.class, () -> method.invoke(null, arena));
+	void returnsVoidTransformer() {
+		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, integer, List.of()));
 	}
 
-	@DisplayName("A native method cannot be constructed for an unsupported parameter type")
 	@Test
-	void unsupportedParameter() throws Exception {
-		assertThrows(IllegalArgumentException.class, () -> builder.parameter(String.class));
+	void parameter() {
+		final MethodHandle handle = MethodHandles.identity(int.class);
+		final var identity = new IdentityNativeTransformer<>(JAVA_INT);
+		final NativeMethod method = new NativeMethod(handle, identity, List.of(identity));
+		assertEquals(42, method.invoke(new Object[]{42}));
 	}
 
-	@DisplayName("A native method cannot be constructed for an unsupported return type")
 	@Test
-	void unsupportedReturnType() throws Exception {
-		assertThrows(IllegalArgumentException.class, () -> builder.returns(String.class));
+	void count() {
+		final MethodHandle handle = MethodHandles.identity(int.class);
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of(integer, integer)));
+	}
+
+	@Nested
+	class FactoryTests {
+		private Factory factory;
+		private NativeRegistry registry;
+		private MemorySegment abs;
+
+		@BeforeEach
+		void before() {
+			abs = Linker.nativeLinker().defaultLookup().find("abs").orElseThrow();
+			registry = new NativeRegistry();
+			factory = new Factory(registry);
+		}
+
+		@Test
+		void descriptor() {
+			assertEquals(FunctionDescriptor.ofVoid(), Factory.build(null, List.of()));
+		}
+
+		@Test
+		void returns() {
+			assertEquals(FunctionDescriptor.of(JAVA_INT), Factory.build(integer, List.of()));
+		}
+
+		@Test
+		void parameter() {
+			assertEquals(FunctionDescriptor.ofVoid(JAVA_INT), Factory.build(null, List.of(integer)));
+		}
+
+		@Test
+		void build() throws Exception {
+			registry.add(int.class, integer);
+
+			final NativeMethod wrapper = factory.build(abs, MethodType.methodType(int.class, int.class));
+			assertEquals(3, wrapper.invoke(new Object[]{-3}));
+		}
+
+		@Test
+		void unsupported() throws Exception {
+			assertThrows(IllegalArgumentException.class, () -> factory.build(abs, MethodType.methodType(int.class, int.class)));
+		}
 	}
 }

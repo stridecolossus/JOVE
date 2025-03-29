@@ -11,7 +11,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 public class VulkanBufferTest {
 	private VulkanBuffer buffer;
@@ -80,7 +80,7 @@ public class VulkanBufferTest {
 			@Override
 			public boolean equals(Object obj) {
 				final var info = (VkBufferCreateInfo) obj;
-				assertEquals(BitMask.of(TRANSFER_SRC), info.usage);
+				assertEquals(EnumMask.of(TRANSFER_SRC), info.usage);
 				assertEquals(VkSharingMode.EXCLUSIVE, info.sharingMode);
 				assertEquals(2, info.size);
 				return true;

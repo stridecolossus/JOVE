@@ -182,7 +182,7 @@ public class Surface extends TransientNativeObject {
 		 * @param supported				Returned boolean flag
 		 * @return Result
 		 */
-		int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported);
+		int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, NativeReference<Integer> supported);
 
 		/**
 		 * Retrieves the capabilities of a surface.
@@ -201,7 +201,7 @@ public class Surface extends TransientNativeObject {
 		 * @param formats			Supported formats
 		 * @return Result
 		 */
-		int vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, IntegerReference count, @Returned VkSurfaceFormatKHR[] formats);
+		int vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, Surface surface, NativeReference<Integer> count, @Returned VkSurfaceFormatKHR[] formats);
 
 		/**
 		 * Queries the supported presentation modes.
@@ -212,7 +212,7 @@ public class Surface extends TransientNativeObject {
 		 * @return Result
 		 * @see VkPresentModeKHR
 		 */
-		int vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, IntegerReference count, VkPresentModeKHR[] modes);
+		int vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, Surface surface, NativeReference<Integer> count, VkPresentModeKHR[] modes);
 
 		/**
 		 * Destroys a surface.

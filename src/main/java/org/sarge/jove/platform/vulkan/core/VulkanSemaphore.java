@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
 
@@ -31,9 +31,9 @@ public class VulkanSemaphore extends VulkanObject {
 		final var info = new VkSemaphoreCreateInfo();
 		final Vulkan vulkan = device.vulkan();
 		final var lib = vulkan.library();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		lib.vkCreateSemaphore(device, info, null, ref);
-		return new VulkanSemaphore(ref.handle(), device);
+		return new VulkanSemaphore(ref.get(), device);
 	}
 
 	/**
@@ -48,7 +48,7 @@ public class VulkanSemaphore extends VulkanObject {
 		 * @param pSemaphore		Returned semaphore
 		 * @return Result
 		 */
-		int vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, PointerReference pSemaphore);
+		int vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSemaphore);
 
 		/**
 		 * Destroys a semaphore.

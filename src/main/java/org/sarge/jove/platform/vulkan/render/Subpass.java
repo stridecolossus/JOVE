@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>sub-pass</i> is a transient, mutable specification for the stage of a {@link RenderPass}.
@@ -318,13 +318,13 @@ public class Subpass {
 		 */
 		void populate(VkSubpassDependency info) {
 			if(dependency.index == null) throw new IllegalArgumentException("Missing dependant subpass: " + dependency);
-			info.dependencyFlags = new BitMask<>(flags);
+			info.dependencyFlags = new EnumMask<>(flags);
 			info.srcSubpass = dependency.index;
 			info.dstSubpass = Subpass.this.index;
-			info.srcStageMask = new BitMask<>(src.stages);
-			info.srcAccessMask = new BitMask<>(src.access);
-			info.dstStageMask = new BitMask<>(dest.stages);
-			info.dstAccessMask = new BitMask<>(dest.access);
+			info.srcStageMask = new EnumMask<>(src.stages);
+			info.srcAccessMask = new EnumMask<>(src.access);
+			info.dstStageMask = new EnumMask<>(dest.stages);
+			info.dstAccessMask = new EnumMask<>(dest.access);
 		}
 	}
 }

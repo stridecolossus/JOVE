@@ -6,12 +6,12 @@ import static org.sarge.lib.Validation.*;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>sampler</i> is used to sample from a texture image.
@@ -273,15 +273,15 @@ public final class Sampler extends VulkanObject {
 			}
 
 			// Init flags
-			info.flags = new BitMask<>(flags);
+			info.flags = new EnumMask<>(flags);
 
 			// Instantiate sampler
 			final Vulkan vulkan = dev.vulkan();
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			vulkan.library().vkCreateSampler(dev, info, null, ref);
 
 			// Create domain object
-			return new Sampler(ref.handle(), dev);
+			return new Sampler(ref.get(), dev);
 		}
 	}
 
@@ -294,10 +294,10 @@ public final class Sampler extends VulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Sampler descriptor
 		 * @param pAllocator		Allocator
-		 * @param pSampler			Returned sampler
+		 * @param pSampler			Returned sampler handle
 		 * @return Result
 		 */
-		int vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, PointerReference pSampler);
+		int vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSampler);
 
 		/**
 		 * Destroys a sampler.

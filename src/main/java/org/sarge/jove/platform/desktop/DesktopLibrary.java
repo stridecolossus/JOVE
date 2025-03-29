@@ -1,12 +1,14 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.foreign.*;
+import java.lang.foreign.MemorySegment;
+
+import org.sarge.jove.foreign.NativeReference;
 
 /**
  * GLFW API.
  * @author Sarge
  */
-interface DesktopLibrary extends DesktopLibraryWindow, DesktopLibraryDevice { // TODO , DesktopLibraryMonitor, DesktopLibraryJoystick {
+interface DesktopLibrary extends DesktopLibraryWindow { // , DesktopLibraryDevice { // TODO , DesktopLibraryMonitor, DesktopLibraryJoystick {
 	/**
 	 * Sets an initialisation hint.
 	 * @param hint		Hint
@@ -61,5 +63,5 @@ interface DesktopLibrary extends DesktopLibraryWindow, DesktopLibraryDevice { //
 	 * @param count Number of extensions
 	 * @return Vulkan extensions
 	 */
-	ArrayReturnValue<String> glfwGetRequiredInstanceExtensions(NativeReference<Integer> count);
+	MemorySegment glfwGetRequiredInstanceExtensions(NativeReference<Integer> count);
 }

@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.desktop;
 
-import javax.security.auth.callback.Callback;
-
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeReference;
 
@@ -97,7 +95,7 @@ interface DesktopLibraryWindow {
 	 * Listener for window events represented by a boolean state, e.g. window focus.
 	 */
 	@FunctionalInterface
-	interface WindowStateListener extends Callback {
+	interface WindowStateListener {
 		/**
 		 * Notifies that a window state change.
 		 * @param window		Window
@@ -132,7 +130,7 @@ interface DesktopLibraryWindow {
 	/**
 	 * Listener for window resize events.
 	 */
-	interface WindowResizeListener extends Callback {
+	interface WindowResizeListener {
 		/**
 		 * Notifies a window resize event.
 		 * @param window		Window

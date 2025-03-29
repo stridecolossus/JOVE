@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 import org.sarge.lib.Percentile;
 
 /**
@@ -152,7 +152,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 
 			// Build queue descriptor
 			final var info = new VkDeviceQueueCreateInfo();
-			info.flags = BitMask.of();
+			info.flags = EnumMask.of();
 			info.queueCount = priorities.size();
 			info.queueFamilyIndex = family.index();
 			info.pQueuePriorities = array;

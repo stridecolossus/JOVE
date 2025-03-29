@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 import com.sun.jna.Pointer;
 
@@ -46,7 +46,7 @@ class WorkQueueTest {
 	void of() {
 		final var props = new VkQueueFamilyProperties();
 		props.queueCount = 2;
-		props.queueFlags = BitMask.of(VkQueueFlag.GRAPHICS);
+		props.queueFlags = EnumMask.of(VkQueueFlag.GRAPHICS);
 		assertEquals(family, Family.of(1, props));
 	}
 }

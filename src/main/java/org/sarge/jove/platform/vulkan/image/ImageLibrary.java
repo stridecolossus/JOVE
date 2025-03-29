@@ -18,10 +18,10 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param device			Logical device
 	 * @param pCreateInfo		Descriptor
 	 * @param pAllocator		Allocator
-	 * @param pImage			Returned image
+	 * @param pImage			Returned image handle
 	 * @return Result
 	 */
-	int vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Handle pAllocator, PointerReference pImage);
+	int vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pImage);
 
 	/**
 	 * Destroys an image.

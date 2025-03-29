@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 public class ColourBlendStageBuilderTest {
 	private static final float[] CONSTANTS = {1, 2, 3, 4};
@@ -52,7 +52,7 @@ public class ColourBlendStageBuilderTest {
 		final VkPipelineColorBlendAttachmentState attachment = info.pAttachments;
 		final var mask = List.of(VkColorComponent.values());
 		assertEquals(true, attachment.blendEnable);
-		assertEquals(new BitMask<>(mask), attachment.colorWriteMask);
+		assertEquals(new EnumMask<>(mask), attachment.colorWriteMask);
 		assertEquals(VkBlendOp.SUBTRACT, attachment.colorBlendOp);
 		assertEquals(VkBlendFactor.SRC_ALPHA, attachment.srcColorBlendFactor);
 		assertEquals(VkBlendFactor.DST_ALPHA, attachment.dstColorBlendFactor);

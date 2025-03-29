@@ -35,10 +35,10 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 
 		/**
 		 * Constructor for a viewport with default depths.
-		 * @param rect Viewport rectangle
+		 * @param rectangle Viewport rectangle
 		 */
-		public Viewport(Rectangle rect) {
-			this(rect, Percentile.ZERO, Percentile.ONE);
+		public Viewport(Rectangle rectangle) {
+			this(rectangle, Percentile.ZERO, Percentile.ONE);
 		}
 
 		/**
@@ -62,8 +62,8 @@ public class ViewportStageBuilder extends AbstractStageBuilder<VkPipelineViewpor
 			info.y = rectangle.y();
 			info.width = rectangle.width();
 			info.height = rectangle.height();
-			info.minDepth = min.floatValue();
-			info.maxDepth = max.floatValue();
+			info.minDepth = min.value();
+			info.maxDepth = max.value();
 		}
 	}
 

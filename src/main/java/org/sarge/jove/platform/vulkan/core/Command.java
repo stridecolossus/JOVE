@@ -11,7 +11,7 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>command</i> defines an operation performed on a work queue.
@@ -155,7 +155,7 @@ public interface Command {
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
-			info.flags = BitMask.of(flags);
+			info.flags = EnumMask.of(flags);
 			info.pInheritanceInfo = inheritance;
 
 			// Start buffer recording
@@ -217,7 +217,7 @@ public interface Command {
 		public final void reset(VkCommandBufferResetFlag... flags) {
 			validate(State.EXECUTABLE);
 			// TODO - check pool has flag
-			final BitMask<VkCommandBufferResetFlag> mask = BitMask.of(flags);
+			final EnumMask<VkCommandBufferResetFlag> mask = EnumMask.of(flags);
 			pool.library().vkResetCommandBuffer(this, mask);
 			state = State.INITIAL;
 		}
@@ -338,15 +338,15 @@ public interface Command {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
-			info.flags = BitMask.of(flags);
+			info.flags = EnumMask.of(flags);
 
 			// Create pool
 			final Vulkan vulkan = dev.vulkan();
-			final PointerReference pool = vulkan.factory().pointer();
+			final NativeReference<Handle> pool = vulkan.factory().pointer();
 			vulkan.library().vkCreateCommandPool(dev, info, null, pool);
 
 			// Create domain object
-			return new CommandPool(pool.handle(), dev, queue);
+			return new CommandPool(pool.get(), dev, queue);
 		}
 
 		private final WorkQueue queue;
@@ -438,7 +438,7 @@ public interface Command {
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
-			final var bits = BitMask.of(flags);
+			final var bits = EnumMask.of(flags);
 			final DeviceContext dev = super.device();
 			this.library().vkResetCommandPool(dev, this, bits);
 		}
@@ -468,10 +468,10 @@ public interface Command {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
-		 * @param pCommandPool		Returned command pool
+		 * @param pCommandPool		Returned command pool handle
 		 * @return Result
 		 */
-		int vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, PointerReference pCommandPool);
+		int vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pCommandPool);
 
 		/**
 		 * Destroys a command pool (and its buffers).
@@ -488,7 +488,7 @@ public interface Command {
 		 * @param flags				Flags
 		 * @return Result
 		 */
-		int vkResetCommandPool(DeviceContext device, CommandPool commandPool, BitMask<VkCommandPoolResetFlag> flags);
+		int vkResetCommandPool(DeviceContext device, CommandPool commandPool, EnumMask<VkCommandPoolResetFlag> flags);
 
 		/**
 		 * Allocates a number of command buffers.
@@ -529,7 +529,7 @@ public interface Command {
 		 * @param flags					Flags
 		 * @return Result
 		 */
-		int vkResetCommandBuffer(CommandBuffer commandBuffer, BitMask<VkCommandBufferResetFlag> flags);
+		int vkResetCommandBuffer(CommandBuffer commandBuffer, EnumMask<VkCommandBufferResetFlag> flags);
 
 		/**
 		 * Executes secondary command buffers.

@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>Vulkan buffer</i> is used to store arbitrary data on the hardware and to perform copy operations.
@@ -179,7 +179,7 @@ public class VulkanBuffer extends VulkanObject {
 
 		// Build buffer descriptor
 		final var info = new VkBufferCreateInfo();
-		info.usage = new BitMask<>(properties.usage());
+		info.usage = new EnumMask<>(properties.usage());
 		info.sharingMode = properties.mode();
 		info.size = requireOneOrMore(length);
 		// TODO - queue families
@@ -187,11 +187,11 @@ public class VulkanBuffer extends VulkanObject {
 		// Allocate buffer
 		final Vulkan vulkan = device.vulkan();
 		final Library lib = vulkan.library();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		lib.vkCreateBuffer(device, info, null, ref);
 
 		// Query memory requirements
-		final Handle handle = ref.handle();
+		final Handle handle = ref.get();
 		final var reqs = new VkMemoryRequirements();
 		lib.vkGetBufferMemoryRequirements(device, handle, reqs);
 
@@ -241,10 +241,10 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
-		 * @param pBuffer			Returned buffer
+		 * @param pBuffer			Returned buffer handle
 		 * @return Result
 		 */
-		int vkCreateBuffer(DeviceContext device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, PointerReference pBuffer);
+		int vkCreateBuffer(DeviceContext device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pBuffer);
 
 		/**
 		 * Destroys a buffer.

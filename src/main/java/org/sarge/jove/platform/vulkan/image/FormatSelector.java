@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 import static org.sarge.lib.Validation.*;
 
 /**
@@ -35,9 +35,9 @@ public class FormatSelector {
 	 */
 	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> required) {
 		requireNotEmpty(required);
-		final BitMask<VkFormatFeature> mask = new BitMask<>(required);
+		final EnumMask<VkFormatFeature> mask = new EnumMask<>(required);
 		return props -> {
-			final BitMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
+			final EnumMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
 			return supported.contains(mask);
 		};
 	}

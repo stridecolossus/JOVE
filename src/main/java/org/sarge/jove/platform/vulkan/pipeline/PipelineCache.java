@@ -8,7 +8,7 @@ import java.nio.file.*;
 import java.util.Collection;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -39,11 +39,11 @@ public final class PipelineCache extends VulkanObject {
 
 		// Create cache
 		final Vulkan vulkan = dev.vulkan();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		vulkan.library().vkCreatePipelineCache(dev, info, null, ref);
 
 		// Create domain object
-		return new PipelineCache(ref.handle(), dev);
+		return new PipelineCache(ref.get(), dev);
 	}
 
 	/**
@@ -148,7 +148,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pPipelineCache	Returned pipeline cache
 		 * @return Result
 		 */
-		int vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Handle pAllocator, PointerReference pPipelineCache);
+		int vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pPipelineCache);
 
 		/**
 		 * Merges pipeline caches.
@@ -168,7 +168,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pData				Cache data
 		 * @return Result
 		 */
-		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, IntegerReference pDataSize, Handle pData); // ByteBuffer pData); // TODO - data blob?
+		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, NativeReference<Integer> pDataSize, Handle pData);
 
 		/**
 		 * Destroys a pipeline cache.

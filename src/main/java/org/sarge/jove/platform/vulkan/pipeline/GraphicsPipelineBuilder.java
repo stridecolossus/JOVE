@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.pipeline.ViewportStageBuilder.Viewport;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Builder for a graphics pipeline.
@@ -147,7 +147,7 @@ public class GraphicsPipelineBuilder implements DelegatePipelineBuilder<VkGraphi
 	}
 
 	@Override
-	public void populate(BitMask<VkPipelineCreateFlag> flags, PipelineLayout layout, Handle base, int parent, VkGraphicsPipelineCreateInfo info) {
+	public void populate(EnumMask<VkPipelineCreateFlag> flags, PipelineLayout layout, Handle base, int parent, VkGraphicsPipelineCreateInfo info) {
 		// Init descriptor
 		info.flags = flags;
 		info.layout = layout.handle();

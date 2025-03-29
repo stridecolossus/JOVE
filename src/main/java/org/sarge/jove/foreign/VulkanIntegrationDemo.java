@@ -3,16 +3,15 @@ package org.sarge.jove.foreign;
 import java.util.Arrays;
 import java.util.logging.LogManager;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 public class VulkanIntegrationDemo {
 
-	public static void main(String[] args) throws Exception {
+	void main() throws Exception {
 		System.out.println("Initialising logging...");
 		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
 			LogManager.getLogManager().readConfiguration(config);
@@ -43,14 +42,16 @@ public class VulkanIntegrationDemo {
 
 		System.out.println("Creating instance...");
 		final Instance instance = new Instance.Builder()
-				.name("VulkanTest")
+				.name("VulkanIntegrationDemo")
 				.extension(DiagnosticHandler.EXTENSION)
 				.extensions(extensions)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build(vulkan);
 
 		System.out.println("Attaching diagnostic handler...");
-		instance.handler().build();
+		new DiagnosticHandler.Builder().attach(instance);
+
+		/*
 
 		System.out.println("Enumerating devices...");
 		final PhysicalDevice physical = PhysicalDevice.devices(instance).toList().getFirst();
@@ -72,8 +73,10 @@ public class VulkanIntegrationDemo {
 				.queue(new RequiredQueue(physical.families().getFirst()))
 				.build();
 
+		 */
+
 		System.out.println("Cleanup...");
-		dev.destroy();
+		//dev.destroy();
 		instance.destroy();
 		window.destroy();
 		desktop.destroy();

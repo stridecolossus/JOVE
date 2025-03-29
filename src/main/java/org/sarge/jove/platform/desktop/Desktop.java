@@ -3,9 +3,14 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
+import java.lang.foreign.*;
+import java.util.function.*;
 
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle.HandleNativeTransformer;
+import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
@@ -33,17 +38,20 @@ public final class Desktop implements TransientObject {
 //			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
 //		};
 
-//		// Init type mapper
-//		final var mapper = new DefaultTypeMapper();
-//		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
-//		mapper.addTypeConverter(Window.class, NativeObject.CONVERTER);
+		final var registry = new NativeRegistry();
+		registry.add(int.class, new IdentityNativeTransformer<>(ValueLayout.JAVA_INT));
+		registry.add(boolean.class, new IdentityNativeTransformer<>(ValueLayout.JAVA_BOOLEAN));
+		registry.add(String.class, new StringNativeTransformer());
+		registry.add(NativeReference.class, new NativeReferenceTransformer());
+		registry.add(Handle.class, new HandleNativeTransformer());
+		registry.add(NativeObject.class, new NativeObjectTransformer());
 
-		final var registry = TransformerRegistry.create();
-		// TODO - window mapper?
+		// TODO
+		registry.add(MemorySegment.class, new IdentityNativeTransformer<>(ValueLayout.ADDRESS));
 
 		// Load native library
-		final var factory = new NativeFactory(registry);
-		final DesktopLibrary lib = factory.build("C:/GLFW/lib-mingw-w64/glfw3.dll", DesktopLibrary.class); // TODO - name
+		final var factory = new NativeLibraryBuilder("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
+		final DesktopLibrary lib = factory.build(DesktopLibrary.class);
 		// TODO - JoystickManager.init(lib);
 
 		// Init GLFW
@@ -109,7 +117,7 @@ public final class Desktop implements TransientObject {
 	 */
 	@MainThread
 	public void poll() {
-		lib.glfwPollEvents();
+//		lib.glfwPollEvents();
 	}
 
 	/**
@@ -117,8 +125,26 @@ public final class Desktop implements TransientObject {
 	 */
 	public String[] extensions() {
 		final NativeReference<Integer> count = factory.integer();
-		final ArrayReturnValue<String> array = lib.glfwGetRequiredInstanceExtensions(count);
-		return array.array(count.get(), String[]::new);
+		final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
+		return array(address, count.get(), String[]::new, StringNativeTransformer::unmarshal);
+	}
+
+	// TODO
+	static <T> T[] array(MemorySegment address, int length, IntFunction<T[]> factory, Function<MemorySegment, T> mapper) {
+		// Allocate array
+		final T[] array = factory.apply(length);
+
+		// Resize address to array
+		// TODO - this only works for array of address, e.g. wouldn't work for structures
+		final MemorySegment segment = address.reinterpret(ValueLayout.ADDRESS.byteSize() * length);
+
+		// Extract and transform array elements
+		for(int n = 0; n < length; ++n) {
+			final MemorySegment element = segment.getAtIndex(ValueLayout.ADDRESS, n);
+			array[n] = mapper.apply(element);
+		}
+
+		return array;
 	}
 
 //	/**

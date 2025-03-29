@@ -6,7 +6,8 @@ import static org.sarge.lib.Validation.requireOneOrMore;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -207,7 +208,7 @@ public class Allocator {
 
 		// Allocate memory
 		final Vulkan vulkan = dev.vulkan();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		// final int result =
 		// TODO - why specific check?
 		vulkan.library().vkAllocateMemory(dev, info, null, ref);
@@ -219,7 +220,7 @@ public class Allocator {
 
 		// Create device memory
 		++count;
-		return new DefaultDeviceMemory(ref.handle(), dev, type, size);
+		return new DefaultDeviceMemory(ref.get(), dev, type, size);
 	}
 
 	/**

@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.render.ClearAttachmentCommandBuilder.Region;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 class ClearAttachmentCommandBuilderTest {
 	private ClearAttachmentCommandBuilder builder;
@@ -76,7 +76,7 @@ class ClearAttachmentCommandBuilderTest {
 			final var clear = builder.new ClearAttachment(depth, Set.of(VkImageAspect.DEPTH), DepthClearValue.DEFAULT);
 			final var info = new VkClearAttachment();
 			clear.populate(info);
-			assertEquals(BitMask.of(VkImageAspect.DEPTH), info.aspectMask);
+			assertEquals(EnumMask.of(VkImageAspect.DEPTH), info.aspectMask);
 			assertNotNull(info.clearValue);
 			assertEquals(1, info.colorAttachment);			// Note this index is actually unused for the depth-stencil
 		}
@@ -124,7 +124,7 @@ class ClearAttachmentCommandBuilderTest {
 			@Override
 			public boolean equals(Object obj) {
 				final var info = (VkClearAttachment) obj;
-				assertEquals(BitMask.of(VkImageAspect.COLOR), info.aspectMask);
+				assertEquals(EnumMask.of(VkImageAspect.COLOR), info.aspectMask);
 				assertEquals(0, info.colorAttachment);
 				assertNotNull(info.clearValue);
 				return true;

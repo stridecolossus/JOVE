@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.Image;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 import com.sun.jna.Structure;
 
@@ -57,13 +57,13 @@ public class BarrierTest {
 					return dataEquals((Structure) obj);
 				}
 			};
-			expected.srcAccessMask = BitMask.of(VkAccess.TRANSFER_WRITE);
-			expected.dstAccessMask = BitMask.of(VkAccess.SHADER_READ);
+			expected.srcAccessMask = EnumMask.of(VkAccess.TRANSFER_WRITE);
+			expected.dstAccessMask = EnumMask.of(VkAccess.SHADER_READ);
 
 			// Check API
-			final var src = BitMask.of(VkPipelineStage.TRANSFER);
-			final var dest = BitMask.of(VkPipelineStage.FRAGMENT_SHADER);
-			final var flags = BitMask.of(VkDependencyFlag.VIEW_LOCAL);
+			final var src = EnumMask.of(VkPipelineStage.TRANSFER);
+			final var dest = EnumMask.of(VkPipelineStage.FRAGMENT_SHADER);
+			final var flags = EnumMask.of(VkDependencyFlag.VIEW_LOCAL);
 			barrier.record(lib, cmd);
 			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 1, new VkMemoryBarrier[]{expected}, 0, null, 0, null);
 		}
@@ -104,17 +104,17 @@ public class BarrierTest {
 					return dataEquals((Structure) obj);
 				}
 			};
-			expected.srcAccessMask = BitMask.of(VkAccess.TRANSFER_WRITE);
-			expected.dstAccessMask = BitMask.of(VkAccess.SHADER_READ);
+			expected.srcAccessMask = EnumMask.of(VkAccess.TRANSFER_WRITE);
+			expected.dstAccessMask = EnumMask.of(VkAccess.SHADER_READ);
 			expected.srcQueueFamilyIndex = 1;
 			expected.dstQueueFamilyIndex = 2;
 			expected.offset = 1;
 			expected.size = 2;
 
 			// Check API
-			final var src = BitMask.of(VkPipelineStage.TRANSFER);
-			final var dest = BitMask.of(VkPipelineStage.FRAGMENT_SHADER);
-			final var flags = BitMask.of(VkDependencyFlag.VIEW_LOCAL);
+			final var src = EnumMask.of(VkPipelineStage.TRANSFER);
+			final var dest = EnumMask.of(VkPipelineStage.FRAGMENT_SHADER);
+			final var flags = EnumMask.of(VkDependencyFlag.VIEW_LOCAL);
 			barrier.record(lib, cmd);
 			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 0, null, 1, new VkBufferMemoryBarrier[]{expected}, 0, null);
 		}
@@ -181,8 +181,8 @@ public class BarrierTest {
 				@Override
 				public boolean equals(Object obj) {
 					final var actual = (VkImageMemoryBarrier) obj;
-					assertEquals(BitMask.of(VkAccess.TRANSFER_WRITE), actual.srcAccessMask);
-					assertEquals(BitMask.of(VkAccess.SHADER_READ), actual.dstAccessMask);
+					assertEquals(EnumMask.of(VkAccess.TRANSFER_WRITE), actual.srcAccessMask);
+					assertEquals(EnumMask.of(VkAccess.SHADER_READ), actual.dstAccessMask);
 					assertEquals(1, actual.srcQueueFamilyIndex);
 					assertEquals(2, actual.dstQueueFamilyIndex);
 					assertEquals(VkImageLayout.TRANSFER_DST_OPTIMAL, actual.oldLayout);
@@ -193,9 +193,9 @@ public class BarrierTest {
 			};
 
 			// Check API
-			final var src = BitMask.of(VkPipelineStage.TRANSFER);
-			final var dest = BitMask.of(VkPipelineStage.FRAGMENT_SHADER);
-			final var flags = BitMask.of(VkDependencyFlag.VIEW_LOCAL);
+			final var src = EnumMask.of(VkPipelineStage.TRANSFER);
+			final var dest = EnumMask.of(VkPipelineStage.FRAGMENT_SHADER);
+			final var flags = EnumMask.of(VkDependencyFlag.VIEW_LOCAL);
 			barrier.record(lib, cmd);
 			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{expected});
 		}

@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Builder for the dynamic state pipeline stage.
@@ -97,7 +97,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param faceMask				Face flags
 		 * @param compareMask			Compare mask
 		 */
-		void vkCmdSetStencilCompareMask(CommandBuffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int compareMask);
+		void vkCmdSetStencilCompareMask(CommandBuffer commandBuffer, EnumMask<VkStencilFaceFlag> faceMask, int compareMask);
 
 		/**
 		 * Sets the stencil write mask.
@@ -105,7 +105,7 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param faceMask				Face flags
 		 * @param writeMask				Write mask
 		 */
-		void vkCmdSetStencilWriteMask(CommandBuffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int writeMask);
+		void vkCmdSetStencilWriteMask(CommandBuffer commandBuffer, EnumMask<VkStencilFaceFlag> faceMask, int writeMask);
 
 		/**
 		 * Sets the stencil reference.
@@ -113,6 +113,6 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 		 * @param faceMask				Face flags
 		 * @param reference				Reference value
 		 */
-		void vkCmdSetStencilReference(CommandBuffer commandBuffer, BitMask<VkStencilFaceFlag> faceMask, int reference);
+		void vkCmdSetStencilReference(CommandBuffer commandBuffer, EnumMask<VkStencilFaceFlag> faceMask, int reference);
 	}
 }

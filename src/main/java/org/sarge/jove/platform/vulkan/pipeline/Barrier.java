@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>pipeline barrier</i> is a command used to synchronize access to memory resources within the pipeline.
@@ -39,8 +39,8 @@ import org.sarge.jove.util.BitMask;
  * @author Sarge
  */
 public final class Barrier implements Command {
-	private final BitMask<VkPipelineStage> src, dest;
-	private final BitMask<VkDependencyFlag> flags;
+	private final EnumMask<VkPipelineStage> src, dest;
+	private final EnumMask<VkDependencyFlag> flags;
 	private final VkImageMemoryBarrier[] images;
 	private final VkBufferMemoryBarrier[] buffers;
 	private final VkMemoryBarrier[] memory;
@@ -55,9 +55,9 @@ public final class Barrier implements Command {
 	 * @param images		Image memory barriers
 	 */
 	private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, Set<VkDependencyFlag> flags, VkMemoryBarrier[] memory, VkBufferMemoryBarrier[] buffers, VkImageMemoryBarrier[] images) {
-		this.src = new BitMask<>(src);
-		this.dest = new BitMask<>(dest);
-		this.flags = new BitMask<>(flags);
+		this.src = new EnumMask<>(src);
+		this.dest = new EnumMask<>(dest);
+		this.flags = new EnumMask<>(flags);
 		this.memory = memory;
 		this.buffers = buffers;
 		this.images = images;
@@ -205,8 +205,8 @@ public final class Barrier implements Command {
 			 * Populates the descriptor for this memory barrier.
 			 */
 			private void populate(VkMemoryBarrier barrier) {
-				barrier.srcAccessMask = new BitMask<>(srcAccess);
-				barrier.dstAccessMask = new BitMask<>(destAccess);
+				barrier.srcAccessMask = new EnumMask<>(srcAccess);
+				barrier.dstAccessMask = new EnumMask<>(destAccess);
 			}
 
 			/**
@@ -296,8 +296,8 @@ public final class Barrier implements Command {
 				barrier.buffer = buffer.handle();
 				barrier.offset = offset;
 				barrier.size = size;
-				barrier.srcAccessMask = new BitMask<>(srcAccess);
-				barrier.dstAccessMask = new BitMask<>(destAccess);
+				barrier.srcAccessMask = new EnumMask<>(srcAccess);
+				barrier.dstAccessMask = new EnumMask<>(destAccess);
 				barrier.srcQueueFamilyIndex = srcFamily;
 				barrier.dstQueueFamilyIndex = destFamily;
 			}
@@ -361,8 +361,8 @@ public final class Barrier implements Command {
 			 */
 			private void populate(VkImageMemoryBarrier barrier) {
 				barrier.image = image.handle();
-				barrier.srcAccessMask = new BitMask<>(srcAccess);
-				barrier.dstAccessMask = new BitMask<>(destAccess);
+				barrier.srcAccessMask = new EnumMask<>(srcAccess);
+				barrier.dstAccessMask = new EnumMask<>(destAccess);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
 				barrier.subresourceRange = SubResource.toRange(subresource);

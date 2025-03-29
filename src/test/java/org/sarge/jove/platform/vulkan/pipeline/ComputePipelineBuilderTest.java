@@ -7,7 +7,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 import com.sun.jna.Pointer;
 
@@ -39,8 +39,8 @@ class ComputePipelineBuilderTest {
 
 	@Test
 	void populate() {
-		builder.populate(BitMask.of(), layout, new Handle(1), 2, info);
-		assertEquals(BitMask.of(), info.flags);
+		builder.populate(EnumMask.of(), layout, new Handle(1), 2, info);
+		assertEquals(EnumMask.of(), info.flags);
 		assertEquals(layout.handle(), info.layout);
 		assertEquals(new Handle(1), info.basePipelineHandle);
 		assertEquals(2, info.basePipelineIndex);

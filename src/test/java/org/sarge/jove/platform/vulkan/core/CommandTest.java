@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 import com.sun.jna.*;
 
@@ -162,7 +162,7 @@ class CommandTest {
 			void reset() {
 				buffer.reset();
 				buffer.begin();
-				verify(lib).vkResetCommandBuffer(buffer, BitMask.of());
+				verify(lib).vkResetCommandBuffer(buffer, EnumMask.of());
 				assertEquals(false, buffer.isReady());
 			}
 		}
@@ -245,7 +245,7 @@ class CommandTest {
 		@Test
 		void reset() {
 			pool.reset();
-			verify(lib).vkResetCommandPool(dev, pool, BitMask.of());
+			verify(lib).vkResetCommandPool(dev, pool, EnumMask.of());
 		}
 
 		@Test

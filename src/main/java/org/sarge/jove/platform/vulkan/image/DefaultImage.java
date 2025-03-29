@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -153,7 +153,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 
 			// Populate image structure
 			final var info = new VkImageCreateInfo();
-			info.flags = new BitMask<>(flags);
+			info.flags = new EnumMask<>(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
@@ -162,18 +162,18 @@ public final class DefaultImage extends VulkanObject implements Image {
 			info.samples = samples;
 			info.tiling = tiling;
 			info.initialLayout = layout;
-			info.usage = new BitMask<>(props.usage());
+			info.usage = new EnumMask<>(props.usage());
 			info.sharingMode = props.mode();
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
 			final Vulkan vulkan = dev.vulkan();
 			final ImageLibrary lib = vulkan.library();
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			lib.vkCreateImage(dev, info, null, ref);
 
 			// Retrieve image memory requirements
-			final Handle handle = ref.handle();
+			final Handle handle = ref.get();
 			final var reqs = new VkMemoryRequirements();
 			lib.vkGetImageMemoryRequirements(dev, handle, reqs);
 

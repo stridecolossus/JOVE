@@ -10,7 +10,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.render.*;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 import com.sun.jna.Pointer;
 
@@ -51,8 +51,8 @@ class GraphicsPipelineBuilderTest {
 	void populate() {
 		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, shader));
 		builder.viewport(new Rectangle(new Dimensions(2, 3)));
-		builder.populate(BitMask.of(), layout, new Handle(1), 2, info);
-		assertEquals(BitMask.of(), info.flags);
+		builder.populate(EnumMask.of(), layout, new Handle(1), 2, info);
+		assertEquals(EnumMask.of(), info.flags);
 		assertEquals(layout.handle(), info.layout);
 		assertEquals(new Handle(1), info.basePipelineHandle);
 		assertEquals(2, info.basePipelineIndex);
@@ -72,14 +72,14 @@ class GraphicsPipelineBuilderTest {
 	@Test
 	void vertex() {
 		builder.viewport(new Rectangle(new Dimensions(2, 3)));
-		assertThrows(IllegalStateException.class, () -> builder.populate(BitMask.of(), layout, null, -1, info));
+		assertThrows(IllegalStateException.class, () -> builder.populate(EnumMask.of(), layout, null, -1, info));
 	}
 
 	@DisplayName("A graphics pipeline must configure at least one viewport")
 	@Test
 	void viewports() {
 		builder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, shader));
-		assertThrows(IllegalArgumentException.class, () -> builder.populate(BitMask.of(), layout, null, -1, info));
+		assertThrows(IllegalArgumentException.class, () -> builder.populate(EnumMask.of(), layout, null, -1, info));
 	}
 
 	@DisplayName("A graphics pipeline cannot contain a duplicate shader stage")

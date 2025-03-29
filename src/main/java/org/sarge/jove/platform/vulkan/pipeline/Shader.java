@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.io.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.io.ResourceLoader;
 import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
 import org.sarge.jove.platform.vulkan.common.*;
@@ -30,11 +30,11 @@ public final class Shader extends VulkanObject {
 
 		// Allocate shader
 		final Vulkan vulkan = dev.vulkan();
-		final PointerReference ref = vulkan.factory().pointer();
+		final NativeReference<Handle> ref = vulkan.factory().pointer();
 		vulkan.library().vkCreateShaderModule(dev, info, null, ref);
 
 		// Create shader
-		return new Shader(ref.handle(), dev);
+		return new Shader(ref.get(), dev);
 	}
 
 	/**
@@ -86,10 +86,10 @@ public final class Shader extends VulkanObject {
 		 * @param device			Logical device
 		 * @param info				Shader descriptor
 		 * @param pAllocator		Allocator
-		 * @param shader			Returned shader module
+		 * @param shader			Returned shader module handle
 		 * @return Result
 		 */
-		int vkCreateShaderModule(DeviceContext device, VkShaderModuleCreateInfo info, Handle pAllocator, PointerReference shader);
+		int vkCreateShaderModule(DeviceContext device, VkShaderModuleCreateInfo info, Handle pAllocator, NativeReference<Handle> shader);
 
 		/**
 		 * Destroys a shader.

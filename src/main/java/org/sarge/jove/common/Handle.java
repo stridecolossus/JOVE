@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.lang.foreign.*;
 import java.util.function.*;
 
-import org.sarge.jove.foreign.NativeTransformer;
+import org.sarge.jove.foreign.AbstractNativeTransformer;
 
 /**
  * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
@@ -71,22 +71,14 @@ public final class Handle {
 		return array;
 	}
 
-	/**
-	 * Native transform for a handle.
-	 */
-	public record HandleNativeTransformer() implements NativeTransformer<Handle, MemorySegment> {
+	public static class HandleNativeTransformer extends AbstractNativeTransformer<Handle> {
 		@Override
-		public MemorySegment transform(Handle handle, ParameterMode mode, SegmentAllocator allocator) {
-			if(handle == null) {
-				return MemorySegment.NULL;
-			}
-			else {
-				return handle.address;
-			}
+		public Object marshal(Handle arg, SegmentAllocator allocator) {
+			return arg.address;
 		}
 
 		@Override
-		public Function<MemorySegment, Handle> returns() {
+		public Function<MemorySegment, Handle> unmarshal() {
 			return Handle::new;
 		}
 	}

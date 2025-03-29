@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -109,12 +110,12 @@ public class Swapchain extends VulkanObject {
 		// Retrieve next image index
 		final DeviceContext dev = super.device();
 		final Vulkan vulkan = dev.vulkan();
-		final IntegerReference index = vulkan.factory().integer();
+		final NativeReference<Integer> index = vulkan.factory().integer();
 		final VkResult result = vulkan.library().vkAcquireNextImageKHR(dev, this, Long.MAX_VALUE, semaphore, fence, index);
 
 		// Check result
 		switch(result) {
-			case SUCCESS, SUBOPTIMAL_KHR -> latest = index.value();
+			case SUCCESS, SUBOPTIMAL_KHR -> latest = index.get();
 			case ERROR_OUT_OF_DATE_KHR -> throw new SwapchainInvalidated(result);
 			default -> throw new VulkanException(result);
 		}
@@ -263,7 +264,7 @@ public class Swapchain extends VulkanObject {
 			clipped(true);
 		}
 
-		private static <E extends IntEnum> void validate(BitMask<E> mask, E e) {
+		private static <E extends IntEnum> void validate(EnumMask<E> mask, E e) {
 			if(!mask.contains(e)) {
 				throw new IllegalArgumentException("Unsupported property: " + e);
 			}
@@ -423,9 +424,9 @@ public class Swapchain extends VulkanObject {
 		 */
 		public Swapchain build(DeviceContext dev) {
 			// Init swapchain descriptor
-			info.flags = new BitMask<>(flags);
+			info.flags = new EnumMask<>(flags);
 			info.surface = surface.handle();
-			info.imageUsage = new BitMask<>(usage);
+			info.imageUsage = new EnumMask<>(usage);
 			info.oldSwapchain = null; // TODO
 
 			// TODO
@@ -435,11 +436,11 @@ public class Swapchain extends VulkanObject {
 			// Create swapchain
 			final Vulkan vulkan = dev.vulkan();
 			final Library lib = vulkan.library();
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			lib.vkCreateSwapchainKHR(dev, info, null, ref);
 
 			// Retrieve swapchain images
-			final Handle handle = ref.handle();
+			final Handle handle = ref.get();
 			final VulkanFunction<Handle[]> images = (count, array) -> lib.vkGetSwapchainImagesKHR(dev, handle, count, array);
 			final Handle[] handles = vulkan.invoke(images, Handle[]::new);
 
@@ -487,10 +488,10 @@ public class Swapchain extends VulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Swapchain descriptor
 		 * @param pAllocator		Allocator
-		 * @param pSwapchain		Returned swapchain
+		 * @param pSwapchain		Returned swapchain handle
 		 * @return Result
 		 */
-		int vkCreateSwapchainKHR(DeviceContext device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, PointerReference pSwapchain);
+		int vkCreateSwapchainKHR(DeviceContext device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, NativeReference<Handle> pSwapchain);
 
 		/**
 		 * Destroys a swapchain.
@@ -508,7 +509,7 @@ public class Swapchain extends VulkanObject {
 		 * @param pSwapchainImages			Image handles
 		 * @return Result code
 		 */
-		int vkGetSwapchainImagesKHR(DeviceContext device, Handle swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages);
+		int vkGetSwapchainImagesKHR(DeviceContext device, Handle swapchain, NativeReference<Integer> pSwapchainImageCount, Handle[] pSwapchainImages);
 
 		/**
 		 * Acquires the next image in the swapchain.
@@ -520,7 +521,7 @@ public class Swapchain extends VulkanObject {
 		 * @param pImageIndex			Returned image index
 		 * @return Result
 		 */
-		VkResult vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex);
+		VkResult vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, NativeReference<Integer> pImageIndex);
 
 		/**
 		 * Presents to the swapchain.

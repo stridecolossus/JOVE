@@ -8,11 +8,11 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>query</i> is used to retrieve statistics from Vulkan during a render pass.
@@ -113,15 +113,15 @@ public interface Query {
 			final var info = new VkQueryPoolCreateInfo();
 			info.queryType = requireNonNull(type);
 			info.queryCount = requireOneOrMore(slots);
-			info.pipelineStatistics = BitMask.of(stats);
+			info.pipelineStatistics = EnumMask.of(stats);
 
 			// Instantiate query pool
 			final Vulkan vulkan = dev.vulkan();
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			vulkan.library().vkCreateQueryPool(dev, info, null, ref);
 
 			// Create pool
-			return new Pool(ref.handle(), dev, type, slots);
+			return new Pool(ref.get(), dev, type, slots);
 		}
 
 		private final VkQueryType type;
@@ -171,7 +171,7 @@ public interface Query {
 
 				@Override
 				public Command begin(VkQueryControlFlag... flags) {
-					final BitMask<VkQueryControlFlag> mask = BitMask.of(flags);
+					final EnumMask<VkQueryControlFlag> mask = EnumMask.of(flags);
 					return (lib, buffer) -> lib.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
 				}
 
@@ -342,7 +342,7 @@ public interface Query {
 		 */
 		public Consumer<ByteBuffer> build() {
 			// Validate query result
-			final BitMask<VkQueryResultFlag> mask = validate();
+			final EnumMask<VkQueryResultFlag> mask = validate();
 
 			// Init library
 			final DeviceContext dev = pool.device();
@@ -378,7 +378,7 @@ public interface Query {
 			buffer.checkOffset(offset - 1 + count * stride);
 
 			// Validate query result
-			final BitMask<VkQueryResultFlag> mask = validate();
+			final EnumMask<VkQueryResultFlag> mask = validate();
 
 			// Create results command
 			return (lib, cmd) -> {
@@ -391,7 +391,7 @@ public interface Query {
 		 * Validates this query result.
 		 * @return Flags bit-field
 		 */
-		private BitMask<VkQueryResultFlag> validate() {
+		private EnumMask<VkQueryResultFlag> validate() {
 			// Validate query range
 			if(start + count > pool.slots) {
 				throw new IllegalArgumentException(String.format("Invalid query slot range: start=%d count=%d pool=%s", start, count, pool));
@@ -404,7 +404,7 @@ public interface Query {
 			}
 
 			// Build flags mask
-			return new BitMask<>(flags);
+			return new EnumMask<>(flags);
 		}
 	}
 
@@ -417,10 +417,10 @@ public interface Query {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Create descriptor
 		 * @param pAllocator		Allocator
-		 * @param pQueryPool		Returned query pool
+		 * @param pQueryPool		Returned query pool handle
 		 * @return Result
 		 */
-		int vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, PointerReference pQueryPool);
+		int vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pQueryPool);
 
 		/**
 		 * Destroys a query pool.
@@ -446,7 +446,7 @@ public interface Query {
 		 * @param query				Query slot
 		 * @param flags				Flags
 		 */
-		void vkCmdBeginQuery(CommandBuffer commandBuffer, Pool queryPool, int query, BitMask<VkQueryControlFlag> flags);
+		void vkCmdBeginQuery(CommandBuffer commandBuffer, Pool queryPool, int query, EnumMask<VkQueryControlFlag> flags);
 
 		/**
 		 * Ends a query.
@@ -477,7 +477,7 @@ public interface Query {
 		 * @param flags				Query flags
 		 * @return Result
 		 */
-		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, PointerReference /*ByteBuffer*/ pData, long stride, BitMask<VkQueryResultFlag> flags);
+		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, NativeReference<Handle> pData, long stride, EnumMask<VkQueryResultFlag> flags);
 
 		/**
 		 * Writes query results to a Vulkan buffer.
@@ -490,6 +490,6 @@ public interface Query {
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
 		 */
-		void vkCmdCopyQueryPoolResults(CommandBuffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, BitMask<VkQueryResultFlag> flags);
+		void vkCmdCopyQueryPoolResults(CommandBuffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, EnumMask<VkQueryResultFlag> flags);
 	}
 }

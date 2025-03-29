@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.Optional;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.PointerReference;
+import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -162,11 +162,11 @@ public final class View extends VulkanObject {
 
 			// Allocate image view
 			final Vulkan vulkan = dev.vulkan();
-			final PointerReference ref = vulkan.factory().pointer();
+			final NativeReference<Handle> ref = vulkan.factory().pointer();
 			vulkan.library().vkCreateImageView(dev, info, null, ref);
 
 			// Create image view
-			return new View(ref.handle(), dev, image);
+			return new View(ref.get(), dev, image);
 		}
 	}
 
@@ -179,10 +179,10 @@ public final class View extends VulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Image view descriptor
 		 * @param pAllocator		Allocator
-		 * @param pView				Returned image view
+		 * @param pView				Returned image view handle
 		 * @return Result
 		 */
-		int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, PointerReference pView);
+		int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pView);
 
 		/**
 		 * Destroys an image view.

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.foreign.IntegerReference;
+import org.sarge.jove.foreign.NativeReference;
 
 /**
  * GLFW monitor API.
@@ -24,8 +24,8 @@ interface DesktopLibraryMonitor {
 	 * @param count Number of monitors
 	 * @return Pointer to array of monitors
 	 */
-	Monitor[] glfwGetMonitors(IntegerReference count);
-	// TODO - cannot return array
+	//ArrayReturnValue<Monitor>
+	Object glfwGetMonitors(NativeReference<Integer> count);
 
 	/**
 	 * Enumerates the video modes supported by the given monitor.
@@ -33,7 +33,7 @@ interface DesktopLibraryMonitor {
 	 * @param count			Number of modes
 	 * @return Display modes for the given monitor
 	 */
-	DesktopDisplayMode glfwGetVideoModes(Monitor monitor, IntegerReference count);
+	DesktopDisplayMode glfwGetVideoModes(Monitor monitor, NativeReference<Integer> count);
 
 	/**
 	 * Retrieves the current video mode of the given monitor.
@@ -48,7 +48,7 @@ interface DesktopLibraryMonitor {
 	 * @param w				Returned width
 	 * @param h				Returned height
 	 */
-	void glfwGetMonitorPhysicalSize(Monitor monitor, IntegerReference w, IntegerReference h);
+	void glfwGetMonitorPhysicalSize(Monitor monitor, NativeReference<Integer> w, NativeReference<Integer> h);
 
 	/**
 	 * Retrieves the name of the given monitor.

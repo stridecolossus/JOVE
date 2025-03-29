@@ -72,7 +72,7 @@ public interface ClearValue {
 		@Override
 		public void populate(VkClearValue value) {
 //			value.setType("depthStencil");
-			value.depthStencil.depth = depth.floatValue();
+			value.depthStencil.depth = depth.value();
 			value.depthStencil.stencil = 0;
 		}
 	}
