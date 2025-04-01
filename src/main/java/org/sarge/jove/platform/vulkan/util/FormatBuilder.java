@@ -6,7 +6,7 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import org.sarge.jove.common.*;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.util.IntEnum;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * The <i>format builder</i> is used to programatically select a Vulkan format.
@@ -36,7 +36,7 @@ import org.sarge.jove.util.IntEnum;
  * @author Sarge
  */
 public final class FormatBuilder {
-	private static final IntEnum.ReverseMapping<VkFormat> MAPPING = IntEnum.reverse(VkFormat.class);
+	private static final ReverseMapping<VkFormat> MAPPING = new ReverseMapping<>(VkFormat.class);
 
 	/**
 	 * Vulkan numeric formats.

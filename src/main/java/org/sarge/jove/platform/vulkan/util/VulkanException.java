@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.util.IntEnum;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>Vulkan exception</i> wraps an error code returned by the Vulkan platform.
@@ -11,6 +11,8 @@ import org.sarge.jove.util.IntEnum;
  * @author Sarge
  */
 public class VulkanException extends RuntimeException {
+	private static final ReverseMapping<VkResult> MAPPING = new ReverseMapping<>(VkResult.class);
+
 	private final int result;
 
 	/**
@@ -53,7 +55,7 @@ public class VulkanException extends RuntimeException {
 	 */
 	private static String reason(int result) {
 		try {
-			return IntEnum.reverse(VkResult.class).map(result).name();
+			return MAPPING.map(result).name();
 		}
 		catch(IllegalArgumentException e) {
 			return "Unknown error code";

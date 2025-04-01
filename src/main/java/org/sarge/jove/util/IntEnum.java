@@ -4,19 +4,16 @@ import static java.util.stream.Collectors.toMap;
 
 import java.lang.foreign.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.NativeTransformer;
+import org.sarge.jove.foreign.ReferenceTransformer;
 
 /**
- * An <i>integer enumeration</i> is a type definition for an enumeration mapped to a native <b>typedef enum</b>.
+ * An <i>integer enumeration</i> represents a native {@code typedef enum} declaration.
  * <p>
- * An integer enumeration can be treated as bi-directional by constructing
- *
- * A {@link ReverseMapping} can be constructed for a given enumeration
+ * The {@link #value()} method maps an enumeration constant to the underlying native value.
  * <p>
- * The {@link IntEnumNativeTransformer} is used to marshal enumerations to/from the native layer.
+ * An integer enumeration can be treated as bidirectional using the {@link ReverseMapping} class.
  * <p>
  * @see EnumMask
  * @author Sarge
@@ -28,46 +25,12 @@ public interface IntEnum {
 	int value();
 
 	/**
-	 * Retrieves the reverse mapping for the given integer enumeration.
-	 * This method is thread-safe.
-	 * @param <E> Enumeration
-	 * @param type Enumeration class
-	 * @return Reverse mapping
-	 */
-	@SuppressWarnings("unchecked")
-	static <E extends IntEnum> ReverseMapping<E> reverse(Class<E> type) {
-		return (ReverseMapping<E>) ReverseMapping.get(type);
-	}
-
-	// TODO - get rid of static / thread-safe cache?
-	// used by:
-	// - mapper / structures => cache locally without need for locking
-	// - custom use-cases, e.g. physical device queue flags (?) => one-off
-
-	/**
-	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers <i>to</i> the enumeration constants.
-	 * Note that constants with duplicate values within an enumeration are silently ignored by this implementation.
+	 * A <i>reverse mapping</i> is the inverse of a given integer enumeration, i.e. maps a native integer <i>to</i> the corresponding enumeration constant.
+	 * Note that duplicate values are silently ignored by this implementation.
 	 * @param <E> Integer enumeration
+	 * @see #defaultValue()
 	 */
 	class ReverseMapping<E extends IntEnum> {
-		private static final Map<Class<?>, ReverseMapping<?>> CACHE = new ConcurrentHashMap<>();
-
-		/**
-		 * Looks up the reverse mapping for the given enumeration.
-		 * This method is thread-safe.
-		 * @param <E> Enumeration
-		 * @param type Enumeration class
-		 * @return Reverse mapping
-		 */
-		@SuppressWarnings("unchecked")
-		public static ReverseMapping<?> get(Class<?> type) {
-
-			// TODO
-			if(type == IntEnum.class) throw new IllegalArgumentException();
-
-			return CACHE.computeIfAbsent(type, ReverseMapping::new);
-		}
-
 		private final Map<Integer, E> map;
 		private final E def;
 
@@ -75,13 +38,14 @@ public interface IntEnum {
 		 * Constructor.
 		 * @param type Integer enumeration class
 		 */
-		private ReverseMapping(Class<E> type) {
+		public ReverseMapping(Class<E> type) {
 			final E[] array = type.getEnumConstants();
 			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (a, b) -> a));
 			this.def = map.getOrDefault(0, array[0]);
 		}
 
 		/**
+		 * The <i>default value</i> of an integer enumeration is the constant with a value of {@code zero} or arbitrarily the <b>first</b> entry in the enumeration.
 		 * @return Default value for this enumeration
 		 */
 		public E defaultValue() {
@@ -89,8 +53,8 @@ public interface IntEnum {
 		}
 
 		/**
-		 * Maps an enumeration literal to the corresponding enumeration constant.
-		 * @param value Native literal
+		 * Maps the given native value to the corresponding enumeration constant.
+		 * @param value Native value
 		 * @return Constant
 		 * @throws IllegalArgumentException if the enumeration does not contain the given value
 		 */
@@ -101,19 +65,28 @@ public interface IntEnum {
 			}
 			return constant;
 		}
+
+		/**
+		 * Maps the given native value to the corresponding enumeration constant or returns the {@link #defaultValue()} if not present.
+		 * @param value Native value
+		 * @return Constant
+		 */
+		public E mapOrDefault(int value) {
+			return map.getOrDefault(value, def);
+		}
 	}
 
 	/**
 	 * Native transformer for integer enumerations.
 	 */
-	class IntEnumNativeTransformer implements NativeTransformer<IntEnum> {
+	class IntEnumTransformer implements ReferenceTransformer<IntEnum> {
 		private final ReverseMapping<?> mapping;
 
 		/**
 		 * Constructor.
 		 * @param type Enumeration type
 		 */
-		public IntEnumNativeTransformer(Class<? extends IntEnum> type) {
+		public IntEnumTransformer(Class<? extends IntEnum> type) {
 			this.mapping = new ReverseMapping<>(type);
 		}
 
@@ -134,15 +107,8 @@ public interface IntEnum {
 
 		@Override
 		public Function<Integer, IntEnum> unmarshal() {
-			// TODO - getOrDefault()
-			return value -> {
-				if(value == 0) {
-					return mapping.defaultValue();
-				}
-				else {
-					return mapping.map(value);
-				}
-			};
+			// TODO - mapOrDefault() would only ever be needed here?
+			return mapping::mapOrDefault;
 		}
 	}
 }

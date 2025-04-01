@@ -215,20 +215,28 @@ public class VulkanForeignDemo {
 
     */
 
-    private void enumerate(MemorySegment instance) {
+    private MemorySegment enumerate(MemorySegment instance) {
 		final MethodHandle handle = linker.downcallHandle(
 				lookup("vkEnumeratePhysicalDevices"),
 				FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS)
 		);
 
 		final MemorySegment count = arena.allocate(JAVA_INT);
-
 		invoke(handle, instance, count, MemorySegment.NULL);
+		System.out.println("count=" + count.get(JAVA_INT, 0L));
 
-		final MemorySegment ref = arena.allocate(ADDRESS);
+		final MemorySegment ref = arena.allocate(ADDRESS, 1);
+		dump(ref);
 		invoke(handle, instance, count, ref);
 
-		System.out.println("devices=" + count.get(JAVA_INT, 0L));
+//		System.out.println("devices=" + count.get(JAVA_INT, 0L));
+		dump(ref);
+
+		return ref.getAtIndex(ADDRESS, 0);
+    }
+
+    private static void dump(MemorySegment ref) {
+    	System.out.println(ref.getAtIndex(ADDRESS, 0));
     }
 
     private void destroyInstance(MemorySegment instance) {
@@ -252,7 +260,7 @@ public class VulkanForeignDemo {
 //			final MemorySegment handler = demo.createDiagnosticHandler(instance);
 
 			System.out.println("Enumerating physical devices...");
-			demo.enumerate(instance);
+			final MemorySegment dev = demo.enumerate(instance);
 
 //			System.out.println("Destroying handler...");
 //			demo.destroyDiagnosticHandler(instance, handler);

@@ -6,7 +6,7 @@ import java.lang.foreign.ValueLayout;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.EnumMask.EnumMaskNativeTransformer;
+import org.sarge.jove.util.EnumMask.EnumMaskTransformer;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 class EnumMaskTest {
@@ -14,7 +14,7 @@ class EnumMaskTest {
 
 	@BeforeEach
 	void before() {
-		mapping = IntEnum.reverse(MockEnum.class);
+		mapping = new ReverseMapping<>(MockEnum.class);
 	}
 
 	@Test
@@ -55,11 +55,11 @@ class EnumMaskTest {
 
 	@Nested
 	class TransformerTests {
-		private EnumMaskNativeTransformer transformer;
+		private EnumMaskTransformer transformer;
 
 		@BeforeEach
 		void before() {
-			transformer = new EnumMaskNativeTransformer();
+			transformer = new EnumMaskTransformer();
 		}
 
 		@Test
@@ -74,7 +74,7 @@ class EnumMaskTest {
 
 		@Test
 		void empty() {
-			assertEquals(0, transformer.empty());
+			assertEquals(0, transformer.marshal(null, null));
 		}
 
 		@Test

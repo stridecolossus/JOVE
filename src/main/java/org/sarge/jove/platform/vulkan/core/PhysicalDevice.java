@@ -64,7 +64,6 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public VkPhysicalDeviceProperties properties() {
 		final var props = new VkPhysicalDeviceProperties();
-//		final VulkanLibraryTEMP lib = instance.vulkan().library();
 //		lib.vkGetPhysicalDeviceProperties(this, props); // props);
 		return props;
 	}
@@ -75,7 +74,8 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public VkPhysicalDeviceMemoryProperties memory() {
     	final var properties = new VkPhysicalDeviceMemoryProperties();
-    	instance.vulkan().library().vkGetPhysicalDeviceMemoryProperties(this, properties);
+    	// TODO
+//    	instance.vulkan().library().vkGetPhysicalDeviceMemoryProperties(this, properties);
     	return properties;
 	}
 
@@ -149,6 +149,7 @@ public class PhysicalDevice implements NativeObject {
 		final Vulkan vulkan = instance.vulkan();
 		final VulkanFunction<Handle[]> enumerate = (count, devices) -> vulkan.library().vkEnumeratePhysicalDevices(instance, count, devices);
 		final Handle[] handles = vulkan.invoke(enumerate, Handle[]::new);
+
 
 		// Helper
 		final var builder = new Object() {
@@ -330,14 +331,14 @@ public class PhysicalDevice implements NativeObject {
 		 * @param device		Device handle
 		 * @param props			Device properties
 		 */
-//		void vkGetPhysicalDeviceProperties(PhysicalDevice device, @Returned VkPhysicalDeviceProperties props);
+		void vkGetPhysicalDeviceProperties(PhysicalDevice device, @Returned VkPhysicalDeviceProperties props);
 
 		/**
 		 * Retrieves the memory properties of the given physical device.
 		 * @param device				Device
 		 * @param pMemoryProperties		Memory properties
 		 */
-		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, @Returned VkPhysicalDeviceMemoryProperties pMemoryProperties);
+//		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, @Returned VkPhysicalDeviceMemoryProperties pMemoryProperties);
 
 		/**
 		 * Retrieves the supported features of the given physical device.

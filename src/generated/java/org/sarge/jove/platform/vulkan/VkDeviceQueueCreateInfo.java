@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
@@ -15,7 +15,7 @@ import org.sarge.jove.util.BitMask;
 public class VkDeviceQueueCreateInfo implements NativeStructure {
 	public final VkStructureType sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
 	public Handle pNext;
-	public BitMask<VkDeviceQueueCreateFlag> flags;
+	public EnumMask<VkDeviceQueueCreateFlag> flags;
 	public int queueFamilyIndex;
 	public int queueCount;
 	public float[] pQueuePriorities;

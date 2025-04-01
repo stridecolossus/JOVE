@@ -8,7 +8,6 @@ import java.util.stream.IntStream;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
-import org.sarge.jove.util.IntEnum;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -65,8 +64,8 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	 */
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
 		class Helper {
-			private final ReverseMapping<VkMemoryHeapFlag> mapper = IntEnum.reverse(VkMemoryHeapFlag.class);
-			private final ReverseMapping<VkMemoryProperty> properties = IntEnum.reverse(VkMemoryProperty.class);
+			private final ReverseMapping<VkMemoryHeapFlag> mapper = new ReverseMapping<>(VkMemoryHeapFlag.class);
+			private final ReverseMapping<VkMemoryProperty> properties = new ReverseMapping<>(VkMemoryProperty.class);
 			private final List<Heap> heaps;
 
 			/**

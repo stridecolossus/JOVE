@@ -2,8 +2,9 @@ package org.sarge.jove.common;
 
 import java.lang.foreign.SegmentAllocator;
 import java.util.Collection;
+import java.util.function.Function;
 
-import org.sarge.jove.foreign.AbstractNativeTransformer;
+import org.sarge.jove.foreign.ReferenceTransformer;
 
 /**
  * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
@@ -28,10 +29,18 @@ public interface NativeObject {
 	}
 	// TODO - used? needed? here?
 
-	public static class NativeObjectTransformer extends AbstractNativeTransformer<NativeObject> {
+	/**
+	 * Transformer for native objects.
+	 */
+	public static class NativeObjectTransformer implements ReferenceTransformer<NativeObject> {
 		@Override
 		public Object marshal(NativeObject arg, SegmentAllocator allocator) {
 			return arg.handle().address();
+		}
+
+		@Override
+		public Function<? extends Object, NativeObject> unmarshal() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

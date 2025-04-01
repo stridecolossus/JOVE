@@ -6,11 +6,8 @@ import java.lang.annotation.*;
 import java.lang.foreign.*;
 import java.util.function.*;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.common.Handle.HandleNativeTransformer;
-import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
+import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
@@ -38,19 +35,8 @@ public final class Desktop implements TransientObject {
 //			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
 //		};
 
-		final var registry = new NativeRegistry();
-		registry.add(int.class, new IdentityNativeTransformer<>(ValueLayout.JAVA_INT));
-		registry.add(boolean.class, new IdentityNativeTransformer<>(ValueLayout.JAVA_BOOLEAN));
-		registry.add(String.class, new StringNativeTransformer());
-		registry.add(NativeReference.class, new NativeReferenceTransformer());
-		registry.add(Handle.class, new HandleNativeTransformer());
-		registry.add(NativeObject.class, new NativeObjectTransformer());
-
-		// TODO
-		registry.add(MemorySegment.class, new IdentityNativeTransformer<>(ValueLayout.ADDRESS));
-
 		// Load native library
-		final var factory = new NativeLibraryBuilder("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
+		final var factory = new NativeLibraryBuilder("C:/GLFW/lib-mingw-w64/glfw3.dll", Registry.create()); // TODO - name
 		final DesktopLibrary lib = factory.build(DesktopLibrary.class);
 		// TODO - JoystickManager.init(lib);
 
@@ -124,9 +110,17 @@ public final class Desktop implements TransientObject {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-		final NativeReference<Integer> count = factory.integer();
-		final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
-		return array(address, count.get(), String[]::new, StringNativeTransformer::unmarshal);
+//		final NativeReference<Integer> count = factory.integer();
+//		lib.glfwGetRequiredInstanceExtensions(count);
+//		System.out.println("extensions.count="+count.get());
+//		return new String[0];
+//		//final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
+//		//return array(address, count.get(), String[]::new, StringNativeTransformer::unmarshal);
+//
+//
+//		//final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
+//		//return array(address, count.get(), String[]::new, StringNativeTransformer::unmarshal);
+		return new String[0];
 	}
 
 	// TODO

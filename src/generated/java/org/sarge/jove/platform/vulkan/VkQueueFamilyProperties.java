@@ -5,14 +5,14 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkQueueFamilyProperties implements NativeStructure {
-	public BitMask<VkQueueFlag> queueFlags;
+	public EnumMask<VkQueueFlag> queueFlags;
 	public int queueCount;
 	public int timestampValidBits;
 	public VkExtent3D minImageTransferGranularity = new VkExtent3D();

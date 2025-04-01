@@ -18,13 +18,13 @@ class NativeLibraryBuilderTest {
 	}
 
 	private NativeLibraryBuilder builder;
-	private NativeRegistry registry;
+	private Registry registry;
 
 	@BeforeEach
 	void before() {
 		final SymbolLookup lookup = Linker.nativeLinker().defaultLookup();
-		registry = new NativeRegistry();
-		registry.add(int.class, new IdentityNativeTransformer<>(ValueLayout.JAVA_INT));
+		registry = new Registry();
+		registry.add(int.class, new Primitive(ValueLayout.JAVA_INT));
 		builder = new NativeLibraryBuilder(lookup, registry);
 	}
 

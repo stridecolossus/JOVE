@@ -59,6 +59,8 @@ public class VulkanIntegrationDemo {
 			System.out.println("  " + family);
 		}
 
+		/*
+
 		System.out.println("Retrieving surface...");
 		final Handle surface = window.surface(instance.handle());
 		System.out.println("presentation=" + physical.isPresentationSupported(surface, physical.families().getFirst()));
@@ -77,8 +79,8 @@ public class VulkanIntegrationDemo {
 
 		System.out.println("Cleanup...");
 		//dev.destroy();
-		instance.destroy();
-		window.destroy();
+//		instance.destroy();
+//		window.destroy();
 		desktop.destroy();
 
 		System.out.println("Done...");

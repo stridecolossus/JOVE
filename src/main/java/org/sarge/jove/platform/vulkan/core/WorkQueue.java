@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntEnum;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -30,7 +29,8 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 	 * @param lib Vulkan API
 	 */
 	public void waitIdle(VulkanLibrary lib) {
-		lib.vkQueueWaitIdle(this);
+		// TODO
+//		lib.vkQueueWaitIdle(this);
 	}
 
 	/**
@@ -45,7 +45,7 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 		/**
 		 * Queue flag mapper.
 		 */
-		private static final ReverseMapping<VkQueueFlag> MAPPING = IntEnum.reverse(VkQueueFlag.class);
+		private static final ReverseMapping<VkQueueFlag> MAPPING = new ReverseMapping<>(VkQueueFlag.class);
 
 		/**
 		 * Helper - Creates a new queue family from the given descriptor.

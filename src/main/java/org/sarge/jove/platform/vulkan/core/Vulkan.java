@@ -4,16 +4,9 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.function.IntFunction;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.common.Handle.HandleNativeTransformer;
-import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.util.*;
-import org.sarge.jove.util.*;
-import org.sarge.jove.util.EnumMask.EnumMaskNativeTransformer;
-import org.sarge.jove.util.IntEnum.IntEnumNativeTransformer;
 
 /**
  * The <i>Vulkan</i> service
@@ -28,17 +21,8 @@ public class Vulkan {
 	 * @throws RuntimeException if Vulkan cannot be instantiated
 	 */
 	public static Vulkan create() {
-		// Register Vulkan types
-		final var registry = NativeRegistry.create();
-		registry.add(String.class, new StringNativeTransformer());
-		registry.add(NativeReference.class, new NativeReferenceTransformer());
-		registry.add(Handle.class, new HandleNativeTransformer());
-		registry.add(NativeObject.class, new NativeObjectTransformer());
-		registry.add(IntEnum.class, IntEnumNativeTransformer::new);
-		registry.add(EnumMask.class, new EnumMaskNativeTransformer());
-		registry.add(NativeStructure.class, NativeStructureTransformer.factory(registry));
-
 		// Init API factory
+		final var registry = Registry.create();
 		final var factory = new NativeLibraryBuilder("vulkan-1", registry);
 		factory.setReturnValueHandler(Vulkan::check);
 
@@ -50,7 +34,7 @@ public class Vulkan {
 	}
 
 	private final VulkanLibrary lib;
-	private final NativeRegistry registry;
+	private final Registry registry;
 	private final NativeReference.Factory factory;
 
 	/**
@@ -59,7 +43,7 @@ public class Vulkan {
 	 * @param registry		Mapper registry
 	 * @param factory		Reference factory
 	 */
-	public Vulkan(VulkanLibrary lib, NativeRegistry registry, NativeReference.Factory factory) {
+	public Vulkan(VulkanLibrary lib, Registry registry, NativeReference.Factory factory) {
 		this.lib = requireNonNull(lib);
 		this.registry = requireNonNull(registry);
 		this.factory = requireNonNull(factory);
@@ -75,7 +59,7 @@ public class Vulkan {
 	/**
 	 * @return Native transformer registry
 	 */
-	public NativeRegistry registry() {
+	public Registry registry() {
 		return registry;
 	}
 

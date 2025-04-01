@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.NativeTransformer;
+import org.sarge.jove.foreign.ReferenceTransformer;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -69,16 +69,6 @@ public record EnumMask<E extends IntEnum>(int bits) {
     			.collect(toSet());
 	}
 
-	/**
-	 * Converts this mask to the corresponding enumeration.
-	 * @param enumeration Enumeration type
-	 * @return Enumeration constants
-	 * @see #enumerate(ReverseMapping)
-	 */
-	public Set<E> enumerate(Class<E> enumeration) {
-		return enumerate(IntEnum.reverse(enumeration));
-	}
-
 	@Override
 	public String toString() {
 		return Integer.toBinaryString(bits);
@@ -88,7 +78,7 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	 * Native transformer for an enumeration bitfield.
 	 */
 	@SuppressWarnings("rawtypes")
-	public static class EnumMaskNativeTransformer implements NativeTransformer<EnumMask> {
+	public static class EnumMaskTransformer implements ReferenceTransformer<EnumMask> {
 		@Override
 		public MemoryLayout layout() {
 			return ValueLayout.JAVA_INT;
@@ -96,7 +86,12 @@ public record EnumMask<E extends IntEnum>(int bits) {
 
 		@Override
 		public Integer marshal(EnumMask mask, SegmentAllocator allocator) {
-			return mask.bits;
+			if(mask == null) {
+				return 0;
+			}
+			else {
+				return mask.bits;
+			}
 		}
 
 		@Override

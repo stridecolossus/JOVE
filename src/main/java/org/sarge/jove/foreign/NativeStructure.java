@@ -1,6 +1,12 @@
 package org.sarge.jove.foreign;
 
+import static java.util.Objects.requireNonNull;
+
 import java.lang.foreign.*;
+import java.lang.reflect.Constructor;
+import java.util.List;
+import java.util.function.Function;
+import java.util.logging.Logger;
 
 /**
  * A <i>native structure</i> is the base type for all JOVE structures.
@@ -21,111 +27,114 @@ public interface NativeStructure {
 	 * @return Memory layout of this structure
 	 */
 	StructLayout layout();
-}
 
-//
-//	/**
-//	 * Transformer for a native structure.
-//	 * <p>
-//	 * Implementation considerations for the {@link #layout(Class)} of a native structure:
-//	 * <ul>
-//	 * <li>The convenience {@link NativeStructure#POINTER} can be used for pointer fields such as strings, structures, etc</li>
-//	 * <li>The layout must adhere to the byte alignment requirements of an FFM structure (8 bytes by default), see {@link NativeStructure#PADDING}</li>
-//	 * <li>A <i>nested</i> structure is declared using an <i>embedded</i> structure layout</li>
-//	 * </ul>
-//	 * <p>
-//	 * Example:
-//	 * <pre>
-//	 * TODO
-//	 * </pre>
-//	 * <p>
-//	 * Note that structures (and other data transfer objects) used in a native method are assumed to be transient, carrier types with a scope that is relevant only during method invocation.
-//	 * Multiple calls to {@link #transform(NativeStructure, ParameterMode, SegmentAllocator)} or other marshalling methods with the same instance will repeat the entire process.
-//	 * i.e. A native structure has no <i>state</i> or off-heap memory.
-//	 * <p>
-//	 */
-//	public static class StructureNativeTransformer implements UpdateTransformer<NativeStructure> {
-//		private static final Logger LOG = Logger.getLogger(StructureNativeTransformer.class.getName());
-//
-//		/**
-//		 *
-//		 */
-//		private record Entry(StructLayout layout, StructureFieldMapping mapping) {
-//		}
-//
-//		private final Map<Class<? extends NativeStructure>, Entry> entries = new HashMap<>();
-//		private final TransformerRegistry registry;
-//
-//		/**
-//		 * Constructor.
-//		 * @param registry Native transformers
-//		 */
-//		public StructureNativeTransformer(TransformerRegistry registry) {
-//			this.registry = requireNonNull(registry);
-//		}
-//
-//		/**
-//		 *
-//		 * @param type
-//		 * @return
-//		 */
-//		private Entry entry(Class<? extends NativeStructure> type) {
-//			return entries.computeIfAbsent(type, this::register);
-//		}
-//
-//		/**
-//		 *
-//		 * @param type
-//		 * @return
-//		 */
-//		private Entry register(Class<? extends NativeStructure> type) {
-//			LOG.info("Registering " + type.getName());
-//			final NativeStructure structure = create(type);
-//			final StructLayout layout = structure.layout();
-//			final var mapping = StructureFieldMapping.build(structure.getClass(), layout, registry);
-//			return new Entry(layout, mapping);
-//		}
-//
-//		/**
-//		 * Instantiates a new structure instance of the given type.
-//		 */
-//		private static NativeStructure create(Class<? extends NativeStructure> type) {
-//			try {
-//				return type.getDeclaredConstructor().newInstance();
-//			}
-//			catch(Exception e) {
-//				throw new RuntimeException("Error instantiating structure: " + type, e);
-//			}
-//		}
-//
-//		@Override
-//		public MemorySegment transform(NativeStructure structure, SegmentAllocator allocator) {
-//			if(structure == null) {
-//				return MemorySegment.NULL;
-//			}
-//			else {
-//				final Entry entry = entry(structure.getClass());
-//				final MemorySegment address = allocator.allocate(entry.layout);
-//   				entry.mapping.transform(structure, address, allocator);
-//    			return address;
-//			}
-//		}
-//
-//		@Override
-//		public Function<MemorySegment, NativeStructure> returns(Class<? extends NativeStructure> type) {
-//			return address -> {
-//				final Entry entry = entry(type);
-//				final NativeStructure structure = create(type);
-//				entry.mapping.populate(address, structure);
-//				return structure;
-//			};
-//		}
-//
-//		@Override
-//		public void update(MemorySegment address, NativeStructure structure) {
-//			final Entry entry = entry(structure.getClass());
-//			final var segment = address.reinterpret(entry.layout.byteSize());
-//			entry.mapping.populate(segment, structure);
-//		}
-//	}
-//}
+	/**
+	 * The <i>structure transformer</i> marshals a structure to/from off-heap memory.
+	 */
+	final class StructureTransformer implements ReferenceTransformer<NativeStructure> {
+		private static final Logger LOG = Logger.getLogger(StructureTransformer.class.getName());
+
+		/**
+		 * Creates a transformer for the given structure.
+		 * @param type		Structure type
+		 * @param mapper	Type mapper
+		 * @return Structure transformer
+		 * @throws IllegalArgumentException if any structure field is unsupported
+		 */
+		public static StructureTransformer create(Class<? extends NativeStructure> type, Registry registry) {
+			LOG.info("Generating native structure mapping: " + type);
+			final Constructor<? extends NativeStructure> constructor = constructor(type);
+			final NativeStructure structure = create(constructor);
+			final StructLayout layout = structure.layout();
+			final List<FieldMapping> mappings = FieldMapping.build(type, layout, registry);
+			return new StructureTransformer(constructor, layout, mappings);
+		}
+
+		/**
+		 * @return Default constructor for the given structure type
+		 */
+		private static Constructor<? extends NativeStructure> constructor(Class<? extends NativeStructure> type) {
+	    	try {
+	    		return type.getConstructor();
+	    	}
+	    	catch(Exception e) {
+	    		throw new RuntimeException("Cannot find default constructor for structure: " + type, e);
+	    	}
+		}
+
+		/**
+		 * Creates a new structure instance.
+		 * @param constructor Structure constructor
+		 * @return New structure
+		 * @throws RuntimeException if the structure cannot be created
+		 */
+		private static NativeStructure create(Constructor<? extends NativeStructure> constructor) {
+			try {
+				return constructor.newInstance();
+			}
+			catch(Exception e) {
+				throw new RuntimeException("Error instantiating structure: " + constructor, e);
+			}
+		}
+
+		private final Constructor<? extends NativeStructure> constructor;
+		private final StructLayout layout;
+		private final List<FieldMapping> mappings;
+
+		/**
+		 * Constructor.
+		 * @param constructor		Constructor for new structure instances
+		 * @param layout			Memory layout
+		 * @param mappings			Field mappings
+		 */
+		private StructureTransformer(Constructor<? extends NativeStructure> constructor, StructLayout layout, List<FieldMapping> mappings) {
+			this.constructor = requireNonNull(constructor);
+			this.layout = requireNonNull(layout);
+			this.mappings = requireNonNull(mappings);
+		}
+
+		@Override
+		public MemoryLayout layout() {
+			return layout;
+		}
+
+		@Override
+		public MemorySegment marshal(NativeStructure structure, SegmentAllocator allocator) {
+			final MemorySegment address = allocator.allocate(layout);
+			marshal(structure, address, allocator);
+			return address;
+		}
+
+		/**
+		 * Marshals a structure to the given off-heap memory.
+		 * @param structure		Structure
+		 * @param address		Off-heap memory
+		 * @param allocator		Off-heap allocator
+		 */
+		public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
+			for(FieldMapping field : mappings) {
+				field.marshal(structure, address, allocator);
+			}
+		}
+
+		@Override
+		public Function<MemorySegment, NativeStructure> unmarshal() {
+			return address -> {
+    			final NativeStructure structure = create(constructor);
+    			unmarshal(address, structure);
+    			return structure;
+			};
+		}
+
+		/**
+		 * Unmarshals a structure from the given off-heap memory.
+		 * @param address		Off-heap memory
+		 * @param structure		Structure
+		 */
+		public void unmarshal(MemorySegment address, NativeStructure structure) {
+			for(FieldMapping field : mappings) {
+				field.unmarshal(address, structure);
+			}
+		}
+	}
+}

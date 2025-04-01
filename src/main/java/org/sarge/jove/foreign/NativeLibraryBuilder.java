@@ -4,13 +4,10 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 import java.lang.foreign.*;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
 import java.util.logging.Logger;
-
-import org.sarge.jove.foreign.NativeMethod.Factory;
 
 /**
  *
@@ -33,18 +30,18 @@ public class NativeLibraryBuilder {
 	private static final Logger LOG = Logger.getLogger(NativeLibraryBuilder.class.getName());
 
 	private final SymbolLookup lookup;
-	private final Factory factory;
 	private final ClassLoader loader = this.getClass().getClassLoader(); // TODO - mutable?
+	private final Registry registry;
 	private Consumer<Object> check = result -> { /* Ignored */ };
 
 	// TODO
-	public NativeLibraryBuilder(SymbolLookup lookup, NativeRegistry registry) {
+	public NativeLibraryBuilder(SymbolLookup lookup, Registry registry) {
 		this.lookup = requireNonNull(lookup);
-		this.factory = new Factory(registry);
+		this.registry = requireNonNull(registry);
 	}
 
 	// TODO
-	public NativeLibraryBuilder(String name, NativeRegistry registry) {
+	public NativeLibraryBuilder(String name, Registry registry) {
 		final SymbolLookup lookup = SymbolLookup.libraryLookup(name, Arena.ofAuto());
 		this(lookup, registry);
 	}
@@ -113,10 +110,21 @@ public class NativeLibraryBuilder {
 	 */
 	public NativeMethod build(Method method) {
 		try {
+			// Init native method
 			LOG.info("Building native method: " + format(method));
-			final MemorySegment symbol = lookup(method);
-			final MethodType signature = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
-			return factory.build(symbol, signature);
+			final var builder = new NativeMethod.Builder(registry);
+
+			// Configure method signature
+			for(Parameter p : method.getParameters()) {
+				boolean returned = Objects.nonNull(p.getAnnotation(Returned.class));
+				builder.parameter(p.getType(), returned);
+			}
+
+			// Construct native method
+			return builder
+        			.address(lookup(method))
+        			.returns(method.getReturnType())
+        			.build();
 		}
 		catch(IllegalArgumentException e) {
 			throw new IllegalArgumentException("Error building native method: " + format(method), e);

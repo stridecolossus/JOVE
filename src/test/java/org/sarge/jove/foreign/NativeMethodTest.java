@@ -8,14 +8,14 @@ import java.lang.invoke.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeMethod.Factory;
+import org.sarge.jove.foreign.NativeMethod.Builder;
 
 class NativeMethodTest {
-	private IdentityNativeTransformer<Integer> integer;
+	private Primitive integer;
 
 	@BeforeEach
 	void before() {
-		integer = new IdentityNativeTransformer<>(JAVA_INT);
+		integer = new Primitive(JAVA_INT);
 	}
 
 	@Test
@@ -58,8 +58,7 @@ class NativeMethodTest {
 	@Test
 	void parameter() {
 		final MethodHandle handle = MethodHandles.identity(int.class);
-		final var identity = new IdentityNativeTransformer<>(JAVA_INT);
-		final NativeMethod method = new NativeMethod(handle, identity, List.of(identity));
+		final NativeMethod method = new NativeMethod(handle, integer, List.of(integer));
 		assertEquals(42, method.invoke(new Object[]{42}));
 	}
 
@@ -71,44 +70,54 @@ class NativeMethodTest {
 	}
 
 	@Nested
-	class FactoryTests {
-		private Factory factory;
-		private NativeRegistry registry;
-		private MemorySegment abs;
+	class BuilderTests {
+		private Registry registry;
+		private Builder builder;
 
 		@BeforeEach
 		void before() {
-			abs = Linker.nativeLinker().defaultLookup().find("abs").orElseThrow();
-			registry = new NativeRegistry();
-			factory = new Factory(registry);
+			registry = new Registry();
+			builder = new Builder(registry);
+		}
+
+		@Test
+		void build() {
+			final MemorySegment abs = Linker
+					.nativeLinker()
+					.defaultLookup()
+					.find("abs")
+					.orElseThrow();
+
+			registry.add(int.class, integer);
+
+			final NativeMethod method = builder
+					.address(abs)
+					.returns(int.class)
+					.parameter(int.class)
+					.build();
+
+			assertEquals(3, method.invoke(new Object[]{-3}));
 		}
 
 		@Test
 		void descriptor() {
-			assertEquals(FunctionDescriptor.ofVoid(), Factory.build(null, List.of()));
+			assertEquals(FunctionDescriptor.ofVoid(), Builder.descriptor(null, List.of()));
 		}
 
 		@Test
 		void returns() {
-			assertEquals(FunctionDescriptor.of(JAVA_INT), Factory.build(integer, List.of()));
+			assertEquals(FunctionDescriptor.of(JAVA_INT), Builder.descriptor(integer, List.of()));
 		}
 
 		@Test
 		void parameter() {
-			assertEquals(FunctionDescriptor.ofVoid(JAVA_INT), Factory.build(null, List.of(integer)));
-		}
-
-		@Test
-		void build() throws Exception {
-			registry.add(int.class, integer);
-
-			final NativeMethod wrapper = factory.build(abs, MethodType.methodType(int.class, int.class));
-			assertEquals(3, wrapper.invoke(new Object[]{-3}));
+			assertEquals(FunctionDescriptor.ofVoid(JAVA_INT), Builder.descriptor(null, List.of(integer)));
 		}
 
 		@Test
 		void unsupported() throws Exception {
-			assertThrows(IllegalArgumentException.class, () -> factory.build(abs, MethodType.methodType(int.class, int.class)));
+			assertThrows(IllegalArgumentException.class, () -> builder.returns(Object.class));
+			assertThrows(IllegalArgumentException.class, () -> builder.parameter(Object.class));
 		}
 	}
 }

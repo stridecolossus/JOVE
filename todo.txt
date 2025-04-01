@@ -1,3 +1,85 @@
+PARAMETER / STRUCTURE FIELD
+
+type                    layout          element
+----                    ------          -------
+
+primitive               atomic
+primitive[]             address         ???
+string                  address
+string[]                address         address         <--- contiguous
+IntEnum                 int
+EnumMask                int
+structure               address         layout
+structure[]             address         layout[]        <--- contiguous     
+
+RETURNED PARAMETER
+
+type                    layout          element         example
+----                    ------          -------         -------
+
+int ref                 address         int             uint32_t*
+ptr ref                 address         address         VkInstance*
+returned structure      address         struct          VkPhysicalDeviceFeatures*
+returned structure[]    address         struct[]        VkLayerProperties*                  <--- contiguous
+
+=>
+
+archetype       layout      marshal                     unmarshal
+---------       ------      -------                     ---------
+
+primitive       value       identity                    identity
+reference       address     function[ref -> address]    function[address -> ref]
+structure       struct      consumer[address]           function[address -> struct]
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// extensions & layers
+int vkEnumerateInstanceExtensionProperties(String pLayerName, NativeReference<Integer> pPropertyCount, @Returned VkExtensionProperties[] pProperties);
+int vkEnumerateInstanceLayerProperties(NativeReference<Integer> pPropertyCount, @Returned VkLayerProperties[] pProperties);
+- VkExtensionProperties -> String extensionName = byte[256]
+- ditto 2x VkLayerProperties
+
+// retrieve required extensions
+MemorySegment glfwGetRequiredInstanceExtensions(NativeReference<Integer> count);
+
+// create instance
+int vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pInstance);
+- VkInstanceCreateInfo -> String[] ppEnabledExtensionNames
+- VkInstanceCreateInfo -> VkApplicationInfo
+
+// enumerate devices
+int vkEnumeratePhysicalDevices(Instance instance, NativeReference<Integer> pPhysicalDeviceCount, @Returned NativeReference<Handle[]> devices);
+
+// device properties
+void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, NativeReference<Integer> pQueueFamilyPropertyCount, @Returned VkQueueFamilyProperties[] props);
+void vkGetPhysicalDeviceFeatures(Handle device, @Returned VkPhysicalDeviceFeatures features);
+- VkQueueFamilyProperties -> VkExtent3D [embedded] 
+
+// select device for surface
+int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, NativeReference<Handle> surface);
+int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, NativeReference<Integer> supported);
+
+// create logical device 
+int vkCreateDevice(PhysicalDevice physicalDevice, VkDeviceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> device);
+void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, NativeReference<Handle> pQueue);
+- VkDeviceCreateInfo -> VkDeviceQueueCreateInfo[] pQueueCreateInfos
+- VkDeviceQueueCreateInfo -> float[] pQueuePriorities = const float*
+
+// create swap chain
+int vkCreateSwapchainKHR(DeviceContext device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, NativeReference<Handle> pSwapchain);
+int vkGetSwapchainImagesKHR(DeviceContext device, Handle swapchain, NativeReference<Integer> pSwapchainImageCount, @Returned Handle[] pSwapchainImages);
+
+// buffer
+void vkCmdBindVertexBuffers(CommandBuffer commandBuffer, int firstBinding, int bindingCount, VertexBuffer[] pBuffers, long[] pOffsets);
+- VkBufferCreateInfo -> int[] pQueueFamilyIndices = const uint32_t*
+
+// render loop
+int vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
+
+
+
+-------------------------------
+
 demo
 - skydome
 - lighting, materials

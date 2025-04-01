@@ -1,9 +1,5 @@
 package org.sarge.jove.platform.desktop;
 
-import java.lang.foreign.MemorySegment;
-
-import org.sarge.jove.foreign.NativeReference;
-
 /**
  * GLFW API.
  * @author Sarge
@@ -63,5 +59,6 @@ interface DesktopLibrary extends DesktopLibraryWindow { // , DesktopLibraryDevic
 	 * @param count Number of extensions
 	 * @return Vulkan extensions
 	 */
-	MemorySegment glfwGetRequiredInstanceExtensions(NativeReference<Integer> count);
+//	//String
+//	void glfwGetRequiredInstanceExtensions(NativeReference<Integer> count);
 }

@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.MemorySegment;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle.HandleNativeTransformer;
+import org.sarge.jove.common.Handle.HandleTransformer;
 
 class HandleTest {
 	private Handle handle;
@@ -30,10 +30,23 @@ class HandleTest {
 		assertNotEquals(handle, new Handle(999));
 	}
 
-	@Test
-	void transformer() {
-		final var transformer = new HandleNativeTransformer();
-		assertEquals(address, transformer.marshal(handle, null));
-		assertEquals(handle, transformer.unmarshal().apply(address));
-	}
+	@Nested
+	class TransformerTests {
+		private HandleTransformer transformer;
+
+		@BeforeEach
+		void before() {
+			transformer = new HandleTransformer();
+		}
+
+		@Test
+    	void marshal() {
+    		assertEquals(address, transformer.marshal(handle, null));
+    	}
+
+    	@Test
+    	void unmarshal() {
+    		assertEquals(handle, transformer.unmarshal().apply(address));
+    	}
+    }
 }

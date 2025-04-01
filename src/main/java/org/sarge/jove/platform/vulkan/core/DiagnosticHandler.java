@@ -7,12 +7,14 @@ import static java.util.stream.Collectors.joining;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Consumer;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeStructure.StructureTransformer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>diagnostic handler</i> is a listener for Vulkan diagnostic messages.
@@ -48,9 +50,14 @@ public class DiagnosticHandler extends TransientNativeObject {
 
 		// Build native method
 		final var registry = instance.vulkan().registry();
-		final var factory = new NativeMethod.Factory(registry);
-		final Class<?>[] signature = {Instance.class, VkDebugUtilsMessengerCreateInfoEXT.class, Handle.class, NativeReference.class};
-		final NativeMethod create = factory.build(function.address(), MethodType.methodType(int.class, signature));
+		final var create = new NativeMethod.Builder(registry)
+				.address(function.address())
+				.returns(int.class)
+				.parameter(Instance.class)
+				.parameter(VkDebugUtilsMessengerCreateInfoEXT.class)
+				.parameter(Handle.class)
+				.parameter(NativeReference.class)
+				.build();
 
 		// Create handler
 		final NativeReference<Handle> ref = instance.vulkan().factory().pointer();
@@ -63,14 +70,17 @@ public class DiagnosticHandler extends TransientNativeObject {
 
 	@Override
 	protected void release() {
-		// Lookup destructor function
+		// Lookup destructor
 		final Handle function = instance.function("vkDestroyDebugUtilsMessengerEXT");
 
-		// Build native method
+		// Build destroy method
 		final var registry = instance.vulkan().registry();
-		final var factory = new NativeMethod.Factory(registry);
-		final Class<?>[] signature = {Instance.class, DiagnosticHandler.class, Handle.class};
-		final NativeMethod destroy = factory.build(function.address(), MethodType.methodType(void.class, signature));
+		final NativeMethod destroy = new NativeMethod.Builder(registry)
+				.address(function.address())
+				.parameter(Instance.class)
+				.parameter(DiagnosticHandler.class)
+				.parameter(Handle.class)
+				.build();
 
 		// Destroy handler
 		final Object[] args = {instance, this, null};
@@ -121,7 +131,10 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * Note that the callback signature is not defined in the Vulkan API.
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
-	private record Callback(Consumer<Message> consumer, Function<MemorySegment, NativeStructure> unmarshal) {
+	private record Callback(Consumer<Message> consumer, StructureTransformer transformer) {
+		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = new ReverseMapping<>(VkDebugUtilsMessageType.class);
+		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = new ReverseMapping<>(VkDebugUtilsMessageSeverity.class);
+
 		/**
 		 * Callback handler method.
 		 * @param severity			Severity
@@ -133,11 +146,11 @@ public class DiagnosticHandler extends TransientNativeObject {
 		@SuppressWarnings("unused")
 		public boolean message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
 			// Unmarshal message properties
-			final var types = new EnumMask<VkDebugUtilsMessageType>(typeMask).enumerate(VkDebugUtilsMessageType.class);
-			final var level = IntEnum.reverse(VkDebugUtilsMessageSeverity.class).map(severity);
+			final var types = new EnumMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
+			final var level = SEVERITY.map(severity);
 
 			// Unmarshal diagnostic report
-			final var data = (VkDebugUtilsMessengerCallbackData) unmarshal.apply(pCallbackData);
+			final var data = (VkDebugUtilsMessengerCallbackData) transformer.unmarshal().apply(pCallbackData);
 
 			// Handle message
 			final Message message = new Message(level, types, data);
@@ -149,7 +162,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		/**
 		 * @return Upcall stub for this callback
 		 */
-		public MemorySegment address() {
+		MemorySegment address() {
 			try {
 				// Lookup callback method and bind to handler
 				final Class<?>[] signature = {int.class, int.class, MemorySegment.class, MemorySegment.class};
@@ -212,8 +225,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * Builds this handler and attaches it to the given instance.
 		 */
 		public void attach(Instance instance) {
-			final NativeStructureTransformer transformer = transformer(instance);
-			final var callback = new Callback(consumer, transformer.unmarshal());
+			final StructureTransformer transformer = transformer(instance);
+			final var callback = new Callback(consumer, transformer);
 			final VkDebugUtilsMessengerCreateInfoEXT info = populate(callback);
 			final Handle handle = create(info, instance);
     		final var handler = new DiagnosticHandler(handle, instance);
@@ -223,10 +236,9 @@ public class DiagnosticHandler extends TransientNativeObject {
 		/**
 		 * Creates the diagnostic structure transformer.
 		 */
-		private static NativeStructureTransformer transformer(Instance instance) {
+		private static StructureTransformer transformer(Instance instance) {
 			final var registry = instance.vulkan().registry();
-			final var factory = NativeStructureTransformer.factory(registry);
-			return (NativeStructureTransformer) factory.create(VkDebugUtilsMessengerCallbackData.class);
+			return StructureTransformer.create(VkDebugUtilsMessengerCallbackData.class, registry);
 		}
 
 		/**

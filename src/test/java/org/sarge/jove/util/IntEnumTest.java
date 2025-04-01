@@ -12,7 +12,7 @@ class IntEnumTest {
 
     	@BeforeEach
     	void before() {
-    		mapping = IntEnum.reverse(MockEnum.class);
+    		mapping = new ReverseMapping<>(MockEnum.class);
     	}
 
     	@DisplayName("A native value can be reverse mapped to an enumeration constant")
@@ -23,37 +23,37 @@ class IntEnumTest {
     		assertEquals(MockEnum.C, mapping.map(4));
     	}
 
-    	@DisplayName("An integer enumeration has a default value")
-    	@Test
-    	void defaultValue() {
-    		assertEquals(MockEnum.A, mapping.defaultValue());
-    	}
-
     	@DisplayName("An invalid native value cannot be reverse mapped")
     	@Test
     	void invalid() {
     		assertThrows(IllegalArgumentException.class, () -> mapping.map(0));
     		assertThrows(IllegalArgumentException.class, () -> mapping.map(999));
     	}
+
+    	@DisplayName("An integer enumeration has a default value")
+    	@Test
+    	void defaultValue() {
+    		assertEquals(MockEnum.A, mapping.defaultValue());
+    	}
+
+    	@Test
+    	void mapOrDefault() {
+    		assertEquals(MockEnum.A, mapping.mapOrDefault(999));
+    	}
 	}
 
 	@Nested
 	class TransformerTests {
-		private IntEnumNativeTransformer transformer;
+		private IntEnumTransformer transformer;
 
 		@BeforeEach
 		void before() {
-			transformer = new IntEnumNativeTransformer(MockEnum.class);
+			transformer = new IntEnumTransformer(MockEnum.class);
 		}
 
 		@Test
 		void marshal() {
 			assertEquals(1, transformer.marshal(MockEnum.A, null));
-		}
-
-		@Test
-		void empty() {
-			assertEquals(MockEnum.A, transformer.empty());
 		}
 
 		@Test

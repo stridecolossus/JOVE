@@ -49,7 +49,7 @@ class DesktopSourceTest {
 			}
 
 			@Override
-			public BiConsumer<Window, Callback> method(DesktopLibrary lib) {
+			public BiConsumer<Window, Callback> address(DesktopLibrary lib) {
 				return method;
 			}
 		};

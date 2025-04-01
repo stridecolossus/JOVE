@@ -59,7 +59,7 @@ public class Instance extends TransientNativeObject {
 	@Override
 	protected void release() {
 		for(DiagnosticHandler handler : handlers) {
-//			handler.destroy();
+			handler.destroy();
 		}
 		handlers.clear();
 		vulkan.library().vkDestroyInstance(this, null);

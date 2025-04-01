@@ -1,27 +1,37 @@
 package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
+import java.util.function.Function;
 
 import org.sarge.jove.common.Handle;
 
 /**
- * A <i>native reference</i> models a <i>by reference</i> parameter returned as a side-effct from a native method.
+ * A <i>native reference</i> models a <i>by reference</i> parameter returned as a side-effect from a native method.
  * @param <T> Reference type
  * @author Sarge
  */
 public abstract class NativeReference<T> {
-	private final MemorySegment pointer;
+	protected final MemorySegment pointer;
 
 	protected NativeReference() {
+		this(ValueLayout.ADDRESS);
+	}
+
+	protected NativeReference(MemoryLayout layout) {
 		@SuppressWarnings("resource")
 		final var allocator = Arena.ofAuto();
-		this.pointer = allocator.allocate(ValueLayout.ADDRESS);
+		this.pointer = allocator.allocate(layout);
 	}
 
 	/**
 	 * @return Referenced value
 	 */
 	public abstract T get();
+
+	@Override
+	public String toString() {
+		return pointer.toString();
+	}
 
 	/**
 	 * Factory for commonly used native reference types.
@@ -62,10 +72,15 @@ public abstract class NativeReference<T> {
 	 * Native transformer for by-reference types.
 	 */
 	@SuppressWarnings("rawtypes")
-	public static class NativeReferenceTransformer extends AbstractNativeTransformer<NativeReference> {
+	public static class NativeReferenceTransformer implements ReferenceTransformer<NativeReference> {
 		@Override
 		public Object marshal(NativeReference ref, SegmentAllocator allocator) {
 			return ref.pointer;
+		}
+
+		@Override
+		public Function<? extends Object, NativeReference> unmarshal() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

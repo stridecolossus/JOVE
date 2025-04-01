@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
@@ -16,8 +16,8 @@ public class VkDebugUtilsMessengerCreateInfoEXT implements NativeStructure {
 	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	public Handle pNext;
 	public int flags;
-	public BitMask<VkDebugUtilsMessageSeverity> messageSeverity;
-	public BitMask<VkDebugUtilsMessageType> messageType;
+	public EnumMask<VkDebugUtilsMessageSeverity> messageSeverity;
+	public EnumMask<VkDebugUtilsMessageType> messageType;
 	public Handle pfnUserCallback;
 	public Handle pUserData;
 
