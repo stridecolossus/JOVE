@@ -46,7 +46,7 @@ class HandleTest {
 
     	@Test
     	void unmarshal() {
-    		assertEquals(handle, transformer.unmarshal().apply(address));
+    		assertEquals(handle, transformer.unmarshal(address));
     	}
     }
 }

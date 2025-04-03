@@ -10,6 +10,7 @@ import java.util.*;
  * A <i>primitive</i> transformer maps Java primitives to their corresponding native types.
  * @author Sarge
  */
+public // TODO
 record Primitive(MemoryLayout layout) implements Transformer {
 	/**
 	 * @return Primitive transformers indexed by type

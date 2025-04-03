@@ -50,7 +50,7 @@ public final class Handle {
 
 	@Override
 	public String toString() {
-		return String.format("Handle[%s]", address);
+		return String.format("Handle[%d]", address.address());
 	}
 
 	// TODO
@@ -74,7 +74,7 @@ public final class Handle {
 	/**
 	 * Native transformer for a handle.
 	 */
-	public static class HandleTransformer implements ReferenceTransformer<Handle> {
+	public static class HandleTransformer implements ReferenceTransformer<Handle, MemorySegment> {
 		@Override
 		public Object marshal(Handle arg, SegmentAllocator allocator) {
 			return arg.address;
@@ -85,8 +85,8 @@ public final class Handle {
 		}
 
 		@Override
-		public Function<MemorySegment, Handle> unmarshal() {
-			return Handle::new;
+		public Handle unmarshal(MemorySegment address) {
+			return new Handle(address);
 		}
 	}
 }

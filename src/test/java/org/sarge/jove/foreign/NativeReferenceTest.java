@@ -52,7 +52,7 @@ class NativeReferenceTest {
 
     	@Test
     	void unmarshal() {
-    		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal());
+    		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal(null));
     	}
     }
 }

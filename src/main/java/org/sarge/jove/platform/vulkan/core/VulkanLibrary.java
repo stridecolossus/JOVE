@@ -19,7 +19,7 @@ public interface VulkanLibrary extends DeviceLibrary { //, GeneralLibrary, Memor
 	int SUCCESS = VkResult.SUCCESS.value();
 }
 
-interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library { //, LogicalDevice.Library {
+interface DeviceLibrary extends Instance.Library, PhysicalDevice.Library, LogicalDevice.Library {
 	// Aggregate API
 }
 

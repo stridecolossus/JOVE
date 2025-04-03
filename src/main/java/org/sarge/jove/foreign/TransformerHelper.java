@@ -1,7 +1,8 @@
 package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
-import java.util.function.Function;
+
+import org.sarge.jove.foreign.NativeStructure.StructureTransformer;
 
 /**
  * The <i>transformer helper</i> marshals Java types to/from the native layer.
@@ -22,12 +23,22 @@ class TransformerHelper {
 	public static Object marshal(Object arg, Transformer transformer, SegmentAllocator allocator) {
 		return switch(transformer) {
 			case Primitive _ -> arg;
+
 			case ReferenceTransformer ref -> {
+				if(arg == null) {
+					yield ref.empty();
+				}
+				else {
+					yield ref.marshal(arg, allocator);
+				}
+			}
+
+			case ArrayTransformer array -> {
 				if(arg == null) {
 					yield MemorySegment.NULL;
 				}
 				else {
-					yield ref.marshal(arg, allocator);
+					yield array.marshal(arg, allocator);
 				}
 			}
 		};
@@ -39,11 +50,27 @@ class TransformerHelper {
 	 * @return Return value function
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public static Function<Object, Object> unmarshal(Transformer transformer) {
+	public static Object unmarshal(Object arg, Transformer transformer) {
 		return switch(transformer) {
-			case null							-> Function.identity();
-			case Primitive _					-> Function.identity();
-			case ReferenceTransformer def		-> def.unmarshal();
+    		case Primitive _				-> arg;
+    		case ReferenceTransformer def	-> {
+    			if(MemorySegment.NULL.equals(arg)) {
+    				yield null;
+    			}
+    			else {
+    				yield def.unmarshal(arg);
+    			}
+    		}
+//    		case ArrayTransformer array		-> array.unmarshal((MemorySegment) arg);
+    		case ArrayTransformer array		-> throw new UnsupportedOperationException();
 		};
+	}
+
+	public static void update(Object foreign, Transformer transformer, Object arg) {
+		switch(transformer) {
+    		case StructureTransformer struct	-> struct.unmarshal((MemorySegment) foreign, (NativeStructure) arg);
+    		case ArrayTransformer array			-> array.update((MemorySegment) foreign, (Object[]) arg);
+    		default 							-> throw new RuntimeException();
+		}
 	}
 }

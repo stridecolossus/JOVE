@@ -30,8 +30,9 @@ public class VkDeviceQueueCreateInfo implements NativeStructure {
 				JAVA_INT.withName("queueFamilyIndex"),
 				JAVA_INT.withName("queueCount"),
 				PADDING,
-				POINTER.withName("pQueuePriorities")
-//			    ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Integer.MAX_VALUE, ValueLayout.JAVA_FLOAT)).withName("pQueuePriorities")
+				POINTER.withName("pQueuePriorities")		// TODO <-- this is what jextract does
+				//MemoryLayout.sequenceLayout(Integer.MAX_VALUE, JAVA_FLOAT).withName("pQueuePriorities")
+			    //ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Integer.MAX_VALUE, ValueLayout.JAVA_FLOAT)).withName("pQueuePriorities")
 		);
 	}
 }

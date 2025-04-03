@@ -5,16 +5,22 @@ import static java.util.Objects.requireNonNull;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * A <i>native method</i> composes a native method and transformers for the return type and parameters.
  * @author Sarge
  */
 public class NativeMethod {
-	private final Function<Object, Object> returns;
+	/**
+	 * Descriptor for a parameter of this method.
+	 */
+	record Parameter(Transformer transformer, boolean returned) {
+	}
+	// TODO - make this hidden? => private ctor, can ONLY used builder => but hard to then set the method handle directly in tests
+
 	private final MethodHandle handle;
-	private final List<Transformer> signature;
+	private final Transformer returns;
+	private final Parameter[] signature;
 
 	/**
 	 * Constructor.
@@ -25,7 +31,7 @@ public class NativeMethod {
 	 * @throws IllegalArgumentException if {@link #returns} is missing or superfluous
 	 * @throws UnsupportedOperationException if the return type is not supported
 	 */
-	public NativeMethod(MethodHandle handle, Transformer returns, List<Transformer> signature) {
+	NativeMethod(MethodHandle handle, Transformer returns, List<Parameter> signature) {
 		final MethodType type = handle.type();
 		if(signature.size() != type.parameterCount()) {
 			throw new IllegalArgumentException("Mismatched number of transformers for method signature");
@@ -35,8 +41,8 @@ public class NativeMethod {
 		}
 
 		this.handle = requireNonNull(handle);
-		this.returns = TransformerHelper.unmarshal(returns);
-		this.signature = List.copyOf(signature);
+		this.returns = returns;
+		this.signature = signature.toArray(Parameter[]::new);
 	}
 
 	/**
@@ -48,10 +54,23 @@ public class NativeMethod {
 	 */
 	public Object invoke(Object[] args) {
 		try {
+			// Marshal arguments to FFM types
 			@SuppressWarnings("resource")
-			final Object[] transformed = marshal(args, Arena.ofAuto());
-			final Object result = handle.invokeWithArguments(transformed);
-			return returns.apply(result);
+			final Object[] foreign = marshal(args, Arena.ofAuto());
+
+			// Invoke underlying native method
+			final Object result = handle.invokeWithArguments(foreign);
+
+			// Update by-reference arguments
+			update(foreign, args);
+
+			// Unmarshal return value
+			if(returns == null) {
+				return null;
+			}
+			else {
+				return TransformerHelper.unmarshal(result, returns);
+			}
 		}
 		catch(IllegalArgumentException e) {
 			throw e;
@@ -74,10 +93,28 @@ public class NativeMethod {
 
 		final Object[] transformed = new Object[args.length];
 		for(int n = 0; n < args.length; ++n) {
-			transformed[n] = TransformerHelper.marshal(args[n], signature.get(n), arena);
+			transformed[n] = TransformerHelper.marshal(args[n], signature[n].transformer, arena);
 		}
 
 		return transformed;
+	}
+
+	/**
+	 * Unmarshals by-reference parameters
+	 * @param foreign		Off-heap memory
+	 * @param args			Method arguments
+	 */
+	private void update(Object[] foreign, Object[] args) {
+		if(args == null) {
+			return;
+		}
+
+		for(int n = 0; n < args.length; ++n) {
+			// TODO - is the null check correct?
+			if(signature[n].returned && Objects.nonNull(args[n])) {
+				TransformerHelper.update(foreign[n], signature[n].transformer, args[n]);
+			}
+		}
 	}
 
 	@Override
@@ -109,7 +146,7 @@ public class NativeMethod {
 
 		private MemorySegment address;
 		private Transformer returns;
-		private final List<Transformer> signature = new ArrayList<>();
+		private final List<Parameter> signature = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -158,9 +195,8 @@ public class NativeMethod {
 		 * @param returned		Whether this a <i>by reference</i> parameter
 		 */
 		public Builder parameter(Class<?> type, boolean returned) {
-			// TODO - returned
 			final Transformer transformer = registry.get(type);
-			signature.add(transformer);
+			signature.add(new Parameter(transformer, returned));
 			return this;
 		}
 
@@ -188,10 +224,11 @@ public class NativeMethod {
 		 * @param signature		Parameter transformers
 		 * @return Function descriptor
 		 */
-		protected static FunctionDescriptor descriptor(Transformer returns, List<Transformer> signature) {
+		protected static FunctionDescriptor descriptor(Transformer returns, List<Parameter> signature) {
 			// Map method signature to FFM layout
 			final MemoryLayout[] layouts = signature
 					.stream()
+					.map(Parameter::transformer)
 					.map(Transformer::layout)
 					.toArray(MemoryLayout[]::new);
 

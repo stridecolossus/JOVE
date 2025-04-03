@@ -150,7 +150,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final var level = SEVERITY.map(severity);
 
 			// Unmarshal diagnostic report
-			final var data = (VkDebugUtilsMessengerCallbackData) transformer.unmarshal().apply(pCallbackData);
+			final MemorySegment address = pCallbackData.reinterpret(transformer.layout().byteSize());
+			final var data = (VkDebugUtilsMessengerCallbackData) transformer.unmarshal(address);
 
 			// Handle message
 			final Message message = new Message(level, types, data);
@@ -238,7 +239,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		private static StructureTransformer transformer(Instance instance) {
 			final var registry = instance.vulkan().registry();
-			return StructureTransformer.create(VkDebugUtilsMessengerCallbackData.class, registry);
+			final var builder = new StructureTransformer.Builder(registry);
+			return builder.build(VkDebugUtilsMessengerCallbackData.class);
 		}
 
 		/**

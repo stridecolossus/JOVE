@@ -35,11 +35,6 @@ class IntEnumTest {
     	void defaultValue() {
     		assertEquals(MockEnum.A, mapping.defaultValue());
     	}
-
-    	@Test
-    	void mapOrDefault() {
-    		assertEquals(MockEnum.A, mapping.mapOrDefault(999));
-    	}
 	}
 
 	@Nested
@@ -57,8 +52,18 @@ class IntEnumTest {
 		}
 
 		@Test
+		void empty() {
+			assertEquals(1, transformer.empty());
+		}
+
+		@Test
 		void unmarshal() {
-			assertEquals(MockEnum.A, transformer.unmarshal().apply(1));
+			assertEquals(MockEnum.A, transformer.unmarshal(1));
+		}
+
+		@Test
+		void def() {
+			assertEquals(MockEnum.A, transformer.unmarshal(0));
 		}
 	}
 }

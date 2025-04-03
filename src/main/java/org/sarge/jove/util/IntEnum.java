@@ -65,21 +65,12 @@ public interface IntEnum {
 			}
 			return constant;
 		}
-
-		/**
-		 * Maps the given native value to the corresponding enumeration constant or returns the {@link #defaultValue()} if not present.
-		 * @param value Native value
-		 * @return Constant
-		 */
-		public E mapOrDefault(int value) {
-			return map.getOrDefault(value, def);
-		}
 	}
 
 	/**
 	 * Native transformer for integer enumerations.
 	 */
-	class IntEnumTransformer implements ReferenceTransformer<IntEnum> {
+	class IntEnumTransformer implements ReferenceTransformer<IntEnum, Integer> {
 		private final ReverseMapping<?> mapping;
 
 		/**
@@ -97,18 +88,22 @@ public interface IntEnum {
 
 		@Override
 		public Integer marshal(IntEnum e, SegmentAllocator allocator) {
-			if(e == null) {
-				return mapping.defaultValue().value();
-			}
-			else {
-				return e.value();
-			}
+			return e.value();
 		}
 
 		@Override
-		public Function<Integer, IntEnum> unmarshal() {
-			// TODO - mapOrDefault() would only ever be needed here?
-			return mapping::mapOrDefault;
+		public Integer empty() {
+			return mapping.defaultValue().value();
+		}
+
+		@Override
+		public IntEnum unmarshal(Integer value) {
+			if(value == 0) {
+				return mapping.defaultValue();
+			}
+			else {
+				return mapping.map(value);
+			}
 		}
 	}
 }

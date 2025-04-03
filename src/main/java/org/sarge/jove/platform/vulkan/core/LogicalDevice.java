@@ -152,7 +152,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 
 			// Build queue descriptor
 			final var info = new VkDeviceQueueCreateInfo();
-			info.flags = EnumMask.of();
+			info.flags = new EnumMask<>();
 			info.queueCount = priorities.size();
 			info.queueFamilyIndex = family.index();
 			info.pQueuePriorities = array;

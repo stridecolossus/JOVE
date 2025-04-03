@@ -1,8 +1,7 @@
 package org.sarge.jove.common;
 
-import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.*;
 import java.util.Collection;
-import java.util.function.Function;
 
 import org.sarge.jove.foreign.ReferenceTransformer;
 
@@ -32,14 +31,14 @@ public interface NativeObject {
 	/**
 	 * Transformer for native objects.
 	 */
-	public static class NativeObjectTransformer implements ReferenceTransformer<NativeObject> {
+	public static class NativeObjectTransformer implements ReferenceTransformer<NativeObject, MemorySegment> {
 		@Override
 		public Object marshal(NativeObject arg, SegmentAllocator allocator) {
 			return arg.handle().address();
 		}
 
 		@Override
-		public Function<? extends Object, NativeObject> unmarshal() {
+		public NativeObject unmarshal(MemorySegment address) {
 			throw new UnsupportedOperationException();
 		}
 	}

@@ -8,7 +8,7 @@ import java.lang.invoke.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeMethod.Builder;
+import org.sarge.jove.foreign.NativeMethod.*;
 
 class NativeMethodTest {
 	private Primitive integer;
@@ -23,17 +23,6 @@ class NativeMethodTest {
 		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class));
 		final NativeMethod method = new NativeMethod(handle, null, List.of());
 		assertEquals(null, method.invoke(null));
-	}
-
-// TODO
-	@Disabled
-	@Test
-	void empty() {
-		final var transformer = new StringNativeTransformer();
-		final MethodHandle handle = MethodHandles.identity(String.class);
-		final NativeMethod method = new NativeMethod(handle, transformer, List.of(transformer));
-		assertEquals(MemorySegment.NULL, method.invoke(new Object[]{null}));
-		assertEquals("string", method.invoke(new Object[]{"string"}));
 	}
 
 	@Test
@@ -58,7 +47,7 @@ class NativeMethodTest {
 	@Test
 	void parameter() {
 		final MethodHandle handle = MethodHandles.identity(int.class);
-		final NativeMethod method = new NativeMethod(handle, integer, List.of(integer));
+		final NativeMethod method = new NativeMethod(handle, integer, List.of(new Parameter(integer, false)));
 		assertEquals(42, method.invoke(new Object[]{42}));
 	}
 
@@ -66,7 +55,7 @@ class NativeMethodTest {
 	void count() {
 		final MethodHandle handle = MethodHandles.identity(int.class);
 		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of()));
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of(integer, integer)));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of(new Parameter(integer, false), new Parameter(integer, false))));
 	}
 
 	@Nested
@@ -111,7 +100,7 @@ class NativeMethodTest {
 
 		@Test
 		void parameter() {
-			assertEquals(FunctionDescriptor.ofVoid(JAVA_INT), Builder.descriptor(null, List.of(integer)));
+			assertEquals(FunctionDescriptor.ofVoid(JAVA_INT), Builder.descriptor(null, List.of(new Parameter(integer, false))));
 		}
 
 		@Test

@@ -74,12 +74,12 @@ class EnumMaskTest {
 
 		@Test
 		void empty() {
-			assertEquals(0, transformer.marshal(null, null));
+			assertEquals(0, transformer.empty());
 		}
 
 		@Test
-		void returns() {
-			assertEquals(new EnumMask<>(1), transformer.unmarshal().apply(1));
+		void unmarshal() {
+			assertEquals(new EnumMask<>(1), transformer.unmarshal(1));
 		}
 	}
 }

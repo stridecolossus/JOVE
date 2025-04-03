@@ -58,8 +58,8 @@ public class Registry {
 		}
 		else
 		if(NativeStructure.class.isAssignableFrom(type)) {
-			final var actual = (Class<? extends NativeStructure>) type;
-			return StructureTransformer.create(actual, this);
+			final var builder = new StructureTransformer.Builder(this);
+			return builder.build((Class<? extends NativeStructure>) type);
 		}
 		else {
 			return find(type);
@@ -107,7 +107,7 @@ public class Registry {
 	 * Registers supporting framework types.
 	 */
 	private void init() {
-		add(String.class, new StringNativeTransformer());
+		add(String.class, new StringTransformer());
 		add(Handle.class, new HandleTransformer());
 		add(NativeObject.class, new NativeObjectTransformer());
 		add(EnumMask.class, new EnumMaskTransformer());

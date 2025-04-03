@@ -147,9 +147,9 @@ public class PhysicalDevice implements NativeObject {
 	public static Stream<PhysicalDevice> devices(Instance instance) {
 		// Enumerate physical devices
 		final Vulkan vulkan = instance.vulkan();
-		final VulkanFunction<Handle[]> enumerate = (count, devices) -> vulkan.library().vkEnumeratePhysicalDevices(instance, count, devices);
+		final VulkanLibrary lib = vulkan.library();
+		final VulkanFunction<Handle[]> enumerate = (count, devices) -> lib.vkEnumeratePhysicalDevices(instance, count, devices);
 		final Handle[] handles = vulkan.invoke(enumerate, Handle[]::new);
-
 
 		// Helper
 		final var builder = new Object() {
@@ -166,7 +166,7 @@ public class PhysicalDevice implements NativeObject {
 			 * @return Queue families for the given device
 			 */
 			private List<Family> families(Handle handle) {
-				final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> vulkan.library().vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
+				final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
 				final VkQueueFamilyProperties[] properties = vulkan.invoke(function, VkQueueFamilyProperties[]::new);
 				return IntStream
 						.range(0, properties.length)
@@ -179,8 +179,7 @@ public class PhysicalDevice implements NativeObject {
 			 */
 			private SupportedFeatures features(Handle handle) {
 				final var features = new VkPhysicalDeviceFeatures();
-				// TODO
-				//lib.vkGetPhysicalDeviceFeatures(handle, features);
+				lib.vkGetPhysicalDeviceFeatures(handle, features);
 				return new SupportedFeatures(features);
 			}
 		};
@@ -345,7 +344,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param device		Device handle
 		 * @param features		Returned features
 		 */
-//		void vkGetPhysicalDeviceFeatures(Handle device, @Returned VkPhysicalDeviceFeatures features);
+		void vkGetPhysicalDeviceFeatures(Handle device, @Returned VkPhysicalDeviceFeatures features);
 
 		/**
 		 * Enumerates the queue families of a device.

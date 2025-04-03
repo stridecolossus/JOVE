@@ -7,13 +7,13 @@ import java.lang.foreign.*;
 import org.junit.jupiter.api.*;
 
 class StringNativeTransformerTest {
-	private StringNativeTransformer transformer;
+	private StringTransformer transformer;
 	private SegmentAllocator allocator;
 
 	@BeforeEach
 	void before() {
 		allocator = Arena.ofAuto();
-		transformer = new StringNativeTransformer();
+		transformer = new StringTransformer();
 	}
 
 	@Test
@@ -31,7 +31,7 @@ class StringNativeTransformerTest {
 	@Test
 	void unmarshal() {
 		final String string = "whatever";
-		final MemorySegment memory = allocator.allocateFrom(string);
-		assertEquals(string, transformer.unmarshal().apply(memory));
+		final MemorySegment address = allocator.allocateFrom(string);
+		assertEquals(string, transformer.unmarshal(address));
 	}
 }

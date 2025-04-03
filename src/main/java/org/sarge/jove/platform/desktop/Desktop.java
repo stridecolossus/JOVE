@@ -35,8 +35,12 @@ public final class Desktop implements TransientObject {
 //			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
 //		};
 
+		// TODO
+		final var registry = Registry.create();
+		registry.add(MemorySegment.class, new Primitive(ValueLayout.ADDRESS));
+
 		// Load native library
-		final var factory = new NativeLibraryBuilder("C:/GLFW/lib-mingw-w64/glfw3.dll", Registry.create()); // TODO - name
+		final var factory = new NativeLibraryBuilder("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
 		final DesktopLibrary lib = factory.build(DesktopLibrary.class);
 		// TODO - JoystickManager.init(lib);
 
@@ -110,17 +114,13 @@ public final class Desktop implements TransientObject {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-//		final NativeReference<Integer> count = factory.integer();
-//		lib.glfwGetRequiredInstanceExtensions(count);
-//		System.out.println("extensions.count="+count.get());
-//		return new String[0];
-//		//final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
-//		//return array(address, count.get(), String[]::new, StringNativeTransformer::unmarshal);
-//
-//
-//		//final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
-//		//return array(address, count.get(), String[]::new, StringNativeTransformer::unmarshal);
-		return new String[0];
+		final NativeReference<Integer> count = factory.integer();
+		final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
+
+		System.out.println(address);
+
+		return array(address, count.get(), String[]::new, segment -> segment.reinterpret(Integer.MAX_VALUE).getString(0L));
+// TODO - StringTransformer::unmarshal);
 	}
 
 	// TODO

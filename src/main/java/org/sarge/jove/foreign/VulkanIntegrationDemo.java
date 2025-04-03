@@ -3,10 +3,11 @@ package org.sarge.jove.foreign;
 import java.util.Arrays;
 import java.util.logging.LogManager;
 
-import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 public class VulkanIntegrationDemo {
@@ -51,19 +52,18 @@ public class VulkanIntegrationDemo {
 		System.out.println("Attaching diagnostic handler...");
 		new DiagnosticHandler.Builder().attach(instance);
 
-		/*
-
 		System.out.println("Enumerating devices...");
 		final PhysicalDevice physical = PhysicalDevice.devices(instance).toList().getFirst();
-		for(var family : physical.families()) {
-			System.out.println("  " + family);
-		}
 
-		/*
+		// TODO
+		for(var family : physical.families()) {
+			System.out.println(family);
+		}
 
 		System.out.println("Retrieving surface...");
 		final Handle surface = window.surface(instance.handle());
 		System.out.println("presentation=" + physical.isPresentationSupported(surface, physical.families().getFirst()));
+		// TODO - do we need to destroy the surface?! [yes]
 
 //		System.out.println("Retrieving device memory properties...");
 //		final var memory = physical.memory();
@@ -75,12 +75,13 @@ public class VulkanIntegrationDemo {
 				.queue(new RequiredQueue(physical.families().getFirst()))
 				.build();
 
-		 */
+		System.out.println("queues=" + dev.queues().values());
 
 		System.out.println("Cleanup...");
-		//dev.destroy();
-//		instance.destroy();
-//		window.destroy();
+		// TODO - surface
+		dev.destroy();
+		instance.destroy();
+		window.destroy();
 		desktop.destroy();
 
 		System.out.println("Done...");

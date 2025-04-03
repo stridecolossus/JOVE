@@ -232,9 +232,9 @@ public final class Window extends TransientNativeObject {
 		final NativeReference<Handle> ref = desktop.factory().pointer();
 		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
 		if(result != 0) {
-////			//System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
-//			final int code = lib.glfwGetError(null);
-//			System.out.println(code);
+System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
+			final int code = lib.glfwGetError(null); // TODO - by-reference error string, managed by GLFW (!)
+			System.out.println(code);
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
 		return ref.get();

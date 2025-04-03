@@ -1,7 +1,6 @@
 package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
-import java.util.function.Function;
 
 import org.sarge.jove.common.Handle;
 
@@ -72,14 +71,14 @@ public abstract class NativeReference<T> {
 	 * Native transformer for by-reference types.
 	 */
 	@SuppressWarnings("rawtypes")
-	public static class NativeReferenceTransformer implements ReferenceTransformer<NativeReference> {
+	public static class NativeReferenceTransformer implements ReferenceTransformer<NativeReference, MemorySegment> {
 		@Override
 		public Object marshal(NativeReference ref, SegmentAllocator allocator) {
 			return ref.pointer;
 		}
 
 		@Override
-		public Function<? extends Object, NativeReference> unmarshal() {
+		public NativeReference unmarshal(MemorySegment address) {
 			throw new UnsupportedOperationException();
 		}
 	}
