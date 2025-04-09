@@ -3,19 +3,20 @@ package org.sarge.jove.foreign;
 import java.lang.foreign.*;
 
 /**
- * A <i>reference transformer</i> marshals a Java or domain type to/from the native layer.
- * @param <T> Java or domain type
+ * An <i>address transformer</i> marshals a reference type to/from the native layer.
+ * @param <T> Reference type
+ * @param <R> Native type
  * @author Sarge
  */
-public non-sealed interface ReferenceTransformer<T extends Object, R> extends Transformer {
+public non-sealed interface AddressTransformer<T extends Object, R> extends Transformer {
     @Override
     default MemoryLayout layout() {
     	return ValueLayout.ADDRESS;
     }
 
     /**
-	 * Marshals a Java argument to its native representation.
-	 * @param arg			Java argument
+	 * Marshals a reference argument to its native representation.
+	 * @param arg			Reference argument
 	 * @param allocator		Off-heap allocator
 	 * @return Native argument
      */
@@ -30,8 +31,9 @@ public non-sealed interface ReferenceTransformer<T extends Object, R> extends Tr
 
     /**
 	 * Unmarshals a native value.
-	 * @return Java or domain value
+	 * @param value Native value
+	 * @return Reference type
 	 * @throws UnsupportedOperationException if this type cannot logically be returned from a native method
      */
-    T unmarshal(R address);
+    Object unmarshal(R value);
 }

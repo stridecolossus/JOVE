@@ -10,13 +10,12 @@ import org.sarge.jove.util.MathsUtility;
 /**
  * A <i>plane</i> defines a flat surface in 3D space.
  * <p>
- * Mathematically the <i>general form</i> of a plane is:
- * <pre>ax + by + cz + d = 0</pre>
- * where <code>n = (a, b, c)</code> is the plane normal and <i>d</i> is the distance of the plane from the origin.
+ * Mathematically the <i>general form</i> of a plane is: {@code ax + by + cz + d = 0}
+ * where {@code n = (a, b, c)} is the plane normal and {@code d} is the distance of the plane from the origin.
  * <p>
  * Note that the distance increases in the <i>opposite</i> direction to the normal vector.
  * <br>
- * For example <code>new Plane(Axis.Y, 1)</code> creates the plane in X-Z at Y = <b>minus</b> one.
+ * For example {@code new Plane(Axis.Y, 1)} creates the plane in X-Z at Y = <b>minus</b> one.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge

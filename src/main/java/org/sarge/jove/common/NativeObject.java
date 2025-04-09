@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.lang.foreign.*;
 import java.util.Collection;
 
-import org.sarge.jove.foreign.ReferenceTransformer;
+import org.sarge.jove.foreign.AddressTransformer;
 
 /**
  * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
@@ -31,7 +31,7 @@ public interface NativeObject {
 	/**
 	 * Transformer for native objects.
 	 */
-	public static class NativeObjectTransformer implements ReferenceTransformer<NativeObject, MemorySegment> {
+	public static class NativeObjectTransformer implements AddressTransformer<NativeObject, MemorySegment> {
 		@Override
 		public Object marshal(NativeObject arg, SegmentAllocator allocator) {
 			return arg.handle().address();

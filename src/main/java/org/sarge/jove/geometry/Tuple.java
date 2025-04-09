@@ -69,6 +69,7 @@ class Tuple implements Bufferable {
 		throw new UnsupportedOperationException();
 	}
 
+	// TODO - static?
 	protected final boolean isEqual(Tuple that) {
 		return
 				MathsUtility.isApproxEqual(this.x, that.x) &&

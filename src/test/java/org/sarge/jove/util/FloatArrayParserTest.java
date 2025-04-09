@@ -6,12 +6,12 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.model.Coordinate;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
-class FloatArrayConverterTest {
-	private FloatArrayConverter<Coordinate> converter;
+class FloatArrayParserTest {
+	private FloatArrayParser<Coordinate> converter;
 
 	@BeforeEach
 	void before() {
-		converter = new FloatArrayConverter<>(2, Coordinate::of);
+		converter = new FloatArrayParser<>(2, Coordinate::of);
 	}
 
 	@Test

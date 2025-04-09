@@ -97,7 +97,7 @@ public class Vulkan {
 	 * This method is equivalent to the following:
 	 * <pre>
 	 * // Determine number of results
-	 * var count = new IntegerReference();
+	 * NativeReference<Integer> count = ...
 	 * lib.someFunction(count, null);
 	 *
 	 * // Allocate container
@@ -108,21 +108,21 @@ public class Vulkan {
 	 * </pre>
 	 * @param <T> Data type
 	 * @param function		Vulkan function
-	 * @param create		Creates the by-reference container
+	 * @param supplier		Creates a container of the required size
 	 * @return Function result
 	 */
-	public <T> T invoke(VulkanFunction<T> function, IntFunction<T> create) {
+	public <T> T invoke(VulkanFunction<T> function, IntFunction<T> supplier) {
 		// Determine the result size
-		final var count = factory.integer();
-		function.enumerate(count, null);
+		final NativeReference<Integer> count = factory.integer();
+		function.get(count, null);
 
 		// Instantiate the container
 		final int size = count.get();
-		final T data = create.apply(size);
+		final T data = supplier.apply(size);
 
 		// Invoke again to populate the container
 		if(size > 0) {
-			function.enumerate(count, data);
+			function.get(count, data);
 		}
 
 		return data;

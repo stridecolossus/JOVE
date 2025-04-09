@@ -3,8 +3,6 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
-import java.lang.foreign.*;
-import java.util.function.*;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.foreign.*;
@@ -37,7 +35,8 @@ public final class Desktop implements TransientObject {
 
 		// TODO
 		final var registry = Registry.create();
-		registry.add(MemorySegment.class, new Primitive(ValueLayout.ADDRESS));
+		//registry.add(DeviceListener.class, null);
+		//registry.add(MemorySegment.class, new IdentityTransformer(ValueLayout.ADDRESS));
 
 		// Load native library
 		final var factory = new NativeLibraryBuilder("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
@@ -115,30 +114,8 @@ public final class Desktop implements TransientObject {
 	 */
 	public String[] extensions() {
 		final NativeReference<Integer> count = factory.integer();
-		final MemorySegment address = lib.glfwGetRequiredInstanceExtensions(count);
-
-		System.out.println(address);
-
-		return array(address, count.get(), String[]::new, segment -> segment.reinterpret(Integer.MAX_VALUE).getString(0L));
-// TODO - StringTransformer::unmarshal);
-	}
-
-	// TODO
-	static <T> T[] array(MemorySegment address, int length, IntFunction<T[]> factory, Function<MemorySegment, T> mapper) {
-		// Allocate array
-		final T[] array = factory.apply(length);
-
-		// Resize address to array
-		// TODO - this only works for array of address, e.g. wouldn't work for structures
-		final MemorySegment segment = address.reinterpret(ValueLayout.ADDRESS.byteSize() * length);
-
-		// Extract and transform array elements
-		for(int n = 0; n < length; ++n) {
-			final MemorySegment element = segment.getAtIndex(ValueLayout.ADDRESS, n);
-			array[n] = mapper.apply(element);
-		}
-
-		return array;
+		final ReturnedArray<String> array = lib.glfwGetRequiredInstanceExtensions(count);
+		return array.get(count.get(), String.class);
 	}
 
 //	/**

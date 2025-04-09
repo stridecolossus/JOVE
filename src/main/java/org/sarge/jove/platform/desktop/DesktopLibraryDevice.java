@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.control.Event.DeviceListener;
 
 /**
  * GLFW device API.
@@ -23,7 +24,8 @@ interface DesktopLibraryDevice {
 	/**
 	 * Listener for key events.
 	 */
-	interface KeyListener { // extends Callback {
+	@FunctionalInterface
+	interface KeyListener extends DeviceListener {
 		/**
 		 * Notifies a key event.
 		 * @param window			Window
@@ -45,7 +47,8 @@ interface DesktopLibraryDevice {
 	/**
 	 * Listener for mouse pointer and scroll wheel events.
 	 */
-	interface MouseListener { // extends Callback {
+	@FunctionalInterface
+	interface MouseListener extends DeviceListener {
 		/**
 		 * Notifies a mouse event.
 		 * @param window	Window
@@ -60,19 +63,25 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse movement listener
 	 */
-//	void glfwSetCursorPosCallback(Window window, MouseListener listener);
+	void glfwSetCursorPosCallback(Window window, MouseListener listener);
 
 	/**
 	 * Registers a mouse scroll listener.
 	 * @param window		Window
 	 * @param listener		Mouse scroll listener
 	 */
-//	void glfwSetScrollCallback(Window window, MouseListener listener);
+	void glfwSetScrollCallback(Window window, MouseListener listener);
+	// TODO - make this separate interface?
+	// TODO - combine all into ONE interface? simpler?
+	// factor out from here? so this just has the API
+	// logical place then to put any code to create/destroy the listeners?
+	// can then get rid of pointless DesktopSource thing?
 
 	/**
 	 * Listener for mouse button events.
 	 */
-	interface MouseButtonListener { // extends Callback {
+	@FunctionalInterface
+	interface MouseButtonListener extends DeviceListener {
 		/**
 		 * Notifies a mouse button event.
 		 * @param window	window
@@ -88,5 +97,5 @@ interface DesktopLibraryDevice {
 	 * @param window		Window
 	 * @param listener		Mouse button listener
 	 */
-//	void glfwSetMouseButtonCallback(Window window, MouseButtonListener listener);
+	void glfwSetMouseButtonCallback(Window window, MouseButtonListener listener);
 }

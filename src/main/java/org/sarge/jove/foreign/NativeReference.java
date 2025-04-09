@@ -1,6 +1,10 @@
 package org.sarge.jove.foreign;
 
+import static java.util.Objects.requireNonNull;
+
 import java.lang.foreign.*;
+import java.lang.invoke.VarHandle;
+import java.util.Objects;
 
 import org.sarge.jove.common.Handle;
 
@@ -10,75 +14,110 @@ import org.sarge.jove.common.Handle;
  * @author Sarge
  */
 public abstract class NativeReference<T> {
-	protected final MemorySegment pointer;
+	private T value;
+	private MemorySegment pointer;
 
-	protected NativeReference() {
-		this(ValueLayout.ADDRESS);
-	}
+	/**
+	 * Allocates the memory address of this reference.
+	 * @param allocator Allocator
+	 * @return Address
+	 */
+	private MemorySegment allocate(SegmentAllocator allocator) {
+		if(pointer == null) {
+			pointer = allocator.allocate(ValueLayout.ADDRESS);
+		}
 
-	protected NativeReference(MemoryLayout layout) {
-		@SuppressWarnings("resource")
-		final var allocator = Arena.ofAuto();
-		this.pointer = allocator.allocate(layout);
+		return pointer;
 	}
 
 	/**
 	 * @return Referenced value
 	 */
-	public abstract T get();
+	public T get() {
+		if(Objects.nonNull(pointer)) {
+			value = update(pointer);
+		}
+
+		return value;
+	}
+
+	/**
+	 * Updates the value after invocation.
+	 * @param address Memory address of this reference
+	 * @return Value
+	 */
+	protected abstract T update(MemorySegment address);
+
+	/**
+	 * Sets the value of this reference.
+	 * @param value New value
+	 */
+	public void set(T value) {
+		this.value = requireNonNull(value);
+	}
 
 	@Override
 	public String toString() {
-		return pointer.toString();
+		return String.format("NativeReference[ptr=%s value=%s]", pointer, value);
 	}
+
+	/**
+	 * Creates a native reference for a primitive with the given layout.
+	 * @param <P> Primitive type
+	 * @param layout Primitive layout
+	 * @return Primitive native reference
+	 */
+	public static <P> NativeReference<P> reference(ValueLayout layout) {
+		return new NativeReference<>() {
+			private final VarHandle handle = layout.varHandle();
+
+			@Override
+			protected P update(MemorySegment address) {
+				return (P) handle.get(address, 0L);
+			}
+		};
+	}
+	// TODO - actually restrict to primitives? layout.carrier().isPrimitive()
 
 	/**
 	 * Factory for commonly used native reference types.
 	 */
 	public static class Factory {
 		/**
-		 * @return New integer-by-reference
+		 * Creates a by-reference integer.
+		 * @return Integer by-reference
 		 */
 		public NativeReference<Integer> integer() {
-			return new NativeReference<>() {
-				@Override
-				public Integer get() {
-					return super.pointer.get(ValueLayout.JAVA_INT, 0L);
-				}
-			};
+			final NativeReference<Integer> ref = reference(ValueLayout.JAVA_INT);
+			ref.set(0);
+			return ref;
 		}
 
 		/**
-		 * @return New pointer-by-reference
+		 * Creates a by-reference pointer.
+		 * @return By-reference handle/pointer
 		 */
 		public NativeReference<Handle> pointer() {
-			return new NativeReference<>() {
-				@Override
-				public Handle get() {
-					final MemorySegment address = super.pointer.get(ValueLayout.ADDRESS, 0L);
-					if(MemorySegment.NULL.equals(address)) {
-						return null;
-					}
-					else {
-						return new Handle(address);
-					}
-				}
-			};
+			return Handle.reference();
 		}
 	}
 
 	/**
 	 * Native transformer for by-reference types.
 	 */
-	@SuppressWarnings("rawtypes")
-	public static class NativeReferenceTransformer implements ReferenceTransformer<NativeReference, MemorySegment> {
+	public static class NativeReferenceTransformer implements AddressTransformer<NativeReference<?>, MemorySegment> {
 		@Override
-		public Object marshal(NativeReference ref, SegmentAllocator allocator) {
-			return ref.pointer;
+		public MemoryLayout layout() {
+			return ValueLayout.ADDRESS;
 		}
 
 		@Override
-		public NativeReference unmarshal(MemorySegment address) {
+		public MemorySegment marshal(NativeReference<?> ref, SegmentAllocator allocator) {
+			return ref.allocate(allocator);
+		}
+
+		@Override
+		public Object unmarshal(MemorySegment value) {
 			throw new UnsupportedOperationException();
 		}
 	}

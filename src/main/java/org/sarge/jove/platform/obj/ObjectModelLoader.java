@@ -12,7 +12,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.io.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.Mesh;
-import org.sarge.jove.util.FloatArrayConverter;
+import org.sarge.jove.util.FloatArrayParser;
 
 /**
  * Loader for an OBJ model.
@@ -35,9 +35,9 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), ObjectModel::positions));
-		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), ObjectModel::coordinates));
-		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Normal.SIZE, ObjectModelLoader::normal), ObjectModel::normals));
+		add("v",  new VertexComponentParser<>(new FloatArrayParser<>(Point.SIZE, Point::new), ObjectModel::positions));
+		add("vt", new VertexComponentParser<>(new FloatArrayParser<>(2, ObjectModelLoader::flip), ObjectModel::coordinates));
+		add("vn", new VertexComponentParser<>(new FloatArrayParser<>(Normal.SIZE, ObjectModelLoader::normal), ObjectModel::normals));
 		add("f", new FaceParser());
 		add("o", Parser.GROUP);
 		add("g", Parser.GROUP);

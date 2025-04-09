@@ -85,8 +85,7 @@ public class NativeLibraryBuilder {
 
 		LOG.info("Building API: " + api);
 		final Map<Method, NativeMethod> methods = methods(api);
-		final InvocationHandler handler = handler(methods, check);
-		return proxy(api, handler);
+		return proxy(api, methods);
 	}
 
 	/**
@@ -116,7 +115,7 @@ public class NativeLibraryBuilder {
 
 			// Configure method signature
 			for(Parameter p : method.getParameters()) {
-				boolean returned = Objects.nonNull(p.getAnnotation(Returned.class));
+				final boolean returned = Objects.nonNull(p.getAnnotation(Returned.class));
 				builder.parameter(p.getType(), returned);
 			}
 
@@ -157,13 +156,15 @@ public class NativeLibraryBuilder {
 	}
 
 	/**
-	 * Creates an invocation handler that delegates method calls to the corresponding native method.
-	 * @param methods 		Native methods
-	 * @param check			Return value handler
-	 * @return Native method handler
+	 * Creates a proxy implementation of the given API.
+	 * @param <T> API type
+	 * @param api			API definition
+	 * @param methods		Native methods
+	 * @return Proxy implementation
 	 */
-	private static InvocationHandler handler(Map<Method, NativeMethod> methods, Consumer<Object> check) {
-		return new InvocationHandler() {
+	@SuppressWarnings("unchecked")
+	private <T> T proxy(Class<T> api, Map<Method, NativeMethod> methods) {
+		final var handler = new InvocationHandler() {
     		@Override
     		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     			final NativeMethod delegate = methods.get(method);
@@ -172,17 +173,7 @@ public class NativeLibraryBuilder {
     			return result;
     		}
     	};
-	}
 
-	/**
-	 * Creates a proxy implementation of the given API.
-	 * @param <T>			API type
-	 * @param api			API definition
-	 * @param handler		Native method handler
-	 * @return Proxy
-	 */
-	@SuppressWarnings("unchecked")
-	private <T> T proxy(Class<?> api, InvocationHandler handler) {
-		return (T) Proxy.newProxyInstance(loader, new Class<?>[]{api}, handler);
+    	return (T) Proxy.newProxyInstance(loader, new Class<?>[]{api}, handler);
 	}
 }

@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 import java.util.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.ReferenceTransformer;
+import org.sarge.jove.foreign.AddressTransformer;
 
 /**
  * An <i>integer enumeration</i> represents a native {@code typedef enum} declaration.
@@ -70,7 +70,7 @@ public interface IntEnum {
 	/**
 	 * Native transformer for integer enumerations.
 	 */
-	class IntEnumTransformer implements ReferenceTransformer<IntEnum, Integer> {
+	class IntEnumTransformer implements AddressTransformer<IntEnum, Integer> {
 		private final ReverseMapping<?> mapping;
 
 		/**

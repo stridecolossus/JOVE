@@ -11,11 +11,11 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.foreign.NativeMethod.*;
 
 class NativeMethodTest {
-	private Primitive integer;
+	private IdentityTransformer integer;
 
 	@BeforeEach
 	void before() {
-		integer = new Primitive(JAVA_INT);
+		integer = new IdentityTransformer(JAVA_INT);
 	}
 
 	@Test

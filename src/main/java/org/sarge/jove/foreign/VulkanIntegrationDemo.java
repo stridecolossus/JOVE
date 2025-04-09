@@ -13,6 +13,7 @@ import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 public class VulkanIntegrationDemo {
 
 	void main() throws Exception {
+
 		System.out.println("Initialising logging...");
 		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
 			LogManager.getLogManager().readConfiguration(config);
@@ -45,6 +46,8 @@ public class VulkanIntegrationDemo {
 		final Instance instance = new Instance.Builder()
 				.name("VulkanIntegrationDemo")
 				.extension(DiagnosticHandler.EXTENSION)
+//				.extension("VK_KHR_surface")
+//				.extension("VK_KHR_win32_surface")
 				.extensions(extensions)
 				.layer(ValidationLayer.STANDARD_VALIDATION)
 				.build(vulkan);
@@ -53,12 +56,14 @@ public class VulkanIntegrationDemo {
 		new DiagnosticHandler.Builder().attach(instance);
 
 		System.out.println("Enumerating devices...");
-		final PhysicalDevice physical = PhysicalDevice.devices(instance).toList().getFirst();
+		final PhysicalDevice physical = PhysicalDevice.enumerate(instance).toList().getFirst();
 
 		// TODO
+		System.out.println("families...");
 		for(var family : physical.families()) {
 			System.out.println(family);
 		}
+		//System.out.println("features=" + physical.features());
 
 		System.out.println("Retrieving surface...");
 		final Handle surface = window.surface(instance.handle());

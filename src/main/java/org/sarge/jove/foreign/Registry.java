@@ -10,6 +10,7 @@ import org.sarge.jove.common.Handle.HandleTransformer;
 import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
 import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 import org.sarge.jove.foreign.NativeStructure.StructureTransformer;
+import org.sarge.jove.foreign.ReturnedArray.ReturnedArrayTransformer;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.EnumMask.EnumMaskTransformer;
 import org.sarge.jove.util.IntEnum.IntEnumTransformer;
@@ -22,16 +23,20 @@ public class Registry {
 	private static final Logger LOG = Logger.getLogger(Registry.class.getName());
 
 	private final Map<Class<?>, Transformer> registry = new HashMap<>();
+	private final StructureTransformer.Builder builder = new StructureTransformer.Builder(this);
 
 	/**
 	 * Looks up the native transformer for the given Java type.
 	 * @param type Java type
 	 * @return Native transformer
+	 * @throws IllegalArgumentException for an unsupported type
 	 */
 	public Transformer get(Class<?> type) {
 		final Transformer transformer = registry.get(type);
 		if(transformer == null) {
-			return create(type);
+			final Transformer created = create(type);
+			add(type, created);
+			return created;
 		}
 		else {
 			return transformer;
@@ -48,18 +53,20 @@ public class Registry {
 	private Transformer create(Class<?> type) {
 		// TODO - some sort of factory/matcher approach
 		if(type.isArray()) {
-			final Class<?> component = type.getComponentType();
-			return new ArrayTransformer(get(component));
+			final var component = get(type.getComponentType());
+			return new ArrayTransformer(component);
 		}
 		else
 		if(IntEnum.class.isAssignableFrom(type)) {
-			final var actual = (Class<? extends IntEnum>) type;
-			return new IntEnumTransformer(actual);
+			return new IntEnumTransformer((Class<? extends IntEnum>) type);
 		}
 		else
 		if(NativeStructure.class.isAssignableFrom(type)) {
-			final var builder = new StructureTransformer.Builder(this);
 			return builder.build((Class<? extends NativeStructure>) type);
+		}
+		else
+		if(ReturnedArray.class.isAssignableFrom(type)) {
+			return new ReturnedArrayTransformer(this);
 		}
 		else {
 			return find(type);
@@ -78,7 +85,8 @@ public class Registry {
 				.filter(e -> e.isAssignableFrom(type))
 				.findAny()
 				.map(registry::get)
-				.orElseThrow(() -> new IllegalArgumentException("Unsupported reference type: " + type));	}
+				.orElseThrow(() -> new IllegalArgumentException("Unsupported reference type: " + type));
+	}
 
 	/**
 	 * Registers a native transformer for the given type.
@@ -98,7 +106,7 @@ public class Registry {
 	 */
 	public static Registry create() {
 		final var registry = new Registry();
-		Primitive.primitives().forEach(registry::add);
+		IdentityTransformer.primitives().forEach(registry::add);
 		registry.init();
 		return registry;
 	}
@@ -108,9 +116,9 @@ public class Registry {
 	 */
 	private void init() {
 		add(String.class, new StringTransformer());
+		add(NativeReference.class, new NativeReferenceTransformer());
 		add(Handle.class, new HandleTransformer());
 		add(NativeObject.class, new NativeObjectTransformer());
 		add(EnumMask.class, new EnumMaskTransformer());
-		add(NativeReference.class, new NativeReferenceTransformer());
 	}
 }

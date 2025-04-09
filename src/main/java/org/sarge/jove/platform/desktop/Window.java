@@ -9,7 +9,6 @@ import java.util.function.Supplier;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
-import org.sarge.lib.LazySupplier;
 
 /**
  * Native window implemented using GLFW.
@@ -21,7 +20,6 @@ public final class Window extends TransientNativeObject {
 	 */
 	@SuppressWarnings("unused")
 	// TODO - use enabled to toggle?
-	// TODO - to IntEnum?
 	public enum Hint {
 		/**
 		 * Window can be resized.
@@ -68,10 +66,11 @@ public final class Window extends TransientNativeObject {
 		}
 	}
 
+	// TODO - was lazy supplier!!!
 	private final Desktop desktop;
-	private final Supplier<KeyboardDevice> keyboard = new LazySupplier<>(() -> new KeyboardDevice(this));
-	private final Supplier<MouseDevice> mouse = new LazySupplier<>(() -> new MouseDevice(this));
-	//private final Map<Object, Callback> registry = new WeakHashMap<>();
+	private final Supplier<KeyboardDevice> keyboard = () -> new KeyboardDevice(this);
+	private final Supplier<MouseDevice> mouse = () -> new MouseDevice(this);
+	private final Map<Object, Object> listeners = new WeakHashMap<>();
 
 	/**
 	 * Constructor.
@@ -89,6 +88,8 @@ public final class Window extends TransientNativeObject {
 	public Desktop desktop() {
 		return desktop;
 	}
+
+	// TODO - lazy or just creates new...
 
 	/**
 	 * @return New keyboard device
@@ -200,26 +201,28 @@ public final class Window extends TransientNativeObject {
 ////			register(key, adapter);
 //		}
 //	}
-//
-//	/**
-//	 * Registers a JNA callback listener attached to this window.
-//	 * <p>
-//	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus de-registered by GLFW.
-//	 * <p>
-//	 * @param key			Key
-//	 * @param callback 		Callback listener
-//	 */
-////	protected void register(Object key, Callback callback) {
-////		registry.put(key, callback);
-////	}
-//
-//	/**
-//	 * Removes a registry entry.
-//	 * @param key Key
-//	 */
-//	protected void remove(Object key) {
-////		registry.remove(key);
-//	}
+
+	/**
+	 * Registers a device listener attached to this window.
+	 * <p>
+	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus unregistered by GLFW.
+	 * <p>
+	 * @param key			Key
+	 * @param listener 		Listener
+	 */
+	protected void register(Object key, Object listener) {
+		requireNonNull(key);
+		requireNonNull(listener);
+		listeners.put(key, listener);
+	}
+
+	/**
+	 * Removes a registry entry.
+	 * @param key Key
+	 */
+	protected void remove(Object key) {
+		listeners.remove(key);
+	}
 
 	/**
 	 * Creates a Vulkan rendering surface for this window.
@@ -231,6 +234,8 @@ public final class Window extends TransientNativeObject {
 		final DesktopLibrary lib = desktop.library();
 		final NativeReference<Handle> ref = desktop.factory().pointer();
 		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
+
+		// TODO - this could be extended to ALL desktop methods, similar to Vulkan?
 		if(result != 0) {
 System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
 			final int code = lib.glfwGetError(null); // TODO - by-reference error string, managed by GLFW (!)
@@ -243,6 +248,8 @@ System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
 	@Override
 	@MainThread
 	protected void release() {
+		// TODO - need to explicitly remove listeners?
+		listeners.clear();
 		desktop.library().glfwDestroyWindow(this);
 	}
 

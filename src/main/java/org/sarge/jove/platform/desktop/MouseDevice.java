@@ -18,9 +18,9 @@ import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
  */
 public class MouseDevice implements Device {
 	private final Window window;
-	private final MouseWheel wheel = new MouseWheel();
+	private final MousePointer pointer = new MousePointer();
 	private final MouseButtonSource buttons = new MouseButtonSource();
-	private final MousePointer ptr = new MousePointer();
+	private final MouseWheel wheel = new MouseWheel();
 
 	/**
 	 * Constructor.
@@ -37,14 +37,14 @@ public class MouseDevice implements Device {
 
 	@Override
 	public Set<Source<?>> sources() {
-		return Set.of(ptr, buttons, wheel);
+		return Set.of(pointer, buttons, wheel);
 	}
 
 	/**
 	 * @return Mouse pointer
 	 */
 	public Source<Position> pointer() {
-		return ptr;
+		return pointer;
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class MouseDevice implements Device {
 
 		@Override
 		public BiConsumer<Window, MouseListener> method(DesktopLibrary lib) {
-//			return lib::glfwSetCursorPosCallback;
+			//return lib::glfwSetCursorPosCallback;
 			return null;
 		}
 	}
@@ -120,8 +120,8 @@ public class MouseDevice implements Device {
 
 		@Override
 		public BiConsumer<Window, MouseButtonListener> method(DesktopLibrary lib) {
-//			return lib::glfwSetMouseButtonCallback;
 			return null;
+//			return lib::glfwSetMouseButtonCallback;
 		}
 	}
 

@@ -46,6 +46,10 @@ public interface Event {
 		Set<Source<?>> sources();
 	}
 
+	interface DeviceListener {
+
+	}
+
 	/**
 	 * Builds a human-readable, hyphen-delimited name from the given tokens.
 	 * @param tokens Tokens

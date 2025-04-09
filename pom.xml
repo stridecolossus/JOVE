@@ -1,59 +1,65 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.sarge.jove</groupId>
-	<artifactId>JOVE</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
-	<name>JOVE</name>
-	<description>JOVE</description>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.sarge.jove</groupId>
+    <artifactId>JOVE</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>JOVE</name>
+    <description>JOVE</description>
 
     <properties>
-        <java.version>22</java.version>
+<!--        <java.version>23</java.version>-->
+        <maven.compiler.target>23</maven.compiler.target>
+        <maven.compiler.source>23</maven.compiler.source>
     </properties>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <release>22</release>
-                    <source>22</source>
-                    <target>22</target>
-                    <compilerArgs>
-                        --enable-preview
-                    </compilerArgs>
+                    <source>23</source>
+                    <target>23</target>
+                    <release>23</release>
+                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 
-	<dependencies>
-	   <dependency>
-	       <groupId>org.sarge.lib</groupId>
-			<artifactId>lib</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-	   </dependency>
+<!--
+default VM arg: -noverify
+https://stackoverflow.com/questions/34821047/java-lang-verifyerror-inconsistent-stackmap-frames
+-->
+
+    <dependencies>
+       <dependency>
+           <groupId>org.sarge.lib</groupId>
+            <artifactId>lib</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+       </dependency>
 
 <!--
-		<dependency>
-			<groupId>net.java.dev.jna</groupId>
-			<artifactId>jna</artifactId>
-			<version>5.3.0</version>
-		</dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.3.0</version>
+        </dependency>
 -->
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.7.0</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>5.7.0</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.1</version>
+            <scope>test</scope>
+     </dependency>
+        
+        <!--
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        -->
+    </dependencies>
 </project>

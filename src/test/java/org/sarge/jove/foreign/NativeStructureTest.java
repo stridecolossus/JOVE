@@ -51,6 +51,8 @@ class NativeStructureTest {
 
     	// TODO - by-reference? arrays?
 
+    	// TODO - nested structure
+
 		private static class Anonymous extends MockStructure {
 			public Anonymous() {
 			}

@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-import org.junit.jupiter.api.extension.Extensions;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
@@ -63,9 +62,9 @@ public class PhysicalDevice implements NativeObject {
 	 * @return Device properties
 	 */
 	public VkPhysicalDeviceProperties properties() {
-		final var props = new VkPhysicalDeviceProperties();
-//		lib.vkGetPhysicalDeviceProperties(this, props); // props);
-		return props;
+		final var properties = new VkPhysicalDeviceProperties();
+//		lib.vkGetPhysicalDeviceProperties(this, properties);
+		return properties;
 	}
 
 	/**
@@ -144,7 +143,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @see Selector
 	 * @see #predicate(DeviceFeatures)
 	 */
-	public static Stream<PhysicalDevice> devices(Instance instance) {
+	public static Stream<PhysicalDevice> enumerate(Instance instance) {
 		// Enumerate physical devices
 		final Vulkan vulkan = instance.vulkan();
 		final VulkanLibrary lib = vulkan.library();
@@ -247,7 +246,7 @@ public class PhysicalDevice implements NativeObject {
 		 */
 		public static Selector of(VkQueueFlag... flags) {
 			final var copy = Set.of(flags);
-			final BiPredicate<PhysicalDevice, Family> predicate = (__, family) -> family.flags().containsAll(copy);
+			final BiPredicate<PhysicalDevice, Family> predicate = (_, family) -> family.flags().containsAll(copy);
 			return new Selector(predicate);
 		}
 

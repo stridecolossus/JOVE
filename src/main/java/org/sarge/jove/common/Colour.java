@@ -56,6 +56,22 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	/**
+	 * Parses a colour from the given comma-separate string.
+	 * @param colour Colour string
+	 * @return Colour
+	 * @throws NumberFormatException if any component is not a valid floating-point value
+	 * @see #of(float[])
+	 */
+	public static Colour parse(String colour) {
+		final String[] parts = colour.split(",");
+		final float[] array = new float[parts.length];
+		for(int n = 0; n < parts.length; ++n) {
+			array[n] = Float.parseFloat(parts[n]);
+		}
+		return of(array);
+	}
+
+	/**
 	 * Constructor.
 	 * @throws IllegalArgumentException if any argument is not a 0..1 percentile value
 	 * @see Percentile#isValid(float)

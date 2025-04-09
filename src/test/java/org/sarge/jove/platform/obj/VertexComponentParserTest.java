@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.util.FloatArrayConverter;
+import org.sarge.jove.util.FloatArrayParser;
 
 public class VertexComponentParserTest {
 	private Parser parser;
@@ -15,7 +15,7 @@ public class VertexComponentParserTest {
 	@BeforeEach
 	void before() {
 		model = new ObjectModel();
-		parser = new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), ObjectModel::positions);
+		parser = new VertexComponentParser<>(new FloatArrayParser<>(Point.SIZE, Point::new), ObjectModel::positions);
 	}
 
 	@Test

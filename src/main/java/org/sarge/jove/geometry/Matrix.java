@@ -49,7 +49,11 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix(float[][] matrix) {
 		final int order = matrix.length;
-		this(order);
+		// TODO - this used to work...
+//		this(order);
+		requireOneOrMore(order);
+		this.matrix = new float[order][order];
+		// ...TODO
 		for(int r = 0; r < order; ++r) {
 			if(matrix[r].length != order) {
 				throw new IllegalArgumentException();

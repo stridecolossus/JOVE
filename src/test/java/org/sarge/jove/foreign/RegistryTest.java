@@ -22,7 +22,7 @@ class RegistryTest {
 
 	@Test
 	void add() {
-		final var transformer = new Primitive(ValueLayout.JAVA_INT);
+		final var transformer = new IdentityTransformer(ValueLayout.JAVA_INT);
 		registry.add(int.class, transformer);
 		assertEquals(transformer, registry.get(int.class));
 	}
@@ -34,7 +34,7 @@ class RegistryTest {
 
 	@Test
 	void supertype() {
-		final Transformer transformer = new Primitive(ValueLayout.JAVA_INT);
+		final Transformer transformer = new IdentityTransformer(ValueLayout.JAVA_INT);
 		registry.add(Number.class, transformer);
 		assertEquals(transformer, registry.get(Integer.class));
 	}
@@ -53,7 +53,7 @@ class RegistryTest {
 	@Test
 	void structure() {
 		final var structure = new MockStructure();
-		registry.add(int.class, new Primitive(ValueLayout.JAVA_INT));
+		registry.add(int.class, new IdentityTransformer(ValueLayout.JAVA_INT));
 		assertEquals(structure.layout(), registry.get(MockStructure.class).layout());
 	}
 

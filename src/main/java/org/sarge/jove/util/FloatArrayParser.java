@@ -5,13 +5,11 @@ import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.function.Function;
 
-import org.sarge.lib.Converter;
-
 /**
- * Converter for a floating-point tuple specified as a whitespace or comma-delimited string.
+ * A <i>float array parser</i> converts a comma-delimited string to a floating-point type.
  * @param <T> Result type
  */
-public class FloatArrayConverter<T> implements Converter<T> {
+public class FloatArrayParser<T> implements Function<String, T> {
 	private final int size;
 	private final Function<float[], T> ctor;
 
@@ -20,7 +18,7 @@ public class FloatArrayConverter<T> implements Converter<T> {
 	 * @param size			Expected array length
 	 * @param ctor			Constructor
 	 */
-	public FloatArrayConverter(int size, Function<float[], T> ctor) {
+	public FloatArrayParser(int size, Function<float[], T> ctor) {
 		this.size = requireOneOrMore(size);
 		this.ctor = requireNonNull(ctor);
 	}
@@ -28,7 +26,7 @@ public class FloatArrayConverter<T> implements Converter<T> {
 	@Override
 	public T apply(String str) throws NumberFormatException {
 		// Tokenize
-		// TODO
+		// TODO - delimiter (?)
 		final String[] parts;
 		if(str.indexOf(',') > 0) {
 			parts = str.trim().split(",");

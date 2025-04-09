@@ -247,7 +247,7 @@ public class VulkanForeignDemo {
 		invoke(handle, instance, MemorySegment.NULL);
     }
 
-    public static void main() {
+    public static void main2() {
 		System.out.println("Starting...");
 
 		try(Arena arena = Arena.ofConfined()) {

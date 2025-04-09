@@ -128,7 +128,7 @@ class PhysicalDeviceTest {
 		doAnswer(families).when(lib).vkGetPhysicalDeviceQueueFamilyProperties(new Handle(1), count, arg);
 
 		// Enumerate devices
-		assertEquals(1, PhysicalDevice.devices(instance).count());
+		assertEquals(1, PhysicalDevice.enumerate(instance).count());
 	}
 
 	@DisplayName("A physical device can be matched by a required feature set")

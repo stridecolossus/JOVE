@@ -9,7 +9,7 @@ import java.util.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-class PrimitiveTest {
+class IdentityTransformerTest {
 	public static Set<Map.Entry<Class<?>, ValueLayout>> primitive() {
 		final Map<Class<?>, ValueLayout> primitives = Map.of(
 	    		boolean.class,	JAVA_BOOLEAN,
@@ -29,7 +29,7 @@ class PrimitiveTest {
 	void primitive(Map.Entry<Class<?>, ValueLayout> entry) {
 		final Class<?> type = entry.getKey();
 		final ValueLayout layout = entry.getValue();
-		final Primitive primitive = Primitive.primitives().get(type);
+		final IdentityTransformer primitive = IdentityTransformer.primitives().get(type);
 		assertEquals(layout, primitive.layout());
 	}
 }

@@ -21,7 +21,7 @@ import org.sarge.jove.control.Event.Source;
  * @param <E> Event type
  * @author Sarge
  */
-interface DesktopSource<T /*extends Callback*/, E extends Event> extends Source<E> {
+interface DesktopSource<T, E extends Event> extends Source<E> {
 	/**
 	 * @return Parent window
 	 */
@@ -51,13 +51,13 @@ interface DesktopSource<T /*extends Callback*/, E extends Event> extends Source<
 		// Register listener
 		if(handler == null) {
 			method.accept(window, null);
-//			window.remove(handler);
+			window.remove(handler);
 			return null;
 		}
 		else {
 			final T listener = listener(handler);
 			method.accept(window, listener);
-//			window.register(handler, listener);
+			window.register(handler, listener);
 			return listener;
 		}
 	}

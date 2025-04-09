@@ -10,7 +10,7 @@ public class MockStructure implements NativeStructure {
 	 */
 	public static Registry registry() {
 		final var registry = new Registry();
-		registry.add(int.class, new Primitive(ValueLayout.JAVA_INT));
+		registry.add(int.class, new IdentityTransformer(ValueLayout.JAVA_INT));
 		return registry;
 	}
 

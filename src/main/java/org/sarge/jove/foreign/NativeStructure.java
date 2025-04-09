@@ -36,7 +36,7 @@ public interface NativeStructure {
 	/**
 	 * A <i>structure transformer</i> marshals a structure to/from off-heap memory.
 	 */
-	final class StructureTransformer implements ReferenceTransformer<NativeStructure, MemorySegment> {
+	class StructureTransformer implements AddressTransformer<NativeStructure, MemorySegment> { // TODO - should be separate archetype?
 		private final StructLayout layout;
 		private final StructureFieldMapping mappings;
 
@@ -51,7 +51,7 @@ public interface NativeStructure {
 		}
 
 		@Override
-		public MemoryLayout layout() {
+		public StructLayout layout() {
 			return layout;
 		}
 
@@ -73,17 +73,12 @@ public interface NativeStructure {
 		}
 
 		@Override
-		public NativeStructure unmarshal(MemorySegment address) {
-			return (NativeStructure) mappings.unmarshal(address);
+		public Object unmarshal(MemorySegment address) {
+			return mappings.unmarshal(address);
 		}
 
-		/**
-		 * Unmarshals a structure from the given off-heap memory.
-		 * @param address		Off-heap memory
-		 * @param structure		Structure
-		 */
 		public void unmarshal(MemorySegment address, NativeStructure structure) {
-			// TODO - where is this used? is it needed?
+			mappings.unmarshal(address, structure);
 		}
 
     	/**
@@ -148,9 +143,9 @@ public interface NativeStructure {
 
     					// Create field mapping
     					final FieldMapping mapping = switch(member) {
-    						case ValueLayout value -> atomic(field);
-    						case StructLayout embedded -> embedded(field, embedded);
-    						default -> throw new IllegalArgumentException("Unsupported structure member %s in field %s::%s".formatted(member, type, name));
+    						case ValueLayout _ -> atomic(field);
+    						case StructLayout nested -> nested(field, nested);
+    						default -> throw new IllegalArgumentException("Unsupported member layout %s in field %s::%s".formatted(member, type, name));
     					};
 
     					// Create structure field wrapper
@@ -168,15 +163,15 @@ public interface NativeStructure {
     				}
 
     				/**
-    				 * Recursively creates field mappings for an embedded structure.
+    				 * Recursively creates field mappings for a nested structure.
     				 * @param field			Structure field
-    				 * @param embedded		Embedded structure layout
-    				 * @return Embedded structure field mappings
+    				 * @param nested		Nested structure layout
+    				 * @return Nested structure field mappings
     				 */
     				@SuppressWarnings("unchecked")
-					private FieldMapping embedded(Field field, StructLayout embedded) {
+					private FieldMapping nested(Field field, StructLayout nested) {
 						final Class<?> child = field.getType();
-						final List<StructureField> fields = build(child, embedded);
+						final List<StructureField> fields = build(child, nested);
 		    			final Supplier<?> factory = factory((Class<? extends NativeStructure>) child);
 						return new StructureFieldMapping(factory, fields);
     				}
@@ -236,8 +231,8 @@ public interface NativeStructure {
     			 * @param parent		Parent structure instance
     			 */
     			public void unmarshal(MemorySegment address, Object parent) {
-    				final Object child = mapping.unmarshal(address);
-    				field.set(parent, child);
+    				final Object value = mapping.unmarshal(address);
+    				field.set(parent, value);
     			}
     		}
 
@@ -279,7 +274,7 @@ public interface NativeStructure {
     		}
 
     		/**
-    		 * A <i>structure field mapping</i> marshals a top-level structure or an embedded structure field.
+    		 * A <i>structure field mapping</i> marshals a top-level or nested structure.
     		 */
     		protected record StructureFieldMapping(Supplier<?> constructor, List<StructureField> fields) implements FieldMapping {
     			@Override
@@ -293,10 +288,15 @@ public interface NativeStructure {
     			public Object unmarshal(MemorySegment address) {
     				// TODO - could only create if NULL or overwrite?
     				final var structure = constructor.get();
+    				unmarshal(address, structure);
+    				return structure;
+    			}
+
+    			// TODO
+    			public void unmarshal(MemorySegment address, Object structure) {
     				for(var field : fields) {
     	    			field.unmarshal(address, structure);
     	    		}
-    				return structure;
     			}
     		}
 
