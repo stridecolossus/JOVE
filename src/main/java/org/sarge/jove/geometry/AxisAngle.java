@@ -7,7 +7,7 @@ import static java.util.Objects.requireNonNull;
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public record AxisAngle(Normal axis, Angle angle) implements Transform {
+public record AxisAngle(Normal axis, Angle angle) implements Rotation {
 	/**
 	 * Constructor.
 	 * @param axis 		Rotation axis
@@ -25,6 +25,11 @@ public record AxisAngle(Normal axis, Angle angle) implements Transform {
 	 */
 	public AxisAngle(Normal axis, float angle) {
 		this(axis, new Angle(angle));
+	}
+
+	@Override
+	public AxisAngle toAxisAngle() {
+		return this;
 	}
 
 	/**

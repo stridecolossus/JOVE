@@ -83,7 +83,7 @@ public class ColourBlendStageBuilderTest {
 		final var lib = mock(VulkanLibrary.class);
 		final var buffer = mock(Command.CommandBuffer.class);
 		final Command cmd = builder.setDynamicBlendConstants(CONSTANTS);
-		cmd.record(lib, buffer);
+		cmd.execute(lib, buffer);
 		verify(lib).vkCmdSetBlendConstants(buffer, CONSTANTS);
 	}
 }

@@ -22,7 +22,7 @@ public class Vulkan {
 	 */
 	public static Vulkan create() {
 		// Init API factory
-		final var registry = Registry.create();
+		final Registry registry = DefaultRegistry.create();
 		final var factory = new NativeLibraryBuilder("vulkan-1", registry);
 		factory.setReturnValueHandler(Vulkan::check);
 

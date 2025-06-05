@@ -24,7 +24,7 @@ class NativeLibraryBuilderTest {
 	void before() {
 		final SymbolLookup lookup = Linker.nativeLinker().defaultLookup();
 		registry = new Registry();
-		registry.add(int.class, new IdentityTransformer(ValueLayout.JAVA_INT));
+		registry.add(int.class, new IdentityTransformer<>(ValueLayout.JAVA_INT));
 		builder = new NativeLibraryBuilder(lookup, registry);
 	}
 

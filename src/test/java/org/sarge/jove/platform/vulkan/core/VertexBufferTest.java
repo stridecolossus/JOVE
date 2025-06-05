@@ -37,7 +37,7 @@ public class VertexBufferTest {
 		final VulkanLibrary lib = dev.library();
 		final var cmd = new MockCommandBuffer();
 		final Command bind = vbo.bind(2);
-		bind.record(lib, cmd);
+		bind.execute(lib, cmd);
 		verify(lib).vkCmdBindVertexBuffers(cmd, 2, 1, NativeObject.array(List.of(vbo)), new long[]{0});
 	}
 }

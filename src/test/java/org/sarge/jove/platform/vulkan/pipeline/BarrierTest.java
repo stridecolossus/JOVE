@@ -64,7 +64,7 @@ public class BarrierTest {
 			final var src = EnumMask.of(VkPipelineStage.TRANSFER);
 			final var dest = EnumMask.of(VkPipelineStage.FRAGMENT_SHADER);
 			final var flags = EnumMask.of(VkDependencyFlag.VIEW_LOCAL);
-			barrier.record(lib, cmd);
+			barrier.execute(lib, cmd);
 			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 1, new VkMemoryBarrier[]{expected}, 0, null, 0, null);
 		}
 	}
@@ -115,7 +115,7 @@ public class BarrierTest {
 			final var src = EnumMask.of(VkPipelineStage.TRANSFER);
 			final var dest = EnumMask.of(VkPipelineStage.FRAGMENT_SHADER);
 			final var flags = EnumMask.of(VkDependencyFlag.VIEW_LOCAL);
-			barrier.record(lib, cmd);
+			barrier.execute(lib, cmd);
 			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 0, null, 1, new VkBufferMemoryBarrier[]{expected}, 0, null);
 		}
 
@@ -196,7 +196,7 @@ public class BarrierTest {
 			final var src = EnumMask.of(VkPipelineStage.TRANSFER);
 			final var dest = EnumMask.of(VkPipelineStage.FRAGMENT_SHADER);
 			final var flags = EnumMask.of(VkDependencyFlag.VIEW_LOCAL);
-			barrier.record(lib, cmd);
+			barrier.execute(lib, cmd);
 			verify(lib).vkCmdPipelineBarrier(cmd, src, dest, flags, 0, null, 0, null, 1, new VkImageMemoryBarrier[]{expected});
 		}
 

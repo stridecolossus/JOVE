@@ -118,7 +118,7 @@ public class PushConstantTest {
 		@Test
 		void record() {
 			final var lib = mock(VulkanLibrary.class);
-			update.record(lib, cmd);
+			update.execute(lib, cmd);
 			verify(lib).vkCmdPushConstants(cmd, layout, EnumMask.of(VERTEX), 0, 4, constant.buffer());
 		}
 

@@ -128,7 +128,7 @@ public class VulkanBufferTest {
     	void copy() {
     		final VulkanBuffer dest = new VulkanBuffer(new Handle(2), dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mem, 2);
     		final BufferCopyCommand copy = buffer.copy(dest);
-    		copy.record(lib, new MockCommandBuffer());
+    		copy.execute(lib, new MockCommandBuffer());
     	}
 
     	@DisplayName("cannot copy a buffer to itself")
@@ -145,7 +145,7 @@ public class VulkanBufferTest {
     	void fill() {
     		final Command fill = buffer.fill(0, VulkanBuffer.VK_WHOLE_SIZE, 42);
     		final var cmd = mock(Command.CommandBuffer.class);
-    		fill.record(lib, cmd);
+    		fill.execute(lib, cmd);
     		verify(lib).vkCmdFillBuffer(cmd, buffer, 0, VulkanBuffer.VK_WHOLE_SIZE, 42);
     	}
 

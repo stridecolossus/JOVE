@@ -44,7 +44,7 @@ public final class BufferCopyCommand implements Command {
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, CommandBuffer buffer) {
+	public void execute(VulkanLibrary lib, CommandBuffer buffer) {
 		lib.vkCmdCopyBuffer(buffer, src, dest, regions.length, regions);
 	}
 

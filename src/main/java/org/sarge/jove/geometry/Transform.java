@@ -3,7 +3,7 @@ package org.sarge.jove.geometry;
 import org.sarge.jove.common.Layout;
 
 /**
- * A <i>transform</i> is a 4x4 {@link Matrix} for model transformation and projection.
+ * A <i>transform</i> is represented by a 4x4 {@link Matrix} for model transformation and projection.
  * @author Sarge
  */
 public interface Transform {

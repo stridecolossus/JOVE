@@ -2,8 +2,6 @@ package org.sarge.jove.common;
 
 import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.foreign.*;
-
 /**
  * Template implementation for a native object managed by the application.
  * @author Sarge

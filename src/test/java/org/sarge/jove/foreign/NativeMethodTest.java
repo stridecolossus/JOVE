@@ -6,18 +6,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.List;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.foreign.NativeMethod.*;
 
 class NativeMethodTest {
-	private IdentityTransformer integer;
+	private IdentityTransformer<Integer> integer;
+	private NativeParameter parameter;
 
 	@BeforeEach
 	void before() {
-		integer = new IdentityTransformer(JAVA_INT);
+		integer = new IdentityTransformer<>(JAVA_INT);
+		parameter = new NativeParameter(integer);
 	}
 
+	@DisplayName("A native method can be invoked")
 	@Test
 	void invoke() {
 		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class));
@@ -25,37 +29,52 @@ class NativeMethodTest {
 		assertEquals(null, method.invoke(null));
 	}
 
+	@DisplayName("A native method can optionally have a return value")
 	@Test
 	void returns() {
 		final MethodHandle handle = MethodHandles.constant(int.class, 42);
-		final NativeMethod method = new NativeMethod(handle, integer, List.of());
+		final NativeMethod method = new NativeMethod(handle, Function.identity(), List.of());
 		assertEquals(42, method.invoke(null));
 	}
 
+	@DisplayName("A native method must specify a return transformer for a method with a return value")
 	@Test
 	void returnsRequiresTransformer() {
 		final MethodHandle handle = MethodHandles.zero(int.class);
 		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of()));
 	}
 
+	@DisplayName("A native method cannot configure a return transformer for a method without a return value")
 	@Test
 	void returnsVoidTransformer() {
 		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class));
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, integer, List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, Function.identity(), List.of()));
 	}
 
+	@DisplayName("A native method can have none-or-more parameters")
 	@Test
 	void parameter() {
+		//final MethodHandle handle = MethodHandles.identity(int.class);
 		final MethodHandle handle = MethodHandles.identity(int.class);
-		final NativeMethod method = new NativeMethod(handle, integer, List.of(new Parameter(integer, false)));
+		final NativeMethod method = new NativeMethod(handle, Function.identity(), List.of(parameter));
 		assertEquals(42, method.invoke(new Object[]{42}));
 	}
 
+	@DisplayName("A native parameter can be returned by-reference")
+	@Test
+	void returnedParameter() {
+		final MethodHandle handle = MethodHandles.identity(int.class);
+		final NativeMethod method = new NativeMethod(handle, Function.identity(), List.of(new NativeParameter(integer, true)));
+//		assertEquals(42, method.invoke(new Object[]{42}));
+		// TODO
+	}
+
+	@DisplayName("The signature of a native method must match the parameter specification")
 	@Test
 	void count() {
 		final MethodHandle handle = MethodHandles.identity(int.class);
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of()));
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of(new Parameter(integer, false), new Parameter(integer, false))));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, Function.identity(), List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, Function.identity(), List.of(parameter, parameter)));
 	}
 
 	@Nested
@@ -69,6 +88,7 @@ class NativeMethodTest {
 			builder = new Builder(registry);
 		}
 
+		@DisplayName("A native method can be constructed programatically")
 		@Test
 		void build() {
 			final MemorySegment abs = Linker
@@ -88,21 +108,7 @@ class NativeMethodTest {
 			assertEquals(3, method.invoke(new Object[]{-3}));
 		}
 
-		@Test
-		void descriptor() {
-			assertEquals(FunctionDescriptor.ofVoid(), Builder.descriptor(null, List.of()));
-		}
-
-		@Test
-		void returns() {
-			assertEquals(FunctionDescriptor.of(JAVA_INT), Builder.descriptor(integer, List.of()));
-		}
-
-		@Test
-		void parameter() {
-			assertEquals(FunctionDescriptor.ofVoid(JAVA_INT), Builder.descriptor(null, List.of(new Parameter(integer, false))));
-		}
-
+		@DisplayName("The return type and parameters of a native method must be registered")
 		@Test
 		void unsupported() throws Exception {
 			assertThrows(IllegalArgumentException.class, () -> builder.returns(Object.class));

@@ -165,7 +165,7 @@ public final class Work {
 		final CommandBuffer buffer = pool
 				.primary()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-				.add(cmd)
+				.record(cmd)
 				.end();
 
 		submit(buffer);

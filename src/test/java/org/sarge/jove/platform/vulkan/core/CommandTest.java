@@ -35,7 +35,7 @@ class CommandTest {
 	@Test
 	void submit() {
 		final CommandBuffer buffer = cmd.submit(pool);
-		verify(cmd).record(lib, buffer);
+		verify(cmd).execute(lib, buffer);
 	}
 
 	@DisplayName("A command buffer...")
@@ -117,8 +117,8 @@ class CommandTest {
 			@DisplayName("can record commands")
 			@Test
 			void add() {
-				buffer.add(cmd);
-				verify(cmd).record(lib, buffer);
+				buffer.record(cmd);
+				verify(cmd).execute(lib, buffer);
 				assertEquals(false, buffer.isReady());
 			}
 
@@ -183,7 +183,7 @@ class CommandTest {
 		void add() {
 			// Record secondary command sequence
 			final Handle pass = new Handle(1);
-			secondary.begin(pass).add(cmd).end();
+			secondary.begin(pass).record(cmd).end();
 			assertEquals(true, secondary.isReady());
 
 			// Record to primary buffer

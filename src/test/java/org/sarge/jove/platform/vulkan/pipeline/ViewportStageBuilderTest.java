@@ -104,7 +104,7 @@ class ViewportStageBuilderTest {
 
     		// Execute dynamic viewport command
     		final Command cmd = builder.setDynamicViewport(0, List.of(viewport));
-    		cmd.record(lib, buffer);
+    		cmd.execute(lib, buffer);
     		verify(lib).vkCmdSetViewport(buffer, 0, 1, info);
     	}
 
@@ -136,7 +136,7 @@ class ViewportStageBuilderTest {
 
     		// Execute dynamic scissor command
     		final Command cmd = builder.setDynamicScissor(0, List.of(rect));
-    		cmd.record(lib, buffer);
+    		cmd.execute(lib, buffer);
     		verify(lib).vkCmdSetScissor(buffer, 0, 1, info);
     	}
 

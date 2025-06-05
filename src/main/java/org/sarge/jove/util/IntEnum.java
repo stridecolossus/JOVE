@@ -6,12 +6,12 @@ import java.lang.foreign.*;
 import java.util.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.AddressTransformer;
+import org.sarge.jove.foreign.Transformer;
 
 /**
  * An <i>integer enumeration</i> represents a native {@code typedef enum} declaration.
  * <p>
- * The {@link #value()} method maps an enumeration constant to the underlying native value.
+ * The {@link #value()} method maps an enumeration constant to its underlying native value.
  * <p>
  * An integer enumeration can be treated as bidirectional using the {@link ReverseMapping} class.
  * <p>
@@ -36,16 +36,16 @@ public interface IntEnum {
 
 		/**
 		 * Constructor.
-		 * @param type Integer enumeration class
+		 * @param type Integer enumeration
 		 */
 		public ReverseMapping(Class<E> type) {
 			final E[] array = type.getEnumConstants();
-			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (a, b) -> a));
+			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (value, _) -> value));
 			this.def = map.getOrDefault(0, array[0]);
 		}
 
 		/**
-		 * The <i>default value</i> of an integer enumeration is the constant with a value of {@code zero} or arbitrarily the <b>first</b> entry in the enumeration.
+		 * The <i>default value</i> of an integer enumeration is the constant with a value of {@code zero} if present <b>or</b> arbitrarily the <b>first</b> entry in the enumeration.
 		 * @return Default value for this enumeration
 		 */
 		public E defaultValue() {
@@ -70,7 +70,7 @@ public interface IntEnum {
 	/**
 	 * Native transformer for integer enumerations.
 	 */
-	class IntEnumTransformer implements AddressTransformer<IntEnum, Integer> {
+	class IntEnumTransformer implements Transformer<IntEnum> {
 		private final ReverseMapping<?> mapping;
 
 		/**
@@ -97,13 +97,15 @@ public interface IntEnum {
 		}
 
 		@Override
-		public IntEnum unmarshal(Integer value) {
-			if(value == 0) {
-				return mapping.defaultValue();
-			}
-			else {
-				return mapping.map(value);
-			}
+		public Function<Integer, IntEnum> unmarshal() {
+			return value -> {
+				if(value == 0) {
+					return mapping.defaultValue();
+				}
+				else {
+					return mapping.map(value);
+				}
+			};
 		}
 	}
 }

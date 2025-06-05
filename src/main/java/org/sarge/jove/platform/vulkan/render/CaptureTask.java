@@ -55,11 +55,11 @@ public class CaptureTask {
 		final Command.CommandBuffer buffer = pool
 				.primary()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-					.add(destination(screenshot))
-					.add(source(image))
-					.add(copy)
-					.add(prepare(screenshot))
-					.add(restore(image))
+					.record(destination(screenshot))
+					.record(source(image))
+					.record(copy)
+					.record(prepare(screenshot))
+					.record(restore(image))
 				.end();
 
 		// submit and wait for screenshot

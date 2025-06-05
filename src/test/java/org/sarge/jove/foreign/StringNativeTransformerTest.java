@@ -24,10 +24,11 @@ class StringNativeTransformerTest {
 	@Test
 	void marshal() {
 		final String string = "whatever";
-		final MemorySegment address = (MemorySegment) transformer.marshal(string, allocator);
-		assertEquals(1 + string.length(), address.byteSize());
+		final MemorySegment address = transformer.marshal(string, allocator);
+		assertEquals(string, address.getString(0));
 	}
 
+	@SuppressWarnings("static-access")
 	@Test
 	void unmarshal() {
 		final String string = "whatever";

@@ -1,19 +1,29 @@
 package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
+import java.util.function.Function;
 
 /**
  * The <i>string transformer</i> marshals a Java string to/from a native pointer to a null-terminated character-array.
  * @author Sarge
  */
-public class StringTransformer implements AddressTransformer<String, MemorySegment> {
+public class StringTransformer implements Transformer<String> {
 	@Override
-	public Object marshal(String str, SegmentAllocator allocator) {
+	public MemorySegment marshal(String str, SegmentAllocator allocator) {
 		return allocator.allocateFrom(str);
 	}
 
 	@Override
-	public String unmarshal(MemorySegment address) {
+	public Function<MemorySegment, String> unmarshal() {
+		return StringTransformer::unmarshal;
+	}
+
+	/**
+	 * Unmarshals a string from the given off-heap memory.
+	 * @param address Off-heap memory
+	 * @return String
+	 */
+	public static String unmarshal(MemorySegment address) {
 		return address.reinterpret(Integer.MAX_VALUE).getString(0L);
 	}
 }

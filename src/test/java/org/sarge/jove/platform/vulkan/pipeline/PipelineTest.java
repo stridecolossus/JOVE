@@ -40,7 +40,7 @@ class PipelineTest {
 		final VulkanLibrary lib = dev.library();
 		final Command cmd = pipeline.bind();
 		final var buffer = new MockCommandBuffer();
-		cmd.record(lib, buffer);
+		cmd.execute(lib, buffer);
 		verify(lib).vkCmdBindPipeline(buffer, VkPipelineBindPoint.GRAPHICS, pipeline);
 	}
 

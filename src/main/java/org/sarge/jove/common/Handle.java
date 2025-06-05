@@ -1,8 +1,9 @@
 package org.sarge.jove.common;
 
 import java.lang.foreign.*;
+import java.util.function.Function;
 
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.Transformer;
 
 /**
  * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
@@ -30,7 +31,7 @@ public final class Handle {
 	}
 
 	/**
-	 * @return Underlying memory address
+	 * @return Copy of the underlying memory address
 	 */
 	public MemorySegment address() {
 		return MemorySegment.ofAddress(address.address());
@@ -55,31 +56,17 @@ public final class Handle {
 	}
 
 	/**
-	 * Creates a by-reference handle.
-	 * @return Handle returned by-reference
-	 */
-	public static NativeReference<Handle> reference() {
-		return new NativeReference<>() {
-    		@Override
-    		protected Handle update(MemorySegment address) {
-    			final MemorySegment handle = address.get(ValueLayout.ADDRESS, 0L);
-    			return new Handle(handle);
-    		}
-    	};
-	}
-
-	/**
 	 * Native transformer for a handle.
 	 */
-	public static class HandleTransformer implements AddressTransformer<Handle, MemorySegment> {
+	public static class HandleTransformer implements Transformer<Handle> {
 		@Override
-		public Object marshal(Handle arg, SegmentAllocator allocator) {
+		public MemorySegment marshal(Handle arg, SegmentAllocator allocator) {
 			return arg.address;
 		}
 
 		@Override
-		public Handle unmarshal(MemorySegment address) {
-			return new Handle(address);
+		public Function<MemorySegment, Handle> unmarshal() {
+			return Handle::new;
 		}
 	}
 }

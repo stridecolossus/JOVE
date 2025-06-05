@@ -1,26 +1,37 @@
 package org.sarge.jove.foreign;
 
-import static java.util.Objects.requireNonNull;
-
 import java.lang.foreign.*;
-import java.lang.invoke.VarHandle;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.sarge.jove.common.Handle;
 
 /**
- * A <i>native reference</i> models a <i>by reference</i> parameter returned as a side-effect from a native method.
+ * A <i>native reference</i> models a <i>by reference</i> parameter with an <i>atomic</i> data type.
+ * The native reference is updated as a side effect on invocation of the native method.
+ * <p>
+ * This implementation is intended to support <i>atomic</i> types such as primitives or immutable domain types.
+ * The {@link Returned} annotation is a similar mechanism that supports more complex by-reference types such as structures and arrays.
+ * <p>
+ * The reference {@link Factory} is used to generate new native references as required by JOVE components.
+ * <p>
  * @param <T> Reference type
+ * @see Handle
+ * @see Returned
  * @author Sarge
  */
 public abstract class NativeReference<T> {
-	private T value;
-	private MemorySegment pointer;
+	protected MemorySegment pointer;
 
 	/**
-	 * Allocates the memory address of this reference.
-	 * @param allocator Allocator
-	 * @return Address
+	 * @return Referenced value
+	 */
+	public abstract T get();
+
+	/**
+	 * Allocates the underlying pointer for this reference.
+	 * @param allocator Off-heap allocator
+	 * @return Reference pointer
 	 */
 	private MemorySegment allocate(SegmentAllocator allocator) {
 		if(pointer == null) {
@@ -30,94 +41,75 @@ public abstract class NativeReference<T> {
 		return pointer;
 	}
 
-	/**
-	 * @return Referenced value
-	 */
-	public T get() {
-		if(Objects.nonNull(pointer)) {
-			value = update(pointer);
-		}
-
-		return value;
+	@Override
+	public int hashCode() {
+		return Objects.hash(pointer);
 	}
 
-	/**
-	 * Updates the value after invocation.
-	 * @param address Memory address of this reference
-	 * @return Value
-	 */
-	protected abstract T update(MemorySegment address);
-
-	/**
-	 * Sets the value of this reference.
-	 * @param value New value
-	 */
-	public void set(T value) {
-		this.value = requireNonNull(value);
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof NativeReference that) &&
+				Objects.equals(this.pointer, that.pointer);
 	}
 
 	@Override
 	public String toString() {
-		return String.format("NativeReference[ptr=%s value=%s]", pointer, value);
+		return String.format("NativeReference[%s]", pointer);
 	}
 
 	/**
-	 * Creates a native reference for a primitive with the given layout.
-	 * @param <P> Primitive type
-	 * @param layout Primitive layout
-	 * @return Primitive native reference
-	 */
-	public static <P> NativeReference<P> reference(ValueLayout layout) {
-		return new NativeReference<>() {
-			private final VarHandle handle = layout.varHandle();
-
-			@Override
-			protected P update(MemorySegment address) {
-				return (P) handle.get(address, 0L);
-			}
-		};
-	}
-	// TODO - actually restrict to primitives? layout.carrier().isPrimitive()
-
-	/**
-	 * Factory for commonly used native reference types.
+	 * The <i>native reference factory</i> generates new native references on demand.
 	 */
 	public static class Factory {
 		/**
-		 * Creates a by-reference integer.
-		 * @return Integer by-reference
+		 * @return Integer-by-reference
 		 */
 		public NativeReference<Integer> integer() {
-			final NativeReference<Integer> ref = reference(ValueLayout.JAVA_INT);
-			ref.set(0);
-			return ref;
+			return new NativeReference<>() {
+				@Override
+				public Integer get() {
+					if(pointer == null) {
+						return 0;
+					}
+					else {
+						return pointer.get(ValueLayout.JAVA_INT, 0);
+					}
+				}
+			};
 		}
 
 		/**
-		 * Creates a by-reference pointer.
-		 * @return By-reference handle/pointer
+		 * @return Pointer-by-reference
 		 */
 		public NativeReference<Handle> pointer() {
-			return Handle.reference();
+			return new NativeReference<>() {
+				@Override
+				public Handle get() {
+					if(pointer == null) {
+						return null;
+					}
+					else {
+						final MemorySegment address = pointer.get(ValueLayout.ADDRESS, 0);
+						return new Handle(address);
+					}
+				}
+			};
 		}
 	}
 
 	/**
-	 * Native transformer for by-reference types.
+	 * Transformer for native references.
 	 */
-	public static class NativeReferenceTransformer implements AddressTransformer<NativeReference<?>, MemorySegment> {
-		@Override
-		public MemoryLayout layout() {
-			return ValueLayout.ADDRESS;
-		}
-
+	public static class NativeReferenceTransformer implements Transformer<NativeReference<?>> {
 		@Override
 		public MemorySegment marshal(NativeReference<?> ref, SegmentAllocator allocator) {
 			return ref.allocate(allocator);
 		}
 
 		@Override
-		public Object unmarshal(MemorySegment value) {
+		public Function<MemorySegment, NativeReference<?>> unmarshal() {
 			throw new UnsupportedOperationException();
 		}
 	}

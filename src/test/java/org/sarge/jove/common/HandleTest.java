@@ -6,7 +6,6 @@ import java.lang.foreign.MemorySegment;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle.HandleTransformer;
-import org.sarge.jove.foreign.NativeReference;
 
 class HandleTest {
 	private Handle handle;
@@ -37,27 +36,6 @@ class HandleTest {
 	}
 
 	@Nested
-	class ReferenceTests {
-		private NativeReference<Handle> ref;
-
-		@BeforeEach
-		void before() {
-    		ref = Handle.reference();
-		}
-
-		@Test
-    	void empty() {
-    		assertEquals(null, ref.get());
-    	}
-
-		@Test
-		void set() {
-			ref.set(handle);
-			assertEquals(handle, ref.get());
-		}
-	}
-
-	@Nested
 	class TransformerTests {
 		private HandleTransformer transformer;
 
@@ -73,7 +51,7 @@ class HandleTest {
 
     	@Test
     	void unmarshal() {
-    		assertEquals(handle, transformer.unmarshal(address));
+    		assertEquals(handle, transformer.unmarshal().apply(address));
     	}
     }
 }

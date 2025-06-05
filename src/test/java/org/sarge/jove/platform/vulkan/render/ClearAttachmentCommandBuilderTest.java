@@ -117,7 +117,7 @@ class ClearAttachmentCommandBuilderTest {
 		// Record command
 		final var buffer = new MockCommandBuffer();
 		final VulkanLibrary lib = dev.library();
-		cmd.record(lib, buffer);
+		cmd.execute(lib, buffer);
 
 		// Check API
 		final var attachment = new VkClearAttachment() {

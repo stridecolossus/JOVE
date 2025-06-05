@@ -1,12 +1,22 @@
 package org.sarge.jove.platform.vulkan.common;
 
+import static org.mockito.Mockito.mock;
+
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.core.Vulkan;
+import org.sarge.jove.foreign.*;
+import org.sarge.jove.platform.vulkan.core.*;
 
 public class MockDeviceContext implements DeviceContext {
+	private final Vulkan vulkan;
+
+	public MockDeviceContext() {
+		final var lib = mock(VulkanLibrary.class);
+		this.vulkan = new Vulkan(lib, new Registry(), new NativeReference.Factory());
+	}
+
 	@Override
 	public Vulkan vulkan() {
-		return null;
+		return vulkan;
 	}
 
 	@Override

@@ -58,7 +58,7 @@ public class ImageTransferCommandTest {
 		@EnumSource(names={"GENERAL", "SHARED_PRESENT_KHR", "TRANSFER_DST_OPTIMAL"})
 		void copyBufferImage(VkImageLayout layout) {
 			final var copy = new ImageTransferCommand(image, src, true, REGIONS, layout);
-			copy.record(lib, cmd);
+			copy.execute(lib, cmd);
 			verify(lib).vkCmdCopyBufferToImage(cmd, src, image, layout, 0, REGIONS);
 		}
 
@@ -83,7 +83,7 @@ public class ImageTransferCommandTest {
 		@EnumSource(names={"GENERAL", "SHARED_PRESENT_KHR", "TRANSFER_SRC_OPTIMAL"})
 		void copyBufferImage(VkImageLayout layout) {
 			final var copy = new ImageTransferCommand(image, dest, false, REGIONS, layout);
-			copy.record(lib, cmd);
+			copy.execute(lib, cmd);
 			verify(lib).vkCmdCopyImageToBuffer(cmd, image, layout, dest, 0, new VkBufferImageCopy[0]);
 		}
 

@@ -16,7 +16,7 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">Wikipedia</a>
  * @author Sarge
  */
-public class Quaternion implements Transform {
+public class Quaternion implements Rotation {
 	/**
 	 * Quaternion that represents no rotation.
 	 * @see #toAxisAngle()
@@ -75,6 +75,7 @@ public class Quaternion implements Transform {
 	 * The rotation axis is undefined if this is approximately the {@link #IDENTITY} quaternion
 	 * @return Axis-angle
 	 */
+	@Override
 	public AxisAngle toAxisAngle() {
 		// TODO - numerically unstable when w near +/- 1 (???)
 		final float angle = 2 * (float) Math.acos(scalar); // TODO - maths

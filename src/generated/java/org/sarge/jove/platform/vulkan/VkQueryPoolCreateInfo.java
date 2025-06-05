@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
@@ -14,5 +14,5 @@ public class VkQueryPoolCreateInfo extends VulkanStructure {
 	public int flags;
 	public VkQueryType queryType;
 	public int queryCount;
-	public BitMask<VkQueryPipelineStatisticFlag> pipelineStatistics;
+	public EnumMask<VkQueryPipelineStatisticFlag> pipelineStatistics;
 }

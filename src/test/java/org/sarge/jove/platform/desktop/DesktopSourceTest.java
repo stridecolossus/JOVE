@@ -23,7 +23,7 @@ class DesktopSourceTest {
 	@SuppressWarnings("unchecked")
 	void before() {
 		// Create window
-		final Desktop desktop = new Desktop(mock(DesktopLibrary.class), new ReferenceFactory());
+		final Desktop desktop = new Desktop(mock(DesktopLibrary.class), new Factory());
 		window = new Window(new Handle(1), desktop);
 
 		// Init listener

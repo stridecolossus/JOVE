@@ -63,7 +63,7 @@ public class IndexBufferTest {
 		void bind() {
 			final VulkanLibrary lib = dev.library();
 			final Command bind = index.bind(0);
-			bind.record(lib, cmd);
+			bind.execute(lib, cmd);
 			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT32);
 		}
 	}
@@ -87,7 +87,7 @@ public class IndexBufferTest {
 		void bind() {
 			final VulkanLibrary lib = dev.library();
 			final Command bind = index.bind(0);
-			bind.record(lib, cmd);
+			bind.execute(lib, cmd);
 			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT16);
 		}
 	}

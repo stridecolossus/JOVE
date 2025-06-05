@@ -21,7 +21,7 @@ public class KeyboardDeviceTest {
 
 	@BeforeEach
 	void before() {
-		final Desktop desktop = new Desktop(mock(DesktopLibrary.class), new ReferenceFactory());
+		final Desktop desktop = new Desktop(mock(DesktopLibrary.class), new Factory());
 		window = new Window(new Handle(1), desktop);
 		dev = new KeyboardDevice(window);
 	}

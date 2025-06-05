@@ -16,6 +16,11 @@ class AxisAngleTest {
 	}
 
 	@Test
+	void rotation() {
+		assertEquals(rot, rot.toAxisAngle());
+	}
+
+	@Test
 	void matrix() {
 		final Matrix expected = new Matrix.Builder(4)
 				.set(0, 1, +1)

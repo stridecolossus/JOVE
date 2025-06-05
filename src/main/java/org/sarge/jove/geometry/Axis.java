@@ -23,15 +23,15 @@ public final class Axis extends Normal {
 
 	/**
 	 * Parses an axis from the given character.
-	 * @param ch Axis character (case insensitive)
+	 * @param axis Axis character (case insensitive)
 	 * @return Cardinal axis
 	 */
-	public static Axis parse(char ch) {
-		return switch(Character.toUpperCase(ch)) {
+	public static Axis parse(char axis) {
+		return switch(Character.toUpperCase(axis)) {
     		case 'X' -> X;
     		case 'Y' -> Y;
     		case 'Z' -> Z;
-			default -> throw new NumberFormatException("Unknown cardinal axis: " + ch);
+			default -> throw new NumberFormatException("Unknown cardinal axis: " + axis);
 		};
 	}
 
@@ -78,6 +78,7 @@ public final class Axis extends Normal {
     			.set(2, 2, cos);
 		}
 		else {
+			assert this == Z;
     		builder
     			.set(0, 0, cos)
     			.set(0, 1, -sin)

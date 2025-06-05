@@ -36,7 +36,7 @@ public class BufferCopyCommandTest {
 	void execute() {
 		// Execute copy
 		final var cmd = new MockCommandBuffer();
-		copy.record(dev.library(), cmd);
+		copy.execute(dev.library(), cmd);
 
 		// Check API
 		final VkBufferCopy region = new VkBufferCopy() {
@@ -54,7 +54,7 @@ public class BufferCopyCommandTest {
 
 	@Test
 	void invert() {
-		copy.invert().record(dev.library(), null);
+		copy.invert().execute(dev.library(), null);
 	}
 
 	@Nested

@@ -4,24 +4,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.MockReferenceFactory;
+import org.sarge.jove.foreign.NativeReference;
 
 public class DesktopTest {
 	private Desktop desktop;
 	private DesktopLibrary lib;
-	private ReferenceFactory factory;
 
 	@BeforeEach
 	void before() {
 		lib = mock(DesktopLibrary.class);
-		factory = new MockReferenceFactory();
-		desktop = new Desktop(lib, factory);
+		desktop = new Desktop(lib, new NativeReference.Factory());
 	}
 
 	@Test
-	void constructor() {
+	void library() {
 		assertEquals(lib, desktop.library());
-		assertEquals(factory, desktop.factory());
 	}
 
 	@Test

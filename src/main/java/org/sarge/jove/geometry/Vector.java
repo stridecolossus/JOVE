@@ -55,6 +55,7 @@ public class Vector extends Tuple {
 	 * Calculates the <i>dot</i> product of two vectors.
 	 * <p>
 	 * The dot product (also known as the <i>inner</i> or <i>scalar</i> vector product) expresses the angular relationship between two vectors.
+	 * <p>
 	 * This is represented mathematically as:
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>

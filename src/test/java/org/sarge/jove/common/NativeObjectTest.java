@@ -33,6 +33,6 @@ class NativeObjectTest {
 	void transformer() {
 		final var transformer = new NativeObjectTransformer();
 		assertEquals(object.handle.address(), transformer.marshal(object, null));
-		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal(null));
+		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal());
 	}
 }

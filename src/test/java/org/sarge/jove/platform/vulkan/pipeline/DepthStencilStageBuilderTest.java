@@ -94,14 +94,14 @@ class DepthStencilStageBuilderTest {
     	@Test
     	void setDynamicDepthBounds() {
     		final Command cmd = builder.setDynamicDepthBounds(0.5f, 1);
-    		cmd.record(lib, buffer);
+    		cmd.execute(lib, buffer);
     		verify(lib).vkCmdSetDepthBounds(buffer, 0.5f, 1f);
     	}
 
     	@Test
     	void setDynamicStencilCompareMask() {
     		final Command cmd = builder.setDynamicStencilCompareMask(StencilMaskType.WRITE, Set.of(VkStencilFaceFlag.FRONT), 42);
-    		cmd.record(lib, buffer);
+    		cmd.execute(lib, buffer);
     		verify(lib).vkCmdSetStencilWriteMask(buffer, EnumMask.of(VkStencilFaceFlag.FRONT), 42);
     	}
     }

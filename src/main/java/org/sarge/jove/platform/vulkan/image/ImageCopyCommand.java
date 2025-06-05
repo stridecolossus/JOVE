@@ -48,7 +48,7 @@ public final class ImageCopyCommand implements Command {
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, CommandBuffer buffer) {
+	public void execute(VulkanLibrary lib, CommandBuffer buffer) {
 		lib.vkCmdCopyImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions);
 	}
 

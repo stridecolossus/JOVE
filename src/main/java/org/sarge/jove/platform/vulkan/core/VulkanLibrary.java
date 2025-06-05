@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.common.Version;
  * The <i>Vulkan library</i> is an aggregated interface defining the Vulkan API.
  * @author Sarge
  */
-public interface VulkanLibrary extends DeviceLibrary { //, GeneralLibrary, MemoryLibrary, ImageLibrary, PipelineLibrary, RenderLibrary {
+public interface VulkanLibrary extends DeviceLibrary, Query.Library /* TODO */ { //, GeneralLibrary, MemoryLibrary, ImageLibrary, PipelineLibrary, RenderLibrary {
 	/**
 	 * Vulkan API version.
 	 */

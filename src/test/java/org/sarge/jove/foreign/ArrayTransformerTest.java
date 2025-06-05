@@ -1,77 +1,46 @@
 package org.sarge.jove.foreign;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
-import org.sarge.jove.platform.vulkan.*;
+import java.lang.foreign.*;
 
-public class ArrayTransformerTest {
+import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.Handle.HandleTransformer;
 
+class ArrayTransformerTest {
+	private Transformer<Handle> component;
+	private ArrayTransformer<Handle> transformer;
+	private SegmentAllocator allocator;
 
-	@Test
-	void fields() throws Exception {
-
-		final var structure = new VkQueueFamilyProperties();
-		structure.minImageTransferGranularity.width = 42;
-
-		final Lookup lookup = MethodHandles.lookup();
-
-		final var min = lookup.findVarHandle(VkQueueFamilyProperties.class, "minImageTransferGranularity", VkExtent3D.class);
-		System.out.println("min=" + min.get(structure));
-
-		final var width = lookup.findVarHandle(VkExtent3D.class, "width", int.class);
-		System.out.println("width=" + width.get(structure.minImageTransferGranularity));
-		//System.out.println("width=" + width.get(structure));
-
+	@BeforeEach
+	void before() {
+		allocator = Arena.ofAuto();
+		component = new HandleTransformer();
+		transformer = new ArrayTransformer<>(component);
 	}
 
+	@Test
+	void layout() {
+		assertEquals(ValueLayout.ADDRESS, transformer.layout());
+	}
+
+	@Test
+	void marshal() {
+		final Handle[] array = {new Handle(42)};
+		final MemorySegment address = transformer.marshal(array, allocator);
+		assertEquals(MemorySegment.ofAddress(42), address.reinterpret(8).getAtIndex(ValueLayout.ADDRESS, 0));
+	}
+
+	@Test
+	void empty() {
+		final Handle[] array = {null};
+		final MemorySegment address = transformer.marshal(array, allocator);
+		assertEquals(MemorySegment.NULL, address.reinterpret(8).getAtIndex(ValueLayout.ADDRESS, 0));
+	}
+
+	@Test
+	void unmarshal() {
+		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal());
+	}
 }
-
-//	@Test
-//	void path() {
-//
-//		//VkQueueFamilyProperties
-//
-//		final var structure = new VkQueueFamilyProperties();
-//		final StructLayout layout = structure.layout();
-////		final VarHandle handle = layout.varHandle(PathElement.groupElement("minImageTransferGranularity"), PathElement.groupElement("width"));
-//
-//		final MemoryLayout extent = layout.memberLayouts().get(3);
-//		final VarHandle handle = layout.varHandle(PathElement.groupElement("width"));
-//
-//		final MemorySegment address = Arena.ofAuto().allocate(layout);
-//		handle.set(address, 0L, 42);
-//
-//		System.out.println(handle.get(address, 0L));
-//	}
-
-
-
-//@Test
-//void primitive() {
-//	final Object array = new float[]{3, 4, 5};
-//
-//	final var layout = ValueLayout.JAVA_FLOAT;
-//	final MemorySegment address = Arena.ofAuto().allocate(layout, 3);
-//	System.out.println(address);
-//
-//	final var handle = layout.arrayElementVarHandle();
-//	System.out.println(handle);
-//
-//	for(int n = 0; n < 3; ++n) {
-//		handle.set(address, 0L, (long) n, Array.get(array, n));
-//	}
-//
-////	address.setAtIndex(layout, 0, 3);
-////	address.setAtIndex(layout, 1, 4);
-////	address.setAtIndex(layout, 2, 5);
-//
-//	System.out.println(handle.get(address, 0L, 0L));
-//	System.out.println(handle.get(address, 0L, 1L));
-//	System.out.println(handle.get(address, 0L, 2L));
-//
-////	System.out.println(address.getAtIndex(layout, 0));
-////	System.out.println(address.getAtIndex(layout, 1));
-////	System.out.println(address.getAtIndex(layout, 2));
-//}

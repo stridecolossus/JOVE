@@ -7,11 +7,10 @@ import static java.util.stream.Collectors.joining;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeStructure.StructureTransformer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -131,7 +130,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * Note that the callback signature is not defined in the Vulkan API.
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
-	private record Callback(Consumer<Message> consumer, StructureTransformer transformer) {
+	private record Callback(Consumer<Message> consumer, Transformer<NativeStructure> transformer) {
 		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = new ReverseMapping<>(VkDebugUtilsMessageType.class);
 		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = new ReverseMapping<>(VkDebugUtilsMessageSeverity.class);
 
@@ -143,7 +142,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * @param pUserData			Optional user data (always {@code null})
 		 * @return {@code false}
 		 */
-		@SuppressWarnings("unused")
+		@SuppressWarnings({"unused", "rawtypes", "unchecked"})
 		public boolean message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
 			// Unmarshal message properties
 			final var types = new EnumMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
@@ -151,7 +150,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 
 			// Unmarshal diagnostic report
 			final MemorySegment address = pCallbackData.reinterpret(transformer.layout().byteSize());
-			final var data = (VkDebugUtilsMessengerCallbackData) transformer.unmarshal(address);
+			final Function function = transformer.unmarshal();
+			final var data = (VkDebugUtilsMessengerCallbackData) function.apply(address);
 
 			// Handle message
 			final Message message = new Message(level, types, data);
@@ -164,7 +164,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * @return Upcall stub for this callback
 		 */
 		MemorySegment address() {
-			try {
+			try { // (Arena arena = Arena.ofConfined()) {
 				// Lookup callback method and bind to handler
 				final Class<?>[] signature = {int.class, int.class, MemorySegment.class, MemorySegment.class};
 				final var type = MethodType.methodType(boolean.class, signature);
@@ -226,7 +226,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * Builds this handler and attaches it to the given instance.
 		 */
 		public void attach(Instance instance) {
-			final StructureTransformer transformer = transformer(instance);
+			final Transformer<NativeStructure> transformer = transformer(instance);
 			final var callback = new Callback(consumer, transformer);
 			final VkDebugUtilsMessengerCreateInfoEXT info = populate(callback);
 			final Handle handle = create(info, instance);
@@ -237,10 +237,10 @@ public class DiagnosticHandler extends TransientNativeObject {
 		/**
 		 * Creates the diagnostic structure transformer.
 		 */
-		private static StructureTransformer transformer(Instance instance) {
-			final var registry = instance.vulkan().registry();
-			final var builder = new StructureTransformer.Builder(registry);
-			return builder.build(VkDebugUtilsMessengerCallbackData.class);
+		@SuppressWarnings("unchecked")
+		private static Transformer<NativeStructure> transformer(Instance instance) {
+			final Registry registry = instance.vulkan().registry();
+			return (Transformer<NativeStructure>) registry.transformer(VkDebugUtilsMessengerCallbackData.class);
 		}
 
 		/**

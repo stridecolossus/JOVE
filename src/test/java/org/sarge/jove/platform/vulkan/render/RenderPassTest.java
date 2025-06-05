@@ -37,7 +37,7 @@ class RenderPassTest {
 	void next() {
 		final var buffer = mock(Command.CommandBuffer.class);
 		final Command next = RenderPass.next();
-		next.record(lib, buffer);
+		next.execute(lib, buffer);
 		verify(lib).vkCmdNextSubpass(buffer, VkSubpassContents.INLINE);
 	}
 

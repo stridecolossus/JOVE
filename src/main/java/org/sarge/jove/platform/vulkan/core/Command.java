@@ -20,11 +20,11 @@ import org.sarge.jove.util.EnumMask;
 @FunctionalInterface
 public interface Command {
 	/**
-	 * Records this command to the given buffer.
+	 * Performs this command.
 	 * @param lib		Vulkan library
 	 * @param buffer 	Command buffer
 	 */
-	void record(VulkanLibrary lib, CommandBuffer buffer);
+	void execute(VulkanLibrary lib, CommandBuffer buffer);
 
 	/**
 	 * Convenience method - Submits this command as a one-time operation and blocks until completed.
@@ -54,9 +54,9 @@ public interface Command {
 		 */
 		default Sequence wrap(Command before, Command after) {
 			return (index, buffer) -> {
-				buffer.add(before);
+				buffer.record(before);
 				record(index, buffer);
-				buffer.add(after);
+				buffer.record(after);
 			};
 		}
 
@@ -77,7 +77,7 @@ public interface Command {
 		static Sequence of(List<Command> commands) {
 			return (index, buffer) -> {
 				for(Command cmd : commands) {
-					buffer.add(cmd);
+					buffer.record(cmd);
 				}
 			};
 		}
@@ -173,11 +173,11 @@ public interface Command {
 		 * @param command Command
 		 * @throws IllegalStateException if this buffer is not recording
 		 * @throws IllegalArgumentException if the given command is for a {@link SecondaryBufferCommand} but this is not a primary command buffer
-		 * @see Command#record(VulkanLibrary, CommandBuffer)
+		 * @see Command#execute(VulkanLibrary, CommandBuffer)
 		 */
-		public final CommandBuffer add(Command command) {
+		public final CommandBuffer record(Command command) {
 			validate(State.RECORDING);
-			command.record(pool.library(), CommandBuffer.this);
+			command.execute(pool.library(), CommandBuffer.this);
 			return this;
 		}
 

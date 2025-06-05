@@ -22,7 +22,7 @@ class DrawCommandTest {
 	@Test
 	void draw() {
 		final DrawCommand draw = DrawCommand.draw(2);
-		draw.record(lib, cmd);
+		draw.execute(lib, cmd);
 		verify(lib).vkCmdDraw(cmd, 2, 1, 0, 0);
 	}
 
@@ -30,7 +30,7 @@ class DrawCommandTest {
 	@Test
 	void indexed() {
 		final DrawCommand draw = DrawCommand.indexed(2);
-		draw.record(lib, cmd);
+		draw.execute(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 2, 1, 0, 0, 0);
 	}
 
@@ -43,7 +43,7 @@ class DrawCommandTest {
 		builder.add(0);
 
 		final DrawCommand draw = DrawCommand.of(builder.mesh());
-		draw.record(lib, cmd);
+		draw.execute(lib, cmd);
 		verify(lib).vkCmdDrawIndexed(cmd, 2, 1, 0, 0, 0);
 	}
 
@@ -59,7 +59,7 @@ class DrawCommandTest {
 		@DisplayName("Draw a number of vertices")
 		@Test
 		void simple() {
-			builder.count(2).build().record(lib, cmd);
+			builder.count(2).build().execute(lib, cmd);
 			verify(lib).vkCmdDraw(cmd, 2, 1, 0, 0);
 		}
 
@@ -70,7 +70,7 @@ class DrawCommandTest {
 					.instances(1)
 					.firstInstance(2)
 					.build()
-					.record(lib, cmd);
+					.execute(lib, cmd);
 
 			verify(lib).vkCmdDraw(cmd, 0, 1, 0, 2);
 		}
@@ -78,7 +78,7 @@ class DrawCommandTest {
 		@DisplayName("Draw indexed vertices")
 		@Test
 		void indexed() {
-			builder.indexed().build().record(lib, cmd);
+			builder.indexed().build().execute(lib, cmd);
 			verify(lib).vkCmdDrawIndexed(cmd, 0, 1, 0, 0, 0);
 		}
 
@@ -92,7 +92,7 @@ class DrawCommandTest {
 					.firstVertex(4)
 					.firstInstance(5)
 					.build()
-					.record(lib, cmd);
+					.execute(lib, cmd);
 
 			verify(lib).vkCmdDrawIndexed(cmd, 1, 2, 3, 4, 5);
 		}

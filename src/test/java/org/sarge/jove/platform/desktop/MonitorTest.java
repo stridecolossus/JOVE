@@ -20,13 +20,13 @@ class MonitorTest {
 	private DesktopDisplayMode struct;
 	private Desktop desktop;
 	private DesktopLibrary lib;
-	private ReferenceFactory factory;
+	private Factory factory;
 
 	@BeforeEach
 	void before() {
 		// Init desktop service
 		lib = mock(DesktopLibrary.class);
-		factory = mock(ReferenceFactory.class);
+		factory = mock(Factory.class);
 		desktop = new Desktop(lib, factory);
 
 		// Init GLFW display mode

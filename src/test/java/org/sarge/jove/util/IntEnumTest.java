@@ -15,7 +15,7 @@ class IntEnumTest {
     		mapping = new ReverseMapping<>(MockEnum.class);
     	}
 
-    	@DisplayName("A native value can be reverse mapped to an enumeration constant")
+    	@DisplayName("An enumeration constant can be mapped from a native value")
     	@Test
     	void map() {
     		assertEquals(MockEnum.A, mapping.map(1));
@@ -23,7 +23,7 @@ class IntEnumTest {
     		assertEquals(MockEnum.C, mapping.map(4));
     	}
 
-    	@DisplayName("An invalid native value cannot be reverse mapped")
+    	@DisplayName("An enumeration constant cannot be mapped from an invalid native value")
     	@Test
     	void invalid() {
     		assertThrows(IllegalArgumentException.class, () -> mapping.map(0));
@@ -58,12 +58,12 @@ class IntEnumTest {
 
 		@Test
 		void unmarshal() {
-			assertEquals(MockEnum.A, transformer.unmarshal(1));
+			assertEquals(MockEnum.A, transformer.unmarshal().apply(1));
 		}
 
 		@Test
 		void def() {
-			assertEquals(MockEnum.A, transformer.unmarshal(0));
+			assertEquals(MockEnum.A, transformer.unmarshal().apply(0));
 		}
 	}
 }

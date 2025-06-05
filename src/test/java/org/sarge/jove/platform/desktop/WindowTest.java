@@ -21,7 +21,7 @@ class WindowTest {
 	private Window window;
 	private DesktopLibrary lib;
 	private Desktop desktop;
-	private ReferenceFactory factory;
+	private Factory factory;
 
 	@BeforeEach
 	void before() {

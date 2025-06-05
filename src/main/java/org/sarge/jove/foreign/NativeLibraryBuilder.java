@@ -7,32 +7,24 @@ import java.lang.foreign.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
-import java.util.logging.Logger;
 
 /**
- *
- * TODO
- *
- * The <i>native library builder</i> constructs a proxy implementation of a native library implemented using FFM.
+ * The <i>native library builder</i> constructs a proxy implementation of a native library using FFM.
  * <p>
- * The {@link #build(SymbolLookup, Class)} method constructs a proxy implementation of a given native API.
- * Each public, non-static method of the API generates a {@link NativeMethod} with a method handle retrieved from the given symbol lookup.
- * The method parameters and optional return type are mapped to the corresponding native transformers via the {@link TransformerRegistry} provided in the constructor.
+ * A {@link NativeMethod} is generated for each public, non-static method of a given API.
+ * The method parameters and return type are mapped to the corresponding transformers via the provided {@link Registry}.
  * <p>
- *
- * TODO
- *
- * The {@link #setReturnHandler(Consumer)} and {@link #setIntegerReturnHandler(IntConsumer)} methods can be used to configure validation or logging of native method returns values.
+ * The {@link #setReturnValueHandler(Consumer)} and {@link #setReturnValueHandler(IntConsumer)} can be used to configure validation or logging of method return values.
  * <p>
+ * @see Transformer
+ * @see NativeMethod
  * @author Sarge
  */
 public class NativeLibraryBuilder {
-	private static final Logger LOG = Logger.getLogger(NativeLibraryBuilder.class.getName());
-
 	private final SymbolLookup lookup;
 	private final ClassLoader loader = this.getClass().getClassLoader(); // TODO - mutable?
 	private final Registry registry;
-	private Consumer<Object> check = result -> { /* Ignored */ };
+	private Consumer<Object> check = _ -> { /* Ignored */ };
 
 	// TODO
 	public NativeLibraryBuilder(SymbolLookup lookup, Registry registry) {
@@ -47,7 +39,7 @@ public class NativeLibraryBuilder {
 	}
 
 	/**
-	 * Sets a validation handler for native method return values.
+	 * Configures a validation handler for native method return values.
 	 * The default implementation does nothing.
 	 * @param handler Return value handler
 	 */
@@ -56,40 +48,40 @@ public class NativeLibraryBuilder {
 	}
 
 	/**
-	 * Helper - Sets a validation handler for native methods that return an integer success code.
+	 * Helper - Configures a validation handler for native methods that return an integer success code.
 	 * Non-integer or {@code null} return values are ignored.
 	 * @param handler Success code handler
 	 * @see #setReturnValueHandler(Consumer)
 	 */
 	public void setReturnValueHandler(IntConsumer handler) {
-		this.check = result -> {
+		final Consumer<Object> adapter = result -> {
 			if(result instanceof Integer code) {
 				handler.accept(code);
 			}
 		};
+		setReturnValueHandler(adapter);
 	}
 
 	/**
-	 * Constructs a native method proxy for the given API.
+	 * Constructs a proxy implementation the given native API.
 	 * @param <T> API type
 	 * @param api API
 	 * @return Native proxy
 	 * @throws IllegalArgumentException if {@link #api} is not an interface
 	 * @throws IllegalArgumentException if any method cannot be found in the native library
-	 * @throws IllegalArgumentException if the return type or parameters of a native method are not unsupported
+	 * @throws IllegalArgumentException if the return type or any parameter of the native method are unsupported
 	 */
 	public <T> T build(Class<T> api) {
 		if(!api.isInterface()) {
-			throw new IllegalArgumentException("Native API must be specified by an interface: " + api);
+			throw new IllegalArgumentException("Native API must be specified by an interface");
 		}
 
-		LOG.info("Building API: " + api);
 		final Map<Method, NativeMethod> methods = methods(api);
 		return proxy(api, methods);
 	}
 
 	/**
-	 * Builds a native method instance for the declared methods of the given API.
+	 * Builds the declared native methods of the given API.
 	 * @param api API
 	 * @return Native methods
 	 */
@@ -109,42 +101,33 @@ public class NativeLibraryBuilder {
 	 */
 	public NativeMethod build(Method method) {
 		try {
-			// Init native method
-			LOG.info("Building native method: " + format(method));
-			final var builder = new NativeMethod.Builder(registry);
-
-			// Configure method signature
-			for(Parameter p : method.getParameters()) {
-				final boolean returned = Objects.nonNull(p.getAnnotation(Returned.class));
-				builder.parameter(p.getType(), returned);
-			}
-
-			// Construct native method
-			return builder
-        			.address(lookup(method))
-        			.returns(method.getReturnType())
-        			.build();
+			return buildLocal(method);
 		}
-		catch(IllegalArgumentException e) {
-			throw new IllegalArgumentException("Error building native method: " + format(method), e);
+		catch(Exception e) {
+			final String type = method.getDeclaringClass().getSimpleName();
+			final String name = String.format("%s::%s", type, method.getName());
+			throw new IllegalArgumentException("Error building native method: " + name, e);
 		}
 	}
 
-	private static String format(Method method) {
-		final String type = method.getDeclaringClass().getSimpleName();
-		return String.format("%s::%s", type, method.getName());
-	}
-
-	/**
-	 * Looks up the address of a native method.
-	 * @param method API method
-	 * @return Native method address
-	 * @throws IllegalArgumentException if the native method cannot be found
-	 */
-	private MemorySegment lookup(Method method) {
-		return lookup
+	private NativeMethod buildLocal(Method method) {
+		// Lookup method symbol
+		final MemorySegment symbol = lookup
 				.find(method.getName())
 				.orElseThrow(() -> new IllegalArgumentException("Unknown native method"));
+
+		// Init native method
+		final var builder = new NativeMethod.Builder(registry)
+				.address(symbol)
+				.returns(method.getReturnType());
+
+		// Configure signature
+		for(Parameter p : method.getParameters()) {
+			final boolean returned = Objects.nonNull(p.getAnnotation(Returned.class));
+			builder.parameter(p.getType(), returned);
+		}
+
+		return builder.build();
 	}
 
 	/**

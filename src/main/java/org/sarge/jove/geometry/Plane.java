@@ -101,6 +101,7 @@ public record Plane(Normal normal, float distance) implements Intersection.Surfa
 			}
 			else {
 				return INTERSECT;
+				// TODO - test approx equals as first case?
 			}
 		}
 	}

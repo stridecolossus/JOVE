@@ -55,6 +55,7 @@ public class Instance extends TransientNativeObject {
 	void attach(DiagnosticHandler handler) {
 		handlers.add(handler);
 	}
+	// TODO - is there much point in this coupling?
 
 	@Override
 	protected void release() {

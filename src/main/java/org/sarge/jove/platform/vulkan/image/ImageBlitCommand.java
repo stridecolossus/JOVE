@@ -37,7 +37,7 @@ public final class ImageBlitCommand implements Command {
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, CommandBuffer buffer) {
+	public void execute(VulkanLibrary lib, CommandBuffer buffer) {
 		lib.vkCmdBlitImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions, filter);
 	}
 

@@ -82,7 +82,7 @@ public class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public Matrix matrix() {
+	public final Matrix matrix() {
 		return this;
 	}
 
@@ -349,14 +349,14 @@ public class Matrix implements Transform, Bufferable {
 		 * Populates a submatrix of this matrix.
 		 * @param row			Row index
 		 * @param col			Column index
-		 * @param m				Submatrix
+		 * @param submatrix		Submatrix
 		 * @throws IndexOutOfBoundsException if the submatrix is out-of-bounds
 		 */
-		public Builder submatrix(int row, int col, Matrix m) {
-			final int order = m.order();
+		public Builder submatrix(int row, int col, Matrix submatrix) {
+			final int order = submatrix.order();
 			for(int r = 0; r < order; ++r) {
 				for(int c = 0; c < order; ++c) {
-					matrix.matrix[r + row][c + col] = m.matrix[r][c];
+					matrix.matrix[r + row][c + col] = submatrix.matrix[r][c];
 				}
 			}
 			return this;

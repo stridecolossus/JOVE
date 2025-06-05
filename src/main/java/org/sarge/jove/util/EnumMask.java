@@ -4,8 +4,9 @@ import static java.util.stream.Collectors.toSet;
 
 import java.lang.foreign.*;
 import java.util.Set;
+import java.util.function.Function;
 
-import org.sarge.jove.foreign.AddressTransformer;
+import org.sarge.jove.foreign.Transformer;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -76,21 +77,15 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	/**
 	 * Native transformer for an enumeration bitfield.
 	 */
-	@SuppressWarnings("rawtypes")
-	public static class EnumMaskTransformer implements AddressTransformer<EnumMask, Integer> {
+	public static class EnumMaskTransformer implements Transformer<EnumMask<?>> {
 		@Override
 		public MemoryLayout layout() {
 			return ValueLayout.JAVA_INT;
 		}
 
 		@Override
-		public Integer marshal(EnumMask mask, SegmentAllocator allocator) {
-			if(mask == null) {
-				return 0;
-			}
-			else {
-				return mask.bits;
-			}
+		public Integer marshal(EnumMask<?> mask, SegmentAllocator allocator) {
+			return mask.bits;
 		}
 
 		@Override
@@ -99,8 +94,8 @@ public record EnumMask<E extends IntEnum>(int bits) {
 		}
 
 		@Override
-		public EnumMask unmarshal(Integer bits) {
-			return new EnumMask<>(bits);
+		public Function<Integer, EnumMask<?>> unmarshal() {
+			return EnumMask::new;
 		}
 	}
 }

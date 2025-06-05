@@ -88,7 +88,7 @@ public record Ray(Point origin, Vector direction) {
 	}
 
 	/**
-	 * Creates an intersection on this ray at the given distance relative to the given volume centre point.
+	 * Creates an intersection on this ray at the given distance relative to the centre point of an intersected volume.
 	 * @param distance		Intersection distance
 	 * @param centre		Centre point
 	 * @return Intersection

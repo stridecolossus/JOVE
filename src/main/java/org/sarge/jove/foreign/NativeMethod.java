@@ -5,64 +5,72 @@ import static java.util.Objects.requireNonNull;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.*;
-import java.util.function.UnaryOperator;
-
-import org.sarge.jove.foreign.NativeStructure.StructureTransformer;
+import java.util.function.Function;
 
 /**
- * A <i>native method</i> composes a native method and transformers for the return type and parameters.
+ * A <i>native method</i> composes an FFM method handle and transformers for its return type and parameters.
+ * @see Transformer
  * @author Sarge
  */
 public class NativeMethod {
 	/**
-	 * Descriptor for a parameter of this method.
+	 * A <i>native parameter</i> is a descriptor for a parameter of this native method.
 	 */
-	record Parameter(Transformer transformer, boolean returned) {
+	record NativeParameter(Transformer<?> transformer, boolean returned) {
+		/**
+		 * Constructor.
+		 * @param transformer		Argument transformer
+		 * @param returned			Whether this parameter is returned-by-reference
+		 */
+		public NativeParameter {
+			requireNonNull(transformer);
+		}
+
+		/**
+		 * Convenience constructor.
+		 * @param transformer Argument transformer
+		 */
+		public NativeParameter(Transformer<?> transformer) {
+			this(transformer, false);
+		}
+
 		/**
 		 * @return Memory layout of this parameter
 		 */
 		private MemoryLayout layout() {
 			if(returned) {
-				return ValueLayout.ADDRESS;
+				return AddressLayout.ADDRESS;
 			}
 			else {
 				return transformer.layout();
 			}
 		}
-		// TODO - all by-reference types must be a pointer (ADDRESS)
 	}
-	// TODO - make this hidden? => private ctor, can ONLY used builder => but hard to then set the method handle directly in tests
-
-	private static final UnaryOperator<Object> VOID = result -> {
-		assert result == null;
-		return null;
-	};
 
 	private final MethodHandle handle;
-	private final UnaryOperator<Object> returns;
-	private final Parameter[] signature;
+	private final Function<Object, ?> returns;
+	private final List<NativeParameter> signature;
 
 	/**
 	 * Constructor.
 	 * @param handle		Native method
 	 * @param returns		Optional return type transformer
-	 * @param signature		Parameter transformers
+	 * @param signature		Parameters
 	 * @throws IllegalArgumentException if the {@link #signature} does not match the native method
-	 * @throws IllegalArgumentException if {@link #returns} is missing or superfluous
-	 * @throws UnsupportedOperationException if the return type is not supported
+	 * @throws IllegalArgumentException if the {@link #returns} transformer is missing or superfluous
 	 */
-	NativeMethod(MethodHandle handle, UnaryOperator<Object> returns, List<Parameter> signature) {
+	NativeMethod(MethodHandle handle, Function<Object, ?> returns, List<NativeParameter> signature) {
 		final MethodType type = handle.type();
 		if(signature.size() != type.parameterCount()) {
 			throw new IllegalArgumentException("Mismatched number of transformers for method signature");
 		}
-		if((returns == VOID) ^ (type.returnType() == void.class)) {
+		if((returns == null) ^ (type.returnType() == void.class)) {
 			throw new IllegalArgumentException("Missing or unused returns transformer");
 		}
 
 		this.handle = requireNonNull(handle);
-		this.returns = requireNonNull(returns);
-		this.signature = signature.toArray(Parameter[]::new);
+		this.returns = returns;
+		this.signature = List.copyOf(signature);
 	}
 
 	/**
@@ -73,59 +81,79 @@ public class NativeMethod {
 	 * @throws RuntimeException if the native method fails
 	 */
 	public Object invoke(Object[] args) {
+		if(args == null) {
+			return invokeLocal(null);
+		}
+
+		final Object[] foreign = marshal(args);
+		final Object result = invokeLocal(foreign);
+		update(args);
+		return result;
+	}
+
+	/**
+	 * Invokes this native method and unmarshals the return value.
+	 * @param args Marshalled arguments
+	 * @return Unmarshalled return value
+	 */
+	private Object invokeLocal(Object[] args) {
 		try {
-			@SuppressWarnings("resource")
-			final Object[] foreign = marshal(args, Arena.ofAuto());
-			final Object result = handle.invokeWithArguments(foreign);
-			update(foreign, args);
-			return returns.apply(result);
+			final Object result = handle.invokeWithArguments(args);
+			return unmarshal(result);
 		}
 		catch(IllegalArgumentException e) {
 			throw e;
 		}
 		catch(Throwable e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Error invoking native method: " + this, e);
 		}
 	}
 
 	/**
 	 * Marshals the given arguments to the corresponding FFM types.
-	 * @param args			Arguments
-	 * @param allocator		Allocator
-	 * @return Marshalled arguments
 	 */
-	private Object[] marshal(Object[] args, SegmentAllocator allocator) {
-		if(args == null) {
-			return null;
-		}
-
+	@SuppressWarnings("resource")
+	private Object[] marshal(Object[] args) {
+		// TODO - make helper an instance with arena
+		final var allocator = Arena.ofAuto();
 		final Object[] transformed = new Object[args.length];
 		for(int n = 0; n < args.length; ++n) {
-			transformed[n] = TransformerHelper.marshal(args[n], signature[n].transformer, allocator);
+			final Transformer<?> transformer = signature.get(n).transformer();
+			transformed[n] = Transformer.marshal(args[n], transformer, allocator);
 		}
-
 		return transformed;
 	}
 
 	/**
-	 * Unmarshals by-reference parameters
-	 * @param foreign		Off-heap memory
-	 * @param args			Method arguments
+	 * Unmarshals by-reference arguments.
 	 */
-	private void update(Object[] foreign, Object[] args) {
-		if(args == null) {
-			return;
-		}
-
+	private static void update(Object[] args) {
 		for(int n = 0; n < args.length; ++n) {
-			if(signature[n].returned && Objects.nonNull(args[n])) {
-				// TODO - should 'update' be another type? generic? mixin on transformer => no need for flag!
-				switch(signature[n].transformer) {
-    	    		case StructureTransformer struct -> struct.unmarshal((MemorySegment) foreign[n], (NativeStructure) args[n]);
-    	    		case ArrayTransformer array -> array.update((MemorySegment) foreign[n], (Object[]) args[n]);
-    	    		default -> throw new RuntimeException();
-    			}
-			}
+
+			// native reference
+			// handle array
+			// structure array
+			// structure?
+
+//				switch(signature[n].transformer) {
+//					// TODO - urgh
+//					case StructureTransformer structure -> structure.update((MemorySegment) foreign[n], (NativeStructure) args[n]);
+//					case ArrayTransformer array -> array.update((MemorySegment) foreign[n], (Object[]) args[n]);
+//					default -> throw new RuntimeException();
+//				}
+		}
+	}
+
+	/**
+	 * Unmarshals the return value.
+	 */
+	private Object unmarshal(Object result) {
+		if(returns == null) {
+			assert result == null;
+			return null;
+		}
+		else {
+			return returns.apply(result);
 		}
 	}
 
@@ -139,9 +167,7 @@ public class NativeMethod {
 		return
 				(obj == this) ||
 				(obj instanceof NativeMethod that) &&
-				this.handle.equals(that.handle) &&
-				Objects.equals(this.returns, that.returns) &&
-				this.signature.equals(that.signature);
+				this.handle.equals(that.handle);
 	}
 
 	@Override
@@ -157,8 +183,8 @@ public class NativeMethod {
 		private final Linker linker;
 
 		private MemorySegment address;
-		private Transformer returns;
-		private final List<Parameter> signature = new ArrayList<>();
+		private Transformer<?> returns;
+		private List<NativeParameter> signature = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -189,61 +215,64 @@ public class NativeMethod {
 
 		/**
 		 * Sets the return type of this method.
-		 * @param returns Return type
+		 * @param type Method return type
+		 * @throws IllegalArgumentException if the return type is unsupported
 		 */
-		public Builder returns(Class<?> returns) {
-			if((returns == null) || (returns == void.class)) {
+		public Builder returns(Class<?> type) {
+			// Ignore methods without a return value
+			if(type == void.class) {
 				this.returns = null;
+				return this;
 			}
-			else {
-				this.returns = registry.get(returns);
-			}
+
+			// Lookup return type transformer
+			this.returns = registry.transformer(type);
+
 			return this;
 		}
 
 		/**
-		 * Adds a method parameter.
-		 * @param type 			Parameter type
-		 * @param returned		Whether this a <i>by reference</i> parameter
-		 */
-		public Builder parameter(Class<?> type, boolean returned) {
-			// TODO - only structures can be updated by-reference using this mechanism (?)
-			// ??? arrays of handles, array of structures
-			final Transformer transformer = registry.get(type);
-			signature.add(new Parameter(transformer, returned));
-			return this;
-		}
-
-		/**
-		 * Adds a method parameter.
+		 * Adds a parameter to the signature of this method.
 		 * @param type Parameter type
+		 * @throws IllegalArgumentException if the parameter type is unsupported
+		 * @see #parameter(Class, boolean)
 		 */
 		public Builder parameter(Class<?> type) {
 			return parameter(type, false);
 		}
 
 		/**
+		 * Adds a parameter to the signature of this method.
+		 * @param type 			Parameter type
+		 * @param returned		Whether this parameter is returned-by-reference
+		 * @throws IllegalArgumentException if the parameter type is unsupported
+		 */
+		public Builder parameter(Class<?> type, boolean returned) {
+			final Transformer<?> transformer = registry.transformer(type);
+			signature.add(new NativeParameter(transformer, returned));
+			// TODO - check can be by-reference?
+			return this;
+		}
+
+		/**
 		 * Constructs this native method.
 		 * @return Native method
+		 * @throws UnsupportedOperationException if the return type is unsupported
 		 */
 		public NativeMethod build() {
-			final FunctionDescriptor descriptor = descriptor(returns, signature);
+			final FunctionDescriptor descriptor = descriptor();
 			final MethodHandle handle = linker.downcallHandle(descriptor).bindTo(address);
-			final UnaryOperator<Object> op = returns(returns);
-			return new NativeMethod(handle, op, signature);
+			return new NativeMethod(handle, returns(), signature);
 		}
 
 		/**
 		 * Builds the function descriptor for this native method.
-		 * @param returns		Optional return value transformer
-		 * @param signature		Parameter transformers
-		 * @return Function descriptor
 		 */
-		protected static FunctionDescriptor descriptor(Transformer returns, List<Parameter> signature) {
+		private FunctionDescriptor descriptor() {
 			// Map method signature to FFM layout
 			final MemoryLayout[] layouts = signature
 					.stream()
-					.map(Parameter::layout)
+					.map(NativeParameter::layout)
 					.toArray(MemoryLayout[]::new);
 
 			// Init descriptor
@@ -258,12 +287,16 @@ public class NativeMethod {
 			}
 		}
 
-		private static UnaryOperator<Object> returns(Transformer returns) {
+		/**
+		 * Looks up the return value transformer for this method.
+		 */
+		@SuppressWarnings("unchecked")
+		private Function<Object, ?> returns() {
 			if(returns == null) {
-				return VOID;
+				return null;
 			}
 			else {
-				return result -> TransformerHelper.unmarshal(result, returns);
+				return (Function<Object, ?>) returns.unmarshal();
 			}
 		}
 	}

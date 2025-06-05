@@ -79,7 +79,7 @@ class EnumMaskTest {
 
 		@Test
 		void unmarshal() {
-			assertEquals(new EnumMask<>(1), transformer.unmarshal(1));
+			assertEquals(new EnumMask<>(1), transformer.unmarshal().apply(1));
 		}
 	}
 }

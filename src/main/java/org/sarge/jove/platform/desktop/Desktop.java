@@ -34,7 +34,7 @@ public final class Desktop implements TransientObject {
 //		};
 
 		// TODO
-		final var registry = Registry.create();
+		final var registry = DefaultRegistry.create();
 		//registry.add(DeviceListener.class, null);
 		//registry.add(MemorySegment.class, new IdentityTransformer(ValueLayout.ADDRESS));
 
@@ -113,9 +113,10 @@ public final class Desktop implements TransientObject {
 	 * @return Vulkan extensions supported by this desktop
 	 */
 	public String[] extensions() {
-		final NativeReference<Integer> count = factory.integer();
-		final ReturnedArray<String> array = lib.glfwGetRequiredInstanceExtensions(count);
-		return array.get(count.get(), String.class);
+//		final NativeReference<Integer> count = factory.integer();
+//		final ReturnedArray<String> array = lib.glfwGetRequiredInstanceExtensions(count);
+//		return array.get(count.get(), String.class);
+		return new String[]{};
 	}
 
 //	/**
