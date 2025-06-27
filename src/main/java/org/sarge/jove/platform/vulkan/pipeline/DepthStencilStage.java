@@ -2,29 +2,24 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Set;
-
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
-import org.sarge.jove.util.EnumMask;
-import static org.sarge.lib.Validation.*;
 
 /**
  * Builder for the depth-stencil pipeline stage.
  * @author Sarge
  */
-public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDepthStencilStateCreateInfo> {
+public class DepthStencilStage {
 	private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
 
-	DepthStencilStageBuilder() {
+	DepthStencilStage() {
 		compare(VkCompareOp.LESS_OR_EQUAL);
 	}
 
 	/**
 	 * Enables the <i>depth test</i>.
 	 */
-	public DepthStencilStageBuilder enable() {
+	public DepthStencilStage enable() {
 		info.depthTestEnable = true;
 		return this;
 	}
@@ -38,7 +33,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	@RequiredFeature(field="none", feature="depthBounds")
 	@RequiredFeature(field="min", feature="VK_EXT_depth_range_unrestricted")		// TODO - extension
 	@RequiredFeature(field="max", feature="VK_EXT_depth_range_unrestricted")
-	public DepthStencilStageBuilder bounds(float min, float max) {
+	public DepthStencilStage bounds(float min, float max) {
 		info.depthBoundsTestEnable = true;
 		info.minDepthBounds = min;
 		info.maxDepthBounds = max;
@@ -49,26 +44,26 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	 * Enables the <i>depth bounds</i> test with default min/max bounds.
 	 * @see #bounds(float, float)
 	 */
-	public DepthStencilStageBuilder bounds() {
+	public DepthStencilStage bounds() {
 		return bounds(0, 1);
 	}
 
-	/**
-	 * Creates a command to dynamically configure the <i>depth bounds</i> tests.
-	 * @param min Minimum depth bound
-	 * @param max Maximum depth bound
-	 * @return Dynamic depth bounds command
-	 */
-	public Command setDynamicDepthBounds(float min, float max) {
-		// TODO - validation
-		return (lib, buffer) -> lib.vkCmdSetDepthBounds(buffer, min, max);
-	}
+//	/**
+//	 * Creates a command to dynamically configure the <i>depth bounds</i> tests.
+//	 * @param min Minimum depth bound
+//	 * @param max Maximum depth bound
+//	 * @return Dynamic depth bounds command
+//	 */
+//	public Command setDynamicDepthBounds(float min, float max) {
+//		// TODO - validation
+//		return (lib, buffer) -> lib.vkCmdSetDepthBounds(buffer, min, max);
+//	}
 
 	/**
 	 * Sets the comparison function for the depth test (default is {@link VkCompareOp#LESS_OR_EQUAL}).
 	 * @param depthCompareOp Comparison function
 	 */
-	public DepthStencilStageBuilder compare(VkCompareOp depthCompareOp) {
+	public DepthStencilStage compare(VkCompareOp depthCompareOp) {
 		info.depthCompareOp = requireNonNull(depthCompareOp);
 		return this;
 	}
@@ -78,7 +73,7 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 	 * @param front 	Front parameters
 	 * @param back 		Back parameters
 	 */
-	public DepthStencilStageBuilder stencil(VkStencilOpState front, VkStencilOpState back) {
+	public DepthStencilStage stencil(VkStencilOpState front, VkStencilOpState back) {
 		info.stencilTestEnable = true;
 		info.front = requireNonNull(front);
 		info.back = requireNonNull(back);
@@ -160,39 +155,41 @@ public class DepthStencilStageBuilder extends AbstractStageBuilder<VkPipelineDep
 		}
 	}
 
-	/**
-	 * Creates a command to dynamically configure a stencil mask.
-	 * @param mask		Stencil mask type
-	 * @param face		Face flags
-	 * @param mask		Mask to set
-	 * @return Dynamic stencil compare command
-	 * @throws IllegalArgumentException if {@link #face} is empty
-	 */
-	public Command setDynamicStencilCompareMask(StencilMaskType type, Set<VkStencilFaceFlag> face, int mask) {
-		requireNotEmpty(face);
-		final var faceMask = new EnumMask<>(face);
-		return (lib, buffer) -> {
-			switch(type) {
-    			case COMPARE 	-> lib.vkCmdSetStencilCompareMask(buffer, faceMask, mask);
-    			case WRITE 		-> lib.vkCmdSetStencilWriteMask(buffer, faceMask, mask);
-    			case REFERENCE 	-> lib.vkCmdSetStencilReference(buffer, faceMask, mask);
-			}
-		};
-	}
+//	/**
+//	 * Creates a command to dynamically configure a stencil mask.
+//	 * @param mask		Stencil mask type
+//	 * @param face		Face flags
+//	 * @param mask		Mask to set
+//	 * @return Dynamic stencil compare command
+//	 * @throws IllegalArgumentException if {@link #face} is empty
+//	 */
+//	public Command setDynamicStencilCompareMask(StencilMaskType type, Set<VkStencilFaceFlag> face, int mask) {
+//		requireNotEmpty(face);
+//		final var faceMask = new EnumMask<>(face);
+//		return (lib, buffer) -> {
+//			switch(type) {
+//    			case COMPARE 	-> lib.vkCmdSetStencilCompareMask(buffer, faceMask, mask);
+//    			case WRITE 		-> lib.vkCmdSetStencilWriteMask(buffer, faceMask, mask);
+//    			case REFERENCE 	-> lib.vkCmdSetStencilReference(buffer, faceMask, mask);
+//			}
+//		};
+//	}
 
 	/**
 	 * Enables <i>depth writes</i>.
 	 * @throws IllegalStateException if the depth test is not enabled
 	 * @see #enable()
 	 */
-	public DepthStencilStageBuilder write() {
+	public DepthStencilStage write() {
 		if(!info.depthTestEnable) throw new IllegalStateException();
 		info.depthWriteEnable = true;
 		return this;
 	}
 
-	@Override
-	VkPipelineDepthStencilStateCreateInfo get() {
+	/**
+	 * @return Depth-stencil descriptor
+	 */
+	VkPipelineDepthStencilStateCreateInfo descriptor() {
 		return info;
 	}
 }

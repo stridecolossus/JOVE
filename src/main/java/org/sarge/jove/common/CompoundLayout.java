@@ -10,6 +10,9 @@ public final class CompoundLayout {
 	private final List<Layout> layout;
 	private final int stride;
 
+	// TODO - record
+	// TODO - is this a layout as well, i.e. recursive?
+
 	/**
 	 * Constructor.
 	 * @param layout Layout

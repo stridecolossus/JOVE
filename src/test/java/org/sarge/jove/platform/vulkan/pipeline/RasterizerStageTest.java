@@ -1,31 +1,29 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
 
-public class RasterizerStageBuilderTest {
-	private RasterizerStageBuilder builder;
+public class RasterizerStageTest {
+	private RasterizerStage stage;
 
 	@BeforeEach
 	void before() {
-		builder = new RasterizerStageBuilder();
+		stage = new RasterizerStage();
 	}
 
 	@Test
 	void build() {
-		// Create a shader stage
-		final var info = builder
+		// Configure rasterizer
+		final VkPipelineRasterizationStateCreateInfo info = stage
 				.depthClamp(true)
 				.discard(true)
 				.polygon(VkPolygonMode.LINE)
 				.cull(VkCullMode.FRONT_AND_BACK)
 				.winding(VkFrontFace.CLOCKWISE)
 				.lineWidth(2)
-				.get();
+				.descriptor();
 
 		// Check descriptor
 		assertEquals(0, info.flags);
@@ -45,7 +43,7 @@ public class RasterizerStageBuilderTest {
 
 	@Test
 	void buildDefaults() {
-		final var info = builder.get();
+		final VkPipelineRasterizationStateCreateInfo info = stage.descriptor();
 		assertEquals(0, info.flags);
 		assertEquals(false, info.depthClampEnable);
 		assertEquals(false, info.rasterizerDiscardEnable);
@@ -59,12 +57,12 @@ public class RasterizerStageBuilderTest {
 //		assertEquals(0, info.depthBiasSlopeFactor);
 	}
 
-	@Test
-	void setDynamicLineWidth() {
-		final var buffer = mock(Command.CommandBuffer.class);
-		final var lib = mock(VulkanLibrary.class);
-		final Command cmd = builder.setDynamicLineWidth(2);
-		cmd.execute(lib, buffer);
-		verify(lib).vkCmdSetLineWidth(buffer, 2f);
-	}
+//	@Test
+//	void setDynamicLineWidth() {
+//		final var buffer = mock(Command.CommandBuffer.class);
+//		final var lib = mock(VulkanLibrary.class);
+//		final Command cmd = builder.setDynamicLineWidth(2);
+//		cmd.execute(lib, buffer);
+//		verify(lib).vkCmdSetLineWidth(buffer, 2f);
+//	}
 }

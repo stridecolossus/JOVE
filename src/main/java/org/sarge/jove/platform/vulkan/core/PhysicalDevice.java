@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.render.Surface;
 import org.sarge.jove.platform.vulkan.util.*;
 
 /**
- * A <i>physical device</i> represents a Vulkan system component such as a GPU.
+ * A <i>physical device</i> represents a hardware component such as a GPU.
  * @author Sarge
  */
 public class PhysicalDevice implements NativeObject {
@@ -158,6 +158,7 @@ public class PhysicalDevice implements NativeObject {
 			PhysicalDevice device(Handle handle) {
 				final List<Family> families = families(handle);
 				final SupportedFeatures features = features(handle);
+//				final SupportedFeatures features = new SupportedFeatures(new VkPhysicalDeviceFeatures());
 				return new PhysicalDevice(handle, instance, families, features);
 			}
 
@@ -178,6 +179,7 @@ public class PhysicalDevice implements NativeObject {
 			 */
 			private SupportedFeatures features(Handle handle) {
 				final var features = new VkPhysicalDeviceFeatures();
+//				lib.vkGetPhysicalDeviceFeatures(handle, new NativeReference<>(features));
 				lib.vkGetPhysicalDeviceFeatures(handle, features);
 				return new SupportedFeatures(features);
 			}
@@ -344,6 +346,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param features		Returned features
 		 */
 		void vkGetPhysicalDeviceFeatures(Handle device, @Returned VkPhysicalDeviceFeatures features);
+//		void vkGetPhysicalDeviceFeatures(Handle device, NativeReference<VkPhysicalDeviceFeatures> features);
 
 		/**
 		 * Enumerates the queue families of a device.

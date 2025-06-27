@@ -1,46 +1,41 @@
 package org.sarge.jove.platform.vulkan.pipeline;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.PointerToIntArray;
 import org.sarge.lib.Percentile;
 
-public class MultiSampleStageBuilderTest {
-	private MultiSampleStageBuilder builder;
+public class MultiSampleStageTest {
+	private MultiSampleStage stage;
 
 	@BeforeEach
 	void before() {
-		builder = new MultiSampleStageBuilder();
+		stage = new MultiSampleStage();
 	}
 
 	@Test
 	void build() {
-		final VkPipelineMultisampleStateCreateInfo info = builder
+		final VkPipelineMultisampleStateCreateInfo info = stage
 				.samples(8)
 				.sampleShadingEnable(true)
 				.minSampleShading(Percentile.HALF)
 				.sampleMask(new int[1])
 				.alphaToCoverageEnable(true)
 				.alphaToOneEnable(true)
-				.get();
+				.descriptor();
 
-		assertNotNull(info);
 		assertEquals(0, info.flags);
 		assertEquals(VkSampleCount.COUNT_8, info.rasterizationSamples);
 		assertEquals(true, info.sampleShadingEnable);
 		assertEquals(0.5f, info.minSampleShading);
-		assertEquals(new PointerToIntArray(new int[1]), info.pSampleMask);
+		assertArrayEquals(new int[1], info.pSampleMask);
 		assertEquals(true, info.alphaToCoverageEnable);
 		assertEquals(true, info.alphaToOneEnable);
 	}
 
 	@Test
-	void buildDefaults() {
-		final VkPipelineMultisampleStateCreateInfo info = builder.get();
-		assertNotNull(info);
+	void defaults() {
+		final VkPipelineMultisampleStateCreateInfo info = stage.descriptor();
 		assertEquals(0, info.flags);
 		assertEquals(VkSampleCount.COUNT_1, info.rasterizationSamples);
 		assertEquals(false, info.sampleShadingEnable);

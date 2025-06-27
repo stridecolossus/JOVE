@@ -1,33 +1,28 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
-
-import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.pipeline.DepthStencilStageBuilder.*;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.pipeline.DepthStencilStage.*;
 
-class DepthStencilStageBuilderTest {
-	private DepthStencilStageBuilder builder;
+class DepthStencilStageTest {
+	private DepthStencilStage stage;
 
 	@BeforeEach
 	void before() {
-		builder = new DepthStencilStageBuilder();
+		stage = new DepthStencilStage();
 	}
 
 	@Test
 	void build() {
 		// Build descriptor
-		final var result = builder
+		final VkPipelineDepthStencilStateCreateInfo result = stage
 				.enable()
 				.compare(VkCompareOp.GREATER)
 				.bounds(0.5f, 1)
 				.write()
-				.get();
+				.descriptor();
 
 		// Check descriptor
 		assertEquals(0, result.flags);
@@ -79,30 +74,32 @@ class DepthStencilStageBuilderTest {
 			assertEquals(0, result.reference);
 		}
 	}
-
-	@Nested
-	class DynamicStateTests {
-		private VulkanLibrary lib;
-		private Command.CommandBuffer buffer;
-
-		@BeforeEach
-		void before() {
-			lib = mock(VulkanLibrary.class);
-			buffer = mock(Command.CommandBuffer.class);
-		}
-
-    	@Test
-    	void setDynamicDepthBounds() {
-    		final Command cmd = builder.setDynamicDepthBounds(0.5f, 1);
-    		cmd.execute(lib, buffer);
-    		verify(lib).vkCmdSetDepthBounds(buffer, 0.5f, 1f);
-    	}
-
-    	@Test
-    	void setDynamicStencilCompareMask() {
-    		final Command cmd = builder.setDynamicStencilCompareMask(StencilMaskType.WRITE, Set.of(VkStencilFaceFlag.FRONT), 42);
-    		cmd.execute(lib, buffer);
-    		verify(lib).vkCmdSetStencilWriteMask(buffer, EnumMask.of(VkStencilFaceFlag.FRONT), 42);
-    	}
-    }
 }
+
+//
+//	@Nested
+//	class DynamicStateTests {
+//		private VulkanLibrary lib;
+//		private Command.CommandBuffer buffer;
+//
+//		@BeforeEach
+//		void before() {
+//			lib = mock(VulkanLibrary.class);
+//			buffer = mock(Command.CommandBuffer.class);
+//		}
+//
+//    	@Test
+//    	void setDynamicDepthBounds() {
+//    		final Command cmd = stage.setDynamicDepthBounds(0.5f, 1);
+//    		cmd.execute(lib, buffer);
+//    		verify(lib).vkCmdSetDepthBounds(buffer, 0.5f, 1f);
+//    	}
+//
+//    	@Test
+//    	void setDynamicStencilCompareMask() {
+//    		final Command cmd = stage.setDynamicStencilCompareMask(StencilMaskType.WRITE, Set.of(VkStencilFaceFlag.FRONT), 42);
+//    		cmd.execute(lib, buffer);
+//    		verify(lib).vkCmdSetStencilWriteMask(buffer, EnumMask.of(VkStencilFaceFlag.FRONT), 42);
+//    	}
+//    }
+//}

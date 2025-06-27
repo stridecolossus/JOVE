@@ -133,11 +133,11 @@ public class Allocator {
 	/**
 	 * Selects the memory type for the given request.
 	 * @param reqs			Requirements
-	 * @param props			Memory properties
+	 * @param properties			Memory properties
 	 * @return Selected memory type
 	 * @throws AllocationException if no memory type matches the request
 	 */
-	private MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
+	private MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> properties) throws AllocationException {
 		/**
 		 * Matches a memory type for the given properties and records the fallback as a side-effect.
 		 */
@@ -147,12 +147,12 @@ public class Allocator {
 			@Override
 			public boolean test(MemoryType type) {
 				// Skip if this type does not match the minimal requirements
-				if(!type.matches(props.required())) {
+				if(!matches(type, properties.required())) {
 					return false;
 				}
 
 				// Check for optimal match
-    			if(type.matches(props.optimal())) {
+				if(matches(type, properties.optimal())) {
     				return true;
     			}
 
@@ -162,6 +162,10 @@ public class Allocator {
 				}
 
 				return false;
+			}
+
+			private static boolean matches(MemoryType type, Set<VkMemoryProperty> properties) {
+				return type.properties().containsAll(properties);
 			}
 
 			private Optional<MemoryType> fallback() {
@@ -177,7 +181,7 @@ public class Allocator {
 				.filter(matcher)
 				.findAny()
 				.or(matcher::fallback)
-				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(reqs, props)));
+				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(reqs, properties)));
 	}
 
 	/**

@@ -194,12 +194,14 @@ public final class PushConstant {
 		}
 
 		/**
-		 * Populates a push constant range descriptor.
+		 * @return Descriptor
 		 */
-		void populate(VkPushConstantRange range) {
+		VkPushConstantRange populate() {
+			final var range = new VkPushConstantRange();
 			range.stageFlags = new EnumMask<>(stages);
 			range.size = size;
 			range.offset = offset;
+			return range;
 		}
 	}
 

@@ -1,93 +1,68 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
+import java.nio.*;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkSpecializationInfo;
-import org.sarge.jove.platform.vulkan.pipeline.SpecialisationConstants.Constant;
-import org.sarge.jove.platform.vulkan.pipeline.SpecialisationConstants.Constant.*;
 
 class SpecialisationConstantsTest {
 	private SpecialisationConstants constants;
 
 	@BeforeEach
 	void before() {
-		final Map<Integer, Constant> map = Map.of(
-				1, new IntegerConstant(1),
-				2, new FloatConstant(2),
-				3, new BooleanConstant(true)
-		);
+		final Map<Integer, Object> map = new LinkedHashMap<>();
+		map.put(1, 1);
+		map.put(2, 2f);
+		map.put(3, false);
+
 		constants = new SpecialisationConstants(map);
 	}
 
 	@Test
-	void build() {
-		final VkSpecializationInfo info = constants.build();
-		final int size = 3 * 4;
-		assertEquals(3, info.mapEntryCount);
-		assertEquals(size, info.dataSize);
-		assertEquals(size, info.pData.limit());
+	void type() {
+		assertThrows(IllegalArgumentException.class, () -> new SpecialisationConstants(Map.of(1, "invalid")));
 	}
 
-	@Nested
-	class ConstantTests {
-		private ByteBuffer bb;
+	@Test
+	void empty() {
+		assertEquals(null, new SpecialisationConstants(Map.of()).descriptor());
+	}
 
-		@BeforeEach
-		void before() {
-			bb = ByteBuffer.allocate(4);
-		}
+	@Test
+	void descriptor() {
+		// Check generated data buffer
+		final VkSpecializationInfo info = constants.descriptor();
+		final var buffer = ByteBuffer.allocate(12).order(ByteOrder.nativeOrder());
+		buffer.putInt(1);
+		buffer.putFloat(2);
+		buffer.putInt(0);
+		buffer.flip();
+		assertArrayEquals(buffer.array(), info.pData);
+		assertEquals(12, info.dataSize);
 
-    	@Test
-    	void integer() {
-    		final var constant = new IntegerConstant(1);
-    		assertEquals(4, constant.size());
-    		constant.buffer(bb);
-    		bb.flip();
-    		assertEquals(1, bb.getInt());
-    	}
+		// Check number of entries
+		assertEquals(3, info.mapEntryCount);
+		assertEquals(3, info.pMapEntries.length);
 
-    	@Test
-    	void floating() {
-    		final var constant = new FloatConstant(2);
-    		assertEquals(4, constant.size());
-    		constant.buffer(bb);
-    		bb.flip();
-    		assertEquals(2f, bb.getFloat());
-    	}
+		// Check integer constant
+		final var integer = info.pMapEntries[0];
+		assertEquals(1, integer.constantID);
+		assertEquals(0, integer.offset);
+		assertEquals(4, integer.size);
 
-    	@Test
-    	void bool() {
-    		final var constant = new BooleanConstant(true);
-    		assertEquals(4, constant.size());
-    		constant.buffer(bb);
-    		bb.flip();
-    		assertEquals(1, bb.getInt());
-    	}
-    }
+		// Check floating-point constant
+		final var fp = info.pMapEntries[1];
+		assertEquals(2, fp.constantID);
+		assertEquals(4, fp.offset);
+		assertEquals(4, fp.size);
 
-	@Nested
-	class BuilderTests {
-		private SpecialisationConstants.Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new SpecialisationConstants.Builder();
-		}
-
-		@Test
-		void add() {
-			builder.add(1, new IntegerConstant(1));
-			builder.build();
-		}
-
-		@Test
-		void compound() {
-			builder.add(constants);
-			assertEquals(constants, builder.build());
-		}
+		// Check boolean constant (represented as a 4-byte integer)
+		final var bool = info.pMapEntries[2];
+		assertEquals(3, bool.constantID);
+		assertEquals(8, bool.offset);
+		assertEquals(4, bool.size);
 	}
 }

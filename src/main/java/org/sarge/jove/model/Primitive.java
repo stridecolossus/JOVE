@@ -2,6 +2,8 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.Validation.requireZeroOrMore;
 
+import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
+
 /**
  * A <i>primitive</i> defines the characteristics of the common drawing primitives.
  * @see <a href="https://registry.khronos.org/vulkan/specs/1.1/html/chap20.html#drawing-primitive-topologies">Vulkan primitive topologies</a>
@@ -90,6 +92,21 @@ public enum Primitive {
 		else {
 			return (count % size) == 0;
 		}
+	}
+
+	/**
+	 * @return Topology of this primitive
+	 */
+	public VkPrimitiveTopology topology() {
+		return switch(this) {
+			case POINT 			-> VkPrimitiveTopology.POINT_LIST;
+			case LINE 			-> VkPrimitiveTopology.LINE_LIST;
+			case LINE_STRIP 	-> VkPrimitiveTopology.LINE_STRIP;
+			case TRIANGLE 		-> VkPrimitiveTopology.TRIANGLE_LIST;
+			case TRIANGLE_STRIP	-> VkPrimitiveTopology.TRIANGLE_STRIP;
+			case TRIANGLE_FAN	-> VkPrimitiveTopology.TRIANGLE_FAN;
+			case PATCH			-> VkPrimitiveTopology.PATCH_LIST;
+		};
 	}
 
 	// TODO - is this actually used?

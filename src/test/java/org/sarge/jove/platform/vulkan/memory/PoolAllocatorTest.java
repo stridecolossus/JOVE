@@ -34,7 +34,7 @@ class PoolAllocatorTest {
 	void pool() {
 		final MemoryPool memoryPool = pool.pool(type);
 		assertNotNull(memoryPool);
-		assertEquals(0, memoryPool.count());
+		assertEquals(0, memoryPool.blocks());
 		assertEquals(0, memoryPool.size());
 		assertEquals(0, memoryPool.free());
 		assertEquals(Map.of(type, memoryPool), pool.pools());

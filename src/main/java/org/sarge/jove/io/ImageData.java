@@ -17,7 +17,7 @@ import org.sarge.jove.common.*;
  * <p>
  * @author Sarge
  */
-public class ImageData {
+public class ImageData {		// TODO - record
 	/**
 	 * An <i>image level</i> specifies the MIP levels of this image.
 	 */

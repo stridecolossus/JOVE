@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import static org.sarge.lib.Validation.*;
 
 /**
  * A set of <i>memory properties</i> specifies the purpose and requirements of a memory request.
@@ -34,7 +34,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @param mode			Sharing mode
 	 * @param required		Required memory properties
 	 * @param optimal		Optimal properties
-	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
+	 * @throws IllegalArgumentException if {@link #usage} is empty
 	 */
 	public MemoryProperties {
 		requireNonNull(mode);
@@ -64,19 +64,19 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 
 		/**
 		 * Adds a <i>required</i> memory property.
-		 * @param prop Required memory property
+		 * @param property Required memory property
 		 */
-		public Builder<T> required(VkMemoryProperty prop) {
-			required.add(requireNonNull(prop));
+		public Builder<T> required(VkMemoryProperty property) {
+			required.add(property);
 			return this;
 		}
 
 		/**
 		 * Adds an <i>optimal</i> memory property.
-		 * @param prop Optimal memory property
+		 * @param property Optimal memory property
 		 */
-		public Builder<T> optimal(VkMemoryProperty prop) {
-			optimal.add(requireNonNull(prop));
+		public Builder<T> optimal(VkMemoryProperty property) {
+			optimal.add(property);
 			return this;
 		}
 
@@ -85,23 +85,23 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * @param usage Memory usage flag
 		 */
 		public Builder<T> usage(T usage) {
-			this.usage.add(requireNonNull(usage));
+			this.usage.add(usage);
 			return this;
 		}
 
 		/**
-		 * Sets the sharing mode for this memory (default is {@link VkSharingMode#EXCLUSIVE}).
+		 * Sets the sharing mode for this memory.
+		 * The default value is {@link VkSharingMode#EXCLUSIVE}.
 		 * @param mode Sharing mode
 		 */
 		public Builder<T> mode(VkSharingMode mode) {
-			this.mode = requireNonNull(mode);
+			this.mode = mode;
 			return this;
 		}
 
 		/**
 		 * Constructs this memory properties instance.
 		 * @return New memory properties
-		 * @see MemoryProperties#MemoryProperties(Set, VkSharingMode, Set, Set)
 		 */
 		public MemoryProperties<T> build() {
 			return new MemoryProperties<>(usage, mode, required, optimal);

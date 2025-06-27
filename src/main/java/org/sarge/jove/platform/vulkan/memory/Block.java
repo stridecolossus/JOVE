@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.sarge.jove.common.Handle;
@@ -17,11 +16,6 @@ import org.sarge.jove.common.Handle;
  * @author Sarge
  */
 class Block {
-	/**
-	 * Active memory filter.
-	 */
-	public static final Predicate<DeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
-
 	private final DeviceMemory mem;
 	private final List<BlockDeviceMemory> allocations = new ArrayList<>();
 	private long next;
@@ -46,7 +40,12 @@ class Block {
 	 * @return Free memory in this block
 	 */
 	long free() {
-		final long total = allocations.stream().filter(ALIVE).mapToLong(DeviceMemory::size).sum();
+		final long total = allocations
+				.stream()
+				.filter(DeviceMemory.ALIVE)
+				.mapToLong(DeviceMemory::size)
+				.sum();
+
 		return size() - total;
 	}
 
@@ -78,7 +77,7 @@ class Block {
 		if(next + size > mem.size()) throw new IllegalArgumentException(String.format("Allocation size exceeds free space: size=%d block=%s", size, this));
 
 		// Allocate from free space
-		final BlockDeviceMemory alloc = new BlockDeviceMemory(next, size);
+		final var alloc = new BlockDeviceMemory(next, size);
 		allocations.add(alloc);
 
 		// Update free space pointer
@@ -113,7 +112,6 @@ class Block {
 	class BlockDeviceMemory implements DeviceMemory {
 		private final long offset;
 		private long size;
-
 		private boolean destroyed;
 
 		/**
@@ -161,7 +159,7 @@ class Block {
 		}
 
 		/**
-		 * Reallocated this device memory.
+		 * Reallocates this device memory.
 		 * @param size New size
 		 * @return Reallocated memory
 		 */

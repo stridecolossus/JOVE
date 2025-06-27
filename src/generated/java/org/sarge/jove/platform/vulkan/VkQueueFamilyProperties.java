@@ -15,7 +15,7 @@ public class VkQueueFamilyProperties implements NativeStructure {
 	public EnumMask<VkQueueFlag> queueFlags;
 	public int queueCount;
 	public int timestampValidBits;
-	public VkExtent3D minImageTransferGranularity;
+	public VkExtent3D minImageTransferGranularity; // TODO - constructor? (no)
 
 	@Override
 	public StructLayout layout() {

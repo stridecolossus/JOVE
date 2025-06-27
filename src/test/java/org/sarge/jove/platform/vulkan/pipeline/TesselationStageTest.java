@@ -5,23 +5,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
 
-public class TesselationStageBuilderTest {
-	private TesselationStageBuilder builder;
+public class TesselationStageTest {
+	private TesselationStage builder;
 
 	@BeforeEach
 	void before() {
-		builder = new TesselationStageBuilder();
+		builder = new TesselationStage();
 	}
 
 	@Test
 	void build() {
-		final VkPipelineTessellationStateCreateInfo info = builder.points(3).get();
+		final VkPipelineTessellationStateCreateInfo info = builder.points(3).descriptor();
 		assertEquals(0, info.flags);
 		assertEquals(3, info.patchControlPoints);
 	}
 
 	@Test
-	void optional() {
-		assertEquals(null, builder.get());
+	void empty() {
+		assertEquals(null, builder.descriptor());
 	}
 }

@@ -51,7 +51,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	/**
 	 * Mapped region implementation.
 	 */
-	private class DefaultRegion implements Region {
+	private class DefaultRegion implements Region {		// TODO - record? remove basic validation in ctor?
 		private final Handle ptr;
 		private final long segment;
 		private final long offset;

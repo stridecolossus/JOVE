@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 import org.sarge.jove.util.EnumMask;
 
-public class MemoryTypeTest {
+class MemoryTypeTest {
 	private MemoryType type;
 	private Heap heap;
 
@@ -23,6 +23,8 @@ public class MemoryTypeTest {
 
 	@Test
 	void constructor() {
+		assertEquals(1, heap.size());
+		assertEquals(Set.of(DEVICE_LOCAL), heap.flags());
 		assertEquals(0, type.index());
 		assertEquals(heap, type.heap());
 		assertEquals(Set.of(HOST_VISIBLE), type.properties());
@@ -36,52 +38,22 @@ public class MemoryTypeTest {
 	}
 
 	@Test
-	void matches() {
-		assertEquals(true, type.matches(Set.of(HOST_VISIBLE)));
-		assertEquals(false, type.matches(Set.of(VkMemoryProperty.PROTECTED)));
-	}
-
-	@Test
-	void equals() {
-		assertEquals(true, type.equals(type));
-		assertEquals(true, type.equals(new MemoryType(0, heap, Set.of(HOST_VISIBLE))));
-		assertEquals(false, type.equals(null));
-		assertEquals(false, type.equals(new MemoryType(0, heap, Set.of())));
-	}
-
-	@Nested
-	class HeapTests {
-		@Test
-		void heap() {
-			assertEquals(1, heap.size());
-			assertEquals(Set.of(DEVICE_LOCAL), heap.flags());
-		}
-
-		@Test
-		void equals() {
-			assertEquals(true, heap.equals(heap));
-			assertEquals(false, heap.equals(null));
-			assertEquals(false, heap.equals(new Heap(1, Set.of())));
-		}
-	}
-
-	@Test
 	void extract() {
 		// Create heap
 		final var heap = new VkMemoryHeap();
 		heap.size = 1;
-		heap.flags = EnumMask.of(DEVICE_LOCAL);
+		heap.flags = new EnumMask<>(DEVICE_LOCAL);
 
 		// Create memory type
 		final var info = new VkMemoryType();
 		info.heapIndex = 0;
-		info.propertyFlags = EnumMask.of(HOST_VISIBLE);
+		info.propertyFlags = new EnumMask<>(HOST_VISIBLE);
 
-		// Create memory properties
+		// Create memory properties descriptor
 		final var props = new VkPhysicalDeviceMemoryProperties();
 		props.memoryHeapCount = 1;
-		props.memoryHeaps = new VkMemoryHeap[]{heap};
 		props.memoryTypeCount = 1;
+		props.memoryHeaps = new VkMemoryHeap[]{heap};
 		props.memoryTypes = new VkMemoryType[]{info};
 
 		// Extract from properties

@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
@@ -41,6 +42,11 @@ import org.sarge.jove.platform.vulkan.VkMemoryProperty;
  */
 public interface DeviceMemory extends NativeObject, TransientObject {
 	/**
+	 * Active memory filter.
+	 */
+	Predicate<DeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
+
+	/**
 	 * @return Type of this memory
 	 */
 	MemoryType type();
@@ -64,13 +70,4 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
 	 */
 	Region map(long offset, long size);
-
-	/**
-	 * Maps the whole of this device memory.
-	 * @return Mapped memory region
-	 * @see #map(long, long)
-	 */
-	default Region map() {
-		return map(0, size());
-	}
 }

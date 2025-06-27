@@ -13,20 +13,22 @@ import org.sarge.jove.util.EnumMask;
  * @see VkPipelineDynamicStateCreateInfo
  * @author Sarge
  */
-public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDynamicStateCreateInfo> {
+public class DynamicStateStage {
 	private final Set<VkDynamicState> states = new HashSet<>();
 
 	/**
 	 * Adds a dynamic state.
 	 * @param state Dynamic state
 	 */
-	public DynamicStateStageBuilder state(VkDynamicState state) {
+	public DynamicStateStage state(VkDynamicState state) {
 		states.add(requireNonNull(state));
 		return this;
 	}
 
-	@Override
-	VkPipelineDynamicStateCreateInfo get() {
+	/**
+	 * @return Dynamic state descriptor
+	 */
+	VkPipelineDynamicStateCreateInfo descriptor() {
 		// Ignore if no dynamic state
 		if(states.isEmpty()) {
 			return null;
@@ -34,12 +36,11 @@ public class DynamicStateStageBuilder extends AbstractStageBuilder<VkPipelineDyn
 
 		// Init descriptor
 		final var info = new VkPipelineDynamicStateCreateInfo();
-		info.flags = 0;		// Reserved
+		info.flags = 0;
 
 		// Populate dynamic states
-		final int[] array = states.stream().mapToInt(VkDynamicState::value).toArray();
-		info.dynamicStateCount = array.length;
-		info.pDynamicStates = array; // TODO new PointerToIntArray(array);
+   		info.dynamicStateCount = states.size();
+    	info.pDynamicStates = states.stream().mapToInt(VkDynamicState::value).toArray();
 
 		return info;
 	}

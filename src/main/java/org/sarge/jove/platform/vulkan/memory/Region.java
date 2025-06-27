@@ -26,15 +26,6 @@ public interface Region {
 	ByteBuffer buffer(long offset, long size);
 
 	/**
-	 * Provides a buffer to access the whole of this memory region.
-	 * @return Buffer
-	 * @see #buffer(long, long)
-	 */
-	default ByteBuffer buffer() {
-		return buffer(0, size());
-	}
-
-	/**
 	 * Unmaps this region.
 	 * @throws IllegalStateException if the mapping has already been released or the memory has been destroyed
 	 */

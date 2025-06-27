@@ -3,17 +3,15 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.vulkan.*;
 
-class AssemblyStageBuilderTest {
-	private AssemblyStageBuilder builder;
+class InputAssemblyStageTest {
+	private InputAssemblyStage builder;
 
 	@BeforeEach
 	void before() {
-		builder = new AssemblyStageBuilder();
+		builder = new InputAssemblyStage();
 	}
 
 	@Test
@@ -22,7 +20,7 @@ class AssemblyStageBuilderTest {
 		final VkPipelineInputAssemblyStateCreateInfo info = builder
 				.topology(Primitive.LINE)
 				.restart(true)
-				.get();
+				.descriptor();
 
 		// Check descriptor
 		assertEquals(0, info.flags);
@@ -31,15 +29,10 @@ class AssemblyStageBuilderTest {
 	}
 
 	@Test
-	void buildDefault() {
-		final VkPipelineInputAssemblyStateCreateInfo info = builder.get();
+	void defaults() {
+		final VkPipelineInputAssemblyStateCreateInfo info = builder.descriptor();
+		assertEquals(0, info.flags);
 		assertEquals(VkPrimitiveTopology.TRIANGLE_STRIP, info.topology);
 		assertEquals(false, info.primitiveRestartEnable);
-	}
-
-	@ParameterizedTest
-	@EnumSource(Primitive.class)
-	void primitives(Primitive primitive) {
-		builder.topology(primitive);
 	}
 }

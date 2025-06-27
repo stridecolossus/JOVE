@@ -9,17 +9,15 @@ import org.sarge.jove.foreign.Transformer;
  * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
  * @author Sarge
  */
-public final class Handle {
-	private final MemorySegment address;
-
+public record Handle(MemorySegment address) {
 	/**
 	 * Constructor.
 	 * @param address Memory address
 	 * @throws NullPointerException if {@link #address} is {@link MemorySegment#NULL}
 	 */
-	public Handle(MemorySegment address) {
+	public Handle {
 		if(MemorySegment.NULL.equals(address)) throw new NullPointerException();
-		this.address = address.asReadOnly();
+		address = address.asReadOnly();
 	}
 
 	/**
@@ -35,24 +33,6 @@ public final class Handle {
 	 */
 	public MemorySegment address() {
 		return MemorySegment.ofAddress(address.address());
-	}
-
-	@Override
-	public int hashCode() {
-		return address.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Handle that) &&
-				this.address.equals(that.address);
-	}
-
-	@Override
-	public String toString() {
-		return String.format("Handle[%s]", address);
 	}
 
 	/**

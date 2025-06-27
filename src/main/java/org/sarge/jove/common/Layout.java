@@ -42,11 +42,11 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 
 	/**
 	 * Creates a signed {@link Type#FLOAT} layout with {@link #size} elements.
-	 * @param size Number of elements
+	 * @param count Number of elements
 	 * @return New floating-point layout
 	 */
-	public static Layout floats(int size) {
-		return new Layout(size, Type.FLOAT, true, Float.BYTES);
+	public static Layout floats(int count) {
+		return new Layout(count, Type.FLOAT, true, Float.BYTES);
 	}
 
 	/**

@@ -12,4 +12,3 @@ public abstract class VulkanStructure implements NativeStructure {
 	}
 }
 // TODO - temporary workaround
-

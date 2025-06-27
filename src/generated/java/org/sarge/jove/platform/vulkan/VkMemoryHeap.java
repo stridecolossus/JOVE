@@ -5,7 +5,7 @@ import static java.lang.foreign.ValueLayout.*;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
@@ -13,7 +13,7 @@ import org.sarge.jove.util.BitMask;
  */
 public class VkMemoryHeap implements NativeStructure {
 	public long size;
-	public BitMask<VkMemoryHeapFlag> flags;
+	public EnumMask<VkMemoryHeapFlag> flags;
 
 	@Override
 	public StructLayout layout() {

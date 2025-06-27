@@ -2,8 +2,10 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Arrays;
+
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntEnum;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 import org.sarge.lib.Percentile;
 
 /**
@@ -11,10 +13,10 @@ import org.sarge.lib.Percentile;
  * @see VkPipelineMultisampleStateCreateInfo
  * @author Sarge
  */
-public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMultisampleStateCreateInfo> {
-	private VkPipelineMultisampleStateCreateInfo info = new VkPipelineMultisampleStateCreateInfo();
+public class MultiSampleStage {
+	private final VkPipelineMultisampleStateCreateInfo info = new VkPipelineMultisampleStateCreateInfo();
 
-	public MultiSampleStageBuilder() {
+	public MultiSampleStage() {
 		samples(1);
 		sampleShadingEnable(false);
 		minSampleShading(Percentile.ONE);
@@ -27,7 +29,7 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * @param samples Sample count
 	 * @see #samples(int)
 	 */
-	public MultiSampleStageBuilder rasterizationSamples(VkSampleCount rasterizationSamples) {
+	public MultiSampleStage rasterizationSamples(VkSampleCount rasterizationSamples) {
 		info.rasterizationSamples = requireNonNull(rasterizationSamples);
 		return this;
 	}
@@ -38,8 +40,8 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 	 * @see #samples(VkSampleCount)
 	 */
-	public MultiSampleStageBuilder samples(int rasterizationSamples) {
-		info.rasterizationSamples = IntEnum.reverse(VkSampleCount.class).map(rasterizationSamples);
+	public MultiSampleStage samples(int rasterizationSamples) {
+		info.rasterizationSamples = new ReverseMapping<>(VkSampleCount.class).map(rasterizationSamples);
 		return this;
 	}
 
@@ -47,7 +49,7 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * Sets whether multi-sample shading is enabled (default is {@code false}).
 	 * @param sampleShadingEnable Whether sample shading is enabled
 	 */
-	public MultiSampleStageBuilder sampleShadingEnable(boolean sampleShadingEnable) {
+	public MultiSampleStage sampleShadingEnable(boolean sampleShadingEnable) {
 		info.sampleShadingEnable = sampleShadingEnable;
 		return this;
 	}
@@ -56,7 +58,7 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * Sets the minimum fraction of sample shading (default is one).
 	 * @param minSampleShading Minimum sample shading fraction
 	 */
-	public MultiSampleStageBuilder minSampleShading(Percentile minSampleShading) {
+	public MultiSampleStage minSampleShading(Percentile minSampleShading) {
 		info.minSampleShading = minSampleShading.value();
 		return this;
 	}
@@ -65,9 +67,9 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * Sets the sample mask.
 	 * @param mask Sample mask
 	 */
-	public MultiSampleStageBuilder sampleMask(int[] mask) {
+	public MultiSampleStage sampleMask(int[] mask) {
 		// TODO - length = samples / 32
-		info.pSampleMask = mask; // TODO new PointerToIntArray(mask);
+		info.pSampleMask = Arrays.copyOf(mask, mask.length);
 		return this;
 	}
 
@@ -75,7 +77,7 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * Sets whether an temporary coverage value is generated based on the alpha value of the first colour output.
 	 * @param alphaToCoverageEnable Whether <i>alpha to coverage</i> is enabled
 	 */
-	public MultiSampleStageBuilder alphaToCoverageEnable(boolean alphaToCoverageEnable) {
+	public MultiSampleStage alphaToCoverageEnable(boolean alphaToCoverageEnable) {
 		info.alphaToCoverageEnable = alphaToCoverageEnable;
 		return this;
 	}
@@ -84,13 +86,15 @@ public class MultiSampleStageBuilder extends AbstractStageBuilder<VkPipelineMult
 	 * Sets whether the alpha component of the first colour output is replaced with one.
 	 * @param alphaToOneEnable Whether <i>alpha to one</i> is enabled
 	 */
-	public MultiSampleStageBuilder alphaToOneEnable(boolean alphaToOneEnable) {
+	public MultiSampleStage alphaToOneEnable(boolean alphaToOneEnable) {
 		info.alphaToOneEnable = alphaToOneEnable;
 		return this;
 	}
 
-	@Override
-	VkPipelineMultisampleStateCreateInfo get() {
+	/**
+	 * @return Multi-sample descriptor
+	 */
+	VkPipelineMultisampleStateCreateInfo descriptor() {
 		return info;
 	}
 }

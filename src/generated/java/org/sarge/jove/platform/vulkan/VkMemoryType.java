@@ -5,14 +5,14 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkMemoryType implements NativeStructure {
-	public BitMask<VkMemoryProperty> propertyFlags;
+	public EnumMask<VkMemoryProperty> propertyFlags;
 	public int heapIndex;
 
 	@Override

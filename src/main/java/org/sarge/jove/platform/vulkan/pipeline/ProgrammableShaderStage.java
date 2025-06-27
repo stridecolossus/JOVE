@@ -10,58 +10,48 @@ import org.sarge.jove.platform.vulkan.*;
  * @author Sarge
  */
 public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String name, SpecialisationConstants constants) {
-	private static final String MAIN = "main";
-
-	/**
-	 * Constructor.
-	 * @param stage		Shader stage
-	 * @param shader	Shader module
-	 */
-	public ProgrammableShaderStage(VkShaderStage stage, Shader shader) {
-		this(stage, shader, MAIN, null);
-	}
-
 	/**
 	 * Constructor.
 	 * @param stage			Shader stage
 	 * @param shader		Shader module
 	 * @param name			Method name
-	 * @param constants		Optional specialisation constants
+	 * @param constants		Specialisation constants
 	 */
 	public ProgrammableShaderStage {
 		requireNonNull(stage);
 		requireNonNull(shader);
 		requireNotEmpty(name);
+		requireNonNull(constants);
 	}
 
 	/**
-	 * Populates the shader stage descriptor.
+	 * @return Programmable shader stage descriptor
 	 */
-	void populate(VkPipelineShaderStageCreateInfo info) {
-		info.sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
+	VkPipelineShaderStageCreateInfo descriptor() {
+		final var info = new VkPipelineShaderStageCreateInfo();
 		info.stage = stage;
 		info.module = shader.handle();
 		info.pName = name;
-		if(constants != null) {
-			info.pSpecializationInfo = constants.build();
-		}
+		info.pSpecializationInfo = constants.descriptor();
+		return info;
 	}
 
 	/**
 	 * Builder for a shader stage.
 	 */
 	public static class Builder {
-		private final VkShaderStage stage;
+		private VkShaderStage stage;
 		private Shader shader;
-		private String name = MAIN;
+		private String name = "main";
 		private SpecialisationConstants constants;
 
 		/**
 		 * Constructor.
 		 * @param stage Shader stage
 		 */
-		public Builder(VkShaderStage stage) {
-			this.stage = requireNonNull(stage);
+		public Builder stage(VkShaderStage stage) {
+			this.stage = stage;
+			return this;
 		}
 
 		/**
@@ -69,7 +59,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param shader Shader module
     	 */
     	public Builder shader(Shader shader) {
-    		this.shader = requireNonNull(shader);
+    		this.shader = shader;
     		return this;
     	}
 
@@ -78,7 +68,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param name Shader method name
     	 */
     	public Builder name(String name) {
-    		this.name = requireNotEmpty(name);
+    		this.name = name;
     		return this;
     	}
 
@@ -87,17 +77,15 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param constants Specialisation constants
     	 */
     	public Builder constants(SpecialisationConstants constants) {
-    		this.constants = requireNonNull(constants);
+    		this.constants = constants;
     		return this;
     	}
 
     	/**
     	 * Constructs this shader stage.
     	 * @return New shader stage
-    	 * @throws IllegalArgumentException if the shader module has not been configured
     	 */
     	public ProgrammableShaderStage build() {
-    		if(shader == null) throw new IllegalArgumentException("Shader module not populated");
     		return new ProgrammableShaderStage(stage, shader, name, constants);
     	}
     }

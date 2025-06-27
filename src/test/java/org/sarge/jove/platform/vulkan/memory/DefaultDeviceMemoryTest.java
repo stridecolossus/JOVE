@@ -51,7 +51,7 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("can be mapped")
 		@Test
 		void map() {
-			assertNotNull(mem.map());
+			assertNotNull(mem.map(0, mem.size()));
 		}
 
 		@DisplayName("cannot be mapped if it is not host visible")
@@ -59,7 +59,7 @@ class DefaultDeviceMemoryTest {
 		void visible() {
 			final MemoryType invalid = new MemoryType(0, new Heap(1, Set.of()), Set.of());
 			mem = new DefaultDeviceMemory(new Handle(1), dev, invalid, 3);
-			assertThrows(IllegalStateException.class, () -> mem.map());
+			assertThrows(IllegalStateException.class, () -> mem.map(0, mem.size()));
 		}
 
 		@DisplayName("cannot map a region larger than the memory")
@@ -83,7 +83,7 @@ class DefaultDeviceMemoryTest {
 
 		@BeforeEach
 		void before() {
-			region = mem.map();
+			region = mem.map(0, mem.size());
 		}
 
 		@DisplayName("has a region mapping")
@@ -96,7 +96,7 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("cannot be mapped more than once")
 		@Test
 		void map() {
-			assertThrows(IllegalStateException.class, () -> mem.map());
+			assertThrows(IllegalStateException.class, () -> mem.map(0, mem.size()));
 		}
 
 		@DisplayName("can be unmapped")
@@ -109,7 +109,7 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("can provide a buffer for read-write operations")
 		@Test
 		void buffer() {
-			final ByteBuffer bb = region.buffer();
+			final ByteBuffer bb = region.buffer(0, region.size());
 			assertEquals(3, bb.capacity());
 		}
 
@@ -142,14 +142,14 @@ class DefaultDeviceMemoryTest {
 
 		@BeforeEach
 		void before() {
-			region = mem.map();
+			region = mem.map(0, mem.size());
 			region.unmap();
 		}
 
 		@DisplayName("can be re-mapped")
 		@Test
 		void map() {
-			mem.map();
+			mem.map(0, mem.size());
 		}
 
 		@DisplayName("cannot be unmapped more than once")
@@ -161,7 +161,7 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("cannot provide a buffer")
 		@Test
 		void buffer() {
-			assertThrows(IllegalStateException.class, () -> region.buffer());
+			assertThrows(IllegalStateException.class, () -> region.buffer(0, region.size()));
 		}
 	}
 
@@ -172,14 +172,14 @@ class DefaultDeviceMemoryTest {
 
 		@BeforeEach
 		void before() {
-			region = mem.map();
+			region = mem.map(0, mem.size());
 			mem.destroy();
 		}
 
 		@DisplayName("cannot be mapped")
 		@Test
 		void map() {
-			assertThrows(IllegalStateException.class, () -> mem.map());
+			assertThrows(IllegalStateException.class, () -> mem.map(0, mem.size()));
 		}
 
 		@DisplayName("cannot be unmapped")
@@ -197,7 +197,7 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("cannot provide a buffer")
 		@Test
 		void buffer() {
-			assertThrows(IllegalStateException.class, () -> region.buffer());
+			assertThrows(IllegalStateException.class, () -> region.buffer(0, region.size()));
 		}
 
 		@DisplayName("cannot be destroyed again")

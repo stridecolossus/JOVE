@@ -1,5 +1,4 @@
 
-cache allocated memory in structures?
 
 -------------------------------
 

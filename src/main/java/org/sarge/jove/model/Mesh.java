@@ -13,6 +13,8 @@ import org.sarge.jove.geometry.*;
  * @author Sarge
  */
 public final class Mesh {
+	// TODO - record?
+
 	private final Primitive primitive;
 	private final CompoundLayout layout;
 	private final IntSupplier count;

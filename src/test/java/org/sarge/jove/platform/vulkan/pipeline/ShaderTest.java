@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.*;
@@ -28,7 +27,6 @@ class ShaderTest {
 			@Override
 			public boolean equals(Object obj) {
 				final var info = (VkShaderModuleCreateInfo) obj;
-				assertNotNull(info);
 				assertEquals(CODE.length, info.codeSize);
 				assertNotNull(info.pCode);
 				return true;

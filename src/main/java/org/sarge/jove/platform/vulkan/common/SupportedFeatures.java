@@ -2,7 +2,8 @@ package org.sarge.jove.platform.vulkan.common;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Set;
+import java.lang.reflect.*;
+import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
@@ -20,20 +21,30 @@ public final class SupportedFeatures {
 	 */
 	public SupportedFeatures(VkPhysicalDeviceFeatures features) {
 		this.features = requireNonNull(features);
-//		this.features.write();
 	}
 
 	/**
 	 * @return Feature names
 	 */
 	public Set<String> features() {
-//		return features
-//				.getFieldOrder()
-//				.stream()
-//				.filter(this::isEnabled)
-//				.collect(toSet());
-		// TODO
-		return null;
+		final var names = new HashSet<String>();
+		try {
+    		for(Field field : VkPhysicalDeviceFeatures.class.getFields()) {
+
+    			final int mods = field.getModifiers();
+    			if(!Modifier.isPublic(mods) || Modifier.isStatic(mods)) {
+    				continue;
+    			}
+
+    			if(field.getInt(features) == 1) {
+    				names.add(field.getName());
+    			}
+    		}
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+		return names;
 	}
 
 	/**
@@ -41,8 +52,15 @@ public final class SupportedFeatures {
 	 * @return Whether the given feature is supported by the hardware
 	 */
 	public boolean isEnabled(String feature) {
-		//return features.readField(feature) == Boolean.TRUE;
-		return false;
+		try {
+			return VkPhysicalDeviceFeatures.class.getField(feature).getInt(features) == 1;
+		}
+		catch(NoSuchFieldException e) {
+			throw new IllegalArgumentException("Unknown device feature: " + feature);
+		}
+		catch(Exception e) {
+			throw new RuntimeException("Error accessing device feature: " + feature, e);
+		}
 	}
 
 	/**

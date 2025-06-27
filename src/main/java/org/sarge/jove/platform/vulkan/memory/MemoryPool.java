@@ -40,34 +40,36 @@ public class MemoryPool implements TransientObject {
 	/**
 	 * @return Amount of available memory in this pool
 	 */
-	public final long free() {
-		return blocks.stream().mapToLong(Block::free).sum();
+	public long free() {
+		return blocks
+				.stream()
+				.mapToLong(Block::free)
+				.sum();
 	}
 
 	/**
 	 * @return Total amount of memory in this pool
 	 */
-	public final long size() {
+	public long size() {
 		return total;
 	}
 
 	/**
 	 * @return Number of memory blocks in this pool
 	 */
-	public final int count() {
+	public int blocks() {
 		return blocks.size();
 	}
 
 	/**
 	 * @return Memory allocations in this pool
 	 */
-	public final Stream<? extends DeviceMemory> allocations() {
+	Stream<? extends DeviceMemory> allocations() {
 		return blocks
 				.stream()
 				.flatMap(Block::allocations)
-				.filter(Block.ALIVE);
+				.filter(DeviceMemory.ALIVE);
 	}
-	// TODO - public?
 
 	/**
 	 * Adds a memory block to this pool.
@@ -115,8 +117,7 @@ public class MemoryPool implements TransientObject {
 	 * Releases <b>all</b> memory allocated back to this pool.
 	 */
 	public void release() {
-		final var allocations = this.allocations();
-		allocations.forEach(DeviceMemory::destroy);
+		this.allocations().forEach(DeviceMemory::destroy);
 		assert free() == total;
 	}
 
@@ -128,5 +129,10 @@ public class MemoryPool implements TransientObject {
 		blocks.clear();
 		total = 0;
 		assert free() == 0;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("MemoryPool[type=%s blocks=%s total=%d]", type, blocks(), total);
 	}
 }

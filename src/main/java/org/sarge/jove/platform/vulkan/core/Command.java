@@ -155,7 +155,7 @@ public interface Command {
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
-			info.flags = EnumMask.of(flags);
+			info.flags = new EnumMask<>(flags);
 			info.pInheritanceInfo = inheritance;
 
 			// Start buffer recording

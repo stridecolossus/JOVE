@@ -90,13 +90,13 @@ public class BlockTest {
 		@Test
 		void mapDestroyed() {
 			allocation.destroy();
-			assertThrows(IllegalStateException.class, () -> allocation.map());
+			assertThrows(IllegalStateException.class, () -> allocation.map(0, 2));
 		}
 
 		@Test
 		void mapReplacePrevious() {
-			final Region prev = mem.map();
-			assertNotEquals(prev, allocation.map());
+			final Region prev = mem.map(0, 1);
+			assertNotEquals(prev, allocation.map(0, 1));
 		}
 
 		@Test
@@ -126,7 +126,7 @@ public class BlockTest {
 
 		@Test
 		void reallocateUnmapped() {
-			allocation.map();
+			allocation.map(0, 1);
 			allocation.destroy();
 			allocation.reallocate(1);
 			assertEquals(Optional.empty(), allocation.region());

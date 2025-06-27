@@ -31,7 +31,7 @@ public class MemoryPoolTest {
     	void empty() {
     		assertEquals(0, pool.size());
     		assertEquals(0, pool.free());
-    		assertEquals(0, pool.count());
+    		assertEquals(0, pool.blocks());
     		assertEquals(0, pool.allocations().count());
     	}
 
@@ -54,7 +54,7 @@ public class MemoryPoolTest {
     		pool.add(block);
     		assertEquals(2, pool.size());
     		assertEquals(2, pool.free());
-    		assertEquals(1, pool.count());
+    		assertEquals(1, pool.blocks());
     		assertEquals(0, pool.allocations().count());
     	}
 
@@ -83,7 +83,7 @@ public class MemoryPoolTest {
 			assertEquals(false, mem.isDestroyed());
 			assertEquals(2, pool.size());
 			assertEquals(1, pool.free());
-			assertEquals(1, pool.count());
+			assertEquals(1, pool.blocks());
 			assertEquals(1, pool.allocations().count());
 		}
 
@@ -107,7 +107,7 @@ public class MemoryPoolTest {
     		assertEquals(2, block.remaining());
 			assertEquals(0, pool.size());
 			assertEquals(0, pool.free());
-			assertEquals(0, pool.count());
+			assertEquals(0, pool.blocks());
 			assertEquals(0, pool.allocations().count());
     	}
 	}
@@ -132,7 +132,7 @@ public class MemoryPoolTest {
 			assertEquals(false, remaining.isDestroyed());
 			assertEquals(2, pool.size());
 			assertEquals(0, pool.free());
-			assertEquals(1, pool.count());
+			assertEquals(1, pool.blocks());
 			assertEquals(2, pool.allocations().count());
 		}
 
@@ -150,7 +150,7 @@ public class MemoryPoolTest {
     		assertEquals(true, mem.isDestroyed());
 			assertEquals(2, pool.size());
 			assertEquals(2, pool.free());
-			assertEquals(1, pool.count());
+			assertEquals(1, pool.blocks());
 			assertEquals(0, pool.allocations().count());
     	}
 
@@ -161,7 +161,7 @@ public class MemoryPoolTest {
     		assertEquals(true, mem.isDestroyed());
 			assertEquals(0, pool.size());
 			assertEquals(0, pool.free());
-			assertEquals(0, pool.count());
+			assertEquals(0, pool.blocks());
 			assertEquals(0, pool.allocations().count());
     	}
 	}
@@ -200,7 +200,7 @@ public class MemoryPoolTest {
 		void free() {
 			assertEquals(2, pool.size());
 			assertEquals(2, pool.free());
-			assertEquals(1, pool.count());
+			assertEquals(1, pool.blocks());
 			assertEquals(0, pool.allocations().count());
 		}
 
@@ -211,7 +211,7 @@ public class MemoryPoolTest {
 			assertEquals(Optional.of(mem), pool.reallocate(2));
 			assertEquals(2, pool.size());
 			assertEquals(0, pool.free());
-			assertEquals(1, pool.count());
+			assertEquals(1, pool.blocks());
 			assertEquals(1, pool.allocations().count());
 		}
 
@@ -223,7 +223,7 @@ public class MemoryPoolTest {
 			assertEquals(1, portion.size());
 			assertEquals(2, pool.size());
 			assertEquals(1, pool.free());
-			assertEquals(1, pool.count());
+			assertEquals(1, pool.blocks());
 			assertEquals(1, pool.allocations().count());
 		}
 	}

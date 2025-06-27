@@ -269,7 +269,7 @@ public class Matrix implements Transform, Bufferable {
 	 * @return Matrix string
 	 */
 	public String format(NumberFormat format) {
-		final StringJoiner str = new StringJoiner("\n");
+		final var str = new StringJoiner("\n");
 		for(int r = 0; r < this.order(); ++r) {
 			final String row = MathsUtility.format(matrix[r]);
 			str.add(row);
