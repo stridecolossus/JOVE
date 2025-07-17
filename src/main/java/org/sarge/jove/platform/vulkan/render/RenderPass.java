@@ -5,9 +5,10 @@ import static java.util.Objects.requireNonNull;
 import java.util.List;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.Returned;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.render.Subpass.*;
@@ -27,7 +28,7 @@ public final class RenderPass extends VulkanObject {
 	 * @param dev				Logical device
 	 * @param attachments		Attachments
 	 */
-	RenderPass(Handle handle, DeviceContext dev, List<Attachment> attachments) {
+	RenderPass(Handle handle, LogicalDevice dev, List<Attachment> attachments) {
 		super(handle, dev);
 		this.attachments = List.copyOf(attachments);
 	}
@@ -70,9 +71,10 @@ public final class RenderPass extends VulkanObject {
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#vkGetRenderAreaGranularity">vkGetRenderAreaGranularity</a>
 	 */
 	public VkExtent2D granularity() {
-		final DeviceContext dev = this.device();
+		final LogicalDevice dev = this.device();
+		final VulkanLibrary vulkan = dev.vulkan();
 		final var area = new VkExtent2D();
-		dev.vulkan().library().vkGetRenderAreaGranularity(dev, this, area);
+		vulkan.vkGetRenderAreaGranularity(dev, this, area);
 		return area;
 	}
 
@@ -88,7 +90,7 @@ public final class RenderPass extends VulkanObject {
 	 * @return New render pass
 	 * @throws IllegalArgumentException if {@link #subpasses} is empty, contains duplicates, or does not contain a dependant subpass
 	 */
-	public static RenderPass create(DeviceContext dev, List<Subpass> subpasses) {
+	public static RenderPass create(LogicalDevice dev, List<Subpass> subpasses) {
 		// Validate
 		if(subpasses.isEmpty()) throw new IllegalArgumentException("At least one subpass must be specified");
 		if(!Utility.distinct(subpasses)) throw new IllegalArgumentException("Subpasses cannot be duplicated");
@@ -133,12 +135,12 @@ public final class RenderPass extends VulkanObject {
 		// Add dependencies
 		final List<Dependency> dependencies = subpasses.stream().flatMap(Subpass::dependencies).toList();
 		info.dependencyCount = dependencies.size();
-		info.pDependencies = null; // TODO StructureCollector.pointer(dependencies, new VkSubpassDependency(), Dependency::populate);
+		info.pDependencies = dependencies.stream().map(Dependency::descriptor).toArray(VkSubpassDependency[]::new);
 
 		// Allocate render pass
-		final Vulkan vulkan= dev.vulkan();
-		final NativeReference<Handle> ref = vulkan.factory().pointer();
-		vulkan.library().vkCreateRenderPass(dev, info, null, ref);
+		final VulkanLibrary vulkan = dev.vulkan();
+		final Pointer ref = new Pointer();
+		vulkan.vkCreateRenderPass(dev, info, null, ref);
 
 		// Create render pass
 		return new RenderPass(ref.get(), dev, attachments);
@@ -156,7 +158,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param pRenderPass		Returned render pass handle
 		 * @return Result
 		 */
-		int vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pRenderPass);
+		VkResult vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, Pointer pRenderPass);
 
 		/**
 		 * Destroys a render pass.
@@ -164,7 +166,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param renderPass		Render pass
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyRenderPass(DeviceContext device, RenderPass renderPass, Handle pAllocator);
+		void vkDestroyRenderPass(LogicalDevice device, RenderPass renderPass, Handle pAllocator);
 
 		/**
 		 * Begins a render pass.
@@ -193,7 +195,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param renderPass			Render pass
 		 * @param pGranularity			Returned render area granularity
 		 */
-		void vkGetRenderAreaGranularity(DeviceContext dev, RenderPass renderPass, @Returned VkExtent2D pGranularity);
+		void vkGetRenderAreaGranularity(LogicalDevice dev, RenderPass renderPass, @Returned VkExtent2D pGranularity);
 
 		/**
 		 * Clears attachments in this render pass.

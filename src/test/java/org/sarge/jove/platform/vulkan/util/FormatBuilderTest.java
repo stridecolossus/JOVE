@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.util;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
@@ -96,10 +95,9 @@ class FormatBuilderTest {
 		@DisplayName("The builder can determine the format for an image using the hint")
 		@Test
 		void hint() {
-			final ImageData image = mock(ImageData.class);
-			final VkFormat format = VkFormat.B8G8R8_SRGB;
-			when(image.format()).thenReturn(format.value());
-			assertEquals(format, FormatBuilder.format(image));
+			final Layout layout = Layout.floats(4);
+			final ImageData image = new ImageData(new Dimensions(1, 1), "BGRA", layout, new byte[1]);
+			assertEquals(VkFormat.R32G32B32A32_SFLOAT, FormatBuilder.format(image));
 		}
 
 		@DisplayName("The builder can determine the format for an image where the hint is not provided")

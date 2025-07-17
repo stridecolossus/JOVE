@@ -8,8 +8,8 @@
 
     <properties>
 <!--        <java.version>23</java.version>-->
-        <maven.compiler.target>22</maven.compiler.target>
-        <maven.compiler.source>22</maven.compiler.source>
+        <maven.compiler.target>23</maven.compiler.target>
+        <maven.compiler.source>23</maven.compiler.source>
     </properties>
 
     <build>
@@ -18,9 +18,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>22</source>
-                    <target>22</target>
-                    <release>22</release>
+                    <source>2</source>
+                    <target>23</target>
+                    <release>23</release>
                     <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
@@ -53,14 +53,17 @@ https://stackoverflow.com/questions/34821047/java-lang-verifyerror-inconsistent-
             <scope>test</scope>
         </dependency>
         
+        <!--
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
+        -->
     </dependencies>
 
+<!--
     <dependencyManagement>
     	<dependencies>
     		<dependency>
@@ -70,4 +73,5 @@ https://stackoverflow.com/questions/34821047/java-lang-verifyerror-inconsistent-
     		</dependency>
     	</dependencies>
     </dependencyManagement>
+-->
 </project>

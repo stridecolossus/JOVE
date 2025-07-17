@@ -1,11 +1,10 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static org.sarge.jove.platform.vulkan.VkAttachmentLoadOp.LOAD;
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.VkAttachmentLoadOp.LOAD;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntEnum;
-import static org.sarge.lib.Validation.*;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * An <i>attachment</i> defines a target for a render pass such as a colour or depth-stencil image.
@@ -109,6 +108,8 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	public static class Builder {
 		private static final LoadStore DONT_CARE = new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
 
+		private final ReverseMapping<VkSampleCount> mapping = new ReverseMapping<>(VkSampleCount.class);
+
 		private final VkFormat format;
 		private VkSampleCount samples = VkSampleCount.COUNT_1;
 		private LoadStore attachment = DONT_CARE;
@@ -140,7 +141,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @see #samples(VkSampleCount)
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntEnum.reverse(VkSampleCount.class).map(samples);
+			this.samples = mapping.map(samples);
 			return this;
 		}
 

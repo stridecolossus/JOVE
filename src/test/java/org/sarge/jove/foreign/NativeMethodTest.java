@@ -1,6 +1,5 @@
 package org.sarge.jove.foreign;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.*;
@@ -9,110 +8,83 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeMethod.*;
 
 class NativeMethodTest {
-	private IdentityTransformer<Integer> integer;
-	private NativeParameter parameter;
+	private IdentityTransformer identity;
 
 	@BeforeEach
 	void before() {
-		integer = new IdentityTransformer<>(JAVA_INT);
-		parameter = new NativeParameter(integer);
+		identity = new IdentityTransformer(ValueLayout.JAVA_INT);
 	}
 
-	@DisplayName("A native method can be invoked")
+	@DisplayName("A simple native method without a return type or parameters can be invoked")
 	@Test
 	void invoke() {
 		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class));
-		final NativeMethod method = new NativeMethod(handle, null, List.of());
+		final var method = new NativeMethod(handle, null, List.of());
 		assertEquals(null, method.invoke(null));
 	}
 
-	@DisplayName("A native method can optionally have a return value")
+	@DisplayName("A native method can marshal the return value of the method")
 	@Test
 	void returns() {
 		final MethodHandle handle = MethodHandles.constant(int.class, 42);
-		final NativeMethod method = new NativeMethod(handle, Function.identity(), List.of());
+		final var method = new NativeMethod(handle, identity, List.of());
 		assertEquals(42, method.invoke(null));
 	}
 
-	@DisplayName("A native method must specify a return transformer for a method with a return value")
+	@DisplayName("A native method with a return value must configure a return transformer")
 	@Test
-	void returnsRequiresTransformer() {
-		final MethodHandle handle = MethodHandles.zero(int.class);
+	void missingReturnTransformer() {
+		final MethodHandle handle = MethodHandles.constant(int.class, 42);
 		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of()));
 	}
 
-	@DisplayName("A native method cannot configure a return transformer for a method without a return value")
+	@DisplayName("The transformer for the return value of a native method must be implemented")
 	@Test
-	void returnsVoidTransformer() {
-		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class));
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, Function.identity(), List.of()));
+	void invalidReturnTransformer() {
+		final MethodHandle handle = MethodHandles.constant(String.class, "whatever");
+		final Transformer invalid = new StringTransformer() {
+			@Override
+			public Function<MemorySegment, String> unmarshal() {
+				throw new UnsupportedOperationException();
+			}
+		};
+		assertThrows(UnsupportedOperationException.class, () -> new NativeMethod(handle, invalid, List.of()));
 	}
 
 	@DisplayName("A native method can have none-or-more parameters")
 	@Test
 	void parameter() {
-		//final MethodHandle handle = MethodHandles.identity(int.class);
 		final MethodHandle handle = MethodHandles.identity(int.class);
-		final NativeMethod method = new NativeMethod(handle, Function.identity(), List.of(parameter));
+		final var method = new NativeMethod(handle, identity, List.of(identity));
 		assertEquals(42, method.invoke(new Object[]{42}));
 	}
 
-	@DisplayName("A native parameter can be returned by-reference")
+	@DisplayName("The transformers for a native method must match the signature")
 	@Test
-	void returnedParameter() {
+	void mismatchedParameterTransformers() {
 		final MethodHandle handle = MethodHandles.identity(int.class);
-		final NativeMethod method = new NativeMethod(handle, Function.identity(), List.of(new NativeParameter(integer, true)));
-//		assertEquals(42, method.invoke(new Object[]{42}));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of()));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of(identity, identity)));
+	}
+
+	@DisplayName("A native method can return by-reference parameters")
+	@Test
+	void reference() {
 		// TODO
+//		final MethodHandle handle = MethodHandles.constant(int.class, 2);
+//		final var method = new NativeMethod(handle, null, List.of(transformer));
+//		method.invoke(new Object[]{1});
 	}
+	// TODO - ignores null args[] or MemorySegment.NULL returned
 
-	@DisplayName("The signature of a native method must match the parameter specification")
 	@Test
-	void count() {
-		final MethodHandle handle = MethodHandles.identity(int.class);
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, Function.identity(), List.of()));
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, Function.identity(), List.of(parameter, parameter)));
-	}
-
-	@Nested
-	class BuilderTests {
-		private Registry registry;
-		private Builder builder;
-
-		@BeforeEach
-		void before() {
-			registry = new Registry();
-			builder = new Builder(registry);
-		}
-
-		@DisplayName("A native method can be constructed programatically")
-		@Test
-		void build() {
-			final MemorySegment abs = Linker
-					.nativeLinker()
-					.defaultLookup()
-					.find("abs")
-					.orElseThrow();
-
-			registry.add(int.class, integer);
-
-			final NativeMethod method = builder
-					.address(abs)
-					.returns(int.class)
-					.parameter(int.class)
-					.build();
-
-			assertEquals(3, method.invoke(new Object[]{-3}));
-		}
-
-		@DisplayName("The return type and parameters of a native method must be registered")
-		@Test
-		void unsupported() throws Exception {
-			assertThrows(IllegalArgumentException.class, () -> builder.returns(Object.class));
-			assertThrows(IllegalArgumentException.class, () -> builder.parameter(Object.class));
-		}
+	void equals() {
+		final MethodHandle handle = MethodHandles.constant(int.class, 42);
+		final var method = new NativeMethod(handle, identity, List.of());
+		assertEquals(method, method);
+		assertEquals(method, new NativeMethod(handle, identity, List.of()));
+		assertNotEquals(method, null);
 	}
 }

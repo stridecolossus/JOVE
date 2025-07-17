@@ -6,9 +6,9 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
@@ -35,7 +35,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @param attachments		Attachments
 	 * @param extents			Image extents
 	 */
-	FrameBuffer(Handle handle, DeviceContext dev, RenderPass pass, List<View> attachments, Rectangle extents) {
+	FrameBuffer(Handle handle, LogicalDevice dev, RenderPass pass, List<View> attachments, Rectangle extents) {
 		super(handle, dev);
 		this.pass = requireNonNull(pass);
 		this.attachments = List.copyOf(requireNotEmpty(attachments));
@@ -67,18 +67,23 @@ public class FrameBuffer extends VulkanObject {
 		info.renderArea.offset.y = extents.y();
 
 		// Build attachment clear operations
-		final Collection<ClearValue> clear = attachments
+		info.pClearValues = attachments
 				.stream()
 				.map(View::clear)
 				.flatMap(Optional::stream)
-				.toList();
+				.map(FrameBuffer::populate)
+				.toArray(VkClearValue[]::new);
 
-		// Init clear values
-		info.clearValueCount = clear.size();
-		info.pClearValues = null; // TODO StructureCollector.pointer(clear, new VkClearValue(), ClearValue::populate);
+		info.clearValueCount = info.pClearValues.length;
 
 		// Create command
 		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, contents);
+	}
+
+	private static VkClearValue populate(ClearValue clear) {
+		final var descriptor = new VkClearValue();
+		clear.populate(descriptor);
+		return descriptor;
 	}
 
 	@Override
@@ -129,10 +134,10 @@ public class FrameBuffer extends VulkanObject {
 		info.layers = 1; // TODO - layers?
 
 		// Allocate frame buffer
-		final DeviceContext dev = pass.device();
-		final Vulkan vulkan = dev.vulkan();
-		final NativeReference<Handle> ref = vulkan.factory().pointer();
-		vulkan.library().vkCreateFramebuffer(dev, info, null, ref);
+		final LogicalDevice dev = pass.device();
+		final VulkanLibrary vulkan = dev.vulkan();
+		final Pointer ref = new Pointer();
+		vulkan.vkCreateFramebuffer(dev, info, null, ref);
 
 		// Create frame buffer
 		return new FrameBuffer(ref.get(), dev, pass, attachments, extents);
@@ -150,7 +155,7 @@ public class FrameBuffer extends VulkanObject {
 		 * @param pFramebuffer		Returned frame buffer handle
 		 * @return Result
 		 */
-		int vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pFramebuffer);
+		VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer);
 
 		/**
 		 * Destroys a frame buffer.
@@ -158,6 +163,6 @@ public class FrameBuffer extends VulkanObject {
 		 * @param framebuffer		Frame buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyFramebuffer(DeviceContext device, FrameBuffer framebuffer, Handle pAllocator);
+		void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Handle pAllocator);
 	}
 }

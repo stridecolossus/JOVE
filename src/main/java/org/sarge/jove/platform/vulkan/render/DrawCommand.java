@@ -4,7 +4,6 @@ import static org.sarge.lib.Validation.*;
 
 import org.sarge.jove.model.Mesh;
 import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
@@ -200,7 +199,7 @@ public interface DrawCommand extends Command {
 			buffer.checkOffset(offset);
 
 			// Check indirect multi-draw is supported
-			final DeviceContext dev = buffer.device();
+//			final LogicalDevice dev = buffer.device();
 // TODO
 //			dev.features().require("multiDrawIndirect");
 //

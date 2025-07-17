@@ -62,6 +62,7 @@ public class Camera {
 	 * @see #right()
 	 */
 	public void strafe(float distance) {
+		// TODO - assumes right is valid at this point? what if direction or up have been changed?
 		move(right.multiply(distance));
 	}
 

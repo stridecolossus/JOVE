@@ -13,7 +13,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * A <i>work queue</i> is used to submit tasks to the hardware.
  * @author Sarge
  */
-public record WorkQueue(Handle handle, WorkQueue.Family family) implements NativeObject {
+public record WorkQueue(Handle handle, Family family) implements NativeObject {
 	/**
 	 * Constructor.
 	 * @param handle	Handle
@@ -26,11 +26,10 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 
 	/**
 	 * Blocks until this queue becomes idle.
-	 * @param lib Vulkan API
+	 * @param vulkan Vulkan API
 	 */
-	public void waitIdle(VulkanLibrary lib) {
-		// TODO
-//		lib.vkQueueWaitIdle(this);
+	public void waitIdle(VulkanLibrary vulkan) {
+		vulkan.vkQueueWaitIdle(this);
 	}
 
 	/**
@@ -49,13 +48,13 @@ public record WorkQueue(Handle handle, WorkQueue.Family family) implements Nativ
 
 		/**
 		 * Helper - Creates a new queue family from the given descriptor.
-		 * @param index		Family index
-		 * @param props		Descriptor
+		 * @param index				Family index
+		 * @param properties		Descriptor
 		 * @return New queue family
 		 */
-		public static Family of(int index, VkQueueFamilyProperties props) {
-			final Set<VkQueueFlag> flags = props.queueFlags.enumerate(MAPPING);
-			return new Family(index, props.queueCount, flags);
+		public static Family of(int index, VkQueueFamilyProperties properties) {
+			final Set<VkQueueFlag> flags = properties.queueFlags.enumerate(MAPPING);
+			return new Family(index, properties.queueCount, flags);
 		}
 
 		/**

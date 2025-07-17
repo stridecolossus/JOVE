@@ -2,14 +2,14 @@ package org.sarge.jove.geometry;
 
 import java.util.*;
 
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>triangle</i> is a polygon with three vertices.
  * @author Sarge
  */
-public record Triangle(List<Point> vertices) implements Intersection.Surface {
+public record Triangle(List<Point> vertices) implements IntersectedSurface {
 	/**
 	 * Constructor.
 	 * @param vertices Triangle vertices
@@ -94,7 +94,7 @@ public record Triangle(List<Point> vertices) implements Intersection.Surface {
 
 		// Orthogonal ray does not intersect
 		if(MathsUtility.isApproxZero(denom)) {
-			return Intersection.NONE;
+			return EMPTY_INTERSECTIONS;
 		}
 
 		// Calc distance along ray
@@ -102,7 +102,7 @@ public record Triangle(List<Point> vertices) implements Intersection.Surface {
 
 		// Check for ray behind
 		if(d < 0) {
-			return Intersection.NONE;
+			return EMPTY_INTERSECTIONS;
 		}
 
 		// Build intersection result

@@ -6,8 +6,9 @@ import java.util.Optional;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer;
 
@@ -27,7 +28,7 @@ public final class View extends VulkanObject {
 	 * @param dev		Logical device
 	 * @param image		Underlying image
 	 */
-	View(Handle handle, DeviceContext dev, Image image) {
+	View(Handle handle, LogicalDevice dev, Image image) {
 		super(handle, dev);
 		this.image = requireNonNull(image);
 	}
@@ -63,7 +64,10 @@ public final class View extends VulkanObject {
 			return true;
 		}
 		else {
-			return image.descriptor().aspects().contains(clear.aspect());
+			return image
+					.descriptor()
+					.aspects()
+					.contains(clear.aspect());
 		}
 	}
 
@@ -151,7 +155,7 @@ public final class View extends VulkanObject {
 		 * @param dev Logical device
 		 * @return New image view
 		 */
-		public View build(DeviceContext dev) {
+		public View build(LogicalDevice dev) {
 			// Build view descriptor
 			final var info = new VkImageViewCreateInfo();
 			info.viewType = type;
@@ -161,9 +165,9 @@ public final class View extends VulkanObject {
 			info.subresourceRange = SubResource.toRange(subresource);
 
 			// Allocate image view
-			final Vulkan vulkan = dev.vulkan();
-			final NativeReference<Handle> ref = vulkan.factory().pointer();
-			vulkan.library().vkCreateImageView(dev, info, null, ref);
+			final VulkanLibrary vulkan = dev.vulkan();
+			final Pointer ref = new Pointer();
+			vulkan.vkCreateImageView(dev, info, null, ref);
 
 			// Create image view
 			return new View(ref.get(), dev, image);
@@ -182,7 +186,7 @@ public final class View extends VulkanObject {
 		 * @param pView				Returned image view handle
 		 * @return Result
 		 */
-		int vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pView);
+		int vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pView);
 
 		/**
 		 * Destroys an image view.
@@ -190,7 +194,7 @@ public final class View extends VulkanObject {
 		 * @param imageView			Image view
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyImageView(DeviceContext device, View imageView, Handle pAllocator);
+		void vkDestroyImageView(LogicalDevice device, View imageView, Handle pAllocator);
 
 		/**
 		 * Clears a colour attachment.

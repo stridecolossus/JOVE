@@ -3,15 +3,15 @@ package org.sarge.jove.platform.vulkan.core;
 import static java.util.Objects.requireNonNull;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Predicate;
 import java.util.stream.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference.IntegerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.render.Surface;
 import org.sarge.jove.platform.vulkan.util.*;
 
 /**
@@ -20,20 +20,20 @@ import org.sarge.jove.platform.vulkan.util.*;
  */
 public class PhysicalDevice implements NativeObject {
 	private final Handle handle;
-	private final Instance instance;
+	private final VulkanLibrary vulkan;
 	private final List<Family> families;
 	private final SupportedFeatures features;
 
 	/**
 	 * Constructor.
 	 * @param handle		Device handle
-	 * @param instance		Parent instance
+	 * @param vulkan		Vulkan library
 	 * @param families		Queue families
 	 * @param features		Features supported by this device
 	 */
-	PhysicalDevice(Handle handle, Instance instance, List<Family> families, SupportedFeatures features) {
+	PhysicalDevice(Handle handle, VulkanLibrary vulkan, List<Family> families, SupportedFeatures features) {
 		this.handle = requireNonNull(handle);
-		this.instance = requireNonNull(instance);
+		this.vulkan = requireNonNull(vulkan);
 		this.families = List.copyOf(families);
 		this.features = requireNonNull(features);
 	}
@@ -44,10 +44,10 @@ public class PhysicalDevice implements NativeObject {
 	}
 
 	/**
-	 * @return Vulkan instance
+	 * @return Vulkan library
 	 */
-	public Instance instance() {
-		return instance;
+	public VulkanLibrary vulkan() {
+		return vulkan;
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public VkPhysicalDeviceProperties properties() {
 		final var properties = new VkPhysicalDeviceProperties();
-//		lib.vkGetPhysicalDeviceProperties(this, properties);
+		vulkan.vkGetPhysicalDeviceProperties(this, properties);
 		return properties;
 	}
 
@@ -73,8 +73,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public VkPhysicalDeviceMemoryProperties memory() {
     	final var properties = new VkPhysicalDeviceMemoryProperties();
-    	// TODO
-//    	instance.vulkan().library().vkGetPhysicalDeviceMemoryProperties(this, properties);
+    	vulkan.vkGetPhysicalDeviceMemoryProperties(this, properties);
     	return properties;
 	}
 
@@ -90,11 +89,10 @@ public class PhysicalDevice implements NativeObject {
 	 * @see Extensions
 	 */
 	public Set<String> extensions() {
-//		final VulkanLibrary lib = instance.library();
-//		final VulkanFunction<VkExtensionProperties> function = (count, array) -> lib.vkEnumerateDeviceExtensionProperties(this, null, count, array);
-//		final IntegerReference count = instance.vulkan().factory().integer();
+		final VulkanFunction<VkExtensionProperties[]> enumerate = (count, array) -> vulkan.vkEnumerateDeviceExtensionProperties(this, null, count, array);
+		VulkanFunction.invoke(enumerate, VkExtensionProperties[]::new);
 //		return Extensions.extensions(count, function);
-		return null;
+		return null; // TODO
 	}
 
 	/**
@@ -103,12 +101,14 @@ public class PhysicalDevice implements NativeObject {
 	 * @see VulkanLibrary#vkEnumerateDeviceLayerProperties(PhysicalDevice, IntByReference, VkLayerProperties)
 	 */
 	@Deprecated
-	public Set<ValidationLayer> layers() {
-//		final VulkanLibrary lib = instance.library();
-//		final VulkanFunction<VkLayerProperties> func = (count, array) -> lib.vkEnumerateDeviceLayerProperties(this, count, array);
-//		final IntegerReference count = instance.vulkan().factory().integer();
-//		return ValidationLayer.layers(count, func);
-		return null;
+	public Collection<ValidationLayer> layers() {
+		final VulkanFunction<VkLayerProperties[]> enumerate = (count, array) -> vulkan.vkEnumerateDeviceLayerProperties(this, count, array);
+		final VkLayerProperties[] layers = VulkanFunction.invoke(enumerate, VkLayerProperties[]::new);
+		return Arrays
+				.stream(layers)
+				.map(ValidationLayer::of)
+				.toList();
+
 	}
 
 	/**
@@ -119,9 +119,8 @@ public class PhysicalDevice implements NativeObject {
 	 * @see Selector#of(Surface)
 	 */
 	public boolean isPresentationSupported(Handle surface, Family family) {
-		final Vulkan vulkan = instance.vulkan();
-		final NativeReference<Integer> supported = vulkan.factory().integer();
-		instance.vulkan().library().vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported);
+		final var supported = new IntegerReference();
+		vulkan.vkGetPhysicalDeviceSurfaceSupportKHR(this, family.index(), surface, supported);
 		return supported.get() == 1;
 	}
 
@@ -132,7 +131,7 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public VkFormatProperties properties(VkFormat format) {
 		final var props = new VkFormatProperties();
-		instance.vulkan().library().vkGetPhysicalDeviceFormatProperties(this, format, props);
+		vulkan.vkGetPhysicalDeviceFormatProperties(this, format, props);
 		return props;
 	}
 
@@ -145,10 +144,9 @@ public class PhysicalDevice implements NativeObject {
 	 */
 	public static Stream<PhysicalDevice> enumerate(Instance instance) {
 		// Enumerate physical devices
-		final Vulkan vulkan = instance.vulkan();
-		final VulkanLibrary lib = vulkan.library();
-		final VulkanFunction<Handle[]> enumerate = (count, devices) -> lib.vkEnumeratePhysicalDevices(instance, count, devices);
-		final Handle[] handles = vulkan.invoke(enumerate, Handle[]::new);
+		final VulkanLibrary vulkan = instance.vulkan();
+		final VulkanFunction<Handle[]> enumerate = (count, devices) -> vulkan.vkEnumeratePhysicalDevices(instance, count, devices);
+		final Handle[] devices = VulkanFunction.invoke(enumerate, Handle[]::new);
 
 		// Helper
 		final var builder = new Object() {
@@ -159,15 +157,15 @@ public class PhysicalDevice implements NativeObject {
 				final List<Family> families = families(handle);
 				final SupportedFeatures features = features(handle);
 //				final SupportedFeatures features = new SupportedFeatures(new VkPhysicalDeviceFeatures());
-				return new PhysicalDevice(handle, instance, families, features);
+				return new PhysicalDevice(handle, vulkan, families, features);
 			}
 
 			/**
 			 * @return Queue families for the given device
 			 */
-			private List<Family> families(Handle handle) {
-				final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> lib.vkGetPhysicalDeviceQueueFamilyProperties(handle, count, array);
-				final VkQueueFamilyProperties[] properties = vulkan.invoke(function, VkQueueFamilyProperties[]::new);
+			private List<Family> families(Handle device) {
+				final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> vulkan.vkGetPhysicalDeviceQueueFamilyProperties(device, count, array);
+				final VkQueueFamilyProperties[] properties = VulkanFunction.invoke(function, VkQueueFamilyProperties[]::new);
 				return IntStream
 						.range(0, properties.length)
 						.mapToObj(n -> Family.of(n, properties[n]))
@@ -179,16 +177,13 @@ public class PhysicalDevice implements NativeObject {
 			 */
 			private SupportedFeatures features(Handle handle) {
 				final var features = new VkPhysicalDeviceFeatures();
-//				lib.vkGetPhysicalDeviceFeatures(handle, new NativeReference<>(features));
-				lib.vkGetPhysicalDeviceFeatures(handle, features);
+				vulkan.vkGetPhysicalDeviceFeatures(handle, features);
 				return new SupportedFeatures(features);
 			}
 		};
 
 		// Build physical devices
-		return Arrays
-				.stream(handles)
-				.map(builder::device);
+		return Arrays.stream(devices).map(builder::device);
 	}
 
 	/**
@@ -199,84 +194,71 @@ public class PhysicalDevice implements NativeObject {
 	public static Predicate<PhysicalDevice> predicate(DeviceFeatures required) {
 		return dev -> dev.features().contains(required);
 	}
+	// TODO - ? DeviceFeatures implements Predicate<PhysicalDevice>
 
 	/**
-	 * A <i>physical device selector</i> is a helper class used when selecting a physical device.
+	 * A <i>device selector</i> is used to select physical devices matching the requirements of the application.
 	 * <p>
-	 * Selectors have two purposes:
-	 * <ol>
-	 * <li>selecting an appropriate physical device (note that a selector is itself a device predicate)</li>
-	 * <li>retrieving matching queue families when configuring the logical device, see {@link Selector#select(PhysicalDevice)}</li>
-	 * </ol>
+	 * The {@link #select(PhysicalDevice)} method retrieves the matching queue family for the selected device.
 	 * <p>
-	 * The class provides factory methods for the general use cases:
+	 * This class provides factory methods for the general use cases:
 	 * <ul>
-	 * <li>{@link Selector#of(VkQueueFlag...)} is used to match devices that contain a queue family with the specified flags</li>
-	 * <li>{@link Selector#of(Handle)} matches a device that supports <i>presentation</i> to a given Vulkan surface</li>
+	 * <li>{@link Selector#family(VkQueueFlag...)} matches devices that support a set of required queue properties</li>
+	 * <li>{@link Selector#presentation(Handle)} matches devices that support <i>presentation</i> to a given Vulkan surface</li>
 	 * </ul>
 	 * <p>
-	 * Example:
-	 * <pre>
-	 * // Create a selector for the graphics queue
-	 * Selector graphics = Selector.of(VkQueueFlag.GRAPHICS);
-	 *
-	 * // Create a selector for a device that supports presentation
-	 * Handle surface = ...
-	 * Selector presentation = Selector.of(surface);
-	 *
-	 * // Select matching physical device
-	 * PhysicalDevice dev = new Enumerator(instance)
-	 *     .devices()
-	 *     .filter(graphics)
-	 *     .filter(presentation)
-	 *     .findAny()
-	 *     .orElseThrow();
-	 *
-	 * // Retrieve queue families and create logical device
-	 * Family graphicsFamily = graphics.select(dev);
-	 * Family presentationFamily = presentation.select(dev);
-	 * ...
-	 * </pre>
-	 * <p>
-	 * @see Enumerator
 	 */
-	public static class Selector implements Predicate<PhysicalDevice> {
+	public static abstract class Selector implements Predicate<PhysicalDevice> {
 		/**
-		 * Creates a selector for a device with a queue family matching the given set of flags.
-		 * @param flags Queue flags to match
-		 * @return New queue flags selector
+		 * Selects devices with a queue that matches the given flags.
+		 * @param flags Queue flags
+		 * @return Queue selector
 		 */
-		public static Selector of(VkQueueFlag... flags) {
-			final var copy = Set.of(flags);
-			final BiPredicate<PhysicalDevice, Family> predicate = (_, family) -> family.flags().containsAll(copy);
-			return new Selector(predicate);
+		public static Selector family(VkQueueFlag... flags) {
+			return new Selector() {
+				private final Set<VkQueueFlag> required = Set.of(flags);
+
+				@Override
+				protected boolean matches(PhysicalDevice device, Family family) {
+					return family.flags().containsAll(required);
+				}
+			};
 		}
 
 		/**
-		 * Creates a selector for a device that supports presentation.
+		 * Selects devices that support presentation.
 		 * @param surface Vulkan surface
-		 * @return New presentation selector
+		 * @return Presentation selector
 		 * @see PhysicalDevice#isPresentationSupported(Handle, Family)
 		 */
-		public static Selector of(Handle surface) {
-			final BiPredicate<PhysicalDevice, Family> predicate = (dev, family) -> dev.isPresentationSupported(surface, family);
-			return new Selector(predicate);
+		public static Selector presentation(Handle surface) {
+			return new Selector() {
+				@Override
+				protected boolean matches(PhysicalDevice device, Family family) {
+					return device.isPresentationSupported(surface, family);
+				}
+			};
 		}
 
-		private final BiPredicate<PhysicalDevice, Family> predicate;
-		private final Map<PhysicalDevice, Optional<Family>> results = new HashMap<>();
+		private final Map<PhysicalDevice, Family> results = new HashMap<>();
 
 		/**
-		 * Constructor.
-		 * @param predicate Queue family predicate
+		 * Matches this selector.
+		 * @param device Physical device
+		 * @param family Queue family
+		 * @return Whether matched
 		 */
-		public Selector(BiPredicate<PhysicalDevice, Family> predicate) {
-			this.predicate = requireNonNull(predicate);
-		}
+		protected abstract boolean matches(PhysicalDevice device, Family family);
 
 		@Override
-		public boolean test(PhysicalDevice dev) {
-			return find(dev).isPresent();
+		public boolean test(PhysicalDevice device) {
+			return device
+					.families
+					.stream()
+					.filter(family -> matches(device, family))
+					.peek(match -> results.put(device, match))
+					.findAny()
+					.isPresent();
 		}
 
 		/**
@@ -286,30 +268,10 @@ public class PhysicalDevice implements NativeObject {
 		 * @return Queue family
 		 * @throws NoSuchElementException if the device does not contain a matching queue family
 		 */
-		public Family select(PhysicalDevice dev) {
-			return find(dev).orElseThrow();
-		}
-
-		/**
-		 * Finds and caches the matching queue family from the given device.
-		 * @param dev Device
-		 * @return Queue family
-		 */
-		private Optional<Family> find(PhysicalDevice dev) {
-			return results.computeIfAbsent(dev, this::findLocal);
-		}
-
-		/**
-		 * Finds the matching queue family from the given device.
-		 * @param dev Device
-		 * @return Queue family
-		 */
-		private Optional<Family> findLocal(PhysicalDevice dev) {
-			return dev
-					.families
-					.stream()
-					.filter(family -> predicate.test(dev, family))
-					.findAny();
+		public Family select(PhysicalDevice device) {
+			final Family family = results.get(device);
+			if(family == null) throw new UnsupportedOperationException();
+			return family;
 		}
 	}
 
@@ -324,7 +286,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param devices					Device handles
 		 * @return Result
 		 */
-		int vkEnumeratePhysicalDevices(Instance instance, NativeReference<Integer> pPhysicalDeviceCount, @Returned Handle[] devices);
+		VkResult vkEnumeratePhysicalDevices(Instance instance, NativeReference<Integer> pPhysicalDeviceCount, @Returned Handle[] devices);
 
 		/**
 		 * Retrieves the properties of the given physical device.
@@ -338,7 +300,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param device				Device
 		 * @param pMemoryProperties		Memory properties
 		 */
-//		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, @Returned VkPhysicalDeviceMemoryProperties pMemoryProperties);
+		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, @Returned VkPhysicalDeviceMemoryProperties pMemoryProperties);
 
 		/**
 		 * Retrieves the supported features of the given physical device.
@@ -346,7 +308,6 @@ public class PhysicalDevice implements NativeObject {
 		 * @param features		Returned features
 		 */
 		void vkGetPhysicalDeviceFeatures(Handle device, @Returned VkPhysicalDeviceFeatures features);
-//		void vkGetPhysicalDeviceFeatures(Handle device, NativeReference<VkPhysicalDeviceFeatures> features);
 
 		/**
 		 * Enumerates the queue families of a device.
@@ -354,7 +315,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param pQueueFamilyPropertyCount		Number of queues family properties
 		 * @param props							Queue family properties
 		 */
-		void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, NativeReference<Integer> pQueueFamilyPropertyCount, @Returned VkQueueFamilyProperties[] props);
+		void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, IntegerReference pQueueFamilyPropertyCount, @Returned VkQueueFamilyProperties[] props);
 
 		/**
 		 * Enumerates device-specific extension properties.
@@ -363,9 +324,9 @@ public class PhysicalDevice implements NativeObject {
 		 * @param count			Number of extensions
 		 * @param extensions	Returned extensions (pointer-to-array)
 		 * @return Result
-		 * @see Instance.Library#vkEnumerateInstanceExtensionProperties(String, IntByReference, VkExtensionProperties)
+		 * @see Instance.Library#vkEnumerateInstanceExtensionProperties(String, IntegerReference, VkExtensionProperties[])
 		 */
-//		int vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, NativeReference<Integer> count, @Returned VkExtensionProperties[] extensions);
+		VkResult vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, IntegerReference count, @Returned VkExtensionProperties[] extensions);
 
 		/**
 		 * Enumerates device-specific validation layers.
@@ -374,10 +335,10 @@ public class PhysicalDevice implements NativeObject {
 		 * @param extensions	Returned layers (pointer-to-array)
 		 * @return Result
 		 * @deprecated Since 1.0.13 device-only layers are deprecated and this method <b>must</b> return the layers for the Vulkan implementation
-		 * @see Instance.Library#vkEnumerateInstanceLayerProperties(IntByReference, VkLayerProperties)
+		 * @see Instance.Library#vkEnumerateInstanceLayerProperties(IntegerReference, VkLayerProperties[])
 		 */
-//		@Deprecated
-//		int vkEnumerateDeviceLayerProperties(PhysicalDevice device, NativeReference<Integer> count, @Returned VkLayerProperties[] layers);
+		@Deprecated
+		VkResult vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntegerReference count, @Returned VkLayerProperties[] layers);
 
 		/**
 		 * Retrieves supported properties of the given format.
@@ -386,8 +347,5 @@ public class PhysicalDevice implements NativeObject {
 		 * @param props			Returned format properties
 		 */
 		void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, @Returned VkFormatProperties props);
-
-		// TODO - temp copied from surface
-		int vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, NativeReference<Integer> supported);
 	}
 }

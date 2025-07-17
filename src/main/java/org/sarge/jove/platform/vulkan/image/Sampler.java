@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -23,7 +24,7 @@ public final class Sampler extends VulkanObject {
 	 * @param handle		Sampler handle
 	 * @param dev			Logical device
 	 */
-	Sampler(Handle handle, DeviceContext dev) {
+	Sampler(Handle handle, LogicalDevice dev) {
 		super(handle, dev);
 	}
 
@@ -266,7 +267,7 @@ public final class Sampler extends VulkanObject {
 		 * @return New sampler
 		 * @throws IllegalArgumentException if the LOD levels are illogical
 		 */
-		public Sampler build(DeviceContext dev) {
+		public Sampler build(LogicalDevice dev) {
 			// Validate
 			if(info.minLod > info.maxLod) {
 				throw new IllegalArgumentException("Invalid min/max LOD");
@@ -276,9 +277,9 @@ public final class Sampler extends VulkanObject {
 			info.flags = new EnumMask<>(flags);
 
 			// Instantiate sampler
-			final Vulkan vulkan = dev.vulkan();
-			final NativeReference<Handle> ref = vulkan.factory().pointer();
-			vulkan.library().vkCreateSampler(dev, info, null, ref);
+			final VulkanLibrary vulkan = dev.vulkan();
+			final NativeReference<Handle> ref = new Pointer(); // TODO
+			vulkan.vkCreateSampler(dev, info, null, ref);
 
 			// Create domain object
 			return new Sampler(ref.get(), dev);
@@ -297,7 +298,7 @@ public final class Sampler extends VulkanObject {
 		 * @param pSampler			Returned sampler handle
 		 * @return Result
 		 */
-		int vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSampler);
+		int vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSampler);
 
 		/**
 		 * Destroys a sampler.
@@ -305,6 +306,6 @@ public final class Sampler extends VulkanObject {
 		 * @param sampler			Sampler
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySampler(DeviceContext device, Sampler sampler, Handle pAllocator);
+		void vkDestroySampler(LogicalDevice device, Sampler sampler, Handle pAllocator);
 	}
 }

@@ -1,9 +1,9 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference;
-import org.sarge.jove.platform.vulkan.VkSemaphoreCreateInfo;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 
 /**
  * A <i>semaphore</i> is used to synchronise operations within or across command queues.
@@ -13,7 +13,7 @@ public class VulkanSemaphore extends VulkanObject {
 	/**
 	 * Constructor.
 	 */
-	private VulkanSemaphore(Handle handle, DeviceContext device) {
+	private VulkanSemaphore(Handle handle, LogicalDevice device) {
 		super(handle, device);
 	}
 
@@ -27,12 +27,11 @@ public class VulkanSemaphore extends VulkanObject {
 	 * @param device Logical device
 	 * @return New semaphore
 	 */
-	public static VulkanSemaphore create(DeviceContext device) {
+	public static VulkanSemaphore create(LogicalDevice device) {
 		final var info = new VkSemaphoreCreateInfo();
-		final Vulkan vulkan = device.vulkan();
-		final var lib = vulkan.library();
-		final NativeReference<Handle> ref = vulkan.factory().pointer();
-		lib.vkCreateSemaphore(device, info, null, ref);
+		final VulkanLibrary vulkan = device.vulkan();
+		final var ref = new Pointer();
+		vulkan.vkCreateSemaphore(device, info, null, ref);
 		return new VulkanSemaphore(ref.get(), device);
 	}
 
@@ -48,7 +47,7 @@ public class VulkanSemaphore extends VulkanObject {
 		 * @param pSemaphore		Returned semaphore
 		 * @return Result
 		 */
-		int vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSemaphore);
+		VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore);
 
 		/**
 		 * Destroys a semaphore.
@@ -56,6 +55,6 @@ public class VulkanSemaphore extends VulkanObject {
 		 * @param semaphore			Semaphore to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySemaphore(DeviceContext device, VulkanSemaphore semaphore, Handle pAllocator);
+		void vkDestroySemaphore(LogicalDevice device, VulkanSemaphore semaphore, Handle pAllocator);
 	}
 }

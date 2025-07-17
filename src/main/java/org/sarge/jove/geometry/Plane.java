@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
@@ -20,7 +20,7 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
  */
-public record Plane(Normal normal, float distance) implements Intersection.Surface {
+public record Plane(Normal normal, float distance) implements IntersectedSurface {
 	/**
 	 * Creates a plane from the given triangle of points.
 	 * @param triangle Triangle
@@ -123,7 +123,7 @@ public record Plane(Normal normal, float distance) implements Intersection.Surfa
 
 		// Orthogonal ray does not intersect
 		if(MathsUtility.isApproxZero(denom)) {
-			return Intersection.NONE;
+			return EMPTY_INTERSECTIONS;
 		}
 
 		// Calculate closest intersection distance
@@ -131,7 +131,7 @@ public record Plane(Normal normal, float distance) implements Intersection.Surfa
 
 		// Check whether intersects
 		if((dist < 0) || (dist * dist > ray.direction().magnitude())) {
-			return Intersection.NONE;
+			return EMPTY_INTERSECTIONS;
 		}
 
 		// Build intersection result

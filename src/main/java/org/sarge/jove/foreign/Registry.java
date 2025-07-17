@@ -32,57 +32,40 @@ public class Registry {
 		 * @param type Domain type
 		 * @return Transformer
 		 */
-		Transformer<T> create(Class<? extends T> type);
+		Transformer create(Class<? extends T> type);
 	}
 
-	private final Map<Class<?>, Transformer<?>> registry = new HashMap<>();
+	private final Map<Class<?>, Transformer> registry = new HashMap<>();
 	private final Map<Class<?>, Factory<?>> factories = new HashMap<>();
 
 	/**
 	 * Looks up or creates the native transformer for the given domain type.
 	 * @param type Domain type
 	 * @return Native transformer
-	 * @throws IllegalArgumentException if the type is not supported
 	 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	public Transformer<?> transformer(Class<?> type) {
-		final Transformer<?> transformer = registry.get(type);
+	public Optional<Transformer> transformer(Class<?> type) {
+		final Transformer transformer = registry.get(type);
 
 		if(transformer == null) {
-			final Transformer created = find(type);
-			add(type, created);
-			return created;
+			if(type.isArray()) {
+				final Class<?> component = type.getComponentType();
+				return transformer(component)
+						.map(ArrayTransformer::new)
+						.map(e -> insert(type, e));
+			}
+			else {
+    			return create(type)
+    					.or(() -> derive(type))
+						.map(e -> insert(type, e));
+			}
 		}
 		else {
-			return transformer;
+			return Optional.of(transformer);
 		}
 	}
 
-	/**
-	 * Finds a transformer for a given type not currently present in this registry.
-	 * @param type Domain type
-	 * @return Transformer
-	 */
-	private Transformer<?> find(Class<?> type) {
-		// Arrays are automatically handled as a special case
-		if(type.isArray()) {
-			return array(type);
-		}
-
-		// Otherwise generate new transformer
-		return create(type)
-				.or(() -> derive(type))
-				.orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + type));
-	}
-
-	/**
-	 * @return Array transformer for the given type
-	 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private Transformer<?> array(Class<?> type) {
-		final Transformer<?> component = find(type.getComponentType());
-		final Transformer transformer = new ArrayTransformer<>(component);
-		add(type, transformer);
+	private Transformer insert(Class<?> type, Transformer transformer) {
+		registry.put(type, transformer);
 		return transformer;
 	}
 
@@ -92,14 +75,14 @@ public class Registry {
 	 * @return New transformer
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private Optional<Transformer<?>> create(Class type) {
+	private Optional<Transformer> create(Class<?> type) {
 		return factories
 				.keySet()
 				.stream()
 				.filter(e -> e.isAssignableFrom(type))
 				.findAny()
 				.map(factories::get)
-				.map(factory -> factory.create(type));
+				.map(factory -> factory.create((Class) type));
 	}
 
 	/**
@@ -107,11 +90,11 @@ public class Registry {
 	 * @param type Java type
 	 * @return Supertype transformer
 	 */
-	private Optional<Transformer<?>> derive(Class<?> type) {
+	private Optional<Transformer> derive(Class<?> type) {
 		return registry
 				.keySet()
 				.stream()
-				.filter(e -> e.isAssignableFrom(type))
+				.filter(base -> base.isAssignableFrom(type))
 				.findAny()
 				.map(registry::get);
 	}
@@ -123,7 +106,7 @@ public class Registry {
 	 * @param type				Java or domain type
 	 * @param transformer		Native transformer
 	 */
-	public <T> void add(Class<T> type, Transformer<? extends T> transformer) {
+	public void add(Class<?> type, Transformer transformer) {
 		requireNonNull(type);
 		requireNonNull(transformer);
 		registry.put(type, transformer);

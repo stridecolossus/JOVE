@@ -8,20 +8,20 @@ import java.util.*;
 import java.util.stream.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.lib.Percentile;
 
 /**
- * The <i>logical device</i> is an instance of a selected {@link PhysicalDevice}.
+ * The <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
-public class LogicalDevice extends TransientNativeObject implements DeviceContext {
-	private final PhysicalDevice parent;
+public class LogicalDevice extends TransientNativeObject {
+	private final VulkanLibrary vulkan;
 	private final DeviceFeatures features;
 	private final VkPhysicalDeviceLimits limits;
 	private final Map<Family, List<WorkQueue>> queues;
@@ -29,32 +29,24 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
-	 * @param parent 		Parent physical device
+	 * @param vulkan		Vulkan service
 	 * @param features		Features enabled on this device
 	 * @param limits		Hardware limits
 	 * @param queues 		Work queues indexed by family
 	 */
-	LogicalDevice(Handle handle, PhysicalDevice parent, DeviceFeatures features, VkPhysicalDeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
+	protected LogicalDevice(Handle handle, VulkanLibrary vulkan, DeviceFeatures features, VkPhysicalDeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
 		super(handle);
-		this.parent = requireNonNull(parent);
-		this.features = null; // requireNonNull(features);
-		this.limits = null; // requireNonNull(limits);
+		this.vulkan = requireNonNull(vulkan);
+		this.features = null; // TODO - requireNonNull(features);
+		this.limits = requireNonNull(limits);
 		this.queues = Map.copyOf(queues);
-	}
-
-	/**
-	 * @return Parent physical device
-	 */
-	public PhysicalDevice parent() {
-		return parent;
 	}
 
 	/**
 	 * @return Vulkan
 	 */
-	@Override
-	public Vulkan vulkan() {
-		return parent.instance().vulkan();
+	public VulkanLibrary vulkan() {
+		return vulkan;
 	}
 
 	/**
@@ -79,28 +71,21 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	}
 
 	/**
-	 * Helper - Retrieves the <i>first</i> queue of the given family.
-	 * @param family Queue family
-	 * @return Queue
-	 * @throws IllegalArgumentException if the queue is not present
+	 * Blocks until this device becomes idle.
 	 */
-	public WorkQueue queue(Family family) {
-		final var list = queues.get(family);
-		if((list == null) || list.isEmpty()) {
-			throw new IllegalArgumentException(String.format("Queue not present: required=%s available=%s", family, queues.keySet()));
-		}
-		return list.get(0);
-	}
-
-//	@Override
 	public void waitIdle() {
-		this.vulkan().library().vkDeviceWaitIdle(this);
+		vulkan.vkDeviceWaitIdle(this);
 	}
 
  	@Override
 	protected void release() {
-		this.vulkan().library().vkDestroyDevice(this, null);
+		vulkan.vkDestroyDevice(this, null);
 	}
+
+ 	@Override
+ 	public String toString() {
+ 		return String.format("LogicalDevice[%s]", this.handle());
+ 	}
 
 	/**
 	 * Transient descriptor for a work queue.
@@ -130,7 +115,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		}
 
 		/**
-		 * Constructor for a group of queues with a default priority.
+		 * Constructor for a group of queues with equal priority.
 		 * @param family		Queue family
 		 * @param count			Number of required queues
 		 */
@@ -141,7 +126,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		/**
 		 * @return Vulkan descriptor for this required queue
 		 */
-		private VkDeviceQueueCreateInfo build() {
+		VkDeviceQueueCreateInfo build() {
 			// Convert priorities to array
 			final int size = priorities.size();
 			final float[] array = new float[size];
@@ -157,6 +142,31 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			info.queueFamilyIndex = family.index();
 			info.pQueuePriorities = array;
 			return info;
+		}
+
+		/**
+		 * Retrieves the work queues specified for this family.
+		 * @param device Logical device
+		 * @param vulkan Vulkan
+		 * @return Work queues
+		 */
+		Stream<WorkQueue> queues(Handle device, VulkanLibrary vulkan) {
+			return IntStream
+					.range(0, priorities.size())
+					.mapToObj(n -> queue(device, n, vulkan));
+		}
+
+		/**
+		 * Retrieves a work queue.
+		 * @param device	Logical device
+		 * @param index		Queue index
+		 * @param vulkan	Vulkan
+		 * @return Work queue
+		 */
+		private WorkQueue queue(Handle device, int index, VulkanLibrary vulkan) {
+			final var ref = new Pointer();
+			vulkan.vkGetDeviceQueue(device, family.index(), index, ref);
+			return new WorkQueue(ref.get(), family);
 		}
 	}
 
@@ -183,8 +193,6 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	 */
 	public static class Builder {
 		private final PhysicalDevice parent;
-		private final Vulkan vulkan;
-
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private final Set<String> features = new HashSet<>();
@@ -196,7 +204,6 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 */
 		public Builder(PhysicalDevice parent) {
 			this.parent = requireNonNull(parent);
-			this.vulkan = parent.instance().vulkan();
 		}
 
 		/**
@@ -265,64 +272,24 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			info.queueCreateInfoCount = queues.size();
 			info.pQueueCreateInfos = queues.stream().map(RequiredQueue::build).toArray(VkDeviceQueueCreateInfo[]::new);
 
-			// Allocate device
-			final NativeReference<Handle> ref = vulkan.factory().pointer();
-			vulkan.library().vkCreateDevice(parent, info, null, ref);
+			// Create device
+			final VulkanLibrary vulkan = parent.vulkan();
+			final var ref = new Pointer();
+			vulkan.vkCreateDevice(parent, info, null, ref);
 
 			// Retrieve work queues
 			final Handle handle = ref.get();
-			final var helper = new QueueHelper(handle);
+			final Map<Family, List<WorkQueue>> map = queues
+						.stream()
+						.flatMap(e -> e.queues(handle, vulkan))
+						.collect(groupingBy(WorkQueue::family));
 
 			// Retrieve physical device limits
 //			final VkPhysicalDeviceLimits limits = parent.properties().limits;
+			// TODO
 
-			// Create logical device
-			return new LogicalDevice(handle, parent, null, null /*required, limits*/, helper.queues());
-		}
-
-		/**
-		 * Helper for retrieval of the work queues for this device.
-		 */
-		// TODO - move to WorkQueue or RequiredQueue?
-		private class QueueHelper {
-			private final Handle dev;
-
-			QueueHelper(Handle dev) {
-				this.dev = dev;
-			}
-
-			/**
-			 * @return Work queues for this device
-			 */
-			Map<Family, List<WorkQueue>> queues() {
-				return queues
-						.stream()
-						.flatMap(this::queues)
-						.collect(groupingBy(WorkQueue::family));
-			}
-
-			/**
-			 * Retrieves the work queues for the given requirements.
-			 * @param queue Required work queue
-			 * @return Queues
-			 */
-			private Stream<WorkQueue> queues(RequiredQueue queue) {
-				return IntStream
-        				.range(0, queue.priorities.size())
-        				.mapToObj(n -> queue(queue.family, n));
-			}
-
-			/**
-			 * Retrieves a work queue.
-			 * @param family		Queue family
-			 * @param index			Index
-			 * @return Work queue
-			 */
-			private WorkQueue queue(Family family, int index) {
-				final NativeReference<Handle> ref = vulkan.factory().pointer();
-				vulkan.library().vkGetDeviceQueue(dev, family.index(), index, ref);
-				return new WorkQueue(ref.get(), family);
-			}
+			// Create domain object
+			return new LogicalDevice(handle, vulkan, null, new VkPhysicalDeviceLimits(), map); // TODO
 		}
 	}
 
@@ -338,7 +305,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @param device				Returned logical device handle
 		 * @return Result
 		 */
-		int vkCreateDevice(PhysicalDevice physicalDevice, VkDeviceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> device);
+		VkResult vkCreateDevice(PhysicalDevice physicalDevice, VkDeviceCreateInfo pCreateInfo, Handle pAllocator, Pointer device);
 
 		/**
 		 * Destroys a logical device.
@@ -352,7 +319,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @param device Logical device
 		 * @return Result
 		 */
-		int vkDeviceWaitIdle(LogicalDevice device);
+		VkResult vkDeviceWaitIdle(LogicalDevice device);
 
 		/**
 		 * Retrieves a work queue for the given logical device.
@@ -361,7 +328,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @param queueIndex			Queue index
 		 * @param pQueue				Returned queue handle
 		 */
-		void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, NativeReference<Handle> pQueue);
+		void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, Pointer pQueue);
 
 		/**
 		 * Submits work to a queue.
@@ -371,13 +338,13 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @param fence					Optional fence
 		 * @return Result
 		 */
-		int vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
+		VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 
 		/**
 		 * Blocks until the given queue becomes idle.
 		 * @param queue Queue
 		 * @return Result
 		 */
-		int vkQueueWaitIdle(WorkQueue queue);
+		VkResult vkQueueWaitIdle(WorkQueue queue);
 	}
 }

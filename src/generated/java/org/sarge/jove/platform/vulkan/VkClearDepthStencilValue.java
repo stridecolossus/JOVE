@@ -1,5 +1,9 @@
 package org.sarge.jove.platform.vulkan;
 
+import static java.lang.foreign.ValueLayout.*;
+
+import java.lang.foreign.*;
+
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 
 /**
@@ -9,4 +13,12 @@ import org.sarge.jove.platform.vulkan.common.VulkanStructure;
 public class VkClearDepthStencilValue extends VulkanStructure {
 	public float depth;
 	public int stencil;
+
+	@Override
+	public StructLayout layout() {
+	    return MemoryLayout.structLayout(
+	        JAVA_FLOAT.withName("depth"),
+	        JAVA_INT.withName("stencil")
+	    );
+	}
 }

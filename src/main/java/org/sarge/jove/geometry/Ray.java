@@ -2,9 +2,7 @@ package org.sarge.jove.geometry;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.*;
-
-import org.sarge.jove.util.MathsUtility;
+import java.util.List;
 
 /**
  * A <i>ray</i> is a vector relative to an originating point used for frustum culling, intersection tests, and picking.
@@ -22,136 +20,61 @@ public record Ray(Point origin, Vector direction) {
 	}
 
 	/**
-	 * An <i>intersection</i> specifies the point(s) at which this ray intersects a {@link Surface}.
+	 * Calculates the point on this ray at the given distance, i.e. solves the line equation.
+	 * @param distance Distance along this ray
+	 * @return Point on ray
 	 */
-	public interface Intersection extends Comparable<Intersection> {
-		/**
-		 * An <i>intersection surface</i> can be tested for intersections with this ray.
-		 */
-		public interface Surface {
-			/**
-			 * Determines the intersections of the given ray with this surface.
-			 * @param ray Ray
-			 * @return Intersections
-			 */
-			Iterable<Intersection> intersections(Ray ray);
-		}
-
-		/**
-		 * Empty intersections.
-		 */
-		Iterable<Intersection> NONE = List.of();
-
-		/**
-		 * Orders intersections by distance from the origin of this ray.
-		 */
-		Comparator<Intersection> COMPARATOR = Comparator.comparing(Intersection::distance);
-
-		/**
-		 * @return Distance of this intersection from the ray origin
-		 */
-		float distance();
-
-		/**
-		 * Calculates the intersection point on this ray, i.e. solves the line equation at this intersection.
-		 * @return Intersection point
-		 */
-		Point point();
-
-		/**
-		 * Determines the surface normal at this intersection.
-		 * @return Surface normal
-		 */
-		Normal normal();
+	public Point point(float distance) {
+		final Vector v = direction.multiply(distance);
+		return origin.add(v);
 	}
 
 	/**
-	 * Creates an intersection on this ray at the given distance with the given surface normal.
+	 * An <i>intersected surface</i> defines a volume that can be tested for intersections by this ray.
+	 */
+	public interface IntersectedSurface {
+		/**
+		 * Enumerates the intersections of the given ray with this surface.
+		 * @param ray Ray
+		 * @return Intersections
+		 */
+		Iterable<Intersection> intersections(Ray ray);
+
+		/**
+		 * Intersection results for a ray that does not intersect this surface.
+		 */
+		Iterable<Intersection> EMPTY_INTERSECTIONS = List.of();
+	}
+
+	/**
+	 * An <i>intersection</i> specifies the point(s) at which this ray intersects an {@link IntersectedSurface}.
+	 */
+	public record Intersection(Point point, float distance, Normal normal) implements Comparable<Intersection> {
+		@Override
+		public int compareTo(Intersection that) {
+			return Float.compare(this.distance(), that.distance());
+		}
+	}
+
+	/**
+	 * Creates an intersection at the given distance along this ray.
 	 * @param distance		Intersection distance
 	 * @param normal		Surface normal
 	 * @return Intersection
 	 */
 	public Intersection intersection(float distance, Normal normal) {
-		requireNonNull(normal);
-
-		return new AbstractIntersection() {
-			@Override
-			public float distance() {
-				return distance;
-			}
-
-			@Override
-			public Normal normal() {
-				return normal;
-			}
-		};
+		return new Intersection(point(distance), distance, normal);
 	}
 
 	/**
-	 * Creates an intersection on this ray at the given distance relative to the centre point of an intersected volume.
+	 * Creates an intersection at the given distance along this ray with a normal to the centre of the intersected surface.
 	 * @param distance		Intersection distance
-	 * @param centre		Centre point
+	 * @param normal		Surface normal
 	 * @return Intersection
-	 * @see AbstractIntersection#normal(Point)
 	 */
 	public Intersection intersection(float distance, Point centre) {
-		requireNonNull(centre);
-
-		return new AbstractIntersection() {
-			@Override
-			public float distance() {
-				return distance;
-			}
-
-			@Override
-			public Normal normal() {
-				return normal(centre);
-			}
-		};
-	}
-
-	/**
-	 * Skeleton implementation.
-	 */
-	public abstract class AbstractIntersection implements Intersection {
-		@Override
-		public Point point() {
-			final Vector v = direction.multiply(this.distance());
-			return origin.add(v);
-		}
-
-		/**
-		 * Helper - Calculates the surface normal at this intersection relative to the given centre point of the intersected volume.
-		 * @param centre Centre point
-		 * @return Surface normal
-		 */
-		protected final Normal normal(Point centre) {
-			final Vector v = Vector.between(centre, this.point());
-			return new Normal(v);
-		}
-
-		@Override
-		public int compareTo(Intersection that) {
-			return Float.compare(this.distance(), that.distance());
-		}
-
-		@Override
-		public int hashCode() {
-			return Float.hashCode(this.distance());
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof Intersection that) &&
-					MathsUtility.isApproxEqual(this.distance(), that.distance()) &&
-					this.normal().equals(that.normal());
-		}
-
-		@Override
-		public String toString() {
-			return String.format("Intersection[%s]", MathsUtility.format(this.distance()));
-		}
+		final Point p = point(distance);
+		final Vector n = Vector.between(centre, p);
+		return new Intersection(p, distance, new Normal(n));
 	}
 }

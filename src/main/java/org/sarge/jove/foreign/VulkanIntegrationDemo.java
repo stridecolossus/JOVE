@@ -3,17 +3,15 @@ package org.sarge.jove.foreign;
 import java.util.Arrays;
 import java.util.logging.LogManager;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 public class VulkanIntegrationDemo {
 
 	void main() throws Exception {
-
 		System.out.println("Initialising logging...");
 		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
 			LogManager.getLogManager().readConfiguration(config);
@@ -37,7 +35,7 @@ public class VulkanIntegrationDemo {
 				.build(desktop);
 
 		System.out.println("Initialising Vulkan...");
-		final Vulkan vulkan = Vulkan.create();
+		final VulkanLibrary vulkan = VulkanLibrary.create();
 
 //		System.out.println("Supported validation layers...");
 //		System.out.println(Arrays.toString(vulkan.layers()));
@@ -53,7 +51,7 @@ public class VulkanIntegrationDemo {
 				.build(vulkan);
 
 		System.out.println("Attaching diagnostic handler...");
-		new DiagnosticHandler.Builder().attach(instance);
+		final DiagnosticHandler handler = new DiagnosticHandler.Builder().build(instance);
 
 		System.out.println("Enumerating devices...");
 		final PhysicalDevice physical = PhysicalDevice.enumerate(instance).toList().getFirst();
@@ -63,7 +61,9 @@ public class VulkanIntegrationDemo {
 		for(var family : physical.families()) {
 			System.out.println(family);
 		}
-		//System.out.println("features=" + physical.features());
+//System.out.println("features=" + physical.features().features());
+
+		/*
 
 		System.out.println("Retrieving surface...");
 		final Handle surface = window.surface(instance.handle());
@@ -80,11 +80,17 @@ public class VulkanIntegrationDemo {
 				.queue(new RequiredQueue(physical.families().getFirst()))
 				.build();
 
+TODO - does this NEED to be done here as well?
+        .layer(ValidationLayer.STANDARD_VALIDATION)
+
 		System.out.println("queues=" + dev.queues().values());
+
+		*/
 
 		System.out.println("Cleanup...");
 		// TODO - surface
-		dev.destroy();
+//		dev.destroy();
+		handler.destroy();
 		instance.destroy();
 		window.destroy();
 		desktop.destroy();

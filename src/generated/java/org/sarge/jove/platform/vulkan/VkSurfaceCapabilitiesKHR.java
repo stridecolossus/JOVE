@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
@@ -14,8 +14,8 @@ public class VkSurfaceCapabilitiesKHR extends VulkanStructure {
 	public VkExtent2D minImageExtent;
 	public VkExtent2D maxImageExtent;
 	public int maxImageArrayLayers;
-	public BitMask<VkSurfaceTransformFlagKHR> supportedTransforms;
+	public EnumMask<VkSurfaceTransformFlagKHR> supportedTransforms;
 	public VkSurfaceTransformFlagKHR currentTransform;
-	public BitMask<VkCompositeAlphaFlagKHR> supportedCompositeAlpha;
-	public BitMask<VkImageUsageFlag> supportedUsageFlags;
+	public EnumMask<VkCompositeAlphaFlagKHR> supportedCompositeAlpha;
+	public EnumMask<VkImageUsageFlag> supportedUsageFlags;
 }

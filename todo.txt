@@ -1,3 +1,7 @@
+finally sort out the builder for native methods
+- doesn't need to be a builder, just use ctors?
+- pointless invoking parameter() for each, just use an array?
+- return type is optional
 
 
 -------------------------------

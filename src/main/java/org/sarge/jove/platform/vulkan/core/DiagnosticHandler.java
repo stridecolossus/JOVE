@@ -11,6 +11,7 @@ import java.util.function.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -25,56 +26,84 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 */
 	public static final String EXTENSION = "VK_EXT_debug_utils";
 
+	/**
+	 *
+	 */
+	private interface HandlerLibrary {
+		/**
+		 * Creates a diagnostic handler.
+		 * @param instance			Parent instance
+		 * @param pCreateInfo		Descriptor
+		 * @param pAllocator		Allocator
+		 * @param pHandler			Returned handler
+		 * @return Result
+		 */
+		VkResult vkCreateDebugUtilsMessengerEXT(Instance instance, VkDebugUtilsMessengerCreateInfoEXT pCreateInfo, Handle pAllocator, Pointer pHandler);
+
+		/**
+		 * Destroys a diagnostic handler.
+		 * @param instance			Parent instance
+		 * @param handler			Handler to destroy
+		 * @param pAllocator		Allocator
+		 */
+		void vkDestroyDebugUtilsMessengerEXT(Instance instance, DiagnosticHandler handler, Handle pAllocator);
+	}
+
 	private final Instance instance;
+	private final HandlerLibrary lib;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Handle
 	 * @param instance		Parent instance
+	 * @param lib			Library
 	 */
-	DiagnosticHandler(Handle handle, Instance instance) {
+	DiagnosticHandler(Handle handle, Instance instance, HandlerLibrary lib) {
 		super(handle);
 		this.instance = requireNonNull(instance);
+		this.lib = requireNonNull(lib);
 	}
 
-	/**
-	 * Creates the diagnostic handler.
-	 * @param info			Handler descriptor
-	 * @param instance		Parent instance
-	 * @return Diagnostic handler
-	 */
-	private static Handle create(VkDebugUtilsMessengerCreateInfoEXT info, Instance instance) {
-		// Lookup create function pointer
-		final Handle function = instance.function("vkCreateDebugUtilsMessengerEXT");
-
-		// Build native method
-		final var registry = instance.vulkan().registry();
-		final var create = new NativeMethod.Builder(registry)
-				.address(function.address())
-				.returns(int.class)
-				.parameter(Instance.class)
-				.parameter(VkDebugUtilsMessengerCreateInfoEXT.class)
-				.parameter(Handle.class)
-				.parameter(NativeReference.class)
-				.build();
-
-		// Create handler
-		final NativeReference<Handle> ref = instance.vulkan().factory().pointer();
-		final Object[] args = {instance, info, null, ref};
-		Vulkan.check((int) create.invoke(args));
-
-		// Extract handler address
-		return ref.get();
-	}
+//	/**
+//	 * Creates the diagnostic handler.
+//	 * @param info			Handler descriptor
+//	 * @param instance		Parent instance
+//	 * @return Diagnostic handler
+//	 * @throws IllegalArgumentException if the function pointer for diagnostic handlers cannot be found
+//	 * @throws VulkanException if the handler cannot be created
+//	 */
+//	private static Handle create(VkDebugUtilsMessengerCreateInfoEXT info, Instance instance) {
+//		// Lookup create function pointer
+//		final Handle function = instance.function("vkCreateDebugUtilsMessengerEXT");
+//
+//		// Build native method
+//		final var create = new NativeMethod.Builder(DefaultRegistry.create())
+//				.address(function.address())
+//				.returns(VkResult.class)
+//				.parameter(Instance.class)
+//				.parameter(VkDebugUtilsMessengerCreateInfoEXT.class)
+//				.parameter(Handle.class)
+//				.parameter(NativeReference.class)
+//				.build();
+//
+//		// Create handler
+//		final var ref = new Pointer();
+//		final Object[] args = {instance, info, null, ref};
+//		final VkResult result = (VkResult) create.invoke(args);
+//		if(result != VkResult.SUCCESS) throw new VulkanException(result);
+//
+//		// Extract handler address
+//		return ref.get();
+//	}
 
 	@Override
 	protected void release() {
+		/*
 		// Lookup destructor
 		final Handle function = instance.function("vkDestroyDebugUtilsMessengerEXT");
 
 		// Build destroy method
-		final var registry = instance.vulkan().registry();
-		final NativeMethod destroy = new NativeMethod.Builder(registry)
+		final NativeMethod destroy = new NativeMethod.Builder(DefaultRegistry.create())
 				.address(function.address())
 				.parameter(Instance.class)
 				.parameter(DiagnosticHandler.class)
@@ -84,6 +113,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 		// Destroy handler
 		final Object[] args = {instance, this, null};
 		destroy.invoke(args);
+		*/
+		lib.vkDestroyDebugUtilsMessengerEXT(instance, this, null);
 	}
 
 	/**
@@ -130,7 +161,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * Note that the callback signature is not defined in the Vulkan API.
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
-	private record Callback(Consumer<Message> consumer, Transformer<NativeStructure> transformer) {
+	private record Callback(Consumer<Message> consumer, DefaultTransformer<NativeStructure> transformer) {
 		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = new ReverseMapping<>(VkDebugUtilsMessageType.class);
 		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = new ReverseMapping<>(VkDebugUtilsMessageSeverity.class);
 
@@ -163,21 +194,17 @@ public class DiagnosticHandler extends TransientNativeObject {
 		/**
 		 * @return Upcall stub for this callback
 		 */
-		MemorySegment address() {
-			try { // (Arena arena = Arena.ofConfined()) {
-				// Lookup callback method and bind to handler
-				final Class<?>[] signature = {int.class, int.class, MemorySegment.class, MemorySegment.class};
-				final var type = MethodType.methodType(boolean.class, signature);
-	    		final MethodHandle handle = MethodHandles.lookup().findVirtual(Callback.class, "message", type).bindTo(this);
+		MemorySegment address() throws Exception {
+			// Lookup callback method and bind to handler
+			final Class<?>[] signature = {int.class, int.class, MemorySegment.class, MemorySegment.class};
+			final var type = MethodType.methodType(boolean.class, signature);
+    		final MethodHandle handle = MethodHandles.lookup().findVirtual(Callback.class, "message", type).bindTo(this);
 
-	    		// Link upcall stub
-				final MemoryLayout[] layout = {JAVA_INT, JAVA_INT, ADDRESS, ADDRESS};
-	    		final var descriptor = FunctionDescriptor.of(JAVA_BOOLEAN, layout);
-	   			return Linker.nativeLinker().upcallStub(handle, descriptor, Arena.ofAuto());
-			}
-			catch(Exception e) {
-				throw new RuntimeException("Error instantiating diagnostic callback", e);
-			}
+    		// Link upcall stub
+			final MemoryLayout[] layout = {JAVA_INT, JAVA_INT, ADDRESS, ADDRESS};
+    		final var descriptor = FunctionDescriptor.of(JAVA_BOOLEAN, layout);
+    		final var linker = Linker.nativeLinker();
+   			return linker.upcallStub(handle, descriptor, Arena.ofAuto());
 		}
 	}
 
@@ -191,6 +218,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * </ul>
 	 */
 	public static class Builder {
+		private final Registry registry = DefaultRegistry.create(); // TODO - is full registry really needed here? int/String/Handle required
 		private final Set<VkDebugUtilsMessageSeverity> severity = new HashSet<>();
 		private final Set<VkDebugUtilsMessageType> types = new HashSet<>();
 		private Consumer<Message> consumer = System.err::println;
@@ -223,24 +251,22 @@ public class DiagnosticHandler extends TransientNativeObject {
 		}
 
 		/**
-		 * Builds this handler and attaches it to the given instance.
+		 * Constructs this handler.
+		 * @param instance Parent instance
+		 * @return Diagnostic handler
 		 */
-		public void attach(Instance instance) {
-			final Transformer<NativeStructure> transformer = transformer(instance);
-			final var callback = new Callback(consumer, transformer);
-			final VkDebugUtilsMessengerCreateInfoEXT info = populate(callback);
-			final Handle handle = create(info, instance);
-    		final var handler = new DiagnosticHandler(handle, instance);
-    		instance.attach(handler);
-		}
+		public DiagnosticHandler build(Instance instance) {
+			// Init configuration
+			init();
 
-		/**
-		 * Creates the diagnostic structure transformer.
-		 */
-		@SuppressWarnings("unchecked")
-		private static Transformer<NativeStructure> transformer(Instance instance) {
-			final Registry registry = instance.vulkan().registry();
-			return (Transformer<NativeStructure>) registry.transformer(VkDebugUtilsMessengerCallbackData.class);
+			// Create callback method
+			final MemorySegment callback = callback();
+
+			// Build descriptor
+			final VkDebugUtilsMessengerCreateInfoEXT info = populate(callback);
+
+			// Create handler
+			return create(info, instance);
 		}
 
 		/**
@@ -262,14 +288,57 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * Builds the create descriptor for this handler.
 		 * @param callback Callback handler
 		 */
-		private VkDebugUtilsMessengerCreateInfoEXT populate(Callback callback) {
+		private VkDebugUtilsMessengerCreateInfoEXT populate(MemorySegment callback) {
 			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
-			init();
 			info.messageSeverity = new EnumMask<>(severity);
 			info.messageType = new EnumMask<>(types);
-			info.pfnUserCallback = new Handle(callback.address());
+			info.pfnUserCallback = new Handle(callback);
 			info.pUserData = null;
 			return info;
+		}
+
+		/**
+		 * Creates the message callback.
+		 * @param registry Transformer registry
+		 * @return Callback address
+		 */
+		private MemorySegment callback() {
+			// Create a transformer for diagnostic messages
+			@SuppressWarnings("unchecked")
+			final var transformer = (DefaultTransformer<NativeStructure>) registry.transformer(VkDebugUtilsMessengerCallbackData.class).orElseThrow();
+
+			// Instantiate the callback
+			final var callback = new Callback(consumer, transformer);
+
+			// Determine address
+			try {
+				return callback.address();
+			}
+			catch(Exception e) {
+				throw new RuntimeException("Error instantiating diagnostic callback", e);
+			}
+		}
+
+		/**
+		 * Instantiates the diagnostic handler.
+		 * @param info			Descriptor
+		 * @param instance		Parent instance
+		 * @return New handler
+		 */
+		private DiagnosticHandler create(VkDebugUtilsMessengerCreateInfoEXT info, Instance instance) {
+			// Lookup function pointers from the instance
+			final SymbolLookup lookup = name -> instance.function(name).map(Handle::address);
+
+			// Create diagnostics library
+			final var factory = new NativeLibraryFactory(lookup, registry);
+			final var lib = factory.build(HandlerLibrary.class);
+
+			// Instantiate handler
+			final var handle = new Pointer();
+			lib.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
+
+			// Create handler
+			return new DiagnosticHandler(handle.get(), instance, lib);
 		}
 	}
 }

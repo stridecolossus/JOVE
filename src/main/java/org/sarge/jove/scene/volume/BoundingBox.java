@@ -13,20 +13,13 @@ import org.sarge.jove.util.MathsUtility;
  * A <i>bounding box</i> is an axis-aligned rectilinear volume implemented as an adapter for a {@link Bounds}.
  * @author Sarge
  */
-public class BoundingBox implements Volume {
-	private final Bounds bounds;
-
+public record BoundingBox(Bounds bounds) implements Volume {
 	/**
 	 * Constructor.
 	 * @param bounds Bounds
 	 */
-	public BoundingBox(Bounds bounds) {
-		this.bounds = requireNonNull(bounds);
-	}
-
-	@Override
-	public Bounds bounds() {
-		return bounds;
+	public BoundingBox {
+		requireNonNull(bounds);
 	}
 
 	@Override
@@ -72,7 +65,7 @@ public class BoundingBox implements Volume {
 			if(MathsUtility.isApproxZero(dir[c])) {
 				// Check for parallel ray
 				if((origin[c] < min[c]) || (origin[c] > max[c])) {
-					return Intersection.NONE;
+					return EMPTY_INTERSECTIONS;
 				}
 			}
 			else {
@@ -86,12 +79,12 @@ public class BoundingBox implements Volume {
 
 				// Check for ray missing the box
 				if(n > f) {
-					return Intersection.NONE;
+					return EMPTY_INTERSECTIONS;
 				}
 
 				// Check for box behind ray
 				if(f < 0) {
-					return Intersection.NONE;
+					return EMPTY_INTERSECTIONS;
 				}
 			}
 		}
@@ -118,18 +111,5 @@ public class BoundingBox implements Volume {
 	 */
 	private static float intersect(int index, float[] value, float[] origin, float[] dir) {
 		return (value[index] - origin[index]) / dir[index];
-	}
-
-	@Override
-	public int hashCode() {
-		return bounds.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof BoundingBox that) &&
-				this.bounds.equals(that.bounds);
 	}
 }

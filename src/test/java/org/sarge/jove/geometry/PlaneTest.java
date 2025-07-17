@@ -2,6 +2,7 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
+import static org.sarge.jove.geometry.Ray.IntersectedSurface.EMPTY_INTERSECTIONS;
 
 import java.util.Iterator;
 
@@ -105,15 +106,15 @@ class PlaneTest {
 		@DisplayName("A ray orthogonal to the plane is not intersecting")
 		@Test
 		void orthogonal() {
-			assertEquals(Intersection.NONE, plane.intersections(new Ray(Point.ORIGIN, X)));
-			assertEquals(Intersection.NONE, plane.intersections(new Ray(Point.ORIGIN, Z)));
+			assertEquals(EMPTY_INTERSECTIONS, plane.intersections(new Ray(Point.ORIGIN, X)));
+			assertEquals(EMPTY_INTERSECTIONS, plane.intersections(new Ray(Point.ORIGIN, Z)));
 		}
 
 		@DisplayName("A ray pointing away from the plane is not intersecting")
 		@Test
 		void missing() {
-			assertEquals(Intersection.NONE, plane.intersections(new Ray(new Point(0, 2, 0), Y)));
-			assertEquals(Intersection.NONE, plane.intersections(new Ray(Point.ORIGIN, Y.invert())));
+			assertEquals(EMPTY_INTERSECTIONS, plane.intersections(new Ray(new Point(0, 2, 0), Y)));
+			assertEquals(EMPTY_INTERSECTIONS, plane.intersections(new Ray(Point.ORIGIN, Y.invert())));
 		}
 	}
 }

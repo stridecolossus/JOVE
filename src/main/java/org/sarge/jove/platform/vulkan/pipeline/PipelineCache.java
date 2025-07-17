@@ -3,15 +3,15 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.Objects.requireNonNull;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.util.Collection;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.*;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
@@ -28,7 +28,7 @@ public final class PipelineCache extends VulkanObject {
 	 * @param data		Optional data blob
 	 * @return New pipeline cache
 	 */
-	public static PipelineCache create(DeviceContext dev, byte[] data) {
+	public static PipelineCache create(LogicalDevice dev, byte[] data) {
 		// Build create descriptor
 		final var info = new VkPipelineCacheCreateInfo();
 		if(data != null) {
@@ -38,9 +38,9 @@ public final class PipelineCache extends VulkanObject {
 		// TODO - info.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT
 
 		// Create cache
-		final Vulkan vulkan = dev.vulkan();
-		final NativeReference<Handle> ref = vulkan.factory().pointer();
-		vulkan.library().vkCreatePipelineCache(dev, info, null, ref);
+		final VulkanLibrary vulkan = dev.vulkan();
+		final Pointer ref = new Pointer();
+		vulkan.vkCreatePipelineCache(dev, info, null, ref);
 
 		// Create domain object
 		return new PipelineCache(ref.get(), dev);
@@ -51,7 +51,7 @@ public final class PipelineCache extends VulkanObject {
 	 * @param handle		Cache handle
 	 * @param dev			Logical device
 	 */
-	PipelineCache(Handle handle, DeviceContext dev) {
+	PipelineCache(Handle handle, LogicalDevice dev) {
 		super(handle, dev);
 	}
 
@@ -64,11 +64,11 @@ public final class PipelineCache extends VulkanObject {
 	 * Retrieves the data blob for this pipeline cache.
 	 * @return Cache data
 	 */
-	public ByteBuffer data() {
-		final DeviceContext dev = super.device();
-		final Vulkan vulkan = dev.vulkan();
-		final VulkanFunction<ByteBuffer> cache = (count, data) -> vulkan.library().vkGetPipelineCacheData(dev, this, count, null); // TODO data);
-		return vulkan.invoke(cache, BufferHelper::allocate);
+	public byte[] data() {
+		final LogicalDevice device = this.device();
+		final VulkanLibrary vulkan = device.vulkan();
+		final VulkanFunction<byte[]> cache = (count, data) -> vulkan.vkGetPipelineCacheData(device, this, count, data);
+		return VulkanFunction.invoke(cache, byte[]::new);
 	}
 
 	/**
@@ -77,8 +77,9 @@ public final class PipelineCache extends VulkanObject {
 	 */
 	public void merge(Collection<PipelineCache> caches) {
 		final var array = caches.toArray(PipelineCache[]::new);
-		final DeviceContext dev = super.device();
-		dev.vulkan().library().vkMergePipelineCaches(dev, this, array.length, array);
+		final LogicalDevice device = this.device();
+		final VulkanLibrary vulkan = device.vulkan();
+		vulkan.vkMergePipelineCaches(device, this, array.length, array);
 	}
 
 	/**
@@ -108,13 +109,13 @@ public final class PipelineCache extends VulkanObject {
 			};
 		}
 
-		private final DeviceContext dev;
+		private final LogicalDevice dev;
 
 		/**
 		 * Constructor.
 		 * @param dev Logical device
 		 */
-		public Loader(DeviceContext dev) {
+		public Loader(LogicalDevice dev) {
 			this.dev = requireNonNull(dev);
 		}
 
@@ -131,8 +132,7 @@ public final class PipelineCache extends VulkanObject {
 
 		// TODO
 		public void write(PipelineCache cache, OutputStream out) throws IOException {
-			final byte[] array = BufferHelper.array(cache.data());
-			out.write(array);
+			out.write(cache.data());
 		}
 	}
 
@@ -148,7 +148,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pPipelineCache	Returned pipeline cache
 		 * @return Result
 		 */
-		int vkCreatePipelineCache(DeviceContext device, VkPipelineCacheCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pPipelineCache);
+		int vkCreatePipelineCache(LogicalDevice device, VkPipelineCacheCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pPipelineCache);
 
 		/**
 		 * Merges pipeline caches.
@@ -158,7 +158,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pSrcCaches		Array of caches to merge
 		 * @return Result
 		 */
-		int vkMergePipelineCaches(DeviceContext device, PipelineCache dstCache, int srcCacheCount, PipelineCache[] pSrcCaches);
+		int vkMergePipelineCaches(LogicalDevice device, PipelineCache dstCache, int srcCacheCount, PipelineCache[] pSrcCaches);
 
 		/**
 		 * Retrieves a pipeline cache.
@@ -168,7 +168,7 @@ public final class PipelineCache extends VulkanObject {
 		 * @param pData				Cache data
 		 * @return Result
 		 */
-		int vkGetPipelineCacheData(DeviceContext device, PipelineCache cache, NativeReference<Integer> pDataSize, Handle pData);
+		int vkGetPipelineCacheData(LogicalDevice device, PipelineCache cache, IntegerReference pDataSize, byte[] pData);
 
 		/**
 		 * Destroys a pipeline cache.
@@ -176,6 +176,6 @@ public final class PipelineCache extends VulkanObject {
 		 * @param cache				Pipeline cache to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipelineCache(DeviceContext device, PipelineCache cache, Handle pAllocator);
+		void vkDestroyPipelineCache(LogicalDevice device, PipelineCache cache, Handle pAllocator);
 	}
 }

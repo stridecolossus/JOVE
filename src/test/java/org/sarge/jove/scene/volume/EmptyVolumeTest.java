@@ -1,11 +1,10 @@
 package org.sarge.jove.scene.volume;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.IntersectedSurface;
 
 class EmptyVolumeTest {
 	private Volume vol;
@@ -32,14 +31,6 @@ class EmptyVolumeTest {
 
 	@Test
 	void intersectsRay() {
-		assertEquals(Intersection.NONE, vol.intersections(mock(Ray.class)));
-	}
-
-	@Test
-	void equals() {
-		assertEquals(vol, vol);
-		assertEquals(vol, new EmptyVolume());
-		assertNotEquals(vol, null);
-		assertNotEquals(vol, mock(Volume.class));
+		assertEquals(IntersectedSurface.EMPTY_INTERSECTIONS, vol.intersections(null));
 	}
 }

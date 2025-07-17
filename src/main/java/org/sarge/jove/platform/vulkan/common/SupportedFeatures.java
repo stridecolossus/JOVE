@@ -23,6 +23,11 @@ public final class SupportedFeatures {
 		this.features = requireNonNull(features);
 	}
 
+	// TODO
+	protected SupportedFeatures() {
+		this(new VkPhysicalDeviceFeatures());
+	}
+
 	/**
 	 * @return Feature names
 	 */

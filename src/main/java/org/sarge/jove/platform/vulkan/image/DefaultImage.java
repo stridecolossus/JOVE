@@ -5,12 +5,13 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>default image</i> is a Vulkan image or texture managed by the application.
@@ -27,7 +28,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 	 * @param descriptor	Descriptor for this image
 	 * @param mem			Device memory
 	 */
-	DefaultImage(Handle handle, DeviceContext dev, Descriptor descriptor, DeviceMemory mem) {
+	DefaultImage(Handle handle, LogicalDevice dev, Descriptor descriptor, DeviceMemory mem) {
 		super(handle, dev);
 		this.descriptor = requireNonNull(descriptor);
 		this.mem = requireNonNull(mem);
@@ -61,6 +62,8 @@ public final class DefaultImage extends VulkanObject implements Image {
 	 * Builder for a default image.
 	 */
 	public static class Builder {
+		private final ReverseMapping<VkSampleCount> mapping = new ReverseMapping<>(VkSampleCount.class);
+
 		private Descriptor descriptor;
 		private MemoryProperties<VkImageUsageFlag> props;
 		private final Set<VkImageCreateFlag> flags = new HashSet<>();
@@ -111,7 +114,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntEnum.reverse(VkSampleCount.class).map(samples);
+			this.samples = mapping.map(samples);
 			return this;
 		}
 
@@ -143,10 +146,9 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * Constructs this image.
 		 * @param dev Logical device
 		 * @return New image
-		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
 		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */
-		public DefaultImage build(DeviceContext dev, Allocator allocator) {
+		public DefaultImage build(LogicalDevice dev, Allocator allocator) {
 			// Validate
 			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
 			if(props == null) throw new IllegalArgumentException("No memory properties specified");
@@ -167,21 +169,20 @@ public final class DefaultImage extends VulkanObject implements Image {
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
-			final Vulkan vulkan = dev.vulkan();
-			final ImageLibrary lib = vulkan.library();
-			final NativeReference<Handle> ref = vulkan.factory().pointer();
-			lib.vkCreateImage(dev, info, null, ref);
+			final VulkanLibrary vulkan = dev.vulkan();
+			final Pointer ref = new Pointer();
+			vulkan.vkCreateImage(dev, info, null, ref);
 
 			// Retrieve image memory requirements
 			final Handle handle = ref.get();
 			final var reqs = new VkMemoryRequirements();
-			lib.vkGetImageMemoryRequirements(dev, handle, reqs);
+			vulkan.vkGetImageMemoryRequirements(dev, handle, reqs);
 
 			// Allocate image memory
 			final DeviceMemory mem = allocator.allocate(reqs, props);
 
 			// Bind memory to image
-			lib.vkBindImageMemory(dev, handle, mem, 0);
+			vulkan.vkBindImageMemory(dev, handle, mem, 0);
 
 			// Create image
 			return new DefaultImage(handle, dev, descriptor, mem);

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
 import org.sarge.jove.platform.vulkan.common.VulkanStructure;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Vulkan structure.
@@ -10,9 +10,9 @@ import org.sarge.jove.util.BitMask;
 public class VkSubpassDependency extends VulkanStructure {
 	public int srcSubpass;
 	public int dstSubpass;
-	public BitMask<VkPipelineStage> srcStageMask;
-	public BitMask<VkPipelineStage> dstStageMask;
-	public BitMask<VkAccess> srcAccessMask;
-	public BitMask<VkAccess> dstAccessMask;
-	public BitMask<VkDependencyFlag> dependencyFlags;
+	public EnumMask<VkPipelineStage> srcStageMask;
+	public EnumMask<VkPipelineStage> dstStageMask;
+	public EnumMask<VkAccess> srcAccessMask;
+	public EnumMask<VkAccess> dstAccessMask;
+	public EnumMask<VkDependencyFlag> dependencyFlags;
 }

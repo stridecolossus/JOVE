@@ -1,5 +1,9 @@
 package org.sarge.jove.foreign;
 
+import static java.lang.foreign.ValueLayout.*;
+
+import java.lang.foreign.ValueLayout;
+
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Handle.HandleTransformer;
 import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
@@ -37,8 +41,8 @@ public final class DefaultRegistry {
 		final Registry registry = new Registry();
 
 		// Primitive types
-		// TODO - also wrappers? otherwise add doc
-		IdentityTransformer.primitives(registry);
+		primitives(registry);
+		// TODO - wrappers?
 
 		// Common types
 		registry.add(String.class, new StringTransformer());
@@ -57,4 +61,29 @@ public final class DefaultRegistry {
 
 		return registry;
 	}
+
+	/**
+	 * Registers transformers for the built-in primitive types.
+	 * @param registry Transformer registry
+	 */
+	@SuppressWarnings("rawtypes")
+	private static void primitives(Registry registry) {
+		final ValueLayout[] primitives = {
+	    		JAVA_BOOLEAN,
+	    		JAVA_BYTE,
+	    		JAVA_CHAR,
+	    		JAVA_SHORT,
+	    		JAVA_INT,
+	    		JAVA_LONG,
+	    		JAVA_FLOAT,
+	    		JAVA_DOUBLE
+		};
+
+		for(ValueLayout layout : primitives) {
+    		final var transformer = new IdentityTransformer(layout);
+			final Class carrier = layout.carrier();
+    		registry.add(carrier, transformer);
+    	}
+    }
+	// TODO - also wrappers? otherwise add doc
 }

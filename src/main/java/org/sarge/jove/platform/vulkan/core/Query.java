@@ -8,7 +8,7 @@ import java.util.Set;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeReference;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.util.EnumMask;
 
@@ -88,11 +88,11 @@ public interface Query {
 	 */
 	class Pool extends VulkanObject {
 
-		public static Pool occlusion(DeviceContext device, int slots) {
+		public static Pool occlusion(LogicalDevice device, int slots) {
     		return new Pool(device, VkQueryType.OCCLUSION, slots);
     	}
 
-    	public static Pool statistics(DeviceContext device, int slots, Set<VkQueryPipelineStatisticFlag> flags) {
+    	public static Pool statistics(LogicalDevice device, int slots, Set<VkQueryPipelineStatisticFlag> flags) {
     		//return new DefaultPool(device, VkQueryType.PIPELINE_STATISTICS, slots); // TODO - flags
     		return null;
     	}
@@ -100,12 +100,12 @@ public interface Query {
 		private final int slots;
 		// TODO - separate State[] to track lifecycle?
 
-		public Pool(DeviceContext device, VkQueryType type, int slots) {
+		public Pool(LogicalDevice device, VkQueryType type, int slots) {
 
 			final var info = new VkQueryPoolCreateInfo();
 			// TODO
 
-			final Library lib = device.vulkan().library();
+			final Library lib = device.vulkan();
 			lib.vkCreateQueryPool(device, info, null, null); // TODO - ref);
 
 
@@ -522,7 +522,7 @@ public interface Query {
 		 * @param pQueryPool		Returned query pool handle
 		 * @return Result
 		 */
-		int vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pQueryPool);
+		int vkCreateQueryPool(LogicalDevice device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pQueryPool);
 
 		/**
 		 * Destroys a query pool.
@@ -530,7 +530,7 @@ public interface Query {
 		 * @param queryPool			Query pool to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyQueryPool(DeviceContext device, Pool queryPool, Handle pAllocator);
+		void vkDestroyQueryPool(LogicalDevice device, Pool queryPool, Handle pAllocator);
 
 		/**
 		 * Command to reset a query pool.
@@ -579,7 +579,7 @@ public interface Query {
 		 * @param flags				Query flags
 		 * @return Result
 		 */
-		int vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, NativeReference<Handle> pData, long stride, EnumMask<VkQueryResultFlag> flags);
+		int vkGetQueryPoolResults(LogicalDevice device, Pool queryPool, int firstQuery, int queryCount, long dataSize, NativeReference<Handle> pData, long stride, EnumMask<VkQueryResultFlag> flags);
 
 		/**
 		 * Writes query results to a Vulkan buffer.

@@ -6,8 +6,9 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
@@ -27,7 +28,7 @@ public final class PipelineLayout extends VulkanObject {
 	 * @param dev			Logical device
 	 * @param push			Push constants
 	 */
-	PipelineLayout(Handle handle, DeviceContext dev, PushConstant push) {
+	PipelineLayout(Handle handle, LogicalDevice dev, PushConstant push) {
 		super(handle, dev);
 		this.push = requireNonNull(push);
 	}
@@ -77,7 +78,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @return New pipeline layout
 		 * @throws IllegalArgumentException if the overall length of the push constant ranges exceeds the hardware limit
 		 */
-		public PipelineLayout build(DeviceContext dev) {
+		public PipelineLayout build(LogicalDevice dev) {
 			// Init pipeline layout descriptor
 			final var info = new VkPipelineLayoutCreateInfo();
 
@@ -107,9 +108,9 @@ public final class PipelineLayout extends VulkanObject {
 			}
 
 			// Allocate layout
-			final Vulkan vulkan = dev.vulkan();
-			final NativeReference<Handle> ref = vulkan.factory().pointer();
-			vulkan.library().vkCreatePipelineLayout(dev, info, null, ref);
+			final VulkanLibrary vulkan = dev.vulkan();
+			final Pointer ref = new Pointer();
+			vulkan.vkCreatePipelineLayout(dev, info, null, ref);
 
 			// Create layout
 			return new PipelineLayout(ref.get(), dev, push);
@@ -128,7 +129,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Returned pipeline layout
 		 * @return Result
 		 */
-		int vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pPipelineLayout);
+		int vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pPipelineLayout);
 
 		/**
 		 * Destroys a pipeline layout.
@@ -136,7 +137,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Pipeline layout
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Handle pAllocator);
+		void vkDestroyPipelineLayout(LogicalDevice device, PipelineLayout pipelineLayout, Handle pAllocator);
 
 		/**
 		 * Updates a push constant range.

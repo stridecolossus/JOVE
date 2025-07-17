@@ -1,12 +1,11 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.VkAccess.*;
 import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 import static org.sarge.jove.platform.vulkan.VkPipelineStage.TRANSFER;
-import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandPool;
 import org.sarge.jove.platform.vulkan.image.*;
@@ -45,7 +44,7 @@ public class CaptureTask {
 		final Image image = swapchain.latest().image();
 
 		// Create destination screenshot image
-		final DeviceContext dev = swapchain.device();
+		final LogicalDevice dev = swapchain.device();
 		final DefaultImage screenshot = screenshot(dev, allocator, image.descriptor());
 
 		// Init copy command
@@ -76,7 +75,7 @@ public class CaptureTask {
 	 * @param allocator		Memory allocator
 	 * @param target		Target image descriptor
 	 */
-	private static DefaultImage screenshot(DeviceContext dev, Allocator allocator, Image.Descriptor target) {
+	private static DefaultImage screenshot(LogicalDevice dev, Allocator allocator, Image.Descriptor target) {
 		// Create descriptor
 		final var descriptor = new Image.Descriptor.Builder()
 				.type(VkImageType.TWO_D)

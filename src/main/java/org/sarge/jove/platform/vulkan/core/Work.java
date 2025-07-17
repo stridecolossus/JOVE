@@ -6,7 +6,6 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 
 /**
@@ -133,7 +132,7 @@ public final class Work {
 				.toArray(VkSubmitInfo[]::new);
 
 		// Submit batch
-		final VulkanLibrary lib = pool.device().vulkan().library();
+		final VulkanLibrary lib = pool.device().vulkan();
 		lib.vkQueueSubmit(queue, info.length, info, fence);
 	}
 
@@ -179,7 +178,7 @@ public final class Work {
 	 * @see #submit(Command, CommandPool)
 	 */
 	public static void submit(CommandBuffer buffer) {
-		final DeviceContext dev = buffer.pool().device();
+		final LogicalDevice dev = buffer.pool().device();
 		final Fence fence = Fence.create(dev);
 		try {
 			Work.of(buffer).submit(fence);

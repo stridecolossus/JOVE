@@ -4,8 +4,9 @@ import java.util.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.EnumMask;
 
@@ -20,21 +21,21 @@ public class Fence extends VulkanObject {
 	 * @param flags			Creation flags
 	 * @return Fence
 	 */
-	public static Fence create(DeviceContext device, VkFenceCreateFlag... flags) {
+	public static Fence create(LogicalDevice device, VkFenceCreateFlag... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
-		info.flags = EnumMask.of(flags);
+		info.flags = new EnumMask<>(flags);
 
 		// Create fence
-		final Vulkan vulkan = device.vulkan();
-		final NativeReference<Handle> ref = vulkan.factory().pointer();
-		vulkan.library().vkCreateFence(device, info, null, ref);
+		final VulkanLibrary vulkan = device.vulkan();
+		final NativeReference<Handle> ref = new Pointer(); // TODO
+		vulkan.vkCreateFence(device, info, null, ref);
 
 		// Create domain object
 		return new Fence(ref.get(), device);
 	}
 
-	Fence(Handle handle, DeviceContext device) {
+	Fence(Handle handle, LogicalDevice device) {
 		super(handle, device);
 	}
 
@@ -42,8 +43,8 @@ public class Fence extends VulkanObject {
 	 * @return Whether this fence has been signalled
 	 */
 	public boolean signalled() {
-		final DeviceContext dev = this.device();
-		final VkResult result = dev.vulkan().library().vkGetFenceStatus(dev, this);
+		final LogicalDevice dev = this.device();
+		final VkResult result = dev.vulkan().vkGetFenceStatus(dev, this);
 		return switch(result) {
 			case SUCCESS -> true;
 			case NOT_READY -> false;
@@ -77,9 +78,9 @@ public class Fence extends VulkanObject {
 	 * @param device		Logical device
 	 * @param fences		Fences to reset
 	 */
-	static void reset(DeviceContext device, Collection<Fence> fences) {
+	static void reset(LogicalDevice device, Collection<Fence> fences) {
 		final Fence[] array = fences.toArray(Fence[]::new);
-		device.vulkan().library().vkResetFences(device, array.length, array);
+		device.vulkan().vkResetFences(device, array.length, array);
 	}
 
 	/**
@@ -89,9 +90,9 @@ public class Fence extends VulkanObject {
 	 * @param all			Whether to wait for all or any fence
 	 * @param timeout		Timeout (nanoseconds)
 	 */
-	static void wait(DeviceContext device, Collection<Fence> fences, boolean all, long timeout) {
+	static void wait(LogicalDevice device, Collection<Fence> fences, boolean all, long timeout) {
 		final Fence[] array = fences.toArray(Fence[]::new);
-		device.vulkan().library().vkWaitForFences(device, array.length, array, all, timeout);
+		device.vulkan().vkWaitForFences(device, array.length, array, all, timeout);
 	}
 
 	/**
@@ -106,7 +107,7 @@ public class Fence extends VulkanObject {
 		 * @param pFence			Returned fence
 		 * @return Result
 		 */
-		int vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pFence);
+		int vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pFence);
 
 		/**
 		 * Destroys a fence.
@@ -114,7 +115,7 @@ public class Fence extends VulkanObject {
 		 * @param fence				Fence
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyFence(DeviceContext device, Fence fence, Handle pAllocator);
+		void vkDestroyFence(LogicalDevice device, Fence fence, Handle pAllocator);
 
 		/**
 		 * Resets a number of fences.
@@ -123,7 +124,7 @@ public class Fence extends VulkanObject {
 		 * @param pFences			Fences
 		 * @return Result
 		 */
-		int vkResetFences(DeviceContext device, int fenceCount, Fence[] pFences);
+		int vkResetFences(LogicalDevice device, int fenceCount, Fence[] pFences);
 
 		/**
 		 * Retrieves the status of a given fence.
@@ -132,7 +133,7 @@ public class Fence extends VulkanObject {
 		 * @param fence
 		 * @return Fence status flag
 		 */
-		VkResult vkGetFenceStatus(DeviceContext device, Fence fence);
+		VkResult vkGetFenceStatus(LogicalDevice device, Fence fence);
 
 		/**
 		 * Waits for a number of fences.
@@ -143,6 +144,6 @@ public class Fence extends VulkanObject {
 		 * @param timeout			Timeout or {@link Long#MAX_VALUE} (nanoseconds)
 		 * @return Result
 		 */
-		int vkWaitForFences(DeviceContext device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout);
+		int vkWaitForFences(LogicalDevice device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout);
 	}
 }

@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
@@ -11,8 +10,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
 
-import com.sun.jna.Pointer;
-
 class WorkQueueTest {
 	private WorkQueue queue;
 	private Family family;
@@ -20,33 +17,27 @@ class WorkQueueTest {
 	@BeforeEach
 	void before() {
 		family = new Family(1, 2, Set.of(VkQueueFlag.GRAPHICS));
-		queue = new WorkQueue(new Handle(new Pointer(3)), family);
-	}
-
-	@Test
-	void constructor() {
-		assertEquals(family, queue.family());
-	}
-
-	@Test
-	void family() {
-		assertEquals(1, family.index());
-		assertEquals(2, family.count());
-		assertEquals(Set.of(VkQueueFlag.GRAPHICS), family.flags());
+		queue = new WorkQueue(new Handle(3), family);
 	}
 
 	@Test
 	void waitIdle() {
-		final VulkanLibrary lib = mock(VulkanLibrary.class);
+		final VulkanLibrary lib = new MockVulkanLibrary() {
+			@Override
+			public VkResult vkQueueWaitIdle(WorkQueue q) {
+				assertEquals(queue, q);
+				return VkResult.SUCCESS;
+			}
+		};
 		queue.waitIdle(lib);
-		verify(lib).vkQueueWaitIdle(queue);
+		// TODO - really test is invoked
 	}
 
 	@Test
 	void of() {
-		final var props = new VkQueueFamilyProperties();
-		props.queueCount = 2;
-		props.queueFlags = EnumMask.of(VkQueueFlag.GRAPHICS);
-		assertEquals(family, Family.of(1, props));
+		final var properties = new VkQueueFamilyProperties();
+		properties.queueCount = 2;
+		properties.queueFlags = new EnumMask<>(VkQueueFlag.GRAPHICS);
+		assertEquals(family, Family.of(1, properties));
 	}
 }

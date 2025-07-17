@@ -8,7 +8,6 @@ import java.util.*;
 
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.EnumMask;
 
@@ -18,7 +17,7 @@ import org.sarge.jove.util.EnumMask;
  * Notes:
  * <ul>
  * <li>The offset and size of each {@link Range} must adhere to the alignment rules for push constants</li>
- * <li>The overall length of the push constant buffer is restricted by the hardware, see {@link PipelineLayout.Builder#build(DeviceContext)}</li>
+ * <li>The overall length of the push constant buffer is restricted by the hardware, see {@link PipelineLayout.Builder#build(LogicalDevice)}</li>
  * <li>The push constant ranges must cover the entire buffer</li>
  * </ul>
  * <p>
@@ -180,8 +179,8 @@ public final class PushConstant {
 		public Range {
 			requireZeroOrMore(offset);
 			requireOneOrMore(size);
-			Vulkan.checkAlignment(offset);
-			Vulkan.checkAlignment(size);
+			VulkanLibrary.checkAlignment(offset);
+			VulkanLibrary.checkAlignment(size);
 			requireNotEmpty(stages);
 			stages = Set.copyOf(stages);
 		}

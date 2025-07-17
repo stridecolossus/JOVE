@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.Transformer;
+import org.sarge.jove.foreign.DefaultTransformer;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -77,7 +77,7 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	/**
 	 * Native transformer for an enumeration bitfield.
 	 */
-	public static class EnumMaskTransformer implements Transformer<EnumMask<?>> {
+	public static class EnumMaskTransformer extends DefaultTransformer<EnumMask<?>> {
 		@Override
 		public MemoryLayout layout() {
 			return ValueLayout.JAVA_INT;

@@ -7,8 +7,7 @@ import static java.util.Objects.requireNonNull;
  * @author Sarge
  */
 public abstract class TransientNativeObject implements NativeObject, TransientObject {
-	protected final Handle handle;
-
+	private final Handle handle;
 	private boolean destroyed;
 
 	/**
@@ -53,10 +52,5 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 				(obj == this) ||
 				(obj instanceof TransientNativeObject that) &&
 				this.handle.equals(that.handle());
-	}
-
-	@Override
-	public String toString() {
-		return handle.toString();
 	}
 }

@@ -9,13 +9,13 @@ import java.util.function.*;
 import org.junit.jupiter.api.*;
 import org.mockito.stubbing.Answer;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.EnumMask;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
 class PhysicalDeviceTest {
@@ -28,8 +28,8 @@ class PhysicalDeviceTest {
 	@BeforeEach
 	void before() {
 		// Init Vulkan
-		lib = mock(VulkanLibrary.class);
-		instance = new Instance(new Handle(2), lib, new MockReferenceFactory());
+		lib = new MockVulkanLibrary();
+		instance = new Instance(new Handle(2), lib);
 
 		// Init supported features
 		final var struct = new VkPhysicalDeviceFeatures();

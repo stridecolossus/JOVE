@@ -6,7 +6,7 @@ import org.sarge.jove.foreign.NativeStructure;
 
 public abstract class VulkanStructure implements NativeStructure {
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
 		);
 	}

@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -8,7 +8,6 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.MockReferenceFactory;
 
 import com.sun.jna.ptr.IntByReference;

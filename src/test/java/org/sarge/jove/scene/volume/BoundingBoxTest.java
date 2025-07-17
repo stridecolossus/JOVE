@@ -2,6 +2,7 @@ package org.sarge.jove.scene.volume;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
+import static org.sarge.jove.geometry.Ray.IntersectedSurface.EMPTY_INTERSECTIONS;
 
 import java.util.*;
 
@@ -53,26 +54,26 @@ class BoundingBoxTest {
 		@DisplayName("A bounding box intersects a sphere that it encloses")
 		@Test
 		void intersects() {
-			assertEquals(true, box.intersects(new SphereVolume(new Sphere(bounds.centre(), 1))));
-			assertEquals(true, box.intersects(new SphereVolume(new Sphere(bounds.centre(), 4))));
+			assertEquals(true, box.intersects(new SphereVolume(bounds.centre(), 1)));
+			assertEquals(true, box.intersects(new SphereVolume(bounds.centre(), 4)));
 		}
 
 		@DisplayName("A bounding box is intersected by a sphere that encloses its bounds")
 		@Test
 		void enclosed() {
-			assertEquals(true, box.intersects(new SphereVolume(new Sphere(Point.ORIGIN, Float.MAX_VALUE))));
+			assertEquals(true, box.intersects(new SphereVolume(Point.ORIGIN, Float.MAX_VALUE)));
 		}
 
 		@DisplayName("A bounding box intersects a sphere that is touching the box")
 		@Test
 		void touching() {
-			assertEquals(true, box.intersects(new SphereVolume(new Sphere(new Point(1, 2, 2), 1))));
+			assertEquals(true, box.intersects(new SphereVolume(new Point(1, 2, 2), 1)));
 		}
 
 		@DisplayName("A bounding box does not intersect a sphere that is outside of its bounds")
 		@Test
 		void outside() {
-			assertEquals(false, box.intersects(new SphereVolume(new Sphere(Point.ORIGIN, 3))));
+			assertEquals(false, box.intersects(new SphereVolume(Point.ORIGIN, 3)));
 		}
 	}
 
@@ -151,22 +152,22 @@ class BoundingBoxTest {
 		@DisplayName("A ray that points away from the box has no intersections")
 		@Test
 		void miss() {
-			assertEquals(Intersection.NONE, box.intersections(new Ray(new Point(0, 3, 0), X.invert())));
+			assertEquals(EMPTY_INTERSECTIONS, box.intersections(new Ray(new Point(0, 3, 0), X.invert())));
 		}
 
 		@DisplayName("A ray does not intersect a bounding box if it is behind the ray origin")
 		@Test
 		void behind() {
-			assertEquals(Intersection.NONE, box.intersections(new Ray(new Point(4, 3, 0), X)));
+			assertEquals(EMPTY_INTERSECTIONS, box.intersections(new Ray(new Point(4, 3, 0), X)));
 		}
 
 		@DisplayName("A ray does not intersect a bounding box if the direction is parallel to that box")
 		@Test
 		void parallel() {
-			assertEquals(Intersection.NONE, box.intersections(new Ray(new Point(0, 1, 0), X)));
-			assertEquals(Intersection.NONE, box.intersections(new Ray(new Point(0, 5, 0), X)));
-			assertEquals(Intersection.NONE, box.intersections(new Ray(new Point(0, 0, 0), Y)));
-			assertEquals(Intersection.NONE, box.intersections(new Ray(new Point(4, 0, 0), Y)));
+			assertEquals(EMPTY_INTERSECTIONS, box.intersections(new Ray(new Point(0, 1, 0), X)));
+			assertEquals(EMPTY_INTERSECTIONS, box.intersections(new Ray(new Point(0, 5, 0), X)));
+			assertEquals(EMPTY_INTERSECTIONS, box.intersections(new Ray(new Point(0, 0, 0), Y)));
+			assertEquals(EMPTY_INTERSECTIONS, box.intersections(new Ray(new Point(4, 0, 0), Y)));
 		}
 	}
 

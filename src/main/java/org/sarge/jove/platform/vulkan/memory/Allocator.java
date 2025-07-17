@@ -6,11 +6,10 @@ import static org.sarge.lib.Validation.requireOneOrMore;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.BitField;
 
 /**
@@ -41,26 +40,20 @@ public class Allocator {
 
 	/**
 	 * Creates and configures a memory allocator for the given device.
-	 * @param dev Logical device
+	 * @param dev 		Logical device
+	 * @param types		Memory types
 	 * @return Allocator
 	 * @see MemoryType#enumerate(VkPhysicalDeviceMemoryProperties)
 	 * @see LogicalDevice#limits()
 	 */
-	public static Allocator create(LogicalDevice dev) {
-		// Retrieve supported memory types
-		final var props = dev.parent().memory();
-		final MemoryType[] types = MemoryType.enumerate(props);
-
-		// Lookup hardware limits
+	public static Allocator create(LogicalDevice dev, MemoryType[] types) {
 		final VkPhysicalDeviceLimits limits = dev.limits();
 		final int max = limits.maxMemoryAllocationCount;
     	final long page = limits.bufferImageGranularity;
-
-    	// Create allocator
     	return new Allocator(dev, types, max, page);
 	}
 
-	private final DeviceContext dev;
+	private final LogicalDevice device;
 	private final MemoryType[] types;
 	private final long granularity;
 	private final int max;
@@ -73,8 +66,8 @@ public class Allocator {
 	 * @param max			Maximum number of allocations
 	 * @param granularity	Memory page granularity
 	 */
-	public Allocator(DeviceContext dev, MemoryType[] types, int max, long granularity) {
-		this.dev = requireNonNull(dev);
+	public Allocator(LogicalDevice dev, MemoryType[] types, int max, long granularity) {
+		this.device = requireNonNull(dev);
 		this.types = Arrays.copyOf(types, types.length);
 		this.max = requireOneOrMore(max);
 		this.granularity = requireOneOrMore(granularity);
@@ -84,7 +77,7 @@ public class Allocator {
 	 * Copy constructor.
 	 */
 	protected Allocator(Allocator allocator) {
-		this(allocator.dev, allocator.types, allocator.max, allocator.granularity);
+		this(allocator.device, allocator.types, allocator.max, allocator.granularity);
 	}
 
 	/**
@@ -199,7 +192,7 @@ public class Allocator {
 	 */
 	protected DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
 		// Check maximum number of allocations
-		if(count >= max) throw new AllocationException("Number of allocations exceeds the hardware limit".formatted(count, max));
+		if(count >= max) throw new AllocationException("Number of allocations exceeds the hardware limit");
 
 		// Quantise the requested size
 		final long pages = pages(size);
@@ -211,20 +204,18 @@ public class Allocator {
 		info.memoryTypeIndex = type.index();
 
 		// Allocate memory
-		final Vulkan vulkan = dev.vulkan();
-		final NativeReference<Handle> ref = vulkan.factory().pointer();
-		// final int result =
-		// TODO - why specific check?
-		vulkan.library().vkAllocateMemory(dev, info, null, ref);
-
-//		// Check allocated
-//		if(result != VulkanLibrary.SUCCESS) {
-//			throw new AllocationException("Cannot allocate memory: type=%s size=%d error=%d".formatted(type, size, result));
-//		}
+		final VulkanLibrary vulkan = device.vulkan();
+		final Pointer ref = new Pointer();
+		try {
+			vulkan.vkAllocateMemory(device, info, null, ref);
+		}
+		catch(VulkanException e) {
+			throw new AllocationException("Cannot allocate device memory: type=%s size=%d".formatted(type, size));
+		}
 
 		// Create device memory
 		++count;
-		return new DefaultDeviceMemory(ref.get(), dev, type, size);
+		return new DefaultDeviceMemory(ref.get(), device, type, size);
 	}
 
 	/**

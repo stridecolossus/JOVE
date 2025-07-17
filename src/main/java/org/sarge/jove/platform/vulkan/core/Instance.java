@@ -6,7 +6,8 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.*;
+import org.sarge.jove.foreign.Returned;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
@@ -16,15 +17,14 @@ import org.sarge.jove.platform.vulkan.util.ValidationLayer;
  * @author Sarge
  */
 public class Instance extends TransientNativeObject {
-	private final Vulkan vulkan;
-	private final Collection<DiagnosticHandler> handlers = new ArrayList<>();
+	private final VulkanLibrary vulkan;
 
 	/**
 	 * Constructor.
 	 * @param handle	Instance handle
 	 * @param vulkan	Vulkan
 	 */
-	Instance(Handle handle, Vulkan vulkan) {
+	Instance(Handle handle, VulkanLibrary vulkan) {
 		super(handle);
 		this.vulkan = requireNonNull(vulkan);
 	}
@@ -32,7 +32,7 @@ public class Instance extends TransientNativeObject {
 	/**
 	 * @return Vulkan platform
 	 */
-	public Vulkan vulkan() {
+	public VulkanLibrary vulkan() {
 		return vulkan;
 	}
 
@@ -40,30 +40,15 @@ public class Instance extends TransientNativeObject {
 	 * Looks up a function pointer in this instance.
 	 * @param name Function name
 	 * @return Function pointer
-	 * @throws IllegalArgumentException if the function cannot be found
 	 */
-	public Handle function(String name) {
-		final Handle handle = vulkan.library().vkGetInstanceProcAddr(this, name);
-		if(handle == null) throw new IllegalArgumentException("Instance function not found: " + name);
-		return handle;
+	public Optional<Handle> function(String name) {
+		final Handle function = vulkan.vkGetInstanceProcAddr(this, name);
+		return Optional.ofNullable(function);
 	}
-
-	/**
-	 * Attaches a diagnostic handler.
-	 * @param handler Handler to attach
-	 */
-	void attach(DiagnosticHandler handler) {
-		handlers.add(handler);
-	}
-	// TODO - is there much point in this coupling?
 
 	@Override
 	protected void release() {
-		for(DiagnosticHandler handler : handlers) {
-			handler.destroy();
-		}
-		handlers.clear();
-		vulkan.library().vkDestroyInstance(this, null);
+		vulkan.vkDestroyInstance(this, null);
 	}
 
 	/**
@@ -99,11 +84,11 @@ public class Instance extends TransientNativeObject {
 		/**
 		 * Sets the required version of the Vulkan API (default is {@link VulkanLibrary#VERSION}).
 		 * @param api Required API version
-		 * @throws IllegalStateException if {@link #api} is not supported by this JOVE implementation
+		 * @throws IllegalArgumentException if {@link #api} is not supported by this JOVE implementation
 		 */
 		public Builder api(Version api) {
 			if(api.compareTo(VulkanLibrary.VERSION) > 0) {
-				throw new IllegalStateException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, VulkanLibrary.VERSION));
+				throw new IllegalArgumentException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, VulkanLibrary.VERSION));
 			}
 			this.api = requireNonNull(api);
 			return this;
@@ -145,7 +130,7 @@ public class Instance extends TransientNativeObject {
 		 * @param lib Vulkan
 		 * @return New instance
 		 */
-		public Instance build(Vulkan vulkan) {
+		public Instance build(VulkanLibrary vulkan) {
 			// Init application descriptor
 			final var app = new VkApplicationInfo();
 			app.pApplicationName = name;
@@ -167,8 +152,8 @@ public class Instance extends TransientNativeObject {
 			info.enabledLayerCount = layers.size();
 
 			// Create instance
-			final NativeReference<Handle> ref = vulkan.factory().pointer();
-			vulkan.library().vkCreateInstance(info, null, ref);
+			final var ref = new Pointer();
+			vulkan.vkCreateInstance(info, null, ref);
 
 			// Create instance domain wrapper
 			return new Instance(ref.get(), vulkan);
@@ -186,7 +171,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pInstance			Returned instance handle
 		 * @return Result
 		 */
-		int vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pInstance);
+		VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance);
 
 		/**
 		 * Destroys the vulkan instance.
@@ -202,7 +187,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Extensions
 		 * @return Result
 		 */
-		//int vkEnumerateInstanceExtensionProperties(String pLayerName, NativeReference<Integer> pPropertyCount, @Returned VkExtensionProperties[] pProperties);
+		VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, @Returned VkExtensionProperties[] pProperties);
 
 		/**
 		 * Enumerates validation layer properties.
@@ -210,12 +195,12 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Layers
 		 * @return Result
 		 */
-		//int vkEnumerateInstanceLayerProperties(NativeReference<Integer> pPropertyCount, @Returned VkLayerProperties[] pProperties);
+		VkResult vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, @Returned VkLayerProperties[] pProperties);
 
 		/**
 		 * Looks up a function pointer of this instance.
 		 * @param instance		Vulkan instance
-		 * @param name			Function name
+		 * @param pName			Function name
 		 * @return Function pointer
 		 */
 		Handle vkGetInstanceProcAddr(Instance instance, String pName);

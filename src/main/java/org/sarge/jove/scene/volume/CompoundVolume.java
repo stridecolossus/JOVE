@@ -21,7 +21,7 @@ import org.sarge.jove.geometry.Ray.Intersection;
  * <p>
  * @author Sarge
  */
-public class CompoundVolume implements Volume {
+public record CompoundVolume(List<Volume> volumes) implements Volume {
 	/**
 	 * Creates a compound volume.
 	 * @param volumes Volumes
@@ -31,14 +31,12 @@ public class CompoundVolume implements Volume {
 		return new CompoundVolume(Arrays.asList(volumes));
 	}
 
-	private final List<Volume> volumes;
-
 	/**
 	 * Constructor.
 	 * @param volumes Volumes
 	 */
-	public CompoundVolume(List<Volume> volumes) {
-		this.volumes = List.copyOf(volumes);
+	public CompoundVolume {
+		volumes = List.copyOf(volumes);
 	}
 
 	@Override
@@ -48,8 +46,8 @@ public class CompoundVolume implements Volume {
 	}
 
 	@Override
-	public boolean contains(Point pt) {
-		return volumes.stream().allMatch(v -> v.contains(pt));
+	public boolean contains(Point p) {
+		return volumes.stream().allMatch(v -> v.contains(p));
 	}
 
 	@Override
@@ -71,15 +69,5 @@ public class CompoundVolume implements Volume {
 //				.filter(Predicate.not(Intersection.NONE::equals))
 //				.findAny();
 		return null;
-	}
-
-	@Override
-	public int hashCode() {
-		return volumes.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return (obj == this) || (obj instanceof CompoundVolume that) && this.volumes.equals(that.volumes);
 	}
 }

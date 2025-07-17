@@ -12,10 +12,10 @@ import java.util.function.Predicate;
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Ray.Intersection.Surface;
+import org.sarge.jove.geometry.Ray.IntersectedSurface;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
+import org.sarge.jove.platform.vulkan.core.Surface;
 
 /**
  * A <i>particle system</i> is a controller for a particle animation.
@@ -62,7 +62,7 @@ public class ParticleSystem implements Frame.Listener {
 	// Controller
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
-	private final Map<Surface, Collision> surfaces = new HashMap<>();
+	private final Map<IntersectedSurface, Collision> surfaces = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -218,7 +218,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param action		Collision action
 	 * @see Characteristic#CULL
 	 */
-	public ParticleSystem add(Surface surface, Collision action) {
+	public ParticleSystem add(IntersectedSurface surface, Collision action) {
 		requireNonNull(surface);
 		requireNonNull(action);
 		surfaces.put(surface, action);
@@ -321,9 +321,9 @@ public class ParticleSystem implements Frame.Listener {
 	 */
 	private void collide(Particle p) {
 		for(var entry : surfaces.entrySet()) {
-			final Surface surface = entry.getKey();
+			final IntersectedSurface surface = entry.getKey();
 			final var results = surface.intersections(p.ray());
-			if(results != Intersection.NONE) {
+			if(results != IntersectedSurface.EMPTY_INTERSECTIONS) {
 				final Collision collision = entry.getValue();
 				collision.collide(p, results.iterator().next());
 				break;

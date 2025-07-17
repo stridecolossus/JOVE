@@ -7,8 +7,7 @@ import java.util.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.EnumMask;
 
@@ -93,7 +92,7 @@ public class GraphicsPipelineBuilder {
 	 * Sets the index of the sibling from which pipeline is derived when creating an array of pipelines.
 	 * @param sibling Sibling index
 	 * @throws IllegalStateException if this pipeline is already configured as a derivative
-	 * @see #build(List, DeviceContext)
+	 * @see #build(GraphicsPipelineBuilder[], PipelineCache, LogicalDevice)
 	 */
 	public GraphicsPipelineBuilder sibling(int sibling) {
 		this.sibling = requireZeroOrMore(sibling);
@@ -227,9 +226,9 @@ public class GraphicsPipelineBuilder {
 	 * @param dev Logical device
 	 * @return Graphics pipeline
 	 * @throws IndexOutOfBoundsException if this pipeline is configured to derive from a sibling
-	 * @see #build(GraphicsPipelineBuilder[], DeviceContext)
+	 * @see #build(GraphicsPipelineBuilder[], PipelineCache, LogicalDevice)
 	 */
-	public Pipeline build(DeviceContext dev) {
+	public Pipeline build(LogicalDevice dev) {
 		final var array = build(new GraphicsPipelineBuilder[]{this}, null, dev);
 		return array[0];
 	}
@@ -238,13 +237,13 @@ public class GraphicsPipelineBuilder {
 	 * Builds an array of pipelines in one operation.
 	 * @param builders		Pipeline builders
 	 * @param cache			Optional pipeline cache
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @return Pipelines
 	 * @throws IllegalStateException if a {@link VkShaderStage#VERTEX} programmable shader stage is not configured for any pipeline
 	 * @throws IndexOutOfBoundsException if the sibling index is invalid for a derived pipeline
 	 * @see #sibling(int)
 	 */
-	public static Pipeline[] build(GraphicsPipelineBuilder[] builders, PipelineCache cache, DeviceContext dev) {
+	public static Pipeline[] build(GraphicsPipelineBuilder[] builders, PipelineCache cache, LogicalDevice device) {
 		// Validate pipeline siblings
 		for(int n = 0; n < builders.length; ++n) {
 			final int sibling = builders[n].sibling;
@@ -263,12 +262,12 @@ public class GraphicsPipelineBuilder {
 
 		// Create native pipelines
 		final Handle[] handles = new Handle[builders.length];
-		final VulkanLibrary lib = dev.vulkan().library();
-//		lib.vkCreateGraphicsPipelines(dev, cache, descriptors.length, descriptors, null, handles);
+		final VulkanLibrary lib = device.vulkan();
+		lib.vkCreateGraphicsPipelines(device, cache, descriptors.length, descriptors, null, handles);
 
 		// Construct pipelines
 		final Pipeline[] pipelines = new Pipeline[builders.length];
-		Arrays.setAll(pipelines, n -> pipeline(handles[n], dev, builders[n]));
+		Arrays.setAll(pipelines, n -> pipeline(handles[n], device, builders[n]));
 
 		return pipelines;
 	}
@@ -276,7 +275,7 @@ public class GraphicsPipelineBuilder {
 	/**
 	 * Constructs a pipeline.
 	 */
-	private static Pipeline pipeline(Handle handle, DeviceContext dev, GraphicsPipelineBuilder builder) {
+	private static Pipeline pipeline(Handle handle, LogicalDevice dev, GraphicsPipelineBuilder builder) {
 		final boolean parent = builder.flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
 		return new Pipeline(handle, dev, VkPipelineBindPoint.GRAPHICS, builder.layout, parent);
 	}

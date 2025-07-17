@@ -9,15 +9,15 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.common.Handle.HandleTransformer;
 
 class ArrayTransformerTest {
-	private Transformer<Handle> component;
-	private ArrayTransformer<Handle> transformer;
+	private Transformer component;
+	private ArrayTransformer transformer;
 	private SegmentAllocator allocator;
 
 	@BeforeEach
 	void before() {
 		allocator = Arena.ofAuto();
 		component = new HandleTransformer();
-		transformer = new ArrayTransformer<>(component);
+		transformer = new ArrayTransformer(component);
 	}
 
 	@Test
@@ -25,13 +25,15 @@ class ArrayTransformerTest {
 		assertEquals(ValueLayout.ADDRESS, transformer.layout());
 	}
 
+	@DisplayName("An array of a supported type can be marshalled")
 	@Test
 	void marshal() {
-		final Handle[] array = {new Handle(42)};
+		final Handle[] array = {new Handle(3)};
 		final MemorySegment address = transformer.marshal(array, allocator);
-		assertEquals(MemorySegment.ofAddress(42), address.reinterpret(8).getAtIndex(ValueLayout.ADDRESS, 0));
+		assertEquals(MemorySegment.ofAddress(3), address.reinterpret(8).getAtIndex(ValueLayout.ADDRESS, 0));
 	}
 
+	@DisplayName("Empty array elements can be marshalled")
 	@Test
 	void empty() {
 		final Handle[] array = {null};
@@ -39,6 +41,7 @@ class ArrayTransformerTest {
 		assertEquals(MemorySegment.NULL, address.reinterpret(8).getAtIndex(ValueLayout.ADDRESS, 0));
 	}
 
+	@DisplayName("An array cannot be returned from a native method")
 	@Test
 	void unmarshal() {
 		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal());

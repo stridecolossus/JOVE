@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeReference;
 
 public class DesktopTest {
 	private Desktop desktop;
@@ -13,7 +12,7 @@ public class DesktopTest {
 	@BeforeEach
 	void before() {
 		lib = mock(DesktopLibrary.class);
-		desktop = new Desktop(lib, new NativeReference.Factory());
+		desktop = new Desktop(lib);
 	}
 
 	@Test

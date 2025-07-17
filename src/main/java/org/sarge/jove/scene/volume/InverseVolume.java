@@ -2,8 +2,6 @@ package org.sarge.jove.scene.volume;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Objects;
-
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
@@ -11,15 +9,13 @@ import org.sarge.jove.geometry.Ray.Intersection;
  * An <i>inverse volume</i> is the space <i>outside</i> a given volume.
  * @author Sarge
  */
-public class InverseVolume implements Volume {
-	private final Volume vol;
-
+public record InverseVolume(Volume vol) implements Volume {
 	/**
 	 * Constructor.
 	 * @param vol Volume
 	 */
-	public InverseVolume(Volume vol) {
-		this.vol = requireNonNull(vol);
+	public InverseVolume {
+		requireNonNull(vol);
 	}
 
 	@Override
@@ -49,11 +45,6 @@ public class InverseVolume implements Volume {
 
 	@Override
 	public int hashCode() {
-		return -Objects.hash(vol);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return (obj == this) || (obj instanceof InverseVolume that) && this.vol.equals(that.vol);
+		return -vol.hashCode();
 	}
 }

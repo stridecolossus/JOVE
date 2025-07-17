@@ -4,11 +4,11 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Optional;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
@@ -27,7 +27,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	 * @param type			Type of memory
 	 * @param size			Size of this memory (bytes)
 	 */
-	DefaultDeviceMemory(Handle handle, DeviceContext dev, MemoryType type, long size) {
+	DefaultDeviceMemory(Handle handle, LogicalDevice dev, MemoryType type, long size) {
 		super(handle, dev);
 		this.type = requireNonNull(type);
 		this.size = requireOneOrMore(size);
@@ -92,8 +92,8 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			checkMapped();
 
 			// Release mapping
-			final DeviceContext dev = device();
-			dev.vulkan().library().vkUnmapMemory(dev, DefaultDeviceMemory.this);
+			final LogicalDevice dev = device();
+			dev.vulkan().vkUnmapMemory(dev, DefaultDeviceMemory.this);
 
 			// Clear mapping
 			region = null;
@@ -127,10 +127,10 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		}
 
 		// Map memory
-		final DeviceContext dev = this.device();
-		final Vulkan vulkan = dev.vulkan();
-		final NativeReference<Handle> ref = vulkan.factory().pointer();
-		vulkan.library().vkMapMemory(dev, this, offset, size, 0, ref);
+		final LogicalDevice dev = this.device();
+		final VulkanLibrary vulkan = dev.vulkan();
+		final Pointer ref = new Pointer();
+		vulkan.vkMapMemory(dev, this, offset, size, 0, ref);
 
 		// Create mapped region
 		region = new DefaultRegion(ref.get(), offset, size);
@@ -169,17 +169,12 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(handle, type, size);
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof DefaultDeviceMemory that) &&
 				(this.type == that.type) &&
 				(this.size == that.size) &&
-				this.handle.equals(that.handle);
+				this.handle().equals(that.handle());
 	}
 }

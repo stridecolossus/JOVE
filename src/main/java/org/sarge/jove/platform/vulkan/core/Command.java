@@ -8,8 +8,9 @@ import java.util.function.BiFunction;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.EnumMask;
 
@@ -159,7 +160,7 @@ public interface Command {
 			info.pInheritanceInfo = inheritance;
 
 			// Start buffer recording
-			final VulkanLibrary lib = pool.device().vulkan().library();
+			final VulkanLibrary lib = pool.device().vulkan();
 			lib.vkBeginCommandBuffer(this, info);
 
 			// Start recording
@@ -217,7 +218,7 @@ public interface Command {
 		public final void reset(VkCommandBufferResetFlag... flags) {
 			validate(State.EXECUTABLE);
 			// TODO - check pool has flag
-			final EnumMask<VkCommandBufferResetFlag> mask = EnumMask.of(flags);
+			final EnumMask<VkCommandBufferResetFlag> mask = new EnumMask<>(flags);
 			pool.library().vkResetCommandBuffer(this, mask);
 			state = State.INITIAL;
 		}
@@ -312,7 +313,7 @@ public interface Command {
 		 * @return Secondary buffer command sequence
 		 */
 		public Sequence sequence() {
-			return (__, buffer) -> buffer.execute(List.of(this));
+			return (_, buffer) -> buffer.execute(List.of(this));
 		}
 
 		// TODO
@@ -320,7 +321,7 @@ public interface Command {
 			begin(pass.handle());
 			sequence.record(index, this);
 			end();
-			return (__, buffer) -> buffer.execute(List.of(this));
+			return (_, buffer) -> buffer.execute(List.of(this));
 		}
 	}
 
@@ -334,16 +335,16 @@ public interface Command {
 		 * @param queue		Work queue
 		 * @param flags		Creation flags
 		 */
-		public static CommandPool create(DeviceContext dev, WorkQueue queue, VkCommandPoolCreateFlag... flags) {
+		public static CommandPool create(LogicalDevice dev, WorkQueue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
-			info.flags = EnumMask.of(flags);
+			info.flags = new EnumMask<>(flags);
 
 			// Create pool
-			final Vulkan vulkan = dev.vulkan();
-			final NativeReference<Handle> pool = vulkan.factory().pointer();
-			vulkan.library().vkCreateCommandPool(dev, info, null, pool);
+			final VulkanLibrary vulkan = dev.vulkan();
+			final NativeReference<Handle> pool = new Pointer();
+			vulkan.vkCreateCommandPool(dev, info, null, pool);
 
 			// Create domain object
 			return new CommandPool(pool.get(), dev, queue);
@@ -357,7 +358,7 @@ public interface Command {
 		 * @param dev			Logical device
 		 * @param queue			Work queue
 		 */
-		CommandPool(Handle handle, DeviceContext dev, WorkQueue queue) {
+		CommandPool(Handle handle, LogicalDevice dev, WorkQueue queue) {
 			super(handle, dev);
 			this.queue = requireNonNull(queue);
 		}
@@ -370,7 +371,7 @@ public interface Command {
 		}
 
 		public VulkanLibrary library() {
-			return this.device().vulkan().library();
+			return this.device().vulkan();
 		}
 
 		/**
@@ -422,9 +423,9 @@ public interface Command {
 			info.commandPool = this.handle();
 
 			// Allocate buffers
-			final DeviceContext dev = super.device();
+			final LogicalDevice dev = super.device();
 			final Handle[] handles = new Handle[num];
-			dev.vulkan().library().vkAllocateCommandBuffers(dev, info, handles);
+			dev.vulkan().vkAllocateCommandBuffers(dev, info, handles);
 
 			// Create buffers
 			return Arrays
@@ -438,8 +439,8 @@ public interface Command {
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
-			final var bits = EnumMask.of(flags);
-			final DeviceContext dev = super.device();
+			final var bits = new EnumMask<>(flags);
+			final LogicalDevice dev = super.device();
 			this.library().vkResetCommandPool(dev, this, bits);
 		}
 
@@ -449,7 +450,7 @@ public interface Command {
 		 */
 		public void free(Collection<CommandBuffer> buffers) {
 			final CommandBuffer[] array = buffers.toArray(CommandBuffer[]::new);
-			final DeviceContext dev = super.device();
+			final LogicalDevice dev = super.device();
 			this.library().vkFreeCommandBuffers(dev, this, array.length, array);
 		}
 
@@ -471,7 +472,7 @@ public interface Command {
 		 * @param pCommandPool		Returned command pool handle
 		 * @return Result
 		 */
-		int vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pCommandPool);
+		int vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pCommandPool);
 
 		/**
 		 * Destroys a command pool (and its buffers).
@@ -479,7 +480,7 @@ public interface Command {
 		 * @param commandPool		Command pool
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyCommandPool(DeviceContext device, CommandPool commandPool, Handle pAllocator);
+		void vkDestroyCommandPool(LogicalDevice device, CommandPool commandPool, Handle pAllocator);
 
 		/**
 		 * Resets a command pool.
@@ -488,7 +489,7 @@ public interface Command {
 		 * @param flags				Flags
 		 * @return Result
 		 */
-		int vkResetCommandPool(DeviceContext device, CommandPool commandPool, EnumMask<VkCommandPoolResetFlag> flags);
+		int vkResetCommandPool(LogicalDevice device, CommandPool commandPool, EnumMask<VkCommandPoolResetFlag> flags);
 
 		/**
 		 * Allocates a number of command buffers.
@@ -497,7 +498,7 @@ public interface Command {
 		 * @param pCommandBuffers	Buffer handles
 		 * @return Result
 		 */
-		int vkAllocateCommandBuffers(DeviceContext device, VkCommandBufferAllocateInfo pAllocateInfo, @Returned Handle[] pCommandBuffers);
+		int vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, @Returned Handle[] pCommandBuffers);
 
 		/**
 		 * Releases a set of command buffers back to the pool.
@@ -506,7 +507,7 @@ public interface Command {
 		 * @param commandBufferCount	Number of buffers
 		 * @param pCommandBuffers		Command buffers
 		 */
-		void vkFreeCommandBuffers(DeviceContext device, CommandPool commandPool, int commandBufferCount, CommandBuffer[] pCommandBuffers);
+		void vkFreeCommandBuffers(LogicalDevice device, CommandPool commandPool, int commandBufferCount, CommandBuffer[] pCommandBuffers);
 
 		/**
 		 * Starts recording.

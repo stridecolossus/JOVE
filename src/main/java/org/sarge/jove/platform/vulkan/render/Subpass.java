@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -80,7 +80,7 @@ public class Subpass {
 	 * @param dev Logical device
 	 * @return Render pass
 	 */
-	public RenderPass create(DeviceContext dev) {
+	public RenderPass create(LogicalDevice dev) {
 		return RenderPass.create(dev, List.of(this));
 	}
 
@@ -313,10 +313,11 @@ public class Subpass {
 		}
 
 		/**
-		 * Populates the descriptor for this dependency.
+		 * @return Descriptor for this dependency
 		 * @throws IllegalArgumentException if the dependant subpass is not included in the render pass
 		 */
-		void populate(VkSubpassDependency info) {
+		VkSubpassDependency descriptor() {
+			final var info = new VkSubpassDependency();
 			if(dependency.index == null) throw new IllegalArgumentException("Missing dependant subpass: " + dependency);
 			info.dependencyFlags = new EnumMask<>(flags);
 			info.srcSubpass = dependency.index;
@@ -325,6 +326,7 @@ public class Subpass {
 			info.srcAccessMask = new EnumMask<>(src.access);
 			info.dstStageMask = new EnumMask<>(dest.stages);
 			info.dstAccessMask = new EnumMask<>(dest.access);
+			return info;
 		}
 	}
 }

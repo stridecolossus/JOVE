@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 
@@ -16,7 +15,7 @@ public class DefaultVulkanFrame implements VulkanFrame {
 	 * Creates a frame instance for the given device.
 	 * @param dev Logical device
 	 */
-	public static DefaultVulkanFrame create(DeviceContext dev) {
+	public static DefaultVulkanFrame create(LogicalDevice dev) {
 		final var available = VulkanSemaphore.create(dev);
 		final var ready = VulkanSemaphore.create(dev);
 		final var fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);

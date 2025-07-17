@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import java.lang.foreign.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.Transformer;
+import org.sarge.jove.foreign.DefaultTransformer;
 
 /**
  * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
@@ -38,7 +38,7 @@ public record Handle(MemorySegment address) {
 	/**
 	 * Native transformer for a handle.
 	 */
-	public static class HandleTransformer implements Transformer<Handle> {
+	public static class HandleTransformer extends DefaultTransformer<Handle> {
 		@Override
 		public MemorySegment marshal(Handle arg, SegmentAllocator allocator) {
 			return arg.address;

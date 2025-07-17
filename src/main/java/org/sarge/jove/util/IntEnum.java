@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 import java.util.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.Transformer;
+import org.sarge.jove.foreign.DefaultTransformer;
 
 /**
  * An <i>integer enumeration</i> represents a native {@code typedef enum} declaration.
@@ -70,7 +70,7 @@ public interface IntEnum {
 	/**
 	 * Native transformer for integer enumerations.
 	 */
-	class IntEnumTransformer implements Transformer<IntEnum> {
+	class IntEnumTransformer extends DefaultTransformer<IntEnum> {
 		private final ReverseMapping<?> mapping;
 
 		/**
@@ -98,14 +98,16 @@ public interface IntEnum {
 
 		@Override
 		public Function<Integer, IntEnum> unmarshal() {
-			return value -> {
-				if(value == 0) {
-					return mapping.defaultValue();
-				}
-				else {
-					return mapping.map(value);
-				}
-			};
+			return this::unmarshal;
+		}
+
+		private IntEnum unmarshal(Integer value) {
+			if(value == 0) {
+				return mapping.defaultValue();
+			}
+			else {
+				return mapping.map(value);
+			}
 		}
 	}
 }

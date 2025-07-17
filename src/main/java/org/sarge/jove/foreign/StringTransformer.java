@@ -7,7 +7,7 @@ import java.util.function.Function;
  * The <i>string transformer</i> marshals a Java string to/from a native pointer to a null-terminated character-array.
  * @author Sarge
  */
-public class StringTransformer implements Transformer<String> {
+public class StringTransformer extends DefaultTransformer<String> {
 	@Override
 	public MemorySegment marshal(String str, SegmentAllocator allocator) {
 		return allocator.allocateFrom(str);

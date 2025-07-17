@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.NativeReference.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 
 /**
@@ -110,8 +110,8 @@ public final class Window extends TransientNativeObject {
 	 */
 	@MainThread
 	public Dimensions size() {
-		final NativeReference<Integer> w = desktop.factory().integer();
-		final NativeReference<Integer> h = desktop.factory().integer();
+		final var w = new IntegerReference();
+		final var h = new IntegerReference();
 		desktop.library().glfwGetWindowSize(this, w, h);
 		return new Dimensions(w.get(), h.get());
 	}
@@ -232,7 +232,7 @@ public final class Window extends TransientNativeObject {
 	 */
 	public Handle surface(Handle instance) {
 		final DesktopLibrary lib = desktop.library();
-		final NativeReference<Handle> ref = desktop.factory().pointer();
+		final var ref = new Pointer();
 		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
 
 		// TODO - this could be extended to ALL desktop methods, similar to Vulkan?

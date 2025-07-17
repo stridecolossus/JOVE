@@ -39,7 +39,7 @@ public final class Desktop implements TransientObject {
 		//registry.add(MemorySegment.class, new IdentityTransformer(ValueLayout.ADDRESS));
 
 		// Load native library
-		final var factory = new NativeLibraryBuilder("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
+		final var factory = new NativeLibraryFactory("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
 		final DesktopLibrary lib = factory.build(DesktopLibrary.class);
 		// TODO - JoystickManager.init(lib);
 
@@ -48,7 +48,7 @@ public final class Desktop implements TransientObject {
 		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
 
 		// Create desktop service
-		return new Desktop(lib, new NativeReference.Factory());
+		return new Desktop(lib);
 	}
 
 	/**
@@ -61,16 +61,13 @@ public final class Desktop implements TransientObject {
 	}
 
 	private final DesktopLibrary lib;
-	private final NativeReference.Factory factory;
 
 	/**
 	 * Constructor.
-	 * @param lib 			GLFW library
-	 * @param factory		Reference factory
+	 * @param lib GLFW library
 	 */
-	Desktop(DesktopLibrary lib, NativeReference.Factory factory) {
+	Desktop(DesktopLibrary lib) {
 		this.lib = requireNonNull(lib);
-		this.factory = requireNonNull(factory);
 	}
 
 	/**
@@ -78,13 +75,6 @@ public final class Desktop implements TransientObject {
 	 */
 	DesktopLibrary library() {
 		return lib;
-	}
-
-	/**
-	 * @return Reference factory
-	 */
-	NativeReference.Factory factory() {
-		return factory;
 	}
 
 	/**

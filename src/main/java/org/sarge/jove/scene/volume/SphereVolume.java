@@ -12,45 +12,37 @@ import org.sarge.jove.util.MathsUtility;
  * A <i>sphere volume</i> is a bounding volume adapter for a {@link Sphere}.
  * @author Sarge
  */
-public class SphereVolume implements Volume {
+public record SphereVolume(Point centre, float radius) implements Volume {
+
+	// TODO - get rid of separate class
+
 	/**
 	 * Creates a sphere volume enclosing the given bounds.
 	 * @param bounds Bounds
 	 * @return Sphere volume
 	 */
 	public static SphereVolume of(Bounds bounds) {
-		final Sphere sphere = new Sphere(bounds.centre(), bounds.largest() / 2);
-		return new SphereVolume(sphere);
+		return new SphereVolume(bounds.centre(), bounds.largest() / 2);
 	}
-
-	private final Sphere sphere;
 
 	/**
 	 * Constructor.
 	 * @param sphere Sphere
 	 */
-	public SphereVolume(Sphere sphere) {
-		this.sphere = requireNonNull(sphere);
-	}
-
-	/**
-	 * @return Sphere
-	 */
-	public Sphere sphere() {
-		return sphere;
+	public SphereVolume {
+		requireNonNull(centre);
 	}
 
 	@Override
 	public Bounds bounds() {
-		final float r = sphere.radius();
-		final Point min = new Point(-r, -r, -r);
-		final Point max = new Point(r, r, r);
+		final Point min = new Point(-radius, -radius, -radius);
+		final Point max = new Point(radius, radius, radius);
 		return new Bounds(min, max);
 	}
 
 	@Override
-	public boolean contains(Point pt) {
-		return contains(pt, sphere.radius());
+	public boolean contains(Point p) {
+		return contains(p, radius);
 	}
 
 	@Override
@@ -66,22 +58,21 @@ public class SphereVolume implements Volume {
 	 * @return Whether two sphere volumes intersect
 	 */
 	private boolean intersects(SphereVolume that) {
-		final Point centre = that.sphere.centre();
-		final float r = this.sphere.radius() + that.sphere.radius();
-		return contains(centre, r);
+		final float r = this.radius + that.radius();
+		return contains(that.centre, r);
 	}
 
 	/**
 	 * @return Whether this sphere contains the given point
 	 */
 	private boolean contains(Point p, float r) {
-		return sphere.centre().distance(p) <= r * r;
+		return centre.distance(p) <= r * r;
 	}
 
 	@Override
 	public boolean intersects(Plane plane) {
-		final float d = plane.distance(sphere.centre());
-		return Math.abs(d) <= sphere.radius();
+		final float d = plane.distance(centre);
+		return Math.abs(d) <= radius;
 	}
 
 	/**
@@ -90,17 +81,17 @@ public class SphereVolume implements Volume {
 	 * @return Whether intersected
 	 */
 	public boolean intersects(Bounds bounds) {
-		final Point p = bounds.nearest(sphere.centre());
+		final Point p = bounds.nearest(centre);
 		return contains(p);
 	}
 
 	@Override
 	public Iterable<Intersection> intersections(Ray ray) {
 		// Determine distance to nearest intersection
-		final Vector vec = Vector.between(ray.origin(), sphere.centre());
+		final Vector vec = Vector.between(ray.origin(), centre);
 		final float nearest = ray.direction().dot(vec);
 		final float distance = vec.magnitude();
-		final float radiusSquared = sphere.radius() * sphere.radius();
+		final float radiusSquared = radius * radius;
 
 		// Init intersection helper
 		final var builder = new Object() {
@@ -119,7 +110,7 @@ public class SphereVolume implements Volume {
     			// Stop if ray does not intersect
     			if(Math.abs(dist) > radiusSquared) {
     				// TODO - are we repeating?
-    				return Intersection.NONE;
+    				return EMPTY_INTERSECTIONS;
     			}
 
     			// Lazily evaluate intersections
@@ -129,14 +120,14 @@ public class SphereVolume implements Volume {
     				final float offset = MathsUtility.sqrt(radiusSquared - dist);
 
     				// Build intersection results
-    				final Intersection a = ray.intersection(nearest + offset, sphere.centre());
+    				final Intersection a = ray.intersection(nearest + offset, centre);
     				if(distance < radiusSquared) {
     					// Ray origin is inside the sphere
     					return List.of(a).iterator();
     				}
     				else {
     					// Ray is outside the sphere (two intersections)
-    					final Intersection b = ray.intersection(nearest - offset, sphere.centre());
+    					final Intersection b = ray.intersection(nearest - offset, centre);
     					return List.of(b, a).iterator();
     				}
     			};
@@ -149,7 +140,7 @@ public class SphereVolume implements Volume {
     			if(distance > radiusSquared) {
     				// Ray originates outside the sphere
     				// TODO - are we repeating? (see above)
-    				return Intersection.NONE;
+    				return EMPTY_INTERSECTIONS;
     			}
     			else
     			if(distance < radiusSquared) {
@@ -158,7 +149,7 @@ public class SphereVolume implements Volume {
     			}
     			else {
     				// Ray originates on the sphere surface
-    				return List.of(ray.intersection(0, sphere.centre()));
+    				return List.of(ray.intersection(0, centre));
     			}
     		}
 
@@ -166,6 +157,7 @@ public class SphereVolume implements Volume {
     		 * Creates an intersection for the case where the ray is inside the sphere.
     		 */
     		private Intersection inside() {
+    			/*
     			return ray.new AbstractIntersection() {
     				@Override
     				public float distance() {
@@ -181,6 +173,8 @@ public class SphereVolume implements Volume {
     					return new Normal(vec);
     				}
     			};
+    			*/
+    			return null; // TODO
     		}
     	};
 
@@ -288,17 +282,4 @@ public class SphereVolume implements Volume {
 	// https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection#bounding_spheres
 	// http://www.lighthouse3d.com/tutorials/maths/ray-sphere-intersection/
 	// http://kylehalladay.com/blog/tutorial/math/2013/12/24/Ray-Sphere-Intersection.html
-
-	@Override
-	public int hashCode() {
-		return sphere.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof SphereVolume that) &&
-				this.sphere.equals(that.sphere);
-	}
 }

@@ -2,9 +2,8 @@ package org.sarge.jove.common;
 
 import java.lang.foreign.*;
 import java.util.Collection;
-import java.util.function.Function;
 
-import org.sarge.jove.foreign.Transformer;
+import org.sarge.jove.foreign.DefaultTransformer;
 
 /**
  * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
@@ -32,15 +31,10 @@ public interface NativeObject {
 	/**
 	 * Transformer for native objects.
 	 */
-	public static class NativeObjectTransformer implements Transformer<NativeObject> {
+	public static class NativeObjectTransformer extends DefaultTransformer<NativeObject> {
 		@Override
 		public MemorySegment marshal(NativeObject arg, SegmentAllocator allocator) {
 			return arg.handle().address();
-		}
-
-		@Override
-		public Function<? extends Object, NativeObject> unmarshal() {
-			throw new UnsupportedOperationException("Native objects cannot be returned from a native method");
 		}
 	}
 }

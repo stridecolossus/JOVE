@@ -3,16 +3,15 @@ package org.sarge.jove.platform.vulkan.image;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 
 /**
  * Vulkan image API.
  * @author Sarge
  */
-public interface ImageLibrary extends View.Library, Sampler.Library {
+public interface ImageLibrary extends View.Library, Sampler.Library {		// TODO - confusing that this is a library AND an aggregate
 	/**
 	 * Creates an image.
 	 * @param device			Logical device
@@ -21,7 +20,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param pImage			Returned image handle
 	 * @return Result
 	 */
-	int vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pImage);
+	int vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pImage);
 
 	/**
 	 * Destroys an image.
@@ -29,7 +28,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param image				Image
 	 * @param pAllocator		Allocator
 	 */
-	void vkDestroyImage(DeviceContext device, Image image, Handle pAllocator);
+	void vkDestroyImage(LogicalDevice device, Image image, Handle pAllocator);
 
 	/**
 	 * Retrieves the memory requirements for the given image.
@@ -37,7 +36,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param image					Image
 	 * @param pMemoryRequirements	Returned memory requirements
 	 */
-	void vkGetImageMemoryRequirements(DeviceContext device, Handle image, @Returned VkMemoryRequirements pMemoryRequirements);
+	void vkGetImageMemoryRequirements(LogicalDevice device, Handle image, @Returned VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds image memory.
@@ -47,7 +46,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {
 	 * @param memoryOffset		Offset
 	 * @return Result
 	 */
-	int vkBindImageMemory(DeviceContext device, Handle image, DeviceMemory memory, long memoryOffset);
+	int vkBindImageMemory(LogicalDevice device, Handle image, DeviceMemory memory, long memoryOffset);
 
 	/**
 	 * Copies an image.

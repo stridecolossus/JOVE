@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
 
-class StringNativeTransformerTest {
+class StringTransformerTest {
 	private StringTransformer transformer;
 	private SegmentAllocator allocator;
 

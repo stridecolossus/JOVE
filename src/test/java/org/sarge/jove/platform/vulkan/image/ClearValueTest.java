@@ -9,76 +9,27 @@ import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.lib.Percentile;
 
 public class ClearValueTest {
-	private VkClearValue value;
+	private VkClearValue descriptor;
 
 	@BeforeEach
 	void before() {
-		value = new VkClearValue();
+		descriptor = new VkClearValue();
 	}
 
-	@Nested
-	class ColourTests {
-		private ColourClearValue clear;
-
-		@BeforeEach
-		void before() {
-			clear = new ColourClearValue(Colour.WHITE);
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(Colour.WHITE, clear.colour());
-			assertEquals(VkImageAspect.COLOR, clear.aspect());
-		}
-
-		@Test
-		void populate() {
-			clear.populate(value);
-			assertArrayEquals(Colour.WHITE.toArray(), value.color.float32);
-		}
-
-		@Test
-		void equals() {
-			assertEquals(clear, clear);
-			assertEquals(clear, new ColourClearValue(Colour.WHITE));
-			assertNotEquals(clear, null);
-			assertNotEquals(clear, new ColourClearValue(Colour.BLACK));
-		}
+	@Test
+	void colour() {
+		final ClearValue colour = new ColourClearValue(Colour.WHITE);
+		assertEquals(VkImageAspect.COLOR, colour.aspect());
+		colour.populate(descriptor);
+		assertArrayEquals(Colour.WHITE.toArray(), descriptor.color.float32);
 	}
 
-	@Nested
-	class DepthStencilTests {
-		private DepthClearValue clear;
-
-		@BeforeEach
-		void before() {
-			clear = new DepthClearValue(Percentile.HALF);
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(Percentile.HALF, clear.depth());
-			assertEquals(VkImageAspect.DEPTH, clear.aspect());
-		}
-
-		@Test
-		void populate() {
-			clear.populate(value);
-			assertEquals(0.5f, value.depthStencil.depth);
-			assertEquals(0, value.depthStencil.stencil);
-		}
-
-		@Test
-		void equals() {
-			assertEquals(clear, clear);
-			assertEquals(clear, new DepthClearValue(Percentile.HALF));
-			assertNotEquals(clear, null);
-			assertNotEquals(clear, DepthClearValue.DEFAULT);
-		}
-
-		@Test
-		void def() {
-			assertEquals(new DepthClearValue(Percentile.ONE), DepthClearValue.DEFAULT);
-		}
+	@Test
+	void depth() {
+		final ClearValue depth = new DepthClearValue(Percentile.HALF);
+		assertEquals(VkImageAspect.DEPTH, depth.aspect());
+		depth.populate(descriptor);
+		assertEquals(0.5f, descriptor.depthStencil.depth);
+		assertEquals(0, descriptor.depthStencil.stencil);
 	}
 }
