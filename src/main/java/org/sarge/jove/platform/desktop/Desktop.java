@@ -36,7 +36,6 @@ public final class Desktop implements TransientObject {
 		// TODO
 		final var registry = DefaultRegistry.create();
 		//registry.add(DeviceListener.class, null);
-		//registry.add(MemorySegment.class, new IdentityTransformer(ValueLayout.ADDRESS));
 
 		// Load native library
 		final var factory = new NativeLibraryFactory("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
@@ -45,7 +44,9 @@ public final class Desktop implements TransientObject {
 
 		// Init GLFW
 		final int result = lib.glfwInit();
-		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
+		if(result != 1) {
+			throw new RuntimeException("Cannot initialise GLFW: code=" + result);
+		}
 
 		// Create desktop service
 		return new Desktop(lib);

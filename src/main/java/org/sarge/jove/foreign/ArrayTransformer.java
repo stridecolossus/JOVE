@@ -4,13 +4,12 @@ import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
-import java.util.function.Function;
 
 /**
  * An <i>array transformer</i> marshals an array to/from off-heap memory.
  * @author Sarge
  */
-public class ArrayTransformer extends DefaultTransformer<Object[]> {
+public class ArrayTransformer implements Transformer<Object[], MemorySegment> {
 	private final Transformer transformer;
 	private final VarHandle handle;
 
@@ -45,7 +44,13 @@ public class ArrayTransformer extends DefaultTransformer<Object[]> {
 
 		// Transform elements and populate off-heap memory
     	for(int n = 0; n < array.length; ++n) {
-    		final Object element = TransformerHelper.marshal(array[n], transformer, allocator);
+    		if(array[n] == null) {
+    			continue;
+    		}
+    		Object element = transformer.marshal(array[n], allocator); //Transformer.marshal(array[n], transformer, allocator);
+//    		if(element == null) {
+//    			element = MemorySegment.NULL;
+//    		}
     		handle.set(address, (long) n, element);
     	}
 //		if(array instanceof NativeStructure[]) {
@@ -93,9 +98,17 @@ public class ArrayTransformer extends DefaultTransformer<Object[]> {
 //	}
 
 	@Override
-	public Function<MemorySegment, Object[]> unmarshal() {
-		throw new UnsupportedOperationException();
+	public Object[] unmarshal(MemorySegment value) {
+		throw new UnsupportedOperationException(); // TODO
 	}
+
+	@Override
+	public ReturnedTransformer<Object[]> update() {
+		return (address, array) -> {
+			System.out.println("*** ARRAY RETURNED BY-REFERENCE ***");
+		};
+	}
+
 
 //	@Override
 //	public BiConsumer<MemorySegment, T[]> update() {

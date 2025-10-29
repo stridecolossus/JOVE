@@ -36,7 +36,7 @@ class HandleTest {
 	}
 
 	@Nested
-	class TransformerTests {
+	class TransformerTest {
 		private HandleTransformer transformer;
 
 		@BeforeEach
@@ -51,7 +51,7 @@ class HandleTest {
 
     	@Test
     	void unmarshal() {
-    		assertEquals(handle, transformer.unmarshal().apply(address));
+    		assertEquals(handle, transformer.unmarshal(address));
     	}
     }
 }

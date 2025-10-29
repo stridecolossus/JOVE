@@ -1,6 +1,6 @@
 package org.sarge.jove.foreign;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.ValueLayout;
 import java.util.Optional;
@@ -10,46 +10,48 @@ import org.sarge.jove.foreign.Registry.Factory;
 
 class RegistryTest {
 	private Registry registry;
-	private Transformer transformer;
+	private IdentityTransformer<Number> transformer;
 
 	@BeforeEach
 	void before() {
+		transformer = new IdentityTransformer<>(ValueLayout.JAVA_INT);
 		registry = new Registry();
-		transformer = new IdentityTransformer(ValueLayout.JAVA_INT);
+		registry.register(Number.class, transformer);
 	}
 
-	@DisplayName("A transformer can be explicitly registered for a domain type")
 	@Test
-	void add() {
-		registry.add(Integer.class, transformer);
+	void transformer() {
+		assertEquals(Optional.of(transformer), registry.transformer(Number.class));
+	}
+
+	@Test
+	void subclass() {
 		assertEquals(Optional.of(transformer), registry.transformer(Integer.class));
 	}
 
-	@DisplayName("A transformer can be generated on demand via a registered factory")
 	@Test
-	void factory() {
-		final Factory<Integer> factory = _ -> transformer;
-		registry.add(Integer.class, factory);
-		assertEquals(Optional.of(transformer), registry.transformer(Integer.class));
+	void replace() {
+		final var other = new IdentityTransformer<Number>(ValueLayout.JAVA_INT);
+		registry.register(Number.class, other);
+		assertEquals(Optional.of(other), registry.transformer(Number.class));
 	}
 
-	@DisplayName("A transformer can be derived from a registered supertype")
-	@Test
-	void derived() {
-		registry.add(Number.class, transformer);
-		assertEquals(Optional.of(transformer), registry.transformer(Integer.class));
-	}
-
-	@DisplayName("A supported type also automatically generates a transformer for an array of that type")
 	@Test
 	void array() {
-		registry.add(Integer.class, transformer);
-		registry.transformer(Integer[].class).orElseThrow();
+		final ArrayTransformer array = (ArrayTransformer) registry.transformer(Number[].class).get();
+		assertNotNull(array);
 	}
 
-	@DisplayName("An unsupported type cannot be transformed")
 	@Test
-	void unsupported() {
+	void factory() {
+		final Factory<Number> factory = _ -> transformer;
+		registry.register(Number.class, factory);
+		assertEquals(Optional.of(transformer), registry.transformer(Number.class));
+		assertEquals(Optional.of(transformer), registry.transformer(Integer.class));
+	}
+
+	@Test
+	void unknown() {
 		assertEquals(Optional.empty(), registry.transformer(String.class));
 	}
 }

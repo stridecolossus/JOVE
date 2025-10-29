@@ -5,48 +5,50 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference.*;
+import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 
 class NativeReferenceTest {
-	private NativeReferenceTransformer transformer;
-	private SegmentAllocator allocator;
+	private NativeReference<Integer> reference;
 
 	@BeforeEach
 	void before() {
-		allocator = Arena.ofAuto();
-		transformer = new NativeReferenceTransformer();
-	}
-
-	@DisplayName("A native reference can be explicitly overridden with a literal value")
-	@Test
-	void set() {
-		final var ref = new NativeReference<>() {
+		reference = new NativeReference<>() {
 			@Override
-			protected Object update(MemorySegment pointer) {
-				return null;
+			protected void update(MemorySegment pointer) {
+				final int value = pointer.get(ValueLayout.JAVA_INT, 0L);
+				set(value);
 			}
 		};
-		final Object obj = new Object();
-		ref.set(obj);
-		transformer.marshal(ref, allocator);
-		assertEquals(obj, ref.get());
 	}
 
 	@Test
-	void integer() {
-		final var integer = new IntegerReference();
-		final MemorySegment address = transformer.marshal(integer, allocator);
-		address.set(ValueLayout.JAVA_INT, 0, 3);
-		assertEquals(3, integer.get());
+	void empty() {
+		assertEquals(null, reference.get());
 	}
 
 	@Test
-	void pointer() {
-		final var pointer = new Pointer();
-		final MemorySegment address = transformer.marshal(pointer, allocator);
-		final Handle handle = new Handle(3);
-		address.set(ValueLayout.ADDRESS, 0, handle.address());
-		assertEquals(handle, pointer.get());
+	void set() {
+		reference.set(2);
+		assertEquals(2, reference.get());
 	}
+
+	@Nested
+	class TransformerTest {
+    	private NativeReferenceTransformer transformer;
+    	private SegmentAllocator allocator;
+
+    	@BeforeEach
+    	void before() {
+    		allocator = Arena.ofAuto();
+    		transformer = new NativeReferenceTransformer();
+    	}
+
+    	@Test
+    	void update() {
+    		final MemorySegment address = transformer.marshal(reference, allocator);
+    		address.set(ValueLayout.JAVA_INT, 0L, 3);
+    		transformer.update().update(address, reference);
+    		assertEquals(3, reference.get());
+    	}
+    }
 }

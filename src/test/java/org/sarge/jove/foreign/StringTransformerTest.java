@@ -28,7 +28,6 @@ class StringTransformerTest {
 		assertEquals(string, address.getString(0));
 	}
 
-	@SuppressWarnings("static-access")
 	@Test
 	void unmarshal() {
 		final String string = "whatever";

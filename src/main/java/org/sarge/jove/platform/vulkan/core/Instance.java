@@ -6,8 +6,8 @@ import static org.sarge.lib.Validation.requireNotEmpty;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.foreign.NativeReference.*;
-import org.sarge.jove.foreign.Returned;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;

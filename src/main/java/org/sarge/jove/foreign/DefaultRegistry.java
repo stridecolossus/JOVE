@@ -1,9 +1,5 @@
 package org.sarge.jove.foreign;
 
-import static java.lang.foreign.ValueLayout.*;
-
-import java.lang.foreign.ValueLayout;
-
 import org.sarge.jove.common.*;
 import org.sarge.jove.common.Handle.HandleTransformer;
 import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
@@ -32,7 +28,7 @@ public final class DefaultRegistry {
 	 * <li>structures</li>
 	 * </ul>
 	 * @return Default registry
-	 * @see IdentityTransformer#PRIMITIVES
+	 * @see IdentityTransformer#primitives(Registry)
 	 * @see NativeReference
 	 * @see StructureTransformerFactory
 	 */
@@ -41,49 +37,24 @@ public final class DefaultRegistry {
 		final Registry registry = new Registry();
 
 		// Primitive types
-		primitives(registry);
+		IdentityTransformer.primitives(registry);
 		// TODO - wrappers?
 
 		// Common types
-		registry.add(String.class, new StringTransformer());
-		registry.add(NativeReference.class, new NativeReferenceTransformer());
+		registry.register(String.class, new StringTransformer());
+		registry.register(NativeReference.class, new NativeReferenceTransformer());
 
 		// Enumerations
-		registry.add(IntEnum.class, IntEnumTransformer::new);
-		registry.add(EnumMask.class, new EnumMaskTransformer());
+		registry.register(IntEnum.class, IntEnumTransformer::new);
+		registry.register(EnumMask.class, new EnumMaskTransformer());
 
 		// JOVE types
-		registry.add(Handle.class, new HandleTransformer());
-		registry.add(NativeObject.class, new NativeObjectTransformer());
-		registry.add(NativeStructure.class, new StructureTransformerFactory(registry));
+		registry.register(Handle.class, new HandleTransformer());
+		registry.register(NativeObject.class, new NativeObjectTransformer());
+		registry.register(NativeStructure.class, new StructureTransformerFactory(registry));
 
 		// TODO - returned arrays, or are they handled in registry itself?
 
 		return registry;
 	}
-
-	/**
-	 * Registers transformers for the built-in primitive types.
-	 * @param registry Transformer registry
-	 */
-	@SuppressWarnings("rawtypes")
-	private static void primitives(Registry registry) {
-		final ValueLayout[] primitives = {
-	    		JAVA_BOOLEAN,
-	    		JAVA_BYTE,
-	    		JAVA_CHAR,
-	    		JAVA_SHORT,
-	    		JAVA_INT,
-	    		JAVA_LONG,
-	    		JAVA_FLOAT,
-	    		JAVA_DOUBLE
-		};
-
-		for(ValueLayout layout : primitives) {
-    		final var transformer = new IdentityTransformer(layout);
-			final Class carrier = layout.carrier();
-    		registry.add(carrier, transformer);
-    	}
-    }
-	// TODO - also wrappers? otherwise add doc
 }

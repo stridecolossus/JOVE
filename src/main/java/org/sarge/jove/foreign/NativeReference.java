@@ -3,67 +3,39 @@ package org.sarge.jove.foreign;
 import java.lang.foreign.*;
 import java.util.Objects;
 
-import org.sarge.jove.common.Handle;
-
 /**
- * A <i>native reference</i> models a <i>by reference</i> parameter with an <i>atomic</i> data type.
- * The native reference is updated as a side effect on invocation of the native method.
- * <p>
- * The {@link IntegerReference} and {@link Pointer} implementations support the common cases of by-reference integers and pointers.
- * <p>
- * This implementation is intended to support <i>atomic</i> types such as primitives or immutable domain types.
- * The {@link Returned} annotation is a similar mechanism that supports more complex by-reference types such as structures and arrays.
- * <p>
- * @param <T> Reference type
+ * A <i>native reference</i> is a template implementation for a <i>by reference</i> parameter with an <i>atomic</i> type, i.e. a primitive value or a simple pointer.
+ * @param <T> Data type
  * @see Returned
  * @author Sarge
  */
 public abstract class NativeReference<T> {
 	private T value;
-	private MemorySegment pointer;
 
 	/**
 	 * @return Referenced value or {@code null} if not populated
 	 */
 	public T get() {
-		if((value == null) && (pointer != null)) {
-			value = update(pointer);
-		}
-
 		return value;
 	}
 
 	/**
-	 * Explicitly sets this reference.
-	 * @param value Referenced value
+	 * Sets this reference.
+	 * @param value New value
 	 */
 	public void set(T value) {
 		this.value = value;
 	}
 
 	/**
-	 * Allocates the underlying pointer.
-	 * @param allocator Off-heap allocator
-	 * @return Pointer
-	 */
-	private MemorySegment allocate(SegmentAllocator allocator) {
-		if(pointer == null) {
-			pointer = allocator.allocate(ValueLayout.ADDRESS);
-		}
-
-		return pointer;
-	}
-
-	/**
 	 * Updates the value of this reference.
 	 * @param pointer Pointer
-	 * @return Value
 	 */
-	protected abstract T update(MemorySegment pointer);
+	protected abstract void update(MemorySegment pointer);
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(value, pointer);
+		return Objects.hash(value);
 	}
 
 	@Override
@@ -71,49 +43,31 @@ public abstract class NativeReference<T> {
 		return
 				(obj == this) ||
 				(obj instanceof NativeReference that) &&
-				Objects.equals(this.value, that.value) &&
-				Objects.equals(this.pointer, that.pointer);
+				Objects.equals(this.value, that.value);
 	}
 
 	@Override
 	public String toString() {
-		return String.format("NativeReference[pointer=%s, value=%s]", pointer, value);
-	}
-
-	/**
-	 * Convenience integer-by-reference implementation.
-	 */
-	public static class IntegerReference extends NativeReference<Integer> {
-		@Override
-		protected Integer update(MemorySegment pointer) {
-			return pointer.get(ValueLayout.JAVA_INT, 0L);
-		}
-	}
-
-	/**
-	 * A <i>pointer</i> is a reference to an off-heap address.
-	 */
-	public static class Pointer extends NativeReference<Handle> {
-		@Override
-		protected Handle update(MemorySegment pointer) {
-			final MemorySegment address = pointer.get(ValueLayout.ADDRESS, 0L);
-			// TODO - check for NULL?
-			return new Handle(address);
-		}
+		return String.format("NativeReference[%s]", value);
 	}
 
 	/**
 	 * Transformer for native references.
 	 */
-	public static class NativeReferenceTransformer extends DefaultTransformer<NativeReference<?>> {
+	public static class NativeReferenceTransformer implements Transformer<NativeReference<?>, MemorySegment> {
 		@Override
-		public final boolean isReference() {
-			return false;
+		public MemorySegment marshal(NativeReference<?> ref, SegmentAllocator allocator) {
+			return allocator.allocate(ValueLayout.ADDRESS);
 		}
 
 		@Override
-		public MemorySegment marshal(NativeReference<?> ref, SegmentAllocator allocator) {
-			return ref.allocate(allocator);
+		public NativeReference<?> unmarshal(MemorySegment address) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ReturnedTransformer<NativeReference<?>> update() {
+			return (address, ref) -> ref.update(address);
 		}
 	}
 }

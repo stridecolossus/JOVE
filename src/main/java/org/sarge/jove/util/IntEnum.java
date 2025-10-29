@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 import java.util.*;
 import java.util.function.Function;
 
-import org.sarge.jove.foreign.DefaultTransformer;
+import org.sarge.jove.foreign.Transformer;
 
 /**
  * An <i>integer enumeration</i> represents a native {@code typedef enum} declaration.
@@ -25,8 +25,8 @@ public interface IntEnum {
 	int value();
 
 	/**
-	 * A <i>reverse mapping</i> is the inverse of a given integer enumeration, i.e. maps a native integer <i>to</i> the corresponding enumeration constant.
-	 * Note that duplicate values are silently ignored by this implementation.
+	 * The <i>reverse mapping</i> is the inverse of this enumeration, i.e. maps a native integer <i>to</i> the corresponding enumeration constant.
+	 * Note that duplicate values (i.e. synonyms) are silently ignored by this implementation.
 	 * @param <E> Integer enumeration
 	 * @see #defaultValue()
 	 */
@@ -36,7 +36,7 @@ public interface IntEnum {
 
 		/**
 		 * Constructor.
-		 * @param type Integer enumeration
+		 * @param type Integer enumeration type
 		 */
 		public ReverseMapping(Class<E> type) {
 			final E[] array = type.getEnumConstants();
@@ -45,7 +45,7 @@ public interface IntEnum {
 		}
 
 		/**
-		 * The <i>default value</i> of an integer enumeration is the constant with a value of {@code zero} if present <b>or</b> arbitrarily the <b>first</b> entry in the enumeration.
+		 * The <i>default value</i> is the constant with a value of {@code zero} if present <b>or</b> arbitrarily the <b>first</b> entry in the enumeration.
 		 * @return Default value for this enumeration
 		 */
 		public E defaultValue() {
@@ -70,7 +70,7 @@ public interface IntEnum {
 	/**
 	 * Native transformer for integer enumerations.
 	 */
-	class IntEnumTransformer extends DefaultTransformer<IntEnum> {
+	class IntEnumTransformer implements Transformer<IntEnum, Integer> {
 		private final ReverseMapping<?> mapping;
 
 		/**
@@ -88,20 +88,16 @@ public interface IntEnum {
 
 		@Override
 		public Integer marshal(IntEnum e, SegmentAllocator allocator) {
-			return e.value();
+			if(e == null) {
+				return mapping.defaultValue().value();
+			}
+			else {
+				return e.value();
+			}
 		}
 
 		@Override
-		public Integer empty() {
-			return mapping.defaultValue().value();
-		}
-
-		@Override
-		public Function<Integer, IntEnum> unmarshal() {
-			return this::unmarshal;
-		}
-
-		private IntEnum unmarshal(Integer value) {
+		public IntEnum unmarshal(Integer value) {
 			if(value == 0) {
 				return mapping.defaultValue();
 			}

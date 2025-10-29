@@ -5,16 +5,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.List;
-import java.util.function.Function;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.foreign.NativeMethod.NativeParameter;
 
 class NativeMethodTest {
-	private IdentityTransformer identity;
+	private IdentityTransformer<Integer> identity;
+	private NativeParameter parameter;
 
 	@BeforeEach
 	void before() {
-		identity = new IdentityTransformer(ValueLayout.JAVA_INT);
+		identity = new IdentityTransformer<>(ValueLayout.JAVA_INT);
+		parameter = new NativeParameter(identity, null);
 	}
 
 	@DisplayName("A simple native method without a return type or parameters can be invoked")
@@ -40,24 +42,11 @@ class NativeMethodTest {
 		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, null, List.of()));
 	}
 
-	@DisplayName("The transformer for the return value of a native method must be implemented")
-	@Test
-	void invalidReturnTransformer() {
-		final MethodHandle handle = MethodHandles.constant(String.class, "whatever");
-		final Transformer invalid = new StringTransformer() {
-			@Override
-			public Function<MemorySegment, String> unmarshal() {
-				throw new UnsupportedOperationException();
-			}
-		};
-		assertThrows(UnsupportedOperationException.class, () -> new NativeMethod(handle, invalid, List.of()));
-	}
-
 	@DisplayName("A native method can have none-or-more parameters")
 	@Test
 	void parameter() {
 		final MethodHandle handle = MethodHandles.identity(int.class);
-		final var method = new NativeMethod(handle, identity, List.of(identity));
+		final var method = new NativeMethod(handle, identity, List.of(parameter));
 		assertEquals(42, method.invoke(new Object[]{42}));
 	}
 
@@ -66,10 +55,10 @@ class NativeMethodTest {
 	void mismatchedParameterTransformers() {
 		final MethodHandle handle = MethodHandles.identity(int.class);
 		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of()));
-		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of(identity, identity)));
+		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of(parameter, parameter)));
 	}
 
-	@DisplayName("A native method can return by-reference parameters")
+	@DisplayName("A native method can return a by-reference parameter")
 	@Test
 	void reference() {
 		// TODO
@@ -86,5 +75,12 @@ class NativeMethodTest {
 		assertEquals(method, method);
 		assertEquals(method, new NativeMethod(handle, identity, List.of()));
 		assertNotEquals(method, null);
+	}
+
+	@Test
+	void create() {
+		final var builder = new NativeMethod.Factory();
+		final var symbol = MemorySegment.ofAddress(3);
+		builder.create(symbol, identity, List.of(parameter));
 	}
 }

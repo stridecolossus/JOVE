@@ -27,8 +27,8 @@ class NativeLibraryFactoryTest {
 	void before() {
 		lookup = Linker.nativeLinker().defaultLookup();
 		registry = new Registry();
-		registry.add(int.class, new IdentityTransformer(ValueLayout.JAVA_INT));
-		registry.add(String.class, new StringTransformer());
+		registry.register(int.class, new IdentityTransformer<>(ValueLayout.JAVA_INT));
+		registry.register(String.class, new StringTransformer());
 		factory = new NativeLibraryFactory(lookup, registry);
 	}
 
@@ -69,7 +69,7 @@ class NativeLibraryFactoryTest {
 	@Test
 	void unsupportedReturnType() {
 		registry = new Registry();
-		registry.add(String.class, new StringTransformer());
+		registry.register(String.class, new StringTransformer());
 		factory = new NativeLibraryFactory(lookup, registry);
 		assertThrows(IllegalArgumentException.class, () -> factory.build(MockInterface.class));
 	}
@@ -77,9 +77,7 @@ class NativeLibraryFactoryTest {
 	@DisplayName("All parameters of a given native method must be supported types")
 	@Test
 	void unsupportedParameterType() {
-		registry = new Registry();
-		registry.add(int.class, new IdentityTransformer(ValueLayout.JAVA_INT));
-		factory = new NativeLibraryFactory(lookup, registry);
+		factory = new NativeLibraryFactory(lookup, new Registry());
 		assertThrows(IllegalArgumentException.class, () -> factory.build(MockInterface.class));
 	}
 }

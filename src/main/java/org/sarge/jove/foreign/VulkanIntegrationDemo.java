@@ -11,6 +11,8 @@ import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 public class VulkanIntegrationDemo {
 
+	boolean stop = true;
+
 	void main() throws Exception {
 		System.out.println("Initialising logging...");
 		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
@@ -53,6 +55,7 @@ public class VulkanIntegrationDemo {
 		System.out.println("Attaching diagnostic handler...");
 		final DiagnosticHandler handler = new DiagnosticHandler.Builder().build(instance);
 
+		/*
 		System.out.println("Enumerating devices...");
 		final PhysicalDevice physical = PhysicalDevice.enumerate(instance).toList().getFirst();
 
@@ -62,7 +65,7 @@ public class VulkanIntegrationDemo {
 			System.out.println(family);
 		}
 //System.out.println("features=" + physical.features().features());
-
+*/
 		/*
 
 		System.out.println("Retrieving surface...");

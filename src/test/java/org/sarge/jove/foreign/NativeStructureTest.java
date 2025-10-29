@@ -7,6 +7,7 @@ import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.foreign.NativeStructure.*;
+
 class NativeStructureTest {
 	private MockStructure structure;
 	private Registry registry;
@@ -18,9 +19,9 @@ class NativeStructureTest {
 	void before() {
 		structure = new MockStructure();
 		registry = new Registry();
-		registry.add(int.class, new IdentityTransformer(JAVA_INT));
+		registry.register(int.class, new IdentityTransformer<>(JAVA_INT));
 		factory = new StructureTransformerFactory(registry);
-		transformer = factory.create(MockStructure.class);
+		transformer = factory.transformer(MockStructure.class);
 		allocator = Arena.ofAuto();
 	}
 
@@ -29,21 +30,27 @@ class NativeStructureTest {
 		assertEquals(structure.layout(), transformer.layout());
 	}
 
+	@DisplayName("A native structure can be marshalled to off-heap memory")
 	@Test
 	void marshal() {
+		// Populate structure
 		structure.field = 3;
 
+		// Marshal structure and check off-heap memory
 		final MemorySegment address = transformer.marshal(structure, allocator);
 		assertEquals(4 + 4, address.byteSize());
 		assertEquals(3, address.get(JAVA_INT, 0L));
 	}
 
+	@DisplayName("A native structure can be marshalled from off-heap memory")
 	@Test
 	void unmarshal() {
+		// Init off-heap representation
 		final MemorySegment address = allocator.allocate(structure.layout());
 		address.set(JAVA_INT, 0L, 3);
 
-		final var result = (MockStructure) transformer.unmarshal().apply(address);
+		// Unmarshal structure instance from the off-heap memory
+		final var result = (MockStructure) transformer.unmarshal(address);
 		assertEquals(structure.layout(), result.layout());
 		assertEquals(3, result.field);
 	}
@@ -63,9 +70,10 @@ class NativeStructureTest {
     	}
 	}
 
+	@DisplayName("A native structure field cannot be anonymous")
     @Test
     void anonymous() {
-    	assertThrows(IllegalArgumentException.class, () -> factory.create(AnonymousField.class));
+    	assertThrows(IllegalArgumentException.class, () -> factory.transformer(AnonymousField.class));
     }
 
 	private static class UnknownField implements NativeStructure {
@@ -78,9 +86,10 @@ class NativeStructureTest {
     	}
 	}
 
+	@DisplayName("The name of a native structure field must correspond to a member of the structure")
 	@Test
 	void unknown() {
-    	assertThrows(IllegalArgumentException.class, () -> factory.create(UnknownField.class));
+    	assertThrows(IllegalArgumentException.class, () -> factory.transformer(UnknownField.class));
 	}
 
 	private static class UnsupportedField implements NativeStructure {
@@ -96,8 +105,9 @@ class NativeStructureTest {
     	}
 	}
 
+	@DisplayName("A native structure field must have a supported type")
 	@Test
 	void unsupported() {
-    	assertThrows(IllegalArgumentException.class, () -> factory.create(UnsupportedField.class));
+    	assertThrows(IllegalArgumentException.class, () -> factory.transformer(UnsupportedField.class));
 	}
 }

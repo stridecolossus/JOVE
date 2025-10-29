@@ -6,71 +6,26 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.MockLibraryFactory;
-import org.sarge.jove.foreign.MockLibraryFactory.MockedMethod;
-import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 class InstanceTest {
-	/*
-	private static class MockInstanceLibrary extends MockVulkanLibrary {
-		public boolean destroyed;
-
-		@Override
-		public VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance) {
-			// Check instance descriptor
-			assertEquals(1, pCreateInfo.enabledExtensionCount);
-			assertEquals(1, pCreateInfo.enabledLayerCount);
-			assertArrayEquals(new String[]{"extension"}, pCreateInfo.ppEnabledExtensionNames);
-			assertArrayEquals(new String[]{"layer"}, pCreateInfo.ppEnabledLayerNames);
-
-			// Check application descriptor
-			final VkApplicationInfo app = pCreateInfo.pApplicationInfo;
-			assertEquals("name", app.pApplicationName);
-			assertEquals("JOVE", app.pEngineName);
-			assertEquals(new Version(1, 2, 3).toInteger(), app.applicationVersion);
-			assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
-			assertEquals(new Version(1, 1, 0).toInteger(), app.apiVersion);
-
-			// Create instance
-			pInstance.set(new Handle(1));
-
-			return VkResult.SUCCESS;
-		}
-
-		@Override
-		public void vkDestroyInstance(Instance instance, Handle pAllocator) {
-			destroyed = true;
-		}
-
-		@Override
-		public Handle vkGetInstanceProcAddr(Instance instance, String pName) {
-			if(pName.equals("function")) {
-				return new Handle(2);
-			}
-			else {
-				return null;
-			}
-		}
-	}
-	*/
-
 	private Instance instance;
 	private MockLibraryFactory factory;
 	private VulkanLibrary lib;
 
 	@BeforeEach
 	void before() {
-		factory = new MockLibraryFactory(VulkanLibrary.class);
+		factory = new MockLibraryFactory(MockCreateInstance.class);
 		lib = factory.proxy();
 		instance = new Instance(new Handle(1), lib);
 	}
 
-	public abstract class MockCreateInstance implements VulkanLibrary { // Instance.Library {
+	public static interface MockCreateInstance extends VulkanLibrary {
 		@Override
-		public VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance) {
+		default VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance) {
 			// Check create descriptor
 			assertEquals(1, pCreateInfo.enabledExtensionCount);
 			assertEquals(1, pCreateInfo.enabledLayerCount);
@@ -91,36 +46,9 @@ class InstanceTest {
 		}
 	}
 
+	@DisplayName("An instance can be configured and created via the builder")
 	@Test
 	void build() {
-
-//		abstract class MockCreateInstance implements Instance.Library {
-//			@Override
-//			public VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance) {
-//				// Check create descriptor
-//				assertEquals(1, pCreateInfo.enabledExtensionCount);
-//				assertEquals(1, pCreateInfo.enabledLayerCount);
-//				assertArrayEquals(new String[]{"extension"}, pCreateInfo.ppEnabledExtensionNames);
-//				assertArrayEquals(new String[]{"layer"}, pCreateInfo.ppEnabledLayerNames);
-//
-//				// Check application descriptor
-//				final VkApplicationInfo app = pCreateInfo.pApplicationInfo;
-//				assertEquals("name", app.pApplicationName);
-//				assertEquals("JOVE", app.pEngineName);
-//				assertEquals(new Version(1, 2, 3).toInteger(), app.applicationVersion);
-//				assertEquals(new Version(1, 0, 0).toInteger(), app.engineVersion);
-//				assertEquals(new Version(1, 1, 0).toInteger(), app.apiVersion);
-//
-//				// Create instance
-//				pInstance.set(new Handle(2));
-//				return null;
-//			}
-//		}
-
-		// Mock create instance API
-		final MockedMethod create = factory.get("vkCreateInstance").implement(lib, MockCreateInstance.class);
-
-		// Configure and build an instance
 		final Instance instance = new Instance.Builder()
         		.name("name")
         		.version(new Version(1, 2, 3))
@@ -129,19 +57,19 @@ class InstanceTest {
         		.layer(new ValidationLayer("layer"))
 				.build(lib);
 
-		// Check instance
 		assertEquals(new Handle(2), instance.handle());
 		assertEquals(false, instance.isDestroyed());
-		assertEquals(1, create.count());
-
+		assertEquals(1, factory.get("vkCreateInstance").count());
 	}
 
+	@DisplayName("The required API version must be supported by the native library")
 	@Test
 	void api() {
 		final var builder = new Instance.Builder();
 		assertThrows(IllegalArgumentException.class, () -> builder.api(new Version(9, 0, 0)));
 	}
 
+	@DisplayName("An instance can be destroyed")
 	@Test
 	void destroy() {
 		instance.destroy();
@@ -149,6 +77,7 @@ class InstanceTest {
 		assertEquals(1, factory.get("vkDestroyInstance").count());
 	}
 
+	@DisplayName("A function pointer can be retrieved by name from the instance")
 	@Test
 	void function() {
 		final Handle handle = new Handle(3);
@@ -156,6 +85,7 @@ class InstanceTest {
 		assertEquals(Optional.of(handle), instance.function("function"));
 	}
 
+	@DisplayName("An unknown function pointer cannot be retrieved from the instance")
 	@Test
 	void unknown() {
 		assertEquals(Optional.empty(), instance.function("cobblers"));

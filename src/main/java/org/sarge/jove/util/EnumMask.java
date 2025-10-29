@@ -4,9 +4,9 @@ import static java.util.stream.Collectors.toSet;
 
 import java.lang.foreign.*;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.stream.*;
 
-import org.sarge.jove.foreign.DefaultTransformer;
+import org.sarge.jove.foreign.Transformer;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -18,13 +18,18 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	/**
 	 * Constructor given a set of constants.
 	 * @param values Enumeration constants
+	 * @see #reduce(Set)
 	 */
 	public EnumMask(Set<E> values) {
 		this(reduce(values));
 	}
 
-	// TODO - why cannot this be done before this() in ctor?
-	private static int reduce(Set<? extends IntEnum> values) {
+	/**
+	 * Reduces the given set of constants to an integer mask.
+	 * @param values Enumeration constants
+	 * @return Mask
+	 */
+	public static int reduce(Set<? extends IntEnum> values) {
 		return values
 				.stream()
 				.mapToInt(IntEnum::value)
@@ -32,7 +37,7 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	}
 
 	/**
-	 * Constructor given an array of enumeration constants.
+	 * Convenience constructor given an array of enumeration constants.
 	 * @param values Enumeration constants
 	 */
 	@SafeVarargs
@@ -41,32 +46,51 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	}
 
 	/**
-	 * @param mask Mask
-	 * @return Whether this mask contains the given enumeration mask
+	 * @param mask Bit mask
+	 * @return Whether this bitfield contains the given mask
 	 */
 	public boolean contains(EnumMask<E> mask) {
-		return BitField.contains(bits, mask.bits);
+		return contains(mask.bits);
 	}
 
 	/**
-	 * @param value Enumeration constant
-	 * @return Whether this mask contains the given constant
+	 * @param mask Bit mask
+	 * @return Whether this bitfield contains the given mask
 	 */
-	public boolean contains(E value) {
-		return BitField.contains(bits, value.value());
+	public boolean contains(int mask) {
+		return (bits & mask) == mask;
 	}
 
 	/**
-	 * Converts this mask to the corresponding enumeration.
-	 * @param reverse Reverse mapping
-	 * @return Enumeration constants
+	 * Enumerates the constants of this bitfield.
+	 * @param mapping Enumeration mapping
+	 * @return Constants
+	 * @see #stream(ReverseMapping)
 	 */
-	public Set<E> enumerate(ReverseMapping<E> reverse) {
-		return new BitField(bits)
-    			.stream()
-    			.map(BitField::map)
-    			.mapToObj(reverse::map)
-    			.collect(toSet());
+	public Set<E> enumerate(ReverseMapping<E> mapping) {
+		return this.stream(mapping).collect(toSet());
+	}
+
+	/**
+	 * Enumerates the constants of this bitfield.
+	 * @param mapping Enumeration mapping
+	 * @return Constants
+	 */
+	public Stream<E> stream(ReverseMapping<E> mapping) {
+		return stream(bits)
+				.map(n -> 1 << n)
+				.filter(this::contains)
+				.mapToObj(mapping::map);
+	}
+
+	/**
+	 * Helper - Enumerates the indices of the given bitfield up to the highest one bit.
+	 * @param bits Bitfield
+	 * @return Bit indices
+	 */
+	public static IntStream stream(int bits) {
+		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(bits);
+		return IntStream.range(0, range);
 	}
 
 	@Override
@@ -75,27 +99,27 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	}
 
 	/**
-	 * Native transformer for an enumeration bitfield.
+	 * Native transformer for an enumeration mask.
 	 */
-	public static class EnumMaskTransformer extends DefaultTransformer<EnumMask<?>> {
+	public static class EnumMaskTransformer implements Transformer<EnumMask<?>, Integer> {
 		@Override
 		public MemoryLayout layout() {
 			return ValueLayout.JAVA_INT;
 		}
 
 		@Override
-		public Integer marshal(EnumMask<?> mask, SegmentAllocator allocator) {
-			return mask.bits;
+		public Integer marshal(EnumMask<?> e, SegmentAllocator allocator) {
+			if(e == null) {
+				return 0;
+			}
+			else {
+				return e.bits();
+			}
 		}
 
 		@Override
-		public Integer empty() {
-			return 0;
-		}
-
-		@Override
-		public Function<Integer, EnumMask<?>> unmarshal() {
-			return EnumMask::new;
+		public EnumMask<?> unmarshal(Integer value) {
+			return new EnumMask<>(value);
 		}
 	}
 }

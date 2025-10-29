@@ -4,10 +4,11 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 import java.lang.foreign.*;
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
+
+import org.sarge.jove.foreign.NativeMethod.NativeParameter;
 
 /**
  * The <i>native library factory</i> constructs a proxy implementation of a native library using FFM.
@@ -23,7 +24,7 @@ import java.util.function.*;
  */
 public class NativeLibraryFactory {
 	private final SymbolLookup lookup;
-	private final Linker linker = Linker.nativeLinker();
+	private final NativeMethod.Factory builder = new NativeMethod.Factory();
 	private final Registry registry;
 	private Consumer<Object> check = _ -> { /* Ignored */ };
 
@@ -137,34 +138,47 @@ public class NativeLibraryFactory {
 		}
 		catch(Exception e) {
 			final Class<?> type = method.getDeclaringClass();
-			final String reason = String.format("%s in %s::%s", e.getMessage(), type.getSimpleName(), method.getName());
+			final String reason = String.format("%s in %s::%s", e.getMessage(), type, method.getName());
 			throw new IllegalArgumentException(reason, e);
 		}
 	}
 
+	@SuppressWarnings("rawtypes")
 	private NativeMethod buildLocal(Method method) {
 		// Lookup method address
 		final MemorySegment symbol = lookup
 				.find(method.getName())
-				.orElseThrow(() -> new IllegalArgumentException("Unknown native method"));
+				.orElseThrow(() -> new IllegalArgumentException("Unknown native method: " + method));
 
 		// Map return value
-		final Transformer returns = registry
-				.transformer(method.getReturnType())
-				.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method.getReturnType()));
+		final Transformer returns = returns(method);
 
 		// Map parameters
-		final List<Transformer> parameters = Arrays
+		final List<NativeParameter> parameters = Arrays
 				.stream(method.getParameters())
 				.map(this::parameter)
 				.toList();
 
 		// Link native method
-		final FunctionDescriptor descriptor = NativeMethod.descriptor(returns, parameters);
-		final MethodHandle handle = linker.downcallHandle(descriptor).bindTo(symbol);
+		return builder.create(symbol, returns, parameters);
+	}
 
-		// Create native method
-		return new NativeMethod(handle, returns, parameters);
+	/**
+	 * Determines the transformer for the return value of the given method.
+	 * @param method Method
+	 * @return Return type transformer or {@code null} for a {@code void} method
+	 */
+	@SuppressWarnings("rawtypes")
+	private Transformer returns(Method method) {
+		final Class<?> type = method.getReturnType();
+		if(type == void.class) {
+			return null;
+		}
+		else {
+			return registry
+					.transformer(method.getReturnType())
+					.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method));
+		}
 	}
 
 	/**
@@ -172,17 +186,18 @@ public class NativeLibraryFactory {
 	 * @param parameter Method parameter
 	 * @return Transformer
 	 */
-	private Transformer parameter(Parameter parameter) {
+	private NativeParameter parameter(Parameter parameter) {
 		// Lookup transformer for this type
 		final Transformer transformer = registry
 				.transformer(parameter.getType())
 				.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + parameter));
 
-		final boolean reference = parameter.isAnnotationPresent(Returned.class);
-		if(reference) {
-			// TODO - handle conversion to by-reference transformer
+		// Wrap by-reference parameters
+		if((NativeReference.class.isAssignableFrom(parameter.getType())) || parameter.isAnnotationPresent(Returned.class)) {		// TODO
+			return new NativeParameter(transformer, transformer.update());
 		}
-
-		return transformer;
+		else {
+			return new NativeParameter(transformer, null);
+		}
 	}
 }

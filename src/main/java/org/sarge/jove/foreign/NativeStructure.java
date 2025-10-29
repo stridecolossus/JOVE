@@ -8,7 +8,7 @@ import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.*;
 import java.util.List;
-import java.util.function.*;
+import java.util.function.Supplier;
 
 import org.sarge.jove.foreign.NativeStructure.StructureTransformer.FieldMapping;
 
@@ -33,13 +33,14 @@ public interface NativeStructure {
     GroupLayout layout();
 
     /**
-     *
+     * Transformer for a native structure.
      */
-    class StructureTransformer extends DefaultTransformer<NativeStructure> {
+    class StructureTransformer implements Transformer<NativeStructure, MemorySegment> {
 		/**
 		 * A <i>field mapping</i> associates a structure field and the corresponding off-heap memory.
 		 */
-		record FieldMapping(VarHandle local, VarHandle foreign, Transformer transformer) {
+		@SuppressWarnings({"rawtypes", "unchecked"})
+		protected record FieldMapping(VarHandle local, VarHandle foreign, Transformer transformer) {
 			/**
 			 * Marshals this structure field.
 			 * @param structure		Structure
@@ -48,7 +49,10 @@ public interface NativeStructure {
 			 */
 			public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
 				final Object value = local.get(structure);
-				final Object result = TransformerHelper.marshal(value, transformer, allocator);
+				if(value == null) {
+					return;
+				}
+				final Object result = transformer.marshal(value, allocator);
 				foreign.set(address, result);
 			}
 
@@ -59,7 +63,10 @@ public interface NativeStructure {
 			 */
 			public void unmarshal(MemorySegment address, NativeStructure structure) {
 				final Object value = foreign.get(address);
-				final Object result = TransformerHelper.unmarshal(value, transformer);
+				if(MemorySegment.NULL.equals(value)) {
+					return;
+				}
+				final Object result = transformer.unmarshal(value);
 				local.set(structure, result);
 			}
 		}
@@ -70,9 +77,9 @@ public interface NativeStructure {
 
 		/**
 		 * Constructor.
-		 * @param factory
-		 * @param layout
-		 * @param fields
+		 * @param factory		Factory for new structure instances
+		 * @param layout		Memory layout
+		 * @param fields		Field mappings
 		 */
 		StructureTransformer(Supplier<NativeStructure> factory, GroupLayout layout, List<FieldMapping> fields) {
 			this.factory = requireNonNull(factory);
@@ -95,15 +102,18 @@ public interface NativeStructure {
 		}
 
 		@Override
-		public Function<MemorySegment, NativeStructure> unmarshal() {
-			return address -> {
-				final NativeStructure structure = factory.get();
-				unmarshal(address, structure);
-				return structure;
-			};
+		public NativeStructure unmarshal(MemorySegment address) {
+			final NativeStructure structure = factory.get();
+			update(address, structure);
+			return structure;
 		}
 
-		private void unmarshal(MemorySegment address, NativeStructure structure) {
+		@Override
+		public ReturnedTransformer<NativeStructure> update() {
+			return this::update;
+		}
+
+		public void update(MemorySegment address, NativeStructure structure) {
 			for(FieldMapping f : fields) {
 				f.unmarshal(address, structure);
 			}
@@ -111,7 +121,7 @@ public interface NativeStructure {
     }
 
 	/**
-	 * The <i>structure transformer factory</i> generates a transformer for a given native structure.
+	 * The <i>structure transformer factory</i> generates the transformer for a native structure.
 	 */
 	class StructureTransformerFactory implements Registry.Factory<NativeStructure> {
 		private final Lookup lookup = MethodHandles.lookup();
@@ -135,8 +145,8 @@ public interface NativeStructure {
 		 * @throws RuntimeException if a structure field cannot be accessed
 		 */
 		@Override
-		public StructureTransformer create(Class<? extends NativeStructure> type) {
-			// Lookup structure constructor
+		public StructureTransformer transformer(Class<? extends NativeStructure> type) {
+			// Lookup structure constructor and generate a temporary instance
 			final Constructor<? extends NativeStructure> constructor = constructor(type);
 			final Supplier<NativeStructure> factory = () -> instance(constructor);
 			final NativeStructure instance = factory.get();
@@ -148,6 +158,34 @@ public interface NativeStructure {
 
 			// Create transformer
 			return new StructureTransformer(factory, layout, fields);
+		}
+
+		/**
+		 * Looks up the default constructor of the given type.
+		 * @param type Type
+		 * @return Constructor for the given type
+		 */
+		private static <T> Constructor<T> constructor(Class<T> type) {
+			try {
+				return type.getConstructor();
+			}
+			catch(Exception e) {
+				throw new IllegalArgumentException("Cannot find default constructor: " + type, e);
+			}
+		}
+
+		/**
+		 * Creates a new structure instance.
+		 * @param constructor Default constructor for the structure
+		 * @return New instance
+		 */
+		private static NativeStructure instance(Constructor<? extends NativeStructure> constructor) {
+			try {
+				return constructor.newInstance();
+			}
+			catch(Exception e) {
+				throw new RuntimeException("Cannot instantiate structure: " + constructor, e);
+			}
 		}
 
 		/**
@@ -197,9 +235,7 @@ public interface NativeStructure {
 				final VarHandle foreign = Transformer.removeOffset(layout.varHandle(path));
 
 				// Lookup transformer for this field
-				final Transformer transformer = registry
-						.transformer(field.getType())
-						.orElseThrow(() -> new IllegalArgumentException("Unsupported field type: " + field));
+				final var transformer = registry.transformer(field.getType()).orElseThrow(() -> new IllegalArgumentException("Unsupported field %s::%s".formatted(type, member)));
 
 				// Create field mapping
 				return new FieldMapping(local, foreign, transformer);
@@ -234,34 +270,6 @@ public interface NativeStructure {
 				catch(IllegalAccessException e) {
 					throw new RuntimeException("Cannot access field %s::%s".formatted(type, field), e);
 				}
-			}
-		}
-
-		/**
-		 * Looks up the default constructor of the given type.
-		 * @param type Type
-		 * @return Constructor for the given type
-		 */
-		private static <T> Constructor<T> constructor(Class<T> type) {
-			try {
-				return type.getConstructor();
-			}
-			catch(Exception e) {
-				throw new IllegalArgumentException("Cannot find default constructor: " + type, e);
-			}
-		}
-
-		/**
-		 * Creates a new structure instance.
-		 * @param constructor Default constructor for the structure
-		 * @return New instance
-		 */
-		private static NativeStructure instance(Constructor<? extends NativeStructure> constructor) {
-			try {
-				return constructor.newInstance();
-			}
-			catch(Exception e) {
-				throw new RuntimeException("Cannot instantiate structure: " + constructor, e);
 			}
 		}
 	}

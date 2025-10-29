@@ -25,7 +25,7 @@ class ReturnedArrayTest {
 		address.setAtIndex(ADDRESS, 1, arena.allocateFrom("two"));
 
 		// Register component type
-		registry.add(String.class, new StringTransformer());
+		registry.register(String.class, new StringTransformer());
 
 		// Extract array
 		final var array = new ReturnedArray<String>(address, registry);

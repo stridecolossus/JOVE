@@ -52,18 +52,18 @@ class IntEnumTest {
 		}
 
 		@Test
-		void empty() {
-			assertEquals(1, transformer.empty());
+		void marshalNull() {
+			assertEquals(1, transformer.marshal(null, null));
 		}
 
 		@Test
 		void unmarshal() {
-			assertEquals(MockEnum.A, transformer.unmarshal().apply(1));
+			assertEquals(MockEnum.A, transformer.unmarshal(1));
 		}
 
 		@Test
-		void def() {
-			assertEquals(MockEnum.A, transformer.unmarshal().apply(0));
+		void unmarshalDefaultValue() {
+			assertEquals(MockEnum.A, transformer.unmarshal(0));
 		}
 	}
 }

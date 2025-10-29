@@ -53,4 +53,9 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 				(obj instanceof TransientNativeObject that) &&
 				this.handle.equals(that.handle());
 	}
+
+	@Override
+	public String toString() {
+		return String.format("TransientNativeObject[%s]", handle);
+	}
 }

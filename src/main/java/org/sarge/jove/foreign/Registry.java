@@ -5,92 +5,56 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 /**
- * A <i>registry</i> maps domain types to native transformers used to marshal method parameters and return values.
- * <p>
- * Generally transformers are generated and cached on demand by a {@link Factory} matching the given type.
- * Factories are added to the registry via the {@link #add(Factory)} method.
- * <p>
- * Alternatively the transformer for a given type can be <i>derived</i> from a registered supertype.
- * <p>
- * In either case new transformers are added to the registry via the {@link #add(Class, Transformer)} method.
- * This method can also be used to explicitly register the transformer for a given type.
- * <p>
- * Additionally a registered type is automatically supported as an array with that component type.
- * <p>
+ * A <i>registry</i> maps built-in and domain types to the corresponding native transformer.
  * @author Sarge
  */
 public class Registry {
 	/**
-	 * A <i>transformer factory</i> generates new transformers on demand.
-	 * TODO - note used for cases where transformer needs to be class-specific, e.g. enumerations, structures
-	 * @param <T> Domain type
+	 * A <i>transformer factory</i> generates a transformer for a given subclass.
+	 * @param <T> Type
 	 */
 	@FunctionalInterface
 	public interface Factory<T> {
 		/**
-		 * Creates a new transformer for the given type.
-		 * @param type Domain type
+		 * Creates a transformer for the given type.
+		 * @param type Type
 		 * @return Transformer
 		 */
-		Transformer create(Class<? extends T> type);
+		Transformer<T, ?> transformer(Class<? extends T> type);
 	}
 
-	private final Map<Class<?>, Transformer> registry = new HashMap<>();
+	private final Map<Class<?>, Transformer<?, ?>> registry = new HashMap<>();
 	private final Map<Class<?>, Factory<?>> factories = new HashMap<>();
 
 	/**
-	 * Looks up or creates the native transformer for the given domain type.
-	 * @param type Domain type
-	 * @return Native transformer
+	 * Finds the registered transformer for the given type.
+	 * @param type Type
+	 * @return Transformer
+	 * @throws IllegalArgumentException if no transformer can be found
+	 * @throws NullPointerException if the transformer is {@code null}
 	 */
+	@SuppressWarnings("rawtypes")
 	public Optional<Transformer> transformer(Class<?> type) {
-		final Transformer transformer = registry.get(type);
+		requireNonNull(type);
 
-		if(transformer == null) {
-			if(type.isArray()) {
-				final Class<?> component = type.getComponentType();
-				return transformer(component)
-						.map(ArrayTransformer::new)
-						.map(e -> insert(type, e));
-			}
-			else {
-    			return create(type)
-    					.or(() -> derive(type))
-						.map(e -> insert(type, e));
-			}
+		if(type.isArray()) {
+			final var component = transformer(type.getComponentType());
+			return component.map(ArrayTransformer::new);
 		}
-		else {
-			return Optional.of(transformer);
-		}
-	}
 
-	private Transformer insert(Class<?> type, Transformer transformer) {
-		registry.put(type, transformer);
-		return transformer;
+		return Optional
+				.ofNullable((Transformer) registry.get(type))
+				.or(() -> supertype(type))
+				.or(() -> generate(type));
 	}
 
 	/**
-	 * Creates a transformer for a type supported by a registered factory.
-	 * @param type Domain type
-	 * @return New transformer
+	 * Finds a superclass transformer for the given type.
+	 * @param type Type
+	 * @return Superclass transformer
 	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	private Optional<Transformer> create(Class<?> type) {
-		return factories
-				.keySet()
-				.stream()
-				.filter(e -> e.isAssignableFrom(type))
-				.findAny()
-				.map(factories::get)
-				.map(factory -> factory.create((Class) type));
-	}
-
-	/**
-	 * Derives a supertype transformer for the given type.
-	 * @param type Java type
-	 * @return Supertype transformer
-	 */
-	private Optional<Transformer> derive(Class<?> type) {
+	@SuppressWarnings("rawtypes")
+	private Optional<Transformer> supertype(Class<?> type) {
 		return registry
 				.keySet()
 				.stream()
@@ -100,25 +64,40 @@ public class Registry {
 	}
 
 	/**
-	 * Registers a native transformer for the given type.
-	 * This method can be overridden for the purposes of logging or debugging.
-	 * @param <T> Domain type
-	 * @param type				Java or domain type
-	 * @param transformer		Native transformer
+	 * Generates a transformer for the given type.
+	 * @param type Type
+	 * @return Generated transformer
 	 */
-	public void add(Class<?> type, Transformer transformer) {
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private Optional<Transformer> generate(Class type) {
+		return factories
+				.keySet()
+				.stream()
+				.filter(base -> base.isAssignableFrom(type))
+				.findAny()
+				.map(factories::get)
+				.map(factory -> factory.transformer(type));
+	}
+
+	/**
+	 * Registers the transformer for the given type.
+	 * @param <T> Type
+	 * @param type				Type
+	 * @param transformer		Transformer
+	 */
+	public <T> void register(Class<T> type, Transformer<? extends T, ?> transformer) {
 		requireNonNull(type);
 		requireNonNull(transformer);
 		registry.put(type, transformer);
 	}
 
 	/**
-	 * Registers a transformer factory for the given base type.
-	 * @param <T> Domain type
-	 * @param type Base domain type
-	 * @param factory Transformer factory
+	 * Registers a transformer factory for the given type.
+	 * @param <T> Type
+	 * @param type			Type
+	 * @param factory		Transformer factory
 	 */
-	public <T> void add(Class<T> type, Factory<T> factory) {
+	public <T> void register(Class<T> type, Factory<? extends T> factory) {
 		requireNonNull(type);
 		requireNonNull(factory);
 		factories.put(type, factory);
