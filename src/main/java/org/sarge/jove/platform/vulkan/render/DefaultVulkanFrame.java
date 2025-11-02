@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Set;
+
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
@@ -67,7 +69,7 @@ public class DefaultVulkanFrame implements VulkanFrame {
 	private void submit(Command.CommandBuffer render) {
 		new Work.Builder()
         		.add(render)
-        		.wait(available, VkPipelineStage.COLOR_ATTACHMENT_OUTPUT)
+        		.wait(available, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT))
         		.signal(ready)
         		.build()
         		.submit(fence);

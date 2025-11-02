@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;

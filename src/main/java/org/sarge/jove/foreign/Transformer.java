@@ -2,6 +2,7 @@ package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
 import java.lang.invoke.*;
+import java.util.function.*;
 
 /**
  * A <i>transformer</i> marshals a Java type to/from the corresponding native representation.
@@ -11,10 +12,17 @@ import java.lang.invoke.*;
  */
 public interface Transformer<T, N> {
     /**
-     * @return Memory layout of this type
+     * @return Memory layout of the native type
      */
 	default MemoryLayout layout() {
 		return ValueLayout.ADDRESS;
+	}
+
+	/**
+	 * @return Transformer for an array of this native type
+	 */
+	default Transformer<?, ?> array() {
+		return new ArrayTransformer(this);
 	}
 
 	/**
@@ -22,37 +30,31 @@ public interface Transformer<T, N> {
 	 * @param arg			Argument
 	 * @param allocator		Off-heap allocator
 	 * @return Off-heap argument
+	 * @see #empty()
 	 */
 	Object marshal(T arg, SegmentAllocator allocator);
 
 	/**
-	 * Unmarshals a value from its off-heap representation.
-	 * @param value Off-heap value
-	 * @return Unmarshalled value
-	 * @throws UnsupportedOperationException if the value cannot be returned from a native method
+	 * @return Empty native value
 	 */
-	T unmarshal(N value);
-
-	/**
-	 * Transformation function for a by-reference parameter.
-	 * @param <T> Returned type
-	 * @see #update(MemorySegment, Object)
-	 */
-	interface ReturnedTransformer<T> {
-		/**
-		 * Updates a by-reference parameter.
-		 * @param address		Off-heap memory
-		 * @param argument		Parameter instance
-		 */
-		void update(MemorySegment address, T argument);
+	default Object empty() {
+		return MemorySegment.NULL;
 	}
 
+	// TODO - 'ref' parameter indicating whether being marshalled as by-reference parameter => can avoid actually marshalling if required (e.g. structures) but still does allocation
+
 	/**
-	 * @return Update function for a by-reference parameter
-	 * @throws UnsupportedOperationException if this transformer cannot return a by-reference parameter
+	 * @return Transformer to unmarshal a native value
+	 * @throws UnsupportedOperationException if the domain type cannot be returned from a native method
 	 */
-	default ReturnedTransformer<T> update() {
-		throw new UnsupportedOperationException("Native type cannot be returned by-reference");
+	Function<N, T> unmarshal();
+
+	/**
+	 * @return Update method for a by-reference parameter
+	 * @throws UnsupportedOperationException if the native type cannot be returned as a by-reference parameter
+	 */
+	default BiConsumer<N, T> update() {
+		throw new UnsupportedOperationException();
 	}
 
     /**

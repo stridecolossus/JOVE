@@ -21,6 +21,7 @@ public class VkPhysicalDeviceProperties implements NativeStructure {
 
 	@Override
 	public StructLayout layout() {
+		//throw new UnsupportedOperationException("TODO - arrays!!!");
 		// TODO
 		return MemoryLayout.structLayout();
 	}

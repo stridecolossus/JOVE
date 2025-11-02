@@ -7,7 +7,6 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeReference.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
@@ -17,23 +16,16 @@ import org.sarge.jove.platform.vulkan.util.ValidationLayer;
  * @author Sarge
  */
 public class Instance extends TransientNativeObject {
-	private final VulkanLibrary vulkan;
+	private final Library lib;
 
 	/**
 	 * Constructor.
 	 * @param handle	Instance handle
-	 * @param vulkan	Vulkan
+	 * @param lib		Instance library
 	 */
-	Instance(Handle handle, VulkanLibrary vulkan) {
+	Instance(Handle handle, Instance.Library lib) {
 		super(handle);
-		this.vulkan = requireNonNull(vulkan);
-	}
-
-	/**
-	 * @return Vulkan platform
-	 */
-	public VulkanLibrary vulkan() {
-		return vulkan;
+		this.lib = requireNonNull(lib);
 	}
 
 	/**
@@ -42,13 +34,13 @@ public class Instance extends TransientNativeObject {
 	 * @return Function pointer
 	 */
 	public Optional<Handle> function(String name) {
-		final Handle function = vulkan.vkGetInstanceProcAddr(this, name);
+		final Handle function = lib.vkGetInstanceProcAddr(this, name);
 		return Optional.ofNullable(function);
 	}
 
 	@Override
 	protected void release() {
-		vulkan.vkDestroyInstance(this, null);
+		lib.vkDestroyInstance(this, null);
 	}
 
 	/**
@@ -61,7 +53,7 @@ public class Instance extends TransientNativeObject {
 		private Version ver = Version.DEFAULT;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
-		private Version api = VulkanLibrary.VERSION;
+		private Version api = Vulkan.VERSION;
 
 		/**
 		 * Sets the application name.
@@ -87,8 +79,8 @@ public class Instance extends TransientNativeObject {
 		 * @throws IllegalArgumentException if {@link #api} is not supported by this JOVE implementation
 		 */
 		public Builder api(Version api) {
-			if(api.compareTo(VulkanLibrary.VERSION) > 0) {
-				throw new IllegalArgumentException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, VulkanLibrary.VERSION));
+			if(api.compareTo(Vulkan.VERSION) > 0) {
+				throw new IllegalArgumentException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, Vulkan.VERSION));
 			}
 			this.api = requireNonNull(api);
 			return this;
@@ -130,18 +122,33 @@ public class Instance extends TransientNativeObject {
 		 * @param lib Vulkan
 		 * @return New instance
 		 */
-		public Instance build(VulkanLibrary vulkan) {
-			// Init application descriptor
+		public Instance build(Library lib) {
+			final VkInstanceCreateInfo info = create();
+			final var ref = new Pointer();
+			lib.vkCreateInstance(info, null, ref);
+			return new Instance(ref.get(), lib);
+		}
+
+		/**
+		 * @return Application descriptor
+		 */
+		private VkApplicationInfo application() {
 			final var app = new VkApplicationInfo();
 			app.pApplicationName = name;
 			app.applicationVersion = ver.toInteger();
 			app.pEngineName = "JOVE";
 			app.engineVersion = VERSION.toInteger();
 			app.apiVersion = api.toInteger();
+			return app;
+		}
 
+		/**
+		 * @return Instance descriptor
+		 */
+		private VkInstanceCreateInfo create() {
 			// Init instance descriptor
 			final var info = new VkInstanceCreateInfo();
-			info.pApplicationInfo = app;
+			info.pApplicationInfo = application();
 
 			// Populate required extensions
 			info.ppEnabledExtensionNames = extensions.toArray(String[]::new);
@@ -151,19 +158,14 @@ public class Instance extends TransientNativeObject {
 			info.ppEnabledLayerNames = layers.toArray(String[]::new);
 			info.enabledLayerCount = layers.size();
 
-			// Create instance
-			final var ref = new Pointer();
-			vulkan.vkCreateInstance(info, null, ref);
-
-			// Create instance domain wrapper
-			return new Instance(ref.get(), vulkan);
+			return info;
 		}
 	}
 
 	/**
 	 * Vulkan API for instance management.
 	 */
-	interface Library {
+	public interface Library {
 		/**
 		 * Creates the vulkan instance.
 		 * @param info				Instance descriptor

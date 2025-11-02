@@ -7,8 +7,8 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
@@ -207,6 +207,13 @@ class CommandTest {
 		void constructor() {
 			assertEquals(queue, pool.queue());
 		}
+
+		// TODO
+//		@Test
+//		void matches() {
+//			final CommandPool other = new CommandPool(new Handle(3), dev, new WorkQueue(new Handle(4), null)
+//			assertEquals(true, pool.matches(pool));
+//		}
 
 		@Test
 		void descriptor() {

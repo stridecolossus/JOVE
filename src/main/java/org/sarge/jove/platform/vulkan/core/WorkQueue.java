@@ -25,14 +25,6 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 	}
 
 	/**
-	 * Blocks until this queue becomes idle.
-	 * @param vulkan Vulkan API
-	 */
-	public void waitIdle(VulkanLibrary vulkan) {
-		vulkan.vkQueueWaitIdle(this);
-	}
-
-	/**
 	 * A <i>queue family</i> defines the properties of a group of queues.
 	 */
 	public record Family(int index, int count, Set<VkQueueFlag> flags) {
@@ -53,6 +45,10 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		 * @return New queue family
 		 */
 		public static Family of(int index, VkQueueFamilyProperties properties) {
+			// TODO - properties.minImageTransferGranularity???
+
+			System.out.println(properties.minImageTransferGranularity);
+
 			final Set<VkQueueFlag> flags = properties.queueFlags.enumerate(MAPPING);
 			return new Family(index, properties.queueCount, flags);
 		}

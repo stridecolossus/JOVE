@@ -4,7 +4,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.common.Handle.HandleTransformer;
 import org.sarge.jove.common.NativeObject.NativeObjectTransformer;
 import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
-import org.sarge.jove.foreign.NativeStructure.StructureTransformerFactory;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.EnumMask.EnumMaskTransformer;
 import org.sarge.jove.util.IntEnum.IntEnumTransformer;

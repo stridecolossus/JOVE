@@ -8,60 +8,40 @@ import java.util.*;
 import java.util.stream.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.EnumMask;
-import org.sarge.lib.Percentile;
 
 /**
  * The <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
 public class LogicalDevice extends TransientNativeObject {
-	private final VulkanLibrary vulkan;
-	private final DeviceFeatures features;
-	private final VkPhysicalDeviceLimits limits;
+	private final Library library;
 	private final Map<Family, List<WorkQueue>> queues;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
-	 * @param vulkan		Vulkan service
-	 * @param features		Features enabled on this device
-	 * @param limits		Hardware limits
+	 * @param library		Device library
 	 * @param queues 		Work queues indexed by family
 	 */
-	protected LogicalDevice(Handle handle, VulkanLibrary vulkan, DeviceFeatures features, VkPhysicalDeviceLimits limits, Map<Family, List<WorkQueue>> queues) {
+	LogicalDevice(Handle handle, Library library, Map<Family, List<WorkQueue>> queues) {
 		super(handle);
-		this.vulkan = requireNonNull(vulkan);
-		this.features = null; // TODO - requireNonNull(features);
-		this.limits = requireNonNull(limits);
+		this.library = requireNonNull(library);
 		this.queues = Map.copyOf(queues);
 	}
 
 	/**
-	 * @return Vulkan
+	 * @return Device library
 	 */
-	public VulkanLibrary vulkan() {
-		return vulkan;
+	public Library library() {
+		return library;
 	}
-
-	/**
-	 * @return Features of this device
-	 */
-	public DeviceFeatures features() {
-		return features;
-	}
-
-	/**
-	 * @return Device limits
-	 */
-	public VkPhysicalDeviceLimits limits() {
-		return limits;
-	}
+	// TODO
 
 	/**
 	 * @return Work queues for this device ordered by family
@@ -74,12 +54,20 @@ public class LogicalDevice extends TransientNativeObject {
 	 * Blocks until this device becomes idle.
 	 */
 	public void waitIdle() {
-		vulkan.vkDeviceWaitIdle(this);
+		library.vkDeviceWaitIdle(this);
+	}
+
+	/**
+	 * Blocks until the given queue becomes idle.
+	 * @param queue Work queue
+	 */
+	public void waitIdle(WorkQueue queue) {
+		library.vkQueueWaitIdle(queue);
 	}
 
  	@Override
 	protected void release() {
-		vulkan.vkDestroyDevice(this, null);
+		library.vkDestroyDevice(this, null);
 	}
 
  	@Override
@@ -90,7 +78,7 @@ public class LogicalDevice extends TransientNativeObject {
 	/**
 	 * Transient descriptor for a work queue.
 	 */
-	public record RequiredQueue(Family family, List<Percentile> priorities) {
+	public record RequiredQueue(Family family, float[] priorities) {
 		/**
 		 * Constructor.
 		 * @param family			Queue family
@@ -99,11 +87,17 @@ public class LogicalDevice extends TransientNativeObject {
 		 */
 		public RequiredQueue {
 			requireNonNull(family);
-			requireNotEmpty(priorities);
-			if(priorities.size() > family.count()) {
-				throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.size()));
+			priorities = Arrays.copyOf(priorities, priorities.length);
+
+			if(priorities.length > family.count()) {
+				throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.length));
 			}
-			priorities = List.copyOf(priorities);
+
+			for(float f : priorities) {
+				if((f < 0) || (f > 1)) {
+					throw new IllegalArgumentException("Invalid queue priority: " + f);
+				}
+			}
 		}
 
 		/**
@@ -120,53 +114,50 @@ public class LogicalDevice extends TransientNativeObject {
 		 * @param count			Number of required queues
 		 */
 		public RequiredQueue(Family family, int count) {
-			this(family, Collections.nCopies(count, Percentile.ONE));
+			this(family, priorities(count));
+		}
+
+		private static float[] priorities(int count) {
+			final var priorities = new float[count];
+			Arrays.fill(priorities, 1f);
+			return priorities;
 		}
 
 		/**
 		 * @return Vulkan descriptor for this required queue
 		 */
-		VkDeviceQueueCreateInfo build() {
-			// Convert priorities to array
-			final int size = priorities.size();
-			final float[] array = new float[size];
-			for(int n = 0; n < array.length; ++n) {
-				array[n] = priorities.get(n).value();
-			}
-			// TODO - custom percentile transformer?
-
-			// Build queue descriptor
+		private VkDeviceQueueCreateInfo build() {
 			final var info = new VkDeviceQueueCreateInfo();
 			info.flags = new EnumMask<>();
-			info.queueCount = priorities.size();
+			info.queueCount = priorities.length;
 			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = array;
+			info.pQueuePriorities = priorities;
 			return info;
 		}
 
 		/**
 		 * Retrieves the work queues specified for this family.
-		 * @param device Logical device
-		 * @param vulkan Vulkan
+		 * @param device	Logical device
+		 * @param library	Device library
 		 * @return Work queues
 		 */
-		Stream<WorkQueue> queues(Handle device, VulkanLibrary vulkan) {
+		private Stream<WorkQueue> queues(Handle device, Library library) {
 			return IntStream
-					.range(0, priorities.size())
-					.mapToObj(n -> queue(device, n, vulkan));
+					.range(0, priorities.length)
+					.mapToObj(n -> queue(device, n, library));
 		}
 
 		/**
 		 * Retrieves a work queue.
 		 * @param device	Logical device
 		 * @param index		Queue index
-		 * @param vulkan	Vulkan
+		 * @param library	Device library
 		 * @return Work queue
 		 */
-		private WorkQueue queue(Handle device, int index, VulkanLibrary vulkan) {
-			final var ref = new Pointer();
-			vulkan.vkGetDeviceQueue(device, family.index(), index, ref);
-			return new WorkQueue(ref.get(), family);
+		private WorkQueue queue(Handle device, int index, Library library) {
+			final var handle = new Pointer();
+			library.vkGetDeviceQueue(device, family.index(), index, handle);
+			return new WorkQueue(handle.get(), family);
 		}
 	}
 
@@ -252,9 +243,10 @@ public class LogicalDevice extends TransientNativeObject {
 
 		/**
 		 * Constructs this logical device.
+		 * @param library Device library
 		 * @return New logical device
 		 */
-		public LogicalDevice build() {
+		public LogicalDevice build(Library library) {
 			// Add required extensions
 			final var info = new VkDeviceCreateInfo();
 			info.ppEnabledExtensionNames = extensions.toArray(String[]::new);
@@ -265,38 +257,33 @@ public class LogicalDevice extends TransientNativeObject {
 			info.enabledLayerCount = layers.size();
 
 			// Add required features
-			//final var required = new DeviceFeatures(features);
-			info.pEnabledFeatures = null; // required.structure();
+			final var required = new DeviceFeatures(features);
+			info.pEnabledFeatures = required.build();
 
 			// Add required queues
 			info.queueCreateInfoCount = queues.size();
 			info.pQueueCreateInfos = queues.stream().map(RequiredQueue::build).toArray(VkDeviceQueueCreateInfo[]::new);
 
 			// Create device
-			final VulkanLibrary vulkan = parent.vulkan();
-			final var ref = new Pointer();
-			vulkan.vkCreateDevice(parent, info, null, ref);
+			final var pointer = new Pointer();
+			library.vkCreateDevice(parent, info, null, pointer);
 
 			// Retrieve work queues
-			final Handle handle = ref.get();
+			final Handle handle = pointer.get();
 			final Map<Family, List<WorkQueue>> map = queues
 						.stream()
-						.flatMap(e -> e.queues(handle, vulkan))
+						.flatMap(e -> e.queues(handle, library))
 						.collect(groupingBy(WorkQueue::family));
 
-			// Retrieve physical device limits
-//			final VkPhysicalDeviceLimits limits = parent.properties().limits;
-			// TODO
-
 			// Create domain object
-			return new LogicalDevice(handle, vulkan, null, new VkPhysicalDeviceLimits(), map); // TODO
+			return new LogicalDevice(handle, library, map);
 		}
 	}
 
 	/**
-	 * Vulkan logical device API.
+	 * Logical device API.
 	 */
-	interface Library {
+	public interface Library {
 		/**
 		 * Creates a logical device.
 		 * @param physicalDevice		Physical device handle
@@ -329,6 +316,8 @@ public class LogicalDevice extends TransientNativeObject {
 		 * @param pQueue				Returned queue handle
 		 */
 		void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, Pointer pQueue);
+
+		// TODO - factor these to separate library?
 
 		/**
 		 * Submits work to a queue.

@@ -23,6 +23,9 @@ public final class MathsUtility {
 	 */
 	private static final float ACCURACY = Float.parseFloat(System.getProperty("jove.accuracy", "0.0001"));
 
+	/**
+	 * Convenience formatter for a floating-point value.
+	 */
 	public static final DecimalFormat FORMATTER = new DecimalFormat("#.####");
 
 	/**
@@ -41,7 +44,7 @@ public final class MathsUtility {
 	public static final float HALF_PI = PI / 2;
 
 	/**
-	 * Double PI (or 360 degrees).
+	 * Twice PI (or 360 degrees).
 	 */
 	public static final float TWO_PI = 2 * PI;
 

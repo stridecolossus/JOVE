@@ -145,17 +145,17 @@ public class SwapchainTest {
 	@Nested
 	class BuilderTests {
 		private Swapchain.Builder builder;
-		private Surface surface;
+		private VulkanSurface surface;
 		private VkSurfaceFormatKHR format;
 
 		@BeforeEach
 		void before() {
 			// Init rendering surface
-			surface = mock(Surface.class);
+			surface = mock(VulkanSurface.class);
 			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
 
 			// Init surface format
-			format = Surface.defaultSurfaceFormat();
+			format = VulkanSurface.defaultSurfaceFormat();
 			when(surface.format(format.format, format.colorSpace)).thenReturn(Optional.of(format));
 
 			// Init surface capabilities

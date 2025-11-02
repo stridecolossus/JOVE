@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeStructure.*;
 
 class NativeStructureTest {
 	private MockStructure structure;
@@ -42,6 +41,11 @@ class NativeStructureTest {
 		assertEquals(3, address.get(JAVA_INT, 0L));
 	}
 
+	@Test
+	void empty() {
+		assertEquals(MemorySegment.NULL, transformer.empty());
+	}
+
 	@DisplayName("A native structure can be marshalled from off-heap memory")
 	@Test
 	void unmarshal() {
@@ -50,64 +54,67 @@ class NativeStructureTest {
 		address.set(JAVA_INT, 0L, 3);
 
 		// Unmarshal structure instance from the off-heap memory
-		final var result = (MockStructure) transformer.unmarshal(address);
+		final var result = (MockStructure) transformer.unmarshal().apply(address);
 		assertEquals(structure.layout(), result.layout());
 		assertEquals(3, result.field);
 	}
 
-	// TODO
-	// - array of structure
-	// - by reference: single, array?
-	// - nested structure?
-
-	private static class AnonymousField implements NativeStructure {
-    	@Override
-    	public StructLayout layout() {
-    		return MemoryLayout.structLayout(
-    				JAVA_INT,
-    				MemoryLayout.paddingLayout(4)
-    		);
-    	}
+	@Test
+	void update() {
+		final MemorySegment address = allocator.allocate(structure.layout());
+		address.set(JAVA_INT, 0L, 3);
+		transformer.update().accept(address, structure);
+		assertEquals(3, structure.field);
 	}
 
 	@DisplayName("A native structure field cannot be anonymous")
     @Test
     void anonymous() {
-    	assertThrows(IllegalArgumentException.class, () -> factory.transformer(AnonymousField.class));
-    }
+		class AnonymousField implements NativeStructure {
+	    	@Override
+	    	public StructLayout layout() {
+	    		return MemoryLayout.structLayout(
+	    				JAVA_INT,
+	    				MemoryLayout.paddingLayout(4)
+	    		);
+	    	}
+		}
 
-	private static class UnknownField implements NativeStructure {
-    	@Override
-    	public StructLayout layout() {
-    		return MemoryLayout.structLayout(
-    				JAVA_INT.withName("cobblers"),
-    				MemoryLayout.paddingLayout(4)
-    		);
-    	}
-	}
+		assertThrows(IllegalArgumentException.class, () -> factory.transformer(AnonymousField.class));
+    }
 
 	@DisplayName("The name of a native structure field must correspond to a member of the structure")
 	@Test
 	void unknown() {
-    	assertThrows(IllegalArgumentException.class, () -> factory.transformer(UnknownField.class));
-	}
+		class UnknownField implements NativeStructure {
+	    	@Override
+	    	public StructLayout layout() {
+	    		return MemoryLayout.structLayout(
+	    				JAVA_INT.withName("cobblers"),
+	    				MemoryLayout.paddingLayout(4)
+	    		);
+	    	}
+		}
 
-	private static class UnsupportedField implements NativeStructure {
-		@SuppressWarnings("unused")
-		private boolean field;
-
-    	@Override
-    	public StructLayout layout() {
-    		return MemoryLayout.structLayout(
-    				ValueLayout.JAVA_BOOLEAN.withName("field"),
-    				MemoryLayout.paddingLayout(4)
-    		);
-    	}
+		assertThrows(IllegalArgumentException.class, () -> factory.transformer(UnknownField.class));
 	}
 
 	@DisplayName("A native structure field must have a supported type")
 	@Test
 	void unsupported() {
-    	assertThrows(IllegalArgumentException.class, () -> factory.transformer(UnsupportedField.class));
+		class UnsupportedField implements NativeStructure {
+			@SuppressWarnings("unused")
+			private boolean field;
+
+	    	@Override
+	    	public StructLayout layout() {
+	    		return MemoryLayout.structLayout(
+	    				ValueLayout.JAVA_BOOLEAN.withName("field"),
+	    				MemoryLayout.paddingLayout(4)
+	    		);
+	    	}
+		}
+
+		assertThrows(IllegalArgumentException.class, () -> factory.transformer(UnsupportedField.class));
 	}
 }

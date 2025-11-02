@@ -111,7 +111,7 @@ public class DescriptorSetTest {
     	void setInvalidResource() {
     		final var invalid = mock(DescriptorResource.class);
     		when(invalid.type()).thenReturn(VkDescriptorType.STORAGE_BUFFER);
-    		assertThrows(IllegalArgumentException.class, () -> entry.set(invalid));
+    		assertThrows(IllegalArgumentException.class, () -> entry.enumerate(invalid));
     	}
 	}
 

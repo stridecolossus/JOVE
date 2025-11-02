@@ -154,7 +154,7 @@ class ParticleSystemTest {
 		@DisplayName("is not tested for collisions")
 		@Test
 		void collide() {
-			final var surface = mock(Intersection.Surface.class);
+			final var surface = mock(Intersection.VulkanSurface.class);
 			sys.add(surface, Collision.DESTROY);
 			sys.update(frame);
 			verifyNoInteractions(surface);
@@ -175,7 +175,7 @@ class ParticleSystemTest {
 		@DisplayName("is not updated by the particle system")
 		@Test
 		void update() {
-			final var surface = mock(Intersection.Surface.class);
+			final var surface = mock(Intersection.VulkanSurface.class);
 			sys.add(surface, Collision.DESTROY);
 			sys.update(frame);
 			assertEquals(false, p.isAlive());

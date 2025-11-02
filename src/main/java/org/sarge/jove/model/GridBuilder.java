@@ -1,6 +1,7 @@
 package org.sarge.jove.model;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.stream.IntStream;
@@ -9,8 +10,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.util.BitField;
-import static org.sarge.lib.Validation.*;
 
 /**
  * The <i>grid builder</i> constructs a grid of vertices in the X-Z plane with an optional index buffer.
@@ -72,7 +71,7 @@ public class GridBuilder {
 			final float h = dim.height() / size.height();
 
 			// Calculate height normalisation scalar
-			final float normalise = scale / BitField.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+			final float normalise = scale / IndexFactory.unsignedMaximum(Byte.SIZE * image.layout().bytes());
 
 			// Create function
 			return (row, col) -> {

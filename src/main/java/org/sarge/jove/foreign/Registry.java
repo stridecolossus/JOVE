@@ -23,29 +23,39 @@ public class Registry {
 		Transformer<T, ?> transformer(Class<? extends T> type);
 	}
 
-	private final Map<Class<?>, Transformer<?, ?>> registry = new HashMap<>();
+	@SuppressWarnings("rawtypes")
+	private final Map<Class<?>, Transformer> registry = new HashMap<>();
 	private final Map<Class<?>, Factory<?>> factories = new HashMap<>();
 
 	/**
 	 * Finds the registered transformer for the given type.
 	 * @param type Type
 	 * @return Transformer
-	 * @throws IllegalArgumentException if no transformer can be found
-	 * @throws NullPointerException if the transformer is {@code null}
 	 */
 	@SuppressWarnings("rawtypes")
 	public Optional<Transformer> transformer(Class<?> type) {
 		requireNonNull(type);
 
 		if(type.isArray()) {
-			final var component = transformer(type.getComponentType());
-			return component.map(ArrayTransformer::new);
-		}
+			final Class<?> component = type.getComponentType();
+    		return transformer(component).map(Transformer::array);
+    	}
 
 		return Optional
-				.ofNullable((Transformer) registry.get(type))
-				.or(() -> supertype(type))
-				.or(() -> generate(type));
+				.ofNullable(registry.get(type))
+				.or(() -> find(type));
+	}
+
+	/**
+	 * Finds and registers the transformer for the given type.
+	 * @param type Type
+	 * @return Transformer
+	 */
+	@SuppressWarnings("rawtypes")
+	private Optional<Transformer> find(Class<?> type) {
+		final var transformer = supertype(type).or(() -> factory(type));
+		transformer.ifPresent(e -> registry.put(type, e));
+		return transformer;
 	}
 
 	/**
@@ -64,19 +74,19 @@ public class Registry {
 	}
 
 	/**
-	 * Generates a transformer for the given type.
+	 * Generates a transformer from a factory supporting the given type.
 	 * @param type Type
 	 * @return Generated transformer
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	private Optional<Transformer> generate(Class type) {
+	private Optional<Transformer> factory(Class<?> type) {
 		return factories
 				.keySet()
 				.stream()
 				.filter(base -> base.isAssignableFrom(type))
 				.findAny()
 				.map(factories::get)
-				.map(factory -> factory.transformer(type));
+				.map(factory -> factory.transformer((Class) type));
 	}
 
 	/**

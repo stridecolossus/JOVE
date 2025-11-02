@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
@@ -13,19 +13,20 @@ import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 class InstanceTest {
 	private Instance instance;
-	private MockLibraryFactory factory;
-	private VulkanLibrary lib;
+	private MockInstanceLibrary lib;
 
 	@BeforeEach
 	void before() {
-		factory = new MockLibraryFactory(MockCreateInstance.class);
-		lib = factory.proxy();
+		lib = new MockInstanceLibrary();
 		instance = new Instance(new Handle(1), lib);
 	}
 
-	public static interface MockCreateInstance extends VulkanLibrary {
+	static class MockInstanceLibrary implements Instance.Library {
+		private final Map<String, Handle> functions = new HashMap<>();
+		boolean destroyed;
+
 		@Override
-		default VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance) {
+		public VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance) {
 			// Check create descriptor
 			assertEquals(1, pCreateInfo.enabledExtensionCount);
 			assertEquals(1, pCreateInfo.enabledLayerCount);
@@ -44,6 +45,33 @@ class InstanceTest {
 			pInstance.set(new Handle(2));
 			return null;
 		}
+
+		@Override
+		public void vkDestroyInstance(Instance instance, Handle pAllocator) {
+			destroyed = true;
+		}
+
+		@Override
+		public VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, VkExtensionProperties[] pProperties) {
+			return null;
+		}
+
+		@Override
+		public VkResult vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, VkLayerProperties[] pProperties) {
+			return null;
+		}
+
+		@Override
+		public Handle vkGetInstanceProcAddr(Instance instance, String pName) {
+			return functions.get(pName);
+		}
+
+		/**
+		 * Adds a function pointer.
+		 */
+		public void function(String name, Handle handle) {
+			functions.put(name, handle);
+		}
 	}
 
 	@DisplayName("An instance can be configured and created via the builder")
@@ -52,14 +80,13 @@ class InstanceTest {
 		final Instance instance = new Instance.Builder()
         		.name("name")
         		.version(new Version(1, 2, 3))
-        		.api(VulkanLibrary.VERSION)
+        		.api(Vulkan.VERSION)
         		.extension("extension")
         		.layer(new ValidationLayer("layer"))
 				.build(lib);
 
 		assertEquals(new Handle(2), instance.handle());
 		assertEquals(false, instance.isDestroyed());
-		assertEquals(1, factory.get("vkCreateInstance").count());
 	}
 
 	@DisplayName("The required API version must be supported by the native library")
@@ -74,14 +101,14 @@ class InstanceTest {
 	void destroy() {
 		instance.destroy();
 		assertEquals(true, instance.isDestroyed());
-		assertEquals(1, factory.get("vkDestroyInstance").count());
+		assertEquals(true, lib.destroyed);
 	}
 
 	@DisplayName("A function pointer can be retrieved by name from the instance")
 	@Test
 	void function() {
-		final Handle handle = new Handle(3);
-		factory.get("vkGetInstanceProcAddr").returns(handle);
+		final var handle = new Handle(3);
+		lib.function("function", handle);
 		assertEquals(Optional.of(handle), instance.function("function"));
 	}
 

@@ -26,7 +26,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	public static final String EXTENSION = "VK_EXT_debug_utils";
 
 	/**
-	 *
+	 * Diagnostic hander library.
 	 */
 	interface HandlerLibrary {
 		/**
@@ -112,6 +112,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * Note that the callback signature is not defined in the Vulkan API.
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
+	@SuppressWarnings("rawtypes")
 	private record Callback(Consumer<Message> consumer, Transformer transformer) {
 		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = new ReverseMapping<>(VkDebugUtilsMessageType.class);
 		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = new ReverseMapping<>(VkDebugUtilsMessageSeverity.class);
@@ -132,7 +133,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 
 			// Unmarshal diagnostic report
 			final MemorySegment address = pCallbackData.reinterpret(transformer.layout().byteSize());
-			final var data = (VkDebugUtilsMessengerCallbackData) transformer.unmarshal(address);
+			final var data = (VkDebugUtilsMessengerCallbackData) transformer.unmarshal().apply(address);
 
 			// Handle message
 			final Message message = new Message(level, types, data);
@@ -144,6 +145,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		/**
 		 * @return Upcall stub for this callback
 		 */
+		@SuppressWarnings("resource")
 		MemorySegment address() throws Exception {
 			// Lookup callback method and bind to handler
 			final Class<?>[] signature = {int.class, int.class, MemorySegment.class, MemorySegment.class};
@@ -168,7 +170,6 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * </ul>
 	 */
 	public static class Builder {
-		private final Registry registry = DefaultRegistry.create(); // TODO - is full registry really needed here? int/String/Handle required
 		private final Set<VkDebugUtilsMessageSeverity> severity = new HashSet<>();
 		private final Set<VkDebugUtilsMessageType> types = new HashSet<>();
 		private Consumer<Message> consumer = System.err::println;
@@ -202,21 +203,27 @@ public class DiagnosticHandler extends TransientNativeObject {
 
 		/**
 		 * Constructs this handler.
-		 * @param instance Parent instance
+		 * @param instance		Parent instance
+		 * @param registry		Transformer registry
 		 * @return Diagnostic handler
 		 */
-		public DiagnosticHandler build(Instance instance) {
-			// Init configuration
+		public DiagnosticHandler build(Instance instance, Registry registry) {
+			// Initialise configuration
 			init();
 
-			// Create callback method
-			final MemorySegment callback = callback();
-
-			// Build descriptor
+			// Create callback
+			final MemorySegment callback = callback(registry);
 			final VkDebugUtilsMessengerCreateInfoEXT info = populate(callback);
 
+			// Create diagnostics library
+			final HandlerLibrary lib = library(instance, registry);
+
 			// Create handler
-			return create(info, instance);
+			final var handle = new Pointer();
+			lib.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
+
+			// Create handler instance
+			return new DiagnosticHandler(handle.get(), instance, lib);
 		}
 
 		/**
@@ -227,10 +234,31 @@ public class DiagnosticHandler extends TransientNativeObject {
 				severity(VkDebugUtilsMessageSeverity.WARNING);
 				severity(VkDebugUtilsMessageSeverity.ERROR);
 			}
-
 			if(types.isEmpty()) {
 				type(VkDebugUtilsMessageType.GENERAL);
 				type(VkDebugUtilsMessageType.VALIDATION);
+			}
+		}
+
+		/**
+		 * Creates the message callback.
+		 * @param registry Transformer registry
+		 * @return Callback address
+		 * @throws NoSuchElementException if the transformer for the {@link VkDebugUtilsMessengerCallbackData} structure cannot be found
+		 */
+		private MemorySegment callback(Registry registry) {
+			// Create a transformer for diagnostic messages
+			final var transformer = registry.transformer(VkDebugUtilsMessengerCallbackData.class).orElseThrow();
+
+			// Instantiate the callback
+			final var callback = new Callback(consumer, transformer);
+
+			// Determine address
+			try {
+				return callback.address();
+			}
+			catch(Exception e) {
+				throw new RuntimeException("Error instantiating diagnostic callback", e);
 			}
 		}
 
@@ -248,46 +276,15 @@ public class DiagnosticHandler extends TransientNativeObject {
 		}
 
 		/**
-		 * Creates the message callback.
-		 * @param registry Transformer registry
-		 * @return Callback address
-		 */
-		private MemorySegment callback() {
-			// Create a transformer for diagnostic messages
-			final var transformer = registry.transformer(VkDebugUtilsMessengerCallbackData.class).orElseThrow();
-
-			// Instantiate the callback
-			final var callback = new Callback(consumer, transformer);
-
-			// Determine address
-			try {
-				return callback.address();
-			}
-			catch(Exception e) {
-				throw new RuntimeException("Error instantiating diagnostic callback", e);
-			}
-		}
-
-		/**
-		 * Instantiates the diagnostic handler.
-		 * @param info			Descriptor
+		 * Builds the diagnostic native library for the given instance.
 		 * @param instance		Parent instance
-		 * @return New handler
+		 * @param registry		Transformer registry
+		 * @return Handler library
 		 */
-		private DiagnosticHandler create(VkDebugUtilsMessengerCreateInfoEXT info, Instance instance) {
-			// Lookup function pointers from the instance
+		protected HandlerLibrary library(Instance instance, Registry registry) {
 			final SymbolLookup lookup = name -> instance.function(name).map(Handle::address);
-
-			// Create diagnostics library
-			final var factory = new NativeLibraryFactory(lookup, registry);
-			final var lib = factory.build(HandlerLibrary.class);
-
-			// Instantiate handler
-			final var handle = new Pointer();
-			lib.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
-
-			// Create handler
-			return new DiagnosticHandler(handle.get(), instance, lib);
+	    	final var builder = new NativeLibrary.Builder(lookup, registry);
+	    	return builder.build(List.of(HandlerLibrary.class)).get();
 		}
 	}
 }

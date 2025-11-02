@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;

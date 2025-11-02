@@ -3,6 +3,7 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
+import java.util.List;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.foreign.*;
@@ -38,8 +39,8 @@ public final class Desktop implements TransientObject {
 		//registry.add(DeviceListener.class, null);
 
 		// Load native library
-		final var factory = new NativeLibraryFactory("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
-		final DesktopLibrary lib = factory.build(DesktopLibrary.class);
+		final var builder = new NativeLibrary.Builder("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
+		final DesktopLibrary lib = builder.build(List.of(DesktopLibrary.class)).get();
 		// TODO - JoystickManager.init(lib);
 
 		// Init GLFW
@@ -107,7 +108,10 @@ public final class Desktop implements TransientObject {
 //		final NativeReference<Integer> count = factory.integer();
 //		final ReturnedArray<String> array = lib.glfwGetRequiredInstanceExtensions(count);
 //		return array.get(count.get(), String.class);
-		return new String[]{};
+		return new String[]{
+				"VK_KHR_surface",
+				"VK_KHR_win32_surface",
+		};
 	}
 
 //	/**

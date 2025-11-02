@@ -1,6 +1,6 @@
 package org.sarge.jove.foreign;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.*;
 
@@ -22,6 +22,11 @@ class StringTransformerTest {
 	}
 
 	@Test
+	void empty() {
+		assertEquals(MemorySegment.NULL, transformer.empty());
+	}
+
+	@Test
 	void marshal() {
 		final String string = "whatever";
 		final MemorySegment address = transformer.marshal(string, allocator);
@@ -33,5 +38,10 @@ class StringTransformerTest {
 		final String string = "whatever";
 		final MemorySegment address = allocator.allocateFrom(string);
 		assertEquals(string, transformer.unmarshal(address));
+	}
+
+	@Test
+	void update() {
+		assertThrows(UnsupportedOperationException.class, () -> transformer.update());
 	}
 }

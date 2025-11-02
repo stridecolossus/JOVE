@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -8,7 +9,6 @@ import java.util.function.Predicate;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.EnumMask;
-import static org.sarge.lib.Validation.*;
 
 /**
  * A <i>format selector</i> is a helper utility used to choose an appropriate format from a list of candidates.
@@ -38,7 +38,7 @@ public class FormatSelector {
 		final EnumMask<VkFormatFeature> mask = new EnumMask<>(required);
 		return props -> {
 			final EnumMask<VkFormatFeature> supported = optimal ? props.optimalTilingFeatures : props.linearTilingFeatures;
-			return supported.contains(mask);
+			return supported.contains(mask.bits());
 		};
 	}
 

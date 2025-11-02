@@ -2,15 +2,16 @@ package org.sarge.jove.foreign;
 
 import java.lang.foreign.*;
 import java.util.Objects;
+import java.util.function.*;
 
 /**
  * A <i>native reference</i> is a template implementation for a <i>by reference</i> parameter with an <i>atomic</i> type, i.e. a primitive value or a simple pointer.
  * @param <T> Data type
- * @see Returned
  * @author Sarge
  */
 public abstract class NativeReference<T> {
 	private T value;
+	private MemorySegment pointer;
 
 	/**
 	 * @return Referenced value or {@code null} if not populated
@@ -25,6 +26,18 @@ public abstract class NativeReference<T> {
 	 */
 	public void set(T value) {
 		this.value = value;
+	}
+
+	/**
+	 * Allocates this reference.
+	 * @param allocator Allocator
+	 * @return Pointer
+	 */
+	private MemorySegment allocate(SegmentAllocator allocator) {
+		if(pointer == null) {
+			pointer = allocator.allocate(ValueLayout.ADDRESS);
+		}
+		return pointer;
 	}
 
 	/**
@@ -57,17 +70,17 @@ public abstract class NativeReference<T> {
 	public static class NativeReferenceTransformer implements Transformer<NativeReference<?>, MemorySegment> {
 		@Override
 		public MemorySegment marshal(NativeReference<?> ref, SegmentAllocator allocator) {
-			return allocator.allocate(ValueLayout.ADDRESS);
+			return ref.allocate(allocator);
 		}
 
 		@Override
-		public NativeReference<?> unmarshal(MemorySegment address) {
+		public Function<MemorySegment, NativeReference<?>> unmarshal() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public ReturnedTransformer<NativeReference<?>> update() {
-			return (address, ref) -> ref.update(address);
+		public BiConsumer<MemorySegment, NativeReference<?>> update() {
+			return (address, reference) -> reference.update(address);
 		}
 	}
 }

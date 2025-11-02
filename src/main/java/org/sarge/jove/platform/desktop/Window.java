@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.foreign.NativeReference.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 

@@ -3,8 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference;
-import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
@@ -28,11 +27,11 @@ public class Fence extends VulkanObject {
 
 		// Create fence
 		final VulkanLibrary vulkan = device.vulkan();
-		final NativeReference<Handle> ref = new Pointer(); // TODO
-		vulkan.vkCreateFence(device, info, null, ref);
+		final var handle = new Pointer();
+		vulkan.vkCreateFence(device, info, null, handle);
 
 		// Create domain object
-		return new Fence(ref.get(), device);
+		return new Fence(handle.get(), device);
 	}
 
 	Fence(Handle handle, LogicalDevice device) {
@@ -107,7 +106,7 @@ public class Fence extends VulkanObject {
 		 * @param pFence			Returned fence
 		 * @return Result
 		 */
-		int vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pFence);
+		int vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence);
 
 		/**
 		 * Destroys a fence.

@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.foreign.NativeReference.IntegerReference;
+import org.sarge.jove.foreign.IntegerReference;
 
 /**
  * Event source for joystick buttons.

@@ -52,18 +52,23 @@ class IntEnumTest {
 		}
 
 		@Test
-		void marshalNull() {
-			assertEquals(1, transformer.marshal(null, null));
+		void empty() {
+			assertEquals(1, transformer.empty());
 		}
 
 		@Test
 		void unmarshal() {
-			assertEquals(MockEnum.A, transformer.unmarshal(1));
+			assertEquals(MockEnum.A, transformer.unmarshal().apply(1));
 		}
 
 		@Test
 		void unmarshalDefaultValue() {
-			assertEquals(MockEnum.A, transformer.unmarshal(0));
+			assertEquals(MockEnum.A, transformer.unmarshal().apply(0));
+		}
+
+		@Test
+		void update() {
+			assertThrows(UnsupportedOperationException.class, () -> transformer.update());
 		}
 	}
 }

@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.control.Button;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.IntegerReference;
 
 /**
  * GLFW joystick library.
@@ -32,7 +32,7 @@ interface DesktopLibraryJoystick {
 	 * @param count		Number of axes
 	 * @return Axis states
 	 */
-	float[] glfwGetJoystickAxes(int id, NativeReference<Integer> count);
+	float[] glfwGetJoystickAxes(int id, IntegerReference count);
 	// TODO - cannot return array
 
 	/**
@@ -46,7 +46,7 @@ interface DesktopLibraryJoystick {
 	 * @param count		Number of buttons
 	 * @return Button states
 	 */
-	float[] glfwGetJoystickButtons(int id, NativeReference<Integer> count);
+	float[] glfwGetJoystickButtons(int id, IntegerReference count);
 	// TODO - cannot return array
 
 	/**
@@ -59,7 +59,7 @@ interface DesktopLibraryJoystick {
 	 * @return Hat states
 	 * @see Hat
 	 */
-	float[] glfwGetJoystickHats(int id, NativeReference<Integer> count);
+	float[] glfwGetJoystickHats(int id, IntegerReference count);
 	// TODO - cannot return array
 
 	/**

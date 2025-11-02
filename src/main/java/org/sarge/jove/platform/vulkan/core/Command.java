@@ -8,7 +8,6 @@ import java.util.function.BiFunction;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeReference.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
@@ -370,6 +369,16 @@ public interface Command {
 			return queue;
 		}
 
+		/**
+		 * Helper - Determines whether this and the given command pool submit to the same queue family.
+		 * @param that Command pool
+		 * @return Whether both pools submit to the same queue family
+		 */
+		public boolean matches(CommandPool that) {
+			return queue.family() == that.queue.family();
+		}
+
+		// TODO
 		public VulkanLibrary library() {
 			return this.device().vulkan();
 		}
@@ -457,6 +466,11 @@ public interface Command {
 		@Override
 		protected Destructor<CommandPool> destructor(VulkanLibrary lib) {
 			return lib::vkDestroyCommandPool;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("CommandPool[handle=%s queue=%s]", this.handle(), queue);
 		}
 	}
 

@@ -1,7 +1,8 @@
 package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.NativeReference.*;
 
 /**
  * GLFW window API.
@@ -45,7 +46,7 @@ interface DesktopLibraryWindow {
 	 * @param surface			Returned surface handle
 	 * @return Result
 	 */
-	int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, NativeReference<Handle> surface);
+	int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, Pointer surface);
 
 	/**
 	 * @param window Window
@@ -74,7 +75,7 @@ interface DesktopLibraryWindow {
 	 * @param w			Width
 	 * @param h			Height
 	 */
-	void glfwGetWindowSize(Window window, NativeReference<Integer> w, NativeReference<Integer> h);
+	void glfwGetWindowSize(Window window, IntegerReference w, IntegerReference h);
 
 	/**
 	 * Sets the window dimensions.

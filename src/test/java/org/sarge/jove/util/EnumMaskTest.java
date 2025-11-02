@@ -75,12 +75,17 @@ class EnumMaskTest {
 
 		@Test
 		void empty() {
-			assertEquals(0, transformer.marshal(null, null));
+			assertEquals(0, transformer.empty());
 		}
 
 		@Test
 		void unmarshal() {
-			assertEquals(new EnumMask<>(1), transformer.unmarshal(1));
+			assertEquals(new EnumMask<>(1), transformer.unmarshal().apply(1));
+		}
+
+		@Test
+		void update() {
+			assertThrows(UnsupportedOperationException.class, () -> transformer.update());
 		}
 	}
 }

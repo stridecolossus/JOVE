@@ -6,11 +6,11 @@ import static org.sarge.lib.Validation.requireOneOrMore;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.BitField;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * An <i>allocator</i> is responsible for allocating device memory for a given request.
@@ -168,8 +168,7 @@ public class Allocator {
 
 		// Walk candidate memory types and match against the requested properties
 		final var matcher = new FallbackMatcher();
-		return new BitField(reqs.memoryTypeBits)
-				.stream()
+		return EnumMask.stream(reqs.memoryTypeBits)
 				.mapToObj(n -> types[n])
 				.filter(matcher)
 				.findAny()

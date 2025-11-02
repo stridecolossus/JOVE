@@ -1,64 +1,78 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import java.util.Set;
+import static java.util.stream.Collectors.*;
+
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 /**
- * The <i>device features</i> specifies the hardware features enabled by the application.
+ * A set of <i>device features</i> is a convenience wrapper specifying required or supported hardware features.
+ * @see VkPhysicalDeviceFeatures
  * @author Sarge
  */
-public class DeviceFeatures {
-	private final Set<String> features;
-
+public record DeviceFeatures(Set<String> features) {
 	/**
 	 * Constructor.
 	 * @param features Enabled features
 	 */
-	public DeviceFeatures(Set<String> features) {
-		this.features = Set.copyOf(features);
+	public DeviceFeatures {
+		features = Set.copyOf(features);
 	}
 
 	/**
-	 * @return Enabled features
+	 * Tests whether this is a subset of the given features.
+	 * @param required Required features
+	 * @return Whether all requires features are present
 	 */
-	public Set<String> enabled() {
-		return features;
+	public boolean contains(DeviceFeatures required) {
+		return features.containsAll(required.features);
 	}
 
 	/**
-	 * Builds the Vulkan structure for this set of required features.
+	 * @return Device features structure
+	 */
+	public VkPhysicalDeviceFeatures build() {
+		final var structure = new VkPhysicalDeviceFeatures();
+
+		try {
+    		for(String name : features) {
+    			final Field field = VkPhysicalDeviceFeatures.class.getField(name);
+    			field.set(structure, 1);
+    		}
+		}
+		catch(NoSuchFieldException e) {
+			throw new IllegalArgumentException("Invalid device feature", e);
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return structure;
+	}
+
+	/**
+	 * Creates a set of features from the given structure.
+	 * @param features Device features structure
 	 * @return Device features
 	 */
-	public VkPhysicalDeviceFeatures structure() {
-		final var struct = new VkPhysicalDeviceFeatures();
-// TODO
-//		for(String key : features) {
-//			struct.writeField(key, Boolean.TRUE);
-//		}
-		return struct;
-	}
+	public static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
+		final Predicate<Field> enabled = field -> {
+			try {
+				return field.getInt(features) == 1;
+			}
+			catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
 
-	/**
-	 * Tests whether the given feature is enabled on this device.
-	 * @param feature Device feature
-	 */
-	public void require(String feature) {
-		if(!features.contains(feature)) {
-			throw new IllegalStateException("Feature not enabled by this device: " + feature);
-		}
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof DeviceFeatures that) &&
-				this.features.equals(that.enabled());
-	}
-
-	@Override
-	public String toString() {
-		return features.toString();
+		return Arrays
+				.stream(VkPhysicalDeviceFeatures.class.getFields())
+				.filter(field -> field.getType() == int.class)
+				.filter(enabled)
+				.map(Field::getName)
+				.collect(collectingAndThen(toSet(), DeviceFeatures::new));
 	}
 }

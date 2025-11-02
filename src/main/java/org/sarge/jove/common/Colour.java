@@ -19,6 +19,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 * RGBA string.
 	 */
 	public static final String RGBA = "RGBA";
+	// TODO - not here?
 
 	/**
 	 * White colour.
@@ -31,7 +32,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	public static final Colour BLACK = new Colour(0, 0, 0);
 
 	/**
-	 * Size of a colour.
+	 * Number of colour components.
 	 */
 	public static final int SIZE = 4;
 

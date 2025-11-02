@@ -4,14 +4,15 @@ import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Array;
+import java.util.function.*;
 
 /**
  * An <i>array transformer</i> marshals an array to/from off-heap memory.
  * @author Sarge
  */
-public class ArrayTransformer implements Transformer<Object[], MemorySegment> {
-	private final Transformer transformer;
-	private final VarHandle handle;
+public class ArrayTransformer implements Transformer<Object, MemorySegment> {
+	protected final Transformer transformer;
 
 	/**
 	 * Constructor.
@@ -19,134 +20,86 @@ public class ArrayTransformer implements Transformer<Object[], MemorySegment> {
 	 */
 	public ArrayTransformer(Transformer transformer) {
 		this.transformer = requireNonNull(transformer);
-		this.handle = Transformer.removeOffset(handle(transformer.layout()));
-	}
-
-	private static VarHandle handle(MemoryLayout layout) {
-		if(layout instanceof StructLayout) {
-			return ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(Integer.MAX_VALUE, layout)).arrayElementVarHandle();
-		}
-		else {
-			return layout.arrayElementVarHandle();
-		}
 	}
 
 	@Override
-	public MemoryLayout layout() {
+	public final MemoryLayout layout() {
 		return ValueLayout.ADDRESS;
 	}
 
+	/**
+	 * Creates a handle to the off-heap memory of this array.
+	 * @return Off-heap array handle
+	 */
+	protected VarHandle handle() {
+		return Transformer.removeOffset(transformer.layout().arrayElementVarHandle());
+	}
+
 	@Override
-	public MemorySegment marshal(Object[] array, SegmentAllocator allocator) {
-		// Allocate off-heap array
+	public MemorySegment marshal(Object array, SegmentAllocator allocator) {
 		final MemoryLayout layout = transformer.layout();
-		final MemorySegment address = allocator.allocate(layout, array.length);
-
-		// Transform elements and populate off-heap memory
-    	for(int n = 0; n < array.length; ++n) {
-    		if(array[n] == null) {
-    			continue;
-    		}
-    		Object element = transformer.marshal(array[n], allocator); //Transformer.marshal(array[n], transformer, allocator);
-//    		if(element == null) {
-//    			element = MemorySegment.NULL;
-//    		}
-    		handle.set(address, (long) n, element);
-    	}
-//		if(array instanceof NativeStructure[]) {
-//			marshalStructureArray(array, address, allocator);
-//		}
-//		else {
-//			marshalReferenceArray(array, address, allocator);
-//		}
-
+		final int len = Array.getLength(array);
+		final MemorySegment address = allocator.allocate(layout, len);
+		marshal(array, len, address, allocator);
 		return address;
 	}
 
-//	// TODO - should array element transformation be a function of the Transformer?
-//	// i.e. returns a int consumer function that marshals each element?
-//
-//	private void marshalStructureArray(T[] array, MemorySegment address, SegmentAllocator allocator) {
-//
-//		final AddressLayout structureArray = ValueLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(array.length, transformer.layout()));
-//		System.out.println("layout="+structureArray+" size="+structureArray.byteSize()+" length="+array.length);
-//
-//		final MemoryLayout layout = transformer.layout();
-//    	final var handle = Transformer.removeOffset(structureArray.arrayElementVarHandle());
-//    	for(int n = 0; n < array.length; ++n) {
-//    		final Object element = Transformer.marshal(array[n], transformer, allocator);
-//    		handle.set(address, (long) n, element);
-//    	}
-//
-//
-////		final MemoryLayout layout = transformer.layout();
-////		final long size = layout.byteSize();
-////		for(int n = 0; n < array.length; ++n) {
-////			final Object element = Transformer.marshal(array[n], transformer, allocator);
-////    		final MemorySegment slice = address.asSlice(n * size, size);
-////    		slice.copyFrom((MemorySegment) element);
-////		}
-//	}
-//
-//	private void marshalReferenceArray(T[] array, MemorySegment address, SegmentAllocator allocator) {
-//		final MemoryLayout layout = transformer.layout();
-//    	final var handle = Transformer.removeOffset(layout.arrayElementVarHandle());
-//    	for(int n = 0; n < array.length; ++n) {
-//    		final Object element = Transformer.marshal(array[n], transformer, allocator);
-//    		handle.set(address, (long) n, element);
-//    	}
-//	}
+	/**
+	 * Marshals an array to off-heap memory.
+	 * @param array			Array
+	 * @param length		Length
+	 * @param address		Off-heap memory
+	 * @param allocator		Allocator
+	 */
+	protected void marshal(Object array, int length, MemorySegment address, SegmentAllocator allocator) {
+		final VarHandle handle = handle();
 
-	@Override
-	public Object[] unmarshal(MemorySegment value) {
-		throw new UnsupportedOperationException(); // TODO
+		// TODO
+		// ObjIntConsumer<Object> consumer = (element, index) -> handle.set(address, (long) index, element);
+
+		for(int n = 0; n < length; ++n) {
+			final Object value = Array.get(array, n);
+
+			if(value == null) {
+    			continue;
+    		}
+
+    		final Object element = transformer.marshal(value, allocator);
+
+    		handle.set(address, (long) n, element);
+    	}
 	}
 
 	@Override
-	public ReturnedTransformer<Object[]> update() {
+	public final Function<MemorySegment, Object> unmarshal() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public BiConsumer<MemorySegment, Object> update() {
 		return (address, array) -> {
-			System.out.println("*** ARRAY RETURNED BY-REFERENCE ***");
+			final int length = Array.getLength(array);
+			update(address, array, length);
 		};
 	}
 
+	/**
+	 * Updates a by-reference array parameter.
+	 * @param address		Off-heap memory
+	 * @param array			Array
+	 * @param length		Length
+	 */
+	protected void update(MemorySegment address, Object array, int length) {
+		final VarHandle handle = handle();
 
-//	@Override
-//	public BiConsumer<MemorySegment, T[]> update() {
-//		return (address, array) -> {
-//System.out.println("array="+array.getClass());
-//			final Function unmarshal = transformer.unmarshal();
-//			for(int n = 0; n < array.length; ++n) {
-//System.out.println("n="+n);
-//	    		final Object element = handle.get(address, (long) n);
-//	    		array[n] = (T) unmarshal.apply(element);
-//			}
-//		};
-//	}
+		for(int n = 0; n < length; ++n) {
+			final Object element = handle.get(address, (long) n);
+
+			if(MemorySegment.NULL.equals(element)) {
+				continue;
+			}
+
+			Array.set(array, n, transformer.unmarshal().apply(element));
+		}
+	}
 }
-
-//
-//	private void updateReferenceArray(MemorySegment address, Object[] array) {
-//		final MemoryLayout layout = transformer.layout();
-//    	final var handle = Transformer.removeOffset(layout.arrayElementVarHandle());
-//		final Function unmarshal = transformer.unmarshal();
-//
-//		for(int n = 0; n < array.length; ++n) {
-//    		final MemorySegment element = (MemorySegment) handle.get(address, (long) n);
-//    		array[n] = unmarshal.apply(element);
-//
-//    		//address.getAtIndex(AddressLayout.ADDRESS, 0);
-//
-//    	}
-//	}
-//
-//	private void updateStructureArray(MemorySegment address, Object[] array) {
-//		final MemoryLayout layout = transformer.layout();
-//		final long size = layout.byteSize();
-//		final Function unmarshal = transformer.unmarshal();
-//
-//		for(int n = 0; n < array.length; ++n) {
-//    		final MemorySegment element = address.asSlice(n * size, size);
-//    		array[n] = unmarshal.apply(element);
-//		}
-//	}
-//}

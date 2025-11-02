@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 /**
- * A <i>rotation</i> represents as a counter-clockwise rotational transform about an axis.
+ * A <i>rotation</i> represents as a counter-clockwise transform about an axis.
  * @author Sarge
  */
 public interface Rotation extends Transform {

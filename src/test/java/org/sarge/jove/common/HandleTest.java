@@ -2,7 +2,7 @@ package org.sarge.jove.common;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle.HandleTransformer;
@@ -45,13 +45,28 @@ class HandleTest {
 		}
 
 		@Test
+    	void layout() {
+			assertEquals(ValueLayout.ADDRESS, transformer.layout());
+		}
+
+		@Test
     	void marshal() {
     		assertEquals(address, transformer.marshal(handle, null));
     	}
 
+		@Test
+		void empty() {
+			assertEquals(MemorySegment.NULL, transformer.empty());
+		}
+
     	@Test
     	void unmarshal() {
-    		assertEquals(handle, transformer.unmarshal(address));
+    		assertEquals(handle, transformer.unmarshal().apply(address));
+    	}
+
+    	@Test
+    	void update() {
+    		assertThrows(UnsupportedOperationException.class, () -> transformer.update());
     	}
     }
 }

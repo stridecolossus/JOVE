@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 

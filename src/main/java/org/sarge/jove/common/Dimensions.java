@@ -3,7 +3,7 @@ package org.sarge.jove.common;
 import static org.sarge.lib.Validation.requireZeroOrMore;
 
 /**
- * General 2D dimensions.
+ * General 2D dimensions with integer components.
  * @author Sarge
  */
 public record Dimensions(int width, int height) implements Comparable<Dimensions> {

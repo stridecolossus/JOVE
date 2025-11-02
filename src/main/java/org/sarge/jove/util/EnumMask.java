@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toSet;
 
 import java.lang.foreign.*;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.*;
 
 import org.sarge.jove.foreign.Transformer;
@@ -109,17 +110,17 @@ public record EnumMask<E extends IntEnum>(int bits) {
 
 		@Override
 		public Integer marshal(EnumMask<?> e, SegmentAllocator allocator) {
-			if(e == null) {
-				return 0;
-			}
-			else {
-				return e.bits();
-			}
+			return e.bits();
 		}
 
 		@Override
-		public EnumMask<?> unmarshal(Integer value) {
-			return new EnumMask<>(value);
+		public Object empty() {
+			return 0;
+		}
+
+		@Override
+		public Function<Integer, EnumMask<?>> unmarshal() {
+			return EnumMask::new;
 		}
 	}
 }

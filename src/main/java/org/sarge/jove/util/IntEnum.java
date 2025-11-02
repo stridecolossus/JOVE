@@ -88,16 +88,20 @@ public interface IntEnum {
 
 		@Override
 		public Integer marshal(IntEnum e, SegmentAllocator allocator) {
-			if(e == null) {
-				return mapping.defaultValue().value();
-			}
-			else {
-				return e.value();
-			}
+			return e.value();
 		}
 
 		@Override
-		public IntEnum unmarshal(Integer value) {
+		public Object empty() {
+			return mapping.defaultValue().value();
+		}
+
+		@Override
+		public Function<Integer, IntEnum> unmarshal() {
+			return this::unmarshal;
+		}
+
+		private IntEnum unmarshal(Integer value) {
 			if(value == 0) {
 				return mapping.defaultValue();
 			}

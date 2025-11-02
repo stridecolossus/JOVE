@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference.Pointer;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 
@@ -28,11 +28,10 @@ public class VulkanSemaphore extends VulkanObject {
 	 * @return New semaphore
 	 */
 	public static VulkanSemaphore create(LogicalDevice device) {
-		final var info = new VkSemaphoreCreateInfo();
-		final VulkanLibrary vulkan = device.vulkan();
-		final var ref = new Pointer();
-		vulkan.vkCreateSemaphore(device, info, null, ref);
-		return new VulkanSemaphore(ref.get(), device);
+		final Library lib = device.vulkan();
+		final var ptr = new Pointer();
+		lib.vkCreateSemaphore(device, new VkSemaphoreCreateInfo(), null, ptr);
+		return new VulkanSemaphore(ptr.get(), device);
 	}
 
 	/**

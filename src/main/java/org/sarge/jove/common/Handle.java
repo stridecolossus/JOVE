@@ -1,6 +1,7 @@
 package org.sarge.jove.common;
 
 import java.lang.foreign.*;
+import java.util.function.Function;
 
 import org.sarge.jove.foreign.Transformer;
 
@@ -47,8 +48,8 @@ public record Handle(MemorySegment address) {
 		}
 
 		@Override
-		public Handle unmarshal(MemorySegment address) {
-			return new Handle(address);
+		public Function<MemorySegment, Handle> unmarshal() {
+			return Handle::new;
 		}
 	}
 }

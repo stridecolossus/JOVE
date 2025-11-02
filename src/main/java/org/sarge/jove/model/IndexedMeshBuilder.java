@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.util.BitField;
 
 /**
  * An <i>indexed mesh</i> constructs an index buffer for a renderable mesh.
@@ -21,7 +20,7 @@ public class IndexedMeshBuilder extends MeshBuilder {
 	/**
 	 * Size of a {@code short} index.
 	 */
-	private static final long SHORT_INDEX = BitField.unsignedMaximum(Short.SIZE);
+	private static final long SHORT_INDEX = IndexFactory.unsignedMaximum(Short.SIZE);
 
 	/**
 	 * Determines whether the given draw count requires a {@code int} index.

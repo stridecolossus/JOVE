@@ -59,4 +59,6 @@ public class Randomiser {
 		}
 		return new Vector(vec);
 	}
+
+	// TODO - this class is really only used in the particle system?
 }

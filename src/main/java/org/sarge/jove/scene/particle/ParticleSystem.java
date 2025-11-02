@@ -15,7 +15,7 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.IntersectedSurface;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.*;
-import org.sarge.jove.platform.vulkan.core.Surface;
+import org.sarge.jove.platform.vulkan.core.VulkanSurface;
 
 /**
  * A <i>particle system</i> is a controller for a particle animation.
@@ -229,7 +229,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * Removes a collision surface.
 	 * @param surface Surface to remove
 	 */
-	public ParticleSystem remove(Surface surface) {
+	public ParticleSystem remove(VulkanSurface surface) {
 		surfaces.remove(surface);
 		return this;
 	}

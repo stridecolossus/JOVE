@@ -22,4 +22,9 @@ public class VkMemoryType implements NativeStructure {
 				JAVA_INT.withName("heapIndex")
 		);
 	}
+
+	@Override
+	public String toString() {
+		return String.format("index=%d flags=%s", heapIndex, propertyFlags);
+	}
 }

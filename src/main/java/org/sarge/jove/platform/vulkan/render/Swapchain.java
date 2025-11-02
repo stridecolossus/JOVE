@@ -5,8 +5,8 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.foreign.NativeReference.*;
-import org.sarge.jove.foreign.Returned;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -17,7 +17,7 @@ import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
 
 /**
- * A <i>swapchain</i> presents rendered images to a {@link Surface}.
+ * A <i>swapchain</i> presents rendered images to a {@link VulkanSurface}.
  * <p>
  * A swapchain is comprised of an array of colour image <i>attachments</i>.
  * Note that the swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
@@ -228,7 +228,7 @@ public class Swapchain extends VulkanObject {
 	 */
 	public static class Builder {
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
-		private final Surface surface;
+		private final VulkanSurface surface;
 		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private VkSurfaceCapabilitiesKHR caps;
@@ -238,7 +238,7 @@ public class Swapchain extends VulkanObject {
 		 * Constructor.
 		 * @param surface Rendering surface
 		 */
-		public Builder(Surface surface) {
+		public Builder(VulkanSurface surface) {
 			this.surface = requireNonNull(surface);
 			update();
 			init();
@@ -256,17 +256,17 @@ public class Swapchain extends VulkanObject {
 			info.imageExtent = caps.currentExtent;
 			count(caps.minImageCount);
 			transform(caps.currentTransform);
-			format(Surface.defaultSurfaceFormat());
+			format(VulkanSurface.defaultSurfaceFormat());
 			arrays(1);
 			mode(VkSharingMode.EXCLUSIVE);
 			usage(VkImageUsageFlag.COLOR_ATTACHMENT);
 			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
-			presentation(Surface.DEFAULT_PRESENTATION_MODE);
+			presentation(VulkanSurface.DEFAULT_PRESENTATION_MODE);
 			clipped(true);
 		}
 
 		private static <E extends IntEnum> void validate(EnumMask<E> mask, E e) {
-			if(!mask.contains(e)) {
+			if(!mask.contains(e.value())) {
 				throw new IllegalArgumentException("Unsupported property: " + e);
 			}
 		}
@@ -395,7 +395,7 @@ public class Swapchain extends VulkanObject {
 		 * Sets the presentation mode.
 		 * @param mode Presentation mode
 		 * @throws IllegalArgumentException if the mode is not supported by the surface
-		 * @see Surface#modes()
+		 * @see VulkanSurface#modes()
 		 */
 		public Builder presentation(VkPresentModeKHR mode) {
 			if(!surface.modes().contains(mode)) throw new IllegalArgumentException("Unsupported presentation mode: " + mode);

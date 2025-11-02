@@ -4,6 +4,7 @@ import static java.lang.foreign.ValueLayout.*;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
+import java.util.function.*;
 
 /**
  * The <i>identity transformer</i> marshals an argument as-is, i.e. without any transformation.
@@ -24,8 +25,28 @@ public record IdentityTransformer<T>(ValueLayout layout) implements Transformer<
 	}
 
 	@Override
-	public T unmarshal(T value) {
-		return value;
+	public Object empty() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Function<T, T> unmarshal() {
+		return Function.identity();
+	}
+
+	@Override
+	public Transformer<?, ?> array() {
+		return new ArrayTransformer(this) {
+			@Override
+			protected void marshal(Object array, int length, MemorySegment address, SegmentAllocator allocator) {
+				MemorySegment.copy(array, 0, address, layout, 0, length);
+			}
+
+			@Override
+			public BiConsumer<MemorySegment, Object> update() {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 
 	/**

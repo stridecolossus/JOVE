@@ -7,7 +7,7 @@ import java.nio.file.*;
 import java.util.Collection;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.NativeReference;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.foreign.NativeReference.*;
 import org.sarge.jove.io.*;
 import org.sarge.jove.platform.vulkan.VkPipelineCacheCreateInfo;

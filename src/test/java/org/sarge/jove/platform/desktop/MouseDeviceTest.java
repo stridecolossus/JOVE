@@ -22,7 +22,7 @@ public class MouseDeviceTest {
 	@BeforeEach
 	void before() {
 		lib = mock(DesktopLibrary.class);
-		window = new Window(new Handle(1), new Desktop(lib, new Factory()));
+		window = new Window(new Handle(1), new Desktop(lib, new Builder()));
 		mouse = new MouseDevice(window);
 	}
 

@@ -2,6 +2,7 @@ package org.sarge.jove.common;
 
 import java.lang.foreign.*;
 import java.util.Collection;
+import java.util.function.Function;
 
 import org.sarge.jove.foreign.Transformer;
 
@@ -38,7 +39,7 @@ public interface NativeObject {
 		}
 
 		@Override
-		public NativeObject unmarshal(MemorySegment address) {
+		public Function<MemorySegment, NativeObject> unmarshal() {
 			throw new UnsupportedOperationException();
 		}
 	}

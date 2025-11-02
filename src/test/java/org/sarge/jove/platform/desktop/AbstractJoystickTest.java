@@ -18,7 +18,7 @@ import com.sun.jna.ptr.IntByReference;
 abstract class AbstractJoystickTest {
 	protected Desktop desktop;
 	protected DesktopLibrary lib;
-	protected Factory factory;
+	protected Builder factory;
 	protected boolean pressed;
 
 	@BeforeEach
@@ -29,7 +29,7 @@ abstract class AbstractJoystickTest {
 		when(desktop.library()).thenReturn(lib);
 
 		// Init reference factory
-		factory = mock(Factory.class);
+		factory = mock(Builder.class);
 		when(desktop.factory()).thenReturn(factory);
 
 		// Mock array count

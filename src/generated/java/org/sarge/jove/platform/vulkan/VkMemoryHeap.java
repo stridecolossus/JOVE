@@ -19,7 +19,13 @@ public class VkMemoryHeap implements NativeStructure {
 	public StructLayout layout() {
 		return MemoryLayout.structLayout(
 				JAVA_LONG.withName("size"),
-				JAVA_INT.withName("flags")
+				JAVA_INT.withName("flags"),
+				PADDING
 		);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("size=%d flags=%s", size, flags);
 	}
 }

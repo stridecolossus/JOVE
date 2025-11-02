@@ -1,6 +1,8 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity.*;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType.*;
 
 import java.util.Set;
 
@@ -9,77 +11,62 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.DiagnosticHandler.*;
+import org.sarge.jove.platform.vulkan.core.InstanceTest.MockInstanceLibrary;
 import org.sarge.jove.util.EnumMask;
 
 class DiagnosticHandlerTest {
-
-//	private Consumer<Message> listener;
-	private Instance instance;
-	private VulkanLibrary lib;
-
-	public static interface MockDiagnosticHandlerLibrary extends VulkanLibrary, HandlerLibrary {
+	private class MockHandlerLibrary implements HandlerLibrary {
 		@Override
-		default Handle vkGetInstanceProcAddr(Instance instance, String pName) {
-			return null;
-		}
-
-		@Override
-		default VkResult vkCreateDebugUtilsMessengerEXT(Instance instance, VkDebugUtilsMessengerCreateInfoEXT pCreateInfo, Handle pAllocator, Pointer pHandler) {
-			System.out.println("create");
-
+		public VkResult vkCreateDebugUtilsMessengerEXT(Instance instance, VkDebugUtilsMessengerCreateInfoEXT pCreateInfo, Handle pAllocator, Pointer pHandler) {
+			// Check create descriptor
 			assertEquals(0, pCreateInfo.flags);
-			assertEquals(new EnumMask<>(VkDebugUtilsMessageType.VALIDATION), pCreateInfo.messageType);
-			assertEquals(new EnumMask<>(VkDebugUtilsMessageSeverity.ERROR), pCreateInfo.messageSeverity);
-			assertEquals(new Handle(3), pCreateInfo.pfnUserCallback);
+			assertEquals(new EnumMask<>(GENERAL, VALIDATION), pCreateInfo.messageType);
+			assertEquals(new EnumMask<>(WARNING, ERROR), pCreateInfo.messageSeverity);
+			assertNotNull(pCreateInfo.pfnUserCallback);
 			assertEquals(null, pCreateInfo.pUserData);
 
-			pHandler.set(new Handle(4));
+			// Check parameters
+			assertEquals(DiagnosticHandlerTest.this.instance, instance);
+			assertEquals(null, pAllocator);
 
-			return null;
+			// Init handler
+			pHandler.set(new Handle(2));
+			return VkResult.SUCCESS;
 		}
 
 		@Override
-		default void vkDestroyDebugUtilsMessengerEXT(Instance instance, DiagnosticHandler handler, Handle pAllocator) {
-			System.out.println("destroy");
+		public void vkDestroyDebugUtilsMessengerEXT(Instance instance, DiagnosticHandler handler, Handle pAllocator) {
+			assertEquals(DiagnosticHandlerTest.this.instance, instance);
+			destroyed = true;
 		}
 	}
+
+	private DiagnosticHandler handler;
+	private Instance instance;
+	private HandlerLibrary lib;
+	private boolean destroyed;
 
 	@BeforeEach
 	void before() {
-
-		lib = new MockLibraryFactory(MockDiagnosticHandlerLibrary.class).proxy();
-
-		instance = new Instance(new Handle(1), lib);
-
-//		instance = new Instance(new Handle(1), lib) {
-//			@Override
-//			public Optional<Handle> function(String name) {
-//				final Handle handle = switch(name) {
-//					case "vkCreateDebugUtilsMessengerEXT" -> new Handle(2);
-//					case "vkDestroyDebugUtilsMessengerEXT" -> new Handle(3);
-//					default -> null;
-//				};
-//				return Optional.ofNullable(handle);
-//			}
-//		};
+		lib = new MockHandlerLibrary();
+		instance = new Instance(new Handle(1), new MockInstanceLibrary());
+		handler = new DiagnosticHandler(new Handle(2), instance, lib);
 	}
 
 	@Test
-	void build() {
-		final DiagnosticHandler handler = new DiagnosticHandler.Builder()
-//				.consumer(listener)
-				.build(instance);
+	void create() {
+		final var builder = new DiagnosticHandler.Builder() {
+			@Override
+			protected HandlerLibrary library(Instance instance, Registry registry) {
+				return new MockHandlerLibrary();
+			}
+		};
 
-		System.out.println(handler);
-
-		handler.destroy();
-
+		builder.build(instance, DefaultRegistry.create());
 	}
 
-	///////////////
-
 	@DisplayName("A diagnostics report can be rendered as a human-readable message")
-	//@Test
+	@Test
 	void message() {
 		final var data = new VkDebugUtilsMessengerCallbackData();
 		data.pMessage = "message";
@@ -88,5 +75,12 @@ class DiagnosticHandlerTest {
 		final var types = Set.of(VkDebugUtilsMessageType.GENERAL, VkDebugUtilsMessageType.VALIDATION);
 		final Message message = new Message(VkDebugUtilsMessageSeverity.WARNING, types, data);
 		assertEquals("WARNING:GENERAL-VALIDATION:name:message", message.toString());
+	}
+
+	@Test
+	void destroy() {
+		handler.destroy();
+		assertEquals(true, handler.isDestroyed());
+		assertEquals(true, destroyed);
 	}
 }

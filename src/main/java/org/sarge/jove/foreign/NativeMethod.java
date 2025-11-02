@@ -5,40 +5,65 @@ import static java.util.Objects.requireNonNull;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.*;
-
-import org.sarge.jove.foreign.Transformer.ReturnedTransformer;
+import java.util.function.*;
 
 /**
  * A <i>native method</i> composes an FFM method handle and transformers for its return type and parameters.
  * @see Transformer
  * @author Sarge
  */
-@SuppressWarnings("rawtypes")
 public class NativeMethod {
 	/**
-	 * A <i>native parameter</i> specifies the transformer for a parameter of this native method.
+	 *
 	 */
-	public record NativeParameter(Transformer transformer, ReturnedTransformer update) {
+	public static class NativeParameter {
+		private final Transformer transformer;
+		private final BiConsumer update;
+
 		/**
 		 * Constructor.
 		 * @param transformer		Parameter transformer
-		 * @param update			Optional transformer for a by-reference parameter
+		 * @param returned			Whether this is a by-reference parameter
+		 * @throws UnsupportedOperationException if the given {@link #transformer} cannot be {@link #returned} as a by-reference parameter
 		 * @see Returned
+		 * @see Transformer#update()
 		 */
-		public NativeParameter {
-			requireNonNull(transformer);
+		public NativeParameter(Transformer transformer, boolean returned) {
+			this.transformer = requireNonNull(transformer);
+			this.update = returned ? transformer.update() : null;
+		}
+
+		/**
+		 * @return Whether this is a by-reference parameter
+		 */
+		public boolean isReturned() {
+			return Objects.nonNull(update);
+		}
+
+		/**
+		 * Helper.
+		 * Overrides the transformer layout as a pointer for by-reference parameters.
+		 * @return Memory layout for this parameter
+		 */
+		MemoryLayout layout() {
+			if(isReturned()) {
+				return AddressLayout.ADDRESS;
+			}
+			else {
+				return transformer.layout();
+			}
 		}
 	}
 
 	private final MethodHandle handle;
-	private final Transformer returns;
+	private final Function returns;
 	private final NativeParameter[] parameters;
 
 	/**
 	 * Constructor.
-	 * @param handle				Native method
-	 * @param returns				Optional return type transformer
-	 * @param signature				Parameter transformers
+	 * @param handle			Native method
+	 * @param returns			Optional return type transformer
+	 * @param parameters		Parameter transformers
 	 * @throws IllegalArgumentException if a {@link #returns} transformer is not configured for a method with a return type
 	 * @throws IllegalArgumentException if the number of {@link #parameters} does not match the native method
 	 */
@@ -47,12 +72,13 @@ public class NativeMethod {
 		if(parameters.size() != signature.parameterCount()) {
 			throw new IllegalArgumentException("Mismatched number of transformers for method signature");
 		}
+
 		if(Objects.isNull(returns) ^ (handle.type().returnType() == void.class)) {
 			throw new IllegalArgumentException("Missing or superfluous return transformer");
 		}
 
 		this.handle = requireNonNull(handle);
-		this.returns = returns;
+		this.returns = returns == null ? null : returns.unmarshal();		// TODO - void transformer?
 		this.parameters = parameters.toArray(NativeParameter[]::new);
 	}
 
@@ -102,7 +128,7 @@ public class NativeMethod {
 			return null;
 		}
 		else {
-			return returns.unmarshal(result);
+			return returns.apply(result);
 		}
 	}
 
@@ -115,9 +141,11 @@ public class NativeMethod {
 		final Object[] foreign = new Object[args.length];
 		for(int n = 0; n < args.length; ++n) {
 			if(args[n] == null) {
-				foreign[n] = MemorySegment.NULL;
+				// TODO - ignore?
+				foreign[n] = parameters[n].transformer.empty();
 			}
 			else {
+				// TODO - ignore if by-reference and structure (and arrays?)
 				foreign[n] = parameters[n].transformer.marshal(args[n], allocator);
 			}
 		}
@@ -129,24 +157,23 @@ public class NativeMethod {
 	 */
 	private void update(Object[] args, Object[] foreign) {
 		for(int n = 0; n < parameters.length; ++n) {
-			// Skip empty parameters
+			// Skip empty arguments
 			if(args[n] == null) {
 				continue;
 			}
 
-			// Skip read-only parameters
-			if(parameters[n].update == null) {
+			// Skip empty arguments
+			if(MemorySegment.NULL.equals(foreign[n])) {
+				continue;
+			}
+
+			// Skip empty arguments
+			if(!parameters[n].isReturned()) {
 				continue;
 			}
 
 			// Overwrite by-reference arguments
-			final ReturnedTransformer update = parameters[n].update;
-			if(MemorySegment.NULL.equals(foreign[n])) {
-				update.update(null, args[n]);		// TODO - or ignore?
-			}
-			else {
-				update.update((MemorySegment) foreign[n], args[n]);		// TODO - cast
-			}
+			parameters[n].update.accept(foreign[n], args[n]);
 		}
 	}
 
@@ -169,48 +196,27 @@ public class NativeMethod {
 	}
 
 	/**
-	 * Helper factory used to create a native method.
+	 * Helper - Derives the FFM function descriptor from the given native method signature.
+	 * @param returns		Optional return value transformer
+	 * @param parameters	Parameter transformers
+	 * @returns Function descriptor
 	 */
-	public static class Factory {
-		private final Linker linker = Linker.nativeLinker();
+	static FunctionDescriptor descriptor(Transformer<?, ?> returns, List<NativeParameter> parameters) {
+		// Map method signature to FFM layout
+		final MemoryLayout[] layouts = parameters
+				.stream()
+				.map(NativeParameter::layout)
+				.toArray(MemoryLayout[]::new);
 
-		/**
-		 * Creates a native method.
-		 * @param address			Method address
-		 * @param returns			Optional return value transformer
-		 * @param parameters		Parameter transformers
-		 * @return Native method
-		 * @throws RuntimeException if the method cannot be linked to the native library
-		 */
-		public NativeMethod create(MemorySegment address, Transformer returns, List<NativeParameter> parameters) {
-			final FunctionDescriptor descriptor = descriptor(returns, parameters);
-			final MethodHandle handle = linker.downcallHandle(descriptor).bindTo(address);
-			return new NativeMethod(handle, returns, parameters);
+		// Init descriptor
+		final FunctionDescriptor descriptor = FunctionDescriptor.ofVoid(layouts);
+
+		// Append return layout
+		if(returns == null) {
+			return descriptor;
 		}
-
-    	/**
-    	 * Helper - Derives the FFM function descriptor from the given native method signature.
-    	 * @param returns		Optional return value transformer
-    	 * @param parameters	Parameter transformers
-    	 * @returns Function descriptor
-    	 */
-    	private static FunctionDescriptor descriptor(Transformer returns, List<NativeParameter> parameters) {
-    		// Map method signature to FFM layout
-    		final MemoryLayout[] layouts = parameters
-    				.stream()
-    				.map(p -> p.transformer.layout())
-    				.toArray(MemoryLayout[]::new);
-
-    		// Init descriptor
-    		final FunctionDescriptor descriptor = FunctionDescriptor.ofVoid(layouts);
-
-    		// Append return layout
-    		if(returns == null) {
-    			return descriptor;
-    		}
-    		else {
-    			return descriptor.changeReturnLayout(returns.layout());
-    		}
-    	}
-    }
+		else {
+			return descriptor.changeReturnLayout(returns.layout());
+		}
+	}
 }

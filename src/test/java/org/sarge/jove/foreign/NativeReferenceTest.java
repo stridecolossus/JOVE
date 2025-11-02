@@ -1,6 +1,6 @@
 package org.sarge.jove.foreign;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.*;
 
@@ -44,10 +44,30 @@ class NativeReferenceTest {
     	}
 
     	@Test
+    	void layout() {
+    		assertEquals(ValueLayout.ADDRESS, transformer.layout());
+    	}
+
+    	@Test
+    	void empty() {
+    		assertEquals(MemorySegment.NULL, transformer.empty());
+    	}
+
+    	@Test
+    	void marshal() {
+    		assertNotNull(transformer.marshal(reference, allocator));
+    	}
+
+    	@Test
+    	void unmarshal() {
+    		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal());
+    	}
+
+    	@Test
     	void update() {
-    		final MemorySegment address = transformer.marshal(reference, allocator);
+    		final MemorySegment address = allocator.allocate(ValueLayout.ADDRESS);
     		address.set(ValueLayout.JAVA_INT, 0L, 3);
-    		transformer.update().update(address, reference);
+    		transformer.update().accept(address, reference);
     		assertEquals(3, reference.get());
     	}
     }
