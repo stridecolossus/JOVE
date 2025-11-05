@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
+import org.sarge.jove.platform.desktop.MonitorLibrary.DesktopDisplayMode;
 import org.sarge.jove.platform.desktop.Monitor.DisplayMode;
 import org.sarge.jove.util.ReferenceFactory;
 

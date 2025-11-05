@@ -8,7 +8,7 @@ import java.util.function.*;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.*;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.platform.desktop.DeviceLibrary.KeyListener;
 
 /**
  * The <i>keyboard device</i> generates GLFW keyboard events.

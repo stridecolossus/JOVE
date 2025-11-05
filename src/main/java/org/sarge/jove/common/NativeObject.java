@@ -17,7 +17,8 @@ public interface NativeObject {
 	Handle handle();
 
 	/**
-	 * Helper - Transforms the given collection of native objects to an array of handles.
+	 * Helper.
+	 * Transforms the given collection of native objects to an array of handles.
 	 * @param objects Native objects
 	 * @return Handles
 	 */
@@ -27,15 +28,14 @@ public interface NativeObject {
 				.map(NativeObject::handle)
 				.toArray(Handle[]::new);
 	}
-	// TODO - used? needed? here?
 
 	/**
 	 * Transformer for native objects.
 	 */
 	public static class NativeObjectTransformer implements Transformer<NativeObject, MemorySegment> {
 		@Override
-		public MemorySegment marshal(NativeObject arg, SegmentAllocator allocator) {
-			return arg.handle().address();
+		public MemorySegment marshal(NativeObject object, SegmentAllocator allocator) {
+			return object.handle().address();
 		}
 
 		@Override

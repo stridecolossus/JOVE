@@ -6,7 +6,7 @@ import static org.sarge.lib.Validation.requireZeroOrMore;
  * General 2D dimensions with integer components.
  * @author Sarge
  */
-public record Dimensions(int width, int height) implements Comparable<Dimensions> {
+public record Dimensions(int width, int height) {
 	/**
 	 * Constructor.
 	 * @param width 	Width
@@ -38,18 +38,8 @@ public record Dimensions(int width, int height) implements Comparable<Dimensions
 		return width == height;
 	}
 
-	@Override
-	public int compareTo(Dimensions that) {
-		if((this.width < that.width) || (this.height < that.height)) {
-			return -1;
-		}
-		else
-		if((this.width > that.width) || (this.height > that.height)) {
-			return +1;
-		}
-		else {
-			return 0;
-		}
+	public boolean contains(Dimensions that) {
+		return (this.width >= that.width) && (this.height >= that.height);
 	}
 
 	/**

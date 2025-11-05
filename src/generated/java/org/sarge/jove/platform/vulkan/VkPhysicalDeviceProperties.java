@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
+import static java.lang.foreign.ValueLayout.*;
+
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
@@ -14,15 +16,25 @@ public class VkPhysicalDeviceProperties implements NativeStructure {
 	public int vendorID;
 	public int deviceID;
 	public VkPhysicalDeviceType deviceType;
-	public byte[] deviceName = new byte[256];
-	public byte[] pipelineCacheUUID = new byte[16];
+	public String deviceName;
+	public byte[] pipelineCacheUUID;
 	public VkPhysicalDeviceLimits limits;
 	public VkPhysicalDeviceSparseProperties sparseProperties;
 
 	@Override
 	public StructLayout layout() {
-		//throw new UnsupportedOperationException("TODO - arrays!!!");
-		// TODO
-		return MemoryLayout.structLayout();
+		return MemoryLayout.structLayout(
+            JAVA_INT.withName("apiVersion"),
+            JAVA_INT.withName("driverVersion"),
+            JAVA_INT.withName("vendorID"),
+            JAVA_INT.withName("deviceID"),
+            JAVA_INT.withName("deviceType"),
+            MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("deviceName"),
+            MemoryLayout.sequenceLayout(16, JAVA_BYTE).withName("pipelineCacheUUID"),
+            PADDING,
+            new VkPhysicalDeviceLimits().layout().withName("limits"),
+            new VkPhysicalDeviceSparseProperties().layout().withName("sparseProperties"),
+            PADDING
+        );
 	}
 }

@@ -34,13 +34,6 @@ public class Registry {
 	 */
 	@SuppressWarnings("rawtypes")
 	public Optional<Transformer> transformer(Class<?> type) {
-		requireNonNull(type);
-
-		if(type.isArray()) {
-			final Class<?> component = type.getComponentType();
-    		return transformer(component).map(Transformer::array);
-    	}
-
 		return Optional
 				.ofNullable(registry.get(type))
 				.or(() -> find(type));
@@ -53,24 +46,33 @@ public class Registry {
 	 */
 	@SuppressWarnings("rawtypes")
 	private Optional<Transformer> find(Class<?> type) {
-		final var transformer = supertype(type).or(() -> factory(type));
-		transformer.ifPresent(e -> registry.put(type, e));
-		return transformer;
+		if(type.isArray()) {
+			final Class<?> component = type.getComponentType();
+    		final var array = transformer(component).map(Transformer::array);
+    		register(type, array);
+    		return array;
+    	}
+		else {
+			final Optional<Transformer> transformer = find(type, registry).or(() -> factory(type));
+    		register(type, transformer);
+			return transformer;
+		}
 	}
 
 	/**
-	 * Finds a superclass transformer for the given type.
-	 * @param type Type
-	 * @return Superclass transformer
+	 * Finds the value in the given map with a supertype of the given type.
+	 * @param <T> Value type
+	 * @param type		Type
+	 * @param map		Map indexed by type
+	 * @return Matched value
 	 */
-	@SuppressWarnings("rawtypes")
-	private Optional<Transformer> supertype(Class<?> type) {
-		return registry
+	private static <T> Optional<T> find(Class<?> type, Map<Class<?>, T> map) {
+		return map
 				.keySet()
 				.stream()
 				.filter(base -> base.isAssignableFrom(type))
 				.findAny()
-				.map(registry::get);
+				.map(map::get);
 	}
 
 	/**
@@ -80,13 +82,15 @@ public class Registry {
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private Optional<Transformer> factory(Class<?> type) {
-		return factories
-				.keySet()
-				.stream()
-				.filter(base -> base.isAssignableFrom(type))
-				.findAny()
-				.map(factories::get)
-				.map(factory -> factory.transformer((Class) type));
+		return find(type, factories).map(factory -> factory.transformer((Class) type));
+	}
+
+	/**
+	 * Registers a derived transformer as a side-effect.
+	 */
+	@SuppressWarnings("rawtypes")
+	private void register(Class<?> type, Optional<Transformer> transformer) {
+		transformer.ifPresent(t -> registry.put(type, t));
 	}
 
 	/**

@@ -43,22 +43,23 @@ interface DesktopSource<T, E extends Event> extends Source<E> {
 
 	@Override
 	default T bind(Consumer<E> handler) {
-		// Retrieve listener registration method
-		final Window window = this.window();
-		final DesktopLibrary lib = window.desktop().library();
-		final BiConsumer<Window, T> method = method(lib);
-
-		// Register listener
-		if(handler == null) {
-			method.accept(window, null);
-			window.remove(handler);
-			return null;
-		}
-		else {
-			final T listener = listener(handler);
-			method.accept(window, listener);
-			window.register(handler, listener);
-			return listener;
-		}
+//		// Retrieve listener registration method
+//		final Window window = this.window();
+//		final DesktopLibrary lib = window.desktop().library();
+//		final BiConsumer<Window, T> method = method(lib);
+//
+//		// Register listener
+//		if(handler == null) {
+//			method.accept(window, null);
+//			window.remove(handler);
+//			return null;
+//		}
+//		else {
+//			final T listener = listener(handler);
+//			method.accept(window, listener);
+//			window.register(handler, listener);
+//			return listener;
+//		}
+		return null;
 	}
 }

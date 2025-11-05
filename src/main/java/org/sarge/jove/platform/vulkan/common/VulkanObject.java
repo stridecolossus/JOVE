@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.common;
 import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * A <i>Vulkan object</i> is a template base-class for objects derived from the logical device.
@@ -31,7 +31,8 @@ public abstract class VulkanObject extends TransientNativeObject {
 
 	/**
 	 * A <i>destructor</i> abstracts the API method used to destroy this object.
-	 * @see VulkanObject#destructor(VulkanLibrary)
+	 * @param <T> Type
+	 * @see VulkanObject#destructor()
 	 */
 	@FunctionalInterface
 	protected interface Destructor<T extends VulkanObject> {
@@ -39,9 +40,22 @@ public abstract class VulkanObject extends TransientNativeObject {
 		 * Destroys this object.
 		 * @param device		Logical device
 		 * @param object		Native object to destroy
-		 * @param allocator		Vulkan memory allocator (always {@code null})
+		 * @param allocator		Vulkan memory allocator, always {@code null}
 		 */
 		void destroy(LogicalDevice device, T object, Handle allocator);
+
+		/**
+		 * Creates a destructor that does nothing.
+		 * @param <T> Vulkan object
+		 * @return Empty destructor
+		 */
+		static <T extends VulkanObject> Destructor<T> empty() {
+			return new Destructor<>() {
+				public void destroy(LogicalDevice device, T object, Handle allocator) {
+					// Ignored
+				}
+			};
+		}
 	}
 
 	/**
@@ -49,13 +63,13 @@ public abstract class VulkanObject extends TransientNativeObject {
 	 * @param lib Vulkan API
 	 * @return Destructor method
 	 */
-	protected abstract Destructor<?> destructor(VulkanLibrary lib);
+	protected abstract Destructor<?> destructor();
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void destroy() {
 		@SuppressWarnings("rawtypes")
-		final Destructor destructor = this.destructor(device.vulkan());
+		final Destructor destructor = this.destructor();
 		destructor.destroy(device, this, null);
 		super.destroy();
 	}

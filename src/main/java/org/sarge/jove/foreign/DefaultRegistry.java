@@ -27,7 +27,7 @@ public final class DefaultRegistry {
 	 * <li>structures</li>
 	 * </ul>
 	 * @return Default registry
-	 * @see IdentityTransformer#primitives(Registry)
+	 * @see PrimitiveTransformer#register(Registry)
 	 * @see NativeReference
 	 * @see StructureTransformerFactory
 	 */
@@ -36,7 +36,7 @@ public final class DefaultRegistry {
 		final Registry registry = new Registry();
 
 		// Primitive types
-		IdentityTransformer.primitives(registry);
+		PrimitiveTransformer.register(registry);
 		// TODO - wrappers?
 
 		// Common types

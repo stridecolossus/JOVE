@@ -6,7 +6,7 @@ import java.lang.foreign.*;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.invoke.*;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.function.*;
 
@@ -15,7 +15,6 @@ import java.util.function.*;
  * @author Sarge
  */
 public class StructureTransformerFactory implements Registry.Factory<NativeStructure> {
-	private final Lookup lookup = MethodHandles.lookup();
 	private final Registry registry;
 
 	/**
@@ -33,7 +32,7 @@ public class StructureTransformerFactory implements Registry.Factory<NativeStruc
 	 * @throws IllegalArgumentException if any of the structure members are anonymous or not present in the structure
 	 * @throws IllegalArgumentException if the type of any field is unsupported
 	 * @throws IllegalArgumentException if the structure does not provide a default constructor
-	 * @throws RuntimeException if a structure field cannot be accessed
+	 * @throws RuntimeException if a structure cannot be instantiated or a field cannot be accessed
 	 */
 	@Override
 	public StructureTransformer transformer(Class<? extends NativeStructure> type) {
@@ -44,9 +43,15 @@ public class StructureTransformerFactory implements Registry.Factory<NativeStruc
 		final NativeStructure instance = factory.get();
 		final GroupLayout layout = instance.layout();
 
+		// TODO...
+		if(layout == null) {
+			throw new RuntimeException("TODO old code generated structure: " + type);
+		}
+		// ...TODO
+
 		// Build field mappings for this structure
 		final var builder = new FieldMappingBuilder(type, layout);
-		final List<FieldMapping> mappings = builder.build(layout);
+		final List<FieldMapping> mappings = builder.build();
 
 		// Create transformer
 		return new StructureTransformer(factory, layout, mappings);
@@ -54,6 +59,8 @@ public class StructureTransformerFactory implements Registry.Factory<NativeStruc
 
 	/**
 	 * Creates a factory for new structure instances.
+	 * @throws IllegalArgumentException if the structure does not declare a default constructor
+	 * @throws RuntimeException if the structure cannot be instantiated
 	 */
 	private static <T> T instance(Class<? extends T> type) {
 		try {
@@ -63,7 +70,7 @@ public class StructureTransformerFactory implements Registry.Factory<NativeStruc
 			throw new IllegalArgumentException("Cannot find default constructor: " + type, e);
 		}
 		catch(Exception e) {
-			throw new IllegalArgumentException("Cannot instantiate structure: " + type, e);
+			throw new RuntimeException("Cannot instantiate structure: " + type, e);
 		}
 	}
 
@@ -71,24 +78,34 @@ public class StructureTransformerFactory implements Registry.Factory<NativeStruc
 	 * Constructs the field mappings for a given structure.
 	 */
 	private class FieldMappingBuilder {
-		private final Class<? extends NativeStructure> type;
+		private final Lookup lookup = MethodHandles.lookup();
+		private final Class<? extends NativeStructure> structure;
 		private final GroupLayout layout;
 
 		/**
 		 * Constructor.
-		 * @param type			Structure type
+		 * @param structure		Structure type
 		 * @param layout		Memory layout
 		 */
-		public FieldMappingBuilder(Class<? extends NativeStructure> type, GroupLayout layout) {
-			this.type = type;
+		public FieldMappingBuilder(Class<? extends NativeStructure> structure, GroupLayout layout) {
+			this.structure = structure;
 			this.layout = layout;
 		}
 
 		/**
 		 * @return Field mappings for this structure
 		 */
-		private List<FieldMapping> build(GroupLayout group) {
-			return group
+		private List<FieldMapping> build() {
+			try {
+				return buildLocal();
+			}
+			catch(IllegalArgumentException e) {
+				throw new IllegalArgumentException(String.format("%s in %s", e.getMessage(), structure), e);
+			}
+		}
+
+		private List<FieldMapping> buildLocal() {
+			return layout
 					.memberLayouts()
 					.stream()
 					.filter(Predicate.not(member -> member instanceof PaddingLayout))
@@ -105,144 +122,110 @@ public class StructureTransformerFactory implements Registry.Factory<NativeStruc
 			// Lookup member name
 			final String name = member
 					.name()
-					.orElseThrow(() -> new IllegalArgumentException("Anonymous structure member %s::%s".formatted(type, member)));
+					.orElseThrow(() -> new IllegalArgumentException("Anonymous structure member: " + member));
 
 			// Get handle to structure field
 			final VarHandle local = local(name);
+			final Class<?> type = local.varType();
 
-			// Create field mapping depending on layout
-			return switch(member) {
-				case ValueLayout _			-> simple(name, local);
-				case SequenceLayout seq		-> array(name, local, seq);
-				case GroupLayout nested		-> nested(name, local, nested);
-				default -> throw new IllegalArgumentException("Unsupported field %s::%s".formatted(type, member));
+			// Lookup field transformer
+			final var transformer = registry
+					.transformer(type)
+					.orElseThrow(() -> new IllegalArgumentException("Unsupported field type %s in %s".formatted(type, member)));
+
+			// Init path to this member
+			final PathElement path = PathElement.groupElement(name);
+
+			// Build field marshalling adapter depending on layout
+			final FieldMarshal marshal = switch(member) {
+				case ValueLayout _			-> value(path);
+				case SequenceLayout seq		-> sequence(path, type, seq);
+				case GroupLayout nested		-> nested(path, nested);
+				default -> throw new IllegalArgumentException("Unsupported structure field layout: " + member);
 			};
+
+			// Create mapping
+			return new FieldMapping(local, transformer, marshal);
 		}
 
 		/**
-		 * Looks up a structure field via reflection.
+		 * Retrieves a handle for a structure field.
 		 * @param name Field name
-		 * @return Structure field
+		 * @return Field handle
+		 * @throws IllegalArgumentException if the field is not declared in the structure
+		 * @throws RuntimeException if the field cannot be accessed
 		 */
 		private VarHandle local(String name) {
 			try {
-				final Field field = type.getField(name);
+				final Field field = structure.getField(name);
 				return lookup.unreflectVarHandle(field);
 			}
 			catch(NoSuchFieldException e) {
-				throw new IllegalArgumentException("Unknown structure field %s::%s".formatted(type, name), e);
+				throw new IllegalArgumentException("Unknown structure field: " + name);
 			}
 			catch(Exception e) {
-				throw new IllegalArgumentException("Cannot access structure field %s::%s".formatted(type, name), e);
+				throw new RuntimeException(e);
 			}
 		}
 
 		/**
-		 * Creates a simple field mapping.
-		 * @param name
-		 * @param local
-		 * @param parent
-		 * @return
+		 * Creates an atomic field marshaller for primitives and simple reference types.
+		 * @param path Field path
+		 * @return Atomic marshaller
 		 */
-		private FieldMapping simple(String name, VarHandle local) {
-			// Lookup field transformer
-			final var transformer = registry
-					.transformer(local.varType())
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported field %s::%s".formatted(type, name)));
-
-			// Get handle to off-heap field
-			final PathElement path = PathElement.groupElement(name);
-			final VarHandle foreign = Transformer.removeOffset(layout.varHandle(path));
-
-			// Create field mapping
-			return new SimpleFieldMapping(local, foreign, transformer);
+		private FieldMarshal value(PathElement path) {
+			final VarHandle foreign = layout.varHandle(path);
+			return new AtomicFieldMarshal(foreign);
 		}
 
 		/**
-		 *
-		 * @param name
-		 * @param local
-		 * @param sequence
-		 * @return
+		 * Creates a field marshaller for an array.
+		 * <p>
+		 * Note that if the structure field is <b>not</b> an array type this implementation delegates to a simple {@link SliceFieldMarshal}.
+		 * This allows compound types such as {@link String} to be transparently marshalled to/from an off-heap array.
+		 * <p>
+		 * @param path			Field path
+		 * @param type			Field type
+		 * @param sequence		Sequence layout
+		 * @return Array field marshaller
 		 */
-		private FieldMapping array(String name, VarHandle local, SequenceLayout sequence) {
+		private FieldMarshal sequence(PathElement path, Class<?> type, SequenceLayout sequence) {
+			final long offset = layout.byteOffset(path);
+			final long size = sequence.byteSize();
 
-			final long count = sequence.elementCount();
+			if(type.isArray()) {
+				// Create array field marshaller
+				final Class<?> component = type.componentType();
+				final int count = (int) sequence.elementCount();
+				return new ArrayFieldMarshal(offset, size, component, count);
+			}
+			else {
+				// Otherwise transparently marshal to a compound type, i.e. string
+				return new SliceFieldMarshal(offset, size);
+			}
+		}
 
-			// Lookup field transformer
-			final var transformer = registry
-					.transformer(local.varType())
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported sequence type %s::%s".formatted(type, name)));
-
-			return new FieldMapping() {
+		/**
+		 * Creates a nested structure field marshaller.
+		 * @param path			Field path
+		 * @param nested		Nested structure layout
+		 * @return Nested field marshaller
+		 */
+		private FieldMarshal nested(PathElement path, GroupLayout nested) {
+			final long offset = layout.byteOffset(path);
+			final long size = nested.byteSize();
+			return new SliceFieldMarshal(offset, size) {
+				@SuppressWarnings("rawtypes")
 				@Override
-				public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
-
-					final Object value = local.get(structure);
-
+				public void marshal(Object value, Transformer transformer, MemorySegment address, SegmentAllocator allocator) {
 					if(value == null) {
 						return;
 					}
 
-					System.err.println("MARSHAL SEQUENCE ELEMENT " + sequence);
-
-				}
-
-				@Override
-				public void unmarshal(MemorySegment address, NativeStructure structure) {
-System.out.println("unmarshal local="+local+" transformer="+transformer);
-
-					final MemorySegment slice = address.asSlice(0L, count * sequence.elementLayout().byteSize());
-					// TODO - is this ALWAYS sequence.byteSize()?
-
-					if(local.varType().isArray()) {
-						final Object[] array = (Object[]) Array.newInstance(local.varType().getComponentType(), (int) sequence.elementCount());
-						final ArrayTransformer t = (ArrayTransformer) transformer;
-						t.update().accept(slice, array);		// TODO - promote update() to Transformer? and/or make it used for arrays in general?
-						local.set(structure, array);
-					}
-					else {
-						final Object result = transformer.unmarshal().apply(slice);
-						local.set(structure, result);
-					}
-					// TODO - primitive arrays that are not mapped to String
-				}
-			};
-		}
-
-		/**
-		 * Creates a nested structure field mapping.
-		 * @param local
-		 * @param nested
-		 * @return Nested field mapping
-		 */
-		private FieldMapping nested(String name, VarHandle local, GroupLayout nested) {
-
-			//final List<FieldMapping> mappings = build(nested);
-
-			/**
-			 *
-			 * - local = child structure field
-			 *
-			 * marshal
-			 * - skip if null (?)
-			 * - create field mapping for each field in child:
-			 * - local = path element to child field
-			 *
-			 * unmarshal
-			 * - if null, create from factory
-			 * - for each mapping:
-			 * - write transformer result to child instance
-			 *
-			 */
-
-			return new FieldMapping() {
-				@Override
-				public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
-				}
-
-				@Override
-				public void unmarshal(MemorySegment address, NativeStructure structure) {
+					// TODO...
+					final var structure = (StructureTransformer) transformer;
+					structure.marshal((NativeStructure) value, slice(address), allocator);
+					// ...TODO
 				}
 			};
 		}

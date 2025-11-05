@@ -155,12 +155,13 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 				.toArray(VkSubmitInfo[]::new);
 
 		// Submit batch
-		final VulkanLibrary lib = pool.device().vulkan();
+		final LogicalDevice.Library lib = pool.device().library();
 		lib.vkQueueSubmit(pool.queue(), info.length, info, fence);
 	}
 
 	/**
-	 * Helper - Submits the given command as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} primary command buffer and waits for completion.
+	 * Helper.
+	 * Submits the given command as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} primary command buffer and blocks until completion.
 	 * @param cmd		Command
 	 * @param pool		Pool
 	 * @return Allocated command buffer
@@ -179,7 +180,8 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	}
 
 	/**
-	 * Helper - Submits the given command buffer and blocks until it is completed.
+	 * Helper.
+	 * Submits the given command buffer and blocks until completion.
 	 * @param buffer Command buffer
 	 */
 	public static void submit(CommandBuffer buffer) {

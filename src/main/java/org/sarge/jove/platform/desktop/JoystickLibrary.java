@@ -8,7 +8,7 @@ import org.sarge.jove.foreign.IntegerReference;
  * The joystick ID argument is in the range 0..15.
  * @author Sarge
  */
-interface DesktopLibraryJoystick {
+interface JoystickLibrary {
 	/**
 	 * Tests whether a joystick is present.
 	 * @param id Joystick ID

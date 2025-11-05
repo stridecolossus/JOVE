@@ -1,14 +1,16 @@
 package org.sarge.jove.foreign;
 
-import java.util.Arrays;
 import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.DeviceEnumerationHelper;
+import org.sarge.jove.platform.vulkan.render.Swapchain;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 public class VulkanIntegrationDemo {
 
@@ -23,8 +25,8 @@ public class VulkanIntegrationDemo {
 		System.out.println("version=" + desktop.version());
 		System.out.println("Vulkan=" + desktop.isVulkanSupported());
 
-		final String[] extensions = desktop.extensions();
-		System.out.println("extensions=" + Arrays.toString(extensions));
+		final var extensions = desktop.extensions();
+		System.out.println("extensions=" + extensions);
 
 		System.out.println("Opening window...");
 		final Window window = new Window.Builder()
@@ -32,70 +34,100 @@ public class VulkanIntegrationDemo {
 				.size(new Dimensions(1024, 768))
 				.hint(Hint.CLIENT_API, 0)
 				.hint(Hint.VISIBLE, 0)
-				.build(desktop);
+				.build(desktop.library());
 
 		System.out.println("Initialising Vulkan...");
-		final NativeLibrary vulkan = Vulkan.create();
+		final Object vulkan = Vulkan.create();
 
-//		System.out.println("Supported validation layers...");
-//		System.out.println(Arrays.toString(vulkan.layers()));
+//		System.out.println("Supported instance layers...");
+//		for(VkLayerProperties layer : Instance.layers(vulkan.get())) {
+//			System.out.println(layer.layerName);
+//		}
+//		for(VkExtensionProperties ext : Instance.extensions(vulkan.get())) {
+//			System.out.println("  " + ext.extensionName);
+//		}
 
 		System.out.println("Creating instance...");
 		final Instance instance = new Instance.Builder()
 				.name("VulkanIntegrationDemo")
 				.extension(DiagnosticHandler.EXTENSION)
 				.extensions(extensions)
-				.layer(ValidationLayer.STANDARD_VALIDATION)
-				.build(vulkan.get());
+				.layer(Vulkan.STANDARD_VALIDATION)
+				.build((Instance.Library) vulkan);
 
 		System.out.println("Attaching diagnostic handler...");
 		final DiagnosticHandler handler = new DiagnosticHandler.Builder().build(instance, DefaultRegistry.create());			// TODO - registry -> library?
 
+		System.out.println("Getting surface...");
+		final Handle handle;
+		try {
+			handle = window.surface(instance.handle());
+		}
+		catch(RuntimeException e) {
+			desktop.error().ifPresent(System.err::println);
+			throw e;
+		}
+
 		System.out.println("Enumerating devices...");
-		final PhysicalDevice physical = PhysicalDevice
-				.enumerate(vulkan.get(), instance)
+		final PhysicalDevice physical = new DeviceEnumerationHelper(instance, (PhysicalDevice.Library) vulkan)
+				.enumerate()
+				.filter(VulkanSurface.presentation(handle, (VulkanSurface.Library) vulkan))
 				.toList()
 				.getFirst();
 
-		// TODO
-		System.out.println("families...");
+//		System.out.println("Supported device layers...");
+//		for(VkLayerProperties layer : physical.layers()) {
+//			System.out.println("  " + layer.layerName);
+//		}
+//		System.out.println("Supported device extensions...");
+//		for(VkExtensionProperties ext : physical.extensions("VK*")) {
+//			System.out.println("  " + ext.extensionName);
+//		}
+
+		System.out.println("Device families...");
 		for(var family : physical.families()) {
 			System.out.println(family);
 		}
-		//System.out.println("features=" + physical.features().supported());
 
-/*
-TODO - arrays!!!
+		System.out.println("Device properties...");
 		final var props = physical.properties();
-		System.out.println("id="+props.deviceID);
-		System.out.println("name="+new String(props.deviceName));
+		System.out.println("name="+props.deviceName);
 		System.out.println("type="+props.deviceType);
-		System.out.println("api="+props.apiVersion);
-		System.out.println("driver="+props.driverVersion);
-		System.out.println("vendor="+props.vendorID);
-		System.out.println("cache="+props.pipelineCacheUUID.length);
-*/
+		System.out.println("bufferImageGranularity="+props.limits.bufferImageGranularity);
+
+		System.out.println("Device features...");
+		System.out.println("  wideLines=" + physical.features().features().contains("wideLines"));
 
 		System.out.println("Creating surface...");
-		final Handle handle = window.surface(instance.handle());
-		final var surface = new VulkanSurface(handle, instance.handle(), physical, vulkan.get());
-		System.out.println("presentation=" + surface.isPresentationSupported(physical.families().getFirst()));
+		final var surface = new VulkanSurface(handle, physical, (VulkanSurface.Library) vulkan).load();
 
 		System.out.println("Retrieving device memory properties...");
 		final var memory = physical.memory();
-		System.out.println("heaps="+Arrays.toString(memory.memoryHeaps));
-		System.out.println("types="+Arrays.toString(memory.memoryTypes));
+		for(int n = 0; n < memory.memoryHeapCount; ++n) {
+			System.out.println("- heap size=%d flags=%s".formatted(memory.memoryHeaps[n].size, memory.memoryHeaps[n].flags.enumerate(new ReverseMapping<>(VkMemoryHeapFlag.class))));
+		}
+		for(int n = 0; n < memory.memoryTypeCount; ++n) {
+			System.out.println("- type heap=%s props=%s".formatted(memory.memoryTypes[n].heapIndex, memory.memoryTypes[n].propertyFlags.enumerate(new ReverseMapping<>(VkMemoryProperty.class))));
+		}
 
 		System.out.println("Creating logical device...");
 		final var dev = new LogicalDevice.Builder(physical)
+				.extension(Swapchain.EXTENSION)
 				.queue(new RequiredQueue(physical.families().getFirst()))
-				.build(vulkan.get());
+				.build((LogicalDevice.Library) vulkan);
 
-// TODO - does this NEED to be done here as well?
-//        .layer(ValidationLayer.STANDARD_VALIDATION)
 		System.out.println("queues=" + dev.queues().values());
 
+		System.out.println("Creating swapchain...");
+		final var swapchain = new Swapchain.Builder(surface)
+				.clipped(true)
+//				.extent(new Dimensions(1024, 768))		// TODO - needed?
+				.build(dev);
+
+		System.out.println("views=" + swapchain.attachments());
+
 		System.out.println("Cleanup...");
+		swapchain.destroy();
 		dev.destroy();
 		surface.destroy();
 		handler.destroy();
@@ -103,6 +135,6 @@ TODO - arrays!!!
 		window.destroy();
 		desktop.destroy();
 
-		System.out.println("Done...");
+		System.out.println("DONE");
 	}
 }

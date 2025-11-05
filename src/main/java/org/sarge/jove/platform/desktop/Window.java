@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeReference.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
 
 /**
@@ -19,56 +18,47 @@ public final class Window extends TransientNativeObject {
 	/**
 	 * Window creation hints.
 	 */
-	@SuppressWarnings("unused")
-	// TODO - use enabled to toggle?
 	public enum Hint {
 		/**
 		 * Window can be resized.
 		 */
-		RESIZABLE(0x00020003, true),
+		RESIZABLE(0x00020003),
 
 		/**
 		 * Window has standard decorations (border, close icon, etc).
 		 */
-		DECORATED(0x00020005, true),
+		DECORATED(0x00020005),
 
 		/**
 		 * Full screen windows are iconified on focus loss.
 		 */
-		AUTO_ICONIFY(0x00020006, true),
+		AUTO_ICONIFY(0x00020006),
 
 		/**
 		 * Window is initially maximised (ignores dimensions).
 		 */
-		MAXIMISED(0x00020008, false),
-
-		// TODO
-		VISIBLE(0x00020004, true),
+		MAXIMISED(0x00020008),
 
 		/**
-		 * Client API for this window, e.g. OpenGL context.
+		 * Window is initially visible.
 		 */
-		CLIENT_API(0x00022001, false); // TODO - 0x00030001 = OPENGL_API
-
-		private final int hint;
-		private final boolean enabled;
-
-		private Hint(int hint, boolean enabled) {
-			this.hint = hint;
-			this.enabled = enabled;
-		}
+		VISIBLE(0x00020004),
 
 		/**
-		 * Applies this hint.
-		 * @param lib Desktop library
+		 * Whether a client API is created for the window, i.e. an OpenGL context.
+		 * Note by default GLFW <b>enables</b> this hint.
 		 */
-		void apply(DesktopLibrary lib, int arg) {
-			lib.glfwWindowHint(hint, arg);
+		CLIENT_API(0x00022001);
+
+		private final int code;
+
+		private Hint(int code) {
+			this.code = code;
 		}
 	}
 
 	// TODO - was lazy supplier!!!
-	private final Desktop desktop;
+	private final WindowLibrary library;
 	private final Supplier<KeyboardDevice> keyboard = () -> new KeyboardDevice(this);
 	private final Supplier<MouseDevice> mouse = () -> new MouseDevice(this);
 	private final Map<Object, Object> listeners = new WeakHashMap<>();
@@ -78,16 +68,9 @@ public final class Window extends TransientNativeObject {
 	 * @param window	Window handle
 	 * @param desktop	Desktop service
 	 */
-	Window(Handle window, Desktop desktop) {
+	Window(Handle window, WindowLibrary library) {
 		super(window);
-		this.desktop = requireNonNull(desktop);
-	}
-
-	/**
-	 * @return Desktop service
-	 */
-	public Desktop desktop() {
-		return desktop;
+		this.library = requireNonNull(library);
 	}
 
 	// TODO - lazy or just creates new...
@@ -113,7 +96,7 @@ public final class Window extends TransientNativeObject {
 	public Dimensions size() {
 		final var w = new IntegerReference();
 		final var h = new IntegerReference();
-		desktop.library().glfwGetWindowSize(this, w, h);
+		library.glfwGetWindowSize(this, w, h);
 		return new Dimensions(w.get(), h.get());
 	}
 
@@ -123,7 +106,7 @@ public final class Window extends TransientNativeObject {
 	 */
 	@MainThread
 	public void size(Dimensions size) {
-		desktop.library().glfwSetWindowSize(this, size.width(), size.height());
+		library.glfwSetWindowSize(this, size.width(), size.height());
 	}
 
 	/**
@@ -133,7 +116,7 @@ public final class Window extends TransientNativeObject {
 	@MainThread
 	public void title(String title) {
 		requireNonNull(title);
-		desktop.library().glfwSetWindowTitle(this, title);
+		library.glfwSetWindowTitle(this, title);
 	}
 
 //	/**
@@ -141,7 +124,7 @@ public final class Window extends TransientNativeObject {
 //	 */
 //	@MainThread
 //	public Optional<Monitor> monitor() {
-//		final Monitor monitor =	desktop.library().glfwGetWindowMonitor(this);
+//		final Monitor monitor =	library.glfwGetWindowMonitor(this);
 //		return Optional.ofNullable(monitor);
 //	}
 //
@@ -230,17 +213,12 @@ public final class Window extends TransientNativeObject {
 	 * @param instance Vulkan instance
 	 * @return Vulkan surface
 	 * @throws RuntimeException if the surface cannot be created for this window
+	 * @see Desktop#error()
 	 */
 	public Handle surface(Handle instance) {
-		final DesktopLibrary lib = desktop.library();
 		final var ref = new Pointer();
-		final int result = lib.glfwCreateWindowSurface(instance, this, null, ref);
-
-		// TODO - this could be extended to ALL desktop methods, similar to Vulkan?
+		final int result = library.glfwCreateWindowSurface(instance, this, null, ref);
 		if(result != 0) {
-System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
-			final int code = lib.glfwGetError(null); // TODO - by-reference error string, managed by GLFW (!)
-			System.out.println(code);
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
 		return ref.get();
@@ -251,7 +229,7 @@ System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
 	protected void release() {
 		// TODO - need to explicitly remove listeners?
 		listeners.clear();
-		desktop.library().glfwDestroyWindow(this);
+		library.glfwDestroyWindow(this);
 	}
 
 	/**
@@ -260,7 +238,7 @@ System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
 	public static class Builder {
 		private String title;
 		private Dimensions size;
-		private final Map<Hint, Integer> hints = new HashMap<>();
+		private final Map<Integer, Integer> hints = new HashMap<>();
 //		private Monitor monitor;
 
 		/**
@@ -283,18 +261,22 @@ System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
 
 		/**
 		 * Adds a window hint.
-		 * @param hint Window hint
+		 * @param hint			Window hint
+		 * @param argument		Argument
 		 */
 		public Builder hint(Hint hint, int argument) {
-			requireNonNull(hint);
+			return hint(hint.code, argument);
+		}
+
+		/**
+		 * Adds a window hint.
+		 * @param hint			Window hint
+		 * @param argument		Argument
+		 */
+		public Builder hint(int hint, int argument) {
 			hints.put(hint, argument);
 			return this;
 		}
-		// TODO - error if arg=1 and enabled by default? or add all enabled and REMOVE? i.e. toggles
-
-//		public Builder hint(Hint hint, boolean enable) {
-//			return hint(hint, NativeBooleanConverter.toInteger(enable));
-//		}
 
 //		/**
 //		 * Sets the monitor for a full screen window.
@@ -310,24 +292,26 @@ System.out.println("GLFW error "+Integer.toString(Math.abs(result), 16));
 		 * Constructs this window.
 		 * @return New window
 		 * @throws RuntimeException if the window cannot be created
+		 * @see Desktop#error()
 		 */
 		@MainThread
-		public Window build(Desktop desktop) {
+		public Window build(WindowLibrary library) {
+			// Reset window hints
+			library.glfwDefaultWindowHints();
+
 			// Apply window hints
-			final DesktopLibrary lib = desktop.library();
-			lib.glfwDefaultWindowHints();
 			for(var entry : hints.entrySet()) {
-				final Hint hint = entry.getKey();
-				final int arg = entry.getValue();
-				hint.apply(lib, arg);
+				library.glfwWindowHint(entry.getKey(), entry.getValue());
 			}
 
 			// Create window
-			final Handle window = lib.glfwCreateWindow(size.width(), size.height(), title, null/*monitor*/, null);
-			if(window == null) throw new RuntimeException("Window cannot be created");
+			final Handle window = library.glfwCreateWindow(size.width(), size.height(), title, null, null);
+			if(window == null) {
+				throw new RuntimeException("Window could not be created");
+			}
 
 			// Create domain object
-			return new Window(window, desktop);
+			return new Window(window, library);
 		}
 	}
 }

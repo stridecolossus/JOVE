@@ -26,8 +26,8 @@ class DeviceFeaturesTest {
 	@Test
 	void build() {
 		final VkPhysicalDeviceFeatures structure = features.build();
-		assertEquals(1, structure.wideLines);
-		assertEquals(0, structure.depthClamp);
+		assertEquals(true, structure.wideLines);
+		assertEquals(false, structure.depthClamp);
 	}
 
 	@Test
@@ -39,7 +39,7 @@ class DeviceFeaturesTest {
 	@Test
 	void of() {
 		final var structure = new VkPhysicalDeviceFeatures();
-		structure.wideLines = 1;
+		structure.wideLines = true;
 		assertEquals(features, DeviceFeatures.of(structure));
 	}
 }

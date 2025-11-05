@@ -3,7 +3,7 @@ package org.sarge.jove.foreign;
 import java.lang.foreign.*;
 
 /**
- * An <i>integer reference</i> is models a mutable, by-reference integer parameter.
+ * An <i>integer reference</i> models a mutable, by-reference integer parameter.
  * @author Sarge
  */
 public class IntegerReference extends NativeReference<Integer> {

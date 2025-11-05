@@ -14,8 +14,9 @@ import java.util.function.*;
  */
 public class NativeMethod {
 	/**
-	 *
+	 * A <i>native parameter</i> specifies the transformer for a parameter of this native method.
 	 */
+	@SuppressWarnings("rawtypes")
 	public static class NativeParameter {
 		private final Transformer transformer;
 		private final BiConsumer update;
@@ -30,7 +31,13 @@ public class NativeMethod {
 		 */
 		public NativeParameter(Transformer transformer, boolean returned) {
 			this.transformer = requireNonNull(transformer);
-			this.update = returned ? transformer.update() : null;
+
+			if(returned) {
+				this.update = transformer.update();
+			}
+			else {
+				this.update = null;
+			}
 		}
 
 		/**
@@ -56,7 +63,7 @@ public class NativeMethod {
 	}
 
 	private final MethodHandle handle;
-	private final Function returns;
+	private final Function<Object, ?> returns;
 	private final NativeParameter[] parameters;
 
 	/**
@@ -67,19 +74,35 @@ public class NativeMethod {
 	 * @throws IllegalArgumentException if a {@link #returns} transformer is not configured for a method with a return type
 	 * @throws IllegalArgumentException if the number of {@link #parameters} does not match the native method
 	 */
+	@SuppressWarnings("rawtypes")
 	public NativeMethod(MethodHandle handle, Transformer returns, List<NativeParameter> parameters) {
 		final MethodType signature = handle.type();
 		if(parameters.size() != signature.parameterCount()) {
 			throw new IllegalArgumentException("Mismatched number of transformers for method signature");
 		}
 
-		if(Objects.isNull(returns) ^ (handle.type().returnType() == void.class)) {
-			throw new IllegalArgumentException("Missing or superfluous return transformer");
-		}
-
 		this.handle = requireNonNull(handle);
-		this.returns = returns == null ? null : returns.unmarshal();		// TODO - void transformer?
+		this.returns = returns(signature.returnType(), returns);
 		this.parameters = parameters.toArray(NativeParameter[]::new);
+	}
+
+	/**
+	 * Extracts the unmarshalling function for the return type of this method.
+	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static Function<Object, ?> returns(Class<?> type, Transformer returns) {
+		if(type == void.class) {
+			if(Objects.nonNull(returns)) {
+				throw new IllegalArgumentException("Superfluous return transformer");
+			}
+			return null;
+		}
+		else {
+			if(returns == null) {
+				throw new IllegalArgumentException("Expected return transformer");
+			}
+			return returns.unmarshal();
+		}
 	}
 
 	/**
@@ -118,7 +141,6 @@ public class NativeMethod {
 	/**
 	 * Unmarshals the method return value.
 	 */
-	@SuppressWarnings("unchecked")
 	private Object unmarshal(Object result) {
 		if(returns == null) {
 			return null;
@@ -135,19 +157,12 @@ public class NativeMethod {
 	/**
 	 * Marshals method arguments to the corresponding FFM types.
 	 */
-	@SuppressWarnings({"resource", "unchecked"})
+	@SuppressWarnings("resource")
 	private Object[] marshal(Object[] args) {
 		final var allocator = Arena.ofAuto();
 		final Object[] foreign = new Object[args.length];
 		for(int n = 0; n < args.length; ++n) {
-			if(args[n] == null) {
-				// TODO - ignore?
-				foreign[n] = parameters[n].transformer.empty();
-			}
-			else {
-				// TODO - ignore if by-reference and structure (and arrays?)
-				foreign[n] = parameters[n].transformer.marshal(args[n], allocator);
-			}
+			foreign[n] = Transformer.marshal(args[n], parameters[n].transformer, allocator);
 		}
 		return foreign;
 	}
@@ -155,6 +170,7 @@ public class NativeMethod {
 	/**
 	 * Unmarshals by-reference arguments.
 	 */
+	@SuppressWarnings("unchecked")
 	private void update(Object[] args, Object[] foreign) {
 		for(int n = 0; n < parameters.length; ++n) {
 			// Skip empty arguments

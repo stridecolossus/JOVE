@@ -31,11 +31,10 @@ public record Handle(MemorySegment address) {
 	}
 
 	/**
-	 * @return Copy of the underlying memory address
+	 * @return Underlying memory address
 	 */
 	public MemorySegment address() {
-		// TODO - no need for copy? since address.asReadOnly() in ctor
-		return MemorySegment.ofAddress(address.address());
+		return address;
 	}
 
 	/**

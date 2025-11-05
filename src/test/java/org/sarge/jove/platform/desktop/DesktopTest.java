@@ -1,75 +1,114 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.lang.foreign.*;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 
 public class DesktopTest {
+	private static class MockDesktopLibrary implements DesktopLibrary {
+		private final SegmentAllocator allocator = Arena.ofAuto();
+		private int init = 1;
+		private int error;
+		private boolean terminated;
+
+		@Override
+		public void glfwInitHint(int hint, int value) {
+			// TODO
+		}
+
+		@Override
+		public int glfwInit() {
+			return init;
+		}
+
+		@Override
+		public int glfwGetError(Pointer description) {
+			if(error == 0) {
+				return 0;
+			}
+			else {
+    			final MemorySegment pointer = allocator.allocateFrom("error");
+    			description.set(new Handle(pointer));
+    			return error;
+			}
+		}
+
+		@Override
+		public String glfwGetVersionString() {
+			return "version";
+		}
+
+		@Override
+		public boolean glfwVulkanSupported() {
+			return true;
+		}
+
+		@Override
+		public Handle glfwGetRequiredInstanceExtensions(IntegerReference count) {
+			final MemorySegment extensions = allocator.allocate(ValueLayout.ADDRESS, 1);
+			extensions.setAtIndex(ValueLayout.ADDRESS, 0L, allocator.allocateFrom("extension"));
+			count.set(1);
+			return new Handle(extensions);
+		}
+
+		@Override
+		public void glfwTerminate() {
+			assertEquals(false, terminated);
+			terminated = true;
+		}
+	}
+
 	private Desktop desktop;
-	private DesktopLibrary lib;
+	private MockDesktopLibrary library;
 
 	@BeforeEach
 	void before() {
-		lib = mock(DesktopLibrary.class);
-		desktop = new Desktop(lib);
+		library = new MockDesktopLibrary();
+		desktop = new Desktop(library);
+		assertEquals(false, desktop.isDestroyed());
 	}
 
 	@Test
-	void library() {
-		assertEquals(lib, desktop.library());
+	void init() {
+		library.init = 42;
+		assertThrows(RuntimeException.class, () -> new Desktop(library));
+	}
+
+	@Test
+	void error() {
+		library.error = 42;
+		assertEquals(Optional.of("[42] error"), desktop.error());
+	}
+
+	@Test
+	void none() {
+		assertEquals(Optional.empty(), desktop.error());
 	}
 
 	@Test
 	void version() {
-		final String ver = "ver";
-		when(lib.glfwGetVersionString()).thenReturn(ver);
-		assertEquals(ver, desktop.version());
+		assertEquals("version", desktop.version());
 	}
 
 	@Test
 	void isVulkanSupported() {
-		when(lib.glfwVulkanSupported()).thenReturn(true);
 		assertEquals(true, desktop.isVulkanSupported());
 	}
 
 	@Test
-	void poll() {
-		desktop.poll();
-		verify(lib).glfwPollEvents();
-	}
-
-	@Test
 	void extensions() {
-		// TODO
-//		final String[] extensions = {"ext"};
-//		final IntegerReference count = factory.integer();
-//		count.set(1);
-//		when(lib.glfwGetRequiredInstanceExtensions(count)).thenReturn(new NativeArray(extensions, Arena.ofAuto()));
-//		assertArrayEquals(extensions, desktop.extensions());
+		assertEquals(List.of("extension"), desktop.extensions());
 	}
 
-//	@SuppressWarnings("unchecked")
-//	@Test
-//	void setErrorHandler() {
-//		// Set error handler
-//		final Consumer<String> handler = mock(Consumer.class);
-//		desktop.setErrorHandler(handler);
-//
-//		// Check API
-//		final ArgumentCaptor<ErrorCallback> captor = ArgumentCaptor.forClass(ErrorCallback.class);
-//		verify(lib).glfwSetErrorCallback(captor.capture());
-//
-//		// Check handler
-//		final ErrorCallback callback = captor.getValue();
-//		callback.error(42, "doh");
-//		verify(handler).accept("GLFW error: [42] doh");
-//	}
-
 	@Test
-	void destroy() {
-		assertEquals(false, desktop.isDestroyed());
+	void terminate() {
 		desktop.destroy();
-		verify(lib).glfwTerminate();
+		assertEquals(true, library.terminated);
+		assertEquals(true, desktop.isDestroyed());
 	}
 }

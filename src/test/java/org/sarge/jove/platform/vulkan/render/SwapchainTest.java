@@ -1,43 +1,94 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.sarge.jove.platform.vulkan.VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 
-import java.util.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.platform.vulkan.render.Swapchain.*;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
+import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
+import org.sarge.jove.util.EnumMask;
 
 public class SwapchainTest {
+	static class MockSwapchainLibrary implements Swapchain.Library {
+		private boolean destroyed;
+		private VkResult result = VkResult.SUCCESS;
+
+		@Override
+		public VkResult vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, Pointer pSwapchain) {
+			assertNotNull(device);
+			assertEquals(null, pAllocator);
+
+			// TODO
+
+			pSwapchain.set(new Handle(1));
+
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public void vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Handle pAllocator) {
+			assertNotNull(device);
+			assertNotNull(swapchain);
+			assertEquals(null, pAllocator);
+			destroyed = true;
+		}
+
+		@Override
+		public VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Handle swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages) {
+			assertNotNull(device);
+			assertNotNull(swapchain);
+			if(pSwapchainImages == null) {
+				pSwapchainImageCount.set(1);
+			}
+			else {
+				pSwapchainImages[0] = new Handle(4);
+			}
+			return null;
+		}
+
+		@Override
+		public VkResult vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
+			assertNotNull(device);
+			assertNotNull(swapchain);
+			assertEquals(Long.MAX_VALUE, timeout);
+			pImageIndex.set(0);
+			return result;
+		}
+
+		@Override
+		public VkResult vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo) {
+			return result;
+		}
+	}
+
 	private Swapchain swapchain;
 	private View view;
-	private Dimensions extents;
-	private DeviceContext dev;
-	private VulkanLibrary lib;
+	private LogicalDevice device;
+	private MockSwapchainLibrary library;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		lib = dev.library();
-		view = new View.Builder(new MockImage()).build(dev);
-		extents = new Dimensions(2, 3);
-		swapchain = new Swapchain(new Handle(1), dev, VkFormat.R32G32B32A32_SFLOAT, extents, List.of(view));
+		device = new MockLogicalDevice();
+		library = new MockSwapchainLibrary();
+		view = new View(new Handle(2), device, new MockImage()) {
+			@Override
+			protected Destructor<View> destructor() {
+				return Destructor.empty();
+			}
+		};
+		swapchain = new Swapchain(new Handle(1), device, library, VkFormat.B8G8R8A8_UNORM, new Dimensions(640, 480), List.of(view));
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(VkFormat.R32G32B32A32_SFLOAT, swapchain.format());
-		assertEquals(extents, swapchain.extents());
+		assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
+		assertEquals(new Dimensions(640, 480), swapchain.extents());
 		assertEquals(List.of(view), swapchain.attachments());
 	}
 
@@ -45,209 +96,127 @@ public class SwapchainTest {
 	void destroy() {
 		swapchain.destroy();
 		assertEquals(true, swapchain.isDestroyed());
-		verify(lib).vkDestroySwapchainKHR(dev, swapchain, null);
+		assertEquals(true, library.destroyed);
+		assertEquals(true, view.isDestroyed());
 	}
 
 	@Nested
-	class AcquireFrameTests {
+	class AcquireTest {
 		private VulkanSemaphore semaphore;
-		private Fence fence;
 
 		@BeforeEach
 		void before() {
-			semaphore = VulkanSemaphore.create(dev);
-			fence = Fence.create(dev);
+			semaphore = new MockVulkanSemaphore(device);
 		}
 
-		@DisplayName("The next image to be rendered can be acquired from the swapchain")
 		@Test
 		void acquire() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, fence, dev.factory().integer())).thenReturn(VkResult.SUCCESS);
-			assertEquals(1, swapchain.acquire(semaphore, fence));
+			assertEquals(0, swapchain.acquire(semaphore, null));
+			assertEquals(view, swapchain.latest());
 		}
 
-		@DisplayName("Acquiring the next image requires at least one synchronisation argument")
 		@Test
-		void invalid() {
-			assertThrows(IllegalArgumentException.class, () -> swapchain.acquire(null, null));
+		void suboptimal() {
+			library.result = VkResult.SUBOPTIMAL_KHR;
+			assertEquals(0, swapchain.acquire(semaphore, null));
 		}
 
-		@DisplayName("The next image cannot be acquired if the swapchain has become invalid")
 		@Test
-		void error() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, semaphore, null, dev.factory().integer())).thenReturn(VkResult.ERROR_OUT_OF_DATE_KHR);
+		void invalidated() {
+			library.result = VkResult.ERROR_OUT_OF_DATE_KHR;
 			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 
-		@DisplayName("The next image can be acquired if the swapchain is sub-optimal")
 		@Test
-		void suboptimal() {
-			when(lib.vkAcquireNextImageKHR(dev, swapchain, Long.MAX_VALUE, null, fence, dev.factory().integer())).thenReturn(VkResult.SUBOPTIMAL_KHR);
-			swapchain.acquire(null, fence);
+		void sync() {
+			assertThrows(IllegalArgumentException.class, () -> swapchain.acquire(null, null));
+		}
+
+		@Test
+		void latest() {
+			assertEquals(view, swapchain.latest());
 		}
 	}
 
 	@Nested
-	class PresentationTests {
-		private WorkQueue queue;
-		private VulkanSemaphore semaphore;
+	class PresentTest {
+
+	}
+
+	@Nested
+	class BuilderTest {
+
+		private static class LIB extends MockVulkanLibrary {
+			@Override
+			public VkResult vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, Pointer pSwapchain) {
+				pSwapchain.set(new Handle(1));
+				return VkResult.SUCCESS;
+			}
+
+			@Override
+			public VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Handle swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages) {
+				assertNotNull(device);
+				assertNotNull(swapchain);
+				if(pSwapchainImages == null) {
+					pSwapchainImageCount.set(1);
+				}
+				else {
+					pSwapchainImages[0] = new Handle(4);
+				}
+				return null;
+			}
+
+			@Override
+			public VkResult vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView) {
+				pView.set(new Handle(2));
+				return VkResult.SUCCESS;
+			}
+		}
+
+		private Swapchain.Builder builder;
 
 		@BeforeEach
 		void before() {
-			queue = new WorkQueue(new Handle(2), new Family(0, 1, Set.of()));
-			semaphore = VulkanSemaphore.create(dev);
-		}
-
-		@DisplayName("A rendered swapchain image can be presented to the swapchain")
-		@Test
-		void present() {
-			final var expected = new VkPresentInfoKHR() {
+			final var surface = new MockVulkanSurface() {
 				@Override
-				public boolean equals(Object obj) {
-					final var info = (VkPresentInfoKHR) obj;
-					assertEquals(1, info.swapchainCount);
-					assertEquals(NativeObject.array(List.of(swapchain)), info.pSwapchains);
-					assertEquals(new PointerToIntArray(new int[]{4}), info.pImageIndices);
-					assertEquals(1, info.waitSemaphoreCount);
-					assertEquals(NativeObject.array(List.of(semaphore)), info.pWaitSemaphores);
-					return true;
+				public VkSurfaceCapabilitiesKHR capabilities() {
+					final var capabilities = new VkSurfaceCapabilitiesKHR();
+					capabilities.currentExtent = new VkExtent2D();
+					capabilities.currentExtent.width = 640;
+					capabilities.currentExtent.height = 480;
+					capabilities.supportedTransforms = new EnumMask<>(IDENTITY_KHR);
+					capabilities.currentTransform = IDENTITY_KHR;
+					capabilities.maxImageArrayLayers = 1;
+					capabilities.minImageCount = 1;
+					capabilities.maxImageCount = 2;
+					capabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT);
+					capabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagKHR.OPAQUE);
+					return capabilities;
+				}
+
+				@Override
+				public List<VkSurfaceFormatKHR> formats() {
+					final var format = new VkSurfaceFormatKHR();
+					format.format = VkFormat.B8G8R8A8_UNORM;
+					format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
+					return List.of(format);
 				}
 			};
-			when(lib.vkQueuePresentKHR(queue, expected)).thenReturn(VkResult.SUCCESS);
-			swapchain.present(queue, 4, semaphore);
-		}
 
-		@DisplayName("A presentation task can be constructed by the builder")
-		@Test
-		void builder() {
-			final VkPresentInfoKHR info = new PresentTaskBuilder()
-					.image(swapchain, 4)
-					.wait(semaphore)
-					.build();
-
-			assertNotNull(info);
-			assertEquals(1, info.swapchainCount);
-			assertEquals(NativeObject.array(List.of(swapchain)), info.pSwapchains);
-			assertEquals(new PointerToIntArray(new int[]{4}), info.pImageIndices);
-			assertEquals(1, info.waitSemaphoreCount);
-			assertEquals(NativeObject.array(List.of(semaphore)), info.pWaitSemaphores);
-		}
-
-		@DisplayName("A presentation task cannot contain a duplicate swapchain")
-		@Test
-		void duplicate() {
-			final var builder = new PresentTaskBuilder();
-			builder.image(swapchain, 4);
-			assertThrows(IllegalArgumentException.class, () -> builder.image(swapchain, 4));
-		}
-	}
-
-	@Nested
-	class BuilderTests {
-		private Swapchain.Builder builder;
-		private VulkanSurface surface;
-		private VkSurfaceFormatKHR format;
-
-		@BeforeEach
-		void before() {
-			// Init rendering surface
-			surface = mock(VulkanSurface.class);
-			when(surface.modes()).thenReturn(Set.of(VkPresentModeKHR.FIFO_KHR));
-
-			// Init surface format
-			format = VulkanSurface.defaultSurfaceFormat();
-			when(surface.format(format.format, format.colorSpace)).thenReturn(Optional.of(format));
-
-			// Init surface capabilities
-			final var caps = new VkSurfaceCapabilitiesKHR();
-			caps.supportedTransforms = EnumMask.of(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
-			caps.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
-			caps.maxImageArrayLayers = 1;
-			caps.supportedUsageFlags = EnumMask.of(VkImageUsageFlag.COLOR_ATTACHMENT);
-			caps.supportedCompositeAlpha = EnumMask.of(VkCompositeAlphaFlagKHR.OPAQUE);
-			when(surface.capabilities()).thenReturn(caps);
-
-			// Init attachment extents
-			extents = new Dimensions(3, 4);
-			caps.currentExtent = new VkExtent2D();
-			caps.currentExtent.width = extents.width();
-			caps.currentExtent.height = extents.height();
-
-			// Create builder
 			builder = new Swapchain.Builder(surface);
 		}
 
-		@DisplayName("A swapchain can be constructed with a default builder configuration")
 		@Test
 		void build() {
-			// Create swapchain
-			swapchain = builder.build(dev);
-			assertNotNull(swapchain.handle());
-			assertEquals(false, swapchain.isDestroyed());
-			assertEquals(dev, swapchain.device());
-			assertEquals(format.format, swapchain.format());
-			assertEquals(extents, swapchain.extents());
+			final var device = new MockLogicalDevice(new LIB());
 
-			// Check swapchain attachments
-			assertNotNull(swapchain.attachments());
+			final var swapchain = builder
+//					.count(2)
+					.build(device);
+
+			assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
+			assertEquals(new Dimensions(640, 480), swapchain.extents());
 			assertEquals(1, swapchain.attachments().size());
-
-			// Check colour attachment
-			final View view = swapchain.attachments().get(0);
-			assertEquals(Optional.empty(), view.clear());
-			assertEquals(false, view.isDestroyed());
-
-			// Check colour image
-			final Descriptor descriptor = new Descriptor.Builder()
-					.format(format.format)
-					.extents(extents)
-					.aspect(VkImageAspect.COLOR)
-					.build();
-			final Image image = view.image();
-			assertEquals(descriptor, image.descriptor());
-
-			// Check API
-			final var expected = new VkSwapchainCreateInfoKHR() {
-				@Override
-				public boolean equals(Object obj) {
-					final var info = (VkSwapchainCreateInfoKHR) obj;
-					assertEquals(3, info.imageExtent.width);
-					assertEquals(4, info.imageExtent.height);
-					assertEquals(VkSurfaceTransformFlagKHR.IDENTITY_KHR, info.preTransform);
-					assertEquals(format.format, info.imageFormat);
-					assertEquals(format.colorSpace, info.imageColorSpace);
-					assertEquals(1, info.imageArrayLayers);
-					assertEquals(VkSharingMode.EXCLUSIVE, info.imageSharingMode);
-					assertEquals(VkImageUsageFlag.COLOR_ATTACHMENT.value(), info.imageUsage.bits());
-					assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, info.compositeAlpha);
-					assertEquals(VkPresentModeKHR.FIFO_KHR, info.presentMode);
-					assertEquals(true, info.clipped);
-					return true;
-				}
-			};
-			verify(lib).vkCreateSwapchainKHR(dev, expected, null, dev.factory().pointer());
-			verify(lib).vkGetSwapchainImagesKHR(dev, swapchain.handle(), dev.factory().integer(), new Pointer[1]);
-		}
-
-		@DisplayName("The swapchain format must be supported by the surface")
-		@Test
-		void format() {
-			final var unsupported = new VkSurfaceFormatKHR();
-			unsupported.format = VkFormat.UNDEFINED;
-			unsupported.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
-			assertThrows(IllegalArgumentException.class, () -> builder.format(unsupported));
-		}
-
-		@DisplayName("The presentation mode must be supported by the surface")
-		@Test
-		void mode() {
-			assertThrows(IllegalArgumentException.class, () -> builder.presentation(VkPresentModeKHR.MAILBOX_KHR));
-		}
-
-		@DisplayName("The type of each attachment must be supported by the surface")
-		@Test
-		void usage() {
-			assertThrows(IllegalArgumentException.class, () -> builder.usage(VkImageUsageFlag.DEPTH_STENCIL_ATTACHMENT));
 		}
 	}
 }

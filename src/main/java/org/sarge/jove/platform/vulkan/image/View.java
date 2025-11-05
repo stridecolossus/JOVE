@@ -2,10 +2,10 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Optional;
+import java.util.*;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -16,10 +16,9 @@ import org.sarge.jove.platform.vulkan.render.FrameBuffer;
  * @see FrameBuffer
  * @author Sarge
  */
-public final class View extends VulkanObject {
+public class View extends VulkanObject {
 	private final Image image;
 	private ClearValue clear;
-	private boolean auto = true;
 
 	/**
 	 * Constructor.
@@ -27,7 +26,7 @@ public final class View extends VulkanObject {
 	 * @param dev		Logical device
 	 * @param image		Underlying image
 	 */
-	View(Handle handle, LogicalDevice dev, Image image) {
+	public View(Handle handle, LogicalDevice dev, Image image) {
 		super(handle, dev);
 		this.image = requireNonNull(image);
 	}
@@ -53,41 +52,23 @@ public final class View extends VulkanObject {
 	 * @throws IllegalArgumentException if the clear value is incompatible with this view
 	 */
 	public View clear(ClearValue clear) {
-		if(!isValid(clear)) throw new IllegalArgumentException("Invalid clear value for this view: clear=%s view=%s".formatted(clear, this));
+		if(Objects.nonNull(clear)) {
+			final VkImageAspect aspect = clear.aspect();
+			final boolean valid = image.descriptor().aspects().contains(aspect);
+			if(!valid) {
+				throw new IllegalArgumentException("Invalid clear value for this view: clear=%s view=%s".formatted(clear, this));
+			}
+		}
+
 		this.clear = clear;
+
 		return this;
 	}
 
-	private boolean isValid(ClearValue clear) {
-		if(clear == null) {
-			return true;
-		}
-		else {
-			return image
-					.descriptor()
-					.aspects()
-					.contains(clear.aspect());
-		}
-	}
-
-	/**
-	 * Sets whether the underlying image is automatically released when this view is destroyed (default is {@code true}).
-	 * @param auto Whether to automatically destroy the underlying image
-	 */
-	public void setDestroyImage(boolean auto) {
-		this.auto = auto;
-	}
-
 	@Override
-	protected Destructor<View> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyImageView;
-	}
-
-	@Override
-	protected void release() {
-		if(auto && (image instanceof TransientObject obj) && !obj.isDestroyed()) {
-			obj.destroy();
-		}
+	protected Destructor<View> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroyImageView;
 	}
 
 	/**
@@ -107,76 +88,69 @@ public final class View extends VulkanObject {
 			};
 		}
 
-		private final Image image;
 		private VkImageViewType type;
 		private ComponentMapping mapping = ComponentMapping.IDENTITY;
 		private SubResource subresource;
-
-		/**
-		 * Constructor.
-		 * @param image Image
-		 */
-		public Builder(Image image) {
-			this.image = requireNonNull(image);
-			this.type = type(image);
-			this.subresource = image.descriptor();
-		}
 
 		/**
 		 * Sets the view type of this image.
 		 * @param type View type
 		 */
 		public Builder type(VkImageViewType type) {
-			this.type = requireNonNull(type);
+			this.type = type;
 			return this;
 		}
+		// TODO - is this ALWAYS that of the image?
 
 		/**
-		 * Sets the component mapping for the view (default is {@link ComponentMapping#IDENTITY}).
+		 * Sets the component mapping for the view.
 		 * @param mapping Component mapping
+		 * @see ComponentMapping#IDENTITY
 		 */
 		public Builder mapping(ComponentMapping mapping) {
-			this.mapping = requireNonNull(mapping);
+			this.mapping = mapping;
 			return this;
 		}
 
 		/**
 		 * Sets the image sub-resource for this view.
-		 * @param sub Image sub-resource
+		 * @param subresource Image sub-resource
 		 */
-		public Builder subresource(SubResource sub) {
-			this.subresource = requireNonNull(sub);
+		public Builder subresource(SubResource subresource) {
+			this.subresource = subresource;
 			return this;
 		}
 
 		/**
 		 * Constructs this image view.
-		 * @param dev Logical device
+		 * The image type and sub-resource range are initialised to the given {@link #image} if not already populated.
+		 * @param device	Logical device
+		 * @param image		Underlying image
 		 * @return New image view
 		 */
-		public View build(LogicalDevice dev) {
+		public View build(LogicalDevice device, Image image) {
 			// Build view descriptor
 			final var info = new VkImageViewCreateInfo();
-			info.viewType = type;
+			info.viewType = Objects.requireNonNullElseGet(type, () -> type(image));
 			info.format = image.descriptor().format();
 			info.image = image.handle();
 			info.components = mapping.build();
-			info.subresourceRange = SubResource.toRange(subresource);
+			info.subresourceRange = SubResource.toRange(Objects.requireNonNullElseGet(subresource, image::descriptor));
 
 			// Allocate image view
-			final VulkanLibrary vulkan = dev.vulkan();
-			final Pointer ref = new Pointer();
-			vulkan.vkCreateImageView(dev, info, null, ref);
+			final Library library = device.library();
+			final Pointer pointer = new Pointer();
+			library.vkCreateImageView(device, info, null, pointer);
 
 			// Create image view
-			return new View(ref.get(), dev, image);
+			return new View(pointer.get(), device, image);
 		}
 	}
 
 	/**
 	 * Image view API.
 	 */
-	interface Library {
+	public interface Library {
 		/**
 		 * Creates an image view.
 		 * @param device			Logical device
@@ -185,7 +159,7 @@ public final class View extends VulkanObject {
 		 * @param pView				Returned image view handle
 		 * @return Result
 		 */
-		int vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pView);
+		VkResult vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView);
 
 		/**
 		 * Destroys an image view.

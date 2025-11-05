@@ -2,30 +2,12 @@ package org.sarge.jove.platform.desktop;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.foreign.NativeReference.*;
 
 /**
  * GLFW window API.
  * @author Sarge
  */
-interface DesktopLibraryWindow {
-	/**
-	 * Creates a window.
-	 * @param w				Width
-	 * @param h				Height
-	 * @param title			Window title
-	 * @param monitor		Monitor for a full-screen window
-	 * @param shared		Optional shared window
-	 * @return Window handle
-	 */
-	Handle glfwCreateWindow(int w, int h, String title, Handle /*Monitor*/ monitor, Window shared);
-
-	/**
-	 * Destroys a window.
-	 * @param window Window handle
-	 */
-	void glfwDestroyWindow(Window window);
-
+public interface WindowLibrary {
 	/**
 	 * Resets all window hints to the default values.
 	 */
@@ -37,6 +19,18 @@ interface DesktopLibraryWindow {
 	 * @param value		Value
 	 */
 	void glfwWindowHint(int hint, int value);
+
+	/**
+	 * Creates a new window.
+	 * @param w				Width
+	 * @param h				Height
+	 * @param title			Window title
+	 * @param monitor		Monitor for a full-screen window
+	 * @param shared		Optional shared window
+	 * @return Window
+	 */
+	Handle glfwCreateWindow(int w, int h, String title, Handle /*Monitor*/ monitor, Window shared);
+	// TODO - returns WINDOW???
 
 	/**
 	 * Creates a Vulkan surface for the given window.
@@ -63,14 +57,14 @@ interface DesktopLibraryWindow {
 //	int glfwSetWindowShouldClose(Window window, boolean close);
 
 	/**
-	 * Sets the title of a window.
+	 * Sets the title of the given window.
 	 * @param window		Window
 	 * @param title			New title
 	 */
 	void glfwSetWindowTitle(Window window, String title);
 
 	/**
-	 * Retrieves the dimensions of a window.
+	 * Retrieves the dimensions of the given window.
 	 * @param window	Window
 	 * @param w			Width
 	 * @param h			Height
@@ -78,8 +72,8 @@ interface DesktopLibraryWindow {
 	void glfwGetWindowSize(Window window, IntegerReference w, IntegerReference h);
 
 	/**
-	 * Sets the window dimensions.
-	 * @param window	Window
+	 * Sets the dimensions of the given window.
+	 * @param window	Window to resize
 	 * @param w			Width
 	 * @param h			Height
 	 */
@@ -147,4 +141,10 @@ interface DesktopLibraryWindow {
 //	 * @param listener		Resize listener
 //	 */
 //	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
+
+	/**
+	 * Destroys the given window.
+	 * @param window Window to destroy
+	 */
+	void glfwDestroyWindow(Window window);
 }

@@ -1,10 +1,13 @@
 package org.sarge.jove.platform.desktop;
 
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
+
 /**
  * GLFW API.
  * @author Sarge
  */
-interface DesktopLibrary extends DesktopLibraryWindow { // , DesktopLibraryDevice { // TODO , DesktopLibraryMonitor, DesktopLibraryJoystick {
+interface DesktopLibrary {
 	/**
 	 * Sets an initialisation hint.
 	 * @param hint		Hint
@@ -19,30 +22,11 @@ interface DesktopLibrary extends DesktopLibraryWindow { // , DesktopLibraryDevic
 	int glfwInit();
 
 	/**
-	 * Terminates GLFW.
+	 * Returns and clears the latest GLFW error.
+	 * @param description Returned error description
+	 * @return Error code or {@code zero} if none
 	 */
-	void glfwTerminate();
-
-//	/**
-//	 * Error callback.
-//	 */
-//	interface ErrorCallback extends Callback {
-//		/**
-//		 * Notifies a GLFW error.
-//		 * @param error				Error code
-//		 * @param description		Description
-//		 */
-//		void error(int error, String description);
-//	}
-//
-//	/**
-//	 * Registers an error handler.
-//	 * @param callback Error handler
-//	 */
-//	void glfwSetErrorCallback(ErrorCallback callback);
-// TODO
-
-	int glfwGetError(String description); // TODO - ? NativeReference<String>
+	int glfwGetError(Pointer description);
 
 	/**
 	 * @return GLFW version
@@ -50,7 +34,7 @@ interface DesktopLibrary extends DesktopLibraryWindow { // , DesktopLibraryDevic
 	String glfwGetVersionString();
 
 	/**
-	 * @return Whether vulkan is supported on this platform
+	 * @return Whether Vulkan is supported on this platform
 	 */
 	boolean glfwVulkanSupported();
 
@@ -59,5 +43,10 @@ interface DesktopLibrary extends DesktopLibraryWindow { // , DesktopLibraryDevic
 	 * @param count Number of extensions
 	 * @return Vulkan extensions
 	 */
-	//ReturnedArray<String> glfwGetRequiredInstanceExtensions(NativeReference<Integer> count);
+	Handle glfwGetRequiredInstanceExtensions(IntegerReference count);
+
+	/**
+	 * Terminates GLFW.
+	 */
+	void glfwTerminate();
 }

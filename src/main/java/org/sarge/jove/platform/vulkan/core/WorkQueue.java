@@ -45,10 +45,6 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		 * @return New queue family
 		 */
 		public static Family of(int index, VkQueueFamilyProperties properties) {
-			// TODO - properties.minImageTransferGranularity???
-
-			System.out.println(properties.minImageTransferGranularity);
-
 			final Set<VkQueueFlag> flags = properties.queueFlags.enumerate(MAPPING);
 			return new Family(index, properties.queueCount, flags);
 		}

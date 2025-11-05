@@ -9,23 +9,23 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
+import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
 /**
  * The <i>instance</i> is the root object for a Vulkan application.
  * @author Sarge
  */
 public class Instance extends TransientNativeObject {
-	private final Library lib;
+	private final Library library;
 
 	/**
 	 * Constructor.
-	 * @param handle	Instance handle
-	 * @param lib		Instance library
+	 * @param handle		Instance handle
+	 * @param library		Instance library
 	 */
-	Instance(Handle handle, Instance.Library lib) {
+	Instance(Handle handle, Instance.Library library) {
 		super(handle);
-		this.lib = requireNonNull(lib);
+		this.library = requireNonNull(library);
 	}
 
 	/**
@@ -34,23 +34,42 @@ public class Instance extends TransientNativeObject {
 	 * @return Function pointer
 	 */
 	public Optional<Handle> function(String name) {
-		final Handle function = lib.vkGetInstanceProcAddr(this, name);
+		final Handle function = library.vkGetInstanceProcAddr(this, name);
 		return Optional.ofNullable(function);
 	}
 
 	@Override
 	protected void release() {
-		lib.vkDestroyInstance(this, null);
+		library.vkDestroyInstance(this, null);
+	}
+
+	/**
+	 * Enumerates the extensions supported by this Vulkan implementation.
+	 * @param library		Instance library
+	 * @param layer			Optional layer name
+	 * @return Supported extensions
+	 */
+	public static VkExtensionProperties[] extensions(Library library, String layer) {
+		final VulkanFunction<VkExtensionProperties[]> extensions = (count, array) -> library.vkEnumerateInstanceExtensionProperties(layer, count, array);
+		return VulkanFunction.invoke(extensions, VkExtensionProperties[]::new);
+	}
+
+	/**
+	 * Enumerates the layers supported by this Vulkan implementation.
+	 * @param library Instance library
+	 * @return Supported layers
+	 */
+	public static VkLayerProperties[] layers(Library library) {
+		final VulkanFunction<VkLayerProperties[]> layers = (count, array) -> library.vkEnumerateInstanceLayerProperties(count, array);
+		return VulkanFunction.invoke(layers, VkLayerProperties[]::new);
 	}
 
 	/**
 	 * Builder for an instance.
 	 */
 	public static class Builder {
-		private static final Version VERSION = Version.DEFAULT;
-
 		private String name = "Unspecified";
-		private Version ver = Version.DEFAULT;
+		private Version version = Version.DEFAULT;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private Version api = Vulkan.VERSION;
@@ -65,18 +84,20 @@ public class Instance extends TransientNativeObject {
 		}
 
 		/**
-		 * Sets the application version (default is {@link Version#DEFAULT}).
+		 * Sets the application version.
 		 * @param version Application version
+		 * @see Version#DEFAULT
 		 */
 		public Builder version(Version version) {
-			this.ver = requireNonNull(version);
+			this.version = requireNonNull(version);
 			return this;
 		}
 
 		/**
-		 * Sets the required version of the Vulkan API (default is {@link VulkanLibrary#VERSION}).
+		 * Sets the required version of the Vulkan API.
 		 * @param api Required API version
 		 * @throws IllegalArgumentException if {@link #api} is not supported by this JOVE implementation
+		 * @see Vulkan#VERSION
 		 */
 		public Builder api(Version api) {
 			if(api.compareTo(Vulkan.VERSION) > 0) {
@@ -97,10 +118,10 @@ public class Instance extends TransientNativeObject {
 		}
 
 		/**
-		 * Helper - Registers an array of extensions.
+		 * Helper - Registers a group of extensions.
 		 * @param extensions Extension names
 		 */
-		public Builder extensions(String[] extensions) {
+		public Builder extensions(Iterable<String> extensions) {
 			for(String ext : extensions) {
 				extension(ext);
 			}
@@ -111,9 +132,9 @@ public class Instance extends TransientNativeObject {
 		 * Registers a required validation layer.
 		 * @param layer Validation layer descriptor
 		 */
-		public Builder layer(ValidationLayer layer) {
-			requireNonNull(layer);
-			layers.add(layer.name());
+		public Builder layer(String layer) {
+			requireNotEmpty(layer);
+			layers.add(layer);
 			return this;
 		}
 
@@ -135,9 +156,9 @@ public class Instance extends TransientNativeObject {
 		private VkApplicationInfo application() {
 			final var app = new VkApplicationInfo();
 			app.pApplicationName = name;
-			app.applicationVersion = ver.toInteger();
+			app.applicationVersion = version.toInteger();
 			app.pEngineName = "JOVE";
-			app.engineVersion = VERSION.toInteger();
+			app.engineVersion = new Version(1, 0, 0).toInteger();
 			app.apiVersion = api.toInteger();
 			return app;
 		}

@@ -1,5 +1,6 @@
 package org.sarge.jove.util;
 
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.util.stream.Collectors.toMap;
 
 import java.lang.foreign.*;
@@ -83,7 +84,7 @@ public interface IntEnum {
 
 		@Override
 		public MemoryLayout layout() {
-			return ValueLayout.JAVA_INT;
+			return JAVA_INT;
 		}
 
 		@Override
@@ -92,7 +93,7 @@ public interface IntEnum {
 		}
 
 		@Override
-		public Object empty() {
+		public Integer empty() {
 			return mapping.defaultValue().value();
 		}
 

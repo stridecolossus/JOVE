@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
@@ -16,7 +16,7 @@ public class VulkanObjectTest {
 		}
 
 		@Override
-		protected Destructor<?> destructor(VulkanLibrary lib) {
+		protected Destructor<?> destructor() {
 			return new Destructor<>() {
 				@Override
 				public void destroy(LogicalDevice device, VulkanObject object, Handle allocator) {
@@ -53,18 +53,5 @@ public class VulkanObjectTest {
 		obj.destroy();
 		assertEquals(true, obj.isDestroyed());
 		assertEquals(true, obj.released);
-	}
-
-	@Test
-	void hash() {
-		final Handle handle = new Handle(2);
-		assertEquals(handle.hashCode(), obj.hashCode());
-	}
-
-	@Test
-	void equals() {
-		assertEquals(obj, obj);
-		assertNotEquals(obj, null);
-		assertNotEquals(obj, new MockVulkanObject());
 	}
 }

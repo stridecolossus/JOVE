@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
-import org.sarge.jove.platform.desktop.DesktopLibraryMonitor.DesktopDisplayMode;
+import org.sarge.jove.platform.desktop.MonitorLibrary.DesktopDisplayMode;
 
 /**
  * A <i>monitor</i> describes a physical monitor attached to this system.

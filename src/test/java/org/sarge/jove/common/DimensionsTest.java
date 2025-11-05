@@ -5,51 +5,50 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 
 class DimensionsTest {
-	private Dimensions dim;
+	private Dimensions dimensions;
 
 	@BeforeEach
 	void before() {
-		dim = new Dimensions(640, 480);
+		dimensions = new Dimensions(640, 480);
 	}
 
-	@DisplayName("A 2D dimension has width and height")
+	@DisplayName("Dimensions have a width and height")
 	@Test
 	void constructor() {
-		assertEquals(640, dim.width());
-		assertEquals(480, dim.height());
+		assertEquals(640, dimensions.width());
+		assertEquals(480, dimensions.height());
 	}
 
-	@DisplayName("The area of a 2D dimension can be calculated")
+	@DisplayName("Dimensions have an area")
 	@Test
 	void area() {
-		assertEquals(640 * 480, dim.area());
+		assertEquals(640 * 480, dimensions.area());
 	}
 
-	@DisplayName("A 2D dimension can be represented by its aspect ratio")
+	@DisplayName("Dimensions have an aspect ratio")
 	@Test
 	void ratio() {
-		assertEquals(640 / 480f, dim.ratio());
+		assertEquals(640 / 480f, dimensions.ratio());
 	}
 
-	@DisplayName("A 2D dimension can be square")
+	@DisplayName("Dimensions can be square")
 	@Test
 	void isSquare() {
-		assertEquals(false, dim.isSquare());
+		assertEquals(false, dimensions.isSquare());
 		assertEquals(true, new Dimensions(2, 2).isSquare());
 	}
 
-	@DisplayName("A 2D dimension can be compared to another instance")
+	@DisplayName("Dimensions can compared")
 	@Test
-	void compareTo() {
-		assertEquals(0, dim.compareTo(dim));
-		assertEquals(1, dim.compareTo(new Dimensions(0, 0)));
-		assertEquals(1, dim.compareTo(new Dimensions(640, 0)));
-		assertEquals(-1, dim.compareTo(new Dimensions(999, 999)));
+	void contains() {
+		assertEquals(true, dimensions.contains(dimensions));
+		assertEquals(true, dimensions.contains(new Dimensions(1, 2)));
+		assertEquals(false, dimensions.contains(new Dimensions(1024, 768)));
 	}
 
-	@DisplayName("A 2D dimension can be converted to a rectangle at the origin")
+	@DisplayName("Dimensions can bve converted to a rectangle at the origin")
 	@Test
 	void rectangle() {
-		assertEquals(new Rectangle(0, 0, 640, 480), dim.rectangle());
+		assertEquals(new Rectangle(0, 0, 640, 480), dimensions.rectangle());
 	}
 }

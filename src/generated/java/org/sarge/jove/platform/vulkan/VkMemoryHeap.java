@@ -23,9 +23,4 @@ public class VkMemoryHeap implements NativeStructure {
 				PADDING
 		);
 	}
-
-	@Override
-	public String toString() {
-		return String.format("size=%d flags=%s", size, flags);
-	}
 }

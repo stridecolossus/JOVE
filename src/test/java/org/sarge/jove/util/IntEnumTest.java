@@ -2,7 +2,10 @@ package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.Arena;
+
 import org.junit.jupiter.api.*;
+import org.sarge.jove.foreign.Transformer;
 import org.sarge.jove.util.IntEnum.*;
 
 class IntEnumTest {
@@ -69,6 +72,17 @@ class IntEnumTest {
 		@Test
 		void update() {
 			assertThrows(UnsupportedOperationException.class, () -> transformer.update());
+		}
+
+		@SuppressWarnings({"rawtypes", "unchecked", "resource"})
+		@Test
+		void array() {
+			final MockEnum[] array = {MockEnum.A, MockEnum.B};
+			final Transformer delegate = transformer.array();
+			final Object address = delegate.marshal(array, Arena.ofAuto());
+			final var result = new MockEnum[2];
+			delegate.update().accept(address, result);
+			assertArrayEquals(array, result);
 		}
 	}
 }

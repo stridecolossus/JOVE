@@ -1,24 +1,30 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"residencyStandard2DBlockShape",
-	"residencyStandard2DMultisampleBlockShape",
-	"residencyStandard3DBlockShape",
-	"residencyAlignedMipSize",
-	"residencyNonResidentStrict"
-})
-public class VkPhysicalDeviceSparseProperties extends VulkanStructure {
+public class VkPhysicalDeviceSparseProperties implements NativeStructure {
 	public boolean residencyStandard2DBlockShape;
 	public boolean residencyStandard2DMultisampleBlockShape;
 	public boolean residencyStandard3DBlockShape;
 	public boolean residencyAlignedMipSize;
 	public boolean residencyNonResidentStrict;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+		        JAVA_INT.withName("residencyStandard2DBlockShape"),
+		        JAVA_INT.withName("residencyStandard2DMultisampleBlockShape"),
+		        JAVA_INT.withName("residencyStandard3DBlockShape"),
+		        JAVA_INT.withName("residencyAlignedMipSize"),
+		        JAVA_INT.withName("residencyNonResidentStrict")
+		);
+	}
 }

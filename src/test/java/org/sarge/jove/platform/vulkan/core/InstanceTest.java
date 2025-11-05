@@ -9,18 +9,18 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 
 class InstanceTest {
 	private Instance instance;
-	private MockInstanceLibrary lib;
+	private MockInstanceLibrary library;
 
 	@BeforeEach
 	void before() {
-		lib = new MockInstanceLibrary();
-		instance = new Instance(new Handle(1), lib);
+		library = new MockInstanceLibrary();
+		instance = new Instance(new Handle(1), library);
 	}
 
+	public // TODO
 	static class MockInstanceLibrary implements Instance.Library {
 		private final Map<String, Handle> functions = new HashMap<>();
 		boolean destroyed;
@@ -43,7 +43,7 @@ class InstanceTest {
 
 			// Create instance
 			pInstance.set(new Handle(2));
-			return null;
+			return VkResult.SUCCESS;
 		}
 
 		@Override
@@ -53,12 +53,24 @@ class InstanceTest {
 
 		@Override
 		public VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, VkExtensionProperties[] pProperties) {
-			return null;
+			if(pProperties == null) {
+				pPropertyCount.set(1);
+			}
+			else {
+				pProperties[0] = new VkExtensionProperties();
+			}
+			return VkResult.SUCCESS;
 		}
 
 		@Override
 		public VkResult vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, VkLayerProperties[] pProperties) {
-			return null;
+			if(pProperties == null) {
+				pPropertyCount.set(1);
+			}
+			else {
+				pProperties[0] = new VkLayerProperties();
+			}
+			return VkResult.SUCCESS;
 		}
 
 		@Override
@@ -82,8 +94,8 @@ class InstanceTest {
         		.version(new Version(1, 2, 3))
         		.api(Vulkan.VERSION)
         		.extension("extension")
-        		.layer(new ValidationLayer("layer"))
-				.build(lib);
+        		.layer("layer")
+				.build(library);
 
 		assertEquals(new Handle(2), instance.handle());
 		assertEquals(false, instance.isDestroyed());
@@ -101,14 +113,14 @@ class InstanceTest {
 	void destroy() {
 		instance.destroy();
 		assertEquals(true, instance.isDestroyed());
-		assertEquals(true, lib.destroyed);
+		assertEquals(true, library.destroyed);
 	}
 
 	@DisplayName("A function pointer can be retrieved by name from the instance")
 	@Test
 	void function() {
 		final var handle = new Handle(3);
-		lib.function("function", handle);
+		library.function("function", handle);
 		assertEquals(Optional.of(handle), instance.function("function"));
 	}
 
@@ -116,5 +128,19 @@ class InstanceTest {
 	@Test
 	void unknown() {
 		assertEquals(Optional.empty(), instance.function("cobblers"));
+	}
+
+	@Test
+	void extensions() {
+		final VkExtensionProperties[] extensions = Instance.extensions(library, null);
+		assertEquals(1, extensions.length);
+		assertNotNull(extensions[0]);
+	}
+
+	@Test
+	void layers() {
+		final VkLayerProperties[] layers = Instance.layers(library);
+		assertEquals(1, layers.length);
+		assertNotNull(layers[0]);
 	}
 }

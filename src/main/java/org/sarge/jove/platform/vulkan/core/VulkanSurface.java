@@ -3,10 +3,12 @@ package org.sarge.jove.platform.vulkan.core;
 import static java.util.Objects.requireNonNull;
 
 import java.util.*;
+import java.util.function.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.util.*;
 
@@ -26,47 +28,76 @@ public class VulkanSurface extends TransientNativeObject {
 	 * @see VkColorSpaceKHR#SRGB_NONLINEAR_KHR
 	 */
 	public static VkSurfaceFormatKHR defaultSurfaceFormat() {
-		// Create surface format
-		final var struct = new VkSurfaceFormatKHR();
-		struct.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
+		// Init surface format
+		final var format = new VkSurfaceFormatKHR();
+		format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
 
 		// Init default swapchain image format
-		struct.format = new FormatBuilder()
+		format.format = new FormatBuilder()
 				.components("BGRA")
 				.bytes(1)
 				.signed(false)
 				.type(FormatBuilder.NumericFormat.NORM)
 				.build();
 
-		return struct;
+		return format;
 	}
 
-	private final Handle instance;
+	/**
+	 * Creates a selector that matches a device with a queue family supporting presentation to the given surface.
+	 * @param surface Vulkan surface
+	 * @param library Surface library
+	 * @return Presentation selector
+	 */
+	public static Selector presentation(Handle surface, Library library) {
+		final BiPredicate<PhysicalDevice, Family> predicate = (device, family) -> {
+			final var supported = new IntegerReference();
+			library.vkGetPhysicalDeviceSurfaceSupportKHR(device, family.index(), surface, supported);
+			return supported.get() == 1;
+		};
+		return new Selector(predicate);
+	}
+
 	private final PhysicalDevice device;
-	private final Library lib;
+	private final Library library;
 
 	/**
 	 * Constructor.
 	 * @param surface		Surface handle
-	 * @param instance		Vulkan instance handle
 	 * @param device		Physical device
 	 * @param lib			Surface library
 	 */
-	public VulkanSurface(Handle surface, Handle instance, PhysicalDevice device, Library lib) {
+	public VulkanSurface(Handle surface, PhysicalDevice device, Library lib) {
 		super(surface);
-		this.instance = requireNonNull(instance);
 		this.device = requireNonNull(device);
-		this.lib = requireNonNull(lib);
+		this.library = requireNonNull(lib);
 	}
 
 	/**
-	 * @param family Queue family
-	 * @return Whether this surface supports presentation for the given queue family
+	 * Creates an adapter that pre-loads the properties of this surface to minimise API calls.
+	 * @return Surface with pre-loaded properties
 	 */
-	public boolean isPresentationSupported(Family family) {
-		final var supported = new IntegerReference();
-		lib.vkGetPhysicalDeviceSurfaceSupportKHR(device, family.index(), this, supported);
-		return supported.get() == 1;		// TODO - boolean ref?
+	public VulkanSurface load() {
+		final var capabilities = this.capabilities();
+		final var formats = this.formats();
+		final var modes = this.modes();
+
+		return new VulkanSurface(this.handle(), device, library) {
+			@Override
+			public VkSurfaceCapabilitiesKHR capabilities() {
+				return capabilities;
+			}
+
+			@Override
+			public List<VkSurfaceFormatKHR> formats() {
+				return formats;
+			}
+
+			@Override
+			public List<VkPresentModeKHR> modes() {
+				return modes;
+			}
+		};
 	}
 
 	/**
@@ -74,7 +105,7 @@ public class VulkanSurface extends TransientNativeObject {
 	 */
 	public VkSurfaceCapabilitiesKHR capabilities() {
 		final var caps = new VkSurfaceCapabilitiesKHR();
-		lib.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, this, caps);
+		library.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, this, caps);
 		return caps;
 	}
 
@@ -82,57 +113,58 @@ public class VulkanSurface extends TransientNativeObject {
 	 * @return Formats supported by this surface
 	 */
 	public List<VkSurfaceFormatKHR> formats() {
-		final VulkanFunction<VkSurfaceFormatKHR[]> formats = (count, array) -> lib.vkGetPhysicalDeviceSurfaceFormatsKHR(device, this, count, array);
+		final VulkanFunction<VkSurfaceFormatKHR[]> formats = (count, array) -> library.vkGetPhysicalDeviceSurfaceFormatsKHR(device, this, count, array);
 		final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(formats, VkSurfaceFormatKHR[]::new);
 		return List.of(array);
 	}
 
 	/**
-	 * Helper - Selects the preferred surface format that supports the given format and colour-space or falls back to the {@link #defaultSurfaceFormat()}.
-	 * @param format				Surface format
-	 * @param space					Colour space
-	 * @param defaultFormat			Default surface format or {@code null} for the {@link #defaultSurfaceFormat()}
+	 * Helper.
+	 * Selects a surface format matching the given predicate or falls back to the provided default (if any) or finally the {@link #defaultSurfaceFormat()}.
+	 * @param predicate		Surface format predicate
+	 * @param def			Optional default surface format
 	 * @return Selected surface format
+	 * @see #equals(VkSurfaceFormatKHR)
 	 */
-	public VkSurfaceFormatKHR format(VkFormat format, VkColorSpaceKHR space, VkSurfaceFormatKHR defaultFormat) {
-		return format(format, space)
-				.or(() -> Optional.ofNullable(defaultFormat))
+	public VkSurfaceFormatKHR select(Predicate<VkSurfaceFormatKHR> predicate, VkSurfaceFormatKHR def) {
+		return this
+				.formats()
+				.stream()
+				.filter(predicate)
+				.findAny()
+				.or(() -> Optional.ofNullable(def))
 				.orElseGet(VulkanSurface::defaultSurfaceFormat);
 	}
 
 	/**
-	 * Finds the surface format matching the given specification.
-	 * @param format		Surface format
-	 * @param space			Colour space
-	 * @return Surface format
+	 * Creates a equals predicate for the given surface format.
+	 * @param format Surface format
+	 * @return Equals predicate
+	 * @implNote Vulkan structures are compared by <b>identity</b> since the {@code equals} method is not implemented
 	 */
-	public Optional<VkSurfaceFormatKHR> format(VkFormat format, VkColorSpaceKHR space) {
-		return this
-				.formats()
-				.stream()
-				.filter(f -> f.format == format)
-				.filter(f -> f.colorSpace == space)
-				.findAny();
+	public static Predicate<VkSurfaceFormatKHR> equals(VkSurfaceFormatKHR format) {
+		return that -> (that.format == format.format) && (that.colorSpace == format.colorSpace);
 	}
 
 	/**
 	 * @return Presentation modes supported by this surface
 	 */
-	public Set<VkPresentModeKHR> modes() {
-		final VulkanFunction<VkPresentModeKHR[]> function = (count, array) -> lib.vkGetPhysicalDeviceSurfacePresentModesKHR(device, this, count, array);
+	public List<VkPresentModeKHR> modes() {
+		final VulkanFunction<VkPresentModeKHR[]> function = (count, array) -> library.vkGetPhysicalDeviceSurfacePresentModesKHR(device, this, count, array);
 		final VkPresentModeKHR[] modes = VulkanFunction.invoke(function, VkPresentModeKHR[]::new);
-		return Set.of(modes);
+		return List.of(modes);
 	}
 
 	/**
-	 * Helper - Selects a preferred presentation mode from the given candidates or falls back to the {@link #DEFAULT_PRESENTATION_MODE}.
-	 * @param candidates Preferred presentation modes
+	 * Helper.
+	 * Selects a preferred presentation mode from the given candidates or falls back to the {@link #DEFAULT_PRESENTATION_MODE}.
+	 * @param modes Candidates presentation modes
 	 * @return Selected presentation mode
 	 */
-	public VkPresentModeKHR mode(VkPresentModeKHR... candidates) {
-		final Set<VkPresentModeKHR> available = this.modes();
-		return Arrays
-				.stream(candidates)
+	public VkPresentModeKHR select(List<VkPresentModeKHR> modes) {
+		final var available = this.modes();
+		return modes
+				.stream()
 				.filter(available::contains)
 				.findAny()
 				.orElse(DEFAULT_PRESENTATION_MODE);
@@ -140,7 +172,7 @@ public class VulkanSurface extends TransientNativeObject {
 
 	@Override
 	protected void release() {
-		lib.vkDestroySurfaceKHR(instance, this, null);
+		library.vkDestroySurfaceKHR(device.instance(), this, null);
 	}
 
 	/**
@@ -155,7 +187,7 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param supported				Returned boolean flag
 		 * @return Result
 		 */
-		VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, VulkanSurface surface, IntegerReference supported);
+		VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported);
 
 		/**
 		 * Retrieves the capabilities of a surface.
@@ -174,7 +206,7 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param formats			Supported formats
 		 * @return Result
 		 */
-		VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, NativeReference<Integer> count, @Returned VkSurfaceFormatKHR[] formats);
+		VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, @Returned VkSurfaceFormatKHR[] formats);
 
 		/**
 		 * Queries the supported presentation modes.
@@ -184,7 +216,7 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param modes				Supported presentation modes
 		 * @return Result
 		 */
-		VkResult vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, VkPresentModeKHR[] modes);
+		VkResult vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, @Returned VkPresentModeKHR[] modes);
 
 		/**
 		 * Destroys a surface.
@@ -192,6 +224,6 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param surface			Surface
 		 * @param allocator			Allocator
 		 */
-		void vkDestroySurfaceKHR(Handle instance, VulkanSurface surface, Handle allocator);
+		void vkDestroySurfaceKHR(Instance instance, VulkanSurface surface, Handle allocator);
 	}
 }

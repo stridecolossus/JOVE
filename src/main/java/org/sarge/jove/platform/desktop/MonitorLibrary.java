@@ -6,7 +6,7 @@ import org.sarge.jove.foreign.IntegerReference;
  * GLFW monitor API.
  * @author Sarge
  */
-interface DesktopLibraryMonitor {
+interface MonitorLibrary {
 	/**
 	 * GLFW display mode.
 	 */

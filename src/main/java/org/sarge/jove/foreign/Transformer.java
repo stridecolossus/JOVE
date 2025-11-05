@@ -20,9 +20,10 @@ public interface Transformer<T, N> {
 
 	/**
 	 * @return Transformer for an array of this native type
+	 * @see DefaultArrayTransformer
 	 */
 	default Transformer<?, ?> array() {
-		return new ArrayTransformer(this);
+		return new DefaultArrayTransformer(this);
 	}
 
 	/**
@@ -32,7 +33,26 @@ public interface Transformer<T, N> {
 	 * @return Off-heap argument
 	 * @see #empty()
 	 */
-	Object marshal(T arg, SegmentAllocator allocator);
+	N marshal(T arg, SegmentAllocator allocator);
+
+	/**
+	 * Helper.
+	 * Marshals a possibly empty value.
+	 * @param value				Value
+	 * @param transformer		Transformer
+	 * @param allocator			Off-heap allocator
+	 * @return Value to marshal
+	 * @see #empty()
+	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	static Object marshal(Object value, Transformer transformer, SegmentAllocator allocator) {
+		if(value == null) {
+			return transformer.empty();
+		}
+		else {
+			return transformer.marshal(value, allocator);
+		}
+	}
 
 	/**
 	 * @return Empty native value
@@ -41,8 +61,6 @@ public interface Transformer<T, N> {
 		return MemorySegment.NULL;
 	}
 
-	// TODO - 'ref' parameter indicating whether being marshalled as by-reference parameter => can avoid actually marshalling if required (e.g. structures) but still does allocation
-
 	/**
 	 * @return Transformer to unmarshal a native value
 	 * @throws UnsupportedOperationException if the domain type cannot be returned from a native method
@@ -50,7 +68,7 @@ public interface Transformer<T, N> {
 	Function<N, T> unmarshal();
 
 	/**
-	 * @return Update method for a by-reference parameter
+	 * @return Update transformer for a by-reference parameter
 	 * @throws UnsupportedOperationException if the native type cannot be returned as a by-reference parameter
 	 */
 	default BiConsumer<N, T> update() {

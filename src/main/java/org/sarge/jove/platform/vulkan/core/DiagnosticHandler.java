@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
@@ -49,7 +50,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 	}
 
 	private final Instance instance;
-	private final HandlerLibrary lib;
+	private final HandlerLibrary library;
 
 	/**
 	 * Constructor.
@@ -60,12 +61,12 @@ public class DiagnosticHandler extends TransientNativeObject {
 	DiagnosticHandler(Handle handle, Instance instance, HandlerLibrary lib) {
 		super(handle);
 		this.instance = requireNonNull(instance);
-		this.lib = requireNonNull(lib);
+		this.library = requireNonNull(lib);
 	}
 
 	@Override
 	protected void release() {
-		lib.vkDestroyDebugUtilsMessengerEXT(instance, this, null);
+		library.vkDestroyDebugUtilsMessengerEXT(instance, this, null);
 	}
 
 	/**
@@ -122,7 +123,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * @param severity			Severity
 		 * @param type				Message type(s) bitfield
 		 * @param pCallbackData		Data
-		 * @param pUserData			Optional user data (always {@code null})
+		 * @param pUserData			Optional user data, always {@code null}
 		 * @return {@code false}
 		 */
 		@SuppressWarnings({"unused", "unchecked"})
@@ -220,7 +221,10 @@ public class DiagnosticHandler extends TransientNativeObject {
 
 			// Create handler
 			final var handle = new Pointer();
-			lib.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
+			final VkResult result = lib.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
+			if(result != VkResult.SUCCESS) {
+				throw new VulkanException(result);
+			}
 
 			// Create handler instance
 			return new DiagnosticHandler(handle.get(), instance, lib);
@@ -283,8 +287,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		protected HandlerLibrary library(Instance instance, Registry registry) {
 			final SymbolLookup lookup = name -> instance.function(name).map(Handle::address);
-	    	final var builder = new NativeLibrary.Builder(lookup, registry);
-	    	return builder.build(List.of(HandlerLibrary.class)).get();
+	    	final var factory = new NativeLibraryFactory(lookup, registry);
+	    	return (HandlerLibrary) factory.build(List.of(HandlerLibrary.class));
 		}
 	}
 }

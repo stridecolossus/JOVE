@@ -10,7 +10,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.*;
 import org.sarge.jove.control.Button.Action;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
+import org.sarge.jove.platform.desktop.DeviceLibrary.*;
 import org.sarge.jove.util.ReferenceFactory;
 
 @SuppressWarnings("unchecked")

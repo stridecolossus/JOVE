@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 import org.sarge.jove.control.*;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.*;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.*;
+import org.sarge.jove.platform.desktop.DeviceLibrary.*;
 
 /**
  * The <i>mouse device</i> exposes event sources for the mouse pointer, buttons and scroll-wheel.

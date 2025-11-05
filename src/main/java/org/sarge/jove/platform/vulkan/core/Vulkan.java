@@ -6,6 +6,8 @@ import java.util.function.Consumer;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.Version;
+import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.platform.vulkan.render.Swapchain;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 
 /**
@@ -19,25 +21,18 @@ public interface Vulkan {
 	Version VERSION = new Version(1, 1, 0);
 
 	/**
+	 * Standard validation layer.
+	 */
+	String STANDARD_VALIDATION = "VK_LAYER_KHRONOS_validation";
+
+	/**
 	 * Instantiates the Vulkan native library.
 	 * @return Vulkan library
 	 */
-	static NativeLibrary create() {
+	static Object create() {
 		// Init API factory
 		final Registry registry = DefaultRegistry.create();
-		final var builder = new NativeLibrary.Builder("vulkan-1", registry);
-
-		// Enumerate API
-		final Class<?>[] api = {
-				Instance.Library.class,
-				PhysicalDevice.Library.class,
-				VulkanSurface.Library.class,
-				LogicalDevice.Library.class,
-				// TODO...
-		};
-
-		// Build native Vulkan API
-		final NativeLibrary lib = builder.build(List.of(api));
+		final var factory = new NativeLibraryFactory("vulkan-1", registry);
 
 		// Configure success code handler
 		final Consumer<Object> handler = code -> {
@@ -45,9 +40,21 @@ public interface Vulkan {
 				throw new VulkanException(result);
 			}
 		};
-		lib.handler(handler);
+		factory.handler(handler);
 
-		return lib;
+		// Enumerate API
+		final Class<?>[] api = {
+				Instance.Library.class,
+				PhysicalDevice.Library.class,
+				VulkanSurface.Library.class,
+				LogicalDevice.Library.class,
+				Swapchain.Library.class,
+				View.Library.class,
+				// TODO...
+		};
+
+		// Build native Vulkan API
+		return factory.build(List.of(api));
 	}
 
 	/**

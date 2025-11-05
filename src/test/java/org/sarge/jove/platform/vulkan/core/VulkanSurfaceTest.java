@@ -1,152 +1,163 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.platform.vulkan.VkPresentModeKHR.*;
+
+import java.util.List;
+import java.util.function.Predicate;
+
+import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.IntegerReference;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 
 class VulkanSurfaceTest {
-
-
 	static class MockVulkanSurfaceLibrary implements VulkanSurface.Library {
+		private VkSurfaceFormatKHR supported = new VkSurfaceFormatKHR();
+		private boolean destroyed;
+
 		@Override
-		public VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, VulkanSurface surface, IntegerReference supported) {
-			return null;
+		public VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported) {
+			assertNotNull(device);
+			assertNotNull(surface);
+			supported.set(1);
+			return VkResult.SUCCESS;
 		}
 
 		@Override
 		public VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, VulkanSurface surface, VkSurfaceCapabilitiesKHR pSurfaceCapabilities) {
-			return null;
+			pSurfaceCapabilities.minImageCount = 2;
+			return VkResult.SUCCESS;
 		}
 
 		@Override
-		public VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, NativeReference<Integer> count, VkSurfaceFormatKHR[] formats) {
-			return null;
+		public VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, VkSurfaceFormatKHR[] formats) {
+			assertNotNull(device);
+			assertNotNull(surface);
+			if(formats == null) {
+				count.set(1);
+			}
+			else {
+				formats[0] = supported;
+			}
+			return VkResult.SUCCESS;
 		}
 
 		@Override
 		public VkResult vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, VkPresentModeKHR[] modes) {
-			return null;
+			assertNotNull(device);
+			assertNotNull(surface);
+			if(modes == null) {
+				count.set(2);
+			}
+			else {
+				modes[0] = FIFO_KHR;
+				modes[1] = MAILBOX_KHR;
+			}
+			return VkResult.SUCCESS;
 		}
 
 		@Override
-		public void vkDestroySurfaceKHR(Handle instance, VulkanSurface surface, Handle allocator) {
+		public void vkDestroySurfaceKHR(Instance instance, VulkanSurface surface, Handle allocator) {
+			assertNotNull(instance);
+			assertNotNull(surface);
+			assertEquals(null, allocator);
+			destroyed = true;
 		}
 	}
 
-}
+	private VulkanSurface surface;
+	private MockVulkanSurfaceLibrary library;
+	private PhysicalDevice device;
 
-//
-//	private VulkanSurface surface;
-//	private PhysicalDevice dev;
-//	private VulkanLibrary lib;
-//
-//	@BeforeEach
-//	void before() {
-//		// Init Vulkan
-//		lib = mock(VulkanLibrary.class);
-//
-//		// Create instance
-//		final var instance = mock(Instance.class);
-//		when(instance.factory()).thenReturn(new MockReferenceFactory());
-//		when(instance.library()).thenReturn(lib);
-//
-//		// Create device
-//		dev = mock(PhysicalDevice.class);
-//		when(dev.instance()).thenReturn(instance);
-//
-//		// Create surface
-//		surface = new VulkanSurface(new Handle(1), dev);
-//	}
-//
-//	@Test
-//	void destroy() {
-//		surface.destroy();
-//		verify(lib).vkDestroySurfaceKHR(dev.instance(), surface, null);
-//		assertEquals(true, surface.isDestroyed());
-//	}
-//
-//	@DisplayName("A surface has a descriptor of its supported capabilities")
-//	@Test
-//	void capabilities() {
-//		final VkSurfaceCapabilitiesKHR caps = surface.capabilities();
-//		assertNotNull(caps);
-//		verify(lib).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, surface, caps);
-//	}
-//
-//	@DisplayName("A surface provides the supported surface formats")
-//	@Test
-//	void formats() {
-//		final IntByReference count = dev.instance().factory().integer();
-//		final List<VkSurfaceFormatKHR> formats = surface.formats();
-//		verify(lib).vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface, count, formats.get(0));
-//	}
-//
-//	@DisplayName("An available surface format can be selected for the surface")
-//	@Test
-//	void selectFormat() {
-//		final VulkanSurface cached = surface.cached();
-//		final VkSurfaceFormatKHR format = cached.formats().iterator().next();
-//		assertEquals(format, cached.format(format.format, format.colorSpace, null));
-//	}
-//
-//	@DisplayName("A surface falls back to the default format for an unsupported surface format")
-//	@Test
-//	void selectFormatDefault() {
-//		final VkSurfaceFormatKHR expected = VulkanSurface.defaultSurfaceFormat();
-//		final VkSurfaceFormatKHR actual = surface.format(VkFormat.UNDEFINED, VkColorSpaceKHR.BT2020_LINEAR_EXT, null);
-//		assertEquals(expected.format, actual.format);
-//		assertEquals(expected.colorSpace, actual.colorSpace);
-//	}
-//
-//	@DisplayName("A surface has a minimum default supported surface format")
-//	@Test
-//	void defaultSurfaceFormat() {
-//		final VkSurfaceFormatKHR format = VulkanSurface.defaultSurfaceFormat();
-//		assertEquals(VkFormat.B8G8R8A8_UNORM, format.format);
-//		assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, format.colorSpace);
-//	}
-//
-//	@DisplayName("A surface provides the set of supported presentation modes")
-//	@Test
-//	void modes() {
-//		final IntByReference count = dev.instance().factory().integer();
-//		final Set<VkPresentModeKHR> modes = surface.modes();
-//		final VkPresentModeKHR first = modes.iterator().next();
-//		verify(lib).vkGetPhysicalDeviceSurfacePresentModesKHR(dev, surface, count, new int[]{first.value()});
-//	}
-//
-//	@DisplayName("An available presentation mode can be selected for the surface")
-//	@Test
-//	void selectMode() {
-//		final VkPresentModeKHR mode = surface.modes().iterator().next();
-//		assertEquals(mode, surface.mode(mode));
-//	}
-//
-//	@DisplayName("A surface falls back to the default for an unsupported presentation mode")
-//	@Test
-//	void selectModeDefault() {
-//		assertEquals(VkPresentModeKHR.FIFO_KHR, VulkanSurface.DEFAULT_PRESENTATION_MODE);
-//		assertEquals(VulkanSurface.DEFAULT_PRESENTATION_MODE, surface.mode(VkPresentModeKHR.SHARED_CONTINUOUS_REFRESH_KHR));
-//	}
-//
-//	@DisplayName("The properties of the surface can be cached to minimise API calls")
-//	@Test
-//	void cached() {
-//		// Create cached instance
-//		final VulkanSurface cached = surface.cached();
-//		final VkSurfaceCapabilitiesKHR caps = cached.capabilities();
-//		assertEquals(caps, cached.capabilities());
-//		verify(lib, times(1)).vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, surface, caps);
-//
-//		// Check surface formats are cached
-//		final IntByReference count = dev.instance().factory().integer();
-//		final List<VkSurfaceFormatKHR> formats = cached.formats();
-//		assertEquals(formats, cached.formats());
-//		verify(lib, times(1)).vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface, count, formats.get(0));
-//
-//		// Check presentation modes are cached
-//		final Set<VkPresentModeKHR> modes = cached.modes();
-//		assertEquals(modes, cached.modes());
-//		verify(lib, times(1)).vkGetPhysicalDeviceSurfacePresentModesKHR(dev, surface, count, new int[]{modes.iterator().next().value()});
-//	}
-//}
+	@BeforeEach
+	void before() {
+		device = new MockPhysicalDevice();
+		library = new MockVulkanSurfaceLibrary();
+		surface = new VulkanSurface(new Handle(3), device, library);
+	}
+
+	@Test
+	void presentation() {
+		final Selector selector = VulkanSurface.presentation(new Handle(3), library);
+		assertEquals(true, selector.test(device));
+		assertEquals(device.families().getFirst(), selector.family(device));
+	}
+
+	@Test
+	void load() {
+		final var loaded = surface.load();
+		final var capabilities = loaded.capabilities();
+		final var modes = loaded.modes();
+		final var formats = loaded.formats();
+		assertSame(capabilities, loaded.capabilities());
+		assertSame(modes, loaded.modes());
+		assertSame(formats, loaded.formats());
+	}
+
+	@Test
+	void capabilities() {
+		final VkSurfaceCapabilitiesKHR capabilities = surface.capabilities();
+		assertEquals(2, capabilities.minImageCount);
+	}
+
+	@Nested
+	class SurfaceFormatTest {
+		private final Predicate<VkSurfaceFormatKHR> none = _ -> false;
+
+    	@Test
+    	void formats() {
+    		assertEquals(1, surface.formats().size());
+    	}
+
+    	@Test
+    	void supported() {
+    		assertEquals(library.supported, surface.select(VulkanSurface.equals(library.supported), null));
+    	}
+
+    	@Test
+    	void fallback() {
+    		final var def = new VkSurfaceFormatKHR();
+    		assertEquals(def, surface.select(none, def));
+    	}
+
+    	@Test
+    	void neither() {
+    		final var def = VulkanSurface.defaultSurfaceFormat();
+    		final VkSurfaceFormatKHR selected = surface.select(none, null);
+    		assertEquals(def.format, selected.format);
+    		assertEquals(def.colorSpace, selected.colorSpace);
+    	}
+
+    	@Test
+    	void def() {
+    		final var def = VulkanSurface.defaultSurfaceFormat();
+    		assertEquals(VkFormat.B8G8R8A8_UNORM, def.format);
+    		assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, def.colorSpace);
+    	}
+	}
+
+	@Nested
+	class PresentationModeTest {
+    	@Test
+    	void modes() {
+    		assertEquals(List.of(FIFO_KHR, MAILBOX_KHR), surface.modes());
+    	}
+
+    	@Test
+    	void select() {
+    		assertEquals(MAILBOX_KHR, surface.select(List.of(MAILBOX_KHR)));
+    		assertEquals(FIFO_KHR, surface.select(List.of(FIFO_KHR)));
+    		assertEquals(FIFO_KHR, surface.select(List.of(VkPresentModeKHR.FIFO_LATEST_READY_KHR)));
+    		assertEquals(FIFO_KHR, surface.select(List.of()));
+    	}
+	}
+
+	@Test
+	void destroy() {
+		surface.destroy();
+		assertEquals(true, surface.isDestroyed());
+		assertEquals(true, library.destroyed);
+	}
+}

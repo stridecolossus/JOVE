@@ -12,7 +12,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.Action;
 import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.platform.desktop.DeviceLibrary.KeyListener;
 import org.sarge.jove.util.ReferenceFactory;
 
 public class KeyboardDeviceTest {

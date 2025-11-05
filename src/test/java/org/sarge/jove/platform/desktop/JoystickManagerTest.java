@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
-import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
+import org.sarge.jove.platform.desktop.JoystickLibrary.JoystickListener;
 import org.sarge.jove.platform.desktop.JoystickManager.ConnectionListener;
 
 @Disabled

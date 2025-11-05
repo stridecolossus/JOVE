@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.common;
 
 import static java.util.stream.Collectors.*;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -40,7 +40,7 @@ public record DeviceFeatures(Set<String> features) {
 		try {
     		for(String name : features) {
     			final Field field = VkPhysicalDeviceFeatures.class.getField(name);
-    			field.set(structure, 1);
+    			field.set(structure, true);
     		}
 		}
 		catch(NoSuchFieldException e) {
@@ -61,7 +61,7 @@ public record DeviceFeatures(Set<String> features) {
 	public static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
 		final Predicate<Field> enabled = field -> {
 			try {
-				return field.getInt(features) == 1;
+				return field.getBoolean(features);
 			}
 			catch(Exception e) {
 				throw new RuntimeException(e);
@@ -70,7 +70,7 @@ public record DeviceFeatures(Set<String> features) {
 
 		return Arrays
 				.stream(VkPhysicalDeviceFeatures.class.getFields())
-				.filter(field -> field.getType() == int.class)
+				.filter(field -> !Modifier.isStatic(field.getModifiers()))
 				.filter(enabled)
 				.map(Field::getName)
 				.collect(collectingAndThen(toSet(), DeviceFeatures::new));

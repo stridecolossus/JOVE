@@ -13,13 +13,14 @@ public class VulkanSemaphore extends VulkanObject {
 	/**
 	 * Constructor.
 	 */
-	private VulkanSemaphore(Handle handle, LogicalDevice device) {
+	VulkanSemaphore(Handle handle, LogicalDevice device) {
 		super(handle, device);
 	}
 
 	@Override
-	protected Destructor<VulkanSemaphore> destructor(VulkanLibrary lib) {
-		return lib::vkDestroySemaphore;
+	protected Destructor<VulkanSemaphore> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroySemaphore;
 	}
 
 	/**
@@ -28,7 +29,7 @@ public class VulkanSemaphore extends VulkanObject {
 	 * @return New semaphore
 	 */
 	public static VulkanSemaphore create(LogicalDevice device) {
-		final Library lib = device.vulkan();
+		final Library lib = device.library();
 		final var ptr = new Pointer();
 		lib.vkCreateSemaphore(device, new VkSemaphoreCreateInfo(), null, ptr);
 		return new VulkanSemaphore(ptr.get(), device);
@@ -37,7 +38,7 @@ public class VulkanSemaphore extends VulkanObject {
 	/**
 	 * Vulkan semaphore API.
 	 */
-	interface Library {
+	public interface Library {
 		/**
 		 * Creates a semaphore.
 		 * @param device			Logical device

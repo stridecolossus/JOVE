@@ -1,22 +1,28 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"r",
-	"g",
-	"b",
-	"a"
-})
-public class VkComponentMapping extends VulkanStructure {
+public class VkComponentMapping implements NativeStructure {
 	public VkComponentSwizzle r;
 	public VkComponentSwizzle g;
 	public VkComponentSwizzle b;
 	public VkComponentSwizzle a;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+            JAVA_INT.withName("r"),
+            JAVA_INT.withName("g"),
+            JAVA_INT.withName("b"),
+            JAVA_INT.withName("a")
+        );
+	}
 }

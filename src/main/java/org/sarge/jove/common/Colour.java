@@ -1,14 +1,11 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.Percentile.validate;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.FloatSupport.FloatFunction;
-import org.sarge.lib.Percentile;
 
 /**
  * RGBA colour.
@@ -75,13 +72,16 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	/**
 	 * Constructor.
 	 * @throws IllegalArgumentException if any argument is not a 0..1 percentile value
-	 * @see Percentile#isValid(float)
 	 */
 	public Colour {
 		validate(red);
 		validate(green);
 		validate(blue);
 		validate(alpha);
+	}
+
+	private static void validate(float value) {
+		if((value < 0) || (value > 1)) throw new IllegalArgumentException();
 	}
 
 	/**

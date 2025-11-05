@@ -8,14 +8,17 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.InstanceTest.MockInstanceLibrary;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.PhysicalDeviceTest.MockPhysicalDeviceLibrary;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
 import org.sarge.jove.util.EnumMask;
 
-public class LogicalDeviceTest {
-	private class MockLogicalDeviceLibrary implements LogicalDevice.Library {
+class LogicalDeviceTest {
+	/**
+	 *
+	 */
+	static class MockLogicalDeviceLibrary implements LogicalDevice.Library {
 		boolean destroyed;
 		boolean blocked;
 		boolean queueBlocked;
@@ -27,7 +30,7 @@ public class LogicalDeviceTest {
 			assertEquals(1, pCreateInfo.queueCreateInfoCount);
 
 			// Check device features
-			assertEquals(1, pCreateInfo.pEnabledFeatures.wideLines);
+			assertEquals(true, pCreateInfo.pEnabledFeatures.wideLines);
 
 			// Check extensions
 			assertEquals(1, pCreateInfo.enabledExtensionCount);
@@ -35,7 +38,7 @@ public class LogicalDeviceTest {
 
 			// Check validation layers
 			assertEquals(1, pCreateInfo.enabledLayerCount);
-			assertArrayEquals(new String[]{ValidationLayer.STANDARD_VALIDATION.name()}, pCreateInfo.ppEnabledLayerNames);
+			assertArrayEquals(new String[]{Vulkan.STANDARD_VALIDATION}, pCreateInfo.ppEnabledLayerNames);
 
 			// Check required queues
 			final VkDeviceQueueCreateInfo queue = pCreateInfo.pQueueCreateInfos[0];
@@ -112,16 +115,12 @@ public class LogicalDeviceTest {
 	}
 
 	@Test
-	void build() {
-		final PhysicalDevice parent = new PhysicalDevice(new Handle(1), new MockPhysicalDeviceLibrary()) {
-			@Override
-			public List<Family> families() {
-				return List.of(family);
-			}
-		};
+	void builder() {
+		final var instance = new Instance(new Handle(1), new MockInstanceLibrary());
+		final PhysicalDevice parent = new PhysicalDevice(new Handle(1), List.of(family), instance, new MockPhysicalDeviceLibrary());
 
 		device = new LogicalDevice.Builder(parent)
-				.layer(ValidationLayer.STANDARD_VALIDATION)
+				.layer(Vulkan.STANDARD_VALIDATION)
 				.extension("extension")
 				.feature("wideLines")
 				.queue(new RequiredQueue(family))

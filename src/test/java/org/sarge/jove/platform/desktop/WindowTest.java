@@ -1,195 +1,171 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 import java.util.*;
-import java.util.function.IntBinaryOperator;
 
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.ArgumentCaptor;
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.WindowListener;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.platform.desktop.DesktopLibraryWindow.*;
+import org.sarge.jove.platform.desktop.Window.Hint;
 
 class WindowTest {
+	private static class MockWindowLibrary implements WindowLibrary {
+		private Map<Integer, Integer> hints;
+		private Dimensions size = new Dimensions(100, 200);
+		private boolean destroyed;
+		private String title;
+
+		@Override
+		public void glfwDefaultWindowHints() {
+			hints = new HashMap<>();
+		}
+
+		@Override
+		public void glfwWindowHint(int hint, int value) {
+			hints.put(hint, value);
+		}
+
+		@Override
+		public Handle glfwCreateWindow(int w, int h, String title, Handle monitor, Window shared) {
+			assertEquals(100, w);
+			assertEquals(200, h);
+			assertEquals("title", title);
+			assertEquals(null, monitor);
+			assertEquals(null, shared);
+			return new Handle(1);
+		}
+
+		@Override
+		public int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, Pointer surface) {
+			assertEquals(new Handle(1), window.handle());
+			assertEquals(new Handle(2), instance);
+			assertEquals(null, allocator);
+			surface.set(new Handle(3));
+			return 0;
+		}
+
+		@Override
+		public boolean glfwWindowShouldClose(Window window) {
+			return false;
+		}
+
+		@Override
+		public void glfwSetWindowTitle(Window window, String title) {
+			assertEquals(new Handle(1), window.handle());
+			this.title = title;
+		}
+
+		@Override
+		public void glfwGetWindowSize(Window window, IntegerReference w, IntegerReference h) {
+			assertEquals(new Handle(1), window.handle());
+			w.set(size.width());
+			h.set(size.height());
+		}
+
+		@Override
+		public void glfwSetWindowSize(Window window, int w, int h) {
+			assertEquals(new Handle(1), window.handle());
+			size = new Dimensions(w, h);
+		}
+
+		@Override
+		public void glfwDestroyWindow(Window window) {
+			assertEquals(new Handle(1), window.handle());
+			assertEquals(false, destroyed);
+			destroyed = true;
+		}
+	}
+
 	private Window window;
-	private DesktopLibrary lib;
-	private Desktop desktop;
-	private Builder factory;
+	private MockWindowLibrary library;
 
 	@BeforeEach
 	void before() {
-		lib = mock(DesktopLibrary.class);
-		factory = new MockReferenceFactory();
-		desktop = new Desktop(lib, factory);
-		window = new Window(new Handle(1), desktop);
+		library = new MockWindowLibrary();
+		window = new Window(new Handle(1), library);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(new Handle(1), window.handle());
-		assertEquals(desktop, window.desktop());
+		assertEquals(false, library.destroyed);
+		assertEquals(false, window.isDestroyed());
 	}
 
 	@Test
-	void devices() {
-		assertNotNull(window.keyboard());
-		assertNotNull(window.mouse());
+	void size() {
+		assertEquals(new Dimensions(100, 200), window.size());
 	}
 
-	@DisplayName("A window cannot be created if the native library returns a NULL window pointer")
-	@Test
-	void failed() {
-		final var builder = new Window.Builder();
-		builder.title("title");
-		builder.size(new Dimensions(1, 2));
-		assertThrows(RuntimeException.class, () -> builder.build(desktop));
-	}
-
-	@DisplayName("A window can be resized")
 	@Test
 	void resize() {
-		window.size(new Dimensions(2, 3));
-		verify(lib).glfwSetWindowSize(window, 2, 3);
+		final var size = new Dimensions(300, 400);
+		window.size(size);
+		assertEquals(size, window.size());
 	}
 
-	@DisplayName("The window title can be reset")
 	@Test
 	void title() {
 		window.title("title");
-		verify(lib).glfwSetWindowTitle(window, "title");
-	}
-
-	@DisplayName("A non-fullscreen window does not have a monitor")
-	@Test
-	void monitor() {
-		assertEquals(Optional.empty(), window.monitor());
+		assertEquals("title", library.title);
 	}
 
 	@Nested
-	class FullScreenTests {
-		private Monitor monitor;
-
-		@BeforeEach
-		void before() {
-			monitor = new Monitor(new Handle(4), "name", new Dimensions(2, 3), List.of());
-		}
-
-		@DisplayName("A fullscreen window has a monitor")
-		@Test
-		void monitor() {
-			when(lib.glfwGetWindowMonitor(window)).thenReturn(monitor);
-			assertEquals(Optional.of(monitor), window.monitor());
-		}
-
-		@DisplayName("A window can be made fullscreen")
-		@Test
-    	void full() {
-			// TODO - implement
-			// TOOD - separate tests into windowed and full-screen?
-    	}
-	}
-
-	@Nested
-	class ListenerTests {
-    	@ParameterizedTest
-    	@EnumSource(WindowListener.Type.class)
-    	void listener(WindowListener.Type type) {
-    		// Register state-change listener
-    		final WindowListener listener = mock(WindowListener.class);
-    		window.listener(type, listener);
-
-    		// Check API
-    		final var captor = ArgumentCaptor.forClass(WindowStateListener.class);
-    		switch(type) {
-    			case ENTER -> verify(lib).glfwSetCursorEnterCallback(eq(window), captor.capture());
-    			case FOCUS -> verify(lib).glfwSetWindowFocusCallback(eq(window), captor.capture());
-    			case ICONIFIED -> verify(lib).glfwSetWindowIconifyCallback(eq(window), captor.capture());
-    			case CLOSED -> verify(lib).glfwSetWindowCloseCallback(eq(window), captor.capture());
-    		}
-
-    		// Check listener
-    		final WindowStateListener adapter = captor.getValue();
-    		adapter.state(null, 1);
-    		verify(listener).state(type, true);
+	class SurfaceTest {
+    	@Test
+    	void surface() {
+    		assertEquals(new Handle(3), window.surface(new Handle(2)));
     	}
 
     	@Test
-    	void resize() {
-    		// Register resize listener
-    		final var listener = mock(IntBinaryOperator.class);
-    		window.resize(listener);
-
-    		// Check API
-    		final var captor = ArgumentCaptor.forClass(WindowResizeListener.class);
-    		verify(lib).glfwSetWindowSizeCallback(eq(window), captor.capture());
-
-    		// Check listener
-    		final WindowResizeListener adapter = captor.getValue();
-    		adapter.resize(null, 1, 2);
-    		verify(listener).applyAsInt(1, 2);
+    	void failed() {
+			library = new MockWindowLibrary() {
+				@Override
+				public int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, Pointer surface) {
+					return 999;
+				}
+			};
+			window = new Window(new Handle(1), library);
+    		assertThrows(RuntimeException.class, () -> window.surface(new Handle(2)));
     	}
-
-    	@Test
-    	void remove() {
-    		final var type = WindowListener.Type.ENTER;
-    		window.listener(type, null);
-    		verify(lib).glfwSetCursorEnterCallback(window, null);
-    	}
-	}
-
-	@Test
-	void surface() {
-		final Handle instance = new Handle(3);
-		assertNotNull(window.surface(instance));
-		verify(lib).glfwCreateWindowSurface(instance, window, null, factory.pointer());
-	}
-
-	@Test
-	void surfaceFailed() {
-		final Handle instance = new Handle(3);
-		when(lib.glfwCreateWindowSurface(instance, window, null, factory.pointer())).thenReturn(999);
-		assertThrows(RuntimeException.class, () -> window.surface(instance));
 	}
 
 	@Test
 	void destroy() {
 		window.destroy();
-		verify(lib).glfwDestroyWindow(window);
+		assertEquals(true, library.destroyed);
+		assertEquals(true, window.isDestroyed());
 	}
 
 	@Nested
-	class BuilderTests {
+	class BuilderTest {
 		private Window.Builder builder;
 
 		@BeforeEach
 		void before() {
-			builder = new Window.Builder();
+			builder = new Window.Builder()
+        			.hint(Hint.VISIBLE, 1)
+        			.hint(Hint.CLIENT_API, 0)
+        			.size(new Dimensions(100, 200))
+        			.title("title");
 		}
 
 		@Test
 		void build() {
-			// Init API
-			final Pointer ptr = new Pointer(1);
-			when(lib.glfwCreateWindow(640, 480, "title", null, null)).thenReturn(ptr);
-
-			// Construct a window without decorations
-			window = builder
-					.title("title")
-					.size(new Dimensions(640, 480))
-					.hint(Window.Hint.DECORATED, false)
-					.build(desktop);
-
-			// Check window
-			assertEquals(new Handle(ptr), window.handle());
+			final Window window = builder.build(library);
 			assertEquals(false, window.isDestroyed());
-			verify(lib).glfwWindowHint(0x00020005, 0);
+			assertEquals(Map.of(0x00020004, 1, 0x00022001, 0), library.hints);
+		}
+
+		@Test
+		void failed() {
+			library = new MockWindowLibrary() {
+				@Override
+				public Handle glfwCreateWindow(int w, int h, String title, Handle monitor, Window shared) {
+					return null;
+				}
+			};
+			assertThrows(RuntimeException.class, () -> builder.build(library));
 		}
 	}
 }

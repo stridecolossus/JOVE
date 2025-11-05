@@ -1,6 +1,6 @@
 package org.sarge.jove.foreign;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.foreign.ValueLayout;
 import java.util.Optional;
@@ -10,11 +10,11 @@ import org.sarge.jove.foreign.Registry.Factory;
 
 class RegistryTest {
 	private Registry registry;
-	private IdentityTransformer<Number> transformer;
+	private PrimitiveTransformer<Number> transformer;
 
 	@BeforeEach
 	void before() {
-		transformer = new IdentityTransformer<>(ValueLayout.JAVA_INT);
+		transformer = new PrimitiveTransformer<>(ValueLayout.JAVA_INT);
 		registry = new Registry();
 		registry.register(Number.class, transformer);
 	}
@@ -31,15 +31,16 @@ class RegistryTest {
 
 	@Test
 	void replace() {
-		final var other = new IdentityTransformer<Number>(ValueLayout.JAVA_INT);
+		final var other = new PrimitiveTransformer<Number>(ValueLayout.JAVA_INT);
 		registry.register(Number.class, other);
 		assertEquals(Optional.of(other), registry.transformer(Number.class));
 	}
 
 	@Test
 	void array() {
-		final ArrayTransformer array = (ArrayTransformer) registry.transformer(Number[].class).get();
-		assertNotNull(array);
+		registry.register(String.class, new StringTransformer());
+		final var array = registry.transformer(String[].class).get();
+		assertEquals(ValueLayout.ADDRESS, array.layout());
 	}
 
 	@Test

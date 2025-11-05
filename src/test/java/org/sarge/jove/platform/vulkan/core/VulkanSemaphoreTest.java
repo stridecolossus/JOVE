@@ -1,27 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.MockLibraryFactory;
+import org.junit.jupiter.api.BeforeEach;
 
 class VulkanSemaphoreTest {
-	private MockLibraryFactory factory;
-	private VulkanLibrary lib;
-	private MockLogicalDevice device;
+	private VulkanSemaphore semaphore;
 
 	@BeforeEach
 	void before() {
-		factory = new MockLibraryFactory(VulkanLibrary.class);
-		lib = factory.proxy();
-		device = new MockLogicalDevice(lib);
-	}
 
-	@Test
-	void create() {
-		final VulkanSemaphore semaphore = VulkanSemaphore.create(device);
-		semaphore.destroy();
-		assertEquals(1, factory.get("vkCreateSemaphore").count());
-		assertEquals(1, factory.get("vkDestroySemaphore").count());
 	}
 }

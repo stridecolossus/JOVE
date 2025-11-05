@@ -7,7 +7,7 @@ import org.sarge.jove.control.Event.DeviceListener;
  * GLFW device API.
  * @author Sarge
  */
-interface DesktopLibraryDevice {
+interface DeviceLibrary {
 	/**
 	 * Processes pending events.
 	 */
