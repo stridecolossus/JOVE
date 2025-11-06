@@ -240,28 +240,28 @@ public class PhysicalDevice implements NativeObject {
 		 * @param devices					Device handles
 		 * @return Result
 		 */
-		VkResult vkEnumeratePhysicalDevices(Instance instance, IntegerReference pPhysicalDeviceCount, @Returned Handle[] devices);
+		VkResult vkEnumeratePhysicalDevices(Instance instance, IntegerReference pPhysicalDeviceCount, @Updated Handle[] devices);
 
 		/**
 		 * Retrieves the properties of the given physical device.
 		 * @param device		Device handle
 		 * @param props			Device properties
 		 */
-		void vkGetPhysicalDeviceProperties(PhysicalDevice device, @Returned VkPhysicalDeviceProperties props);
+		void vkGetPhysicalDeviceProperties(PhysicalDevice device, @Updated VkPhysicalDeviceProperties props);
 
 		/**
 		 * Retrieves the memory properties of the given physical device.
 		 * @param device				Device
 		 * @param pMemoryProperties		Memory properties
 		 */
-		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, @Returned VkPhysicalDeviceMemoryProperties pMemoryProperties);
+		void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, @Updated VkPhysicalDeviceMemoryProperties pMemoryProperties);
 
 		/**
 		 * Retrieves the supported features of the given physical device.
 		 * @param device		Device handle
 		 * @param features		Returned features
 		 */
-		void vkGetPhysicalDeviceFeatures(Handle device, @Returned VkPhysicalDeviceFeatures features);
+		void vkGetPhysicalDeviceFeatures(Handle device, @Updated VkPhysicalDeviceFeatures features);
 
 		/**
 		 * Enumerates the queue families of a device.
@@ -269,7 +269,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param pQueueFamilyPropertyCount		Number of queues family properties
 		 * @param props							Queue family properties
 		 */
-		void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, IntegerReference pQueueFamilyPropertyCount, @Returned VkQueueFamilyProperties[] pQueueFamilyProperties);
+		void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, IntegerReference pQueueFamilyPropertyCount, @Updated VkQueueFamilyProperties[] pQueueFamilyProperties);
 
 		/**
 		 * Enumerates device-specific extension properties.
@@ -280,7 +280,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @return Result
 		 * @see Instance.Library#vkEnumerateInstanceExtensionProperties(String, IntegerReference, VkExtensionProperties[])
 		 */
-		VkResult vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, IntegerReference count, @Returned VkExtensionProperties[] extensions);
+		VkResult vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, IntegerReference count, @Updated VkExtensionProperties[] extensions);
 
 		/**
 		 * Enumerates device-specific validation layers.
@@ -292,7 +292,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @see Instance.Library#vkEnumerateInstanceLayerProperties(IntegerReference, VkLayerProperties[])
 		 */
 		@Deprecated
-		VkResult vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntegerReference count, @Returned VkLayerProperties[] layers);
+		VkResult vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntegerReference count, @Updated VkLayerProperties[] layers);
 
 		/**
 		 * Retrieves supported properties of the given format.
@@ -300,6 +300,6 @@ public class PhysicalDevice implements NativeObject {
 		 * @param format		Format
 		 * @param props			Returned format properties
 		 */
-		void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, @Returned VkFormatProperties props);
+		void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, @Updated VkFormatProperties props);
 	}
 }

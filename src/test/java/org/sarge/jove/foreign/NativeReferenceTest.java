@@ -14,9 +14,8 @@ class NativeReferenceTest {
 	void before() {
 		reference = new NativeReference<>() {
 			@Override
-			protected void update(MemorySegment pointer) {
-				final int value = pointer.get(ValueLayout.JAVA_INT, 0L);
-				set(value);
+			protected Integer update(MemorySegment pointer) {
+				return pointer.get(ValueLayout.JAVA_INT, 0L);
 			}
 		};
 	}

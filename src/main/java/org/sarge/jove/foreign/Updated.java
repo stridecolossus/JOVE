@@ -3,11 +3,11 @@ package org.sarge.jove.foreign;
 import java.lang.annotation.*;
 
 /**
- * The <i>returned</i> annotation denotes a parameter that is returned <i>by reference</i> from a native method.
+ * The <i>updated</i> annotation denotes a <i>by reference</i> parameter that is updated after invocation of a native method.
  * @author Sarge
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface Returned {
+public @interface Updated {
 	// Marker
 }

@@ -53,7 +53,7 @@ public class VulkanSurface extends TransientNativeObject {
 		final BiPredicate<PhysicalDevice, Family> predicate = (device, family) -> {
 			final var supported = new IntegerReference();
 			library.vkGetPhysicalDeviceSurfaceSupportKHR(device, family.index(), surface, supported);
-			return supported.get() == 1;
+			return NativeBooleanTransformer.isTrue(supported.get());
 		};
 		return new Selector(predicate);
 	}
@@ -196,7 +196,7 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param pSurfaceCapabilities		Returned capabilities
 		 * @return Result
 		 */
-		VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, VulkanSurface surface, @Returned VkSurfaceCapabilitiesKHR pSurfaceCapabilities);
+		VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, VulkanSurface surface, @Updated VkSurfaceCapabilitiesKHR pSurfaceCapabilities);
 
 		/**
 		 * Queries the supported surface formats.
@@ -206,7 +206,7 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param formats			Supported formats
 		 * @return Result
 		 */
-		VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, @Returned VkSurfaceFormatKHR[] formats);
+		VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, @Updated VkSurfaceFormatKHR[] formats);
 
 		/**
 		 * Queries the supported presentation modes.
@@ -216,7 +216,7 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param modes				Supported presentation modes
 		 * @return Result
 		 */
-		VkResult vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, @Returned VkPresentModeKHR[] modes);
+		VkResult vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, @Updated VkPresentModeKHR[] modes);
 
 		/**
 		 * Destroys a surface.

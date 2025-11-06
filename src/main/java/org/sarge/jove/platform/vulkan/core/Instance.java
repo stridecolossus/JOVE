@@ -210,7 +210,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Extensions
 		 * @return Result
 		 */
-		VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, @Returned VkExtensionProperties[] pProperties);
+		VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, @Updated VkExtensionProperties[] pProperties);
 
 		/**
 		 * Enumerates validation layer properties.
@@ -218,7 +218,7 @@ public class Instance extends TransientNativeObject {
 		 * @param pProperties		Layers
 		 * @return Result
 		 */
-		VkResult vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, @Returned VkLayerProperties[] pProperties);
+		VkResult vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, @Updated VkLayerProperties[] pProperties);
 
 		/**
 		 * Looks up a function pointer of this instance.

@@ -259,7 +259,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer					Buffer
 		 * @param pMemoryRequirements		Returned memory requirements
 		 */
-		void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, @Returned VkMemoryRequirements pMemoryRequirements);
+		void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, @Updated VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds the memory for the given buffer.

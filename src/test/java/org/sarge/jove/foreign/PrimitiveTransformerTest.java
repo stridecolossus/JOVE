@@ -8,7 +8,6 @@ import java.lang.foreign.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.sarge.jove.foreign.PrimitiveTransformer.NativeBooleanTransformer;
 
 class PrimitiveTransformerTest {
 	private PrimitiveTransformer<Integer> transformer;

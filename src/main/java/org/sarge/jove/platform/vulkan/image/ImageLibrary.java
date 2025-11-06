@@ -36,7 +36,7 @@ public interface ImageLibrary extends View.Library, Sampler.Library {		// TODO -
 	 * @param image					Image
 	 * @param pMemoryRequirements	Returned memory requirements
 	 */
-	void vkGetImageMemoryRequirements(LogicalDevice device, Handle image, @Returned VkMemoryRequirements pMemoryRequirements);
+	void vkGetImageMemoryRequirements(LogicalDevice device, Handle image, @Updated VkMemoryRequirements pMemoryRequirements);
 
 	/**
 	 * Binds image memory.

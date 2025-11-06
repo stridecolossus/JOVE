@@ -125,14 +125,14 @@ class NativeMethodTest {
 		@Test
     	void value() {
     		final var parameter = new NativeParameter(transformer, false);
-    		assertEquals(false, parameter.isReturned());
+    		assertEquals(false, parameter.isUpdated());
     		assertEquals(MockStructure.LAYOUT, parameter.layout());
     	}
 
     	@Test
     	void returned() {
     		final var parameter = new NativeParameter(transformer, true);
-    		assertEquals(true, parameter.isReturned());
+    		assertEquals(true, parameter.isUpdated());
     		assertEquals(ValueLayout.ADDRESS, parameter.layout());
     	}
 	}

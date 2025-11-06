@@ -27,14 +27,12 @@ class PointerTest {
 		final Handle handle = new Handle(3);
 		final MemorySegment address = allocator.allocate(AddressLayout.ADDRESS);
 		address.set(ValueLayout.ADDRESS, 0L, handle.address());
-		pointer.update(address);
-		assertEquals(handle, pointer.get());
+		assertEquals(handle, pointer.update(address));
 	}
 
 	@Test
 	void none() {
 		final MemorySegment address = allocator.allocate(AddressLayout.ADDRESS);
-		pointer.update(address);
-		assertEquals(null, pointer.get());
+		assertEquals(null, pointer.update(address));
 	}
 }

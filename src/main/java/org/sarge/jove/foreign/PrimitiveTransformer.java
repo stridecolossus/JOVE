@@ -51,7 +51,7 @@ public record PrimitiveTransformer<T>(ValueLayout layout) implements Transformer
 	 * @param layout		Primitive layout
 	 * @return Array transformer
 	 */
-	private static Transformer<?, ?> array(Transformer<?, ?> delegate, ValueLayout layout) {
+	static Transformer<?, ?> array(Transformer<?, ?> delegate, ValueLayout layout) {
 		return new AbstractArrayTransformer(delegate) {
 			@Override
 			protected void marshal(Object array, int length, MemorySegment address, SegmentAllocator allocator) {
@@ -66,37 +66,6 @@ public record PrimitiveTransformer<T>(ValueLayout layout) implements Transformer
 				};
 			}
 		};
-	}
-
-	/**
-	 * Specialised implementation that maps a Java {@code boolean} to a native integer.
-	 * TODO - more explanation
-	 */
-	public record NativeBooleanTransformer() implements Transformer<Boolean, Integer> {
-		@Override
-		public MemoryLayout layout() {
-			return JAVA_INT;
-		}
-
-		@Override
-		public Integer marshal(Boolean arg, SegmentAllocator allocator) {
-			return arg ? 1 : 0;
-		}
-
-		@Override
-		public Object empty() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Function<Integer, Boolean> unmarshal() {
-			return value -> value == 1 ? Boolean.TRUE : Boolean.FALSE;
-		}
-
-		@Override
-		public Transformer<?, ?> array() {
-			return PrimitiveTransformer.array(this, JAVA_INT);
-		}
 	}
 
 	/**

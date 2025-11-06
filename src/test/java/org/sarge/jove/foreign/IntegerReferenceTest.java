@@ -25,7 +25,6 @@ class IntegerReferenceTest {
 	void update() {
 		final MemorySegment address = allocator.allocate(AddressLayout.ADDRESS);
 		address.set(ValueLayout.JAVA_INT, 0L, 3);
-		integer.update(address);
-		assertEquals(3, integer.get());
+		assertEquals(3, integer.update(address));
 	}
 }

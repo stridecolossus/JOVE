@@ -188,10 +188,10 @@ public class NativeLibraryFactory {
 				.transformer(parameter.getType())
 				.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + parameter));
 
-		return new NativeParameter(transformer, isReturnedParameter(parameter));
+		return new NativeParameter(transformer, isUpdatedParameter(parameter));
 	}
 
-	private static boolean isReturnedParameter(Parameter parameter) {
-		return NativeReference.class.isAssignableFrom(parameter.getType()) || parameter.isAnnotationPresent(Returned.class);
+	private static boolean isUpdatedParameter(Parameter parameter) {
+		return NativeReference.class.isAssignableFrom(parameter.getType()) || parameter.isAnnotationPresent(Updated.class);
 	}
 }

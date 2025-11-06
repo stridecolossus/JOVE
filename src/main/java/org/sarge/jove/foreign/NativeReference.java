@@ -41,10 +41,11 @@ public abstract class NativeReference<T> {
 	}
 
 	/**
-	 * Updates the value of this reference.
+	 * Extracts the by-reference value from the given pointer.
 	 * @param pointer Pointer
+	 * @return Referenced value
 	 */
-	protected abstract void update(MemorySegment pointer);
+	protected abstract T update(MemorySegment pointer);
 
 	@Override
 	public int hashCode() {
@@ -80,7 +81,14 @@ public abstract class NativeReference<T> {
 
 		@Override
 		public BiConsumer<MemorySegment, NativeReference<?>> update() {
-			return (address, reference) -> reference.update(address);
+			return new BiConsumer<>() {
+				@SuppressWarnings({"rawtypes", "unchecked"})
+				@Override
+				public void accept(MemorySegment address, NativeReference reference) {
+					final Object value = reference.update(address);
+					reference.set(value);
+				}
+			};
 		}
 	}
 }

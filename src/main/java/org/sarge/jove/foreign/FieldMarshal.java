@@ -6,6 +6,7 @@ import java.lang.foreign.*;
  * A <i>field marshal</i> is responsible for marshalling to/from off-heap memory.
  * @author Sarge
  */
+@SuppressWarnings("rawtypes")
 interface FieldMarshal {
 	/**
 	 * Marshals a structure field to off-heap memory.
@@ -14,7 +15,6 @@ interface FieldMarshal {
 	 * @param address			Off-heap structure
 	 * @param allocator			Allocator
 	 */
-	@SuppressWarnings("rawtypes")
 	void marshal(Object value, Transformer transformer, MemorySegment address, SegmentAllocator allocator);
 
 	/**
@@ -23,6 +23,5 @@ interface FieldMarshal {
 	 * @param transformer		Transformer
 	 * @return Unmarshalled field value
 	 */
-	@SuppressWarnings("rawtypes")
 	Object unmarshal(MemorySegment address, Transformer transformer);
 }

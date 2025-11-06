@@ -512,7 +512,7 @@ public interface Command {
 		 * @param pCommandBuffers	Buffer handles
 		 * @return Result
 		 */
-		int vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, @Returned Handle[] pCommandBuffers);
+		int vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, @Updated Handle[] pCommandBuffers);
 
 		/**
 		 * Releases a set of command buffers back to the pool.

@@ -633,7 +633,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pDescriptorSets		Returned descriptor set handles
 		 * @return Result
 		 */
-		VkResult vkAllocateDescriptorSets(LogicalDevice device, VkDescriptorSetAllocateInfo pAllocateInfo, @Returned Handle[] pDescriptorSets);
+		VkResult vkAllocateDescriptorSets(LogicalDevice device, VkDescriptorSetAllocateInfo pAllocateInfo, @Updated Handle[] pDescriptorSets);
 
 		/**
 		 * Resets all descriptor sets in the given pool, i.e. recycles the resources back to the pool and releases the descriptor sets.

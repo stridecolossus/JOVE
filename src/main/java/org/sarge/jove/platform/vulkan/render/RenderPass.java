@@ -194,7 +194,7 @@ public final class RenderPass extends VulkanObject {
 		 * @param renderPass			Render pass
 		 * @param pGranularity			Returned render area granularity
 		 */
-		void vkGetRenderAreaGranularity(LogicalDevice dev, RenderPass renderPass, @Returned VkExtent2D pGranularity);
+		void vkGetRenderAreaGranularity(LogicalDevice dev, RenderPass renderPass, @Updated VkExtent2D pGranularity);
 
 		/**
 		 * Clears attachments in this render pass.

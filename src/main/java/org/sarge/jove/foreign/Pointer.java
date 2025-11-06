@@ -10,13 +10,14 @@ import org.sarge.jove.common.Handle;
  */
 public class Pointer extends NativeReference<Handle> {
 	@Override
-	protected void update(MemorySegment pointer) {
+	protected Handle update(MemorySegment pointer) {
 		final MemorySegment address = pointer.get(ValueLayout.ADDRESS, 0L);
+
 		if(MemorySegment.NULL.equals(address)) {
-			set(null);
+			return null;
 		}
 		else {
-			set(new Handle(address));
+			return new Handle(address);
 		}
 	}
 }

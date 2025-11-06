@@ -24,15 +24,15 @@ public class NativeMethod {
 		/**
 		 * Constructor.
 		 * @param transformer		Parameter transformer
-		 * @param returned			Whether this is a by-reference parameter
-		 * @throws UnsupportedOperationException if the given {@link #transformer} cannot be {@link #returned} as a by-reference parameter
-		 * @see Returned
+		 * @param updated			Whether this is a by-reference parameter
+		 * @throws UnsupportedOperationException if the given {@link #transformer} cannot be {@link #updated} as a by-reference parameter
+		 * @see Updated
 		 * @see Transformer#update()
 		 */
-		public NativeParameter(Transformer transformer, boolean returned) {
+		public NativeParameter(Transformer transformer, boolean updated) {
 			this.transformer = requireNonNull(transformer);
 
-			if(returned) {
+			if(updated) {
 				this.update = transformer.update();
 			}
 			else {
@@ -43,7 +43,7 @@ public class NativeMethod {
 		/**
 		 * @return Whether this is a by-reference parameter
 		 */
-		public boolean isReturned() {
+		public boolean isUpdated() {
 			return Objects.nonNull(update);
 		}
 
@@ -53,7 +53,7 @@ public class NativeMethod {
 		 * @return Memory layout for this parameter
 		 */
 		MemoryLayout layout() {
-			if(isReturned()) {
+			if(isUpdated()) {
 				return AddressLayout.ADDRESS;
 			}
 			else {
@@ -178,13 +178,13 @@ public class NativeMethod {
 				continue;
 			}
 
-			// Skip empty arguments
+			// Skip empty off-heap arguments
 			if(MemorySegment.NULL.equals(foreign[n])) {
 				continue;
 			}
 
-			// Skip empty arguments
-			if(!parameters[n].isReturned()) {
+			// Skip normal parameters
+			if(!parameters[n].isUpdated()) {
 				continue;
 			}
 
