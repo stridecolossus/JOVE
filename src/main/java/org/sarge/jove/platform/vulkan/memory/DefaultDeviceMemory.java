@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * Default implementation.
@@ -158,8 +158,9 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	@Override
-	protected final Destructor<DefaultDeviceMemory> destructor(VulkanLibrary lib) {
-		return lib::vkFreeMemory;
+	protected final Destructor<DefaultDeviceMemory> destructor() {
+		final MemoryLibrary library = this.device().library();
+		return library::vkFreeMemory;
 	}
 
 	@Override

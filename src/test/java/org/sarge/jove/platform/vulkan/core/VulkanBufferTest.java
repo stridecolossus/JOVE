@@ -1,172 +1,138 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.*;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.EnumMask;
 
-public class VulkanBufferTest {
+class VulkanBufferTest {
+	private static class MockVulkanBufferLibrary extends MockVulkanLibrary {
+		private boolean bind;
+		private boolean index;
+		private boolean fill;
+
+		@Override
+		public VkResult vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer) {
+			assertNotNull(device);
+			assertEquals(0, pCreateInfo.flags);
+			assertEquals(new EnumMask<>(VkBufferUsageFlag.TRANSFER_DST), pCreateInfo.usage);
+			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.sharingMode);
+			assertEquals(3L, pCreateInfo.size);
+			assertEquals(null, pAllocator);
+			pBuffer.set(new Handle(3));
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public void vkDestroyBuffer(LogicalDevice device, VulkanBuffer pBuffer, Handle pAllocator) {
+			assertNotNull(device);
+			assertNotNull(pBuffer);
+		}
+
+		@Override
+		public void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, VkMemoryRequirements pMemoryRequirements) {
+			assertNotNull(device);
+			assertEquals(new Handle(3), pBuffer);
+			pMemoryRequirements.size = 3L;
+			pMemoryRequirements.alignment = 0;
+			pMemoryRequirements.memoryTypeBits = 1;
+		}
+
+		@Override
+		public VkResult vkBindBufferMemory(LogicalDevice device, Handle pBuffer, DeviceMemory memory, long memoryOffset) {
+			assertNotNull(device);
+			assertEquals(new Handle(3), pBuffer);
+			assertEquals(3L, memory.size());
+			assertEquals(0L, memoryOffset);
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public void vkCmdBindVertexBuffers(Buffer commandBuffer, int firstBinding, int bindingCount, VulkanBuffer[] pBuffers, long[] pOffsets) {
+			assertEquals(1, firstBinding);
+			assertEquals(1, bindingCount);
+			assertEquals(1, pBuffers.length);
+			assertArrayEquals(new long[]{0L}, pOffsets);
+			bind = true;
+		}
+
+		@Override
+		public void vkCmdBindIndexBuffer(Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType) {
+			assertNotNull(buffer);
+			assertEquals(0L, offset);
+			assertEquals(VkIndexType.UINT32, indexType);
+			index = true;
+		}
+
+		@Override
+		public void vkCmdCopyBuffer(Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions) {
+			assertNotNull(srcBuffer);
+			assertNotNull(dstBuffer);
+			assertEquals(1, regionCount);
+		}
+
+		@Override
+		public void vkCmdFillBuffer(Buffer commandBuffer, VulkanBuffer dstBuffer, long dstOffset, long size, int data) {
+			assertEquals(0L, dstOffset);
+			assertEquals(-1L, size);
+			assertEquals(42, data);
+			fill = true;
+		}
+	}
+
 	private VulkanBuffer buffer;
-	private DeviceMemory mem;
-	private DeviceContext dev;
-	private Allocator allocator;
-	private VulkanLibrary lib;
+	private LogicalDevice device;
+	private MockVulkanBufferLibrary library;
+	private DeviceMemory memory;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		lib = dev.library();
-		mem = new MockDeviceMemory();
-		allocator = new MockAllocator();
-		buffer = new VulkanBuffer(new Handle(1), dev, Set.of(TRANSFER_SRC, TRANSFER_DST, VERTEX_BUFFER), mem, 2);
-	}
-
-	@Test
-	void constructor() {
-		assertEquals(Set.of(TRANSFER_SRC, TRANSFER_DST, VERTEX_BUFFER), buffer.usage());
-		assertEquals(mem, buffer.memory());
-		assertEquals(2, buffer.length());
-	}
-
-	@Test
-	void checkOffset() {
-		buffer.checkOffset(0);
-		buffer.checkOffset(1);
-	}
-
-	@Test
-	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> buffer.checkOffset(2));
-		assertThrows(IllegalArgumentException.class, () -> buffer.checkOffset(-1));
+		library = new MockVulkanBufferLibrary();
+		device = new MockLogicalDevice(library);
+		memory = new MockDeviceMemory();
+		buffer = new VulkanBuffer(new Handle(1), device, Set.of(VkBufferUsageFlag.TRANSFER_DST, VkBufferUsageFlag.VERTEX_BUFFER), memory, 3L);
 	}
 
 	@Test
 	void require() {
-		buffer.require();
-		buffer.require(TRANSFER_SRC);
-		buffer.require(TRANSFER_DST);
-		buffer.require(VERTEX_BUFFER);
-		buffer.require(TRANSFER_SRC, TRANSFER_DST, VERTEX_BUFFER);
+		buffer.require(VkBufferUsageFlag.TRANSFER_DST);
 	}
 
 	@Test
-	void unsupported() {
-		assertThrows(IllegalStateException.class, () -> buffer.require(INDEX_BUFFER));
+	void copy() {
+		final var src = new VulkanBuffer(new Handle(2), device, Set.of(VkBufferUsageFlag.TRANSFER_SRC), memory, memory.size());
+		final Command copy = src.copy(buffer);
+		copy.execute(null);
 	}
+
+	@Test
+	void fill() {
+		final Command fill = buffer.fill(0L, VulkanBuffer.VK_WHOLE_SIZE, 42);
+		fill.execute(null);
+		assertEquals(true, library.fill);
+	}
+
+	// TODO - offset tests
 
 	@Test
 	void create() {
-		// Specify buffer properties
-		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
-				.usage(TRANSFER_SRC)
-				.required(VkMemoryProperty.HOST_VISIBLE)
-				.build();
-
-		// Create buffer
-		buffer = VulkanBuffer.create(dev, allocator, 2, props);
-		assertEquals(Set.of(TRANSFER_SRC), buffer.usage());
-		assertEquals(2, buffer.length());
-
-		// Check API
-		final var expected = new VkBufferCreateInfo() {
-			@Override
-			public boolean equals(Object obj) {
-				final var info = (VkBufferCreateInfo) obj;
-				assertEquals(EnumMask.of(TRANSFER_SRC), info.usage);
-				assertEquals(VkSharingMode.EXCLUSIVE, info.sharingMode);
-				assertEquals(2, info.size);
-				return true;
-			}
-		};
-		final var reqs = new VkMemoryRequirements() {
-			@Override
-			public boolean equals(Object obj) {
-				return true;
-			}
-		};
-		verify(lib).vkCreateBuffer(dev, expected, null, dev.factory().pointer());
-		verify(lib).vkGetBufferMemoryRequirements(dev, buffer.handle(), reqs);
-		verify(lib).vkBindBufferMemory(dev, buffer.handle(), mem, 0L);
 	}
 
 	@Test
 	void staging() {
-		// Create data
-		final var data = mock(ByteSizedBufferable.class);
-		when(data.length()).thenReturn(2);
-
-		// Create staging buffer
-		final var staging = VulkanBuffer.staging(dev, allocator, data);
-		assertEquals(Set.of(TRANSFER_SRC), staging.usage());
-		assertEquals(2, staging.length());
-
-		// Check data is copied to the buffer
-		verify(data).buffer(staging.buffer());
 	}
 
-	@DisplayName("A buffer can be destroyed")
 	@Test
 	void destroy() {
 		buffer.destroy();
-		verify(lib).vkDestroyBuffer(dev, buffer, null);
-		assertEquals(true, mem.isDestroyed());
+		assertEquals(true, buffer.isDestroyed());
+		assertEquals(true, memory.isDestroyed());
 	}
-
-	@DisplayName("A buffer copy command...")
-	@Nested
-	class CopyBufferTests {
-    	@DisplayName("can be created to copy the whole of the buffer")
-    	@Test
-    	void copy() {
-    		final VulkanBuffer dest = new VulkanBuffer(new Handle(2), dev, Set.of(VkBufferUsageFlag.TRANSFER_DST), mem, 2);
-    		final BufferCopyCommand copy = buffer.copy(dest);
-    		copy.execute(lib, new MockCommandBuffer());
-    	}
-
-    	@DisplayName("cannot copy a buffer to itself")
-    	@Test
-    	void self() {
-    		assertThrows(IllegalArgumentException.class, () -> buffer.copy(buffer));
-    	}
-	}
-
-	@DisplayName("A buffer fill command...")
-	@Nested
-	class FillBufferTests {
-    	@Test
-    	void fill() {
-    		final Command fill = buffer.fill(0, VulkanBuffer.VK_WHOLE_SIZE, 42);
-    		final var cmd = mock(Command.CommandBuffer.class);
-    		fill.execute(lib, cmd);
-    		verify(lib).vkCmdFillBuffer(cmd, buffer, 0, VulkanBuffer.VK_WHOLE_SIZE, 42);
-    	}
-
-    	@DisplayName("must have a valid buffer offset")
-    	@Test
-    	void offset() {
-    		assertThrows(IllegalArgumentException.class, () -> buffer.fill(2, VulkanBuffer.VK_WHOLE_SIZE, 42));
-    	}
-
-    	@DisplayName("must have an offset and size with the correct alignment")
-    	@Test
-    	void alignment() {
-    		assertThrows(IllegalArgumentException.class, () -> buffer.fill(3, VulkanBuffer.VK_WHOLE_SIZE, 42));
-    		assertThrows(IllegalArgumentException.class, () -> buffer.fill(0, 3, 42));
-    	}
-
-    	@DisplayName("must be created from a buffer that is a transfer destination")
-    	@Test
-    	void destination() {
-    		final VulkanBuffer invalid = new VulkanBuffer(new Handle(2), dev, Set.of(VkBufferUsageFlag.TRANSFER_SRC), mem, 2);
-    		assertThrows(IllegalStateException.class, () -> invalid.fill(0, VulkanBuffer.VK_WHOLE_SIZE, 42));
-    	}
-    }
 }

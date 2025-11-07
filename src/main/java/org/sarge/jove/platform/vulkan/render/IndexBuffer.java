@@ -57,7 +57,7 @@ public final class IndexBuffer extends VulkanBuffer {
 	public Command bind(long offset) {
 		checkOffset(offset);
 		validateLimit();
-		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
+		return buffer -> this.library().vkCmdBindIndexBuffer(buffer, this, offset, type);
 	}
 
 	/**

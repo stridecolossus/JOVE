@@ -9,7 +9,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.EnumMask;
 
@@ -54,6 +54,7 @@ public final class Sampler extends VulkanObject {
 			}
 		};
 	}
+	// TODO - implements this?
 
 	/**
 	 * The <i>address mode</i> specifies how coordinates outside of the texture are handled.

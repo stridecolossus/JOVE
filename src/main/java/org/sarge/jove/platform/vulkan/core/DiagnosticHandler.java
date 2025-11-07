@@ -115,8 +115,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 */
 	@SuppressWarnings("rawtypes")
 	private record Callback(Consumer<Message> consumer, Transformer transformer) {
-		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = new ReverseMapping<>(VkDebugUtilsMessageType.class);
-		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = new ReverseMapping<>(VkDebugUtilsMessageSeverity.class);
+		private static final ReverseMapping<VkDebugUtilsMessageType> TYPE = ReverseMapping.mapping(VkDebugUtilsMessageType.class);
+		private static final ReverseMapping<VkDebugUtilsMessageSeverity> SEVERITY = ReverseMapping.mapping(VkDebugUtilsMessageSeverity.class);
 
 		/**
 		 * Callback handler method.

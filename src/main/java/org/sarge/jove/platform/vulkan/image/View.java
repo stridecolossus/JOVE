@@ -10,6 +10,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.FrameBuffer;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * An <i>image view</i> is a reference to an {@link Image} used as a frame buffer <i>attachment</i>.
@@ -131,6 +132,7 @@ public class View extends VulkanObject {
 		public View build(LogicalDevice device, Image image) {
 			// Build view descriptor
 			final var info = new VkImageViewCreateInfo();
+			info.flags = new EnumMask<>();
 			info.viewType = Objects.requireNonNullElseGet(type, () -> type(image));
 			info.format = image.descriptor().format();
 			info.image = image.handle();
@@ -150,7 +152,7 @@ public class View extends VulkanObject {
 	/**
 	 * Image view API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Creates an image view.
 		 * @param device			Logical device
@@ -178,7 +180,7 @@ public class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearColorImage(Command.CommandBuffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
+		void vkCmdClearColorImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 		// TODO - these can only be done outside of a render pass? what are they for?
 
@@ -191,7 +193,7 @@ public class View extends VulkanObject {
 		 * @param rangeCount		Number of sub-resource ranges
 		 * @param pRanges			Sub-resource ranges
 		 */
-		void vkCmdClearDepthStencilImage(Command.CommandBuffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
+		void vkCmdClearDepthStencilImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
 		// TODO
 	}
 }

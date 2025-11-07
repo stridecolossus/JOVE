@@ -15,7 +15,7 @@ class IntEnumTest {
 
     	@BeforeEach
     	void before() {
-    		mapping = new ReverseMapping<>(MockEnum.class);
+    		mapping = ReverseMapping.mapping(MockEnum.class);
     	}
 
     	@DisplayName("An enumeration constant can be mapped from a native value")

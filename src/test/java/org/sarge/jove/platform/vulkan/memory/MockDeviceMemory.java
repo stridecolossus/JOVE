@@ -6,7 +6,7 @@ import java.util.Set;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
-import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 public class MockDeviceMemory extends DefaultDeviceMemory {
@@ -17,7 +17,7 @@ public class MockDeviceMemory extends DefaultDeviceMemory {
 	}
 
 	public MockDeviceMemory(MemoryType type) {
-		super(new Handle(1), new MockDeviceContext(), type, 2);
+		super(new Handle(1), new MockLogicalDevice(), type, 2);
 	}
 
 	@Override

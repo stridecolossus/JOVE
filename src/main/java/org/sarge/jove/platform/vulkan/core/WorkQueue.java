@@ -36,7 +36,7 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		/**
 		 * Queue flag mapper.
 		 */
-		private static final ReverseMapping<VkQueueFlag> MAPPING = new ReverseMapping<>(VkQueueFlag.class);
+		private static final ReverseMapping<VkQueueFlag> MAPPING = ReverseMapping.mapping(VkQueueFlag.class);
 
 		/**
 		 * Helper - Creates a new queue family from the given descriptor.

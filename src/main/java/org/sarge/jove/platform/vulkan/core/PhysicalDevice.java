@@ -232,7 +232,7 @@ public class PhysicalDevice implements NativeObject {
 	/**
 	 * Vulkan physical device API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Enumerates the physical devices on this platform.
 		 * @param instance					Vulkan instance

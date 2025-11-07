@@ -15,7 +15,7 @@ class EnumMaskTest {
 
 	@BeforeEach
 	void before() {
-		mapping = new ReverseMapping<>(MockEnum.class);
+		mapping = ReverseMapping.mapping(MockEnum.class);
 	}
 
 	@Test

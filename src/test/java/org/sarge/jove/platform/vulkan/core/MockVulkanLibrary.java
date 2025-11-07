@@ -3,11 +3,13 @@ package org.sarge.jove.platform.vulkan.core;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.render.Swapchain;
+import org.sarge.jove.platform.vulkan.memory.*;
+import org.sarge.jove.platform.vulkan.render.*;
+import org.sarge.jove.util.EnumMask;
 
-public class MockVulkanLibrary implements Instance.Library, PhysicalDevice.Library, LogicalDevice.Library, Swapchain.Library, View.Library {
+public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, RenderLibrary, ImageLibrary {
 	// Instance
 
 	@Override
@@ -118,14 +120,86 @@ public class MockVulkanLibrary implements Instance.Library, PhysicalDevice.Libra
 	}
 
 	@Override
-	public VkResult vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence,
-			IntegerReference pImageIndex) {
-		return null;
+	public int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
+		return VkResult.SUCCESS.value();
 	}
 
 	@Override
 	public VkResult vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo) {
 		return null;
+	}
+
+    // Fence
+
+	@Override
+	public VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyFence(LogicalDevice device, Fence fence, Handle pAllocator) {
+	}
+
+	@Override
+	public VkResult vkResetFences(LogicalDevice device, int fenceCount, Fence[] pFences) {
+		return null;
+	}
+
+	@Override
+	public int vkGetFenceStatus(LogicalDevice device, Fence fence) {
+		return 0;
+	}
+
+	@Override
+	public VkResult vkWaitForFences(LogicalDevice device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout) {
+		return null;
+	}
+
+	// Semaphore
+
+	@Override
+	public VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroySemaphore(LogicalDevice device, VulkanSemaphore semaphore, Handle pAllocator) {
+	}
+
+    // Image
+
+	@Override
+	public VkResult vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Handle pAllocator, Pointer pImage) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyImage(LogicalDevice device, Image image, Handle pAllocator) {
+	}
+
+	@Override
+	public void vkGetImageMemoryRequirements(LogicalDevice device, Handle image, VkMemoryRequirements pMemoryRequirements) {
+	}
+
+	@Override
+	public VkResult vkBindImageMemory(LogicalDevice device, Handle image, DeviceMemory memory, long memoryOffset) {
+		return null;
+	}
+
+	@Override
+	public void vkCmdCopyImage(Command.Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageCopy[] pRegions) {
+	}
+
+	@Override
+	public void vkCmdCopyBufferToImage(Command.Buffer commandBuffer, VulkanBuffer srcBuffer, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions) {
+	}
+
+	@Override
+	public void vkCmdCopyImageToBuffer(Command.Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions) {
+	}
+
+	@Override
+	public void vkCmdBlitImage(Command.Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageBlit[] pRegions, VkFilter filter) {
 	}
 
 	// View
@@ -140,10 +214,147 @@ public class MockVulkanLibrary implements Instance.Library, PhysicalDevice.Libra
     }
 
     @Override
-    public void vkCmdClearColorImage(CommandBuffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges) {
+    public void vkCmdClearColorImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges) {
     }
 
     @Override
-    public void vkCmdClearDepthStencilImage(CommandBuffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges) {
+    public void vkCmdClearDepthStencilImage(Command.Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges) {
     }
+
+    // Command
+
+	@Override
+	public VkResult vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyCommandPool(LogicalDevice device, Command.Pool commandPool, Handle pAllocator) {
+	}
+
+	@Override
+	public VkResult vkResetCommandPool(LogicalDevice device, Command.Pool commandPool, EnumMask<VkCommandPoolResetFlag> flags) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Handle[] pCommandBuffers) {
+		return null;
+	}
+
+	@Override
+	public void vkFreeCommandBuffers(LogicalDevice device, Command.Pool commandPool, int commandBufferCount, Command.Buffer[] pCommandBuffers) {
+	}
+
+	@Override
+	public VkResult vkBeginCommandBuffer(Command.Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkEndCommandBuffer(Command.Buffer commandBuffer) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkResetCommandBuffer(Command.Buffer commandBuffer, EnumMask<VkCommandBufferResetFlag> flags) {
+		return null;
+	}
+
+	@Override
+	public void vkCmdExecuteCommands(Command.Buffer commandBuffer, int commandBufferCount, Command.Buffer[] pCommandBuffers) {
+	}
+
+	// Buffer
+
+	@Override
+	public VkResult vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyBuffer(LogicalDevice device, VulkanBuffer pBuffer, Handle pAllocator) {
+	}
+
+	@Override
+	public void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, VkMemoryRequirements pMemoryRequirements) {
+	}
+
+	@Override
+	public VkResult vkBindBufferMemory(LogicalDevice device, Handle pBuffer, DeviceMemory memory, long memoryOffset) {
+		return null;
+	}
+
+	@Override
+	public void vkCmdBindVertexBuffers(Buffer commandBuffer, int firstBinding, int bindingCount, VulkanBuffer[] pBuffers, long[] pOffsets) {
+	}
+
+	@Override
+	public void vkCmdBindIndexBuffer(Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType) {
+	}
+
+	@Override
+	public void vkCmdCopyBuffer(Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions) {
+	}
+
+	@Override
+	public void vkCmdFillBuffer(Buffer commandBuffer, VulkanBuffer dstBuffer, long dstOffset, long size, int data) {
+	}
+
+	// Memory
+
+	@Override
+	public VkResult vkAllocateMemory(LogicalDevice device, VkMemoryAllocateInfo pAllocateInfo, Handle pAllocator, Pointer pMemory) {
+		return null;
+	}
+
+	@Override
+	public void vkFreeMemory(LogicalDevice device, DeviceMemory memory, Handle pAllocator) {
+	}
+
+	@Override
+	public int vkMapMemory(LogicalDevice device, DeviceMemory memory, long offset, long size, int flags, Pointer ppData) {
+		return 0;
+	}
+
+	@Override
+	public void vkUnmapMemory(LogicalDevice device, DeviceMemory memory) {
+	}
+
+	// Vulkan surface
+
+	@Override
+	public VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, VulkanSurface surface, VkSurfaceCapabilitiesKHR pSurfaceCapabilities) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, VkSurfaceFormatKHR[] formats) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, VkPresentModeKHR[] modes) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroySurfaceKHR(Instance instance, VulkanSurface surface, Handle allocator) {
+	}
+
+	// Sampler
+
+	@Override
+	public int vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSampler) {
+		return 0;
+	}
+
+	@Override
+	public void vkDestroySampler(LogicalDevice device, Sampler sampler, Handle pAllocator) {
+	}
 }

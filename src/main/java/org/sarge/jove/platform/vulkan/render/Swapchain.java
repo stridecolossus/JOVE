@@ -13,6 +13,7 @@ import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>swapchain</i> presents rendered images to a {@link VulkanSurface}.
@@ -33,6 +34,8 @@ public class Swapchain extends VulkanObject {
 	 * Swap-chain extension name.
 	 */
 	public static final String EXTENSION = "VK_KHR_swapchain";
+
+	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
 
 	private final Library library;
 	private final VkFormat format;
@@ -110,7 +113,8 @@ public class Swapchain extends VulkanObject {
 
 		// Retrieve next image index
 		final var index = new IntegerReference();
-		final VkResult result = library.vkAcquireNextImageKHR(this.device(), this, Long.MAX_VALUE, semaphore, fence, index);
+		final int code = library.vkAcquireNextImageKHR(this.device(), this, Long.MAX_VALUE, semaphore, fence, index);
+		final VkResult result = MAPPING.map(code);
 
 		// Check result
 		switch(result) {
@@ -564,9 +568,10 @@ public class Swapchain extends VulkanObject {
 		 * @param semaphore				Optional semaphore
 		 * @param fence					Optional fence
 		 * @param pImageIndex			Returned image index
-		 * @return Result
+		 * @return Success code
+		 * @implNote Returns {@code int} since this method returns multiple success codes
 		 */
-		VkResult vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex);
+		int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex);
 
 		/**
 		 * Presents to the swapchain.

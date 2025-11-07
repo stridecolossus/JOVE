@@ -1,185 +1,146 @@
 package org.sarge.jove.platform.vulkan.core;
-
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.sarge.jove.platform.vulkan.VkPipelineStage.FRAGMENT_SHADER;
 
-import java.util.*;
+import java.util.Set;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.PointerToIntArray;
+import org.sarge.jove.util.EnumMask;
 
-import com.sun.jna.Structure;
+class WorkTest {
+	private static class MockQueueLibrary extends MockVulkanLibrary {
+		private boolean submitted;
+		private EnumMask<VkCommandBufferUsage> flags;
 
-public class WorkTest {
-	private WorkQueue queue;
-	private CommandPool pool;
-	private CommandBuffer buffer;
-	private Work work;
-	private DeviceContext dev;
-	private VulkanLibrary lib;
+		@Override
+		public VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence) {
+			assertNotNull(queue);
+			assertNotNull(fence);
+			assertEquals(submitCount, pSubmits.length);
+			for(var submit : pSubmits) {
+				assertEquals(1, submit.commandBufferCount);
+				assertEquals(1, submit.pCommandBuffers.length);
+				assertEquals(submit.waitSemaphoreCount, submit.pWaitSemaphores.length);
+				assertEquals(submit.signalSemaphoreCount, submit.pSignalSemaphores.length);
+				if(submit.waitSemaphoreCount > 0) {
+					assertArrayEquals(new int[]{128}, submit.pWaitDstStageMask);
+				}
+			}
+			submitted = true;
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Handle[] pCommandBuffers) {
+			pCommandBuffers[0] = new Handle(3);
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public VkResult vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo) {
+			this.flags = pBeginInfo.flags;
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence) {
+			pFence.set(new Handle(4));
+			return VkResult.SUCCESS;
+		}
+	}
+
+	private Pool pool;
+	private Buffer buffer;
+	private LogicalDevice device;
+	private MockQueueLibrary library;
 
 	@BeforeEach
 	void before() {
 		// Init device
-		dev = new MockDeviceContext();
-		lib = dev.library();
+		library = new MockQueueLibrary();
+		device = new MockLogicalDevice(library);
 
 		// Create work queue
-		final Family family = new Family(2, 3, Set.of());
-		queue = new WorkQueue(new Handle(1), family);
+		final Family family = new Family(0, 1, Set.of());
+		final WorkQueue queue = new WorkQueue(new Handle(1), family);
 
-		// Create command buffer
-		pool = new Command.CommandPool(new Handle(2), dev, queue);
-		buffer = pool.primary().begin().end();
+		// Init command pool
+		pool = new Pool(new Handle(2), device, queue, library);
 
-		// Create work instance
-		work = new Work.Builder().add(buffer).build();
-	}
-
-	@Test
-	void constructor() {
-		assertEquals(pool, work.pool());
+		// Create a command buffer
+		buffer = pool
+				.allocate(1, true)
+				.getFirst()
+				.begin()
+				.end();
 	}
 
 	@DisplayName("Work can be submitted to a queue")
 	@Test
 	void submit() {
-		// Submit work
-		final Fence fence = Fence.create(dev);
+		final Work work = new Work.Builder()
+				.add(buffer)
+				.wait(new MockVulkanSemaphore(), Set.of(FRAGMENT_SHADER))
+				.signal(new MockVulkanSemaphore())
+				.build();
+
+		final Fence fence = new Fence(new Handle(2), device, library);
 		work.submit(fence);
-
-		// Init expected submission descriptor
-		final VkSubmitInfo expected = new VkSubmitInfo() {
-			@Override
-			public boolean equals(Object obj) {
-				return dataEquals((Structure) obj);
-			}
-		};
-		expected.commandBufferCount = 1;
-		expected.pCommandBuffers = NativeObject.array(List.of(buffer));
-
-		// Check API
-		verify(lib).vkQueueSubmit(queue, 1, new VkSubmitInfo[]{expected}, fence);
+		assertEquals(true, library.submitted);
 	}
 
-	@DisplayName("A work batch must all submit to the same queue family")
+	@DisplayName("All command buffers in a work submission must be ready for execution")
 	@Test
-	void invalid() {
-		final PrimaryBuffer other = new MockCommandBuffer();
-		other.begin().end();
-		final Work invalid = Work.of(other);
-		assertThrows(IllegalArgumentException.class, () -> Work.submit(List.of(work, invalid), null));
+	void ready() {
+		final Buffer unready = pool.allocate(1, true).getFirst();
+		assertThrows(IllegalStateException.class, () -> new Work.Builder().add(unready).build());
 	}
 
+	@DisplayName("All command buffers in a work submission must submit to the same queue family")
 	@Test
-	void equals() {
-		assertEquals(true, work.equals(work));
-		assertEquals(false, work.equals(null));
+	void family() {
+		final WorkQueue queue = new WorkQueue(new Handle(4), new Family(1, 2, Set.of()));
+
+		final Buffer other = new Pool(new Handle(5), device, queue, library)
+				.allocate(1, true)
+				.getFirst()
+				.begin()
+				.end();
+
+		final var work = new Work.Builder()
+				.add(buffer)
+				.add(other);
+
+		assertThrows(IllegalArgumentException.class, () -> work.build());
 	}
 
-	@Nested
-	class BuilderTest {
-		private Work.Builder builder;
-		private VulkanSemaphore wait, signal;
+	@DisplayName("A semaphore in a work submission cannot be used as both a wait and a signal")
+	@Test
+	void both() {
+		final var semaphore = new MockVulkanSemaphore();
 
-		@BeforeEach
-		void before() {
-			wait = mock(VulkanSemaphore.class);
-			signal = mock(VulkanSemaphore.class);
-			builder = new Work.Builder();
-		}
+		final var work = new Work.Builder()
+				.add(buffer)
+				.wait(semaphore, Set.of(FRAGMENT_SHADER))
+				.signal(semaphore);
 
-		@DisplayName("A command buffer can be added to the work")
-		@Test
-		void add() {
-			builder.add(buffer);
-		}
+		assertThrows(IllegalArgumentException.class, () -> work.build());
+	}
 
-		@DisplayName("A command buffer that has not been recorded cannot be added to the work")
-		@Test
-		void addNotRecorded() {
-			buffer.reset();
-			assertThrows(IllegalStateException.class, () -> builder.add(buffer));
-		}
-
-		@DisplayName("All command buffers in the work must submit to the same queue family")
-		@Test
-		void addInvalidQueueFamily() {
-			final var other = new WorkQueue(new Handle(1), new Family(999, 2, Set.of()));
-			final CommandPool otherPool = new Command.CommandPool(new Handle(2), dev, other);
-			final CommandBuffer invalid = otherPool.primary().begin().end();
-			builder.add(buffer);
-			assertThrows(IllegalArgumentException.class, () -> builder.add(invalid));
-		}
-
-		@DisplayName("The work can be configured to wait for a semaphore")
-		@Test
-		void waitSemaphore() {
-			builder.wait(wait, VkPipelineStage.TOP_OF_PIPE);
-		}
-
-		@DisplayName("A wait semaphore cannot be added to the work more than once")
-		@Test
-		void waitSemaphoreDuplicate() {
-			builder.wait(wait, VkPipelineStage.TOP_OF_PIPE);
-			assertThrows(IllegalArgumentException.class, () -> builder.wait(wait, VkPipelineStage.TOP_OF_PIPE));
-		}
-
-		@DisplayName("The work can be configured to signal a semaphore on completion")
-		@Test
-		void signalSemaphore() {
-			builder.signal(signal);
-		}
-
-		@DisplayName("A semaphore cannot be used as both a wait and a signal")
-		@Test
-		void invalidSemaphores() {
-			builder.wait(wait, VkPipelineStage.TOP_OF_PIPE);
-			builder.signal(wait);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
-		}
-
-		@DisplayName("A work submission can be constructed via the builder")
-		@Test
-		void build() {
-			// Build work
-			work = builder
-					.add(buffer)
-					.wait(wait, VkPipelineStage.TOP_OF_PIPE)
-					.signal(signal)
-					.build();
-
-			// Submit work
-			work.submit((Fence) null);
-
-			// Init expected submission descriptor
-			final VkSubmitInfo expected = new VkSubmitInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final VkSubmitInfo info = (VkSubmitInfo) obj;
-					assertEquals(1, info.commandBufferCount);
-					assertEquals(NativeObject.array(List.of(buffer)), info.pCommandBuffers);
-
-					// Check wait semaphores
-					assertEquals(1, info.waitSemaphoreCount);
-					assertEquals(NativeObject.array(Set.of(wait)), info.pWaitSemaphores);
-					assertEquals(new PointerToIntArray(new int[]{VkPipelineStage.TOP_OF_PIPE.value()}), info.pWaitDstStageMask);
-
-					// Check signal semaphores
-					assertEquals(1, info.signalSemaphoreCount);
-					assertEquals(NativeObject.array(Set.of(signal)), info.pSignalSemaphores);
-
-					return true;
-				}
-			};
-
-			// Check API
-			verify(lib).vkQueueSubmit(queue, 1, new VkSubmitInfo[]{expected}, null);
-		}
+	@DisplayName("A command can be submitted as a one-time task")
+	@Test
+	void once() {
+		final Buffer once = Work.submit(new MockCommand(), pool);
+		assertEquals(true, library.submitted);
+		assertEquals(new EnumMask<>(VkCommandBufferUsage.ONE_TIME_SUBMIT), library.flags);
+		assertEquals(true, once.isPrimary());
+		assertEquals(pool, once.pool());
+		assertEquals(Stage.INVALID, once.stage());
 	}
 }

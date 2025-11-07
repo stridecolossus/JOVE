@@ -296,7 +296,7 @@ public class LogicalDevice extends TransientNativeObject {
 	/**
 	 * Logical device API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Creates a logical device.
 		 * @param physicalDevice		Physical device handle

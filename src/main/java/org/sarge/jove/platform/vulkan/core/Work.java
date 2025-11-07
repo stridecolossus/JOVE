@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
@@ -24,7 +24,7 @@ import org.sarge.jove.util.EnumMask;
  * @see Command
  * @author Sarge
  */
-public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStage>> waiting, Set<VulkanSemaphore> signal) {
+public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStage>> waiting, Set<VulkanSemaphore> signal) {
 	/**
 	 * Constructor.
 	 * @param buffers		Command buffers
@@ -32,13 +32,13 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	 * @param signal		Semaphores to be signalled
 	 * @throws NoSuchElementException if {@link #buffers} is empty
 	 * @throws IllegalStateException if any buffer has not been recorded
-	 * @throws IllegalStateException unless all buffers submit to the same queue family
-	 * @throws IllegalArgumentException if any semaphore is used as both a wait and signal
+	 * @throws IllegalStateException if any buffer submits to a different queue family
+	 * @throws IllegalArgumentException if any semaphore is used as both a wait and a signal
 	 */
 	public Work {
-		// Check all buffers have been recorded and submit to the same queue
+		// Check all buffers have been recorded and submit to the same queue family
 		validate(buffers);
-		verify(buffers, CommandBuffer::pool);
+		validate(buffers.stream());
 
 		// Check semaphores
 		if(!Collections.disjoint(signal, waiting.keySet())) {
@@ -53,8 +53,8 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	/**
 	 * @throws IllegalStateException if any buffer has not been recorded
 	 */
-	private static void validate(List<CommandBuffer> buffers) {
-		for(var b : buffers) {
+	private static void validate(List<Buffer> buffers) {
+		for(Buffer b : buffers) {
 			if(!b.isReady()) {
 				throw new IllegalStateException("Buffer has not been recorded: " + b);
 			}
@@ -62,33 +62,20 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	}
 
 	/**
-	 * Checks that the given work submissions all submit to the same queue family.
-	 * @param <T> Work type
-	 * @param work		Work submissions
-	 * @param mapper	Returns the command pool of the work submission
-	 * @return Common command pool
-	 * @see CommandPool#matches(CommandPool)
+	 * @return Distinct command pool
+	 * @throws IllegalArgumentException unless all buffers submit to the same queue family
 	 */
-	private static <T> CommandPool verify(List<T> work, Function<T, CommandPool> mapper) {
-		// Determine the expected command pool
-		final CommandPool expected = mapper.apply(work.getFirst());
+	private static Pool validate(Stream<Buffer> buffers) {
+    	final List<Pool> pools = buffers
+            	.map(Buffer::pool)
+            	.distinct()
+            	.toList();
 
-		// Check all submissions submit to the same family
-		for(T item : work) {
-			final CommandPool actual = mapper.apply(item);
-			if(!expected.matches(actual)) {
-				throw new IllegalArgumentException("Work submission does not submit to the common queue family: work=%s pool=%s".formatted(item, expected));
-			}
-		}
+    	if(pools.size() != 1) {
+    		throw new IllegalArgumentException("Command buffers must submit to the same queue family: pools=" + pools);
+    	}
 
-		return expected;
-	}
-
-	/**
-	 * @return Command pool for this work
-	 */
-	public CommandPool pool() {
-		return buffers.getFirst().pool();
+    	return pools.getFirst();
 	}
 
 	/**
@@ -98,7 +85,7 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 		// Populate command buffers
 		final var info = new VkSubmitInfo();
 		info.commandBufferCount = buffers.size();
-		info.pCommandBuffers = buffers.toArray(CommandBuffer[]::new);
+		info.pCommandBuffers = buffers.toArray(Buffer[]::new);
 
 		// Create a temporary copy of the wait table entries such that they can be iterated consistently below
 		final var entries = waiting
@@ -146,7 +133,12 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	 */
 	public static void submit(List<Work> batch, Fence fence) {
 		// Check all work in this batch submits to same queue
-		final CommandPool pool = verify(batch, Work::pool);
+		final Stream<Buffer> buffers = batch
+        		.stream()
+        		.map(Work::buffers)
+        		.flatMap(Collection::stream);
+
+		final Pool pool = validate(buffers);
 
 		// Build batch descriptors
 		final VkSubmitInfo[] info = batch
@@ -155,8 +147,8 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 				.toArray(VkSubmitInfo[]::new);
 
 		// Submit batch
-		final LogicalDevice.Library lib = pool.device().library();
-		lib.vkQueueSubmit(pool.queue(), info.length, info, fence);
+		final LogicalDevice.Library library = pool.device().library();
+		library.vkQueueSubmit(pool.queue(), info.length, info, fence);
 	}
 
 	/**
@@ -167,11 +159,12 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	 * @return Allocated command buffer
 	 * @see #submit(CommandBuffer)
 	 */
-	public static CommandBuffer submit(Command cmd, CommandPool pool) {
-		final CommandBuffer buffer = pool
-				.primary()
+	public static Buffer submit(Command cmd, Pool pool) {
+		final Buffer buffer = pool
+				.allocate(1, true)
+				.getFirst()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-				.record(cmd)
+				.add(cmd)
 				.end();
 
 		submit(buffer);
@@ -184,7 +177,7 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	 * Submits the given command buffer and blocks until completion.
 	 * @param buffer Command buffer
 	 */
-	public static void submit(CommandBuffer buffer) {
+	public static void submit(Buffer buffer) {
 		// Create bounding fence
 		final LogicalDevice dev = buffer.pool().device();
 		final Fence fence = Fence.create(dev);
@@ -207,7 +200,7 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 	 * Builder for a work submission.
 	 */
 	public static class Builder {
-		private final List<CommandBuffer> buffers = new ArrayList<>();
+		private final List<Buffer> buffers = new ArrayList<>();
 		private final Map<VulkanSemaphore, Set<VkPipelineStage>> wait = new HashMap<>();
 		private final Set<VulkanSemaphore> signal = new HashSet<>();
 
@@ -215,7 +208,7 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 		 * Adds a command buffer to be submitted.
 		 * @param buffer Command buffer
 		 */
-		public Builder add(CommandBuffer buffer) {
+		public Builder add(Buffer buffer) {
 			buffers.add(buffer);
 			return this;
 		}
@@ -241,8 +234,7 @@ public record Work(List<CommandBuffer> buffers, Map<VulkanSemaphore, Set<VkPipel
 
 		/**
 		 * Constructs this work.
-		 * @return New work
-		 * @see Work#Work(List, Map, Set)
+		 * @return Work submission
 		 */
 		public Work build() {
 			return new Work(buffers, wait, signal);

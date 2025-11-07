@@ -36,7 +36,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @author Sarge
  */
 public final class FormatBuilder {
-	private static final ReverseMapping<VkFormat> MAPPING = new ReverseMapping<>(VkFormat.class);
+	private static final ReverseMapping<VkFormat> MAPPING = ReverseMapping.mapping(VkFormat.class);
 
 	/**
 	 * Vulkan numeric formats.

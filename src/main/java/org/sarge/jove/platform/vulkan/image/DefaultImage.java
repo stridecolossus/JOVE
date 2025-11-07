@@ -8,7 +8,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -62,7 +62,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 	 * Builder for a default image.
 	 */
 	public static class Builder {
-		private final ReverseMapping<VkSampleCount> mapping = new ReverseMapping<>(VkSampleCount.class);
+		private static final ReverseMapping<VkSampleCount> SAMPLES = ReverseMapping.mapping(VkSampleCount.class);
 
 		private Descriptor descriptor;
 		private MemoryProperties<VkImageUsageFlag> props;
@@ -114,7 +114,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 		 */
 		public Builder samples(int samples) {
-			this.samples = mapping.map(samples);
+			this.samples = SAMPLES.map(samples);
 			return this;
 		}
 

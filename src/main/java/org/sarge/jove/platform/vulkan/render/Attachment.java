@@ -108,7 +108,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	public static class Builder {
 		private static final LoadStore DONT_CARE = new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
 
-		private final ReverseMapping<VkSampleCount> mapping = new ReverseMapping<>(VkSampleCount.class);
+		private final ReverseMapping<VkSampleCount> mapping = ReverseMapping.mapping(VkSampleCount.class);
 
 		private final VkFormat format;
 		private VkSampleCount samples = VkSampleCount.COUNT_1;

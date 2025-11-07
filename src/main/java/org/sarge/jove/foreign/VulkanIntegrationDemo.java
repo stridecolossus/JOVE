@@ -37,7 +37,7 @@ public class VulkanIntegrationDemo {
 				.build(desktop.library());
 
 		System.out.println("Initialising Vulkan...");
-		final Object vulkan = Vulkan.create();
+		final var vulkan = Vulkan.create();
 
 //		System.out.println("Supported instance layers...");
 //		for(VkLayerProperties layer : Instance.layers(vulkan.get())) {
@@ -53,7 +53,7 @@ public class VulkanIntegrationDemo {
 				.extension(DiagnosticHandler.EXTENSION)
 				.extensions(extensions)
 				.layer(Vulkan.STANDARD_VALIDATION)
-				.build((Instance.Library) vulkan);
+				.build(vulkan);
 
 		System.out.println("Attaching diagnostic handler...");
 		final DiagnosticHandler handler = new DiagnosticHandler.Builder().build(instance, DefaultRegistry.create());			// TODO - registry -> library?
@@ -69,9 +69,9 @@ public class VulkanIntegrationDemo {
 		}
 
 		System.out.println("Enumerating devices...");
-		final PhysicalDevice physical = new DeviceEnumerationHelper(instance, (PhysicalDevice.Library) vulkan)
+		final PhysicalDevice physical = new DeviceEnumerationHelper(instance, vulkan)
 				.enumerate()
-				.filter(VulkanSurface.presentation(handle, (VulkanSurface.Library) vulkan))
+				.filter(VulkanSurface.presentation(handle, vulkan))
 				.toList()
 				.getFirst();
 
@@ -99,22 +99,22 @@ public class VulkanIntegrationDemo {
 		System.out.println("  wideLines=" + physical.features().features().contains("wideLines"));
 
 		System.out.println("Creating surface...");
-		final var surface = new VulkanSurface(handle, physical, (VulkanSurface.Library) vulkan).load();
+		final var surface = new VulkanSurface(handle, physical, vulkan).load();
 
 		System.out.println("Retrieving device memory properties...");
 		final var memory = physical.memory();
 		for(int n = 0; n < memory.memoryHeapCount; ++n) {
-			System.out.println("- heap size=%d flags=%s".formatted(memory.memoryHeaps[n].size, memory.memoryHeaps[n].flags.enumerate(new ReverseMapping<>(VkMemoryHeapFlag.class))));
+			System.out.println("- heap size=%d flags=%s".formatted(memory.memoryHeaps[n].size, memory.memoryHeaps[n].flags.enumerate(ReverseMapping.mapping(VkMemoryHeapFlag.class))));
 		}
 		for(int n = 0; n < memory.memoryTypeCount; ++n) {
-			System.out.println("- type heap=%s props=%s".formatted(memory.memoryTypes[n].heapIndex, memory.memoryTypes[n].propertyFlags.enumerate(new ReverseMapping<>(VkMemoryProperty.class))));
+			System.out.println("- type heap=%s props=%s".formatted(memory.memoryTypes[n].heapIndex, memory.memoryTypes[n].propertyFlags.enumerate(ReverseMapping.mapping(VkMemoryProperty.class))));
 		}
 
 		System.out.println("Creating logical device...");
 		final var dev = new LogicalDevice.Builder(physical)
 				.extension(Swapchain.EXTENSION)
 				.queue(new RequiredQueue(physical.families().getFirst()))
-				.build((LogicalDevice.Library) vulkan);
+				.build(vulkan);
 
 		System.out.println("queues=" + dev.queues().values());
 

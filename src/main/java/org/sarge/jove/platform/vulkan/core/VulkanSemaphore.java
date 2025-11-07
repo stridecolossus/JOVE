@@ -13,7 +13,7 @@ public class VulkanSemaphore extends VulkanObject {
 	/**
 	 * Constructor.
 	 */
-	VulkanSemaphore(Handle handle, LogicalDevice device) {
+	protected VulkanSemaphore(Handle handle, LogicalDevice device) {
 		super(handle, device);
 	}
 
@@ -29,16 +29,16 @@ public class VulkanSemaphore extends VulkanObject {
 	 * @return New semaphore
 	 */
 	public static VulkanSemaphore create(LogicalDevice device) {
-		final Library lib = device.library();
-		final var ptr = new Pointer();
-		lib.vkCreateSemaphore(device, new VkSemaphoreCreateInfo(), null, ptr);
-		return new VulkanSemaphore(ptr.get(), device);
+		final Library library = device.library();
+		final var pointer = new Pointer();
+		library.vkCreateSemaphore(device, new VkSemaphoreCreateInfo(), null, pointer);
+		return new VulkanSemaphore(pointer.get(), device);
 	}
 
 	/**
 	 * Vulkan semaphore API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Creates a semaphore.
 		 * @param device			Logical device

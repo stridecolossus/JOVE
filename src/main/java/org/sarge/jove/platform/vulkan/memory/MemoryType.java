@@ -55,7 +55,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
 		// Extracts a memory heap
 		class HeapMapper implements IntFunction<Heap> {
-			private final ReverseMapping<VkMemoryHeapFlag> mapper = new ReverseMapping<>(VkMemoryHeapFlag.class);
+			private final ReverseMapping<VkMemoryHeapFlag> mapper = ReverseMapping.mapping(VkMemoryHeapFlag.class);
 
 			@Override
 			public Heap apply(int index) {
@@ -71,7 +71,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 
 		// Extracts a memory type
 		class TypeMapper implements IntFunction<MemoryType> {
-			private final ReverseMapping<VkMemoryProperty> properties = new ReverseMapping<>(VkMemoryProperty.class);
+			private final ReverseMapping<VkMemoryProperty> properties = ReverseMapping.mapping(VkMemoryProperty.class);
 
 			@Override
 			public MemoryType apply(int index) {

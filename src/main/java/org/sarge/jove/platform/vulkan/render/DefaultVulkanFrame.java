@@ -68,7 +68,7 @@ public class DefaultVulkanFrame implements VulkanFrame {
 
 	private void submit(Command.CommandBuffer render) {
 		new Work.Builder()
-        		.add(render)
+        		.execute(render)
         		.wait(available, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT))
         		.signal(ready)
         		.build()

@@ -64,9 +64,9 @@ class PipelineLayoutTest {
 
 			// Create layout
 			final PipelineLayout layout = builder
-					.add(set)
-					.add(one)
-					.add(two)
+					.execute(set)
+					.execute(one)
+					.execute(two)
 					.build(dev);
 
 			// Check layout

@@ -1,26 +1,45 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"bufferOffset",
-	"bufferRowLength",
-	"bufferImageHeight",
-	"imageSubresource",
-	"imageOffset",
-	"imageExtent"
-})
-public class VkBufferImageCopy extends VulkanStructure {
+public class VkBufferImageCopy implements NativeStructure {
 	public long bufferOffset;
 	public int bufferRowLength;
 	public int bufferImageHeight;
 	public VkImageSubresourceLayers imageSubresource;
 	public VkOffset3D imageOffset;
 	public VkExtent3D imageExtent;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+		        JAVA_LONG.withName("bufferOffset"),
+		        JAVA_INT.withName("bufferRowLength"),
+		        JAVA_INT.withName("bufferImageHeight"),
+		        MemoryLayout.structLayout(
+		            JAVA_INT.withName("aspectMask"),
+		            JAVA_INT.withName("mipLevel"),
+		            JAVA_INT.withName("baseArrayLayer"),
+		            JAVA_INT.withName("layerCount")
+		        ).withName("imageSubresource"),
+		        MemoryLayout.structLayout(
+		            JAVA_INT.withName("x"),
+		            JAVA_INT.withName("y"),
+		            JAVA_INT.withName("z")
+		        ).withName("imageOffset"),
+		        MemoryLayout.structLayout(
+		            JAVA_INT.withName("width"),
+		            JAVA_INT.withName("height"),
+		            JAVA_INT.withName("depth")
+		        ).withName("imageExtent")
+		);
+	}
 }

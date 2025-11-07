@@ -1,16 +1,16 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.VkCommandBufferLevel.*;
 import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
-import java.util.function.BiFunction;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.render.RenderPass;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -20,116 +20,77 @@ import org.sarge.jove.util.EnumMask;
 @FunctionalInterface
 public interface Command {
 	/**
-	 * Performs this command.
-	 * @param lib		Vulkan library
-	 * @param buffer 	Command buffer
+	 * Records this command to the given buffer.
+	 * @param buffer Command buffer
 	 */
-	void execute(VulkanLibrary lib, CommandBuffer buffer);
+	void execute(Buffer buffer);
 
 	/**
-	 * Convenience method - Submits this command as a one-time operation and blocks until completed.
-	 * @param pool Command pool
-	 * @see Work#submit(Command, CommandPool)
+	 * A <i>command buffer</i> records a command sequence.
+	 * Buffers are allocated by a {@link Pool}.
 	 */
-	default CommandBuffer submit(CommandPool pool) {
-		return Work.submit(this, pool);
-	}
-
-	/**
-	 * A <i>command sequence</i> is a convenience abstraction for the process of recording rendering commands for a frame.
-	 */
-	interface Sequence {
-		/**
-		 * Records this command sequence to the given buffer.
-		 * @param index 		Frame index
-		 * @param buffer		Command buffer
-		 */
-		void record(int index, CommandBuffer buffer);
-
-		/**
-		 * Wraps this sequence with the given commands.
-		 * @param before		Command executed before
-		 * @param after			Command executed after
-		 * @return Wrapped sequence
-		 */
-		default Sequence wrap(Command before, Command after) {
-			return (index, buffer) -> {
-				buffer.record(before);
-				record(index, buffer);
-				buffer.record(after);
-			};
-		}
-
-		/**
-		 * Creates a single command sequence.
-		 * @param command Command
-		 * @return Single command sequence
-		 */
-		static Sequence of(Command command) {
-			return of(List.of(command));
-		}
-
-		/**
-		 * Creates a sequence from the given list of commands.
-		 * @param commands Commands
-		 * @return Sequence
-		 */
-		static Sequence of(List<Command> commands) {
-			return (index, buffer) -> {
-				for(Command cmd : commands) {
-					buffer.record(cmd);
-				}
-			};
-		}
-	}
-
-	/**
-	 * A <i>command buffer</i> is allocated by a {@link CommandPool} and used to record a command sequence.
-	 * @see Sequence
-	 */
-	abstract class CommandBuffer implements NativeObject {
+	class Buffer implements NativeObject {
 		/**
 		 * Buffer recording states.
 		 * @see <a href="https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#commandbuffers-lifecycle">lifecycle</a>
 		 */
-		protected enum State {
+		enum Stage {
 			INITIAL,
 			RECORDING,
-			EXECUTABLE
+			EXECUTABLE,
+			INVALID
 		}
 
 		private final Handle handle;
-		private final CommandPool pool;
+		private final Pool pool;
+		private final boolean primary;
 
-		private State state = State.INITIAL;
+		private Stage stage = Stage.INITIAL;
 
 		/**
 		 * Constructor.
 		 * @param handle 		Command buffer handle
 		 * @param pool			Parent pool
+		 * @param primary		Whether this is a primary or secondary buffer
 		 */
-		protected CommandBuffer(Handle handle, CommandPool pool) {
+		Buffer(Handle handle, Pool pool, boolean primary) {
 			this.handle = requireNonNull(handle);
 			this.pool = requireNonNull(pool);
+			this.primary = primary;
 		}
 
 		@Override
-		public final Handle handle() {
+		public Handle handle() {
 			return handle;
 		}
 
 		/**
 		 * @return Parent command pool
 		 */
-		public final CommandPool pool() {
+		public Pool pool() {
 			return pool;
 		}
 
 		/**
-		 * @return Whether this command buffer is ready for submission (i.e. has been recorded)
+		 * @return Whether this is a primary or secondary buffer
 		 */
-		public final boolean isReady() {
-			return state == State.EXECUTABLE;
+		public boolean isPrimary() {
+			return primary;
+		}
+
+		/**
+		 * @return Recording stage of this buffer
+		 */
+		Stage stage() {
+			return stage;
+		}
+
+		/**
+		 * @return Whether this command buffer is ready for submission
+		 * @see Stage#EXECUTABLE
+		 */
+		public boolean isReady() {
+			return stage == Stage.EXECUTABLE;
 		}
 
 		/**
@@ -137,21 +98,34 @@ public interface Command {
 		 * @param expected Expected state
 		 * @throws IllegalStateException if this buffer is not in the expected state
 		 */
-		protected final void validate(State expected) {
-			if(state != expected) {
-				throw new IllegalStateException(String.format("Invalid buffer state: expected=%s actual=%s", expected, state));
+		private void check(Stage expected) {
+			if(stage != expected) {
+				throw new IllegalStateException(String.format("Invalid buffer state: expected=%s actual=%s", expected, stage));
 			}
 		}
 
 		/**
-		 * Starts recording.
-		 * @param inheritance		Inheritance descriptor for a secondary command buffer
-		 * @param flags				Creation flags
-		 * @return Command buffer recorder
+		 * Starts recording this primary buffer.
+		 * @param flags Usage flags
+		 * @see #begin(VkCommandBufferInheritanceInfo, VkCommandBufferUsage...)
 		 */
-		protected final CommandBuffer begin(VkCommandBufferInheritanceInfo inheritance, VkCommandBufferUsage... flags) {
+		public Buffer begin(VkCommandBufferUsage... flags) {
+			return begin(null, flags);
+		}
+
+		/**
+		 * Starts recording this buffer.
+		 * @param inheritance		Inheritance descriptor
+		 * @param flags				Usage flags
+		 */
+		public Buffer begin(VkCommandBufferInheritanceInfo inheritance, VkCommandBufferUsage... flags) {
 			// Check buffer can be recorded
-			validate(State.INITIAL);
+			check(Stage.INITIAL);
+
+			// Check inheritance descriptor provided for a secondary buffer
+			if(primary ^ Objects.isNull(inheritance)) {
+				throw new IllegalArgumentException("Mismatched inheritance descriptor: " + this);
+			}
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
@@ -159,11 +133,11 @@ public interface Command {
 			info.pInheritanceInfo = inheritance;
 
 			// Start buffer recording
-			final VulkanLibrary lib = pool.device().vulkan();
-			lib.vkBeginCommandBuffer(this, info);
+			final Library library = pool.library();
+			library.vkBeginCommandBuffer(this, info);
 
 			// Start recording
-			state = State.RECORDING;
+			stage = Stage.RECORDING;
 
 			return this;
 		}
@@ -172,28 +146,31 @@ public interface Command {
 		 * Records a command to this buffer.
 		 * @param command Command
 		 * @throws IllegalStateException if this buffer is not recording
-		 * @throws IllegalArgumentException if the given command is for a {@link SecondaryBufferCommand} but this is not a primary command buffer
-		 * @see Command#execute(VulkanLibrary, CommandBuffer)
 		 */
-		public final CommandBuffer record(Command command) {
-			validate(State.RECORDING);
-			command.execute(pool.library(), CommandBuffer.this);
+		public Buffer add(Command command) {
+			check(Stage.RECORDING);
+			command.execute(this);
 			return this;
 		}
 
 		/**
-		 * Records secondary command buffers to this primary buffer.
+		 * Records secondary command buffers to this buffer.
+		 * TODO - can this ONLY be done on a primary buffer?
 		 * @param buffers Secondary command buffers
-		 * @throws IllegalArgumentException if any of {@link #buffers} is not ready for recording
+		 * @throws IllegalArgumentException if any of {@link #buffers} is not a secondary buffer or is not ready for recording
 		 */
-		protected final void execute(List<SecondaryBuffer> buffers) {
+		public void add(List<Buffer> buffers) {
 			// Validate secondary buffers can be executed
-			for(var e : buffers) {
-    			e.validate(State.EXECUTABLE);
+			for(var buffer : buffers) {
+				if(buffer.isPrimary()) {
+					throw new IllegalArgumentException("Not a primary buffer: " + buffer);
+				}
+    			buffer.check(Stage.EXECUTABLE);
     		}
 
 			// Record secondary buffers
-			final CommandBuffer[] array = buffers.toArray(CommandBuffer[]::new);
+			check(Stage.RECORDING);
+			final Buffer[] array = buffers.toArray(Buffer[]::new);
     		final Library lib = pool.library();
     		lib.vkCmdExecuteCommands(this, array.length, array);
     	}
@@ -202,24 +179,24 @@ public interface Command {
 		 * Ends recording.
 		 * @throws IllegalStateException if this buffer is not recording
 		 */
-		public final CommandBuffer end() {
-			validate(State.RECORDING);
-			pool.library().vkEndCommandBuffer(CommandBuffer.this);
-			state = State.EXECUTABLE;
-			return CommandBuffer.this;
+		public Buffer end() {
+			check(Stage.RECORDING);
+			pool.library().vkEndCommandBuffer(Buffer.this);
+			stage = Stage.EXECUTABLE;
+			return this;
 		}
 
 		/**
 		 * Resets this command buffer.
-		 * @param flags Flags
+		 * @param flags Reset flags
 		 * @throws IllegalStateException if this buffer has not been recorded
 		 */
-		public final void reset(VkCommandBufferResetFlag... flags) {
-			validate(State.EXECUTABLE);
+		public void reset(VkCommandBufferResetFlag... flags) {
+			check(Stage.EXECUTABLE);
 			// TODO - check pool has flag
 			final EnumMask<VkCommandBufferResetFlag> mask = new EnumMask<>(flags);
 			pool.library().vkResetCommandBuffer(this, mask);
-			state = State.INITIAL;
+			stage = Stage.INITIAL;
 		}
 		// TODO - should allocated buffers be invalidated? (ditto free)
 
@@ -227,139 +204,62 @@ public interface Command {
 		 * Releases this buffer back to the pool.
 		 * @see CommandPool#free(Collection)
 		 */
-		public final void free() {
+		public void free() {
 			pool.free(Set.of(this));
-		}
-	}
-
-	/**
-	 * A <i>primary</i> command buffer can be submitted to a queue to perform work.
-	 * <p>
-	 * Primary buffers can also contain secondary buffers using the {@link PrimaryBuffer#add(List)} method.
-	 */
-	class PrimaryBuffer extends CommandBuffer {
-		/**
-		 * Constructor.
-		 */
-		PrimaryBuffer(Handle handle, CommandPool pool) {
-			super(handle, pool);
+			stage = Stage.INVALID;
 		}
 
-		/**
-		 * Starts recording to this command buffer.
-		 * @param flags Creation flags
-		 * @return Primary command buffer recorder
-		 * @throws IllegalStateException if this buffer is not ready for recording
-		 */
-		public PrimaryBuffer begin(VkCommandBufferUsage... flags) {
-			super.begin(null, flags);
-			return this;
-		}
-		// TODO - can secondary buffers also do this?
-
-		/**
-		 * Records secondary command buffers to this primary buffer.
-		 * @param buffers Secondary command buffers
-		 * @throws IllegalArgumentException if any of the {@link #buffers} are not ready for recording
-		 * @throws IllegalStateException if this buffer is not recording
-		 */
-		public PrimaryBuffer add(List<SecondaryBuffer> buffers) {
-			validate(State.RECORDING);
-			execute(buffers);
-    		return this;
-    	}
-	}
-
-	/**
-	 * A <i>secondary</i> command buffer is a subroutine command sequence that be reused in a primary command buffer.
-	 * <p>
-	 * Secondary command buffers are commonly used to record render sequences offline and/or in parallel with the rendering process,
-	 * which are then composed into a one-time primary command buffer during rendering.
-	 * <p>
-	 * @see PrimaryBuffer#add(List)
-	 */
-	class SecondaryBuffer extends CommandBuffer {
-		/**
-		 * Constructor.
-		 */
-		SecondaryBuffer(Handle handle, CommandPool pool) {
-			super(handle, pool);
+		@Override
+		public boolean equals(Object obj) {
+			return (obj == this);
 		}
 
-		/**
-		 * Starts recording a render pass to this secondary command buffer.
-		 * Note that the creation flag for this recording is assumed to be {@link VkCommandBufferUsage#RENDER_PASS_CONTINUE}.
-		 * @param pass Render pass
-		 * @throws IllegalStateException if this buffer is not ready for recording
-		 */
-		public SecondaryBuffer begin(Handle pass) {
-			// Check can be recorded
-			validate(State.INITIAL);
-
-			// Init inheritance
-			final var info = new VkCommandBufferInheritanceInfo();
-			info.renderPass = requireNonNull(pass);
-			info.subpass = 0; // TODO - subpass index, query stuff
-
-			// Begin recording
-			super.begin(info, VkCommandBufferUsage.RENDER_PASS_CONTINUE);
-
-			return this;
-		}
-
-		/**
-		 * Convenience method to create a command sequence for this secondary buffer.
-		 * @return Secondary buffer command sequence
-		 */
-		public Sequence sequence() {
-			return (_, buffer) -> buffer.execute(List.of(this));
-		}
-
-		// TODO
-		public Sequence sequence(Sequence sequence, int index, RenderPass pass) {
-			begin(pass.handle());
-			sequence.record(index, this);
-			end();
-			return (_, buffer) -> buffer.execute(List.of(this));
+		@Override
+		public String toString() {
+			return String.format("Buffer[handle=%s primary=%b stage=%s pool=%s]", this.handle(), primary, stage, pool);
 		}
 	}
 
 	/**
 	 * A <i>command pool</i> allocates command buffers used to perform work on a given {@link WorkQueue}.
 	 */
-	class CommandPool extends VulkanObject {
+	class Pool extends VulkanObject {
 		/**
 		 * Creates a command pool for the given queue.
-		 * @param dev		Logical device
-		 * @param queue		Work queue
-		 * @param flags		Creation flags
+		 * @param device		Logical device
+		 * @param queue			Work queue
+		 * @param flags			Creation flags
 		 */
-		public static CommandPool create(LogicalDevice dev, WorkQueue queue, VkCommandPoolCreateFlag... flags) {
+		public static Pool create(LogicalDevice device, WorkQueue queue, VkCommandPoolCreateFlag... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
 			info.flags = new EnumMask<>(flags);
 
 			// Create pool
-			final VulkanLibrary vulkan = dev.vulkan();
-			final NativeReference<Handle> pool = new Pointer();
-			vulkan.vkCreateCommandPool(dev, info, null, pool);
+			final Library library = device.library();
+			final Pointer pool = new Pointer();
+			library.vkCreateCommandPool(device, info, null, pool);
 
 			// Create domain object
-			return new CommandPool(pool.get(), dev, queue);
+			return new Pool(pool.get(), device, queue, library);
 		}
 
 		private final WorkQueue queue;
+		private final Library library;
+		private final List<Buffer> buffers = new ArrayList<>();
 
 		/**
 		 * Constructor.
 		 * @param handle 		Command pool handle
 		 * @param dev			Logical device
 		 * @param queue			Work queue
+		 * @param library		Command library
 		 */
-		CommandPool(Handle handle, LogicalDevice dev, WorkQueue queue) {
+		Pool(Handle handle, LogicalDevice dev, WorkQueue queue, Library library) {
 			super(handle, dev);
 			this.queue = requireNonNull(queue);
+			this.library = requireNonNull(library);
 		}
 
 		/**
@@ -369,108 +269,101 @@ public interface Command {
 			return queue;
 		}
 
-		/**
-		 * Helper - Determines whether this and the given command pool submit to the same queue family.
-		 * @param that Command pool
-		 * @return Whether both pools submit to the same queue family
-		 */
-		public boolean matches(CommandPool that) {
-			return queue.family() == that.queue.family();
-		}
-
-		// TODO
-		public VulkanLibrary library() {
-			return this.device().vulkan();
-		}
+//		/**
+//		 * Helper - Determines whether this and the given command pool submit to the same queue family.
+//		 * @param that Command pool
+//		 * @return Whether both pools submit to the same queue family
+//		 */
+//		public boolean matches(CommandPool that) {
+//			return queue.family() == that.queue.family();
+//		}
 
 		/**
-		 * Allocates a number of primary command buffers.
-		 * @param num Number of buffers to allocate
-		 * @return Primary command buffers
+		 * @return Buffers allocated by this pool
 		 */
-		public List<PrimaryBuffer> primary(int num) {
-			return allocate(num, true, PrimaryBuffer::new);
+		public List<Buffer> buffers() {
+			return Collections.unmodifiableList(buffers);
 		}
 
 		/**
-		 * Convenience method to allocate a single primary command buffer.
-		 * @return Primary buffer
+		 * @return Command library
 		 */
-		public PrimaryBuffer primary() {
-			return primary(1).get(0);
-		}
-
-		/**
-		 * Allocates a number of secondary command buffers.
-		 * @param num Number of buffers to allocate
-		 * @return Secondary command buffers
-		 */
-		public List<SecondaryBuffer> secondary(int num) {
-			return allocate(num, false, SecondaryBuffer::new);
-		}
-
-		/**
-		 * Convenience method to allocate a single secondary command buffer.
-		 * @return Secondary buffer
-		 */
-		public SecondaryBuffer secondary() {
-			return secondary(1).get(0);
+		Library library() {
+			return library;
 		}
 
 		/**
 		 * Allocates a number of command buffers from this pool.
-		 * @param num				Number of buffers to allocate
-		 * @param primary			Whether to allocate primary or secondary buffers
-		 * @param constructor		Constructor method
+		 * @param number		Number of buffers to allocate
+		 * @param primary		Whether allocating primary or secondary buffers
 		 * @return Allocated buffers
+		 * @see VkCommandBufferLevel
 		 */
-		private <T extends CommandBuffer> List<T> allocate(int num, boolean primary, BiFunction<Handle, CommandPool, T> constructor) {
+		public List<Buffer> allocate(int number, boolean primary) {
 			// Init descriptor
 			final var info = new VkCommandBufferAllocateInfo();
-			info.level = primary ? VkCommandBufferLevel.PRIMARY : VkCommandBufferLevel.SECONDARY;
-			info.commandBufferCount = requireOneOrMore(num);
+			info.level = primary ? PRIMARY : SECONDARY;
+			info.commandBufferCount = requireOneOrMore(number);
 			info.commandPool = this.handle();
 
 			// Allocate buffers
-			final LogicalDevice dev = super.device();
-			final Handle[] handles = new Handle[num];
-			dev.vulkan().vkAllocateCommandBuffers(dev, info, handles);
+			final Handle[] handles = new Handle[number];
+			library.vkAllocateCommandBuffers(this.device(), info, handles);
 
 			// Create buffers
-			return Arrays
+			final List<Buffer> allocated = Arrays
 					.stream(handles)
-					.map(handle -> constructor.apply(handle, this))
+					.map(handle -> new Buffer(handle, this, primary))
 					.toList();
+
+			// Record buffers allocated by this pool
+			buffers.addAll(allocated);
+
+			return allocated;
 		}
 
 		/**
 		 * Resets this command pool.
+		 * All allocated buffers are reset to the {@link Stage#INITIAL} state.
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
 			final var bits = new EnumMask<>(flags);
-			final LogicalDevice dev = super.device();
-			this.library().vkResetCommandPool(dev, this, bits);
+			library.vkResetCommandPool(this.device(), this, bits);
+			update(buffers, Stage.INITIAL);
 		}
 
 		/**
 		 * Releases a set of command buffers back to this pool.
 		 * @param buffers Buffers to release
 		 */
-		public void free(Collection<CommandBuffer> buffers) {
-			final CommandBuffer[] array = buffers.toArray(CommandBuffer[]::new);
-			final LogicalDevice dev = super.device();
-			this.library().vkFreeCommandBuffers(dev, this, array.length, array);
+		public void free(Collection<Buffer> buffers) {
+			final Buffer[] array = buffers.toArray(Buffer[]::new);
+			library.vkFreeCommandBuffers(this.device(), this, array.length, array);
+			update(buffers, Stage.INVALID);
+			this.buffers.removeAll(buffers);
 		}
 
 		@Override
-		protected Destructor<CommandPool> destructor(VulkanLibrary lib) {
-			return lib::vkDestroyCommandPool;
+		protected Destructor<Pool> destructor() {
+			return library::vkDestroyCommandPool;
+		}
+
+		@Override
+		protected void release() {
+			update(buffers, Stage.INVALID);
+			buffers.clear();
+		}
+
+		private static void update(Collection<Buffer> buffers, Stage stage) {
+    		for(Buffer b : buffers) {
+    			b.stage = stage;
+    		}
 		}
 
 		@Override
 		public String toString() {
-			return String.format("CommandPool[handle=%s queue=%s]", this.handle(), queue);
+			return String.format("Pool[handle=%s queue=%s buffers=%d]", this.handle(), queue, buffers.size());
 		}
 	}
 
@@ -486,7 +379,7 @@ public interface Command {
 		 * @param pCommandPool		Returned command pool handle
 		 * @return Result
 		 */
-		int vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pCommandPool);
+		VkResult vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool);
 
 		/**
 		 * Destroys a command pool (and its buffers).
@@ -494,7 +387,7 @@ public interface Command {
 		 * @param commandPool		Command pool
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyCommandPool(LogicalDevice device, CommandPool commandPool, Handle pAllocator);
+		void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Handle pAllocator);
 
 		/**
 		 * Resets a command pool.
@@ -503,16 +396,16 @@ public interface Command {
 		 * @param flags				Flags
 		 * @return Result
 		 */
-		int vkResetCommandPool(LogicalDevice device, CommandPool commandPool, EnumMask<VkCommandPoolResetFlag> flags);
+		VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlag> flags);
 
 		/**
 		 * Allocates a number of command buffers.
 		 * @param device			Logical device
 		 * @param pAllocateInfo		Descriptor
-		 * @param pCommandBuffers	Buffer handles
+		 * @param pCommandBuffers	Returned buffer handles
 		 * @return Result
 		 */
-		int vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, @Updated Handle[] pCommandBuffers);
+		VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, @Updated Handle[] pCommandBuffers);
 
 		/**
 		 * Releases a set of command buffers back to the pool.
@@ -521,7 +414,7 @@ public interface Command {
 		 * @param commandBufferCount	Number of buffers
 		 * @param pCommandBuffers		Command buffers
 		 */
-		void vkFreeCommandBuffers(LogicalDevice device, CommandPool commandPool, int commandBufferCount, CommandBuffer[] pCommandBuffers);
+		void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
 
 		/**
 		 * Starts recording.
@@ -529,14 +422,14 @@ public interface Command {
 		 * @param pBeginInfo			Descriptor
 		 * @return Result
 		 */
-		int vkBeginCommandBuffer(CommandBuffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
+		VkResult vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
 
 		/**
 		 * Stops recording.
 		 * @param commandBuffer Command buffer
 		 * @return Result
 		 */
-		int vkEndCommandBuffer(CommandBuffer commandBuffer);
+		VkResult vkEndCommandBuffer(Buffer commandBuffer);
 
 		/**
 		 * Resets a command buffer.
@@ -544,7 +437,7 @@ public interface Command {
 		 * @param flags					Flags
 		 * @return Result
 		 */
-		int vkResetCommandBuffer(CommandBuffer commandBuffer, EnumMask<VkCommandBufferResetFlag> flags);
+		VkResult vkResetCommandBuffer(Buffer commandBuffer, EnumMask<VkCommandBufferResetFlag> flags);
 
 		/**
 		 * Executes secondary command buffers.
@@ -552,6 +445,6 @@ public interface Command {
 		 * @param commandBufferCount	Number of secondary buffers
 		 * @param pCommandBuffers		Secondary buffers to execute
 		 */
-		void vkCmdExecuteCommands(CommandBuffer commandBuffer, int commandBufferCount, CommandBuffer[] pCommandBuffers);
+		void vkCmdExecuteCommands(Buffer commandBuffer, int commandBufferCount, Buffer[] pCommandBuffers);
 	}
 }

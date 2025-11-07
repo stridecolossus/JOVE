@@ -186,7 +186,7 @@ public class Instance extends TransientNativeObject {
 	/**
 	 * Vulkan API for instance management.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Creates the vulkan instance.
 		 * @param info				Instance descriptor

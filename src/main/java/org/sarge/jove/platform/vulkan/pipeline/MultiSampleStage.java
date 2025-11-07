@@ -41,7 +41,7 @@ public class MultiSampleStage {
 	 * @see #samples(VkSampleCount)
 	 */
 	public MultiSampleStage samples(int rasterizationSamples) {
-		info.rasterizationSamples = new ReverseMapping<>(VkSampleCount.class).map(rasterizationSamples);
+		info.rasterizationSamples = ReverseMapping.mapping(VkSampleCount.class).map(rasterizationSamples);
 		return this;
 	}
 

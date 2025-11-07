@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
@@ -8,12 +10,15 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>fence</i> is used to synchronise between application code and Vulkan.
  * @author Sarge
  */
 public class Fence extends VulkanObject {
+	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
+
 	/**
 	 * Creates a fence.
 	 * @param device		Logical device
@@ -26,28 +31,37 @@ public class Fence extends VulkanObject {
 		info.flags = new EnumMask<>(flags);
 
 		// Create fence
-		final VulkanLibrary vulkan = device.vulkan();
+		final Library library = device.library();
 		final var handle = new Pointer();
-		vulkan.vkCreateFence(device, info, null, handle);
+		library.vkCreateFence(device, info, null, handle);
 
 		// Create domain object
-		return new Fence(handle.get(), device);
+		return new Fence(handle.get(), device, library);
 	}
 
-	Fence(Handle handle, LogicalDevice device) {
+	private final Library library;
+
+	/**
+	 * Constructor.
+	 * @param handle		Fence handle
+	 * @param device		Logical device
+	 * @param library		Library
+	 */
+	Fence(Handle handle, LogicalDevice device, Library library) {
 		super(handle, device);
+		this.library = requireNonNull(library);
 	}
 
 	/**
 	 * @return Whether this fence has been signalled
 	 */
 	public boolean signalled() {
-		final LogicalDevice dev = this.device();
-		final VkResult result = dev.vulkan().vkGetFenceStatus(dev, this);
+		final int code = library.vkGetFenceStatus(this.device(), this);
+		final VkResult result = MAPPING.map(code);
 		return switch(result) {
-			case SUCCESS -> true;
-			case NOT_READY -> false;
-			default -> throw new VulkanException(result);
+			case SUCCESS	-> true;
+			case NOT_READY	-> false;
+			default			-> throw new VulkanException(result);
 		};
 	}
 
@@ -56,7 +70,18 @@ public class Fence extends VulkanObject {
 	 * @see #reset(LogicalDevice, Collection)
 	 */
 	public void reset() {
-		Fence.reset(device(), Set.of(this));
+		reset(Set.of(this));
+	}
+
+	/**
+	 * Resets a group of fences.
+	 * @param fences Fences to reset
+	 */
+	public static void reset(Collection<Fence> fences) {
+		final Fence[] array = fences.toArray(Fence[]::new);
+		final LogicalDevice device = array[0].device();
+		final Library library = array[0].library;
+		library.vkResetFences(device, array.length, array);
 	}
 
 	/**
@@ -64,22 +89,7 @@ public class Fence extends VulkanObject {
 	 * @see #wait(LogicalDevice, Collection, boolean, long)
 	 */
 	public void waitReady() {
-		Fence.wait(device(), Set.of(this), true, Long.MAX_VALUE);
-	}
-
-	@Override
-	protected Destructor<Fence> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyFence;
-	}
-
-	/**
-	 * Resets a group of fences.
-	 * @param device		Logical device
-	 * @param fences		Fences to reset
-	 */
-	static void reset(LogicalDevice device, Collection<Fence> fences) {
-		final Fence[] array = fences.toArray(Fence[]::new);
-		device.vulkan().vkResetFences(device, array.length, array);
+		waitReady(Set.of(this), true, Long.MAX_VALUE);
 	}
 
 	/**
@@ -89,9 +99,16 @@ public class Fence extends VulkanObject {
 	 * @param all			Whether to wait for all or any fence
 	 * @param timeout		Timeout (nanoseconds)
 	 */
-	static void wait(LogicalDevice device, Collection<Fence> fences, boolean all, long timeout) {
+	public static void waitReady(Collection<Fence> fences, boolean all, long timeout) {
 		final Fence[] array = fences.toArray(Fence[]::new);
-		device.vulkan().vkWaitForFences(device, array.length, array, all, timeout);
+		final LogicalDevice device = array[0].device();
+		final Library library = array[0].library;
+		library.vkWaitForFences(device, array.length, array, all, timeout);
+	}
+
+	@Override
+	protected Destructor<Fence> destructor() {
+		return library::vkDestroyFence;
 	}
 
 	/**
@@ -106,7 +123,7 @@ public class Fence extends VulkanObject {
 		 * @param pFence			Returned fence
 		 * @return Result
 		 */
-		int vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence);
+		VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence);
 
 		/**
 		 * Destroys a fence.
@@ -123,7 +140,7 @@ public class Fence extends VulkanObject {
 		 * @param pFences			Fences
 		 * @return Result
 		 */
-		int vkResetFences(LogicalDevice device, int fenceCount, Fence[] pFences);
+		VkResult vkResetFences(LogicalDevice device, int fenceCount, Fence[] pFences);
 
 		/**
 		 * Retrieves the status of a given fence.
@@ -131,8 +148,9 @@ public class Fence extends VulkanObject {
 		 * @param device
 		 * @param fence
 		 * @return Fence status flag
+		 * @implNote Returns {@code int} since this method has multiple success codes
 		 */
-		VkResult vkGetFenceStatus(LogicalDevice device, Fence fence);
+		int vkGetFenceStatus(LogicalDevice device, Fence fence);
 
 		/**
 		 * Waits for a number of fences.
@@ -143,6 +161,6 @@ public class Fence extends VulkanObject {
 		 * @param timeout			Timeout or {@link Long#MAX_VALUE} (nanoseconds)
 		 * @return Result
 		 */
-		int vkWaitForFences(LogicalDevice device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout);
+		VkResult vkWaitForFences(LogicalDevice device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout);
 	}
 }

@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.Version;
-import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.render.Swapchain;
 import org.sarge.jove.platform.vulkan.util.VulkanException;
 
@@ -29,7 +29,7 @@ public interface Vulkan {
 	 * Instantiates the Vulkan native library.
 	 * @return Vulkan library
 	 */
-	static Object create() {
+	static VulkanCoreLibrary create() {
 		// Init API factory
 		final Registry registry = DefaultRegistry.create();
 		final var factory = new NativeLibraryFactory("vulkan-1", registry);
@@ -44,17 +44,14 @@ public interface Vulkan {
 
 		// Enumerate API
 		final Class<?>[] api = {
-				Instance.Library.class,
-				PhysicalDevice.Library.class,
-				VulkanSurface.Library.class,
-				LogicalDevice.Library.class,
-				Swapchain.Library.class,
-				View.Library.class,
+				VulkanCoreLibrary.class,
+				Swapchain.Library.class,	// TODO
+				ImageLibrary.class,
 				// TODO...
 		};
 
 		// Build native Vulkan API
-		return factory.build(List.of(api));
+		return (VulkanCoreLibrary) factory.build(List.of(api));
 	}
 
 	/**

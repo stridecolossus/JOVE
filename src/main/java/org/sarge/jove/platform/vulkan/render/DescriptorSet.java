@@ -492,6 +492,7 @@ public final class DescriptorSet implements NativeObject {
 			final LogicalDevice dev = this.device();
 			dev.vulkan().vkResetDescriptorPool(dev, this, 0);
 		}
+		// TODO - needs to maintain allocated sets to do this?
 
 		@Override
 		protected Destructor<Pool> destructor(VulkanLibrary lib) {

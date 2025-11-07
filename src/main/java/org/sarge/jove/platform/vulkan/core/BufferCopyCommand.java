@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
  * A <i>buffer copy command</i> is used to transfer data between Vulkan buffers.
  * @author Sarge
  */
-public final class BufferCopyCommand implements Command {
+public class BufferCopyCommand implements Command {
 	/**
 	 * Creates a command to copy between the given buffers.
 	 * @param src		Source buffer
@@ -36,16 +36,21 @@ public final class BufferCopyCommand implements Command {
 	 * @param src			Source
 	 * @param dest			Destination
 	 * @param regions		Copy regions
+	 * @throws IllegalArgumentException if {@link #regions} is empty
 	 */
 	private BufferCopyCommand(VulkanBuffer src, VulkanBuffer dest, VkBufferCopy[] regions) {
+		if(regions.length == 0) {
+			throw new IllegalArgumentException("No copy regions specified");
+		}
 		this.src = requireNonNull(src);
 		this.dest = requireNonNull(dest);
 		this.regions = requireNonNull(regions);
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, CommandBuffer buffer) {
-		lib.vkCmdCopyBuffer(buffer, src, dest, regions.length, regions);
+	public void execute(Command.Buffer buffer) {
+		final VulkanBuffer.Library library = src.device().library();
+		library.vkCmdCopyBuffer(buffer, src, dest, regions.length, regions);
 	}
 
 	/**
@@ -73,10 +78,12 @@ public final class BufferCopyCommand implements Command {
 				requireZeroOrMore(size);
 			}
 
-			private void populate(VkBufferCopy copy) {
+			private VkBufferCopy build() {
+				final var copy = new VkBufferCopy();
 				copy.srcOffset = srcOffset;
 				copy.dstOffset = destOffset;
 				copy.size = size;
+				return copy;
 			}
 		}
 
@@ -86,7 +93,7 @@ public final class BufferCopyCommand implements Command {
 		/**
 		 * Sets the source buffer.
 		 * @param src Source buffer
-		 * @throws IllegalStateException if the buffer is not a copy source
+		 * @throws IllegalStateException if the buffer is not a {@link VkBufferUsageFlag#TRANSFER_SRC}
 		 */
 		public Builder source(VulkanBuffer src) {
 			src.require(VkBufferUsageFlag.TRANSFER_SRC);
@@ -97,7 +104,7 @@ public final class BufferCopyCommand implements Command {
 		/**
 		 * Sets the destination buffer.
 		 * @param dest Destination buffer
-		 * @throws IllegalStateException if the buffer is not a copy destination
+		 * @throws IllegalStateException if the buffer is not a {@link VkBufferUsageFlag#TRANSFER_DST}
 		 */
 		public Builder destination(VulkanBuffer dest) {
 			dest.require(VkBufferUsageFlag.TRANSFER_DST);
@@ -141,14 +148,17 @@ public final class BufferCopyCommand implements Command {
 		 */
 		public BufferCopyCommand build() {
 			// Validate
-			requireNonNull(src);
-			requireNonNull(dest);
-			if(src == dest) throw new IllegalArgumentException("Cannot copy to self");
-			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
+			if(src == dest) {
+				throw new IllegalArgumentException("Cannot copy to self");
+			}
+
+			// Build copy regions array
+			final var array = regions
+					.stream()
+					.map(CopyRegion::build)
+					.toArray(VkBufferCopy[]::new);
 
 			// Create copy command
-			//final VkBufferCopy[] array = regions.stream().collect(StructureCollector.array(new VkBufferCopy(), CopyRegion::populate));
-			final VkBufferCopy[] array = null; // TODO StructureCollector.array(regions, new VkBufferCopy(), CopyRegion::populate);
 			return new BufferCopyCommand(src, dest, array);
 		}
 	}

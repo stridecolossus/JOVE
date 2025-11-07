@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 import org.sarge.jove.util.EnumMask;
 
 public class SwapchainTest {
-	static class MockSwapchainLibrary implements Swapchain.Library {
+	static class MockSwapchainLibrary extends MockVulkanLibrary {
 		private boolean destroyed;
 		private VkResult result = VkResult.SUCCESS;
 
@@ -24,10 +24,33 @@ public class SwapchainTest {
 			assertNotNull(device);
 			assertEquals(null, pAllocator);
 
-			// TODO
+			assertEquals(new EnumMask<>(), pCreateInfo.flags);
+			assertEquals(new Handle(3), pCreateInfo.surface);
+			assertEquals(1, pCreateInfo.minImageCount);
+			assertEquals(VkFormat.B8G8R8A8_UNORM, pCreateInfo.imageFormat);
+			assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, pCreateInfo.imageColorSpace);
+			assertEquals(640, pCreateInfo.imageExtent.width);
+			assertEquals(480, pCreateInfo.imageExtent.height);
+			assertEquals(1, pCreateInfo.imageArrayLayers);
+			assertEquals(new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT), pCreateInfo.imageUsage);
+			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.imageSharingMode);
+			assertEquals(0, pCreateInfo.queueFamilyIndexCount);
+			//assertArrayEquals(new int[]{}, pCreateInfo.pQueueFamilyIndices);
+			assertEquals(VkSurfaceTransformFlagKHR.IDENTITY_KHR, pCreateInfo.preTransform);
+			assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, pCreateInfo.compositeAlpha);
+			assertEquals(VkPresentModeKHR.FIFO_KHR, pCreateInfo.presentMode);
+			assertEquals(true, pCreateInfo.clipped);
+			assertEquals(null, pCreateInfo.oldSwapchain);
 
-			pSwapchain.set(new Handle(1));
+			pSwapchain.set(new Handle(2));
+			return VkResult.SUCCESS;
+		}
 
+		@Override
+		public VkResult vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView) {
+			assertNotNull(device);
+			assertEquals(null, pAllocator);
+			pView.set(new Handle(3));
 			return VkResult.SUCCESS;
 		}
 
@@ -49,16 +72,16 @@ public class SwapchainTest {
 			else {
 				pSwapchainImages[0] = new Handle(4);
 			}
-			return null;
+			return VkResult.SUCCESS;
 		}
 
 		@Override
-		public VkResult vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
+		public int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
 			assertNotNull(device);
 			assertNotNull(swapchain);
 			assertEquals(Long.MAX_VALUE, timeout);
 			pImageIndex.set(0);
-			return result;
+			return result.value();
 		}
 
 		@Override
@@ -74,15 +97,17 @@ public class SwapchainTest {
 
 	@BeforeEach
 	void before() {
-		device = new MockLogicalDevice();
 		library = new MockSwapchainLibrary();
-		view = new View(new Handle(2), device, new MockImage()) {
+		device = new MockLogicalDevice(library);
+		// TODO...
+		view = new View(new Handle(3), device, new MockImage()) {
 			@Override
 			protected Destructor<View> destructor() {
 				return Destructor.empty();
 			}
 		};
-		swapchain = new Swapchain(new Handle(1), device, library, VkFormat.B8G8R8A8_UNORM, new Dimensions(640, 480), List.of(view));
+		// ...TODO
+		swapchain = new Swapchain(new Handle(2), device, library, VkFormat.B8G8R8A8_UNORM, new Dimensions(640, 480), List.of(view));
 	}
 
 	@Test
@@ -145,39 +170,8 @@ public class SwapchainTest {
 
 	@Nested
 	class BuilderTest {
-
-		private static class LIB extends MockVulkanLibrary {
-			@Override
-			public VkResult vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, Pointer pSwapchain) {
-				pSwapchain.set(new Handle(1));
-				return VkResult.SUCCESS;
-			}
-
-			@Override
-			public VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Handle swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages) {
-				assertNotNull(device);
-				assertNotNull(swapchain);
-				if(pSwapchainImages == null) {
-					pSwapchainImageCount.set(1);
-				}
-				else {
-					pSwapchainImages[0] = new Handle(4);
-				}
-				return null;
-			}
-
-			@Override
-			public VkResult vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView) {
-				pView.set(new Handle(2));
-				return VkResult.SUCCESS;
-			}
-		}
-
-		private Swapchain.Builder builder;
-
-		@BeforeEach
-		void before() {
-			final var surface = new MockVulkanSurface() {
+		private static VulkanSurface surface() {
+			return new MockVulkanSurface() {
 				@Override
 				public VkSurfaceCapabilitiesKHR capabilities() {
 					final var capabilities = new VkSurfaceCapabilitiesKHR();
@@ -202,18 +196,18 @@ public class SwapchainTest {
 					return List.of(format);
 				}
 			};
+		}
 
-			builder = new Swapchain.Builder(surface);
+		private Swapchain.Builder builder;
+
+		@BeforeEach
+		void before() {
+			builder = new Swapchain.Builder(surface());
 		}
 
 		@Test
 		void build() {
-			final var device = new MockLogicalDevice(new LIB());
-
-			final var swapchain = builder
-//					.count(2)
-					.build(device);
-
+			final var swapchain = builder.build(device);
 			assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
 			assertEquals(new Dimensions(640, 480), swapchain.extents());
 			assertEquals(1, swapchain.attachments().size());

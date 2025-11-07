@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 
 import java.lang.foreign.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import org.sarge.jove.foreign.Transformer;
@@ -32,6 +33,19 @@ public interface IntEnum {
 	 * @see #defaultValue()
 	 */
 	class ReverseMapping<E extends IntEnum> {
+		private static final Map<Class<?>, ReverseMapping<?>> CACHE = new ConcurrentHashMap<>();
+
+		/**
+		 * Looks up the reverse mapping for the given enumeration.
+		 * @param <E> Enumeration
+		 * @param type Enumeration type
+		 * @return Reverse mapping
+		 */
+		@SuppressWarnings("unchecked")
+		public static <E extends IntEnum> ReverseMapping<E> mapping(Class<E> type) {
+			return (ReverseMapping<E>) CACHE.computeIfAbsent(type, ReverseMapping::new);
+		}
+
 		private final Map<Integer, E> map;
 		private final E def;
 
@@ -39,7 +53,7 @@ public interface IntEnum {
 		 * Constructor.
 		 * @param type Integer enumeration type
 		 */
-		public ReverseMapping(Class<E> type) {
+		private ReverseMapping(Class<E> type) {
 			final E[] array = type.getEnumConstants();
 			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (value, _) -> value));
 			this.def = map.getOrDefault(0, array[0]);
@@ -79,7 +93,7 @@ public interface IntEnum {
 		 * @param type Enumeration type
 		 */
 		public IntEnumTransformer(Class<? extends IntEnum> type) {
-			this.mapping = new ReverseMapping<>(type);
+			this.mapping = ReverseMapping.mapping(type);
 		}
 
 		@Override

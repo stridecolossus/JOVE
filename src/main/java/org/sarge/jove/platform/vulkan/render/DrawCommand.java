@@ -133,10 +133,10 @@ public interface DrawCommand extends Command {
 		 */
 		public DrawCommand build() {
 			if(index == null) {
-				return (api, buffer) -> api.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
+				return buffer -> api.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
 			}
 			else {
-				return (api, buffer) -> api.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
+				return buffer -> api.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
 			}
 		}
 	}

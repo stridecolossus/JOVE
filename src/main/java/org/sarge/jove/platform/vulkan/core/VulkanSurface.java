@@ -178,7 +178,7 @@ public class VulkanSurface extends TransientNativeObject {
 	/**
 	 * Surface API.
 	 */
-	public interface Library {
+	interface Library {
 		/**
 		 * Queries whether a queue family supports presentation to the given surface.
 		 * @param device				Physical device handle

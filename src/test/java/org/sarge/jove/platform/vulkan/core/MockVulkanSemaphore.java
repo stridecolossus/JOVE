@@ -10,4 +10,9 @@ public class MockVulkanSemaphore extends VulkanSemaphore {
 	public MockVulkanSemaphore() {
 		this(new MockLogicalDevice());
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
+	}
 }
