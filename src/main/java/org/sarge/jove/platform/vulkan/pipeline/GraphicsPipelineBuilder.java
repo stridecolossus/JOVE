@@ -7,7 +7,8 @@ import java.util.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Library;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
 import org.sarge.jove.util.EnumMask;
 
@@ -199,9 +200,15 @@ public class GraphicsPipelineBuilder {
 		info.subpass = 0; // TODO
 
 		// Init shader pipeline stages
-		if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
+		if(!shaders.containsKey(VkShaderStage.VERTEX)) {
+			throw new IllegalStateException("No vertex shader specified");
+		}
 		info.stageCount = shaders.size();
-		info.pStages = shaders.values().stream().map(ProgrammableShaderStage::descriptor).toArray(VkPipelineShaderStageCreateInfo[]::new);
+		info.pStages = shaders
+				.values()
+				.stream()
+				.map(ProgrammableShaderStage::descriptor)
+				.toArray(VkPipelineShaderStageCreateInfo[]::new);
 
 		// Init fixed function stages
 		info.pVertexInputState = input.descriptor();
@@ -262,8 +269,8 @@ public class GraphicsPipelineBuilder {
 
 		// Create native pipelines
 		final Handle[] handles = new Handle[builders.length];
-		final VulkanLibrary lib = device.vulkan();
-		lib.vkCreateGraphicsPipelines(device, cache, descriptors.length, descriptors, null, handles);
+		final Library library = device.library();
+		library.vkCreateGraphicsPipelines(device, cache, descriptors.length, descriptors, null, handles);
 
 		// Construct pipelines
 		final Pipeline[] pipelines = new Pipeline[builders.length];

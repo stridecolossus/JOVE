@@ -30,8 +30,7 @@ class AttachmentTest {
 
 	@Test
 	void populate() {
-		final var descriptor = new VkAttachmentDescription();
-		attachment.populate(descriptor);
+		final var descriptor = attachment.populate();
 		assertEquals(FORMAT, descriptor.format);
 		assertEquals(VkSampleCount.COUNT_1, descriptor.samples);
 		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
@@ -54,7 +53,7 @@ class AttachmentTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Attachment.Builder(FORMAT);
+			builder = new Attachment.Builder().format(FORMAT);
 		}
 
 		@Test
@@ -68,8 +67,8 @@ class AttachmentTest {
 		@DisplayName("The image format of an attachment cannot be undefined")
 		@Test
 		void undefined() {
-			assertThrows(NullPointerException.class, () -> new Attachment.Builder(null).build());
-			assertThrows(NullPointerException.class, () -> new Attachment.Builder(VkFormat.UNDEFINED).build());
+			assertThrows(NullPointerException.class, () -> new Attachment.Builder().build());
+			assertThrows(NullPointerException.class, () -> new Attachment.Builder().format(VkFormat.UNDEFINED).build());
 		}
 
 		@DisplayName("The final image layout of an attachment cannot be undefined")

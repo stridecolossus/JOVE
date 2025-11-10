@@ -24,7 +24,7 @@ public interface VulkanFrame extends TransientObject {
 	 * @param index			Frame buffer index
 	 * @param swapchain		Swapchain
 	 */
-	void present(Command.CommandBuffer render, int index, Swapchain swapchain);
+	void present(Command.Buffer render, int index, Swapchain swapchain);
 
 	/**
 	 * Helper - Creates an array of frame trackers.

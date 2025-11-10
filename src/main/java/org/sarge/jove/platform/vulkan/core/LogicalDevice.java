@@ -21,18 +21,22 @@ import org.sarge.jove.util.EnumMask;
 public class LogicalDevice extends TransientNativeObject {
 	private final Library library;
 	private final Map<Family, List<WorkQueue>> queues;
+	private final VkPhysicalDeviceLimits limits;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
-	 * @param library		Device library
 	 * @param queues 		Work queues indexed by family
+	 * @param limits		Device limits
+	 * @param library		Device library
 	 */
-	LogicalDevice(Handle handle, Library library, Map<Family, List<WorkQueue>> queues) {
+	LogicalDevice(Handle handle, Map<Family, List<WorkQueue>> queues, VkPhysicalDeviceLimits limits, Library library) {
 		super(handle);
 		this.library = requireNonNull(library);
 		this.queues = Map.copyOf(queues);
+		this.limits = requireNonNull(limits);
 	}
+	// TODO - limits are mutable!
 
 	/**
 	 * @param <T> Library type
@@ -49,6 +53,14 @@ public class LogicalDevice extends TransientNativeObject {
 	public Map<Family, List<WorkQueue>> queues() {
 		return queues;
 	}
+
+	/**
+	 * @return Device limits
+	 */
+	public VkPhysicalDeviceLimits limits() {
+		return limits;
+	}
+	// TODO - mutable!
 
 	/**
 	 * Blocks until this device becomes idle.
@@ -262,7 +274,8 @@ public class LogicalDevice extends TransientNativeObject {
 			final Map<Family, List<WorkQueue>> map = helper.queues(queues);
 
 			// Create domain object
-			return new LogicalDevice(handle, library, map);
+			final var properties = parent.properties();
+			return new LogicalDevice(handle, map, properties.limits, library);
 		}
 
 		/**

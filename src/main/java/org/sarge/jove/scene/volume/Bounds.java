@@ -175,12 +175,13 @@ public record Bounds(Point min, Point max) {
 		 * Creates a collector for computing bounds.
 		 * @return Bounds collector
 		 */
-		public static Collector<Point, ?, Builder> collector() {
+		public static Collector<Point, ?, Bounds> collector() {
 			return Collector.of(
-					Bounds.Builder::new,
-					Bounds.Builder::add,
-					Bounds.Builder::sum,
-					Characteristics.UNORDERED, Characteristics.IDENTITY_FINISH
+					Builder::new,
+					Builder::add,
+					Builder::sum,
+					Builder::build,
+					Characteristics.UNORDERED
 			);
 		}
 	}

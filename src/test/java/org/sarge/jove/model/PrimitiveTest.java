@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.*;
 
 import org.junit.jupiter.api.*;
@@ -79,61 +79,49 @@ class PrimitiveTest {
 	}
 
 	@Nested
-	class FaceTests {
+	class PolygonTests {
 		@ParameterizedTest
 		@EnumSource(value=Primitive.class, names={"POINT", "PATCH"})
 		void points(Primitive primitive) {
-			assertEquals(0, primitive.faces(0));
-			assertEquals(1, primitive.faces(1));
-			assertEquals(2, primitive.faces(2));
+			assertEquals(0, primitive.polygons(0));
+			assertEquals(1, primitive.polygons(1));
+			assertEquals(2, primitive.polygons(2));
 		}
 
 		@Test
 		void lines() {
-			assertEquals(0, Primitive.LINE.faces(0));
-			assertEquals(0, Primitive.LINE.faces(1));
-			assertEquals(1, Primitive.LINE.faces(2));
-			assertEquals(1, Primitive.LINE.faces(3));
+			assertEquals(0, Primitive.LINE.polygons(0));
+			assertEquals(0, Primitive.LINE.polygons(1));
+			assertEquals(1, Primitive.LINE.polygons(2));
+			assertEquals(1, Primitive.LINE.polygons(3));
 		}
 
 		@Test
 		void strip() {
-			assertEquals(0, Primitive.LINE_STRIP.faces(1));
-			assertEquals(1, Primitive.LINE_STRIP.faces(2));
-			assertEquals(2, Primitive.LINE_STRIP.faces(3));
-			assertEquals(3, Primitive.LINE_STRIP.faces(4));
+			assertEquals(0, Primitive.LINE_STRIP.polygons(1));
+			assertEquals(1, Primitive.LINE_STRIP.polygons(2));
+			assertEquals(2, Primitive.LINE_STRIP.polygons(3));
+			assertEquals(3, Primitive.LINE_STRIP.polygons(4));
 		}
 
 		@Test
 		void triangles() {
-			assertEquals(0, Primitive.TRIANGLE.faces(0));
-			assertEquals(0, Primitive.TRIANGLE.faces(1));
-			assertEquals(0, Primitive.TRIANGLE.faces(2));
-			assertEquals(1, Primitive.TRIANGLE.faces(3));
-			assertEquals(1, Primitive.TRIANGLE.faces(4));
-			assertEquals(1, Primitive.TRIANGLE.faces(5));
-			assertEquals(2, Primitive.TRIANGLE.faces(6));
+			assertEquals(0, Primitive.TRIANGLE.polygons(0));
+			assertEquals(0, Primitive.TRIANGLE.polygons(1));
+			assertEquals(0, Primitive.TRIANGLE.polygons(2));
+			assertEquals(1, Primitive.TRIANGLE.polygons(3));
+			assertEquals(1, Primitive.TRIANGLE.polygons(4));
+			assertEquals(1, Primitive.TRIANGLE.polygons(5));
+			assertEquals(2, Primitive.TRIANGLE.polygons(6));
 		}
 
 		@ParameterizedTest
 		@EnumSource(value=Primitive.class, names={"TRIANGLE_STRIP", "TRIANGLE_FAN"})
 		void strip(Primitive primitive) {
-			assertEquals(0, primitive.faces(2));
-			assertEquals(1, primitive.faces(3));
-			assertEquals(2, primitive.faces(4));
-			assertEquals(3, primitive.faces(5));
+			assertEquals(0, primitive.polygons(2));
+			assertEquals(1, primitive.polygons(3));
+			assertEquals(2, primitive.polygons(4));
+			assertEquals(3, primitive.polygons(5));
 		}
-	}
-
-	@DisplayName("A primitive can specify the indices for a polygon of that primitive")
-	@Test
-	void indices() {
-		assertArrayEquals(new int[]{1}, Primitive.POINT.indices(1));
-		assertArrayEquals(new int[]{1}, Primitive.PATCH.indices(1));
-		assertArrayEquals(new int[]{2, 3}, Primitive.LINE.indices(1));
-		assertArrayEquals(new int[]{1, 2}, Primitive.LINE_STRIP.indices(1));
-		assertArrayEquals(new int[]{3, 4, 5}, Primitive.TRIANGLE.indices(1));
-		assertArrayEquals(new int[]{1, 2, 3}, Primitive.TRIANGLE_STRIP.indices(1));
-		assertArrayEquals(new int[]{1, 2, 0}, Primitive.TRIANGLE_FAN.indices(1));
 	}
 }

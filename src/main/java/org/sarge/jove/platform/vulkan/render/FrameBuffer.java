@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 
@@ -10,36 +9,34 @@ import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 
 /**
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
  * @author Sarge
  */
 public class FrameBuffer extends VulkanObject {
-	/**
-	 * Command to end the render pass on this frame buffer.
-	 */
-	public static final Command END = (lib, buffer) -> lib.vkCmdEndRenderPass(buffer);
-
 	private final RenderPass pass;
 	private final List<View> attachments;
 	private final Rectangle extents;
+	private final Library library;
 
 	/**
 	 * Constructor.
 	 * @param handle 			Handle
-	 * @param dev				Logical device
+	 * @param device			Logical device
 	 * @param pass				Render pass
 	 * @param attachments		Attachments
 	 * @param extents			Image extents
+	 * @param library			Frame buffer library
 	 */
-	FrameBuffer(Handle handle, LogicalDevice dev, RenderPass pass, List<View> attachments, Rectangle extents) {
-		super(handle, dev);
+	FrameBuffer(Handle handle, LogicalDevice device, RenderPass pass, List<View> attachments, Rectangle extents, Library library) {
+		super(handle, device);
 		this.pass = requireNonNull(pass);
-		this.attachments = List.copyOf(requireNotEmpty(attachments));
+		this.attachments = List.copyOf(attachments);
 		this.extents = requireNonNull(extents);
+		this.library = requireNonNull(library);
 	}
 
 	/**
@@ -50,11 +47,26 @@ public class FrameBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Creates a command to begin rendering to this frame buffer.
-	 * @return Rendering command
-	 * @see #END
+	 * Creates a command to start a render pass with this frame buffer.
+	 * @param contents Subpass contents
+	 * @return Begin render pass command
 	 */
 	public Command begin(VkSubpassContents contents) {
+		final VkRenderPassBeginInfo info = begin();
+		return buffer -> library.vkCmdBeginRenderPass(buffer, info, contents);
+	}
+
+	/**
+	 * @return End render pass command
+	 */
+	public Command end() {
+		return library::vkCmdEndRenderPass;
+	}
+
+	/**
+	 * @return Render pass descriptor
+	 */
+	private VkRenderPassBeginInfo begin() {
 		// Create descriptor
 		final var info = new VkRenderPassBeginInfo();
 		info.renderPass = pass.handle();
@@ -67,6 +79,7 @@ public class FrameBuffer extends VulkanObject {
 		info.renderArea.offset.y = extents.y();
 
 		// Build attachment clear operations
+		info.clearValueCount = info.pClearValues.length;
 		info.pClearValues = attachments
 				.stream()
 				.map(View::clear)
@@ -74,10 +87,7 @@ public class FrameBuffer extends VulkanObject {
 				.map(FrameBuffer::populate)
 				.toArray(VkClearValue[]::new);
 
-		info.clearValueCount = info.pClearValues.length;
-
-		// Create command
-		return (lib, cmd) -> lib.vkCmdBeginRenderPass(cmd, info, contents);
+		return info;
 	}
 
 	private static VkClearValue populate(ClearValue clear) {
@@ -87,8 +97,8 @@ public class FrameBuffer extends VulkanObject {
 	}
 
 	@Override
-	protected Destructor<FrameBuffer> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyFramebuffer;
+	protected Destructor<FrameBuffer> destructor() {
+		return library::vkDestroyFramebuffer;
 	}
 
 	/**
@@ -102,6 +112,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @throws IllegalArgumentException if an attachment is smaller than the given extents
 	 */
 	public static FrameBuffer create(RenderPass pass, Rectangle extents, List<View> attachments) {
+		/*
 		// Validate attachments
 		final List<Attachment> expected = pass.attachments();
 		final int size = expected.size();
@@ -118,29 +129,30 @@ public class FrameBuffer extends VulkanObject {
 			}
 
 			// Validate attachment contains frame-buffer extents
-			final Dimensions dim = descriptor.extents().size();
-			if(extents.dimensions().compareTo(dim) > 0) {
-				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dim, extents));
+			final Dimensions dimensions = descriptor.extents().size();
+			if(!extents.dimensions().contains(dimensions)) {
+				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dimensions, extents));
 			}
 		}
+		*/
 
 		// Build descriptor
 		final var info = new VkFramebufferCreateInfo();
 		info.renderPass = pass.handle();
 		info.attachmentCount = attachments.size();
-		info.pAttachments = null; // TODO NativeObject.array(attachments);
+		info.pAttachments = NativeObject.handles(attachments);
 		info.width = extents.width();
 		info.height = extents.height();
 		info.layers = 1; // TODO - layers?
 
 		// Allocate frame buffer
-		final LogicalDevice dev = pass.device();
-		final VulkanLibrary vulkan = dev.vulkan();
-		final Pointer ref = new Pointer();
-		vulkan.vkCreateFramebuffer(dev, info, null, ref);
+		final LogicalDevice device = pass.device();
+		final Library library = device.library();
+		final Pointer pointer = new Pointer();
+		library.vkCreateFramebuffer(device, info, null, pointer);
 
 		// Create frame buffer
-		return new FrameBuffer(ref.get(), dev, pass, attachments, extents);
+		return new FrameBuffer(pointer.get(), device, pass, attachments, extents, library);
 	}
 
 	/**
@@ -164,5 +176,19 @@ public class FrameBuffer extends VulkanObject {
 		 * @param pAllocator		Allocator
 		 */
 		void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Handle pAllocator);
+
+		/**
+		 * Begins a render pass.
+		 * @param commandBuffer			Command buffer
+		 * @param pRenderPassBegin		Descriptor
+		 * @param contents				Subpass contents
+		 */
+		void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents);
+
+		/**
+		 * Ends a render pass.
+		 * @param commandBuffer Command buffer
+		 */
+		void vkCmdEndRenderPass(Buffer commandBuffer);
 	}
 }

@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.Component;
+import org.sarge.jove.common.Layout.*;
 
 /**
  * A <i>normal</i> is a unit vector.
@@ -11,7 +11,7 @@ public class Normal extends Vector implements Component {
 	/**
 	 * Vertex normal layout.
 	 */
-	public static final Layout LAYOUT = Layout.floats(Point.SIZE);
+	public static final Layout LAYOUT = new Layout(SIZE, Type.NORMALIZED, true, Float.BYTES);
 
 	/**
 	 * Constructor.

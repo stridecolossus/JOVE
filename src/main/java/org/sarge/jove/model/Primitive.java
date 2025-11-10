@@ -2,11 +2,8 @@ package org.sarge.jove.model;
 
 import static org.sarge.lib.Validation.requireZeroOrMore;
 
-import org.sarge.jove.platform.vulkan.VkPrimitiveTopology;
-
 /**
  * A <i>primitive</i> defines the characteristics of the common drawing primitives.
- * @see <a href="https://registry.khronos.org/vulkan/specs/1.1/html/chap20.html#drawing-primitive-topologies">Vulkan primitive topologies</a>
  * @author Sarge
  */
 public enum Primitive {
@@ -16,16 +13,15 @@ public enum Primitive {
 	LINE_STRIP(2),
 	TRIANGLE(3),
 	TRIANGLE_STRIP(3),
-	TRIANGLE_FAN(3) {
-		@Override
-		public int[] indices(int face) {
-			final int[] indices = new int[3];
-			indices[0] = face;
-			indices[1] = face + 1;
-			indices[2] = 0;
-			return indices;
-		}
-	};
+	TRIANGLE_FAN(3);
+//		@Override
+//		public int[] indices(int face) {
+//			final int[] indices = new int[3];
+//			indices[0] = face;
+//			indices[1] = face + 1;
+//			indices[2] = 0;
+//			return indices;
+//		}
 
 	private final int size;
 
@@ -65,13 +61,12 @@ public enum Primitive {
 	}
 
 	/**
-	 * Determines the number of faces for the given draw count.
+	 * Determines the number of polygons for the given draw count.
 	 * @param count Draw count
-	 * @return Number of faces
-	 * @see #isValidVertexCount(int)
-	 * @see #indices(int)
+	 * @return Number of polygons
+//	 * @see #indices(int)
 	 */
-	public int faces(int count) {
+	public int polygons(int count) {
 		if(isStrip()) {
 			return Math.max(0, count - (size - 1));
 		}
@@ -93,34 +88,19 @@ public enum Primitive {
 			return (count % size) == 0;
 		}
 	}
-
-	/**
-	 * @return Topology of this primitive
-	 */
-	public VkPrimitiveTopology topology() {
-		return switch(this) {
-			case POINT 			-> VkPrimitiveTopology.POINT_LIST;
-			case LINE 			-> VkPrimitiveTopology.LINE_LIST;
-			case LINE_STRIP 	-> VkPrimitiveTopology.LINE_STRIP;
-			case TRIANGLE 		-> VkPrimitiveTopology.TRIANGLE_LIST;
-			case TRIANGLE_STRIP	-> VkPrimitiveTopology.TRIANGLE_STRIP;
-			case TRIANGLE_FAN	-> VkPrimitiveTopology.TRIANGLE_FAN;
-			case PATCH			-> VkPrimitiveTopology.PATCH_LIST;
-		};
-	}
-
-	// TODO - is this actually used?
-	/**
-	 * Generates the vertices indices for a polygon of this primitive.
-	 * @param face Face index
-	 * @return Vertex indices
-	 */
-	public int[] indices(int face) {
-		final int[] indices = new int[size];
-		final int start = isStrip() ? face : face * size;
-		for(int n = 0; n < size; ++n) {
-			indices[n] = start + n;
-		}
-		return indices;
-	}
 }
+
+//	// TODO - is this actually used?
+//	/**
+//	 * Generates the vertices indices for a polygon of this primitive.
+//	 * @param face Face index
+//	 * @return Vertex indices
+//	 */
+//	public int[] indices(int face) {
+//		final int[] indices = new int[size];
+//		final int start = isStrip() ? face : face * size;
+//		for(int n = 0; n < size; ++n) {
+//			indices[n] = start + n;
+//		}
+//		return indices;
+//	}

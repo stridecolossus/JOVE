@@ -11,7 +11,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-public record Attachment(VkFormat format, VkSampleCount samples, Attachment.LoadStore attachment, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
+public record Attachment(VkFormat format, VkSampleCount samples, Attachment.LoadStore colour, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
 	/**
 	 * Convenience wrapper for a load-store pair.
 	 */
@@ -33,7 +33,8 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	 * @return Colour attachment
 	 */
 	public static Attachment colour(VkFormat format) {
-		return new Builder(format)
+		return new Builder()
+				.format(format)
 				.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE))
 				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 				.build();
@@ -45,7 +46,8 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	 * @return Depth attachment
 	 */
 	public static Attachment depth(VkFormat format) {
-		return new Builder(format)
+		return new Builder()
+				.format(format)
 				.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE))
 				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 				.build();
@@ -55,7 +57,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	 * Constructor.
 	 * @param format			Image format
 	 * @param samples			Number of samples
-	 * @param attachment		Attachment operations
+	 * @param colour			Colour attachment operations
 	 * @param stencil			Stencil operations
 	 * @param initialLayout		Initial layout
 	 * @param finalLayout		Final layout
@@ -66,20 +68,26 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	public Attachment {
 		requireNonNull(format);
 		requireNonNull(samples);
-		requireNonNull(attachment);
+		requireNonNull(colour);
 		requireNonNull(stencil);
 		requireNonNull(initialLayout);
 		requireNonNull(finalLayout);
 
-		if(format == VkFormat.UNDEFINED) throw new IllegalArgumentException("Format cannot be undefined");
+		if(format == VkFormat.UNDEFINED) {
+			throw new IllegalArgumentException("Format cannot be undefined");
+		}
 
 		switch(finalLayout) {
     		case UNDEFINED, PREINITIALIZED -> throw new IllegalArgumentException("Invalid final layout: " + finalLayout);
     	}
 
 		if(initialLayout == VkImageLayout.UNDEFINED) {
-			if(attachment.load == LOAD) throw new IllegalArgumentException("Cannot load an image with an undefined layout");
-			if(stencil.load == LOAD) throw new IllegalArgumentException("Cannot load a stencil with an undefined layout");
+			if(colour.load == LOAD) {
+				throw new IllegalArgumentException("Cannot load an image with an undefined layout");
+			}
+			if(stencil.load == LOAD) {
+				throw new IllegalArgumentException("Cannot load a stencil with an undefined layout");
+			}
 		}
 
 		// TODO - further validation
@@ -88,18 +96,19 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	}
 
 	/**
-	 * Populates the Vulkan descriptor for this attachment.
-	 * @param descriptor Attachment descriptor
+	 * @return Attachment descriptor
 	 */
-	void populate(VkAttachmentDescription descriptor) {
-		descriptor.format = format;
-		descriptor.samples = samples;
-		descriptor.loadOp = attachment.load;
-		descriptor.storeOp = attachment.store;
-		descriptor.stencilLoadOp = stencil.load;
-		descriptor.stencilStoreOp = stencil.store;
-		descriptor.initialLayout = initialLayout;
-		descriptor.finalLayout = finalLayout;
+	VkAttachmentDescription populate() {
+		final var attachment = new VkAttachmentDescription();
+		attachment.format = format;
+		attachment.samples = samples;
+		attachment.loadOp = colour.load;
+		attachment.storeOp = colour.store;
+		attachment.stencilLoadOp = stencil.load;
+		attachment.stencilStoreOp = stencil.store;
+		attachment.initialLayout = initialLayout;
+		attachment.finalLayout = finalLayout;
+		return attachment;
 	}
 
 	/**
@@ -110,7 +119,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 
 		private final ReverseMapping<VkSampleCount> mapping = ReverseMapping.mapping(VkSampleCount.class);
 
-		private final VkFormat format;
+		private VkFormat format;
 		private VkSampleCount samples = VkSampleCount.COUNT_1;
 		private LoadStore attachment = DONT_CARE;
 		private LoadStore stencil = DONT_CARE;
@@ -118,11 +127,12 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		private VkImageLayout finalLayout;
 
 		/**
-		 * Constructor.
+		 * Sets the image format of this attachment.
 		 * @param format Image format
 		 */
-		public Builder(VkFormat format) {
-			this.format = requireNonNull(format);
+		public Builder format(VkFormat format) {
+			this.format = format;
+			return this;
 		}
 
 		/**
@@ -130,7 +140,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param samples Number of samples
 		 */
 		public Builder samples(VkSampleCount samples) {
-			this.samples = requireNonNull(samples);
+			this.samples = samples;
 			return this;
 		}
 
@@ -150,7 +160,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param load Attachment operations
 		 */
 		public Builder attachment(LoadStore attachment) {
-			this.attachment = requireNonNull(attachment);
+			this.attachment = attachment;
 			return this;
 		}
 
@@ -159,7 +169,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param stencil Stencil operation
 		 */
 		public Builder stencil(LoadStore stencil) {
-			this.stencil = requireNonNull(stencil);
+			this.stencil = stencil;
 			return this;
 		}
 
@@ -168,7 +178,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param layout Initial image layout
 		 */
 		public Builder initialLayout(VkImageLayout layout) {
-			this.initialLayout = requireNonNull(layout);
+			this.initialLayout = layout;
 			return this;
 		}
 
@@ -177,7 +187,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * @param layout Final image layout
 		 */
 		public Builder finalLayout(VkImageLayout layout) {
-			this.finalLayout = requireNonNull(layout);
+			this.finalLayout = layout;
 			return this;
 		}
 

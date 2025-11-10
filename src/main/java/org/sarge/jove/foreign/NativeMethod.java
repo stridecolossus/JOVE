@@ -224,15 +224,12 @@ public class NativeMethod {
 				.map(NativeParameter::layout)
 				.toArray(MemoryLayout[]::new);
 
-		// Init descriptor
-		final FunctionDescriptor descriptor = FunctionDescriptor.ofVoid(layouts);
-
 		// Append return layout
 		if(returns == null) {
-			return descriptor;
+			return FunctionDescriptor.ofVoid(layouts);
 		}
 		else {
-			return descriptor.changeReturnLayout(returns.layout());
+			return FunctionDescriptor.of(returns.layout(), layouts);
 		}
 	}
 }

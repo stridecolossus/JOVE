@@ -92,8 +92,9 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			checkMapped();
 
 			// Release mapping
-			final LogicalDevice dev = device();
-			dev.vulkan().vkUnmapMemory(dev, DefaultDeviceMemory.this);
+			final LogicalDevice device = device();
+			final MemoryLibrary library = device.library();
+			library.vkUnmapMemory(device, DefaultDeviceMemory.this);
 
 			// Clear mapping
 			region = null;
@@ -127,13 +128,13 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		}
 
 		// Map memory
-		final LogicalDevice dev = this.device();
-		final VulkanLibrary vulkan = dev.vulkan();
-		final Pointer ref = new Pointer();
-		vulkan.vkMapMemory(dev, this, offset, size, 0, ref);
+		final LogicalDevice device = this.device();
+		final MemoryLibrary library = device.library();
+		final Pointer pointer = new Pointer();
+		library.vkMapMemory(device, this, offset, size, 0, pointer);
 
 		// Create mapped region
-		region = new DefaultRegion(ref.get(), offset, size);
+		region = new DefaultRegion(pointer.get(), offset, size);
 
 		return region;
 	}

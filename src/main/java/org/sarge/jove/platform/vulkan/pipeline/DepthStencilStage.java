@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 
 /**
  * Builder for the depth-stencil pipeline stage.
@@ -30,9 +29,6 @@ public class DepthStencilStage {
 	 * @param max Maximum depth bound
 	 * @see #bounds()
 	 */
-	@RequiredFeature(field="none", feature="depthBounds")
-	@RequiredFeature(field="min", feature="VK_EXT_depth_range_unrestricted")		// TODO - extension
-	@RequiredFeature(field="max", feature="VK_EXT_depth_range_unrestricted")
 	public DepthStencilStage bounds(float min, float max) {
 		info.depthBoundsTestEnable = true;
 		info.minDepthBounds = min;

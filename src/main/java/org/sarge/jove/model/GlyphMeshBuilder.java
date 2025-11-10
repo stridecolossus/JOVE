@@ -4,8 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.Coordinate.Coordinate2D.Corners;
@@ -16,7 +16,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D.Corners;
  */
 public class GlyphMeshBuilder {
 	private final GlyphFont font;
-	private final MeshBuilder mesh = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
+	private final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 	private final int tiles;
 	private final float size;
 	private float scale = 1;
@@ -71,7 +71,7 @@ cursor = new Point(-0.9f, 0, 0);
 	 * @return Glyph mesh
 	 */
 	public Mesh mesh() {
-		return mesh.mesh();
+		return mesh;
 	}
 
 	/**

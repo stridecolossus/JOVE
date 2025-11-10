@@ -7,8 +7,8 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkDescriptorSetLayoutCreateFlag implements IntEnum {
- 	VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR(1),
- 	VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT(2);
+ 	PUSH_DESCRIPTOR_BIT_KHR(1),
+ 	UPDATE_AFTER_BIND_POOL_BIT_EXT(2);
 
 	private final int value;
 

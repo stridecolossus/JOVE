@@ -67,7 +67,7 @@ public class SamplerTest {
 
 		@Test
 		void build() {
-			final var info = (VkDescriptorImageInfo) res.build();
+			final var info = (VkDescriptorImageInfo) res.descriptor();
 			assertEquals(sampler.handle(), info.sampler);
 			assertEquals(view.handle(), info.imageView);
 			assertEquals(VkImageLayout.SHADER_READ_ONLY_OPTIMAL, info.imageLayout);

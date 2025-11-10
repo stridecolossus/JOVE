@@ -57,12 +57,13 @@ public final class ImageTransferCommand implements Command {
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, Command.CommandBuffer cmd) {
+	public void execute(Buffer cmd) {
+		final Image.Library library = buffer.device().library();
 		if(write) {
-			lib.vkCmdCopyBufferToImage(cmd, buffer, image, layout, regions.length, regions);
+			library.vkCmdCopyBufferToImage(cmd, buffer, image, layout, regions.length, regions);
 		}
 		else {
-			lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
+			library.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
 		}
 	}
 
@@ -78,7 +79,7 @@ public final class ImageTransferCommand implements Command {
 	/**
 	 * A <i>copy region</i> specifies a portion of the image to be copied.
 	 */
-	public record CopyRegion(long offset, Dimensions row, SubResource subresource, Extents imageOffset, Extents extents) {
+	public record CopyRegion(long offset, Dimensions row, Subresource subresource, Extents imageOffset, Extents extents) {
 		/**
 		 * Creates a copy region for the whole of the given image.
 		 * @param descriptor Image descriptor
@@ -120,7 +121,7 @@ public final class ImageTransferCommand implements Command {
 				return true;
 			}
 			else {
-				return row.compareTo(size) >= 0;
+				return row.contains(size);
 			}
 		}
 
@@ -131,7 +132,7 @@ public final class ImageTransferCommand implements Command {
 			copy.bufferOffset = offset;
 			copy.bufferRowLength = row.width();
 			copy.bufferImageHeight = row.height();
-			copy.imageSubresource = SubResource.toLayers(subresource);
+			copy.imageSubresource = Subresource.layers(subresource);
 			copy.imageOffset = imageOffset.toOffset();
 			copy.imageExtent = extents.toExtent();
 		}
@@ -143,7 +144,7 @@ public final class ImageTransferCommand implements Command {
 			private long offset;
 			private int length;
 			private int height;
-			private SubResource subresource;
+			private Subresource subresource;
 			private Extents imageOffsets = Extents.ZERO;
 			private Extents extents;
 
@@ -207,7 +208,7 @@ public final class ImageTransferCommand implements Command {
 			 * Sets the sub-resource for this copy command.
 			 * @param subresource Sub-resource
 			 */
-			public Builder subresource(SubResource subresource) {
+			public Builder subresource(Subresource subresource) {
 				this.subresource = requireNonNull(subresource);
 				return this;
 			}
@@ -278,7 +279,8 @@ public final class ImageTransferCommand implements Command {
 		}
 
 		/**
-		 * Helper - Adds copy regions for <b>all</b> layers and MIP levels of the given image.
+		 * Helper.
+		 * Adds copy regions for <b>all</b> layers and MIP levels of the given image.
 		 * @param image Image
 		 * @throws NullPointerException if the image texture has not been populated
 		 */
@@ -293,9 +295,10 @@ public final class ImageTransferCommand implements Command {
 				// Load layers for this MIP level
 				for(int layer = 0; layer < count; ++layer) {
 					// Build sub-resource
-					final SubResource res = new SubResource.Builder(descriptor)
-							.baseArrayLayer(layer)
+					final Subresource res = new Subresource.Builder()
+							.copy(descriptor)
 							.mipLevel(level)
+							.baseArrayLayer(layer)
 							.build();
 
 					// Determine layer offset within this level

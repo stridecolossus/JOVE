@@ -2,31 +2,35 @@ package org.sarge.jove.platform.obj;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.util.FloatArrayParser;
 
+@SuppressWarnings("resource")
 public class VertexComponentParserTest {
 	private Parser parser;
-	private ObjectModel model;
+	private VertexComponentList<Point> list;
 
 	@BeforeEach
 	void before() {
-		model = new ObjectModel();
-		parser = new VertexComponentParser<>(new FloatArrayParser<>(Point.SIZE, Point::new), ObjectModel::positions);
+		list = new VertexComponentList<>();
+		parser = new VertexComponentParser<>(Point.SIZE, Point::new, list);
 	}
 
 	@Test
 	void parse() {
-		parser.parse("1 2 3", model);
-		assertEquals(List.of(new Point(1, 2, 3)), model.positions());
+		parser.parse(new Scanner("1 2 3"));
+		assertEquals(List.of(new Point(1, 2, 3)), list);
 	}
 
 	@Test
-	void parseInvalidArrayLength() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse("", model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 2", model));
+	void invalid() {
+		assertThrows(InputMismatchException.class, () -> parser.parse(new Scanner("cobblers 2 3")));
+	}
+
+	@Test
+	void length() {
+		assertThrows(NoSuchElementException.class, () -> parser.parse(new Scanner("1 2")));
 	}
 }

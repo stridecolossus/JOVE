@@ -6,7 +6,6 @@ import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.lib.Percentile;
 
 /**
@@ -23,7 +22,7 @@ public class ViewportStage {
 		 * @param rectangle		Viewport rectangle
 		 * @param min			Minimum depth
 		 * @param max			Maximum depth
-		 * @throws IllegalArgumentException if the {@link #min} depth is less than {@lnk #max}
+		 * @throws IllegalArgumentException if {@link #min} is less than {@link #max}
 		 */
 		public Viewport {
 			requireNonNull(rectangle);
@@ -75,7 +74,6 @@ public class ViewportStage {
 	 * Adds a viewport.
 	 * @param viewport Viewport to add
 	 */
-	@RequiredFeature(field="viewportCount", feature="multiViewport")
 	public ViewportStage viewport(Viewport viewport) {
 		viewports.add(viewport);
 		return this;
@@ -106,8 +104,12 @@ public class ViewportStage {
 	VkPipelineViewportStateCreateInfo descriptor() {
 		// Validate
 		final int count = viewports.size();
-		if(count == 0) throw new IllegalArgumentException("No viewports specified");
-		if(scissors.size() != count) throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+		if(count == 0) {
+			throw new IllegalArgumentException("No viewports specified");
+		}
+		if(scissors.size() != count) {
+			throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+		}
 
 		// Init descriptor
 		final var info = new VkPipelineViewportStateCreateInfo();
@@ -119,28 +121,28 @@ public class ViewportStage {
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = scissors.stream().map(ViewportStage::convert).toArray(VkRect2D[]::new);
+		info.pScissors = scissors.stream().map(ViewportStage::rectangle).toArray(VkRect2D[]::new);
 
 		return info;
 	}
 
 	/**
-	 * @return Descriptor for the given scissor rectangle
+	 * @return Scissor rectangle descriptor
 	 */
-	private static VkRect2D convert(Rectangle rect) {
+	private static VkRect2D rectangle(Rectangle scissor) {
 		final var offset = new VkOffset2D();
-		offset.x = rect.x();
-		offset.y = rect.y();
+		offset.x = scissor.x();
+		offset.y = scissor.y();
 
 		final var extent = new VkExtent2D();
-		extent.width = rect.width();
-		extent.height = rect.height();
+		extent.width = scissor.width();
+		extent.height = scissor.height();
 
-		final VkRect2D descriptor = new VkRect2D();
-		descriptor.offset = offset;
-		descriptor.extent = extent;
+		final VkRect2D rectangle = new VkRect2D();
+		rectangle.offset = offset;
+		rectangle.extent = extent;
 
-		return descriptor;
+		return rectangle;
 	}
 }
 
@@ -151,7 +153,6 @@ public class ViewportStage {
 //	 * @return Dynamic viewport command
 //	 * @throws IllegalArgumentException if {@link #viewports} is empty or the range is out-of-bounds for this pipeline
 //	 */
-//	@RequiredFeature(field="start", feature="multiViewport")
 //	public Command setDynamicViewport(int start, List<Viewport> viewports) {
 //		validate(start, viewports);
 //		final VkViewport array = null; // TODO viewports(viewports);
@@ -165,7 +166,6 @@ public class ViewportStage {
 //	 * @return Dynamic scissors command
 //	 * @throws IllegalArgumentException if {@link #scissors} is empty or the range is out-of-bounds for this pipeline
 //	 */
-//	@RequiredFeature(field="start", feature="multiViewport")
 //	public Command setDynamicScissor(int start, List<Rectangle> scissors) {
 //		validate(start, scissors);
 //		final VkRect2D array = null; // TODO scissors(scissors);

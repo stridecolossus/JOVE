@@ -11,7 +11,7 @@ import org.sarge.jove.util.EnumMask;
  * @see Image.Descriptor
  * @author Sarge
  */
-public interface SubResource {
+public interface Subresource {
 	/**
 	 * Special case identifier indicating the <i>remaining</i> number of mip levels or array layers.
 	 */
@@ -45,7 +45,7 @@ public interface SubResource {
 	/**
 	 * Default implementation.
 	 */
-	record DefaultSubResource(Set<VkImageAspect> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) implements SubResource {
+	record DefaultSubResource(Set<VkImageAspect> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) implements Subresource {
 		/**
 		 * Constructor.
 		 * @param aspects				Sub resource aspects
@@ -68,7 +68,7 @@ public interface SubResource {
 	 * @param res Sub-resource
 	 * @return Vulkan sub-resource range
 	 */
-	static VkImageSubresourceRange toRange(SubResource res) {
+	static VkImageSubresourceRange range(Subresource res) {
 		final var range = new VkImageSubresourceRange();
 		range.aspectMask = new EnumMask<>(res.aspects());
 		range.baseMipLevel = res.mipLevel();
@@ -83,7 +83,7 @@ public interface SubResource {
 	 * @param res Sub-resource
 	 * @return Vulkan sub-resource layers
 	 */
-	static VkImageSubresourceLayers toLayers(SubResource res) {
+	static VkImageSubresourceLayers layers(Subresource res) {
 		final var layers = new VkImageSubresourceLayers();
 		layers.aspectMask = new EnumMask<>(res.aspects());
 		layers.mipLevel = res.mipLevel();
@@ -96,7 +96,7 @@ public interface SubResource {
 	 * Builder for an image sub-resource.
 	 */
 	class Builder {
-		private Set<VkImageAspect> aspects = new HashSet<>();
+		private final Set<VkImageAspect> aspects = new HashSet<>();
 		private int mipLevel;
 		private int levelCount = 1;
 		private int baseArrayLayer;
@@ -148,10 +148,24 @@ public interface SubResource {
 		}
 
 		/**
+		 * Copies the properties of the given subresource.
+		 * @param subresource Subresource to copy
+		 */
+		public Builder copy(Subresource subresource) {
+			aspects.clear();
+			aspects.addAll(subresource.aspects());
+			mipLevel(subresource.mipLevel());
+			levelCount(subresource.levelCount());
+			baseArrayLayer(subresource.baseArrayLayer());
+			layerCount(subresource.layerCount());
+			return this;
+		}
+
+		/**
 		 * Constructs this sub-resource.
 		 * @return New sub-resource
 		 */
-		public SubResource build() {
+		public Subresource build() {
 			return new DefaultSubResource(aspects, mipLevel, levelCount, baseArrayLayer, layerCount);
 		}
 	}

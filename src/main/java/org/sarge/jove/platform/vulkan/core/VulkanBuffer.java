@@ -66,6 +66,21 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Helper.
+	 * Determines the maximum length of a buffer.
+	 * @param usage		Buffer usage
+	 * @param limits	Device limits
+	 * @return Maximum length
+	 */
+	public static int maximum(VkBufferUsageFlag usage, VkPhysicalDeviceLimits limits) {
+		return switch(usage) {
+			case UNIFORM_BUFFER -> limits.maxUniformBufferRange;
+			case STORAGE_BUFFER -> limits.maxStorageBufferRange;
+			default -> Integer.MAX_VALUE;
+		};
+	}
+
+	/**
+	 * Helper.
 	 * Validates the given offset for this buffer.
 	 * @param offset Buffer offset
 	 * @throws IllegalArgumentException if the {@link #offset} exceeds the {@link #length()} of this buffer
@@ -244,7 +259,7 @@ public class VulkanBuffer extends VulkanObject {
 	/**
 	 * Vulkan buffer API.
 	 */
-	interface Library {
+	public interface Library {
 		/**
 		 * Creates a buffer.
 		 * @param device			Logical device

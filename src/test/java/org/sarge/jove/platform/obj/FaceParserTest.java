@@ -1,54 +1,61 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
+@SuppressWarnings("resource")
 public class FaceParserTest {
 	private FaceParser parser;
 	private ObjectModel model;
 
 	@BeforeEach
 	void before() {
-		parser = new FaceParser();
 		model = new ObjectModel();
+		parser = new FaceParser(model);
 		model.positions().add(Point.ORIGIN);
 		model.normals().add(Axis.X);
 		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
-		model.start();
 	}
 
 	@Test
 	void position() {
-		parser.parse("1 1 1", model);
+		parser.parse(new Scanner("1 1 1"));
+		assertEquals(3, model.build().getFirst().count());
 	}
 
 	@Test
 	void coordinate() {
-		parser.parse("1/1 1/1 1/1", model);
+		parser.parse(new Scanner("1/1 1/1 1/1"));
+		assertEquals(3, model.build().getFirst().count());
 	}
 
 	@Test
 	void normal() {
-		parser.parse("1//1 1//1 1//1", model);
+		parser.parse(new Scanner("1//1 1//1 1//1"));
+		assertEquals(3, model.build().getFirst().count());
 	}
 
 	@Test
 	void all() {
-		parser.parse("1/1/1 1/1/1 1/1/1", model);
+		parser.parse(new Scanner("1/1/1 1/1/1 1/1/1"));
+		final var mesh = model.build().getFirst();
+		assertEquals(3 + 3 + 2, mesh.vertices().asFloatBuffer().limit());
+		assertEquals(3, mesh.index().orElseThrow().asIntBuffer().limit());
 	}
 
 	@Test
 	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse("", model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 1", model));
-		assertThrows(IllegalArgumentException.class, () -> parser.parse("1 1 1 1", model));
+		assertThrows(NoSuchElementException.class, () -> parser.parse(new Scanner("")));
+		assertThrows(NoSuchElementException.class, () -> parser.parse(new Scanner("1 1")));
 	}
 
 	@Test
-	void length() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse("1/1/1/1 1 2", model));
+	void triangle() {
+		assertThrows(IllegalArgumentException.class, () -> parser.parse(new Scanner("1/1/1/1 1 1")));
 	}
 }

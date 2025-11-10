@@ -3,6 +3,8 @@ package org.sarge.jove.common;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireOneOrMore;
 
+import java.util.List;
+
 /**
  * A <i>layout</i> describes the structure and format of common data tuples such as image pixels or vertex components.
  * <p>
@@ -14,10 +16,10 @@ import static org.sarge.lib.Validation.requireOneOrMore;
  * <li>The number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
  * </ul>
  * <p>
- * Example layout for a floating-point 3-tuple normal: <pre>new Component(3, Type.FLOAT, true, Float.BYTES)</pre>
+ * Example layout for an unsigned floating-point normal: <pre>new Component(3, Type.FLOAT, false, Float.BYTES)</pre>
  * <p>
  * The {@link #toString()} representation of a layout is a compacted string with a {@code U} suffix for unsigned types.
- * For example the above layout is represented as {@code 3-FLOAT4}.
+ * For example the above layout is represented as {@code 3-FLOAT4U}.
  * <p>
  */
 public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
@@ -67,6 +69,17 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 	 */
 	public int stride() {
 		return count * bytes;
+	}
+
+	/**
+	 * @param layouts Layouts
+	 * @return Stride of the given layouts (bytes)
+	 */
+	public static int stride(List<Layout> layouts) {
+		return layouts
+				.stream()
+				.mapToInt(Layout::stride)
+				.sum();
 	}
 
 	@Override

@@ -38,7 +38,7 @@ public interface MemoryLibrary {
 	 * @param ppData			Returned pointer to the memory
 	 * @return Result
 	 */
-	int vkMapMemory(LogicalDevice device, DeviceMemory memory, long offset, long size, int flags, Pointer ppData);
+	VkResult vkMapMemory(LogicalDevice device, DeviceMemory memory, long offset, long size, int flags, Pointer ppData);
 
 	/**
 	 * Unmaps a memory region.

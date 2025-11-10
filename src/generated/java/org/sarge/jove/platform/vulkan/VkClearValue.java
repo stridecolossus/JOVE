@@ -4,13 +4,13 @@ import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkClearValue extends VulkanStructure {
+public class VkClearValue implements NativeStructure {
 	public VkClearColorValue color;
 	public VkClearDepthStencilValue depthStencil;
 

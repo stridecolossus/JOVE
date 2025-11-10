@@ -2,7 +2,6 @@ package org.sarge.jove.platform.obj;
 
 import java.util.*;
 
-import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
@@ -16,43 +15,18 @@ class ObjectModel {
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
 	private final List<Mesh> meshes = new ArrayList<>();
-	private MeshBuilder builder;
+	private MutableMesh current;
 
-	/**
-	 * Starts a new object group.
-	 */
-	public void start() {
-		// Ignore if current group is empty
-		if(positions.isEmpty()) {
-			return;
-		}
-
-		// Build current model group
-		build();
-
-//		// Reset transient model
-//		positions.clear();
-//		normals.clear();
-//		coords.clear();
+	public ObjectModel() {
+		append();
 	}
 
 	/**
-	 * Constructs the current object.
+	 * Starts a new mesh.
 	 */
-	private void build() {
-		// Init model layout
-		final var layout = new ArrayList<Layout>();
-		layout.add(Point.LAYOUT);
-		if(!normals.isEmpty()) {
-			layout.add(Normal.LAYOUT);
-		}
-		if(!coords.isEmpty()) {
-			layout.add(Coordinate2D.LAYOUT);
-		}
-
-		// Start new model
-		builder = new RemoveDuplicateMeshBuilder(new CompoundLayout(layout));
-		meshes.add(builder.mesh());
+	private void append() {
+		current = new RemoveDuplicateMesh();
+		meshes.add(current);
 	}
 
 	/**
@@ -76,19 +50,51 @@ class ObjectModel {
 		return coords;
 	}
 
+//	/**
+//	 * @return Layout for the current model
+//	 */
+//	private List<Layout> layout() {
+//		final var layout = new ArrayList<Layout>();
+//		layout.add(Point.LAYOUT);
+//		if(!normals.isEmpty()) {
+//			layout.add(Normal.LAYOUT);
+//		}
+//		if(!coords.isEmpty()) {
+//			layout.add(Coordinate2D.LAYOUT);
+//		}
+//		return layout;
+//	}
+
+	/**
+	 * Starts a new object group.
+	 */
+	public void start() {
+		// Ignore empty models
+		if(current.count() == 0) {
+			return;
+		}
+
+		// Construct the current model
+		append();
+
+		// Initialise model
+		positions.clear();
+		normals.clear();
+		coords.clear();
+	}
+
 	/**
 	 * Adds a model vertex.
 	 */
 	public void add(Vertex vertex) {
-		builder.add(vertex);
+		current.add(vertex);
 	}
 
 	/**
-	 * Constructs the model(s).
-	 * @return Model(s)
+	 * Constructs this OBJ model.
+	 * @return Meshes
 	 */
-	public List<Mesh> models() {
-		return new ArrayList<>(meshes);
+	public List<Mesh> build() {
+		return meshes;
 	}
-	// TODO - check all groups have same layout
 }

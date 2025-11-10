@@ -9,14 +9,14 @@ import org.sarge.jove.platform.vulkan.pipeline.ViewportStage.Viewport;
 
 class ViewportStageTest {
 	private ViewportStage stage;
-	private Rectangle rect;
+	private Rectangle rectangle;
 	private Viewport viewport;
 
 	@BeforeEach
 	void before() {
 		stage = new ViewportStage();
-		rect = new Rectangle(1, 2, 3, 4);
-		viewport = new Viewport(rect);
+		rectangle = new Rectangle(0, 0, 640, 480);
+		viewport = new Viewport(rectangle);
 	}
 
 	@Test
@@ -24,7 +24,7 @@ class ViewportStageTest {
 		// Build descriptor
 		final VkPipelineViewportStateCreateInfo descriptor = stage
 				.viewport(viewport)
-				.scissor(rect)
+				.scissor(rectangle)
 				.descriptor();
 
 		// Check descriptor
@@ -32,7 +32,7 @@ class ViewportStageTest {
 		assertEquals(1, descriptor.viewportCount);
 		assertEquals(1, descriptor.scissorCount);
 
-		// Check viewport
+		// Check viewports
 		final VkViewport viewport = descriptor.pViewports[0];
 		assertEquals(1, viewport.x);
 		assertEquals(2, viewport.y);
@@ -41,7 +41,7 @@ class ViewportStageTest {
 		assertEquals(0, viewport.minDepth);
 		assertEquals(1, viewport.maxDepth);
 
-		// Check scissor
+		// Check scissors
 		final VkRect2D scissor = descriptor.pScissors[0];
 		assertEquals(1, scissor.offset.x);
 		assertEquals(2, scissor.offset.y);

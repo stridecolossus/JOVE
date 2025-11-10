@@ -80,6 +80,7 @@ public class SpecialisationConstants {
 	 */
 	VkSpecializationInfo descriptor() {
 		// Ignore if empty
+		// TODO - not here?
 		if(constants.isEmpty()) {
 			return null;
 		}

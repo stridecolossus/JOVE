@@ -91,7 +91,7 @@ public class View extends VulkanObject {
 
 		private VkImageViewType type;
 		private ComponentMapping mapping = ComponentMapping.IDENTITY;
-		private SubResource subresource;
+		private Subresource subresource;
 
 		/**
 		 * Sets the view type of this image.
@@ -117,7 +117,7 @@ public class View extends VulkanObject {
 		 * Sets the image sub-resource for this view.
 		 * @param subresource Image sub-resource
 		 */
-		public Builder subresource(SubResource subresource) {
+		public Builder subresource(Subresource subresource) {
 			this.subresource = subresource;
 			return this;
 		}
@@ -137,7 +137,7 @@ public class View extends VulkanObject {
 			info.format = image.descriptor().format();
 			info.image = image.handle();
 			info.components = mapping.build();
-			info.subresourceRange = SubResource.toRange(Objects.requireNonNullElseGet(subresource, image::descriptor));
+			info.subresourceRange = Subresource.range(Objects.requireNonNullElseGet(subresource, image::descriptor));
 
 			// Allocate image view
 			final Library library = device.library();

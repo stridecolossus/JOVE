@@ -6,10 +6,12 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.memory.*;
+import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.render.*;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.*;
 import org.sarge.jove.util.EnumMask;
 
-public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, RenderLibrary, ImageLibrary {
+public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, PipelineLibrary, RenderLibrary, ImageLibrary {
 	// Instance
 
 	@Override
@@ -313,8 +315,8 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Rend
 	}
 
 	@Override
-	public int vkMapMemory(LogicalDevice device, DeviceMemory memory, long offset, long size, int flags, Pointer ppData) {
-		return 0;
+	public VkResult vkMapMemory(LogicalDevice device, DeviceMemory memory, long offset, long size, int flags, Pointer ppData) {
+		return null;
 	}
 
 	@Override
@@ -350,11 +352,164 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Rend
 	// Sampler
 
 	@Override
-	public int vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSampler) {
-		return 0;
+	public VkResult vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, Pointer pSampler) {
+		return null;
 	}
 
 	@Override
 	public void vkDestroySampler(LogicalDevice device, Sampler sampler, Handle pAllocator) {
+	}
+
+	// Shader
+
+	@Override
+	public VkResult vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Handle pAllocator, Pointer shader) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyShaderModule(LogicalDevice device, Shader shader, Handle pAllocator) {
+	}
+
+	@Override
+	public VkResult vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, Pointer pRenderPass) {
+		return null;
+	}
+
+	// Render Pass
+
+	@Override
+	public void vkDestroyRenderPass(LogicalDevice device, RenderPass renderPass, Handle pAllocator) {
+	}
+
+	@Override
+	public void vkCmdNextSubpass(Buffer commandBuffer, VkSubpassContents contents) {
+	}
+
+	@Override
+	public void vkGetRenderAreaGranularity(LogicalDevice dev, RenderPass renderPass, VkExtent2D pGranularity) {
+	}
+
+	@Override
+	public void vkCmdClearAttachments(Buffer commandBuffer, int attachmentCount, VkClearAttachment[] pAttachments, int rectCount, VkClearRect[] pRects) {
+	}
+
+	// Frame buffer
+
+	@Override
+	public VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Handle pAllocator) {
+	}
+
+	@Override
+	public void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents) {
+	}
+
+	@Override
+	public void vkCmdEndRenderPass(Buffer commandBuffer) {
+	}
+
+	// Descriptor Sets
+
+	@Override
+	public VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyDescriptorSetLayout(LogicalDevice device, Layout descriptorSetLayout, Handle pAllocator) {
+	}
+
+	@Override
+	public VkResult vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pDescriptorPool) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyDescriptorPool(LogicalDevice device, Pool descriptorPool, Handle pAllocator) {
+	}
+
+	@Override
+	public VkResult vkAllocateDescriptorSets(LogicalDevice device, VkDescriptorSetAllocateInfo pAllocateInfo, Handle[] pDescriptorSets) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkResetDescriptorPool(LogicalDevice device, Pool descriptorPool, int flags) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkFreeDescriptorSets(LogicalDevice device, Pool descriptorPool, int descriptorSetCount, DescriptorSet[] pDescriptorSets) {
+		return null;
+	}
+
+	@Override
+	public void vkUpdateDescriptorSets(LogicalDevice device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies) {
+	}
+
+	@Override
+	public void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, DescriptorSet[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets) {
+	}
+
+	// Draw Commands
+
+	@Override
+	public void vkCmdDraw(Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance) {
+	}
+
+	@Override
+	public void vkCmdDrawIndexed(Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance) {
+	}
+
+	@Override
+	public void vkCmdDrawIndirect(Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride) {
+	}
+
+	@Override
+	public void vkCmdDrawIndexedIndirect(Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride) {
+	}
+
+	// Pipeline layout
+
+	@Override
+	public VkResult vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pPipelineLayout) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyPipelineLayout(LogicalDevice device, PipelineLayout pipelineLayout, Handle pAllocator) {
+	}
+
+	@Override
+	public void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStage> stageFlags, int offset, int size, Handle pValues) {
+	}
+
+	// Pipeline
+
+	@Override
+	public VkResult vkCreateGraphicsPipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines) {
+		return null;
+	}
+
+	@Override
+	public VkResult vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines) {
+		return null;
+	}
+
+	@Override
+	public void vkDestroyPipeline(LogicalDevice device, Pipeline pipeline, Handle pAllocator) {
+	}
+
+	@Override
+	public void vkCmdBindPipeline(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pipeline pipeline) {
+	}
+
+	@Override
+	public void vkCmdPipelineBarrier(Buffer commandBuffer, EnumMask<VkPipelineStage> srcStageMask, EnumMask<VkPipelineStage> dstStageMask, EnumMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers) {
 	}
 }

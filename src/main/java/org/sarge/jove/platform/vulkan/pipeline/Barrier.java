@@ -38,7 +38,7 @@ import org.sarge.jove.util.EnumMask;
  * <p>
  * @author Sarge
  */
-public final class Barrier implements Command {
+public class Barrier implements Command {
 	private final EnumMask<VkPipelineStage> src, dest;
 	private final EnumMask<VkDependencyFlag> flags;
 	private final VkImageMemoryBarrier[] images;
@@ -64,7 +64,10 @@ public final class Barrier implements Command {
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, CommandBuffer buffer) {
+	public void execute(Buffer buffer) {
+		// TODO - library
+
+		/*
 		lib.vkCmdPipelineBarrier(
 				buffer,
 				src, dest,
@@ -73,6 +76,7 @@ public final class Barrier implements Command {
 				length(buffers), buffers,
 				length(images), images
 		);
+		*/
 	}
 
 	/**
@@ -322,7 +326,7 @@ public final class Barrier implements Command {
 			private final Image image;
 			private VkImageLayout oldLayout = VkImageLayout.UNDEFINED;
 			private VkImageLayout newLayout;
-			private SubResource subresource;
+			private Subresource subresource;
 
 			private ImageBarrierBuilder(Image image) {
 				this.image = requireNonNull(image);
@@ -351,7 +355,7 @@ public final class Barrier implements Command {
 			 * Sets the image sub-resource.
 			 * @param subresource Sub-resource
 			 */
-			public ImageBarrierBuilder subresource(SubResource subresource) {
+			public ImageBarrierBuilder subresource(Subresource subresource) {
 				this.subresource = requireNonNull(subresource);
 				return this;
 			}
@@ -365,7 +369,7 @@ public final class Barrier implements Command {
 				barrier.dstAccessMask = new EnumMask<>(destAccess);
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
-				barrier.subresourceRange = SubResource.toRange(subresource);
+				barrier.subresourceRange = Subresource.range(subresource);
 				barrier.srcQueueFamilyIndex = srcFamily;
 				barrier.dstQueueFamilyIndex = destFamily;
 			}

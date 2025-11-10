@@ -1,8 +1,8 @@
 package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.util.MathsUtility;
@@ -26,32 +26,6 @@ public class CubeBuilder {
 			new Point(+1, +1, -1),
 			new Point(-1, +1, -1),
 	};
-
-	/**
-	 *
-	 * TODO - use bit pattern
-	 *
-	 * range 0..7
-	 * bits -Z X Y
-	 * generates front face (at least) with counter-clockwise order
-	 *
-	 * =>
-	 *
-	 * no need for array of positions or face indices
-	 * and probably ditto normals?
-	 *
-	 */
-
-//	@Test
-//	void test() {
-//		for(int n = 0; n < 8; ++n) {
-//			float x = (n & 2) != 0 ? +1 : -1;
-//			float y = (n & 1) != 0 ? +1 : -1;
-//			float z = (n & 4) != 0 ? -1 : +1;
-//			System.out.println(n+" "+x+","+y+","+z);
-//		}
-//	}
-
 
 	// Face indices
 	private static final int[][] FACES = {
@@ -93,7 +67,8 @@ public class CubeBuilder {
 	 * @see #vertex(Point, Normal, Coordinate2D)
 	 */
 	public Mesh build() {
-		final MeshBuilder builder = new MeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+		final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
 				// Lookup triangle index for this corner of the face
@@ -106,11 +81,11 @@ public class CubeBuilder {
 
 				// Build vertex
 				final Vertex vertex = vertex(pos, normal, coord);
-				builder.add(vertex);
+				mesh.add(vertex);
 			}
 		}
 
-		return builder.mesh();
+		return mesh;
 	}
 
 	private Point position(int index) {

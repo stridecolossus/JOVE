@@ -1,15 +1,16 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.EnumMask;
@@ -18,30 +19,98 @@ import org.sarge.jove.util.EnumMask;
  * A <i>pipeline layout</i> specifies the resources used by a pipeline.
  * @author Sarge
  */
-public final class PipelineLayout extends VulkanObject {
-	private final PushConstant push;
+public class PipelineLayout extends VulkanObject {
+	private final PushConstant constant;
 
 	/**
 	 * Constructor.
-	 * @param handle		Pipeline handle
-	 * @param dev			Logical device
-	 * @param push			Push constants
+	 * @param handle		Layout handle
+	 * @param device		Logical device
+	 * @param constant		Optional push constant
+	 * @throws IllegalArgumentException if any range of the push constant exceeds the maximum for the device
 	 */
-	PipelineLayout(Handle handle, LogicalDevice dev, PushConstant push) {
-		super(handle, dev);
-		this.push = requireNonNull(push);
+	PipelineLayout(Handle handle, LogicalDevice device, PushConstant constant) {
+		super(handle, device);
+		this.constant = constant;
+		if(constant != null) {
+			validate();
+		}
+	}
+
+	private void validate() {
+    	final var limits = this.device().limits();
+    	final int max = limits.maxPushConstantsSize;
+    	for(Range range : constant.ranges()) {
+    		if(range.size() > max) {
+    			throw new IllegalArgumentException("Push constant range %s is larger than device limit %d".formatted(range, max));
+    		}
+    	}
 	}
 
 	/**
-	 * @return Push constants for this layout
+	 * @return Push constant for this layout
 	 */
-	public PushConstant push() {
-		return push;
+	public PushConstant constant() {
+		return constant;
+	}
+
+	/**
+	 * A <i>push constant update command</i> updates a segment of the backing memory for a the push constants of this layout.
+	 */
+	public class PushConstantUpdateCommand implements Command {
+		private final Range range;
+
+		/**
+		 * Constructor.
+		 * @param range Push constant range to update
+		 * @throws IllegalArgumentException if {@link #constant} does not belong to this pipeline layout
+		 */
+		public PushConstantUpdateCommand(Range range) {
+			if(!constant.ranges().contains(range)) {
+				throw new IllegalArgumentException("Invalid push constant range: " + range);
+			}
+			this.range = requireNonNull(range);
+		}
+
+		/**
+		 * Constructor to update the entire push constant buffer.
+		 * @throws NoSuchElementException if this layout does not contain push constants
+		 */
+		public PushConstantUpdateCommand() {
+			// Determine overall length of backing buffer
+			final Range last = constant.ranges().getLast();
+			final int length = last.offset() + last.size();
+
+			// Aggregate shader stages
+			final Set<VkShaderStage> stages = constant
+					.ranges()
+					.stream()
+					.map(Range::stages)
+					.flatMap(Set::stream)
+					.distinct()
+					.collect(toSet());
+
+			// Init synthetic range for whole buffer
+			this.range = new Range(0, length, stages);
+		}
+
+		@Override
+		public void execute(Buffer buffer) {
+			final var layout = PipelineLayout.this;
+			final PipelineLayout.Library library = layout.device().library();
+			library.vkCmdPushConstants(buffer, layout, new EnumMask<>(range.stages()), range.offset(), range.size(), new Handle(constant.data()));
+		}
+
+		@Override
+		public String toString() {
+			return String.format("PushConstantUpdateCommand[%s]", range);
+		}
 	}
 
 	@Override
-	protected Destructor<PipelineLayout> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyPipelineLayout;
+	protected Destructor<PipelineLayout> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroyPipelineLayout;
 	}
 
 	/**
@@ -49,70 +118,58 @@ public final class PipelineLayout extends VulkanObject {
 	 */
 	public static class Builder {
 		private final List<DescriptorSet.Layout> sets = new ArrayList<>();
-		private final List<Range> ranges = new ArrayList<>();
+		private PushConstant constant;
 
 		/**
 		 * Adds a descriptor set layout to this pipeline.
 		 * @param layout Descriptor set layout
 		 */
 		public Builder add(DescriptorSet.Layout layout) {
-			requireNonNull(layout);
 			sets.add(layout);
 			return this;
 		}
 
 		/**
-		 * Adds a push constant range to this layout.
-		 * @param range Push constant range
+		 * Sets the push constants used by this layout.
+		 * @param constant Push constant
 		 */
-		public Builder add(Range range) {
-			requireNonNull(range);
-			ranges.add(range);
+		public Builder constant(PushConstant constant) {
+			this.constant = constant;
 			return this;
 		}
 
 		/**
 		 * Constructs this pipeline layout.
-		 * @param dev Logical device
+		 * @param device Logical device
 		 * @return New pipeline layout
 		 * @throws IllegalArgumentException if the overall length of the push constant ranges exceeds the hardware limit
 		 */
-		public PipelineLayout build(LogicalDevice dev) {
+		public PipelineLayout build(LogicalDevice device) {
 			// Init pipeline layout descriptor
 			final var info = new VkPipelineLayoutCreateInfo();
+			info.flags = 0;
 
 			// Add descriptor set layouts
 			info.setLayoutCount = sets.size();
 			info.pSetLayouts = NativeObject.handles(sets);
 
 			// Add push constant ranges
-			final PushConstant push;
-			if(ranges.isEmpty()) {
-				push = PushConstant.NONE;
-			}
-			else {
-				// Create push constant
-				push = new PushConstant(ranges);
-
-				// Check that overall size is supported by the hardware
-// TODO
-//				final var limits = dev.limits();
-//				final int len = push.length();
-//				final int max = limits.maxPushConstantsSize;
-//				if(len > max) throw new IllegalArgumentException("Push constant buffer too large: max=%d len=%d".formatted(max, len));
-
-				// Add push constant ranges
-				info.pushConstantRangeCount = ranges.size();
-				info.pPushConstantRanges = null; // TODO StructureCollector.pointer(ranges, new VkPushConstantRange(), Range::populate);
+			if(constant != null) {
+    			info.pushConstantRangeCount = constant.ranges().size();
+    			info.pPushConstantRanges = constant
+    					.ranges()
+    					.stream()
+    					.map(Range::populate)
+    					.toArray(VkPushConstantRange[]::new);
 			}
 
 			// Allocate layout
-			final VulkanLibrary vulkan = dev.vulkan();
-			final Pointer ref = new Pointer();
-			vulkan.vkCreatePipelineLayout(dev, info, null, ref);
+			final Library library = device.library();
+			final Pointer handle = new Pointer();
+			library.vkCreatePipelineLayout(device, info, null, handle);
 
 			// Create layout
-			return new PipelineLayout(ref.get(), dev, push);
+			return new PipelineLayout(handle.get(), device, constant);
 		}
 	}
 
@@ -128,7 +185,7 @@ public final class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Returned pipeline layout
 		 * @return Result
 		 */
-		int vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pPipelineLayout);
+		VkResult vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pPipelineLayout);
 
 		/**
 		 * Destroys a pipeline layout.
@@ -142,11 +199,11 @@ public final class PipelineLayout extends VulkanObject {
 		 * Updates a push constant range.
 		 * @param commandBuffer			Command buffer
 		 * @param layout				Pipeline layout
-		 * @param stageFlags			Stage flags (mask)
+		 * @param stageFlags			Stage flags
 		 * @param offset				Start of the range (bytes)
 		 * @param size					Size of the range (bytes)
 		 * @param pValues				Push constants data buffer
 		 */
-		void vkCmdPushConstants(CommandBuffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStage> stageFlags, int offset, int size, Handle pValues);
+		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStage> stageFlags, int offset, int size, Handle pValues);
 	}
 }

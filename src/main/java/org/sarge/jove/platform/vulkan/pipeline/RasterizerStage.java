@@ -5,7 +5,6 @@ import static org.sarge.lib.Validation.requireOneOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 
 /**
  * Builder for the rasterizer pipeline stage.
@@ -53,7 +52,6 @@ public class RasterizerStage {
 	 * Default is {@link VkPolygonMode#FILL}.
 	 * @param polygonMode Polygon mode
 	 */
-	@RequiredFeature(field="polygonMode", feature="fillModeNonSolid")
 	public RasterizerStage polygon(VkPolygonMode polygonMode) {
 		info.polygonMode = requireNonNull(polygonMode);
 		return this;
@@ -101,7 +99,6 @@ public class RasterizerStage {
 	 * @param lineWidth Line width
 	 * @throws IllegalArgumentException if the line width is less-than one
 	 */
-	@RequiredFeature(field="lineWidth", feature="wideLines")
 	public RasterizerStage lineWidth(float lineWidth) {
 		info.lineWidth = requireOneOrMore(lineWidth);
 		return this;
@@ -112,7 +109,6 @@ public class RasterizerStage {
 	 * @param w Line width
 	 * @return Dynamic line width command
 	 */
-	@RequiredFeature(field="lineWidth", feature="wideLines")
 	public Command setDynamicLineWidth(float width) {
 		requireOneOrMore(width);
 //		return (lib, cmd) -> lib.vkCmdSetLineWidth(cmd, w);

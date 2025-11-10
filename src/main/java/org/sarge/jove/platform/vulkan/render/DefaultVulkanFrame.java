@@ -56,7 +56,7 @@ public class DefaultVulkanFrame implements VulkanFrame {
 	}
 
 	@Override
-	public void present(Command.CommandBuffer render, int index, Swapchain swapchain) {
+	public void present(Command.Buffer render, int index, Swapchain swapchain) {
 		// Submit render task
 		submit(render);
 		fence.waitReady();
@@ -66,9 +66,9 @@ public class DefaultVulkanFrame implements VulkanFrame {
 		swapchain.present(queue, index, ready);
 	}
 
-	private void submit(Command.CommandBuffer render) {
+	private void submit(Command.Buffer render) {
 		new Work.Builder()
-        		.execute(render)
+				.add(render)
         		.wait(available, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT))
         		.signal(ready)
         		.build()

@@ -6,11 +6,10 @@ import static org.sarge.lib.Validation.*;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.util.RequiredFeature;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -21,15 +20,16 @@ public final class Sampler extends VulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle		Sampler handle
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 */
-	Sampler(Handle handle, LogicalDevice dev) {
-		super(handle, dev);
+	Sampler(Handle handle, LogicalDevice device) {
+		super(handle, device);
 	}
 
 	@Override
-	protected Destructor<Sampler> destructor(VulkanLibrary lib) {
-		return lib::vkDestroySampler;
+	protected Destructor<Sampler> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroySampler;
 	}
 
 	/**
@@ -45,7 +45,7 @@ public final class Sampler extends VulkanObject {
 			}
 
 			@Override
-			public VkDescriptorImageInfo build() {
+			public VkDescriptorImageInfo descriptor() {
 				final var info = new VkDescriptorImageInfo();
 				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
 				info.sampler = Sampler.this.handle();
@@ -235,7 +235,6 @@ public final class Sampler extends VulkanObject {
 		 * Sets the number of texel samples for anisotropy filtering (default is disabled).
 		 * @param anisotropy Number of texel samples
 		 */
-		@RequiredFeature(field="maxAnisotropy", feature="samplerAnisotropy")
 		public Builder anisotropy(float anisotropy) {
 			info.maxAnisotropy = requireOneOrMore(anisotropy);
 			info.anisotropyEnable = anisotropy > 1;
@@ -277,12 +276,12 @@ public final class Sampler extends VulkanObject {
 			info.flags = new EnumMask<>(flags);
 
 			// Instantiate sampler
-			final VulkanLibrary vulkan = dev.vulkan();
-			final NativeReference<Handle> ref = new Pointer(); // TODO
-			vulkan.vkCreateSampler(dev, info, null, ref);
+			final Library library = dev.library();
+			final Pointer pointer = new Pointer();
+			library.vkCreateSampler(dev, info, null, pointer);
 
 			// Create domain object
-			return new Sampler(ref.get(), dev);
+			return new Sampler(pointer.get(), dev);
 		}
 	}
 
@@ -298,7 +297,7 @@ public final class Sampler extends VulkanObject {
 		 * @param pSampler			Returned sampler handle
 		 * @return Result
 		 */
-		int vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, NativeReference<Handle> pSampler);
+		VkResult vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, Pointer pSampler);
 
 		/**
 		 * Destroys a sampler.

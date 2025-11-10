@@ -42,7 +42,10 @@ public record VertexBuffer(VulkanBuffer buffer) {
 				.device()
 				.library();
 
-		final var array = buffers.toArray(VulkanBuffer[]::new);
+		final var array = buffers
+				.stream()
+				.map(VertexBuffer::buffer)
+				.toArray(VulkanBuffer[]::new);
 
 		return buffer -> library.vkCmdBindVertexBuffers(buffer, start, array.length, array, new long[]{0});
 	}

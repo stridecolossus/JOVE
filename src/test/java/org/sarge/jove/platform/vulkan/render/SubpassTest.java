@@ -1,205 +1,46 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
-import org.sarge.jove.platform.vulkan.render.Subpass.*;
+import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
 import org.sarge.jove.util.EnumMask;
 
-@Nested
 class SubpassTest {
 	private Subpass subpass;
-	private Attachment col, depth;
+	private AttachmentReference colour, depth;
 
 	@BeforeEach
 	void before() {
-		final VkFormat format = VkFormat.R32G32B32A32_SFLOAT;
-		col = Attachment.colour(format);
-		depth = Attachment.depth(format);
-		subpass = new Subpass();
+		colour = new AttachmentReference(Attachment.colour(VkFormat.R32G32B32A32_SFLOAT), COLOR_ATTACHMENT_OPTIMAL);
+		depth = new AttachmentReference(Attachment.depth(VkFormat.D32_SFLOAT), DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		subpass = new Subpass(List.of(colour), depth, Set.of());
 	}
 
 	@Test
-	void populate() {
-		final Reference refColour = new Reference(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-		refColour.init(1);
-		subpass.colour(refColour);
-
-		final Reference refDepth = new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		refDepth.init(2);
-		subpass.depth(refDepth);
-
-		final var desc = new VkSubpassDescription();
-		subpass.populate(desc);
-		assertEquals(VkPipelineBindPoint.GRAPHICS, desc.pipelineBindPoint);
-		assertEquals(1, desc.colorAttachmentCount);
-		assertNotNull(desc.pColorAttachments);
-		assertNotNull(desc.pDepthStencilAttachment);
+	void attachments() {
+		assertEquals(List.of(colour, depth), subpass.attachments().toList());
 	}
 
-	@DisplayName("A render pass can be conveniently created from a single subpass")
 	@Test
-	void create() {
-		final RenderPass pass = subpass.colour(col).create(new MockDeviceContext());
-		assertNotNull(pass);
+	void description() {
+		final VkSubpassDescription description = subpass.description(List.of(colour.attachment(), depth.attachment()));
+		assertEquals(new EnumMask<>(), description.flags);
+		assertEquals(VkPipelineBindPoint.GRAPHICS, description.pipelineBindPoint);
+		assertEquals(1, description.colorAttachmentCount);
+		assertEquals(1, description.pColorAttachments.length);
+		assertNotNull(description.pColorAttachments[0]);
+		assertNotNull(description.pDepthStencilAttachment);
 	}
 
-	@DisplayName("A subpass...")
-	@Nested
-    	class AttachmentTests {
-    	@DisplayName("can contain a colour attachment")
-    	@Test
-    	void colour() {
-    		final Reference ref = new Reference(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-    		subpass.colour(ref);
-    		assertEquals(List.of(ref), subpass.attachments().toList());
-    	}
-
-    	@DisplayName("can contain a depth-stencil attachment")
-    	@Test
-    	void depth() {
-    		final Reference ref = new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-    		subpass.depth(ref);
-    		assertEquals(List.of(ref), subpass.attachments().toList());
-    	}
-
-    	@DisplayName("cannot contain a duplicate colour attachment")
-    	@Test
-    	void duplicate() {
-    		subpass.colour(col);
-    		assertThrows(IllegalArgumentException.class, () -> subpass.colour(col));
-    	}
-
-    	@DisplayName("can contain both colour and depth-stencil attachments")
-    	@Test
-    	void both() {
-    		subpass.colour(col);
-    		subpass.depth(new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
-    		assertEquals(2, subpass.attachments().count());
-    	}
-
-    	@DisplayName("cannot contain the same colour and depth-stencil attachment")
-    	@Test
-    	void invalid() {
-    		subpass.colour(col);
-    		subpass.depth(new Reference(col, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
-    		assertThrows(IllegalArgumentException.class, () -> subpass.attachments());
-    	}
-
-    	@DisplayName("must contain at least one attachment")
-    	@Test
-    	void empty() {
-    		assertThrows(IllegalArgumentException.class, () -> subpass.attachments());
-    	}
-
-    	@Test
-    	void reference() {
-    		final var info = new VkAttachmentReference();
-    		final Reference ref = new Reference(col, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-    		ref.init(2);
-    		ref.populate(info);
-    		assertEquals(2, info.attachment);
-    		assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, info.layout);
-    	}
-	}
-
-	@DisplayName("A subpass dependency...")
-	@Nested
-	class DependencyTests {
-		private Subpass other;
-		private Dependency dependency;
-		private VkSubpassDependency desc;
-
-		@BeforeEach
-		void before() {
-			desc = new VkSubpassDependency();
-			other = new Subpass();
-			dependency = subpass.dependency();
-		}
-
-		@Test
-		void constructor() {
-			assertNotNull(dependency);
-			assertEquals(List.of(dependency), subpass.dependencies().toList());
-		}
-
-		@DisplayName("can be configured by a builder")
-		@Test
-		void build() {
-			// Configure a dependency
-			dependency
-					.subpass(other)
-    				.flag(VkDependencyFlag.VIEW_LOCAL)
-            		.source()
-            			.stage(VkPipelineStage.VERTEX_SHADER)
-            			.build()
-            		.destination()
-            			.stage(VkPipelineStage.FRAGMENT_SHADER)
-            			.access(VkAccess.SHADER_READ)
-            			.build()
-            		.build();
-
-			// Patch subpass indices
-			other.init(1);
-			subpass.init(2);
-
-			// Check descriptor
-			dependency.populate(desc);
-			assertEquals(EnumMask.of(VkDependencyFlag.VIEW_LOCAL), desc.dependencyFlags);
-			assertEquals(1, desc.srcSubpass);
-			assertEquals(2, desc.dstSubpass);
-			assertEquals(EnumMask.of(VkPipelineStage.VERTEX_SHADER), desc.srcStageMask);
-			assertEquals(EnumMask.of(), desc.srcAccessMask);
-			assertEquals(EnumMask.of(VkPipelineStage.FRAGMENT_SHADER), desc.dstStageMask);
-			assertEquals(EnumMask.of(VkAccess.SHADER_READ), desc.dstAccessMask);
-		}
-
-		@DisplayName("can depend on the implicit subpass before or after the render pass")
-		@Test
-		void implicit() {
-			subpass.init(2);
-			dependency
-					.external()
-					.source()
-						.stage(VkPipelineStage.VERTEX_SHADER)
-						.build()
-					.destination()
-						.stage(VkPipelineStage.FRAGMENT_SHADER)
-						.build()
-					.build();
-			dependency.populate(desc);
-			assertEquals(-1, desc.srcSubpass);
-			assertEquals(2, desc.dstSubpass);
-		}
-
-		@DisplayName("can be self referential")
-		@Test
-		void self() {
-			subpass.init(2);
-			dependency
-					.subpass(subpass)
-        			.flag(VkDependencyFlag.VIEW_LOCAL)
-            		.source()
-            			.stage(VkPipelineStage.VERTEX_SHADER)
-            			.build()
-            		.destination()
-            			.stage(VkPipelineStage.FRAGMENT_SHADER)
-            			.access(VkAccess.SHADER_READ)
-            			.build()
-            		.build();
-			dependency.populate(desc);
-			assertEquals(2, desc.srcSubpass);
-			assertEquals(2, desc.dstSubpass);
-		}
-
-		@DisplayName("must contain source and destination pipeline stages")
-		@Test
-		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> dependency.build());
-		}
+	@Test
+	void unknown() {
+		assertThrows(IllegalArgumentException.class, () -> subpass.description(List.of()));
+		assertThrows(IllegalArgumentException.class, () -> subpass.description(List.of(colour.attachment())));
+		assertThrows(IllegalArgumentException.class, () -> subpass.description(List.of(depth.attachment())));
 	}
 }

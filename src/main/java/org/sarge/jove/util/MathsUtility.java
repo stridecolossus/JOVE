@@ -87,6 +87,15 @@ public final class MathsUtility {
 	}
 
 	/**
+	 * Calculates the maximum unsigned integer value for the given number of bits.
+	 * @param bits Number of bits
+	 * @return Maximum unsigned value
+	 */
+	public static long unsignedMaximum(int bits) {
+		return (1L << bits) - 1;
+	}
+
+	/**
 	 * Clamps the given floating-point value.
 	 * @param value		Value to clamp
 	 * @param min		Minimum

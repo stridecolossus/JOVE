@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.obj;
 
+import java.util.Scanner;
+
 /**
  * A <i>parser</i> processes an OBJ command.
  * @author Sarge
@@ -7,26 +9,15 @@ package org.sarge.jove.platform.obj;
 interface Parser {
 	/**
 	 * Parses the given command.
-	 * @param args 		Arguments
-	 * @param model		OBJ model
+	 * @param scanner Input scanner
 	 * @throws NumberFormatException if the data cannot be parsed
 	 */
-	void parse(String args, ObjectModel model);
+	void parse(Scanner scanner);
 
 	/**
 	 * Parser that ignores a command.
 	 */
-	Parser IGNORE = (args, model) -> {
+	Parser IGNORE = _ -> {
 		// Does nowt
-	};
-
-	/**
-	 * Parser for a new object command (either {@code o} or {@code g}).
-	 * @see ObjectModel#start()
-	 */
-	Parser GROUP = (args, model) -> {
-		// TODO - object names
-		// Start new object
-		model.start();
 	};
 }

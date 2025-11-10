@@ -30,10 +30,9 @@ public sealed interface ClearValue {
 		}
 
 		@Override
-		public void populate(VkClearValue descriptor) {
-			final var clear = new VkClearColorValue();
-			clear.float32 = colour.toArray();
-			descriptor.color = clear;
+		public void populate(VkClearValue clear) {
+			clear.color = new VkClearColorValue();
+			clear.color.float32 = colour.toArray();
 		}
 	}
 
@@ -47,11 +46,10 @@ public sealed interface ClearValue {
 		}
 
 		@Override
-		public void populate(VkClearValue descriptor) {
-			final var clear = new VkClearDepthStencilValue();
-			clear.depth = depth.value();
-			clear.stencil = 0;
-			descriptor.depthStencil = clear;
+		public void populate(VkClearValue clear) {
+			clear.depthStencil = new VkClearDepthStencilValue();
+			clear.depthStencil.depth = depth.value();
+			clear.depthStencil.stencil = 0;
 		}
 	}
 }

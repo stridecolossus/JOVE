@@ -15,9 +15,6 @@ import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
 
 class LogicalDeviceTest {
-	/**
-	 *
-	 */
 	static class MockLogicalDeviceLibrary implements LogicalDevice.Library {
 		boolean destroyed;
 		boolean blocked;
@@ -87,14 +84,14 @@ class LogicalDeviceTest {
 	private LogicalDevice device;
 	private Family family;
 	private WorkQueue queue;
-	private MockLogicalDeviceLibrary lib;
+	private MockLogicalDeviceLibrary library;
 
 	@BeforeEach
 	void before() {
-		lib = new MockLogicalDeviceLibrary();
+		library = new MockLogicalDeviceLibrary();
 		family = new Family(0, 1, Set.of());
 		queue = new WorkQueue(new Handle(3), family);
-		device = new LogicalDevice(new Handle(2), lib, Map.of(family, List.of(queue)));
+		device = new LogicalDevice(new Handle(2), Map.of(family, List.of(queue)), new VkPhysicalDeviceLimits(), library);
 	}
 
 	@Test
@@ -105,13 +102,13 @@ class LogicalDeviceTest {
 	@Test
 	void waitIdleDevice() {
 		device.waitIdle();
-		assertEquals(true, lib.blocked);
+		assertEquals(true, library.blocked);
 	}
 
 	@Test
 	void waitIdleQueue() {
 		device.waitIdle(queue);
-		assertEquals(true, lib.queueBlocked);
+		assertEquals(true, library.queueBlocked);
 	}
 
 	@Test
@@ -124,9 +121,9 @@ class LogicalDeviceTest {
 				.extension("extension")
 				.feature("wideLines")
 				.queue(new RequiredQueue(family))
-				.build(lib);
+				.build(library);
 
-		assertEquals(false, lib.destroyed);
+		assertEquals(false, library.destroyed);
 		assertEquals(false, device.isDestroyed());
 		assertEquals(new Handle(2), device.handle());
 		assertEquals(Map.of(family, List.of(queue)), device.queues());
@@ -136,6 +133,6 @@ class LogicalDeviceTest {
 	void destroy() {
 		device.destroy();
 		assertEquals(true, device.isDestroyed());
-		assertEquals(true, lib.destroyed);
+		assertEquals(true, library.destroyed);
 	}
 }

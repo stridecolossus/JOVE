@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
 
 import org.sarge.jove.model.Mesh;
@@ -31,47 +32,39 @@ import org.sarge.jove.platform.vulkan.core.*;
  */
 public interface DrawCommand extends Command {
 	/**
-	 * Creates a simple draw command.
-	 * @param count Number of vertices
-	 * @return Simple draw command
-	 */
-	static DrawCommand draw(int count) {
-		return new Builder().count(count).build();
-	}
-
-	/**
-	 * Creates an indexed draw command.
-	 * @param count Number of indices
-	 * @return Indexed draw command
-	 */
-	static DrawCommand indexed(int count) {
-		return new Builder().indexed().count(count).build();
-	}
-
-	/**
+	 * Helper.
 	 * Creates a draw command for the given mesh.
-	 * @param mesh Mesh
-	 * @return Draw command
+	 * @param mesh			Mesh
+	 * @param library		Drawing library
+	 * @return Draw mesh command
 	 */
-	static DrawCommand of(Mesh mesh) {
-		final int count = mesh.count();
-		if(mesh.isIndexed()) {
-			return indexed(count);
+	static DrawCommand of(Mesh mesh, Library library) {
+		final var builder = new Builder(library);
+		builder.count(mesh.count());
+		if(mesh.index().isPresent()) {			// TODO - this actually builds the index!!!
+			builder.indexed();
 		}
-		else {
-			return draw(count);
-		}
+		return builder.build();
 	}
 
 	/**
 	 * Builder for a draw command.
 	 */
 	class Builder {
+		private final Library library;
 		private int count;
 		private Integer index;
 		private int firstVertex;
 		private int instanceCount = 1;
 		private int firstInstance;
+
+		/**
+		 * Constructor.
+		 * @param library Drawing library
+		 */
+		public Builder(Library library) {
+			this.library = requireNonNull(library);
+		}
 
 		/**
 		 * Sets the number of vertices to draw.
@@ -132,11 +125,12 @@ public interface DrawCommand extends Command {
 		 * @return New draw command
 		 */
 		public DrawCommand build() {
+			requireNonNull(library);
 			if(index == null) {
-				return buffer -> api.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
+				return buffer -> library.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
 			}
 			else {
-				return buffer -> api.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
+				return buffer -> library.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
 			}
 		}
 	}
@@ -145,10 +139,19 @@ public interface DrawCommand extends Command {
 	 * Builder for an <i>indirect</i> draw command.
 	 */
 	class IndirectBuilder {
+		private final Library library;
 		private boolean indexed;
 		private long offset;
 		private int count = 1;
 		private int stride;
+
+		/**
+		 * Constructor.
+		 * @param library Drawing library
+		 */
+		public IndirectBuilder(Library library) {
+			this.library = requireNonNull(library);
+		}
 
 		/**
 		 * Sets this as an indexed draw command.
@@ -187,33 +190,23 @@ public interface DrawCommand extends Command {
 
 		/**
 		 * Constructs this indirect draw command.
-		 * @param buffer Indirect buffer
+		 * @param buffer		Indirect buffer
+		 * @param library		Drawing library
 		 * @return New indirect draw command
 		 * @throws IllegalArgumentException if the buffer is not an {@link VkBufferUsageFlag#INDIRECT_BUFFER}
 		 * @throws IllegalArgumentException if the offset is invalid for the given buffer
 		 * @throws IllegalArgumentException if the draw count exceeds the hardware limit
 		 */
 		public DrawCommand build(VulkanBuffer buffer) {
-			// Validate
+			requireNonNull(library);
 			buffer.require(VkBufferUsageFlag.INDIRECT_BUFFER);
 			buffer.checkOffset(offset);
 
-			// Check indirect multi-draw is supported
-//			final LogicalDevice dev = buffer.device();
-// TODO
-//			dev.features().require("multiDrawIndirect");
-//
-//			// Check the indirect draw count is supported by the hardware
-//			final var limits = dev.limits();
-//			final int max = limits.maxDrawIndirectCount;
-//			if(count > max) throw new IllegalArgumentException("Invalid indirect draw count: count=%d max=%d".formatted(count, max));
-
-			// Create command
 			if(indexed) {
-				return (lib, cmd) -> lib.vkCmdDrawIndexedIndirect(cmd, buffer, offset, count, stride);
+				return cmd -> library.vkCmdDrawIndexedIndirect(cmd, buffer, offset, count, stride);
 			}
 			else {
-				return (lib, cmd) -> lib.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
+				return cmd -> library.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
 			}
 		}
 	}
@@ -231,7 +224,7 @@ public interface DrawCommand extends Command {
 		 * @param firstVertex			First vertex index
 		 * @param firstInstance			First index index
 		 */
-		void vkCmdDraw(CommandBuffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
+		void vkCmdDraw(Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance);
 
 		/**
 		 * Draws indexed vertices.
@@ -242,7 +235,7 @@ public interface DrawCommand extends Command {
 		 * @param firstVertex			First vertex index
 		 * @param firstInstance			First instance
 		 */
-		void vkCmdDrawIndexed(CommandBuffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
+		void vkCmdDrawIndexed(Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance);
 
 		/**
 		 * Indirect draw.
@@ -252,7 +245,7 @@ public interface DrawCommand extends Command {
 		 * @param drawCount				Draw count
 		 * @param stride				Stride
 		 */
-		void vkCmdDrawIndirect(CommandBuffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
+		void vkCmdDrawIndirect(Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
 
 		/**
 		 * Indirect indexed draw.
@@ -262,6 +255,6 @@ public interface DrawCommand extends Command {
 		 * @param drawCount				Draw count
 		 * @param stride				Stride
 		 */
-		void vkCmdDrawIndexedIndirect(CommandBuffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
+		void vkCmdDrawIndexedIndirect(Buffer commandBuffer, VulkanBuffer buffer, long offset, int drawCount, int stride);
 	}
 }

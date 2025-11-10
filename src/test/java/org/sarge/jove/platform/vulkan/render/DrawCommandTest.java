@@ -37,7 +37,7 @@ class DrawCommandTest {
 	@DisplayName("Create a draw command for a mesh")
 	@Test
 	void model() {
-		final var builder = new IndexedMeshBuilder(Primitive.POINT, new CompoundLayout(Point.LAYOUT));
+		final var builder = new IndexedMesh(Primitive.POINT, new CompoundLayout(Point.LAYOUT));
 		builder.add(new Vertex(Point.ORIGIN));
 		builder.add(0);
 		builder.add(0);

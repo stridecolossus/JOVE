@@ -46,7 +46,7 @@ public class ImageBlitCommandTest {
 		@Test
 		void build() {
 			// Init copy regions
-			final SubResource res = spy(SubResource.class);
+			final Subresource res = spy(Subresource.class);
 			final Extents offset = new Extents(new Dimensions(2, 3));
 			final BlitRegion src = new BlitRegion(res, Extents.ZERO, offset);
 			final BlitRegion dest = new BlitRegion(res, Extents.ZERO, offset);
@@ -57,7 +57,7 @@ public class ImageBlitCommandTest {
 					.destination(image)
 					.region(src, dest)
 					.filter(VkFilter.NEAREST)
-					.build();
+					.descriptor();
 
 			// Init expected blit descriptor
 			final VkImageBlit expected = new VkImageBlit() {
@@ -94,20 +94,20 @@ public class ImageBlitCommandTest {
 		@Test
 		void emptySourceImage() {
 			builder.destination(image);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.descriptor());
 		}
 
 		@Test
 		void emptyDestinationImage() {
 			builder.source(image);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.descriptor());
 		}
 
 		@Test
 		void emptyRegions() {
 			builder.source(image);
 			builder.destination(image);
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.descriptor());
 		}
 	}
 }

@@ -2,10 +2,9 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Collections;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.CompoundLayout;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.GlyphMeshBuilder.GlyphVertex;
@@ -32,7 +31,7 @@ class GlyphMeshBuilderTest {
     	@Test
     	void empty() {
     		assertEquals(0, mesh.count());
-    		assertEquals(0, mesh.vertices().length());
+    		assertEquals(0, mesh.vertices().limit());
     	}
 
 		@DisplayName("has a cursor at the origin")
@@ -44,14 +43,14 @@ class GlyphMeshBuilderTest {
 		@DisplayName("is not indexed")
     	@Test
     	void index() {
-    		assertEquals(false, mesh.isIndexed());
+    		assertEquals(false, mesh.index().isEmpty());
 		}
 
 		@DisplayName("is comprised of triangles with texture coordinates")
     	@Test
     	void mesh() {
     		assertEquals(Primitive.TRIANGLE, mesh.primitive());
-    		assertEquals(new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT), mesh.layout());
+    		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), mesh.layout());
 		}
     }
 

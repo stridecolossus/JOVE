@@ -99,13 +99,4 @@ public interface IndexFactory {
 //	private boolean contains(int index) {
 //		return Integer.lowestOneBit(mask >>> index) == 1;
 //	}
-
-	/**
-	 * Calculates the maximum unsigned integer value for the given number of bits.
-	 * @param bits Number of bits
-	 * @return Maximum unsigned value
-	 */
-	public static long unsignedMaximum(int bits) {
-		return (1L << bits) - 1;
-	}
 }

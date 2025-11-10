@@ -68,7 +68,7 @@ public class VulkanRenderTask implements TransientObject {
 		final FrameBuffer buffer = adapter.buffer(index);
 
 		// Build and render task and present
-		final Command.CommandBuffer render = composer.compose(index, buffer);
+		final Command.Buffer render = composer.compose(index, buffer);
 		frame.present(render, index, swapchain);
 	}
 

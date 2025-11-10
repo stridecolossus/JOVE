@@ -1,22 +1,27 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
-import com.sun.jna.Structure.ByReference;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"buffer",
-	"offset",
-	"range"
-})
-public class VkDescriptorBufferInfo extends VulkanStructure implements ByReference {
+public class VkDescriptorBufferInfo implements NativeStructure {
 	public Handle buffer;
 	public long offset;
 	public long range;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+				POINTER.withName("buffer"),
+				JAVA_LONG.withName("offset"),
+				JAVA_LONG.withName("range")
+		);
+	}
 }

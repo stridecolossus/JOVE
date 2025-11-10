@@ -1,6 +1,8 @@
 
 
-EnumMask should store a set, easier to debug?
+replace Percentile with custom implementation (just range checking)
+copy custom validation
+remove dependency on Library
 
 
 -------------------------------

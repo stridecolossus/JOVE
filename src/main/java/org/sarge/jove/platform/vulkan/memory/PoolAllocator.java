@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
@@ -20,12 +21,11 @@ public class PoolAllocator extends Allocator implements TransientObject {
 
 	/**
 	 * Constructor.
-	 * @param allocator		Delegate allocator
-	 * @param pages			Number of pages to allocate for a new block
-	 * @see #granularity()
+	 * @param dev
+	 * @param types
 	 */
-	public PoolAllocator(Allocator allocator, int pages) {
-		super(allocator);
+	public PoolAllocator(LogicalDevice dev, MemoryType[] types, int pages) {
+		super(dev, types);
 		this.pages = requireOneOrMore(pages);
 	}
 

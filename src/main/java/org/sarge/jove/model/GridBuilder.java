@@ -4,12 +4,14 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.stream.IntStream;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * The <i>grid builder</i> constructs a grid of vertices in the X-Z plane with an optional index buffer.
@@ -71,7 +73,7 @@ public class GridBuilder {
 			final float h = dim.height() / size.height();
 
 			// Calculate height normalisation scalar
-			final float normalise = scale / IndexFactory.unsignedMaximum(Byte.SIZE * image.layout().bytes());
+			final float normalise = scale / MathsUtility.unsignedMaximum(Byte.SIZE * image.layout().bytes());
 
 			// Create function
 			return (row, col) -> {
@@ -147,9 +149,9 @@ public class GridBuilder {
 	 * Constructs this grid.
 	 * @return New grid mesh
 	 */
-	public MeshBuilder build() {
+	public MutableMesh build() {
 		// Init mesh
-		final var mesh = new IndexedMeshBuilder(primitive, new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final var mesh = new IndexedMesh(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 
 		// Calculate half distance in both directions
 		final int w = size.width();

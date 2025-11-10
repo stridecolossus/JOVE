@@ -43,6 +43,7 @@ public record NativeBooleanTransformer() implements Transformer<Boolean, Integer
 
 	@Override
 	public Object empty() {
+		// TODO - return FALSE? how do wrappers work exactly?
 		throw new UnsupportedOperationException();
 	}
 

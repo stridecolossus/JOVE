@@ -2,6 +2,8 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
@@ -20,10 +22,10 @@ class GridBuilderTest {
 	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
 	@Test
 	void buildQuadStrip() {
-		final Mesh mesh = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build().mesh();
+		final Mesh mesh = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
 		assertEquals(Primitive.PATCH, mesh.primitive());
 		assertEquals((3 * 3) * 4, mesh.count());
-		assertEquals(new CompoundLayout(Point.LAYOUT, Coordinate2D.LAYOUT), mesh.layout());
+		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), mesh.layout());
 	}
 
 	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")

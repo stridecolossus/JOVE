@@ -61,7 +61,7 @@ public class ImageCopyCommandTest {
 
 		@Test
 		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> builder.build());
+			assertThrows(IllegalArgumentException.class, () -> builder.descriptor());
 		}
 
 		@Test

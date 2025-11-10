@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 
 class ProgrammableShaderStageTest {
 	private ProgrammableShaderStage stage;
@@ -14,7 +14,7 @@ class ProgrammableShaderStageTest {
 
 	@BeforeEach
 	void before() {
-		shader = Shader.create(new MockDeviceContext(), new byte[0]); // TODO - MockShader?
+		shader = Shader.create(new MockLogicalDevice(), new byte[42]);
 
 		stage = new ProgrammableShaderStage.Builder()
 				.stage(VkShaderStage.VERTEX)

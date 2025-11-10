@@ -7,7 +7,6 @@ import static org.sarge.jove.platform.vulkan.VkPipelineStage.TRANSFER;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.CommandPool;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier;
@@ -24,13 +23,13 @@ import org.sarge.jove.platform.vulkan.pipeline.Barrier;
  * @author Sarge
  */
 public class CaptureTask {
-	private final CommandPool pool;
+	private final Command.Pool pool;
 
 	/**
 	 * Constructor.
 	 * @param pool Transfer command pool
 	 */
-	public CaptureTask(CommandPool pool) {
+	public CaptureTask(Command.Pool pool) {
 		this.pool = requireNonNull(pool);
 	}
 
@@ -48,17 +47,19 @@ public class CaptureTask {
 		final DefaultImage screenshot = screenshot(dev, allocator, image.descriptor());
 
 		// Init copy command
-		final Command copy = ImageCopyCommand.of(image, screenshot);
+		final Image.Library library = swapchain.device().library();
+		final Command copy = ImageCopyCommand.of(image, screenshot, library);
 
 		// Build screenshot task
-		final Command.CommandBuffer buffer = pool
-				.primary()
+		final Command.Buffer buffer = pool
+				.allocate(1, true)
+				.getFirst()
 				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
-					.record(destination(screenshot))
-					.record(source(image))
-					.record(copy)
-					.record(prepare(screenshot))
-					.record(restore(image))
+					.add(destination(screenshot))
+					.add(source(image))
+					.add(copy)
+					.add(prepare(screenshot))
+					.add(restore(image))
 				.end();
 
 		// submit and wait for screenshot

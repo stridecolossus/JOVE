@@ -1,20 +1,35 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
-import com.sun.jna.Structure.*;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"rect",
-	"baseArrayLayer",
-	"layerCount"
-})
-public class VkClearRect extends VulkanStructure implements ByReference {
+public class VkClearRect implements NativeStructure {
 	public VkRect2D rect;
 	public int baseArrayLayer;
 	public int layerCount;
+
+	@Override
+	public GroupLayout layout() {
+	    return MemoryLayout.structLayout(
+	            MemoryLayout.structLayout(
+	                MemoryLayout.structLayout(
+	                    JAVA_INT.withName("x"),
+	                    JAVA_INT.withName("y")
+	                ).withName("offset"),
+	                MemoryLayout.structLayout(
+	                    JAVA_INT.withName("width"),
+	                    JAVA_INT.withName("height")
+	                ).withName("extent")
+	            ).withName("rect"),
+	            JAVA_INT.withName("baseArrayLayer"),
+	            JAVA_INT.withName("layerCount")
+	    );
+	}
 }

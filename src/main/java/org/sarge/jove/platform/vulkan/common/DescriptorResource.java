@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
+import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.platform.vulkan.VkDescriptorType;
 
 /**
@@ -13,8 +14,8 @@ public interface DescriptorResource {
 	VkDescriptorType type();
 
 	/**
-	 * Builds the Vulkan descriptor for this resource.
-	 * @return Vulkan descriptor
+	 * Builds the descriptor for this resource.
+	 * @return Resource descriptor
 	 */
-	VulkanStructure build();
+	NativeStructure descriptor();
 }

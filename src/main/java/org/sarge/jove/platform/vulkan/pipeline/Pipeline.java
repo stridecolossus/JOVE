@@ -3,10 +3,11 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Updated;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.CommandBuffer;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -60,12 +61,14 @@ public class Pipeline extends VulkanObject {
 	 * @return New bind pipeline command
 	 */
 	public Command bind() {
-		return (lib, buffer) -> lib.vkCmdBindPipeline(buffer, type, Pipeline.this);
+		final Library library = this.device().library();
+		return buffer -> library.vkCmdBindPipeline(buffer, type, Pipeline.this);
 	}
 
 	@Override
-	protected Destructor<Pipeline> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyPipeline;
+	protected Destructor<Pipeline> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroyPipeline;
 	}
 
 	/**
@@ -82,7 +85,7 @@ public class Pipeline extends VulkanObject {
 		 * @param pPipelines		Returned pipeline(s)
 		 * @return Result
 		 */
-		int vkCreateGraphicsPipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines);
+		VkResult vkCreateGraphicsPipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
 
 		/**
 		 * Creates an array of compute pipelines.
@@ -94,7 +97,7 @@ public class Pipeline extends VulkanObject {
 		 * @param pPipelines		Returned pipeline(s)
 		 * @return Result
 		 */
-		int vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines);
+		VkResult vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
 
 		/**
 		 * Destroys a pipeline.
@@ -110,7 +113,7 @@ public class Pipeline extends VulkanObject {
 		 * @param pipelineBindPoint		Bind-point
 		 * @param pipeline				Pipeline to bind
 		 */
-		void vkCmdBindPipeline(CommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pipeline pipeline);
+		void vkCmdBindPipeline(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pipeline pipeline);
 
 		/**
 		 * Command to apply a pipeline barrier.
@@ -125,6 +128,6 @@ public class Pipeline extends VulkanObject {
 		 * @param imageMemoryBarrierCount			Number of image barriers
 		 * @param pImageMemoryBarriers				Image barriers
 		 */
-		void vkCmdPipelineBarrier(CommandBuffer commandBuffer, EnumMask<VkPipelineStage> srcStageMask, EnumMask<VkPipelineStage> dstStageMask, EnumMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
+		void vkCmdPipelineBarrier(Buffer commandBuffer, EnumMask<VkPipelineStage> srcStageMask, EnumMask<VkPipelineStage> dstStageMask, EnumMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 	}
 }

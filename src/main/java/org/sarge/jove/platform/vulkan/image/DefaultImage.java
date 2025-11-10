@@ -19,19 +19,19 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  */
 public final class DefaultImage extends VulkanObject implements Image {
 	private final Descriptor descriptor;
-	private final DeviceMemory mem;
+	private final DeviceMemory memory;
 
 	/**
 	 * Constructor.
-	 * @param handle		Handle
-	 * @param dev			Logical device
-	 * @param descriptor	Descriptor for this image
-	 * @param mem			Device memory
+	 * @param handle			Handle
+	 * @param device			Logical device
+	 * @param descriptor		Descriptor for this image
+	 * @param memory			Device memory
 	 */
-	DefaultImage(Handle handle, LogicalDevice dev, Descriptor descriptor, DeviceMemory mem) {
-		super(handle, dev);
+	DefaultImage(Handle handle, LogicalDevice device, Descriptor descriptor, DeviceMemory memory) {
+		super(handle, device);
 		this.descriptor = requireNonNull(descriptor);
-		this.mem = requireNonNull(mem);
+		this.memory = requireNonNull(memory);
 	}
 
 	@Override
@@ -43,18 +43,19 @@ public final class DefaultImage extends VulkanObject implements Image {
 	 * @return Device memory for this image
 	 */
 	public DeviceMemory memory() {
-		return mem;
+		return memory;
 	}
 
 	@Override
-	protected Destructor<DefaultImage> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyImage;
+	protected Destructor<DefaultImage> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroyImage;
 	}
 
 	@Override
 	protected void release() {
-		if(!mem.isDestroyed()) {
-			mem.destroy();
+		if(!memory.isDestroyed()) {
+			memory.destroy();
 		}
 	}
 
@@ -65,7 +66,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		private static final ReverseMapping<VkSampleCount> SAMPLES = ReverseMapping.mapping(VkSampleCount.class);
 
 		private Descriptor descriptor;
-		private MemoryProperties<VkImageUsageFlag> props;
+		private MemoryProperties<VkImageUsageFlag> properties;
 		private final Set<VkImageCreateFlag> flags = new HashSet<>();
 		private VkSampleCount samples = VkSampleCount.COUNT_1;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
@@ -86,7 +87,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @param props Memory properties
 		 */
 		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
-			this.props = requireNonNull(props);
+			this.properties = requireNonNull(props);
 			return this;
 		}
 		// TODO - ctor
@@ -144,14 +145,18 @@ public final class DefaultImage extends VulkanObject implements Image {
 
 		/**
 		 * Constructs this image.
-		 * @param dev Logical device
+		 * @param device Logical device
 		 * @return New image
 		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */
-		public DefaultImage build(LogicalDevice dev, Allocator allocator) {
+		public DefaultImage build(LogicalDevice device, Allocator allocator) {
 			// Validate
-			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
-			if(props == null) throw new IllegalArgumentException("No memory properties specified");
+			if(descriptor == null) {
+				throw new IllegalArgumentException("No image descriptor specified");
+			}
+			if(properties == null) {
+				throw new IllegalArgumentException("No memory properties specified");
+			}
 
 			// Populate image structure
 			final var info = new VkImageCreateInfo();
@@ -164,28 +169,28 @@ public final class DefaultImage extends VulkanObject implements Image {
 			info.samples = samples;
 			info.tiling = tiling;
 			info.initialLayout = layout;
-			info.usage = new EnumMask<>(props.usage());
-			info.sharingMode = props.mode();
+			info.usage = new EnumMask<>(properties.usage());
+			info.sharingMode = properties.mode();
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
-			final VulkanLibrary vulkan = dev.vulkan();
-			final Pointer ref = new Pointer();
-			vulkan.vkCreateImage(dev, info, null, ref);
+			final Library vulkan = device.library();
+			final Pointer pointer = new Pointer();
+			vulkan.vkCreateImage(device, info, null, pointer);
 
 			// Retrieve image memory requirements
-			final Handle handle = ref.get();
-			final var reqs = new VkMemoryRequirements();
-			vulkan.vkGetImageMemoryRequirements(dev, handle, reqs);
+			final Handle handle = pointer.get();
+			final var requirements = new VkMemoryRequirements();
+			vulkan.vkGetImageMemoryRequirements(device, handle, requirements);
 
 			// Allocate image memory
-			final DeviceMemory mem = allocator.allocate(reqs, props);
+			final DeviceMemory memory = allocator.allocate(requirements, properties);
 
 			// Bind memory to image
-			vulkan.vkBindImageMemory(dev, handle, mem, 0);
+			vulkan.vkBindImageMemory(device, handle, memory, 0);
 
 			// Create image
-			return new DefaultImage(handle, dev, descriptor, mem);
+			return new DefaultImage(handle, device, descriptor, memory);
 		}
 	}
 }

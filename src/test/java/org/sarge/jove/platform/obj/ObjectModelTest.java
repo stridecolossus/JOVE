@@ -33,7 +33,7 @@ public class ObjectModelTest {
 		model.add(vertex);
 
 		// Build model
-		final List<Mesh> list = model.models();
+		final List<Mesh> list = model.build();
 		assertEquals(1, list.size());
 
 		// Check model

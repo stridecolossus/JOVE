@@ -53,9 +53,11 @@ public class ClearAttachmentCommandBuilder {
 		}
 
 		private int index(Attachment attachment) {
-			final int index = pass.attachments().indexOf(attachment);
-			if(index == -1) throw new IllegalArgumentException("Invalid attachment for this render pass: " + attachment);
-			return index;
+			// TODO
+			return -1;
+//			final int index = pass.attachments().indexOf(attachment);
+//			if(index == -1) throw new IllegalArgumentException("Invalid attachment for this render pass: " + attachment);
+//			return index;
 		}
 
 		void populate(VkClearAttachment info) {
@@ -119,9 +121,10 @@ public class ClearAttachmentCommandBuilder {
 	 * @return New clear attachments command
 	 */
 	public Command build() {
-		// TODO
-		final VkClearAttachment[] attachments = null; // StructureCollector.pointer(entries, new VkClearAttachment(), ClearAttachment::populate);
-		final VkClearRect[] rects = null; // StructureCollector.pointer(regions, new VkClearRect(), Region::populate);
-		return (lib, buffer) -> lib.vkCmdClearAttachments(buffer, entries.size(), attachments, regions.size(), rects);
+//		// TODO
+//		final VkClearAttachment[] attachments = null; // StructureCollector.pointer(entries, new VkClearAttachment(), ClearAttachment::populate);
+//		final VkClearRect[] rects = null; // StructureCollector.pointer(regions, new VkClearRect(), Region::populate);
+//		return buffer -> library.vkCmdClearAttachments(buffer, entries.size(), attachments, regions.size(), rects);
+		return null;
 	}
 }

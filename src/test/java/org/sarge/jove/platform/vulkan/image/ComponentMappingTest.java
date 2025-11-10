@@ -26,7 +26,7 @@ class ComponentMappingTest {
 		assertEquals(VkComponentSwizzle.A, mapping.a);
 	}
 
-	@DisplayName("Unspecified channels are IDENTITY by default")
+	@DisplayName("Unspecified channels are the identity swizzle by default")
 	@Test
 	void unspecified() {
 		final VkComponentMapping mapping = ComponentMapping.of("R").build();
@@ -58,7 +58,7 @@ class ComponentMappingTest {
 		assertThrows(IllegalArgumentException.class, () -> ComponentMapping.of("12345"));
 	}
 
-	@DisplayName("A component mapping must be comprised of supported swizzles")
+	@DisplayName("A component mapping must be comprised of supported swizzle characters")
 	@Test
 	void invalid() {
 		assertThrows(IllegalArgumentException.class, () -> ComponentMapping.of("?"));

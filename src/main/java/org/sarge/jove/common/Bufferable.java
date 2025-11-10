@@ -13,3 +13,4 @@ public interface Bufferable {
 	 */
 	void buffer(ByteBuffer bb);
 }
+// TODO - replace with direct MemorySegment?

@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Command;
 
 /**
  * The <i>image blit command</i> copies regions of an image, potentially performing format conversion, scaling and filtering.
@@ -17,6 +17,7 @@ public final class ImageBlitCommand implements Command {
 	private final VkImageLayout srcLayout, destLayout;
 	private final VkImageBlit[] regions;
 	private final VkFilter filter;
+	private final Image.Library library;
 
 	/**
 	 * Constructor.
@@ -26,19 +27,21 @@ public final class ImageBlitCommand implements Command {
 	 * @param destLayout	Destination image layout
 	 * @param regions		Copy regions
 	 * @param filter		Filter
+	 * @param library		Image library
 	 */
-	ImageBlitCommand(Image src, VkImageLayout srcLayout, Image dest, VkImageLayout destLayout, VkImageBlit[] regions, VkFilter filter) {
+	ImageBlitCommand(Image src, VkImageLayout srcLayout, Image dest, VkImageLayout destLayout, VkImageBlit[] regions, VkFilter filter, Image.Library library) {
 		this.src = requireNonNull(src);
 		this.srcLayout = requireNonNull(srcLayout);
 		this.dest = requireNonNull(dest);
 		this.destLayout = requireNonNull(destLayout);
 		this.regions = Arrays.copyOf(regions, regions.length);
 		this.filter = requireNonNull(filter);
+		this.library = requireNonNull(library);
 	}
 
 	@Override
-	public void execute(VulkanLibrary lib, CommandBuffer buffer) {
-		lib.vkCmdBlitImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions, filter);
+	public void execute(Buffer buffer) {
+		library.vkCmdBlitImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions, filter);
 	}
 
 	/**
@@ -48,7 +51,7 @@ public final class ImageBlitCommand implements Command {
 		/**
 		 * Blit copy region.
 		 */
-		public record BlitRegion(SubResource subresource, Extents min, Extents max) {
+		public record BlitRegion(Subresource subresource, Extents min, Extents max) {
 			/**
 			 * Creates a blit region for the whole of the given image.
 			 * @param image Image
@@ -127,16 +130,18 @@ public final class ImageBlitCommand implements Command {
 		/**
 		 * Populates a blit descriptor from the source/destination regions.
 		 */
-		private void populate(Entry<BlitRegion, BlitRegion> entry, VkImageBlit blit) {
-			// Populate source region
+		private VkImageBlit populate(Entry<BlitRegion, BlitRegion> entry) {
+			final var blit = new VkImageBlit();
+
 			final BlitRegion src = entry.getKey();
-			blit.srcSubresource = SubResource.toLayers(src.subresource);
+			blit.srcSubresource = Subresource.layers(src.subresource);
 			blit.srcOffsets = offsets(src);
 
-			// Populate destination region
 			final BlitRegion dest = entry.getValue();
-			blit.dstSubresource = SubResource.toLayers(dest.subresource);
+			blit.dstSubresource = Subresource.layers(dest.subresource);
 			blit.dstOffsets = offsets(dest);
+
+			return blit;
 		}
 
 		/**
@@ -151,20 +156,18 @@ public final class ImageBlitCommand implements Command {
 
 		/**
 		 * Constructs this blit command.
+		 * @param library Image library
 		 * @return New blit command
 		 * @throws IllegalArgumentException if the source and destination images have not been specified, or no copy regions are specified
 		 */
-		public ImageBlitCommand build() {
-			// Validate
-			if(src == null) throw new IllegalArgumentException("No source image specified");
-			if(dest == null) throw new IllegalArgumentException("No destination image specified");
-			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
+		public ImageBlitCommand build(Image.Library library) {
+			final VkImageBlit[] array = regions
+					.entrySet()
+					.stream()
+					.map(this::populate)
+					.toArray(VkImageBlit[]::new);
 
-			// Create copy regions array
-			final VkImageBlit[] array = null; // TODO StructureCollector.array(regions.entrySet(), new VkImageBlit(), this::populate);
-
-			// Create command
-			return new ImageBlitCommand(src, srcLayout, dest, destLayout, array, filter);
+			return new ImageBlitCommand(src, srcLayout, dest, destLayout, array, filter, library);
 		}
 	}
 }

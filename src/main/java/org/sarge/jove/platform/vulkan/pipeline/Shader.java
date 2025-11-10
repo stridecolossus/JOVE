@@ -1,18 +1,16 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.Objects.requireNonNull;
-
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * A <i>shader</i> is a Vulkan shader module used to implement a programmable pipeline stage.
  * @author Sarge
  */
-public final class Shader extends VulkanObject {
+public class Shader extends VulkanObject {
 	/**
 	 * Creates a shader module.
 	 * @param device	Logical device
@@ -23,29 +21,30 @@ public final class Shader extends VulkanObject {
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
-		info.pCode = requireNonNull(code);
+		info.pCode = code;
 
 		// Allocate shader
-		final VulkanLibrary vulkan = device.vulkan();
-		final Pointer ref = new Pointer();
-		vulkan.vkCreateShaderModule(device, info, null, ref);
+		final Library library = device.library();
+		final Pointer pointer = new Pointer();
+		library.vkCreateShaderModule(device, info, null, pointer);
 
 		// Create shader
-		return new Shader(ref.get(), device);
+		return new Shader(pointer.get(), device);
 	}
 
 	/**
 	 * Constructor.
-	 * @param handle 		Shader module handle
-	 * @param dev			Logical device
+	 * @param handle 		Shader module
+	 * @param device		Logical device
 	 */
-	private Shader(Handle handle, LogicalDevice dev) {
-		super(handle, dev);
+	Shader(Handle handle, LogicalDevice device) {
+		super(handle, device);
 	}
 
 	@Override
-	protected Destructor<Shader> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyShaderModule;
+	protected Destructor<Shader> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroyShaderModule;
 	}
 
 	/**

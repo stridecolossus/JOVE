@@ -1,398 +1,264 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentCaptor;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.*;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
+import org.sarge.jove.util.EnumMask;
 
 public class DescriptorSetTest {
+	private static class MockDescriptorSetLibrary extends MockVulkanLibrary {
+		private boolean updated;
+		private boolean bound;
+
+		@Override
+		public VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout) {
+			assertNotNull(device);
+			assertEquals(new EnumMask<>(), pCreateInfo.flags);
+			assertEquals(1, pCreateInfo.bindingCount);
+			assertEquals(1, pCreateInfo.pBindings.length);
+
+			assertEquals(1, pCreateInfo.pBindings[0].binding);
+			assertEquals(VkDescriptorType.SAMPLER, pCreateInfo.pBindings[0].descriptorType);
+			assertEquals(2, pCreateInfo.pBindings[0].descriptorCount);
+			assertEquals(new EnumMask<>(VkShaderStage.FRAGMENT), pCreateInfo.pBindings[0].stageFlags);
+
+			pSetLayout.set(new Handle(3));
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public VkResult vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pDescriptorPool) {
+			assertNotNull(device);
+			assertEquals(new EnumMask<>(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET), pCreateInfo.flags);
+			assertEquals(1, pCreateInfo.poolSizeCount);
+			assertEquals(1, pCreateInfo.pPoolSizes.length);
+			assertEquals(2, pCreateInfo.pPoolSizes[0].descriptorCount);
+			assertEquals(VkDescriptorType.SAMPLER, pCreateInfo.pPoolSizes[0].type);
+			pDescriptorPool.set(new Handle(4));
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public VkResult vkAllocateDescriptorSets(LogicalDevice device, VkDescriptorSetAllocateInfo pAllocateInfo, Handle[] pDescriptorSets) {
+			assertNotNull(device);
+			assertNotNull(pAllocateInfo.descriptorPool);
+			assertEquals(pDescriptorSets.length, pAllocateInfo.descriptorSetCount);
+			assertEquals(1, pAllocateInfo.pSetLayouts.length);
+			Arrays.fill(pDescriptorSets, new Handle(5));
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public void vkUpdateDescriptorSets(LogicalDevice device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies) {
+			assertNotNull(device);
+			assertEquals(1, descriptorWriteCount);
+			assertEquals(1, pDescriptorWrites.length);
+			assertEquals(0, descriptorCopyCount);
+			assertEquals(null, pDescriptorCopies);
+
+			assertEquals(1, pDescriptorWrites[0].dstBinding);
+			assertEquals(VkDescriptorType.SAMPLER, pDescriptorWrites[0].descriptorType);
+			assertEquals(1, pDescriptorWrites[0].descriptorCount);
+			assertEquals(0, pDescriptorWrites[0].dstArrayElement);
+			assertEquals(new Handle(2), pDescriptorWrites[0].dstSet);
+
+			updated = true;
+		}
+
+		@Override
+		public void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, DescriptorSet[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets) {
+			assertEquals(VkPipelineBindPoint.GRAPHICS, pipelineBindPoint);
+			assertEquals(0, firstSet);
+			assertEquals(1, descriptorSetCount);
+			assertEquals(1, pDescriptorSets.length);
+			assertEquals(new Handle(2), pDescriptorSets[0].handle());
+			assertEquals(0, dynamicOffsetCount);
+			assertEquals(null, pDynamicOffsets);
+			bound = true;
+		}
+	}
+
 	private Binding binding;
-	private DescriptorSet.Layout layout;
-	private DescriptorSet descriptor;
-	private DescriptorResource res;
-	private DeviceContext dev;
-	private VulkanLibrary lib;
+	private DescriptorSet set;
+	private DescriptorResource resource;
+	private LogicalDevice device;
+	private MockDescriptorSetLibrary library;
 
 	@BeforeEach
 	void before() {
 		// Init device
-		dev = new MockDeviceContext();
-		lib = dev.library();
+		library = new MockDescriptorSetLibrary();
+		device = new MockLogicalDevice(library);
 
 		// Create layout with a sampler binding
-		binding = new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
-		layout = new DescriptorSet.Layout(new Handle(1), dev, List.of(binding));
+		binding = new Binding(1, VkDescriptorType.SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
 
 		// Create sampler resource
-		res = new DescriptorResource() {
+		resource = new DescriptorResource() {
 			@Override
 			public VkDescriptorType type() {
-				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
+				return VkDescriptorType.SAMPLER;
 			}
 
 			@Override
-			public VulkanStructure build() {
+			public NativeStructure descriptor() {
 				return new VkDescriptorImageInfo();
 			}
 		};
 
 		// Create descriptor set
-		descriptor = new DescriptorSet(new Handle(2), layout);
+		set = new DescriptorSet(new Handle(2), List.of(binding));
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(new Handle(2), descriptor.handle());
-		assertEquals(layout, descriptor.layout());
+	void empty() {
+		assertEquals(null, set.resource(binding));
 	}
 
-	@DisplayName("A descriptor set can be bound to the graphics pipeline")
+	@Test
+	void resource() {
+		set.resource(binding, resource);
+		assertEquals(resource, set.resource(binding));
+	}
+
+	@Test
+	void replace() {
+		set.resource(binding, resource);
+		set.resource(binding, resource);
+	}
+
+	@Test
+	void invalidBinding() {
+		final Binding other = new Binding.Builder()
+				.stage(VkShaderStage.VERTEX)
+				.type(VkDescriptorType.UNIFORM_BUFFER)
+				.build();
+
+		assertThrows(IllegalArgumentException.class, () -> set.resource(other, resource));
+	}
+
+	@Test
+	void invalidResource() {
+		final var invalid = new DescriptorResource() {
+			@Override
+			public VkDescriptorType type() {
+				return VkDescriptorType.UNIFORM_BUFFER;
+			}
+
+			@Override
+			public NativeStructure descriptor() {
+				return null;
+			}
+		};
+
+		assertThrows(IllegalArgumentException.class, () -> set.resource(binding, invalid));
+	}
+
+	@Test
+	void update() {
+		set.resource(binding, resource);
+		assertEquals(1, DescriptorSet.update(device, List.of(set)));
+		assertEquals(true, library.updated);
+	}
+
+	@Test
+	void updateNotPopulated() {
+		assertThrows(IllegalStateException.class, () -> DescriptorSet.update(device, List.of(set)));
+	}
+
+	@Test
+	void ignored() {
+		set.resource(binding, resource);
+		DescriptorSet.update(device, List.of(set));
+		assertEquals(0, DescriptorSet.update(device, List.of(set)));
+	}
+
 	@Test
 	void bind() {
-		final var pipeline = new PipelineLayout.Builder().build(dev);
-		final Command bind = descriptor.bind(pipeline);
-		final var buffer = mock(Command.CommandBuffer.class);
-		bind.execute(lib, buffer);
-		verify(lib).vkCmdBindDescriptorSets(buffer, VkPipelineBindPoint.GRAPHICS, pipeline, 0, 1, NativeObject.array(List.of(descriptor)), 0, null);
+		final Command bind = set.bind(new MockPipelineLayout(device));
+		bind.execute(null);
+		assertEquals(true, library.bound);
 	}
 
-	@DisplayName("A descriptor set resource...")
-	@Nested
-	class EntryTests {
-		private Entry entry;
-
-		@BeforeEach
-		void before() {
-			entry = descriptor.entry(binding);
-		}
-
-    	@DisplayName("TODO")
-    	@Test
-    	void entry() {
-    		assertNotNull(entry);
-    	}
-
-    	@DisplayName("can be populated")
-    	@Test
-    	void set() {
-    		entry.set(res);
-    		assertEquals(res, entry.get());
-    	}
-
-    	@DisplayName("can be overwritten with a new resource")
-    	@Test
-    	void reset() {
-    		entry.set(res);
-    		entry.set(res);
-    	}
-
-    	@DisplayName("cannot populate a binding that does not belong to the layout")
-    	@Test
-    	void invalid() {
-    		final Binding other = new Binding(2, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1, Set.of(VkShaderStage.FRAGMENT));
-    		assertThrows(IllegalArgumentException.class, () -> descriptor.entry(other));
-    	}
-
-    	@DisplayName("cannot be set to a resource with a different descriptor type")
-    	@Test
-    	void setInvalidResource() {
-    		final var invalid = mock(DescriptorResource.class);
-    		when(invalid.type()).thenReturn(VkDescriptorType.STORAGE_BUFFER);
-    		assertThrows(IllegalArgumentException.class, () -> entry.enumerate(invalid));
-    	}
+	@Test
+	void binding() {
+		final var builder = new Binding.Builder().type(VkDescriptorType.SAMPLER);
+		assertThrows(IllegalArgumentException.class, () -> builder.build());
 	}
 
-	@DisplayName("A descriptor set update...")
-	@Nested
-	class UpdateTests {
-		@DisplayName("is used to update the resources for a group of descriptor sets")
-    	@Test
-    	void update() {
-    		// Apply update
-    		descriptor.entry(binding).set(res);
-    		assertEquals(1, DescriptorSet.update(dev, Set.of(descriptor)));
-
-    		// Init expected write descriptor
-    		final var write = new VkWriteDescriptorSet() {
-    			@Override
-    			public boolean equals(Object obj) {
-    				final var expected = (VkWriteDescriptorSet) obj;
-    				assertEquals(1, expected.dstBinding);
-    				assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, expected.descriptorType);
-    				assertEquals(descriptor.handle(), expected.dstSet);
-    				assertEquals(1, expected.descriptorCount);
-    				assertEquals(0, expected.dstArrayElement);
-    				return true;
-    			}
-    		};
-
-    		// Check API
-    		verify(lib).vkUpdateDescriptorSets(dev, 1, new VkWriteDescriptorSet[]{write}, 0, null);
-    	}
-
-		@DisplayName("is ignored if none of the resources have been modified")
-    	@Test
-    	void none() {
-    		descriptor.entry(binding).set(res);
-    		DescriptorSet.update(dev, Set.of(descriptor));
-    		assertEquals(0, DescriptorSet.update(dev, Set.of(descriptor)));
-    	}
-
-		@DisplayName("cannot be applied if any resource has not been configured")
-    	@Test
-    	void empty() {
-    		assertThrows(IllegalStateException.class, () -> DescriptorSet.update(dev, Set.of(descriptor)));
-    	}
-
-		@DisplayName("must be a supported resource type")
-    	@Test
-    	void type() {
-			final var unsupported = new DescriptorResource() {
-				@Override
-				public VkDescriptorType type() {
-					return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
-				}
-
-				@Override
-				public VulkanStructure build() {
-					return new MockStructure();
-				}
-			};
-    		descriptor.entry(binding).set(unsupported);
-    		assertThrows(UnsupportedOperationException.class, () -> DescriptorSet.update(dev, Set.of(descriptor)));
-    	}
+	@Test
+	void layout() {
+		final Layout layout = Layout.create(device, List.of(binding), Set.of());
+		layout.destroy();
+		assertEquals(true, layout.isDestroyed());
 	}
 
-	@DisplayName("A descriptor set binding...")
 	@Nested
-	class BindingTests {
-		@Test
-		void constructor() {
-			assertEquals(1, binding.index());
-			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, binding.type());
-			assertEquals(2, binding.count());
-			assertEquals(Set.of(VkShaderStage.FRAGMENT), binding.stages());
-		}
-
-		@DisplayName("must specify at least one pipeline stage")
-		@Test
-		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> new Binding(1, VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2, Set.of()));
-		}
-
-		@DisplayName("can be created via a builder")
-		@Test
-		void build() {
-			final var builder = new Binding.Builder()
-					.binding(1)
-					.type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
-					.count(2)
-					.stage(VkShaderStage.FRAGMENT);
-
-			assertEquals(binding, builder.build());
-		}
-	}
-
-	@DisplayName("A descriptor set layout...")
-	@Nested
-	class LayoutTests {
-		@Test
-		void constructor() {
-			assertEquals(new Handle(new Pointer(1)), layout.handle());
-			assertEquals(List.of(binding), layout.bindings());
-		}
-
-		@DisplayName("must contain at least one binding")
-		@Test
-		void empty() {
-			assertThrows(IllegalArgumentException.class, () -> new DescriptorSet.Layout(new Handle(1), dev, List.of()));
-		}
-
-		@DisplayName("can be destroyed")
-		@Test
-		void destroy() {
-			layout.destroy();
-			verify(lib).vkDestroyDescriptorSetLayout(dev, layout, null);
-		}
-
-		@DisplayName("can be created for a given list of bindings")
-		@Test
-		void create() {
-			// Create layout
-			layout = DescriptorSet.Layout.create(dev, List.of(binding));
-			assertNotNull(layout);
-
-			// Init expected create descriptor
-			final var expected = new VkDescriptorSetLayoutCreateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final var actual = (VkDescriptorSetLayoutCreateInfo) obj;
-					assertEquals(1, actual.bindingCount);
-					assertNotNull(actual.pBindings);
-					return true;
-				}
-			};
-
-			// Check API
-			verify(lib).vkCreateDescriptorSetLayout(dev, expected, null, dev.factory().pointer());
-		}
-
-		@DisplayName("cannot contain duplicate bindings")
-		@Test
-		void duplicate() {
-			assertThrows(IllegalArgumentException.class, () -> DescriptorSet.Layout.create(dev, List.of(binding, binding)));
-		}
-	}
-
-	@DisplayName("A descriptor set pool...")
-	@Nested
-	class PoolTests {
+	class PoolTest {
 		private Pool pool;
+		private Layout layout;
 
 		@BeforeEach
 		void before() {
-			pool = new Pool(new Handle(2), dev, 1);
+			layout = Layout.create(device, List.of(binding), Set.of());
+
+			pool = new Pool.Builder()
+					.add(VkDescriptorType.SAMPLER, 2)
+					.flag(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET)
+					.build(device);
 		}
 
 		@Test
-		void constructor() {
-			assertEquals(new Handle(new Pointer(2)), pool.handle());
-			assertEquals(dev, pool.device());
-			assertEquals(1, pool.maximum());
+		void maximum() {
+			assertEquals(2, pool.maximum());
 		}
 
-		@DisplayName("can be destroyed")
 		@Test
-		void destroy() {
-			pool.destroy();
-			verify(lib).vkDestroyDescriptorPool(dev, pool, null);
+		void invalidMaximum() {
+			final var builder = new Pool.Builder()
+					.add(VkDescriptorType.SAMPLER, 2)
+					.max(3);
+
+			assertThrows(IllegalArgumentException.class, () -> builder.build(device));
 		}
 
-		@DisplayName("can allocate a descriptor set with a given layout")
+		@Test
+		void none() {
+			assertThrows(IllegalArgumentException.class, () -> new Pool.Builder().build(device));
+		}
+
 		@Test
 		void allocate() {
-			// Allocate some sets
-			final Collection<DescriptorSet> sets = pool.allocate(layout);
-			assertNotNull(sets);
-			assertEquals(1, sets.size());
-
-			// Check allocated sets
-			assertNotNull(sets.iterator().next());
-			assertEquals(1, pool.maximum());
-
-			// Check API
-			final ArgumentCaptor<VkDescriptorSetAllocateInfo> captor = ArgumentCaptor.forClass(VkDescriptorSetAllocateInfo.class);
-			verify(lib).vkAllocateDescriptorSets(eq(dev), captor.capture(), isA(Pointer[].class));
-
-			// Check descriptor
-			final VkDescriptorSetAllocateInfo info = captor.getValue();
-			assertNotNull(info);
-			assertEquals(pool.handle(), info.descriptorPool);
-			assertEquals(1, info.descriptorSetCount);
-			assertNotNull(info.pSetLayouts);
+			final List<DescriptorSet> allocated = pool.allocate(List.of(layout));
+			assertEquals(1, allocated.size());
+			allocated.getFirst().resource(binding, resource);
 		}
 
-		@DisplayName("can allocate multiple descriptor sets with a given layout")
-		@Test
-		void multiple() {
-			final Collection<DescriptorSet> sets = pool.allocate(2, layout);
-			assertNotNull(sets);
-			assertEquals(2, sets.size());
-			assertEquals(layout, sets.iterator().next().layout());
-		}
-
-		@DisplayName("can release all its descriptor sets back to the pool")
 		@Test
 		void free() {
-			final Collection<DescriptorSet> sets = pool.allocate(layout);
-			pool.free(sets);
-			verify(lib).vkFreeDescriptorSets(dev, pool, 1, NativeObject.array(sets));
-			assertEquals(1, pool.maximum());
+			final var allocated = pool.allocate(List.of(layout));
+			pool.free(allocated);
 		}
 
-		@DisplayName("can be reset")
 		@Test
 		void reset() {
 			pool.reset();
-			verify(lib).vkResetDescriptorPool(dev, pool, 0);
 		}
 
-		@Nested
-		class BuilderTests {
-			private Pool.Builder builder;
-
-			@BeforeEach
-			void before() {
-				builder = new Pool.Builder();
-			}
-
-			@DisplayName("can be created via a builder")
-			@Test
-			void build() {
-				// Build pool
-				pool = builder
-						.add(VkDescriptorType.SAMPLER, 3)
-						.flag(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET)
-						.build(dev);
-
-				// Check API
-				final var expected = new VkDescriptorPoolCreateInfo() {
-					@Override
-					public boolean equals(Object obj) {
-						final var info = (VkDescriptorPoolCreateInfo) obj;
-						assertEquals(3, info.maxSets);
-						assertEquals(EnumMask.of(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET), info.flags);
-						assertEquals(1, info.poolSizeCount);
-						assertNotNull(info.pPoolSizes);
-						return true;
-					}
-				};
-				verify(lib).vkCreateDescriptorPool(dev, expected, null, dev.factory().pointer());
-			}
-
-			@DisplayName("must contain at least one descriptor type")
-			@Test
-			void empty() {
-				assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
-			}
-
-			@DisplayName("has an implicit maximum number of descriptor sets that can be allocated")
-			@Test
-			void implicit() {
-				pool = builder.add(VkDescriptorType.SAMPLER, 1).build(dev);
-				assertEquals(1, pool.maximum());
-			}
-
-			@DisplayName("can specify a maximum allocation size larger than the configured pool entries")
-			@Test
-			void max() {
-				pool = builder
-						.add(VkDescriptorType.SAMPLER, 1)
-						.max(2)
-						.build(dev);
-
-				assertEquals(2, pool.maximum());
-			}
-
-			@DisplayName("cannot configure a maximum allocation size smaller than any of the pool entries")
-			@Test
-			void size() {
-				builder.max(1).add(VkDescriptorType.SAMPLER, 2);
-				assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
-			}
+		@Test
+		void destroy() {
+			pool.destroy();
+			assertEquals(true, pool.isDestroyed());
 		}
 	}
 }

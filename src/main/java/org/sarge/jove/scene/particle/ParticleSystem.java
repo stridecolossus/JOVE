@@ -14,7 +14,7 @@ import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.IntersectedSurface;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.*;
+import org.sarge.jove.model.Mesh;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface;
 
 /**
@@ -362,13 +362,14 @@ public class ParticleSystem implements Frame.Listener {
 	 */
 	public Mesh mesh() {
 		// Init vertex layout
-		final var layout = new CompoundLayout(Point.LAYOUT, Colour.LAYOUT);
+		final var layout = List.of(Point.LAYOUT, Colour.LAYOUT);
+		final int stride = Layout.stride(layout);
 
 		// Create vertex buffer
 		final var vertices = new ByteSizedBufferable() {
             @Override
             public int length() {
-            	return particles.size() * layout.stride();
+            	return particles.size() * stride;
             }
 
 			@Override
@@ -380,6 +381,7 @@ public class ParticleSystem implements Frame.Listener {
 		};
 
 		// Create mesh
-		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
+//		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
+		return null; // TODO
 	}
 }

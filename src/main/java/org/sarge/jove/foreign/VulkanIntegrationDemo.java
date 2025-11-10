@@ -94,6 +94,7 @@ public class VulkanIntegrationDemo {
 		System.out.println("name="+props.deviceName);
 		System.out.println("type="+props.deviceType);
 		System.out.println("bufferImageGranularity="+props.limits.bufferImageGranularity);
+		System.out.println("maxPushConstantsSize="+props.limits.maxPushConstantsSize);
 
 		System.out.println("Device features...");
 		System.out.println("  wideLines=" + physical.features().features().contains("wideLines"));
@@ -125,6 +126,10 @@ public class VulkanIntegrationDemo {
 				.build(dev);
 
 		System.out.println("views=" + swapchain.attachments());
+
+		// Shaders
+
+		// Pipeline
 
 		System.out.println("Cleanup...");
 		swapchain.destroy();

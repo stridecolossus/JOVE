@@ -2,90 +2,81 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.nio.ByteBuffer;
+import java.nio.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
 
 public class IndexedMeshTest {
-	private IndexedMeshBuilder builder;
-	private Mesh mesh;
-	private Vertex vertex;
+	private IndexedMesh mesh;
 
 	@BeforeEach
 	void before() {
-		vertex = new Vertex(Point.ORIGIN);
-		builder = new IndexedMeshBuilder(Primitive.TRIANGLE, new CompoundLayout(Point.LAYOUT));
-		builder.add(vertex);
-		mesh = builder.mesh();
+		mesh = new IndexedMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
 	}
 
 	@Test
-	void constructor() {
+	void empty() {
 		assertEquals(0, mesh.count());
+		assertEquals(0, mesh.vertices().limit());
+		assertEquals(0, mesh.index().get().limit());
+		assertEquals(true, Primitive.TRIANGLE.isValidVertexCount(mesh.count()));
 	}
 
-	@DisplayName("Vertex indices can be added to an indexed mesh")
 	@Test
 	void add() {
-		builder.add(0);
-		assertEquals(1, mesh.count());
+		mesh.add(new Vertex(Point.ORIGIN));
+		mesh.add(0);
+		mesh.add(0);
+		mesh.add(0);
+		assertEquals(3, mesh.count());
+		assertEquals(3 * 4, mesh.vertices().limit());
+		assertEquals(true, Primitive.TRIANGLE.isValidVertexCount(mesh.count()));
+
+		final IntBuffer index = mesh.index().map(ByteBuffer::asIntBuffer).orElseThrow();
+		assertEquals(3, index.limit());
+		assertEquals(0, index.get());
+		assertEquals(0, index.get());
+		assertEquals(0, index.get());
 	}
 
-	@DisplayName("An invalid vertex index cannot be added to the mesh")
 	@Test
 	void invalid() {
-		assertThrows(IndexOutOfBoundsException.class, () -> builder.add(-1));
-		assertThrows(IndexOutOfBoundsException.class, () -> builder.add(1));
+		assertThrows(IndexOutOfBoundsException.class, () -> mesh.add(1));
 	}
 
-	@DisplayName("The index can be restarted")
-	@Test
-	void restart() {
-		builder.add(0);
-		builder.restart();
-		assertEquals(1, mesh.count());
-	}
+	@Nested
+	class CompactIndexTest {
+    	@Test
+    	void compact() {
+    		mesh.add(new Vertex(Point.ORIGIN));
+    		mesh.add(0);
+    		mesh.compact(true);
+    		final var buffer = mesh.index().orElseThrow().asShortBuffer();
+    		assertEquals(1, buffer.limit());
+    		assertEquals((short) 0, buffer.get());
+    	}
 
-	@DisplayName("An indexed mesh has a short index buffer if the index is small enough")
-	@Test
-	void shorts() {
-		// Create index
-		builder.add(0);
-		builder.add(0);
-		builder.add(0);
+    	@Test
+    	void restart() {
+    		mesh.add(new Vertex(Point.ORIGIN));
+    		mesh.restart();
+    		mesh.compact(true);
+    		final Exception e = assertThrows(IllegalStateException.class, () -> mesh.index());
+    		assertEquals("Cannot restart a compact index", e.getMessage());
+    	}
 
-		// Check index buffer
-		final int len = 3 * Short.BYTES;
-		final ByteSizedBufferable index = mesh.index().orElseThrow();
-		final ByteBuffer bb = ByteBuffer.allocate(len);
-		assertEquals(len, index.length());
-		index.buffer(bb);
-		assertEquals(0, bb.remaining());
-
-		builder.compact(false);
-		assertEquals(3 * Integer.BYTES, index.length());
-	}
-
-	@DisplayName("An indexed mesh has an integer index buffer if the index is large")
-	@Test
-	void integers() {
-		// Create an index larger than the size of a short value
-		final int size = 65535;
-		for(int n = 0; n < size; ++n) {
-			builder.add(0);
-		}
-
-		// Check index is integral
-		final int len = size * Integer.BYTES;
-		final ByteSizedBufferable index = mesh.index().orElseThrow();
-		assertEquals(len, index.length());
-
-		// Check index buffer
-		final ByteBuffer bb = ByteBuffer.allocate(len);
-		index.buffer(bb);
-		// TODO - non-direct buffer does not get updated!!!
-		// assertEquals(0, bb.remaining());
+    	@Test
+    	void invalid() {
+    		mesh.add(new Vertex(Point.ORIGIN));
+    		mesh.compact(true);
+    		for(int n = 0; n < IndexedMesh.MAX_SHORT_INDEX_SIZE; ++n) {
+    			mesh.add(0);
+    		}
+    		mesh.add(0);
+    		final Exception e = assertThrows(IllegalStateException.class, () -> mesh.index());
+    		assertEquals("Index is too large to be compact", e.getMessage());
+    	}
 	}
 }
