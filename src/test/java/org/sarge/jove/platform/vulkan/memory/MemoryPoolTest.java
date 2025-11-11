@@ -6,18 +6,18 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 public class MemoryPoolTest {
 	private MemoryPool pool;
 	private MemoryType type;
 	private Block block;
-	private DeviceContext dev;
+	private LogicalDevice dev;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
+		dev = new MockLogicalDevice();
 		type = new MemoryType(0, new Heap(0, Set.of()), Set.of());
 		block = new Block(new DefaultDeviceMemory(new Handle(1), dev, type, 2));
 		pool = new MemoryPool(type);

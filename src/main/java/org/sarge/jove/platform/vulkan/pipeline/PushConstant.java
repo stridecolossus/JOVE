@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * A <i>push constant</i> is an alternative mechanism for transferring small amounts of data to shaders.
+ * A <i>push constant</i> is an alternative to uniform buffers for transferring small amounts of data to a shader.
  * @author Sarge
  */
 public class PushConstant {
@@ -71,20 +71,6 @@ public class PushConstant {
 		stages();
 	}
 
-	/**
-	 * @return Ranges of this push constant
-	 */
-	public List<Range> ranges() {
-		return ranges;
-	}
-
-	/**
-	 * @return Mutable backing buffer for this push constant
-	 */
-	public MemorySegment data() {
-		return data;
-	}
-
     /**
      * Checks that the push constants cover the entire backing buffer.
      */
@@ -94,7 +80,7 @@ public class PushConstant {
     		if(range.offset > offset) {
     			throw new IllegalArgumentException("Unused segment before push constant %s at offset %d".formatted(range, offset));
     		}
-    		offset = range.offset;
+    		offset = range.offset + range.size;
     	}
     }
 
@@ -110,4 +96,30 @@ public class PushConstant {
     		stages.addAll(range.stages);
     	}
     }
+
+	/**
+	 * @return Ranges of this push constant
+	 */
+	public List<Range> ranges() {
+		return ranges;
+	}
+
+	/**
+	 * @return Mutable backing buffer for this push constant
+	 */
+	public MemorySegment data() {
+		return data;
+	}
+
+	/**
+	 * @param range Range of this push constant
+	 * @return Mutable backing buffer for the given push constant range
+	 * @throws IllegalArgumentException if {@link #range} is not a member of this push constant
+	 */
+	public MemorySegment data(Range range) {
+		if(!ranges.contains(range)) {
+			throw new IllegalArgumentException();
+		}
+		return data.asSlice(range.offset, range.size);
+	}
 }

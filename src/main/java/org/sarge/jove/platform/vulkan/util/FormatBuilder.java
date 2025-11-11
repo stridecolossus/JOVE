@@ -4,8 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireNotEmpty;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.util.ImageData;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**

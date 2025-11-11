@@ -3,10 +3,10 @@ package org.sarge.jove.platform.vulkan.core;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
 
-import java.nio.ByteBuffer;
+import java.nio.*;
 import java.util.*;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
@@ -53,7 +53,7 @@ public class VulkanBuffer extends VulkanObject {
 	/**
 	 * @return Buffer memory
 	 */
-	DeviceMemory memory() {
+	public DeviceMemory memory() {
 		return memory;
 	}
 
@@ -102,20 +102,22 @@ public class VulkanBuffer extends VulkanObject {
 		}
 	}
 
-	// TODO...
-
 	/**
-	 * Helper - Provides access to the underlying buffer (mapping the buffer memory as required).
-	 * @return Underlying buffer
+	 * Helper.
+	 * Accesses the underlying buffer memory as an NIO buffer, mapping the device memory as required.
+	 * @return Underlying byte buffer
 	 */
 	public ByteBuffer buffer() {
-		return memory
+		final Region region = memory
 				.region()
-				.orElseGet(() -> memory.map(0, length))
-				.buffer(0, length);
-	}
+				.orElseGet(() -> memory.map(0, length));
 
-	// ...TODO
+		return region
+				.segment(0, length)
+				.asByteBuffer()
+				.order(ByteOrder.nativeOrder());
+	}
+	// TODO - urgh
 
 	/**
 	 * Creates a command to copy the whole of this buffer to the given destination buffer.
@@ -171,17 +173,6 @@ public class VulkanBuffer extends VulkanObject {
 		memory.destroy();
 	}
 
-//	@Override
-//	public boolean equals(Object obj) {
-//		return
-//				(obj == this) ||
-//				(obj instanceof VulkanBuffer that) &&
-//				(this.length == that.length()) &&
-//				this.usage.equals(that.usage()) &&
-//				this.memory.equals(that.memory()) &&
-//				super.equals(obj);
-//	}
-
 	/**
 	 * Creates a buffer.
 	 * @param device			Logical device
@@ -228,30 +219,33 @@ public class VulkanBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Helper - Creates and initialises a staging buffer containing the given data.
+	 * Helper.
+	 * Creates and initialises a staging buffer containing the given data.
 	 * <p>
 	 * The staging buffer is a {@link VkBufferUsageFlag#TRANSFER_SRC} with {@link VkMemoryProperty#HOST_VISIBLE} memory.
 	 * <p>
 	 * @param device			Logical device
 	 * @param allocator			Memory allocator
-	 * @param data				Data to stage
 	 * @return New staging buffer
 	 */
-	public static VulkanBuffer staging(LogicalDevice device, Allocator allocator, ByteSizedBufferable data) {
+	public static VulkanBuffer staging(LogicalDevice device, Allocator allocator, ByteBuffer data) {
 		// Init memory properties
-		final var propertiess = new MemoryProperties.Builder<VkBufferUsageFlag>()
+		final var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 				.required(VkMemoryProperty.HOST_VISIBLE)
 				.build();
 
 		// Create staging buffer
-		final VulkanBuffer buffer = create(device, allocator, data.length(), propertiess);
+		final VulkanBuffer buffer = create(device, allocator, data.limit(), properties);
 
 		// Write data to buffer
-		// TODO...
-		final ByteBuffer bb = buffer.buffer();
-		data.buffer(bb);
-		// ...TODO
+		// TODO
+		if(data.isDirect()) {
+			buffer.buffer().put(data);
+		}
+		else {
+			buffer.buffer().put(data);
+		}
 
 		return buffer;
 	}

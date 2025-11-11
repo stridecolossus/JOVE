@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.platform.vulkan.util.FormatBuilder.NumericFormat;
+import org.sarge.jove.util.ImageData;
 
 class FormatBuilderTest {
 	private FormatBuilder builder;

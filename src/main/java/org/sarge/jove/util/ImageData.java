@@ -1,4 +1,4 @@
-package org.sarge.jove.io;
+package org.sarge.jove.util;
 
 import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
@@ -145,11 +145,15 @@ public class ImageData {		// TODO - record
 		return 1;
 	}
 
-	/**
-	 * @return Image data
-	 */
-	public final ByteSizedBufferable data() {
-		return ByteSizedBufferable.of(data);
+// TODO
+//	/**
+//	 * @return Image data
+//	 */
+//	public final ByteSizedBufferable data() {
+//		return ByteSizedBufferable.of(data);
+//	}
+	public byte[] data() {
+		return data;
 	}
 
 	/**

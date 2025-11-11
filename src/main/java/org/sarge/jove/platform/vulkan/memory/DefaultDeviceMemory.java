@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
 
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
 import java.util.Optional;
 
 import org.sarge.jove.common.Handle;
@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
- * Default implementation.
+ * Default implementation that essentially wraps an FFM memory segment.
  * @author Sarge
  */
 class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
@@ -22,7 +22,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 	/**
 	 * Constructor.
-	 * @param handle		Memory pointer
+	 * @param handle		Memory handle
 	 * @param dev			Logical device
 	 * @param type			Type of memory
 	 * @param size			Size of this memory (bytes)
@@ -49,40 +49,29 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	/**
-	 * Mapped region implementation.
+	 * Wrapper for a memory segment.
 	 */
-	private class DefaultRegion implements Region {		// TODO - record? remove basic validation in ctor?
-		private final Handle ptr;
-		private final long segment;
-		private final long offset;
+	private class DefaultRegion implements Region {
+		private final MemorySegment segment;
 
 		/**
 		 * Constructor.
-		 * @param ptr		Region memory pointer
-		 * @param offset	Offset
-		 * @param size		Size of this region
+		 * @param segment Memory segment
 		 */
-		private DefaultRegion(Handle ptr, long offset, long size) {
-			this.ptr = requireNonNull(ptr);
-			this.offset = requireZeroOrMore(offset);
-			this.segment = requireOneOrMore(size);
+		private DefaultRegion(Handle segment) {
+			this.segment = segment.address();			// TODO - read only?
 		}
 
 		@Override
 		public long size() {
-			return segment;
+			return segment.byteSize();
 		}
 
 		@Override
-		public ByteBuffer buffer(long offset, long size) {
+		public MemorySegment segment(long offset, long size) {
 			checkAlive();
 			checkMapped();
-			if(offset + size > segment) {
-				throw new IllegalArgumentException("Buffer offset/length larger than region: offset=%d size=%d region=%s".formatted(offset, size, this));
-			}
-			// TODO
-			//return handle.getByteBuffer(offset, size);
-			return null;
+			return segment.asSlice(offset, size);
 		}
 
 		@Override
@@ -101,13 +90,21 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		}
 
 		@Override
+		public int hashCode() {
+			return segment.hashCode();
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			return
 					(obj == this) ||
 					(obj instanceof DefaultRegion that) &&
-					(this.offset == that.offset) &&
-					(this.segment == that.segment) &&
-					this.ptr.equals(that.ptr);
+					this.segment.equals(that.segment);
+		}
+
+		@Override
+		public String toString() {
+			return String.format("Region[%s]", segment);
 		}
 	}
 
@@ -134,7 +131,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		library.vkMapMemory(device, this, offset, size, 0, pointer);
 
 		// Create mapped region
-		region = new DefaultRegion(pointer.get(), offset, size);
+		region = new DefaultRegion(pointer.get());
 
 		return region;
 	}
@@ -166,8 +163,12 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 	@Override
 	protected void release() {
-		// TODO - do we need to explicitly unmap?
 		region = null;
+	}
+
+	@Override
+	public int hashCode() {
+		return this.handle().hashCode();
 	}
 
 	@Override

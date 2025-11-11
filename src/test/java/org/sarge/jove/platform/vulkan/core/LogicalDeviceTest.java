@@ -114,7 +114,14 @@ class LogicalDeviceTest {
 	@Test
 	void builder() {
 		final var instance = new Instance(new Handle(1), new MockInstanceLibrary());
-		final PhysicalDevice parent = new PhysicalDevice(new Handle(1), List.of(family), instance, new MockPhysicalDeviceLibrary());
+		final PhysicalDevice parent = new PhysicalDevice(new Handle(1), List.of(family), instance, new MockPhysicalDeviceLibrary()) {
+			@Override
+			public VkPhysicalDeviceProperties properties() {
+				final var properties = new VkPhysicalDeviceProperties();
+				properties.limits = new VkPhysicalDeviceLimits();
+				return properties;
+			}
+		};
 
 		device = new LogicalDevice.Builder(parent)
 				.layer(Vulkan.STANDARD_VALIDATION)

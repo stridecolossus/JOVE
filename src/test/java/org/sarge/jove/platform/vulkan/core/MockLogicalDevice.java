@@ -14,6 +14,11 @@ public class MockLogicalDevice extends LogicalDevice {
 	public MockLogicalDevice(MockVulkanLibrary library) {
 		final var family = new Family(0, 1, Set.of());
 		final var queue = new WorkQueue(new Handle(2), family);
-		super(new Handle(1), Map.of(family, List.of(queue)), new VkPhysicalDeviceLimits(), library);
+
+		final var limits = new VkPhysicalDeviceLimits();
+		limits.maxMemoryAllocationCount = Integer.MAX_VALUE;
+		limits.bufferImageGranularity = 1024;
+
+		super(new Handle(1), Map.of(family, List.of(queue)), limits, library);
 	}
 }

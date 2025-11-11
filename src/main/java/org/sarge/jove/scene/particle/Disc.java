@@ -3,7 +3,7 @@ package org.sarge.jove.scene.particle;
 import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.Randomiser;
 
 /**
  * A <i>disc</i> is a helper class for generating points and vectors on a disc.
@@ -16,7 +16,7 @@ import org.sarge.jove.util.*;
 class Disc {
 	private final Normal normal;
 	private final Vector x, y;
-	private final Interpolator radius;
+//	private final Interpolator radius;
 	private final Randomiser randomiser;
 
 	/**
@@ -29,7 +29,7 @@ class Disc {
 		this.normal = requireNonNull(normal);
 		this.x = this.normal.cross(Axis.minimal(normal));
 		this.y = x.cross(this.normal);
-		this.radius = Interpolator.linear(-radius, +radius);
+//		this.radius = Interpolator.linear(-radius, +radius);
 		this.randomiser = requireNonNull(randomiser);
 	}
 
@@ -59,7 +59,9 @@ class Disc {
 	 * @return Random vector
 	 */
 	private Vector random(Vector axis) {
-		final float r = radius.apply(randomiser.next());
+		// TODO
+		//final float r = radius.apply(randomiser.next());
+		final float r = randomiser.next();
 		return axis.multiply(r);
 	}
 	// TODO - normal?

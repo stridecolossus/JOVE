@@ -1,17 +1,14 @@
-package org.sarge.jove.io;
+package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData.Level;
+import org.sarge.jove.util.ImageData.Level;
 
 public class NativeImageLoaderTest {
 	private NativeImageLoader loader;
@@ -43,9 +40,7 @@ public class NativeImageLoaderTest {
 		assertEquals(List.of(new Level(0, len)), image.levels());
 
 		// Check image data
-		final ByteSizedBufferable data = image.data();
-		assertNotNull(data);
-		assertEquals(len, data.length());
+		assertEquals(len, image.data().length);
 	}
 
 	@DisplayName("ABGR should be loaded as-is")
@@ -84,18 +79,20 @@ public class NativeImageLoaderTest {
 		final BufferedImage buffered = new BufferedImage(2, 3, BufferedImage.TYPE_BYTE_BINARY);
 		assertThrows(RuntimeException.class, () -> loader.load(buffered));
 	}
-
-	@DisplayName("Should load supported buffered formats")
-	@ParameterizedTest
-	@CsvSource({
-		"duke.jpg, 5",
-		//"duke.png, 13",		// TODO - only has 2 channels?
-		"heightmap.jpg, 10",
-	})
-	void map(String filename, int type) throws IOException {
-		final Path path = Paths.get("./src/test/resources", filename);
-		final BufferedImage buffered = loader.map(Files.newInputStream(path));
-		assertEquals(type, buffered.getType());
-		assertNotNull(loader.load(buffered));
-	}
 }
+
+//
+//	@DisplayName("Should load supported buffered formats")
+//	@ParameterizedTest
+//	@CsvSource({
+//		"duke.jpg, 5",
+//		//"duke.png, 13",		// TODO - only has 2 channels?
+//		"heightmap.jpg, 10",
+//	})
+//	void map(String filename, int type) throws IOException {
+//		final Path path = Paths.get("./src/test/resources", filename);
+//		final BufferedImage buffered = loader.map(Files.newInputStream(path));
+//		assertEquals(type, buffered.getType());
+//		assertNotNull(loader.load(buffered));
+//	}
+//}

@@ -2,7 +2,6 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.jove.util.MathsUtility.isApproxEqual;
 
-import org.sarge.jove.util.FloatSupport.FloatUnaryOperator;
 import org.sarge.jove.util.MathsUtility;
 
 /**
@@ -49,23 +48,32 @@ public record Cosine(float sin, float cos) {
 		 */
 		Cosine cosine(float angle);
 
-    	/**
-    	 * Default implementation that delegates to the JDK maths library.
-    	 */
-    	Provider DEFAULT = of(angle -> (float) Math.cos(angle));
-
-    	/**
-    	 * Creates a provider as an adapter for the given cosine function.
-    	 * TODO
-    	 * @param function Cosine function
-    	 * @return Cosine provider
-    	 */
-    	static Provider of(FloatUnaryOperator function) {
-    		return angle -> {
-    			final float sin = (float) Math.sin(angle); // function.apply(angle - MathsUtility.HALF_PI);
-    			final float cos = (float) Math.cos(angle); // function.apply(angle);
-    			return new Cosine(sin, cos);
-    		};
-    	}
-    }
+		Provider DEFAULT = angle -> {
+			final float sin = (float) Math.sin(angle);
+			final float cos = (float) Math.sin(angle);
+			return new Cosine(sin, cos);
+		};
+	}
 }
+
+//
+//    	/**
+//    	 * Default implementation that delegates to the JDK maths library.
+//    	 */
+//    	Provider DEFAULT = of(angle -> (float) Math.cos(angle));
+//
+//    	/**
+//    	 * Creates a provider as an adapter for the given cosine function.
+//    	 * TODO
+//    	 * @param function Cosine function
+//    	 * @return Cosine provider
+//    	 */
+//    	static Provider of(FloatUnaryOperator function) {
+//    		return angle -> {
+//    			final float sin = (float) Math.sin(angle); // function.apply(angle - MathsUtility.HALF_PI);
+//    			final float cos = (float) Math.cos(angle); // function.apply(angle);
+//    			return new Cosine(sin, cos);
+//    		};
+//    	}
+//    }
+//}

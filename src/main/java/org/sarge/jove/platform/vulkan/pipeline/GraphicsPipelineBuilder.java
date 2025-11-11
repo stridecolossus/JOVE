@@ -179,7 +179,9 @@ public class GraphicsPipelineBuilder {
 	 */
 	public GraphicsPipelineBuilder shader(ProgrammableShaderStage shader) {
 		final VkShaderStage stage = shader.stage();
-		if(shaders.containsKey(stage)) throw new IllegalStateException("Duplicate shader stage: " + stage);
+		if(shaders.containsKey(stage)) {
+			throw new IllegalStateException("Duplicate shader stage: " + stage);
+		}
 		shaders.put(stage, shader);
 		return this;
 	}

@@ -7,9 +7,9 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.model.GridBuilder.HeightFunction;
+import org.sarge.jove.util.ImageData;
 
 class GridBuilderTest {
 	private GridBuilder builder;

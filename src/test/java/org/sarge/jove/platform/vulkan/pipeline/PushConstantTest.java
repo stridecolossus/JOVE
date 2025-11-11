@@ -39,11 +39,34 @@ public class PushConstantTest {
 		assertEquals(4, descriptor.size);
 	}
 
-	@Test
-	void constant() {
-		final Range range = new Range(0, 4, Set.of(VERTEX));
-		final var constant = new PushConstant(List.of(range), allocator);
-		assertEquals(4, constant.data().byteSize());
+	@Nested
+	class DataTest {
+		private PushConstant constant;
+		private Range one, two;
+
+		@BeforeEach
+		void before() {
+    		one = new Range(0, 4, Set.of(VERTEX));
+    		two = new Range(4, 4, Set.of(FRAGMENT));
+    		constant = new PushConstant(List.of(one, two), allocator);
+		}
+
+		@Test
+		void all() {
+			assertEquals(8, constant.data().byteSize());
+		}
+
+    	@Test
+    	void data() {
+    		assertEquals(4, constant.data(one).byteSize());
+    		assertEquals(4, constant.data(two).byteSize());
+    	}
+
+    	@Test
+    	void invalid() {
+    		final Range other = new Range(0, 4, Set.of(GEOMETRY));
+    		assertThrows(IllegalArgumentException.class, () -> constant.data(other));
+    	}
 	}
 
 	@Test

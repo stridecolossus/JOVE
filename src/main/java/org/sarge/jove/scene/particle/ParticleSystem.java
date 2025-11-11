@@ -4,12 +4,11 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static org.sarge.lib.Validation.requireOneOrMore;
 
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.IntersectedSurface;
@@ -361,27 +360,27 @@ public class ParticleSystem implements Frame.Listener {
 	 * @return Buffered mesh
 	 */
 	public Mesh mesh() {
-		// Init vertex layout
-		final var layout = List.of(Point.LAYOUT, Colour.LAYOUT);
-		final int stride = Layout.stride(layout);
-
-		// Create vertex buffer
-		final var vertices = new ByteSizedBufferable() {
-            @Override
-            public int length() {
-            	return particles.size() * stride;
-            }
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				for(Particle p : particles) {
-					p.buffer(bb);
-				}
-			}
-		};
-
-		// Create mesh
-//		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
+//		// Init vertex layout
+//		final var layout = List.of(Point.LAYOUT, Colour.LAYOUT);
+//		final int stride = Layout.stride(layout);
+//
+//		// Create vertex buffer
+//		final var vertices = new ByteSizedBufferable() {
+//            @Override
+//            public int length() {
+//            	return particles.size() * stride;
+//            }
+//
+//			@Override
+//			public void buffer(ByteBuffer bb) {
+//				for(Particle p : particles) {
+//					p.buffer(bb);
+//				}
+//			}
+//		};
+//
+//		// Create mesh
+////		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
 		return null; // TODO
 	}
 }

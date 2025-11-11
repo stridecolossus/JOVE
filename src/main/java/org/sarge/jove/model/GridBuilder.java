@@ -9,9 +9,8 @@ import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.io.ImageData;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.util.MathsUtility;
+import org.sarge.jove.util.*;
 
 /**
  * The <i>grid builder</i> constructs a grid of vertices in the X-Z plane with an optional index buffer.

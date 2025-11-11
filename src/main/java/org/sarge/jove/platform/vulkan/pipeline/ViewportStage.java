@@ -55,7 +55,7 @@ public class ViewportStage {
 		/**
 		 * @return Viewport descriptor
 		 */
-		VkViewport populate() {
+		private VkViewport populate() {
 			final var viewport = new VkViewport();
 			viewport.x = rectangle.x();
 			viewport.y = rectangle.y();
@@ -83,18 +83,19 @@ public class ViewportStage {
 	 * Adds a scissor rectangle.
 	 * @param rect Scissor rectangle
 	 */
-	public ViewportStage scissor(Rectangle rect) {
-		scissors.add(rect);
+	public ViewportStage scissor(Rectangle rectangle) {
+		scissors.add(rectangle);
 		return this;
 	}
 
 	/**
-	 * Helper for the common case of a viewport and scissor rectangle with the same dimensions.
-	 * @param viewport Viewport
+	 * Helper.
+	 * Adds a viewport and scissor with the same dimensions.
+	 * @param rectangle Viewport and scissor rectangle
 	 */
-	public ViewportStage viewportAndScissor(Viewport viewport) {
-		viewports.add(viewport);
-		scissor(viewport.rectangle);
+	public ViewportStage viewportAndScissor(Rectangle rectangle) {
+		viewports.add(new Viewport(rectangle));
+		scissor(rectangle);
 		return this;
 	}
 
@@ -105,10 +106,10 @@ public class ViewportStage {
 		// Validate
 		final int count = viewports.size();
 		if(count == 0) {
-			throw new IllegalArgumentException("No viewports specified");
+			throw new IllegalStateException("No viewports specified");
 		}
 		if(scissors.size() != count) {
-			throw new IllegalArgumentException("Number of scissors must be the same as the number of viewports");
+			throw new IllegalStateException("Number of scissors must be the same as the number of viewports");
 		}
 
 		// Init descriptor

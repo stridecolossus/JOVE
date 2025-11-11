@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import java.nio.ByteBuffer;
+import java.lang.foreign.MemorySegment;
 
 import org.sarge.jove.platform.vulkan.VkMemoryProperty;
 
@@ -16,14 +16,13 @@ public interface Region {
 	long size();
 
 	/**
-	 * Provides an NIO buffer to access a sub-section of this memory region.
+	 * Accesses a segment of this region.
 	 * @param offset		Offset
-	 * @param size			Region size (bytes)
-	 * @return Buffer
-	 * @throws IllegalArgumentException if the {@code offset} and {@code size} exceeds the size of this region
-	 * @throws IllegalStateException if this region has been released or the memory has been destroyed
+	 * @param size			Segment size (bytes)
+	 * @return Memory segment
+	 * @throws IndexOutOfBoundsException if the {@link #offset} or {@link #size} are invalid for this region
 	 */
-	ByteBuffer buffer(long offset, long size);
+	MemorySegment segment(long offset, long size);
 
 	/**
 	 * Unmaps this region.

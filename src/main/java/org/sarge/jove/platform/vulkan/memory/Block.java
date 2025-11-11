@@ -73,8 +73,12 @@ class Block {
 	BlockDeviceMemory allocate(long size) {
 		// Validate
 		requireOneOrMore(size);
-		if(mem.isDestroyed()) throw new IllegalStateException("Memory block has been released: " + this);
-		if(next + size > mem.size()) throw new IllegalArgumentException(String.format("Allocation size exceeds free space: size=%d block=%s", size, this));
+		if(mem.isDestroyed()) {
+			throw new IllegalStateException("Memory block has been released: " + this);
+		}
+		if(next + size > mem.size()) {
+			throw new IllegalArgumentException(String.format("Allocation size exceeds free space: size=%d block=%s", size, this));
+		}
 
 		// Allocate from free space
 		final var alloc = new BlockDeviceMemory(next, size);
@@ -165,9 +169,15 @@ class Block {
 		 */
 		BlockDeviceMemory reallocate(long size) {
 			requireOneOrMore(size);
-			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
-			if(!destroyed) throw new IllegalStateException("Block allocation canot be reallocated: " + this);
-			if(size > this.size) throw new IllegalArgumentException("Reallocation size is larger than this memory: " + this);
+			if(mem.isDestroyed()) {
+				throw new IllegalStateException("Block has been destroyed: " + this);
+			}
+			if(!destroyed) {
+				throw new IllegalStateException("Block allocation canot be reallocated: " + this);
+			}
+			if(size > this.size) {
+				throw new IllegalArgumentException("Reallocation size is larger than this memory: " + this);
+			}
 
 			// TODO - essentially orphans unused memory! => remove or resize this memory, and add new instance for remainder
 			this.size = size;
@@ -192,7 +202,9 @@ class Block {
 		}
 
 		private void checkAlive() {
-			if(isDestroyed()) throw new IllegalStateException("Device memory has been destroyed: " + this);
+			if(isDestroyed()) {
+				throw new IllegalStateException("Device memory has been destroyed: " + this);
+			}
 		}
 
 		@Override

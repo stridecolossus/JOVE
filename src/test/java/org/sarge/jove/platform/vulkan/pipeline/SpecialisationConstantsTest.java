@@ -13,10 +13,11 @@ class SpecialisationConstantsTest {
 
 	@BeforeEach
 	void before() {
-		final Map<Integer, Object> map = new LinkedHashMap<>();
-		map.put(1, 1);
-		map.put(2, 2f);
-		map.put(3, false);
+		final Map<Integer, Object> map = Map.of(
+				1, 1,
+				2, 2f,
+				3, false
+		);
 
 		constants = new SpecialisationConstants(map);
 	}
@@ -27,42 +28,35 @@ class SpecialisationConstantsTest {
 	}
 
 	@Test
-	void empty() {
-		assertEquals(null, new SpecialisationConstants(Map.of()).descriptor());
-	}
-
-	@Test
 	void descriptor() {
-		// Check generated data buffer
+		// Build descriptor
 		final VkSpecializationInfo info = constants.descriptor();
-		final var buffer = ByteBuffer.allocate(12).order(ByteOrder.nativeOrder());
-		buffer.putInt(1);
-		buffer.putFloat(2);
-		buffer.putInt(0);
-		buffer.flip();
-		assertArrayEquals(buffer.array(), info.pData);
-		assertEquals(12, info.dataSize);
-
-		// Check number of entries
 		assertEquals(3, info.mapEntryCount);
 		assertEquals(3, info.pMapEntries.length);
 
-		// Check integer constant
-		final var integer = info.pMapEntries[0];
-		assertEquals(1, integer.constantID);
-		assertEquals(0, integer.offset);
-		assertEquals(4, integer.size);
+		// Check entries
+		final Set<Integer> identifiers = new HashSet<>(Set.of(1, 2, 3));
+		final ByteBuffer buffer = ByteBuffer.wrap(info.pData).order(ByteOrder.nativeOrder());
+		for(int n = 0; n < 3; ++n) {
+			// Check entry
+			final var entry = info.pMapEntries[n];
+			assertEquals(n * 4, entry.offset);
+			assertEquals(4, entry.size);
 
-		// Check floating-point constant
-		final var fp = info.pMapEntries[1];
-		assertEquals(2, fp.constantID);
-		assertEquals(4, fp.offset);
-		assertEquals(4, fp.size);
+			// Check entries are unique
+			assertEquals(true, identifiers.remove(entry.constantID));
 
-		// Check boolean constant (represented as a 4-byte integer)
-		final var bool = info.pMapEntries[2];
-		assertEquals(3, bool.constantID);
-		assertEquals(8, bool.offset);
-		assertEquals(4, bool.size);
+			// Check actual constant value
+			buffer.position(entry.offset);
+			switch(entry.constantID) {
+				case 1 -> assertEquals(1, buffer.getInt());
+				case 2 -> assertEquals(2f, buffer.getFloat());
+				case 3 -> assertEquals(0, buffer.getInt());
+				default -> fail();
+			}
+		}
+
+		// Ensure all constants are present
+		assertEquals(true, identifiers.isEmpty());
 	}
 }

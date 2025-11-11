@@ -1,4 +1,4 @@
-package org.sarge.jove.io;
+package org.sarge.jove.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,7 +6,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData.Level;
+import org.sarge.jove.util.ImageData;
+import org.sarge.jove.util.ImageData.Level;
 
 public class ImageDataTest {
 	private static final Dimensions EXTENTS = new Dimensions(2, 3);

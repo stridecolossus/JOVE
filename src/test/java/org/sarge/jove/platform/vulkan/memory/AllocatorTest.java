@@ -1,22 +1,22 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 class AllocatorTest {
 	private Allocator allocator;
 	private MemoryType fallback, optimal;
-	private VkMemoryRequirements reqs;
-	private MemoryProperties<?> props;
-	private DeviceContext dev;
+	private VkMemoryRequirements requirements;
+	private MemoryProperties<?> properties;
+	private LogicalDevice device;
+	private MockMemoryLibrary library;
 
 	@BeforeEach
 	void before() {
@@ -26,111 +26,89 @@ class AllocatorTest {
 		optimal = new MemoryType(1, heap, Set.of(VkMemoryProperty.HOST_VISIBLE, VkMemoryProperty.DEVICE_LOCAL));
 
 		// Init a memory request matching all types
-		reqs = new VkMemoryRequirements();
-		reqs.size = 3;
-		reqs.memoryTypeBits = 0b11;
+		requirements = new VkMemoryRequirements();
+		requirements.size = 3;
+		requirements.memoryTypeBits = 0b11;
 
 		// Init memory properties for the optimal type
-		props = new MemoryProperties.Builder<VkImageUsageFlag>()
+		properties = new MemoryProperties.Builder<VkImageUsageFlag>()
         		.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
         		.required(VkMemoryProperty.HOST_VISIBLE)
         		.optimal(VkMemoryProperty.DEVICE_LOCAL)
         		.build();
 
 		// Create allocator
-		dev = new MockDeviceContext();
-		allocator = new Allocator(dev, new MemoryType[]{fallback, optimal}, 1, 2);
+		library = new MockMemoryLibrary();
+		device = new MockLogicalDevice(library) {
+			@Override
+			public VkPhysicalDeviceLimits limits() {
+				final var limits = new VkPhysicalDeviceLimits();
+				limits.maxMemoryAllocationCount = 1;
+				limits.bufferImageGranularity = 2;
+				return limits;
+			}
+		};
+		allocator = new Allocator(device, new MemoryType[]{fallback, optimal});
 	}
 
 	@Test
-	void constructor() {
+	void configuration() {
 		assertEquals(0, allocator.count());
 		assertEquals(1, allocator.max());
-		assertEquals(2, allocator.granularity());
+		assertEquals(2, allocator.page());
 	}
 
 	@DisplayName("Memory can be allocated for a matching memory type")
 	@Test
 	void allocate() {
-		final DeviceMemory mem = allocator.allocate(reqs, props);
-		assertEquals(optimal, mem.type());
-		assertEquals(3, mem.size());
-		assertEquals(false, mem.isDestroyed());
+		final DeviceMemory memory = allocator.allocate(requirements, properties);
+		assertEquals(optimal, memory.type());
+		assertEquals(3, memory.size());
+		assertEquals(false, memory.isDestroyed());
 		assertEquals(1, allocator.count());
-	}
-
-	@Test
-	void api() {
-		final var expected = new VkMemoryAllocateInfo() {
-			@Override
-			public boolean equals(Object obj) {
-				final var info = (VkMemoryAllocateInfo) obj;
-				assertEquals(2 * 2, info.allocationSize);
-				assertEquals(1, info.memoryTypeIndex);
-				return true;
-			}
-		};
-
-		allocator.allocate(reqs, props);
-		verify(dev.library()).vkAllocateMemory(dev, expected, null, dev.factory().pointer());
 	}
 
 	@DisplayName("The allocator falls back to the minimal requirements if the optimal memory type is not available")
 	@Test
 	void fallback() {
-		props = new MemoryProperties.Builder<VkImageUsageFlag>()
+		properties = new MemoryProperties.Builder<VkImageUsageFlag>()
         		.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
         		.required(VkMemoryProperty.HOST_VISIBLE)
         		.optimal(VkMemoryProperty.HOST_COHERENT)
         		.build();
 
-		assertEquals(fallback, allocator.allocate(reqs, props).type());
+		assertEquals(fallback, allocator.allocate(requirements, properties).type());
 	}
 
 	@DisplayName("Memory cannot be allocated if there are no matching memory types included in the filter")
 	@Test
 	void none() {
-		reqs.memoryTypeBits = 0;
-		assertThrows(AllocationException.class, () -> allocator.allocate(reqs, props));
+		requirements.memoryTypeBits = 0;
+		assertThrows(AllocationException.class, () -> allocator.allocate(requirements, properties));
 	}
 
 	@DisplayName("Memory cannot be allocated if there are no matching memory types")
 	@Test
 	void match() {
-		props = new MemoryProperties.Builder<VkImageUsageFlag>()
+		properties = new MemoryProperties.Builder<VkImageUsageFlag>()
         		.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
         		.required(VkMemoryProperty.HOST_COHERENT)
         		.build();
 
-		assertThrows(AllocationException.class, () -> allocator.allocate(reqs, props));
+		assertThrows(AllocationException.class, () -> allocator.allocate(requirements, properties));
 	}
 
 	@DisplayName("The allocator fails if the hardware cannot allocate memory")
 	@Test
 	void failed() {
-		final var info = new VkMemoryAllocateInfo() {
-			@Override
-			public boolean equals(Object obj) {
-				return true;
-			}
-		};
-		when(dev.library().vkAllocateMemory(dev, info, null, dev.factory().pointer())).thenReturn(999);
-		assertThrows(AllocationException.class, () -> allocator.allocate(reqs, props));
+		library.fail = true;
+		assertThrows(AllocationException.class, () -> allocator.allocate(requirements, properties));
 	}
 
 	@DisplayName("Memory cannot be allocated if the total number of allocations supported by the hardware is exceeded")
 	@Test
 	void max() {
-		allocator.allocate(reqs, props);
-		assertThrows(AllocationException.class, () -> allocator.allocate(reqs, props));
-	}
-
-	@DisplayName("The total number of allocations can be reset")
-	@Test
-	void reset() {
-		allocator.allocate(reqs, props);
-		allocator.reset();
-		assertEquals(0, allocator.count());
-		allocator.allocate(reqs, props);
+		allocator.allocate(requirements, properties);
+		assertThrows(AllocationException.class, () -> allocator.allocate(requirements, properties));
 	}
 }

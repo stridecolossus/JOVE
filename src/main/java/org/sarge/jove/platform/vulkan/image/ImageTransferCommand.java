@@ -6,11 +6,11 @@ import static org.sarge.lib.Validation.requireZeroOrMore;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
+import org.sarge.jove.util.ImageData;
+import org.sarge.jove.util.ImageData.Level;
 
 /**
  * An <i>image transfer command</i> is used to copy an image to/from a Vulkan buffer.

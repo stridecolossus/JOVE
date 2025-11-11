@@ -15,13 +15,26 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	 * @param stage			Shader stage
 	 * @param shader		Shader module
 	 * @param name			Method name
-	 * @param constants		Specialisation constants
+	 * @param constants		Optional specialisation constants
 	 */
 	public ProgrammableShaderStage {
 		requireNonNull(stage);
 		requireNonNull(shader);
 		requireNotEmpty(name);
-		requireNonNull(constants);
+	}
+
+	/**
+	 * Helper.
+	 * Builds a programmable shader stage with default properties.
+	 * @param stage			Shader stage
+	 * @param shader		Shader
+	 * @return Programmable shader stage
+	 */
+	public static ProgrammableShaderStage of(VkShaderStage stage, Shader shader) {
+		return new Builder()
+				.stage(stage)
+				.shader(shader)
+				.build();
 	}
 
 	/**
@@ -32,7 +45,9 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 		info.stage = stage;
 		info.module = shader.handle();
 		info.pName = name;
-		info.pSpecializationInfo = constants.descriptor();
+		if(constants != null) {
+			info.pSpecializationInfo = constants.descriptor();
+		}
 		return info;
 	}
 

@@ -1,4 +1,4 @@
-package org.sarge.jove.io;
+package org.sarge.jove.util;
 
 import java.io.DataInput;
 import java.io.DataInputStream;

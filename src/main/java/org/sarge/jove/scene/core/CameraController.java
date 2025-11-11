@@ -7,7 +7,6 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.control.Position;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Sphere.NormalFactory;
-import org.sarge.jove.util.Interpolator;
 
 /**
  * The <i>camera controller</i> rotates the scene about the cameras position, i.e. a free-look controller.
@@ -17,8 +16,8 @@ public class CameraController {
 	protected final Camera cam;
 	private final Dimensions dim;
 	private final NormalFactory factory;
-	private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
-	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
+//	private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
+//	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
 	// TODO - make interpolator ranges mutable?
 
 	/**
@@ -42,11 +41,19 @@ public class CameraController {
 	 * @see #update(Normal)
 	 */
 	public void update(float x, float y) {
-		// TODO - prepare inverse and multiply, move to helper?
-		final float yaw = horizontal.apply(x / dim.width());
-		final float pitch = vertical.apply(y / dim.height());
+// TODO - prepare inverse and multiply, move to helper?
+//		final float yaw = horizontal.apply(x / dim.width());
+//		final float pitch = vertical.apply(y / dim.height());
+		final float yaw = lerp(x, 0, TWO_PI);
+		final float pitch = lerp(y, -HALF_PI, +HALF_PI);
 		final Vector vec = factory.vector(yaw, pitch);
 		update(new Normal(vec));
+	}
+
+	// TODO
+	static float lerp(float t, float start, float end) {
+		// TODO - Math.fma(end - start, t, start);
+		return start + (end - start) * t;
 	}
 
 	/**

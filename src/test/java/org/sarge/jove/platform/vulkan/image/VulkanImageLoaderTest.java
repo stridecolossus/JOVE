@@ -7,9 +7,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.VkFormat;
+import org.sarge.jove.util.*;
+import org.sarge.jove.util.ImageData.Level;
 
 @SuppressWarnings("static-access")
 public class VulkanImageLoaderTest {
@@ -17,7 +17,7 @@ public class VulkanImageLoaderTest {
 	private static final int DFD = 24 + 4 * 16;
 
 	private VulkanImageLoader loader;
-	private DataInputStream in;
+	private LittleEndianDataInputStream in;
 	private DataOutputStream out;
 	private ByteArrayOutputStream file;
 
@@ -33,7 +33,7 @@ public class VulkanImageLoaderTest {
 	 * Copies file to input stream.
 	 */
 	private void init() throws IOException {
-		in = new DataInputStream(new ByteArrayInputStream(file.toByteArray()));
+		in = new LittleEndianDataInputStream(new ByteArrayInputStream(file.toByteArray()));
 	}
 
 	/**
@@ -114,7 +114,7 @@ public class VulkanImageLoaderTest {
 
 		// Check image data
 		assertNotNull(image.data());
-		assertEquals(total, image.data().length());
+		assertEquals(total, image.data().length);
 	}
 
 	@Test

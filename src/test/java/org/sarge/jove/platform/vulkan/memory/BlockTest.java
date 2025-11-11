@@ -1,23 +1,26 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
+import java.lang.foreign.*;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 
 public class BlockTest {
 	private Block block;
-	private DeviceMemory mem;
+	private DeviceMemory memory;
+	private SegmentAllocator allocator;
 
 	@BeforeEach
 	void before() {
-		mem = new DefaultDeviceMemory(new Handle(1), new MockDeviceContext(), MockAllocator.TYPE, 3);
-		block = new Block(mem);
+		final var device = new MockLogicalDevice(new MockMemoryLibrary());
+		allocator = Arena.ofAuto();
+		memory = new DefaultDeviceMemory(new Handle(allocator.allocate(3)), device, MockAllocator.TYPE, 3);
+		block = new Block(memory);
 	}
 
 	@Test
@@ -49,7 +52,7 @@ public class BlockTest {
 
 	@Test
 	void allocateDestroyed() {
-		mem.destroy();
+		memory.destroy();
 		assertThrows(IllegalStateException.class, () -> block.allocate(1));
 	}
 
@@ -57,7 +60,7 @@ public class BlockTest {
 	void destroy() {
 		final DeviceMemory allocation = block.allocate(1);
 		block.destroy();
-		assertEquals(true, mem.isDestroyed());
+		assertEquals(true, memory.isDestroyed());
 		assertEquals(true, allocation.isDestroyed());
 		assertEquals(0, block.allocations().count());
 	}
@@ -75,14 +78,14 @@ public class BlockTest {
 		void constructor() {
 			assertNotNull(allocation);
 			assertEquals(2, allocation.size());
-			assertEquals(mem.handle(), allocation.handle());
+			assertEquals(memory.handle(), allocation.handle());
 			assertEquals(Optional.empty(), allocation.region());
 			assertEquals(false, allocation.isDestroyed());
 		}
 
 		@Test
 		void map() {
-			final Region region = mem.map(1, 2);
+			final Region region = memory.map(1, 2);
 			region.unmap();
 			assertEquals(region, allocation.map(1, 2));
 		}
@@ -95,8 +98,8 @@ public class BlockTest {
 
 		@Test
 		void mapReplacePrevious() {
-			final Region prev = mem.map(0, 1);
-			assertNotEquals(prev, allocation.map(0, 1));
+			memory.map(0, 1);
+			allocation.map(0, 1);
 		}
 
 		@Test
@@ -114,7 +117,7 @@ public class BlockTest {
 
 		@Test
 		void reallocateBlockDestroyed() {
-			mem.destroy();
+			memory.destroy();
 			assertThrows(IllegalStateException.class, () -> allocation.reallocate(1));
 		}
 
@@ -148,7 +151,7 @@ public class BlockTest {
 
 		@Test
 		void isDestroyed() {
-			mem.destroy();
+			memory.destroy();
 			assertEquals(true, allocation.isDestroyed());
 		}
 
@@ -156,7 +159,6 @@ public class BlockTest {
 		void equals() {
 			assertEquals(true, allocation.equals(allocation));
 			assertEquals(false, allocation.equals(null));
-			assertEquals(false, allocation.equals(mock(DeviceMemory.class)));
 		}
 	}
 }

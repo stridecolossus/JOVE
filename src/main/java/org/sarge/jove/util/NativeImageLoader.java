@@ -1,4 +1,4 @@
-package org.sarge.jove.io;
+package org.sarge.jove.util;
 
 import static java.awt.image.BufferedImage.*;
 
@@ -13,17 +13,18 @@ import org.sarge.jove.common.*;
  * Loader for a Java image implemented using {@link ImageIO}.
  * @author Sarge
  */
-public class NativeImageLoader implements ResourceLoader<BufferedImage, ImageData> {
-	@Override
-	public BufferedImage map(InputStream in) throws IOException {
-		return ImageIO.read(in);
+public class NativeImageLoader {
+	// TODO
+	public ImageData load(InputStream in) throws IOException {
+		final BufferedImage image = ImageIO.read(in);
+		if(image == null) {
+			throw new IOException("Invalid image");
+		}
+		return load(image);
 	}
 
-	@Override
+	// TODO
 	public ImageData load(BufferedImage image) throws IOException {
-		// Validate image
-		if(image == null) throw new IOException("Invalid image");
-
 		// Determine image channels
 		final String channels = switch(image.getType()) {
 			case TYPE_BYTE_GRAY -> "R";

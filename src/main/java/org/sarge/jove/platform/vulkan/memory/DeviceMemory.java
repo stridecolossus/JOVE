@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryProperty;
  * <li>Only <b>one</b> active mapping is permitted on a given instance at any one time</li>
  * <li>Memory mappings can be <i>persistent</i>, i.e. it is not required to explicitly unmap memory after a read/write access</li>
  * <li>Memory can be assumed to be automatically unmapped when it is released</li>
- * <li>Buffers retrieved from a mapped region using {@link Region#buffer(long, long)} are invalidated if the region is unmapped or the memory destroyed</li>
+ * <li>A mapped region is invalidated if the region is unmapped or the memory has been destroyed</li>
  * </ul>
  * <p>
  * Usage:

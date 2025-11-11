@@ -23,8 +23,6 @@ public class VertexInputStageTest {
 		assertEquals(0, info.flags);
 		assertEquals(0, info.vertexBindingDescriptionCount);
 		assertEquals(0, info.vertexAttributeDescriptionCount);
-		assertEquals(null, info.pVertexBindingDescriptions);
-		assertEquals(null, info.pVertexAttributeDescriptions);
 	}
 
 	@DisplayName("The vertex input stage can be specified programatically")

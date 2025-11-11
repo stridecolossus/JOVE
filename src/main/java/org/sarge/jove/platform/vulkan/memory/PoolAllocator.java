@@ -21,11 +21,12 @@ public class PoolAllocator extends Allocator implements TransientObject {
 
 	/**
 	 * Constructor.
-	 * @param dev
-	 * @param types
+	 * @param device		Logical device
+	 * @param types			Memory types
+	 * @param pages			Minimum number of pages per memory allocation
 	 */
-	public PoolAllocator(LogicalDevice dev, MemoryType[] types, int pages) {
-		super(dev, types);
+	public PoolAllocator(LogicalDevice device, MemoryType[] types, int pages) {
+		super(device, types);
 		this.pages = requireOneOrMore(pages);
 	}
 

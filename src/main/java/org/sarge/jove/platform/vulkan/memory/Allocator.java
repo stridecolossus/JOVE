@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -38,46 +38,24 @@ public class Allocator {
 		}
 	}
 
-	/**
-	 * Creates and configures a memory allocator for the given device.
-	 * @param device 		Logical device
-	 * @param types			Memory types
-	 * @return Allocator
-	 * @see MemoryType#enumerate(VkPhysicalDeviceMemoryProperties)
-	 * @see LogicalDevice#limits()
-	 */
-	public static Allocator create(LogicalDevice device, MemoryType[] types) {
-//		final int max = limits.maxMemoryAllocationCount;
-//    	final long page = limits.bufferImageGranularity;
-    	return new Allocator(device, types);
-	}
-
 	private final LogicalDevice device;
 	private final MemoryType[] types;
-	private long page = 1024;				// TODO
-	private int max = Integer.MAX_VALUE;
+	private final long page;
+	private final int max;
 	private int count;
 
 	/**
 	 * Constructor.
 	 * @param dev			Logical device
 	 * @param types 		Memory types
-	 * @param max			Maximum number of allocations
-	 * @param page	Memory page granularity
 	 */
 	public Allocator(LogicalDevice dev, MemoryType[] types) {
+		final var limits = dev.limits();
 		this.device = requireNonNull(dev);
 		this.types = Arrays.copyOf(types, types.length);
-//		this.max = requireOneOrMore(max);
-//		this.granularity = requireOneOrMore(granularity);
+		this.page = requireOneOrMore(limits.bufferImageGranularity);
+		this.max = requireOneOrMore(limits.maxMemoryAllocationCount);
 	}
-
-//	/**
-//	 * Copy constructor.
-//	 */
-//	protected Allocator(Allocator allocator) {
-//		this(allocator.device, allocator.types, allocator.max, allocator.granularity);
-//	}
 
 	/**
 	 * @return Number of allocations
@@ -86,27 +64,19 @@ public class Allocator {
 		return count;
 	}
 
-	public void setPageSize(long page) {
-		this.page = requireOneOrMore(page);
+	/**
+	 * @return Maximum number of allocations supported by the hardware
+	 */
+	public final int max() {
+		return max;
 	}
 
-	public void setMaximumAllocationCount(int max) {
-		this.max = requireZeroOrMore(max);
+	/**
+	 * @return Page size
+	 */
+	public final long page() {
+		return page;
 	}
-
-//	/**
-//	 * @return Maximum number of allocations supported by the hardware
-//	 */
-//	public final int max() {
-//		return max;
-//	}
-//
-//	/**
-//	 * @return Page size granularity
-//	 */
-//	public final long granularity() {
-//		return granularity;
-//	}
 
 	/**
 	 * Allocates device memory for the given request.
@@ -190,9 +160,8 @@ public class Allocator {
 	/**
 	 * Allocates memory of the given type.
 	 * <p>
-	 * The requested memory size is quantised to the optimal page size {@link #granularity()} specified by the hardware.
+	 * The requested memory size is quantised to the optimal page size {@link #page()} specified by the hardware.
 	 * Additionally the size of the allocated memory may be larger due to alignment constraints.
-	 * In either case this is transparent to the resultant device memory instance.
 	 * <p>
 	 * @param type		Memory type
 	 * @param size		Size (bytes)
@@ -202,7 +171,9 @@ public class Allocator {
 	 */
 	protected DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
 		// Check maximum number of allocations
-		if(count >= max) throw new AllocationException("Number of allocations exceeds the hardware limit");
+		if(count >= max) {
+			throw new AllocationException("Number of allocations exceeds the hardware limit");
+		}
 
 		// Quantise the requested size
 		final long pages = pages(size);
@@ -229,7 +200,7 @@ public class Allocator {
 	}
 
 	/**
-	 * Quantises the requested memory size to the configured page granularity.
+	 * Quantises the requested memory size to the configured page size.
 	 * @param size Memory size (bytes)
 	 * @return Number of pages
 	 */

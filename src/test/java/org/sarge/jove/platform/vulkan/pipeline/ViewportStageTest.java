@@ -10,27 +10,26 @@ import org.sarge.jove.platform.vulkan.pipeline.ViewportStage.Viewport;
 class ViewportStageTest {
 	private ViewportStage stage;
 	private Rectangle rectangle;
-	private Viewport viewport;
 
 	@BeforeEach
 	void before() {
 		stage = new ViewportStage();
-		rectangle = new Rectangle(0, 0, 640, 480);
-		viewport = new Viewport(rectangle);
+		rectangle = new Rectangle(1, 2, 3, 4);
 	}
 
 	@Test
 	void build() {
 		// Build descriptor
 		final VkPipelineViewportStateCreateInfo descriptor = stage
-				.viewport(viewport)
-				.scissor(rectangle)
+				.viewportAndScissor(rectangle)
 				.descriptor();
 
 		// Check descriptor
 		assertEquals(0, descriptor.flags);
 		assertEquals(1, descriptor.viewportCount);
 		assertEquals(1, descriptor.scissorCount);
+		assertEquals(1, descriptor.pViewports.length);
+		assertEquals(1, descriptor.pScissors.length);
 
 		// Check viewports
 		final VkViewport viewport = descriptor.pViewports[0];
@@ -52,21 +51,21 @@ class ViewportStageTest {
 	@DisplayName("The viewport coordinate system can be flipped vertically")
 	@Test
 	void flip() {
-		final Viewport flip = viewport.flip();
+		final Viewport flip = new Viewport(rectangle).flip();
 		assertEquals(new Rectangle(1, 2 + 4, 3, -4), flip.rectangle());
 	}
 
 	@DisplayName("The viewport configuration cannot be empty")
 	@Test
 	void empty() {
-		assertThrows(IllegalArgumentException.class, () -> stage.descriptor());
+		assertThrows(IllegalStateException.class, () -> stage.descriptor());
 	}
 
 	@DisplayName("The number of scissor rectangles must match the number of viewports")
 	@Test
 	void scissor() {
-		stage.viewport(viewport);
-		assertThrows(IllegalArgumentException.class, () -> stage.descriptor());
+		stage.viewport(new Viewport(rectangle));
+		assertThrows(IllegalStateException.class, () -> stage.descriptor());
 	}
 }
 

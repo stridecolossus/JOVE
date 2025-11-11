@@ -15,7 +15,7 @@ import org.sarge.jove.geometry.Vector;
  */
 public class Randomiser {
 	private final Random random;
-	private final Interpolator interpolator = Interpolator.linear(-1, +1);
+	//private final Interpolator interpolator = Interpolator.linear(-1, +1);
 
 	/**
 	 * Constructor.
@@ -55,7 +55,8 @@ public class Randomiser {
 	public Vector vector() {
 		final float[] vec = new float[Vector.SIZE];
 		for(int n = 0; n < vec.length; ++n) {
-			vec[n] = interpolator.apply(next());
+			// TODO
+			vec[n] = next(); //interpolator.apply(next());
 		}
 		return new Vector(vec);
 	}

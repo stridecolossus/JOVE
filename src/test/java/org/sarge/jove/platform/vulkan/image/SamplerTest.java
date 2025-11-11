@@ -1,21 +1,20 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.DescriptorResource;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
 import org.sarge.jove.util.MathsUtility;
 
-import com.sun.jna.Pointer;
-
 public class SamplerTest {
 	private Sampler sampler;
-	private DeviceContext dev;
+	private LogicalDevice dev;
 
 	@BeforeEach
 	void before() {

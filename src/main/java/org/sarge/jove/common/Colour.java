@@ -1,11 +1,9 @@
 package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.sarge.jove.common.Layout.Component;
-import org.sarge.jove.util.*;
-import org.sarge.jove.util.FloatSupport.FloatFunction;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * RGBA colour.
@@ -92,31 +90,31 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		this(red, green, blue, 1);
 	}
 
-	/**
-	 * Creates a colour interpolator.
-	 * @param start				Start colour
-	 * @param end				End colour
-	 * @param interpolator		Interpolator function
-	 * @return Colour interpolator
-	 */
-	public static FloatFunction<Colour> interpolator(Colour start, Colour end, Interpolator interpolator) {
-		// Create an interpolator for each channel
-		final float[] a = start.toArray();
-		final float[] b = end.toArray();
-		final Interpolator[] array = new Interpolator[SIZE];
-		Arrays.setAll(array, n -> interpolator.range(a[n], b[n]));
-
-		// Create colour interpolator
-		return t -> {
-			final float[] result = new float[SIZE];
-			for(int n = 0; n < SIZE; ++n) {
-				result[n] = array[n].apply(t);
-			}
-			return Colour.of(result);
-		};
-	}
-	// TODO - move to separate class + loader?  see particle system loader
-	// TODO - JDK19 vector API
+//	/**
+//	 * Creates a colour interpolator.
+//	 * @param start				Start colour
+//	 * @param end				End colour
+//	 * @param interpolator		Interpolator function
+//	 * @return Colour interpolator
+//	 */
+//	public static FloatFunction<Colour> interpolator(Colour start, Colour end, Interpolator interpolator) {
+//		// Create an interpolator for each channel
+//		final float[] a = start.toArray();
+//		final float[] b = end.toArray();
+//		final Interpolator[] array = new Interpolator[SIZE];
+//		Arrays.setAll(array, n -> interpolator.range(a[n], b[n]));
+//
+//		// Create colour interpolator
+//		return t -> {
+//			final float[] result = new float[SIZE];
+//			for(int n = 0; n < SIZE; ++n) {
+//				result[n] = array[n].apply(t);
+//			}
+//			return Colour.of(result);
+//		};
+//	}
+//	// TODO - move to separate class + loader?  see particle system loader
+//	// TODO - JDK19 vector API
 
 	@Override
 	public Layout layout() {
