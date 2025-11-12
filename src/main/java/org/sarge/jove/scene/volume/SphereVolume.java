@@ -13,9 +13,6 @@ import org.sarge.jove.util.MathsUtility;
  * @author Sarge
  */
 public record SphereVolume(Point centre, float radius) implements Volume {
-
-	// TODO - get rid of separate class
-
 	/**
 	 * Creates a sphere volume enclosing the given bounds.
 	 * @param bounds Bounds

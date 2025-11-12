@@ -9,7 +9,7 @@ import java.util.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.EnumMask;
@@ -146,12 +146,12 @@ public class VulkanBuffer extends VulkanObject {
 		// Validate
 		require(VkBufferUsageFlag.TRANSFER_DST);
 		checkOffset(offset);
-		Vulkan.checkAlignment(offset);
+		VulkanUtility.checkAlignment(offset);
 
 		// Validate alignment
 		if(size != VK_WHOLE_SIZE) {
 			requireOneOrMore(size);
-			Vulkan.checkAlignment(size);
+			VulkanUtility.checkAlignment(size);
 		}
 
 		// Create fill command

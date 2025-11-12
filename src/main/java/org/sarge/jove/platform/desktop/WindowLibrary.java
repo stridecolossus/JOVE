@@ -7,7 +7,7 @@ import org.sarge.jove.foreign.*;
  * GLFW window API.
  * @author Sarge
  */
-public interface WindowLibrary {
+interface WindowLibrary {
 	/**
 	 * Resets all window hints to the default values.
 	 */
@@ -30,7 +30,6 @@ public interface WindowLibrary {
 	 * @return Window
 	 */
 	Handle glfwCreateWindow(int w, int h, String title, Handle /*Monitor*/ monitor, Window shared);
-	// TODO - returns WINDOW???
 
 	/**
 	 * Creates a Vulkan surface for the given window.
@@ -122,6 +121,7 @@ public interface WindowLibrary {
 //	 */
 //	void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
 
+// TODO
 	/**
 	 * Listener for window resize events.
 	 */

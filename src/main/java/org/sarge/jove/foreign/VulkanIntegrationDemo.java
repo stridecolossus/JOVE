@@ -1,5 +1,6 @@
 package org.sarge.jove.foreign;
 
+import java.lang.foreign.MemorySegment;
 import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
@@ -13,6 +14,62 @@ import org.sarge.jove.platform.vulkan.render.Swapchain;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 public class VulkanIntegrationDemo {
+
+//	void main() throws Exception {
+//		System.out.println("Initialising logging...");
+//		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
+//			LogManager.getLogManager().readConfiguration(config);
+//		}
+//
+//		System.out.println("Initialising GLFW...");
+//		final var desktop = Desktop.create();
+//		System.out.println("version=" + desktop.version());
+//		System.out.println("Vulkan=" + desktop.isVulkanSupported());
+//
+//		final var extensions = desktop.extensions();
+//		System.out.println("extensions=" + extensions);
+//
+//		System.out.println("Opening window...");
+//		final Window window = new Window.Builder()
+//				.title("DesktopTestTemp")
+//				.size(new Dimensions(1024, 768))
+//				.hint(Hint.CLIENT_API, 0)
+//				.hint(Hint.VISIBLE, 1)
+//				.build(desktop.library());
+//
+//		/
+//		// 		void event(Handle window, double x, double y);
+//
+//		//final DeviceLibrary deviceLibrary = desktop.library();
+//
+//		final var listener = new DeviceLibrary.MouseListener() {
+//			@Override
+//			public void event(MemorySegment window, double x, double y) {
+//				System.out.println("event="+window+" "+x+","+y);
+//			}
+//		};
+//
+//		final MethodType type = MethodType.methodType(void.class, MemorySegment.class, double.class, double.class);
+//		final MethodHandle callback = MethodHandles.lookup().findVirtual(DeviceLibrary.MouseListener.class, "event", type).bindTo(listener);
+//		System.out.println("***** callback="+callback);
+//
+//		final MemorySegment stub = Linker.nativeLinker().upcallStub(
+//				callback,
+//				FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_DOUBLE, ValueLayout.JAVA_DOUBLE),
+//				Arena.ofAuto()
+//		);
+//		System.out.println("stub="+stub);
+//
+//		window.register(new Handle(stub));
+//		System.out.println("registered");
+
+
+	private static void loop(MouseDevice mouse) throws InterruptedException {
+		while(true) {
+			mouse.poll();
+			Thread.sleep(50);
+		}
+	}
 
 	void main() throws Exception {
 		System.out.println("Initialising logging...");
@@ -33,8 +90,27 @@ public class VulkanIntegrationDemo {
 				.title("DesktopTestTemp")
 				.size(new Dimensions(1024, 768))
 				.hint(Hint.CLIENT_API, 0)
-				.hint(Hint.VISIBLE, 0)
-				.build(desktop.library());
+				.hint(Hint.VISIBLE, 1)				// TODO
+				.build(desktop);
+
+		/////////////////
+
+		final MouseDevice mouse = new MouseDevice(window);
+
+		final var listener = new DeviceLibrary.MouseListener() {
+			@Override
+			public void event(MemorySegment window, double x, double y) {
+				System.err.println("event "+window+" "+x+","+y);
+			}
+		};
+
+		mouse.add(listener);
+
+		desktop.error().ifPresent(System.err::println);
+
+		loop(mouse);
+
+		/////////////////
 
 		System.out.println("Initialising Vulkan...");
 		final var vulkan = Vulkan.create();

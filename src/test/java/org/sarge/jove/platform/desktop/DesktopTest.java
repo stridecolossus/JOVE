@@ -9,8 +9,8 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 
-public class DesktopTest {
-	private static class MockDesktopLibrary implements DesktopLibrary {
+class DesktopTest {
+	static class MockDesktopLibrary implements DesktopLibrary {
 		private final SegmentAllocator allocator = Arena.ofAuto();
 		private int init = 1;
 		private int error;

@@ -8,6 +8,6 @@ import org.sarge.jove.platform.vulkan.memory.MockDeviceMemory;
 
 public class MockVulkanBuffer extends VulkanBuffer {
 	public MockVulkanBuffer(LogicalDevice device, VkBufferUsageFlag... usage) {
-		super(new Handle(1), device, Set.of(usage), new MockDeviceMemory(), 42L);
+		super(new Handle(1), device, Set.of(usage), new MockDeviceMemory(42L), 42L);
 	}
 }

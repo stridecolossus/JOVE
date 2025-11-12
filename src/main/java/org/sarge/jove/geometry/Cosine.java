@@ -23,6 +23,33 @@ public record Cosine(float sin, float cos) {
 		};
 	}
 
+	/**
+	 *
+	 * i) small angle approximations
+	 *
+	 * for small angles (???) in radians:
+	 *
+	 * sin(a) ~ tan(a) ~ 0 OR a
+	 *
+	 * cos(a) ~ 1 - (a * a) / 2 ~ 1
+	 *
+	 * where 'small' is up to 0.5 radians
+	 *
+	 * ii)
+	 *
+	 * only store angles 0 .. PI/2, i.e. first quadrant
+	 *
+	 * reduces to 25% memory
+	 *
+	 * quadrant IV  -> sin(a) = -sin(-a)
+	 * quadrant II  -> sin(a) = sin(PI - a)
+	 * quadrant III -> sin(a) = -sina(PI + a)
+	 *
+	 *
+	 *
+	 *
+	 */
+
 	@Override
 	public final boolean equals(Object obj) {
 		return
@@ -50,7 +77,7 @@ public record Cosine(float sin, float cos) {
 
 		Provider DEFAULT = angle -> {
 			final float sin = (float) Math.sin(angle);
-			final float cos = (float) Math.sin(angle);
+			final float cos = (float) Math.cos(angle);
 			return new Cosine(sin, cos);
 		};
 	}

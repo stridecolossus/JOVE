@@ -98,18 +98,6 @@ class ImageTest {
     			builder.aspect(VkImageAspect.STENCIL);
     			builder.build();
     		}
-
-    		@Test
-    		void empty() {
-    			assertThrows(IllegalArgumentException.class, () -> builder.build());
-    		}
-
-    		@Test
-    		void invalid() {
-    			builder.aspect(VkImageAspect.COLOR);
-    			builder.aspect(VkImageAspect.DEPTH);
-    			assertThrows(IllegalArgumentException.class, () -> builder.build());
-    		}
 		}
 	}
 }

@@ -7,11 +7,10 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.util.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 

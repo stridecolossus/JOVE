@@ -6,7 +6,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.platform.vulkan.common.VulkanException;
 import org.sarge.jove.util.EnumMask;
 
 class FenceTest {

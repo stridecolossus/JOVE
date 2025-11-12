@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
@@ -59,9 +58,16 @@ public final class Window extends TransientNativeObject {
 
 	// TODO - was lazy supplier!!!
 	private final WindowLibrary library;
-	private final Supplier<KeyboardDevice> keyboard = () -> new KeyboardDevice(this);
-	private final Supplier<MouseDevice> mouse = () -> new MouseDevice(this);
+//	private final Supplier<KeyboardDevice> keyboard = () -> new KeyboardDevice(this);
+//	private final Supplier<MouseDevice> mouse = () -> new MouseDevice(this);
 	private final Map<Object, Object> listeners = new WeakHashMap<>();
+
+//	public enum Type {
+//		ENTER,
+//		FOCUS,
+//		ICONIFIED,
+//		CLOSED
+//	}
 
 	/**
 	 * Constructor.
@@ -73,21 +79,23 @@ public final class Window extends TransientNativeObject {
 		this.library = requireNonNull(library);
 	}
 
-	// TODO - lazy or just creates new...
-
-	/**
-	 * @return New keyboard device
-	 */
-	public KeyboardDevice keyboard() {
-		return keyboard.get();
+	WindowLibrary library() {
+		return library;
 	}
 
-	/**
-	 * @return New mouse device
-	 */
-	public MouseDevice mouse() {
-		return mouse.get();
-	}
+//	/**
+//	 * @return New keyboard device
+//	 */
+//	public KeyboardDevice keyboard() {
+//		return keyboard.get();
+//	}
+//
+//	/**
+//	 * @return New mouse device
+//	 */
+//	public MouseDevice mouse() {
+//		return mouse.get();
+//	}
 
 	/**
 	 * @return Size of this window
@@ -295,8 +303,9 @@ public final class Window extends TransientNativeObject {
 		 * @see Desktop#error()
 		 */
 		@MainThread
-		public Window build(WindowLibrary library) {
+		public Window build(Desktop desktop) {
 			// Reset window hints
+			final WindowLibrary library = desktop.library();
 			library.glfwDefaultWindowHints();
 
 			// Apply window hints

@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.control.Button;
+import java.awt.Button;
+
 import org.sarge.jove.foreign.IntegerReference;
 
 /**

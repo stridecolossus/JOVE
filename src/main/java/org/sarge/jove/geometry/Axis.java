@@ -12,7 +12,7 @@ package org.sarge.jove.geometry;
  * <p>
  * @author Sarge
  */
-public final class Axis extends Normal {
+public final class Axis extends Normal {			// TODO - this COULD just be an enum composing the axis normal, actually used relatively infrequently (mainly camera)
 	/**
 	 * Cardinal axes.
 	 */

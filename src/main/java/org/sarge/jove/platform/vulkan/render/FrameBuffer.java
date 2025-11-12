@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
@@ -17,7 +17,7 @@ import org.sarge.jove.platform.vulkan.image.*;
  * @author Sarge
  */
 public class FrameBuffer extends VulkanObject {
-	private final RenderPass pass;
+	private final Handle pass;
 	private final List<View> attachments;
 	private final Rectangle extents;
 	private final Library library;
@@ -31,7 +31,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @param extents			Image extents
 	 * @param library			Frame buffer library
 	 */
-	FrameBuffer(Handle handle, LogicalDevice device, RenderPass pass, List<View> attachments, Rectangle extents, Library library) {
+	FrameBuffer(Handle handle, LogicalDevice device, Handle pass, List<View> attachments, Rectangle extents, Library library) {
 		super(handle, device);
 		this.pass = requireNonNull(pass);
 		this.attachments = List.copyOf(attachments);
@@ -52,8 +52,39 @@ public class FrameBuffer extends VulkanObject {
 	 * @return Begin render pass command
 	 */
 	public Command begin(VkSubpassContents contents) {
-		final VkRenderPassBeginInfo info = begin();
+		// Create descriptor
+		final var info = new VkRenderPassBeginInfo();
+		info.renderPass = pass;
+		info.framebuffer = this.handle();
+		info.renderArea = VulkanUtility.rectangle(extents);
+
+		// Build attachment clear operations
+		info.pClearValues = clear();
+		info.clearValueCount = info.pClearValues.length;
+
+		// Create command
 		return buffer -> library.vkCmdBeginRenderPass(buffer, info, contents);
+	}
+
+	/**
+	 * @return Clear attachment array
+	 */
+	private VkClearValue[] clear() {
+		return attachments
+				.stream()
+				.map(View::clear)
+				.flatMap(Optional::stream)
+				.map(FrameBuffer::populate)
+				.toArray(VkClearValue[]::new);
+	}
+
+	/**
+	 * Populates an attachment clear descriptor.
+	 */
+	private static VkClearValue populate(ClearValue clear) {
+		final var descriptor = new VkClearValue();
+		clear.populate(descriptor);
+		return descriptor;
 	}
 
 	/**
@@ -61,39 +92,6 @@ public class FrameBuffer extends VulkanObject {
 	 */
 	public Command end() {
 		return library::vkCmdEndRenderPass;
-	}
-
-	/**
-	 * @return Render pass descriptor
-	 */
-	private VkRenderPassBeginInfo begin() {
-		// Create descriptor
-		final var info = new VkRenderPassBeginInfo();
-		info.renderPass = pass.handle();
-		info.framebuffer = this.handle();
-
-		// Populate rendering area
-		info.renderArea.extent.width = extents.width();
-		info.renderArea.extent.height = extents.height();
-		info.renderArea.offset.x = extents.x();
-		info.renderArea.offset.y = extents.y();
-
-		// Build attachment clear operations
-		info.clearValueCount = info.pClearValues.length;
-		info.pClearValues = attachments
-				.stream()
-				.map(View::clear)
-				.flatMap(Optional::stream)
-				.map(FrameBuffer::populate)
-				.toArray(VkClearValue[]::new);
-
-		return info;
-	}
-
-	private static VkClearValue populate(ClearValue clear) {
-		final var descriptor = new VkClearValue();
-		clear.populate(descriptor);
-		return descriptor;
 	}
 
 	@Override
@@ -148,11 +146,78 @@ public class FrameBuffer extends VulkanObject {
 		// Allocate frame buffer
 		final LogicalDevice device = pass.device();
 		final Library library = device.library();
-		final Pointer pointer = new Pointer();
-		library.vkCreateFramebuffer(device, info, null, pointer);
+		final Pointer handle = new Pointer();
+		library.vkCreateFramebuffer(device, info, null, handle);
 
 		// Create frame buffer
-		return new FrameBuffer(pointer.get(), device, pass, attachments, extents, library);
+		return new FrameBuffer(handle.get(), device, pass.handle(), attachments, extents, library);
+	}
+
+	/**
+	 * A <i>framebuffer group</i> is the set of framebuffers for a given swapchain.
+	 */
+	public static class Group implements TransientObject {
+		private final Swapchain swapchain;
+		private final RenderPass pass;
+		private final List<View> additional;
+		private final List<FrameBuffer> buffers = new ArrayList<>();
+
+		/**
+		 * Constructor.
+		 * @param swapchain			Swapchain
+		 * @param pass				Render pass
+		 * @param additional		Additional attachments
+		 */
+		public Group(Swapchain swapchain, RenderPass pass, List<View> additional) {
+			this.swapchain = requireNonNull(swapchain);
+			this.pass = requireNonNull(pass);
+			this.additional = List.copyOf(additional);
+			build();
+		}
+
+		/**
+		 * Retrieves a framebuffer.
+		 * @param index Index
+		 * @return Framebuffer
+		 * @throws IndexOutOfBoundsException for an invalid index or if this group has been destroyed
+		 */
+		public FrameBuffer get(int index) {
+			return buffers.get(index);
+		}
+
+		/**
+		 * Recreates this group of framebuffers when the swapchain has been invalidated.
+		 */
+		public void create() {
+			destroy();
+			build();
+		}
+
+		/**
+		 * Builds the framebuffer group.
+		 */
+		private void build() {
+			final Rectangle extents = swapchain.extents().rectangle();
+			final View[] colour = swapchain.attachments().toArray(View[]::new);
+			for(int n = 0; n < colour.length; ++n) {
+    			// Aggregate attachments
+				final List<View> attachments = new ArrayList<>();
+    			attachments.add(colour[n]);
+    			attachments.addAll(additional);
+
+    			// Create buffer
+    			final var buffer = FrameBuffer.create(pass, extents, attachments);
+    			buffers.add(buffer);
+    		}
+		}
+
+		@Override
+		public void destroy() {
+			for(FrameBuffer buffer : buffers) {
+				buffer.destroy();
+			}
+			buffers.clear();
+		}
 	}
 
 	/**

@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.platform.vulkan.core.Vulkan.checkAlignment;
 import static org.sarge.lib.Validation.*;
 
 import java.lang.foreign.*;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.VulkanUtility;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -28,8 +28,8 @@ public class PushConstant {
     	public Range {
     		requireZeroOrMore(offset);
     		requireOneOrMore(size);
-    		checkAlignment(offset);
-    		checkAlignment(size);
+    		VulkanUtility.checkAlignment(offset);
+    		VulkanUtility.checkAlignment(size);
     		requireNotEmpty(stages);
     		stages = Set.copyOf(stages);
     	}

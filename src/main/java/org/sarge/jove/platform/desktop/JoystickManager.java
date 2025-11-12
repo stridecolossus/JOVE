@@ -70,15 +70,16 @@ public class JoystickManager {
 	 * @return Removed device
 	 */
 	private JoystickDevice remove(int id) {
-		final JoystickDevice prev = devices
-				.stream()
-				.filter(dev -> dev.id() == id)
-				.findAny()
-				.orElseThrow();
-
-		devices.remove(prev);
-
-		return prev;
+//		final JoystickDevice prev = devices
+//				.stream()
+//				.filter(dev -> dev.id() == id)
+//				.findAny()
+//				.orElseThrow();
+//
+//		devices.remove(prev);
+//
+//		return prev;
+		return null;
 	}
 
 	/**
@@ -93,9 +94,9 @@ public class JoystickManager {
 	 * Polls joystick events.
 	 */
 	public void poll() {
-		for(JoystickDevice dev : devices) {
-			dev.poll();
-		}
+//		for(JoystickDevice dev : devices) {
+//			dev.poll();
+//		}
 	}
 
 	/**

@@ -1,12 +1,14 @@
 package org.sarge.jove.platform.desktop;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.control.Event.DeviceListener;
+import java.lang.foreign.MemorySegment;
+
+import org.sarge.jove.foreign.Callback;
 
 /**
  * GLFW device API.
  * @author Sarge
  */
+public
 interface DeviceLibrary {
 	/**
 	 * Processes pending events.
@@ -25,7 +27,7 @@ interface DeviceLibrary {
 	 * Listener for key events.
 	 */
 	@FunctionalInterface
-	interface KeyListener extends DeviceListener {
+	interface KeyListener extends Callback {
 		/**
 		 * Notifies a key event.
 		 * @param window			Window
@@ -34,7 +36,7 @@ interface DeviceLibrary {
 		 * @param action			Key action
 		 * @param mods				Modifiers
 		 */
-		void key(Handle window, int key, int scancode, int action, int mods);
+		void key(Window window, int key, int scancode, int action, int mods);
 	}
 
 	/**
@@ -42,20 +44,21 @@ interface DeviceLibrary {
 	 * @param window		Window
 	 * @param listener		Key listener
 	 */
-//	void glfwSetKeyCallback(Window window, KeyListener listener);
+	void glfwSetKeyCallback(Window window, KeyListener listener);
 
 	/**
 	 * Listener for mouse pointer and scroll wheel events.
 	 */
 	@FunctionalInterface
-	interface MouseListener extends DeviceListener {
+	public
+	interface MouseListener extends Callback {
 		/**
 		 * Notifies a mouse event.
 		 * @param window	Window
 		 * @param x			X coordinate
 		 * @param y			Y coordinate
 		 */
-		void event(Handle window, double x, double y);
+		void event(MemorySegment window, double x, double y);
 	}
 
 	/**
@@ -71,17 +74,12 @@ interface DeviceLibrary {
 	 * @param listener		Mouse scroll listener
 	 */
 	void glfwSetScrollCallback(Window window, MouseListener listener);
-	// TODO - make this separate interface?
-	// TODO - combine all into ONE interface? simpler?
-	// factor out from here? so this just has the API
-	// logical place then to put any code to create/destroy the listeners?
-	// can then get rid of pointless DesktopSource thing?
 
 	/**
 	 * Listener for mouse button events.
 	 */
 	@FunctionalInterface
-	interface MouseButtonListener extends DeviceListener {
+	interface MouseButtonListener extends Callback {
 		/**
 		 * Notifies a mouse button event.
 		 * @param window	window
@@ -89,7 +87,7 @@ interface DeviceLibrary {
 		 * @param action	Button action
 		 * @param mods		Modifiers
 		 */
-		void button(Handle window, int button, int action, int mods);
+		void button(Window window, int button, int action, int mods);
 	}
 
 	/**

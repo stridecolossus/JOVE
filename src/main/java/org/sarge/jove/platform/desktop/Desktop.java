@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.Callback.CallbackTransformerFactory;
 
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
@@ -36,6 +37,8 @@ public class Desktop implements TransientObject {
 
 		// TODO
 		final var registry = DefaultRegistry.create();
+		registry.register(Callback.class, new CallbackTransformerFactory());
+
 		//registry.add(DeviceListener.class, null);
 
 		// Load native library
@@ -43,6 +46,7 @@ public class Desktop implements TransientObject {
 		final Class<?>[] api = {
 				DesktopLibrary.class,
 				WindowLibrary.class,
+				DeviceLibrary.class,
 		};
 		final var library = (DesktopLibrary) factory.build(List.of(api));
 		// TODO - JoystickManager.init(lib);

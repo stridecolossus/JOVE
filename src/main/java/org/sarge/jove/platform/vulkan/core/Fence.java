@@ -7,8 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
@@ -47,7 +46,7 @@ public class Fence extends VulkanObject {
 	 * @param device		Logical device
 	 * @param library		Library
 	 */
-	Fence(Handle handle, LogicalDevice device, Library library) {
+	protected Fence(Handle handle, LogicalDevice device, Library library) {
 		super(handle, device);
 		this.library = requireNonNull(library);
 	}

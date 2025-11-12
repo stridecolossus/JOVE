@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 
 /**
- * The <i>Vulkan render task</i> is used to render and present a frame to the swapchain.
+ * The <i>Vulkan render task</i> renders and presents a frame to the swapchain.
  * <p>
  * This class orchestrates the components that collaborate to render a frame as follows:
  * <ol>
@@ -25,33 +25,44 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
  * <p>
  * @author Sarge
  */
-public class VulkanRenderTask implements TransientObject {
+public class VulkanRenderTask implements Runnable, TransientObject {
 	private final FrameComposer composer;
-	private final SwapchainAdapter adapter;
+	//private final SwapchainAdapter adapter;
+	private final Swapchain swapchain;
+	private final FrameBuffer.Group group;
 	private final VulkanFrame[] frames;
 	private int next;
 
 	/**
 	 * Constructor.
-	 * @param composer		Composer for the render task
-	 * @param adapter		Swapchain adapter
-	 * @param frames		Frame trackers
+	 * @param swapchain			Swapchain
+	 * @param group				Frame buffers
+	 * @param composer			Composer for the render sequence
 	 */
-	public VulkanRenderTask(FrameComposer composer, SwapchainAdapter adapter, VulkanFrame[] frames) {
+	public VulkanRenderTask(Swapchain swapchain, FrameBuffer.Group group, FrameComposer composer) {
 		this.composer = requireNonNull(composer);
-		this.adapter = requireNonNull(adapter);
-		this.frames = Arrays.copyOf(frames, frames.length);
+		this.swapchain = requireNonNull(swapchain);
+		this.group = requireNonNull(group);
+		this.frames = frames(swapchain);
 	}
 
-	/**
-	 * Renders the next frame.
-	 */
-	public void render() {
+	private static VulkanFrame[] frames(Swapchain swapchain) {
+		final var device = swapchain.device();
+		final int number = swapchain.attachments().size();
+		final var frames = new VulkanFrame[number];
+		Arrays.setAll(frames, _ -> VulkanFrame.create(device));
+		return frames;
+	}
+
+	@Override
+	public void run() {
 		try {
 			frame();
 		}
 		catch(SwapchainInvalidated e) {
-			adapter.recreate();
+			// TODO
+//			adapter.recreate();
+			// group.recreate()
 		}
 	}
 
@@ -63,13 +74,16 @@ public class VulkanRenderTask implements TransientObject {
 		}
 
 		// Acquire frame buffer
-		final Swapchain swapchain = adapter.swapchain();
+		//final Swapchain swapchain = adapter.swapchain();
 		final int index = frame.acquire(swapchain);
-		final FrameBuffer buffer = adapter.buffer(index);
+		final FrameBuffer buffer = group.get(index);
 
-		// Build and render task and present
-		final Command.Buffer render = composer.compose(index, buffer);
-		frame.present(render, index, swapchain);
+		// Render frame
+		final Command.Buffer sequence = composer.compose(index, buffer);
+		frame.render(sequence);
+
+		// Present frame
+		frame.present(sequence, index, swapchain);
 	}
 
 	@Override

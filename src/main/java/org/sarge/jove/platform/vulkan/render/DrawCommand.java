@@ -3,93 +3,94 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.*;
 
+import java.util.Objects;
+
 import org.sarge.jove.model.Mesh;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * A <i>draw command</i> is used to render a {@link Mesh}.
- * <p>
- * Draw commands are constructed using the {@link Builder} or the convenience factory methods.
- * <p>
- * Examples:
- * <pre>
- * // Draw a triangle
- * DrawCommand simple = DrawCommand.draw(3);
- *
- * // Draw an indexed triangle
- * DrawCommand indexed = DrawCommand.indexed(3);
- *
- * // Draw multiple instances
- * DrawCommand instanced = new DrawCommand.Builder()
- *     .indexed()
- *     .count(3)
- *     .instances(4)
- *     .build();
- * </pre>
- * <p>
  * @author Sarge
  */
-public interface DrawCommand extends Command {
+public class DrawCommand implements Command {
+	private final int vertexCount;
+	private final int instanceCount;
+	private final int firstVertex;
+	private final int firstInstance;
+	private final Integer firstIndex;
+	private final Library library;
+
 	/**
-	 * Helper.
-	 * Creates a draw command for the given mesh.
-	 * @param mesh			Mesh
-	 * @param library		Drawing library
-	 * @return Draw mesh command
+	 * Constructor.
+	 * @param vertexCount			Number of vertices
+	 * @param instanceCount			Number of instances
+	 * @param firstVertex			First vertex
+	 * @param firstInstance			First instance
+	 * @param firstIndex			Optional index
+	 * @param library				Drawing library
 	 */
-	static DrawCommand of(Mesh mesh, Library library) {
-		final var builder = new Builder(library);
-		builder.count(mesh.count());
-		if(mesh.index().isPresent()) {			// TODO - this actually builds the index!!!
-			builder.indexed();
+	public DrawCommand(int vertexCount, int instanceCount, int firstVertex, int firstInstance, Integer firstIndex, Library library) {
+		this.vertexCount = requireZeroOrMore(vertexCount);
+		this.instanceCount = requireOneOrMore(instanceCount);
+		this.firstVertex = requireZeroOrMore(firstVertex);
+		this.firstInstance = requireZeroOrMore(firstInstance);
+		this.firstIndex = firstIndex;
+		this.library = requireNonNull(library);
+	}
+
+	@Override
+	public void execute(Buffer buffer) {
+		if(firstIndex == null) {
+			library.vkCmdDraw(buffer, vertexCount, instanceCount, firstVertex, firstInstance);
 		}
-		return builder.build();
+		else {
+			library.vkCmdDrawIndexed(buffer, vertexCount, instanceCount, firstIndex, firstVertex, firstInstance);
+		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof DrawCommand that) &&
+				(this.vertexCount == that.vertexCount) &&
+				(this.instanceCount == that.instanceCount) &&
+				(this.firstVertex == that.firstVertex) &&
+				(this.firstInstance == that.firstInstance) &&
+				Objects.equals(this.firstIndex, that.firstIndex);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("DrawCommand[vertexCount=%d firstVertex=%d instanceCount=%d firstInstance=%d firstIndex=%s]", vertexCount, firstVertex, instanceCount, firstInstance, firstIndex);
 	}
 
 	/**
 	 * Builder for a draw command.
 	 */
-	class Builder {
-		private final Library library;
-		private int count;
-		private Integer index;
+	public static class Builder {
+		private int vertexCount;
 		private int firstVertex;
 		private int instanceCount = 1;
 		private int firstInstance;
-
-		/**
-		 * Constructor.
-		 * @param library Drawing library
-		 */
-		public Builder(Library library) {
-			this.library = requireNonNull(library);
-		}
+		private Integer firstIndex;
 
 		/**
 		 * Sets the number of vertices to draw.
 		 * @param count Draw count
 		 * @see #indexed()
 		 */
-		public Builder count(int count) {
-			this.count = requireZeroOrMore(count);
+		public Builder vertexCount(int vertexCount) {
+			this.vertexCount = vertexCount;
 			return this;
 		}
 
 		/**
-		 * Sets this as an <i>indexed</i> draw command starting at the <b>first</b> index.
-		 * @see #indexed(int)
+		 * Sets the number of instances (default is one).
+		 * @param instanceCount Number of instances
 		 */
-		public Builder indexed() {
-			return indexed(0);
-		}
-
-		/**
-		 * Sets this as an <i>indexed</i> draw command.
-		 * @param firstIndex First index
-		 */
-		public Builder indexed(int firstIndex) {
-			this.index = requireZeroOrMore(firstIndex);
+		public Builder instanceCount(int instanceCount) {
+			this.instanceCount = instanceCount;
 			return this;
 		}
 
@@ -98,16 +99,7 @@ public interface DrawCommand extends Command {
 		 * @param firstVertex First vertex
 		 */
 		public Builder firstVertex(int firstVertex) {
-			this.firstVertex = requireZeroOrMore(firstVertex);
-			return this;
-		}
-
-		/**
-		 * Sets the number of instances (default is one).
-		 * @param instanceCount Number of instances
-		 */
-		public Builder instances(int instanceCount) {
-			this.instanceCount = requireOneOrMore(instanceCount);
+			this.firstVertex = firstVertex;
 			return this;
 		}
 
@@ -116,101 +108,36 @@ public interface DrawCommand extends Command {
 		 * @param firstInstance First instance
 		 */
 		public Builder firstInstance(int firstInstance) {
-			this.firstInstance = requireZeroOrMore(firstInstance);
+			this.firstInstance = firstInstance;
+			return this;
+		}
+
+		/**
+		 * Sets this as an <i>indexed</i> draw command starting at the <b>first</b> index.
+		 * @see #firstIndex(int)
+		 */
+		public Builder indexed() {
+			return firstIndex(0);
+		}
+
+		/**
+		 * Sets the first index.
+		 * @param firstIndex First index
+		 */
+		public Builder firstIndex(int firstIndex) {
+			this.firstIndex = firstIndex;
 			return this;
 		}
 
 		/**
 		 * Constructs this draw command.
-		 * @return New draw command
-		 */
-		public DrawCommand build() {
-			requireNonNull(library);
-			if(index == null) {
-				return buffer -> library.vkCmdDraw(buffer, count, instanceCount, firstVertex, firstInstance);
-			}
-			else {
-				return buffer -> library.vkCmdDrawIndexed(buffer, count, instanceCount, index, firstVertex, firstInstance);
-			}
-		}
-	}
-
-	/**
-	 * Builder for an <i>indirect</i> draw command.
-	 */
-	class IndirectBuilder {
-		private final Library library;
-		private boolean indexed;
-		private long offset;
-		private int count = 1;
-		private int stride;
-
-		/**
-		 * Constructor.
 		 * @param library Drawing library
+		 * @return Draw command
 		 */
-		public IndirectBuilder(Library library) {
-			this.library = requireNonNull(library);
-		}
-
-		/**
-		 * Sets this as an indexed draw command.
-		 */
-		public IndirectBuilder indexed() {
-			indexed = true;
-			return this;
-		}
-
-		/**
-		 * Sets the buffer offset.
-		 * @param offset Buffer offset
-		 */
-		public IndirectBuilder offset(long offset) {
-			this.offset = requireZeroOrMore(offset);
-			return this;
-		}
-
-		/**
-		 * Sets the draw count.
-		 * @param count Draw count
-		 */
-		public IndirectBuilder count(int count) {
-			this.count = requireZeroOrMore(count);
-			return this;
-		}
-
-		/**
-		 * Sets the vertex stride.
-		 * @param stride Vertex stride
-		 */
-		public IndirectBuilder stride(int stride) {
-			this.stride = requireZeroOrMore(stride);
-			return this;
-		}
-
-		/**
-		 * Constructs this indirect draw command.
-		 * @param buffer		Indirect buffer
-		 * @param library		Drawing library
-		 * @return New indirect draw command
-		 * @throws IllegalArgumentException if the buffer is not an {@link VkBufferUsageFlag#INDIRECT_BUFFER}
-		 * @throws IllegalArgumentException if the offset is invalid for the given buffer
-		 * @throws IllegalArgumentException if the draw count exceeds the hardware limit
-		 */
-		public DrawCommand build(VulkanBuffer buffer) {
-			requireNonNull(library);
-			buffer.require(VkBufferUsageFlag.INDIRECT_BUFFER);
-			buffer.checkOffset(offset);
-
-			if(indexed) {
-				return cmd -> library.vkCmdDrawIndexedIndirect(cmd, buffer, offset, count, stride);
-			}
-			else {
-				return cmd -> library.vkCmdDrawIndirect(cmd, buffer, offset, count, stride);
-			}
+		public DrawCommand build(Library library) {
+			return new DrawCommand(vertexCount, instanceCount, firstVertex, firstInstance, firstIndex, library);
 		}
 	}
-	// TODO - multiDrawIndirect
 
 	/**
 	 * Drawing API.

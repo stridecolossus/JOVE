@@ -166,15 +166,10 @@ public class NativeLibraryFactory {
 			return null;
 		}
 		else {
-			return transformer(method, type);
+			return registry
+					.transformer(type)
+					.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method));
 		}
-	}
-
-	@SuppressWarnings("rawtypes")
-	private Transformer transformer(Method method, Class<?> type) {
-		return registry
-				.transformer(type)
-				.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method));
 	}
 
 	/**

@@ -8,8 +8,8 @@ import java.util.function.Predicate;
 
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.VulkanException;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
 import org.sarge.jove.util.EnumMask;
 
 /**

@@ -5,10 +5,9 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.VkResult;
-import org.sarge.jove.platform.vulkan.common.Version;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.render.Swapchain;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
 
 /**
  * TODO
@@ -52,16 +51,5 @@ public interface Vulkan {
 
 		// Build native Vulkan API
 		return (VulkanCoreLibrary) factory.build(List.of(api));
-	}
-
-	/**
-	 * Checks that the given size is aligned to four bytes.
-	 * @param size Buffer offset or size
-	 * @throws IllegalArgumentException if the given size is not a multiple of 4 bytes
-	 */
-	static void checkAlignment(long size) {
-		if((size % 4) != 0) {
-			throw new IllegalArgumentException("Expected 4-byte alignment");
-		}
 	}
 }

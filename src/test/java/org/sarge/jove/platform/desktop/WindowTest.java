@@ -7,6 +7,7 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.platform.desktop.DesktopTest.MockDesktopLibrary;
 import org.sarge.jove.platform.desktop.Window.Hint;
 
 class WindowTest {
@@ -140,6 +141,7 @@ class WindowTest {
 	@Nested
 	class BuilderTest {
 		private Window.Builder builder;
+		private Desktop desktop;
 
 		@BeforeEach
 		void before() {
@@ -148,11 +150,19 @@ class WindowTest {
         			.hint(Hint.CLIENT_API, 0)
         			.size(new Dimensions(100, 200))
         			.title("title");
+
+			desktop = new Desktop(new MockDesktopLibrary()) {
+				@Override
+				public <T> T library() {
+					return (T) library;
+				}
+			};
+			// TODO - argh
 		}
 
 		@Test
 		void build() {
-			final Window window = builder.build(library);
+			final Window window = builder.build(desktop);
 			assertEquals(false, window.isDestroyed());
 			assertEquals(Map.of(0x00020004, 1, 0x00022001, 0), library.hints);
 		}
@@ -165,7 +175,7 @@ class WindowTest {
 					return null;
 				}
 			};
-			assertThrows(RuntimeException.class, () -> builder.build(library));
+			assertThrows(RuntimeException.class, () -> builder.build(desktop));
 		}
 	}
 }

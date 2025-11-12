@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.Layout.Type;
 
 public class NormalTest {
 	private Normal normal;
@@ -47,7 +48,6 @@ public class NormalTest {
 	@DisplayName("A normal has a vertex layout")
 	@Test
 	void layout() {
-		assertEquals(Layout.floats(3), Normal.LAYOUT);
-		assertEquals(Point.LAYOUT, normal.layout());
+		assertEquals(new Layout(3, Type.NORMALIZED, true, Float.BYTES), Normal.LAYOUT);
 	}
 }

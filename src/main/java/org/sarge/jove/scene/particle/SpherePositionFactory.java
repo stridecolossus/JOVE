@@ -1,6 +1,7 @@
 package org.sarge.jove.scene.particle;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.Randomiser;
@@ -10,7 +11,8 @@ import org.sarge.jove.util.Randomiser;
  * @author Sarge
  */
 public class SpherePositionFactory implements PositionFactory {
-	private final Sphere sphere;
+	private final Point centre;
+	private final float radius;
 	private final Randomiser randomiser;
 
 	/**
@@ -18,14 +20,15 @@ public class SpherePositionFactory implements PositionFactory {
 	 * @param sphere			Sphere
 	 * @param randomiser		Randomiser
 	 */
-	public SpherePositionFactory(Sphere sphere, Randomiser randomiser) {
-		this.sphere = requireNonNull(sphere);
+	public SpherePositionFactory(Point centre, float radius, Randomiser randomiser) {
+		this.centre = requireNonNull(centre);
+		this.radius = requireZeroOrMore(radius);
 		this.randomiser = requireNonNull(randomiser);
 	}
 
 	@Override
 	public Point position() {
-		final Vector vec = randomiser.vector().normalize().multiply(sphere.radius());
-		return sphere.centre().add(vec);
+		final Vector vec = randomiser.vector().normalize().multiply(radius);
+		return centre.add(vec);
 	}
 }

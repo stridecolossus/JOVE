@@ -21,6 +21,8 @@ public class Normal extends Vector implements Component {
 		super(vector.normalize());
 	}
 
+	// TODO - constructor for 'actual' normals? e.g. from OBj => test 0..1 components
+
 	@Override
 	public final float magnitude() {
 		return 1;

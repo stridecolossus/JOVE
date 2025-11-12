@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.control.Frame;
+import org.sarge.jove.control.RenderLoop.FrameListener;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.IntersectedSurface;
 import org.sarge.jove.geometry.Vector;
@@ -35,8 +35,8 @@ import org.sarge.jove.platform.vulkan.core.VulkanSurface;
  * <p>
  * @author Sarge
  */
-public class ParticleSystem implements Frame.Listener {
-	private static final float SCALE = 1f / Frame.MILLISECONDS_PER_SECOND;
+public class ParticleSystem implements FrameListener {
+	private static final float SCALE = 1f / 1000; // FrameCounter.MILLISECONDS_PER_SECOND;
 
 	/**
 	 * Characteristic hints for this particle system.
@@ -55,7 +55,7 @@ public class ParticleSystem implements Frame.Listener {
 	private DirectionFactory vector = DirectionFactory.of(Axis.Y);
 	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
 	private int max = 1;
-	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
+	private long lifetime = 1000; // FrameCounter.MILLISECONDS_PER_SECOND;
 	private List<Particle> particles = new ArrayList<>();
 
 	// Controller
@@ -234,13 +234,13 @@ public class ParticleSystem implements Frame.Listener {
 	}
 
 	@Override
-	public void update(Frame frame) {
-		final long time = frame.time().toEpochMilli();
-		final float elapsed = frame.elapsed().toMillis() * SCALE;
-		expire(time);
-		update(time, elapsed);
-		cull();
-		generate(time, elapsed);
+	public void frame(Duration elapsed) {
+//		final long time = frame.time().toEpochMilli();
+//		final float f = frame.elapsed().toMillis() * SCALE;
+//		expire(time);
+//		update(time, elapsed);
+//		cull();
+//		generate(time, elapsed);
 	}
 
 	/**

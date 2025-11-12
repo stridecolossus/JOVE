@@ -7,7 +7,7 @@ import java.util.*;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.util.FormatBuilder;
+import org.sarge.jove.platform.vulkan.common.FormatBuilder;
 
 /**
  * Builder for the vertex input pipeline stage descriptor.

@@ -9,9 +9,8 @@ import java.util.stream.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceFeatures;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.VulkanFunction;
 
 /**
  * A <i>physical device</i> represents a hardware component such as a GPU.

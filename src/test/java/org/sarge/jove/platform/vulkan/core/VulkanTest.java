@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
+import org.sarge.jove.platform.vulkan.common.VulkanUtility;
 
 class VulkanTest {
 	@Test
@@ -11,11 +12,11 @@ class VulkanTest {
 
 	@Test
 	void alignment() {
-		Vulkan.checkAlignment(0);
-		Vulkan.checkAlignment(4);
-		Vulkan.checkAlignment(8);
-		assertThrows(IllegalArgumentException.class, () -> Vulkan.checkAlignment(1));
-		assertThrows(IllegalArgumentException.class, () -> Vulkan.checkAlignment(2));
-		assertThrows(IllegalArgumentException.class, () -> Vulkan.checkAlignment(3));
+		VulkanUtility.checkAlignment(0);
+		VulkanUtility.checkAlignment(4);
+		VulkanUtility.checkAlignment(8);
+		assertThrows(IllegalArgumentException.class, () -> VulkanUtility.checkAlignment(1));
+		assertThrows(IllegalArgumentException.class, () -> VulkanUtility.checkAlignment(2));
+		assertThrows(IllegalArgumentException.class, () -> VulkanUtility.checkAlignment(3));
 	}
 }

@@ -13,6 +13,10 @@ public record Rectangle(int x, int y, int width, int height) {
 		this(0, 0, size);
 	}
 
+	public Rectangle(int width, int height) {
+		this(0, 0, width, height);
+	}
+
 	/**
 	 * Constructor given rectangle dimensions.
 	 */

@@ -8,9 +8,9 @@ import java.util.function.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.util.*;
 
 /**
  * A <i>vulkan surface</i> defines the capabilities of a rendering surface.

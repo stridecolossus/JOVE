@@ -6,7 +6,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
 
 class InverseVolumeTest {
-	private Volume inverse, vol;
+	private Volume inverse;
 
 	@BeforeEach
 	void before() {
@@ -15,16 +15,11 @@ class InverseVolumeTest {
 
 	@Test
 	void contains() {
-		assertEquals(true, inverse.contains(Point.ORIGIN));
+		assertEquals(false, inverse.contains(Point.ORIGIN));
 	}
 
 	@Test
 	void intersects() {
-//		final Volume other = mock(Volume.class);
-//		assertEquals(true, inverse.intersects(other));
-//		verify(vol).intersects(other);
+		assertEquals(false, inverse.intersects(new SphereVolume(Point.ORIGIN, 1)));
 	}
-
-	// TODO
-	// - intersect ray
 }

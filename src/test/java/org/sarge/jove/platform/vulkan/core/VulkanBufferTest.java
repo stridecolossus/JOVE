@@ -96,7 +96,7 @@ class VulkanBufferTest {
 	void before() {
 		library = new MockVulkanBufferLibrary();
 		device = new MockLogicalDevice(library);
-		memory = new MockDeviceMemory();
+		memory = new MockDeviceMemory(3L);
 		buffer = new VulkanBuffer(new Handle(1), device, Set.of(VkBufferUsageFlag.TRANSFER_DST, VkBufferUsageFlag.VERTEX_BUFFER), memory, 3L);
 	}
 

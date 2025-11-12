@@ -4,6 +4,20 @@ replace Percentile with custom implementation (just range checking)
 copy custom validation
 remove dependency on Library
 
+can we use Spring to refresh a bean? to handle the invalid swapchain case?
+
+swapchain adapter very ropey
+- factor out swapchain recreate (extends?)
+- revert to frame buffer group/array in render task
+- task has responsibility for:
+- in-flight frames (local class? unused anywhere else!)
+- frame buffer set & re/creation ~ renderpass
+- swapchain recreation
+
+review use of cosine
+- very invasive
+- not even that good implementation?
+- how to get both sin/cos from sine table?
 
 -------------------------------
 
