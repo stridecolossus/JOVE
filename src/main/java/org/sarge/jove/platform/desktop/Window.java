@@ -13,7 +13,7 @@ import org.sarge.jove.platform.desktop.Desktop.MainThread;
  * Native window implemented using GLFW.
  * @author Sarge
  */
-public final class Window extends TransientNativeObject {
+public class Window extends TransientNativeObject {
 	/**
 	 * Window creation hints.
 	 */
@@ -224,12 +224,12 @@ public final class Window extends TransientNativeObject {
 	 * @see Desktop#error()
 	 */
 	public Handle surface(Handle instance) {
-		final var ref = new Pointer();
-		final int result = library.glfwCreateWindowSurface(instance, this, null, ref);
+		final var pointer = new Pointer();
+		final int result = library.glfwCreateWindowSurface(instance, this, null, pointer);
 		if(result != 0) {
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
-		return ref.get();
+		return pointer.get();
 	}
 
 	@Override
@@ -247,7 +247,7 @@ public final class Window extends TransientNativeObject {
 		private String title;
 		private Dimensions size;
 		private final Map<Integer, Integer> hints = new HashMap<>();
-//		private Monitor monitor;
+		private Monitor monitor;
 
 		/**
 		 * Sets the window title.
@@ -286,15 +286,14 @@ public final class Window extends TransientNativeObject {
 			return this;
 		}
 
-//		/**
-//		 * Sets the monitor for a full screen window.
-//		 * @param monitor Monitor
-//		 * @see Monitor#monitors(Desktop)
-//		 */
-//		public Builder monitor(Monitor monitor) {
-//			this.monitor = requireNonNull(monitor);
-//			return this;
-//		}
+		/**
+		 * Sets the monitor for a full screen window.
+		 * @param monitor Monitor
+		 */
+		public Builder monitor(Monitor monitor) {
+			this.monitor = monitor;
+			return this;
+		}
 
 		/**
 		 * Constructs this window.
@@ -314,7 +313,7 @@ public final class Window extends TransientNativeObject {
 			}
 
 			// Create window
-			final Handle window = library.glfwCreateWindow(size.width(), size.height(), title, null, null);
+			final Handle window = library.glfwCreateWindow(size.width(), size.height(), title, monitor, null);
 			if(window == null) {
 				throw new RuntimeException("Window could not be created");
 			}

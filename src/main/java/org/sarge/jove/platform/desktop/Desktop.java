@@ -37,15 +37,14 @@ public class Desktop implements TransientObject {
 
 		// TODO
 		final var registry = DefaultRegistry.create();
-		registry.register(Callback.class, new CallbackTransformerFactory());
-
-		//registry.add(DeviceListener.class, null);
+		registry.add(Callback.class, new CallbackTransformerFactory());
 
 		// Load native library
 		final var factory = new NativeLibraryFactory("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
 		final Class<?>[] api = {
 				DesktopLibrary.class,
 				WindowLibrary.class,
+				MonitorLibrary.class,
 				DeviceLibrary.class,
 		};
 		final var library = (DesktopLibrary) factory.build(List.of(api));
@@ -130,8 +129,7 @@ public class Desktop implements TransientObject {
 	public List<String> extensions() {
 		final var count = new IntegerReference();
 		final Handle handle = library.glfwGetRequiredInstanceExtensions(count);
-		final String[] array = StringTransformer.array(handle.address(), count.get());
-		return List.of(array);
+		return AbstractArrayTransformer.unmarshal(handle.address(), count.get(), StringTransformer::unmarshal);
 	}
 
 	@Override

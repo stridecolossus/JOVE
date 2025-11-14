@@ -29,7 +29,7 @@ interface WindowLibrary {
 	 * @param shared		Optional shared window
 	 * @return Window
 	 */
-	Handle glfwCreateWindow(int w, int h, String title, Handle /*Monitor*/ monitor, Window shared);
+	Handle glfwCreateWindow(int w, int h, String title, Monitor monitor, Window shared);
 
 	/**
 	 * Creates a Vulkan surface for the given window.

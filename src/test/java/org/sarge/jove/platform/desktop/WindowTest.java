@@ -28,7 +28,7 @@ class WindowTest {
 		}
 
 		@Override
-		public Handle glfwCreateWindow(int w, int h, String title, Handle monitor, Window shared) {
+		public Handle glfwCreateWindow(int w, int h, String title, Monitor monitor, Window shared) {
 			assertEquals(100, w);
 			assertEquals(200, h);
 			assertEquals("title", title);
@@ -171,7 +171,7 @@ class WindowTest {
 		void failed() {
 			library = new MockWindowLibrary() {
 				@Override
-				public Handle glfwCreateWindow(int w, int h, String title, Handle monitor, Window shared) {
+				public Handle glfwCreateWindow(int w, int h, String title, Monitor monitor, Window shared) {
 					return null;
 				}
 			};

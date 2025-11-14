@@ -8,7 +8,6 @@ import org.sarge.jove.foreign.Callback;
  * GLFW device API.
  * @author Sarge
  */
-public
 interface DeviceLibrary {
 	/**
 	 * Processes pending events.
@@ -36,7 +35,7 @@ interface DeviceLibrary {
 		 * @param action			Key action
 		 * @param mods				Modifiers
 		 */
-		void key(Window window, int key, int scancode, int action, int mods);
+		void key(MemorySegment window, int key, int scancode, int action, int mods);
 	}
 
 	/**
@@ -50,7 +49,6 @@ interface DeviceLibrary {
 	 * Listener for mouse pointer and scroll wheel events.
 	 */
 	@FunctionalInterface
-	public
 	interface MouseListener extends Callback {
 		/**
 		 * Notifies a mouse event.
@@ -87,7 +85,7 @@ interface DeviceLibrary {
 		 * @param action	Button action
 		 * @param mods		Modifiers
 		 */
-		void button(Window window, int button, int action, int mods);
+		void button(MemorySegment window, int button, int action, int mods);
 	}
 
 	/**
