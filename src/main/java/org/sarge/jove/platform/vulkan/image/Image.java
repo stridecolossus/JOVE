@@ -28,7 +28,6 @@ public interface Image extends NativeObject {
 
 	/**
 	 * An <i>image descriptor</i> specifies the properties of this image.
-	 * <p>
 	 * Note that an image descriptor is-a {@link Subresource} with default (i.e. zero) values for the {@link #mipLevel()} and {@link #baseArrayLayer()} properties.
 	 */
 	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements Subresource {

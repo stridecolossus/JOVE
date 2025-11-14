@@ -30,7 +30,7 @@ import org.sarge.jove.util.EnumMask;
  * Layout layout = Layout.create(List.of(binding, ...));
  *
  * // Create a descriptor pool for a double-buffered swapchain
- * Pool pool = new Pool.Builder(dev)
+ * Pool pool = new Pool.Builder(device)
  *  	.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
  *  	.max(2)
  *  	.build();
@@ -44,10 +44,10 @@ import org.sarge.jove.util.EnumMask;
  * DescriptorResource resource = sampler.resource(view);
  *
  * // Add the sampler to the descriptor set
- * set.set(binding, resource);
+ * set.resource(binding, resource);
  *
  * // Apply updates
- * DescriptorSet.update(dev, List.of(set));
+ * DescriptorSet.update(device, List.of(set));
  *
  * // Create a command to bind the descriptor set to the render sequence
  * Command bind = set.bind(pipeline.layout());
@@ -253,13 +253,13 @@ public class DescriptorSet implements NativeObject {
 
 	/**
 	 * Updates the resources of the given descriptor sets.
-	 * @param dev		Logical device
+	 * @param device	Logical device
 	 * @param sets		Descriptor sets to update
 	 * @return Number of updated descriptor sets
 	 * @throws IllegalStateException if any resource has not been populated
 	 * @see #resource(Binding, DescriptorResource)
 	 */
-	public static int update(LogicalDevice dev, Collection<DescriptorSet> sets) {
+	public static int update(LogicalDevice device, Collection<DescriptorSet> sets) {
 		// Enumerate pending updates
 		final VkWriteDescriptorSet[] updates = sets
 				.stream()
@@ -272,8 +272,8 @@ public class DescriptorSet implements NativeObject {
 		}
 
 		// Apply updates
-		final Library library = dev.library();
-		library.vkUpdateDescriptorSets(dev, updates.length, updates, 0, null);
+		final Library library = device.library();
+		library.vkUpdateDescriptorSets(device, updates.length, updates, 0, null);
 
 		// Mark as done
 		for(DescriptorSet set : sets) {
@@ -345,9 +345,9 @@ public class DescriptorSet implements NativeObject {
 			info.pBindings = bindings.stream().map(Binding::populate).toArray(VkDescriptorSetLayoutBinding[]::new);
 
 			// Allocate layout
-			final Library vulkan = device.library();
+			final Library library = device.library();
 			final Pointer handle = new Pointer();
-			vulkan.vkCreateDescriptorSetLayout(device, info, null, handle);
+			library.vkCreateDescriptorSetLayout(device, info, null, handle);
 
 			// Create layout
 			return new Layout(handle.get(), device, bindings);

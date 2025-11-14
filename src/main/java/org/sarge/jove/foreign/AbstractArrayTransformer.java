@@ -4,7 +4,9 @@ import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
 import java.lang.reflect.Array;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 /**
  * Skeleton implementation that marshals an array to/from off-heap memory.
@@ -48,5 +50,24 @@ public abstract class AbstractArrayTransformer implements Transformer<Object, Me
 	@Override
 	public final Function<MemorySegment, Object> unmarshal() {
 		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * Helper.
+	 * Unmarshals an array from the given address.
+	 * @param <T> Element type
+	 * @param address		Off-heap address
+	 * @param length		Array length
+	 * @param mapper		Element mapper
+	 * @return Array as a list
+	 */
+	public static <T> List<T> unmarshal(MemorySegment address, int length, Function<MemorySegment, T> mapper) {
+		final MemorySegment array = address.reinterpret(ValueLayout.ADDRESS.byteSize() * length);
+
+		return IntStream
+				.range(0, length)
+				.mapToObj(n -> array.getAtIndex(ValueLayout.ADDRESS, n))
+				.map(mapper)
+				.toList();
 	}
 }

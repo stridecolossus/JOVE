@@ -115,14 +115,13 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	 * Builder for an attachment.
 	 */
 	public static class Builder {
-		private static final LoadStore DONT_CARE = new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
-
+		private final LoadStore none = new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
 		private final ReverseMapping<VkSampleCount> mapping = ReverseMapping.mapping(VkSampleCount.class);
 
 		private VkFormat format;
 		private VkSampleCount samples = VkSampleCount.COUNT_1;
-		private LoadStore attachment = DONT_CARE;
-		private LoadStore stencil = DONT_CARE;
+		private LoadStore attachment = none;
+		private LoadStore stencil = none;
 		private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;
 		private VkImageLayout finalLayout;
 

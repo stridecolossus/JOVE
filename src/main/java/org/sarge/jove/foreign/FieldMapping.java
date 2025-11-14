@@ -34,6 +34,7 @@ class FieldMapping {
 	 * @param allocator		Allocator
 	 */
 	public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
+		// TODO - try..catch here? and unmarshal?
 		final Object value = field.get(structure);
 		marshal.marshal(value, transformer.delegate(), address, allocator);
 	}

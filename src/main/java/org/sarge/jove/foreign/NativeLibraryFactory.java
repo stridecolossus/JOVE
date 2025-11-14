@@ -150,7 +150,7 @@ public class NativeLibraryFactory {
 
 		// Link native method
 		final FunctionDescriptor descriptor = NativeMethod.descriptor(returns, parameters);
-		final MethodHandle handle = linker.downcallHandle(descriptor).bindTo(symbol);
+		MethodHandle handle = linker.downcallHandle(descriptor).bindTo(symbol);
 		return new NativeMethod(handle, returns, parameters);
 	}
 
@@ -162,14 +162,14 @@ public class NativeLibraryFactory {
 	@SuppressWarnings("rawtypes")
 	private Transformer returns(Method method) {
 		final Class<?> type = method.getReturnType();
+
 		if(type == void.class) {
 			return null;
 		}
-		else {
-			return registry
-					.transformer(type)
-					.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method));
-		}
+
+		return registry
+				.transformer(type)
+				.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method));
 	}
 
 	/**

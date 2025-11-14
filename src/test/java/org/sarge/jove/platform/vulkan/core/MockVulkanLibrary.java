@@ -127,8 +127,8 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 	}
 
 	@Override
-	public VkResult vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo) {
-		return null;
+	public int vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo) {
+		return 0;
 	}
 
     // Fence
@@ -496,10 +496,10 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 		return null;
 	}
 
-	@Override
-	public VkResult vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines) {
-		return null;
-	}
+//	@Override
+//	public VkResult vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, Handle[] pPipelines) {
+//		return null;
+//	}
 
 	@Override
 	public void vkDestroyPipeline(LogicalDevice device, Pipeline pipeline, Handle pAllocator) {

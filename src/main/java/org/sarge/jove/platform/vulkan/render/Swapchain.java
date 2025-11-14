@@ -135,12 +135,14 @@ public class Swapchain extends VulkanObject {
 	 * @see #present(LogicalDevice, WorkQueue, VkPresentInfoKHR)
 	 */
 	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws SwapchainInvalidated {
-		final VkPresentInfoKHR info = new PresentTaskBuilder()
-				.image(this, index)
-				.wait(semaphore)
-				.build();
+		final var builder = new PresentTaskBuilder();
+		builder.image(this, index);
 
-		present(library, queue, info);
+		if(semaphore != null) {
+			builder.wait(semaphore);
+		}
+
+		present(library, queue, builder.build());
 	}
 
 	/**
@@ -152,10 +154,15 @@ public class Swapchain extends VulkanObject {
 	 * @see PresentTaskBuilder
 	 */
 	public static void present(Library library, WorkQueue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
-		final VkResult result = library.vkQueuePresentKHR(queue, info);
+		final int code = library.vkQueuePresentKHR(queue, info);
+		final VkResult result = MAPPING.map(code);
 		switch(result) {
 			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new SwapchainInvalidated(result);
-			default -> result.value();
+			default -> {
+				if(result != VkResult.SUCCESS) {
+					throw new VulkanException(result);
+				}
+			}
 		}
 	}
 
@@ -285,6 +292,7 @@ public class Swapchain extends VulkanObject {
 		 * @see VkSurfaceCapabilitiesKHR
 		 */
 		public Builder count(int num) {
+			// TODO - maxImageCount = 0 -> no limit!
 			if((num < capabilities.minImageCount) || (num > capabilities.maxImageCount)) {
 				throw new IllegalArgumentException("Invalid number of images: num=%d range=%d/%d".formatted(num, capabilities.minImageCount, capabilities.maxImageCount));
 			}
@@ -477,7 +485,7 @@ public class Swapchain extends VulkanObject {
 			info.flags = new EnumMask<>(flags);
 			info.imageUsage = new EnumMask<>(usage);
 			info.oldSwapchain = null; // TODO
-			// TODO
+			// TODO - need to populate these if graphics <> presentation AND sharing -> CONCURRENT (EXLCUSIVE is default and preferred)
 			info.queueFamilyIndexCount = 0;
 			info.pQueueFamilyIndices = null;
 		}
@@ -577,7 +585,8 @@ public class Swapchain extends VulkanObject {
 		 * @param queue					Presentation queue
 		 * @param pPresentInfo			Descriptor
 		 * @return Result
+		 * @implNote Returns {@code int} since this method returns multiple success codes
 		 */
-		VkResult vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo);
+		int vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo);
 	}
 }

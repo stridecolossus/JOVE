@@ -3,8 +3,8 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.MockVulkanLibrary;
 
 class DrawCommandTest {
 	private static class MockDrawLibrary extends MockVulkanLibrary {
@@ -22,17 +22,19 @@ class DrawCommandTest {
 	}
 
 	private MockDrawLibrary library;
+	private LogicalDevice device;
 
 	@BeforeEach
 	void before() {
 		library = new MockDrawLibrary();
+		device = new MockLogicalDevice(library);
 	}
 
 	@Test
 	void draw() {
 		final DrawCommand draw = new DrawCommand.Builder()
 				.vertexCount(1)
-				.build(library);
+				.build(device);
 
 		draw.execute(null);
 		assertEquals(draw, library.result);
@@ -43,7 +45,7 @@ class DrawCommandTest {
 		final DrawCommand indexed = new DrawCommand.Builder()
 				.vertexCount(1)
 				.indexed()
-				.build(library);
+				.build(device);
 
 		indexed.execute(null);
 		assertEquals(indexed, library.result);

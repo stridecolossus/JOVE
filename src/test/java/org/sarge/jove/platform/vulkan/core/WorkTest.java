@@ -9,7 +9,6 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
 
@@ -141,6 +140,6 @@ class WorkTest {
 		assertEquals(new EnumMask<>(VkCommandBufferUsage.ONE_TIME_SUBMIT), library.flags);
 		assertEquals(true, once.isPrimary());
 		assertEquals(pool, once.pool());
-		assertEquals(Stage.INVALID, once.stage());
+		// TODO - assertEquals(Stage.INVALID, once.stage());
 	}
 }

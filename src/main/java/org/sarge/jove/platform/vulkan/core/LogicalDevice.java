@@ -239,6 +239,7 @@ public class LogicalDevice extends TransientNativeObject {
 		 * @param Required feature
 		 */
 		public Builder feature(String feature) {
+			// TODO - check whether in parent device first? not much point in asking for it otherwise? => init this.features to parent.features?
 			features.add(feature);
 			return this;
 		}

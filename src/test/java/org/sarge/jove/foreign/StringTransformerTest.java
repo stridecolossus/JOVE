@@ -54,12 +54,4 @@ class StringTransformerTest {
 	void update() {
 		assertThrows(UnsupportedOperationException.class, () -> transformer.update());
 	}
-
-	@Test
-	void array() {
-		final MemorySegment address = allocator.allocate(ValueLayout.ADDRESS, 2);
-		address.setAtIndex(ValueLayout.ADDRESS, 0L, allocator.allocateFrom(string));
-		address.setAtIndex(ValueLayout.ADDRESS, 1L, allocator.allocateFrom(string));
-		assertArrayEquals(new String[]{string, string}, StringTransformer.array(address, 2));
-	}
 }

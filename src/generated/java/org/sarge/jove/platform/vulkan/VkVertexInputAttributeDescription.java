@@ -1,14 +1,28 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-public class VkVertexInputAttributeDescription extends VulkanStructure {
+public class VkVertexInputAttributeDescription implements NativeStructure {
 	public int location;
 	public int binding;
 	public VkFormat format;
 	public int offset;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+				JAVA_INT.withName("location"),
+				JAVA_INT.withName("binding"),
+				JAVA_INT.withName("format"),
+				JAVA_INT.withName("offset")
+		);
+	}
 }

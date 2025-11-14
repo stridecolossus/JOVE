@@ -131,10 +131,11 @@ public class DrawCommand implements Command {
 
 		/**
 		 * Constructs this draw command.
-		 * @param library Drawing library
+		 * @param device Logical device
 		 * @return Draw command
 		 */
-		public DrawCommand build(Library library) {
+		public DrawCommand build(LogicalDevice device) {
+			final Library library = device.library();
 			return new DrawCommand(vertexCount, instanceCount, firstVertex, firstInstance, firstIndex, library);
 		}
 	}

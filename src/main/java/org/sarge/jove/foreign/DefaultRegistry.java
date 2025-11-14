@@ -40,17 +40,17 @@ public final class DefaultRegistry {
 		// TODO - wrappers?
 
 		// Common types
-		registry.register(String.class, new StringTransformer());
-		registry.register(NativeReference.class, new NativeReferenceTransformer());
+		registry.add(String.class, new StringTransformer());
+		registry.add(NativeReference.class, new NativeReferenceTransformer());
 
 		// Enumerations
-		registry.register(IntEnum.class, IntEnumTransformer::new);
-		registry.register(EnumMask.class, new EnumMaskTransformer());
+		registry.add(IntEnum.class, IntEnumTransformer::new);
+		registry.add(EnumMask.class, new EnumMaskTransformer());
 
 		// JOVE types
-		registry.register(Handle.class, new HandleTransformer());
-		registry.register(NativeObject.class, new NativeObjectTransformer());
-		registry.register(NativeStructure.class, new StructureTransformerFactory(registry));
+		registry.add(Handle.class, new HandleTransformer());
+		registry.add(NativeObject.class, new NativeObjectTransformer());
+		registry.add(NativeStructure.class, new StructureTransformerFactory(registry));
 
 		// TODO - returned arrays, or are they handled in registry itself?
 

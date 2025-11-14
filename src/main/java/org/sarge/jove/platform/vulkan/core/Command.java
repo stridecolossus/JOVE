@@ -216,7 +216,7 @@ public interface Command {
 
 		@Override
 		public String toString() {
-			return String.format("Buffer[handle=%s primary=%b stage=%s pool=%s]", this.handle(), primary, stage, pool);
+			return String.format("CommandBuffer[handle=%s primary=%b stage=%s pool=%s]", this.handle(), primary, stage, pool);
 		}
 	}
 
@@ -238,11 +238,11 @@ public interface Command {
 
 			// Create pool
 			final Library library = device.library();
-			final Pointer pool = new Pointer();
-			library.vkCreateCommandPool(device, info, null, pool);
+			final Pointer handle = new Pointer();
+			library.vkCreateCommandPool(device, info, null, handle);
 
 			// Create domain object
-			return new Pool(pool.get(), device, queue, library);
+			return new Pool(handle.get(), device, queue, library);
 		}
 
 		private final WorkQueue queue;
@@ -268,15 +268,6 @@ public interface Command {
 		public WorkQueue queue() {
 			return queue;
 		}
-
-//		/**
-//		 * Helper - Determines whether this and the given command pool submit to the same queue family.
-//		 * @param that Command pool
-//		 * @return Whether both pools submit to the same queue family
-//		 */
-//		public boolean matches(CommandPool that) {
-//			return queue.family() == that.queue.family();
-//		}
 
 		/**
 		 * @return Buffers allocated by this pool
@@ -363,7 +354,7 @@ public interface Command {
 
 		@Override
 		public String toString() {
-			return String.format("Pool[handle=%s queue=%s buffers=%d]", this.handle(), queue, buffers.size());
+			return String.format("CommandPool[handle=%s queue=%s buffers=%d]", this.handle(), queue, buffers.size());
 		}
 	}
 

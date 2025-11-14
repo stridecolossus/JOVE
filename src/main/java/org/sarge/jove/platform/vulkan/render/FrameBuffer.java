@@ -77,6 +77,7 @@ public class FrameBuffer extends VulkanObject {
 				.map(FrameBuffer::populate)
 				.toArray(VkClearValue[]::new);
 	}
+	// TODO - needs to have entries even if not cleared?
 
 	/**
 	 * Populates an attachment clear descriptor.
@@ -173,6 +174,13 @@ public class FrameBuffer extends VulkanObject {
 			this.pass = requireNonNull(pass);
 			this.additional = List.copyOf(additional);
 			build();
+		}
+
+		/**
+		 * @return Number of frame buffers in this group, i.e. the number of swapchain attachments
+		 */
+		public int size() {
+			return buffers.size();
 		}
 
 		/**

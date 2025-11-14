@@ -14,7 +14,7 @@ import org.sarge.jove.util.EnumMask;
  */
 public record Dependency(Properties source, Properties destination, Set<VkDependencyFlag> flags) {
 	/**
-	 * Marker for the <i>external</i> subpass before or after the render pass.
+	 * Marker for the <i>implicit</i> subpass before or after the render pass.
 	 */
 	public static final Subpass VK_SUBPASS_EXTERNAL = new Subpass(List.of(), null, Set.of());
 

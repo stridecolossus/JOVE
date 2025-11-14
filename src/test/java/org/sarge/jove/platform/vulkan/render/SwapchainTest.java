@@ -85,8 +85,8 @@ public class SwapchainTest {
 		}
 
 		@Override
-		public VkResult vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo) {
-			return result;
+		public int vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo) {
+			return result.value();
 		}
 	}
 

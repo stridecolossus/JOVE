@@ -96,38 +96,52 @@ class FrameBufferTest {
 		assertEquals(true, library.destroyed);
 	}
 
+	@DisplayName("A frame buffer group...")
 	@Nested
 	class GroupTest {
 		private Group group;
+		private Swapchain swapchain;
+		private View depth;
 
 		@BeforeEach
 		void before() {
-			final var attachment = new View(new Handle(4), device, new MockImage());
-			final var swapchain = new Swapchain(new Handle(5), device, library, VkFormat.R32G32B32A32_SFLOAT, new Dimensions(640, 480), List.of(attachment));
 			final var pass = new MockRenderPass(device);
-			final var other = new View(new Handle(6), device, new MockImage());
-			group = new Group(swapchain, pass, List.of(other));
+			final var colour = new View(new Handle(4), device, new MockImage());
+			depth = new View(new Handle(5), device, new MockImage());
+			swapchain = new Swapchain(new Handle(6), device, library, VkFormat.R32G32B32A32_SFLOAT, new Dimensions(640, 480), List.of(colour, colour));
+			group = new Group(swapchain, pass, List.of(depth));
 		}
 
+		@DisplayName("has a number of buffers equal to the number of swapchain attachments")
+		@Test
+		void size() {
+			assertEquals(2, group.size());
+		}
+
+		@DisplayName("creates a frame buffer for each swapchain image and any additional attachments")
 		@Test
 		void get() {
-			final FrameBuffer buffer = group.get(0);
-			assertEquals(false, buffer.isDestroyed());
-			assertEquals(2, buffer.attachments().size());
+			for(int n = 0; n < 2; ++n) {
+    			final FrameBuffer buffer = group.get(0);
+    			final View colour = swapchain.attachments().get(n);
+    			assertEquals(false, buffer.isDestroyed());
+    			assertEquals(List.of(colour, depth), buffer.attachments());
+			}
 		}
 
+		@DisplayName("can be recreated if the swapchain is invalidated")
 		@Test
 		void create() {
-			final FrameBuffer buffer = group.get(0);
 			group.create();
-			assertEquals(true, buffer.isDestroyed());
-			assertNotNull(group.get(0));
+			assertEquals(2, group.size());
 		}
 
+		@DisplayName("can be destroyed releasing all buffers")
 		@Test
 		void destroy() {
 			final FrameBuffer buffer = group.get(0);
 			group.destroy();
+			assertEquals(0, group.size());
 			assertEquals(true, buffer.isDestroyed());
 			assertThrows(IndexOutOfBoundsException.class, () -> group.get(0));
 		}

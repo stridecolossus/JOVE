@@ -6,7 +6,6 @@ import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
-import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * Vulkan structure.
@@ -16,12 +15,12 @@ public class VkSubmitInfo implements NativeStructure {
 	public final VkStructureType sType = VkStructureType.SUBMIT_INFO;
 	public Handle pNext;
 	public int waitSemaphoreCount;
-	public VulkanSemaphore[] pWaitSemaphores;
+	public Handle[] pWaitSemaphores;
 	public int[] pWaitDstStageMask;
 	public int commandBufferCount;
-	public Command.Buffer[] pCommandBuffers;
+	public Handle[] pCommandBuffers;
 	public int signalSemaphoreCount;
-	public VulkanSemaphore[] pSignalSemaphores;
+	public Handle[] pSignalSemaphores;
 
 	@Override
 	public StructLayout layout() {

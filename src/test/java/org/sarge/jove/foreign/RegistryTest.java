@@ -16,7 +16,7 @@ class RegistryTest {
 	void before() {
 		transformer = new PrimitiveTransformer<>(ValueLayout.JAVA_INT);
 		registry = new Registry();
-		registry.register(Number.class, transformer);
+		registry.add(Number.class, transformer);
 	}
 
 	@Test
@@ -32,13 +32,13 @@ class RegistryTest {
 	@Test
 	void replace() {
 		final var other = new PrimitiveTransformer<Number>(ValueLayout.JAVA_INT);
-		registry.register(Number.class, other);
+		registry.add(Number.class, other);
 		assertEquals(Optional.of(other), registry.transformer(Number.class));
 	}
 
 	@Test
 	void array() {
-		registry.register(String.class, new StringTransformer());
+		registry.add(String.class, new StringTransformer());
 		final var array = registry.transformer(String[].class).get();
 		assertEquals(ValueLayout.ADDRESS, array.layout());
 	}
@@ -46,7 +46,7 @@ class RegistryTest {
 	@Test
 	void factory() {
 		final Factory<Number> factory = _ -> transformer;
-		registry.register(Number.class, factory);
+		registry.add(Number.class, factory);
 		assertEquals(Optional.of(transformer), registry.transformer(Number.class));
 		assertEquals(Optional.of(transformer), registry.transformer(Integer.class));
 	}

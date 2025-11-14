@@ -1,73 +1,28 @@
 package org.sarge.jove.foreign;
 
-import java.lang.foreign.MemorySegment;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.DeviceEnumerationHelper;
-import org.sarge.jove.platform.vulkan.render.Swapchain;
-import org.sarge.jove.util.IntEnum.ReverseMapping;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
+import org.sarge.jove.platform.vulkan.pipeline.*;
+import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
+import org.sarge.jove.platform.vulkan.render.*;
+import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
 
 public class VulkanIntegrationDemo {
 
-//	void main() throws Exception {
-//		System.out.println("Initialising logging...");
-//		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
-//			LogManager.getLogManager().readConfiguration(config);
-//		}
-//
-//		System.out.println("Initialising GLFW...");
-//		final var desktop = Desktop.create();
-//		System.out.println("version=" + desktop.version());
-//		System.out.println("Vulkan=" + desktop.isVulkanSupported());
-//
-//		final var extensions = desktop.extensions();
-//		System.out.println("extensions=" + extensions);
-//
-//		System.out.println("Opening window...");
-//		final Window window = new Window.Builder()
-//				.title("DesktopTestTemp")
-//				.size(new Dimensions(1024, 768))
-//				.hint(Hint.CLIENT_API, 0)
-//				.hint(Hint.VISIBLE, 1)
-//				.build(desktop.library());
-//
-//		/
-//		// 		void event(Handle window, double x, double y);
-//
-//		//final DeviceLibrary deviceLibrary = desktop.library();
-//
-//		final var listener = new DeviceLibrary.MouseListener() {
-//			@Override
-//			public void event(MemorySegment window, double x, double y) {
-//				System.out.println("event="+window+" "+x+","+y);
-//			}
-//		};
-//
-//		final MethodType type = MethodType.methodType(void.class, MemorySegment.class, double.class, double.class);
-//		final MethodHandle callback = MethodHandles.lookup().findVirtual(DeviceLibrary.MouseListener.class, "event", type).bindTo(listener);
-//		System.out.println("***** callback="+callback);
-//
-//		final MemorySegment stub = Linker.nativeLinker().upcallStub(
-//				callback,
-//				FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_DOUBLE, ValueLayout.JAVA_DOUBLE),
-//				Arena.ofAuto()
-//		);
-//		System.out.println("stub="+stub);
-//
-//		window.register(new Handle(stub));
-//		System.out.println("registered");
-
-
-	private static void loop(MouseDevice mouse) throws InterruptedException {
+	static void loop(Window window) throws InterruptedException {
 		while(true) {
-			mouse.poll();
-			Thread.sleep(50);
+			Thread.sleep(100);
 		}
 	}
 
@@ -85,32 +40,39 @@ public class VulkanIntegrationDemo {
 		final var extensions = desktop.extensions();
 		System.out.println("extensions=" + extensions);
 
+//		final var monitors = Monitor.monitors(desktop);
+//		System.out.println(monitors);
+//		monitors.stream().map(m -> m.mode(desktop)).forEach(System.out::println);
+
 		System.out.println("Opening window...");
+		final Dimensions size = new Dimensions(1024, 768);
 		final Window window = new Window.Builder()
 				.title("DesktopTestTemp")
-				.size(new Dimensions(1024, 768))
+				.size(size)
 				.hint(Hint.CLIENT_API, 0)
-				.hint(Hint.VISIBLE, 1)				// TODO
+				.hint(Hint.VISIBLE, 1)
 				.build(desktop);
 
-		/////////////////
+//		window.fiddle();
 
-		final MouseDevice mouse = new MouseDevice(window);
-
-		final var listener = new DeviceLibrary.MouseListener() {
-			@Override
-			public void event(MemorySegment window, double x, double y) {
-				System.err.println("event "+window+" "+x+","+y);
-			}
-		};
-
-		mouse.add(listener);
-
-		desktop.error().ifPresent(System.err::println);
-
-		loop(mouse);
-
-		/////////////////
+//		/////////////////
+//
+//		final MouseDevice mouse = new MouseDevice(window);
+//
+//		final var listener = new DeviceLibrary.MouseListener() {
+//			@Override
+//			public void event(MemorySegment window, double x, double y) {
+//				System.err.println("event "+window+" "+x+","+y);
+//			}
+//		};
+//
+//		mouse.add(listener);
+//
+//		desktop.error().ifPresent(System.err::println);
+//
+//		loop(mouse);
+//
+//		/////////////////
 
 		System.out.println("Initialising Vulkan...");
 		final var vulkan = Vulkan.create();
@@ -133,23 +95,26 @@ public class VulkanIntegrationDemo {
 
 		System.out.println("Attaching diagnostic handler...");
 		final DiagnosticHandler handler = new DiagnosticHandler.Builder().build(instance, DefaultRegistry.create());			// TODO - registry -> library?
+		// TODO - option to exit on errors?
 
 		System.out.println("Getting surface...");
-		final Handle handle;
-		try {
-			handle = window.surface(instance.handle());
-		}
-		catch(RuntimeException e) {
-			desktop.error().ifPresent(System.err::println);
-			throw e;
-		}
+		final Handle handle = window.surface(instance.handle());
 
 		System.out.println("Enumerating devices...");
+		final Selector graphicsSelector = PhysicalDevice.Selector.queue(Set.of(VkQueueFlag.GRAPHICS));
+		final Selector presentationSelector = VulkanSurface.presentation(handle, vulkan);
 		final PhysicalDevice physical = new DeviceEnumerationHelper(instance, vulkan)
 				.enumerate()
-				.filter(VulkanSurface.presentation(handle, vulkan))
+				.filter(graphicsSelector)
+				.filter(presentationSelector)
 				.toList()
 				.getFirst();
+
+		System.out.println("Extracting families...");
+		final Family graphicsFamily = graphicsSelector.family(physical);
+		final Family presentationFamily = presentationSelector.family(physical);
+		System.out.println("graphics=" + graphicsFamily);
+		System.out.println("presentation" + presentationFamily);
 
 //		System.out.println("Supported device layers...");
 //		for(VkLayerProperties layer : physical.layers()) {
@@ -160,11 +125,6 @@ public class VulkanIntegrationDemo {
 //			System.out.println("  " + ext.extensionName);
 //		}
 
-		System.out.println("Device families...");
-		for(var family : physical.families()) {
-			System.out.println(family);
-		}
-
 		System.out.println("Device properties...");
 		final var props = physical.properties();
 		System.out.println("name="+props.deviceName);
@@ -172,44 +132,139 @@ public class VulkanIntegrationDemo {
 		System.out.println("bufferImageGranularity="+props.limits.bufferImageGranularity);
 		System.out.println("maxPushConstantsSize="+props.limits.maxPushConstantsSize);
 
-		System.out.println("Device features...");
-		System.out.println("  wideLines=" + physical.features().features().contains("wideLines"));
-
 		System.out.println("Creating surface...");
 		final var surface = new VulkanSurface(handle, physical, vulkan).load();
 
-		System.out.println("Retrieving device memory properties...");
-		final var memory = physical.memory();
-		for(int n = 0; n < memory.memoryHeapCount; ++n) {
-			System.out.println("- heap size=%d flags=%s".formatted(memory.memoryHeaps[n].size, memory.memoryHeaps[n].flags.enumerate(ReverseMapping.mapping(VkMemoryHeapFlag.class))));
-		}
-		for(int n = 0; n < memory.memoryTypeCount; ++n) {
-			System.out.println("- type heap=%s props=%s".formatted(memory.memoryTypes[n].heapIndex, memory.memoryTypes[n].propertyFlags.enumerate(ReverseMapping.mapping(VkMemoryProperty.class))));
-		}
+//		System.out.println("Retrieving device memory properties...");
+//		final var memory = physical.memory();
+//		for(int n = 0; n < memory.memoryHeapCount; ++n) {
+//			System.out.println("- heap size=%d flags=%s".formatted(memory.memoryHeaps[n].size, memory.memoryHeaps[n].flags.enumerate(ReverseMapping.mapping(VkMemoryHeapFlag.class))));
+//		}
+//		for(int n = 0; n < memory.memoryTypeCount; ++n) {
+//			System.out.println("- type heap=%s props=%s".formatted(memory.memoryTypes[n].heapIndex, memory.memoryTypes[n].propertyFlags.enumerate(ReverseMapping.mapping(VkMemoryProperty.class))));
+//		}
 
 		System.out.println("Creating logical device...");
-		final var dev = new LogicalDevice.Builder(physical)
+		final var device = new LogicalDevice.Builder(physical)
 				.extension(Swapchain.EXTENSION)
-				.queue(new RequiredQueue(physical.families().getFirst()))
+				.queue(new RequiredQueue(graphicsFamily))
+				//.queue(new RequiredQueue(presentationFamily))			// TODO - queue family must be unique! =? need to check if graphics == presentation
 				.build(vulkan);
 
-		System.out.println("queues=" + dev.queues().values());
+		final WorkQueue graphicsQueue = device.queues().get(graphicsFamily).getFirst();
+		final WorkQueue presentationQueue = device.queues().get(presentationFamily).getFirst();
+		System.out.println("graphics=" + graphicsQueue);
+		System.out.println("presentation=" + presentationQueue);
 
 		System.out.println("Creating swapchain...");
+		//https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain
+		// TODO - select extents
+		// TODO - sharing mode ~ whether queue family is for both render & presentation
 		final var swapchain = new Swapchain.Builder(surface)
 				.clipped(true)
-//				.extent(new Dimensions(1024, 768))		// TODO - needed?
-				.build(dev);
-
-		System.out.println("views=" + swapchain.attachments());
+				.presentation(VkPresentModeKHR.MAILBOX_KHR)
+				.clear(new Colour(0.6f, 0.6f, 0.6f, 1))
+				.build(device);
 
 		// Shaders
+		System.out.println("Creating shaders...");
+		final var shaderLoader = new ShaderLoader(device);
+		final Shader vertex = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.vert"));
+		final Shader fragment = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.frag"));
+
+		// Render pass
+		System.out.println("Building render pass...");
+		final var colour = Attachment.colour(swapchain.format());
+		final Subpass subpass = new Subpass(List.of(new AttachmentReference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)), null, Set.of());
+//		final Dependency dependency = new Dependency(
+//				new Dependency.Properties(Dependency.VK_SUBPASS_EXTERNAL, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT), Set.of()),
+//				new Dependency.Properties(subpass, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT), Set.of(VkAccess.COLOR_ATTACHMENT_WRITE)),
+//				Set.of()
+//		);
+		final RenderPass pass = new RenderPass.Builder()
+				.add(subpass)
+//				.dependency(dependency)
+				.build(device);
 
 		// Pipeline
+		// TODO - this still all sucks
+		System.out.println("Building pipeline...");
+		final var pipelineLayout = new PipelineLayout.Builder().build(device);
+		final var pipelineBuilder = new GraphicsPipelineBuilder();
+		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
+		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(size));
+		pipelineBuilder.rasterizer().winding(VkFrontFace.CLOCKWISE);
+		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, vertex, "main", null));
+		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.FRAGMENT, fragment, "main", null));
+		final Pipeline pipeline = pipelineBuilder
+				.pass(pass)
+				.layout(pipelineLayout)
+				.build(device);
 
+		// Command Pool
+		System.out.println("Creating command pool...");
+		final var commandPool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlag.RESET_COMMAND_BUFFER);
+
+		// Frame buffers
+		System.out.println("Building frame buffers...");
+		final var group = new FrameBuffer.Group(swapchain, pass, List.of());
+
+		// Sequence
+		System.out.println("Recording render sequence...");
+		final var draw = new DrawCommand.Builder().vertexCount(3).build(device);		// TODO - helper
+		final var sequence = commandPool.allocate(group.size(), true);
+		for(int n = 0; n < group.size(); ++n) {
+			final Command.Buffer cb = sequence.get(n);
+			final FrameBuffer fb = group.get(n);
+    		cb
+        		.begin()
+        			.add(fb.begin(VkSubpassContents.INLINE))		// TODO - default
+        				.add(pipeline.bind())
+        				.add(draw)		// TODO - cannot draw if no pipeline bound!?
+        			.add(fb.end())
+        		.end();
+		}
+
+		// Render
+		System.out.println("Rendering...");
+		final var available = VulkanSemaphore.create(device);
+		final var ready = VulkanSemaphore.create(device);
+		final var fence = Fence.create(device);
+		for(int n = 0; n < 10; ++n) {
+    		final int index = swapchain.acquire(available, null);
+    		device.waitIdle();
+
+    		new Work.Builder()
+    				.add(sequence.get(index))
+    				.wait(available, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT))
+    				.signal(ready)
+    				.build()
+    				.submit(fence);
+    		device.waitIdle();
+
+    		swapchain.present(presentationQueue, index, ready);		// TODO - null ready semaphore?
+    		device.waitIdle();
+
+    		fence.reset();
+    		Thread.sleep(50);
+		}
+
+		// Cleanup
 		System.out.println("Cleanup...");
+		///////////////
+		available.destroy();
+		ready.destroy();
+		fence.destroy();
+		///////////////
+		commandPool.destroy();
+		pipeline.destroy();
+		pipelineLayout.destroy();
+		group.destroy();
+		pass.destroy();
+		fragment.destroy();
+		vertex.destroy();
 		swapchain.destroy();
-		dev.destroy();
+		device.destroy();
 		surface.destroy();
 		handler.destroy();
 		instance.destroy();

@@ -21,7 +21,7 @@ class NativeLibraryFactoryTest {
 	void before() {
 		lookup = Linker.nativeLinker().defaultLookup();
 		registry = new Registry();
-		registry.register(int.class, new PrimitiveTransformer<>(ValueLayout.JAVA_INT));
+		registry.add(int.class, new PrimitiveTransformer<>(ValueLayout.JAVA_INT));
 		factory = new NativeLibraryFactory(lookup, registry);
 	}
 

@@ -188,4 +188,5 @@ public class DepthStencilStage {
 	VkPipelineDepthStencilStateCreateInfo descriptor() {
 		return info;
 	}
+	// TODO - NULL if not used/enabled?
 }

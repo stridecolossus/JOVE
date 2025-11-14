@@ -2,14 +2,14 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
+import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.pipeline.ColourBlendStage.*;
+import org.sarge.jove.platform.vulkan.pipeline.ColourBlendStage.ColourBlendAttachment;
 import org.sarge.jove.util.EnumMask;
 
-public class ColourBlendStageTest {
+class ColourBlendStageTest {
 	private ColourBlendStage stage;
 
 	@BeforeEach
@@ -17,82 +17,62 @@ public class ColourBlendStageTest {
 		stage = new ColourBlendStage();
 	}
 
+	@DisplayName("The default colour write mask enables all channels")
 	@Test
-	void empty() {
-		final VkPipelineColorBlendStateCreateInfo info = stage.descriptor();
-		assertEquals(false, info.logicOpEnable);
-		assertEquals(VkLogicOp.COPY, info.logicOp);
-		assertEquals(1, info.pAttachments.length);
-
-		final VkPipelineColorBlendAttachmentState attachment = info.pAttachments[0];
-		assertEquals(false, attachment.blendEnable);
-
-		final var constants = new float[4];
-		Arrays.fill(constants, 1);
-		assertArrayEquals(constants, info.blendConstants);
-
+	void mask() {
+		assertEquals(Set.of(VkColorComponent.values()), ColourBlendAttachment.DEFAULT_WRITE_MASK);
 	}
 
+	@DisplayName("The global blend can be enabled essentially disabling any per-attachment configuration")
 	@Test
-	void constants() {
-		final float[] constants = new float[4];
-		stage.constants(constants);
-		assertArrayEquals(constants, stage.descriptor().blendConstants);
+	void global() {
+		final VkPipelineColorBlendStateCreateInfo descriptor = stage.operation(VkLogicOp.COPY).descriptor();
+		assertEquals(true, descriptor.logicOpEnable);
+		assertEquals(VkLogicOp.COPY, descriptor.logicOp);
+		assertArrayEquals(new float[]{1, 1, 1, 1}, descriptor.blendConstants);
+		assertEquals(1, descriptor.attachmentCount);
+		assertEquals(false, descriptor.pAttachments[0].blendEnable);
 	}
 
+	@DisplayName("The blend configuration can be configured for each colour attachment")
 	@Test
 	void attachment() {
-		final VkPipelineColorBlendStateCreateInfo info = stage
-				.add(new ColourBlendAttachment(BlendOperation.colour(), BlendOperation.alpha(), ColourBlendAttachment.DEFAULT_WRITE_MASK))
-				.descriptor();
+		// Add explicit configuration for a colour attachment
+		final var attachment = new ColourBlendAttachment.Builder().build();
+		stage.add(attachment);
 
-		assertEquals(1, info.pAttachments.length);
+		// Check descriptor
+		final VkPipelineColorBlendStateCreateInfo descriptor = stage.descriptor();
+		assertEquals(false, descriptor.logicOpEnable);
+		assertEquals(1, descriptor.attachmentCount);
 
-		final VkPipelineColorBlendAttachmentState attachment = info.pAttachments[0];
-		assertEquals(true, attachment.blendEnable);
+		// Check attachment
+		final VkPipelineColorBlendAttachmentState state = descriptor.pAttachments[0];
+		assertEquals(true, state.blendEnable);
+		assertEquals(new EnumMask<>(ColourBlendAttachment.DEFAULT_WRITE_MASK), state.colorWriteMask);
+
+		// Check colour channels
+		assertEquals(VkBlendFactor.SRC_ALPHA, state.srcColorBlendFactor);
+		assertEquals(VkBlendFactor.ONE_MINUS_SRC_ALPHA, state.dstColorBlendFactor);
+		assertEquals(VkBlendOp.ADD, state.colorBlendOp);
+
+		// Check alpha channel
+		assertEquals(VkBlendFactor.ONE, state.srcAlphaBlendFactor);
+		assertEquals(VkBlendFactor.ZERO, state.dstAlphaBlendFactor);
+		assertEquals(VkBlendOp.ADD, state.alphaBlendOp);
 	}
 
-	@Nested
-	class BlendOperationTest {
-		@Test
-		void colour() {
-			final var colour = new BlendOperation(VkBlendFactor.SRC_ALPHA, VkBlendOp.ADD, VkBlendFactor.ONE_MINUS_SRC_ALPHA);
-			assertEquals(colour, BlendOperation.colour());
-		}
+	@DisplayName("A disabled attachment is injected if none have been configured")
+	@Test
+	void unspecified() {
+		// Check descriptor
+		final VkPipelineColorBlendStateCreateInfo descriptor = stage.descriptor();
+		assertEquals(false, descriptor.logicOpEnable);
+		assertEquals(1, descriptor.attachmentCount);
 
-		@Test
-		void alpha() {
-			final var alpha = new BlendOperation(VkBlendFactor.ONE, VkBlendOp.ADD, VkBlendFactor.ZERO);
-			assertEquals(alpha, BlendOperation.alpha());
-		}
-	}
-
-	@Nested
-	class ColourBlendAttachmentTest {
-		private ColourBlendAttachment.Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new ColourBlendAttachment.Builder();
-		}
-
-		@Test
-		void populate() {
-			final VkPipelineColorBlendAttachmentState descriptor = builder
-					.colour(BlendOperation.colour())
-					.alpha(BlendOperation.alpha())
-					.mask("R")
-					.build()
-					.populate();
-
-			assertEquals(true, descriptor.blendEnable);
-			assertEquals(VkBlendFactor.SRC_ALPHA, descriptor.srcColorBlendFactor);
-			assertEquals(VkBlendFactor.ONE_MINUS_SRC_ALPHA, descriptor.dstColorBlendFactor);
-			assertEquals(VkBlendOp.ADD, descriptor.colorBlendOp);
-			assertEquals(VkBlendFactor.ONE, descriptor.srcAlphaBlendFactor);
-			assertEquals(VkBlendFactor.ZERO, descriptor.dstAlphaBlendFactor);
-			assertEquals(VkBlendOp.ADD, descriptor.alphaBlendOp);
-			assertEquals(new EnumMask<>(VkColorComponent.R), descriptor.colorWriteMask);
-		}
+		// Check attachment
+		final VkPipelineColorBlendAttachmentState state = descriptor.pAttachments[0];
+		assertEquals(false, state.blendEnable);
+		assertEquals(new EnumMask<>(ColourBlendAttachment.DEFAULT_WRITE_MASK), state.colorWriteMask);
 	}
 }

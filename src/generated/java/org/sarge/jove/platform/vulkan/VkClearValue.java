@@ -15,7 +15,7 @@ public class VkClearValue implements NativeStructure {
 	public VkClearDepthStencilValue depthStencil;
 
 	@Override
-	public UnionLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.unionLayout(
 			MemoryLayout.unionLayout(
 		        MemoryLayout.sequenceLayout(4, JAVA_FLOAT).withName("float32"),

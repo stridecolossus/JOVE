@@ -24,6 +24,11 @@ public record PrimitiveTransformer<T>(ValueLayout layout) implements Transformer
 		}
 	}
 
+	// TODO
+	// - reintroduce identity transformer, supports MemorySegment
+	// - primitive extends with special cases for empty() and array()
+	// - no real need/benefit for this to be a record!
+
 	@Override
 	public T marshal(T arg, SegmentAllocator allocator) {
 		return arg;
@@ -45,14 +50,12 @@ public record PrimitiveTransformer<T>(ValueLayout layout) implements Transformer
 	}
 
 	/**
-	 * Helper.
-	 * Creates an primitive array transformer.
-	 * @param delegate		Delegate transformer
+	 * @param component		Component transformer
 	 * @param layout		Primitive layout
-	 * @return Array transformer
+	 * @return Primitive array transformer
 	 */
-	static Transformer<?, ?> array(Transformer<?, ?> delegate, ValueLayout layout) {
-		return new AbstractArrayTransformer(delegate) {
+	static Transformer<?, ?> array(Transformer<?, ?> component, ValueLayout layout) {
+		return new AbstractArrayTransformer(component) {
 			@Override
 			protected void marshal(Object array, int length, MemorySegment address, SegmentAllocator allocator) {
 				MemorySegment.copy(array, 0, address, layout, 0L, length);
@@ -88,10 +91,10 @@ public record PrimitiveTransformer<T>(ValueLayout layout) implements Transformer
 		for(ValueLayout layout : primitives) {
     		final var transformer = new PrimitiveTransformer<>(layout);
 			final Class carrier = layout.carrier();
-    		registry.register(carrier, transformer);
+    		registry.add(carrier, transformer);
     	}
 
-		registry.register(boolean.class, new NativeBooleanTransformer());
+		registry.add(boolean.class, new NativeBooleanTransformer());
     }
 	// TODO - also wrappers? otherwise add doc
 }

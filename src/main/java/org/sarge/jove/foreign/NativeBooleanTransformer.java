@@ -12,7 +12,7 @@ import java.util.function.Function;
  * <p>
  * @author Sarge
  */
-public record NativeBooleanTransformer() implements Transformer<Boolean, Integer> {
+public class NativeBooleanTransformer implements Transformer<Boolean, Integer> {
 	/**
 	 * Native {@code true} boolean.
 	 */
@@ -43,7 +43,6 @@ public record NativeBooleanTransformer() implements Transformer<Boolean, Integer
 
 	@Override
 	public Object empty() {
-		// TODO - return FALSE? how do wrappers work exactly?
 		throw new UnsupportedOperationException();
 	}
 
@@ -54,6 +53,8 @@ public record NativeBooleanTransformer() implements Transformer<Boolean, Integer
 
 	@Override
 	public Transformer<?, ?> array() {
-		return PrimitiveTransformer.array(this, JAVA_INT);
+		// TODO - needs to be transformed to int[] first?
+		//return PrimitiveTransformer.array(this, JAVA_INT);
+		throw new UnsupportedOperationException();
 	}
 }

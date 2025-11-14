@@ -118,7 +118,7 @@ class PrimitiveTransformerTest {
 		@SuppressWarnings("unchecked")
 		@Test
 		void update() {
-			final MemorySegment address = allocator.allocate(JAVA_INT, 3);
+			final MemorySegment address = allocator.allocate(JAVA_INT, 2);
 			address.setAtIndex(JAVA_INT, 0L, 2);
 			address.setAtIndex(JAVA_INT, 1L, 3);
 

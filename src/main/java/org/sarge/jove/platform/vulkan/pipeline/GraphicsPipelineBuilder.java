@@ -220,7 +220,7 @@ public class GraphicsPipelineBuilder {
 		info.pRasterizationState = raster.descriptor();
 		info.pMultisampleState = multi.descriptor();
 		info.pDepthStencilState = depth.descriptor();
-		info.pColorBlendState = blend.descriptor();			// TODO - check number of blend attachments = framebuffers
+		info.pColorBlendState = blend.descriptor();
 		info.pDynamicState = dynamic.descriptor();
 
 		// Init derivative pipelines
@@ -257,8 +257,12 @@ public class GraphicsPipelineBuilder {
 		for(int n = 0; n < builders.length; ++n) {
 			final int sibling = builders[n].sibling;
 			if(sibling >= 0) {
-				if(sibling >= builders.length) throw new IndexOutOfBoundsException("Invalid sibling index: sibling=%d pipeline=%d".formatted(sibling, n));
-				if(sibling >= n) throw new IndexOutOfBoundsException("Sibling index must refer to a previous pipeline in an array: pipeline=" + n);
+				if(sibling >= builders.length) {
+					throw new IndexOutOfBoundsException("Invalid sibling index: sibling=%d pipeline=%d".formatted(sibling, n));
+				}
+				if(sibling >= n) {
+					throw new IndexOutOfBoundsException("Sibling index must refer to a previous pipeline in an array: pipeline=" + n);
+				}
 				// TODO - self?
 			}
 		}
@@ -284,8 +288,8 @@ public class GraphicsPipelineBuilder {
 	/**
 	 * Constructs a pipeline.
 	 */
-	private static Pipeline pipeline(Handle handle, LogicalDevice dev, GraphicsPipelineBuilder builder) {
+	private static Pipeline pipeline(Handle handle, LogicalDevice device, GraphicsPipelineBuilder builder) {
 		final boolean parent = builder.flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
-		return new Pipeline(handle, dev, VkPipelineBindPoint.GRAPHICS, builder.layout, parent);
+		return new Pipeline(handle, device, VkPipelineBindPoint.GRAPHICS, builder.layout, parent);
 	}
 }

@@ -99,7 +99,7 @@ public class Registry {
 	 * @param type				Type
 	 * @param transformer		Transformer
 	 */
-	public <T> void register(Class<T> type, Transformer<? extends T, ?> transformer) {
+	public <T> void add(Class<T> type, Transformer<? extends T, ?> transformer) {
 		requireNonNull(type);
 		requireNonNull(transformer);
 		registry.put(type, transformer);
@@ -111,7 +111,7 @@ public class Registry {
 	 * @param type			Type
 	 * @param factory		Transformer factory
 	 */
-	public <T> void register(Class<T> type, Factory<? extends T> factory) {
+	public <T> void add(Class<T> type, Factory<? extends T> factory) {
 		requireNonNull(type);
 		requireNonNull(factory);
 		factories.put(type, factory);

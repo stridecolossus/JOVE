@@ -1,5 +1,10 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.Objects.requireNonNull;
+
+import java.io.IOException;
+import java.nio.file.*;
+
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
@@ -45,6 +50,32 @@ public class Shader extends VulkanObject {
 	protected Destructor<Shader> destructor() {
 		final Library library = this.device().library();
 		return library::vkDestroyShaderModule;
+	}
+
+	/**
+	 * Loader for a shader.
+	 */
+	public static class ShaderLoader {
+		private final LogicalDevice device;
+
+		/**
+		 * Constructor.
+		 * @param device
+		 */
+		public ShaderLoader(LogicalDevice device) {
+			this.device = requireNonNull(device);
+		}
+
+		/**
+		 * Loads a shader from the given file.
+		 * @param path File path
+		 * @return Shader
+		 * @throws IOException if the shader cannot be loaded
+		 */
+		public Shader load(Path path) throws IOException {
+			final byte[] code = Files.readAllBytes(path);
+			return Shader.create(device, code);
+		}
 	}
 
 	/**

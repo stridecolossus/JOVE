@@ -114,13 +114,15 @@ public class NativeMethod {
 	 */
 	public Object invoke(Object[] args) {
 		if(args == null) {
-			return invokeLocal(null);
+			return invokeLocal(null, null);
 		}
 
-		final Object[] foreign = marshal(args);
-		final Object result = invokeLocal(foreign);
-		update(args, foreign);
-		return result;
+			final var allocator = Arena.ofAuto();
+    		final Object[] foreign = marshal(args, allocator);
+			final Object result = invokeLocal(foreign, allocator);
+//    		final Object result = invokeLocal(foreign);
+    		update(args, foreign);
+    		return result;
 	}
 
 	/**
@@ -128,8 +130,15 @@ public class NativeMethod {
 	 * @param args Marshalled arguments
 	 * @return Unmarshalled return value
 	 */
-	private Object invokeLocal(Object[] args) {
+	private Object invokeLocal(Object[] args, SegmentAllocator allocator) {
 		try {
+
+//			if(NativeStructure.class.isAssignableFrom(handle.type().returnType())) {
+//				final MethodHandle actual = MethodHandles.insertArguments(handle, 1, allocator);
+//				final Object result = actual.invokeWithArguments(args);
+//				return unmarshal(result);
+//			}
+
 			final Object result = handle.invokeWithArguments(args);
 			return unmarshal(result);
 		}
@@ -158,8 +167,7 @@ public class NativeMethod {
 	 * Marshals method arguments to the corresponding FFM types.
 	 */
 	@SuppressWarnings("resource")
-	private Object[] marshal(Object[] args) {
-		final var allocator = Arena.ofAuto();
+	private Object[] marshal(Object[] args, SegmentAllocator allocator) {
 		final Object[] foreign = new Object[args.length];
 		for(int n = 0; n < args.length; ++n) {
 			foreign[n] = Transformer.marshal(args[n], parameters[n].transformer, allocator);

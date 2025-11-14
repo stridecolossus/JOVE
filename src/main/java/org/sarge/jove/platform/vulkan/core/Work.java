@@ -1,9 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
+import static java.util.stream.Collectors.*;
+
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.EnumMask;
@@ -16,7 +19,7 @@ import org.sarge.jove.util.EnumMask;
  * <li>the queue that performs the work</li>
  * <li>one-or-more command buffers</li>
  * <li>a set of <i>wait</i> semaphores specifying when the work can begin</li>
- * <li>a set of <i>signal</i> semaphores that are notified when <b>all</b> the buffers have been executed</li>
+ * <li>a set of <i>signal</i> semaphores that are signalled when <b>all</b> the buffers have been executed</li>
  * </ul>
  * <p>
  * Note that <b>all</b> command buffers in a work submission <b>must</b> be allocated from pools with the same queue family.
@@ -85,9 +88,9 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 		// Populate command buffers
 		final var info = new VkSubmitInfo();
 		info.commandBufferCount = buffers.size();
-		info.pCommandBuffers = buffers.toArray(Buffer[]::new);
+		info.pCommandBuffers = NativeObject.handles(buffers);
 
-		// Create a temporary copy of the wait table entries such that they can be iterated consistently below
+		// Create a temporary copy of the wait table entries so that they can be iterated consistently
 		final var entries = waiting
 				.entrySet()
 				.stream()
@@ -98,7 +101,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 		info.pWaitSemaphores = entries
 				.stream()
 				.map(Entry::getKey)
-				.toArray(VulkanSemaphore[]::new);
+				.collect(collectingAndThen(toList(), NativeObject::handles));
 
 		// Populate pipeline stage flags (for some reason this is a pointer to an int-array)
 		info.pWaitDstStageMask = entries
@@ -110,7 +113,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 
 		// Populate signal semaphores
 		info.signalSemaphoreCount = signal.size();
-		info.pSignalSemaphores = signal.toArray(VulkanSemaphore[]::new);
+		info.pSignalSemaphores = NativeObject.handles(signal);
 
 		return info;
 	}
@@ -192,7 +195,6 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 		}
 		finally {
 			fence.destroy();
-			buffer.free();
 		}
 	}
 

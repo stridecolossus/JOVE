@@ -77,7 +77,8 @@ public class StructureTransformer implements Transformer<NativeStructure, Memory
 				f.unmarshal(address, structure);
 			}
 			catch(Exception e) {
-				System.out.println("mapping="+f+" structure="+structure);
+				e.printStackTrace();
+				System.err.println("mapping="+f+" structure="+structure);
 				throw e;
 			}
 		}

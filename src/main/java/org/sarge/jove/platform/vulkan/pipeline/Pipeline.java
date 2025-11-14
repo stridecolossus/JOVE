@@ -97,7 +97,7 @@ public class Pipeline extends VulkanObject {
 		 * @param pPipelines		Returned pipeline(s)
 		 * @return Result
 		 */
-		VkResult vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
+		//VkResult vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
 
 		/**
 		 * Destroys a pipeline.

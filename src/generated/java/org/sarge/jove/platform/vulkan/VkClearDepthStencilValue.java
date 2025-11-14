@@ -15,7 +15,7 @@ public class VkClearDepthStencilValue extends VulkanStructure {
 	public int stencil;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 	    return MemoryLayout.structLayout(
 	        JAVA_FLOAT.withName("depth"),
 	        JAVA_INT.withName("stencil")

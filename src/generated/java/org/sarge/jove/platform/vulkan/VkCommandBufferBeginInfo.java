@@ -1,5 +1,7 @@
 package org.sarge.jove.platform.vulkan;
 
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+
 import java.lang.foreign.*;
 
 import org.sarge.jove.common.Handle;
@@ -19,10 +21,10 @@ public class VkCommandBufferBeginInfo implements NativeStructure {
 	@Override
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-				ValueLayout.JAVA_INT.withName("sType"),
+				JAVA_INT.withName("sType"),
 				PADDING,
 				POINTER.withName("pNext"),
-				ValueLayout.JAVA_INT.withName("flags"),
+				JAVA_INT.withName("flags"),
 				PADDING,
 				POINTER.withName("pInheritanceInfo")
 		);

@@ -9,54 +9,55 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * Colour blending pipeline stage.
+ * The <i>colour blend stage</i> configures the colour blending fixed function of the pipeline.
+ * <p>
+ * TODO
+ * - explain global vs per-attachment configuration
+ * - logicOpEnable = true => use global logicOp => all attachments essentially disabled (!)
+ * - injects disabled configuration if unspecified for convenience
+ * - however the write mask for each (?) attachment MUST be configured or nothing will be rendered!!!
+ * - this is very backward
+ * <p>
  * @author Sarge
  */
 public class ColourBlendStage {
+	private VkPipelineColorBlendStateCreateInfo info = new VkPipelineColorBlendStateCreateInfo();
 	private final List<ColourBlendAttachment> attachments = new ArrayList<>();
-	private boolean logicOpEnable = false;
-	private VkLogicOp logicOp = VkLogicOp.COPY;
-	private final float[] blendConstants = new float[4];
 
 	public ColourBlendStage() {
-		Arrays.fill(blendConstants, 1);
+		info.logicOpEnable = false;
+		info.logicOp = VkLogicOp.CLEAR;
+		info.blendConstants = new float[4];
+		Arrays.fill(info.blendConstants, 1);
 	}
 
 	/**
-	 * Enables global bitwise colour blending.
+	 * Enables the global colour blending operation.
+	 * Note this essentially disables the configuration for colour attachments specified by {@link #add(ColourBlendAttachment)}.
+	 * @param logicOp Blending operation
 	 */
-	public ColourBlendStage enable() {
-		this.logicOpEnable = true;
-		return this;
-	}
-
-	/**
-	 * Sets the global colour blending operation.
-	 * @param op Colour-blending operation
-	 */
-	public ColourBlendStage operation(VkLogicOp op) {
-		this.logicOp = op;
+	public ColourBlendStage operation(VkLogicOp logicOp) {
+		info.logicOpEnable = true;
+		info.logicOp = requireNonNull(logicOp);
 		return this;
 	}
 
 	/**
 	 * Sets the global blending constants.
 	 * @param constants Blending constants array
-	 * @throws IndexOutOfBoundsException if the given array does not contain <b>four</b> values
+	 * @throws IllegalArgumentException if {@link #constants} does not contains four values
 	 */
 	public ColourBlendStage constants(float[] constants) {
-		copy(constants, this.blendConstants);
+		if(constants.length != info.blendConstants.length) {
+			throw new IllegalArgumentException();
+		}
+		System.arraycopy(constants, 0, info.blendConstants, 0, constants.length);
 		return this;
 	}
 
-	private static void copy(float[] src, float[] dest) {
-		System.arraycopy(src, 0, dest, 0, dest.length);
-	}
-
 	/**
-	 * Adds the colour blending descriptor for an attachment.
-	 * @param attachment colour blending attachment descriptor
-	 * TODO - injects? doc has to equal frame buffers?
+	 * Configures the blending operation for a colour attachment.
+	 * @param attachment Attachment colour blending configuration
 	 */
 	public ColourBlendStage add(ColourBlendAttachment attachment) {
 		attachments.add(attachment);
@@ -67,69 +68,57 @@ public class ColourBlendStage {
 	 * @return Colour blending descriptor
 	 */
 	VkPipelineColorBlendStateCreateInfo descriptor() {
-		// Init blending descriptor
-		final var info = new VkPipelineColorBlendStateCreateInfo();
+		// Init descriptor
 		info.flags = 0;
-		info.logicOpEnable = logicOpEnable;
-		info.logicOp = logicOp;
-		info.blendConstants = blendConstants;
 
-		// Populate attachment descriptors or inject a single default entry
-		// TODO - leave this up to the app?
+		// Add blend configuration for the colour attachments, injecting a single default entry if unspecified
 		if(attachments.isEmpty()) {
 			final var disabled = new VkPipelineColorBlendAttachmentState();
+			disabled.colorWriteMask = new EnumMask<>(ColourBlendAttachment.DEFAULT_WRITE_MASK);
 			disabled.blendEnable = false;
 	   		info.attachmentCount = 1;
 	   		info.pAttachments = new VkPipelineColorBlendAttachmentState[]{disabled};
 		}
 		else {
-       		info.attachmentCount = attachments.size();
-       		info.pAttachments = attachments.stream().map(ColourBlendAttachment::populate).toArray(VkPipelineColorBlendAttachmentState[]::new);
+           	info.attachmentCount = attachments.size();
+           	info.pAttachments = attachments
+           			.stream()
+           			.map(ColourBlendAttachment::populate)
+           			.toArray(VkPipelineColorBlendAttachmentState[]::new);
 		}
 
 		return info;
 	}
 
-//	/**
-//	 * Creates a command to dynamically set the blend constants.
-//	 * @param constants Blend constants
-//	 * @return Dynamic blend constants command
-//	 * @throws IndexOutOfBoundsException if the given array does not contain <b>four</b> values
-//	 */
-//	public Command setDynamicBlendConstants(float[] constants) {
-//		final float[] copy = new float[info.blendConstants.length];
-//		copy(constants, copy);
-//		return (lib, buffer) -> lib.vkCmdSetBlendConstants(buffer, copy);
-//	}
-
 	/**
-	 * Descriptor for the blending function of a colour or alpha channel.
+	 * A <i>blend operation</i> configures the blending function of the colour or alpha channels.
 	 */
-	public record BlendOperation(VkBlendFactor src, VkBlendOp blend, VkBlendFactor dest) {
+	public record BlendOperation(VkBlendFactor source, VkBlendOp operation, VkBlendFactor destination) {
 		/**
 		 * Constructor.
-		 * @param src			Source factor
-		 * @param blend			Blending function
-		 * @param dest			Destination factor
+		 * @param source			Source factor
+		 * @param operation			Blend operation
+		 * @param destination		Destination factor
 		 */
 		public BlendOperation {
-			requireNonNull(src);
-			requireNonNull(blend);
-			requireNonNull(dest);
+			requireNonNull(source);
+			requireNonNull(operation);
+			requireNonNull(destination);
 		}
 
 		/**
+		 * Helper.
 		 * Creates the common blending operation for the colour channel.
-		 * @return Default colour channel blending operation
+		 * @return Default colour channel operation
 		 */
 		public static BlendOperation colour() {
 			return new BlendOperation(VkBlendFactor.SRC_ALPHA, VkBlendOp.ADD, VkBlendFactor.ONE_MINUS_SRC_ALPHA);
 		}
-		// TODO - could make this more smarty pants? the ONE_MINUS is always the next factor (one exception for saturate?).
 
 		/**
+		 * Helper.
 		 * Creates the common blending operation for the alpha channel.
-		 * @return Default alpha channel blending operation
+		 * @return Default alpha channel operation
 		 */
 		public static BlendOperation alpha() {
 			return new BlendOperation(VkBlendFactor.ONE, VkBlendOp.ADD, VkBlendFactor.ZERO);
@@ -137,39 +126,56 @@ public class ColourBlendStage {
 	}
 
 	/**
-	 * Colour blending descriptor for an attachment.
+	 * A <i>colour blend attachment</i> configures the blending operations of each colour attachment.
 	 */
-	public record ColourBlendAttachment(BlendOperation colour, BlendOperation alpha, EnumMask<VkColorComponent> mask) {
+	public record ColourBlendAttachment(BlendOperation colour, BlendOperation alpha, Set<VkColorComponent> mask) {
 		/**
-		 *
+		 * Default colour write mask containing <b>all</b> channels.
 		 */
-		public static final EnumMask<VkColorComponent> DEFAULT_WRITE_MASK = new EnumMask<>(EnumSet.allOf(VkColorComponent.class));
+		public static final Set<VkColorComponent> DEFAULT_WRITE_MASK = Set.of(VkColorComponent.values());
 
 		/**
 		 * Constructor.
 		 * @param colour		Colour channel blending operation
 		 * @param alpha			Alpha blending operation
-		 * @param mask			Colour component mask
+		 * @param mask			Colour component write mask
+		 * @see #DEFAULT_WRITE_MASK
 		 */
 		public ColourBlendAttachment {
 			requireNonNull(colour);
 			requireNonNull(alpha);
-			requireNonNull(mask);
+			mask = Set.copyOf(mask);
+		}
+
+		/**
+		 * Helper.
+		 * Builds a colour write mask specified by the given string, e.g. {@code RGBA}.
+		 * @param mask Colour component write mask
+		 * @throws IllegalArgumentException if {@link #mask} contains an unknown component character
+		 * @see VkColorComponent
+		 */
+		public static Set<VkColorComponent> mask(String mask) {
+			return mask
+					.toUpperCase()
+					.chars()
+					.mapToObj(Character::toString)
+					.map(VkColorComponent::valueOf)
+					.collect(toSet());
 		}
 
 		/**
 		 * @return Descriptor
 		 */
-		VkPipelineColorBlendAttachmentState populate() {
+		private VkPipelineColorBlendAttachmentState populate() {
 			final var info = new VkPipelineColorBlendAttachmentState();
-			info.blendEnable = true;
-			info.srcColorBlendFactor = colour.src;
-			info.dstColorBlendFactor = colour.dest;
-			info.colorBlendOp = colour.blend;
-			info.srcAlphaBlendFactor = alpha.src;
-			info.dstAlphaBlendFactor = alpha.dest;
-			info.alphaBlendOp = alpha.blend;
-			info.colorWriteMask = mask;
+			info.blendEnable = true; // TODO - how/why would this ever logically be publicly false?
+			info.srcColorBlendFactor = colour.source;
+			info.dstColorBlendFactor = colour.destination;
+			info.colorBlendOp = colour.operation;
+			info.srcAlphaBlendFactor = alpha.source;
+			info.dstAlphaBlendFactor = alpha.destination;
+			info.alphaBlendOp = alpha.operation;
+			info.colorWriteMask = new EnumMask<>(mask);
 			return info;
 		}
 
@@ -179,7 +185,7 @@ public class ColourBlendStage {
 		public static class Builder {
 			private BlendOperation colour = BlendOperation.colour();
 			private BlendOperation alpha = BlendOperation.alpha();
-			private EnumMask<VkColorComponent> mask = DEFAULT_WRITE_MASK;
+			private Set<VkColorComponent> mask = DEFAULT_WRITE_MASK;
 
 			/**
 			 * Sets the blending operation for the colour channel.
@@ -202,31 +208,14 @@ public class ColourBlendStage {
 			}
 
 			/**
-			 * Sets the colour component mask.
-			 * @param mask Colour component mask
-			 * @see #mask(String)
+			 * Sets the colour write mask.
+			 * @param mask Colour write mask
+			 * @see ColourBlendAttachment#mask(String)
+			 * @see ColourBlendAttachment#DEFAULT_WRITE_MASK
 			 */
 			public Builder mask(Set<VkColorComponent> mask) {
-				this.mask = new EnumMask<>(mask);
+				this.mask = mask;
 				return this;
-			}
-
-			/**
-			 * Sets the colour write mask specified by the given string, e.g. {@code RGBA}
-			 * @param mask Colour component mask represented as a string
-			 * @throws IllegalArgumentException if {@link #mask} contains an unknown colour component character
-			 * @see #mask(Set)
-			 * @see VkColorComponent
-			 */
-			public Builder mask(String mask) {
-				final Set<VkColorComponent> set = mask
-						.toUpperCase()
-						.chars()
-						.mapToObj(Character::toString)
-						.map(VkColorComponent::valueOf)
-						.collect(toSet());
-
-				return mask(set);
 			}
 
 			/**
@@ -238,4 +227,16 @@ public class ColourBlendStage {
 			}
 		}
 	}
+
+//	/**
+//	 * Creates a command to dynamically set the blend constants.
+//	 * @param constants Blend constants
+//	 * @return Dynamic blend constants command
+//	 * @throws IndexOutOfBoundsException if the given array does not contain <b>four</b> values
+//	 */
+//	public Command setDynamicBlendConstants(float[] constants) {
+//		final float[] copy = new float[info.blendConstants.length];
+//		copy(constants, copy);
+//		return (lib, buffer) -> lib.vkCmdSetBlendConstants(buffer, copy);
+//	}
 }

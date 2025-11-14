@@ -13,7 +13,7 @@ import org.sarge.jove.util.EnumMask;
  * This class has been code-generated.
  */
 public class VkImageViewCreateInfo implements NativeStructure {
-	public VkStructureType sType = VkStructureType.IMAGE_VIEW_CREATE_INFO;
+	public final VkStructureType sType = VkStructureType.IMAGE_VIEW_CREATE_INFO;
 	public Handle pNext;
 	public EnumMask<VkImageViewCreateFlag> flags;
 	public Handle image;
@@ -33,8 +33,19 @@ public class VkImageViewCreateInfo implements NativeStructure {
 		        POINTER.withName("image"),
 		        JAVA_INT.withName("viewType"),
 		        JAVA_INT.withName("format"),
-		        new VkComponentMapping().layout().withName("components"),
-		        new VkImageSubresourceRange().layout().withName("subresourceRange"),
+		        MemoryLayout.structLayout(
+    	                JAVA_INT.withName("r"),
+    	                JAVA_INT.withName("g"),
+    	                JAVA_INT.withName("b"),
+    	                JAVA_INT.withName("a")
+	            ).withName("components"),
+	            MemoryLayout.structLayout(
+    	                JAVA_INT.withName("aspectMask"),
+    	                JAVA_INT.withName("baseMipLevel"),
+    	                JAVA_INT.withName("levelCount"),
+    	                JAVA_INT.withName("baseArrayLayer"),
+    	                JAVA_INT.withName("layerCount")
+	            ).withName("subresourceRange"),
 		        PADDING
 		);
 	}

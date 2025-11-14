@@ -7,7 +7,8 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
-import org.sarge.jove.platform.vulkan.render.Swapchain;
+import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
+import org.sarge.jove.platform.vulkan.render.RenderLibrary;
 
 /**
  * TODO
@@ -44,8 +45,9 @@ public interface Vulkan {
 		// Enumerate API
 		final Class<?>[] api = {
 				VulkanCoreLibrary.class,
-				Swapchain.Library.class,	// TODO
 				ImageLibrary.class,
+				PipelineLibrary.class,
+				RenderLibrary.class,
 				// TODO...
 		};
 
