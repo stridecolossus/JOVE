@@ -18,7 +18,7 @@ public class Camera {
 	private Normal up = Axis.Y;
 
 	// Transient view transform
-	private Vector right = Axis.X;
+	private Normal right = Axis.X;
 	private Matrix matrix;
 	private boolean dirty = true;
 
@@ -97,7 +97,8 @@ public class Camera {
 	}
 
 	/**
-	 * Sets the up axis of this camera (default is {@link Axis#Y}).
+	 * Sets the up axis of this camera.
+	 * The default is {@link Axis#Y}.
 	 * @param up Camera up axis
 	 * @throws IllegalStateException if {@link #up} would result in gimbal lock
 	 */
@@ -153,7 +154,7 @@ public class Camera {
 	 */
 	protected void update() {
 		// Determine right axis
-		right = up.cross(dir).normalize();
+		right = new Normal(up.cross(dir));
 
 		// Determine up axis
 		final Vector y = dir.cross(right).normalize();

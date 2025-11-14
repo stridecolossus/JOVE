@@ -12,14 +12,76 @@ package org.sarge.jove.geometry;
  * <p>
  * @author Sarge
  */
-public final class Axis extends Normal {			// TODO - this COULD just be an enum composing the axis normal, actually used relatively infrequently (mainly camera)
+public class Axis extends Normal {
 	/**
 	 * Cardinal axes.
 	 */
 	public static final Axis
-    		X = new Axis(0),
-    		Y = new Axis(1),
-    		Z = new Axis(2);
+        	X = new Axis(0),
+           	Y = new Axis(1),
+           	Z = new Axis(2);
+
+	private final int ordinal;
+	private final Normal invert;
+
+	/**
+	 * Constructor.
+	 * @param ordinal Axis ordinal
+	 */
+	private Axis(int ordinal) {
+		final Vector vector = vector(ordinal);
+		super(vector);
+		this.ordinal = ordinal;
+		this.invert = new Normal(vector.invert());
+	}
+
+	private static Vector vector(int ordinal) {
+		final var array = new float[Vector.SIZE];
+		array[ordinal] = 1;
+		return new Vector(array);
+	}
+
+	@Override
+	public Normal invert() {
+		return invert;
+	}
+
+	/**
+	 * Creates a transform matrix for a rotation about this axis.
+	 * @param angle			Rotation angle (radians, counter-clockwise)
+	 * @param provider		Cosine provider
+	 * @return Rotation matrix
+	 */
+	public Matrix rotation(float angle, Cosine.Provider provider) {
+		// Init matrix
+		final var builder = new Matrix.Builder(4).identity();
+		final Cosine cosine = provider.cosine(angle);
+		final float sin = cosine.sin();
+		final float cos = cosine.cos();
+
+		// Build rotation matrix for this axis
+		switch(ordinal) {
+			case 0 -> builder
+				.set(1, 1, cos)
+				.set(1, 2, -sin)
+				.set(2, 1, sin)
+				.set(2, 2, cos);
+
+			case 1 -> builder
+    			.set(0, 0, cos)
+    			.set(0, 2, sin)
+    			.set(2, 0, -sin)
+    			.set(2, 2, cos);
+
+			case 2 -> builder
+    			.set(0, 0, cos)
+    			.set(0, 1, -sin)
+    			.set(1, 0, sin)
+    			.set(1, 1, cos);
+		}
+
+		return builder.build();
+	}
 
 	/**
 	 * Parses an axis from the given character.
@@ -28,65 +90,11 @@ public final class Axis extends Normal {			// TODO - this COULD just be an enum 
 	 */
 	public static Axis parse(char axis) {
 		return switch(Character.toUpperCase(axis)) {
-    		case 'X' -> X;
-    		case 'Y' -> Y;
-    		case 'Z' -> Z;
+			case 'X' -> X;
+			case 'Y' -> Y;
+			case 'Z' -> Z;
 			default -> throw new NumberFormatException("Unknown cardinal axis: " + axis);
 		};
-	}
-
-	private final Normal inv;
-
-	private Axis(int ordinal) {
-		final var array = new float[SIZE];
-		array[ordinal] = 1;
-		super(new Vector(array));
-		this.inv = super.invert();
-	}
-
-	@Override
-	public Normal invert() {
-		return inv;
-	}
-
-	/**
-	 * Creates a transform matrix for a rotation about this axis.
-	 * @param angle Rotation angle (radians, counter-clockwise)
-	 * @return Rotation matrix
-	 */
-	public Matrix rotation(Angle angle) {
-		// Init matrix
-		final var builder = new Matrix.Builder(4).identity();
-		final Cosine cosine = angle.cosine();
-		final float sin = cosine.sin();
-		final float cos = cosine.cos();
-
-		// Build rotation matrix for this axis
-		if(this == X) {
-    		builder
-				.set(1, 1, cos)
-				.set(1, 2, -sin)
-				.set(2, 1, sin)
-				.set(2, 2, cos);
-		}
-		else
-		if(this == Y) {
-    		builder
-    			.set(0, 0, cos)
-    			.set(0, 2, sin)
-    			.set(2, 0, -sin)
-    			.set(2, 2, cos);
-		}
-		else {
-			assert this == Z;
-    		builder
-    			.set(0, 0, cos)
-    			.set(0, 1, -sin)
-    			.set(1, 0, sin)
-    			.set(1, 1, cos);
-		}
-
-		return builder.build();
 	}
 
 	/**

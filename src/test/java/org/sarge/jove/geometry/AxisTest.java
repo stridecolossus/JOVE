@@ -2,9 +2,9 @@ package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.sarge.jove.geometry.Axis.*;
+import static org.sarge.jove.util.MathsUtility.PI;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.MathsUtility;
 
 class AxisTest {
 	@Test
@@ -30,34 +30,34 @@ class AxisTest {
 
 	@Nested
 	class RotationTests {
-		private Angle angle;
 		private Matrix.Builder matrix;
+		private Cosine.Provider provider;
 
 		@BeforeEach
 		void before() {
-			angle = new Angle(MathsUtility.PI);
 			matrix = new Matrix.Builder(4).identity();
+			provider = Cosine.Provider.DEFAULT;
 		}
 
     	@Test
     	void x() {
     		matrix.set(1, 1, -1);
     		matrix.set(2, 2, -1);
-    		assertEquals(matrix.build(), X.rotation(angle));
+    		assertEquals(matrix.build(), X.rotation(PI, provider));
     	}
 
     	@Test
     	void y() {
     		matrix.set(0, 0, -1);
     		matrix.set(2, 2, -1);
-    		assertEquals(matrix.build(), Y.rotation(angle));
+    		assertEquals(matrix.build(), Y.rotation(PI, provider));
     	}
 
     	@Test
     	void z() {
     		matrix.set(0, 0, -1);
     		matrix.set(1, 1, -1);
-    		assertEquals(matrix.build(), Z.rotation(angle));
+    		assertEquals(matrix.build(), Z.rotation(PI, provider));
     	}
 	}
 

@@ -1,23 +1,32 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.util.MathsUtility.PI;
+import static org.sarge.jove.util.MathsUtility.*;
 
 import org.junit.jupiter.api.*;
 
 class AxisAngleTest {
 	private Normal axis;
-	private AxisAngle rot;
+	private AxisAngle rotation;
 
 	@BeforeEach
 	void before() {
 		axis = new Normal(new Vector(1, 1, 0));
-		rot = new AxisAngle(axis, PI);
+		rotation = new AxisAngle(axis, PI);
 	}
 
 	@Test
 	void rotation() {
-		assertEquals(rot, rot.toAxisAngle());
+		assertEquals(axis, rotation.axis());
+		assertEquals(PI, rotation.angle());
+		assertEquals(Cosine.Provider.DEFAULT, rotation.provider());
+		assertEquals(rotation, rotation.toAxisAngle());
+	}
+
+	@Test
+	void set() {
+		rotation.set(HALF_PI);
+		assertEquals(HALF_PI, rotation.angle());
 	}
 
 	@Test
@@ -29,25 +38,26 @@ class AxisAngleTest {
 				.set(3, 3, +1)
 				.build();
 
-		assertEquals(expected, rot.matrix());
+		assertEquals(expected, rotation.matrix());
 	}
 
 	@Test
 	void cardinal() {
-		rot = new AxisAngle(Axis.Y, PI);
-		assertEquals(Axis.Y.rotation(new Angle(PI)), rot.matrix());
+		final var cardinal = new AxisAngle(Axis.Y, PI);
+		final Matrix expected = Axis.Y.rotation(PI, Cosine.Provider.DEFAULT);
+		assertEquals(expected, cardinal.matrix());
 	}
 
 	@Test
 	void rotate() {
-		assertEquals(new Vector(0, 1, 0), rot.rotate(new Vector(1, 0, 0)));
+		assertEquals(new Vector(0, 1, 0), rotation.rotate(new Vector(1, 0, 0)));
 	}
 
 	@Test
 	void equals() {
-		assertEquals(rot, rot);
-		assertEquals(rot, new AxisAngle(axis, PI));
-		assertNotEquals(rot, null);
-		assertNotEquals(rot, new AxisAngle(axis, 0));
+		assertEquals(rotation, rotation);
+		assertEquals(rotation, new AxisAngle(axis, PI));
+		assertNotEquals(rotation, null);
+		assertNotEquals(rotation, new AxisAngle(Axis.Z, 0));
 	}
 }

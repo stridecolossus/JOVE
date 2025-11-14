@@ -3,9 +3,6 @@ package org.sarge.jove.geometry;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.MathsUtility.*;
 
-import java.util.Objects;
-
-import org.sarge.jove.geometry.Cosine.Provider;
 import org.sarge.jove.util.MathsUtility;
 
 /**
@@ -16,10 +13,9 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">Wikipedia</a>
  * @author Sarge
  */
-public class Quaternion implements Rotation {
+public record Quaternion(float scalar, Vector vector) implements Rotation {
 	/**
 	 * Quaternion that represents no rotation.
-	 * @see #toAxisAngle()
 	 */
 	public static final Quaternion IDENTITY = new Quaternion(1, new Vector(0, 0, 0));
 
@@ -29,46 +25,21 @@ public class Quaternion implements Rotation {
 	 * @return Rotation quaternion
 	 */
 	public static Quaternion of(AxisAngle rotation) {
-		final Angle angle = rotation.angle();
-		final float half = angle.angle() * HALF;
-		final Cosine.Provider provider = angle.provider();
-		final Cosine cosine = provider.cosine(half);
+		final float half = rotation.angle() * HALF;
+		final Cosine cosine = rotation.provider().cosine(half);
 		final Vector axis = rotation.axis().multiply(cosine.sin());
-		return new Quaternion(cosine.cos(), axis) {
-			@Override
-			protected Provider provider() {
-				return provider;
-			}
-		};
+		return new Quaternion(cosine.cos(), axis);
 	}
-
-	private final float scalar;
-	private final Vector vector;
 
 	/**
 	 * Constructor.
 	 * @param scalar Scalar component
 	 * @param vector Vector component
 	 */
-	protected Quaternion(float scalar, Vector vector) {
-		this.scalar = scalar;
-		this.vector = requireNonNull(vector);
+	public Quaternion {
+		requireNonNull(vector);
 	}
 	// TODO - assumes but does not enforce normalised (as things stand)
-
-	/**
-	 * @return Scalar component
-	 */
-	public float scalar() {
-		return scalar;
-	}
-
-	/**
-	 * @return Vector component
-	 */
-	public Vector vector() {
-		return vector;
-	}
 
 	/**
 	 * Converts this quaternion to an axis-angle rotation.
@@ -78,18 +49,12 @@ public class Quaternion implements Rotation {
 	@Override
 	public AxisAngle toAxisAngle() {
 		// TODO - numerically unstable when w near +/- 1 (???)
-		final float angle = 2 * (float) Math.acos(scalar); // TODO - maths
-		final float sin = this.provider().cosine(angle * HALF).sin();
+		final float angle = 2 * (float) Math.acos(scalar);
+		final float sin = (float) Math.sin(angle * HALF);
 		final Vector axis = vector.multiply(1 / sin);
 		return new AxisAngle(new Normal(axis), angle);
 	}
-
-	/**
-	 * @return Cosine function
-	 */
-	protected Cosine.Provider provider() {
-		return Cosine.Provider.DEFAULT;
-	}
+	// TODO - overload with cosine provider?
 
 	/**
 	 * Note that the conjugate of a rotation quaternion is its inverse.
@@ -125,11 +90,7 @@ public class Quaternion implements Rotation {
 		return new Quaternion(w, total);
 	}
 
-	/**
-	 * Rotates the given vector by this quaternion.
-	 * @param v Vector to rotate
-	 * @return Rotated vector
-	 */
+	@Override
 	public Vector rotate(Vector v) {
 		final Quaternion q = new Quaternion(0, v);
 		final Quaternion result = this.multiply(q).multiply(this.conjugate());
@@ -167,22 +128,11 @@ public class Quaternion implements Rotation {
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(scalar, vector);
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof Quaternion that) &&
 				MathsUtility.isApproxEqual(this.scalar, that.scalar) &&
 				vector.equals(that.vector);
-	}
-
-	@Override
-	public String toString() {
-		final String w = MathsUtility.FORMATTER.format(scalar);
-		return String.format("Quaternion[%s, %s]", w, vector);
 	}
 }

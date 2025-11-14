@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.util.MathsUtility.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.Cosine.Pair;
 
 class CosineTableTest {
 	private CosineTable table;
@@ -29,16 +30,16 @@ class CosineTableTest {
 
 	@Test
 	void cardinal() {
-		assertEquals(new Cosine(0, +1), table.cosine(0));
-		assertEquals(new Cosine(+1, 0), table.cosine(HALF_PI));
-		assertEquals(new Cosine(0, -1), table.cosine(PI));
-		assertEquals(new Cosine(0, +1), table.cosine(TWO_PI));
+		assertEquals(new Pair(0, +1), table.cosine(0));
+		assertEquals(new Pair(+1, 0), table.cosine(HALF_PI));
+		assertEquals(new Pair(0, -1), table.cosine(PI));
+		assertEquals(new Pair(0, +1), table.cosine(TWO_PI));
 	}
 
 	@Test
 	void negative() {
-		assertEquals(new Cosine(-1, 0), table.cosine(-HALF_PI));
-		assertEquals(new Cosine(0, -1), table.cosine(-PI));
-		assertEquals(new Cosine(0, +1), table.cosine(-TWO_PI));
+		assertEquals(new Pair(-1, 0), table.cosine(-HALF_PI));
+		assertEquals(new Pair(0, -1), table.cosine(-PI));
+		assertEquals(new Pair(0, +1), table.cosine(-TWO_PI));
 	}
 }

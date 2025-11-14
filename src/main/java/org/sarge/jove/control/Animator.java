@@ -21,7 +21,7 @@ public class Animator extends AbstractPlayable implements FrameListener {
 		 * Updates this animation.
 		 * @param pos Animation position 0..1
 		 */
-		void update(float pos);
+		void set(float pos);
 	}
 
 	private final Animation animation;
@@ -118,6 +118,6 @@ public class Animator extends AbstractPlayable implements FrameListener {
 		}
 
 		// Update animation
-		animation.update(time / (float) duration);
+		animation.set(time / (float) duration);
 	}
 }
