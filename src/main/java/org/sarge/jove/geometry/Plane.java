@@ -28,7 +28,9 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 	 * @throws IllegalArgumentException if the given triangle {@link Triangle#isDegenerate()}
 	 */
 	public static Plane of(Triangle triangle) {
-		if(triangle.isDegenerate()) throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
+		if(triangle.isDegenerate()) {
+			throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
+		}
 		final Normal normal = new Normal(triangle.normal());
 		return new Plane(normal, triangle.vertices().getFirst());
 	}
@@ -44,11 +46,11 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 
 	/**
 	 * Constructor given a normal and a point on the plane.
-	 * @param n Plane normal
-	 * @param p Point on this plane
+	 * @param normal		Plane normal
+	 * @param point			Point on the plane
 	 */
-	public Plane(Normal n, Point p) {
-		this(n, -n.dot(new Vector(p)));
+	public Plane(Normal normal, Point point) {
+		this(normal, -normal.dot(new Vector(point)));
 	}
 
 	/**

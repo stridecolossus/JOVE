@@ -79,9 +79,9 @@ public class PhysicalDevice implements NativeObject {
 	 * @return Features supported by this device
 	 */
 	public DeviceFeatures features() {
-		final var features = new VkPhysicalDeviceFeatures();
-		library.vkGetPhysicalDeviceFeatures(handle, features);
-		return DeviceFeatures.of(features);
+		final var supported = new VkPhysicalDeviceFeatures();
+		library.vkGetPhysicalDeviceFeatures(handle, supported);
+		return DeviceFeatures.of(supported);
 	}
 
 	/**
@@ -116,74 +116,58 @@ public class PhysicalDevice implements NativeObject {
 	}
 
 	/**
-	 * The <i>device enumeration helper</i> enumerates the available physical devices.
+	 * Enumerates the available physical devices.
+	 * @param instance		Vulkan instance
+	 * @param library		Device library
+	 * @return Physical devices
 	 */
-	public static class DeviceEnumerationHelper {
-		private final Instance instance;
-		private final Library library;
+	public static Stream<PhysicalDevice> enumerate(Instance instance, Library library) {
+		// Builder for each device
+		final var builder = new Object() {
+			/**
+			 * @param device Device handle
+			 * @return Physical device
+			 */
+	    	public PhysicalDevice device(Handle device) {
+	    		final List<Family> families = families(device);
+	    		return new PhysicalDevice(device, families, instance, library);
+	    	}
 
-		/**
-		 * Constructor.
-		 * @param instance		Vulkan instance
-		 * @param library		Device library
-		 */
-		public DeviceEnumerationHelper(Instance instance, Library library) {
-			this.instance = requireNonNull(instance);
-			this.library = requireNonNull(library);
-		}
+	    	/**
+	    	 * @Return Queue families for the given device
+	    	 */
+	    	private List<Family> families(Handle device) {
+	    		final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> library.vkGetPhysicalDeviceQueueFamilyProperties(device, count, array);
+	    		final VkQueueFamilyProperties[] properties = VulkanFunction.invoke(function, VkQueueFamilyProperties[]::new);
+	    		return IntStream
+	    				.range(0, properties.length)
+	    				.mapToObj(n -> Family.of(n, properties[n]))
+	    				.toList();
+	    	}
+		};
 
-    	/**
-    	 * Enumerates the physical devices for the given instance.
-    	 * @param instance		Vulkan instance
-    	 * @param library		Device library
-    	 * @return Devices
-    	 * @see Selector
-    	 * @see #predicate(DeviceFeatures)
-    	 */
-    	public Stream<PhysicalDevice> enumerate() {
-    		final VulkanFunction<Handle[]> enumerate = (count, devices) -> library.vkEnumeratePhysicalDevices(instance, count, devices);
-    		final Handle[] devices = VulkanFunction.invoke(enumerate, Handle[]::new);
+		// Enumerate devices
+		final VulkanFunction<Handle[]> enumerate = (count, devices) -> library.vkEnumeratePhysicalDevices(instance, count, devices);
+		final Handle[] devices = VulkanFunction.invoke(enumerate, Handle[]::new);
+		return Arrays.stream(devices).map(builder::device);
+	}
 
-    		return Arrays
-    				.stream(devices)
-    				.map(this::device);
-    	}
-
-    	/**
-    	 * Retrieves the queue families and creates a physical device.
-    	 * @param device Device
-    	 * @return Physical device
-    	 */
-    	private PhysicalDevice device(Handle device) {
-    		// Retrieve queue families
-    		final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> library.vkGetPhysicalDeviceQueueFamilyProperties(device, count, array);
-    		final VkQueueFamilyProperties[] properties = VulkanFunction.invoke(function, VkQueueFamilyProperties[]::new);
-
-    		// Convert to families
-    		final List<Family> families = IntStream
-    				.range(0, properties.length)
-    				.mapToObj(n -> Family.of(n, properties[n]))
-    				.toList();
-
-    		// Create device
-    		return new PhysicalDevice(device, families, instance, library);
-    	}
-
-    	/**
-    	 * Helper - Creates a device predicate for the given required features.
-    	 * @param required Required features
-    	 * @return New device predicate
-    	 */
-    	public static Predicate<PhysicalDevice> predicate(DeviceFeatures required) {
-    		return dev -> dev.features().contains(required);
-    	}
+	/**
+	 * Helper.
+	 * Creates a device filter for the given required features.
+	 * @param required Required features
+	 * @return Device features filter
+	 */
+	public static Predicate<PhysicalDevice> predicate(DeviceFeatures required) {
+		return dev -> dev.features().contains(required);
 	}
 
 	/**
 	 * A <i>device selector</i> is used to select a physical device with a queue family matching the requirements of the application.
 	 * <p>
-	 * Matching queue families are recorded as a side effect.
-	 * The {@link #family(PhysicalDevice)} method retrieves the matching queue family for a given device.
+	 * The matching queue family is recorded as a side effect and can be retrieved using the {@link #family(PhysicalDevice)} method.
+	 * <p>
+	 * Note that the same queue family may be returned by multiple selectors, i.e. families often support multiple use cases.
 	 */
 	public static class Selector implements Predicate<PhysicalDevice> {
 		private final BiPredicate<PhysicalDevice, Family> predicate;
@@ -203,13 +187,13 @@ public class PhysicalDevice implements NativeObject {
 					.families()
 					.stream()
 					.filter(family -> predicate.test(device, family))
-					.peek(family -> matches.put(device, family))
+					.peek(family -> matches.putIfAbsent(device, family))
 					.findAny()
 					.isPresent();
 		}
 
 		/**
-		 * Selects the matching queue family for the given device.
+		 * Selects the matched queue family for the given device.
 		 * @param device Physical device
 		 * @return Matching queue family
 		 */
@@ -218,18 +202,19 @@ public class PhysicalDevice implements NativeObject {
 		}
 
 		/**
-		 * Creates a selector that matches a device with a family that supports <b>all</b> the given flags.
+		 * Creates a selector that matches a device with a queue family that supports <b>all</b> the given flags.
 		 * @param flags Required flags
 		 * @return Queue selector
 		 */
-		public static Selector queue(Set<VkQueueFlag> flags) {
-			final BiPredicate<PhysicalDevice, Family> predicate = (_, family) -> family.flags().containsAll(flags);
+		public static Selector queue(VkQueueFlag... flags) {
+			final var required = Set.of(flags);
+			final BiPredicate<PhysicalDevice, Family> predicate = (_, family) -> family.flags().containsAll(required);
 			return new Selector(predicate);
 		}
 	}
 
 	/**
-	 * Vulkan physical device API.
+	 * Physical device API.
 	 */
 	interface Library {
 		/**

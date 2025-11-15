@@ -11,12 +11,12 @@ import org.sarge.jove.util.MathsUtility;
 public interface Projection {
 	/**
 	 * Builds the matrix for this projection.
-	 * @param near		Near plane
-	 * @param far		Far plane
-	 * @param dim		Viewport dimensions
+	 * @param near				Near plane
+	 * @param far				Far plane
+	 * @param dimensions		Viewport dimensions
 	 * @return Projection matrix
 	 */
-	Matrix matrix(float near, float far, Dimensions dim);
+	Matrix matrix(float near, float far, Dimensions dimensions);
 
 	/**
 	 * Perspective projection with a 60 degree FOV.
@@ -29,9 +29,9 @@ public interface Projection {
 	 */
 	static Projection perspective(float fov) {
 		final float scale = 1 / (float) Math.tan(fov / 2);
-		return (near, far, dim) -> {
+		return (near, far, dimensions) -> {
 			return new Matrix.Builder(4)
-					.set(0, 0, scale / dim.ratio())
+					.set(0, 0, scale / dimensions.ratio())
 					.set(1, 1, -scale)
 					.set(2, 2, far / (near - far))
 					.set(2, 3, (near * far) / (near - far))
@@ -44,12 +44,12 @@ public interface Projection {
 	 * Orthographic or flat projection.
 	 * TODO - update for Vulkan (see cookbook)
 	 */
-	Projection FLAT = (near, far, dim) -> {
+	Projection FLAT = (near, far, dimensions) -> {
 		// Determine clipping planes
 		final float left = 0;
-		final float right = dim.width();
+		final float right = dimensions.width();
 		final float top = 0;
-		final float bottom = dim.height();
+		final float bottom = dimensions.height();
 
 		// Build projection matrix
 		return new Matrix.Builder(4)

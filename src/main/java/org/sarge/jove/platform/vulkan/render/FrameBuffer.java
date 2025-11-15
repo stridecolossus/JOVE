@@ -67,6 +67,14 @@ public class FrameBuffer extends VulkanObject {
 	}
 
 	/**
+	 * Creates a command to start a render pass with this frame buffer.
+	 * @return Begin render pass command
+	 */
+	public Command begin() {
+		return begin(VkSubpassContents.INLINE);
+	}
+
+	/**
 	 * @return Clear attachment array
 	 */
 	private VkClearValue[] clear() {

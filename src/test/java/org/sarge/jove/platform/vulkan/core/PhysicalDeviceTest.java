@@ -9,7 +9,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.IntegerReference;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceFeatures;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
 
@@ -115,13 +115,12 @@ class PhysicalDeviceTest {
 
 	@Test
 	void enumerate() {
-		final var helper = new DeviceEnumerationHelper(instance, library);
-		assertEquals(1, helper.enumerate().count());
+		assertEquals(1, PhysicalDevice.enumerate(instance, library).count());
 	}
 
 	@Test
 	void selector() {
-		final Selector selector = Selector.queue(Set.of(VkQueueFlag.GRAPHICS));
+		final Selector selector = Selector.queue(VkQueueFlag.GRAPHICS);
 		assertEquals(true, selector.test(device));
 		assertEquals(family, selector.family(device));
 	}

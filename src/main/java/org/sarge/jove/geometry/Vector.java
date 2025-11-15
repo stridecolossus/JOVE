@@ -189,12 +189,12 @@ public class Vector extends Tuple {
 	/**
 	 * Projects this vector onto the given normal.
 	 * <p>
-	 * The vector projection of a vector V onto U is: {@code projU(V) = (V.N) N / |N * N|} where:
+	 * The projection of vector V onto U is: {@code projU(V) = (V.N) N / |N * N|} where:
 	 * <ul>
 	 * <li>V is <b>this</b> vector</li>
 	 * <li>N is the normal to be projected onto</li>
 	 * </ul>
-	 * Note that the magnitude of N squared is always {@code one} in this implementation.
+	 * Note that the magnitude of N squared is always {@code one} in this implementation and can therefore be ignored.
 	 * <p>
 	 * @param normal Vector to project onto
 	 * @return Projected vector

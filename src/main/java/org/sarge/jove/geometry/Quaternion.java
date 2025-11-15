@@ -57,8 +57,9 @@ public record Quaternion(float scalar, Vector vector) implements Rotation {
 	// TODO - overload with cosine provider?
 
 	/**
-	 * Note that the conjugate of a rotation quaternion is its inverse.
-	 * @return Conjugate of this quaternion
+	 * Calculates the conjugate of this quaternion.
+	 * Note that the conjugate of a rotation quaternion is also its inverse.
+	 * @return Conjugate
 	 */
 	public Quaternion conjugate() {
 		return new Quaternion(scalar, vector.invert());

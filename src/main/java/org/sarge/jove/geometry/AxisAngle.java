@@ -9,7 +9,9 @@ import org.sarge.jove.util.MathsUtility;
 
 /**
  * An <i>axis-angle</i> specifies a mutable, counter-clockwise rotation about an arbitrary axis.
- * @see #provider()
+ * <p>
+ * The {@link #provider()} method can be overridden to implement custom trigonometric functions.
+ * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
@@ -20,7 +22,7 @@ public class AxisAngle implements Rotation, Animation {
 	/**
 	 * Constructor.
 	 * @param axis 		Rotation axis
-	 * @param angle		Angle
+	 * @param angle		Angle (radians, counter-clockwise)
 	 */
 	public AxisAngle(Normal axis, float angle) {
 		this.axis = requireNonNull(axis);

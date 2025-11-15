@@ -25,11 +25,13 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  *     .bytes(2)            // 16
  *     .signed(false)       // U
  *     .type(Type.NORM)     // NORM
- *     .build();            // B16G16R16A16_UNORM</pre>
+ *     .build();            // B16G16R16A16_UNORM
+ * </pre>
  * <p>
  * The {@link #format(Layout)} convenience method can also be used to determine the format from a vertex layout:
  * <pre>
- * VkFormat point = FormatBuilder.format(Point.LAYOUT); // R32G32B32_SFLOAT</pre>
+ * VkFormat point = FormatBuilder.format(Point.LAYOUT); // R32G32B32_SFLOAT
+ * </pre>
  * <p>
  * @see VkFormat
  * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#texel-block-size">Texel block sizes</a>
@@ -69,7 +71,8 @@ public final class FormatBuilder {
 	}
 
 	/**
-	 * Helper - Determines the Vulkan format for the given layout.
+	 * Helper.
+	 * Determines the Vulkan format for the given layout.
 	 * @param layout Layout
 	 * @return Format for the given layout
 	 */
@@ -83,7 +86,8 @@ public final class FormatBuilder {
 	}
 
 	/**
-	 * Helper - Determine the format of the given image.
+	 * Helper.
+	 * Determines the format of the given image.
 	 * <p>
 	 * The image format is determined as follows:
 	 * <ol>
@@ -121,10 +125,11 @@ public final class FormatBuilder {
 	 * Sets the colour components, e.g. {@code RGBA}.
 	 * @param template Colour components
 	 * @throws IllegalArgumentException if {@link #components} is empty or is longer than 4 characters in length
-	 * @see Colour#RGBA
 	 */
 	public FormatBuilder components(String components) {
-		if(components.length() > 4) throw new IllegalArgumentException(String.format("Invalid components [%s]", components));
+		if(components.length() > 4) {
+			throw new IllegalArgumentException(String.format("Invalid components [%s]", components));
+		}
 		this.components = requireNotEmpty(components);
 		return count(components.length());
 	}
@@ -136,31 +141,31 @@ public final class FormatBuilder {
 	 * @see #components(String)
 	 */
 	public FormatBuilder count(int count) {
-		if((count < 1) || (count > components.length())) throw new IllegalArgumentException("Invalid number of components: count=%d max=%d".formatted(count, components.length()));
+		if((count < 1) || (count > components.length())) {
+			throw new IllegalArgumentException("Invalid number of components: count=%d max=%d".formatted(count, components.length()));
+		}
 		this.count = count;
 		return this;
 	}
 
 	/**
 	 * Sets the number of bytes per component: 1, 2, 4 or 8.
-	 * @param bytes Number of bytes per component (default is <code>4</code>)
+	 * @param bytes Number of bytes per component
 	 * @throws IllegalArgumentException if the number of bytes is invalid
 	 */
 	public FormatBuilder bytes(int bytes) {
-		final boolean valid = switch(bytes) {
-    		case 1, 2, 4, 8 -> true;
-    		default -> false;
-		};
-		if(!valid) {
-			throw new IllegalArgumentException("Unsupported number of component bytes: " + bytes);
+		switch(bytes) {
+			case 1, 2, 4, 8 -> {
+				this.bytes = bytes;
+			}
+			default -> throw new IllegalArgumentException("Unsupported number of component bytes: " + bytes);
 		}
-		this.bytes = bytes;
 		return this;
 	}
 
 	/**
 	 * Sets whether the data type is signed.
-	 * @param signed Whether signed type (default is {@code true})
+	 * @param signed Whether signed type
 	 */
 	public FormatBuilder signed(boolean signed) {
 		this.signed = signed;
@@ -169,7 +174,7 @@ public final class FormatBuilder {
 
 	/**
 	 * Sets the numeric format.
-	 * @param numeric Numeric format (default is {@link NumericFormat#FLOAT})
+	 * @param numeric Numeric format
 	 */
 	public FormatBuilder type(NumericFormat numeric) {
 		this.numeric = requireNonNull(numeric);

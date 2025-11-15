@@ -6,9 +6,11 @@ import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.util.*;
@@ -237,7 +239,7 @@ public class Swapchain extends VulkanObject {
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
-		private final VulkanSurface surface;
+		private final VulkanSurface.Properties properties;
 		private final VkSurfaceCapabilitiesKHR capabilities;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
@@ -246,28 +248,26 @@ public class Swapchain extends VulkanObject {
 
 		/**
 		 * Constructor.
-		 * @param surface Rendering surface
+		 * @param properties Surface properties
 		 */
-		public Builder(VulkanSurface surface) {
-			this.surface = requireNonNull(surface);
-			this.capabilities = surface.capabilities();
+		public Builder(VulkanSurface.Properties properties) {
+			this.properties = requireNonNull(properties);
+			this.capabilities = properties.capabilities();
 			init();
+			format(VulkanSurface.defaultSurfaceFormat());
+			usage(VkImageUsageFlag.COLOR_ATTACHMENT);
 		}
 
-		/**
-		 * Initialises the swapchain descriptor.
-		 */
 		private void init() {
-			extents(capabilities.currentExtent);
-			count(capabilities.minImageCount);
-			transform(capabilities.currentTransform);
-			format(VulkanSurface.defaultSurfaceFormat());
-			arrays(1);
-			mode(VkSharingMode.EXCLUSIVE);
-			usage(VkImageUsageFlag.COLOR_ATTACHMENT);
-			alpha(VkCompositeAlphaFlagKHR.OPAQUE);
-			presentation(VulkanSurface.DEFAULT_PRESENTATION_MODE);
-			clipped(true);
+			info.surface = properties.surface().handle();
+			info.minImageCount = capabilities.minImageCount;
+			info.preTransform = capabilities.currentTransform;
+			info.imageArrayLayers = 1;
+			info.compositeAlpha = VkCompositeAlphaFlagKHR.OPAQUE;
+			info.imageExtent = capabilities.currentExtent;
+			info.imageSharingMode = VkSharingMode.EXCLUSIVE;
+			info.presentMode = VulkanSurface.DEFAULT_PRESENTATION_MODE;
+			info.clipped = true;
 		}
 
 		private static <E extends IntEnum> void validate(EnumMask<E> mask, E e) {
@@ -286,17 +286,16 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Sets the number of images.
-		 * @param num Number of images
-		 * @throws IllegalArgumentException if the number of image is not supported by the surface
-		 * @see VkSurfaceCapabilitiesKHR
+		 * Sets the minimum number of images.
+		 * @param count Number of images
+		 * @throws IllegalArgumentException if the number of images is not supported by the surface
 		 */
-		public Builder count(int num) {
-			// TODO - maxImageCount = 0 -> no limit!
-			if((num < capabilities.minImageCount) || (num > capabilities.maxImageCount)) {
-				throw new IllegalArgumentException("Invalid number of images: num=%d range=%d/%d".formatted(num, capabilities.minImageCount, capabilities.maxImageCount));
+		public Builder count(int count) {
+			final int max = capabilities.maxImageCount;
+			if((count < capabilities.minImageCount) || ((max > 0) && (count > max))) {
+				throw new IllegalArgumentException("Invalid number of images: num=%d range=%d/%d".formatted(count, capabilities.minImageCount, capabilities.maxImageCount));
 			}
-			info.minImageCount = num;
+			info.minImageCount = count;
 			return this;
 		}
 
@@ -304,13 +303,12 @@ public class Swapchain extends VulkanObject {
 		 * Sets the surface format.
 		 * @param format Surface format
 		 * @throws IllegalArgumentException if the given format is not supported by the surface
-		 * @see VulkanSurface#equals(VkSurfaceFormatKHR)
 		 */
 		public Builder format(VkSurfaceFormatKHR format) {
-			final boolean valid = surface
+			final boolean valid = properties
 					.formats()
 					.stream()
-					.anyMatch(VulkanSurface.equals(format));
+					.anyMatch(VulkanSurface.Properties.equals(format));
 
 			if(!valid) {
 				throw new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", format.format, format.colorSpace));
@@ -326,46 +324,67 @@ public class Swapchain extends VulkanObject {
 		 * Helper.
 		 * @return Extents as width-height dimensions
 		 */
-		private static Dimensions dimensions(VkExtent2D extents) {
+		private static Dimensions toDimensions(VkExtent2D extents) {
 			return new Dimensions(extents.width, extents.height);
 		}
 
 		/**
-		 * Sets the image extent.
-		 * @param extents Image extent
+		 * Sets the image extents.
+		 * @param extents Image extents
+		 * @throws IllegalArgumentException if {@link #extents} does not match the min/max extents supported by the surface
 		 */
-		public Builder extent(Dimensions extents) {
+		public Builder extents(Dimensions extents) {
 			// Check minimum extent
-			final Dimensions min = dimensions(capabilities.minImageExtent);
+			final Dimensions min = toDimensions(capabilities.minImageExtent);
 			if(!extents.contains(min)) {
 				throw new IllegalArgumentException("Extent is smaller than the supported minimum");
 			}
 
 			// Check maximum extent
-			final Dimensions max = dimensions(capabilities.maxImageExtent);
+			final Dimensions max = toDimensions(capabilities.maxImageExtent);
 			if(!max.contains(extents)) {
 				throw new IllegalArgumentException("Extent is larger than the supported maximum");
 			}
 
 			// Populate extents
-			final var structure = new VkExtent2D();
-			structure.width = extents.width();
-			structure.height = extents.height();
-			extents(structure);
+			info.imageExtent.width = extents.width();
+			info.imageExtent.height = extents.height();
 
 			return this;
 		}
 
-		private void extents(VkExtent2D extents) {
-			info.imageExtent = requireNonNull(extents);
-			// TODO - constrain by actual resolution using glfwGetFramebufferSize()
+		/**
+		 * Sets the image extents of this swapchain to match the given window.
+		 * @param window Window
+		 */
+		public Builder extents(Window window) {
+			info.imageExtent = select(capabilities, window);
+			return this;
+		}
+		// TODO - test, doc explanation
+
+		private static VkExtent2D select(VkSurfaceCapabilitiesKHR capabilities, Window window) {
+			// Try using the current extents of the surface
+			if(capabilities.currentExtent.width < Integer.MAX_VALUE) {
+				return capabilities.currentExtent;
+			}
+
+			// Otherwise query the actual surface size (in pixels)
+			final Dimensions size = window.size();
+
+			// Constraint to min/max extents
+			final var min = capabilities.minImageExtent;
+			final var max = capabilities.minImageExtent;
+			final var extents = new VkExtent2D();
+			extents.width = Math.clamp(size.width(), min.width, max.width);
+			extents.height = Math.clamp(size.height(), min.height, max.height);
+			return extents;
 		}
 
 		/**
 		 * Sets the number of image array layers.
 		 * @param layers Number of image array layers
 		 * @throws IllegalArgumentException if the given number of array layers exceeds the maximum supported by the surface
-		 * @see VkSurfaceCapabilitiesKHR#maxImageArrayLayers
 		 */
 		public Builder arrays(int layers) {
 			if((layers < 1) || (layers > capabilities.maxImageArrayLayers)) {
@@ -378,7 +397,7 @@ public class Swapchain extends VulkanObject {
 		/**
 		 * Sets the image usage flag.
 		 * @param usage Image usage
-		 * @throws IllegalArgumentException if the usage flag is not supported by the surface
+		 * @throws IllegalArgumentException if {@link #usage} is not supported by the surface
 		 */
 		public Builder usage(VkImageUsageFlag usage) {
 			validate(capabilities.supportedUsageFlags, usage);
@@ -387,18 +406,21 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Sets the image sharing mode.
-		 * @param mode Sharing mode
+		 * Sets the sharing mode as {@link VkSharingMode#CONCURRENT} for the case where swapchain images can be shared across multiple queue families without ownership transfers.
+		 * If a single queue family is used for both rendering and presentation the mode can remain as the default {@link VkSharingMode#EXCLUSIVE}.
+		 * @param families Shared queue families
 		 */
-		public Builder mode(VkSharingMode mode) {
-			info.imageSharingMode = mode;
+		public Builder concurrent(List<Family> families) {
+			info.imageSharingMode = VkSharingMode.CONCURRENT;
+			info.queueFamilyIndexCount = families.size();
+			info.pQueueFamilyIndices = families.stream().mapToInt(Family::index).toArray();
 			return this;
 		}
 
 		/**
 		 * Sets the surface transform.
 		 * @param transform Surface transform
-		 * @throws IllegalArgumentException if the transform is not supported by the surface
+		 * @throws IllegalArgumentException if {@link #transform} is not supported by the surface
 		 */
 		public Builder transform(VkSurfaceTransformFlagKHR transform) {
 			validate(capabilities.supportedTransforms, transform);
@@ -409,7 +431,7 @@ public class Swapchain extends VulkanObject {
 		/**
 		 * Sets the surface alpha function.
 		 * @param alpha Alpha function
-		 * @throws IllegalArgumentException if the given alpha function is not supported by the surface
+		 * @throws IllegalArgumentException if the {@link #alpha} function is not supported by the surface
 		 */
 		public Builder alpha(VkCompositeAlphaFlagKHR alpha) {
 			validate(capabilities.supportedCompositeAlpha, alpha);
@@ -419,13 +441,13 @@ public class Swapchain extends VulkanObject {
 
 		/**
 		 * Sets the presentation mode.
-		 * @implNote The {@link #mode} is a Vulkan structure compared by <b>identity</b>, i.e. this method assumes the given mode has been retrieved via {@link VulkanSurface#modes()}
 		 * @param mode Presentation mode
-		 * @throws IllegalArgumentException if the mode is not supported by the surface
+		 * @throws IllegalArgumentException if {@link #mode} is not supported by the surface
+		 * @implNote The {@link #mode} is a Vulkan structure compared by <b>identity</b>, i.e. this method assumes the given mode has been retrieved via {@link VulkanSurface#modes()}
 		 * @see VulkanSurface#modes()
 		 */
 		public Builder presentation(VkPresentModeKHR mode) {
-			if(!surface.modes().contains(mode)) {
+			if(!properties.modes().contains(mode)) {
 				throw new IllegalArgumentException("Unsupported presentation mode: " + mode);
 			}
 			info.presentMode = mode;
@@ -433,8 +455,8 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Sets whether the surface can be clipped.
-		 * @param clipped Whether clipped
+		 * Sets whether the surface can be clipped, i.e. The surface is not a full screen window.
+		 * @param clipped Whether this swapchain is clipped
 		 */
 		public Builder clipped(boolean clipped) {
 			info.clipped = clipped;
@@ -454,74 +476,45 @@ public class Swapchain extends VulkanObject {
 		 * Constructs this swapchain.
 		 * @param device Logical device
 		 * @return New swapchain
-		 * @throws IllegalArgumentException if the image format or colour-space is not supported by the surface
 		 */
 		public Swapchain build(LogicalDevice device) {
 			// Initialise swapchain descriptor
-			populate();
+			info.flags = new EnumMask<>(flags);
+			info.imageUsage = new EnumMask<>(usage);
 
 			// Create swapchain
 			final Library library = device.library();
-			final Pointer ref = new Pointer();
-			library.vkCreateSwapchainKHR(device, info, null, ref);
+			final Pointer handle = new Pointer();
+			library.vkCreateSwapchainKHR(device, info, null, handle);
 
 			// Retrieve swapchain images
-			final Handle handle = ref.get();
-			final Handle[] images = images(library, device, handle);
+			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, handle.get(), count, array);
+			final Handle[] images = VulkanFunction.invoke(function, Handle[]::new);
 
-			// Create image views
-			final Dimensions extents = dimensions(info.imageExtent);
-			final List<View> views = views(device, images, info.imageFormat, extents, clear);
-
-			// Create swapchain instance
-			return new Swapchain(handle, device, library, info.imageFormat, extents, views);
-		}
-
-		/**
-		 * Initialises the swapchain descriptor.
-		 */
-		private void populate() {
-			info.surface = surface.handle();
-			info.flags = new EnumMask<>(flags);
-			info.imageUsage = new EnumMask<>(usage);
-			info.oldSwapchain = null; // TODO
-			// TODO - need to populate these if graphics <> presentation AND sharing -> CONCURRENT (EXLCUSIVE is default and preferred)
-			info.queueFamilyIndexCount = 0;
-			info.pQueueFamilyIndices = null;
-		}
-
-		/**
-		 * @return Swapchain images
-		 */
-		private static Handle[] images(Library library, LogicalDevice device, Handle swapchain) {
-			final VulkanFunction<Handle[]> images = (count, array) -> library.vkGetSwapchainImagesKHR(device, swapchain, count, array);
-			return VulkanFunction.invoke(images, Handle[]::new);
-		}
-
-		/**
-		 * Builds the swapchain image views.
-		 * @param device		Logical device
-		 * @param images		Images
-		 * @param format		Image format
-		 * @param extents		Extents
-		 * @param clear			Clear value
-		 * @return Swapchain image views
-		 */
-		private static List<View> views(LogicalDevice device, Handle[] images, VkFormat format, Dimensions extents, ClearValue clear) {
-			// Build a common image descriptor
-			final Image.Descriptor descriptor = new Image.Descriptor.Builder()
-    				.format(format)
+			// Build the common image descriptor for the views
+			final var extents = toDimensions(info.imageExtent);
+			final var descriptor = new Image.Descriptor.Builder()
+    				.format(info.imageFormat)
     				.extents(extents)
     				.aspect(VkImageAspect.COLOR)
     				.build();
 
-			// Create a view for each swapchain image
-			return Arrays
+			// Create image views
+			final List<View> views = Arrays
 					.stream(images)
-					.map(handle -> new SwapChainImage(handle, descriptor))
+					.map(image -> new SwapChainImage(image, descriptor))
 					.map(image -> new View.Builder().build(device, image))
-					.peek(view -> view.clear(clear))
 					.toList();
+
+			// Initialise clear value
+			if(clear != null) {
+    			for(View view : views) {
+    				view.clear(clear);
+    			}
+			}
+
+			// Create swapchain instance
+			return new Swapchain(handle.get(), device, library, info.imageFormat, extents, views);
 		}
 
 		/**

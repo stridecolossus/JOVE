@@ -11,6 +11,11 @@ import org.sarge.jove.platform.vulkan.*;
  */
 public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String name, SpecialisationConstants constants) {
 	/**
+	 * Default entry-point name for a shader.
+	 */
+	public static final String MAIN = "main";
+
+	/**
 	 * Constructor.
 	 * @param stage			Shader stage
 	 * @param shader		Shader module
@@ -21,6 +26,16 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 		requireNonNull(stage);
 		requireNonNull(shader);
 		requireNotEmpty(name);
+	}
+
+	/**
+	 * Convenience constructor.
+	 * @param stage			Shader stage
+	 * @param shader		Shader module
+	 * @see #MAIN
+	 */
+	public ProgrammableShaderStage(VkShaderStage stage, Shader shader) {
+		this(stage, shader, MAIN, null);
 	}
 
 	/**
@@ -57,11 +72,11 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	public static class Builder {
 		private VkShaderStage stage;
 		private Shader shader;
-		private String name = "main";
+		private String name = MAIN;
 		private SpecialisationConstants constants;
 
 		/**
-		 * Constructor.
+		 * Sets the shader stage.
 		 * @param stage Shader stage
 		 */
 		public Builder stage(VkShaderStage stage) {

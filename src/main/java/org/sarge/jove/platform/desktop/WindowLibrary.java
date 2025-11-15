@@ -63,12 +63,22 @@ interface WindowLibrary {
 	void glfwSetWindowTitle(Window window, String title);
 
 	/**
-	 * Retrieves the dimensions of the given window.
+	 * Retrieves the dimensions of the given window in screen coordinates.
 	 * @param window	Window
 	 * @param w			Width
 	 * @param h			Height
+	 * @see #glfwGetFramebufferSize(Window, IntegerReference, IntegerReference)
 	 */
 	void glfwGetWindowSize(Window window, IntegerReference w, IntegerReference h);
+
+	/**
+	 * Retrieves the dimensions of the given window in pixels.
+	 * @param window	Window
+	 * @param w			Width
+	 * @param h			Height
+	 * @see #glfwGetWindowSize(Window, IntegerReference, IntegerReference)
+	 */
+	void glfwGetFramebufferSize(Window window, IntegerReference w, IntegerReference h);
 
 	/**
 	 * Sets the dimensions of the given window.

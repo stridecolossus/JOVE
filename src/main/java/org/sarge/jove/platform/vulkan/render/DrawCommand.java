@@ -66,6 +66,16 @@ public class DrawCommand implements Command {
 	}
 
 	/**
+	 * Creates a simple draw command for the given number of vertices.
+	 * @param vertexCount Number of vertices
+	 * @param device Logical device
+	 * @return Simple draw command
+	 */
+	public static DrawCommand draw(int vertexCount, LogicalDevice device) {
+		return new Builder().vertexCount(vertexCount).build(device);
+	}
+
+	/**
 	 * Builder for a draw command.
 	 */
 	public static class Builder {

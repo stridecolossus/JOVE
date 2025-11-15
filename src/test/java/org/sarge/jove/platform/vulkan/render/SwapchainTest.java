@@ -3,19 +3,21 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 
-import java.util.List;
+import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 import org.sarge.jove.util.EnumMask;
 
 public class SwapchainTest {
 	static class MockSwapchainLibrary extends MockVulkanLibrary {
+		private boolean concurrent;
 		private boolean destroyed;
 		private VkResult result = VkResult.SUCCESS;
 
@@ -33,9 +35,14 @@ public class SwapchainTest {
 			assertEquals(480, pCreateInfo.imageExtent.height);
 			assertEquals(1, pCreateInfo.imageArrayLayers);
 			assertEquals(new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT), pCreateInfo.imageUsage);
-			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.imageSharingMode);
-			assertEquals(0, pCreateInfo.queueFamilyIndexCount);
-			//assertArrayEquals(new int[]{}, pCreateInfo.pQueueFamilyIndices);
+			if(concurrent) {
+    			assertEquals(VkSharingMode.CONCURRENT, pCreateInfo.imageSharingMode);
+    			assertEquals(1, pCreateInfo.queueFamilyIndexCount);
+			}
+			else {
+    			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.imageSharingMode);
+    			assertEquals(0, pCreateInfo.queueFamilyIndexCount);
+			}
 			assertEquals(VkSurfaceTransformFlagKHR.IDENTITY_KHR, pCreateInfo.preTransform);
 			assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, pCreateInfo.compositeAlpha);
 			assertEquals(VkPresentModeKHR.FIFO_KHR, pCreateInfo.presentMode);
@@ -87,6 +94,35 @@ public class SwapchainTest {
 		@Override
 		public int vkQueuePresentKHR(WorkQueue queue, VkPresentInfoKHR pPresentInfo) {
 			return result.value();
+		}
+
+		@Override
+		public VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, VulkanSurface surface, VkSurfaceCapabilitiesKHR pSurfaceCapabilities) {
+			pSurfaceCapabilities.currentExtent = new VkExtent2D();
+			pSurfaceCapabilities.currentExtent.width = 640;
+			pSurfaceCapabilities.currentExtent.height = 480;
+			pSurfaceCapabilities.supportedTransforms = new EnumMask<>(IDENTITY_KHR);
+			pSurfaceCapabilities.currentTransform = IDENTITY_KHR;
+			pSurfaceCapabilities.maxImageArrayLayers = 1;
+			pSurfaceCapabilities.minImageCount = 1;
+			pSurfaceCapabilities.maxImageCount = 2;
+			pSurfaceCapabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT);
+			pSurfaceCapabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagKHR.OPAQUE);
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public VkResult vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, VkSurfaceFormatKHR[] formats) {
+			if(formats == null) {
+				count.set(1);
+			}
+			else {
+				final var format = new VkSurfaceFormatKHR();
+    			format.format = VkFormat.B8G8R8A8_UNORM;
+    			format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
+    			formats[0] = format;
+			}
+			return VkResult.SUCCESS;
 		}
 	}
 
@@ -170,39 +206,12 @@ public class SwapchainTest {
 
 	@Nested
 	class BuilderTest {
-		private static VulkanSurface surface() {
-			return new MockVulkanSurface() {
-				@Override
-				public VkSurfaceCapabilitiesKHR capabilities() {
-					final var capabilities = new VkSurfaceCapabilitiesKHR();
-					capabilities.currentExtent = new VkExtent2D();
-					capabilities.currentExtent.width = 640;
-					capabilities.currentExtent.height = 480;
-					capabilities.supportedTransforms = new EnumMask<>(IDENTITY_KHR);
-					capabilities.currentTransform = IDENTITY_KHR;
-					capabilities.maxImageArrayLayers = 1;
-					capabilities.minImageCount = 1;
-					capabilities.maxImageCount = 2;
-					capabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT);
-					capabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagKHR.OPAQUE);
-					return capabilities;
-				}
-
-				@Override
-				public List<VkSurfaceFormatKHR> formats() {
-					final var format = new VkSurfaceFormatKHR();
-					format.format = VkFormat.B8G8R8A8_UNORM;
-					format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
-					return List.of(format);
-				}
-			};
-		}
-
 		private Swapchain.Builder builder;
 
 		@BeforeEach
 		void before() {
-			builder = new Swapchain.Builder(surface());
+			final var surface = new MockVulkanSurface(library);
+			builder = new Swapchain.Builder(surface.new Properties(new MockPhysicalDevice()));
 		}
 
 		@Test
@@ -211,6 +220,13 @@ public class SwapchainTest {
 			assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
 			assertEquals(new Dimensions(640, 480), swapchain.extents());
 			assertEquals(1, swapchain.attachments().size());
+		}
+
+		@Test
+		void concurrent() {
+			final var family = new Family(1, 2, Set.of());
+			library.concurrent = true;
+			builder.concurrent(List.of(family)).build(device);
 		}
 	}
 }

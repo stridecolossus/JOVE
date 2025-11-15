@@ -22,7 +22,7 @@ public class Instance extends TransientNativeObject {
 	 * @param handle		Instance handle
 	 * @param library		Instance library
 	 */
-	Instance(Handle handle, Instance.Library library) {
+	Instance(Handle handle, Library library) {
 		super(handle);
 		this.library = requireNonNull(library);
 	}
@@ -117,7 +117,8 @@ public class Instance extends TransientNativeObject {
 		}
 
 		/**
-		 * Helper - Registers a group of extensions.
+		 * Helper.
+		 * Registers a group of extensions.
 		 * @param extensions Extension names
 		 */
 		public Builder extensions(Iterable<String> extensions) {
@@ -203,7 +204,7 @@ public class Instance extends TransientNativeObject {
 		void vkDestroyInstance(Instance instance, Handle pAllocator);
 
 		/**
-		 * Enumerates extension properties.
+		 * Enumerates supported extensions.
 		 * @param pLayerName		Optional layer name
 		 * @param pPropertyCount	Number of extensions
 		 * @param pProperties		Extensions
@@ -212,7 +213,7 @@ public class Instance extends TransientNativeObject {
 		VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, @Updated VkExtensionProperties[] pProperties);
 
 		/**
-		 * Enumerates validation layer properties.
+		 * Enumerates supported layers.
 		 * @param pPropertyCount	Number of layers
 		 * @param pProperties		Layers
 		 * @return Result

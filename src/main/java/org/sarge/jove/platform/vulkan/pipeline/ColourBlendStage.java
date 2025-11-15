@@ -11,12 +11,17 @@ import org.sarge.jove.util.EnumMask;
 /**
  * The <i>colour blend stage</i> configures the colour blending fixed function of the pipeline.
  * <p>
- * TODO
- * - explain global vs per-attachment configuration
- * - logicOpEnable = true => use global logicOp => all attachments essentially disabled (!)
- * - injects disabled configuration if unspecified for convenience
- * - however the write mask for each (?) attachment MUST be configured or nothing will be rendered!!!
- * - this is very backward
+ * Colour blending has two modes of operation:
+ * <p>
+ * By default colour blending is configured <i>per attachment</i> by specifying a {@link ColourBlendAttachment} for each swapchain attachment.
+ * <p>
+ * Alternatively <i>global bitwise blending</i> overrides this behaviour by configuring the {@link ColourBlendStage#operation(VkLogicOp)} logic operation for <b>all</b> attachments.
+ * <p>
+ * For convenience, if no attachments have been configured, this implementation injects a <b>single</b> {@link ColourBlendAttachment#DISABLED} attachment.
+ * This disables both modes, in which case fragment colours are written to the frame buffer unmodified.
+ * <p>
+ * However note that in <b>all</b> cases a {@link ColourBlendAttachment} descriptor <b>must</b> be configured for each colour attachment.
+ * Additionally the colour write {@link ColourBlendAttachment#mask()} <b>must</b> be configured to pass through the resultant colours, otherwise rendering is essentially disabled entirely.
  * <p>
  * @author Sarge
  */
@@ -71,21 +76,17 @@ public class ColourBlendStage {
 		// Init descriptor
 		info.flags = 0;
 
-		// Add blend configuration for the colour attachments, injecting a single default entry if unspecified
+		// Inject a single disabled entry if no attachments are configured
 		if(attachments.isEmpty()) {
-			final var disabled = new VkPipelineColorBlendAttachmentState();
-			disabled.colorWriteMask = new EnumMask<>(ColourBlendAttachment.DEFAULT_WRITE_MASK);
-			disabled.blendEnable = false;
-	   		info.attachmentCount = 1;
-	   		info.pAttachments = new VkPipelineColorBlendAttachmentState[]{disabled};
+			attachments.add(ColourBlendAttachment.DISABLED);
 		}
-		else {
-           	info.attachmentCount = attachments.size();
-           	info.pAttachments = attachments
-           			.stream()
-           			.map(ColourBlendAttachment::populate)
-           			.toArray(VkPipelineColorBlendAttachmentState[]::new);
-		}
+
+		// Add blending configuration for colour attachments
+		info.attachmentCount = attachments.size();
+       	info.pAttachments = attachments
+       			.stream()
+       			.map(ColourBlendAttachment::populate)
+       			.toArray(VkPipelineColorBlendAttachmentState[]::new);
 
 		return info;
 	}
@@ -128,11 +129,16 @@ public class ColourBlendStage {
 	/**
 	 * A <i>colour blend attachment</i> configures the blending operations of each colour attachment.
 	 */
-	public record ColourBlendAttachment(BlendOperation colour, BlendOperation alpha, Set<VkColorComponent> mask) {
+	public record ColourBlendAttachment(boolean enabled, BlendOperation colour, BlendOperation alpha, Set<VkColorComponent> mask) {
 		/**
 		 * Default colour write mask containing <b>all</b> channels.
 		 */
 		public static final Set<VkColorComponent> DEFAULT_WRITE_MASK = Set.of(VkColorComponent.values());
+
+		/**
+		 * Defines an attachment with colour blending disabled.
+		 */
+		public static final ColourBlendAttachment DISABLED = new Builder().enable(false).build();
 
 		/**
 		 * Constructor.
@@ -168,7 +174,7 @@ public class ColourBlendStage {
 		 */
 		private VkPipelineColorBlendAttachmentState populate() {
 			final var info = new VkPipelineColorBlendAttachmentState();
-			info.blendEnable = true; // TODO - how/why would this ever logically be publicly false?
+			info.blendEnable = enabled;
 			info.srcColorBlendFactor = colour.source;
 			info.dstColorBlendFactor = colour.destination;
 			info.colorBlendOp = colour.operation;
@@ -183,9 +189,19 @@ public class ColourBlendStage {
 		 * Builder for a colour blend attachment.
 		 */
 		public static class Builder {
+			private boolean enable = true;
 			private BlendOperation colour = BlendOperation.colour();
 			private BlendOperation alpha = BlendOperation.alpha();
 			private Set<VkColorComponent> mask = DEFAULT_WRITE_MASK;
+
+			/**
+			 * Sets whether blending is enabled for this attachment.
+			 * @param enable Whether enabled
+			 */
+			public Builder enable(boolean enable) {
+				this.enable = enable;
+				return this;
+			}
 
 			/**
 			 * Sets the blending operation for the colour channel.
@@ -223,7 +239,7 @@ public class ColourBlendStage {
 			 * @return New colour blending attachment
 			 */
 			public ColourBlendAttachment build() {
-				return new ColourBlendAttachment(colour, alpha, mask);
+				return new ColourBlendAttachment(enable, colour, alpha, mask);
 			}
 		}
 	}

@@ -11,21 +11,13 @@ import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.render.*;
-import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
 
 public class VulkanIntegrationDemo {
-
-	static void loop(Window window) throws InterruptedException {
-		while(true) {
-			Thread.sleep(100);
-		}
-	}
-
 	void main() throws Exception {
 		System.out.println("Initialising logging...");
 		try(final var config = VulkanIntegrationDemo.class.getResourceAsStream("/logging.properties")) {
@@ -45,34 +37,12 @@ public class VulkanIntegrationDemo {
 //		monitors.stream().map(m -> m.mode(desktop)).forEach(System.out::println);
 
 		System.out.println("Opening window...");
-		final Dimensions size = new Dimensions(1024, 768);
 		final Window window = new Window.Builder()
 				.title("DesktopTestTemp")
-				.size(size)
+				.size(new Dimensions(1024, 768))
 				.hint(Hint.CLIENT_API, 0)
 				.hint(Hint.VISIBLE, 1)
 				.build(desktop);
-
-//		window.fiddle();
-
-//		/////////////////
-//
-//		final MouseDevice mouse = new MouseDevice(window);
-//
-//		final var listener = new DeviceLibrary.MouseListener() {
-//			@Override
-//			public void event(MemorySegment window, double x, double y) {
-//				System.err.println("event "+window+" "+x+","+y);
-//			}
-//		};
-//
-//		mouse.add(listener);
-//
-//		desktop.error().ifPresent(System.err::println);
-//
-//		loop(mouse);
-//
-//		/////////////////
 
 		System.out.println("Initialising Vulkan...");
 		final var vulkan = Vulkan.create();
@@ -98,13 +68,13 @@ public class VulkanIntegrationDemo {
 		// TODO - option to exit on errors?
 
 		System.out.println("Getting surface...");
-		final Handle handle = window.surface(instance.handle());
+		//final Handle handle = window.surface(instance.handle());
+		final var surface = new VulkanSurface(window, instance, vulkan);
 
 		System.out.println("Enumerating devices...");
-		final Selector graphicsSelector = PhysicalDevice.Selector.queue(Set.of(VkQueueFlag.GRAPHICS));
-		final Selector presentationSelector = VulkanSurface.presentation(handle, vulkan);
-		final PhysicalDevice physical = new DeviceEnumerationHelper(instance, vulkan)
-				.enumerate()
+		final Selector graphicsSelector = Selector.queue(VkQueueFlag.GRAPHICS);
+		final Selector presentationSelector = new Selector(surface::isPresentationSupported);
+		final PhysicalDevice physical = PhysicalDevice.enumerate(instance, vulkan)
 				.filter(graphicsSelector)
 				.filter(presentationSelector)
 				.toList()
@@ -132,9 +102,6 @@ public class VulkanIntegrationDemo {
 		System.out.println("bufferImageGranularity="+props.limits.bufferImageGranularity);
 		System.out.println("maxPushConstantsSize="+props.limits.maxPushConstantsSize);
 
-		System.out.println("Creating surface...");
-		final var surface = new VulkanSurface(handle, physical, vulkan).load();
-
 //		System.out.println("Retrieving device memory properties...");
 //		final var memory = physical.memory();
 //		for(int n = 0; n < memory.memoryHeapCount; ++n) {
@@ -148,7 +115,6 @@ public class VulkanIntegrationDemo {
 		final var device = new LogicalDevice.Builder(physical)
 				.extension(Swapchain.EXTENSION)
 				.queue(new RequiredQueue(graphicsFamily))
-				//.queue(new RequiredQueue(presentationFamily))			// TODO - queue family must be unique! =? need to check if graphics == presentation
 				.build(vulkan);
 
 		final WorkQueue graphicsQueue = device.queues().get(graphicsFamily).getFirst();
@@ -157,10 +123,7 @@ public class VulkanIntegrationDemo {
 		System.out.println("presentation=" + presentationQueue);
 
 		System.out.println("Creating swapchain...");
-		//https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain
-		// TODO - select extents
-		// TODO - sharing mode ~ whether queue family is for both render & presentation
-		final var swapchain = new Swapchain.Builder(surface)
+		final var swapchain = new Swapchain.Builder(surface.new PropertiesAdapter(physical))
 				.clipped(true)
 				.presentation(VkPresentModeKHR.MAILBOX_KHR)
 				.clear(new Colour(0.6f, 0.6f, 0.6f, 1))
@@ -175,27 +138,22 @@ public class VulkanIntegrationDemo {
 		// Render pass
 		System.out.println("Building render pass...");
 		final var colour = Attachment.colour(swapchain.format());
-		final Subpass subpass = new Subpass(List.of(new AttachmentReference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)), null, Set.of());
-//		final Dependency dependency = new Dependency(
-//				new Dependency.Properties(Dependency.VK_SUBPASS_EXTERNAL, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT), Set.of()),
-//				new Dependency.Properties(subpass, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT), Set.of(VkAccess.COLOR_ATTACHMENT_WRITE)),
-//				Set.of()
-//		);
+		final Subpass subpass = new Subpass.Builder()
+				.colour(colour)
+				.build();
 		final RenderPass pass = new RenderPass.Builder()
 				.add(subpass)
-//				.dependency(dependency)
 				.build(device);
 
 		// Pipeline
-		// TODO - this still all sucks
 		System.out.println("Building pipeline...");
 		final var pipelineLayout = new PipelineLayout.Builder().build(device);
 		final var pipelineBuilder = new GraphicsPipelineBuilder();
 		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
-		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(size));
+		pipelineBuilder.viewport().viewportAndScissor(swapchain.extents().rectangle());
 		pipelineBuilder.rasterizer().winding(VkFrontFace.CLOCKWISE);
-		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, vertex, "main", null));
-		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.FRAGMENT, fragment, "main", null));
+		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, vertex));
+		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.FRAGMENT, fragment));
 		final Pipeline pipeline = pipelineBuilder
 				.pass(pass)
 				.layout(pipelineLayout)
@@ -211,16 +169,16 @@ public class VulkanIntegrationDemo {
 
 		// Sequence
 		System.out.println("Recording render sequence...");
-		final var draw = new DrawCommand.Builder().vertexCount(3).build(device);		// TODO - helper
+		final var draw = DrawCommand.draw(3, device);
 		final var sequence = commandPool.allocate(group.size(), true);
 		for(int n = 0; n < group.size(); ++n) {
 			final Command.Buffer cb = sequence.get(n);
 			final FrameBuffer fb = group.get(n);
     		cb
         		.begin()
-        			.add(fb.begin(VkSubpassContents.INLINE))		// TODO - default
+        			.add(fb.begin())
         				.add(pipeline.bind())
-        				.add(draw)		// TODO - cannot draw if no pipeline bound!?
+        				.add(draw)
         			.add(fb.end())
         		.end();
 		}
@@ -242,7 +200,7 @@ public class VulkanIntegrationDemo {
     				.submit(fence);
     		device.waitIdle();
 
-    		swapchain.present(presentationQueue, index, ready);		// TODO - null ready semaphore?
+    		swapchain.present(presentationQueue, index, ready);
     		device.waitIdle();
 
     		fence.reset();

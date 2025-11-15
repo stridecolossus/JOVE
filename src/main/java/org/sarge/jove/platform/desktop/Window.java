@@ -104,7 +104,9 @@ public class Window extends TransientNativeObject {
 	public Dimensions size() {
 		final var w = new IntegerReference();
 		final var h = new IntegerReference();
-		library.glfwGetWindowSize(this, w, h);
+		// TODO - library.glfwGetWindowSize(this, w, h);
+		// should this be either/or? what about setting the size?
+		library.glfwGetFramebufferSize(this, w, h);
 		return new Dimensions(w.get(), h.get());
 	}
 

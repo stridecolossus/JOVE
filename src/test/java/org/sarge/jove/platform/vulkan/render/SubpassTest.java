@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 
-import java.util.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
@@ -18,7 +18,10 @@ class SubpassTest {
 	void before() {
 		colour = new AttachmentReference(Attachment.colour(VkFormat.R32G32B32A32_SFLOAT), COLOR_ATTACHMENT_OPTIMAL);
 		depth = new AttachmentReference(Attachment.depth(VkFormat.D32_SFLOAT), DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		subpass = new Subpass(List.of(colour), depth, Set.of());
+		subpass = new Subpass.Builder()
+				.colour(colour)
+				.depth(depth)
+				.build();
 	}
 
 	@Test

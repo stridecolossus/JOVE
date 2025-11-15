@@ -3,25 +3,26 @@ package org.sarge.jove.platform.vulkan.common;
 import java.util.function.IntFunction;
 
 import org.sarge.jove.foreign.IntegerReference;
-import org.sarge.jove.platform.vulkan.VkResult;
 
 /**
- * A <i>Vulkan function</i> abstracts a Vulkan API method used to retrieve data via the <i>two stage invocation</i> approach.
+ * A <i>Vulkan function</i> abstracts an API method that is used to retrieve data via the <i>two stage invocation</i> approach.
  * <p>
  * The function is of the form {@code function(IntegerReference count, T data)}
  * <p>
  * Where:
  * <ul>
  * <li><i>count</i> is the size of the data</li>
- * <li><i>data</i> is a pre-allocated <i>by reference</i> parameter populated by the function</li>
- * <li>the return value is either {@code void} or a {@link VkResult} success code</li>
+ * <li><i>data</i> is a pre-allocated <i>by reference</i> parameter populated by the function (usually an array)</li>
  * </ul>
  * <p>
- * The method is invoked <b>twice</b> to retrieve the data from the native API method:
+ * The function is invoked <b>twice</b> to retrieve the data from the native API method:
  * <ol>
- * <li>once to retrieve the size (or array length) of the result with the <i>data</i> argument set to {@code null}</li>
- * <li>and again to populate the provided container</li>
+ * <li>once to retrieve the size of the result, where the <i>data</i> argument is set to {@code null}</li>
+ * <li>and again to populate the provided container or array</li>
  * </ol>
+ * <p>
+ * The convenience {@link #invoke(VulkanFunction, IntFunction)} helper encapsulates the two-stage invocation process for a given function.
+ * <p>
  * @param <T> Data type
  * @author Sarge
  */
@@ -37,36 +38,44 @@ public interface VulkanFunction<T> {
 	/**
 	 * Invokes the given function using the <i>two stage invocation</i> approach.
 	 * <p>
-	 * This method is equivalent to the following:
+	 * Example: Given an API method that returns a by-reference array of handles:
 	 * <pre>
-	 * // Given an API method that returns the size and data as by-reference parameters...
 	 * interface Library {
-	 *     void method(IntegerReference count, Handle[] handle);
+	 *     void method(IntegerReference count, @Updated Handle[] handle);
 	 * }
-	 *
+	 * </pre>
+	 * <p>
+	 * the method can be invoked as follows:
+	 * <pre>
+	 * Handle[] array = VulkanFunction.invoke(library::method, Handle[]::new);
+	 * </pre>
+	 * <p>
+	 * which is equivalent to:
+	 * </pre>
 	 * // Determine the size of the container
 	 * IntegerReference count = new IntegerReference();
-	 * lib.method(count, null);
+	 * library.method(count, null);
 	 *
 	 * // Allocate the container
 	 * Handle[] array = new Handle[count.getValue()];
 	 *
 	 * // Invoke again to populate the container
-	 * lib.method(count, array);
+	 * library.method(count, array);
 	 * </pre>
+	 * <p>
 	 * @param <T> Data type
 	 * @param function		Vulkan function
-	 * @param supplier		Creates a container of the required size
+	 * @param factory		Factory for a container or array of the required size
 	 * @return Results
 	 */
-	static <T> T invoke(VulkanFunction<T> function, IntFunction<T> supplier) {
+	static <T> T invoke(VulkanFunction<T> function, IntFunction<T> factory) {
 		// Determine the size of the results
 		final var count = new IntegerReference();
 		function.invoke(count, null);
 
 		// Instantiate the container
 		final int size = count.get();
-		final T data = supplier.apply(size);
+		final T data = factory.apply(size);
 
 		// Invoke again to populate the container
 		if(size > 0) {

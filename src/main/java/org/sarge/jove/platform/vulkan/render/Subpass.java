@@ -96,4 +96,57 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 	public final boolean equals(Object obj) {
 		return obj == this;
 	}
+
+	/**
+	 * Builder for a subpass.
+	 */
+	public static class Builder {
+		private final Set<VkSubpassDescriptionFlag> flags = new HashSet<>();
+		private final List<AttachmentReference> colour = new ArrayList<>();
+		private AttachmentReference depth;
+
+		/**
+		 * Adds a subpass creation flag.
+		 * @param flag Create flag
+		 */
+		public Builder flag(VkSubpassDescriptionFlag flag) {
+			flags.add(flag);
+			return this;
+		}
+
+		/**
+		 * Adds a colour attachment reference.
+		 * @param colour Colour attachment reference
+		 */
+		public Builder colour(AttachmentReference colour) {
+			this.colour.add(colour);
+			return this;
+		}
+
+		/**
+		 * Helper.
+		 * Adds a colour attachment with a {@link VkImageLayout#COLOR_ATTACHMENT_OPTIMAL} layout.
+		 * @param colour Colour attachment
+		 */
+		public Builder colour(Attachment attachment) {
+			return colour(new AttachmentReference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL));
+		}
+
+		/**
+		 * Sets the depth-stencil attachment.
+		 * @param depth Depth-stencil attachment
+		 */
+		public Builder depth(AttachmentReference depth) {
+			this.depth = depth;
+			return this;
+		}
+
+		/**
+		 * Constructs this subpass.
+		 * @return Subpass
+		 */
+		public Subpass build() {
+			return new Subpass(colour, depth, flags);
+		}
+	}
 }

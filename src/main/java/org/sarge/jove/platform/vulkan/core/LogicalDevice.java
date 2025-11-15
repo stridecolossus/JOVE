@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.lib.Validation.requireNotEmpty;
 
 import java.util.*;
 import java.util.stream.*;
@@ -13,6 +13,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.lib.Percentile;
 
 /**
  * The <i>logical device</i> is an instance of a {@link PhysicalDevice}.
@@ -36,7 +37,6 @@ public class LogicalDevice extends TransientNativeObject {
 		this.queues = Map.copyOf(queues);
 		this.limits = requireNonNull(limits);
 	}
-	// TODO - limits are mutable!
 
 	/**
 	 * @param <T> Library type
@@ -60,7 +60,6 @@ public class LogicalDevice extends TransientNativeObject {
 	public VkPhysicalDeviceLimits limits() {
 		return limits;
 	}
-	// TODO - mutable!
 
 	/**
 	 * Blocks until this device becomes idle.
@@ -76,6 +75,7 @@ public class LogicalDevice extends TransientNativeObject {
 	public void waitIdle(WorkQueue queue) {
 		library.vkQueueWaitIdle(queue);
 	}
+	// TODO - move to Work/Queue?
 
  	@Override
 	protected void release() {
@@ -89,8 +89,11 @@ public class LogicalDevice extends TransientNativeObject {
 
 	/**
 	 * A <i>required queue</i> is a transient descriptor for a number of work queues to be created for a logical device.
+	 * <p>
+	 * Note that only one required queue can be configured for each queue family.
+	 * i.e. A queue family selected from the physical device may be the same instance since families often support multiple use cases.
 	 */
-	public record RequiredQueue(Family family, float[] priorities) {
+	public record RequiredQueue(Family family, List<Percentile> priorities) {
 		/**
 		 * Constructor.
 		 * @param family			Queue family
@@ -99,17 +102,11 @@ public class LogicalDevice extends TransientNativeObject {
 		 */
 		public RequiredQueue {
 			requireNonNull(family);
-			requireOneOrMore(priorities.length);
-			priorities = Arrays.copyOf(priorities, priorities.length);
+			requireNotEmpty(priorities);
+			priorities = List.copyOf(priorities);
 
-			if(priorities.length > family.count()) {
-				throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.length));
-			}
-
-			for(float f : priorities) {
-				if((f < 0) || (f > 1)) {
-					throw new IllegalArgumentException("Invalid queue priority: " + f);
-				}
+			if(priorities.size() > family.count()) {
+				throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.size()));
 			}
 		}
 
@@ -130,10 +127,10 @@ public class LogicalDevice extends TransientNativeObject {
 			this(family, priorities(count));
 		}
 
-		private static float[] priorities(int count) {
-			final var priorities = new float[count];
-			Arrays.fill(priorities, 1f);
-			return priorities;
+		private static List<Percentile> priorities(int count) {
+			final var priorities = new Percentile[count];
+			Arrays.fill(priorities, Percentile.ONE);
+			return List.of(priorities);
 		}
 
 		/**
@@ -142,10 +139,22 @@ public class LogicalDevice extends TransientNativeObject {
 		private VkDeviceQueueCreateInfo build() {
 			final var info = new VkDeviceQueueCreateInfo();
 			info.flags = new EnumMask<>();
-			info.queueCount = priorities.length;
+			info.queueCount = priorities.size();
 			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = priorities;
+			info.pQueuePriorities = array(priorities);
 			return info;
+		}
+
+		/**
+		 * Converts queue priorities to an array.
+		 */
+		private static float[] array(List<Percentile> priorities) {
+			final int length = priorities.size();
+			final float[] array = new float[length];
+			for(int n = 0; n < length; ++n) {
+				array[n] = priorities.get(n).value();
+			}
+			return array;
 		}
 
 		/**
@@ -174,7 +183,7 @@ public class LogicalDevice extends TransientNativeObject {
     		 */
     		private Stream<WorkQueue> queues(RequiredQueue queue) {
     			return IntStream
-    					.range(0, queue.priorities.length)
+    					.range(0, queue.priorities.size())
     					.mapToObj(n -> queue(queue.family, n));
     		}
 
@@ -195,7 +204,6 @@ public class LogicalDevice extends TransientNativeObject {
 
 	/**
 	 * Builder for a logical device.
-	 * @see Vulkan#STANDARD_VALIDATION
 	 */
 	public static class Builder {
 		private final PhysicalDevice parent;
@@ -228,6 +236,7 @@ public class LogicalDevice extends TransientNativeObject {
 		/**
 		 * Adds a validation layer required for this device.
 		 * @param layer Validation layer
+		 * @see Vulkan#STANDARD_VALIDATION
 		 */
 		public Builder layer(String layer) {
 			layers.add(layer);
@@ -248,12 +257,21 @@ public class LogicalDevice extends TransientNativeObject {
 		 * Adds a required work queue for this device.
 		 * @param queue Required queue
 		 * @throws IllegalArgumentException if the queue family is not a member of the parent physical device
+		 * @throws IllegalArgumentException if a queue has already been configured for the family
 		 */
 		public Builder queue(RequiredQueue queue) {
+			// Check queue family is a member of the physical device
 			final Family family = queue.family;
 			if(!parent.families().contains(family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
 			}
+
+			// Check only one required queue is configured for each family
+			final boolean present = queues.stream().map(RequiredQueue::family).anyMatch(family::equals);
+			if(present) {
+				throw new IllegalArgumentException("Queue already specified for family: " + family);
+			}
+
 			queues.add(queue);
 			return this;
 		}
@@ -274,8 +292,10 @@ public class LogicalDevice extends TransientNativeObject {
 			final var helper = new RequiredQueue.Helper(handle, library);
 			final Map<Family, List<WorkQueue>> map = helper.queues(queues);
 
-			// Create domain object
+			// Retrieve device limits
 			final var properties = parent.properties();
+
+			// Create domain object
 			return new LogicalDevice(handle, map, properties.limits, library);
 		}
 

@@ -11,7 +11,7 @@ import org.sarge.jove.platform.desktop.DesktopTest.MockDesktopLibrary;
 import org.sarge.jove.platform.desktop.Window.Hint;
 
 class WindowTest {
-	private static class MockWindowLibrary implements WindowLibrary {
+	static class MockWindowLibrary implements WindowLibrary {
 		private Map<Integer, Integer> hints;
 		private Dimensions size = new Dimensions(100, 200);
 		private boolean destroyed;
@@ -39,9 +39,6 @@ class WindowTest {
 
 		@Override
 		public int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, Pointer surface) {
-			assertEquals(new Handle(1), window.handle());
-			assertEquals(new Handle(2), instance);
-			assertEquals(null, allocator);
 			surface.set(new Handle(3));
 			return 0;
 		}
@@ -59,6 +56,13 @@ class WindowTest {
 
 		@Override
 		public void glfwGetWindowSize(Window window, IntegerReference w, IntegerReference h) {
+			assertEquals(new Handle(1), window.handle());
+			w.set(size.width());
+			h.set(size.height());
+		}
+
+		@Override
+		public void glfwGetFramebufferSize(Window window, IntegerReference w, IntegerReference h) {
 			assertEquals(new Handle(1), window.handle());
 			w.set(size.width());
 			h.set(size.height());

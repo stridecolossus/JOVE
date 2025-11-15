@@ -9,12 +9,13 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.IntegerReference;
+import org.sarge.jove.platform.desktop.MockWindow;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
+import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 
 class VulkanSurfaceTest {
 	static class MockVulkanSurfaceLibrary implements VulkanSurface.Library {
-		private VkSurfaceFormatKHR supported = new VkSurfaceFormatKHR();
 		private boolean destroyed;
 
 		@Override
@@ -39,6 +40,9 @@ class VulkanSurfaceTest {
 				count.set(1);
 			}
 			else {
+				final var supported = new VkSurfaceFormatKHR();
+				supported.format = VkFormat.UNDEFINED;
+				supported.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
 				formats[0] = supported;
 			}
 			return VkResult.SUCCESS;
@@ -73,85 +77,21 @@ class VulkanSurfaceTest {
 
 	@BeforeEach
 	void before() {
+		final var window = new MockWindow() {
+			@Override
+			public Handle surface(Handle instance) {
+				return new Handle(42);
+			}
+		};
 		device = new MockPhysicalDevice();
 		library = new MockVulkanSurfaceLibrary();
-		surface = new VulkanSurface(new Handle(3), device, library);
+		surface = new VulkanSurface(window, new MockInstance(), library);
 	}
 
 	@Test
 	void presentation() {
-		final Selector selector = VulkanSurface.presentation(new Handle(3), library);
-		assertEquals(true, selector.test(device));
-		assertEquals(device.families().getFirst(), selector.family(device));
-	}
-
-	@Test
-	void load() {
-		final var loaded = surface.load();
-		final var capabilities = loaded.capabilities();
-		final var modes = loaded.modes();
-		final var formats = loaded.formats();
-		assertSame(capabilities, loaded.capabilities());
-		assertSame(modes, loaded.modes());
-		assertSame(formats, loaded.formats());
-	}
-
-	@Test
-	void capabilities() {
-		final VkSurfaceCapabilitiesKHR capabilities = surface.capabilities();
-		assertEquals(2, capabilities.minImageCount);
-	}
-
-	@Nested
-	class SurfaceFormatTest {
-		private final Predicate<VkSurfaceFormatKHR> none = _ -> false;
-
-    	@Test
-    	void formats() {
-    		assertEquals(1, surface.formats().size());
-    	}
-
-    	@Test
-    	void supported() {
-    		assertEquals(library.supported, surface.select(VulkanSurface.equals(library.supported), null));
-    	}
-
-    	@Test
-    	void fallback() {
-    		final var def = new VkSurfaceFormatKHR();
-    		assertEquals(def, surface.select(none, def));
-    	}
-
-    	@Test
-    	void neither() {
-    		final var def = VulkanSurface.defaultSurfaceFormat();
-    		final VkSurfaceFormatKHR selected = surface.select(none, null);
-    		assertEquals(def.format, selected.format);
-    		assertEquals(def.colorSpace, selected.colorSpace);
-    	}
-
-    	@Test
-    	void def() {
-    		final var def = VulkanSurface.defaultSurfaceFormat();
-    		assertEquals(VkFormat.B8G8R8A8_UNORM, def.format);
-    		assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, def.colorSpace);
-    	}
-	}
-
-	@Nested
-	class PresentationModeTest {
-    	@Test
-    	void modes() {
-    		assertEquals(List.of(FIFO_KHR, MAILBOX_KHR), surface.modes());
-    	}
-
-    	@Test
-    	void select() {
-    		assertEquals(MAILBOX_KHR, surface.select(List.of(MAILBOX_KHR)));
-    		assertEquals(FIFO_KHR, surface.select(List.of(FIFO_KHR)));
-    		assertEquals(FIFO_KHR, surface.select(List.of(VkPresentModeKHR.FIFO_LATEST_READY_KHR)));
-    		assertEquals(FIFO_KHR, surface.select(List.of()));
-    	}
+		final Family family = device.families().getFirst();
+		assertEquals(true, surface.isPresentationSupported(device, family));
 	}
 
 	@Test
@@ -160,4 +100,71 @@ class VulkanSurfaceTest {
 		assertEquals(true, surface.isDestroyed());
 		assertEquals(true, library.destroyed);
 	}
+
+	@Nested
+	class PropertiesTest {
+		private Properties properties;
+
+		@BeforeEach
+		void before() {
+			properties = surface.new PropertiesAdapter(device);
+		}
+
+    	@Test
+    	void capabilities() {
+    		final VkSurfaceCapabilitiesKHR capabilities = properties.capabilities();
+    		assertEquals(2, capabilities.minImageCount);
+    	}
+
+    	@Nested
+    	class SurfaceFormatTest {
+    		private final Predicate<VkSurfaceFormatKHR> none = _ -> false;
+
+        	@Test
+        	void formats() {
+        		assertEquals(1, properties.formats().size());
+        	}
+
+        	@Test
+        	void supported() {
+        		final var supported = properties.formats().getFirst();
+        		final var matcher = Properties.equals(supported);
+        		assertEquals(supported, properties.select(matcher, null));
+        	}
+
+        	@Test
+        	void fallback() {
+        		final var def = new VkSurfaceFormatKHR();
+        		assertEquals(def, properties.select(none, def));
+        	}
+
+        	@Test
+        	void neither() {
+        		final var def = VulkanSurface.defaultSurfaceFormat();
+        		final VkSurfaceFormatKHR selected = properties.select(none, null);
+        		assertEquals(def.format, selected.format);
+        		assertEquals(def.colorSpace, selected.colorSpace);
+        	}
+
+        	@Test
+        	void defaultSurfaceFormat() {
+        		final var def = VulkanSurface.defaultSurfaceFormat();
+        		assertEquals(VkFormat.B8G8R8A8_UNORM, def.format);
+        		assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, def.colorSpace);
+        	}
+    	}
+
+    	@Test
+    	void modes() {
+    		assertEquals(List.of(FIFO_KHR, MAILBOX_KHR), properties.modes());
+    	}
+
+    	@Test
+    	void select() {
+    		assertEquals(MAILBOX_KHR, properties.select(List.of(MAILBOX_KHR)));
+    		assertEquals(FIFO_KHR, properties.select(List.of(FIFO_KHR)));
+    		assertEquals(FIFO_KHR, properties.select(List.of(VkPresentModeKHR.FIFO_LATEST_READY_KHR)));
+    		assertEquals(FIFO_KHR, properties.select(List.of()));
+    	}
+    }
 }

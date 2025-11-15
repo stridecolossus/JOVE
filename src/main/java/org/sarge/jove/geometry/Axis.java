@@ -5,9 +5,8 @@ package org.sarge.jove.geometry;
  * <p>
  * Notes:
  * <ul>
- * <li>The positive Vulkan Y axis points <b>down</b></li>
+ * <li>The positive Vulkan Y axis points <b>down</b> the screen</li>
  * <li>Negative Z points <b>into</b> the screen</li>
- * <li>The {@link #rotation(float, Cosine)} implementation uses a custom implementation TODO</li>
  * </ul>
  * <p>
  * @author Sarge
@@ -29,16 +28,12 @@ public class Axis extends Normal {
 	 * @param ordinal Axis ordinal
 	 */
 	private Axis(int ordinal) {
-		final Vector vector = vector(ordinal);
+		final var array = new float[Vector.SIZE];
+		array[ordinal] = 1;
+		final Vector vector = new Vector(array);
 		super(vector);
 		this.ordinal = ordinal;
 		this.invert = new Normal(vector.invert());
-	}
-
-	private static Vector vector(int ordinal) {
-		final var array = new float[Vector.SIZE];
-		array[ordinal] = 1;
-		return new Vector(array);
 	}
 
 	@Override

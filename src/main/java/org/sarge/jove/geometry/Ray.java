@@ -47,7 +47,7 @@ public record Ray(Point origin, Vector direction) {
 	}
 
 	/**
-	 * An <i>intersection</i> specifies the point(s) at which this ray intersects an {@link IntersectedSurface}.
+	 * An <i>intersection</i> specifies a point at which this ray intersects an {@link IntersectedSurface}.
 	 */
 	public record Intersection(Point point, float distance, Normal normal) implements Comparable<Intersection> {
 		@Override

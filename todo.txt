@@ -1,4 +1,6 @@
 
+can IntegerReference and Pointer be reverted to general by-reference types?
+could then (perhaps) use Pointer for the more general case of a dereferenced memory address? e.g. for methods that return a POINTER to a structure (ADDRESS), as opposed to an instance (STRUCT LAYOUT)
 
 replace Percentile with custom implementation (just range checking)
 copy custom validation
