@@ -2,9 +2,12 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Point;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.pipeline.VertexInputStage.*;
 
 public class VertexInputStageTest {
 	private static final VkFormat FORMAT = VkFormat.R32G32B32_SFLOAT;
@@ -16,141 +19,114 @@ public class VertexInputStageTest {
 		stage = new VertexInputStage();
 	}
 
-	@DisplayName("An empty vertex input stage has no vertex bindings or attributes")
-	@Test
-	void none() {
-		final VkPipelineVertexInputStateCreateInfo info = stage.descriptor();
-		assertEquals(0, info.flags);
-		assertEquals(0, info.vertexBindingDescriptionCount);
-		assertEquals(0, info.vertexAttributeDescriptionCount);
-	}
-
-	@DisplayName("The vertex input stage can be specified programatically")
+	@DisplayName("A vertex binding can be constructed using a builder")
 	@Test
 	void build() {
-		final VkPipelineVertexInputStateCreateInfo info = stage
-				.binding()
-					.binding(1)
-					.rate(VkVertexInputRate.VERTEX)
-					.stride(4)
-					.attribute()
-						.location(2)
-						.format(FORMAT)
-						.offset(3)
-						.build()
-					.build()
-				.descriptor();
+		final var attribute = new VertexAttribute(2, FORMAT, 3);
 
-		assertEquals(0, info.flags);
-		assertEquals(1, info.vertexBindingDescriptionCount);
-		assertEquals(1, info.vertexAttributeDescriptionCount);
+		final var binding = new VertexBinding.Builder()
+				.index(1)
+				.attribute(attribute)
+				.stride(4)
+				.build();
 
-		final VkVertexInputBindingDescription binding = info.pVertexBindingDescriptions[0];
-		assertEquals(1, binding.binding);
-		assertEquals(VkVertexInputRate.VERTEX, binding.inputRate);
-		assertEquals(4, binding.stride);
+		final var expected = new VertexBinding(1, 4, VkVertexInputRate.VERTEX, List.of(attribute));
+		assertEquals(expected, binding);
+	}
 
-		final VkVertexInputAttributeDescription attribute = info.pVertexAttributeDescriptions[0];
-		assertEquals(1, attribute.binding);
+	@DisplayName("The pipeline stage generates the descriptor for the vertex bindings and attributes")
+	@Test
+	void descriptor() {
+		// Build a binding
+		final var binding = new VertexBinding.Builder()
+				.index(1)
+				.stride(12)
+				.attribute(new VertexAttribute(2, FORMAT, 0))
+				.build();
+
+		// Add to pipeline stage
+		stage.add(binding);
+
+		// Check descriptor
+		final VkPipelineVertexInputStateCreateInfo descriptor = stage.descriptor();
+		assertEquals(0, descriptor.flags);
+		assertEquals(1, descriptor.vertexBindingDescriptionCount);
+		assertEquals(1, descriptor.pVertexBindingDescriptions.length);
+		assertEquals(1, descriptor.vertexAttributeDescriptionCount);
+		assertEquals(1, descriptor.pVertexAttributeDescriptions.length);
+
+		// Check binding descriptor
+		final VkVertexInputBindingDescription description = descriptor.pVertexBindingDescriptions[0];
+		assertEquals(1, description.binding);
+		assertEquals(VkVertexInputRate.VERTEX, description.inputRate);
+		assertEquals(12, description.stride);
+
+		// Check attribute descriptor
+		final VkVertexInputAttributeDescription attribute = descriptor.pVertexAttributeDescriptions[0];
 		assertEquals(2, attribute.location);
 		assertEquals(FORMAT, attribute.format);
-		assertEquals(3, attribute.offset);
-	}
-
-	@DisplayName("The vertex bindings and attribute properties are initialised to sensible defaults if not specified")
-	@Test
-	void defaults() {
-		final VkPipelineVertexInputStateCreateInfo info = stage
-				.binding()
-					.stride(1)
-					.attribute(FORMAT)
-				.build()
-				.descriptor();
-
-		assertEquals(0, info.flags);
-		assertEquals(1, info.vertexBindingDescriptionCount);
-		assertEquals(1, info.vertexAttributeDescriptionCount);
-
-		final VkVertexInputBindingDescription binding = info.pVertexBindingDescriptions[0];
-		assertEquals(0, binding.binding);
-		assertEquals(VkVertexInputRate.VERTEX, binding.inputRate);
-		assertEquals(1, binding.stride);
-
-		final VkVertexInputAttributeDescription attribute = info.pVertexAttributeDescriptions[0];
-		assertEquals(0, attribute.binding);
-		assertEquals(0, attribute.location);
-		assertEquals(FORMAT, attribute.format);
 		assertEquals(0, attribute.offset);
 	}
 
-	@DisplayName("A vertex attribute can be derived from a component layout")
+	@DisplayName("A vertex binding can be generated from a vertex layout")
 	@Test
 	void layout() {
-		final VkPipelineVertexInputStateCreateInfo info = stage
-				.binding()
-					.attribute(Point.LAYOUT)
-				.build()
-				.descriptor();
-
-		assertEquals(0, info.flags);
-		assertEquals(1, info.vertexBindingDescriptionCount);
-		assertEquals(1, info.vertexAttributeDescriptionCount);
-
-		final VkVertexInputBindingDescription binding = info.pVertexBindingDescriptions[0];
-		assertEquals(3 * 4, binding.stride);
-
-		final VkVertexInputAttributeDescription attribute = info.pVertexAttributeDescriptions[0];
-		assertEquals(0, attribute.binding);
-		assertEquals(0, attribute.location);
-		assertEquals(FORMAT, attribute.format);
-		assertEquals(0, attribute.offset);
+		final var layout = Layout.floats(3);
+		final var binding = VertexBinding.of(1, 2, List.of(layout, layout));
+		final var one = new VertexAttribute(2, FORMAT, 0);
+		final var two = new VertexAttribute(3, FORMAT, 3 * 4);
+		final var expected = new VertexBinding(1, 2 * 3 * 4, VkVertexInputRate.VERTEX, List.of(one, two));
+		assertEquals(expected, binding);
 	}
 
-	@DisplayName("A vertex binding must contain at least one vertex attribute")
-	@Test
-	void empty() {
-		assertThrows(IllegalStateException.class, () -> stage.binding().build().descriptor());
-	}
-
-	@DisplayName("Each vertex binding must have a unqiue binding index")
+	@DisplayName("The index of a vertex binding must be unique")
 	@Test
 	void duplicateBindingIndex() {
-		stage
-				.binding()
-					.binding(1)
-					.stride(2)
+		final var binding = new VertexBinding.Builder()
+				.index(2)
+				.stride(3)
 				.build();
 
-		assertThrows(IllegalStateException.class, () -> stage.binding().binding(1));
+		stage.add(binding);
+		assertThrows(IllegalArgumentException.class, () -> stage.add(binding));
 	}
 
-	@DisplayName("Each vertex attribute must have a unqiue location within its binding")
+	@DisplayName("The location of a vertex attribute must be unique")
 	@Test
 	void duplicateAttributeLocation() {
-		final var binding = stage
-				.binding()
-				.stride(2);
-
-		binding
-				.attribute()
-				.location(2)
+		final var binding = new VertexBinding.Builder()
+				.attribute(new VertexAttribute(3, FORMAT, 0))
+				.attribute(new VertexAttribute(3, FORMAT, 0))
+				.stride(2)
 				.build();
 
-		assertThrows(IllegalStateException.class, () -> binding.attribute().location(2).build());
+		assertThrows(IllegalArgumentException.class, () -> stage.add(binding));
 	}
 
-	@DisplayName("The offset of a vertex attribute cannot exceed the stride of its binding")
+	@DisplayName("The location of a vertex attribute must be unique across all bindings in the pipeline")
 	@Test
-	void invalidOffset() {
-		final var binding = stage
-				.binding()
-				.stride(1);
+	void duplicateAttributeLocationAcrossBindings() {
+		final var one = new VertexBinding.Builder()
+				.attribute(new VertexAttribute(3, FORMAT, 0))
+				.stride(1)
+				.build();
 
-		final var attribute = binding
-				.attribute()
-				.format(FORMAT)
-				.offset(1);
+		final var two = new VertexBinding.Builder()
+				.attribute(new VertexAttribute(3, FORMAT, 0))
+				.stride(1)
+				.build();
 
-		assertThrows(IndexOutOfBoundsException.class, () -> attribute.build());
+		stage.add(one);
+		assertThrows(IllegalArgumentException.class, () -> stage.add(two));
+	}
+
+	@DisplayName("The stride of a vertex binding must be larger than the offset of all its attributes")
+	@Test
+	void invalidBindingStride() {
+		final var builder = new VertexBinding.Builder()
+				.stride(2)
+				.attribute(new VertexAttribute(0, FORMAT, 3));
+
+		assertThrows(IllegalArgumentException.class, () -> builder.build());
 	}
 }

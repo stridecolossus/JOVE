@@ -1,288 +1,220 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.lib.Validation.requireZeroOrMore;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.FormatBuilder;
 
 /**
- * Builder for the vertex input pipeline stage descriptor.
- * TODO - usage, auto allocation, implications on shader
+ * The <i>vertex input stage</i> specifies the configuration of the vertex input fixed function of the pipeline.
  * @author Sarge
  */
 public class VertexInputStage {
 	private final Map<Integer, VertexBinding> bindings = new HashMap<>();
+	private final Set<Integer> locations = new HashSet<>();
 
 	/**
-	 * Starts a new binding.
-	 * @return New binding
+	 * A <i>vertex attribute</i> specifies the position and format of a vertex component.
 	 */
-	public VertexBinding binding() {
-		return new VertexBinding();
-	}
-
-	/**
-	 * Allocates the next available slot in the given integer map.
-	 * @param map Integer map
-	 * @return Next slot
-	 */
-	private static int allocate(Map<Integer, ?> map) {
-		return map
-				.keySet()
-				.stream()
-				.mapToInt(Integer::intValue)
-				.max()
-				.orElse(0);
-	}
-
-	/**
-	 * A vertex input <i>binding</i> specifies a group of vertex attributes.
-	 */
-	public class VertexBinding {
-    	private int index = allocate(bindings);
-    	private int stride;
-    	private VkVertexInputRate rate = VkVertexInputRate.VERTEX;
-    	private final Map<Integer, VertexAttribute> attributes = new HashMap<>();
-
-		private VertexBinding() {
-		}
-
-		/**
-		 * Sets the index of this binding.
-		 * The binding index is initialised to the next available slot if not specified.
-		 * @param index Binding index
-		 * @throws IllegalStateException if the {@link #index} index has already been allocated
-		 */
-		public VertexBinding binding(int index) {
-			if(bindings.containsKey(index)) throw new IllegalStateException("Duplicate binding index: " + index);
-			this.index = requireZeroOrMore(index);
-			return this;
-		}
-
-		/**
-		 * Sets the vertex input rate.
-		 * Default is {@link VkVertexInputRate#VERTEX}.
-		 * @param rate Vertex rate
-		 */
-		public VertexBinding rate(VkVertexInputRate rate) {
-			this.rate = requireNonNull(rate);
-			return this;
-		}
-
-		/**
-		 * Sets the <i>stride</i> of this binding, i.e. the number of bytes per binding.
-		 * @param stride Binding stride (bytes)
-		 */
-		public VertexBinding stride(int stride) {
-			this.stride = requireOneOrMore(stride);
-			return this;
-		}
-
-		/**
-		 * Starts a new vertex attribute for this binding.
-		 * @return New vertex attribute
-		 */
-    	public VertexAttribute attribute() {
-    		return new VertexAttribute(this);
-    	}
-
-    	/**
-    	 * Helper - Adds a new vertex attribute with the given format and other properties set to appropriate defaults.
-    	 * @param format Vertex format
-    	 */
-    	public VertexBinding attribute(VkFormat format) {
-    		final var attribute = new VertexAttribute(this);
-    		attribute.format(format);
-    		attribute.build();
-    		return this;
-    	}
-
-    	/**
-    	 * Helper - Adds a vertex attribute derived from the given layout.
-		 * The binding index is initialised to the next available slot.
-		 * The vertex stride of this binding is incremented accordingly.
-    	 * @param layout Vertex layout
-    	 */
-    	public VertexBinding attribute(Layout layout) {
-    		// Configure vertex attribute for this layout
-    		final var attribute = new VertexAttribute(this)
-    				.format(FormatBuilder.format(layout))
-    				.offset(stride);
-
-    		// Increment total stride for this binding accordingly
-    		stride += layout.stride();
-
-    		// Attach attribute
-    		attribute.build();
-
-    		return this;
-    	}
-
-    	/**
-    	 * @throws IndexOutOfBoundsException if any attribute offset exceeds the vertex stride of this binding
-    	 */
-    	private void validate() {
-			for(VertexAttribute attribute : attributes.values()) {
-				validate(attribute);
-			}
-    	}
-
-    	/**
-    	 * @throws IndexOutOfBoundsException if the attribute offset exceeds the vertex stride of this binding
-    	 */
-    	private void validate(VertexAttribute attribute) {
-			if(attribute.offset >= stride) {
-				throw new IndexOutOfBoundsException("Attribute offset exceeds stride: attribute=%s binding=%s".formatted(attribute, this));
-			}
-    	}
-
-    	/**
-    	 * Constructs this binding.
-    	 * @throws IllegalStateException if the stride of this binding has not been populated
-    	 * @throws IndexOutOfBoundsException if any attribute offset exceeds the vertex stride of this binding
-    	 */
-    	public VertexInputStage build() {
-    		if(stride == 0) throw new IllegalStateException("Binding stride cannot be zero: " + this);
-    		validate();
-    		bindings.put(index, this);
-    		return VertexInputStage.this;
-    	}
-
-    	/**
-    	 * @return Descriptor for this binding
-    	 */
-    	private VkVertexInputBindingDescription populate() {
-    		final var descriptor = new VkVertexInputBindingDescription();
-    		descriptor.binding = index;
-    		descriptor.stride = stride;
-    		descriptor.inputRate = rate;
-    		return descriptor;
-    	}
-
-    	@Override
-    	public String toString() {
-    		return String.format("Binding[binding=%d stride=%s rate=%s]", index, String.valueOf(stride), rate);
-    	}
-	}
-
-	/**
-	 * A vertex <i>attribute</i> describes the layout of a component of a vertex buffer.
-	 */
-	public class VertexAttribute {
-		private final VertexBinding binding;
-		private int location;
-		private VkFormat format;
-		private int offset;
-
+	public record VertexAttribute(int location, VkFormat format, int offset) {
 		/**
 		 * Constructor.
-		 * @param binding Parent binding
+		 * @param location		Shader location
+		 * @param format		Format of this attribute
+		 * @param offset		Offset within the vertex data
 		 */
-		private VertexAttribute(VertexBinding binding) {
-			this.binding = binding;
-			this.location = allocate(binding.attributes);
+		public VertexAttribute {
+			requireZeroOrMore(location);
+			requireNonNull(format);
+			requireZeroOrMore(offset);
 		}
 
 		/**
-		 * Sets the location of this vertex attribute.
-		 * If unspecified the location is automatically allocated to the next contiguous slot within this binding.
-		 * @param location Attribute location
-		 * @throws IllegalStateException if {@link #location} has already been allocated in this binding
+		 * @param binding Binding index
+		 * @return Vertex attribute descriptor
 		 */
-		public VertexAttribute location(int location) {
-			if(binding.attributes.containsKey(location)) throw new IllegalStateException();
-			this.location = requireZeroOrMore(location);
-			return this;
+		private VkVertexInputAttributeDescription populate(int binding) {
+			final var attribute = new VkVertexInputAttributeDescription();
+			attribute.binding = binding;
+			attribute.location = location;
+			attribute.format = format;
+			attribute.offset = offset;
+			return attribute;
+		}
+	}
+
+	/**
+	 * A <i>vertex binding</i> specifies the vertex attributes used in a shader.
+	 */
+	public record VertexBinding(int index, int stride, VkVertexInputRate rate, List<VertexAttribute> attributes) {
+		/**
+		 * Constructor.
+		 * @param index				Binding index
+		 * @param stride			Stride (bytes)
+		 * @param rate				Input rate
+		 * @param attributes		Vertex attributes
+		 * @throws IllegalArgumentException if the offset of any attribute is not less than the {@link #stride} of this binding
+		 */
+		public VertexBinding {
+			requireZeroOrMore(index);
+			requireZeroOrMore(stride);
+			requireNonNull(rate);
+			attributes = List.copyOf(attributes);
+
+			final int offset = offset(attributes);
+			if(offset >= stride) {
+				throw new IllegalArgumentException("Invalid vertex attribute offset %d for stride %d".formatted(offset, stride));
+			}
 		}
 
 		/**
-		 * Sets the format of this vertex attribute.
-		 * @param format Vertex format
+		 * @return Maximum offset of the given attributes
 		 */
-		public VertexAttribute format(VkFormat format) {
-			this.format = requireNonNull(format);
-			return this;
+		private static int offset(List<VertexAttribute> attributes) {
+			return attributes
+					.stream()
+					.mapToInt(VertexAttribute::offset)
+					.max()
+					.orElse(0);
 		}
 
 		/**
-		 * Sets the offset of this vertex attribute.
-		 * @param offset Offset (bytes)
+		 * Helper.
+		 * Creates a vertex binding from the given layouts.
+		 * TODO - contiguous
+		 * @param index			Binding index
+		 * @param start			Starting attribute location
+		 * @param layouts		Vertex layouts
+		 * @return Vertex binding
 		 */
-		public VertexAttribute offset(int offset) {
-			this.offset = requireZeroOrMore(offset);
-			return this;
+		public static VertexBinding of(int index, int start, List<Layout> layouts) {
+			// Init attribute location and stride
+			int loc = requireZeroOrMore(start);
+			int stride = 0;
+
+			// Create a vertex attribute for each layout
+			final List<VertexAttribute> attributes = new ArrayList<>();
+			for(Layout layout : layouts) {
+				final VkFormat format = FormatBuilder.format(layout);
+				final var attribute = new VertexAttribute(loc, format, stride);
+				attributes.add(attribute);
+				++loc;
+				stride += layout.stride();
+			}
+
+			// Create binding
+			return new VertexBinding(index, stride, VkVertexInputRate.VERTEX, attributes);
 		}
 
 		/**
-		 * Constructs this vertex attribute.
-    	 * @throws IndexOutOfBoundsException if the attribute offset exceeds the vertex stride of this binding
+		 * @return Binding descriptor
 		 */
-		public VertexBinding build() {
-			binding.validate(this);
-			binding.attributes.put(location, this);
-			return binding;
+		private VkVertexInputBindingDescription populate() {
+			final var description = new VkVertexInputBindingDescription();
+			description.binding = index;
+			description.stride = stride;
+			description.inputRate = rate;
+			return description;
 		}
 
 		/**
-    	 * @return Descriptor for this vertex attribute
-    	 */
-    	private VkVertexInputAttributeDescription populate() {
-    		final var descriptor = new VkVertexInputAttributeDescription();
-    		descriptor.binding = binding.index;
-    		descriptor.location = location;
-    		descriptor.format = format;
-    		descriptor.offset = offset;
-    		return descriptor;
-    	}
+		 * @return Attribute descriptors
+		 */
+		private Stream<VkVertexInputAttributeDescription> stream() {
+			return attributes
+					.stream()
+					.map(attribute -> attribute.populate(index));
+		}
 
-    	@Override
-    	public String toString() {
-    		return String.format("loc=%d format=%s offset=%d", location, format, offset);
-    	}
+		/**
+		 * Builder for a vertex binding.
+		 */
+		public static class Builder {
+			private int index;
+			private int stride;
+			private VkVertexInputRate rate = VkVertexInputRate.VERTEX;
+			private final List<VertexAttribute> attributes = new ArrayList<>();
+
+			public Builder index(int index) {
+				this.index = index;
+				return this;
+			}
+
+			public Builder stride(int stride) {
+				this.stride = stride;
+				return this;
+			}
+
+			public Builder rate(VkVertexInputRate rate) {
+				this.rate = rate;
+				return this;
+			}
+
+			public Builder attribute(VertexAttribute attribute) {
+				attributes.add(attribute);
+				return this;
+			}
+
+			public VertexBinding build() {
+				return new VertexBinding(index, stride, rate, attributes);
+			}
+		}
+	}
+
+	/**
+	 * Adds a vertex binding.
+	 * @param binding Binding to add
+	 * @throws IllegalArgumentException for a duplicate binding index
+	 * @throws IllegalArgumentException for a duplicate vertex attribute location
+	 */
+	public void add(VertexBinding binding) {
+		if(bindings.containsKey(binding.index)) {
+			throw new IllegalArgumentException("Duplicate binding index: " + binding);
+		}
+
+		for(var attribute : binding.attributes) {
+			if(locations.contains(attribute.location)) {
+				throw new IllegalArgumentException("Duplicate location for attribute %s in binding %s".formatted(attribute, binding));
+			}
+			locations.add(attribute.location);
+		}
+
+		bindings.put(binding.index, binding);
 	}
 
 	/**
 	 * @return Vertex input stage descriptor
 	 * @throws IllegalStateException if any binding does not contain at least one vertex attribute
-   	 * @throws IndexOutOfBoundsException if any attribute offset exceeds the vertex stride of its binding
+  	 * @throws IndexOutOfBoundsException if any attribute offset exceeds the vertex stride of its binding
 	 */
 	VkPipelineVertexInputStateCreateInfo descriptor() {
-		// Validate bindings
-		for(VertexBinding b : bindings.values()) {
-			if(b.attributes.isEmpty()) {
-				throw new IllegalStateException("Binding cannot be empty: " + b);
-			}
-			b.validate();
-		}
-
 		// Init stage descriptor
 		final var info = new VkPipelineVertexInputStateCreateInfo();
 		info.flags = 0;
 
-		// Populate bindings
+		// Add vertex bindings
 		info.vertexBindingDescriptionCount = bindings.size();
-		info.pVertexBindingDescriptions = bindings.values().stream().map(VertexBinding::populate).toArray(VkVertexInputBindingDescription[]::new);
+		info.pVertexBindingDescriptions = bindings
+				.values()
+				.stream()
+				.map(VertexBinding::populate)
+				.toArray(VkVertexInputBindingDescription[]::new);
 
-		// Aggregate vertex attributes from the bindings
+		// Aggregate vertex attributes across all bindings
 		final var attributes = bindings
 				.values()
 				.stream()
-				.flatMap(e -> e.attributes.values().stream())
-				.map(VertexAttribute::populate)
+				.flatMap(VertexBinding::stream)
 				.toArray(VkVertexInputAttributeDescription[]::new);
 
-		// Populate vertex attributes
-		if(attributes.length > 0) {
-    		info.vertexAttributeDescriptionCount = attributes.length;
-    		info.pVertexAttributeDescriptions = attributes;
-		}
-		else {
-			assert bindings.isEmpty();
-		}
+		// Add vertex attributes
+		info.vertexAttributeDescriptionCount = attributes.length;
+		info.pVertexAttributeDescriptions = attributes;
 
 		return info;
 	}
