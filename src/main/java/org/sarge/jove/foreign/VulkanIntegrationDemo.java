@@ -1,10 +1,12 @@
 package org.sarge.jove.foreign;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.control.RenderLoop;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
@@ -16,6 +18,7 @@ import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.render.*;
+import org.sarge.jove.platform.vulkan.render.FrameComposer.BufferPolicy;
 
 public class VulkanIntegrationDemo {
 	void main() throws Exception {
@@ -161,60 +164,37 @@ public class VulkanIntegrationDemo {
 
 		// Command Pool
 		System.out.println("Creating command pool...");
-		final var commandPool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlag.RESET_COMMAND_BUFFER);
+		final var pool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlag.RESET_COMMAND_BUFFER);
 
 		// Frame buffers
 		System.out.println("Building frame buffers...");
-		final var group = new FrameBuffer.Group(swapchain, pass, List.of());
+		final var group = new Framebuffer.Group(swapchain, pass, List.of());
 
 		// Sequence
 		System.out.println("Recording render sequence...");
 		final var draw = DrawCommand.draw(3, device);
-		final var sequence = commandPool.allocate(group.size(), true);
-		for(int n = 0; n < group.size(); ++n) {
-			final Command.Buffer cb = sequence.get(n);
-			final FrameBuffer fb = group.get(n);
-    		cb
-        		.begin()
-        			.add(fb.begin())
-        				.add(pipeline.bind())
-        				.add(draw)
-        			.add(fb.end())
-        		.end();
-		}
+		final Consumer<Command.Buffer> sequence = buffer -> {
+			buffer.add(pipeline.bind());
+			buffer.add(draw);
+		};
+		final var composer = new FrameComposer(pool, BufferPolicy.DEFAULT, sequence);
+		final var render = new RenderTask(swapchain, group, composer);
 
-		// Render
+		// Render...
 		System.out.println("Rendering...");
-		final var available = VulkanSemaphore.create(device);
-		final var ready = VulkanSemaphore.create(device);
-		final var fence = Fence.create(device);
-		for(int n = 0; n < 10; ++n) {
-    		final int index = swapchain.acquire(available, null);
-    		device.waitIdle();
-
-    		new Work.Builder()
-    				.add(sequence.get(index))
-    				.wait(available, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT))
-    				.signal(ready)
-    				.build()
-    				.submit(fence);
-    		device.waitIdle();
-
-    		swapchain.present(presentationQueue, index, ready);
-    		device.waitIdle();
-
-    		fence.reset();
-    		Thread.sleep(50);
-		}
+		final var loop = new RenderLoop();
+//		final AtomicInteger count = new AtomicInteger();
+//		loop.add(elapsed -> {
+//			System.out.println("elapsed=" + elapsed + " count="+count.getAndIncrement());
+//		});
+		loop.start(render);
+			Thread.sleep(2000);
+		loop.stop();
 
 		// Cleanup
 		System.out.println("Cleanup...");
-		///////////////
-		available.destroy();
-		ready.destroy();
-		fence.destroy();
-		///////////////
-		commandPool.destroy();
+		render.destroy();
+		pool.destroy();
 		pipeline.destroy();
 		pipelineLayout.destroy();
 		group.destroy();

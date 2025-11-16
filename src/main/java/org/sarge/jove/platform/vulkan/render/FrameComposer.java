@@ -2,78 +2,76 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Set;
+import java.util.function.Consumer;
+
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 /**
- * The <i>frame composer</i> builds the render task for the next frame.
- * <p>
- * The default configuration assumes that the render sequence is comprised of <i>secondary</i> command buffers.
- * The {@link #contents(VkSubpassContents)} method can be used to override the default behaviour.
- * <p>
+ * The <i>frame composer</i> builds the render sequence for the next frame according to the configured policy.
+ * TODO
  * @author Sarge
  */
 public class FrameComposer {
-	private final Command.Pool pool;
-	//private final Sequence sequence;
+	/**
+	 * The <i>buffer policy</i> specifies the properties of the render sequence.
+	 */
+	public record BufferPolicy(VkSubpassContents contents, Set<VkCommandBufferUsage> usage) {
+		/**
+		 * Default buffer policy that provides the an {VkSubpassContents#INLINE} render sequence submitted as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} task.
+		 */
+		public static final BufferPolicy DEFAULT = new BufferPolicy(VkSubpassContents.INLINE, Set.of(VkCommandBufferUsage.ONE_TIME_SUBMIT));
 
-	private VkCommandBufferUsage[] flags = {VkCommandBufferUsage.ONE_TIME_SUBMIT};
-	private VkSubpassContents contents = VkSubpassContents.SECONDARY_COMMAND_BUFFERS;
+		/**
+		 * Constructor.
+		 * @param contents		Specifies how the render sequence commands are provided
+		 * @param usage			Behaviour of the command buffer for rendering
+		 */
+		public BufferPolicy {
+			requireNonNull(contents);
+			usage = Set.copyOf(usage);
+		}
+	}
+
+	private final Command.Pool pool;
+	private final BufferPolicy policy;
+	private final Consumer<Buffer> sequence;
 
 	/**
 	 * Constructor.
-	 * @param pool 			Command pool
-	 * @param sequence		Render sequence
+	 * @param pool			Pool for rendering command buffers
+	 * @param policy		Policy for command buffers
+	 * @param sequence		Rendering sequence
 	 */
-	public FrameComposer(Command.Pool pool) { //, Sequence sequence) {
+	public FrameComposer(Command.Pool pool, BufferPolicy policy, Consumer<Buffer> sequence) {
 		this.pool = requireNonNull(pool);
-//		this.sequence = requireNonNull(sequence);
+		this.policy = requireNonNull(policy);
+		this.sequence = requireNonNull(sequence);
 	}
 
 	/**
-	 * Sets the creation flags for the render task.
-	 * Default is {@link VkCommandBufferUsage#ONE_TIME_SUBMIT}.
-	 * @param flags Creation flags
+	 * Composes the render sequence for the next frame.
+	 * @param index Frame index
+	 * @return Render sequence
 	 */
-	public void flags(VkCommandBufferUsage... flags) {
-		this.flags = requireNonNull(flags);
-	}
+	public Buffer compose(int index, Framebuffer framebuffer) {
+		// Allocate command buffer
+		final Buffer buffer = pool.allocate(1, true).getFirst();
 
-	/**
-	 * Sets the subpass contents for the render sequence.
-	 * Default is {@link VkSubpassContents#SECONDARY_COMMAND_BUFFERS}.
-	 * @param contents Subpass contents
-	 */
-	public void contents(VkSubpassContents contents) {
-		this.contents = requireNonNull(contents);
-	}
+		// Init frame buffer
+		final Command begin = framebuffer.begin(policy.contents);
 
-	/**
-	 * Composes the render task for the next frame.
-	 * @param index In-flight frame index
-	 * @param frame Frame buffer
-	 * @return Render task
-	 */
-	public Command.Buffer compose(int index, FrameBuffer frame) {
-		// Allocate a primary command buffer
-		final Command.Buffer buffer = pool
-				.allocate(1, true)
-				.getFirst();
-
-		// Start recording
-		buffer.begin(flags);
-
-		// Create a render pass for the given frame buffer
-		final Command begin = frame.begin(contents);
-// TODO
-//		final Sequence pass = sequence.wrap(begin, FrameBuffer.END);
-//
-//		// Record render pass
-//		pass.record(index, buffer);
-
-		// Finish recording
-		buffer.end();
+		// Build render sequence
+		buffer.begin(null, policy.usage());
+    		buffer.add(begin);
+    			sequence.accept(buffer);
+    		buffer.add(framebuffer.end());
+    	buffer.end();
 
 		return buffer;
 	}
+
+	// TODO - pre-generated array[]
 }

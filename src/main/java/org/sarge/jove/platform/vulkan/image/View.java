@@ -9,12 +9,12 @@ import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.render.FrameBuffer;
+import org.sarge.jove.platform.vulkan.render.Framebuffer;
 import org.sarge.jove.util.EnumMask;
 
 /**
  * An <i>image view</i> is a reference to an {@link Image} used as a frame buffer <i>attachment</i>.
- * @see FrameBuffer
+ * @see Framebuffer
  * @author Sarge
  */
 public class View extends VulkanObject {

@@ -402,7 +402,7 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 	}
 
 	@Override
-	public void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Handle pAllocator) {
+	public void vkDestroyFramebuffer(LogicalDevice device, Framebuffer framebuffer, Handle pAllocator) {
 	}
 
 	@Override

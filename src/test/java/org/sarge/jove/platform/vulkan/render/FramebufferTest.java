@@ -12,9 +12,9 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.render.FrameBuffer.Group;
+import org.sarge.jove.platform.vulkan.render.Framebuffer.Group;
 
-class FrameBufferTest {
+class FramebufferTest {
 	private static class MockFrameBufferLibrary extends MockVulkanLibrary {
 		public boolean begin;
 		public boolean end;
@@ -53,12 +53,12 @@ class FrameBufferTest {
 		}
 
 		@Override
-		public void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Handle pAllocator) {
+		public void vkDestroyFramebuffer(LogicalDevice device, Framebuffer framebuffer, Handle pAllocator) {
 			destroyed = true;
 		}
 	}
 
-	private FrameBuffer framebuffer;
+	private Framebuffer framebuffer;
 	private LogicalDevice device;
 	private MockFrameBufferLibrary library;
 
@@ -72,7 +72,7 @@ class FrameBufferTest {
 		final var view = new View(new Handle(2), device, new MockImage());
 		view.clear(new ColourClearValue(Colour.BLACK));
 
-		framebuffer = FrameBuffer.create(pass, new Rectangle(640, 480), List.of(view));
+		framebuffer = Framebuffer.create(pass, new Rectangle(640, 480), List.of(view));
 	}
 
 	@Test
@@ -122,7 +122,7 @@ class FrameBufferTest {
 		@Test
 		void get() {
 			for(int n = 0; n < 2; ++n) {
-    			final FrameBuffer buffer = group.get(0);
+    			final Framebuffer buffer = group.get(0);
     			final View colour = swapchain.attachments().get(n);
     			assertEquals(false, buffer.isDestroyed());
     			assertEquals(List.of(colour, depth), buffer.attachments());
@@ -132,14 +132,14 @@ class FrameBufferTest {
 		@DisplayName("can be recreated if the swapchain is invalidated")
 		@Test
 		void create() {
-			group.create();
+			group.recreate();
 			assertEquals(2, group.size());
 		}
 
 		@DisplayName("can be destroyed releasing all buffers")
 		@Test
 		void destroy() {
-			final FrameBuffer buffer = group.get(0);
+			final Framebuffer buffer = group.get(0);
 			group.destroy();
 			assertEquals(0, group.size());
 			assertEquals(true, buffer.isDestroyed());

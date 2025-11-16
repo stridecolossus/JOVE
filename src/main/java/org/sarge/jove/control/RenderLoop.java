@@ -13,7 +13,6 @@ import java.util.function.Consumer;
  * <p>
  * Note that frame rendering tasks are executed sequentially on a single thread.
  * <p>
- * @see FrameCounter.Listener
  * @author Sarge
  */
 public class RenderLoop {
@@ -53,7 +52,14 @@ public class RenderLoop {
 	 * @return Whether this render loop is running
 	 */
 	public boolean isRunning() {
-		return future != null;
+		return Objects.nonNull(future);
+	}
+
+	/**
+	 * @return Whether this render loop has been paused
+	 */
+	public boolean isPaused() {
+		return paused;
 	}
 
 	/**
@@ -106,17 +112,18 @@ public class RenderLoop {
 	}
 
 	/**
-	 * Starts scheduling of the render task.
+	 * Starts or resumes scheduling of the render task.
 	 */
 	private void schedule() {
-		assert task != null;
+		if(future != null) {
+			assert future.isCancelled();
+		}
 		final long period = TimeUnit.SECONDS.toMillis(1) / rate;
 		future = executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MILLISECONDS);
 	}
 
 	/**
-	 * Runs the given render task and tracks the elapsed duration.
-	 * @param task Render task
+	 * Runs the task and notifies the elapsed duration.
 	 */
 	private void run() {
 		counter.start();
@@ -148,7 +155,7 @@ public class RenderLoop {
 	}
 
 	/**
-	 * Notifies listeners of a completed frame.
+	 * Notifies listeners on a completed frame.
 	 */
 	private void update(Duration elapsed) {
 		for(FrameListener listener : listeners) {

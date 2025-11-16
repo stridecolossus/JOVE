@@ -107,10 +107,10 @@ public interface Command {
 		/**
 		 * Starts recording this primary buffer.
 		 * @param flags Usage flags
-		 * @see #begin(VkCommandBufferInheritanceInfo, VkCommandBufferUsage...)
+		 * @see #begin(VkCommandBufferInheritanceInfo, Set)
 		 */
 		public Buffer begin(VkCommandBufferUsage... flags) {
-			return begin(null, flags);
+			return begin(null, Set.of(flags));
 		}
 
 		/**
@@ -118,7 +118,7 @@ public interface Command {
 		 * @param inheritance		Inheritance descriptor
 		 * @param flags				Usage flags
 		 */
-		public Buffer begin(VkCommandBufferInheritanceInfo inheritance, VkCommandBufferUsage... flags) {
+		public Buffer begin(VkCommandBufferInheritanceInfo inheritance, Set<VkCommandBufferUsage> flags) {
 			// Check buffer can be recorded
 			check(Stage.INITIAL);
 

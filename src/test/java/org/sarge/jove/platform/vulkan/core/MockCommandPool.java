@@ -7,6 +7,10 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 
 public class MockCommandPool extends Command.Pool {
+	public MockCommandPool() {
+		this(new MockLogicalDevice());
+	}
+
 	public MockCommandPool(LogicalDevice device) {
 		final var family = new Family(0, 1, Set.of());
 		final var queue = new WorkQueue(new Handle(1), family);

@@ -244,7 +244,7 @@ class CommandTest {
 
 		@Test
 		void begin() {
-			secondary.begin(new VkCommandBufferInheritanceInfo(), RENDER_PASS_CONTINUE);
+			secondary.begin(new VkCommandBufferInheritanceInfo(), Set.of(RENDER_PASS_CONTINUE));
 		}
 
 		@Test
@@ -254,7 +254,7 @@ class CommandTest {
 
 		@Test
 		void add() {
-			secondary.begin(new VkCommandBufferInheritanceInfo(), RENDER_PASS_CONTINUE);
+			secondary.begin(new VkCommandBufferInheritanceInfo(), Set.of(RENDER_PASS_CONTINUE));
 			secondary.end();
 			primary.add(List.of(secondary));
 		}

@@ -23,6 +23,11 @@ public class VulkanSemaphore extends VulkanObject {
 		return library::vkDestroySemaphore;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
+	}
+
 	/**
 	 * Creates a new semaphore.
 	 * @param device Logical device

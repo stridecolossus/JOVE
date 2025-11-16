@@ -7,22 +7,23 @@ import java.util.Set;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
 
 /**
- * A <i>Vulkan frame</i> tracks the state of an in-flight frame during the acquire-render-present process.
+ * The <i>frame state</i> manages the synchronisation state of an <i>in-flight</i> frame during the rendering process.
  * @author Sarge
  */
-public class VulkanFrame implements TransientObject {
+public class FrameState implements TransientObject {
 	/**
 	 * Creates a frame instance for the given device.
-	 * @param dev Logical device
+	 * @param device Logical device
 	 */
-	public static VulkanFrame create(LogicalDevice dev) {
-		final var available = VulkanSemaphore.create(dev);
-		final var ready = VulkanSemaphore.create(dev);
-		final var fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
-		return new VulkanFrame(available, ready, fence);
+	public static FrameState create(LogicalDevice device) {
+		final var available = VulkanSemaphore.create(device);
+		final var ready = VulkanSemaphore.create(device);
+		final var fence = Fence.create(device, VkFenceCreateFlag.SIGNALED);
+		return new FrameState(available, ready, fence);
 	}
 
 	private final VulkanSemaphore available, ready;
@@ -30,12 +31,12 @@ public class VulkanFrame implements TransientObject {
 
 	/**
 	 * Constructor.
-	 * @param available		Signals a frame is available for rendering
-	 * @param ready			Signals a frame has been rendered and is ready for presentation
-	 * @param fence			Synchronises execution of the rendering work
+	 * @param available		Signals the frame is available for rendering
+	 * @param ready			Signals the frame has been rendered and is ready for presentation
+	 * @param fence			Synchronises the rendering work
 	 * @throws IllegalArgumentException if {@link #available} and {@link #ready} are the same semaphore
 	 */
-	VulkanFrame(VulkanSemaphore available, VulkanSemaphore ready, Fence fence) {
+	FrameState(VulkanSemaphore available, VulkanSemaphore ready, Fence fence) {
 		if(available.equals(ready)) {
 			throw new IllegalArgumentException("Available and ready semaphores cannot be the same");
 		}
@@ -45,9 +46,10 @@ public class VulkanFrame implements TransientObject {
 	}
 
 	/**
-	 * Acquires the next frame buffer.
+	 * Acquires the index of the next frame buffer.
 	 * @param swapchain Swapchain
 	 * @return Frame buffer index
+	 * @throws SwapchainInvalidated if the frame buffer index cannot be acquired
 	 */
 	public int acquire(Swapchain swapchain) throws SwapchainInvalidated {
 		// Wait for the previous frame to be completed
@@ -65,28 +67,42 @@ public class VulkanFrame implements TransientObject {
 	/**
 	 * Renders the next frame frame and blocks until completion.
 	 * @param sequence Render sequence
+	 * @see #submit(Buffer)
 	 */
-	public void render(Command.Buffer sequence) {
+	public void render(Buffer sequence) {
 		submit(sequence);
 		fence.waitReady();
 	}
 
-	private void submit(Command.Buffer sequence) {
+	/**
+	 * Submits the render sequence.
+	 * @param sequence Render sequence
+	 * @see #stages()
+	 */
+	protected void submit(Buffer sequence) {
 		new Work.Builder()
         		.add(sequence)
-        		.wait(available, Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT))
+        		.wait(available, stages())
         		.signal(ready)
         		.build()
         		.submit(fence);
 	}
 
 	/**
+	 * @return Waiting pipeline stages for the render task
+	 */
+	protected Set<VkPipelineStage> stages() {
+		return Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT);
+	}
+
+	/**
 	 * Presents a completed frame.
-	 * @param sequence		Render sequence
+	 * @param sequence		Rendering sequence
 	 * @param index			Frame buffer index
 	 * @param swapchain		Swapchain
+	 * @throws SwapchainInvalidated if the frame cannot be presented
 	 */
-	public void present(Command.Buffer sequence, int index, Swapchain swapchain) {
+	public void present(Buffer sequence, int index, Swapchain swapchain) throws SwapchainInvalidated {
 		final WorkQueue queue = sequence.pool().queue();
 		swapchain.present(queue, index, ready);
 	}

@@ -93,7 +93,7 @@ public class Swapchain extends VulkanObject {
 	 * Indicates that this swapchain has been invalidated when acquiring or presenting a frame, generally when the window is resized or minimised.
 	 */
 	public static final class SwapchainInvalidated extends VulkanException {
-		private SwapchainInvalidated(VkResult result) {
+		SwapchainInvalidated(VkResult result) {
 			super(result);
 		}
 	}
@@ -177,6 +177,22 @@ public class Swapchain extends VulkanObject {
 	protected void release() {
 		attachments.forEach(View::destroy);
 	}
+
+	// TODO...
+	public class Provider {
+		private final Swapchain.Builder builder;
+
+		public Provider(Swapchain.Builder builder) {
+			this.builder = requireNonNull(builder);
+		}
+
+		public Swapchain create() {
+			// TODO - builder needs to dynamically get surface properties
+			// TODO - wait for device idle
+			return builder.build(null); // TODO - device
+		}
+	}
+	// ...TODO
 
 	/**
 	 * The <i>presentation task builder</i> is used to construct the descriptor for swapchain presentation.

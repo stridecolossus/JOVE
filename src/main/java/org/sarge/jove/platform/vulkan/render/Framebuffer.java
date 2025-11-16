@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.image.*;
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
  * @author Sarge
  */
-public class FrameBuffer extends VulkanObject {
+public class Framebuffer extends VulkanObject {
 	private final Handle pass;
 	private final List<View> attachments;
 	private final Rectangle extents;
@@ -31,7 +31,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @param extents			Image extents
 	 * @param library			Frame buffer library
 	 */
-	FrameBuffer(Handle handle, LogicalDevice device, Handle pass, List<View> attachments, Rectangle extents, Library library) {
+	Framebuffer(Handle handle, LogicalDevice device, Handle pass, List<View> attachments, Rectangle extents, Library library) {
 		super(handle, device);
 		this.pass = requireNonNull(pass);
 		this.attachments = List.copyOf(attachments);
@@ -67,14 +67,6 @@ public class FrameBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Creates a command to start a render pass with this frame buffer.
-	 * @return Begin render pass command
-	 */
-	public Command begin() {
-		return begin(VkSubpassContents.INLINE);
-	}
-
-	/**
 	 * @return Clear attachment array
 	 */
 	private VkClearValue[] clear() {
@@ -82,7 +74,7 @@ public class FrameBuffer extends VulkanObject {
 				.stream()
 				.map(View::clear)
 				.flatMap(Optional::stream)
-				.map(FrameBuffer::populate)
+				.map(Framebuffer::populate)
 				.toArray(VkClearValue[]::new);
 	}
 	// TODO - needs to have entries even if not cleared?
@@ -104,7 +96,7 @@ public class FrameBuffer extends VulkanObject {
 	}
 
 	@Override
-	protected Destructor<FrameBuffer> destructor() {
+	protected Destructor<Framebuffer> destructor() {
 		return library::vkDestroyFramebuffer;
 	}
 
@@ -118,7 +110,7 @@ public class FrameBuffer extends VulkanObject {
 	 * @throws IllegalArgumentException if an attachment is not of the expected format
 	 * @throws IllegalArgumentException if an attachment is smaller than the given extents
 	 */
-	public static FrameBuffer create(RenderPass pass, Rectangle extents, List<View> attachments) {
+	public static Framebuffer create(RenderPass pass, Rectangle extents, List<View> attachments) {
 		/*
 		// Validate attachments
 		final List<Attachment> expected = pass.attachments();
@@ -159,7 +151,7 @@ public class FrameBuffer extends VulkanObject {
 		library.vkCreateFramebuffer(device, info, null, handle);
 
 		// Create frame buffer
-		return new FrameBuffer(handle.get(), device, pass.handle(), attachments, extents, library);
+		return new Framebuffer(handle.get(), device, pass.handle(), attachments, extents, library);
 	}
 
 	/**
@@ -169,7 +161,7 @@ public class FrameBuffer extends VulkanObject {
 		private final Swapchain swapchain;
 		private final RenderPass pass;
 		private final List<View> additional;
-		private final List<FrameBuffer> buffers = new ArrayList<>();
+		private final List<Framebuffer> buffers = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -183,6 +175,7 @@ public class FrameBuffer extends VulkanObject {
 			this.additional = List.copyOf(additional);
 			build();
 		}
+		// TODO - swapchain -> factory
 
 		/**
 		 * @return Number of frame buffers in this group, i.e. the number of swapchain attachments
@@ -197,17 +190,18 @@ public class FrameBuffer extends VulkanObject {
 		 * @return Framebuffer
 		 * @throws IndexOutOfBoundsException for an invalid index or if this group has been destroyed
 		 */
-		public FrameBuffer get(int index) {
+		public Framebuffer get(int index) {
 			return buffers.get(index);
 		}
 
 		/**
 		 * Recreates this group of framebuffers when the swapchain has been invalidated.
 		 */
-		public void create() {
+		public void recreate() {
 			destroy();
 			build();
 		}
+		// TODO - pass in new swapchain
 
 		/**
 		 * Builds the framebuffer group.
@@ -222,14 +216,14 @@ public class FrameBuffer extends VulkanObject {
     			attachments.addAll(additional);
 
     			// Create buffer
-    			final var buffer = FrameBuffer.create(pass, extents, attachments);
+    			final var buffer = Framebuffer.create(pass, extents, attachments);
     			buffers.add(buffer);
     		}
 		}
 
 		@Override
 		public void destroy() {
-			for(FrameBuffer buffer : buffers) {
+			for(Framebuffer buffer : buffers) {
 				buffer.destroy();
 			}
 			buffers.clear();
@@ -256,7 +250,7 @@ public class FrameBuffer extends VulkanObject {
 		 * @param framebuffer		Frame buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyFramebuffer(LogicalDevice device, FrameBuffer framebuffer, Handle pAllocator);
+		void vkDestroyFramebuffer(LogicalDevice device, Framebuffer framebuffer, Handle pAllocator);
 
 		/**
 		 * Begins a render pass.
