@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.Pointer;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
@@ -16,6 +16,8 @@ import org.sarge.jove.platform.vulkan.render.SwapchainTest.MockSwapchainLibrary;
 
 class RenderTaskTest {
 	private static class MockRenderTaskLibrary extends MockSwapchainLibrary {
+		private VkResult result = VkResult.SUCCESS;
+
 		@Override
 		public VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore) {
 			pSemaphore.set(new Handle(4));
@@ -33,23 +35,34 @@ class RenderTaskTest {
 			pFramebuffer.set(new Handle(6));
 			return VkResult.SUCCESS;
 		}
+
+		@Override
+		public int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
+			pImageIndex.set(0);
+			return result.value();
+		}
 	}
 
 	private RenderTask task;
 	private LogicalDevice device;
-	private MockSwapchain swapchain;
+	private MockRenderTaskLibrary library;
 	private Framebuffer.Group group;
 	private AtomicReference<Buffer> sequence;
 	private FrameComposer composer;
 
 	@BeforeEach
 	void before() {
-		device = new MockLogicalDevice(new MockRenderTaskLibrary());
-		swapchain = new MockSwapchain(device);
-		group = new Framebuffer.Group(swapchain, new MockRenderPass(device), List.of());
+		library = new MockRenderTaskLibrary();
+		device = new MockLogicalDevice(library);
+
+		final var surface = new MockVulkanSurface(library);
+		final var physical = new MockPhysicalDevice(library);
+		final var factory = new SwapchainFactory(device, surface.new PropertiesAdapter(physical));
+
+		group = new Framebuffer.Group(factory.swapchain(), new MockRenderPass(device), List.of());
 		sequence = new AtomicReference<>();
 		composer = new FrameComposer(new MockCommandPool(), BufferPolicy.DEFAULT, sequence::set);
-		task = new RenderTask(swapchain, group, composer);
+		task = new RenderTask(factory, group, composer);
 	}
 
 	@Test
@@ -67,9 +80,8 @@ class RenderTaskTest {
 
 	@Test
 	void invalidated() {
-		swapchain.invalidate();
+		library.result = VkResult.ERROR_OUT_OF_DATE_KHR;
 		task.run();
-		// TODO
 	}
 
 	@Test

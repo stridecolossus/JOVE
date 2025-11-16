@@ -8,15 +8,15 @@ import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
+import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
 
 /**
- * The <i>frame state</i> manages the synchronisation state of an <i>in-flight</i> frame during the rendering process.
+ * The <i>frame state</i> manages the synchronisation state of an <i>in-flight</i> frame during rendering.
  * @author Sarge
  */
 public class FrameState implements TransientObject {
 	/**
-	 * Creates a frame instance for the given device.
+	 * Creates a frame state instance.
 	 * @param device Logical device
 	 */
 	public static FrameState create(LogicalDevice device) {
@@ -49,9 +49,9 @@ public class FrameState implements TransientObject {
 	 * Acquires the index of the next frame buffer.
 	 * @param swapchain Swapchain
 	 * @return Frame buffer index
-	 * @throws SwapchainInvalidated if the frame buffer index cannot be acquired
+	 * @throws Invalidated if the frame buffer index cannot be acquired
 	 */
-	public int acquire(Swapchain swapchain) throws SwapchainInvalidated {
+	public int acquire(Swapchain swapchain) throws Invalidated {
 		// Wait for the previous frame to be completed
 		fence.waitReady();
 
@@ -100,9 +100,9 @@ public class FrameState implements TransientObject {
 	 * @param sequence		Rendering sequence
 	 * @param index			Frame buffer index
 	 * @param swapchain		Swapchain
-	 * @throws SwapchainInvalidated if the frame cannot be presented
+	 * @throws Invalidated if the frame cannot be presented
 	 */
-	public void present(Buffer sequence, int index, Swapchain swapchain) throws SwapchainInvalidated {
+	public void present(Buffer sequence, int index, Swapchain swapchain) throws Invalidated {
 		final WorkQueue queue = sequence.pool().queue();
 		swapchain.present(queue, index, ready);
 	}

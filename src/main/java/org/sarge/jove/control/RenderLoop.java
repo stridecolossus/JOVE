@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 /**
  * The <i>render loop</i> performs frame rendering according to a configured frame rate.
  * <p>
- * Note that frame rendering tasks are executed sequentially on a single thread.
+ * Frame render tasks are executed sequentially on a single thread.
  * <p>
  * @author Sarge
  */
@@ -118,8 +118,8 @@ public class RenderLoop {
 		if(future != null) {
 			assert future.isCancelled();
 		}
-		final long period = TimeUnit.SECONDS.toMillis(1) / rate;
-		future = executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MILLISECONDS);
+		final long period = TimeUnit.SECONDS.toMicros(1) / rate;
+		future = executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MICROSECONDS);
 	}
 
 	/**

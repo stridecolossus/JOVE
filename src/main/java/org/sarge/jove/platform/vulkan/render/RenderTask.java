@@ -5,10 +5,10 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
+import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
 
 /**
- * The <i>render task</i> renders and presents a frame to the swapchain.
+ * The <i>render task</i> encapsulates the process of rendering and presenting frames to the swapchain.
  * <p>
  * This class orchestrates the various components that collaborate to render a frame as follows:
  * <ol>
@@ -18,16 +18,16 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
  * <li>Submit the render task</li>
  * <li>Present the completed frame to the swapchain</li>
  * </ol>
- * TODO
- * If the acquire or present steps fail due to a {@link SwapchainInvalidated} the swapchain and frame buffers are recreated by {@link SwapchainAdapter#recreate()}.
+ * If the acquire or present steps fail due to a {@link Invalidated} the swapchain and frame buffers are recreated by {@link SwapchainAdapter#recreate()}.
  * <p>
+ * This implementation aims to fully utilise the multi-threaded nature of the hardware by rendering multiple <i>in flight</i> frame concurrently.
  * The number of in-flight frames can be overridden by the {@link #count(Swapchain)} method.
- * Usually this is the same as the number of swapchain attachments (the default behaviour).
+ * The default configuration is the same as the number of swapchain attachments.
  * <p>
  * @author Sarge
  */
 public class RenderTask implements Runnable, TransientObject {
-	private final Swapchain swapchain;
+	private final SwapchainFactory factory;
 	private final Framebuffer.Group group;
 	private final FrameComposer composer;
 	private final FrameState[] frames;
@@ -35,17 +35,16 @@ public class RenderTask implements Runnable, TransientObject {
 
 	/**
 	 * Constructor.
-	 * @param swapchain			Swapchain
+	 * @param swapchain			Swapchain factory
 	 * @param group				Frame buffers
 	 * @param composer			Composer for the render sequence
 	 */
-	public RenderTask(Swapchain swapchain, Framebuffer.Group group, FrameComposer composer) {
-		this.swapchain = requireNonNull(swapchain);
+	public RenderTask(SwapchainFactory factory, Framebuffer.Group group, FrameComposer composer) {
+		this.factory = requireNonNull(factory);
 		this.group = requireNonNull(group);
 		this.composer = requireNonNull(composer);
-		this.frames = init(swapchain);
+		this.frames = init(factory.swapchain());
 	}
-	// TODO - swapchain provider
 
 	/**
 	 * Builds the array of in-flight frames.
@@ -63,7 +62,7 @@ public class RenderTask implements Runnable, TransientObject {
 	}
 
 	/**
-	 * Determines the number of in-flight frames.
+	 * Specified the number of in-flight frames.
 	 * @param swapchain Swapchain
 	 * @return Number of in-flight frames
 	 */
@@ -85,13 +84,14 @@ public class RenderTask implements Runnable, TransientObject {
 		try {
 			frame();
 		}
-		catch(SwapchainInvalidated e) {
-			// TODO - recreate the swapchain => factory, uses builder?, needs surface capabilities
+		catch(Swapchain.Invalidated e) {
+			waitIdle();
+			factory.recreate();
 			group.recreate();
 		}
 	}
 
-	private void frame() {
+	private void frame() throws Swapchain.Invalidated {
 		// Select the next in-flight frame
 		final FrameState frame = frames[next];
 		if(++next >= frames.length) {
@@ -99,6 +99,7 @@ public class RenderTask implements Runnable, TransientObject {
 		}
 
 		// Acquire next frame buffer
+		final Swapchain swapchain = factory.swapchain();
 		final int index = frame.acquire(swapchain);
 		final Framebuffer framebuffer = group.get(index);
 
@@ -108,6 +109,14 @@ public class RenderTask implements Runnable, TransientObject {
 
 		// Present frame
 		frame.present(sequence, index, swapchain);
+	}
+
+	/**
+	 * Blocks until the device has completed all pending work.
+	 */
+	private void waitIdle() {
+		final LogicalDevice device = factory.swapchain().device();
+		device.waitIdle();
 	}
 
 	@Override

@@ -26,13 +26,13 @@ class FrameStateTest {
 		// Create swapchain
 		swapchain = new MockSwapchain(new MockLogicalDevice()) {
 			@Override
-			public int acquire(VulkanSemaphore semaphore, Fence fence) throws SwapchainInvalidated {
+			public int acquire(VulkanSemaphore semaphore, Fence fence) throws Invalidated {
 				assertEquals(available, semaphore);
 				return 3;
 			}
 
 			@Override
-			public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws SwapchainInvalidated {
+			public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws Invalidated {
 				assertEquals(sequence.pool().queue(), queue);
 				assertEquals(ready, semaphore);
 				presented = true;

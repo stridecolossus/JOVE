@@ -90,23 +90,14 @@ public class Swapchain extends VulkanObject {
 	}
 
 	/**
-	 * Indicates that this swapchain has been invalidated when acquiring or presenting a frame, generally when the window is resized or minimised.
-	 */
-	public static final class SwapchainInvalidated extends VulkanException {
-		SwapchainInvalidated(VkResult result) {
-			super(result);
-		}
-	}
-
-	/**
 	 * Acquires the next swapchain image.
 	 * @param semaphore		Optional semaphore signalled when the frame has been acquired
 	 * @param fence			Optional fence
 	 * @return Image index
 	 * @throws IllegalArgumentException if both the semaphore and fence are {@code null}
-	 * @throws SwapchainInvalidated if the swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR}
+	 * @throws Invalidated if the swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR}
 	 */
-	public int acquire(VulkanSemaphore semaphore, Fence fence) throws SwapchainInvalidated {
+	public int acquire(VulkanSemaphore semaphore, Fence fence) throws Invalidated {
 		// Validate
 		if((semaphore == null) && (fence == null)) {
 			throw new IllegalArgumentException("Either a semaphore or fence must be provided");
@@ -120,7 +111,7 @@ public class Swapchain extends VulkanObject {
 		// Check result
 		switch(result) {
 			case SUCCESS, SUBOPTIMAL_KHR -> latest = index.get();
-			case ERROR_OUT_OF_DATE_KHR -> throw new SwapchainInvalidated(result);
+			case ERROR_OUT_OF_DATE_KHR -> throw new Invalidated(result);
 			default -> throw new VulkanException(result);
 		}
 
@@ -132,11 +123,11 @@ public class Swapchain extends VulkanObject {
 	 * @param queue				Presentation queue
 	 * @param index				Swapchain image index
 	 * @param semaphore			Wait semaphore
-	 * @throws SwapchainInvalidated if the image cannot be presented
+	 * @throws Invalidated if the image cannot be presented
 	 * @see PresentTaskBuilder
 	 * @see #present(LogicalDevice, WorkQueue, VkPresentInfoKHR)
 	 */
-	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws SwapchainInvalidated {
+	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws Invalidated {
 		final var builder = new PresentTaskBuilder();
 		builder.image(this, index);
 
@@ -152,14 +143,14 @@ public class Swapchain extends VulkanObject {
 	 * @param library		Swapchain library
 	 * @param queue			Presentation queue
 	 * @param info			Presentation task
-	 * @throws SwapchainInvalidated if a swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR} or {@link VkResult#SUBOPTIMAL_KHR}
+	 * @throws Invalidated if a swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR} or {@link VkResult#SUBOPTIMAL_KHR}
 	 * @see PresentTaskBuilder
 	 */
-	public static void present(Library library, WorkQueue queue, VkPresentInfoKHR info) throws SwapchainInvalidated {
+	public static void present(Library library, WorkQueue queue, VkPresentInfoKHR info) throws Invalidated {
 		final int code = library.vkQueuePresentKHR(queue, info);
 		final VkResult result = MAPPING.map(code);
 		switch(result) {
-			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new SwapchainInvalidated(result);
+			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new Invalidated(result);
 			default -> {
 				if(result != VkResult.SUCCESS) {
 					throw new VulkanException(result);
@@ -178,21 +169,22 @@ public class Swapchain extends VulkanObject {
 		attachments.forEach(View::destroy);
 	}
 
-	// TODO...
-	public class Provider {
-		private final Swapchain.Builder builder;
+	/**
+	 * Indicates that this swapchain has been invalidated.
+	 * This is generally caused by the window being resized or minimised.
+	 */
+	public static final class Invalidated extends VulkanException {
+		private final VkResult result;
 
-		public Provider(Swapchain.Builder builder) {
-			this.builder = requireNonNull(builder);
+		Invalidated(VkResult result) {
+			super(result);
+			this.result = result;
 		}
 
-		public Swapchain create() {
-			// TODO - builder needs to dynamically get surface properties
-			// TODO - wait for device idle
-			return builder.build(null); // TODO - device
+		public VkResult result() {
+			return result;
 		}
 	}
-	// ...TODO
 
 	/**
 	 * The <i>presentation task builder</i> is used to construct the descriptor for swapchain presentation.

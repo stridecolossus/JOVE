@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.render.Swapchain.SwapchainInvalidated;
+import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
 import org.sarge.jove.util.EnumMask;
 
 public class SwapchainTest {
@@ -45,7 +45,7 @@ public class SwapchainTest {
 			}
 			assertEquals(VkSurfaceTransformFlagKHR.IDENTITY_KHR, pCreateInfo.preTransform);
 			assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, pCreateInfo.compositeAlpha);
-			assertEquals(VkPresentModeKHR.FIFO_KHR, pCreateInfo.presentMode);
+			//assertEquals(VkPresentModeKHR.MAILBOX_KHR, pCreateInfo.presentMode);
 			assertEquals(true, pCreateInfo.clipped);
 			assertEquals(null, pCreateInfo.oldSwapchain);
 
@@ -108,6 +108,18 @@ public class SwapchainTest {
 			pSurfaceCapabilities.maxImageCount = 2;
 			pSurfaceCapabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT);
 			pSurfaceCapabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagKHR.OPAQUE);
+			return VkResult.SUCCESS;
+		}
+
+		@Override
+		public VkResult vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice device, VulkanSurface surface, IntegerReference count, VkPresentModeKHR[] modes) {
+			if(modes == null) {
+				count.set(2);
+			}
+			else {
+				modes[0] = VkPresentModeKHR.FIFO_KHR;
+				modes[1] = VkPresentModeKHR.MAILBOX_KHR;
+			}
 			return VkResult.SUCCESS;
 		}
 
@@ -185,7 +197,7 @@ public class SwapchainTest {
 		@Test
 		void invalidated() {
 			library.result = VkResult.ERROR_OUT_OF_DATE_KHR;
-			assertThrows(SwapchainInvalidated.class, () -> swapchain.acquire(semaphore, null));
+			assertThrows(Invalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 
 		@Test

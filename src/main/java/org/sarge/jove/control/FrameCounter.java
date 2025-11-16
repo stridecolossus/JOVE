@@ -58,4 +58,9 @@ public class FrameCounter {
 
 		return elapsed;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("FrameCounter[fps=%d]", count());
+	}
 }
