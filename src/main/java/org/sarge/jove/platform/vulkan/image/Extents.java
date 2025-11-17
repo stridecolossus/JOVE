@@ -7,7 +7,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
- * The <i>extents</i> specifies the size and depth of an image.
+ * An <i>extents</i> specifies the size and depth of an image.
  * @author Sarge
  */
 public record Extents(Dimensions size, int depth) {

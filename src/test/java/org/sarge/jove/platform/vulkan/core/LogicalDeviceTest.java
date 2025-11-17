@@ -33,7 +33,7 @@ class LogicalDeviceTest {
 
 			// Check validation layers
 			assertEquals(1, pCreateInfo.enabledLayerCount);
-			assertArrayEquals(new String[]{Vulkan.STANDARD_VALIDATION}, pCreateInfo.ppEnabledLayerNames);
+			assertArrayEquals(new String[]{DiagnosticHandler.STANDARD_VALIDATION}, pCreateInfo.ppEnabledLayerNames);
 
 			// Check required queues
 			final VkDeviceQueueCreateInfo queue = pCreateInfo.pQueueCreateInfos[0];
@@ -141,7 +141,7 @@ class LogicalDeviceTest {
 		@Test
 		void build() {
 			final LogicalDevice device = builder
-					.layer(Vulkan.STANDARD_VALIDATION)
+					.layer(DiagnosticHandler.STANDARD_VALIDATION)
 					.extension("extension")
 					.feature("wideLines")
 					.queue(new RequiredQueue(family))

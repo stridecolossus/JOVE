@@ -18,6 +18,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>diagnostic handler</i> is a listener for Vulkan diagnostic messages.
+ * @see Vulkan#STANDARD_VALIDATION
  * @author Sarge
  */
 public class DiagnosticHandler extends TransientNativeObject {
@@ -27,7 +28,12 @@ public class DiagnosticHandler extends TransientNativeObject {
 	public static final String EXTENSION = "VK_EXT_debug_utils";
 
 	/**
-	 * Diagnostic hander library.
+	 * Standard validation layer.
+	 */
+	public static final String STANDARD_VALIDATION = "VK_LAYER_KHRONOS_validation";
+
+	/**
+	 * Synthetic diagnostic hander library.
 	 */
 	interface HandlerLibrary {
 		/**
@@ -56,12 +62,12 @@ public class DiagnosticHandler extends TransientNativeObject {
 	 * Constructor.
 	 * @param handle 		Handle
 	 * @param instance		Parent instance
-	 * @param lib			Library
+	 * @param library		Diagnostic handler library
 	 */
-	DiagnosticHandler(Handle handle, Instance instance, HandlerLibrary lib) {
+	DiagnosticHandler(Handle handle, Instance instance, HandlerLibrary library) {
 		super(handle);
 		this.instance = requireNonNull(instance);
-		this.library = requireNonNull(lib);
+		this.library = requireNonNull(library);
 	}
 
 	@Override
@@ -189,6 +195,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * @param severity Message severity
 		 */
 		public Builder severity(VkDebugUtilsMessageSeverity severity) {
+			requireNonNull(severity);
 			this.severity.add(severity);
 			return this;
 		}
@@ -198,6 +205,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * @param type Message type
 		 */
 		public Builder type(VkDebugUtilsMessageType type) {
+			requireNonNull(type);
 			types.add(type);
 			return this;
 		}
@@ -217,17 +225,17 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final VkDebugUtilsMessengerCreateInfoEXT info = populate(callback);
 
 			// Create diagnostics library
-			final HandlerLibrary lib = library(instance, registry);
+			final HandlerLibrary library = library(instance, registry);
 
 			// Create handler
 			final var handle = new Pointer();
-			final VkResult result = lib.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
+			final VkResult result = library.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
 			if(result != VkResult.SUCCESS) {
 				throw new VulkanException(result);
 			}
 
 			// Create handler instance
-			return new DiagnosticHandler(handle.get(), instance, lib);
+			return new DiagnosticHandler(handle.get(), instance, library);
 		}
 
 		/**

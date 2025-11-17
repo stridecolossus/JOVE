@@ -34,14 +34,22 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	 * @return Amount of free space
 	 */
 	public long free() {
-		return pools.values().stream().mapToLong(MemoryPool::free).sum();
+		return pools
+				.values()
+				.stream()
+				.mapToLong(MemoryPool::free)
+				.sum();
 	}
 
 	/**
 	 * @return Total amount of allocated memory
 	 */
 	public long size() {
-		return pools.values().stream().mapToLong(MemoryPool::size).sum();
+		return pools
+				.values()
+				.stream()
+				.mapToLong(MemoryPool::size)
+				.sum();
 	}
 
 	/**
@@ -79,10 +87,10 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	 */
 	private DeviceMemory create(MemoryType type, long size, MemoryPool pool) throws AllocationException {
 		// Allocate memory for a new block
-		final DeviceMemory mem = super.allocate(type, size);
+		final DeviceMemory memory = super.allocate(type, size);
 
 		// Add new block to pool
-		final Block block = new Block(mem);
+		final Block block = new Block(memory);
 		pool.add(block);
 
 		// Allocate from this block

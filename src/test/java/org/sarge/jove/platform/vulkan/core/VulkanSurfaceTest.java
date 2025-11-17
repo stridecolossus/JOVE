@@ -19,7 +19,7 @@ class VulkanSurfaceTest {
 		private boolean destroyed;
 
 		@Override
-		public VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported) {
+		public VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, VulkanSurface surface, IntegerReference supported) {
 			assertNotNull(device);
 			assertNotNull(surface);
 			supported.set(1);

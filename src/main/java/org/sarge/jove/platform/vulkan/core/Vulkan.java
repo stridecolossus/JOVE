@@ -7,6 +7,7 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
+import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderLibrary;
 
@@ -19,11 +20,6 @@ public interface Vulkan {
 	 * Vulkan API version.
 	 */
 	Version VERSION = new Version(1, 1, 0);
-
-	/**
-	 * Standard validation layer.
-	 */
-	String STANDARD_VALIDATION = "VK_LAYER_KHRONOS_validation";
 
 	/**
 	 * Instantiates the Vulkan native library.
@@ -45,6 +41,7 @@ public interface Vulkan {
 		// Enumerate API
 		final Class<?>[] api = {
 				VulkanCoreLibrary.class,
+				MemoryLibrary.class,
 				ImageLibrary.class,
 				PipelineLibrary.class,
 				RenderLibrary.class,

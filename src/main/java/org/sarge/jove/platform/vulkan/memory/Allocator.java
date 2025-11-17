@@ -46,15 +46,24 @@ public class Allocator {
 
 	/**
 	 * Constructor.
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param types 		Memory types
 	 */
-	public Allocator(LogicalDevice dev, MemoryType[] types) {
-		final var limits = dev.limits();
-		this.device = requireNonNull(dev);
+	public Allocator(LogicalDevice device, MemoryType[] types) {
+		final var limits = device.limits();
+		this.device = requireNonNull(device);
 		this.types = Arrays.copyOf(types, types.length);
-		this.page = requireOneOrMore(limits.bufferImageGranularity);
-		this.max = requireOneOrMore(limits.maxMemoryAllocationCount);
+		this.page = requireOneOrMore((int) limits.get("bufferImageGranularity"));
+		this.max = constrain(limits.get("maxMemoryAllocationCount"), Integer.MAX_VALUE);
+	}
+
+	private static int constrain(int value, int def) {
+		if(value == -1) {
+			return def;
+		}
+		else {
+			return value;
+		}
 	}
 
 	/**
@@ -89,15 +98,14 @@ public class Allocator {
 	 * <li>Otherwise fallback to the <b>first</b> available type matching the minimal <i>required</i> properties</li>
 	 * </ol>
 	 * <p>
-	 * @param reqs			Memory requirements
-	 * @param props			Memory properties
+	 * @param requirements			Memory requirements
+	 * @param properties			Memory properties
 	 * @return Allocated memory
-	 * @throws IllegalAccessException if {@link #size} is not positive
 	 * @throws AllocationException if there is no matching memory type for the request or the memory cannot be allocated by the hardware
 	 */
-	public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-		final MemoryType type = select(reqs, props);
-		return allocate(type, reqs.size);
+	public DeviceMemory allocate(VkMemoryRequirements requirements, MemoryProperties<?> properties) throws AllocationException {
+		final MemoryType type = select(requirements, properties);
+		return allocate(type, requirements.size);
 	}
 
 	/**

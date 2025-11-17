@@ -49,13 +49,13 @@ public record Dependency(Properties source, Properties destination, Set<VkDepend
 	}
 
 	/**
-	 * @param Aggregated subpasses in this render pass
+	 * @param Aggregated subpasses of this render pass
 	 * @return Dependency descriptor
 	 * @throws IllegalArgumentException if a subpass is not present
 	 * @see #VK_SUBPASS_EXTERNAL
 	 */
 	VkSubpassDependency descriptor(List<Subpass> subpasses) {
-		// Map subpasses to indices
+		// Maps subpass indices
 		final var indexer = new Object() {
 			int index(Properties properties) {
 				if(properties.subpass == VK_SUBPASS_EXTERNAL) {
@@ -63,7 +63,9 @@ public record Dependency(Properties source, Properties destination, Set<VkDepend
 				}
 				else {
 					final int index = subpasses.indexOf(properties.subpass);
-					if(index < 0) throw new IllegalArgumentException();
+					if(index < 0) {
+						throw new IllegalArgumentException("Subpass not present: " + properties);
+					}
 					return index;
 				}
 			}

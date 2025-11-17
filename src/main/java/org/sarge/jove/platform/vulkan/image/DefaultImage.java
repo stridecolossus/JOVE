@@ -187,7 +187,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 			final DeviceMemory memory = allocator.allocate(requirements, properties);
 
 			// Bind memory to image
-			vulkan.vkBindImageMemory(device, handle, memory, 0);
+			vulkan.vkBindImageMemory(device, handle, memory, 0L);
 
 			// Create image
 			return new DefaultImage(handle, device, descriptor, memory);

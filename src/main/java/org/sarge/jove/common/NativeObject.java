@@ -7,7 +7,7 @@ import java.util.function.Function;
 import org.sarge.jove.foreign.Transformer;
 
 /**
- * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
+ * A <i>native object</i> is a resource created by the native layer and referenced by a {@link Handle}.
  * @author Sarge
  */
 public interface NativeObject {

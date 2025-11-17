@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * A <i>sub-pass</i> is a transient specification for the stage of a {@link RenderPass}.
+ * A <i>sub-pass</i> is a transient specification for a stage of a {@link RenderPass}.
  * @author Sarge
  */
 public record Subpass(List<AttachmentReference> colour, AttachmentReference depth, Set<VkSubpassDescriptionFlag> flags) {
@@ -27,8 +27,6 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 			requireNonNull(layout);
 		}
 	}
-
-	// TODO - VK_ATTACHMENT_UNUSED  ???
 
 	/**
 	 * Constructor.
@@ -66,7 +64,7 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 				descriptor.layout = reference.layout;
 				descriptor.attachment = attachments.indexOf(reference.attachment);
 				if(descriptor.attachment < 0) {
-					throw new IllegalArgumentException();
+					throw new IllegalArgumentException("Attachment not present in render pass: " + reference);
 				}
 				return descriptor;
 			}

@@ -23,12 +23,12 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	/**
 	 * Constructor.
 	 * @param handle		Memory handle
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param type			Type of memory
 	 * @param size			Size of this memory (bytes)
 	 */
-	DefaultDeviceMemory(Handle handle, LogicalDevice dev, MemoryType type, long size) {
-		super(handle, dev);
+	DefaultDeviceMemory(Handle handle, LogicalDevice device, MemoryType type, long size) {
+		super(handle, device);
 		this.type = requireNonNull(type);
 		this.size = requireOneOrMore(size);
 	}
@@ -59,7 +59,10 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		 * @param segment Memory segment
 		 */
 		private DefaultRegion(Handle segment) {
-			this.segment = segment.address();			// TODO - read only?
+			// TODO
+			// TODO
+			// TODO
+			this.segment = MemorySegment.ofAddress(segment.address().address()).reinterpret(size);
 		}
 
 		@Override

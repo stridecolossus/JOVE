@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.Allocator.AllocationException;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
@@ -41,11 +42,11 @@ class AllocatorTest {
 		library = new MockMemoryLibrary();
 		device = new MockLogicalDevice(library) {
 			@Override
-			public VkPhysicalDeviceLimits limits() {
+			public DeviceLimits limits() {
 				final var limits = new VkPhysicalDeviceLimits();
 				limits.maxMemoryAllocationCount = 1;
 				limits.bufferImageGranularity = 2;
-				return limits;
+				return new DeviceLimits(limits);
 			}
 		};
 		allocator = new Allocator(device, new MemoryType[]{fallback, optimal});

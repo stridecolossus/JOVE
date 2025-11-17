@@ -71,10 +71,10 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param limits	Device limits
 	 * @return Maximum length
 	 */
-	public static int maximum(VkBufferUsageFlag usage, VkPhysicalDeviceLimits limits) {
+	public static int maximum(VkBufferUsageFlag usage, DeviceLimits limits) {
 		return switch(usage) {
-			case UNIFORM_BUFFER -> limits.maxUniformBufferRange;
-			case STORAGE_BUFFER -> limits.maxStorageBufferRange;
+			case UNIFORM_BUFFER -> limits.get("maxUniformBufferRange");
+			case STORAGE_BUFFER -> limits.get("maxStorageBufferRange");
 			default -> Integer.MAX_VALUE;
 		};
 	}

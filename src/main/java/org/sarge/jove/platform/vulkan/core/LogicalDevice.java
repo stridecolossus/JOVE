@@ -10,7 +10,7 @@ import java.util.stream.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceFeatures;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.lib.Percentile;
@@ -22,7 +22,7 @@ import org.sarge.lib.Percentile;
 public class LogicalDevice extends TransientNativeObject {
 	private final Library library;
 	private final Map<Family, List<WorkQueue>> queues;
-	private final VkPhysicalDeviceLimits limits;
+	private final DeviceLimits limits;
 
 	/**
 	 * Constructor.
@@ -35,7 +35,7 @@ public class LogicalDevice extends TransientNativeObject {
 		super(handle);
 		this.library = requireNonNull(library);
 		this.queues = Map.copyOf(queues);
-		this.limits = requireNonNull(limits);
+		this.limits = new DeviceLimits(limits);
 	}
 
 	/**
@@ -57,7 +57,7 @@ public class LogicalDevice extends TransientNativeObject {
 	/**
 	 * @return Device limits
 	 */
-	public VkPhysicalDeviceLimits limits() {
+	public DeviceLimits limits() {
 		return limits;
 	}
 

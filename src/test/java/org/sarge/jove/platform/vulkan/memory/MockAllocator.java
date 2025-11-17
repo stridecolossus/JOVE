@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
@@ -12,11 +13,11 @@ public class MockAllocator extends Allocator {
 	public MockAllocator() {
 		final var device = new MockLogicalDevice() {
 			@Override
-			public VkPhysicalDeviceLimits limits() {
+			public DeviceLimits limits() {
 				final var limits = new VkPhysicalDeviceLimits();
-				limits.maxMemoryAllocationCount = Integer.MAX_VALUE;
+				limits.maxMemoryAllocationCount = -1;
 				limits.bufferImageGranularity = 1024;
-				return limits;
+				return new DeviceLimits(limits);
 			}
 		};
 		super(device, new MemoryType[]{TYPE});

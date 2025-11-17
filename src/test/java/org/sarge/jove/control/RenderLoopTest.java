@@ -42,13 +42,6 @@ public class RenderLoopTest {
 			assertEquals(true, loop.isRunning());
 		}
 
-		@DisplayName("cannot be paused")
-		@Test
-		void pause() {
-			assertThrows(IllegalStateException.class, () -> loop.pause());
-			assertThrows(IllegalStateException.class, () -> loop.restart());
-		}
-
 		@DisplayName("cannot be stopped")
 		@Test
 		void stop() {
@@ -69,19 +62,6 @@ public class RenderLoopTest {
 			latch.await();
 		}
 
-		@DisplayName("can be paused")
-		@Test
-		void pause() {
-			loop.pause();
-			assertEquals(true, loop.isRunning());
-		}
-
-		@DisplayName("cannot be unpaused")
-		@Test
-		void unpause() {
-			assertThrows(IllegalStateException.class, () -> loop.restart());
-		}
-
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
@@ -93,33 +73,6 @@ public class RenderLoopTest {
 		@Test
 		void start() {
 			assertThrows(IllegalStateException.class, () -> loop.start(task));
-		}
-	}
-
-	@DisplayName("A paused render loop...")
-	@Nested
-	class Paused {
-		@BeforeEach
-		void before() {
-			loop.start(task);
-			loop.pause();
-		}
-
-		@DisplayName("is still active")
-		void paused() {
-			assertEquals(true, loop.isRunning());
-		}
-
-		@DisplayName("cannot be paused again")
-		@Test
-		void pause() {
-			assertThrows(IllegalStateException.class, () -> loop.pause());
-		}
-
-		@DisplayName("can be restarted")
-		@Test
-		void stop() {
-			loop.restart();
 		}
 	}
 

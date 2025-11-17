@@ -25,6 +25,10 @@ public interface Mesh {
 	 */
 	int count();
 
+	// TODO - vertices() and index() do not RETURN a buffer but ARE bufferable
+	// i.e. Mesh implements Bufferable
+	// NB also works for a persisted mesh
+
 	/**
 	 * @return Vertex buffer
 	 */

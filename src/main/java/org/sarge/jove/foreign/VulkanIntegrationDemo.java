@@ -63,7 +63,7 @@ public class VulkanIntegrationDemo {
 				.name("VulkanIntegrationDemo")
 				.extension(DiagnosticHandler.EXTENSION)
 				.extensions(extensions)
-				.layer(Vulkan.STANDARD_VALIDATION)
+				.layer(DiagnosticHandler.STANDARD_VALIDATION)
 				.build(vulkan);
 
 		System.out.println("Attaching diagnostic handler...");
@@ -104,6 +104,7 @@ public class VulkanIntegrationDemo {
 		System.out.println("type="+props.deviceType);
 		System.out.println("bufferImageGranularity="+props.limits.bufferImageGranularity);
 		System.out.println("maxPushConstantsSize="+props.limits.maxPushConstantsSize);
+		System.out.println("maxMemoryAllocationCount="+props.limits.maxMemoryAllocationCount);
 
 //		System.out.println("Retrieving device memory properties...");
 //		final var memory = physical.memory();
@@ -117,6 +118,7 @@ public class VulkanIntegrationDemo {
 		System.out.println("Creating logical device...");
 		final var device = new LogicalDevice.Builder(physical)
 				.extension(Swapchain.EXTENSION)
+				.layer(DiagnosticHandler.STANDARD_VALIDATION)
 				.queue(new RequiredQueue(graphicsFamily))
 				.build(vulkan);
 
@@ -128,11 +130,6 @@ public class VulkanIntegrationDemo {
 		System.out.println("Creating swapchain...");
 		final var properties = surface.new PropertiesAdapter(physical);
 		final var factory = new SwapchainFactory(device, properties);
-//		final var swapchain = new Swapchain.Builder(
-//				.clipped(true)
-//				.presentation(VkPresentModeKHR.MAILBOX_KHR)
-//				.clear(new Colour(0.6f, 0.6f, 0.6f, 1))
-//				.build(device);
 
 		// Shaders
 		System.out.println("Creating shaders...");
@@ -156,7 +153,7 @@ public class VulkanIntegrationDemo {
 		final var pipelineBuilder = new GraphicsPipelineBuilder();
 		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
 		pipelineBuilder.viewport().viewportAndScissor(factory.swapchain().extents().rectangle());
-		pipelineBuilder.rasterizer().winding(VkFrontFace.CLOCKWISE);
+		pipelineBuilder.rasterizer().cull(VkCullMode.NONE);
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, vertex));
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.FRAGMENT, fragment));
 		final Pipeline pipeline = pipelineBuilder
@@ -186,12 +183,13 @@ public class VulkanIntegrationDemo {
 		System.out.println("Rendering...");
 		final var loop = new RenderLoop();
 //		final AtomicInteger count = new AtomicInteger();
-		loop.add(_ -> {
-			System.out.println("fps="+loop.counter());
-		});
+//		loop.add(_ -> {
+//			System.out.println("fps="+loop.counter());
+//		});
 		loop.start(render);
 			Thread.sleep(2000);
 		loop.stop();
+		System.out.println(loop.counter());
 
 		// Cleanup
 		System.out.println("Cleanup...");
@@ -214,3 +212,62 @@ public class VulkanIntegrationDemo {
 		System.out.println("DONE");
 	}
 }
+
+//
+//	private static VulkanBuffer demo(LogicalDevice device, PhysicalDevice physical, WorkQueue queue) {
+//
+//		// Builds mesh
+//
+//		final Vertex[] vertices = {
+//			new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT),
+//			new Vertex(new Point(-0.5f, +0.5f, 0), Coordinate2D.BOTTOM_LEFT),
+//			new Vertex(new Point(+0.5f, -0.5f, 0), Coordinate2D.TOP_RIGHT),
+//			new Vertex(new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT),
+//		};
+//
+////		final var mesh = new MutableMesh(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+////		for(Vertex v : vertices) {
+////			mesh.add(v);
+////		}
+//
+//		// Init memory
+//
+//		final var types = MemoryType.enumerate(physical.memory());
+//		final var allocator = new Allocator(device, types);
+//
+//		// Create staging
+//
+//		final var stagingProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
+//				.required(VkMemoryProperty.HOST_VISIBLE)
+//				.optimal(VkMemoryProperty.DEVICE_LOCAL)
+//				.usage(VkBufferUsageFlag.TRANSFER_SRC)
+//				.build();
+//
+//		final var staging = VulkanBuffer.create(device, allocator, 4 * (3 + 2) * 4, stagingProperties);
+//
+//		final ByteBuffer bb = staging.buffer();
+//		for(Vertex v : vertices) {
+//			v.buffer(bb);
+//		}
+//
+//		// Create VBO
+//
+//		final var destProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
+//				.required(VkMemoryProperty.DEVICE_LOCAL)
+//				.usage(VkBufferUsageFlag.TRANSFER_DST)
+//				.usage(VkBufferUsageFlag.VERTEX_BUFFER)
+//				.build();
+//
+//		final var dest = VulkanBuffer.create(device, allocator, 4 * (3 + 2) * 4, destProperties);
+//
+//		// Copy staging to VBO
+//
+//		final var pool = Command.Pool.create(device, queue);
+//		Work.submit(staging.copy(dest), pool);
+//
+//		staging.destroy();
+//		pool.destroy();
+//
+//		return dest;
+//	}
+//}

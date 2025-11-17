@@ -26,6 +26,18 @@ public class Vertex implements Bufferable {
 	}
 
 	// TODO
+	public Vertex(Point pos, Coordinate coordinate) {
+		this(pos);
+		coordinate(coordinate);
+	}
+
+	// TODO
+	public Vertex(Point pos, Normal normal) {
+		this(pos);
+		normal(normal);
+	}
+
+	// TODO
 	public Vertex(Point pos, Normal normal, Coordinate coordinate) {
 		this(pos);
 		normal(normal);

@@ -28,38 +28,22 @@ public class RenderLoop {
 	}
 
 	// Configuration
-	private int rate;
 	private Consumer<Exception> handler = Exception::printStackTrace;
+	private int rate = 60;
 
 	// Listeners
 	private final Set<FrameListener> listeners = new HashSet<>();
 	private final FrameCounter counter = new FrameCounter();
 
 	// Scheduling
-	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	private ScheduledExecutorService executor;
 	private Runnable task;
-	private Future<?> future;
-	private boolean paused;
-
-	/**
-	 * Constructor.
-	 */
-	public RenderLoop() {
-		rate(60);
-	}
 
 	/**
 	 * @return Whether this render loop is running
 	 */
 	public boolean isRunning() {
-		return Objects.nonNull(future);
-	}
-
-	/**
-	 * @return Whether this render loop has been paused
-	 */
-	public boolean isPaused() {
-		return paused;
+		return Objects.nonNull(executor);
 	}
 
 	/**
@@ -115,11 +99,10 @@ public class RenderLoop {
 	 * Starts or resumes scheduling of the render task.
 	 */
 	private void schedule() {
-		if(future != null) {
-			assert future.isCancelled();
-		}
+		assert executor == null;
 		final long period = TimeUnit.SECONDS.toMicros(1) / rate;
-		future = executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MICROSECONDS);
+		executor = Executors.newSingleThreadScheduledExecutor();
+		executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MICROSECONDS);
 	}
 
 	/**
@@ -136,6 +119,7 @@ public class RenderLoop {
 		final Duration elapsed = counter.stop();
 		update(elapsed);
 	}
+	// TODO - counter is-a listener?
 
 	/**
 	 * Registers a frame completion listener.
@@ -164,33 +148,6 @@ public class RenderLoop {
 	}
 
 	/**
-	 * Pauses the render loop.
-	 * @throws IllegalStateException if the loop is not running or is already paused
-	 */
-	public void pause() {
-		if(!isRunning()) {
-			throw new IllegalStateException("Render loop has not been started");
-		}
-		if(paused) {
-			throw new IllegalStateException("Render loop is already paused");
-		}
-		future.cancel(true);
-		paused = true;
-	}
-
-	/**
-	 * Restarts a paused render loop.
-	 * @throws IllegalStateException if the loop is not paused
-	 */
-	public void restart() {
-		if(!paused) {
-			throw new IllegalStateException("Render loop is not paused");
-		}
-		schedule();
-		paused = false;
-	}
-
-	/**
 	 * Stops the render loop.
 	 * @throws IllegalStateException if rendering has not been started
 	 */
@@ -198,8 +155,7 @@ public class RenderLoop {
 		if(!isRunning()) {
 			throw new IllegalStateException("Render loop has not been started");
 		}
-		future.cancel(true);
-		future = null;
-		paused = false;
+		executor.shutdownNow();
+		executor = null;
 	}
 }

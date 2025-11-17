@@ -145,9 +145,9 @@ public class Instance extends TransientNativeObject {
 		 */
 		public Instance build(Library lib) {
 			final VkInstanceCreateInfo info = create();
-			final var ref = new Pointer();
-			lib.vkCreateInstance(info, null, ref);
-			return new Instance(ref.get(), lib);
+			final var handle = new Pointer();
+			lib.vkCreateInstance(info, null, handle);
+			return new Instance(handle.get(), lib);
 		}
 
 		/**

@@ -28,7 +28,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	}
 
 	/**
-	 * Creates a simple colour attachment for presentation.
+	 * Creates a colour attachment for presentation.
 	 * @param format Colour image layout
 	 * @return Colour attachment
 	 */
@@ -41,7 +41,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	}
 
 	/**
-	 * Creates a simple depth attachment.
+	 * Creates the depth-stencil attachment.
 	 * @param format Depth image layout
 	 * @return Depth attachment
 	 */

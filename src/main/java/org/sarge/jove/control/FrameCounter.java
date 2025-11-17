@@ -4,7 +4,7 @@ import java.time.*;
 import java.util.LinkedList;
 
 /**
- * A <i>frame counter</i> tracks the number of completed frame over the last second.
+ * A <i>frame counter</i> tracks the number of completed frames over the last second.
  * @author Sarge
  */
 public class FrameCounter {

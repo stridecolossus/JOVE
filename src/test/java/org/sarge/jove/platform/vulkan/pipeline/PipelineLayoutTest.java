@@ -9,6 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
@@ -65,10 +66,10 @@ class PipelineLayoutTest {
 		// Init logical device
 		device = new MockLogicalDevice(library) {
 			@Override
-			public VkPhysicalDeviceLimits limits() {
+			public DeviceLimits limits() {
 				final var limits = new VkPhysicalDeviceLimits();
 				limits.maxPushConstantsSize = 256;
-				return limits;
+				return new DeviceLimits(limits);
 			}
 		};
 

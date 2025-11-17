@@ -43,7 +43,11 @@ public class SpecialisationConstants {
     	// Build map entries
     	final var builder = new EntryBuilder();
     	info.mapEntryCount = constants.size();
-    	info.pMapEntries = map.entrySet().stream().map(builder::build).toArray(VkSpecializationMapEntry[]::new);
+    	info.pMapEntries = map
+    			.entrySet()
+    			.stream()
+    			.map(builder::build)
+    			.toArray(VkSpecializationMapEntry[]::new);
 
     	assert info.pMapEntries.length == info.mapEntryCount;
     	assert builder.index == constants.size();

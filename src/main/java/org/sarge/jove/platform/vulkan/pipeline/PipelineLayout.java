@@ -39,7 +39,7 @@ public class PipelineLayout extends VulkanObject {
 
 	private void validate() {
     	final var limits = this.device().limits();
-    	final int max = limits.maxPushConstantsSize;
+    	final int max = limits.get("maxPushConstantsSize");
     	for(Range range : constant.ranges()) {
     		if(range.size() > max) {
     			throw new IllegalArgumentException("Push constant range %s is larger than device limit %d".formatted(range, max));
@@ -125,6 +125,7 @@ public class PipelineLayout extends VulkanObject {
 		 * @param layout Descriptor set layout
 		 */
 		public Builder add(DescriptorSet.Layout layout) {
+			requireNonNull(layout);
 			sets.add(layout);
 			return this;
 		}

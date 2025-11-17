@@ -67,7 +67,7 @@ public class VulkanSurface extends TransientNativeObject {
 	 */
 	public boolean isPresentationSupported(PhysicalDevice device, WorkQueue.Family family) {
 		final var supported = new IntegerReference();
-		library.vkGetPhysicalDeviceSurfaceSupportKHR(device, family.index(), this.handle(), supported);
+		library.vkGetPhysicalDeviceSurfaceSupportKHR(device, family.index(), this, supported);
 		return NativeBooleanTransformer.isTrue(supported.get());
 	}
 
@@ -216,7 +216,7 @@ public class VulkanSurface extends TransientNativeObject {
 		 * @param supported				Returned boolean flag
 		 * @return Result
 		 */
-		VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported);
+		VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, VulkanSurface surface, IntegerReference supported);
 
 		/**
 		 * Retrieves the capabilities of a surface.

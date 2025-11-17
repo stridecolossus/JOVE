@@ -136,11 +136,7 @@ public class AxisAngle implements Rotation, Animation {
 	 * <li>and <i>v</i> is the vector to be rotated</li>
 	 * </ul>
 	 * <p>
-	 * Notes:
-	 * <ul>
-	 * <li>This approach may be more efficient than constructing a rotation matrix or quaternion for certain use-cases</li>
-	 * <li>The {@link #provider()} can be overridden to implement a custom cosine function to be used by this method</li>
-	 * </ul>
+	 * This approach will generally be more efficient than constructing an intermediate rotation matrix.
 	 * <p>
 	 * @param v Vector to rotate
 	 * @return Rotated vector

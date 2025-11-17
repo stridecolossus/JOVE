@@ -22,13 +22,13 @@ public class Pipeline extends VulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle		Pipeline handle
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param type			Type of pipeline
 	 * @param layout		Pipeline layout
 	 * @param parent		Whether this is a parent pipeline
 	 */
-	Pipeline(Handle handle, LogicalDevice dev, VkPipelineBindPoint type, PipelineLayout layout, boolean parent) {
-		super(handle, dev);
+	Pipeline(Handle handle, LogicalDevice device, VkPipelineBindPoint type, PipelineLayout layout, boolean parent) {
+		super(handle, device);
 		this.type = requireNonNull(type);
 		this.layout = requireNonNull(layout);
 		this.parent = parent;

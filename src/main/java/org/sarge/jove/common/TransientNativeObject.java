@@ -30,7 +30,9 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 
 	@Override
 	public void destroy() {
-		if(destroyed) throw new IllegalStateException("Transient object has already been destroyed: " + this);
+		if(destroyed) {
+			throw new IllegalStateException("Transient object has already been destroyed: " + this);
+		}
 		release();
 		destroyed = true;
 	}

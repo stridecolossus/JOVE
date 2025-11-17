@@ -326,7 +326,7 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 	// Vulkan surface
 
 	@Override
-	public VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, Handle surface, IntegerReference supported) {
+	public VkResult vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice device, int queueFamilyIndex, VulkanSurface surface, IntegerReference supported) {
 		return null;
 	}
 

@@ -12,7 +12,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
- * A <i>shader</i> is a Vulkan shader module used to implement a programmable pipeline stage.
+ * A <i>shader</i> module implements a programmable pipeline stage.
  * @author Sarge
  */
 public class Shader extends VulkanObject {
@@ -60,7 +60,7 @@ public class Shader extends VulkanObject {
 
 		/**
 		 * Constructor.
-		 * @param device
+		 * @param device Logical device
 		 */
 		public ShaderLoader(LogicalDevice device) {
 			this.device = requireNonNull(device);

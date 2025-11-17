@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.*;
 
 class ResourceBufferTest {
@@ -14,10 +15,10 @@ class ResourceBufferTest {
 	void before() {
 		device = new MockLogicalDevice() {
 			@Override
-			public VkPhysicalDeviceLimits limits() {
+			public DeviceLimits limits() {
 				final var limits = new VkPhysicalDeviceLimits();
 				limits.maxUniformBufferRange = 42;
-				return limits;
+				return new DeviceLimits(limits);
 			}
 		};
 		final var buffer = new MockVulkanBuffer(device, VkBufferUsageFlag.UNIFORM_BUFFER);

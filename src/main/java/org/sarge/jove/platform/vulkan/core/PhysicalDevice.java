@@ -159,7 +159,7 @@ public class PhysicalDevice implements NativeObject {
 	 * @return Device features filter
 	 */
 	public static Predicate<PhysicalDevice> predicate(DeviceFeatures required) {
-		return dev -> dev.features().contains(required);
+		return device -> device.features().contains(required);
 	}
 
 	/**

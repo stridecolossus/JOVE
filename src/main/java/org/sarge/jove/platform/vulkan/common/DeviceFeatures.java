@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
 /**
- * A set of <i>device features</i> is a convenience wrapper specifying required or supported hardware features.
+ * A set of <i>device features</i> is a convenience wrapper specifying required or supported hardware features by <i>name</i>.
  * @see VkPhysicalDeviceFeatures
  * @author Sarge
  */

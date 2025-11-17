@@ -82,6 +82,7 @@ public class Axis extends Normal {
 	 * Parses an axis from the given character.
 	 * @param axis Axis character (case insensitive)
 	 * @return Cardinal axis
+	 * @throws NumberFormatException for an invalid axis
 	 */
 	public static Axis parse(char axis) {
 		return switch(Character.toUpperCase(axis)) {

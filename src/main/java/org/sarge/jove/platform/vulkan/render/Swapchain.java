@@ -124,11 +124,11 @@ public class Swapchain extends VulkanObject {
 	 * @param index				Swapchain image index
 	 * @param semaphore			Wait semaphore
 	 * @throws Invalidated if the image cannot be presented
-	 * @see PresentTaskBuilder
+	 * @see PresentationTaskBuilder
 	 * @see #present(LogicalDevice, WorkQueue, VkPresentInfoKHR)
 	 */
 	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws Invalidated {
-		final var builder = new PresentTaskBuilder();
+		final var builder = new PresentationTaskBuilder();
 		builder.image(this, index);
 
 		if(semaphore != null) {
@@ -144,7 +144,7 @@ public class Swapchain extends VulkanObject {
 	 * @param queue			Presentation queue
 	 * @param info			Presentation task
 	 * @throws Invalidated if a swapchain image is {@link VkResult#ERROR_OUT_OF_DATE_KHR} or {@link VkResult#SUBOPTIMAL_KHR}
-	 * @see PresentTaskBuilder
+	 * @see PresentationTaskBuilder
 	 */
 	public static void present(Library library, WorkQueue queue, VkPresentInfoKHR info) throws Invalidated {
 		final int code = library.vkQueuePresentKHR(queue, info);
@@ -183,63 +183,6 @@ public class Swapchain extends VulkanObject {
 
 		public VkResult result() {
 			return result;
-		}
-	}
-
-	/**
-	 * The <i>presentation task builder</i> is used to construct the descriptor for swapchain presentation.
-	 * @see Swapchain#present(LogicalDevice, WorkQueue, VkPresentInfoKHR)
-	 */
-	public static class PresentTaskBuilder {
-		private final Map<Swapchain, Integer> images = new LinkedHashMap<>();
-		private final Set<VulkanSemaphore> semaphores = new HashSet<>();
-
-		/**
-		 * Adds a swapchain image to be presented.
-		 * @param swapchain		Swapchain
-		 * @param index			Image index
-		 * @throws IllegalArgumentException for a duplicate swapchain
-		 */
-		public PresentTaskBuilder image(Swapchain swapchain, int index) {
-			if(images.containsKey(swapchain)) {
-				throw new IllegalArgumentException("Duplicate swapchain: " + swapchain);
-			}
-			images.put(swapchain, index);
-			return this;
-		}
-
-		/**
-		 * Adds a wait semaphore.
-		 * @param semaphore Wait semaphore
-		 */
-		public PresentTaskBuilder wait(VulkanSemaphore semaphore) {
-			semaphores.add(semaphore);
-			return this;
-		}
-
-		/**
-		 * Constructs this presentation task.
-		 * @return Presentation task
-		 */
-		public VkPresentInfoKHR build() {
-			// Create presentation descriptor
-			final var info = new VkPresentInfoKHR();
-
-			// Populate wait semaphores
-			info.waitSemaphoreCount = semaphores.size();
-			info.pWaitSemaphores = NativeObject.handles(semaphores);
-
-			// Populate swapchain
-			info.swapchainCount = images.size();
-			info.pSwapchains = NativeObject.handles(images.keySet());
-
-			// Set image indices
-			info.pImageIndices = images.values().stream().mapToInt(Integer::intValue).toArray();
-			// TODO - quadruple check this is same order as the keys!!!
-
-			// TODO - what is pResults for?
-
-			return info;
 		}
 	}
 

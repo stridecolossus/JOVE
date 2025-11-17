@@ -212,11 +212,6 @@ public class SwapchainTest {
 	}
 
 	@Nested
-	class PresentTest {
-
-	}
-
-	@Nested
 	class BuilderTest {
 		private Swapchain.Builder builder;
 

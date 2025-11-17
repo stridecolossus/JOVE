@@ -24,11 +24,11 @@ public class View extends VulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle 	Image view handle
-	 * @param dev		Logical device
+	 * @param device	Logical device
 	 * @param image		Underlying image
 	 */
-	public View(Handle handle, LogicalDevice dev, Image image) {
-		super(handle, dev);
+	public View(Handle handle, LogicalDevice device, Image image) {
+		super(handle, device);
 		this.image = requireNonNull(image);
 	}
 

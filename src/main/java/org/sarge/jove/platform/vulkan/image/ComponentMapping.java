@@ -35,13 +35,17 @@ public final class ComponentMapping {
 	 */
 	public static ComponentMapping of(String components) {
 		// Validate
-		final int len = components.length();
-		if(len == 0) throw new IllegalArgumentException("Component mapping cannot be empty");
-		if(len > SIZE) throw new IllegalArgumentException("Invalid component mapping length: " + components);
+		final int length = components.length();
+		if(length == 0) {
+			throw new IllegalArgumentException("Component mapping cannot be empty");
+		}
+		if(length > SIZE) {
+			throw new IllegalArgumentException("Invalid component mapping length: " + components);
+		}
 
 		// Map component swizzles
 		final var mapping = new ComponentMapping();
-		for(int n = 0; n < len; ++n) {
+		for(int n = 0; n < length; ++n) {
 			mapping.swizzle[n] = swizzle(components.charAt(n));
 		}
 
