@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.logging.LogManager;
 
-import org.sarge.jove.common.Dimensions;
+import org.sarge.jove.common.*;
 import org.sarge.jove.control.RenderLoop;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.desktop.*;
@@ -19,6 +19,7 @@ import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.render.*;
 import org.sarge.jove.platform.vulkan.render.FrameComposer.BufferPolicy;
+import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
 public class VulkanIntegrationDemo {
 	void main() throws Exception {
@@ -128,8 +129,20 @@ public class VulkanIntegrationDemo {
 		System.out.println("presentation=" + presentationQueue);
 
 		System.out.println("Creating swapchain...");
-		final var properties = surface.new PropertiesAdapter(physical);
-		final var factory = new SwapchainFactory(device, properties);
+		final var properties = surface.properties(physical);
+		final var builder = new Swapchain.Builder()
+				.clipped(true)
+				.init(properties.capabilities())
+				.clear(new Colour(0.3f, 0.3f, 0.3f, 1f));
+
+		System.out.println("Creating swapchain factory...");
+		final SwapchainConfiguration[] configuration = {
+				new ImageCountSwapchainConfiguration(ImageCountSwapchainConfiguration.MIN),
+				new SurfaceFormatSwapchainConfiguration(new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR)),
+				new PresentationModeSwapchainConfiguration(List.of(VkPresentModeKHR.MAILBOX_KHR)),
+				new SharingModeSwapchainConfiguration(List.of(graphicsFamily, presentationFamily)),
+		};
+		final var factory = new SwapchainFactory(device, properties, builder, List.of(configuration));
 
 		// Shaders
 		System.out.println("Creating shaders...");

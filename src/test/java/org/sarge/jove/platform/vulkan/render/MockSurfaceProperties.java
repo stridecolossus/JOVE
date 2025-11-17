@@ -1,0 +1,53 @@
+package org.sarge.jove.platform.vulkan.render;
+
+import java.util.List;
+
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.util.EnumMask;
+
+class MockSurfaceProperties implements VulkanSurface.Properties {
+	public static final VkSurfaceFormatKHR FORMAT = new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
+
+	public VkSurfaceCapabilitiesKHR capabilities = new VkSurfaceCapabilitiesKHR();
+
+	public MockSurfaceProperties() {
+		capabilities.minImageCount = 1;
+		capabilities.maxImageCount = 2;
+		capabilities.currentExtent = extent(800, 600);
+		capabilities.minImageExtent = extent(640, 480);
+		capabilities.maxImageExtent = extent(1024, 768);
+		capabilities.maxImageArrayLayers = 1;
+		capabilities.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
+		capabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT);
+		capabilities.supportedTransforms = new EnumMask<>(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
+		capabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagKHR.OPAQUE);
+	}
+
+	private static VkExtent2D extent(int width, int height) {
+		final var extent = new VkExtent2D();
+		extent.width = width;
+		extent.height = height;
+		return extent;
+	}
+
+	@Override
+	public VulkanSurface surface() {
+		return new MockVulkanSurface();
+	}
+
+	@Override
+	public VkSurfaceCapabilitiesKHR capabilities() {
+		return capabilities;
+	}
+
+	@Override
+	public List<VkSurfaceFormatKHR> formats() {
+		return List.of(FORMAT);
+	}
+
+	@Override
+	public List<VkPresentModeKHR> modes() {
+		return List.of(VkPresentModeKHR.FIFO_KHR);
+	}
+}

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkPresentModeKHR.*;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
@@ -107,7 +106,7 @@ class VulkanSurfaceTest {
 
 		@BeforeEach
 		void before() {
-			properties = surface.new PropertiesAdapter(device);
+			properties = surface.properties(device);
 		}
 
     	@Test
@@ -116,55 +115,14 @@ class VulkanSurfaceTest {
     		assertEquals(2, capabilities.minImageCount);
     	}
 
-    	@Nested
-    	class SurfaceFormatTest {
-    		private final Predicate<VkSurfaceFormatKHR> none = _ -> false;
-
-        	@Test
-        	void formats() {
-        		assertEquals(1, properties.formats().size());
-        	}
-
-        	@Test
-        	void supported() {
-        		final var supported = properties.formats().getFirst();
-        		final var matcher = Properties.equals(supported);
-        		assertEquals(supported, properties.select(matcher, null));
-        	}
-
-        	@Test
-        	void fallback() {
-        		final var def = new VkSurfaceFormatKHR();
-        		assertEquals(def, properties.select(none, def));
-        	}
-
-        	@Test
-        	void neither() {
-        		final var def = VulkanSurface.defaultSurfaceFormat();
-        		final VkSurfaceFormatKHR selected = properties.select(none, null);
-        		assertEquals(def.format, selected.format);
-        		assertEquals(def.colorSpace, selected.colorSpace);
-        	}
-
-        	@Test
-        	void defaultSurfaceFormat() {
-        		final var def = VulkanSurface.defaultSurfaceFormat();
-        		assertEquals(VkFormat.B8G8R8A8_UNORM, def.format);
-        		assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, def.colorSpace);
-        	}
+    	@Test
+    	void formats() {
+    		assertEquals(1, properties.formats().size());
     	}
 
     	@Test
     	void modes() {
     		assertEquals(List.of(FIFO_KHR, MAILBOX_KHR), properties.modes());
-    	}
-
-    	@Test
-    	void select() {
-    		assertEquals(MAILBOX_KHR, properties.select(List.of(MAILBOX_KHR)));
-    		assertEquals(FIFO_KHR, properties.select(List.of(FIFO_KHR)));
-    		assertEquals(FIFO_KHR, properties.select(List.of(VkPresentModeKHR.FIFO_LATEST_READY_KHR)));
-    		assertEquals(FIFO_KHR, properties.select(List.of()));
     	}
     }
 }

@@ -1,19 +1,19 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
-import org.sarge.jove.util.*;
+import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -190,41 +190,36 @@ public class Swapchain extends VulkanObject {
 	 * Builder for a swap chain.
 	 */
 	public static class Builder {
-		private final VulkanSurface.Properties properties;
-		private final VkSurfaceCapabilitiesKHR capabilities;
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
 		private ColourClearValue clear;
 
-		/**
-		 * Constructor.
-		 * @param properties Surface properties
-		 */
-		public Builder(VulkanSurface.Properties properties) {
-			this.properties = requireNonNull(properties);
-			this.capabilities = properties.capabilities();
+		public Builder() {
 			init();
-			format(VulkanSurface.defaultSurfaceFormat());
 			usage(VkImageUsageFlag.COLOR_ATTACHMENT);
 		}
 
 		private void init() {
-			info.surface = properties.surface().handle();
-			info.minImageCount = capabilities.minImageCount;
-			info.preTransform = capabilities.currentTransform;
+			info.imageFormat = VkFormat.UNDEFINED;
+			info.preTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 			info.imageArrayLayers = 1;
 			info.compositeAlpha = VkCompositeAlphaFlagKHR.OPAQUE;
-			info.imageExtent = capabilities.currentExtent;
 			info.imageSharingMode = VkSharingMode.EXCLUSIVE;
 			info.presentMode = VulkanSurface.DEFAULT_PRESENTATION_MODE;
 			info.clipped = true;
 		}
 
-		private static <E extends IntEnum> void validate(EnumMask<E> mask, E e) {
-			if(!mask.contains(e.value())) {
-				throw new IllegalArgumentException("Unsupported property: " + e);
-			}
+		/**
+		 * Initialises some of the properties of this swapchain according to the given surface capabilities.
+		 * TODO - list
+		 * @param capabilities Surface capabilities
+		 */
+		public Builder init(VkSurfaceCapabilitiesKHR capabilities) {
+			info.minImageCount = capabilities.minImageCount;
+			info.preTransform = capabilities.currentTransform;
+			info.imageExtent = capabilities.currentExtent;
+			return this;
 		}
 
 		/**
@@ -232,6 +227,7 @@ public class Swapchain extends VulkanObject {
 		 * @param flag Creation flag
 		 */
 		public Builder flag(VkSwapchainCreateFlagKHR flag) {
+			requireNonNull(flag);
 			flags.add(flag);
 			return this;
 		}
@@ -239,119 +235,54 @@ public class Swapchain extends VulkanObject {
 		/**
 		 * Sets the minimum number of images.
 		 * @param count Number of images
-		 * @throws IllegalArgumentException if the number of images is not supported by the surface
 		 */
 		public Builder count(int count) {
-			final int max = capabilities.maxImageCount;
-			if((count < capabilities.minImageCount) || ((max > 0) && (count > max))) {
-				throw new IllegalArgumentException("Invalid number of images: num=%d range=%d/%d".formatted(count, capabilities.minImageCount, capabilities.maxImageCount));
-			}
-			info.minImageCount = count;
+			info.minImageCount = requireOneOrMore(count);
 			return this;
 		}
 
 		/**
 		 * Sets the surface format.
 		 * @param format Surface format
-		 * @throws IllegalArgumentException if the given format is not supported by the surface
 		 */
 		public Builder format(VkSurfaceFormatKHR format) {
-			final boolean valid = properties
-					.formats()
-					.stream()
-					.anyMatch(VulkanSurface.Properties.equals(format));
-
-			if(!valid) {
-				throw new IllegalArgumentException(String.format("Unsupported surface format: format=%s space=%s", format.format, format.colorSpace));
-			}
-
 			info.imageFormat = format.format;
 			info.imageColorSpace = format.colorSpace;
-
 			return this;
-		}
-
-		/**
-		 * Helper.
-		 * @return Extents as width-height dimensions
-		 */
-		private static Dimensions toDimensions(VkExtent2D extents) {
-			return new Dimensions(extents.width, extents.height);
 		}
 
 		/**
 		 * Sets the image extents.
 		 * @param extents Image extents
-		 * @throws IllegalArgumentException if {@link #extents} does not match the min/max extents supported by the surface
 		 */
-		public Builder extents(Dimensions extents) {
-			// Check minimum extent
-			final Dimensions min = toDimensions(capabilities.minImageExtent);
-			if(!extents.contains(min)) {
-				throw new IllegalArgumentException("Extent is smaller than the supported minimum");
-			}
-
-			// Check maximum extent
-			final Dimensions max = toDimensions(capabilities.maxImageExtent);
-			if(!max.contains(extents)) {
-				throw new IllegalArgumentException("Extent is larger than the supported maximum");
-			}
-
-			// Populate extents
-			info.imageExtent.width = extents.width();
-			info.imageExtent.height = extents.height();
-
-			return this;
+		public Builder extent(Dimensions extent) {
+			return extent(VulkanUtility.extent(extent));
 		}
 
 		/**
-		 * Sets the image extents of this swapchain to match the given window.
-		 * @param window Window
+		 * Sets the image extents.
+		 * @param extents Image extents
 		 */
-		public Builder extents(Window window) {
-			info.imageExtent = select(capabilities, window);
+		public Builder extent(VkExtent2D extent) {
+			info.imageExtent = requireNonNull(extent);
 			return this;
-		}
-		// TODO - test, doc explanation
-
-		private static VkExtent2D select(VkSurfaceCapabilitiesKHR capabilities, Window window) {
-			// Try using the current extents of the surface
-			if(capabilities.currentExtent.width < Integer.MAX_VALUE) {
-				return capabilities.currentExtent;
-			}
-
-			// Otherwise query the actual surface size (in pixels)
-			final Dimensions size = window.size();
-
-			// Constraint to min/max extents
-			final var min = capabilities.minImageExtent;
-			final var max = capabilities.minImageExtent;
-			final var extents = new VkExtent2D();
-			extents.width = Math.clamp(size.width(), min.width, max.width);
-			extents.height = Math.clamp(size.height(), min.height, max.height);
-			return extents;
 		}
 
 		/**
 		 * Sets the number of image array layers.
 		 * @param layers Number of image array layers
-		 * @throws IllegalArgumentException if the given number of array layers exceeds the maximum supported by the surface
 		 */
 		public Builder arrays(int layers) {
-			if((layers < 1) || (layers > capabilities.maxImageArrayLayers)) {
-				throw new IllegalArgumentException("Invalid number of layers: layers=%d max=%d".formatted(layers, capabilities.maxImageArrayLayers));
-			}
-			info.imageArrayLayers = layers;
+			info.imageArrayLayers = requireOneOrMore(layers);
 			return this;
 		}
 
 		/**
 		 * Sets the image usage flag.
 		 * @param usage Image usage
-		 * @throws IllegalArgumentException if {@link #usage} is not supported by the surface
 		 */
 		public Builder usage(VkImageUsageFlag usage) {
-			validate(capabilities.supportedUsageFlags, usage);
+			requireNonNull(usage);
 			this.usage.add(usage);
 			return this;
 		}
@@ -361,7 +292,7 @@ public class Swapchain extends VulkanObject {
 		 * If a single queue family is used for both rendering and presentation the mode can remain as the default {@link VkSharingMode#EXCLUSIVE}.
 		 * @param families Shared queue families
 		 */
-		public Builder concurrent(List<Family> families) {
+		public Builder concurrent(Collection<Family> families) {
 			info.imageSharingMode = VkSharingMode.CONCURRENT;
 			info.queueFamilyIndexCount = families.size();
 			info.pQueueFamilyIndices = families.stream().mapToInt(Family::index).toArray();
@@ -371,37 +302,27 @@ public class Swapchain extends VulkanObject {
 		/**
 		 * Sets the surface transform.
 		 * @param transform Surface transform
-		 * @throws IllegalArgumentException if {@link #transform} is not supported by the surface
 		 */
 		public Builder transform(VkSurfaceTransformFlagKHR transform) {
-			validate(capabilities.supportedTransforms, transform);
-			info.preTransform = transform;
+			info.preTransform = requireNonNull(transform);
 			return this;
 		}
 
 		/**
 		 * Sets the surface alpha function.
 		 * @param alpha Alpha function
-		 * @throws IllegalArgumentException if the {@link #alpha} function is not supported by the surface
 		 */
 		public Builder alpha(VkCompositeAlphaFlagKHR alpha) {
-			validate(capabilities.supportedCompositeAlpha, alpha);
-			info.compositeAlpha = alpha;
+			info.compositeAlpha = requireNonNull(alpha);
 			return this;
 		}
 
 		/**
 		 * Sets the presentation mode.
 		 * @param mode Presentation mode
-		 * @throws IllegalArgumentException if {@link #mode} is not supported by the surface
-		 * @implNote The {@link #mode} is a Vulkan structure compared by <b>identity</b>, i.e. this method assumes the given mode has been retrieved via {@link VulkanSurface#modes()}
-		 * @see VulkanSurface#modes()
 		 */
 		public Builder presentation(VkPresentModeKHR mode) {
-			if(!properties.modes().contains(mode)) {
-				throw new IllegalArgumentException("Unsupported presentation mode: " + mode);
-			}
-			info.presentMode = mode;
+			info.presentMode = requireNonNull(mode);
 			return this;
 		}
 
@@ -424,14 +345,71 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
+		 * Helper.
+		 * @return Extents as width-height dimensions
+		 */
+		private static Dimensions dimensions(VkExtent2D extents) {
+			return new Dimensions(extents.width, extents.height);
+		}
+
+		private void validate(VulkanSurface.Properties properties) {
+			final VkSurfaceCapabilitiesKHR capabilities = properties.capabilities();
+			if((info.minImageCount < capabilities.minImageCount) || (info.minImageCount > capabilities.maxImageCount)) {
+				throw new IllegalArgumentException("Image count %d out of range %d...%d".formatted(info.minImageCount, capabilities.minImageCount, capabilities.maxImageCount));
+			}
+
+			final var wrapper = new SurfaceFormatWrapper(info.imageFormat, info.imageColorSpace);
+			if(!properties.formats().contains(wrapper)) {
+				throw new IllegalArgumentException("Unsupported image format: " + wrapper);
+			}
+
+			final var extents = dimensions(info.imageExtent);
+			final var min = dimensions(capabilities.minImageExtent);
+			final var max = dimensions(capabilities.maxImageExtent);
+			if(!extents.contains(min) || !max.contains(extents)) {
+				throw new IllegalArgumentException("Invalid swapchain extents: actual=%s range=%s...%s".formatted(extents, min, max));
+			}
+
+			if(info.imageArrayLayers > capabilities.maxImageArrayLayers) {
+				throw new IllegalArgumentException("Invalid number of layers: layers=%d max=%d".formatted(info.imageArrayLayers, capabilities.maxImageArrayLayers));
+			}
+
+			if(!capabilities.supportedUsageFlags.contains(info.imageUsage)) {
+				throw new IllegalArgumentException("Unsupported image usage: " + info.imageUsage);
+			}
+
+			if(!capabilities.supportedTransforms.contains(info.preTransform.value())) {
+				throw new IllegalArgumentException("Unsupported image transform: " + info.preTransform);
+			}
+
+			if(!capabilities.supportedCompositeAlpha.contains(info.compositeAlpha.value())) {
+				throw new IllegalArgumentException("Unsupported composite alpha: " + info.compositeAlpha);
+			}
+
+			if(!properties.modes().contains(info.presentMode)) {
+				throw new IllegalArgumentException("Unsupported presentation mode: " + info.presentMode);
+			}
+
+			if((info.imageSharingMode == VkSharingMode.EXCLUSIVE) ^ (info.queueFamilyIndexCount == 0)) {
+				throw new IllegalArgumentException("Invalid sharing mode configuration");
+			}
+		}
+
+		/**
 		 * Constructs this swapchain.
 		 * @param device Logical device
 		 * @return New swapchain
+		 * @throws IllegalArgumentException if the image format or extents have not been configured
+		 * @throws IllegalArgumentException if any swapchain property is out-of-bounds or unsupported by the surface
 		 */
-		public Swapchain build(LogicalDevice device) {
+		public Swapchain build(LogicalDevice device, VulkanSurface.Properties properties) {
 			// Initialise swapchain descriptor
+			requireNonNull(info.imageFormat, "Expected swapchain image format");
+			requireNonNull(info.imageExtent, "Expected swapchain extent");
+			info.surface = requireNonNull(properties.surface().handle());
 			info.flags = new EnumMask<>(flags);
 			info.imageUsage = new EnumMask<>(usage);
+			validate(properties);
 
 			// Create swapchain
 			final Library library = device.library();
@@ -443,7 +421,7 @@ public class Swapchain extends VulkanObject {
 			final Handle[] images = VulkanFunction.invoke(function, Handle[]::new);
 
 			// Build the common image descriptor for the views
-			final var extents = toDimensions(info.imageExtent);
+			final var extents = dimensions(info.imageExtent);
 			final var descriptor = new Image.Descriptor.Builder()
     				.format(info.imageFormat)
     				.extents(extents)

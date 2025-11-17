@@ -3,16 +3,15 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 
-import java.util.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
+import org.sarge.jove.platform.vulkan.render.Swapchain.*;
 import org.sarge.jove.util.EnumMask;
 
 public class SwapchainTest {
@@ -27,9 +26,9 @@ public class SwapchainTest {
 			assertEquals(null, pAllocator);
 
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
-			assertEquals(new Handle(3), pCreateInfo.surface);
+			assertNotNull(pCreateInfo.surface);
 			assertEquals(1, pCreateInfo.minImageCount);
-			assertEquals(VkFormat.B8G8R8A8_UNORM, pCreateInfo.imageFormat);
+			assertEquals(VkFormat.R32G32B32_SFLOAT, pCreateInfo.imageFormat);
 			assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, pCreateInfo.imageColorSpace);
 			assertEquals(640, pCreateInfo.imageExtent.width);
 			assertEquals(480, pCreateInfo.imageExtent.height);
@@ -213,27 +212,33 @@ public class SwapchainTest {
 
 	@Nested
 	class BuilderTest {
-		private Swapchain.Builder builder;
+		private Builder builder;
+		private MockSurfaceProperties properties;
 
 		@BeforeEach
 		void before() {
-			final var surface = new MockVulkanSurface(library);
-			builder = new Swapchain.Builder(surface.new Properties(new MockPhysicalDevice()));
+			properties = new MockSurfaceProperties();
+			builder = new Builder();
 		}
 
 		@Test
 		void build() {
-			final var swapchain = builder.build(device);
-			assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
-			assertEquals(new Dimensions(640, 480), swapchain.extents());
+			final Swapchain swapchain = builder
+					.count(1)
+					.format(MockSurfaceProperties.FORMAT)
+					.extent(new Dimensions(640, 480))
+					.build(device, properties);
+
 			assertEquals(1, swapchain.attachments().size());
+			assertEquals(new Dimensions(640, 480), swapchain.extents());
+			assertEquals(MockSurfaceProperties.FORMAT.format, swapchain.format());
+			assertEquals(false, swapchain.isDestroyed());
 		}
 
-		@Test
-		void concurrent() {
-			final var family = new Family(1, 2, Set.of());
-			library.concurrent = true;
-			builder.concurrent(List.of(family)).build(device);
-		}
+		// TODO
+		// - count: zero, min/max, capabilities.min
+		// - format: null, unsupported
+		// - extent: null, min/max, capabilities.current
+		// - others?
 	}
 }

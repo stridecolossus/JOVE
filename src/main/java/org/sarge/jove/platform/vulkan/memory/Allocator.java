@@ -53,7 +53,7 @@ public class Allocator {
 		final var limits = device.limits();
 		this.device = requireNonNull(device);
 		this.types = Arrays.copyOf(types, types.length);
-		this.page = requireOneOrMore((int) limits.get("bufferImageGranularity"));
+		this.page = requireOneOrMore((long) limits.get("bufferImageGranularity"));
 		this.max = constrain(limits.get("maxMemoryAllocationCount"), Integer.MAX_VALUE);
 	}
 

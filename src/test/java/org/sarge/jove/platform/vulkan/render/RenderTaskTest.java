@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -55,9 +55,12 @@ class RenderTaskTest {
 		library = new MockRenderTaskLibrary();
 		device = new MockLogicalDevice(library);
 
-		final var surface = new MockVulkanSurface(library);
-		final var physical = new MockPhysicalDevice(library);
-		final var factory = new SwapchainFactory(device, surface.new PropertiesAdapter(physical));
+		final var properties = new MockSurfaceProperties();
+		final var builder = new Swapchain.Builder()
+				.count(1)
+				.format(MockSurfaceProperties.FORMAT)
+				.extent(new Dimensions(640, 480));
+		final var factory = new SwapchainFactory(device, properties, builder, List.of());
 
 		group = new Framebuffer.Group(factory.swapchain(), new MockRenderPass(device), List.of());
 		sequence = new AtomicReference<>();

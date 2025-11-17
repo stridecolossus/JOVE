@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import org.sarge.jove.common.Rectangle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
@@ -22,24 +22,24 @@ public final class VulkanUtility {
 		}
 	}
 
+	public static VkExtent2D extent(Dimensions size) {
+		final var extent = new VkExtent2D();
+		extent.width = size.width();
+		extent.height = size.height();
+		return extent;
+	}
+
 	/**
 	 * Converts a rectangle to the Vulkan equivalent.
 	 * @param rectangle Rectangle
 	 * @return Vulkan rectangle
 	 */
 	public static VkRect2D rectangle(Rectangle rectangle) {
-		final var offset = new VkOffset2D();
-		offset.x = rectangle.x();
-		offset.y = rectangle.y();
-
-		final var extent = new VkExtent2D();
-		extent.width = rectangle.width();
-		extent.height = rectangle.height();
-
 		final VkRect2D result = new VkRect2D();
-		result.offset = offset;
-		result.extent = extent;
-
+		result.offset = new VkOffset2D();
+		result.offset.x = rectangle.x();
+		result.offset.y = rectangle.y();
+		result.extent = extent(rectangle.dimensions());
 		return result;
 	}
 }
