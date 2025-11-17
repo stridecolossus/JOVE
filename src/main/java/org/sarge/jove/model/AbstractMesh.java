@@ -2,8 +2,7 @@ package org.sarge.jove.model;
 
 import static java.util.Objects.requireNonNull;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.List;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
@@ -46,7 +45,7 @@ public abstract class AbstractMesh implements Mesh {
 	}
 
 	@Override
-	public Optional<ByteBuffer> index() {
-		return Optional.empty();
+	public String toString() {
+		return String.format("Mesh[primitive=%s layout=%s count=%d]", primitive, layout, count());
 	}
 }

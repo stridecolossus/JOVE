@@ -148,9 +148,9 @@ public class GridBuilder {
 	 * Constructs this grid.
 	 * @return New grid mesh
 	 */
-	public MutableMesh build() {
+	public VertexMesh build() {
 		// Init mesh
-		final var mesh = new IndexedMesh(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final var mesh = new IndexedVertexMesh(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 
 		// Calculate half distance in both directions
 		final int w = size.width();

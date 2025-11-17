@@ -10,7 +10,7 @@ import java.util.function.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.Mesh;
+import org.sarge.jove.model.IndexedMesh;
 
 /**
  * Loader for an OBJ model.
@@ -85,7 +85,7 @@ public class ObjectModelLoader {
 	 * @return OBJ model(s)
 	 * @throws IOException if the model cannot be loaded
 	 */
-	public List<Mesh> load(Reader input) throws IOException {
+	public List<IndexedMesh> load(Reader input) throws IOException {
 		// Open file
 		final var reader = new LineNumberReader(input);
 

@@ -14,8 +14,8 @@ class ObjectModel {
 	private final VertexComponentList<Point> positions = new VertexComponentList<>();
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
-	private final List<Mesh> meshes = new ArrayList<>();
-	private MutableMesh current;
+	private final List<IndexedMesh> meshes = new ArrayList<>();
+	private IndexedVertexMesh current;
 
 	public ObjectModel() {
 		append();
@@ -94,7 +94,7 @@ class ObjectModel {
 	 * Constructs this OBJ model.
 	 * @return Meshes
 	 */
-	public List<Mesh> build() {
+	public List<IndexedMesh> build() {
 		return meshes;
 	}
 }

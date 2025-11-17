@@ -72,17 +72,17 @@ public class VulkanIntegrationDemo {
 		// TODO - option to exit on errors?
 
 		System.out.println("Getting surface...");
-		//final Handle handle = window.surface(instance.handle());
 		final var surface = new VulkanSurface(window, instance, vulkan);
 
 		System.out.println("Enumerating devices...");
 		final Selector graphicsSelector = Selector.queue(VkQueueFlag.GRAPHICS);
 		final Selector presentationSelector = new Selector(surface::isPresentationSupported);
-		final PhysicalDevice physical = PhysicalDevice.enumerate(instance, vulkan)
+		final PhysicalDevice physical = PhysicalDevice
+				.enumerate(instance, vulkan)
 				.filter(graphicsSelector)
 				.filter(presentationSelector)
-				.toList()
-				.getFirst();
+				.findAny()
+				.orElseThrow();
 
 		System.out.println("Extracting families...");
 		final Family graphicsFamily = graphicsSelector.family(physical);
@@ -141,6 +141,7 @@ public class VulkanIntegrationDemo {
 				new SurfaceFormatSwapchainConfiguration(new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR)),
 				new PresentationModeSwapchainConfiguration(List.of(VkPresentModeKHR.MAILBOX_KHR)),
 				new SharingModeSwapchainConfiguration(List.of(graphicsFamily, presentationFamily)),
+				new ExtentSwapchainConfiguration()
 		};
 		final var factory = new SwapchainFactory(device, properties, builder, List.of(configuration));
 

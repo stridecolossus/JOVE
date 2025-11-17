@@ -1,7 +1,7 @@
 package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.List;
 
 import org.sarge.jove.common.Layout;
 
@@ -25,17 +25,24 @@ public interface Mesh {
 	 */
 	int count();
 
-	// TODO - vertices() and index() do not RETURN a buffer but ARE bufferable
-	// i.e. Mesh implements Bufferable
-	// NB also works for a persisted mesh
+	/**
+	 * A mesh <i>data buffer</i> specifies the properties of the vertices or index of this mesh.
+	 */
+	interface DataBuffer {
+		/**
+		 * @return Data length (bytes)
+		 */
+		int length();
+
+		/**
+		 * Writes this data to the given buffer.
+		 * @param buffer Destination buffer
+		 */
+		void buffer(ByteBuffer buffer);
+	}
 
 	/**
 	 * @return Vertex buffer
 	 */
-	ByteBuffer vertices();
-
-	/**
-	 * @return Index buffer
-	 */
-	Optional<ByteBuffer> index();
+	DataBuffer vertices();
 }

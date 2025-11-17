@@ -17,10 +17,12 @@ public record ExtentSwapchainConfiguration() implements SwapchainConfiguration {
 		final var capabilites = properties.capabilities();
 		final VkExtent2D current = capabilites.currentExtent;
 		if(current.width < Integer.MAX_VALUE) {
+			//System.out.println("*********** current="+current.width+" "+current.height);
 			builder.extent(current);
 		}
 		else {
 			final Dimensions size = properties.surface().window().size();
+			//System.out.println("*********** using framebuffer="+size);
 			builder.extent(size);
 			// TODO - clamp to min/max
 		}

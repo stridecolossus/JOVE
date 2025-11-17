@@ -1,10 +1,12 @@
 package org.sarge.jove.model;
 
 import java.io.*;
-import java.nio.*;
+import java.nio.ByteBuffer;
+import java.nio.file.*;
 import java.util.*;
 
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.model.Mesh.DataBuffer;
 
 /**
  * The <i>mesh loader</i> is used to persist and load a {@link BufferedMesh}.
@@ -13,7 +15,18 @@ import org.sarge.jove.common.Layout;
 public class MeshLoader {
 	private static final int VERSION = 1;
 
-	// TODO
+	public Mesh load(Path path) throws IOException {
+		try(var in = new DataInputStream(Files.newInputStream(path))) {
+			return load(in);
+		}
+	}
+
+	/**
+	 * Loads a persisted mesh from the given input stream.
+	 * @param in Input stream
+	 * @return Mesh
+	 * @throws IOException if the mesh cannot be loaded
+	 */
 	public Mesh load(DataInputStream in) throws IOException {
 		// Verify file version
 		if(in.readInt() > VERSION) {
@@ -23,10 +36,10 @@ public class MeshLoader {
 		// Load model header
 		final Primitive primitive = Primitive.valueOf(in.readUTF());
 		final int count = in.readInt();
-		final int num = in.readInt();
 
 		// Load vertex layout
 		final List<Layout> layouts = new ArrayList<>();
+		final int num = in.readInt();
 		for(int n = 0; n < num; ++n) {
 			final int size = in.readInt();
 			final var type = Layout.Type.valueOf(in.readUTF());
@@ -37,59 +50,105 @@ public class MeshLoader {
 		}
 
 		// Load data
-		final ByteBuffer vertices = buffer(in);
-		final ByteBuffer index = buffer(in);
+		final DataBuffer vertices = data(in);
+
+		// Load index
+		final boolean compact = in.readBoolean();
+		final DataBuffer index = data(in);
 
 		// Create mesh
-		return new AbstractMesh(primitive, layouts) {
+		if(index.length() == 0) {
+			return new AbstractMesh(primitive, layouts) {
+				@Override
+				public int count() {
+					return count;
+				}
+
+				@Override
+				public DataBuffer vertices() {
+					return vertices;
+				}
+			};
+		}
+		else {
+			class IndexWrapper extends AbstractMesh implements IndexedMesh {
+				protected IndexWrapper() {
+					super(primitive, layouts);
+				}
+
+				@Override
+				public int count() {
+					return count;
+				}
+
+				@Override
+				public DataBuffer vertices() {
+					return vertices;
+				}
+
+				@Override
+				public boolean isCompactIndex() {
+					return compact;
+				}
+
+				@Override
+				public DataBuffer index() {
+					return index;
+				}
+			}
+
+			return new IndexWrapper();
+		}
+	}
+
+	/**
+	 * Loads a data buffer for a mesh.
+	 */
+	private static DataBuffer data(DataInputStream in) throws IOException {
+		// Init data buffer
+		final var data = new DataBuffer() {
+			private final int length = in.readInt();
+			private final byte[] bytes = new byte[length];
+
 			@Override
-			public int count() {
-				return count;
+			public int length() {
+				return length;
 			}
 
 			@Override
-			public ByteBuffer vertices() {
-				return vertices;
-			}
-
-			@Override
-			public Optional<ByteBuffer> index() {
-				return Optional.ofNullable(index);
+			public void buffer(ByteBuffer buffer) {
+				if(buffer.isDirect()) {
+					for(int n = 0; n < length; ++n) {
+						buffer.put(bytes[n]);
+					}
+				}
+				else {
+					buffer.put(bytes);
+				}
 			}
 		};
+
+		// Load data
+		if(data.length > 0) {
+			in.readFully(data.bytes);
+		}
+
+		return data;
+	}
+
+	public void write(Mesh mesh, Path path) throws IOException {
+		try(var out = new DataOutputStream(Files.newOutputStream(path))) {
+			write(mesh, out);
+		}
 	}
 
 	/**
-	 * Loads a buffer.
-	 */
-	private static ByteBuffer buffer(DataInputStream in) throws IOException {
-		// Read buffer size
-		final int len = in.readInt();
-
-		// Ignore if empty buffer
-		if(len == 0) {
-			return null;
-		}
-
-		// Load bytes
-		final byte[] bytes = new byte[len];
-		in.readFully(bytes);
-
-		// Convert to buffer
-		final var buffer = ByteBuffer.allocateDirect(len).order(ByteOrder.nativeOrder());
-		for(byte b : bytes) {
-			buffer.put(b);
-		}
-		return buffer.rewind().asReadOnlyBuffer();
-	}
-
-	/**
-	 * Writes a mesh to an output stream.
+	 * Writes a mesh to the given output stream.
 	 * @param mesh		Mesh
 	 * @param out		Output stream
 	 * @throws IOException if the mesh cannot be written
 	 */
-	public void save(Mesh mesh, DataOutputStream out) throws IOException {
+	public void write(Mesh mesh, DataOutputStream out) throws IOException {
 		// Write file header
 		out.writeInt(VERSION);
 
@@ -111,42 +170,33 @@ public class MeshLoader {
 		write(mesh.vertices(), out);
 
 		// Write index
-		final Optional<ByteBuffer> index = mesh.index();
-		if(index.isEmpty()) {
-			out.writeInt(0);
+		if(mesh instanceof IndexedMesh indexed) {
+			out.writeBoolean(indexed.isCompactIndex());
+			write(indexed.index(), out);
 		}
-		else {
-			write(mesh.index().get(), out);
-		}
-
-		// TODO - do we need this?
-		out.flush();
 	}
 
 	/**
-	 * Writes a buffer.
-	 * @param obj	Buffer to write
-	 * @param out	Output stream
+	 * Writes mesh data to the given output stream.
+	 * @param data		Data buffer
+	 * @param out		Output
+	 * @throws IOException if the data cannot be written
 	 */
-	private static void write(ByteBuffer buffer, DataOutput out) throws IOException {
-		// Output length
-		final int len = buffer.limit();
-		out.writeInt(len);
+	private static void write(DataBuffer data, DataOutputStream out) throws IOException {
+		// Write data header
+		final int length = data.length();
+		out.writeInt(length);
 
-		// Stop if empty buffer
-		if(len == 0) {
+		// Stop if empty
+		if(length == 0) {
 			return;
 		}
 
-		// Write buffer
-		if(buffer.hasArray()) {
-			out.write(buffer.array());
-		}
-		else {
-			buffer.rewind();
-			for(int n = 0; n < len; ++n) {
-				out.writeByte(buffer.get());
-			}
-		}
+		// Buffer data
+		final var buffer = ByteBuffer.allocate(length);
+		data.buffer(buffer);
+
+		// Copy buffer to output
+		out.write(buffer.array());
 	}
 }

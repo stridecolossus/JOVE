@@ -67,7 +67,7 @@ public class CubeBuilder {
 	 * @see #vertex(Point, Normal, Coordinate2D)
 	 */
 	public Mesh build() {
-		final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+		final VertexMesh mesh = new VertexMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
 
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {

@@ -2,43 +2,39 @@ package org.sarge.jove.model;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
 
 class AbstractMeshTest {
 	private static class MockAbstractMesh extends AbstractMesh {
-		private final int count;
-
-		public MockAbstractMesh(int count, Primitive primitive, Layout... layout) {
+		public MockAbstractMesh(Primitive primitive, Layout... layout) {
 			super(primitive, List.of(layout));
-			this.count = count;
-		}
-
-		@Override
-		public ByteBuffer vertices() {
-			return null;
 		}
 
 		@Override
 		public int count() {
-			return count;
+			return 0;
+		}
+
+		@Override
+		public DataBuffer vertices() {
+			return null;
 		}
 	}
 
 	@Test
 	void position() {
-		assertThrows(IllegalArgumentException.class, () -> new MockAbstractMesh(3, Primitive.TRIANGLE, Normal.LAYOUT));
+		assertThrows(IllegalArgumentException.class, () -> new MockAbstractMesh(Primitive.TRIANGLE, Normal.LAYOUT));
 	}
 
-	@Test
-	void normals() {
-		assertThrows(IllegalArgumentException.class, () -> new MockAbstractMesh(1, Primitive.POINT, Point.LAYOUT, Normal.LAYOUT));
-		assertThrows(IllegalArgumentException.class, () -> new MockAbstractMesh(2, Primitive.LINE, Point.LAYOUT, Normal.LAYOUT));
-		assertThrows(IllegalArgumentException.class, () -> new MockAbstractMesh(2, Primitive.LINE_STRIP, Point.LAYOUT, Normal.LAYOUT));
-		assertThrows(IllegalArgumentException.class, () -> new MockAbstractMesh(1, Primitive.PATCH, Point.LAYOUT, Normal.LAYOUT));
+	@ParameterizedTest
+	@EnumSource(names={"POINT", "LINE", "LINE_STRIP", "PATCH"})
+	void normals(Primitive primitive) {
+		assertThrows(IllegalArgumentException.class, () -> new MockAbstractMesh(primitive, Point.LAYOUT, Normal.LAYOUT));
 	}
 }

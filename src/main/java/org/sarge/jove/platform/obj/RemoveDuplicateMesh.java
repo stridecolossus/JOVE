@@ -10,7 +10,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
  * Adapter for an indexed model that performs de-duplication of the OBJ vertices.
  * @author Sarge
  */
-class RemoveDuplicateMesh extends IndexedMesh {
+class RemoveDuplicateMesh extends IndexedVertexMesh {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
 	public RemoveDuplicateMesh() {

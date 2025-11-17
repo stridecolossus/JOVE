@@ -24,6 +24,6 @@ public class CubeBuilderTest {
 		assertEquals(Primitive.TRIANGLE, mesh.primitive());
 		assertEquals(count, mesh.count());
 		assertEquals(layout, mesh.layout());
-		assertEquals(count * (3 + 3 + 2) * 4, mesh.vertices().limit());
+		assertEquals(count * (3 + 3 + 2) * 4, mesh.vertices().length());
 	}
 }

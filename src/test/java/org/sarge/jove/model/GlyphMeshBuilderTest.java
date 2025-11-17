@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 
@@ -31,7 +31,7 @@ class GlyphMeshBuilderTest {
     	@Test
     	void empty() {
     		assertEquals(0, mesh.count());
-    		assertEquals(0, mesh.vertices().limit());
+    		assertEquals(0, mesh.vertices().length());
     	}
 
 		@DisplayName("has a cursor at the origin")
@@ -43,7 +43,7 @@ class GlyphMeshBuilderTest {
 		@DisplayName("is not indexed")
     	@Test
     	void index() {
-    		assertEquals(false, mesh.index().isEmpty());
+			assertFalse(mesh instanceof IndexedMesh);
 		}
 
 		@DisplayName("is comprised of triangles with texture coordinates")

@@ -13,10 +13,10 @@ import org.sarge.jove.scene.volume.Bounds;
  * <p>
  * Vertex normals can be automatically computed using the {@link #compute()} method.
  * <p>
- * @see IndexedMesh
+ * @see IndexedVertexMesh
  * @author Sarge
  */
-public class MutableMesh extends AbstractMesh {
+public class VertexMesh extends AbstractMesh {
 	private final List<Vertex> vertices = new ArrayList<>();
 
 	/**
@@ -25,7 +25,7 @@ public class MutableMesh extends AbstractMesh {
 	 * @param layout		Vertex layout
 	 * @see Mesh
 	 */
-	public MutableMesh(Primitive primitive, List<Layout> layout) {
+	public VertexMesh(Primitive primitive, List<Layout> layout) {
 		super(primitive, layout);
 	}
 
@@ -38,7 +38,7 @@ public class MutableMesh extends AbstractMesh {
 	 * Adds a vertex to this mesh.
 	 * @param vertex Vertex to add
 	 */
-	public MutableMesh add(Vertex vertex) {
+	public VertexMesh add(Vertex vertex) {
 		requireNonNull(vertex);
 		vertices.add(vertex);
 		return this;
@@ -54,17 +54,21 @@ public class MutableMesh extends AbstractMesh {
 	}
 
 	@Override
-	public ByteBuffer vertices() {
-		final int length = Layout.stride(this.layout()) * vertices.size();
-		final ByteBuffer buffer = ByteBuffer.allocate(length);
-		for(Vertex v : vertices) {
-			v.buffer(buffer);
-		}
-		return buffer.rewind();
+	public DataBuffer vertices() {
+		return new DataBuffer() {
+			@Override
+			public int length() {
+				return vertices.size() * Layout.stride(layout());
+			}
+
+			@Override
+			public void buffer(ByteBuffer buffer) {
+				for(Vertex v : vertices) {
+					v.buffer(buffer);
+				}
+			}
+		};
 	}
-	// TODO - vertices and index could have backing 'buffer' rather than allocating and populating every time, i.e. for extrusions
-	// TODO - backing buffer grows as required, similar to ArrayList, setter for capacity / growth factor
-	// TODO - read only?
 
 	/**
 	 * Calculates the bounds of this mesh.
@@ -85,7 +89,7 @@ public class MutableMesh extends AbstractMesh {
 	 * Computes per-vertex normals for this mesh.
 	 */
 	public void compute() {
-		final int polygons = this.primitive().polygons(this.count());
+		//final int polygons = this.primitive().polygons(this.count());
 
 //		IntStream
 //				.range(0, polygons)

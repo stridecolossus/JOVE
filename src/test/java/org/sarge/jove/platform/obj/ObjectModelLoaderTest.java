@@ -42,11 +42,11 @@ class ObjectModelLoaderTest {
 		""";
 
 		// Load OBJ models
-		final List<Mesh> models = loader.load(new StringReader(data));
+		final List<IndexedMesh> models = loader.load(new StringReader(data));
 		assertEquals(1, models.size());
 
 		// Check model
-		final Mesh mesh = models.get(0);
+		final var mesh = models.get(0);
 
 		// Check header
 		final var layout = List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
@@ -55,8 +55,8 @@ class ObjectModelLoaderTest {
 		assertEquals(layout, mesh.layout());
 
 		// Check model data
-		assertEquals(3 * (3 + 3 + 2), mesh.vertices().asFloatBuffer().limit());
-		assertEquals(3, mesh.index().orElseThrow().asIntBuffer().limit());
+		assertEquals(3 * (3 + 3 + 2), mesh.vertices().length());
+		assertEquals(3, mesh.index().length());
 	}
 
 	@Test
