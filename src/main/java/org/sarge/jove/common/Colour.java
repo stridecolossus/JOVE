@@ -2,8 +2,6 @@ package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 
-import org.sarge.jove.util.MathsUtility;
-
 /**
  * RGBA colour.
  * @author Sarge
@@ -128,10 +126,5 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 */
 	public float[] toArray() {
 		return new float[]{red, green, blue, alpha};
-	}
-
-	@Override
-	public String toString() {
-		return MathsUtility.format(toArray());
 	}
 }

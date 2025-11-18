@@ -3,6 +3,8 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
+import org.sarge.jove.platform.vulkan.render.ImageCountSwapchainConfiguration.Policy;
 import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
 
 class ImageCountSwapchainConfigurationTest {
@@ -16,28 +18,27 @@ class ImageCountSwapchainConfigurationTest {
 		}
 	}
 
+	private ImageCountSwapchainConfiguration configuration;
 	private MockSwapchainBuilder builder;
-	private MockSurfaceProperties properties;
 
 	@BeforeEach
 	void before() {
 		builder = new MockSwapchainBuilder();
-		properties = new MockSurfaceProperties();
+		configuration = new ImageCountSwapchainConfiguration(_ -> 3);
 	}
 
 	@Test
-	void min() {
-		final var configuration = new ImageCountSwapchainConfiguration(ImageCountSwapchainConfiguration.MIN);
-		properties.capabilities.minImageCount = 2;
-		configuration.configure(builder, properties);
-		assertEquals(2, builder.count);
-	}
-
-	@Test
-	void max() {
-		final var configuration = new ImageCountSwapchainConfiguration(ImageCountSwapchainConfiguration.MAX);
-		properties.capabilities.maxImageCount = 3;
-		configuration.configure(builder, properties);
+	void configure() {
+		configuration.configure(builder, new MockSurfaceProperties());
 		assertEquals(3, builder.count);
+	}
+
+	@Test
+	void policy() {
+		final var capabilities = new VkSurfaceCapabilitiesKHR();
+		capabilities.minImageCount = 2;
+		capabilities.maxImageCount = 3;
+		assertEquals(2, Policy.MIN.applyAsInt(capabilities));
+		assertEquals(3, Policy.MAX.applyAsInt(capabilities));
 	}
 }

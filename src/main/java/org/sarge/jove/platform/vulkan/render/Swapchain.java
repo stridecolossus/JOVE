@@ -285,7 +285,7 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Sets the sharing mode as {@link VkSharingMode#CONCURRENT} for the case where swapchain images are shared across multiple queue families without ownership transfers.
+		 * Sets the sharing mode as {@link VkSharingMode#CONCURRENT} for the case where swapchain images are shared across multiple queue families.
 		 * If a single queue family is used for both rendering and presentation the mode can remain as the default {@link VkSharingMode#EXCLUSIVE}.
 		 * @param families Shared queue families
 		 */

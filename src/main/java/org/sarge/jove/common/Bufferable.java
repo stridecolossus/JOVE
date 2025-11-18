@@ -9,8 +9,7 @@ import java.nio.ByteBuffer;
 public interface Bufferable {
 	/**
 	 * Writes this object to the given buffer.
-	 * @param bb Buffer
+	 * @param buffer Buffer
 	 */
-	void buffer(ByteBuffer bb);
+	void buffer(ByteBuffer buffer);
 }
-// TODO - replace with direct MemorySegment?

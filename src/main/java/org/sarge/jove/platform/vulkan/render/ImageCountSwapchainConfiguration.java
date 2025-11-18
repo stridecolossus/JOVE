@@ -15,14 +15,20 @@ import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfigura
  */
 public record ImageCountSwapchainConfiguration(ToIntFunction<VkSurfaceCapabilitiesKHR> policy) implements SwapchainConfiguration {
 	/**
-	 * Selects the minimum image count.
+	 * Convenience built-in policies.
 	 */
-	public static final ToIntFunction<VkSurfaceCapabilitiesKHR> MIN = capabilities -> capabilities.minImageCount;
+	public enum Policy implements ToIntFunction<VkSurfaceCapabilitiesKHR> {
+		MIN,
+		MAX;
 
-	/**
-	 * Selects the maximum image count.
-	 */
-	public static final ToIntFunction<VkSurfaceCapabilitiesKHR> MAX = capabilities -> capabilities.maxImageCount;
+		@Override
+		public int applyAsInt(VkSurfaceCapabilitiesKHR capabilities) {
+			return switch(this) {
+				case MIN -> capabilities.minImageCount;
+				case MAX -> capabilities.maxImageCount;
+			};
+		}
+	}
 
 	/**
 	 * Constructor.

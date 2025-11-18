@@ -156,14 +156,16 @@ public final class MathsUtility {
 		return 1 / sqrt(f);
 	}
 
-	public static String format(float f) {
-		return FORMATTER.format(f);
-	}
-
-	public static String format(float... values) {
-		final var str = new StringJoiner(", ", "[", "]");
-		for(int n = 0; n < values.length; ++n) {
-			str.add(format(values[n]));
+	/**
+	 * Formats an array of floating-point values as a comma-separated string.
+	 * @param values Floating-point values
+	 * @return Formatted array
+	 * @see #FORMATTER
+	 */
+	public static String toString(float... values) {
+		final var str = new StringJoiner(", ");
+		for(float f : values) {
+			str.add(FORMATTER.format(f));
 		}
 		return str.toString();
 	}

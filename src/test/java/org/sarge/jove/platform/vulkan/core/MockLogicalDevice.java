@@ -18,6 +18,7 @@ public class MockLogicalDevice extends LogicalDevice {
 		final var limits = new VkPhysicalDeviceLimits();
 		limits.maxMemoryAllocationCount = Integer.MAX_VALUE;
 		limits.bufferImageGranularity = 1024;
+		limits.maxPushConstantsSize = 256;
 
 		super(new Handle(1), Map.of(family, List.of(queue)), limits, library);
 	}

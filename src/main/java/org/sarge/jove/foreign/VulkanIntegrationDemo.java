@@ -19,6 +19,7 @@ import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.render.*;
 import org.sarge.jove.platform.vulkan.render.FrameComposer.BufferPolicy;
+import org.sarge.jove.platform.vulkan.render.ImageCountSwapchainConfiguration.Policy;
 import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
 public class VulkanIntegrationDemo {
@@ -137,7 +138,7 @@ public class VulkanIntegrationDemo {
 
 		System.out.println("Creating swapchain factory...");
 		final SwapchainConfiguration[] configuration = {
-				new ImageCountSwapchainConfiguration(ImageCountSwapchainConfiguration.MIN),
+				new ImageCountSwapchainConfiguration(Policy.MIN),
 				new SurfaceFormatSwapchainConfiguration(new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR)),
 				new PresentationModeSwapchainConfiguration(List.of(VkPresentModeKHR.MAILBOX_KHR)),
 				new SharingModeSwapchainConfiguration(List.of(graphicsFamily, presentationFamily)),

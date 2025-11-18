@@ -21,6 +21,7 @@ public class SpecialisationConstants {
 	/**
 	 * Constructor.
 	 * @param constants Constants indexed by identifier
+	 * @throws IllegalArgumentException for an unsupported constant type
 	 */
 	public SpecialisationConstants(Map<Integer, Object> constants) {
 		this.info = build(constants);
@@ -50,7 +51,7 @@ public class SpecialisationConstants {
     			.toArray(VkSpecializationMapEntry[]::new);
 
     	assert info.pMapEntries.length == info.mapEntryCount;
-    	assert builder.index == constants.size();
+    	assert builder.count == constants.size();
 
     	return info;
 	}
@@ -79,17 +80,17 @@ public class SpecialisationConstants {
 	}
 
 	/**
-	 * Builds map entries.
+	 * Builds map entries and records the number of entries as a side-effect.
 	 */
 	private static class EntryBuilder {
-		private int index;
+		private int count;
 
 		public VkSpecializationMapEntry build(Map.Entry<Integer, Object> constant) {
 			final var entry = new VkSpecializationMapEntry();
 			entry.constantID = constant.getKey();
-			entry.offset = index * SIZE;
+			entry.offset = count * SIZE;
 			entry.size = SIZE;
-			++index;
+			++count;
 			return entry;
 		}
 	}
