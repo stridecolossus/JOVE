@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.nio.ByteBuffer;
 import java.text.NumberFormat;

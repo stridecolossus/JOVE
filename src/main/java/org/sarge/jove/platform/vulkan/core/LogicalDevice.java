@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
-import static org.sarge.lib.Validation.requireNotEmpty;
+import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import java.util.*;
 import java.util.stream.*;
@@ -12,8 +12,7 @@ import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.EnumMask;
-import org.sarge.lib.Percentile;
+import org.sarge.jove.util.*;
 
 /**
  * The <i>logical device</i> is an instance of a {@link PhysicalDevice}.

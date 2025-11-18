@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.*;
 import java.util.stream.Stream;

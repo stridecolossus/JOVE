@@ -2,7 +2,7 @@ package org.sarge.jove.scene.particle;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.time.Duration;
 import java.util.*;

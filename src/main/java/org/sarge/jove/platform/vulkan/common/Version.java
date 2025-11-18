@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.*;
 
 /**
  * Vulkan version number.

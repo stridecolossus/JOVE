@@ -1,7 +1,7 @@
 package org.sarge.jove.foreign;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Array;

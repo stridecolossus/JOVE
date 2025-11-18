@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
-import org.sarge.lib.Percentile;
+import org.sarge.jove.util.Percentile;
 
 /**
  * Builder for the multi-sample pipeline stage.

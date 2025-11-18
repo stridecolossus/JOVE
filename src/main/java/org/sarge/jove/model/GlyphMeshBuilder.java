@@ -1,7 +1,7 @@
 package org.sarge.jove.model;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.List;

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
 

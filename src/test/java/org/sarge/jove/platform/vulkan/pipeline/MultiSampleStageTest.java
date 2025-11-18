@@ -3,7 +3,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.Percentile;
+import org.sarge.jove.util.Percentile;
 
 public class MultiSampleStageTest {
 	private MultiSampleStage stage;

@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
-import org.sarge.lib.Utility;
-
 /**
  * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
  * @author Sarge
@@ -33,7 +31,7 @@ enum KeyTable {
 			return new BufferedReader(new InputStreamReader(in))
 					.lines()
 					.map(String::trim)
-					.map(str -> str.split(Utility.WHITE_SPACE))
+					.map(str -> str.split("\\s+"))
 					.map(KeyTable::load)
 					.collect(toMap(Entry::getKey, Entry::getValue));
 		}

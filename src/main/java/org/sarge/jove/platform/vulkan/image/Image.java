@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.util.*;
 

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.*;
 
 import java.lang.foreign.*;
 import java.util.*;

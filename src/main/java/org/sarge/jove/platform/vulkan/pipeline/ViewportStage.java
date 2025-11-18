@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanUtility;
-import org.sarge.lib.Percentile;
+import org.sarge.jove.util.Percentile;
 
 /**
  * Viewport pipeline stage.

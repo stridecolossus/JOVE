@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireNotEmpty;
+import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import java.util.*;
 

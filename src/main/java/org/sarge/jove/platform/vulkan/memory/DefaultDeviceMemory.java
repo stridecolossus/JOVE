@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.*;
 
 import java.lang.foreign.MemorySegment;
 import java.util.Optional;

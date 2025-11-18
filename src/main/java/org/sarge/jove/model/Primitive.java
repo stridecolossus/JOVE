@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 /**
  * A <i>primitive</i> defines the characteristics of the common drawing primitives.

@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

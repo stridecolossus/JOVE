@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.VkCommandBufferLevel.*;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.util.*;
 

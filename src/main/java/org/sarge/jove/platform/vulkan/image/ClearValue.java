@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.image;
 
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.Percentile;
+import org.sarge.jove.util.Percentile;
 
 /**
  * A <i>clear value</i> specifies the clearing operation for an attachment before the render pass begins.
