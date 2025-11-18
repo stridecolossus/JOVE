@@ -18,7 +18,7 @@ import org.sarge.jove.util.EnumMask;
  */
 public class Allocator {
 	/**
-	 * An <i>allocation exception</i> is thrown when this allocator cannot allocate memory.
+	 * An <i>allocation exception</i> is thrown when this allocator fails to allocate memory.
 	 */
 	public static class AllocationException extends RuntimeException {
 		/**
@@ -187,7 +187,7 @@ public class Allocator {
 	protected DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
 		// Check maximum number of allocations
 		if(count >= max) {
-			throw new AllocationException("Number of allocations exceeds the hardware limit");
+			throw new AllocationException("Number of allocations exceeds the hardware limit: " + max);
 		}
 
 		// Quantise the requested size
@@ -195,15 +195,15 @@ public class Allocator {
 		assert pages > 0;
 
 		// Init memory descriptor
-		final var info = new VkMemoryAllocateInfo();
-		info.allocationSize = page * pages;
-		info.memoryTypeIndex = type.index();
+		final var allocation = new VkMemoryAllocateInfo();
+		allocation.allocationSize = page * pages;
+		allocation.memoryTypeIndex = type.index();
 
 		// Allocate memory
-		final MemoryLibrary vulkan = device.library();
+		final MemoryLibrary library = device.library();
 		final Pointer pointer = new Pointer();
 		try {
-			vulkan.vkAllocateMemory(device, info, null, pointer);
+			library.vkAllocateMemory(device, allocation, null, pointer);
 		}
 		catch(VulkanException e) {
 			throw new AllocationException("Cannot allocate device memory: type=%s size=%d".formatted(type, size));
@@ -222,6 +222,7 @@ public class Allocator {
 	protected long pages(long size) {
 		return 1 + (size - 1) / page;
 	}
+	// TODO - this feels a bit 'contrived', can it be made simpler and more expressive?
 
 	/**
 	 * Clears the allocation count.

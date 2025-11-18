@@ -45,6 +45,13 @@ public class PushConstant {
     	}
 
     	/**
+    	 * @return Length of this range
+    	 */
+    	public int length() {
+    		return offset + size;
+    	}
+
+    	/**
     	 * @return Descriptor for this push constant
     	 */
     	VkPushConstantRange populate() {
@@ -74,7 +81,8 @@ public class PushConstant {
 
 		// Allocate backing buffer
 		final Range last = this.ranges.getLast();
-		this.data = allocator.allocate(last.offset + last.size);
+		final MemoryLayout layout = MemoryLayout.sequenceLayout(last.length(), ValueLayout.JAVA_BYTE);
+		this.data = allocator.allocate(layout);
 
 		// Validate ranges
 		coverage();
@@ -90,7 +98,7 @@ public class PushConstant {
     		if(range.offset > offset) {
     			throw new IllegalArgumentException("Unused segment before push constant %s at offset %d".formatted(range, offset));
     		}
-    		offset = range.offset + range.size;
+    		offset = range.length();
     	}
     }
 

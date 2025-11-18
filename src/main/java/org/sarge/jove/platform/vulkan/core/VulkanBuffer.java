@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.common.VulkanUtility.checkAlignment;
 import static org.sarge.jove.util.Validation.*;
 
 import java.nio.*;
@@ -146,12 +147,12 @@ public class VulkanBuffer extends VulkanObject {
 		// Validate
 		require(VkBufferUsageFlag.TRANSFER_DST);
 		checkOffset(offset);
-		VulkanUtility.checkAlignment(offset);
+		checkAlignment(offset);
 
 		// Validate alignment
 		if(size != VK_WHOLE_SIZE) {
 			requireOneOrMore(size);
-			VulkanUtility.checkAlignment(size);
+			checkAlignment(size);
 		}
 
 		// Create fill command

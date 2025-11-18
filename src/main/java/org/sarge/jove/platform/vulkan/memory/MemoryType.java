@@ -13,7 +13,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * A <i>memory type</i> specifies the properties of the memory heaps supported by the hardware.
  * @author Sarge
  */
-public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> properties) {
+public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties) {
 	/**
 	 * Constructor.
 	 * @param index				Type index
@@ -26,6 +26,7 @@ public record MemoryType(int index, MemoryType.Heap heap, Set<VkMemoryProperty> 
 	}
 
 	/**
+	 * Helper.
 	 * @return Whether this memory type is {@link VkMemoryProperty#HOST_VISIBLE}
 	 */
 	public boolean isHostVisible() {

@@ -37,7 +37,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#texel-block-size">Texel block sizes</a>
  * @author Sarge
  */
-public final class FormatBuilder {
+public class FormatBuilder {
 	private static final ReverseMapping<VkFormat> MAPPING = ReverseMapping.mapping(VkFormat.class);
 
 	/**
