@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.control.RenderLoop.FrameListener;
+import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.IntersectedSurface;
 import org.sarge.jove.geometry.Vector;
@@ -35,7 +35,7 @@ import org.sarge.jove.platform.vulkan.core.VulkanSurface;
  * <p>
  * @author Sarge
  */
-public class ParticleSystem implements FrameListener {
+public class ParticleSystem implements Frame.Listener {
 	private static final float SCALE = 1f / 1000; // FrameCounter.MILLISECONDS_PER_SECOND;
 
 	/**
@@ -234,9 +234,9 @@ public class ParticleSystem implements FrameListener {
 	}
 
 	@Override
-	public void frame(Duration elapsed) {
+	public void update(Frame frame) {
 //		final long time = frame.time().toEpochMilli();
-//		final float f = frame.elapsed().toMillis() * SCALE;
+		final float f = frame.elapsed().toMillis() * SCALE;
 //		expire(time);
 //		update(time, elapsed);
 //		cull();

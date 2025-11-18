@@ -42,12 +42,12 @@ public final class ImageCopyCommand implements Command {
 	 * @param regions		Copy regions
 	 * @param library		Image library
 	 */
-	private ImageCopyCommand(Image src, Image dest, VkImageLayout srcLayout, VkImageLayout destLayout, VkImageCopy[] regions, Image.Library library) {
+	private ImageCopyCommand(Image src, Image dest, VkImageLayout srcLayout, VkImageLayout destLayout, List<VkImageCopy> regions, Image.Library library) {
 		this.src = requireNonNull(src);
 		this.dest = requireNonNull(dest);
 		this.srcLayout = requireNonNull(srcLayout);
 		this.destLayout = requireNonNull(destLayout);
-		this.regions = regions.clone();
+		this.regions = regions.toArray(VkImageCopy[]::new);
 		this.library = requireNonNull(library);
 	}
 
@@ -105,7 +105,9 @@ public final class ImageCopyCommand implements Command {
 		 * @param dest		Destination image
 		 */
 		public Builder(Image src, Image dest) {
-			if(src == dest) throw new IllegalArgumentException("Cannot copy to self");
+			if(src == dest) {
+				throw new IllegalArgumentException("Cannot copy to self");
+			}
 			this.src = requireNonNull(src);
 			this.dest = requireNonNull(dest);
 		}
@@ -136,7 +138,9 @@ public final class ImageCopyCommand implements Command {
 				case GENERAL, SHARED_PRESENT_KHR -> true;
 				default -> layout == valid;
 			};
-			if(!ok) throw new IllegalArgumentException("Invalid image layout: " + layout);
+			if(!ok) {
+				throw new IllegalArgumentException("Invalid image layout: " + layout);
+			}
 		}
 
 		/**
@@ -155,8 +159,10 @@ public final class ImageCopyCommand implements Command {
 		 * @throws IllegalArgumentException if no copy regions have been configured
 		 */
 		public ImageCopyCommand build(Image.Library library) {
-			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
-			final VkImageCopy[] array = regions.stream().map(CopyRegion::populate).toArray(VkImageCopy[]::new);
+			if(regions.isEmpty()) {
+				throw new IllegalArgumentException("No copy regions specified");
+			}
+			final List<VkImageCopy> array = regions.stream().map(CopyRegion::populate).toList();
 			return new ImageCopyCommand(src, dest, srcLayout, destLayout, array, library);
 		}
 	}

@@ -1,8 +1,8 @@
 package org.sarge.jove.control;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.time.Duration;
+import java.time.Instant;
 
 import org.junit.jupiter.api.*;
 
@@ -20,43 +20,33 @@ class FrameCounterTest {
 	}
 
 	@Test
-	void start() {
-		counter.start();
-	}
-
-	@Test
-	void startAlreadyStarted() {
-		counter.start();
-		assertThrows(IllegalStateException.class, () -> counter.start());
-	}
-
-	@Test
-	void stop() {
-		counter.start();
-		counter.stop();
+	void update() {
+		final Instant start = Instant.ofEpochMilli(0);
+		counter.update(new Frame(start, start.plusMillis(50)));
 		assertEquals(1, counter.count());
 	}
 
 	@Test
-	void stopNotStarted() {
-		assertThrows(IllegalStateException.class, () -> counter.stop());
-	}
+	void cull() {
+		// Record frame that will be culled
+		final Instant one = Instant.ofEpochMilli(0);
+		counter.update(new Frame(one, one.plusMillis(50)));
 
-	@Test
-	void elapsed() throws InterruptedException {
-		counter.start();
-		Thread.sleep(50);
-		final Duration elapsed = counter.stop();
-		assertEquals(true, elapsed.isPositive());
-	}
+		// Record new frame
+		final Instant two = Instant.ofEpochMilli(1000);
+		counter.update(new Frame(two, two.plusMillis(50)));
 
-	@Test
-	void window() throws InterruptedException {
-		counter.start();
-		counter.stop();
-		Thread.sleep(1000);
-		counter.start();
-		counter.stop();
+		// Check old frame is culled
 		assertEquals(1, counter.count());
+	}
+
+	@Test
+	void count() {
+		final long elapsed = 1000 / 60;
+		for(int n = 0; n < 60; ++n) {
+			final Instant start = Instant.ofEpochMilli(n * elapsed);
+			counter.update(new Frame(start, start.plusMillis(elapsed)));
+		}
+		assertEquals(60, counter.count());
 	}
 }

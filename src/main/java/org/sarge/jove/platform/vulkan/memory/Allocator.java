@@ -67,6 +67,13 @@ public class Allocator {
 	}
 
 	/**
+	 * @return Logical device
+	 */
+	public LogicalDevice device() {
+		return device;
+	}
+
+	/**
 	 * @return Number of allocations
 	 */
 	public final int count() {

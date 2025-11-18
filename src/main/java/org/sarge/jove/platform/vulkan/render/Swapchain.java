@@ -149,13 +149,11 @@ public class Swapchain extends VulkanObject {
 	public static void present(Library library, WorkQueue queue, VkPresentInfoKHR info) throws Invalidated {
 		final int code = library.vkQueuePresentKHR(queue, info);
 		final VkResult result = MAPPING.map(code);
-		switch(result) {
-			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new Invalidated(result);
-			default -> {
-				if(result != VkResult.SUCCESS) {
-					throw new VulkanException(result);
-				}
-			}
+		if(result != VkResult.SUCCESS) {
+    		switch(result) {
+    			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new Invalidated(result);
+    			default -> throw new VulkanException(result);
+    		}
 		}
 	}
 
@@ -170,8 +168,7 @@ public class Swapchain extends VulkanObject {
 	}
 
 	/**
-	 * Indicates that this swapchain has been invalidated.
-	 * This is generally caused by the window being resized or minimised.
+	 * Indicates that this swapchain has been invalidated, generally caused by the window being resized or minimised.
 	 */
 	public static final class Invalidated extends VulkanException {
 		private final VkResult result;
@@ -288,7 +285,7 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Sets the sharing mode as {@link VkSharingMode#CONCURRENT} for the case where swapchain images can be shared across multiple queue families without ownership transfers.
+		 * Sets the sharing mode as {@link VkSharingMode#CONCURRENT} for the case where swapchain images are shared across multiple queue families without ownership transfers.
 		 * If a single queue family is used for both rendering and presentation the mode can remain as the default {@link VkSharingMode#EXCLUSIVE}.
 		 * @param families Shared queue families
 		 */

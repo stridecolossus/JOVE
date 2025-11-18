@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.control.RenderLoop;
+import org.sarge.jove.control.*;
 import org.sarge.jove.model.Primitive;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
@@ -195,15 +195,14 @@ public class VulkanIntegrationDemo {
 
 		// Render...
 		System.out.println("Rendering...");
-		final var loop = new RenderLoop();
-//		final AtomicInteger count = new AtomicInteger();
-//		loop.add(_ -> {
-//			System.out.println("fps="+loop.counter());
-//		});
-		loop.start(render);
+		final var tracker = new Frame.Tracker();
+		final var counter = new FrameCounter();
+		tracker.add(counter);
+		try(var loop = new RenderLoop(render, tracker)) {
+			loop.start();
 			Thread.sleep(2000);
-		loop.stop();
-		System.out.println(loop.counter());
+		}
+		System.out.println(counter);
 
 		// Cleanup
 		System.out.println("Cleanup...");

@@ -5,13 +5,11 @@ import static org.sarge.lib.Validation.requireOneOrMore;
 
 import java.time.Duration;
 
-import org.sarge.jove.control.RenderLoop.FrameListener;
-
 /**
  * An <i>animator</i> is a specialised playable for an {@link Animation} interpolated over a given duration.
  * @author Sarge
  */
-public class Animator extends AbstractPlayable implements FrameListener {
+public class Animator extends AbstractPlayable implements Frame.Listener {
 	/**
 	 * An <i>animation</i> is updated by this animator.
 	 */
@@ -75,7 +73,9 @@ public class Animator extends AbstractPlayable implements FrameListener {
 	 * @throws IllegalArgumentException if the speed is not positive
 	 */
 	public void speed(float speed) {
-		if(speed <= 0) throw new IllegalArgumentException("Speed must be positive");
+		if(speed <= 0) {
+			throw new IllegalArgumentException("Speed must be positive");
+		}
 		this.speed = speed;
 	}
 
@@ -95,14 +95,14 @@ public class Animator extends AbstractPlayable implements FrameListener {
 	}
 
 	@Override
-	public void frame(Duration elapsed) {
+	public void update(Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
 		// Update animation time position
-		time += elapsed.toMillis() * speed;
+		time += frame.elapsed().toMillis() * speed;
 
 		// Check for end of animation
 		if(time > duration) {

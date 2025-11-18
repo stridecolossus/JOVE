@@ -27,7 +27,6 @@ class ColourTest {
 	@Test
 	void layout() {
 		assertEquals(Layout.floats(4), Colour.LAYOUT);
-		assertEquals(Colour.LAYOUT, col.layout());
 	}
 
 	@Nested

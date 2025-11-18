@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 
 import org.sarge.jove.common.TransientObject;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.render.Swapchain.*;
 
@@ -23,7 +23,7 @@ public class SwapchainFactory implements TransientObject {
 		/**
 		 * Configures a swapchain property.
 		 * @param builder		Swapchain builder
-		 * @param properties		Surface
+		 * @param properties	Surface properties
 		 */
 		void configure(Builder builder, Properties properties);
 	}
@@ -67,9 +67,6 @@ public class SwapchainFactory implements TransientObject {
 	/**
 	 * Applies the swapchain configuration and creates a new instance.
 	 * @return New swapchain
-	 * @see SwapchainConfiguration
-	 * @see #configure(Swapchain.Builder, Properties)
-	 * @see Swapchain.Builder#build(LogicalDevice, Properties)
 	 */
 	private Swapchain build() {
 		for(var c : configuration) {

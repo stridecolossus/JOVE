@@ -23,7 +23,7 @@ class VertexBufferTest {
 			}
 		};
 		final var device = new MockLogicalDevice(library);
-		final VulkanBuffer buffer = new MockVulkanBuffer(device, VkBufferUsageFlag.VERTEX_BUFFER);
+		final VulkanBuffer buffer = new MockVulkanBuffer(device, 42, VkBufferUsageFlag.VERTEX_BUFFER);
 		vertex = new VertexBuffer(buffer);
 	}
 
@@ -36,7 +36,7 @@ class VertexBufferTest {
 
 	@Test
 	void invalid() {
-		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), VkBufferUsageFlag.TRANSFER_SRC);
+		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 42, VkBufferUsageFlag.TRANSFER_SRC);
 		assertThrows(IllegalStateException.class, () -> new VertexBuffer(invalid));
 	}
 }

@@ -11,28 +11,16 @@ import java.util.List;
  * A layout is comprised of:
  * <ul>
  * <li>The {@link #size} number of data elements, e.g. 3 for a vertex normal</li>
- * <li>The {@link #type} of the data, e.g. {@link ByteSized.Type#FLOAT}</li>
+ * <li>The {@link #type} of the data, e.g. {@link Type#FLOAT}</li>
  * <li>Whether the data is {@link #signed}</li>
  * <li>The number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
  * </ul>
  * <p>
- * Example layout for an unsigned floating-point normal: <pre>new Component(3, Type.FLOAT, false, Float.BYTES)</pre>
+ * For example the layout for a vertex position could be <pre>Layout(3, Type.FLOAT, true, Float.BYTES)</pre>
  * <p>
- * The {@link #toString()} representation of a layout is a compacted string with a {@code U} suffix for unsigned types.
- * For example the above layout is represented as {@code 3-FLOAT4U}.
- * <p>
+ * @author Sarge
  */
-public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
-	/**
-	 * A <i>component</i> defines a data type with a layout.
-	 */
-	public interface Component {
-		/**
-		 * @return Layout of this component
-		 */
-		Layout layout();
-	}
-
+public record Layout(int count, Type type, boolean signed, int bytes) {
 	/**
 	 * Component types.
 	 */
@@ -43,7 +31,7 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 	}
 
 	/**
-	 * Creates a signed {@link Type#FLOAT} layout with {@link #size} elements.
+	 * Creates a signed {@link Type#FLOAT} layout with {@link #count} elements.
 	 * @param count Number of elements
 	 * @return New floating-point layout
 	 */
@@ -73,7 +61,7 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 
 	/**
 	 * @param layouts Layouts
-	 * @return Stride of the given layouts (bytes)
+	 * @return Total stride of the given layouts (bytes)
 	 */
 	public static int stride(List<Layout> layouts) {
 		return layouts

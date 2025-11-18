@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 class IndexBufferTest {
 	private IndexBuffer index;
+	private int max;
 	private boolean bound;
 
 	@BeforeEach
@@ -22,8 +24,18 @@ class IndexBufferTest {
 				bound = true;
 			}
 		};
-		final var device = new MockLogicalDevice(library);
-		final var buffer = new MockVulkanBuffer(device, VkBufferUsageFlag.INDEX_BUFFER);
+
+		final var device = new MockLogicalDevice(library) {
+			@Override
+			public DeviceLimits limits() {
+				final var limits = new VkPhysicalDeviceLimits();
+				limits.maxDrawIndexedIndexValue = max;
+				return new DeviceLimits(limits);
+			}
+		};
+		max = 2;
+
+		final var buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlag.INDEX_BUFFER);
 		index = new IndexBuffer(VkIndexType.UINT32, buffer);
 	}
 
@@ -36,13 +48,18 @@ class IndexBufferTest {
 
 	@Test
 	void length() {
-		final long length = index.buffer().length();
-		assertThrows(IllegalArgumentException.class, () -> index.bind(length));
+		assertThrows(IllegalArgumentException.class, () -> index.bind(8L));
+	}
+
+	@Test
+	void limit() {
+		max = 1;
+		assertThrows(IllegalStateException.class, () -> index.bind(0L));
 	}
 
 	@Test
 	void invalid() {
-		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), VkBufferUsageFlag.TRANSFER_SRC);
+		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 8L, VkBufferUsageFlag.TRANSFER_SRC);
 		assertThrows(IllegalStateException.class, () -> new IndexBuffer(VkIndexType.UINT32, invalid));
 	}
 }

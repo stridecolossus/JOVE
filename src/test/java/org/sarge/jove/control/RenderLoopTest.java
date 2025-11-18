@@ -11,19 +11,22 @@ public class RenderLoopTest {
 	private CountDownLatch latch;
 	private RenderLoop loop;
 	private Runnable task;
+	private Frame.Tracker tracker;
 
 	@BeforeEach
 	void before() {
 		latch = new CountDownLatch(2);
 		task = latch::countDown;
-		loop = new RenderLoop();
+		tracker = new Frame.Tracker();
+		loop = new RenderLoop(task, tracker);
 	}
 
 	@AfterEach
-	void after() {
+	void after() throws Exception {
 		if(loop.isRunning()) {
 			loop.stop();
 		}
+		loop.close();
 	}
 
 	@DisplayName("A new render loop...")
@@ -38,7 +41,7 @@ public class RenderLoopTest {
 		@DisplayName("can be started")
 		@Test
 		void start() {
-			loop.start(task);
+			loop.start();
 			assertEquals(true, loop.isRunning());
 		}
 
@@ -54,12 +57,13 @@ public class RenderLoopTest {
 	class Running {
 		@BeforeEach
 		void before() {
-			loop.start(task);
+			loop.start();
 		}
 
 		@Test
 		void started() throws InterruptedException {
 			latch.await();
+			// TODO - how to effectively check listener? since happens AFTER latch
 		}
 
 		@DisplayName("can be stopped")
@@ -72,7 +76,7 @@ public class RenderLoopTest {
 		@DisplayName("cannot be started again")
 		@Test
 		void start() {
-			assertThrows(IllegalStateException.class, () -> loop.start(task));
+			assertThrows(IllegalStateException.class, () -> loop.start());
 		}
 	}
 
@@ -95,7 +99,7 @@ public class RenderLoopTest {
     	@DisplayName("cannot be set if the loop is running")
     	@Test
     	void running() {
-    		loop.start(task);
+    		loop.start();
     		assertThrows(IllegalStateException.class, () -> loop.rate(50));
     	}
 

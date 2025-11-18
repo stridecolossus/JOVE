@@ -182,7 +182,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @return New buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
-	public static VulkanBuffer create(LogicalDevice device, Allocator allocator, long length, MemoryProperties<VkBufferUsageFlag> properties) {
+	public static VulkanBuffer create(Allocator allocator, long length, MemoryProperties<VkBufferUsageFlag> properties) {
 		// TODO
 		if(properties.mode() == VkSharingMode.CONCURRENT) {
 			throw new UnsupportedOperationException();
@@ -199,6 +199,7 @@ public class VulkanBuffer extends VulkanObject {
 		// TODO - queue families
 
 		// Allocate buffer
+		final LogicalDevice device = allocator.device();
 		final Library library = device.library();
 		final Pointer pointer = new Pointer();
 		library.vkCreateBuffer(device, info, null, pointer);
@@ -220,34 +221,19 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Helper.
-	 * Creates and initialises a staging buffer containing the given data.
-	 * <p>
-	 * The staging buffer is a {@link VkBufferUsageFlag#TRANSFER_SRC} with {@link VkMemoryProperty#HOST_VISIBLE} memory.
-	 * <p>
-	 * @param device			Logical device
-	 * @param allocator			Memory allocator
+	 * Creates and a staging buffer for data that can then be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
+	 * The buffer is a {@link VkBufferUsageFlag#TRANSFER_SRC} with {@link VkMemoryProperty#HOST_VISIBLE} memory.
+	 * @param device		Logical device
+	 * @param allocator		Memory allocator
 	 * @return New staging buffer
 	 */
-	public static VulkanBuffer staging(LogicalDevice device, Allocator allocator, ByteBuffer data) {
-		// Init memory properties
+	public static VulkanBuffer staging(Allocator allocator, int length) {
 		final var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 				.required(VkMemoryProperty.HOST_VISIBLE)
 				.build();
 
-		// Create staging buffer
-		final VulkanBuffer buffer = create(device, allocator, data.limit(), properties);
-
-		// Write data to buffer
-		// TODO
-		if(data.isDirect()) {
-			buffer.buffer().put(data);
-		}
-		else {
-			buffer.buffer().put(data);
-		}
-
-		return buffer;
+		return create(allocator, length, properties);
 	}
 
 	/**

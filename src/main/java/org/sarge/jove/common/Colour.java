@@ -2,14 +2,13 @@ package org.sarge.jove.common;
 
 import java.nio.ByteBuffer;
 
-import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.MathsUtility;
 
 /**
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements Component, Bufferable {
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
 	/**
 	 * RGBA string.
 	 */
@@ -115,11 +114,6 @@ public record Colour(float red, float green, float blue, float alpha) implements
 //	}
 //	// TODO - move to separate class + loader?  see particle system loader
 //	// TODO - JDK19 vector API
-
-	@Override
-	public Layout layout() {
-		return LAYOUT;
-	}
 
 	@Override
 	public void buffer(ByteBuffer buffer) {

@@ -40,7 +40,6 @@ public interface Image extends NativeObject {
 		 * @param levelCount	Number of mip levels
 		 * @param layerCount	Number of array layers
 		 * @throws IllegalArgumentException if {@link #extents} is invalid for the given image {@link #type}
-		 * @see TODO
 		 */
 		public Descriptor {
 			requireNonNull(type);

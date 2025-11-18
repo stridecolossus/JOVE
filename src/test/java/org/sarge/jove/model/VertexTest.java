@@ -3,10 +3,8 @@ package org.sarge.jove.model;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
@@ -20,11 +18,6 @@ class VertexTest {
 
 	@Nested
 	class Simple {
-    	@Test
-    	void layout() {
-    		assertEquals(List.of(Point.LAYOUT), vertex.layout());
-    	}
-
     	@Test
     	void buffer() {
     		final var buffer = ByteBuffer.allocate(3 * Float.BYTES);
@@ -51,16 +44,6 @@ class VertexTest {
     		vertex.normal(Axis.X);
     		vertex.coordinate(Coordinate2D.BOTTOM_LEFT);
 		}
-
-    	@Test
-    	void layout() {
-    		final Layout[] layout = {
-    				Point.LAYOUT,
-    				Normal.LAYOUT,
-    				Coordinate2D.LAYOUT
-    		};
-    		assertEquals(List.of(layout), vertex.layout());
-    	}
 
     	@Test
     	void buffer() {

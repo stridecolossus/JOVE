@@ -1,13 +1,13 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.*;
+import org.sarge.jove.common.Layout.Type;
 
 /**
  * A <i>normal</i> is a unit vector.
  * @author Sarge
  */
-public class Normal extends Vector implements Component {
+public class Normal extends Vector {
 	/**
 	 * Vertex normal layout.
 	 */
@@ -36,10 +36,5 @@ public class Normal extends Vector implements Component {
 	@Override
 	public Normal invert() {
 		return new Normal(super.invert());
-	}
-
-	@Override
-	public Layout layout() {
-		return LAYOUT;
 	}
 }

@@ -3,54 +3,37 @@ package org.sarge.jove.control;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.lib.Validation.requireOneOrMore;
 
-import java.time.Duration;
-import java.util.*;
+import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 /**
- * The <i>render loop</i> performs frame rendering according to a configured frame rate.
- * <p>
- * Frame render tasks are executed sequentially on a single thread.
- * <p>
+ * The <i>render loop</i> executes render tasks sequentially on a single thread at a configured frame rate.
  * @author Sarge
  */
-public class RenderLoop {
-	/**
-	 * Listener for frame events.
-	 */
-	public interface FrameListener {
-		/**
-		 * Notifies a completed frame.
-		 * @param elapsed Elapsed duration
-		 */
-		void frame(Duration elapsed);
-	}
-
-	// Configuration
+public class RenderLoop implements AutoCloseable {
+	private final Runnable task;
+	private final Frame.Tracker tracker;
+	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	private ScheduledFuture<?> future;
 	private Consumer<Exception> handler = Exception::printStackTrace;
 	private int rate = 60;
 
-	// Listeners
-	private final Set<FrameListener> listeners = new HashSet<>();
-	private final FrameCounter counter = new FrameCounter();
-
-	// Scheduling
-	private ScheduledExecutorService executor;
-	private Runnable task;
+	/**
+	 * Constructor.
+	 * @param task			Render task
+	 * @param tracker		Frame tracker
+	 */
+	public RenderLoop(Runnable task, Frame.Tracker tracker) {
+		this.task = requireNonNull(task);
+		this.tracker = requireNonNull(tracker);
+	}
 
 	/**
 	 * @return Whether this render loop is running
 	 */
 	public boolean isRunning() {
-		return Objects.nonNull(executor);
-	}
-
-	/**
-	 * @return FPS counter
-	 */
-	public FrameCounter counter() {
-		return counter;
+		return Objects.nonNull(future);
 	}
 
 	/**
@@ -61,9 +44,9 @@ public class RenderLoop {
 	}
 
 	/**
-	 * Sets the target frame rate (or FPS).
+	 * Sets the target frame rate.
 	 * @param rate Frame rate
-	 * @throws IllegalArgumentException if {@link #rate} is not one-or-more
+	 * @throws IllegalArgumentException if {@link #rate} is not positive
 	 * @throws IllegalStateException if this loop is running
 	 */
 	public void rate(int rate) {
@@ -84,14 +67,12 @@ public class RenderLoop {
 
 	/**
 	 * Starts the render loop.
-	 * @param task Render task
 	 * @throws IllegalStateException if rendering has already been started
 	 */
-	public void start(Runnable task) {
+	public void start() {
 		if(isRunning()) {
 			throw new IllegalStateException("Render loop already running");
 		}
-		this.task = requireNonNull(task);
 		schedule();
 	}
 
@@ -99,52 +80,23 @@ public class RenderLoop {
 	 * Starts or resumes scheduling of the render task.
 	 */
 	private void schedule() {
-		assert executor == null;
+		assert !isRunning();
 		final long period = TimeUnit.SECONDS.toMicros(1) / rate;
-		executor = Executors.newSingleThreadScheduledExecutor();
-		executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MICROSECONDS);
+		future = executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MICROSECONDS);
 	}
 
 	/**
 	 * Runs the task and notifies the elapsed duration.
 	 */
 	private void run() {
-		counter.start();
+		final Frame.Timer timer = tracker.begin();
 		try {
 			task.run();
 		}
 		catch(Exception e) {
 			handler.accept(e);
 		}
-		final Duration elapsed = counter.stop();
-		update(elapsed);
-	}
-	// TODO - counter is-a listener?
-
-	/**
-	 * Registers a frame completion listener.
-	 * @param listener Listener to add
-	 */
-	public void add(FrameListener listener) {
-		requireNonNull(listener);
-		listeners.add(listener);
-	}
-
-	/**
-	 * Detaches a frame completion listener.
-	 * @param listener Listener to remove
-	 */
-	public void remove(FrameListener listener) {
-		listeners.remove(listener);
-	}
-
-	/**
-	 * Notifies listeners on a completed frame.
-	 */
-	private void update(Duration elapsed) {
-		for(FrameListener listener : listeners) {
-			listener.frame(elapsed);
-		}
+		timer.end();
 	}
 
 	/**
@@ -155,7 +107,15 @@ public class RenderLoop {
 		if(!isRunning()) {
 			throw new IllegalStateException("Render loop has not been started");
 		}
+		future.cancel(true);
+		future = null;
+	}
+
+	@Override
+	public void close() throws Exception {
+		if(isRunning()) {
+			stop();
+		}
 		executor.shutdownNow();
-		executor = null;
 	}
 }

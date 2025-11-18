@@ -8,7 +8,6 @@ import org.sarge.jove.util.EnumMask;
 
 /**
  * An <i>image sub-resource</i> defines a subset of the aspects, mip levels and array layers of an image.
- * @see Image.Descriptor
  * @author Sarge
  */
 public interface Subresource {
@@ -116,7 +115,7 @@ public interface Subresource {
 		 * @param mipLevel Starting mip level
 		 */
 		public Builder mipLevel(int mipLevel) {
-			this.mipLevel = requireZeroOrMore(mipLevel);
+			this.mipLevel = mipLevel;
 			return this;
 		}
 
@@ -125,7 +124,7 @@ public interface Subresource {
 		 * @param levelCount Number of mip levels
 		 */
 		public Builder levelCount(int levelCount) {
-			this.levelCount = requireOneOrMore(levelCount);
+			this.levelCount = levelCount;
 			return this;
 		}
 
@@ -134,7 +133,7 @@ public interface Subresource {
 		 * @param baseArrayLayer Starting array layer
 		 */
 		public Builder baseArrayLayer(int baseArrayLayer) {
-			this.baseArrayLayer = requireZeroOrMore(baseArrayLayer);
+			this.baseArrayLayer = baseArrayLayer;
 			return this;
 		}
 
@@ -143,7 +142,7 @@ public interface Subresource {
 		 * @param layerCount Number of array layers
 		 */
 		public Builder layerCount(int layerCount) {
-			this.layerCount = requireOneOrMore(layerCount);
+			this.layerCount = layerCount;
 			return this;
 		}
 

@@ -17,7 +17,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * A <i>default image</i> is a Vulkan image or texture managed by the application.
  * @author Sarge
  */
-public final class DefaultImage extends VulkanObject implements Image {
+public class DefaultImage extends VulkanObject implements Image {
 	private final Descriptor descriptor;
 	private final DeviceMemory memory;
 
@@ -97,7 +97,8 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @param flag Image creation flag
 		 */
 		public Builder flag(VkImageCreateFlag flag) {
-			flags.add(requireNonNull(flag));
+			requireNonNull(flag);
+			flags.add(flag);
 			return this;
 		}
 
@@ -138,7 +139,9 @@ public final class DefaultImage extends VulkanObject implements Image {
 				case UNDEFINED, PREINITIALIZED -> true;
 				default -> false;
 			};
-			if(!valid) throw new IllegalArgumentException("Invalid initial layout: " + layout);
+			if(!valid) {
+				throw new IllegalArgumentException("Invalid initial layout: " + layout);
+			}
 			this.layout = requireNonNull(layout);
 			return this;
 		}
@@ -174,20 +177,20 @@ public final class DefaultImage extends VulkanObject implements Image {
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
-			final Library vulkan = device.library();
+			final Library library = device.library();
 			final Pointer pointer = new Pointer();
-			vulkan.vkCreateImage(device, info, null, pointer);
+			library.vkCreateImage(device, info, null, pointer);
 
 			// Retrieve image memory requirements
 			final Handle handle = pointer.get();
 			final var requirements = new VkMemoryRequirements();
-			vulkan.vkGetImageMemoryRequirements(device, handle, requirements);
+			library.vkGetImageMemoryRequirements(device, handle, requirements);
 
 			// Allocate image memory
 			final DeviceMemory memory = allocator.allocate(requirements, properties);
 
 			// Bind memory to image
-			vulkan.vkBindImageMemory(device, handle, memory, 0L);
+			library.vkBindImageMemory(device, handle, memory, 0L);
 
 			// Create image
 			return new DefaultImage(handle, device, descriptor, memory);

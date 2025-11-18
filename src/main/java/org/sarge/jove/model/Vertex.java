@@ -3,9 +3,9 @@ package org.sarge.jove.model;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Objects;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.*;
 
 /**
@@ -82,22 +82,6 @@ public class Vertex implements Bufferable {
 	 */
 	public void coordinate(Coordinate coordinate) {
 		this.coordinate = coordinate;
-	}
-
-	/**
-	 * Determines the layout of this vertex.
-	 * @return Vertex layout
-	 */
-	public List<Layout> layout() {
-		final var layout = new ArrayList<Layout>();
-		layout.add(Point.LAYOUT);
-		if(normal != null) {
-			layout.add(Normal.LAYOUT);
-		}
-		if(coordinate != null) {
-			layout.add(coordinate.layout());
-		}
-		return layout;
 	}
 
 	@Override

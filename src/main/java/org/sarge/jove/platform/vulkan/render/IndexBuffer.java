@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
+import org.sarge.jove.model.IndexedMesh;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
@@ -10,6 +11,7 @@ import org.sarge.jove.platform.vulkan.core.*;
  * <p>
  * Note that the index is represented as either {@code short} or {@code int} values depending on the length of the vertex data referred to, specified by {@link VkIndexType}.
  * <p>
+ * @see IndexedMesh#isCompactIndex()
  * @author Sarge
  */
 public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
@@ -57,22 +59,16 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 			return;
 		}
 
-		// TODO...
+		// Ignore if unlimited
+		final int max = buffer.device().limits().get("maxDrawIndexedIndexValue");
+		if(max == -1) {
+			return;
+		}
 
-//		// Lookup maximum index length
-//		final var limits = this.device().limits();
-//		final int max = limits.maxDrawIndexedIndexValue;
-//
-//		// Ignore maximum unsigned integer value
-//		if(max == -1) {
-//			return;
-//		}
-//
-//		// Validate size of this index
-//		final long count = this.length() / Integer.BYTES;
-//		if(count > max) {
-//			throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
-//		}
-//		// TODO - mod by offset?
+		// Otherwise check buffer length is supported
+		final long count = buffer.length() / Integer.BYTES;
+		if(count > max) {
+			throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
+		}
 	}
 }
