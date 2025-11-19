@@ -12,7 +12,18 @@ class RayTest {
 	@BeforeEach
 	void before() {
 		ray = new Ray(Point.ORIGIN, Axis.X);
-		intersection = new Intersection(new Point(1, 0, 0), 1, Axis.Y);
+
+		intersection = ray.new AbstractIntersection(1) {
+			@Override
+			public Point point() {
+				return new Point(1, 0, 0);
+			}
+
+			@Override
+			public Normal normal() {
+				return Axis.Y;
+			}
+		};
 	}
 
 	@Test
@@ -34,6 +45,6 @@ class RayTest {
 	@Test
 	void compare() {
 		assertEquals(0, intersection.compareTo(intersection));
-		assertEquals(1, intersection.compareTo(new Intersection(Point.ORIGIN, 0, Axis.Y)));
+		assertEquals(1, intersection.compareTo(ray.intersection(0, Axis.Y)));
 	}
 }

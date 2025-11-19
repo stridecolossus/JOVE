@@ -15,7 +15,7 @@ import org.sarge.jove.util.MathsUtility;
  * <p>
  * Note that the distance increases in the <i>opposite</i> direction to the normal vector.
  * <br>
- * For example {@code new Plane(Axis.Y, 1)} creates the plane in X-Z at Y = <b>minus</b> one.
+ * For example {@code Plane(Axis.Y, 1)} defines X-Z plane at Y = <b>minus</b> one.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
@@ -32,7 +32,7 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 			throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
 		}
 		final Normal normal = new Normal(triangle.normal());
-		return new Plane(normal, triangle.vertices().getFirst());
+		return new Plane(normal, triangle.a());
 	}
 
 	/**
@@ -121,15 +121,15 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 	@Override
 	public Iterable<Intersection> intersections(Ray ray) {
 		// Determine angle between ray and normal
-		final float denom = normal.dot(ray.direction());
+		final float determinant = normal.dot(ray.direction());
 
 		// Orthogonal ray does not intersect
-		if(MathsUtility.isApproxZero(denom)) {
+		if(MathsUtility.isApproxZero(determinant)) {
 			return EMPTY_INTERSECTIONS;
 		}
 
 		// Calculate closest intersection distance
-		final float dist = -distance(ray.origin()) / denom;
+		final float dist = -distance(ray.origin()) / determinant;
 
 		// Check whether intersects
 		if((dist < 0) || (dist * dist > ray.direction().magnitude())) {

@@ -4,6 +4,8 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 
+import org.sarge.jove.util.MathsUtility;
+
 /**
  * A <i>ray</i> is a vector relative to an originating point used for frustum culling, intersection tests, and picking.
  * @author Sarge
@@ -41,40 +43,112 @@ public record Ray(Point origin, Vector direction) {
 		Iterable<Intersection> intersections(Ray ray);
 
 		/**
-		 * Intersection results for a ray that does not intersect this surface.
+		 * Empty results for a ray that does not intersect this surface.
 		 */
 		Iterable<Intersection> EMPTY_INTERSECTIONS = List.of();
 	}
 
 	/**
-	 * An <i>intersection</i> specifies a point at which this ray intersects an {@link IntersectedSurface}.
+	 * An <i>intersection</i> specifies the point(s) where this ray intersects a {@link IntersectedSurface}.
 	 */
-	public record Intersection(Point point, float distance, Normal normal) implements Comparable<Intersection> {
+	public interface Intersection extends Comparable<Intersection> {
+		/**
+		 * @return Distance from the ray origin
+		 */
+		float distance();
+
+		/**
+		 * @return Intersection point
+		 * @see Ray#point(float)
+		 */
+		Point point();
+
+		/**
+		 * Surface normal at this intersection.
+		 */
+		Normal normal();
+	}
+
+	/**
+	 * Skeleton implementation.
+	 */
+	public abstract class AbstractIntersection implements Intersection {
+		private final float distance;
+
+		/**
+		 * Constructor.
+		 * @param distance Intersection distance
+		 */
+		protected AbstractIntersection(float distance) {
+			this.distance = distance;
+		}
+
+		@Override
+		public float distance() {
+			return distance;
+		}
+
+		@Override
+		public Point point() {
+			return Ray.this.point(distance);
+		}
+
 		@Override
 		public int compareTo(Intersection that) {
 			return Float.compare(this.distance(), that.distance());
 		}
+
+		@Override
+		public int hashCode() {
+			return Float.hashCode(distance);
+		}
+
+		@Override
+		public final boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Intersection that) &&
+					MathsUtility.isApproxEqual(distance, that.distance());
+		}
+
+		@Override
+		public String toString() {
+			return String.format("Intersection[dist=%d]", distance);
+		}
 	}
 
 	/**
+	 * Helper.
 	 * Creates an intersection at the given distance along this ray.
 	 * @param distance		Intersection distance
 	 * @param normal		Surface normal
 	 * @return Intersection
+	 * @see #point(float)
 	 */
 	public Intersection intersection(float distance, Normal normal) {
-		return new Intersection(point(distance), distance, normal);
+		requireNonNull(normal);
+		return new AbstractIntersection(distance) {
+			@Override
+			public Normal normal() {
+				return normal;
+			}
+		};
 	}
 
 	/**
-	 * Creates an intersection at the given distance along this ray with a normal to the centre of the intersected surface.
+	 * Helper.
+	 * Creates an intersection at the given distance along this ray that calculates the surface normal to the centre of the intersected surface.
 	 * @param distance		Intersection distance
-	 * @param normal		Surface normal
+	 * @param centre		Centre point of the intersected surface
 	 * @return Intersection
 	 */
 	public Intersection intersection(float distance, Point centre) {
-		final Point p = point(distance);
-		final Vector n = Vector.between(centre, p);
-		return new Intersection(p, distance, new Normal(n));
+		requireNonNull(centre);
+		return new AbstractIntersection(distance) {
+			@Override
+			public Normal normal() {
+				return new Normal(Vector.between(centre, this.point()));
+			}
+		};
 	}
 }
