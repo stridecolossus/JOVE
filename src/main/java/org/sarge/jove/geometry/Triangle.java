@@ -76,7 +76,7 @@ public record Triangle(Point a, Point b, Point c) implements IntersectedSurface 
 	 * @see <a href="https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm">Wikipedia<a>
 	 */
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
 		// Determine angle between ray and triangle
 		final Vector ab = Vector.between(a, b);
 		final Vector ac = Vector.between(a, c);
@@ -108,15 +108,11 @@ public record Triangle(Point a, Point b, Point c) implements IntersectedSurface 
 		}
 
 		// Build result
-		// TODO - can normal be derived from variables used by this algorithm? i.e. without ab x ac
-		final var intersection = ray.new AbstractIntersection(t) {
-			@Override
-			public Normal normal() {
-				return normal();
-			}
-		};
-		return List.of(intersection);
-		//final Normal normal = new Normal(ab.cross(ac));
-		//return List.of(ray.intersection(t, normal));
+		return List.of(new Intersection(t, this));
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
+		return normal();
 	}
 }

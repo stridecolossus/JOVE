@@ -27,7 +27,8 @@ public interface Collision {
 	 * @see Particle#stop(Point)
 	 */
 	Collision STOP = (p, intersection) -> {
-		final Point pos = intersection.point();
-		p.stop(pos);
+		// TODO
+		//final Point pos = intersection.point();
+		//p.stop(pos);
 	};
 }

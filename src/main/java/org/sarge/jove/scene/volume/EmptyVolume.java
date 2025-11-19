@@ -1,5 +1,7 @@
 package org.sarge.jove.scene.volume;
 
+import java.util.List;
+
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.*;
 
@@ -29,8 +31,13 @@ public record EmptyVolume() implements Volume {
 	}
 
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
 		return IntersectedSurface.EMPTY_INTERSECTIONS;
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
+		throw new RuntimeException();
 	}
 
 	@Override

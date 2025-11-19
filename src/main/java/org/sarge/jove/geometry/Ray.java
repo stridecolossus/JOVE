@@ -1,6 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public record Ray(Point origin, Vector direction) {
 	}
 
 	/**
-	 * Calculates the point on this ray at the given distance, i.e. solves the line equation.
+	 * Calculates the point on this ray at the given distance from the origin, i.e. solves the line equation.
 	 * @param distance Distance along this ray
 	 * @return Point on ray
 	 */
@@ -40,67 +41,50 @@ public record Ray(Point origin, Vector direction) {
 		 * @param ray Ray
 		 * @return Intersections
 		 */
-		Iterable<Intersection> intersections(Ray ray);
+		List<Intersection> intersections(Ray ray);
+
+		/**
+		 * Calculates the surface normal for the given intersection point.
+		 * @param intersection Intersection point
+		 * @return Surface normal
+		 * @see #normal(Point, Point)
+		 */
+		Normal normal(Point intersection);
+
+		/**
+		 * Helper.
+		 * Determines the surface normal at the given intersection point relative to the centre of this surface.
+		 * @param intersection		Intersection point
+		 * @param centre			Centre point of this surface
+		 * @return Surface normal
+		 */
+		static Normal normal(Point intersection, Point centre) {
+			return new Normal(Vector.between(centre, intersection));
+		}
 
 		/**
 		 * Empty results for a ray that does not intersect this surface.
 		 */
-		Iterable<Intersection> EMPTY_INTERSECTIONS = List.of();
+		List<Intersection> EMPTY_INTERSECTIONS = List.of();
 	}
 
 	/**
-	 * An <i>intersection</i> specifies the point(s) where this ray intersects a {@link IntersectedSurface}.
+	 * An <i>intersection</i> specifies the distance along this ray where it intersects with a given surface.
 	 */
-	public interface Intersection extends Comparable<Intersection> {
-		/**
-		 * @return Distance from the ray origin
-		 */
-		float distance();
-
-		/**
-		 * @return Intersection point
-		 * @see Ray#point(float)
-		 */
-		Point point();
-
-		/**
-		 * Surface normal at this intersection.
-		 */
-		Normal normal();
-	}
-
-	/**
-	 * Skeleton implementation.
-	 */
-	public abstract class AbstractIntersection implements Intersection {
-		private final float distance;
-
+	public record Intersection(float distance, IntersectedSurface surface) implements Comparable<Intersection> {
 		/**
 		 * Constructor.
-		 * @param distance Intersection distance
+		 * @param distance		Distance from the ray origin
+		 * @param surface		Intersected surface
 		 */
-		protected AbstractIntersection(float distance) {
-			this.distance = distance;
-		}
-
-		@Override
-		public float distance() {
-			return distance;
-		}
-
-		@Override
-		public Point point() {
-			return Ray.this.point(distance);
+		public Intersection {
+			requireZeroOrMore(distance);
+			requireNonNull(surface);
 		}
 
 		@Override
 		public int compareTo(Intersection that) {
-			return Float.compare(this.distance(), that.distance());
-		}
-
-		@Override
-		public int hashCode() {
-			return Float.hashCode(distance);
+			return Float.compare(this.distance, that.distance);
 		}
 
 		@Override
@@ -108,47 +92,8 @@ public record Ray(Point origin, Vector direction) {
 			return
 					(obj == this) ||
 					(obj instanceof Intersection that) &&
-					MathsUtility.isApproxEqual(distance, that.distance());
+					(this.surface == that.surface) &&
+					MathsUtility.isApproxEqual(this.distance, that.distance);
 		}
-
-		@Override
-		public String toString() {
-			return String.format("Intersection[dist=%d]", distance);
-		}
-	}
-
-	/**
-	 * Helper.
-	 * Creates an intersection at the given distance along this ray.
-	 * @param distance		Intersection distance
-	 * @param normal		Surface normal
-	 * @return Intersection
-	 * @see #point(float)
-	 */
-	public Intersection intersection(float distance, Normal normal) {
-		requireNonNull(normal);
-		return new AbstractIntersection(distance) {
-			@Override
-			public Normal normal() {
-				return normal;
-			}
-		};
-	}
-
-	/**
-	 * Helper.
-	 * Creates an intersection at the given distance along this ray that calculates the surface normal to the centre of the intersected surface.
-	 * @param distance		Intersection distance
-	 * @param centre		Centre point of the intersected surface
-	 * @return Intersection
-	 */
-	public Intersection intersection(float distance, Point centre) {
-		requireNonNull(centre);
-		return new AbstractIntersection(distance) {
-			@Override
-			public Normal normal() {
-				return new Normal(Vector.between(centre, this.point()));
-			}
-		};
 	}
 }

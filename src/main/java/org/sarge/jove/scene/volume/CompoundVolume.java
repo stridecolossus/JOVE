@@ -61,13 +61,19 @@ public record CompoundVolume(List<Volume> volumes) implements Volume {
 	}
 
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
 //		// TODO
 //		final Optional<Intersection> intersection = volumes
 //				.stream()
 //				.map(v -> v.intersect(ray))
 //				.filter(Predicate.not(Intersection.NONE::equals))
 //				.findAny();
+		return null;
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
+		// TODO
 		return null;
 	}
 }

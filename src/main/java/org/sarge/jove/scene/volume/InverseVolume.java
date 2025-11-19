@@ -2,6 +2,8 @@ package org.sarge.jove.scene.volume;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
+
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 
@@ -39,8 +41,14 @@ public record InverseVolume(Volume vol) implements Volume {
 	}
 
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
 		return vol.intersections(ray);
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
+		// TODO
+		return null;
 	}
 
 	@Override

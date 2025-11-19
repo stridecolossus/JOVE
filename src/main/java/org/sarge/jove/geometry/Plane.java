@@ -119,7 +119,7 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 	}
 
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
 		// Determine angle between ray and normal
 		final float determinant = normal.dot(ray.direction());
 
@@ -137,7 +137,12 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 		}
 
 		// Build intersection result
-		return List.of(ray.intersection(dist, normal));
+		return List.of(new Intersection(dist, this));
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
+		return normal;
 	}
 
 	@Override

@@ -8,7 +8,7 @@ import org.sarge.jove.util.MathsUtility;
 /**
  * A <i>quaternion</i> is a more compact and efficient representation of a rotation about an arbitrary axis.
  * <p>
- * This implementation represents a <i>rotation quaternion</i> which is implicitly a unit quaternion.
+ * This implementation represents a <i>rotation quaternion</i> which is also implicitly a unit quaternion.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">Wikipedia</a>
  * @author Sarge

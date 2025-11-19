@@ -1,7 +1,3 @@
-
-can IntegerReference and Pointer be reverted to general by-reference types?
-could then (perhaps) use Pointer for the more general case of a dereferenced memory address? e.g. for methods that return a POINTER to a structure (ADDRESS), as opposed to an instance (STRUCT LAYOUT)
-
 review use of cosine
 - very invasive
 - not even that good implementation?

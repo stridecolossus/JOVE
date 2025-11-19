@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Plane.HalfSpace;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
@@ -51,7 +51,7 @@ public record BoundingBox(Bounds bounds) implements Volume {
 	 * @see <a href="https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection">Ray-box intersection</a>
 	 */
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
 		// Convert arguments to slab-wise components
 		final float[] min = bounds.min().toArray();
 		final float[] max = bounds.max().toArray();
@@ -90,15 +90,19 @@ public record BoundingBox(Bounds bounds) implements Volume {
 		}
 
 		// Build results
-		final Point centre = bounds.centre();
-		final var far = ray.intersection(f, centre);
+		final var far = new Intersection(f, this);
 		if((n < 0) || MathsUtility.isApproxEqual(n, f)) {
 			return List.of(far);
 		}
 		else {
-			final var near = ray.intersection(n, centre);
+			final var near = new Intersection(n, this);
 			return List.of(near, far);
 		}
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
+		return IntersectedSurface.normal(bounds.centre(), intersection);
 	}
 
 	/**

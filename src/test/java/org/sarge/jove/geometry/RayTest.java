@@ -1,50 +1,37 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.sarge.jove.geometry.Point.ORIGIN;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Ray.*;
 
 class RayTest {
 	private Ray ray;
-	private Intersection intersection;
 
 	@BeforeEach
 	void before() {
-		ray = new Ray(Point.ORIGIN, Axis.X);
-
-		intersection = ray.new AbstractIntersection(1) {
-			@Override
-			public Point point() {
-				return new Point(1, 0, 0);
-			}
-
-			@Override
-			public Normal normal() {
-				return Axis.Y;
-			}
-		};
+		ray = new Ray(ORIGIN, Axis.X);
 	}
 
 	@Test
-	void intersection() {
-		assertEquals(intersection, ray.intersection(1, Axis.Y));
+	void point() {
+		assertEquals(ORIGIN, ray.point(0));
+		assertEquals(new Point(Axis.X.multiply(3)), ray.point(3));
 	}
 
 	@Test
-	void centre() {
-		assertEquals(intersection, ray.intersection(1, new Point(1, -1, 0)));
+	void normal() {
+		assertEquals(Axis.X.invert(), IntersectedSurface.normal(ORIGIN, new Point(Axis.X)));
 	}
 
 	@Test
-	void none() {
-		final var results = IntersectedSurface.EMPTY_INTERSECTIONS.iterator();
-		assertEquals(false, results.hasNext());
-	}
-
-	@Test
-	void compare() {
-		assertEquals(0, intersection.compareTo(intersection));
-		assertEquals(1, intersection.compareTo(ray.intersection(0, Axis.Y)));
+	void order() {
+		final var surface = new Plane(Axis.X, 0);
+		final var one = new Intersection(1, surface);
+		final var two = new Intersection(2, surface);
+		assertEquals(-1, one.compareTo(two));
+		assertEquals(+1, two.compareTo(one));
+		assertEquals( 0, one.compareTo(one));
 	}
 }

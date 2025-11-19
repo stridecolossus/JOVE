@@ -49,15 +49,8 @@ class TriangleTest {
     	@Test
     	void inside() {
     		final Ray ray = new Ray(triangle.centre(), Z);
-			final Intersection expected = ray.new AbstractIntersection(0) {
-				@Override
-				public Normal normal() {
-					return Axis.Z.invert();
-				}
-			};
-    		final var intersections = triangle.intersections(ray).iterator();
-    		assertEquals(expected, intersections.next());
-    		assertEquals(false, intersections.hasNext());
+    		assertEquals(List.of(new Intersection(0, triangle)), triangle.intersections(ray));
+    		assertEquals(Z.invert(), triangle.normal(null));
     	}
 
 		private static List<Point> edge() {
@@ -69,20 +62,7 @@ class TriangleTest {
     	@MethodSource
     	void edge(Point p) {
     		final Ray ray = new Ray(p, Z);
-			final Intersection expected = ray.new AbstractIntersection(0) {
-				@Override
-				public Point point() {
-					return p;
-				}
-
-				@Override
-				public Normal normal() {
-					return Axis.Z.invert();
-				}
-			};
-    		final var intersections = triangle.intersections(ray).iterator();
-    		assertEquals(expected, intersections.next());
-    		assertEquals(false, intersections.hasNext());
+    		assertEquals(List.of(new Intersection(0, triangle)), triangle.intersections(ray));
     	}
 
 		@DisplayName("does not intersect if the ray is parallel to the triangle")
