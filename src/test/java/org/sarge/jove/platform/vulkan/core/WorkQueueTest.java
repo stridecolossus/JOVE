@@ -24,4 +24,9 @@ class WorkQueueTest {
 		properties.queueFlags = new EnumMask<>(VkQueueFlag.GRAPHICS);
 		assertEquals(family, Family.of(1, properties));
 	}
+
+	@Test
+	void ignored() {
+		assertEquals(-1, Family.IGNORED.index());
+	}
 }

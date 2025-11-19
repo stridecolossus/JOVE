@@ -78,21 +78,14 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		}
 
 		switch(finalLayout) {
-    		case UNDEFINED, PREINITIALIZED -> throw new IllegalArgumentException("Invalid final layout: " + finalLayout);
+    		case UNDEFINED, PREINITIALIZED -> {
+    			throw new IllegalArgumentException("Invalid final layout: " + finalLayout);
+    		}
     	}
 
-		if(initialLayout == VkImageLayout.UNDEFINED) {
-			if(colour.load == LOAD) {
-				throw new IllegalArgumentException("Cannot load an image with an undefined layout");
-			}
-			if(stencil.load == LOAD) {
-				throw new IllegalArgumentException("Cannot load a stencil with an undefined layout");
-			}
+		if((initialLayout == VkImageLayout.UNDEFINED) && ((colour.load == LOAD) || (stencil.load == LOAD))) {
+			throw new IllegalArgumentException("Cannot load an undefined layout");
 		}
-
-		// TODO - further validation
-		// - no attachment load-store if stencil only
-		// - no stencil load-store if colour image
 	}
 
 	/**

@@ -29,7 +29,6 @@ public class InputAssemblyStage {
 	}
 
 	/**
-	 * Sets whether primitive restart is enabled.
 	 * @param restart Whether restart is enabled
 	 */
 	public InputAssemblyStage restart(boolean restart) {

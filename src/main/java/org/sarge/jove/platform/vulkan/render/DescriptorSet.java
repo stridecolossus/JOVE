@@ -16,42 +16,6 @@ import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>descriptor set</i> specifies resources used during rendering, such as samplers and uniform buffers.
- * <p>
- * Example for a texture sampler:
- * <pre>
- * // Define binding for a sampler
- * Binding binding = new Binding.Builder()
- *     .binding(0)
- *     .type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
- *     .stage(VkShaderStage.FRAGMENT)
- *     .build()
- *
- * // Create a descriptor set layout for a sampler
- * Layout layout = Layout.create(List.of(binding, ...));
- *
- * // Create a descriptor pool for a double-buffered swapchain
- * Pool pool = new Pool.Builder(device)
- *  	.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
- *  	.max(2)
- *  	.build();
- *
- * // Create a descriptor set
- * DescriptorSet set = pool.allocate(layout);
- *
- * // Create a sampler resource
- * Sampler sampler = ...
- * View view = ...
- * DescriptorResource resource = sampler.resource(view);
- *
- * // Add the sampler to the descriptor set
- * set.resource(binding, resource);
- *
- * // Apply updates
- * DescriptorSet.update(device, List.of(set));
- *
- * // Create a command to bind the descriptor set to the render sequence
- * Command bind = set.bind(pipeline.layout());
- * </pre>
  * @author Sarge
  */
 public class DescriptorSet implements NativeObject {
@@ -136,7 +100,7 @@ public class DescriptorSet implements NativeObject {
 
 			/**
 			 * Constructs this binding.
-			 * @return New layout binding
+			 * @return New binding
 			 */
 			public Binding build() {
 				return new Binding(binding, type, count, stages);
@@ -155,7 +119,10 @@ public class DescriptorSet implements NativeObject {
 	 */
 	DescriptorSet(Handle handle, Collection<Binding> bindings) {
 		this.handle = requireNonNull(handle);
+		init(bindings);
+	}
 
+	private void init(Collection<Binding> bindings) {
 		for(Binding b : bindings) {
 			entries.put(b, null);
 			dirty.add(b);
@@ -168,6 +135,7 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	/**
+	 * Retrieves the current resource for the given binding.
 	 * @param binding Binding
 	 * @return Descriptor resource for the given binding or {@code null} if not populated
 	 */
@@ -235,7 +203,6 @@ public class DescriptorSet implements NativeObject {
 			case VkDescriptorBufferInfo buffer -> write.pBufferInfo = buffer;
 			default -> throw new UnsupportedOperationException("Unsupported resource descriptor: " + resource);
 		}
-		// TODO - pTexelBuffer
 
 		return write;
 	}
@@ -332,12 +299,6 @@ public class DescriptorSet implements NativeObject {
 		 * @throws IllegalArgumentException if the bindings are empty or contain duplicate indices
 		 */
 		public static Layout create(LogicalDevice device, Collection<Binding> bindings, Set<VkDescriptorSetLayoutCreateFlag> flags) {
-			// Check binding indices
-			final long count = bindings.stream().map(Binding::index).distinct().count();
-			if(count != bindings.size()) {
-				throw new IllegalArgumentException("Binding indices must be unique: " + bindings);
-			}
-
 			// Init layout descriptor
 			final var info = new VkDescriptorSetLayoutCreateInfo();
 			info.flags = new EnumMask<>(flags);
@@ -358,12 +319,20 @@ public class DescriptorSet implements NativeObject {
 		/**
 		 * Constructor.
 		 * @param handle		Layout handle
-		 * @param dev			Logical device
+		 * @param device		Logical device
 		 * @param bindings		Bindings
 		 */
-		private Layout(Handle handle, LogicalDevice dev, Collection<Binding> bindings) {
-			super(handle, dev);
+		private Layout(Handle handle, LogicalDevice device, Collection<Binding> bindings) {
+			super(handle, device);
+			validate(bindings);
 			this.bindings = List.copyOf(bindings);
+		}
+
+		private static void validate(Collection<Binding> bindings) {
+    		final long count = bindings.stream().map(Binding::index).distinct().count();
+    		if(count != bindings.size()) {
+    			throw new IllegalArgumentException("Binding indices must be unique: " + bindings);
+    		}
 		}
 
 		/**
@@ -501,6 +470,7 @@ public class DescriptorSet implements NativeObject {
 			 * @param flag Flag
 			 */
 			public Builder flag(VkDescriptorPoolCreateFlag flag) {
+				requireNonNull(flag);
 				flags.add(flag);
 				return this;
 			}

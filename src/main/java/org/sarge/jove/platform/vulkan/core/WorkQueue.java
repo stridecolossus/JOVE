@@ -29,9 +29,9 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 	 */
 	public record Family(int index, int count, Set<VkQueueFlag> flags) {
 		/**
-		 * Index for the <i>ignored</i> queue family.
+		 * Ignored queue family.
 		 */
-		public static final int IGNORED = (~0);
+		public static final Family IGNORED = new Family(-1, 1, Set.of());
 
 		/**
 		 * Queue flag mapper.
@@ -46,6 +46,7 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		 */
 		public static Family of(int index, VkQueueFamilyProperties properties) {
 			final Set<VkQueueFlag> flags = properties.queueFlags.enumerate(MAPPING);
+			requireZeroOrMore(index);
 			return new Family(index, properties.queueCount, flags);
 		}
 
@@ -56,7 +57,6 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		 * @param flags		Queue flags
 		 */
 		public Family {
-			requireZeroOrMore(index);
 			requireOneOrMore(count);
 			flags = Set.copyOf(flags);
 		}

@@ -1,15 +1,18 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.VkAccess.*;
 import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 import static org.sarge.jove.platform.vulkan.VkPipelineStage.TRANSFER;
 
+import java.util.Set;
+
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.platform.vulkan.pipeline.Barrier;
+import org.sarge.jove.platform.vulkan.pipeline.Barrier.BarrierType.ImageBarrier;
+import org.sarge.jove.platform.vulkan.render.Swapchain;
 
 /**
  * The <i>capture task</i> is used to capture a screenshot from the swapchain.
@@ -24,13 +27,16 @@ import org.sarge.jove.platform.vulkan.pipeline.Barrier;
  */
 public class CaptureTask {
 	private final Command.Pool pool;
+	private final Pipeline.Library library;
 
 	/**
 	 * Constructor.
-	 * @param pool Transfer command pool
+	 * @param pool			Transfer command pool
+	 * @param library		Pipeline library
 	 */
 	public CaptureTask(Command.Pool pool) {
 		this.pool = requireNonNull(pool);
+		this.library = pool.device().library();
 	}
 
 	/**
@@ -43,8 +49,8 @@ public class CaptureTask {
 		final Image image = swapchain.latest().image();
 
 		// Create destination screenshot image
-		final LogicalDevice dev = swapchain.device();
-		final DefaultImage screenshot = screenshot(dev, allocator, image.descriptor());
+		final LogicalDevice device = swapchain.device();
+		final DefaultImage screenshot = screenshot(device, allocator, image.descriptor());
 
 		// Init copy command
 		final Image.Library library = swapchain.device().library();
@@ -68,15 +74,13 @@ public class CaptureTask {
 		return screenshot;
 	}
 
-	// TODO - factor out target image helper and overload? but screenshot ~ swapchain image
-
 	/**
 	 * Creates a screenshot image.
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param allocator		Memory allocator
 	 * @param target		Target image descriptor
 	 */
-	private static DefaultImage screenshot(LogicalDevice dev, Allocator allocator, Image.Descriptor target) {
+	private static DefaultImage screenshot(LogicalDevice device, Allocator allocator, Image.Descriptor target) {
 		// Create descriptor
 		final var descriptor = new Image.Descriptor.Builder()
 				.type(VkImageType.TWO_D)
@@ -86,7 +90,7 @@ public class CaptureTask {
 				.build();
 
 		// Init image memory properties
-		final var props = new MemoryProperties.Builder<VkImageUsageFlag>()
+		final var properties = new MemoryProperties.Builder<VkImageUsageFlag>()
 				.usage(VkImageUsageFlag.TRANSFER_DST)
 				.required(VkMemoryProperty.HOST_VISIBLE)
 				.required(VkMemoryProperty.HOST_COHERENT)
@@ -95,70 +99,52 @@ public class CaptureTask {
 		// Create screenshot image
 		return new DefaultImage.Builder()
 				.descriptor(descriptor)
-				.properties(props)
+				.properties(properties)
 				.tiling(VkImageTiling.LINEAR)
-				.build(dev, allocator);
+				.build(device, allocator);
 	}
 
 	/**
 	 * Transitions the screenshot to a copy destination.
 	 */
-	private static Barrier destination(Image screenshot) {
+	private Barrier destination(Image screenshot) {
 		return new Barrier.Builder()
 				.source(TRANSFER)
 				.destination(TRANSFER)
-				.image(screenshot)
-					.newLayout(TRANSFER_DST_OPTIMAL)
-					.destination(TRANSFER_WRITE)
-					.build()
-				.build();
+ 				.add(Set.of(), Set.of(TRANSFER_WRITE), new ImageBarrier(screenshot, UNDEFINED, TRANSFER_DST_OPTIMAL))
+				.build(library);
 	}
 
 	/**
 	 * Transitions the swapchain image to a copy source.
 	 */
-	private static Barrier source(Image image) {
+	private Barrier source(Image image) {
 		return new Barrier.Builder()
 				.source(TRANSFER)
 				.destination(TRANSFER)
-				.image(image)
-					.oldLayout(PRESENT_SRC_KHR)
-					.newLayout(TRANSFER_SRC_OPTIMAL)
-					.source(MEMORY_READ)
-					.destination(TRANSFER_READ)
-					.build()
-				.build();
+ 				.add(Set.of(MEMORY_READ), Set.of(TRANSFER_READ), new ImageBarrier(image, PRESENT_SRC_KHR, TRANSFER_SRC_OPTIMAL))
+				.build(library);
 	}
 
 	/**
 	 * Transitions the completed screenshot.
 	 */
-	private static Barrier prepare(Image screenshot) {
+	private Barrier prepare(Image screenshot) {
 		return new Barrier.Builder()
 				.source(TRANSFER)
 				.destination(TRANSFER)
-				.image(screenshot)
-					.oldLayout(TRANSFER_DST_OPTIMAL)
-					.newLayout(VkImageLayout.GENERAL)
-					.source(TRANSFER_WRITE)
-					.destination(MEMORY_READ)
-					.build()
-				.build();
+ 				.add(Set.of(TRANSFER_WRITE), Set.of(MEMORY_READ), new ImageBarrier(screenshot, TRANSFER_DST_OPTIMAL, GENERAL))
+				.build(library);
 	}
 
 	/**
 	 * Restores the swapchain image to its initial state.
 	 */
-	private static Barrier restore(Image image) {
+	private Barrier restore(Image image) {
 		return new Barrier.Builder()
 				.source(TRANSFER)
 				.destination(TRANSFER)
-				.image(image)
-					.oldLayout(TRANSFER_SRC_OPTIMAL)
-					.newLayout(PRESENT_SRC_KHR)
-					.source(TRANSFER_READ)
-					.destination(MEMORY_READ)
-					.build()
-				.build();
+ 				.add(Set.of(TRANSFER_READ), Set.of(MEMORY_READ), new ImageBarrier(image, TRANSFER_SRC_OPTIMAL, PRESENT_SRC_KHR))
+				.build(library);
 	}
 }

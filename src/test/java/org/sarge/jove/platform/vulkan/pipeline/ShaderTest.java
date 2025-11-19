@@ -23,6 +23,7 @@ class ShaderTest {
 
 		@Override
 		public void vkDestroyShaderModule(LogicalDevice device, Shader shader, Handle pAllocator) {
+			destroyed = true;
 		}
 	}
 
@@ -41,5 +42,6 @@ class ShaderTest {
 	void destroy() {
 		shader.destroy();
 		assertEquals(true, shader.isDestroyed());
+		assertEquals(true, library.destroyed);
 	}
 }
