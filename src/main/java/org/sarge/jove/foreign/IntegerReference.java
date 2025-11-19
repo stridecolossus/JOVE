@@ -11,11 +11,22 @@ public class IntegerReference extends NativeReference<Integer> {
 	 * Constructor.
 	 */
 	public IntegerReference() {
-		set(0);
+		super(AddressLayout.ADDRESS);
 	}
 
 	@Override
-	protected Integer update(MemorySegment pointer) {
+	public Integer get() {
+		final Integer value = super.get();
+		if(value == null) {
+			return 0;
+		}
+		else {
+			return value;
+		}
+	}
+
+	@Override
+	protected Integer update(MemorySegment pointer, AddressLayout layout) {
 		return pointer.get(ValueLayout.JAVA_INT, 0L);
 	}
 }

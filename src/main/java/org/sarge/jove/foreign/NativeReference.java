@@ -1,8 +1,10 @@
 package org.sarge.jove.foreign;
 
+import static java.util.Objects.requireNonNull;
+
 import java.lang.foreign.*;
 import java.util.Objects;
-import java.util.function.*;
+import java.util.function.Function;
 
 /**
  * A <i>native reference</i> is a template implementation for a <i>by reference</i> parameter with an <i>atomic</i> type, i.e. a primitive value or a simple pointer.
@@ -10,15 +12,45 @@ import java.util.function.*;
  * @author Sarge
  */
 public abstract class NativeReference<T> {
-	private T value;
+	private final AddressLayout layout;
 	private MemorySegment pointer;
+	private T value;
+
+	/**
+	 * Constructor.
+	 * @param layout Memory layout of the underlying pointer
+	 */
+	protected NativeReference(AddressLayout layout) {
+		this.layout = requireNonNull(layout);
+	}
+
+	/**
+	 * @return Memory layout of the underlying pointer
+	 */
+	public AddressLayout layout() {
+		return layout;
+	}
 
 	/**
 	 * @return Referenced value or {@code null} if not populated
 	 */
 	public T get() {
+		if(value == null) {
+			if(pointer != null) {
+				value = update(pointer, layout);
+			}
+		}
+
 		return value;
 	}
+
+	/**
+	 * Updates the by-reference value from the given pointer.
+	 * @param pointer 		Pointer
+	 * @param layout		Memory layout
+	 * @return Referenced value or {@code null} if not present
+	 */
+	protected abstract T update(MemorySegment pointer, AddressLayout layout);
 
 	/**
 	 * Sets this reference.
@@ -35,21 +67,14 @@ public abstract class NativeReference<T> {
 	 */
 	private MemorySegment allocate(SegmentAllocator allocator) {
 		if(pointer == null) {
-			pointer = allocator.allocate(ValueLayout.ADDRESS);
+			pointer = allocator.allocate(layout);
 		}
 		return pointer;
 	}
 
-	/**
-	 * Extracts the by-reference value from the given pointer.
-	 * @param pointer Pointer
-	 * @return Referenced value
-	 */
-	protected abstract T update(MemorySegment pointer);
-
 	@Override
 	public int hashCode() {
-		return Objects.hash(value);
+		return Objects.hash(layout, value);
 	}
 
 	@Override
@@ -62,7 +87,7 @@ public abstract class NativeReference<T> {
 
 	@Override
 	public String toString() {
-		return String.format("NativeReference[%s]", value);
+		return String.format("NativeReference[layout=%s value=%s]", layout, value);
 	}
 
 	/**
@@ -77,18 +102,6 @@ public abstract class NativeReference<T> {
 		@Override
 		public Function<MemorySegment, NativeReference<?>> unmarshal() {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public BiConsumer<MemorySegment, NativeReference<?>> update() {
-			return new BiConsumer<>() {
-				@SuppressWarnings({"rawtypes", "unchecked"})
-				@Override
-				public void accept(MemorySegment address, NativeReference reference) {
-					final Object value = reference.update(address);
-					reference.set(value);
-				}
-			};
 		}
 	}
 }

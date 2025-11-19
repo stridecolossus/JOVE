@@ -1,6 +1,7 @@
 package org.sarge.jove.foreign;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static java.lang.foreign.ValueLayout.ADDRESS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.foreign.*;
 
@@ -8,16 +9,24 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 
 class NativeReferenceTest {
-	private NativeReference<Integer> reference;
+	private NativeReference<MemorySegment> reference;
+	private SegmentAllocator allocator;
+	private NativeReferenceTransformer transformer;
 
 	@BeforeEach
 	void before() {
-		reference = new NativeReference<>() {
+		reference = new NativeReference<>(ADDRESS) {
 			@Override
-			protected Integer update(MemorySegment pointer) {
-				return pointer.get(ValueLayout.JAVA_INT, 0L);
+			protected MemorySegment update(MemorySegment pointer, AddressLayout layout) {
+				final MemorySegment address = pointer.get(ADDRESS, 0L);
+				if(MemorySegment.NULL.equals(address)) {
+					return null;
+				}
+				return address;
 			}
 		};
+		transformer = new NativeReferenceTransformer();
+		allocator = Arena.ofAuto();
 	}
 
 	@Test
@@ -27,47 +36,23 @@ class NativeReferenceTest {
 
 	@Test
 	void set() {
-		reference.set(2);
-		assertEquals(2, reference.get());
+		final var address = MemorySegment.ofAddress(42);
+		reference.set(address);
+		assertEquals(address, reference.get());
 	}
 
-	@Nested
-	class TransformerTest {
-    	private NativeReferenceTransformer transformer;
-    	private SegmentAllocator allocator;
+	@Test
+	void update() {
+		final MemorySegment pointer = transformer.marshal(reference, allocator);
+		final var address = MemorySegment.ofAddress(42);
+		pointer.set(ADDRESS, 0L, address);
+		assertEquals(address, reference.get());
+	}
 
-    	@BeforeEach
-    	void before() {
-    		allocator = Arena.ofAuto();
-    		transformer = new NativeReferenceTransformer();
-    	}
-
-    	@Test
-    	void layout() {
-    		assertEquals(ValueLayout.ADDRESS, transformer.layout());
-    	}
-
-    	@Test
-    	void empty() {
-    		assertEquals(MemorySegment.NULL, transformer.empty());
-    	}
-
-    	@Test
-    	void marshal() {
-    		assertNotNull(transformer.marshal(reference, allocator));
-    	}
-
-    	@Test
-    	void unmarshal() {
-    		assertThrows(UnsupportedOperationException.class, () -> transformer.unmarshal());
-    	}
-
-    	@Test
-    	void update() {
-    		final MemorySegment address = allocator.allocate(ValueLayout.ADDRESS);
-    		address.set(ValueLayout.JAVA_INT, 0L, 3);
-    		transformer.update().accept(address, reference);
-    		assertEquals(3, reference.get());
-    	}
-    }
+	@Test
+	void none() {
+		final var transformer = new NativeReferenceTransformer();
+		transformer.marshal(reference, allocator);
+		assertEquals(null, reference.get());
+	}
 }

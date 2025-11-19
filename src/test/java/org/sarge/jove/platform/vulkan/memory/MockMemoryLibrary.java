@@ -24,6 +24,10 @@ class MockMemoryLibrary extends MockVulkanLibrary {
 
 		final var allocator = Arena.ofAuto();
 		final MemorySegment memory = allocator.allocate(pAllocateInfo.allocationSize);
+//		pMemory.set(new Handle(memory));
+
+//		final MemorySegment p = allocator.allocate(AddressLayout.ADDRESS);
+//		p.set(AddressLayout.ADDRESS, 0L, memory);
 		pMemory.set(new Handle(memory));
 
 		return VkResult.SUCCESS;
@@ -39,7 +43,14 @@ class MockMemoryLibrary extends MockVulkanLibrary {
 				.address()
 				.asSlice(offset, size);
 
+//		final var allocator = Arena.ofAuto();
+//		final var seq = MemoryLayout.sequenceLayout(size, ValueLayout.JAVA_BYTE);
+//		final AddressLayout layout = AddressLayout.ADDRESS.withTargetLayout(seq);
+//		final MemorySegment p = allocator.allocate(layout);
+//		p.set(layout, 0L, segment);
 		ppData.set(new Handle(segment));
+
+		//ppData.set(new Handle(segment));
 
 		return VkResult.SUCCESS;
 	}

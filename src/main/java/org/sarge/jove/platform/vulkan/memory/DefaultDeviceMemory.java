@@ -49,20 +49,17 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	/**
-	 * Wrapper for a memory segment.
+	 * Wrapper for a mapped memory segment.
 	 */
 	private class DefaultRegion implements Region {
 		private final MemorySegment segment;
 
 		/**
 		 * Constructor.
-		 * @param segment Memory segment
+		 * @param segment Mapped memory segment
 		 */
-		private DefaultRegion(Handle segment) {
-			// TODO
-			// TODO
-			// TODO
-			this.segment = MemorySegment.ofAddress(segment.address().address()).reinterpret(size);
+		private DefaultRegion(MemorySegment segment) {
+			this.segment = requireNonNull(segment);
 		}
 
 		@Override
@@ -130,11 +127,11 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		// Map memory
 		final LogicalDevice device = this.device();
 		final MemoryLibrary library = device.library();
-		final Pointer pointer = new Pointer();
+		final Pointer pointer = new Pointer(size);
 		library.vkMapMemory(device, this, offset, size, 0, pointer);
 
 		// Create mapped region
-		region = new DefaultRegion(pointer.get());
+		region = new DefaultRegion(pointer.get().address());
 
 		return region;
 	}

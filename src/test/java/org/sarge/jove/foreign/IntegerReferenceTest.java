@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.foreign.NativeReference.NativeReferenceTransformer;
 
 class IntegerReferenceTest {
 	private IntegerReference integer;
@@ -17,14 +18,26 @@ class IntegerReferenceTest {
 	}
 
 	@Test
+	void layout() {
+		assertEquals(ValueLayout.ADDRESS, integer.layout());
+	}
+
+	@Test
 	void zero() {
 		assertEquals(0, integer.get());
 	}
 
 	@Test
+	void set() {
+		integer.set(2);
+		assertEquals(2, integer.get());
+	}
+
+	@Test
 	void update() {
-		final MemorySegment address = allocator.allocate(AddressLayout.ADDRESS);
+		final var transformer = new NativeReferenceTransformer();
+		final MemorySegment address = transformer.marshal(integer, allocator);
 		address.set(ValueLayout.JAVA_INT, 0L, 3);
-		assertEquals(3, integer.update(address));
+		assertEquals(3, integer.get());
 	}
 }

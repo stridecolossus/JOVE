@@ -201,7 +201,7 @@ public class Allocator {
 
 		// Allocate memory
 		final MemoryLibrary library = device.library();
-		final Pointer pointer = new Pointer();
+		final Pointer pointer = new Pointer(size);
 		try {
 			library.vkAllocateMemory(device, allocation, null, pointer);
 		}

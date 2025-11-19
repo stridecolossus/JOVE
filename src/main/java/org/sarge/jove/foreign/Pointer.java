@@ -9,15 +9,27 @@ import org.sarge.jove.common.Handle;
  * @author Sarge
  */
 public class Pointer extends NativeReference<Handle> {
-	@Override
-	protected Handle update(MemorySegment pointer) {
-		final MemorySegment address = pointer.get(ValueLayout.ADDRESS, 0L);
+	/**
+	 * Default constructor for a simple pointer.
+	 */
+	public Pointer() {
+		super(AddressLayout.ADDRESS);
+	}
 
+	/**
+	 * Constructor for a memory block of the given size.
+	 * @param size Block size (bytes)
+	 */
+	public Pointer(long size) {
+		super(AddressLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(size, ValueLayout.JAVA_BYTE)));
+	}
+
+	@Override
+	protected Handle update(MemorySegment pointer, AddressLayout layout) {
+		final MemorySegment address = pointer.get(layout, 0L);
 		if(MemorySegment.NULL.equals(address)) {
 			return null;
 		}
-		else {
-			return new Handle(address);
-		}
+		return new Handle(address);
 	}
 }
