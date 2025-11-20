@@ -158,7 +158,6 @@ public class Framebuffer extends VulkanObject {
 	 * A <i>framebuffer group</i> is the set of framebuffers for a given swapchain.
 	 */
 	public static class Group implements TransientObject {
-		private final Swapchain swapchain;
 		private final RenderPass pass;
 		private final List<View> additional;
 		private final List<Framebuffer> buffers = new ArrayList<>();
@@ -170,12 +169,10 @@ public class Framebuffer extends VulkanObject {
 		 * @param additional		Additional attachments
 		 */
 		public Group(Swapchain swapchain, RenderPass pass, List<View> additional) {
-			this.swapchain = requireNonNull(swapchain);
 			this.pass = requireNonNull(pass);
 			this.additional = List.copyOf(additional);
-			build();
+			build(swapchain);
 		}
-		// TODO - swapchain -> factory
 
 		/**
 		 * @return Number of frame buffers in this group, i.e. the number of swapchain attachments
@@ -196,17 +193,18 @@ public class Framebuffer extends VulkanObject {
 
 		/**
 		 * Recreates this group of framebuffers when the swapchain has been invalidated.
+		 * @param swapchain Swapchain
 		 */
-		public void recreate() {
+		public void recreate(Swapchain swapchain) {
 			destroy();
-			build();
+			build(swapchain);
 		}
-		// TODO - pass in new swapchain
 
 		/**
 		 * Builds the framebuffer group.
+		 * @param swapchain Swapchain
 		 */
-		private void build() {
+		private void build(Swapchain swapchain) {
 			final Rectangle extents = swapchain.extents().rectangle();
 			final View[] colour = swapchain.attachments().toArray(View[]::new);
 			for(int n = 0; n < colour.length; ++n) {

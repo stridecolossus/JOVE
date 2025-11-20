@@ -39,6 +39,13 @@ class PoolAllocatorTest {
 	}
 
 	@Test
+	void preallocate() {
+		pool.add(type, 1);
+		assertEquals(1, pool.pool(type).free());
+		assertEquals(1, pool.pool(type).blocks());
+	}
+
+	@Test
 	void allocate() {
 		final DeviceMemory mem = pool.allocate(type, 1);
 		assertNotNull(mem);

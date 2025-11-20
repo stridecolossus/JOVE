@@ -39,7 +39,7 @@ class Block {
 	/**
 	 * @return Free memory in this block
 	 */
-	long free() {
+	public long free() {
 		final long total = allocations
 				.stream()
 				.filter(DeviceMemory.ALIVE)
@@ -52,14 +52,14 @@ class Block {
 	/**
 	 * @return Remaining free memory in this block
 	 */
-	long remaining() {
+	public long remaining() {
 		return size() - next;
 	}
 
 	/**
 	 * @return Allocated memory in this block
 	 */
-	Stream<BlockDeviceMemory> allocations() {
+	public Stream<BlockDeviceMemory> allocations() {
 		return allocations.stream();
 	}
 
@@ -70,7 +70,7 @@ class Block {
 	 * @throws IllegalStateException if this block has been released
 	 * @throws IllegalArgumentException if the given size is larger than the available free space
 	 */
-	BlockDeviceMemory allocate(long size) {
+	public BlockDeviceMemory allocate(long size) {
 		// Validate
 		requireOneOrMore(size);
 		if(memory.isDestroyed()) {

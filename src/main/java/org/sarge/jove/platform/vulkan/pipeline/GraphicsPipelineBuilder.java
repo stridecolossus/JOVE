@@ -15,9 +15,13 @@ import org.sarge.jove.util.EnumMask;
 /**
  * A <i>graphics pipeline builder</i> creates a rendering pipeline.
  * <p>
+ * A following pipeline stages <b>must</b> be configured:
+ * <ul>
+ * <li>the {@link #viewport()} fixed function</li>
+ * <li>the {@link VkShaderStage#VERTEX} programmable shader stage</li>
+ * <p>
  * Notes:
  * <ul>
- * <li>The pipeline <b>must</b> contain a {@link VkShaderStage#VERTEX} shader stage</li>
  * <li>A pipeline can be <i>derived</i> from an existing <i>parent</i> by configuring the {@link #parent(Pipeline)} pipeline</li>
  * <li>A group of pipelines can be constructed in one operation using the {@link #build(GraphicsPipelineBuilder[], PipelineCache, DeviceContext)} variant</li>
  * <li>Pipelines can also be derived from a sibling within an array by configuring the {@link #sibling(int)} index</li>
@@ -47,7 +51,7 @@ public class GraphicsPipelineBuilder {
 	private final DynamicStateStage dynamic = new DynamicStateStage();
 
 	/**
-	 * Sets the render of for this pipelines.
+	 * Sets the render pass of this pipelines.
 	 * @param pass Render pass
 	 */
 	public GraphicsPipelineBuilder pass(RenderPass pass) {
@@ -65,7 +69,7 @@ public class GraphicsPipelineBuilder {
 	}
 
 	/**
-	 * Sets this pipeline as a parent pipeline that can be used to derive further pipelines.
+	 * Sets this pipeline as a <i>parent</i> that can be used to derive further pipelines.
 	 * @see VkPipelineCreateFlag#ALLOW_DERIVATIVES
 	 * @see #parent(Pipeline)
 	 */
@@ -83,7 +87,9 @@ public class GraphicsPipelineBuilder {
 	 * @see VkPipelineCreateFlag#DERIVATIVE
 	 */
 	public GraphicsPipelineBuilder parent(Pipeline parent) {
-		if(!parent.isParent()) throw new IllegalArgumentException("Pipeline does not allow derivatives: " + parent);
+		if(!parent.isParent()) {
+			throw new IllegalArgumentException("Pipeline does not allow derivatives: " + parent);
+		}
 		this.parent = parent.handle();
 		derivative();
 		return this;
@@ -105,7 +111,9 @@ public class GraphicsPipelineBuilder {
 	 * Sets this pipeline as a derivative.
 	 */
 	private void derivative() {
-		if(flags.contains(VkPipelineCreateFlag.DERIVATIVE)) throw new IllegalStateException("Pipeline already configured as a derivative");
+		if(flags.contains(VkPipelineCreateFlag.DERIVATIVE)) {
+			throw new IllegalStateException("Pipeline already configured as a derivative");
+		}
 		flags.add(VkPipelineCreateFlag.DERIVATIVE);
 	}
 
@@ -193,6 +201,9 @@ public class GraphicsPipelineBuilder {
 		// Validate
 		requireNonNull(pass);
 		requireNonNull(layout);
+		if(!shaders.containsKey(VkShaderStage.VERTEX)) {
+			throw new IllegalStateException("No vertex shader specified");
+		}
 
 		// Init descriptor
 		final var info = new VkGraphicsPipelineCreateInfo();
@@ -202,9 +213,6 @@ public class GraphicsPipelineBuilder {
 		info.subpass = 0; // TODO
 
 		// Init shader pipeline stages
-		if(!shaders.containsKey(VkShaderStage.VERTEX)) {
-			throw new IllegalStateException("No vertex shader specified");
-		}
 		info.stageCount = shaders.size();
 		info.pStages = shaders
 				.values()
@@ -232,13 +240,13 @@ public class GraphicsPipelineBuilder {
 
 	/**
 	 * Builds this graphics pipeline.
-	 * @param dev Logical device
+	 * @param device Logical device
 	 * @return Graphics pipeline
 	 * @throws IndexOutOfBoundsException if this pipeline is configured to derive from a sibling
 	 * @see #build(GraphicsPipelineBuilder[], PipelineCache, LogicalDevice)
 	 */
-	public Pipeline build(LogicalDevice dev) {
-		final var array = build(new GraphicsPipelineBuilder[]{this}, null, dev);
+	public Pipeline build(LogicalDevice device) {
+		final var array = build(new GraphicsPipelineBuilder[]{this}, null, device);
 		return array[0];
 	}
 

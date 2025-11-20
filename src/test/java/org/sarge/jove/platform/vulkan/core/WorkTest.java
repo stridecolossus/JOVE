@@ -116,7 +116,7 @@ class WorkTest {
 				.add(buffer)
 				.add(other);
 
-		assertThrows(IllegalArgumentException.class, () -> work.build());
+		assertThrows(IllegalStateException.class, () -> work.build());
 	}
 
 	@DisplayName("A semaphore in a work submission cannot be used as both a wait and a signal")

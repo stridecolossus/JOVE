@@ -54,6 +54,17 @@ public class LogicalDevice extends TransientNativeObject {
 	}
 
 	/**
+	 * Helper.
+	 * Retrieves the <b>first</b> queue of the given family.
+	 * @param family Queue family
+	 * @return Queue
+	 * @throws NoSuchElementException if the queue is not present
+	 */
+	public WorkQueue queue(Family family) {
+		return queues.get(family).getFirst();
+	}
+
+	/**
 	 * @return Device limits
 	 */
 	public DeviceLimits limits() {
@@ -74,23 +85,18 @@ public class LogicalDevice extends TransientNativeObject {
 	public void waitIdle(WorkQueue queue) {
 		library.vkQueueWaitIdle(queue);
 	}
-	// TODO - move to Work/Queue?
 
  	@Override
 	protected void release() {
 		library.vkDestroyDevice(this, null);
 	}
 
- 	@Override
- 	public String toString() {
- 		return String.format("LogicalDevice[%s]", this.handle());
- 	}
-
 	/**
 	 * A <i>required queue</i> is a transient descriptor for a number of work queues to be created for a logical device.
 	 * <p>
-	 * Note that only one required queue can be configured for each queue family.
-	 * i.e. A queue family selected from the physical device may be the same instance since families often support multiple use cases.
+	 * Note that only <b>one</b> required queue can be configured for a given queue family.
+	 * <p>
+	 * @see PhysicalDevice.Selector
 	 */
 	public record RequiredQueue(Family family, List<Percentile> priorities) {
 		/**
@@ -123,13 +129,7 @@ public class LogicalDevice extends TransientNativeObject {
 		 * @param count			Number of required queues
 		 */
 		public RequiredQueue(Family family, int count) {
-			this(family, priorities(count));
-		}
-
-		private static List<Percentile> priorities(int count) {
-			final var priorities = new Percentile[count];
-			Arrays.fill(priorities, Percentile.ONE);
-			return List.of(priorities);
+			this(family, Collections.nCopies(count, Percentile.ONE));
 		}
 
 		/**
@@ -146,6 +146,7 @@ public class LogicalDevice extends TransientNativeObject {
 
 		/**
 		 * Converts queue priorities to an array.
+		 * @implNote There is no built-in helper to initialise a floating-point array or stream
 		 */
 		private static float[] array(List<Percentile> priorities) {
 			final int length = priorities.size();
@@ -162,9 +163,7 @@ public class LogicalDevice extends TransientNativeObject {
 		private record Helper(Handle device, Library library) {
     		/**
     		 * Retrieves the work queues for the given device.
-    		 * @param queues
-    		 * @param device
-    		 * @param library
+    		 * @param queues Required queues
     		 * @return Work queues indexed by family
     		 */
     		public Map<Family, List<WorkQueue>> queues(List<RequiredQueue> queues) {
@@ -175,10 +174,7 @@ public class LogicalDevice extends TransientNativeObject {
     		}
 
     		/**
-    		 * Retrieves the work queues specified for this family.
-    		 * @param device	Logical device
-    		 * @param library	Device library
-    		 * @return Work queues
+    		 * Retrieves work queues for the given specification.
     		 */
     		private Stream<WorkQueue> queues(RequiredQueue queue) {
     			return IntStream
@@ -188,9 +184,8 @@ public class LogicalDevice extends TransientNativeObject {
 
     		/**
     		 * Retrieves a work queue.
-    		 * @param device	Logical device
+    		 * @param family	Queue family
     		 * @param index		Queue index
-    		 * @param library	Device library
     		 * @return Work queue
     		 */
     		private WorkQueue queue(Family family, int index) {
@@ -210,6 +205,7 @@ public class LogicalDevice extends TransientNativeObject {
 		private final Set<String> layers = new HashSet<>();
 		private final Set<String> features = new HashSet<>();
 		private final List<RequiredQueue> queues = new ArrayList<>();
+		private final Set<Family> families = new HashSet<>();
 
 		/**
 		 * Constructor.
@@ -222,7 +218,7 @@ public class LogicalDevice extends TransientNativeObject {
 		/**
 		 * Adds an extension required for this device.
 		 * @param extension Extension
-		 * @throws IllegalArgumentException for {@link DiagnosticHandler#EXTENSION_DEBUG_UTILS}
+		 * @throws IllegalArgumentException for the {@link DiagnosticHandler#EXTENSION_DEBUG_UTILS}
 		 */
 		public Builder extension(String extension) {
 			if(DiagnosticHandler.EXTENSION.equals(extension)) {
@@ -256,22 +252,23 @@ public class LogicalDevice extends TransientNativeObject {
 		 * Adds a required work queue for this device.
 		 * @param queue Required queue
 		 * @throws IllegalArgumentException if the queue family is not a member of the parent physical device
-		 * @throws IllegalArgumentException if a queue has already been configured for the family
+		 * @throws IllegalArgumentException if a queue with the same family has already been configured
 		 */
 		public Builder queue(RequiredQueue queue) {
 			// Check queue family is a member of the physical device
-			final Family family = queue.family;
-			if(!parent.families().contains(family)) {
-				throw new IllegalArgumentException("Invalid queue family for this device: " + family);
+			if(!parent.families().contains(queue.family)) {
+				throw new IllegalArgumentException("Invalid queue family for this device: " + queue.family);
 			}
 
 			// Check only one required queue is configured for each family
-			final boolean present = queues.stream().map(RequiredQueue::family).anyMatch(family::equals);
-			if(present) {
-				throw new IllegalArgumentException("Queue already specified for family: " + family);
+			if(families.contains(queue.family)) {
+				throw new IllegalArgumentException("Queue already specified for family: " + queue.family);
 			}
 
+			// Add required queue
 			queues.add(queue);
+			families.add(queue.family);
+
 			return this;
 		}
 
@@ -317,10 +314,7 @@ public class LogicalDevice extends TransientNativeObject {
 
 			// Add required queues
 			info.queueCreateInfoCount = queues.size();
-			info.pQueueCreateInfos = queues
-					.stream()
-					.map(RequiredQueue::build)
-					.toArray(VkDeviceQueueCreateInfo[]::new);
+			info.pQueueCreateInfos = queues.stream().map(RequiredQueue::build).toArray(VkDeviceQueueCreateInfo[]::new);
 
 			return info;
 		}

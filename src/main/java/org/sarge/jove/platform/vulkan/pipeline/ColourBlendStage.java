@@ -20,7 +20,7 @@ import org.sarge.jove.util.EnumMask;
  * For convenience, if no attachments have been configured, this implementation injects a <b>single</b> {@link ColourBlendAttachment#DISABLED} attachment.
  * This disables both modes, in which case fragment colours are written to the frame buffer unmodified.
  * <p>
- * However note that in <b>all</b> cases a {@link ColourBlendAttachment} descriptor <b>must</b> be configured for each colour attachment.
+ * Note that in <b>all</b> cases a {@link ColourBlendAttachment} descriptor <b>must</b> be configured for each colour attachment.
  * Additionally the colour write {@link ColourBlendAttachment#mask()} <b>must</b> be configured to pass through the resultant colours, otherwise rendering is essentially disabled entirely.
  * <p>
  * @author Sarge
@@ -50,7 +50,7 @@ public class ColourBlendStage {
 	/**
 	 * Sets the global blending constants.
 	 * @param constants Blending constants array
-	 * @throws IllegalArgumentException if {@link #constants} does not contains four values
+	 * @throws IllegalArgumentException if {@link #constants} does not contains 4 values
 	 */
 	public ColourBlendStage constants(float[] constants) {
 		if(constants.length != info.blendConstants.length) {

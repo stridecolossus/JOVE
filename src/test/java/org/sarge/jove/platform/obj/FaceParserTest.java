@@ -7,7 +7,6 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.IndexedMesh;
 
 @SuppressWarnings("resource")
 public class FaceParserTest {
@@ -44,9 +43,9 @@ public class FaceParserTest {
 	@Test
 	void all() {
 		parser.parse(new Scanner("1/1/1 1/1/1 1/1/1"));
-		final var mesh = (IndexedMesh) model.build().getFirst();
-		assertEquals(3 + 3 + 2, mesh.vertices().length());
-		assertEquals(3, mesh.index().length());
+		final var mesh = model.build().getFirst();
+		assertEquals((3 + 3 + 2) * 4, mesh.vertices().length());
+		assertEquals(3 * 4, mesh.index().length());
 	}
 
 	@Test

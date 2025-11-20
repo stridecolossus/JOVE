@@ -28,14 +28,6 @@ public class Allocator {
 		public AllocationException(String message) {
 			super(message);
 		}
-
-		/**
-		 * Constructor.
-		 * @param cause Cause
-		 */
-		protected AllocationException(Throwable cause) {
-			super(cause);
-		}
 	}
 
 	private final LogicalDevice device;
@@ -185,6 +177,8 @@ public class Allocator {
 	 * @throws AllocationException if the memory cannot be allocated
 	 */
 	protected DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
+		requireOneOrMore(size);
+
 		// Check maximum number of allocations
 		if(count >= max) {
 			throw new AllocationException("Number of allocations exceeds the hardware limit: " + max);
@@ -206,7 +200,7 @@ public class Allocator {
 			library.vkAllocateMemory(device, allocation, null, pointer);
 		}
 		catch(VulkanException e) {
-			throw new AllocationException("Cannot allocate device memory: type=%s size=%d".formatted(type, size));
+			throw new AllocationException("Cannot allocate device memory: type=%s size=%d result=%s".formatted(type, size, e.result()));
 		}
 
 		// Create device memory

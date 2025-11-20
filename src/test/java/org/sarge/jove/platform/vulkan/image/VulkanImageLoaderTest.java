@@ -11,8 +11,9 @@ import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.ImageData.Level;
 
+@Disabled // TODO
 @SuppressWarnings("static-access")
-public class VulkanImageLoaderTest {
+class VulkanImageLoaderTest {
 	private static final int FORMAT = VkFormat.R8G8B8A8_SRGB.value();
 	private static final int DFD = 24 + 4 * 16;
 

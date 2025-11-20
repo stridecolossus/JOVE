@@ -87,7 +87,7 @@ public class RenderTask implements Runnable, TransientObject {
 		catch(Swapchain.Invalidated e) {
 			waitIdle();
 			factory.recreate();
-			group.recreate();
+			group.recreate(factory.swapchain());
 		}
 	}
 

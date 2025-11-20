@@ -64,7 +64,7 @@ public class Instance extends TransientNativeObject {
 	}
 
 	/**
-	 * Builder for an instance.
+	 * Builder for the instance.
 	 */
 	public static class Builder {
 		private String name = "Unspecified";
@@ -140,14 +140,14 @@ public class Instance extends TransientNativeObject {
 
 		/**
 		 * Constructs this instance.
-		 * @param lib Vulkan
-		 * @return New instance
+		 * @param library Instance library
+		 * @return Instance
 		 */
-		public Instance build(Library lib) {
+		public Instance build(Library library) {
 			final VkInstanceCreateInfo info = create();
 			final var handle = new Pointer();
-			lib.vkCreateInstance(info, null, handle);
-			return new Instance(handle.get(), lib);
+			library.vkCreateInstance(info, null, handle);
+			return new Instance(handle.get(), library);
 		}
 
 		/**

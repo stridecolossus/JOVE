@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.core.Command;
  * @author Sarge
  */
 public final class ImageBlitCommand implements Command {
-	private final Image src, dest;
+	private final Image source, destination;
 	private final VkImageLayout srcLayout, destLayout;
 	private final VkImageBlit[] regions;
 	private final VkFilter filter;
@@ -21,18 +21,18 @@ public final class ImageBlitCommand implements Command {
 
 	/**
 	 * Constructor.
-	 * @param src			Source image
+	 * @param source		Source image
 	 * @param srcLayout		Source image layout
-	 * @param dest			Destination image
+	 * @param destination	Destination image
 	 * @param destLayout	Destination image layout
 	 * @param regions		Copy regions
 	 * @param filter		Filter
 	 * @param library		Image library
 	 */
-	ImageBlitCommand(Image src, VkImageLayout srcLayout, Image dest, VkImageLayout destLayout, VkImageBlit[] regions, VkFilter filter, Image.Library library) {
-		this.src = requireNonNull(src);
+	ImageBlitCommand(Image source, VkImageLayout srcLayout, Image destination, VkImageLayout destLayout, VkImageBlit[] regions, VkFilter filter, Image.Library library) {
+		this.source = requireNonNull(source);
 		this.srcLayout = requireNonNull(srcLayout);
-		this.dest = requireNonNull(dest);
+		this.destination = requireNonNull(destination);
 		this.destLayout = requireNonNull(destLayout);
 		this.regions = Arrays.copyOf(regions, regions.length);
 		this.filter = requireNonNull(filter);
@@ -41,7 +41,7 @@ public final class ImageBlitCommand implements Command {
 
 	@Override
 	public void execute(Buffer buffer) {
-		library.vkCmdBlitImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions, filter);
+		library.vkCmdBlitImage(buffer, source, srcLayout, destination, destLayout, regions.length, regions, filter);
 	}
 
 	/**
@@ -63,8 +63,8 @@ public final class ImageBlitCommand implements Command {
 
 			/**
 			 * Constructor.
-			 * @param subresource		Region sub-resource
-			 * @param min				Minimal offset
+			 * @param subresource		Region subresource
+			 * @param min				Minimum offset
 			 * @param max				Maximum offset
 			 */
 			public BlitRegion {
@@ -74,7 +74,7 @@ public final class ImageBlitCommand implements Command {
 			}
 		}
 
-		private Image src, dest;
+		private Image source, destination;
 		private VkImageLayout srcLayout = VkImageLayout.TRANSFER_SRC_OPTIMAL;
 		private VkImageLayout destLayout = VkImageLayout.TRANSFER_DST_OPTIMAL;
 		private final Map<BlitRegion, BlitRegion> regions = new HashMap<>();
@@ -82,31 +82,31 @@ public final class ImageBlitCommand implements Command {
 
 		/**
 		 * Sets the source image.
-		 * @param src Source image
+		 * @param source Source image
 		 */
-		public Builder source(Image src) {
-			this.src = requireNonNull(src);
+		public Builder source(Image source) {
+			this.source = requireNonNull(source);
 			return this;
 		}
 
 		/**
 		 * Sets the destination image.
-		 * @param dest Destination image
+		 * @param destination Destination image
 		 */
-		public Builder destination(Image dest) {
-			this.dest = requireNonNull(dest);
+		public Builder destination(Image destination) {
+			this.destination = requireNonNull(destination);
 			return this;
 		}
 
 		/**
 		 * Adds a blit copy region.
-		 * @param src Source blit region
-		 * @param dest Destination blit region
+		 * @param source Source blit region
+		 * @param destination Destination blit region
 		 */
-		public Builder region(BlitRegion src, BlitRegion dest) {
-			requireNonNull(src);
-			requireNonNull(dest);
-			regions.put(src, dest);
+		public Builder region(BlitRegion source, BlitRegion destination) {
+			requireNonNull(source);
+			requireNonNull(destination);
+			regions.put(source, destination);
 			return this;
 		}
 
@@ -115,11 +115,11 @@ public final class ImageBlitCommand implements Command {
 		 * @throws NullPointerException if the source and destination image have not been configured
 		 */
 		public Builder region() {
-			return region(BlitRegion.of(src), BlitRegion.of(dest));
+			return region(BlitRegion.of(source), BlitRegion.of(destination));
 		}
 
 		/**
-		 * Sets the image filter (default is {@link VkFilter#LINEAR}).
+		 * Sets the image filter.
 		 * @param filter Filter
 		 */
 		public Builder filter(VkFilter filter) {
@@ -133,13 +133,13 @@ public final class ImageBlitCommand implements Command {
 		private VkImageBlit populate(Entry<BlitRegion, BlitRegion> entry) {
 			final var blit = new VkImageBlit();
 
-			final BlitRegion src = entry.getKey();
-			blit.srcSubresource = Subresource.layers(src.subresource);
-			blit.srcOffsets = offsets(src);
+			final BlitRegion source = entry.getKey();
+			blit.srcSubresource = Subresource.layers(source.subresource);
+			blit.srcOffsets = offsets(source);
 
-			final BlitRegion dest = entry.getValue();
-			blit.dstSubresource = Subresource.layers(dest.subresource);
-			blit.dstOffsets = offsets(dest);
+			final BlitRegion destination = entry.getValue();
+			blit.dstSubresource = Subresource.layers(destination.subresource);
+			blit.dstOffsets = offsets(destination);
 
 			return blit;
 		}
@@ -157,7 +157,7 @@ public final class ImageBlitCommand implements Command {
 		/**
 		 * Constructs this blit command.
 		 * @param library Image library
-		 * @return New blit command
+		 * @return Image blit command
 		 * @throws IllegalArgumentException if the source and destination images have not been specified, or no copy regions are specified
 		 */
 		public ImageBlitCommand build(Image.Library library) {
@@ -167,7 +167,7 @@ public final class ImageBlitCommand implements Command {
 					.map(this::populate)
 					.toArray(VkImageBlit[]::new);
 
-			return new ImageBlitCommand(src, srcLayout, dest, destLayout, array, filter, library);
+			return new ImageBlitCommand(source, srcLayout, destination, destLayout, array, filter, library);
 		}
 	}
 }

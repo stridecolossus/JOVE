@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.sarge.jove.common.TransientObject;
@@ -12,6 +12,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
  * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
  * <p>
  * This implementation creates a memory pool for <b>each</b> memory type on demand which grows as required.
+ * Memory can be pre-allocated using the {@link #add(MemoryType, long)} method.
  * <p>
  * @author Sarge
  */
@@ -65,7 +66,19 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	 * @return Memory pools ordered by type
 	 */
 	public Map<MemoryType, MemoryPool> pools() {
-		return Map.copyOf(pools);
+		return Collections.unmodifiableMap(pools);
+	}
+
+	/**
+	 * Pre-allocates free memory of the given type.
+	 * @param type Memory type
+	 * @param size Size
+	 */
+	public void add(MemoryType type, long size) {
+		final DeviceMemory memory = super.allocate(type, size);
+		final Block block = new Block(memory);
+		final MemoryPool pool = pool(type);
+		pool.add(block);
 	}
 
 	@Override
@@ -80,20 +93,15 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	/**
 	 * Allocates memory from a new block.
 	 * @param type 		Memory type
-	 * @param size 		Size (bytes)
+	 * @param size 		Size
 	 * @param pool		Memory pool
 	 * @return Allocated memory
 	 * @throws AllocationException if a new block cannot be allocated
 	 */
 	private DeviceMemory create(MemoryType type, long size, MemoryPool pool) throws AllocationException {
-		// Allocate memory for a new block
 		final DeviceMemory memory = super.allocate(type, size);
-
-		// Add new block to pool
 		final Block block = new Block(memory);
 		pool.add(block);
-
-		// Allocate from this block
 		return block.allocate(size);
 	}
 

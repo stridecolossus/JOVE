@@ -31,26 +31,6 @@ public class RenderPass extends VulkanObject {
 		this.library = requireNonNull(library);
 	}
 
-//	/**
-//	 * Creates a command to advance to the next subpass.
-//	 * @param contents Subpass contents
-//	 * @return Next subpass command
-//	 */
-//	public static Command next(VkSubpassContents contents, Library library) {
-//		requireNonNull(contents);
-//		return buffer -> library.vkCmdNextSubpass(buffer, contents);
-//	}
-//
-//	/**
-//	 * Creates a command to advance to the next subpass using {@link VkSubpassContents#INLINE}.
-//	 * @return Next subpass command
-//	 * @see #next(VkSubpassContents)
-//	 */
-//	public static Command next() {
-//		final Library library = this.device().library();
-//		return next(VkSubpassContents.INLINE);
-//	}
-
 	/**
 	 * Queries the render area granularity for this render pass.
 	 * <p>
@@ -217,4 +197,24 @@ public class RenderPass extends VulkanObject {
 //		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange pRanges);
 //		void vkCmdResolveImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageResolve pRegions);
 	}
+
+//	/**
+//	 * Creates a command to advance to the next subpass.
+//	 * @param contents Subpass contents
+//	 * @return Next subpass command
+//	 */
+//	public static Command next(VkSubpassContents contents, Library library) {
+//		requireNonNull(contents);
+//		return buffer -> library.vkCmdNextSubpass(buffer, contents);
+//	}
+//
+//	/**
+//	 * Creates a command to advance to the next subpass using {@link VkSubpassContents#INLINE}.
+//	 * @return Next subpass command
+//	 * @see #next(VkSubpassContents)
+//	 */
+//	public static Command next() {
+//		final Library library = this.device().library();
+//		return next(VkSubpassContents.INLINE);
+//	}
 }

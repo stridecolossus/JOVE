@@ -11,16 +11,10 @@ import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 /**
  * A <i>memory pool</i> is comprised of a number of <i>blocks</i> from which device memory is allocated.
  * <p>
- * Notes:
- * <ul>
- * <li>The pool grows as required according to the configured {@link AllocationPolicy}</li>
- * <li>Released memory allocations are restored to the pool and potentially reallocated</li>
- * <li>Free memory can be pre-allocated into the pool via the {@link #init(long)} method</li>
- * </ul>
+ * Released memory blocks are restored to the pool and can potentially be reallocated using {@link #reallocate(long)}.
  * <p>
- * Note that a mapped {@link Region} for a block can be silently unmapped by the pool since only one mapped region is permitted per block.
- * The client is responsible for ensuring that a new region is mapped as required.
- * Alternatively a non-pooled allocator implementation could be considered where memory mapping is highly volatile.
+ * Note that a mapped {@link Region} for a block may be silently unmapped by the pool since only one mapped region is permitted per block.
+ * The client is accordingly responsible for ensuring that regions are mapped as required.
  * <p>
  * @author Sarge
  */
@@ -72,13 +66,10 @@ public class MemoryPool implements TransientObject {
 	}
 
 	/**
-	 * Adds a memory block to this pool.
-	 * @param block Block to add
-	 * @throws IllegalArgumentException if the block has already been added or is in use
+	 * Adds a new block to this pool.
 	 */
 	void add(Block block) {
-		if(block.free() != block.size()) throw new IllegalArgumentException("Cannot add a block in use: " + block);
-		if(blocks.contains(block)) throw new IllegalArgumentException("Block already added: " + block);
+		requireNonNull(block);
 		blocks.add(block);
 		total += block.size();
 	}

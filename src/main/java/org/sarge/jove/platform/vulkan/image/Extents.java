@@ -7,7 +7,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
- * An <i>extents</i> specifies the size and depth of an image.
+ * An <i>extents</i> composes the size and depth of an image.
  * @author Sarge
  */
 public record Extents(Dimensions size, int depth) {
@@ -46,7 +46,6 @@ public record Extents(Dimensions size, int depth) {
 	}
 
 	/**
-	 * Converts to Vulkan 3D extents.
 	 * @return 3D extents
 	 */
 	public VkExtent3D toExtent() {
@@ -58,8 +57,7 @@ public record Extents(Dimensions size, int depth) {
 	}
 
 	/**
-	 * Converts to Vulkan offsets.
-	 * @return Offsets
+	 * @return 3D offsets
 	 */
 	public VkOffset3D toOffset() {
 		final var offset = new VkOffset3D();

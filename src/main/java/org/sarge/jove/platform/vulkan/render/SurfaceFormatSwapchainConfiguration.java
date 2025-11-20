@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
 /**
- * The <i>surface format swapchain configuration</i> selects a preferred surface format for the swapchain.
+ * The <i>surface format</i> swapchain configuration selects a preferred surface format for the swapchain.
  * @see SurfaceFormatWrapper
  * @author Sarge
  */

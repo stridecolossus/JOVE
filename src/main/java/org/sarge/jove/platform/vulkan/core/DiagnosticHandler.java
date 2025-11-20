@@ -97,7 +97,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		public String toString() {
 			final var str = new StringJoiner(":");
 			str.add(severity.name());
-			str.add(compoundTypes());
+			str.add(toString(types));
 			if(!data.pMessage.contains(data.pMessageIdName)) {
 				str.add(data.pMessageIdName);
 			}
@@ -105,7 +105,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 			return str.toString();
 		}
 
-		private String compoundTypes() {
+		private static String toString(Set<VkDebugUtilsMessageType> types) {
 			return types
 					.stream()
 					.sorted()
@@ -127,7 +127,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		/**
 		 * Callback handler method.
 		 * @param severity			Severity
-		 * @param type				Message type(s) bitfield
+		 * @param typeMask			Message type(s)
 		 * @param pCallbackData		Data
 		 * @param pUserData			Optional user data, always {@code null}
 		 * @return {@code false}
@@ -156,8 +156,8 @@ public class DiagnosticHandler extends TransientNativeObject {
 		MemorySegment address() throws Exception {
 			// Lookup callback method and bind to handler
 			final Class<?>[] signature = {int.class, int.class, MemorySegment.class, MemorySegment.class};
-			final var type = MethodType.methodType(boolean.class, signature);
-    		final MethodHandle handle = MethodHandles.lookup().findVirtual(Callback.class, "message", type).bindTo(this);
+			final var method = MethodType.methodType(boolean.class, signature);
+    		final MethodHandle handle = MethodHandles.lookup().findVirtual(Callback.class, "message", method).bindTo(this);
 
     		// Link upcall stub
 			final MemoryLayout[] layout = {JAVA_INT, JAVA_INT, ADDRESS, ADDRESS};

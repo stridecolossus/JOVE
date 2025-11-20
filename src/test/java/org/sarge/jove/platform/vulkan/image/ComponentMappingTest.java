@@ -26,7 +26,7 @@ class ComponentMappingTest {
 		assertEquals(VkComponentSwizzle.A, mapping.a);
 	}
 
-	@DisplayName("Unspecified channels are the identity swizzle by default")
+	@DisplayName("Unspecified channels are initialised to the identity swizzle")
 	@Test
 	void unspecified() {
 		final VkComponentMapping mapping = ComponentMapping.of("R").build();

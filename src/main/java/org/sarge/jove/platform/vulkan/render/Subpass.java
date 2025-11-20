@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * A <i>sub-pass</i> is a transient specification for a stage of a {@link RenderPass}.
+ * A <i>subpass</i> is a transient specification for a stage of a {@link RenderPass}.
  * @author Sarge
  */
 public record Subpass(List<AttachmentReference> colour, AttachmentReference depth, Set<VkSubpassDescriptionFlag> flags) {
@@ -52,6 +52,7 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 	}
 
 	/**
+	 * Builds the descriptor for this subpass.
 	 * @param attachments Aggregated attachments for this render pass
 	 * @return Subpass descriptor
 	 * @throws IllegalArgumentException for an unknown attachment
@@ -59,7 +60,7 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 	VkSubpassDescription description(List<Attachment> attachments) {
 		// Builder for attachment references
 		final var builder = new Object() {
-			public VkAttachmentReference build(AttachmentReference reference) {
+			VkAttachmentReference build(AttachmentReference reference) {
 				final var descriptor = new VkAttachmentReference();
 				descriptor.layout = reference.layout;
 				descriptor.attachment = attachments.indexOf(reference.attachment);

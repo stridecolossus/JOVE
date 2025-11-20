@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
 import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
 /**
- * The <i>image count swapchain configuration</i> selects the number of swapchain attachments.
+ * The <i>image count</i> swapchain configuration selects the number of swapchain attachments.
  * @author Sarge
  */
 public record ImageCountSwapchainConfiguration(ToIntFunction<VkSurfaceCapabilitiesKHR> policy) implements SwapchainConfiguration {

@@ -1,25 +1,24 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
-public class MemoryPoolTest {
+class MemoryPoolTest {
 	private MemoryPool pool;
 	private MemoryType type;
-	private Block block;
-	private LogicalDevice dev;
+	private LogicalDevice device;
+	private Allocator allocator;
 
 	@BeforeEach
 	void before() {
-		dev = new MockLogicalDevice();
+		device = new MockLogicalDevice(new MockMemoryLibrary());
 		type = new MemoryType(0, new Heap(0, Set.of()), Set.of());
-		block = new Block(new DefaultDeviceMemory(new Handle(1), dev, type, 2));
+		allocator = new Allocator(device, new MemoryType[]{type});
 		pool = new MemoryPool(type);
 	}
 
@@ -51,36 +50,32 @@ public class MemoryPoolTest {
     	@DisplayName("can add new memory blocks")
     	@Test
     	void add() {
-    		pool.add(block);
+    		pool.add(new Block(allocator.allocate(type, 2)));
     		assertEquals(2, pool.size());
     		assertEquals(2, pool.free());
     		assertEquals(1, pool.blocks());
     		assertEquals(0, pool.allocations().count());
-    	}
-
-    	@DisplayName("cannot add a block that is in use")
-    	@Test
-    	void used() {
-    		block.allocate(1);
-    		assertThrows(IllegalArgumentException.class, () -> pool.add(block));
     	}
 	}
 
 	@DisplayName("A pool with a free memory block...")
 	@Nested
 	class Free {
+		private Block block;
+
 		@BeforeEach
 		void before() {
-			pool.add(block);
+			block = new Block(allocator.allocate(type, 2));
+    		pool.add(block);
 		}
 
-		@DisplayName("can allocate from the block")
+		@DisplayName("can allocate from that block")
 		@Test
 		void allocate() {
-			final DeviceMemory mem = pool.allocate(1).get();
-			assertEquals(1, mem.size());
-			assertEquals(type, mem.type());
-			assertEquals(false, mem.isDestroyed());
+			final DeviceMemory memory = pool.allocate(1).get();
+			assertEquals(1, memory.size());
+			assertEquals(type, memory.type());
+			assertEquals(false, memory.isDestroyed());
 			assertEquals(2, pool.size());
 			assertEquals(1, pool.free());
 			assertEquals(1, pool.blocks());
@@ -92,12 +87,6 @@ public class MemoryPoolTest {
 		void none() {
 			assertEquals(Optional.empty(), pool.allocate(3));
 			assertEquals(Optional.empty(), pool.reallocate(3));
-		}
-
-		@DisplayName("cannot add the same block more than once")
-		@Test
-		void duplicate() {
-			assertThrows(IllegalArgumentException.class, () -> pool.add(block));
 		}
 
 		@DisplayName("can destroy the allocated blocks")
@@ -115,12 +104,12 @@ public class MemoryPoolTest {
 	@DisplayName("A pool with partially allocated memory blocks...")
 	@Nested
 	class Partial {
-		private DeviceMemory mem;
+		private DeviceMemory memory;
 
 		@BeforeEach
 		void before() {
-			pool.add(block);
-			mem = pool.allocate(1).get();
+    		pool.add(new Block(allocator.allocate(type, 2)));
+			memory = pool.allocate(1).get();
 		}
 
 		@DisplayName("can allocate from an available block with sufficient remaining memory")
@@ -147,7 +136,7 @@ public class MemoryPoolTest {
 		@Test
     	void release() {
     		pool.release();
-    		assertEquals(true, mem.isDestroyed());
+    		assertEquals(true, memory.isDestroyed());
 			assertEquals(2, pool.size());
 			assertEquals(2, pool.free());
 			assertEquals(1, pool.blocks());
@@ -158,7 +147,7 @@ public class MemoryPoolTest {
 		@Test
     	void destroy() {
     		pool.destroy();
-    		assertEquals(true, mem.isDestroyed());
+    		assertEquals(true, memory.isDestroyed());
 			assertEquals(0, pool.size());
 			assertEquals(0, pool.free());
 			assertEquals(0, pool.blocks());
@@ -171,7 +160,7 @@ public class MemoryPoolTest {
 	class Exhausted {
 		@BeforeEach
 		void before() {
-			pool.add(block);
+    		pool.add(new Block(allocator.allocate(type, 2)));
 			pool.allocate(2).get();
 		}
 
@@ -183,16 +172,16 @@ public class MemoryPoolTest {
 		}
 	}
 
-	@DisplayName("A pool with a block containing destroyed memory...")
+	@DisplayName("A pool with a block containing released memory...")
 	@Nested
 	class Destroyed {
-		private DeviceMemory mem;
+		private DeviceMemory memory;
 
 		@BeforeEach
 		void before() {
-			pool.add(block);
-			mem = pool.allocate(2).get();
-			mem.destroy();
+    		pool.add(new Block(allocator.allocate(type, 2)));
+			memory = pool.allocate(2).get();
+			memory.destroy();
 		}
 
 		@DisplayName("has available free memory that can be reallocated")
@@ -205,10 +194,10 @@ public class MemoryPoolTest {
 		}
 
 		@Disabled
-		@DisplayName("can reallocate the destroyed memory")
+		@DisplayName("can reallocate the released memory")
 		@Test
 		void reallocate() {
-			assertEquals(Optional.of(mem), pool.reallocate(2));
+			assertEquals(Optional.of(memory), pool.reallocate(2));
 			assertEquals(2, pool.size());
 			assertEquals(0, pool.free());
 			assertEquals(1, pool.blocks());
@@ -216,7 +205,7 @@ public class MemoryPoolTest {
 		}
 
 		@Disabled
-		@DisplayName("can reallocate a portion of the destroyed memory")
+		@DisplayName("can reallocate a portion of the released memory")
 		@Test
 		void portion() {
 			final DeviceMemory portion = pool.reallocate(1).get();

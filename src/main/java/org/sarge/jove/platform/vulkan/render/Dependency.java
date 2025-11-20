@@ -49,6 +49,7 @@ public record Dependency(Properties source, Properties destination, Set<VkDepend
 	}
 
 	/**
+	 * Builds the descriptor for this dependency.
 	 * @param Aggregated subpasses of this render pass
 	 * @return Dependency descriptor
 	 * @throws IllegalArgumentException if a subpass is not present

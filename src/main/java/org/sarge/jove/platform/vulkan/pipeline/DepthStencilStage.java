@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
- * Builder for the depth-stencil pipeline stage.
+ * The <i>depth stencil</i> pipeline stage configures the optional depth-stencil attachment.
  * @author Sarge
  */
 public class DepthStencilStage {
@@ -27,14 +27,16 @@ public class DepthStencilStage {
 	 * Enables the <i>depth bounds</i> test.
 	 * @param min Minimum depth bound
 	 * @param max Maximum depth bound
-	 * @see #bounds()
+	 * @throws IllegalArgumentException if {@link #min} is not less than or equal to {@link #max}
 	 */
 	public DepthStencilStage bounds(float min, float max) {
+		if(min > max) throw new IllegalArgumentException();
 		info.depthBoundsTestEnable = true;
 		info.minDepthBounds = min;
 		info.maxDepthBounds = max;
 		return this;
 	}
+	// TODO - should these be percentile?
 
 	/**
 	 * Enables the <i>depth bounds</i> test with default min/max bounds.
@@ -68,6 +70,7 @@ public class DepthStencilStage {
 	 * Enables the <i>stencil test</i>.
 	 * @param front 	Front parameters
 	 * @param back 		Back parameters
+	 * @see StencilStateBuilder
 	 */
 	public DepthStencilStage stencil(VkStencilOpState front, VkStencilOpState back) {
 		info.stencilTestEnable = true;

@@ -132,7 +132,7 @@ class FramebufferTest {
 		@DisplayName("can be recreated if the swapchain is invalidated")
 		@Test
 		void create() {
-			group.recreate();
+			group.recreate(swapchain);
 			assertEquals(2, group.size());
 		}
 

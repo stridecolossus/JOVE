@@ -76,19 +76,6 @@ public class View extends VulkanObject {
 	 * Builder for an image view.
 	 */
 	public static class Builder {
-		/**
-		 * Helper - Maps an image type to the corresponding view type.
-		 * @param type Image type
-		 * @return View type
-		 */
-		private static VkImageViewType type(Image image) {
-			return switch(image.descriptor().type()) {
-				case ONE_D		-> VkImageViewType.ONE_D;
-				case TWO_D		-> VkImageViewType.TWO_D;
-				case THREE_D	-> VkImageViewType.THREE_D;
-			};
-		}
-
 		private VkImageViewType type;
 		private ComponentMapping mapping = ComponentMapping.IDENTITY;
 		private Subresource subresource;
@@ -114,8 +101,8 @@ public class View extends VulkanObject {
 		}
 
 		/**
-		 * Sets the image sub-resource for this view.
-		 * @param subresource Image sub-resource
+		 * Sets the image subresource for this view.
+		 * @param subresource Image subresource
 		 */
 		public Builder subresource(Subresource subresource) {
 			this.subresource = subresource;
@@ -124,10 +111,10 @@ public class View extends VulkanObject {
 
 		/**
 		 * Constructs this image view.
-		 * The image type and sub-resource range are initialised to the given {@link #image} if not already populated.
+		 * The image type and subresource range are initialised to the given {@link #image} if not configured.
 		 * @param device	Logical device
 		 * @param image		Underlying image
-		 * @return New image view
+		 * @return Image view
 		 */
 		public View build(LogicalDevice device, Image image) {
 			// Build view descriptor
@@ -146,6 +133,20 @@ public class View extends VulkanObject {
 
 			// Create image view
 			return new View(pointer.get(), device, image);
+		}
+
+		/**
+		 * Helper.
+		 * Maps an image type to the corresponding view type.
+		 * @param type Image type
+		 * @return View type
+		 */
+		private static VkImageViewType type(Image image) {
+			return switch(image.descriptor().type()) {
+				case ONE_D		-> VkImageViewType.ONE_D;
+				case TWO_D		-> VkImageViewType.TWO_D;
+				case THREE_D	-> VkImageViewType.THREE_D;
+			};
 		}
 	}
 
