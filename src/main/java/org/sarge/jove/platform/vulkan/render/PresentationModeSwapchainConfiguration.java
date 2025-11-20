@@ -29,7 +29,7 @@ public class PresentationModeSwapchainConfiguration implements SwapchainConfigur
 				.stream()
 				.filter(modes::contains)
 				.findAny()
-				.orElse(VkPresentModeKHR.FIFO_KHR);
+				.orElse(Swapchain.DEFAULT_PRESENTATION_MODE);
 
 		builder.presentation(selected);
 	}

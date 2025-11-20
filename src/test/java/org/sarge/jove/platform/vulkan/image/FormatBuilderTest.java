@@ -1,12 +1,11 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkFormat;
-import org.sarge.jove.platform.vulkan.common.FormatBuilder;
-import org.sarge.jove.platform.vulkan.common.FormatBuilder.NumericFormat;
+import org.sarge.jove.platform.vulkan.image.FormatBuilder.NumericFormat;
 import org.sarge.jove.util.ImageData;
 
 class FormatBuilderTest {
@@ -36,7 +35,7 @@ class FormatBuilderTest {
 		assertEquals(VkFormat.R32G32B32A32_SFLOAT, builder.build());
 	}
 
-	@DisplayName("The builder can construct an sRGB surface format")
+	@DisplayName("The builder can construct a signed RGB surface format")
 	@Test
 	void srgb() {
 		builder
@@ -85,27 +84,29 @@ class FormatBuilderTest {
 		}
 	}
 
-	@Nested
-	class Helpers {
-		@DisplayName("The builder can construct a format for a given vertex layout")
-		@Test
-		void layout() {
-			assertEquals(VkFormat.R16G16B16_SFLOAT, FormatBuilder.format(new Layout(3, Layout.Type.FLOAT, true, 2)));
-		}
+	@DisplayName("The builder can construct a format for a given vertex layout")
+	@Test
+	void layout() {
+		final var layout = new Layout(3, Layout.Type.FLOAT, true, 2);
+		assertEquals(VkFormat.R16G16B16_SFLOAT, builder.init(layout).build());
+	}
 
-		@DisplayName("The builder can determine the format for an image using the hint")
-		@Test
-		void hint() {
-			final Layout layout = Layout.floats(4);
-			final ImageData image = new ImageData(new Dimensions(1, 1), "BGRA", layout, new byte[1]);
-			assertEquals(VkFormat.R32G32B32A32_SFLOAT, FormatBuilder.format(image));
-		}
+	@DisplayName("The builder can determine the format for an image using the hint")
+	@Test
+	void hint() {
+		final ImageData image = new ImageData(new Dimensions(1, 1), "BGR", Layout.floats(3), new byte[1]) {
+			@Override
+			public int format() {
+				return VkFormat.R32G32B32_UINT.value();
+			}
+		};
+		assertEquals(VkFormat.R32G32B32_UINT, FormatBuilder.format(image));
+	}
 
-		@DisplayName("The builder can determine the format for an image where the hint is not provided")
-		@Test
-		void image() {
-			final var image = new ImageData(new Dimensions(1, 1), "RGB", Layout.floats(3), new byte[4 * 3]);
-			assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
-		}
+	@DisplayName("The builder can determine the format for an image where the hint is not provided")
+	@Test
+	void image() {
+		final var image = new ImageData(new Dimensions(1, 1), "BGR", Layout.floats(3), new byte[1]);
+		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
 	}
 }

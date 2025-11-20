@@ -6,15 +6,18 @@ package org.sarge.jove.common;
  */
 public record Rectangle(int x, int y, int width, int height) {
 	/**
+	 * Constructor.
+	 */
+	public Rectangle(int width, int height) {
+		this(0, 0, width, height);
+	}
+
+	/**
 	 * Constructor for a rectangle at the origin.
 	 * @param size Rectangle size
 	 */
 	public Rectangle(Dimensions size) {
 		this(0, 0, size);
-	}
-
-	public Rectangle(int width, int height) {
-		this(0, 0, width, height);
 	}
 
 	/**

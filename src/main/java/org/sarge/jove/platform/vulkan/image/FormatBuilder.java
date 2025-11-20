@@ -1,9 +1,9 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireNotEmpty;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.ImageData;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -41,6 +41,16 @@ public class FormatBuilder {
 	private static final ReverseMapping<VkFormat> MAPPING = ReverseMapping.mapping(VkFormat.class);
 
 	/**
+	 * {@code RGBA} colour components.
+	 */
+	public static final String RGBA = "RGBA";
+
+	/**
+	 * {@code RGBA} colour components.
+	 */
+	public static final String BGRA = "BGRA";
+
+	/**
 	 * Vulkan numeric formats.
 	 * <p>
 	 * The Vulkan numeric formats correspond to the general {@link Layout.Type} equivalents with the following special cases:
@@ -72,27 +82,12 @@ public class FormatBuilder {
 
 	/**
 	 * Helper.
-	 * Determines the Vulkan format for the given layout.
-	 * @param layout Layout
-	 * @return Format for the given layout
-	 */
-	public static VkFormat format(Layout layout) {
-		return new FormatBuilder()
-				.count(layout.count())
-				.bytes(layout.bytes())
-				.type(NumericFormat.of(layout.type()))
-				.signed(layout.signed())
-				.build();
-	}
-
-	/**
-	 * Helper.
 	 * Determines the format of the given image.
 	 * <p>
 	 * The image format is determined as follows:
 	 * <ol>
 	 * <li>Use the {@link ImageData#format()} hint unless this value is {@link VkFormat#UNDEFINED}</li>
-	 * <li>Otherwise delegate to {@link #format(Layout)} using the image layout</li>
+	 * <li>Otherwise determine the format from the image layout using {@link #init(Layout)}</li>
 	 * </ol>
 	 * <p>
 	 * @param image Image
@@ -101,7 +96,9 @@ public class FormatBuilder {
 	public static VkFormat format(ImageData image) {
 		final int format = image.format();
 		if(format == VkFormat.UNDEFINED.value()) {
-			return format(image.layout());
+			final var builder = new FormatBuilder();
+			builder.init(image.layout());
+			return builder.build();
 		}
 		else {
 			return MAPPING.map(image.format());
@@ -118,7 +115,7 @@ public class FormatBuilder {
 	 * Constructor.
 	 */
 	public FormatBuilder() {
-		components(Colour.RGBA);
+		components(RGBA);
 	}
 
 	/**
@@ -131,18 +128,18 @@ public class FormatBuilder {
 			throw new IllegalArgumentException(String.format("Invalid components [%s]", components));
 		}
 		this.components = requireNotEmpty(components);
-		return count(components.length());
+		this.count = components.length();
+		return this;
 	}
 
 	/**
-	 * Sets the number of components.
+	 * Sets the number of components as a subset of the configured {@link #components(String)}.
 	 * @param count Number of components
 	 * @throws IllegalArgumentException if {@link #count} exceeds the components template
-	 * @see #components(String)
 	 */
 	public FormatBuilder count(int count) {
 		if((count < 1) || (count > components.length())) {
-			throw new IllegalArgumentException("Invalid number of components: count=%d max=%d".formatted(count, components.length()));
+			throw new IllegalArgumentException("Invalid number of components: count=%d components=%s".formatted(count, components));
 		}
 		this.count = count;
 		return this;
@@ -165,7 +162,7 @@ public class FormatBuilder {
 
 	/**
 	 * Sets whether the data type is signed.
-	 * @param signed Whether signed type
+	 * @param signed Whether signed
 	 */
 	public FormatBuilder signed(boolean signed) {
 		this.signed = signed;
@@ -178,6 +175,18 @@ public class FormatBuilder {
 	 */
 	public FormatBuilder type(NumericFormat numeric) {
 		this.numeric = requireNonNull(numeric);
+		return this;
+	}
+
+	/**
+	 * Initialises this format to the given vertex layout.
+	 * @param layout Vertex layout
+	 */
+	public FormatBuilder init(Layout layout) {
+		count(layout.count());
+		bytes(layout.bytes());
+		type(NumericFormat.of(layout.type()));
+		signed(layout.signed());
 		return this;
 	}
 

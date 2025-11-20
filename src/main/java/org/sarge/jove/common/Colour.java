@@ -8,12 +8,6 @@ import java.nio.ByteBuffer;
  */
 public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
 	/**
-	 * RGBA string.
-	 */
-	public static final String RGBA = "RGBA";
-	// TODO - not here?
-
-	/**
 	 * White colour.
 	 */
 	public static final Colour WHITE = new Colour(1, 1, 1);

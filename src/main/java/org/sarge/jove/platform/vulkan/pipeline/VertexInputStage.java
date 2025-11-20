@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.FormatBuilder;
+import org.sarge.jove.platform.vulkan.image.FormatBuilder;
 
 /**
  * The <i>vertex input stage</i> specifies the configuration of the vertex input fixed function of the pipeline.
@@ -86,7 +86,7 @@ public class VertexInputStage {
 		/**
 		 * Helper.
 		 * Creates a vertex binding from the given layouts.
-		 * TODO - contiguous
+		 * TODO - contiguous, RGBA
 		 * @param index			Binding index
 		 * @param start			Starting attribute location
 		 * @param layouts		Vertex layouts
@@ -98,9 +98,10 @@ public class VertexInputStage {
 			int stride = 0;
 
 			// Create a vertex attribute for each layout
+			final var builder = new FormatBuilder();
 			final List<VertexAttribute> attributes = new ArrayList<>();
 			for(Layout layout : layouts) {
-				final VkFormat format = FormatBuilder.format(layout);
+				final VkFormat format = builder.init(layout).build();
 				final var attribute = new VertexAttribute(loc, format, stride);
 				attributes.add(attribute);
 				++loc;

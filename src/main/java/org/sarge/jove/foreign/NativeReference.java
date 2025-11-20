@@ -35,10 +35,8 @@ public abstract class NativeReference<T> {
 	 * @return Referenced value or {@code null} if not populated
 	 */
 	public T get() {
-		if(value == null) {
-			if(pointer != null) {
-				value = update(pointer, layout);
-			}
+		if((value == null) && (pointer != null)) {
+			value = update(pointer, layout);
 		}
 
 		return value;

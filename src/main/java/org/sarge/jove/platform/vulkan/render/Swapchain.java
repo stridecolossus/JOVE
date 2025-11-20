@@ -36,6 +36,12 @@ public class Swapchain extends VulkanObject {
 	 */
 	public static final String EXTENSION = "VK_KHR_swapchain";
 
+	/**
+	 * Default presentation mode guaranteed on all Vulkan implementations.
+	 * @see VkPresentModeKHR#FIFO_KHR
+	 */
+	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
+
 	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
 
 	private final Library library;
@@ -203,7 +209,7 @@ public class Swapchain extends VulkanObject {
 			info.imageArrayLayers = 1;
 			info.compositeAlpha = VkCompositeAlphaFlagKHR.OPAQUE;
 			info.imageSharingMode = VkSharingMode.EXCLUSIVE;
-			info.presentMode = VulkanSurface.DEFAULT_PRESENTATION_MODE;
+			info.presentMode = DEFAULT_PRESENTATION_MODE;
 			info.clipped = true;
 		}
 

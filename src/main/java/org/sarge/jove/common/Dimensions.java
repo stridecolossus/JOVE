@@ -38,6 +38,11 @@ public record Dimensions(int width, int height) {
 		return width == height;
 	}
 
+	/**
+	 * Determines whether this dimensions contains the given dimensions, i.e. {@code this} is larger than {@code that}.
+	 * @param that dimensions
+	 * @return Whether contains
+	 */
 	public boolean contains(Dimensions that) {
 		return (this.width >= that.width) && (this.height >= that.height);
 	}

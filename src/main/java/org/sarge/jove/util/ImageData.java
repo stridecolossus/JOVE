@@ -33,19 +33,23 @@ public class ImageData {
 		}
 
 		/**
-		 * Helper - Calculates the offset into the image data for the given layer.
+		 * Helper.
+		 * Calculates the offset into the image data for the given layer.
 		 * @param layer			Layer index
 		 * @param count			Number of layers
 		 * @return Offset
 		 * @throws IllegalArgumentException if the layer index is larger than the given number of layers
 		 */
 		public int offset(int layer, int count) {
-			if(layer >= count) throw new IllegalArgumentException(String.format("Illogical offset for layer %d/%d", layer, count));
+			if(layer >= count) {
+				throw new IllegalArgumentException(String.format("Illogical offset for layer %d/%d", layer, count));
+			}
 			return offset + layer * (length / count);
 		}
 
 		/**
-		 * Helper - Determines the number of mipmap levels for the given image dimensions.
+		 * Helper.
+		 * Determines the number of mipmap levels for the given image dimensions.
 		 * @param dim Image dimensions
 		 * @return Number of mipmap levels
 		 */
@@ -81,7 +85,9 @@ public class ImageData {
 	private void validate() {
 		// Validate channels
 		for(char ch : channels.toCharArray()) {
-			if(Colour.RGBA.indexOf(ch) == -1) throw new IllegalArgumentException("Invalid channel character: " + ch);
+			if("RGBA".indexOf(ch) == -1) {
+				throw new IllegalArgumentException("Invalid channel character: " + ch);
+			}
 		}
 
 		// Check channels and layout match
@@ -145,13 +151,9 @@ public class ImageData {
 		return 1;
 	}
 
-// TODO
-//	/**
-//	 * @return Image data
-//	 */
-//	public final ByteSizedBufferable data() {
-//		return ByteSizedBufferable.of(data);
-//	}
+	/**
+	 * @return Image data
+	 */
 	public byte[] data() {
 		return data;
 	}
@@ -165,7 +167,9 @@ public class ImageData {
 	 * @see #pixel(int)
 	 */
 	public final int pixel(int x, int y, int component) {
-		if((component < 0) || (component >= channels.length())) throw new IllegalArgumentException("Invalid component index: component=%d channels=%d".formatted(component, channels.length()));
+		if((component < 0) || (component >= channels.length())) {
+			throw new IllegalArgumentException("Invalid component index: component=%d channels=%d".formatted(component, channels.length()));
+		}
 		final int offset = levels().get(0).offset;
 		final int start = (x + y * size.width()) * layout.stride();
 		final int index = offset + start + (component * layout.bytes());

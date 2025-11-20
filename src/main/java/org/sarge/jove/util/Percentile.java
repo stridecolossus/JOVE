@@ -1,7 +1,5 @@
 package org.sarge.jove.util;
 
-import java.util.Arrays;
-
 /**
  * A <i>percentile</i> represents a percentage expressed as a floating-point value in the range {@code 0..1}.
  * @author Sarge
@@ -27,25 +25,6 @@ public record Percentile(float value) implements Comparable<Percentile> {
 	 */
 	public static final Percentile ONE = new Percentile(1f);
 
-	private static final Percentile[] INTEGERS = new Percentile[MAX_VALUE + 1];
-
-	static {
-		final float inv = 1f / MAX_VALUE;
-		Arrays.setAll(INTEGERS, n -> new Percentile(n * inv));
-		INTEGERS[MAX_VALUE] = ONE;
-	}
-
-	/**
-	 * Creates an integer percentile.
-	 * @param percentile Percentile as a 0..100 integer (exclusive)
-	 * @return Percentile
-	 * @throws ArrayIndexOutOfBoundsException if the given value is not a valid percentile
-	 */
-	public static Percentile of(int percentile) {
-		return INTEGERS[percentile];
-	}
-	// TODO - does this really help? how often would we actually be using hard-coded integers anyway? rarely? ever? => Percentile(int) ctor?
-
 	/**
 	 * Parses a percentile from the given string representation.
 	 * <p>
@@ -61,7 +40,7 @@ public record Percentile(float value) implements Comparable<Percentile> {
 			return new Percentile(Float.parseFloat(percentile));
 		}
 		else {
-			return of(Integer.parseInt(percentile));
+			return new Percentile(Integer.parseInt(percentile));
 		}
 	}
 
@@ -70,12 +49,20 @@ public record Percentile(float value) implements Comparable<Percentile> {
 	 * @param value Percentile value
 	 * @throws IllegalArgumentException if the value is not a valid percentile
 	 */
-	public Percentile(float value) {
-		this.value = validate(value);
+	public Percentile {
+		validate(value);
 	}
 
 	/**
-	 * @param value Floating-point percentile
+	 * Constructor given an integer in the range 0..{@link #MAX_VALUE}.
+	 * @param value Integer percentile
+	 * @throws IllegalArgumentException if the value is not a valid percentile
+	 */
+	public Percentile(int value) {
+		this(value / (float) MAX_VALUE);
+	}
+
+	/**
 	 * @throws IllegalArgumentException if {@link #value} is not a valid percentile
 	 */
 	public static float validate(float value) {
@@ -92,24 +79,11 @@ public record Percentile(float value) implements Comparable<Percentile> {
 		return (int) (value * MAX_VALUE);
 	}
 
-	@Override
-	public int compareTo(Percentile that) {
-		return Float.compare(this.value, that.value);
-	}
-
 	/**
 	 * @return Whether this percentile is equal to zero
 	 */
 	public boolean isZero() {
 		return (this == ZERO) || (Float.floatToIntBits(value) == 0);
-	}
-
-	/**
-	 * @param that Percentile
-	 * @return Whether this percentile is less than the given percentile
-	 */
-	public boolean isLessThan(Percentile that) {
-		return this.value < that.value;
 	}
 
 	/**
@@ -141,21 +115,16 @@ public record Percentile(float value) implements Comparable<Percentile> {
 	}
 
 	/**
-	 * Multiplies this and the given percentile.
-	 * @param p Percentile
-	 * @return Multiplied percentile
-	 */
-	public Percentile multiply(Percentile p) {
-		return new Percentile(this.value * p.value);
-	}
-	// TODO - used? logical as API method?
-
-	/**
 	 * Inverts this percentile, i.e. {@code 100% - this}
 	 * @return Inverted percentile
 	 */
 	public Percentile invert() {
 		return new Percentile(1 - value);
+	}
+
+	@Override
+	public int compareTo(Percentile that) {
+		return Float.compare(this.value, that.value);
 	}
 
 	@Override

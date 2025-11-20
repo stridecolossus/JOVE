@@ -23,13 +23,16 @@ public class ViewportStage {
 		 * @param rectangle		Viewport rectangle
 		 * @param min			Minimum depth
 		 * @param max			Maximum depth
-		 * @throws IllegalArgumentException if {@link #min} is less than {@link #max}
+		 * @throws IllegalArgumentException if {@link #min} is greater than {@link #max}
 		 */
 		public Viewport {
 			requireNonNull(rectangle);
 			requireNonNull(min);
 			requireNonNull(max);
-			if(max.isLessThan(min)) throw new IllegalArgumentException();
+
+			if(min.compareTo(max) > 0) {
+				throw new IllegalArgumentException();
+			}
 		}
 
 		/**

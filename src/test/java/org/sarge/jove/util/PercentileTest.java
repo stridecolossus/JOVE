@@ -22,8 +22,8 @@ class PercentileTest {
 
 	@Test
 	void invalidInteger() {
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> Percentile.of(-1));
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> Percentile.of(101));
+		assertThrows(IllegalArgumentException.class, () -> new Percentile(-1));
+		assertThrows(IllegalArgumentException.class, () -> new Percentile(101));
 	}
 
 	@Test
@@ -36,22 +36,10 @@ class PercentileTest {
 	@Test
 	void zero() {
 		assertEquals(true, ZERO.isZero());
-		assertEquals(true, Percentile.of(0).isZero());
+		assertEquals(true, new Percentile(0).isZero());
+		assertEquals(true, new Percentile(0f).isZero());
 		assertEquals(false, HALF.isZero());
 		assertEquals(false, ONE.isZero());
-	}
-
-	@Test
-	void integer() {
-		assertEquals(ZERO, Percentile.of(0));
-		assertEquals(HALF, Percentile.of(50));
-		assertEquals(ONE, Percentile.of(100));
-	}
-
-	@Test
-	void integerInvalidRange() {
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> Percentile.of(-1));
-		assertThrows(ArrayIndexOutOfBoundsException.class, () -> Percentile.of(101));
 	}
 
 	@Nested
@@ -93,13 +81,6 @@ class PercentileTest {
 	}
 
 	@Test
-	void lessThan() {
-		assertEquals(true, HALF.isLessThan(ONE));
-		assertEquals(false, ONE.isLessThan(HALF));
-		assertEquals(false, ONE.isLessThan(ONE));
-	}
-
-	@Test
 	void min() {
 		assertEquals(ZERO, HALF.min(ZERO));
 		assertEquals(HALF, HALF.min(HALF));
@@ -111,13 +92,6 @@ class PercentileTest {
 		assertEquals(HALF, HALF.max(ZERO));
 		assertEquals(HALF, HALF.max(HALF));
 		assertEquals(ONE,  HALF.max(ONE));
-	}
-
-	@Test
-	void multiply() {
-		assertEquals(ONE, ONE.multiply(ONE));
-		assertEquals(Percentile.of(25), HALF.multiply(HALF));
-		assertEquals(ZERO, ONE.multiply(ZERO));
 	}
 
 	@Test
