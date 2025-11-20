@@ -8,15 +8,16 @@ import java.util.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>sampler</i> is used to sample from a texture image.
  * @author Sarge
  */
-public final class Sampler extends VulkanObject {
+public class Sampler extends VulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle		Sampler handle
@@ -37,8 +38,8 @@ public final class Sampler extends VulkanObject {
 	 * @param view View
 	 * @return Sampler resource
 	 */
-	public DescriptorResource resource(View view) {
-		return new DescriptorResource() {
+	public DescriptorSet.Resource resource(View view) {
+		return new DescriptorSet.Resource() {
 			@Override
 			public VkDescriptorType type() {
 				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
@@ -54,7 +55,6 @@ public final class Sampler extends VulkanObject {
 			}
 		};
 	}
-	// TODO - implements this?
 
 	/**
 	 * The <i>address mode</i> specifies how coordinates outside of the texture are handled.

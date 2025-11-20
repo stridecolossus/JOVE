@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
@@ -35,7 +33,7 @@ public class Fence extends VulkanObject {
 		library.vkCreateFence(device, info, null, handle);
 
 		// Create domain object
-		return new Fence(handle.get(), device, library);
+		return new Fence(handle.get(), device);
 	}
 
 	private final Library library;
@@ -44,11 +42,10 @@ public class Fence extends VulkanObject {
 	 * Constructor.
 	 * @param handle		Fence handle
 	 * @param device		Logical device
-	 * @param library		Library
 	 */
-	protected Fence(Handle handle, LogicalDevice device, Library library) {
+	protected Fence(Handle handle, LogicalDevice device) {
 		super(handle, device);
-		this.library = requireNonNull(library);
+		this.library = device.library();
 	}
 
 	/**
@@ -77,6 +74,9 @@ public class Fence extends VulkanObject {
 	 * @param fences Fences to reset
 	 */
 	public static void reset(Collection<Fence> fences) {
+		if(fences.isEmpty()) {
+			return;
+		}
 		final Fence[] array = fences.toArray(Fence[]::new);
 		final LogicalDevice device = array[0].device();
 		final Library library = array[0].library;
@@ -85,7 +85,7 @@ public class Fence extends VulkanObject {
 
 	/**
 	 * Blocks until this fence is ready.
-	 * @see #wait(LogicalDevice, Collection, boolean, long)
+	 * @see #waitReady(Collection, boolean, long)
 	 */
 	public void waitReady() {
 		waitReady(Set.of(this), true, Long.MAX_VALUE);
@@ -99,6 +99,9 @@ public class Fence extends VulkanObject {
 	 * @param timeout		Timeout (nanoseconds)
 	 */
 	public static void waitReady(Collection<Fence> fences, boolean all, long timeout) {
+		if(fences.isEmpty()) {
+			return;
+		}
 		final Fence[] array = fences.toArray(Fence[]::new);
 		final LogicalDevice device = array[0].device();
 		final Library library = array[0].library;

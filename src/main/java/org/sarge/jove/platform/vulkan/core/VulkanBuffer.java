@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.common.VulkanUtility.checkAlignment;
 import static org.sarge.jove.util.Validation.*;
 
-import java.nio.*;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
@@ -16,7 +16,7 @@ import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * A <i>Vulkan buffer</i> is used to store and move data on the hardware.
+ * A <i>Vulkan buffer</i> is used to transfer data to and from the hardware.
  * @author Sarge
  */
 public class VulkanBuffer extends VulkanObject {
@@ -37,7 +37,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param memory		Buffer memory
 	 * @param length		Length of this buffer (bytes)
 	 */
-	public VulkanBuffer(Handle handle, LogicalDevice device, Set<VkBufferUsageFlag> usage, DeviceMemory memory, long length) {
+	VulkanBuffer(Handle handle, LogicalDevice device, Set<VkBufferUsageFlag> usage, DeviceMemory memory, long length) {
 		super(handle, device);
 		this.usage = Set.copyOf(usage);
 		this.memory = requireNonNull(memory);
@@ -95,7 +95,7 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Validates that this buffer supports the given usage flag(s).
-	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the given required {@link #flags}
+	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the required {@link #flags}
 	 */
 	public void require(VkBufferUsageFlag... flags) {
 		if(!usage.containsAll(Set.of(flags))) {
@@ -108,20 +108,16 @@ public class VulkanBuffer extends VulkanObject {
 	 * Accesses the underlying buffer memory as an NIO buffer, mapping the device memory as required.
 	 * @return Underlying byte buffer
 	 */
-	public ByteBuffer buffer() {
-		final Region region = memory
+	protected ByteBuffer buffer() {
+		return memory
 				.region()
-				.orElseGet(() -> memory.map(0, length));
-
-		return region
-				.segment(0, length)
-				.asByteBuffer()
-				.order(ByteOrder.nativeOrder());
+				.orElseGet(() -> memory.map(0L, length))
+				.segment(0L, length)
+				.asByteBuffer();
 	}
-	// TODO - urgh
 
 	/**
-	 * Creates a command to copy the whole of this buffer to the given destination buffer.
+	 * Creates a command to copy the whole of this buffer to the given destination.
 	 * @param destination Destination buffer
 	 * @return New copy command
 	 * @throws IllegalArgumentException if the destination buffer is too small
@@ -176,7 +172,6 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Creates a buffer.
-	 * @param device			Logical device
 	 * @param allocator			Memory allocator
 	 * @param length			Length (bytes)
 	 * @param properties		Memory properties
@@ -222,10 +217,10 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Helper.
-	 * Creates and a staging buffer for data that can then be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
+	 * Creates a staging buffer for data that can then be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
 	 * The buffer is a {@link VkBufferUsageFlag#TRANSFER_SRC} with {@link VkMemoryProperty#HOST_VISIBLE} memory.
-	 * @param device		Logical device
 	 * @param allocator		Memory allocator
+	 * @param length		Buffer length
 	 * @return New staging buffer
 	 */
 	public static VulkanBuffer staging(Allocator allocator, int length) {

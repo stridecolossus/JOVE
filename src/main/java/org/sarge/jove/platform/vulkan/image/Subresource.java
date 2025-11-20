@@ -63,36 +63,36 @@ public interface Subresource {
 	}
 
 	/**
-	 * Converts the given sub-resource to a Vulkan range descriptor.
-	 * @param res Sub-resource
-	 * @return Vulkan sub-resource range
+	 * Converts the given subresource to a Vulkan range descriptor.
+	 * @param subresource Subresource
+	 * @return Vulkan subresource range
 	 */
-	static VkImageSubresourceRange range(Subresource res) {
+	static VkImageSubresourceRange range(Subresource subresource) {
 		final var range = new VkImageSubresourceRange();
-		range.aspectMask = new EnumMask<>(res.aspects());
-		range.baseMipLevel = res.mipLevel();
-		range.levelCount = res.levelCount();
-		range.baseArrayLayer = res.baseArrayLayer();
-		range.layerCount = res.layerCount();
+		range.aspectMask = new EnumMask<>(subresource.aspects());
+		range.baseMipLevel = subresource.mipLevel();
+		range.levelCount = subresource.levelCount();
+		range.baseArrayLayer = subresource.baseArrayLayer();
+		range.layerCount = subresource.layerCount();
 		return range;
 	}
 
 	/**
-	 * Converts the given sub-resource to a Vulkan layers descriptor.
-	 * @param res Sub-resource
-	 * @return Vulkan sub-resource layers
+	 * Converts the given subresource to a Vulkan layers descriptor.
+	 * @param subresource Subresource
+	 * @return Vulkan subresource layers
 	 */
-	static VkImageSubresourceLayers layers(Subresource res) {
+	static VkImageSubresourceLayers layers(Subresource subresource) {
 		final var layers = new VkImageSubresourceLayers();
-		layers.aspectMask = new EnumMask<>(res.aspects());
-		layers.mipLevel = res.mipLevel();
-		layers.baseArrayLayer = res.baseArrayLayer();
-		layers.layerCount = res.layerCount();
+		layers.aspectMask = new EnumMask<>(subresource.aspects());
+		layers.mipLevel = subresource.mipLevel();
+		layers.baseArrayLayer = subresource.baseArrayLayer();
+		layers.layerCount = subresource.layerCount();
 		return layers;
 	}
 
 	/**
-	 * Builder for an image sub-resource.
+	 * Builder for an image subresource.
 	 */
 	class Builder {
 		private final Set<VkImageAspect> aspects = new HashSet<>();
@@ -161,8 +161,8 @@ public interface Subresource {
 		}
 
 		/**
-		 * Constructs this sub-resource.
-		 * @return New sub-resource
+		 * Constructs this subresource.
+		 * @return Subresource
 		 */
 		public Subresource build() {
 			return new DefaultSubResource(aspects, mipLevel, levelCount, baseArrayLayer, layerCount);

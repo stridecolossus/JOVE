@@ -86,8 +86,7 @@ public interface Command {
 		}
 
 		/**
-		 * @return Whether this command buffer is ready for submission
-		 * @see Stage#EXECUTABLE
+		 * @return Whether this buffer is ready for submission
 		 */
 		public boolean isReady() {
 			return stage == Stage.EXECUTABLE;
@@ -108,6 +107,7 @@ public interface Command {
 		 * Starts recording this primary buffer.
 		 * @param flags Usage flags
 		 * @see #begin(VkCommandBufferInheritanceInfo, Set)
+		 * @throws IllegalStateException if this buffer is not ready for recording
 		 */
 		public Buffer begin(VkCommandBufferUsage... flags) {
 			return begin(null, Set.of(flags));
@@ -117,6 +117,8 @@ public interface Command {
 		 * Starts recording this buffer.
 		 * @param inheritance		Inheritance descriptor
 		 * @param flags				Usage flags
+		 * @throws IllegalArgumentException if {@link #inheritance} is provided for a primary buffer
+		 * @throws IllegalStateException if this buffer is not ready for recording
 		 */
 		public Buffer begin(VkCommandBufferInheritanceInfo inheritance, Set<VkCommandBufferUsage> flags) {
 			// Check buffer can be recorded
@@ -133,8 +135,7 @@ public interface Command {
 			info.pInheritanceInfo = inheritance;
 
 			// Start buffer recording
-			final Library library = pool.library();
-			library.vkBeginCommandBuffer(this, info);
+			pool.library.vkBeginCommandBuffer(this, info);
 
 			// Start recording
 			stage = Stage.RECORDING;
@@ -157,13 +158,14 @@ public interface Command {
 		 * Records secondary command buffers to this buffer.
 		 * TODO - can this ONLY be done on a primary buffer?
 		 * @param buffers Secondary command buffers
-		 * @throws IllegalArgumentException if any of {@link #buffers} is not a secondary buffer or is not ready for recording
+		 * @throws IllegalStateException if this buffer is not recording
+		 * @throws IllegalArgumentException if any of {@link #buffers} is not a secondary buffer or is not ready for execution
 		 */
 		public void add(List<Buffer> buffers) {
 			// Validate secondary buffers can be executed
 			for(var buffer : buffers) {
 				if(buffer.isPrimary()) {
-					throw new IllegalArgumentException("Not a primary buffer: " + buffer);
+					throw new IllegalArgumentException("Not a secondary buffer: " + buffer);
 				}
     			buffer.check(Stage.EXECUTABLE);
     		}
@@ -171,8 +173,7 @@ public interface Command {
 			// Record secondary buffers
 			check(Stage.RECORDING);
 			final Buffer[] array = buffers.toArray(Buffer[]::new);
-    		final Library lib = pool.library();
-    		lib.vkCmdExecuteCommands(this, array.length, array);
+    		pool.library.vkCmdExecuteCommands(this, array.length, array);
     	}
 
 		/**
@@ -181,7 +182,7 @@ public interface Command {
 		 */
 		public Buffer end() {
 			check(Stage.RECORDING);
-			pool.library().vkEndCommandBuffer(Buffer.this);
+			pool.library.vkEndCommandBuffer(Buffer.this);
 			stage = Stage.EXECUTABLE;
 			return this;
 		}
@@ -195,7 +196,7 @@ public interface Command {
 			check(Stage.EXECUTABLE);
 			// TODO - check pool has flag
 			final EnumMask<VkCommandBufferResetFlag> mask = new EnumMask<>(flags);
-			pool.library().vkResetCommandBuffer(this, mask);
+			pool.library.vkResetCommandBuffer(this, mask);
 			stage = Stage.INITIAL;
 		}
 		// TODO - should allocated buffers be invalidated? (ditto free)
@@ -242,7 +243,7 @@ public interface Command {
 			library.vkCreateCommandPool(device, info, null, handle);
 
 			// Create domain object
-			return new Pool(handle.get(), device, queue, library);
+			return new Pool(handle.get(), device, queue);
 		}
 
 		private final WorkQueue queue;
@@ -252,14 +253,13 @@ public interface Command {
 		/**
 		 * Constructor.
 		 * @param handle 		Command pool handle
-		 * @param dev			Logical device
+		 * @param device		Logical device
 		 * @param queue			Work queue
-		 * @param library		Command library
 		 */
-		Pool(Handle handle, LogicalDevice dev, WorkQueue queue, Library library) {
-			super(handle, dev);
+		Pool(Handle handle, LogicalDevice device, WorkQueue queue) {
+			super(handle, device);
 			this.queue = requireNonNull(queue);
-			this.library = requireNonNull(library);
+			this.library = device.library();
 		}
 
 		/**
@@ -274,13 +274,6 @@ public interface Command {
 		 */
 		public List<Buffer> buffers() {
 			return Collections.unmodifiableList(buffers);
-		}
-
-		/**
-		 * @return Command library
-		 */
-		Library library() {
-			return library;
 		}
 
 		/**
@@ -315,7 +308,6 @@ public interface Command {
 
 		/**
 		 * Resets this command pool.
-		 * All allocated buffers are reset to the {@link Stage#INITIAL} state.
 		 * @param flags Reset flags
 		 */
 		public void reset(VkCommandPoolResetFlag... flags) {
@@ -359,7 +351,7 @@ public interface Command {
 	}
 
 	/**
-	 * Vulkan command pool and buffer API.
+	 * Command pool and buffer API.
 	 */
 	interface Library {
 		/**

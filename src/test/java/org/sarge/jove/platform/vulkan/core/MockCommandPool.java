@@ -14,7 +14,7 @@ public class MockCommandPool extends Command.Pool {
 	public MockCommandPool(LogicalDevice device) {
 		final var family = new Family(0, 1, Set.of());
 		final var queue = new WorkQueue(new Handle(1), family);
-		super(new Handle(1), device, queue, device.library());
+		super(new Handle(1), device, queue);
 	}
 
 	@Override

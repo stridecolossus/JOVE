@@ -20,6 +20,22 @@ import org.sarge.jove.util.EnumMask;
  */
 public class DescriptorSet implements NativeObject {
 	/**
+	 * A descriptor set <i>resource</i> defines an object that can be applied to this descriptor set.
+	 */
+	public interface Resource {
+		/**
+		 * @return Descriptor type
+		 */
+		VkDescriptorType type();
+
+		/**
+		 * Builds the descriptor for this resource.
+		 * @return Resource descriptor
+		 */
+		NativeStructure descriptor();
+	}
+
+	/**
 	 * A <i>binding</i> defines the properties of a resource in this descriptor set.
 	 */
 	public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
@@ -109,7 +125,7 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	private final Handle handle;
-	private final Map<Binding, DescriptorResource> entries = new HashMap<>();
+	private final Map<Binding, Resource> entries = new HashMap<>();
 	private final Set<Binding> dirty = new HashSet<>();
 
 	/**
@@ -139,7 +155,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param binding Binding
 	 * @return Descriptor resource for the given binding or {@code null} if not populated
 	 */
-	public DescriptorResource resource(Binding binding) {
+	public Resource resource(Binding binding) {
 		return entries.get(binding);
 	}
 
@@ -150,7 +166,7 @@ public class DescriptorSet implements NativeObject {
 	 * @throws IllegalArgumentException if the {@link #binding} does not belong to the layout of this descriptor set
 	 * @throws IllegalArgumentException if the {@link #resource} does not match the {@link Binding#type()}
 	 */
-	public void resource(Binding binding, DescriptorResource resource) {
+	public void resource(Binding binding, Resource resource) {
 		requireNonNull(binding);
 		requireNonNull(resource);
 		if(!entries.containsKey(binding)) {
@@ -172,7 +188,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param resource		Resource
 	 * @see #resource(Binding, DescriptorResource)
 	 */
-	public static void set(Collection<DescriptorSet> group, Binding binding, DescriptorResource resource) {
+	public static void set(Collection<DescriptorSet> group, Binding binding, Resource resource) {
 		for(DescriptorSet set : group) {
 			set.resource(binding, resource);
 		}
@@ -181,10 +197,10 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * Builds an update descriptor for the given entry.
 	 */
-	private VkWriteDescriptorSet populate(Map.Entry<Binding, DescriptorResource> entry) {
+	private VkWriteDescriptorSet populate(Map.Entry<Binding, Resource> entry) {
 		// Validate
 		final Binding binding = entry.getKey();
-		final DescriptorResource resource = entry.getValue();
+		final Resource resource = entry.getValue();
 		if(resource == null) {
 			throw new IllegalStateException("Resource not populated: set=%s binding=%s".formatted(this, binding));
 		}

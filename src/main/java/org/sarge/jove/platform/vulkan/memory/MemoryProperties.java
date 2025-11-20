@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.*;
  * <p>
  * Example for the properties of a uniform buffer visible to the application and ideally GPU resident:
  * <pre>
- * var props = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
+ * var properties = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
  *     .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
  *     .mode(VkSharingMode.CONCURRENT)
  *     .required(VkMemoryProperty.HOST_COHERENT)

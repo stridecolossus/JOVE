@@ -70,7 +70,7 @@ class WorkTest {
 		final WorkQueue queue = new WorkQueue(new Handle(1), family);
 
 		// Init command pool
-		pool = new Pool(new Handle(2), device, queue, library);
+		pool = new Pool(new Handle(2), device, queue);
 
 		// Create a command buffer
 		buffer = pool
@@ -89,7 +89,7 @@ class WorkTest {
 				.signal(new MockVulkanSemaphore())
 				.build();
 
-		final Fence fence = new Fence(new Handle(2), device, library);
+		final Fence fence = new Fence(new Handle(2), device);
 		work.submit(fence);
 		assertEquals(true, library.submitted);
 	}
@@ -106,7 +106,7 @@ class WorkTest {
 	void family() {
 		final WorkQueue queue = new WorkQueue(new Handle(4), new Family(1, 2, Set.of()));
 
-		final Buffer other = new Pool(new Handle(5), device, queue, library)
+		final Buffer other = new Pool(new Handle(5), device, queue)
 				.allocate(1, true)
 				.getFirst()
 				.begin()

@@ -67,7 +67,7 @@ class FenceTest {
 	void before() {
 		library = new MockFenceLibrary();
 		device = new MockLogicalDevice(library);
-		fence = new Fence(new Handle(2), device, library);
+		fence = new Fence(new Handle(2), device);
 	}
 
 	@Test

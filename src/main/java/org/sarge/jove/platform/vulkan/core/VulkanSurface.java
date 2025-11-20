@@ -9,6 +9,7 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanFunction;
+import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 
 /**
  * A <i>vulkan surface</i> composes a rendering surface derived from a GLFW window and the Vulkan instance.
@@ -51,9 +52,9 @@ public class VulkanSurface extends TransientNativeObject {
 	 * Determines whether presentation to this surface is supported by the given device and queue family.
 	 * @param device Physical device
 	 * @param family Queue family
-	 * @return Whether supports presentation
+	 * @return Whether presentation to this surface is supported
 	 */
-	public boolean isPresentationSupported(PhysicalDevice device, WorkQueue.Family family) {
+	public boolean isPresentationSupported(PhysicalDevice device, Family family) {
 		final var supported = new IntegerReference();
 		library.vkGetPhysicalDeviceSurfaceSupportKHR(device, family.index(), this, supported);
 		return NativeBooleanTransformer.isTrue(supported.get());

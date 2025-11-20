@@ -6,9 +6,9 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.EnumMask;
 
 class SamplerTest {
@@ -74,7 +74,7 @@ class SamplerTest {
 
 	@Nested
 	class ResourceTest {
-		private DescriptorResource resource;
+		private DescriptorSet.Resource resource;
 		private View view;
 
 		@BeforeEach

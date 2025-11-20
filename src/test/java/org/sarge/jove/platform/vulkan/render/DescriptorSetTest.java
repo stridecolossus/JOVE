@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.*;
@@ -90,7 +89,7 @@ public class DescriptorSetTest {
 
 	private Binding binding;
 	private DescriptorSet set;
-	private DescriptorResource resource;
+	private Resource resource;
 	private LogicalDevice device;
 	private MockDescriptorSetLibrary library;
 
@@ -103,8 +102,8 @@ public class DescriptorSetTest {
 		// Create layout with a sampler binding
 		binding = new Binding(1, VkDescriptorType.SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
 
-		// Create sampler resource
-		resource = new DescriptorResource() {
+		// Create a resource
+		resource = new Resource() {
 			@Override
 			public VkDescriptorType type() {
 				return VkDescriptorType.SAMPLER;
@@ -149,7 +148,7 @@ public class DescriptorSetTest {
 
 	@Test
 	void invalidResource() {
-		final var invalid = new DescriptorResource() {
+		final var invalid = new Resource() {
 			@Override
 			public VkDescriptorType type() {
 				return VkDescriptorType.UNIFORM_BUFFER;

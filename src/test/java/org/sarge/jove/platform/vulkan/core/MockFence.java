@@ -8,7 +8,7 @@ public class MockFence extends Fence {
 
 	public MockFence() {
 		final var device = new MockLogicalDevice();
-		super(new Handle(3), device, device.library());
+		super(new Handle(3), device);
 	}
 
 	@Override

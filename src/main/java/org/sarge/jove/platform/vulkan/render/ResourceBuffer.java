@@ -4,14 +4,13 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 
 /**
  * A <i>resource buffer</i> is an adapter for a buffer used as a descriptor resource, e.g. a {@link VkBufferUsageFlag#UNIFORM_BUFFER}.
  * @author Sarge
  */
-public record ResourceBuffer(VkDescriptorType type, long offset, VulkanBuffer buffer) implements DescriptorResource {
+public record ResourceBuffer(VkDescriptorType type, long offset, VulkanBuffer buffer) implements DescriptorSet.Resource {
 	/**
 	 * Constructor.
 	 * @param buffer 		Underlying buffer

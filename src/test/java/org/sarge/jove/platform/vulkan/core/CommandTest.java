@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
 
 class CommandTest {
-	private static class MockCommandLibrary implements Command.Library {
+	private static class MockCommandLibrary extends MockVulkanLibrary {
 		private boolean destroyed;
 		private boolean reset;
 		private boolean free;
@@ -117,9 +117,9 @@ class CommandTest {
 	void before() {
 		command = new MockCommand();
 		library = new MockCommandLibrary();
-		device = new MockLogicalDevice();
+		device = new MockLogicalDevice(library);
 		queue = new WorkQueue(new Handle(1), new Family(0, 1, Set.of()));
-		pool = new Pool(new Handle(2), device, queue, library);
+		pool = new Pool(new Handle(2), device, queue);
 	}
 
 	@Nested

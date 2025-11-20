@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.Command;
 
 /**
  * Builder for the rasterizer pipeline stage.
@@ -30,7 +29,7 @@ public class RasterizerStage {
 	}
 
 	/**
-	 * Sets whether fragment depth values are clamped (default is {@code false})
+	 * Sets whether fragment depth values are clamped.
 	 * @param depthClampEnable Whether to clamp depth values
 	 */
 	public RasterizerStage depthClamp(boolean depthClampEnable) {
@@ -39,7 +38,7 @@ public class RasterizerStage {
 	}
 
 	/**
-	 * Sets whether geometry is discarded by the rasterizer (default is {@code false}).
+	 * Sets whether geometry is discarded by the rasterizer.
 	 * @param rasterizerDiscardEnable Whether to discard geometry
 	 */
 	public RasterizerStage discard(boolean rasterizerDiscardEnable) {
@@ -95,23 +94,25 @@ public class RasterizerStage {
 	// TODO - also dynamic API
 
 	/**
-	 * Sets the line width (default is {@code one}).
+	 * Sets the line width.
 	 * @param lineWidth Line width
-	 * @throws IllegalArgumentException if the line width is less-than one
+	 * @throws IllegalArgumentException if the line width is less than one
 	 */
 	public RasterizerStage lineWidth(float lineWidth) {
 		info.lineWidth = requireOneOrMore(lineWidth);
 		return this;
 	}
-
-	/**
-	 * Creates a command to dynamically set the line width.
-	 * @param w Line width
-	 * @return Dynamic line width command
-	 */
-	public Command setDynamicLineWidth(float width) {
-		requireOneOrMore(width);
-//		return (lib, cmd) -> lib.vkCmdSetLineWidth(cmd, w);
-		return null;
-	}
 }
+
+//
+//	/**
+//	 * Creates a command to dynamically set the line width.
+//	 * @param w Line width
+//	 * @return Dynamic line width command
+//	 */
+//	public Command setDynamicLineWidth(float width) {
+//		requireOneOrMore(width);
+////		return (lib, cmd) -> lib.vkCmdSetLineWidth(cmd, w);
+//		return null;
+//	}
+//}
