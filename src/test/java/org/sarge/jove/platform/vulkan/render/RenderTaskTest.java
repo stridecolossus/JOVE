@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.lang.foreign.MemorySegment;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -20,19 +21,19 @@ class RenderTaskTest {
 
 		@Override
 		public VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore) {
-			pSemaphore.set(new Handle(4));
+			pSemaphore.set(MemorySegment.ofAddress(4));
 			return null;
 		}
 
 		@Override
 		public VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence) {
-			pFence.set(new Handle(5));
+			pFence.set(MemorySegment.ofAddress(5));
 			return null;
 		}
 
 		@Override
 		public VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer) {
-			pFramebuffer.set(new Handle(6));
+			pFramebuffer.set(MemorySegment.ofAddress(6));
 			return VkResult.SUCCESS;
 		}
 

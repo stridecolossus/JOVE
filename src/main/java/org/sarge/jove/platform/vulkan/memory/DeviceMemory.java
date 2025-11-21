@@ -70,4 +70,14 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
 	 */
 	Region map(long offset, long size);
+
+	/**
+	 * Maps this entire memory blocks.
+	 * @return Mapping memory
+	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
+	 * @see #map(long, long)
+	 */
+	default Region map() {
+		return map(0L, size());
+	}
 }

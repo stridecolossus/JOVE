@@ -63,10 +63,6 @@ class AllocatorTest {
 	@Test
 	void allocate() {
 		final DeviceMemory memory = allocator.allocate(requirements, properties);
-
-		System.out.println(memory.handle());
-		System.out.println(memory.handle().address());
-
 		assertEquals(optimal, memory.type());
 		assertEquals(3, memory.size());
 		assertEquals(false, memory.isDestroyed());

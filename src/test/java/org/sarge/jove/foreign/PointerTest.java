@@ -29,27 +29,31 @@ class PointerTest {
 	@Test
 	void empty() {
 		assertEquals(null, pointer.get());
+		assertEquals(null, pointer.handle());
 	}
 
 	@Test
 	void set() {
-		final var handle = new Handle(2);
-		pointer.set(handle);
-		assertEquals(handle, pointer.get());
+		final var address = MemorySegment.ofAddress(2);
+		pointer.set(address);
+		assertEquals(address, pointer.get());
+		assertEquals(new Handle(address), pointer.handle());
 	}
 
 	@Test
 	void update() {
-		final MemorySegment address = transformer.marshal(pointer, allocator);
-		final Handle handle = new Handle(3);
-		address.set(ADDRESS, 0L, handle.address());
-		assertEquals(handle, pointer.get());
+		final MemorySegment allocated = transformer.marshal(pointer, allocator);
+		final var address = MemorySegment.ofAddress(3);
+		allocated.set(ADDRESS, 0L, address);
+		assertEquals(address, pointer.get());
+		assertEquals(new Handle(address), pointer.handle());
 	}
 
 	@Test
 	void none() {
 		transformer.marshal(pointer, allocator);
-		assertEquals(null, pointer.get());
+		assertEquals(MemorySegment.NULL, pointer.get());
+		assertEquals(null, pointer.handle());
 	}
 
 	@Test
@@ -68,7 +72,7 @@ class PointerTest {
 		address.set(pointer.layout(), 0L, data);
 
 		// Check result is the expected size and value
-		final MemorySegment result = pointer.get().address();
+		final MemorySegment result = pointer.get();
 		assertEquals(4, result.byteSize());
 		assertEquals((byte) 42, result.getAtIndex(JAVA_BYTE, 0L));
 	}

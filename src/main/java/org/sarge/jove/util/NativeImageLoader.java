@@ -3,28 +3,43 @@ package org.sarge.jove.util;
 import static java.awt.image.BufferedImage.*;
 
 import java.awt.image.*;
-import java.io.*;
+import java.io.IOException;
+import java.nio.file.*;
 
 import javax.imageio.ImageIO;
 
 import org.sarge.jove.common.*;
 
 /**
- * Loader for a Java image implemented using {@link ImageIO}.
+ * The <i>native image loader</i> uses the {@link ImageIO} library to load images from the file system.
  * @author Sarge
  */
 public class NativeImageLoader {
-	// TODO
-	public ImageData load(InputStream in) throws IOException {
-		final BufferedImage image = ImageIO.read(in);
-		if(image == null) {
-			throw new IOException("Invalid image");
+	/**
+	 * Loads an image from the given path.
+	 * @param path Image path
+	 * @return Image
+	 * @throws IOException if the image format is unsupported
+	 */
+	public ImageData load(Path path) throws IOException {
+		try(var in = Files.newInputStream(path)) {
+			final BufferedImage image = ImageIO.read(in);
+			if(image == null) {
+				throw new IOException("Unsupported image format: " + path);
+			}
+			return load(image);
 		}
-		return load(image);
 	}
 
-	// TODO
-	public ImageData load(BufferedImage image) throws IOException {
+	/**
+	 * Converts a Java image to a generic JOVE image.
+	 * TODO - doc injects alpha channel
+	 * TODO - alpha injection should be optional?
+	 * @param image Java image
+	 * @return JOVE image
+	 * @throws RuntimeException if the image format is unsupported
+	 */
+	public ImageData load(BufferedImage image) {
 		// Determine image channels
 		final String channels = switch(image.getType()) {
 			case TYPE_BYTE_GRAY -> "R";

@@ -113,7 +113,7 @@ public interface Query {
 			library.vkCreateQueryPool(device, info, null, pointer);
 
 			// Init query pool
-			return new Pool(pointer.get(), device, type, slots, library);
+			return new Pool(pointer.handle(), device, type, slots, library);
 		}
 
 		private final VkQueryType type;

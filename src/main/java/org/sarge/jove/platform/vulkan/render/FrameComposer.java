@@ -20,7 +20,7 @@ public class FrameComposer {
 	 */
 	public record BufferPolicy(VkSubpassContents contents, Set<VkCommandBufferUsage> usage) {
 		/**
-		 * Default buffer policy that provides the an {VkSubpassContents#INLINE} render sequence submitted as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} task.
+		 * Default buffer policy that provides an {VkSubpassContents#INLINE} render sequence submitted as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} task.
 		 */
 		public static final BufferPolicy DEFAULT = new BufferPolicy(VkSubpassContents.INLINE, Set.of(VkCommandBufferUsage.ONE_TIME_SUBMIT));
 
@@ -69,6 +69,8 @@ public class FrameComposer {
     			sequence.accept(buffer);
     		buffer.add(framebuffer.end());
     	buffer.end();
+
+    	// TODO - should we be releasing the buffer is one-time submit?
 
 		return buffer;
 	}

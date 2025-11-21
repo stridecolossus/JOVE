@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
@@ -17,7 +19,7 @@ class ShaderTest {
 			assertNotNull(device);
 			assertEquals(42L, info.codeSize);
 			assertArrayEquals(new byte[42], info.pCode);
-			shader.set(new Handle(2));
+			shader.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 

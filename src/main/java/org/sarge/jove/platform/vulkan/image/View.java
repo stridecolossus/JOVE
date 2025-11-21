@@ -132,7 +132,7 @@ public class View extends VulkanObject {
 			library.vkCreateImageView(device, info, null, pointer);
 
 			// Create image view
-			return new View(pointer.get(), device, image);
+			return new View(pointer.handle(), device, image);
 		}
 
 		/**

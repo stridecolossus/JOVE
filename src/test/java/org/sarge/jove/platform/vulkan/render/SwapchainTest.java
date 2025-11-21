@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 
+import java.lang.foreign.MemorySegment;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
@@ -48,7 +49,7 @@ public class SwapchainTest {
 			assertEquals(true, pCreateInfo.clipped);
 			assertEquals(null, pCreateInfo.oldSwapchain);
 
-			pSwapchain.set(new Handle(2));
+			pSwapchain.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 
@@ -56,7 +57,7 @@ public class SwapchainTest {
 		public VkResult vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView) {
 			assertNotNull(device);
 			assertEquals(null, pAllocator);
-			pView.set(new Handle(3));
+			pView.set(MemorySegment.ofAddress(3));
 			return VkResult.SUCCESS;
 		}
 

@@ -8,7 +8,7 @@ import org.sarge.jove.common.Handle;
  * A <i>pointer</i> is an indirect reference to an off-heap address.
  * @author Sarge
  */
-public class Pointer extends NativeReference<Handle> {
+public class Pointer extends NativeReference<MemorySegment> {
 	/**
 	 * Default constructor for a simple pointer.
 	 */
@@ -24,12 +24,23 @@ public class Pointer extends NativeReference<Handle> {
 		super(AddressLayout.ADDRESS.withTargetLayout(MemoryLayout.sequenceLayout(size, ValueLayout.JAVA_BYTE)));
 	}
 
-	@Override
-	protected Handle update(MemorySegment pointer, AddressLayout layout) {
-		final MemorySegment address = pointer.get(layout, 0L);
-		if(MemorySegment.NULL.equals(address)) {
+	/**
+	 * Helper.
+	 * Converts the off-heap address to a handle.
+	 * @return Referenced handle or {@code null} if not updated
+	 */
+	public Handle handle() {
+		final MemorySegment address = this.get();
+		if((address == null) || MemorySegment.NULL.equals(address)) {
 			return null;
 		}
-		return new Handle(address);
+		else {
+			return new Handle(address);
+		}
+	}
+
+	@Override
+	protected MemorySegment unmarshal(MemorySegment address, AddressLayout layout) {
+		return address.get(layout, 0);
 	}
 }

@@ -26,7 +26,7 @@ public class IntegerReference extends NativeReference<Integer> {
 	}
 
 	@Override
-	protected Integer update(MemorySegment pointer, AddressLayout layout) {
-		return pointer.get(ValueLayout.JAVA_INT, 0L);
+	protected Integer unmarshal(MemorySegment address, AddressLayout layout) {
+		return address.get(ValueLayout.JAVA_INT, 0L);
 	}
 }

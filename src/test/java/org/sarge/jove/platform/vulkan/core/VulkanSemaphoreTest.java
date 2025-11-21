@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
@@ -16,7 +18,7 @@ class VulkanSemaphoreTest {
 			assertNotNull(device);
 			assertNotNull(pCreateInfo);
 			assertEquals(null, pAllocator);
-			pSemaphore.set(new Handle(2));
+			pSemaphore.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 

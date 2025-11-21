@@ -109,7 +109,7 @@ public class RenderPass extends VulkanObject {
 			library.vkCreateRenderPass(device, info, null, pointer);
 
 			// Create render pass
-			return new RenderPass(pointer.get(), device, library);
+			return new RenderPass(pointer.handle(), device, library);
 		}
 
 		/**

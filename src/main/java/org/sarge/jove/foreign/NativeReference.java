@@ -13,7 +13,7 @@ import java.util.function.Function;
  */
 public abstract class NativeReference<T> {
 	private final AddressLayout layout;
-	private MemorySegment pointer;
+	private MemorySegment address;
 	private T value;
 
 	/**
@@ -32,23 +32,23 @@ public abstract class NativeReference<T> {
 	}
 
 	/**
-	 * @return Referenced value or {@code null} if not populated
+	 * @return Referenced value
 	 */
 	public T get() {
-		if((value == null) && (pointer != null)) {
-			value = update(pointer, layout);
+		if((value == null) && (address != null)) {
+			value = unmarshal(address, layout);
 		}
 
 		return value;
 	}
 
 	/**
-	 * Updates the by-reference value from the given pointer.
-	 * @param pointer 		Pointer
+	 * Unmarshals the referenced value.
+	 * @param address		Pointer address
 	 * @param layout		Memory layout
-	 * @return Referenced value or {@code null} if not present
+	 * @return Value
 	 */
-	protected abstract T update(MemorySegment pointer, AddressLayout layout);
+	protected abstract T unmarshal(MemorySegment address, AddressLayout layout);
 
 	/**
 	 * Sets this reference.
@@ -64,10 +64,10 @@ public abstract class NativeReference<T> {
 	 * @return Pointer
 	 */
 	private MemorySegment allocate(SegmentAllocator allocator) {
-		if(pointer == null) {
-			pointer = allocator.allocate(layout);
+		if(address == null) {
+			address = allocator.allocate(layout);
 		}
-		return pointer;
+		return address;
 	}
 
 	@Override

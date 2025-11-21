@@ -184,6 +184,7 @@ public class Swapchain extends VulkanObject {
 			this.result = result;
 		}
 
+		@Override
 		public VkResult result() {
 			return result;
 		}
@@ -407,8 +408,9 @@ public class Swapchain extends VulkanObject {
 		 */
 		public Swapchain build(LogicalDevice device, VulkanSurface.Properties properties) {
 			// Initialise swapchain descriptor
-			requireNonNull(info.imageFormat, "Expected swapchain image format");
 			requireNonNull(info.imageExtent, "Expected swapchain extent");
+			requireNonNull(info.imageFormat, "Expected swapchain image format");
+			requireNonNull(info.imageColorSpace, "Expected swapchain image colour-space");
 			info.surface = requireNonNull(properties.surface().handle());
 			info.flags = new EnumMask<>(flags);
 			info.imageUsage = new EnumMask<>(usage);
@@ -416,11 +418,11 @@ public class Swapchain extends VulkanObject {
 
 			// Create swapchain
 			final Library library = device.library();
-			final Pointer handle = new Pointer();
-			library.vkCreateSwapchainKHR(device, info, null, handle);
+			final Pointer pointer = new Pointer();
+			library.vkCreateSwapchainKHR(device, info, null, pointer);
 
 			// Retrieve swapchain images
-			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, handle.get(), count, array);
+			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, pointer.handle(), count, array);
 			final Handle[] images = VulkanFunction.invoke(function, Handle[]::new);
 
 			// Build the common image descriptor for the views
@@ -446,7 +448,7 @@ public class Swapchain extends VulkanObject {
 			}
 
 			// Create swapchain instance
-			return new Swapchain(handle.get(), device, library, info.imageFormat, extents, views);
+			return new Swapchain(pointer.handle(), device, library, info.imageFormat, extents, views);
 		}
 
 		/**

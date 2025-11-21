@@ -101,11 +101,11 @@ public class PipelineLayout extends VulkanObject {
 
 			// Allocate layout
 			final Library library = device.library();
-			final Pointer handle = new Pointer();
-			library.vkCreatePipelineLayout(device, info, null, handle);
+			final Pointer pointer = new Pointer();
+			library.vkCreatePipelineLayout(device, info, null, pointer);
 
 			// Create layout
-			return new PipelineLayout(handle.get(), device, constant);
+			return new PipelineLayout(pointer.handle(), device, constant);
 		}
 	}
 

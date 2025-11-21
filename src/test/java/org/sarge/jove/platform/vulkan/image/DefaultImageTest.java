@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
@@ -14,7 +16,7 @@ class DefaultImageTest {
 		@Override
 		public VkResult vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Handle pAllocator, Pointer pImage) {
 			assertNotNull(device);
-			pImage.set(new Handle(2));
+			pImage.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 

@@ -3,7 +3,7 @@ package org.sarge.jove.model;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.*;
 
 /**
  * A <i>mesh</i> is a renderable model comprising vertices and an optional index buffer.
@@ -28,16 +28,13 @@ public interface Mesh {
 	/**
 	 * A mesh <i>data buffer</i> specifies the properties of the vertices or index of this mesh.
 	 */
-	interface DataBuffer {
+	interface DataBuffer extends Bufferable {
 		/**
 		 * @return Data length (bytes)
 		 */
 		int length();
 
-		/**
-		 * Writes this data to the given buffer.
-		 * @param buffer Destination buffer
-		 */
+		@Override
 		void buffer(ByteBuffer buffer);
 	}
 

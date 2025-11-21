@@ -33,7 +33,7 @@ class DesktopTest {
 			}
 			else {
     			final MemorySegment pointer = allocator.allocateFrom("error");
-    			description.set(new Handle(pointer));
+    			description.set(pointer);
     			return error;
 			}
 		}

@@ -37,7 +37,7 @@ public class VulkanSemaphore extends VulkanObject {
 		final Library library = device.library();
 		final var pointer = new Pointer();
 		library.vkCreateSemaphore(device, new VkSemaphoreCreateInfo(), null, pointer);
-		return new VulkanSemaphore(pointer.get(), device);
+		return new VulkanSemaphore(pointer.handle(), device);
 	}
 
 	/**

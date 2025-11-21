@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
@@ -26,7 +27,7 @@ class VulkanBufferTest {
 			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.sharingMode);
 			assertEquals(3L, pCreateInfo.size);
 			assertEquals(null, pAllocator);
-			pBuffer.set(new Handle(3));
+			pBuffer.set(MemorySegment.ofAddress(3));
 			return VkResult.SUCCESS;
 		}
 

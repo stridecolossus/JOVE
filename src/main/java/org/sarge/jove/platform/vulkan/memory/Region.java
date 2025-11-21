@@ -16,13 +16,10 @@ public interface Region {
 	long size();
 
 	/**
-	 * Accesses a segment of this region.
-	 * @param offset		Offset
-	 * @param size			Segment size (bytes)
-	 * @return Memory segment
-	 * @throws IndexOutOfBoundsException if the {@link #offset} or {@link #size} are invalid for this region
+	 * @return Region memory
+	 * @throws IllegalStateException if the mapping has already been released or the memory has been destroyed
 	 */
-	MemorySegment segment(long offset, long size);
+	MemorySegment memory();
 
 	/**
 	 * Unmaps this region.

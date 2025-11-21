@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
@@ -29,7 +31,7 @@ class SamplerTest {
 			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeW);
 			assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, pCreateInfo.borderColor);
 			assertEquals(false, pCreateInfo.unnormalizedCoordinates);
-			pSampler.set(new Handle(2));
+			pSampler.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 	}

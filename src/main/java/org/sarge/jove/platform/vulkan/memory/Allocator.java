@@ -205,7 +205,7 @@ public class Allocator {
 
 		// Create device memory
 		++count;
-		return new DefaultDeviceMemory(pointer.get(), device, type, size);
+		return new DefaultDeviceMemory(pointer.handle(), device, type, size);
 	}
 
 	/**

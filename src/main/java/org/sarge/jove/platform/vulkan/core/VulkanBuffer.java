@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.common.VulkanUtility.checkAlignment;
 import static org.sarge.jove.util.Validation.*;
 
-import java.nio.ByteBuffer;
+import java.nio.*;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
@@ -105,16 +105,18 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Helper.
-	 * Accesses the underlying buffer memory as an NIO buffer, mapping the device memory as required.
+	 * Accesses the entire underlying buffer memory as an NIO buffer, mapping the device memory as required.
 	 * @return Underlying byte buffer
 	 */
-	protected ByteBuffer buffer() {
+	public ByteBuffer buffer() {
 		return memory
 				.region()
-				.orElseGet(() -> memory.map(0L, length))
-				.segment(0L, length)
-				.asByteBuffer();
+				.orElseGet(memory::map)
+				.memory()
+				.asByteBuffer()
+				.order(ByteOrder.nativeOrder());
 	}
+	// TODO - should vertex/index data be 'buffered' using FFM rather than NIO buffers? any benefits either way?
 
 	/**
 	 * Creates a command to copy the whole of this buffer to the given destination.
@@ -201,7 +203,7 @@ public class VulkanBuffer extends VulkanObject {
 		library.vkCreateBuffer(device, info, null, pointer);
 
 		// Query memory requirements
-		final Handle handle = pointer.get();
+		final Handle handle = pointer.handle();
 		final var requirements = new VkMemoryRequirements();
 		library.vkGetBufferMemoryRequirements(device, handle, requirements);
 
@@ -223,10 +225,11 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param length		Buffer length
 	 * @return New staging buffer
 	 */
-	public static VulkanBuffer staging(Allocator allocator, int length) {
+	public static VulkanBuffer staging(Allocator allocator, long length) {
 		final var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 				.required(VkMemoryProperty.HOST_VISIBLE)
+				.optimal(VkMemoryProperty.DEVICE_LOCAL)
 				.build();
 
 		return create(allocator, length, properties);

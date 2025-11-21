@@ -34,7 +34,7 @@ public class Shader extends VulkanObject {
 		library.vkCreateShaderModule(device, info, null, pointer);
 
 		// Create shader
-		return new Shader(pointer.get(), device);
+		return new Shader(pointer.handle(), device);
 	}
 
 	/**

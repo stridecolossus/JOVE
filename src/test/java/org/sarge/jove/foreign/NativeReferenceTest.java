@@ -17,12 +17,8 @@ class NativeReferenceTest {
 	void before() {
 		reference = new NativeReference<>(ADDRESS) {
 			@Override
-			protected MemorySegment update(MemorySegment pointer, AddressLayout layout) {
-				final MemorySegment address = pointer.get(ADDRESS, 0L);
-				if(MemorySegment.NULL.equals(address)) {
-					return null;
-				}
-				return address;
+			protected MemorySegment unmarshal(MemorySegment address, AddressLayout layout) {
+				return address.get(ADDRESS, 0L);
 			}
 		};
 		transformer = new NativeReferenceTransformer();
@@ -47,12 +43,5 @@ class NativeReferenceTest {
 		final var address = MemorySegment.ofAddress(42);
 		pointer.set(ADDRESS, 0L, address);
 		assertEquals(address, reference.get());
-	}
-
-	@Test
-	void none() {
-		final var transformer = new NativeReferenceTransformer();
-		transformer.marshal(reference, allocator);
-		assertEquals(null, reference.get());
 	}
 }

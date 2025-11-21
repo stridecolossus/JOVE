@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
@@ -21,7 +23,7 @@ class FenceTest {
 			assertNotNull(device);
 			assertEquals(new EnumMask<>(VkFenceCreateFlag.SIGNALED), pCreateInfo.flags);
 			assertEquals(null, pAllocator);
-			pFence.set(new Handle(2));
+			pFence.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 

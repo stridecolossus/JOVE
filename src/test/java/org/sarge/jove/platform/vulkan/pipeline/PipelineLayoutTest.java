@@ -27,13 +27,13 @@ class PipelineLayoutTest {
 			assertEquals(1, pCreateInfo.pPushConstantRanges.length);
 			assertEquals(new EnumMask<>(VkShaderStage.FRAGMENT), pCreateInfo.pPushConstantRanges[0].stageFlags);
 			assertEquals(0, pCreateInfo.pPushConstantRanges[0].offset);
-			pPipelineLayout.set(new Handle(2));
+			pPipelineLayout.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 
 		@Override
 		public VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout) {
-			pSetLayout.set(new Handle(3));
+			pSetLayout.set(MemorySegment.ofAddress(3));
 			return VkResult.SUCCESS;
 		}
 	}

@@ -104,18 +104,12 @@ class DefaultDeviceMemoryTest {
 			assertEquals(Optional.empty(), memory.region());
 		}
 
-		@DisplayName("can provide access to the underlying memory segment")
+		@DisplayName("can provide access to the underlying memory")
 		@Test
 		void buffer() {
-			final MemorySegment segment = region.segment(0, region.size());
+			final MemorySegment segment = region.memory();
+			assertEquals(false, segment.isReadOnly());
 			assertEquals(3L, segment.byteSize());
-		}
-
-		@DisplayName("cannot provide a buffer larger than the region")
-		@Test
-		void invalid() {
-			assertThrows(IndexOutOfBoundsException.class, () -> region.segment(0, 4));
-			assertThrows(IndexOutOfBoundsException.class, () -> region.segment(1, 3));
 		}
 
 		@DisplayName("can be destroyed")
@@ -159,7 +153,7 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("cannot access the underlying memory segment")
 		@Test
 		void buffer() {
-			assertThrows(IllegalStateException.class, () -> region.segment(0, region.size()));
+			assertThrows(IllegalStateException.class, () -> region.memory());
 		}
 	}
 
@@ -195,7 +189,7 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("cannot access the underlying memory segment")
 		@Test
 		void buffer() {
-			assertThrows(IllegalStateException.class, () -> region.segment(0, region.size()));
+			assertThrows(IllegalStateException.class, () -> region.memory());
 		}
 
 		@DisplayName("cannot be destroyed again")

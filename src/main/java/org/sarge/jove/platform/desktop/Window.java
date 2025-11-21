@@ -231,7 +231,7 @@ public class Window extends TransientNativeObject {
 		if(result != 0) {
 			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
 		}
-		return pointer.get();
+		return pointer.handle();
 	}
 
 	@Override

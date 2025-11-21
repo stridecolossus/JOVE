@@ -228,14 +228,14 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final HandlerLibrary library = library(instance, registry);
 
 			// Create handler
-			final var handle = new Pointer();
-			final VkResult result = library.vkCreateDebugUtilsMessengerEXT(instance, info, null, handle);
+			final var pointer = new Pointer();
+			final VkResult result = library.vkCreateDebugUtilsMessengerEXT(instance, info, null, pointer);
 			if(result != VkResult.SUCCESS) {
 				throw new VulkanException(result);
 			}
 
 			// Create handler instance
-			return new DiagnosticHandler(handle.get(), instance, library);
+			return new DiagnosticHandler(pointer.handle(), instance, library);
 		}
 
 		/**

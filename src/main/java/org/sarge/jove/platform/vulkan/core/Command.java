@@ -239,11 +239,11 @@ public interface Command {
 
 			// Create pool
 			final Library library = device.library();
-			final Pointer handle = new Pointer();
-			library.vkCreateCommandPool(device, info, null, handle);
+			final Pointer pointer = new Pointer();
+			library.vkCreateCommandPool(device, info, null, pointer);
 
 			// Create domain object
-			return new Pool(handle.get(), device, queue);
+			return new Pool(pointer.handle(), device, queue);
 		}
 
 		private final WorkQueue queue;

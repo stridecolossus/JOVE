@@ -1,5 +1,6 @@
 package org.sarge.jove.foreign;
 
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
@@ -7,7 +8,9 @@ import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.*;
-import org.sarge.jove.model.Primitive;
+import org.sarge.jove.geometry.Point;
+import org.sarge.jove.model.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.*;
@@ -15,8 +18,10 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
+import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
+import org.sarge.jove.platform.vulkan.pipeline.VertexInputStage.*;
 import org.sarge.jove.platform.vulkan.render.*;
 import org.sarge.jove.platform.vulkan.render.FrameComposer.BufferPolicy;
 import org.sarge.jove.platform.vulkan.render.ImageCountSwapchainConfiguration.Policy;
@@ -139,7 +144,7 @@ public class VulkanIntegrationDemo {
 		System.out.println("Creating swapchain factory...");
 		final SwapchainConfiguration[] configuration = {
 				new ImageCountSwapchainConfiguration(Policy.MIN),
-				new SurfaceFormatSwapchainConfiguration(new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR)),
+				new SurfaceFormatSwapchainConfiguration(new SurfaceFormatWrapper(VkFormat.B8G8R8A8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR)),
 				new PresentationModeSwapchainConfiguration(List.of(VkPresentModeKHR.MAILBOX_KHR)),
 				new SharingModeSwapchainConfiguration(List.of(graphicsFamily, presentationFamily)),
 				new ExtentSwapchainConfiguration()
@@ -149,8 +154,10 @@ public class VulkanIntegrationDemo {
 		// Shaders
 		System.out.println("Creating shaders...");
 		final var shaderLoader = new ShaderLoader(device);
-		final Shader vertex = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.vert"));
-		final Shader fragment = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.frag"));
+//		final Shader vertex = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.vert"));
+//		final Shader fragment = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.frag"));
+		final Shader vertex = shaderLoader.load(Path.of("../Demo/RotatingCube/src/main/resources/spv.quad.vert"));
+		final Shader fragment = shaderLoader.load(Path.of("../Demo/RotatingCube/src/main/resources/spv.quad.faked.frag"));
 
 		// Render pass
 		System.out.println("Building render pass...");
@@ -162,11 +169,31 @@ public class VulkanIntegrationDemo {
 				.add(subpass)
 				.build(device);
 
+		///////////////
+
+		final VertexBinding binding = new VertexBinding.Builder()
+        		.attribute(new VertexAttribute(0, VkFormat.R32G32B32_SFLOAT, 0))
+        		.attribute(new VertexAttribute(1, VkFormat.R32G32_SFLOAT, 3 * 4))
+        		.stride((3 + 2) * 4)
+				.build();
+
+		System.out.println("binding="+binding);
+
+		final VulkanBuffer b = vbo(device, physical, graphicsQueue);
+		final var vbo = new VertexBuffer(b);
+		System.out.println("vbo="+vbo);
+
+		///////////////
+
 		// Pipeline
 		System.out.println("Building pipeline...");
 		final var pipelineLayout = new PipelineLayout.Builder().build(device);
 		final var pipelineBuilder = new GraphicsPipelineBuilder();
-		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
+		///////////////
+		pipelineBuilder.input().add(binding);
+		pipelineBuilder.assembly().topology(Primitive.TRIANGLE_STRIP);
+		///////////////
+//		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
 		pipelineBuilder.viewport().viewportAndScissor(factory.swapchain().extents().rectangle());
 		pipelineBuilder.rasterizer().cull(VkCullMode.NONE);
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, vertex));
@@ -186,9 +213,11 @@ public class VulkanIntegrationDemo {
 
 		// Sequence
 		System.out.println("Recording render sequence...");
-		final var draw = DrawCommand.draw(3, device);
+		//final var draw = DrawCommand.draw(3, device);
+		final var draw = DrawCommand.draw(4, device);
 		final Consumer<Command.Buffer> sequence = buffer -> {
 			buffer.add(pipeline.bind());
+			buffer.add(vbo.bind(0));
 			buffer.add(draw);
 		};
 		final var composer = new FrameComposer(pool, BufferPolicy.DEFAULT, sequence);
@@ -207,6 +236,9 @@ public class VulkanIntegrationDemo {
 
 		// Cleanup
 		System.out.println("Cleanup...");
+///////////////
+b.destroy();
+///////////////
 		render.destroy();
 		pool.destroy();
 		pipeline.destroy();
@@ -225,63 +257,81 @@ public class VulkanIntegrationDemo {
 
 		System.out.println("DONE");
 	}
-}
 
-//
-//	private static VulkanBuffer demo(LogicalDevice device, PhysicalDevice physical, WorkQueue queue) {
-//
-//		// Builds mesh
-//
-//		final Vertex[] vertices = {
-//			new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT),
-//			new Vertex(new Point(-0.5f, +0.5f, 0), Coordinate2D.BOTTOM_LEFT),
-//			new Vertex(new Point(+0.5f, -0.5f, 0), Coordinate2D.TOP_RIGHT),
-//			new Vertex(new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT),
-//		};
-//
-////		final var mesh = new MutableMesh(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
-////		for(Vertex v : vertices) {
-////			mesh.add(v);
-////		}
-//
-//		// Init memory
-//
-//		final var types = MemoryType.enumerate(physical.memory());
-//		final var allocator = new Allocator(device, types);
-//
-//		// Create staging
-//
+	private static VulkanBuffer vbo(LogicalDevice device, PhysicalDevice physical, WorkQueue queue) {
+
+		// Builds mesh
+
+		final Vertex[] vertices = {
+			new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT),
+			new Vertex(new Point(-0.5f, +0.5f, 0), Coordinate2D.BOTTOM_LEFT),
+			new Vertex(new Point(+0.5f, -0.5f, 0), Coordinate2D.TOP_RIGHT),
+			new Vertex(new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT),
+		};
+
+		final var mesh = new VertexMesh(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+		for(Vertex v : vertices) {
+			mesh.add(v);
+		}
+
+		final var data = mesh.vertices();
+
+		// Init memory
+
+		final var types = MemoryType.enumerate(physical.memory());
+		final var allocator = new Allocator(device, types);
+
+		// Create staging
+
 //		final var stagingProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
 //				.required(VkMemoryProperty.HOST_VISIBLE)
 //				.optimal(VkMemoryProperty.DEVICE_LOCAL)
 //				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 //				.build();
 //
-//		final var staging = VulkanBuffer.create(device, allocator, 4 * (3 + 2) * 4, stagingProperties);
-//
-//		final ByteBuffer bb = staging.buffer();
-//		for(Vertex v : vertices) {
-//			v.buffer(bb);
-//		}
-//
-//		// Create VBO
-//
-//		final var destProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
-//				.required(VkMemoryProperty.DEVICE_LOCAL)
-//				.usage(VkBufferUsageFlag.TRANSFER_DST)
-//				.usage(VkBufferUsageFlag.VERTEX_BUFFER)
-//				.build();
-//
-//		final var dest = VulkanBuffer.create(device, allocator, 4 * (3 + 2) * 4, destProperties);
-//
-//		// Copy staging to VBO
-//
-//		final var pool = Command.Pool.create(device, queue);
-//		Work.submit(staging.copy(dest), pool);
-//
-//		staging.destroy();
-//		pool.destroy();
-//
-//		return dest;
-//	}
-//}
+//		final var staging = VulkanBuffer.create(allocator, data.length(), stagingProperties); //  4 * (3 + 2) * 4, stagingProperties);
+
+		final var staging = VulkanBuffer.staging(allocator, data.length());
+
+		/*
+		final var mem = staging.memory().map(0L, 80).segment(0L, 80);
+
+		mem.set(ValueLayout.JAVA_FLOAT, 0L, -0.5f);
+		mem.set(ValueLayout.JAVA_FLOAT, 4L, -0.5f);
+
+		mem.set(ValueLayout.JAVA_FLOAT, 20L, -0.5f);
+		mem.set(ValueLayout.JAVA_FLOAT, 24L, +0.5f);
+		mem.set(ValueLayout.JAVA_FLOAT, 36L, 1);
+
+		mem.set(ValueLayout.JAVA_FLOAT, 40L, +0.5f);
+		mem.set(ValueLayout.JAVA_FLOAT, 44L, -0.5f);
+		mem.set(ValueLayout.JAVA_FLOAT, 52L, 1);
+
+		mem.set(ValueLayout.JAVA_FLOAT, 60L, +0.5f);
+		mem.set(ValueLayout.JAVA_FLOAT, 64L, +0.5f);
+		mem.set(ValueLayout.JAVA_FLOAT, 72L, 1);
+		mem.set(ValueLayout.JAVA_FLOAT, 76L, 1);
+		*/
+
+		final ByteBuffer bb = staging.buffer();
+		data.buffer(bb);
+
+		// Create VBO
+		final var destProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
+				.required(VkMemoryProperty.DEVICE_LOCAL)
+				.usage(VkBufferUsageFlag.TRANSFER_DST)
+				.usage(VkBufferUsageFlag.VERTEX_BUFFER)
+				.build();
+
+		final var dest = VulkanBuffer.create(allocator, data.length(), destProperties);
+
+		// Copy staging to VBO
+		final var pool = Command.Pool.create(device, queue);
+		Work.submit(staging.copy(dest), pool);
+
+		staging.destroy();
+		pool.destroy();
+
+		return dest;
+	}
+}

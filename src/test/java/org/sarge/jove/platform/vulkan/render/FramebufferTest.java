@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
@@ -29,7 +30,7 @@ class FramebufferTest {
 			assertEquals(640, pCreateInfo.width);
 			assertEquals(480, pCreateInfo.height);
 			assertEquals(1, pCreateInfo.layers);
-			pFramebuffer.set(new Handle(3));
+			pFramebuffer.set(MemorySegment.ofAddress(3));
 			return VkResult.SUCCESS;
 		}
 

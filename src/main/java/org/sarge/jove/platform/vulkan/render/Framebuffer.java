@@ -147,11 +147,11 @@ public class Framebuffer extends VulkanObject {
 		// Allocate frame buffer
 		final LogicalDevice device = pass.device();
 		final Library library = device.library();
-		final Pointer handle = new Pointer();
-		library.vkCreateFramebuffer(device, info, null, handle);
+		final Pointer pointer = new Pointer();
+		library.vkCreateFramebuffer(device, info, null, pointer);
 
 		// Create frame buffer
-		return new Framebuffer(handle.get(), device, pass.handle(), attachments, extents, library);
+		return new Framebuffer(pointer.handle(), device, pass.handle(), attachments, extents, library);
 	}
 
 	/**

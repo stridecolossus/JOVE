@@ -36,7 +36,7 @@ public class PipelineCache extends VulkanObject {
 		library.vkCreatePipelineCache(device, info, null, pointer);
 
 		// Create domain object
-		return new PipelineCache(pointer.get(), device);
+		return new PipelineCache(pointer.handle(), device);
 	}
 
 	/**

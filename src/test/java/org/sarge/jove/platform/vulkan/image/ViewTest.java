@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Optional;
 
 import org.junit.jupiter.api.*;
@@ -31,7 +32,7 @@ class ViewTest {
 			assertEquals(1, pCreateInfo.subresourceRange.levelCount);
 			assertEquals(0, pCreateInfo.subresourceRange.baseArrayLayer);
 			assertEquals(1, pCreateInfo.subresourceRange.layerCount);
-			pView.set(new Handle(2));
+			pView.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 	}

@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkPipelineStage.FRAGMENT_SHADER;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
@@ -49,7 +50,7 @@ class WorkTest {
 
 		@Override
 		public VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence) {
-			pFence.set(new Handle(4));
+			pFence.set(MemorySegment.ofAddress(4));
 			return VkResult.SUCCESS;
 		}
 	}

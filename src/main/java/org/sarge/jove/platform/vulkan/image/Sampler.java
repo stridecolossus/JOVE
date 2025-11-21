@@ -281,7 +281,7 @@ public class Sampler extends VulkanObject {
 			library.vkCreateSampler(dev, info, null, pointer);
 
 			// Create domain object
-			return new Sampler(pointer.get(), dev);
+			return new Sampler(pointer.handle(), dev);
 		}
 	}
 

@@ -86,8 +86,7 @@ public class BlockTest {
 		@Test
 		void map() {
 			final Region region = memory.map(1, 2);
-			region.unmap();
-			assertEquals(region, allocation.map(1, 2));
+			assertEquals(2, region.size());
 		}
 
 		@Test

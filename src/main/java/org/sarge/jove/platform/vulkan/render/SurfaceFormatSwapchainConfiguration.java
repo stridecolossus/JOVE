@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import org.sarge.jove.platform.vulkan.VkSurfaceFormatKHR;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
@@ -30,9 +30,12 @@ public class SurfaceFormatSwapchainConfiguration implements SwapchainConfigurati
 	 * Constructor for the common case a single preferred surface format.
 	 * @param format Preferred surface format
 	 */
-	public SurfaceFormatSwapchainConfiguration(VkSurfaceFormatKHR format) {
-		final var wrapper = new SurfaceFormatWrapper(format);
-		this(List.of(wrapper::equals));
+	public SurfaceFormatSwapchainConfiguration(SurfaceFormatWrapper format) {
+		this(List.of(format::equals));
+	}
+
+	public SurfaceFormatSwapchainConfiguration(VkFormat format, VkColorSpaceKHR space) {
+		this(new SurfaceFormatWrapper(format, space));
 	}
 
 	@Override

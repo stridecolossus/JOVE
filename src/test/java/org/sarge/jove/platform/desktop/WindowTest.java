@@ -2,6 +2,7 @@ package org.sarge.jove.platform.desktop;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -39,7 +40,7 @@ class WindowTest {
 
 		@Override
 		public int glfwCreateWindowSurface(Handle instance, Window window, Handle allocator, Pointer surface) {
-			surface.set(new Handle(3));
+			surface.set(MemorySegment.ofAddress(3));
 			return 0;
 		}
 

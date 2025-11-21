@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -24,7 +25,7 @@ class RenderPassTest {
 			assertEquals(1, pCreateInfo.pAttachments.length);
 			assertEquals(1, pCreateInfo.dependencyCount);
 			assertEquals(1, pCreateInfo.pAttachments.length);
-			pRenderPass.set(new Handle(2));
+			pRenderPass.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 	}

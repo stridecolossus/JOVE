@@ -182,7 +182,7 @@ public class DefaultImage extends VulkanObject implements Image {
 			library.vkCreateImage(device, info, null, pointer);
 
 			// Retrieve image memory requirements
-			final Handle handle = pointer.get();
+			final Handle handle = pointer.handle();
 			final var requirements = new VkMemoryRequirements();
 			library.vkGetImageMemoryRequirements(device, handle, requirements);
 

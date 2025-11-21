@@ -31,13 +31,6 @@ public record Handle(MemorySegment address) {
 	}
 
 	/**
-	 * @return Underlying memory address
-	 */
-	public MemorySegment address() {
-		return address;
-	}
-
-	/**
 	 * Native transformer for a handle.
 	 */
 	public static class HandleTransformer implements Transformer<Handle, MemorySegment> {

@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -31,7 +32,7 @@ public class DescriptorSetTest {
 			assertEquals(2, pCreateInfo.pBindings[0].descriptorCount);
 			assertEquals(new EnumMask<>(VkShaderStage.FRAGMENT), pCreateInfo.pBindings[0].stageFlags);
 
-			pSetLayout.set(new Handle(3));
+			pSetLayout.set(MemorySegment.ofAddress(3));
 			return VkResult.SUCCESS;
 		}
 
@@ -43,7 +44,7 @@ public class DescriptorSetTest {
 			assertEquals(1, pCreateInfo.pPoolSizes.length);
 			assertEquals(2, pCreateInfo.pPoolSizes[0].descriptorCount);
 			assertEquals(VkDescriptorType.SAMPLER, pCreateInfo.pPoolSizes[0].type);
-			pDescriptorPool.set(new Handle(4));
+			pDescriptorPool.set(MemorySegment.ofAddress(4));
 			return VkResult.SUCCESS;
 		}
 

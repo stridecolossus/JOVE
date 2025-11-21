@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -42,7 +43,7 @@ class InstanceTest {
 			assertEquals(new Version(1, 1, 0).toInteger(), app.apiVersion);
 
 			// Create instance
-			pInstance.set(new Handle(2));
+			pInstance.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 

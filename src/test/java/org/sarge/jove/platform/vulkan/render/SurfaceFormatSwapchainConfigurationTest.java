@@ -26,7 +26,7 @@ class SurfaceFormatSwapchainConfigurationTest {
 
 	@BeforeEach
 	void before() {
-		format = new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
+		format = new SurfaceFormatWrapper(VkFormat.B8G8R8A8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
 		builder = new MockSwapchainBuilder();
 		properties = new MockSurfaceProperties() {
 			@Override
@@ -38,7 +38,7 @@ class SurfaceFormatSwapchainConfigurationTest {
 
 	@Test
 	void preferred() {
-		final var configuration = new SurfaceFormatSwapchainConfiguration(format);
+		final var configuration = new SurfaceFormatSwapchainConfiguration(new SurfaceFormatWrapper(format));
 		configuration.configure(builder, properties);
 		assertEquals(format, builder.selected);
 	}

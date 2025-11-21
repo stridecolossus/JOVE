@@ -2,6 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -43,7 +44,7 @@ class LogicalDeviceTest {
 			assertArrayEquals(new float[]{1}, queue.pQueuePriorities);
 
 			// Create device
-			device.set(new Handle(2));
+			device.set(MemorySegment.ofAddress(2));
 
 			return VkResult.SUCCESS;
 		}
@@ -52,7 +53,7 @@ class LogicalDeviceTest {
 		public void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, Pointer pQueue) {
 			assertEquals(0, queueFamilyIndex);
 			assertEquals(0, queueIndex);
-			pQueue.set(new Handle(3));
+			pQueue.set(MemorySegment.ofAddress(3));
 		}
 
 		@Override

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity.*;
 import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
@@ -30,7 +31,7 @@ class DiagnosticHandlerTest {
 			assertEquals(null, pAllocator);
 
 			// Init handler
-			pHandler.set(new Handle(2));
+			pHandler.set(MemorySegment.ofAddress(2));
 			return VkResult.SUCCESS;
 		}
 

@@ -68,10 +68,10 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		}
 
 		@Override
-		public MemorySegment segment(long offset, long size) {
+		public MemorySegment memory() {
 			checkAlive();
 			checkMapped();
-			return segment.asSlice(offset, size);
+			return segment;
 		}
 
 		@Override
@@ -127,12 +127,11 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		// Map memory
 		final LogicalDevice device = this.device();
 		final MemoryLibrary library = device.library();
-		final Pointer pointer = new Pointer(size);
+		final var pointer = new Pointer(size);
 		library.vkMapMemory(device, this, offset, size, 0, pointer);
 
 		// Create mapped region
-		region = new DefaultRegion(pointer.get().address());
-
+		region = new DefaultRegion(pointer.get());
 		return region;
 	}
 	// TODO - region rounding if not host coherent

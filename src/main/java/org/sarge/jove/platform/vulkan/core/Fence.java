@@ -29,11 +29,11 @@ public class Fence extends VulkanObject {
 
 		// Create fence
 		final Library library = device.library();
-		final var handle = new Pointer();
-		library.vkCreateFence(device, info, null, handle);
+		final var pointer = new Pointer();
+		library.vkCreateFence(device, info, null, pointer);
 
 		// Create domain object
-		return new Fence(handle.get(), device);
+		return new Fence(pointer.handle(), device);
 	}
 
 	private final Library library;

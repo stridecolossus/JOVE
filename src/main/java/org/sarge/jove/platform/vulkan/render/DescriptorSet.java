@@ -9,7 +9,7 @@ import java.util.stream.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
 import org.sarge.jove.util.EnumMask;
@@ -323,11 +323,11 @@ public class DescriptorSet implements NativeObject {
 
 			// Allocate layout
 			final Library library = device.library();
-			final Pointer handle = new Pointer();
-			library.vkCreateDescriptorSetLayout(device, info, null, handle);
+			final Pointer pointer = new Pointer();
+			library.vkCreateDescriptorSetLayout(device, info, null, pointer);
 
 			// Create layout
-			return new Layout(handle.get(), device, bindings);
+			return new Layout(pointer.handle(), device, bindings);
 		}
 
 		private final Collection<Binding> bindings;
@@ -506,11 +506,11 @@ public class DescriptorSet implements NativeObject {
 
 				// Allocate pool
 				final Library library = device.library();
-				final Pointer handle = new Pointer();
-				library.vkCreateDescriptorPool(device, info, null, handle);
+				final Pointer pointer = new Pointer();
+				library.vkCreateDescriptorPool(device, info, null, pointer);
 
 				// Create pool
-				return new Pool(handle.get(), device, info.maxSets, library);
+				return new Pool(pointer.handle(), device, info.maxSets, library);
 			}
 
 			/**

@@ -189,9 +189,9 @@ public class LogicalDevice extends TransientNativeObject {
     		 * @return Work queue
     		 */
     		private WorkQueue queue(Family family, int index) {
-    			final var handle = new Pointer();
-    			library.vkGetDeviceQueue(device, family.index(), index, handle);
-    			return new WorkQueue(handle.get(), family);
+    			final var pointer = new Pointer();
+    			library.vkGetDeviceQueue(device, family.index(), index, pointer);
+    			return new WorkQueue(pointer.handle(), family);
     		}
 		}
 	}
@@ -284,7 +284,7 @@ public class LogicalDevice extends TransientNativeObject {
 			library.vkCreateDevice(parent, info, null, pointer);
 
 			// Retrieve work queues
-			final Handle handle = pointer.get();
+			final Handle handle = pointer.handle();
 			final var helper = new RequiredQueue.Helper(handle, library);
 			final Map<Family, List<WorkQueue>> map = helper.queues(queues);
 

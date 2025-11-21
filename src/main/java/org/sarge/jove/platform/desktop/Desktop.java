@@ -116,7 +116,7 @@ public class Desktop implements TransientObject {
 			return Optional.empty();
 		}
 		else {
-			final Handle handle = description.get();
+			final Handle handle = description.handle();
 			final String message = StringTransformer.unmarshal(handle.address());
 			final String error = String.format("[%d] %s", code, message);
 			return Optional.of(error);
