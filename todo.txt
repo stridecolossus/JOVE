@@ -3,6 +3,9 @@ review use of cosine
 - not even that good implementation?
 - how to get both sin/cos from sine table?
 
+add debug support for the create instance call
+https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
+
 -------------------------------
 
 demo

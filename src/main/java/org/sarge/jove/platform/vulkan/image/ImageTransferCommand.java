@@ -128,13 +128,15 @@ public final class ImageTransferCommand implements Command {
 		/**
 		 * Populates the copy descriptor.
 		 */
-		void populate(VkBufferImageCopy copy) {
+		VkBufferImageCopy populate() {
+			final var copy = new VkBufferImageCopy();
 			copy.bufferOffset = offset;
 			copy.bufferRowLength = row.width();
 			copy.bufferImageHeight = row.height();
 			copy.imageSubresource = Subresource.layers(subresource);
 			copy.imageOffset = imageOffset.toOffset();
 			copy.imageExtent = extents.toExtent();
+			return copy;
 		}
 
 		/**
@@ -153,7 +155,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param offset Buffer offset (bytes)
 			 */
 			public Builder offset(long offset) {
-				this.offset = requireZeroOrMore(offset);
+				this.offset = offset;
 				return this;
 			}
 
@@ -162,7 +164,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param length Row length (texels)
 			 */
 			public Builder length(int length) {
-				this.length = requireZeroOrMore(length);
+				this.length = length;
 				return this;
 			}
 
@@ -171,17 +173,17 @@ public final class ImageTransferCommand implements Command {
 			 * @param height Image height (texels)
 			 */
 			public Builder height(int height) {
-				this.height = requireZeroOrMore(height);
+				this.height = height;
 				return this;
 			}
 
 			/**
-			 * Sets the image offset (default is no offset).
+			 * Sets the image offset.
 			 * @param imageOffset Image offsets
 			 * @throws IndexOutOfBoundsException if the offset array does not contain three values
 			 */
 			public Builder imageOffsets(Extents imageOffsets) {
-				this.imageOffsets = requireNonNull(imageOffsets);
+				this.imageOffsets = imageOffsets;
 				return this;
 			}
 
@@ -190,7 +192,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param extents Image extents
 			 */
 			public Builder extents(Extents extents) {
-				this.extents = requireNonNull(extents);
+				this.extents = extents;
 				return this;
 			}
 
@@ -199,6 +201,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param rect Copy rectangle
 			 */
 			public Builder region(Rectangle rect) {
+				// TODO - should extents also compose offsets?
 				imageOffsets(new Extents(new Dimensions(rect.x(), rect.y())));
 				extents(new Extents(rect.dimensions()));
 				return this;
@@ -209,7 +212,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param subresource Sub-resource
 			 */
 			public Builder subresource(Subresource subresource) {
-				this.subresource = requireNonNull(subresource);
+				this.subresource = subresource;
 				return this;
 			}
 
@@ -238,7 +241,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param buffer Buffer
 		 */
 		public Builder buffer(VulkanBuffer buffer) {
-			this.buffer = requireNonNull(buffer);
+			this.buffer = buffer;
 			return this;
 		}
 
@@ -247,7 +250,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param image Image
 		 */
 		public Builder image(Image image) {
-			this.image = requireNonNull(image);
+			this.image = image;
 			return this;
 		}
 
@@ -265,7 +268,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param layout Image layout
 		 */
 		public Builder layout(VkImageLayout layout) {
-			this.layout = requireNonNull(layout);
+			this.layout = layout;
 			return this;
 		}
 
@@ -274,7 +277,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param region Copy region
 		 */
 		public Builder region(CopyRegion region) {
-			regions.add(requireNonNull(region));
+			regions.add(region);
 			return this;
 		}
 
@@ -331,10 +334,15 @@ public final class ImageTransferCommand implements Command {
 			requireNonNull(image);
 			requireNonNull(buffer);
 			requireNonNull(layout);
-			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
+			if(regions.isEmpty()) {
+				throw new IllegalArgumentException("No copy regions specified");
+			}
 
 			// Populate copy regions
-			final VkBufferImageCopy[] array = null; // TODO StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
+			final VkBufferImageCopy[] array = regions
+					.stream()
+					.map(CopyRegion::populate)
+					.toArray(VkBufferImageCopy[]::new);
 
 			// Create copy command
 			return new ImageTransferCommand(image, buffer, write, array, layout);

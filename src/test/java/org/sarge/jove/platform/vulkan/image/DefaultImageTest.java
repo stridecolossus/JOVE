@@ -36,13 +36,12 @@ class DefaultImageTest {
 	}
 
 	private DefaultImage image;
-	private LogicalDevice device;
 	private MockImageLibrary library;
 
 	@BeforeEach
 	void before() {
 		library = new MockImageLibrary();
-		device = new MockLogicalDevice(library);
+		final var device = new MockLogicalDevice(library);
 
 		final var descriptor = new Image.Descriptor.Builder()
 				.format(VkFormat.R32G32B32A32_SFLOAT)
@@ -58,7 +57,7 @@ class DefaultImageTest {
 				.descriptor(descriptor)
 				.properties(properties)
 				.initialLayout(VkImageLayout.PREINITIALIZED)
-				.build(device, new MockAllocator());
+				.build(new MockAllocator(device));
 	}
 
 	@Test

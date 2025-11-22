@@ -13,7 +13,7 @@ import org.sarge.jove.util.EnumMask;
  * This class has been code-generated.
  */
 public class VkDebugUtilsMessengerCreateInfoEXT implements NativeStructure {
-	public VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	public final VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	public Handle pNext;
 	public int flags;
 	public EnumMask<VkDebugUtilsMessageSeverity> messageSeverity;
@@ -28,9 +28,7 @@ public class VkDebugUtilsMessengerCreateInfoEXT implements NativeStructure {
 				PADDING,
 				POINTER.withName("pNext"),
 				JAVA_INT.withName("flags"),
-//				PADDING,
 				JAVA_INT.withName("messageSeverity"),
-//				PADDING,
 				JAVA_INT.withName("messageType"),
 				PADDING,
 				POINTER.withName("pfnUserCallback"),
@@ -38,5 +36,3 @@ public class VkDebugUtilsMessengerCreateInfoEXT implements NativeStructure {
 		);
 	}
 }
-
-// TODO - how were we meant to know that there is NO padding above 1. after flags and 2. after severity!!!

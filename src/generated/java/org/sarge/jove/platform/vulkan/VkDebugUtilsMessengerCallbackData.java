@@ -12,7 +12,7 @@ import org.sarge.jove.foreign.NativeStructure;
  * This class has been code-generated.
  */
 public class VkDebugUtilsMessengerCallbackData implements NativeStructure {
-	public /*final*/ VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
+	public final VkStructureType sType = VkStructureType.DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
 	public Handle pNext;
 	public int flags;
 	public String pMessageIdName;

@@ -3,14 +3,10 @@ package org.sarge.jove.platform.vulkan.memory;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.util.*;
-import java.util.function.Predicate;
-
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanException;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.util.EnumMask;
 
 /**
  * An <i>allocator</i> is responsible for allocating device memory for a given request.
@@ -31,7 +27,8 @@ public class Allocator {
 	}
 
 	private final LogicalDevice device;
-	private final MemoryType[] types;
+	//private final MemoryType[] types;
+	private final MemorySelector selector;
 	private final long page;
 	private final int max;
 	private int count;
@@ -44,7 +41,8 @@ public class Allocator {
 	public Allocator(LogicalDevice device, MemoryType[] types) {
 		final var limits = device.limits();
 		this.device = requireNonNull(device);
-		this.types = Arrays.copyOf(types, types.length);
+		//this.types = Arrays.copyOf(types, types.length);
+		this.selector = new MemorySelector(types);
 		this.page = requireOneOrMore((long) limits.get("bufferImageGranularity"));
 		this.max = constrain(limits.get("maxMemoryAllocationCount"), Integer.MAX_VALUE);
 	}
@@ -103,66 +101,110 @@ public class Allocator {
 	 * @throws AllocationException if there is no matching memory type for the request or the memory cannot be allocated by the hardware
 	 */
 	public DeviceMemory allocate(VkMemoryRequirements requirements, MemoryProperties<?> properties) throws AllocationException {
-		final MemoryType type = select(requirements, properties);
+		final MemoryType type = selector
+				.select(requirements.memoryTypeBits, properties)
+				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(requirements, properties)));
+
 		return allocate(type, requirements.size);
 	}
 
-	/**
-	 * Selects the memory type for the given request.
-	 * @param requirements			Requirements
-	 * @param properties			Memory properties
-	 * @return Selected memory type
-	 * @throws AllocationException if no memory type matches the request
-	 */
-	private MemoryType select(VkMemoryRequirements requirements, MemoryProperties<?> properties) throws AllocationException {
-		final var matcher = new MemoryTypeMatcher(properties);
-		return EnumMask.stream(requirements.memoryTypeBits)
-				.mapToObj(n -> types[n])
-				.filter(matcher)
-				.findAny()
-				.or(matcher::fallback)
-				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(requirements, properties)));
-	}
-
-	/**
-	 * Matches a memory type for the given properties and records the fallback as a side-effect.
-	 */
-	private static class MemoryTypeMatcher implements Predicate<MemoryType> {
-		private final MemoryProperties<?> properties;
-		private MemoryType fallback;
-
-		public MemoryTypeMatcher(MemoryProperties<?> properties) {
-			this.properties = properties;
-		}
-
-		@Override
-		public boolean test(MemoryType type) {
-			// Skip if this type does not match the minimal requirements
-			if(!matches(type, properties.required())) {
-				return false;
-			}
-
-			// Check for optimal match
-			if(matches(type, properties.optimal())) {
-				return true;
-			}
-
-			// Record fallback candidate
-			if(fallback == null) {
-				fallback = type;
-			}
-
-			return false;
-		}
-
-		private static boolean matches(MemoryType type, Set<VkMemoryProperty> properties) {
-			return type.properties().containsAll(properties);
-		}
-
-		private Optional<MemoryType> fallback() {
-			return Optional.ofNullable(fallback);
-		}
-	}
+//	/**
+//	 * Selects the memory type for the given request.
+//	 * @param requirements			Requirements
+//	 * @param properties			Memory properties
+//	 * @return Selected memory type
+//	 * @throws AllocationException if no memory type matches the request
+//	 */
+//	private MemoryType select(VkMemoryRequirements requirements, MemoryProperties<?> properties) throws AllocationException {
+//		final var matcher = new MemoryTypeMatcher(properties);
+//
+//		return IntStream
+//				.range(0, Integer.SIZE)
+//				.filter(n -> (requirements.memoryTypeBits & (1 << n)) == n)
+//				.mapToObj(n -> types[n])
+//				.filter(matcher)
+//				.findAny()
+//				.or(matcher::fallback)
+//				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(requirements, properties)));
+//
+////		System.out.println(Integer.toBinaryString(requirements.memoryTypeBits));
+////
+////		for(int n = 0; n < 32; ++n) {
+////
+////			if((requirements.memoryTypeBits & (1 << n)) == 0) {
+////				System.out.println("skip "+n);
+////				continue;
+////			}
+////
+////			final MemoryType type = types[n];
+////
+////			System.out.println("test "+n);
+////			if(matcher.test(type)) {
+////				System.out.println("matched "+n);
+////				return type;
+////			}
+////		}
+////
+////		System.out.println("fallback");
+////		return matcher.fallback().orElseThrow();
+//
+////		return EnumMask.stream(requirements.memoryTypeBits)
+////				.mapToObj(n -> types[n])
+////				.filter(matcher)
+////				.findAny()
+////				.or(matcher::fallback)
+////				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(requirements, properties)));
+//	}
+//
+//	/**
+//	 * Matches a memory type for the given properties and records the fallback as a side-effect.
+//	 */
+//	private static class MemoryTypeMatcher implements Predicate<MemoryType> {
+//		private final MemoryProperties<?> properties;
+//		private MemoryType fallback;
+//
+//		/**
+//		 * Constructor.
+//		 * @param properties Memory properties to be matched
+//		 */
+//		MemoryTypeMatcher(MemoryProperties<?> properties) {
+//			this.properties = properties;
+//		}
+//
+//		@Override
+//		public boolean test(MemoryType type) {
+//			// Test whether matches minimal requirements
+//			if(!matches(type, properties.required())) {
+//				return false;
+//			}
+//
+//			// Test whether matches optimal requirements
+//			if(matches(type, properties.optimal())) {
+//				return true;
+//			}
+//
+//			// Record fallback candidate
+//			if(fallback == null) {
+//				fallback = type;
+//			}
+//
+//			return false;
+//		}
+//
+//		/**
+//		 * @return Whether a memory type matches the given memory properties
+//		 */
+//		private static boolean matches(MemoryType type, Set<VkMemoryProperty> properties) {
+//			return type.properties().containsAll(properties);
+//		}
+//
+//		/**
+//		 * @return Fallback memory type
+//		 */
+//		private Optional<MemoryType> fallback() {
+//			return Optional.ofNullable(fallback);
+//		}
+//	}
 
 	/**
 	 * Allocates memory of the given type.

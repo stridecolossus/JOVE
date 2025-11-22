@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.*;
 
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.common.*;
 
@@ -184,5 +184,25 @@ public class ImageData {
 	 */
 	protected int pixel(int index) {
 		return data[index];
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(channels, size, layout);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof ImageData that) &&
+				this.channels.equals(that.channels()) &&
+				this.size().equals(that.size()) &&
+				this.layout().equals(that.layout());
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Imagedata[channels=%s size=%s layout=%s length=%d]", channels, size, layout, data.length);
 	}
 }

@@ -9,6 +9,8 @@ public class MockImage implements Image {
 			.format(VkFormat.R32G32B32A32_SFLOAT)
 			.extents(new Dimensions(640, 480));
 
+	public boolean destroyed;
+
 	@Override
 	public Handle handle() {
 		return new Handle(3);
@@ -17,5 +19,10 @@ public class MockImage implements Image {
 	@Override
 	public Descriptor descriptor() {
 		return descriptor.build();
+	}
+
+	@Override
+	public void destroy() {
+		destroyed = true;
 	}
 }

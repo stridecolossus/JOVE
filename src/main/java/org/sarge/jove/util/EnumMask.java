@@ -5,7 +5,7 @@ import static java.util.stream.Collectors.toSet;
 import java.lang.foreign.*;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.*;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.foreign.Transformer;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -69,29 +69,12 @@ public record EnumMask<E extends IntEnum>(int bits) {
 	 * @see #stream(ReverseMapping)
 	 */
 	public Set<E> enumerate(ReverseMapping<E> mapping) {
-		return this.stream(mapping).collect(toSet());
-	}
-
-	/**
-	 * Enumerates the constants of this bitfield.
-	 * @param mapping Enumeration mapping
-	 * @return Constants
-	 */
-	public Stream<E> stream(ReverseMapping<E> mapping) {
-		return stream(bits)
+		return IntStream
+				.range(0, Integer.SIZE - Integer.numberOfLeadingZeros(bits))
 				.map(n -> 1 << n)
-				.filter(this::contains)
-				.mapToObj(mapping::map);
-	}
-
-	/**
-	 * Helper - Enumerates the indices of the given bitfield up to the highest one bit.
-	 * @param bits Bitfield
-	 * @return Bit indices
-	 */
-	public static IntStream stream(int bits) {
-		final int range = Integer.SIZE - Integer.numberOfLeadingZeros(bits);
-		return IntStream.range(0, range);
+				.filter(n -> (bits & n) == n)
+				.mapToObj(mapping::map)
+				.collect(toSet());
 	}
 
 	@Override

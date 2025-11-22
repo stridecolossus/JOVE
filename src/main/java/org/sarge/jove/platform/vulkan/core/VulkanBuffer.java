@@ -229,11 +229,17 @@ public class VulkanBuffer extends VulkanObject {
 		final var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 				.required(VkMemoryProperty.HOST_VISIBLE)
-				.optimal(VkMemoryProperty.DEVICE_LOCAL)
+				.required(VkMemoryProperty.HOST_COHERENT)		// TODO - added
+				.optimal(VkMemoryProperty.DEVICE_LOCAL)			// TODO - not needed?
 				.build();
 
 		return create(allocator, length, properties);
 	}
+
+//	public static VulkanBuffer staging(Allocator allocator, byte[] data) {
+//		final var staging = staging(allocator, data.length);
+//		staging.write(data);
+//	}
 
 	/**
 	 * Vulkan buffer API.
