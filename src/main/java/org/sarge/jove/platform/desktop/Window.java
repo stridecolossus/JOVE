@@ -98,15 +98,25 @@ public class Window extends TransientNativeObject {
 //	}
 
 	/**
+	 * Unit for window dimensions.
+	 */
+	public enum Unit {
+		PIXEL,
+		SCREEN_COORDINATE
+	}
+
+	/**
+	 * @param unit Window size unit
 	 * @return Size of this window
 	 */
 	@MainThread
-	public Dimensions size() {
+	public Dimensions size(Unit unit) {
 		final var w = new IntegerReference();
 		final var h = new IntegerReference();
-		// TODO - library.glfwGetWindowSize(this, w, h);
-		// should this be either/or? what about setting the size?
-		library.glfwGetFramebufferSize(this, w, h);
+		switch(unit) {
+			case PIXEL				-> library.glfwGetFramebufferSize(this, w, h);
+			case SCREEN_COORDINATE	-> library.glfwGetWindowSize(this, w, h);
+		}
 		return new Dimensions(w.get(), h.get());
 	}
 
@@ -118,6 +128,7 @@ public class Window extends TransientNativeObject {
 	public void size(Dimensions size) {
 		library.glfwSetWindowSize(this, size.width(), size.height());
 	}
+	// TODO - unit
 
 	/**
 	 * Resets the window title.

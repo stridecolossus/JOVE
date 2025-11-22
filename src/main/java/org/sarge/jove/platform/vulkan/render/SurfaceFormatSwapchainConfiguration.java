@@ -2,75 +2,45 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
+import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
 import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
 /**
  * The <i>surface format</i> swapchain configuration selects a preferred surface format for the swapchain.
- * @see SurfaceFormatWrapper
+ * This implementation falls back to the <b>first</b> surface format supported by the surface.
  * @author Sarge
  */
 public class SurfaceFormatSwapchainConfiguration implements SwapchainConfiguration {
-	private final List<Predicate<VkSurfaceFormatKHR>> matchers;
+	private final SurfaceFormatWrapper format;
 
 	/**
 	 * Constructor.
-	 * @param matchers Surface format matchers in order of preference
+	 * @param format Surface format
 	 */
-	public SurfaceFormatSwapchainConfiguration(List<Predicate<VkSurfaceFormatKHR>> matchers) {
-		this.matchers = requireNonNull(matchers);
+	public SurfaceFormatSwapchainConfiguration(SurfaceFormatWrapper format) {
+		this.format = requireNonNull(format);
 	}
 
 	/**
-	 * Constructor for the common case a single preferred surface format.
-	 * @param format Preferred surface format
+	 * Constructor.
+	 * @param format		Image format
+	 * @param space			Colour space
 	 */
-	public SurfaceFormatSwapchainConfiguration(SurfaceFormatWrapper format) {
-		this(List.of(format::equals));
-	}
-
 	public SurfaceFormatSwapchainConfiguration(VkFormat format, VkColorSpaceKHR space) {
 		this(new SurfaceFormatWrapper(format, space));
 	}
 
 	@Override
-	public void configure(Swapchain.Builder builder, Properties properties) {
-		// Match available formats
-		final var matcher = new Object() {
-			private Stream<VkSurfaceFormatKHR> stream(Predicate<VkSurfaceFormatKHR> matcher) {
-				return properties
-						.formats()
-						.stream()
-						.filter(matcher);
-			}
-		};
-
-		// Select matching format
-		final VkSurfaceFormatKHR selected = matchers
-				.stream()
-				.flatMap(matcher::stream)
-				.findAny()
-				.or(() -> fallback(properties))
-				.orElseThrow();
-
-		// Apply
-		builder.format(selected);
-	}
-
-	/**
-	 * Selects the <b>first</b> available format as a fallback.
-	 * @param properties Surface properties
-	 * @return Fallback format
-	 */
-	protected static Optional<VkSurfaceFormatKHR> fallback(Properties properties) {
-		return properties
+	public void configure(Builder builder, Properties properties) {
+		final VkSurfaceFormatKHR selected = properties
 				.formats()
 				.stream()
-				.findAny();
+				.filter(format::equals)
+				.findAny()
+				.orElse(properties.formats().getFirst());
+
+		builder.format(selected);
 	}
 }

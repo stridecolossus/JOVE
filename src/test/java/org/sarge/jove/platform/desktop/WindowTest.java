@@ -6,6 +6,8 @@ import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.DesktopTest.MockDesktopLibrary;
@@ -98,16 +100,17 @@ class WindowTest {
 		assertEquals(false, window.isDestroyed());
 	}
 
-	@Test
-	void size() {
-		assertEquals(new Dimensions(100, 200), window.size());
+	@ParameterizedTest
+	@EnumSource
+	void size(Window.Unit unit) {
+		assertEquals(new Dimensions(100, 200), window.size(unit));
 	}
 
 	@Test
 	void resize() {
 		final var size = new Dimensions(300, 400);
 		window.size(size);
-		assertEquals(size, window.size());
+		assertEquals(size, window.size(Window.Unit.SCREEN_COORDINATE));
 	}
 
 	@Test

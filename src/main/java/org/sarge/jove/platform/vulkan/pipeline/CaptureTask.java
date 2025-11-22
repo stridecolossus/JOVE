@@ -101,7 +101,7 @@ public class CaptureTask {
 				.descriptor(descriptor)
 				.properties(properties)
 				.tiling(VkImageTiling.LINEAR)
-				.build(device, allocator);
+				.build(allocator);
 	}
 
 	/**

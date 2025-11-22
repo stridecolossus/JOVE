@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
 import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;

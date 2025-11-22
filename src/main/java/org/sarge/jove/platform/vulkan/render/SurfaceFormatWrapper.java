@@ -45,6 +45,6 @@ public class SurfaceFormatWrapper extends VkSurfaceFormatKHR {
 
 	@Override
 	public String toString() {
-		return String.format("SurfaceFormatWrapper[format=%s space=%s]", format, colorSpace);
+		return String.format("SurfaceFormat[format=%s space=%s]", format, colorSpace);
 	}
 }

@@ -32,7 +32,7 @@ class ExtentSwapchainConfigurationTest {
 			public Window window() {
 				return new MockWindow() {
 					@Override
-					public Dimensions size() {
+					public Dimensions size(Window.Unit unit) {
 						return new Dimensions(1024, 768);
 					}
 				};

@@ -26,7 +26,7 @@ public class ExtentSwapchainConfiguration implements SwapchainConfiguration {
 			builder.extent(current);
 		}
 		else {
-			final Dimensions size = properties.surface().window().size();
+			final Dimensions size = properties.surface().window().size(Window.Unit.PIXEL);
 			final var min = capabilities.minImageExtent;
 			final var max = capabilities.maxImageExtent;
 			final int w = Math.clamp(size.width(), min.width, max.width);

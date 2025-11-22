@@ -45,10 +45,4 @@ class DimensionsTest {
 		assertEquals(true, dimensions.contains(new Dimensions(1, 2)));
 		assertEquals(false, dimensions.contains(new Dimensions(1024, 768)));
 	}
-
-	@DisplayName("Dimensions can bve converted to a rectangle at the origin")
-	@Test
-	void rectangle() {
-		assertEquals(new Rectangle(0, 0, 640, 480), dimensions.rectangle());
-	}
 }
