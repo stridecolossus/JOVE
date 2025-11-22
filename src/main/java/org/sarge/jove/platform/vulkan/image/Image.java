@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
  * A Vulkan <i>image</i> is a texture or data image stored on the hardware.
  * @author Sarge
  */
-public interface Image extends NativeObject {
+public interface Image extends NativeObject, TransientObject {
 	/**
 	 * Number of array layers for a cube-map image.
 	 */

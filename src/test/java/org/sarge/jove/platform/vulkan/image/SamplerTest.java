@@ -81,7 +81,7 @@ class SamplerTest {
 
 		@BeforeEach
 		void before() {
-			view = new View(new Handle(2), device, new MockImage());
+			view = new View(new Handle(2), device, new MockImage(), true);
 			resource = sampler.resource(view);
 		}
 

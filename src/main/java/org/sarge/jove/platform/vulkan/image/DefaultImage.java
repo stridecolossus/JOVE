@@ -152,7 +152,7 @@ public class DefaultImage extends VulkanObject implements Image {
 		 * @return New image
 		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */
-		public DefaultImage build(LogicalDevice device, Allocator allocator) {
+		public DefaultImage build(Allocator allocator) {
 			// Validate
 			if(descriptor == null) {
 				throw new IllegalArgumentException("No image descriptor specified");
@@ -177,6 +177,7 @@ public class DefaultImage extends VulkanObject implements Image {
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
+			final LogicalDevice device = allocator.device();
 			final Library library = device.library();
 			final Pointer pointer = new Pointer();
 			library.vkCreateImage(device, info, null, pointer);

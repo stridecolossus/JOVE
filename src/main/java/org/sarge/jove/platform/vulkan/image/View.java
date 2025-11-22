@@ -2,34 +2,34 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.*;
+import java.util.Objects;
 
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.render.Framebuffer;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * An <i>image view</i> is a reference to an {@link Image} used as a frame buffer <i>attachment</i>.
- * @see Framebuffer
+ * An <i>image view</i> is the entry-point for operations on an image.
  * @author Sarge
  */
 public class View extends VulkanObject {
 	private final Image image;
-	private ClearValue clear;
+	private final boolean release;
 
 	/**
 	 * Constructor.
 	 * @param handle 	Image view handle
 	 * @param device	Logical device
 	 * @param image		Underlying image
+	 * @param release	Whether the image is also destroyed when this image is released
 	 */
-	public View(Handle handle, LogicalDevice device, Image image) {
+	public View(Handle handle, LogicalDevice device, Image image, boolean release) {
 		super(handle, device);
 		this.image = requireNonNull(image);
+		this.release = release;
 	}
 
 	/**
@@ -39,37 +39,22 @@ public class View extends VulkanObject {
 		return image;
 	}
 
-	/**
-	 * Clear value for this view attachment.
-	 * @return Clear value
-	 */
-	public Optional<ClearValue> clear() {
-		return Optional.ofNullable(clear);
-	}
-
-	/**
-	 * Sets the clear value for this view attachment.
-	 * @param clear Clear value or {@code null} if not cleared
-	 * @throws IllegalArgumentException if the clear value is incompatible with this view
-	 */
-	public View clear(ClearValue clear) {
-		if(Objects.nonNull(clear)) {
-			final VkImageAspect aspect = clear.aspect();
-			final boolean valid = image.descriptor().aspects().contains(aspect);
-			if(!valid) {
-				throw new IllegalArgumentException("Invalid clear value for this view: clear=%s view=%s".formatted(clear, this));
-			}
-		}
-
-		this.clear = clear;
-
-		return this;
-	}
-
 	@Override
 	protected Destructor<View> destructor() {
 		final Library library = this.device().library();
 		return library::vkDestroyImageView;
+	}
+
+	@Override
+	protected void release() {
+		if(release && !image.isDestroyed()) {
+			image.destroy();
+		}
+	}
+
+	@Override
+	public String toString() {
+		return String.format("View[image=%s]", image);
 	}
 
 	/**
@@ -79,6 +64,7 @@ public class View extends VulkanObject {
 		private VkImageViewType type;
 		private ComponentMapping mapping = ComponentMapping.IDENTITY;
 		private Subresource subresource;
+		private boolean release;
 
 		/**
 		 * Sets the view type of this image.
@@ -88,7 +74,6 @@ public class View extends VulkanObject {
 			this.type = type;
 			return this;
 		}
-		// TODO - is this ALWAYS that of the image?
 
 		/**
 		 * Sets the component mapping for the view.
@@ -110,6 +95,14 @@ public class View extends VulkanObject {
 		}
 
 		/**
+		 * Sets the image to be automatically destroyed when the view is released.
+		 */
+		public Builder release() {
+			this.release = true;
+			return this;
+		}
+
+		/**
 		 * Constructs this image view.
 		 * The image type and subresource range are initialised to the given {@link #image} if not configured.
 		 * @param device	Logical device
@@ -117,6 +110,11 @@ public class View extends VulkanObject {
 		 * @return Image view
 		 */
 		public View build(LogicalDevice device, Image image) {
+			// Validate
+			if(release && !(image instanceof TransientNativeObject)) {
+				throw new IllegalStateException("Only default images can be released");
+			}
+
 			// Build view descriptor
 			final var info = new VkImageViewCreateInfo();
 			info.flags = new EnumMask<>();
@@ -132,7 +130,7 @@ public class View extends VulkanObject {
 			library.vkCreateImageView(device, info, null, pointer);
 
 			// Create image view
-			return new View(pointer.handle(), device, image);
+			return new View(pointer.handle(), device, image, release);
 		}
 
 		/**

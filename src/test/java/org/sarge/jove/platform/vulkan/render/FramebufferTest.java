@@ -70,7 +70,7 @@ class FramebufferTest {
 
 		final var pass = new MockRenderPass(device);
 
-		final var view = new View(new Handle(2), device, new MockImage());
+		final var view = new View(new Handle(2), device, new MockImage(), false);
 		view.clear(new ColourClearValue(Colour.BLACK));
 
 		framebuffer = Framebuffer.create(pass, new Rectangle(640, 480), List.of(view));
@@ -107,8 +107,8 @@ class FramebufferTest {
 		@BeforeEach
 		void before() {
 			final var pass = new MockRenderPass(device);
-			final var colour = new View(new Handle(4), device, new MockImage());
-			depth = new View(new Handle(5), device, new MockImage());
+			final var colour = new View(new Handle(4), device, new MockImage(), false);
+			depth = new View(new Handle(5), device, new MockImage(), true);
 			swapchain = new Swapchain(new Handle(6), device, library, VkFormat.R32G32B32A32_SFLOAT, new Dimensions(640, 480), List.of(colour, colour));
 			group = new Group(swapchain, pass, List.of(depth));
 		}

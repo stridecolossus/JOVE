@@ -147,14 +147,7 @@ public class SwapchainTest {
 	void before() {
 		library = new MockSwapchainLibrary();
 		device = new MockLogicalDevice(library);
-		// TODO...
-		view = new View(new Handle(3), device, new MockImage()) {
-			@Override
-			protected Destructor<View> destructor() {
-				return Destructor.empty();
-			}
-		};
-		// ...TODO
+		view = new View(new Handle(3), device, new MockImage(), false);
 		swapchain = new Swapchain(new Handle(2), device, library, VkFormat.B8G8R8A8_UNORM, new Dimensions(640, 480), List.of(view));
 	}
 

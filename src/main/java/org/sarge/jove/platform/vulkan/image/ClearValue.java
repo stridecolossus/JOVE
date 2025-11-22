@@ -10,46 +10,48 @@ import org.sarge.jove.util.Percentile;
  */
 public sealed interface ClearValue {
 	/**
-	 * @return Expected image aspect
+	 * Unused clear value.
 	 */
-	VkImageAspect aspect();
-
-	/**
-	 * Populates the given clear value descriptor.
-	 * @param value Descriptor
-	 */
-	void populate(VkClearValue descriptor);
+	record None() implements ClearValue {
+	}
 
 	/**
 	 * Clear value for a colour attachment.
 	 */
 	record ColourClearValue(Colour colour) implements ClearValue {
-		@Override
-		public VkImageAspect aspect() {
-			return VkImageAspect.COLOR;
-		}
-
-		@Override
-		public void populate(VkClearValue clear) {
-			clear.color = new VkClearColorValue();
-			clear.color.float32 = colour.toArray();
-		}
 	}
 
 	/**
 	 * Clear value for the depth-stencil attachment.
 	 */
 	record DepthClearValue(Percentile depth) implements ClearValue {
-		@Override
-		public VkImageAspect aspect() {
-			return VkImageAspect.DEPTH;
+	}
+
+	/**
+	 * Builds the clear value descriptor for a framebuffer attachment.
+	 * @param clear Clear value
+	 * @return Clear value descriptor
+	 */
+	static VkClearValue populate(ClearValue clear) {
+		final var descriptor = new VkClearValue();
+
+		switch(clear) {
+    		case None _ -> {
+    			// Empty
+    		}
+
+			case ColourClearValue(Colour colour) -> {
+				descriptor.color = new VkClearColorValue();
+				descriptor.color.float32 = colour.toArray();
+			}
+
+			case DepthClearValue(Percentile depth) -> {
+				descriptor.depthStencil = new VkClearDepthStencilValue();
+				descriptor.depthStencil.depth = depth.value();
+				descriptor.depthStencil.stencil = 0;
+			}
 		}
 
-		@Override
-		public void populate(VkClearValue clear) {
-			clear.depthStencil = new VkClearDepthStencilValue();
-			clear.depthStencil.depth = depth.value();
-			clear.depthStencil.stencil = 0;
-		}
+		return descriptor;
 	}
 }

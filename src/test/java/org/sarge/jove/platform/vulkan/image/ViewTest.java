@@ -3,14 +3,12 @@ package org.sarge.jove.platform.vulkan.image;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.MemorySegment;
-import java.util.Optional;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.util.EnumMask;
 
 class ViewTest {
@@ -46,18 +44,6 @@ class ViewTest {
 		device = new MockLogicalDevice(new MockViewLibrary());
 		image = new MockImage();
 		view = new View.Builder().build(device, image);
-	}
-
-	@Test
-	void none() {
-		assertEquals(Optional.empty(), view.clear());
-	}
-
-	@Test
-	void clear() {
-		final var clear = new ColourClearValue(Colour.WHITE);
-		view.clear(clear);
-		assertEquals(Optional.of(clear), view.clear());
 	}
 
 	@Test
