@@ -72,15 +72,7 @@ public class StructureTransformer implements Transformer<NativeStructure, Memory
 	 */
 	private void update(MemorySegment address, NativeStructure structure) {
 		for(FieldMapping f : mappings) {
-			// TODO
-			try {
-				f.unmarshal(address, structure);
-			}
-			catch(Exception e) {
-				e.printStackTrace();
-				System.err.println("mapping="+f+" structure="+structure);
-				throw e;
-			}
+			f.unmarshal(address, structure);
 		}
 	}
 

@@ -26,6 +26,11 @@ public class StringTransformer implements Transformer<String, MemorySegment> {
 	 * @return Unmarshalled string
 	 */
 	public static String unmarshal(MemorySegment address) {
-		return address.reinterpret(Integer.MAX_VALUE).getString(0L);
+		if(address.byteSize() == 0L) {
+    		return address.reinterpret(Integer.MAX_VALUE).getString(0L);
+		}
+		else {
+			return address.getString(0L);
+		}
 	}
 }

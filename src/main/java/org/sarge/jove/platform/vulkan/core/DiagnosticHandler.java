@@ -1,9 +1,8 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
-import static org.sarge.jove.foreign.NativeStructure.POINTER;
 
 import java.lang.foreign.*;
 import java.lang.invoke.*;
@@ -134,7 +133,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 * @return {@code false}
 		 */
 		@SuppressWarnings({"unused", "unchecked"})
-		public int message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
+		public boolean message(int severity, int typeMask, MemorySegment pCallbackData, MemorySegment pUserData) {
 			// Unmarshal message properties
 			final var types = new EnumMask<VkDebugUtilsMessageType>(typeMask).enumerate(TYPE);
 			final var level = SEVERITY.map(severity);
@@ -147,7 +146,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final Message message = new Message(level, types, data);
 			consumer.accept(message);
 
-			return 0;
+			return false;
 		}
 
 		/**
@@ -157,15 +156,14 @@ public class DiagnosticHandler extends TransientNativeObject {
 		MemorySegment address() throws Exception {
 			// Lookup callback method and bind to handler
 			final Class<?>[] signature = {int.class, int.class, MemorySegment.class, MemorySegment.class};
-			final var method = MethodType.methodType(int.class, signature);
+			final var method = MethodType.methodType(boolean.class, signature);
     		final MethodHandle handle = MethodHandles.lookup().findVirtual(Callback.class, "message", method).bindTo(this);
-    		// TODO - sometimes fails, try this with a static method?
 
     		// Link upcall stub
-			final MemoryLayout[] layout = {JAVA_INT, JAVA_INT, POINTER, POINTER}; //ADDRESS, ADDRESS};
-    		final var descriptor = FunctionDescriptor.of(JAVA_INT, layout);
+			final MemoryLayout[] layout = {JAVA_INT, JAVA_INT, ADDRESS, ADDRESS};
+    		final var descriptor = FunctionDescriptor.of(JAVA_BOOLEAN, layout);
     		final var linker = Linker.nativeLinker();
-   			return linker.upcallStub(handle, descriptor, Arena.ofAuto());
+   			return linker.upcallStub(handle, descriptor, Arena.global());
 		}
 	}
 

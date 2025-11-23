@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
+import java.lang.invoke.VarHandle.AccessMode;
 
 /**
  * A <i>field mapping</i> marshals a structure field.
@@ -34,17 +35,23 @@ class FieldMapping {
 	 * @param allocator		Allocator
 	 */
 	public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
-		// TODO - try..catch here? and unmarshal?
 		final Object value = field.get(structure);
 		marshal.marshal(value, transformer.delegate(), address, allocator);
 	}
 
 	/**
 	 * Unmarshals this field to the given structure.
+	 * @implNote Skips final fields
 	 * @param address			Off-heap structure
 	 * @param structure			Structure instance
 	 */
 	public void unmarshal(MemorySegment address, NativeStructure structure) {
+		if(!field.isAccessModeSupported(AccessMode.SET)) {
+			// TODO - can we not just omit this mapping? => factory needs to handle optional case
+			// TODO - can the generator even work out whether a field should be final? do we want it to? i.e. get rid of final 'sType'
+			return;
+		}
+
 		final Object value = marshal.unmarshal(address, transformer);
 		field.set(structure, value);
 	}
