@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
@@ -18,17 +16,26 @@ import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
  * @author Sarge
  */
 public class RenderPass extends VulkanObject {
+	private final List<Attachment> attachments;
 	private final Library library;
 
 	/**
 	 * Constructor.
 	 * @param handle			Render pass handle
 	 * @param device			Logical device
-	 * @param library			Render pass library
+	 * @param attachments		Attachments used by this render pass
 	 */
-	RenderPass(Handle handle, LogicalDevice device, Library library) {
+	RenderPass(Handle handle, LogicalDevice device, List<Attachment> attachments) {
 		super(handle, device);
-		this.library = requireNonNull(library);
+		this.attachments = List.copyOf(attachments);
+		this.library = device.library();
+	}
+
+	/**
+	 * @return Attachments used by this render pass
+	 */
+	public List<Attachment> attachments() {
+		return attachments;
 	}
 
 	/**
@@ -92,7 +99,7 @@ public class RenderPass extends VulkanObject {
 				throw new IllegalArgumentException("At least one subpass must be specified");
 			}
 
-			// Enumerate attachment references across the sub-passes
+			// Enumerate attachment references across the subpasses
 			final List<Attachment> attachments = subpasses
 					.stream()
 					.flatMap(Subpass::attachments)
@@ -109,7 +116,7 @@ public class RenderPass extends VulkanObject {
 			library.vkCreateRenderPass(device, info, null, pointer);
 
 			// Create render pass
-			return new RenderPass(pointer.handle(), device, library);
+			return new RenderPass(pointer.handle(), device, attachments);
 		}
 
 		/**

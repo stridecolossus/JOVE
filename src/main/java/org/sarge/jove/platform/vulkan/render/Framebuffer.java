@@ -17,33 +17,21 @@ import org.sarge.jove.platform.vulkan.image.*;
  * @author Sarge
  */
 public class Framebuffer extends VulkanObject {
-	private final Handle pass;
-	private final List<View> attachments;
-	private final Rectangle extents;
-	private final Library library;
+	private final Group group;
 
 	/**
 	 * Constructor.
-	 * @param handle 			Handle
-	 * @param device			Logical device
-	 * @param pass				Render pass
-	 * @param attachments		Attachments
-	 * @param extents			Image extents
-	 * @param library			Frame buffer library
+	 * @param handle 		Handle
+	 * @param device		Logical device
+	 * @param group			Parent group
 	 */
-	Framebuffer(Handle handle, LogicalDevice device, Handle pass, List<View> attachments, Rectangle extents, Library library) {
+	Framebuffer(Handle handle, LogicalDevice device, Group group) {
 		super(handle, device);
-		this.pass = requireNonNull(pass);
-		this.attachments = List.copyOf(attachments);
-		this.extents = requireNonNull(extents);
-		this.library = requireNonNull(library);
+		this.group = requireNonNull(group);
 	}
 
-	/**
-	 * @return Attachments
-	 */
-	public List<View> attachments() {
-		return attachments;
+	public Group group() {
+		return group;
 	}
 
 	/**
@@ -54,131 +42,90 @@ public class Framebuffer extends VulkanObject {
 	public Command begin(VkSubpassContents contents) {
 		// Create descriptor
 		final var info = new VkRenderPassBeginInfo();
-		info.renderPass = pass;
+		info.renderPass = group.pass.handle();
 		info.framebuffer = this.handle();
-		info.renderArea = VulkanUtility.rectangle(extents);
+		info.renderArea = VulkanUtility.rectangle(new Rectangle(group.extents));
 
-		// Build attachment clear operations
-		info.pClearValues = clear();
-		info.clearValueCount = info.pClearValues.length;
+		// Build attachment clear array
+		final var clear = group.clear.values();
+		info.clearValueCount = clear.size();
+		info.pClearValues = clear.stream().map(ClearValue::populate).toArray(VkClearValue[]::new);
 
 		// Create command
-		return buffer -> library.vkCmdBeginRenderPass(buffer, info, contents);
-	}
-
-	/**
-	 * @return Clear attachment array
-	 */
-	private VkClearValue[] clear() {
-		return attachments
-				.stream()
-				.map(View::clear)
-				.flatMap(Optional::stream)
-				.map(Framebuffer::populate)
-				.toArray(VkClearValue[]::new);
-	}
-	// TODO - needs to have entries even if not cleared?
-
-	/**
-	 * Populates an attachment clear descriptor.
-	 */
-	private static VkClearValue populate(ClearValue clear) {
-		final var descriptor = new VkClearValue();
-		clear.populate(descriptor);
-		return descriptor;
+		return buffer -> group.library.vkCmdBeginRenderPass(buffer, info, contents);
 	}
 
 	/**
 	 * @return End render pass command
 	 */
 	public Command end() {
-		return library::vkCmdEndRenderPass;
+		return group.library::vkCmdEndRenderPass;
 	}
 
 	@Override
 	protected Destructor<Framebuffer> destructor() {
-		return library::vkDestroyFramebuffer;
+		return group.library::vkDestroyFramebuffer;
 	}
 
-	/**
-	 * Creates a frame buffer.
-	 * @param pass				Render pass
-	 * @param extents			Image extents
-	 * @param attachments		Attachments
-	 * @return New frame buffer
-	 * @throws IllegalArgumentException if the number of {@link #attachments} is not the same as the render pass
-	 * @throws IllegalArgumentException if an attachment is not of the expected format
-	 * @throws IllegalArgumentException if an attachment is smaller than the given extents
-	 */
-	public static Framebuffer create(RenderPass pass, Rectangle extents, List<View> attachments) {
-		/*
-		// Validate attachments
-		final List<Attachment> expected = pass.attachments();
-		final int size = expected.size();
-		if(attachments.size() != size) {
-			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", attachments.size(), expected.size()));
-		}
-		for(int n = 0; n < size; ++n) {
-			// Validate matching format
-			final Attachment attachment = expected.get(n);
-			final View view = attachments.get(n);
-			final Descriptor descriptor = view.image().descriptor();
-			if(attachment.format() != descriptor.format()) {
-				throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
-			}
-
-			// Validate attachment contains frame-buffer extents
-			final Dimensions dimensions = descriptor.extents().size();
-			if(!extents.dimensions().contains(dimensions)) {
-				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dimensions, extents));
-			}
-		}
-		*/
-
-		// Build descriptor
-		final var info = new VkFramebufferCreateInfo();
-		info.renderPass = pass.handle();
-		info.attachmentCount = attachments.size();
-		info.pAttachments = NativeObject.handles(attachments);
-		info.width = extents.width();
-		info.height = extents.height();
-		info.layers = 1; // TODO - layers?
-
-		// Allocate frame buffer
-		final LogicalDevice device = pass.device();
-		final Library library = device.library();
-		final Pointer pointer = new Pointer();
-		library.vkCreateFramebuffer(device, info, null, pointer);
-
-		// Create frame buffer
-		return new Framebuffer(pointer.handle(), device, pass.handle(), attachments, extents, library);
-	}
+//	public static Framebuffer create(RenderPass pass, Rectangle extents, List<View> attachments) {
+//		/*
+//		// Validate attachments
+//		final List<Attachment> expected = pass.attachments();
+//		final int size = expected.size();
+//		if(attachments.size() != size) {
+//			throw new IllegalArgumentException(String.format("Number of attachments does not match the render pass: actual=%d expected=%d", attachments.size(), expected.size()));
+//		}
+//		for(int n = 0; n < size; ++n) {
+//			// Validate matching format
+//			final Attachment attachment = expected.get(n);
+//			final View view = attachments.get(n);
+//			final Descriptor descriptor = view.image().descriptor();
+//			if(attachment.format() != descriptor.format()) {
+//				throw new IllegalArgumentException(String.format("Invalid attachment %d format: expected=%s actual=%s", n, attachment.format(), descriptor.format()));
+//			}
+//
+//			// Validate attachment contains frame-buffer extents
+//			final Dimensions dimensions = descriptor.extents().size();
+//			if(!extents.dimensions().contains(dimensions)) {
+//				throw new IllegalArgumentException(String.format("Attachment %d extents must be same or larger than framebuffer: attachment=%s framebuffer=%s", n, dimensions, extents));
+//			}
+//		}
 
 	/**
 	 * A <i>framebuffer group</i> is the set of framebuffers for a given swapchain.
 	 */
 	public static class Group implements TransientObject {
 		private final RenderPass pass;
-		private final List<View> additional;
+		private final Library library;
+		private final View depth;
 		private final List<Framebuffer> buffers = new ArrayList<>();
+		private final Map<Attachment, ClearValue> clear = new LinkedHashMap<>();
+		private Dimensions extents;
 
 		/**
 		 * Constructor.
 		 * @param swapchain			Swapchain
 		 * @param pass				Render pass
-		 * @param additional		Additional attachments
+		 * @param depth				Optional depth-stencil attachment
 		 */
-		public Group(Swapchain swapchain, RenderPass pass, List<View> additional) {
+		public Group(Swapchain swapchain, RenderPass pass, View depth) {
 			this.pass = requireNonNull(pass);
-			this.additional = List.copyOf(additional);
+			this.library = swapchain.device().library();
+			this.depth = depth;
+
+			for(Attachment attachment : pass.attachments()) {
+				clear.put(attachment, new ClearValue.None());
+			}
+
 			build(swapchain);
 		}
+		// TODO - check 'depth' vs 'attachments'
 
 		/**
-		 * @return Number of frame buffers in this group, i.e. the number of swapchain attachments
+		 * @return Framebuffers in this group
 		 */
-		public int size() {
-			return buffers.size();
+		public List<Framebuffer> buffers() {
+			return Collections.unmodifiableList(buffers);
 		}
 
 		/**
@@ -189,6 +136,20 @@ public class Framebuffer extends VulkanObject {
 		 */
 		public Framebuffer get(int index) {
 			return buffers.get(index);
+		}
+
+		/**
+		 * Sets the clear value for the given attachment.
+		 * @param clear Clear value
+		 * @throws IllegalArgumentException if {@link #attachment} does not belong to this framebuffer group
+		 * @throws IllegalStateException if the {@link #clear} value does not match the attachment
+		 */
+		public void clear(Attachment attachment, ClearValue clear) {
+			if(!pass.attachments().contains(attachment)) {
+				throw new IllegalArgumentException("Invalid attachment for render pass: " + attachment);
+			}
+			// TODO - validate clear vs attachment => need attachment 'type', also add index to Attachment?
+			this.clear.put(attachment, clear);
 		}
 
 		/**
@@ -205,18 +166,47 @@ public class Framebuffer extends VulkanObject {
 		 * @param swapchain Swapchain
 		 */
 		private void build(Swapchain swapchain) {
-			final Rectangle extents = swapchain.extents().rectangle();
 			final View[] colour = swapchain.attachments().toArray(View[]::new);
+			this.extents = swapchain.extents();
 			for(int n = 0; n < colour.length; ++n) {
-    			// Aggregate attachments
+				// Aggregate attachments for this framebuffer
+				// TODO - assumes colour is 0, optional depth is 1
 				final List<View> attachments = new ArrayList<>();
-    			attachments.add(colour[n]);
-    			attachments.addAll(additional);
+				attachments.add(colour[n]);
+				if(depth != null) {
+					attachments.add(depth);
+				}
 
-    			// Create buffer
-    			final var buffer = Framebuffer.create(pass, extents, attachments);
-    			buffers.add(buffer);
-    		}
+				// Create buffer
+				final Framebuffer buffer = create(attachments, extents);
+				buffers.add(buffer);
+			}
+		}
+
+		/**
+		 * Creates a new framebuffer.
+		 * @param attachments		Attachments
+		 * @param extents			Framebuffer extents
+		 * @return New framebuffer
+		 */
+		private Framebuffer create(List<View> attachments, Dimensions extents) {
+			// Build descriptor
+			final var info = new VkFramebufferCreateInfo();
+			info.renderPass = pass.handle();
+			info.attachmentCount = attachments.size();
+			info.pAttachments = NativeObject.handles(attachments);
+			info.width = extents.width();
+			info.height = extents.height();
+			info.layers = 1; // TODO - layers?
+
+			// Allocate frame buffer
+			final LogicalDevice device = pass.device();
+			final Library library = device.library();
+			final Pointer pointer = new Pointer();
+			library.vkCreateFramebuffer(device, info, null, pointer);
+
+			// Create frame buffer
+			return new Framebuffer(pointer.handle(), device, this);
 		}
 
 		@Override

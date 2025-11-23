@@ -12,7 +12,6 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
@@ -154,13 +153,14 @@ public class Swapchain extends VulkanObject {
 	 */
 	public static void present(Library library, WorkQueue queue, VkPresentInfoKHR info) throws Invalidated {
 		final int code = library.vkQueuePresentKHR(queue, info);
-		final VkResult result = MAPPING.map(code);
-		if(result != VkResult.SUCCESS) {
-    		switch(result) {
-    			case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new Invalidated(result);
-    			default -> throw new VulkanException(result);
-    		}
-		}
+
+        if(code != VkResult.SUCCESS.value()) {
+            final VkResult result = MAPPING.map(code);
+            switch(result) {
+                case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new Invalidated(result);
+                default -> throw new VulkanException(result);
+            }
+        }
 	}
 
 	@Override
@@ -177,16 +177,8 @@ public class Swapchain extends VulkanObject {
 	 * Indicates that this swapchain has been invalidated, generally caused by the window being resized or minimised.
 	 */
 	public static final class Invalidated extends VulkanException {
-		private final VkResult result;
-
 		Invalidated(VkResult result) {
 			super(result);
-			this.result = result;
-		}
-
-		@Override
-		public VkResult result() {
-			return result;
 		}
 	}
 
@@ -197,7 +189,6 @@ public class Swapchain extends VulkanObject {
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
 		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
 		private final Set<VkImageUsageFlag> usage = new HashSet<>();
-		private ColourClearValue clear;
 
 		public Builder() {
 			init();
@@ -340,15 +331,6 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Sets the clear colour for the swapchain images.
-		 * @param clear Clear colour
-		 */
-		public Builder clear(Colour clear) {
-			this.clear = new ColourClearValue(clear);
-			return this;
-		}
-
-		/**
 		 * Helper.
 		 * @return Extents as width-height dimensions
 		 */
@@ -433,19 +415,17 @@ public class Swapchain extends VulkanObject {
     				.aspect(VkImageAspect.COLOR)
     				.build();
 
+			// Init views builder
+			final var builder = new View.Builder()
+					.type(VkImageViewType.TWO_D)
+					.subresource(descriptor);
+
 			// Create image views
 			final List<View> views = Arrays
 					.stream(images)
-					.map(image -> new SwapChainImage(image, descriptor))
-					.map(image -> new View.Builder().build(device, image))
+					.map(handle -> new SwapChainImage(handle, descriptor))
+					.map(image -> builder.build(device, image))
 					.toList();
-
-			// Initialise clear value
-			if(clear != null) {
-    			for(View view : views) {
-    				view.clear(clear);
-    			}
-			}
 
 			// Create swapchain instance
 			return new Swapchain(pointer.handle(), device, library, info.imageFormat, extents, views);
@@ -458,6 +438,11 @@ public class Swapchain extends VulkanObject {
 			@Override
 			public boolean equals(Object obj) {
 				return obj == this;
+			}
+
+			@Override
+			public void destroy() {
+				throw new RuntimeException();
 			}
 		}
 	}

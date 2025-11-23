@@ -26,6 +26,16 @@ public interface Command {
 	void execute(Buffer buffer);
 
 	/**
+	 * Helper.
+	 * Submits this command to the given pool as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} primary command buffer and blocks until completion.
+	 * @param pool Command pool
+	 * @see Work#submit(Command, Pool)
+	 */
+	default void submit(Command.Pool pool) {
+		Work.submit(this, pool);
+	}
+
+	/**
 	 * A <i>command buffer</i> records a command sequence.
 	 * Buffers are allocated by a {@link Pool}.
 	 */

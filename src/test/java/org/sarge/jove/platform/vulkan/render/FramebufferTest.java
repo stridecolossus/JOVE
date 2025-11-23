@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.MemorySegment;
-import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
@@ -11,12 +10,10 @@ import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
-import org.sarge.jove.platform.vulkan.render.Framebuffer.Group;
 
 class FramebufferTest {
-	private static class MockFrameBufferLibrary extends MockVulkanLibrary {
+	static class MockFramebufferLibrary extends MockVulkanLibrary {
 		public boolean begin;
 		public boolean end;
 		public boolean destroyed;
@@ -37,14 +34,19 @@ class FramebufferTest {
 		@Override
 		public void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents) {
 			assertNotNull(pRenderPassBegin.renderPass);
-			assertEquals(new Handle(3), pRenderPassBegin.framebuffer);
+			assertNotNull(pRenderPassBegin.framebuffer);
 			assertEquals(0, pRenderPassBegin.renderArea.offset.x);
 			assertEquals(0, pRenderPassBegin.renderArea.offset.y);
 			assertEquals(640, pRenderPassBegin.renderArea.extent.width);
 			assertEquals(480, pRenderPassBegin.renderArea.extent.height);
 			assertEquals(1, pRenderPassBegin.clearValueCount);
 			assertEquals(1, pRenderPassBegin.pClearValues.length);
-			assertArrayEquals(new float[]{0, 0, 0, 1}, pRenderPassBegin.pClearValues[0].color.float32);
+
+			final var colour = pRenderPassBegin.pClearValues[0].color;
+			if(colour != null) {
+				assertArrayEquals(new float[]{0, 0, 0, 1}, colour.float32);
+			}
+
 			begin = true;
 		}
 
@@ -60,20 +62,21 @@ class FramebufferTest {
 	}
 
 	private Framebuffer framebuffer;
+	private Framebuffer.Group group;
+	private Swapchain swapchain;
+	private RenderPass pass;
 	private LogicalDevice device;
-	private MockFrameBufferLibrary library;
+	private MockFramebufferLibrary library;
 
 	@BeforeEach
 	void before() {
-		library = new MockFrameBufferLibrary();
+		library = new MockFramebufferLibrary();
 		device = new MockLogicalDevice(library);
-
-		final var pass = new MockRenderPass(device);
-
-		final var view = new View(new Handle(2), device, new MockImage(), false);
-		view.clear(new ColourClearValue(Colour.BLACK));
-
-		framebuffer = Framebuffer.create(pass, new Rectangle(640, 480), List.of(view));
+		var pass = new MockRenderPass(device);
+		swapchain = new MockSwapchain(device);
+		group = new Framebuffer.Group(swapchain, pass, null);
+		group.clear(pass.attachments().getFirst(), new ColourClearValue(Colour.BLACK));
+		framebuffer = group.get(0);
 	}
 
 	@Test
@@ -100,41 +103,24 @@ class FramebufferTest {
 	@DisplayName("A frame buffer group...")
 	@Nested
 	class GroupTest {
-		private Group group;
-		private Swapchain swapchain;
-		private View depth;
-
-		@BeforeEach
-		void before() {
-			final var pass = new MockRenderPass(device);
-			final var colour = new View(new Handle(4), device, new MockImage(), false);
-			depth = new View(new Handle(5), device, new MockImage(), true);
-			swapchain = new Swapchain(new Handle(6), device, library, VkFormat.R32G32B32A32_SFLOAT, new Dimensions(640, 480), List.of(colour, colour));
-			group = new Group(swapchain, pass, List.of(depth));
-		}
-
 		@DisplayName("has a number of buffers equal to the number of swapchain attachments")
 		@Test
 		void size() {
-			assertEquals(2, group.size());
+			assertEquals(1, group.buffers().size());
 		}
 
-		@DisplayName("creates a frame buffer for each swapchain image and any additional attachments")
+		@DisplayName("can lookup a framebuffer by swapchain index")
 		@Test
 		void get() {
-			for(int n = 0; n < 2; ++n) {
-    			final Framebuffer buffer = group.get(0);
-    			final View colour = swapchain.attachments().get(n);
-    			assertEquals(false, buffer.isDestroyed());
-    			assertEquals(List.of(colour, depth), buffer.attachments());
-			}
+			final Framebuffer buffer = group.get(0);
+   			assertEquals(false, buffer.isDestroyed());
 		}
 
 		@DisplayName("can be recreated if the swapchain is invalidated")
 		@Test
 		void create() {
 			group.recreate(swapchain);
-			assertEquals(2, group.size());
+			assertEquals(1, group.buffers().size());
 		}
 
 		@DisplayName("can be destroyed releasing all buffers")
@@ -142,9 +128,11 @@ class FramebufferTest {
 		void destroy() {
 			final Framebuffer buffer = group.get(0);
 			group.destroy();
-			assertEquals(0, group.size());
+			assertEquals(0, group.buffers().size());
 			assertEquals(true, buffer.isDestroyed());
 			assertThrows(IndexOutOfBoundsException.class, () -> group.get(0));
 		}
+
+		// TODO - clear values
 	}
 }

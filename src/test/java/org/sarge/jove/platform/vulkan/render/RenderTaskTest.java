@@ -63,7 +63,7 @@ class RenderTaskTest {
 				.extent(new Dimensions(640, 480));
 		final var factory = new SwapchainFactory(device, properties, builder, List.of());
 
-		group = new Framebuffer.Group(factory.swapchain(), new MockRenderPass(device), List.of());
+		group = new Framebuffer.Group(factory.swapchain(), new MockRenderPass(device), null);
 		sequence = new AtomicReference<>();
 		composer = new FrameComposer(new MockCommandPool(), BufferPolicy.DEFAULT, sequence::set);
 		task = new RenderTask(factory, group, composer);

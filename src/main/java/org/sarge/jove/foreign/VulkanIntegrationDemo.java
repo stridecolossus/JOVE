@@ -18,6 +18,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
+import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
@@ -138,13 +139,12 @@ public class VulkanIntegrationDemo {
 		final var properties = surface.properties(physical);
 		final var builder = new Swapchain.Builder()
 				.clipped(true)
-				.init(properties.capabilities())
-				.clear(new Colour(0.3f, 0.3f, 0.3f, 1f));
+				.init(properties.capabilities());
 
 		System.out.println("Creating swapchain factory...");
 		final SwapchainConfiguration[] configuration = {
 				new ImageCountSwapchainConfiguration(Policy.MIN),
-				new SurfaceFormatSwapchainConfiguration(new SurfaceFormatWrapper(VkFormat.B8G8R8A8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR)),
+				new SurfaceFormatSwapchainConfiguration(VkFormat.B8G8R8A8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR),
 				new PresentationModeSwapchainConfiguration(List.of(VkPresentModeKHR.MAILBOX_KHR)),
 				new SharingModeSwapchainConfiguration(List.of(graphicsFamily, presentationFamily)),
 				new ExtentSwapchainConfiguration()
@@ -194,7 +194,7 @@ public class VulkanIntegrationDemo {
 		pipelineBuilder.assembly().topology(Primitive.TRIANGLE_STRIP);
 		///////////////
 //		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
-		pipelineBuilder.viewport().viewportAndScissor(factory.swapchain().extents().rectangle());
+		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(factory.swapchain().extents()));
 		pipelineBuilder.rasterizer().cull(VkCullMode.NONE);
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, vertex));
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.FRAGMENT, fragment));
@@ -209,7 +209,8 @@ public class VulkanIntegrationDemo {
 
 		// Frame buffers
 		System.out.println("Building frame buffers...");
-		final var group = new Framebuffer.Group(factory.swapchain(), pass, List.of());
+		final var group = new Framebuffer.Group(factory.swapchain(), pass, null);
+		group.clear(colour, new ColourClearValue(new Colour(0.3f, 0.3f, 0.3f, 1f)));
 
 		// Sequence
 		System.out.println("Recording render sequence...");

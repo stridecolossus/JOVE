@@ -74,6 +74,7 @@ public class Pipeline extends VulkanObject {
 	/**
 	 * Pipeline API.
 	 */
+	public // TODO
 	interface Library {
 		/**
 		 * Creates an array of graphics pipelines.
