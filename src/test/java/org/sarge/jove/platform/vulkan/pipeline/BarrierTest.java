@@ -38,13 +38,14 @@ class BarrierTest {
 	@Test
 	void builder() {
 		final var library = new MockPipelineLibrary();
+		final var device = new MockLogicalDevice(library);
 
 		final Command barrier = new Barrier.Builder()
         		.source(TOP_OF_PIPE)
         		.destination(TRANSFER)
         		.flag(VkDependencyFlag.DEVICE_GROUP)
         		.add(Set.of(MEMORY_READ), Set.of(MEMORY_WRITE), new MemoryBarrier())
-				.build(library);
+				.build(device);
 
 		barrier.execute(null);
 

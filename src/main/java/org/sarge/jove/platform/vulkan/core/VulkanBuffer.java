@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.common.VulkanUtility.checkAlignment;
 import static org.sarge.jove.util.Validation.*;
 
+import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 
@@ -104,19 +105,39 @@ public class VulkanBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Helper.
-	 * Accesses the entire underlying buffer memory as an NIO buffer, mapping the device memory as required.
-	 * @return Underlying byte buffer
+	 * Maps the memory of this buffer.
+	 * @return Mapped buffer memory
 	 */
-	public ByteBuffer buffer() {
+	public MemorySegment map() {
 		return memory
 				.region()
 				.orElseGet(memory::map)
-				.memory()
+				.memory();
+	}
+
+	/**
+	 * Helper.
+	 * Accesses the entire underlying buffer memory as an NIO buffer, mapping the device memory as required.
+	 * @return Underlying byte buffer
+	 * @see #map()
+	 */
+	public ByteBuffer buffer() {
+		return this
+				.map()
 				.asByteBuffer()
 				.order(ByteOrder.nativeOrder());
 	}
-	// TODO - should vertex/index data be 'buffered' using FFM rather than NIO buffers? any benefits either way?
+
+	/**
+	 * Helper.
+	 * Writes the given data to this buffer.
+	 * @param data Data to write
+	 * @see #map()
+	 */
+	public void write(byte[] data) {
+		final MemorySegment address = this.map();
+		MemorySegment.copy(data, 0, address, ValueLayout.JAVA_BYTE, 0L, data.length);
+	}
 
 	/**
 	 * Creates a command to copy the whole of this buffer to the given destination.
@@ -220,7 +241,14 @@ public class VulkanBuffer extends VulkanObject {
 	/**
 	 * Helper.
 	 * Creates a staging buffer for data that can then be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
-	 * The buffer is a {@link VkBufferUsageFlag#TRANSFER_SRC} with {@link VkMemoryProperty#HOST_VISIBLE} memory.
+	 * <p>
+	 * The buffer has the following properties:
+	 * <ul>
+	 * <li>{@link VkBufferUsageFlag#TRANSFER_SRC}</li>
+	 * <li>{@link VkMemoryProperty#HOST_VISIBLE}</li>
+	 * <li>{@link VkMemoryProperty#HOST_COHERENT}</li>
+	 * <li>{@link VkMemoryProperty#DEVICE_LOCAL}</li>
+	 * </ul>
 	 * @param allocator		Memory allocator
 	 * @param length		Buffer length
 	 * @return New staging buffer
@@ -229,17 +257,26 @@ public class VulkanBuffer extends VulkanObject {
 		final var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
 				.usage(VkBufferUsageFlag.TRANSFER_SRC)
 				.required(VkMemoryProperty.HOST_VISIBLE)
-				.required(VkMemoryProperty.HOST_COHERENT)		// TODO - added
-				.optimal(VkMemoryProperty.DEVICE_LOCAL)			// TODO - not needed?
+				.required(VkMemoryProperty.HOST_COHERENT)
+				.optimal(VkMemoryProperty.DEVICE_LOCAL)
 				.build();
 
 		return create(allocator, length, properties);
 	}
 
-//	public static VulkanBuffer staging(Allocator allocator, byte[] data) {
-//		final var staging = staging(allocator, data.length);
-//		staging.write(data);
-//	}
+	/**
+	 * Helper.
+	 * Creates and populates a staging buffer.
+	 * @param allocator		Memory allocator
+	 * @param data			Data to be staged
+	 * @return New staging buffer
+	 * @see #staging(Allocator, long)
+	 */
+	public static VulkanBuffer staging(Allocator allocator, byte[] data) {
+		final var staging = staging(allocator, data.length);
+		staging.write(data);
+		return staging;
+	}
 
 	/**
 	 * Vulkan buffer API.

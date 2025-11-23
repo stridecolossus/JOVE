@@ -16,7 +16,7 @@ import org.sarge.jove.util.ImageData.Level;
  * An <i>image transfer command</i> is used to copy an image to/from a Vulkan buffer.
  * @author Sarge
  */
-public final class ImageTransferCommand implements Command {
+public class ImageTransferCommand implements Command {
 	private final Image image;
 	private final VulkanBuffer buffer;
 	private final boolean write;
@@ -53,17 +53,19 @@ public final class ImageTransferCommand implements Command {
 			case TRANSFER_SRC_OPTIMAL -> !write;
 			default -> false;
 		};
-		if(!valid) throw new IllegalStateException("Invalid image layout for copy operation: write=%s layout=%s".formatted(write, layout));
+		if(!valid) {
+			throw new IllegalStateException("Invalid image layout for copy operation: write=%s layout=%s".formatted(write, layout));
+		}
 	}
 
 	@Override
-	public void execute(Buffer cmd) {
+	public void execute(Buffer commandBuffer) {
 		final Image.Library library = buffer.device().library();
 		if(write) {
-			library.vkCmdCopyBufferToImage(cmd, buffer, image, layout, regions.length, regions);
+			library.vkCmdCopyBufferToImage(commandBuffer, buffer, image, layout, regions.length, regions);
 		}
 		else {
-			library.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
+			library.vkCmdCopyImageToBuffer(commandBuffer, image, layout, buffer, regions.length, regions);
 		}
 	}
 

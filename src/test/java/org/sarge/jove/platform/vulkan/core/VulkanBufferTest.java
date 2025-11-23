@@ -2,7 +2,8 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
+import java.lang.foreign.*;
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
@@ -14,7 +15,7 @@ import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.EnumMask;
 
 class VulkanBufferTest {
-	private static class MockVulkanBufferLibrary extends MockVulkanLibrary {
+	private static class MockVulkanBufferLibrary extends MockVulkanLibrary { // MockMemoryLibrary {
 		private boolean bind;
 		private boolean index;
 		private boolean fill;
@@ -118,6 +119,26 @@ class VulkanBufferTest {
 		final Command fill = buffer.fill(0L, VulkanBuffer.VK_WHOLE_SIZE, 42);
 		fill.execute(null);
 		assertEquals(true, library.fill);
+	}
+
+	@Test
+	void map() {
+		final MemorySegment mapped = buffer.map();
+		assertEquals(3L, mapped.byteSize());
+		assertEquals(true, buffer.memory().region().isPresent());
+	}
+
+	@Test
+	void write() {
+		buffer.write(new byte[]{42});
+		assertEquals((byte) 42, buffer.memory().region().get().memory().get(ValueLayout.JAVA_BYTE, 0L));
+	}
+
+	@Test
+	void buffer() {
+		final ByteBuffer bb = buffer.buffer();
+		bb.put((byte) 42);
+		assertEquals((byte) 42, buffer.memory().region().get().memory().get(ValueLayout.JAVA_BYTE, 0L));
 	}
 
 	// TODO - offset tests

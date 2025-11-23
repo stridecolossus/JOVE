@@ -13,7 +13,7 @@ import org.sarge.jove.util.EnumMask;
  * This class has been code-generated.
  */
 public class VkImageMemoryBarrier implements NativeStructure {
-	public VkStructureType sType = VkStructureType.IMAGE_MEMORY_BARRIER;
+	public final VkStructureType sType = VkStructureType.IMAGE_MEMORY_BARRIER;
 	public Handle pNext;
 	public EnumMask<VkAccess> srcAccessMask;
 	public EnumMask<VkAccess> dstAccessMask;
@@ -37,7 +37,14 @@ public class VkImageMemoryBarrier implements NativeStructure {
 				JAVA_INT.withName("srcQueueFamilyIndex"),
 				JAVA_INT.withName("dstQueueFamilyIndex"),
 				POINTER.withName("image"),
-				POINTER.withName("subresourceRange")
-		);
+                MemoryLayout.structLayout(
+                    JAVA_INT.withName("aspectMask"),
+                    JAVA_INT.withName("baseMipLevel"),
+                    JAVA_INT.withName("levelCount"),
+                    JAVA_INT.withName("baseArrayLayer"),
+                    JAVA_INT.withName("layerCount")
+                ).withName("subresourceRange"),
+		        PADDING
+				);
 	}
 }

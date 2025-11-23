@@ -14,6 +14,6 @@ public class MockDeviceMemory extends DefaultDeviceMemory {
 	public MockDeviceMemory(long size) {
 		final var allocator = Arena.ofAuto();
 		final var memory = allocator.allocate(size);
-		super(new Handle(memory), new MockLogicalDevice(), TYPE, size);
+		super(new Handle(memory), new MockLogicalDevice(new MockMemoryLibrary()), TYPE, size);
 	}
 }

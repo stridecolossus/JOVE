@@ -10,7 +10,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanException;
 import org.sarge.jove.platform.vulkan.core.*;
 
-class MockMemoryLibrary extends MockVulkanLibrary {
+public class MockMemoryLibrary extends MockVulkanLibrary {
 	public boolean fail;
 
 	@Override

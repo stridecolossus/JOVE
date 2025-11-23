@@ -27,16 +27,15 @@ import org.sarge.jove.platform.vulkan.render.Swapchain;
  */
 public class CaptureTask {
 	private final Command.Pool pool;
-	private final Pipeline.Library library;
+	private final LogicalDevice device;
 
 	/**
 	 * Constructor.
-	 * @param pool			Transfer command pool
-	 * @param library		Pipeline library
+	 * @param pool Transfer command pool
 	 */
 	public CaptureTask(Command.Pool pool) {
 		this.pool = requireNonNull(pool);
-		this.library = pool.device().library();
+		this.device = pool.device();
 	}
 
 	/**
@@ -112,7 +111,7 @@ public class CaptureTask {
 				.source(TRANSFER)
 				.destination(TRANSFER)
  				.add(Set.of(), Set.of(TRANSFER_WRITE), new ImageBarrier(screenshot, UNDEFINED, TRANSFER_DST_OPTIMAL))
-				.build(library);
+				.build(device);
 	}
 
 	/**
@@ -123,7 +122,7 @@ public class CaptureTask {
 				.source(TRANSFER)
 				.destination(TRANSFER)
  				.add(Set.of(MEMORY_READ), Set.of(TRANSFER_READ), new ImageBarrier(image, PRESENT_SRC_KHR, TRANSFER_SRC_OPTIMAL))
-				.build(library);
+				.build(device);
 	}
 
 	/**
@@ -134,7 +133,7 @@ public class CaptureTask {
 				.source(TRANSFER)
 				.destination(TRANSFER)
  				.add(Set.of(TRANSFER_WRITE), Set.of(MEMORY_READ), new ImageBarrier(screenshot, TRANSFER_DST_OPTIMAL, GENERAL))
-				.build(library);
+				.build(device);
 	}
 
 	/**
@@ -145,6 +144,6 @@ public class CaptureTask {
 				.source(TRANSFER)
 				.destination(TRANSFER)
  				.add(Set.of(TRANSFER_READ), Set.of(MEMORY_READ), new ImageBarrier(image, TRANSFER_SRC_OPTIMAL, PRESENT_SRC_KHR))
-				.build(library);
+				.build(device);
 	}
 }

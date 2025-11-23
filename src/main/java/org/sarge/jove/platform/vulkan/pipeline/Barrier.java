@@ -128,9 +128,9 @@ public class Barrier implements Command {
 		 * @param library Pipeline library
 		 * @return New barrier
 		 */
-		public Barrier build(Pipeline.Library library) {
+		public Barrier build(LogicalDevice device) {
 			return new Barrier(
-					library,
+					device.library(),
 					source,
 					destination,
 					flags,
