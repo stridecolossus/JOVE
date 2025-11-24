@@ -3,7 +3,7 @@ package org.sarge.jove.control;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.time.*;
+import java.time.Duration;
 
 /**
  * An <i>animator</i> is a specialised playable for an {@link Animation} interpolated over a given duration.
@@ -22,13 +22,16 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		void set(float pos);
 	}
 
+	// Configuration
 	private final Animation animation;
 	private final long duration;
+	private final float scale;
 
-	private Instant start;
+	// State
+	private long time;
 	private float speed = 1;
 	private boolean repeat = true;
-	// TODO - interpolator
+	// TODO - interpolator?
 
 	/**
 	 * Constructor.
@@ -37,8 +40,8 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	 */
 	public Animator(Animation animation, Duration duration) {
 		this.animation = requireNonNull(animation);
-		this.duration = requireOneOrMore(duration.toNanos());
-
+		this.duration = requireOneOrMore(duration.toMillis());
+		this.scale = 1f / duration.toMillis();
 	}
 
 	/**
@@ -48,19 +51,19 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		return animation;
 	}
 
-//	/**
-//	 * @return Animation duration
-//	 */
-//	public Duration duration() {
-//		return duration;
-//	}
-//
-//	/**
-//	 * @return Current animation position
-//	 */
-//	public Duration time() {
-//		return Duration.ofMillis(time);
-//	}
+	/**
+	 * @return Animation duration
+	 */
+	public Duration duration() {
+		return Duration.ofMillis(duration);
+	}
+
+	/**
+	 * @return Current animation position
+	 */
+	public Duration time() {
+		return Duration.ofMillis(time);
+	}
 
 	/**
 	 * @return Animation speed
@@ -97,52 +100,28 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	@Override
-	public void play() {
-		super.play();
-		start = Instant.now();
-	}
-
-	@Override
 	public void end(Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
-		final var diff = Duration.between(start, frame.end());
-		long nanos = diff.toNanos();
-
-		if(nanos > duration) {
+		// Update animation time
+		final long end = frame.end().toEpochMilli();
+		if(end > duration) {
 			if(repeat) {
-				nanos = nanos % duration;
+				time = end % duration;
 			}
 			else {
-				nanos = duration;
-				stop();
-			}
-		}
-
-		animation.set(nanos / (float) duration);
-
-		/*
-		// Update animation time position
-		time += frame.elapsed().toMillis() * speed;
-
-		// Check for end of animation
-		if(time > duration) {
-			if(repeat) {
-				// Cycle animation
-				time = time % duration;
-			}
-			else {
-				// Stop animation
 				time = duration;
 				stop();
 			}
 		}
+		else {
+			time = end;
+		}
 
-		// Update animation
-		animation.set(time / (float) duration);
-		*/
+		// Update animation position
+		animation.set(time * scale);
 	}
 }

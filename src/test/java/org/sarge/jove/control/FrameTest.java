@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Frame.Tracker;
+import org.sarge.jove.control.Frame.*;
 
 class FrameTest {
-	private static class MockFrameListener implements Frame.Listener {
+	private static class MockFrameListener implements Listener {
 		private int count;
 
 		@Override
@@ -69,5 +69,15 @@ class FrameTest {
 		two.run();
 		one.run();
 		assertEquals(2, listener.count);
+	}
+
+	@Test
+	void periodic() {
+		final var periodic = Listener.periodic(Duration.ofSeconds(1), listener);
+		final Instant start = Instant.now();
+		periodic.end(new Frame(start, start.plusMillis(500)));
+		assertEquals(0, listener.count);
+		periodic.end(new Frame(start, start.plusMillis(1500)));
+		assertEquals(1, listener.count);
 	}
 }
