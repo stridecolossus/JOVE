@@ -234,7 +234,7 @@ public class ParticleSystem implements Frame.Listener {
 	}
 
 	@Override
-	public void update(Frame frame) {
+	public void end(Frame frame) {
 //		final long time = frame.time().toEpochMilli();
 		final float f = frame.elapsed().toMillis() * SCALE;
 //		expire(time);

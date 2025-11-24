@@ -122,19 +122,19 @@ public class DescriptorSetTest {
 
 	@Test
 	void empty() {
-		assertEquals(null, set.resource(binding));
+		assertEquals(null, set.get(binding));
 	}
 
 	@Test
 	void resource() {
-		set.resource(binding, resource);
-		assertEquals(resource, set.resource(binding));
+		set.set(binding, resource);
+		assertEquals(resource, set.get(binding));
 	}
 
 	@Test
 	void replace() {
-		set.resource(binding, resource);
-		set.resource(binding, resource);
+		set.set(binding, resource);
+		set.set(binding, resource);
 	}
 
 	@Test
@@ -144,7 +144,7 @@ public class DescriptorSetTest {
 				.type(VkDescriptorType.UNIFORM_BUFFER)
 				.build();
 
-		assertThrows(IllegalArgumentException.class, () -> set.resource(other, resource));
+		assertThrows(IllegalArgumentException.class, () -> set.set(other, resource));
 	}
 
 	@Test
@@ -161,12 +161,12 @@ public class DescriptorSetTest {
 			}
 		};
 
-		assertThrows(IllegalArgumentException.class, () -> set.resource(binding, invalid));
+		assertThrows(IllegalArgumentException.class, () -> set.set(binding, invalid));
 	}
 
 	@Test
 	void update() {
-		set.resource(binding, resource);
+		set.set(binding, resource);
 		assertEquals(1, DescriptorSet.update(device, List.of(set)));
 		assertEquals(true, library.updated);
 	}
@@ -178,7 +178,7 @@ public class DescriptorSetTest {
 
 	@Test
 	void ignored() {
-		set.resource(binding, resource);
+		set.set(binding, resource);
 		DescriptorSet.update(device, List.of(set));
 		assertEquals(0, DescriptorSet.update(device, List.of(set)));
 	}
@@ -241,7 +241,7 @@ public class DescriptorSetTest {
 		void allocate() {
 			final List<DescriptorSet> allocated = pool.allocate(List.of(layout));
 			assertEquals(1, allocated.size());
-			allocated.getFirst().resource(binding, resource);
+			allocated.getFirst().set(binding, resource);
 		}
 
 		@Test

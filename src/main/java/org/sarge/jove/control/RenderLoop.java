@@ -89,14 +89,14 @@ public class RenderLoop implements AutoCloseable {
 	 * Runs the task and notifies the elapsed duration.
 	 */
 	private void run() {
-		final Frame.Timer timer = tracker.begin();
+		final Runnable timer = tracker.begin();
 		try {
 			task.run();
 		}
 		catch(Exception e) {
 			handler.accept(e);
 		}
-		timer.end();
+		timer.run();
 	}
 
 	/**

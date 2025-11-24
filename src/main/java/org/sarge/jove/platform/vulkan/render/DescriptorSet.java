@@ -66,6 +66,8 @@ public class DescriptorSet implements NativeObject {
 			binding.descriptorType = type;
 			binding.descriptorCount = count;
 			binding.stageFlags = new EnumMask<>(stages);
+			// TODO - binding.pImmutableSamplers
+			// https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/VkDescriptorSetLayoutBinding.html
 			return binding;
 		}
 
@@ -155,7 +157,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param binding Binding
 	 * @return Descriptor resource for the given binding or {@code null} if not populated
 	 */
-	public Resource resource(Binding binding) {
+	public Resource get(Binding binding) {
 		return entries.get(binding);
 	}
 
@@ -166,7 +168,7 @@ public class DescriptorSet implements NativeObject {
 	 * @throws IllegalArgumentException if the {@link #binding} does not belong to the layout of this descriptor set
 	 * @throws IllegalArgumentException if the {@link #resource} does not match the {@link Binding#type()}
 	 */
-	public void resource(Binding binding, Resource resource) {
+	public void set(Binding binding, Resource resource) {
 		requireNonNull(binding);
 		requireNonNull(resource);
 		if(!entries.containsKey(binding)) {
@@ -186,11 +188,11 @@ public class DescriptorSet implements NativeObject {
 	 * @param group			Descriptor sets
 	 * @param binding		Binding
 	 * @param resource		Resource
-	 * @see #resource(Binding, DescriptorResource)
+	 * @see #set(Binding, DescriptorResource)
 	 */
 	public static void set(Collection<DescriptorSet> group, Binding binding, Resource resource) {
 		for(DescriptorSet set : group) {
-			set.resource(binding, resource);
+			set.set(binding, resource);
 		}
 	}
 
@@ -240,7 +242,7 @@ public class DescriptorSet implements NativeObject {
 	 * @param sets		Descriptor sets to update
 	 * @return Number of updated descriptor sets
 	 * @throws IllegalStateException if any resource has not been populated
-	 * @see #resource(Binding, DescriptorResource)
+	 * @see #set(Binding, DescriptorResource)
 	 */
 	public static int update(LogicalDevice device, Collection<DescriptorSet> sets) {
 		// Enumerate pending updates
@@ -427,7 +429,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param layout		Descriptor layout
 		 * @return New descriptor sets
 		 */
-		public Collection<DescriptorSet> allocate(int count, Layout layout) {
+		public List<DescriptorSet> allocate(int count, Layout layout) {
 			return allocate(Collections.nCopies(count, layout));
 		}
 

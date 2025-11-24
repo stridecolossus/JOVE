@@ -18,11 +18,11 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
  * <li>Submit the render task</li>
  * <li>Present the completed frame to the swapchain</li>
  * </ol>
- * If the acquire or present steps fail due to a {@link Invalidated} the swapchain and frame buffers are recreated by {@link SwapchainAdapter#recreate()}.
  * <p>
- * This implementation aims to fully utilise the multi-threaded nature of the hardware by rendering multiple <i>in flight</i> frame concurrently.
+ * This implementation aims to fully utilise the multi-threaded nature of the hardware by rendering multiple <i>in flight</i> frames concurrently.
  * The number of in-flight frames can be overridden by the {@link #count(Swapchain)} method.
- * The default configuration is the same as the number of swapchain attachments.
+ * <p>
+ * If the acquire or present steps fail due to an {@link Invalidated} swapchain, the frame buffers and swapchain are recreated on demand.
  * <p>
  * @author Sarge
  */
@@ -63,6 +63,7 @@ public class RenderTask implements Runnable, TransientObject {
 
 	/**
 	 * Specified the number of in-flight frames.
+	 * By default the number of in-flight frames is the same as the number of swapchain attachments.
 	 * @param swapchain Swapchain
 	 * @return Number of in-flight frames
 	 */

@@ -6,7 +6,7 @@ import static org.sarge.jove.util.Validation.*;
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.foreign.Pointer;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
@@ -34,26 +34,33 @@ public class Sampler extends VulkanObject {
 	}
 
 	/**
-	 * Creates a descriptor set resource for this sampler on the given view.
-	 * @param view View
-	 * @return Sampler resource
+	 * A <i>sampler resource</i> is a descriptor set resource composing this sampler with a given texture.
+	 * @see VkDescriptorType#COMBINED_IMAGE_SAMPLER;
 	 */
-	public DescriptorSet.Resource resource(View view) {
-		return new DescriptorSet.Resource() {
-			@Override
-			public VkDescriptorType type() {
-				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
-			}
+	public class SamplerResource implements DescriptorSet.Resource {
+		private final View texture;
 
-			@Override
-			public VkDescriptorImageInfo descriptor() {
-				final var info = new VkDescriptorImageInfo();
-				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
-				info.sampler = Sampler.this.handle();
-				info.imageView = view.handle();
-				return info;
-			}
-		};
+		/**
+		 * Constructor.
+		 * @param texture Texture to sample
+		 */
+		public SamplerResource(View texture) {
+			this.texture = requireNonNull(texture);
+		}
+
+		@Override
+		public VkDescriptorType type() {
+			return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
+		}
+
+		@Override
+		public NativeStructure descriptor() {
+			final var info = new VkDescriptorImageInfo();
+			info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
+			info.sampler = handle();
+			info.imageView = texture.handle();
+			return info;
+		}
 	}
 
 	/**

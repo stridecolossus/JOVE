@@ -3,7 +3,6 @@ package org.sarge.jove.foreign;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
@@ -24,7 +23,6 @@ import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.pipeline.VertexInputStage.*;
 import org.sarge.jove.platform.vulkan.render.*;
-import org.sarge.jove.platform.vulkan.render.FrameComposer.BufferPolicy;
 import org.sarge.jove.platform.vulkan.render.ImageCountSwapchainConfiguration.Policy;
 import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
@@ -214,14 +212,13 @@ public class VulkanIntegrationDemo {
 
 		// Sequence
 		System.out.println("Recording render sequence...");
-		//final var draw = DrawCommand.draw(3, device);
 		final var draw = DrawCommand.draw(4, device);
-		final Consumer<Command.Buffer> sequence = buffer -> {
+		final RenderSequence sequence = (_, buffer) -> {
 			buffer.add(pipeline.bind());
 			buffer.add(vbo.bind(0));
 			buffer.add(draw);
 		};
-		final var composer = new FrameComposer(pool, BufferPolicy.DEFAULT, sequence);
+		final var composer = new FrameComposer(pool, sequence);
 		final var render = new RenderTask(factory, group, composer);
 
 		// Render...

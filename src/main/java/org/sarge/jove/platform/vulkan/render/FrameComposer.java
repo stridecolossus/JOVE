@@ -3,77 +3,79 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 /**
- * The <i>frame composer</i> builds the render sequence for the next frame according to the configured policy.
- * TODO
+ * The <i>frame composer</i> builds the command buffer to render the next frame.
  * @author Sarge
  */
 public class FrameComposer {
-	/**
-	 * The <i>buffer policy</i> specifies the properties of the render sequence.
-	 */
-	public record BufferPolicy(VkSubpassContents contents, Set<VkCommandBufferUsage> usage) {
-		/**
-		 * Default buffer policy that provides an {VkSubpassContents#INLINE} render sequence submitted as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} task.
-		 */
-		public static final BufferPolicy DEFAULT = new BufferPolicy(VkSubpassContents.INLINE, Set.of(VkCommandBufferUsage.ONE_TIME_SUBMIT));
-
-		/**
-		 * Constructor.
-		 * @param contents		Specifies how the render sequence commands are provided
-		 * @param usage			Behaviour of the command buffer for rendering
-		 */
-		public BufferPolicy {
-			requireNonNull(contents);
-			usage = Set.copyOf(usage);
-		}
-	}
-
 	private final Command.Pool pool;
-	private final BufferPolicy policy;
-	private final Consumer<Buffer> sequence;
+	private final RenderSequence sequence;
 
 	/**
 	 * Constructor.
-	 * @param pool			Pool for rendering command buffers
-	 * @param policy		Policy for command buffers
+	 * @param pool			Command pool
 	 * @param sequence		Rendering sequence
 	 */
-	public FrameComposer(Command.Pool pool, BufferPolicy policy, Consumer<Buffer> sequence) {
+	public FrameComposer(Command.Pool pool, RenderSequence sequence) {
 		this.pool = requireNonNull(pool);
-		this.policy = requireNonNull(policy);
 		this.sequence = requireNonNull(sequence);
 	}
 
 	/**
-	 * Composes the render sequence for the next frame.
-	 * @param index Frame index
-	 * @return Render sequence
+	 * Composes the command buffer to render the next frame.
+	 * @param index				Frame index
+	 * @param framebuffer		Framebuffer to be rendered
+	 * @return Render command buffer
 	 */
 	public Buffer compose(int index, Framebuffer framebuffer) {
 		// Allocate command buffer
-		final Buffer buffer = pool.allocate(1, true).getFirst();
+		final Buffer buffer = allocate(pool, index);
 
 		// Init frame buffer
-		final Command begin = framebuffer.begin(policy.contents);
+		final Command begin = framebuffer.begin(this.contents());
 
 		// Build render sequence
-		buffer.begin(null, policy.usage());
+		begin(buffer);
     		buffer.add(begin);
-    			sequence.accept(buffer);
+    			sequence.build(index, buffer);
     		buffer.add(framebuffer.end());
     	buffer.end();
 
-    	// TODO - should we be releasing the buffer is one-time submit?
+    	// TODO - should we be releasing the buffer if a one-time submit?
 
 		return buffer;
 	}
 
-	// TODO - pre-generated array[]
+	/**
+	 * Allocates the next command buffer.
+	 * The default implementation allocates a new buffer for each frame.
+	 * @param pool		Command pool
+	 * @param index		Frame index
+	 * @return Command buffer
+	 */
+	protected Buffer allocate(Command.Pool pool, int index) {
+		return pool.allocate(1, true).getFirst();
+	}
+	// TODO - this needs to return a factory
+
+	/**
+	 * @return Subpass contents for the rendering command
+	 */
+	protected VkSubpassContents contents() {
+		return VkSubpassContents.INLINE;
+	}
+
+	/**
+	 * Begins recording to the given buffer.
+	 * The default implementation begins recording as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} command.
+	 * @param buffer Recording buffer
+	 */
+	protected void begin(Buffer buffer) {
+		buffer.begin(null, Set.of(VkCommandBufferUsage.ONE_TIME_SUBMIT));
+	}
 }

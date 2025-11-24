@@ -22,7 +22,7 @@ class FrameCounterTest {
 	@Test
 	void update() {
 		final Instant start = Instant.ofEpochMilli(0);
-		counter.update(new Frame(start, start.plusMillis(50)));
+		counter.end(new Frame(start, start.plusMillis(50)));
 		assertEquals(1, counter.count());
 	}
 
@@ -30,11 +30,11 @@ class FrameCounterTest {
 	void cull() {
 		// Record frame that will be culled
 		final Instant one = Instant.ofEpochMilli(0);
-		counter.update(new Frame(one, one.plusMillis(50)));
+		counter.end(new Frame(one, one.plusMillis(50)));
 
 		// Record new frame
 		final Instant two = Instant.ofEpochMilli(1000);
-		counter.update(new Frame(two, two.plusMillis(50)));
+		counter.end(new Frame(two, two.plusMillis(50)));
 
 		// Check old frame is culled
 		assertEquals(1, counter.count());
@@ -45,7 +45,7 @@ class FrameCounterTest {
 		final long elapsed = 1000 / 60;
 		for(int n = 0; n < 60; ++n) {
 			final Instant start = Instant.ofEpochMilli(n * elapsed);
-			counter.update(new Frame(start, start.plusMillis(elapsed)));
+			counter.end(new Frame(start, start.plusMillis(elapsed)));
 		}
 		assertEquals(60, counter.count());
 	}

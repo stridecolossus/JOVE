@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.foreign.MemorySegment;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
@@ -12,7 +11,6 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.render.FrameComposer.BufferPolicy;
 import org.sarge.jove.platform.vulkan.render.SwapchainTest.MockSwapchainLibrary;
 
 class RenderTaskTest {
@@ -48,7 +46,7 @@ class RenderTaskTest {
 	private LogicalDevice device;
 	private MockRenderTaskLibrary library;
 	private Framebuffer.Group group;
-	private AtomicReference<Buffer> sequence;
+	private RenderSequence sequence;
 	private FrameComposer composer;
 
 	@BeforeEach
@@ -64,8 +62,18 @@ class RenderTaskTest {
 		final var factory = new SwapchainFactory(device, properties, builder, List.of());
 
 		group = new Framebuffer.Group(factory.swapchain(), new MockRenderPass(device), null);
-		sequence = new AtomicReference<>();
-		composer = new FrameComposer(new MockCommandPool(), BufferPolicy.DEFAULT, sequence::set);
+
+		sequence = new RenderSequence() {
+			@Override
+			public void build(int index, Buffer buffer) {
+				assertEquals(0, index);
+				assertEquals(true, buffer.isPrimary());
+				assertEquals(true, buffer.isReady());
+			}
+		};
+
+		composer = new FrameComposer(new MockCommandPool(), sequence);
+
 		task = new RenderTask(factory, group, composer);
 	}
 
@@ -77,9 +85,9 @@ class RenderTaskTest {
 		// - compose index, framebuffer
 		// - render
 		// - present index, swapchain
-		final Buffer buffer = sequence.get();
-		assertEquals(true, buffer.isPrimary());
-		assertEquals(true, buffer.isReady()); // TODO - invalidated?
+//		final Buffer buffer = sequence.get();
+//		assertEquals(true, buffer.isPrimary());
+//		assertEquals(true, buffer.isReady()); // TODO - invalidated?
 	}
 
 	@Test

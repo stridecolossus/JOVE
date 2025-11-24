@@ -67,7 +67,7 @@ public class CubeBuilder {
 	 * @see #vertex(Point, Normal, Coordinate2D)
 	 */
 	public Mesh build() {
-		final VertexMesh mesh = new VertexMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+		final VertexMesh mesh = new VertexMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, /*Normal.LAYOUT,*/ Coordinate2D.LAYOUT));
 
 		for(int face = 0; face < FACES.length; ++face) {
 			for(int corner : TRIANGLES) {
@@ -80,7 +80,7 @@ public class CubeBuilder {
 				final Coordinate2D coord = Coordinate2D.QUAD.get(corner);
 
 				// Build vertex
-				final Vertex vertex = vertex(pos, normal, coord);
+				final Vertex vertex = vertex(pos, null, coord);
 				mesh.add(vertex);
 			}
 		}
@@ -107,7 +107,7 @@ public class CubeBuilder {
 			@Override
 			public void buffer(ByteBuffer bb) {
 				super.buffer(bb);
-				normal.buffer(bb);
+				//normal.buffer(bb);
 				coord.buffer(bb);
 			}
 		};

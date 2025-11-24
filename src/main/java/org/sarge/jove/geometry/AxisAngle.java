@@ -15,7 +15,7 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public class AxisAngle implements Rotation, Animation {
+public class AxisAngle implements Rotation {
 	private final Normal axis;
 	private float angle;
 
@@ -43,7 +43,10 @@ public class AxisAngle implements Rotation, Animation {
 		return angle;
 	}
 
-	@Override
+	/**
+	 * Sets the rotation angle.
+	 * @param angle Rotation angle (radians)
+	 */
 	public void set(float angle) {
 		this.angle = angle;
 	}
@@ -51,6 +54,13 @@ public class AxisAngle implements Rotation, Animation {
 	@Override
 	public AxisAngle toAxisAngle() {
 		return this;
+	}
+
+	/**
+	 * @return This rotation as an animation
+	 */
+	public Animation animation() {
+		return pos -> set(pos * MathsUtility.TWO_PI);
 	}
 
 	/**

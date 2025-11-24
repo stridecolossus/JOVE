@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Frame.*;
+import org.sarge.jove.control.Frame.Tracker;
 
 class FrameTest {
 	private static class MockFrameListener implements Frame.Listener {
 		private int count;
 
 		@Override
-		public void update(Frame frame) {
+		public void end(Frame frame) {
 			assertNotNull(frame);
 			++count;
 		}
@@ -40,23 +40,23 @@ class FrameTest {
 
 	@Test
 	void end() {
-		final Timer timer = tracker.begin();
-		timer.end();
+		final var timer = tracker.begin();
+		timer.run();
 	}
 
 	@Test
 	void already() {
-		final Timer timer = tracker.begin();
-		timer.end();
-		assertThrows(IllegalStateException.class, () -> timer.end());
+		final var timer = tracker.begin();
+		timer.run();
+		assertThrows(IllegalStateException.class, () -> timer.run());
 	}
 
 	@Test
 	void listener() {
 		tracker.add(listener);
 		for(int n = 0; n < 3; ++n) {
-    		final Timer timer = tracker.begin();
-    		timer.end();
+    		final var timer = tracker.begin();
+    		timer.run();
 		}
 		assertEquals(3, listener.count);
 	}
@@ -64,10 +64,10 @@ class FrameTest {
 	@Test
 	void parallel() {
 		tracker.add(listener);
-		final Timer one = tracker.begin();
-		final Timer two = tracker.begin();
-		two.end();
-		one.end();
+		final var one = tracker.begin();
+		final var two = tracker.begin();
+		two.run();
+		one.run();
 		assertEquals(2, listener.count);
 	}
 }

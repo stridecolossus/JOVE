@@ -3,7 +3,7 @@ package org.sarge.jove.control;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.time.Duration;
+import java.time.*;
 
 /**
  * An <i>animator</i> is a specialised playable for an {@link Animation} interpolated over a given duration.
@@ -24,7 +24,8 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 
 	private final Animation animation;
 	private final long duration;
-	private long time;
+
+	private Instant start;
 	private float speed = 1;
 	private boolean repeat = true;
 	// TODO - interpolator
@@ -36,7 +37,8 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	 */
 	public Animator(Animation animation, Duration duration) {
 		this.animation = requireNonNull(animation);
-		this.duration = requireOneOrMore(duration.toMillis());
+		this.duration = requireOneOrMore(duration.toNanos());
+
 	}
 
 	/**
@@ -46,19 +48,19 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		return animation;
 	}
 
-	/**
-	 * @return Animation duration
-	 */
-	public Duration duration() {
-		return Duration.ofMillis(duration);
-	}
-
-	/**
-	 * @return Current animation position
-	 */
-	public Duration time() {
-		return Duration.ofMillis(time);
-	}
+//	/**
+//	 * @return Animation duration
+//	 */
+//	public Duration duration() {
+//		return duration;
+//	}
+//
+//	/**
+//	 * @return Current animation position
+//	 */
+//	public Duration time() {
+//		return Duration.ofMillis(time);
+//	}
 
 	/**
 	 * @return Animation speed
@@ -95,12 +97,34 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	@Override
-	public void update(Frame frame) {
+	public void play() {
+		super.play();
+		start = Instant.now();
+	}
+
+	@Override
+	public void end(Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
+		final var diff = Duration.between(start, frame.end());
+		long nanos = diff.toNanos();
+
+		if(nanos > duration) {
+			if(repeat) {
+				nanos = nanos % duration;
+			}
+			else {
+				nanos = duration;
+				stop();
+			}
+		}
+
+		animation.set(nanos / (float) duration);
+
+		/*
 		// Update animation time position
 		time += frame.elapsed().toMillis() * speed;
 
@@ -119,5 +143,6 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 
 		// Update animation
 		animation.set(time / (float) duration);
+		*/
 	}
 }

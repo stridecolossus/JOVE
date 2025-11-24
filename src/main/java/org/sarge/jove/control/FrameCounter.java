@@ -18,7 +18,7 @@ public class FrameCounter implements Frame.Listener {
 	}
 
 	@Override
-	public void update(Frame frame) {
+	public void end(Frame frame) {
 		clean(frame.end());
 		history.add(frame.start());
 	}
