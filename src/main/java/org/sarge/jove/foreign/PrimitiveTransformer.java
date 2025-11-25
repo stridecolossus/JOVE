@@ -45,7 +45,7 @@ public record PrimitiveTransformer<T>(ValueLayout layout) implements Transformer
 	}
 
 	@Override
-	public Transformer<?, ?> array() {
+	public AbstractArrayTransformer array() {
 		return array(this, layout);
 	}
 
@@ -54,7 +54,7 @@ public record PrimitiveTransformer<T>(ValueLayout layout) implements Transformer
 	 * @param layout		Primitive layout
 	 * @return Primitive array transformer
 	 */
-	static Transformer<?, ?> array(Transformer<?, ?> component, ValueLayout layout) {
+	static AbstractArrayTransformer array(Transformer<?, ?> component, ValueLayout layout) {
 		return new AbstractArrayTransformer(component) {
 			@Override
 			protected void marshal(Object array, int length, MemorySegment address, SegmentAllocator allocator) {

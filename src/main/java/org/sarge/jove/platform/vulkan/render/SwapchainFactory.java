@@ -46,6 +46,11 @@ public class SwapchainFactory implements TransientObject {
 		this.properties = requireNonNull(properties);
 		this.builder = requireNonNull(builder);
 		this.configuration = List.copyOf(configuration);
+		init();
+	}
+
+	private void init() {
+		builder.init(properties.capabilities());
 		this.swapchain = build();
 	}
 

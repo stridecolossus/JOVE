@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Function;
 
 /**
  * A <i>native method</i> composes an FFM method handle and transformers for its return type and parameters.
@@ -13,58 +13,10 @@ import java.util.function.*;
  * @author Sarge
  */
 public class NativeMethod {
-	/**
-	 * A <i>native parameter</i> specifies the transformer for a parameter of this native method.
-	 */
-	@SuppressWarnings("rawtypes")
-	public static class NativeParameter {
-		private final Transformer transformer;
-		private final BiConsumer update;
-
-		/**
-		 * Constructor.
-		 * @param transformer		Parameter transformer
-		 * @param updated			Whether this is a by-reference parameter
-		 * @throws UnsupportedOperationException if the given {@link #transformer} cannot be {@link #updated} as a by-reference parameter
-		 * @see Updated
-		 * @see Transformer#update()
-		 */
-		public NativeParameter(Transformer transformer, boolean updated) {
-			this.transformer = requireNonNull(transformer);
-
-			if(updated) {
-				this.update = transformer.update();
-			}
-			else {
-				this.update = null;
-			}
-		}
-
-		/**
-		 * @return Whether this is a by-reference parameter
-		 */
-		public boolean isUpdated() {
-			return Objects.nonNull(update);
-		}
-
-		/**
-		 * Helper.
-		 * Overrides the transformer layout as a pointer for by-reference parameters.
-		 * @return Memory layout for this parameter
-		 */
-		MemoryLayout layout() {
-			if(isUpdated()) {
-				return AddressLayout.ADDRESS;
-			}
-			else {
-				return transformer.layout();
-			}
-		}
-	}
-
 	private final MethodHandle handle;
 	private final Function<Object, ?> returns;
-	private final NativeParameter[] parameters;
+	@SuppressWarnings("rawtypes")
+	private final Transformer[] parameters;
 
 	/**
 	 * Constructor.
@@ -75,7 +27,7 @@ public class NativeMethod {
 	 * @throws IllegalArgumentException if the number of {@link #parameters} does not match the native method
 	 */
 	@SuppressWarnings("rawtypes")
-	public NativeMethod(MethodHandle handle, Transformer returns, List<NativeParameter> parameters) {
+	public NativeMethod(MethodHandle handle, Transformer returns, List<Transformer> parameters) {
 		final MethodType signature = handle.type();
 		if(parameters.size() != signature.parameterCount()) {
 			throw new IllegalArgumentException("Mismatched number of transformers for method signature");
@@ -83,11 +35,15 @@ public class NativeMethod {
 
 		this.handle = requireNonNull(handle);
 		this.returns = returns(signature.returnType(), returns);
-		this.parameters = parameters.toArray(NativeParameter[]::new);
+		this.parameters = parameters.toArray(Transformer[]::new);
 	}
 
 	/**
 	 * Extracts the unmarshalling function for the return type of this method.
+	 * @param type			Return type
+	 * @param returns		Return transformer
+	 * @return Return value unmarshalling function
+	 * @throws IllegalArgumentError if the function is missing or superfluous
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private static Function<Object, ?> returns(Class<?> type, Transformer returns) {
@@ -114,15 +70,13 @@ public class NativeMethod {
 	 */
 	public Object invoke(Object[] args) {
 		if(args == null) {
-			return invokeLocal(null, null);
+			return invokeLocal(null);
 		}
 
-			final var allocator = Arena.ofAuto();
-    		final Object[] foreign = marshal(args, allocator);
-			final Object result = invokeLocal(foreign, allocator);
-//    		final Object result = invokeLocal(foreign);
-    		update(args, foreign);
-    		return result;
+		final Object[] foreign = marshal(args);
+   		final Object result = invokeLocal(foreign);
+		update(args, foreign);
+		return result;
 	}
 
 	/**
@@ -130,15 +84,8 @@ public class NativeMethod {
 	 * @param args Marshalled arguments
 	 * @return Unmarshalled return value
 	 */
-	private Object invokeLocal(Object[] args, SegmentAllocator allocator) {
+	private Object invokeLocal(Object[] args) {
 		try {
-
-//			if(NativeStructure.class.isAssignableFrom(handle.type().returnType())) {
-//				final MethodHandle actual = MethodHandles.insertArguments(handle, 1, allocator);
-//				final Object result = actual.invokeWithArguments(args);
-//				return unmarshal(result);
-//			}
-
 			final Object result = handle.invokeWithArguments(args);
 			return unmarshal(result);
 		}
@@ -165,18 +112,23 @@ public class NativeMethod {
 
 	/**
 	 * Marshals method arguments to the corresponding FFM types.
+	 * @param arg Domain arguments
+	 * @return Transformed arguments
 	 */
 	@SuppressWarnings("resource")
-	private Object[] marshal(Object[] args, SegmentAllocator allocator) {
+	private Object[] marshal(Object[] args) {
+		final var allocator = Arena.ofAuto();
 		final Object[] foreign = new Object[args.length];
 		for(int n = 0; n < args.length; ++n) {
-			foreign[n] = Transformer.marshal(args[n], parameters[n].transformer, allocator);
+			foreign[n] = Transformer.marshal(args[n], parameters[n], allocator);
 		}
 		return foreign;
 	}
 
 	/**
 	 * Unmarshals by-reference arguments.
+	 * @param args			Domain arguments
+	 * @param foreign		Off-heap arguments
 	 */
 	@SuppressWarnings("unchecked")
 	private void update(Object[] args, Object[] foreign) {
@@ -191,13 +143,10 @@ public class NativeMethod {
 				continue;
 			}
 
-			// Skip normal parameters
-			if(!parameters[n].isUpdated()) {
-				continue;
-			}
-
 			// Overwrite by-reference arguments
-			parameters[n].update.accept(foreign[n], args[n]);
+			if(parameters[n] instanceof UpdateTransformer) {
+				parameters[n].update().accept(foreign[n], args[n]);
+			}
 		}
 	}
 
@@ -220,16 +169,18 @@ public class NativeMethod {
 	}
 
 	/**
-	 * Helper - Derives the FFM function descriptor from the given native method signature.
+	 * Helper.
+	 * Derives the FFM function descriptor from the given native method signature.
 	 * @param returns		Optional return value transformer
 	 * @param parameters	Parameter transformers
 	 * @returns Function descriptor
 	 */
-	static FunctionDescriptor descriptor(Transformer<?, ?> returns, List<NativeParameter> parameters) {
+	@SuppressWarnings("rawtypes")
+	static FunctionDescriptor descriptor(Transformer<?, ?> returns, List<Transformer> parameters) {
 		// Map method signature to FFM layout
 		final MemoryLayout[] layouts = parameters
 				.stream()
-				.map(NativeParameter::layout)
+				.map(Transformer::layout)
 				.toArray(MemoryLayout[]::new);
 
 		// Append return layout

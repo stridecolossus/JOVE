@@ -31,8 +31,10 @@ public class SwapchainTest {
 			assertEquals(1, pCreateInfo.minImageCount);
 			assertEquals(VkFormat.R32G32B32_SFLOAT, pCreateInfo.imageFormat);
 			assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, pCreateInfo.imageColorSpace);
-			assertEquals(640, pCreateInfo.imageExtent.width);
-			assertEquals(480, pCreateInfo.imageExtent.height);
+			assertTrue(pCreateInfo.imageExtent.width >= 640);
+			assertTrue(pCreateInfo.imageExtent.width <= 1024);
+			assertTrue(pCreateInfo.imageExtent.height >= 480);
+			assertTrue(pCreateInfo.imageExtent.height <= 768);
 			assertEquals(1, pCreateInfo.imageArrayLayers);
 			assertEquals(new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT), pCreateInfo.imageUsage);
 			if(concurrent) {

@@ -12,8 +12,14 @@ import java.lang.invoke.VarHandle.AccessMode;
  */
 class FieldMapping {
 	private final VarHandle field;
-	private final TransformerAdapter transformer;
 	private final FieldMarshal marshal;
+
+	@SuppressWarnings("rawtypes")
+	private final Transformer transformer;
+
+	// TODO - why is the transformer not a property of the field marshal? they are intimately linked and unchanging
+	// i.e. marshal & transformer created as a pair
+	// => marshal to abstract + transformer (and cached)
 
 	/**
 	 * Constructor.
@@ -24,7 +30,7 @@ class FieldMapping {
 	@SuppressWarnings("rawtypes")
 	public FieldMapping(VarHandle field, Transformer transformer, FieldMarshal marshal) {
 		this.field = requireNonNull(field);
-		this.transformer = new TransformerAdapter(transformer);
+		this.transformer = requireNonNull(transformer);
 		this.marshal = requireNonNull(marshal);
 	}
 
@@ -36,7 +42,7 @@ class FieldMapping {
 	 */
 	public void marshal(NativeStructure structure, MemorySegment address, SegmentAllocator allocator) {
 		final Object value = field.get(structure);
-		marshal.marshal(value, transformer.delegate(), address, allocator);
+		marshal.marshal(value, transformer, address, allocator);
 	}
 
 	/**

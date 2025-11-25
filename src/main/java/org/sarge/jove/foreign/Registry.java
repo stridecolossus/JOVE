@@ -48,7 +48,7 @@ public class Registry {
 	private Optional<Transformer> find(Class<?> type) {
 		if(type.isArray()) {
 			final Class<?> component = type.getComponentType();
-    		final var array = transformer(component).map(Transformer::array);
+    		final Optional<Transformer> array = transformer(component).map(Transformer::array);
     		register(type, array);
     		return array;
     	}

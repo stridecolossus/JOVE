@@ -55,14 +55,9 @@ public class StructureTransformer implements Transformer<NativeStructure, Memory
 	public Function<MemorySegment, NativeStructure> unmarshal() {
 		return address -> {
 			final NativeStructure structure = factory.get();
-			update(address, structure);
+			unmarshal(address, structure);
 			return structure;
 		};
-	}
-
-	@Override
-	public BiConsumer<MemorySegment, NativeStructure> update() {
-		return this::update;
 	}
 
 	/**
@@ -70,7 +65,7 @@ public class StructureTransformer implements Transformer<NativeStructure, Memory
 	 * @param address		Off-heap memory
 	 * @param structure		Structure to update
 	 */
-	private void update(MemorySegment address, NativeStructure structure) {
+	private void unmarshal(MemorySegment address, NativeStructure structure) {
 		for(FieldMapping f : mappings) {
 			f.unmarshal(address, structure);
 		}
@@ -95,7 +90,12 @@ public class StructureTransformer implements Transformer<NativeStructure, Memory
 	}
 
 	@Override
-	public Transformer<?, ?> array() {
+	public AbstractArrayTransformer array() {
 		return new DefaultArrayTransformer(this, new StructureElementAccessor());
+	}
+
+	@Override
+	public BiConsumer<MemorySegment, NativeStructure> update() {
+		return this::unmarshal;
 	}
 }

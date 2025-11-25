@@ -55,10 +55,12 @@ class RenderTaskTest {
 		device = new MockLogicalDevice(library);
 
 		final var properties = new MockSurfaceProperties();
+
 		final var builder = new Swapchain.Builder()
 				.count(1)
 				.format(MockSurfaceProperties.FORMAT)
 				.extent(new Dimensions(640, 480));
+
 		final var factory = new SwapchainFactory(device, properties, builder, List.of());
 
 		group = new Framebuffer.Group(factory.swapchain(), new MockRenderPass(device), null);

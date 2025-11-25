@@ -37,7 +37,7 @@ public class Desktop implements TransientObject {
 
 		// TODO
 		final var registry = DefaultRegistry.create();
-		registry.add(Callback.class, new CallbackTransformerFactory());
+		registry.add(Callback.class, new CallbackTransformerFactory(registry));
 
 		// Load native library
 		final var factory = new NativeLibraryFactory("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
@@ -89,6 +89,11 @@ public class Desktop implements TransientObject {
 	@SuppressWarnings("unchecked")
 	public <T> T library() {
 		return (T) library;
+	}
+
+	public void poll() {
+		final DeviceLibrary library = this.library();
+		library.glfwPollEvents();
 	}
 
 	/**

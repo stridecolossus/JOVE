@@ -5,7 +5,7 @@ import java.lang.invoke.*;
 import java.util.function.*;
 
 /**
- * A <i>transformer</i> marshals a Java type to/from the corresponding native representation.
+ * A <i>transformer</i> marshals a domain type to/from the corresponding native representation.
  * @param <T> Domain type
  * @param <N> Native representation
  * @author Sarge
@@ -19,19 +19,11 @@ public interface Transformer<T, N> {
 	}
 
 	/**
-	 * @return Transformer for an array of this native type
-	 * @see DefaultArrayTransformer
-	 */
-	default Transformer<?, ?> array() {
-		return new DefaultArrayTransformer(this);
-	}
-
-	/**
 	 * Marshals a method argument to its off-heap representation.
 	 * @param arg			Argument
 	 * @param allocator		Off-heap allocator
 	 * @return Off-heap argument
-	 * @see #empty()
+	 * @see #marshal(Object, Transformer, SegmentAllocator)
 	 */
 	N marshal(T arg, SegmentAllocator allocator);
 
@@ -62,23 +54,36 @@ public interface Transformer<T, N> {
 	}
 
 	/**
-	 * @return Transformer to unmarshal a native value
+	 * Provides a function to unmarshal an off-heap return value.
+	 * @return Unmarshalling function
 	 * @throws UnsupportedOperationException if the domain type cannot be returned from a native method
 	 */
-	Function<N, T> unmarshal();
+	default Function<N, T> unmarshal() {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
-	 * @return Update transformer for a by-reference parameter
+	 * Provides an array transformer for this native type
+	 * @return Array transformer
+	 */
+	default AbstractArrayTransformer array() {
+		return new DefaultArrayTransformer(this);
+	}
+
+	/**
+	 * Provides a consumer to update a by-reference parameter after invocation.
+	 * @return Update function
 	 * @throws UnsupportedOperationException if the native type cannot be returned as a by-reference parameter
 	 */
-	default BiConsumer<N, T> update() {
+	default BiConsumer<MemorySegment, T> update() {
 		throw new UnsupportedOperationException();
 	}
 
     /**
-     * Helper - Inserts a zero byte offset coordinate into the given method handle at index <b>one</b>.
+     * Helper.
+     * Injects a zero byte offset coordinate into the given method handle at index <b>one</b>.
      * @param handle Method handle
-     * @return Method handle with no byte offsets
+     * @return Method handle without an offset
      */
 	static VarHandle removeOffset(VarHandle handle) {
 		return MethodHandles.insertCoordinates(handle, 1, 0L);

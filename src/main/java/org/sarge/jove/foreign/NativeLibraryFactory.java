@@ -9,13 +9,13 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
 
-import org.sarge.jove.foreign.NativeMethod.NativeParameter;
-
 /**
  * The <i>native library builder</i> constructs a proxy implementation of a native library based on FFM.
  * <p>
  * A {@link NativeMethod} is generated for each public, non-static method of a given API.
  * The method parameters and return type are mapped to the corresponding transformers via the provided {@link Registry}.
+ * <p>
+ * TODO - by-reference fiddle
  * <p>
  * The {@link #handler(Consumer)} method can be used to configure validation or logging of native return values.
  * <p>
@@ -143,7 +143,7 @@ public class NativeLibraryFactory {
 		final Transformer returns = returns(method);
 
 		// Map parameters
-		final List<NativeParameter> parameters = Arrays
+		final List<Transformer> parameters = Arrays
 				.stream(method.getParameters())
 				.map(this::parameter)
 				.toList();
@@ -177,14 +177,22 @@ public class NativeLibraryFactory {
 	 * @param parameter Method parameter
 	 * @return Native parameter
 	 */
-	private NativeParameter parameter(Parameter parameter) {
-		@SuppressWarnings("rawtypes")
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private Transformer parameter(Parameter parameter) {
+		// Lookup transformer
 		final Transformer transformer = registry
 				.transformer(parameter.getType())
 				.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + parameter));
 
+		// Check whether normal or by-reference parameter
 		final boolean updated = parameter.isAnnotationPresent(Updated.class);
 
-		return new NativeParameter(transformer, updated);
+		// Create by-reference adapter as required
+		if(updated) {
+			return new UpdateTransformer(transformer);
+		}
+		else {
+			return transformer;
+		}
 	}
 }

@@ -5,19 +5,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.util.List;
-import java.util.function.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.NativeMethod.NativeParameter;
 
 class NativeMethodTest {
 	private PrimitiveTransformer<Integer> identity;
-	private NativeParameter parameter;
 
 	@BeforeEach
 	void before() {
 		identity = new PrimitiveTransformer<>(ValueLayout.JAVA_INT);
-		parameter = new NativeParameter(identity, false);
 	}
 
 	@DisplayName("A simple native method without a return type or parameters can be invoked")
@@ -62,7 +58,7 @@ class NativeMethodTest {
     	@Test
     	void parameter() {
     		final MethodHandle handle = MethodHandles.identity(int.class);
-    		final var method = new NativeMethod(handle, identity, List.of(parameter));
+    		final var method = new NativeMethod(handle, identity, List.of(identity));
     		assertEquals(42, method.invoke(new Object[]{42}));
     	}
 
@@ -70,7 +66,7 @@ class NativeMethodTest {
     	@Test
     	void empty() {
     		final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class, MemorySegment.class));
-    		final var method = new NativeMethod(handle, null, List.of(new NativeParameter(new StringTransformer(), false)));
+    		final var method = new NativeMethod(handle, null, List.of(new StringTransformer()));
     		method.invoke(new Object[]{null});
     	}
 
@@ -79,61 +75,7 @@ class NativeMethodTest {
     	void mismatchedParameterTransformers() {
     		final MethodHandle handle = MethodHandles.identity(int.class);
     		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of()));
-    		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of(parameter, parameter)));
-    	}
-	}
-
-	private static class MockReturnedTransformer implements Transformer<Object, MemorySegment> {
-		private Object arg;
-		private boolean returned;
-
-		@Override
-		public MemoryLayout layout() {
-			return MockStructure.LAYOUT;
-		}
-
-		@Override
-		public MemorySegment marshal(Object arg, SegmentAllocator allocator) {
-			assertNotNull(arg);
-			this.arg = arg;
-			return MemorySegment.ofAddress(42);
-		}
-
-		@Override
-		public Function<MemorySegment, Object> unmarshal() {
-			return null;
-		}
-
-		@Override
-		public BiConsumer<MemorySegment, Object> update() {
-			return (_, arg) -> {
-				assertEquals(this.arg, arg);
-				returned = true;
-			};
-		}
-	}
-
-	@Nested
-	class NativeParameterTest {
-		private MockReturnedTransformer transformer;
-
-		@BeforeEach
-		void before() {
-    		transformer = new MockReturnedTransformer();
-		}
-
-		@Test
-    	void value() {
-    		final var parameter = new NativeParameter(transformer, false);
-    		assertEquals(false, parameter.isUpdated());
-    		assertEquals(MockStructure.LAYOUT, parameter.layout());
-    	}
-
-    	@Test
-    	void returned() {
-    		final var parameter = new NativeParameter(transformer, true);
-    		assertEquals(true, parameter.isUpdated());
-    		assertEquals(ValueLayout.ADDRESS, parameter.layout());
+    		assertThrows(IllegalArgumentException.class, () -> new NativeMethod(handle, identity, List.of(identity, identity)));
     	}
 	}
 
@@ -141,36 +83,34 @@ class NativeMethodTest {
 	@Nested
 	class ReturnedReferenceParameter {
 		private NativeMethod method;
-		private MockReturnedTransformer transformer;
+		private UpdateTransformer<MockStructure> transformer;
 
 		@BeforeEach
 		void before() throws Exception {
 			final MethodHandle handle = MethodHandles.empty(MethodType.methodType(void.class, MemorySegment.class));
-    		transformer = new MockReturnedTransformer();
-    		method = new NativeMethod(handle, null, List.of(new NativeParameter(transformer, true)));
+			transformer = new UpdateTransformer<>(new MockStructureTransformer());
+    		method = new NativeMethod(handle, null, List.of(transformer));
 		}
 
 		@DisplayName("marshals by-reference parameters")
     	@Test
     	void marshal() {
-			final var arg = new MockStructure();
-    		method.invoke(new Object[]{arg});
-    		assertEquals(arg, transformer.arg);
+			final var structure = new MockStructure();
+    		method.invoke(new Object[]{structure});
     	}
 
 		@DisplayName("can marshal a NULL by-reference parameter")
     	@Test
     	void empty() {
     		method.invoke(new Object[]{null});
-    		assertEquals(false, transformer.returned);
-    		assertEquals(null, transformer.arg);
 		}
 
 		@DisplayName("updates by-reference parameters after invocation")
     	@Test
     	void update() {
-    		method.invoke(new Object[]{new MockStructure()});
-    		assertEquals(true, transformer.returned);
+			final var structure = new MockStructure();
+    		method.invoke(new Object[]{structure});
+    		assertEquals(42, structure.field);
 		}
 	}
 

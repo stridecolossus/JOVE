@@ -52,7 +52,7 @@ public class NativeBooleanTransformer implements Transformer<Boolean, Integer> {
 	}
 
 	@Override
-	public Transformer<?, ?> array() {
+	public AbstractArrayTransformer array() {
 		// TODO - needs to be transformed to int[] first?
 		//return PrimitiveTransformer.array(this, JAVA_INT);
 		throw new UnsupportedOperationException();
