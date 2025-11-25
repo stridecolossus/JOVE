@@ -7,13 +7,15 @@ import java.lang.invoke.VarHandle;
  * An <i>atomic field marshal</i> marshals a primitive or simple reference type (including structures).
  * @author Sarge
  */
-record AtomicFieldMarshal(VarHandle handle) implements FieldMarshal {
+class AtomicFieldMarshal implements FieldMarshal {
+	private final VarHandle handle;
+
 	/**
 	 * Constructor.
 	 * @param handle Off-heap field handle
 	 */
-	public AtomicFieldMarshal {
-		handle = Transformer.removeOffset(handle);
+	public AtomicFieldMarshal(VarHandle handle) {
+		this.handle = Transformer.removeOffset(handle);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -36,5 +38,10 @@ record AtomicFieldMarshal(VarHandle handle) implements FieldMarshal {
 
 		// Unmarshal field
 		return transformer.unmarshal().apply(value);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("AtomicFieldMarshal[handle=%s]", handle);
 	}
 }

@@ -167,28 +167,4 @@ public class NativeMethod {
 	public String toString() {
 		return String.format("NativeMethod[%s]", handle);
 	}
-
-	/**
-	 * Helper.
-	 * Derives the FFM function descriptor from the given native method signature.
-	 * @param returns		Optional return value transformer
-	 * @param parameters	Parameter transformers
-	 * @returns Function descriptor
-	 */
-	@SuppressWarnings("rawtypes")
-	static FunctionDescriptor descriptor(Transformer<?, ?> returns, List<Transformer> parameters) {
-		// Map method signature to FFM layout
-		final MemoryLayout[] layouts = parameters
-				.stream()
-				.map(Transformer::layout)
-				.toArray(MemoryLayout[]::new);
-
-		// Append return layout
-		if(returns == null) {
-			return FunctionDescriptor.ofVoid(layouts);
-		}
-		else {
-			return FunctionDescriptor.of(returns.layout(), layouts);
-		}
-	}
 }

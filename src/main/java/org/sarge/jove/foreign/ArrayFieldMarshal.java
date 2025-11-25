@@ -5,7 +5,6 @@ import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Array;
-import java.util.function.BiConsumer;
 
 /**
  * An <i>array field marshal</i> marshals an array field to/from off-heap memory.
@@ -15,9 +14,6 @@ import java.util.function.BiConsumer;
 class ArrayFieldMarshal extends SliceFieldMarshal {
 	private final Class<?> component;
 	private final int length;
-
-	@SuppressWarnings("rawtypes")
-	private BiConsumer update;
 
 	/**
 	 * Constructor.
@@ -37,20 +33,15 @@ class ArrayFieldMarshal extends SliceFieldMarshal {
 		// Instantiate array
 		final Object array = Array.newInstance(component, length);
 
-		// Cache update function
-		if(update == null) {
-			update = transformer.update();
-		}
-
 		// Unmarshal off-heap array
 		final MemorySegment slice = super.slice(address);
-		update.accept(slice, array);
+		transformer.update().accept(slice, array);
 
 		return array;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("ArrayFieldMarshal[length=%d component=%s delegate=%s]", component, length, super.toString());
+		return String.format("ArrayFieldMarshal[length=%d component=%s]", component, length);
 	}
 }

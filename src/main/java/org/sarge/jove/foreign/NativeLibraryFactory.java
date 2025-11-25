@@ -15,7 +15,7 @@ import java.util.function.*;
  * A {@link NativeMethod} is generated for each public, non-static method of a given API.
  * The method parameters and return type are mapped to the corresponding transformers via the provided {@link Registry}.
  * <p>
- * TODO - by-reference fiddle
+ * By-reference parameters are denoted by the {@link Updated} annotation and are mapped to a {@link UpdateTransformer}.
  * <p>
  * The {@link #handler(Consumer)} method can be used to configure validation or logging of native return values.
  * <p>
@@ -139,60 +139,29 @@ public class NativeLibraryFactory {
 				.find(method.getName())
 				.orElseThrow(() -> new IllegalArgumentException("Unknown native method: " + method));
 
-		// Map return value
-		final Transformer returns = returns(method);
+		// Init transformer mapper that wraps by-reference parameters
+		final var mapper = new NativeMethodMapper(registry) {
+			@SuppressWarnings("unchecked")
+			@Override
+			protected Transformer parameter(Parameter parameter) {
+				final Transformer transformer = super.parameter(parameter);
+				final boolean updated = parameter.isAnnotationPresent(Updated.class);
+				if(updated) {
+					return new UpdateTransformer(transformer);
+				}
+				else {
+					return transformer;
+				}
+			}
+		};
 
-		// Map parameters
-		final List<Transformer> parameters = Arrays
-				.stream(method.getParameters())
-				.map(this::parameter)
-				.toList();
+		// Map method signature
+		final Transformer returns = mapper.returns(method);
+		final List<Transformer> parameters = mapper.parameters(method);
 
 		// Link native method
-		final FunctionDescriptor descriptor = NativeMethod.descriptor(returns, parameters);
+		final FunctionDescriptor descriptor = NativeMethodMapper.descriptor(returns, parameters);
 		MethodHandle handle = linker.downcallHandle(descriptor).bindTo(symbol);
 		return new NativeMethod(handle, returns, parameters);
-	}
-
-	/**
-	 * Determines the transformer for the return value of the given method.
-	 * @param method Method
-	 * @return Return type transformer or {@code null} for a {@code void} method
-	 */
-	@SuppressWarnings("rawtypes")
-	private Transformer returns(Method method) {
-		final Class<?> type = method.getReturnType();
-
-		if(type == void.class) {
-			return null;
-		}
-
-		return registry
-				.transformer(type)
-				.orElseThrow(() -> new IllegalArgumentException("Unsupported return type: " + method));
-	}
-
-	/**
-	 * Determines the native transformer for the given method parameter.
-	 * @param parameter Method parameter
-	 * @return Native parameter
-	 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private Transformer parameter(Parameter parameter) {
-		// Lookup transformer
-		final Transformer transformer = registry
-				.transformer(parameter.getType())
-				.orElseThrow(() -> new IllegalArgumentException("Unsupported parameter type: " + parameter));
-
-		// Check whether normal or by-reference parameter
-		final boolean updated = parameter.isAnnotationPresent(Updated.class);
-
-		// Create by-reference adapter as required
-		if(updated) {
-			return new UpdateTransformer(transformer);
-		}
-		else {
-			return transformer;
-		}
 	}
 }

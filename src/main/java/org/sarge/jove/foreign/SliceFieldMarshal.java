@@ -3,7 +3,6 @@ package org.sarge.jove.foreign;
 import static org.sarge.jove.util.Validation.*;
 
 import java.lang.foreign.*;
-import java.util.function.Function;
 
 /**
  * A <i>slice field marshal</i> directly accesses an off-heap memory slice to marshal arrays or nested structure fields.
@@ -13,13 +12,10 @@ class SliceFieldMarshal implements FieldMarshal {
 	private final long offset;
 	private final long size;
 
-	@SuppressWarnings("rawtypes")
-	private Function unmarshal;
-
 	/**
 	 * Constructor.
 	 * @param offset		Field offset
-	 * @param size			Field size (bytes)
+	 * @param size			Field size
 	 */
 	public SliceFieldMarshal(long offset, long size) {
 		this.offset = requireZeroOrMore(offset);
@@ -29,12 +25,16 @@ class SliceFieldMarshal implements FieldMarshal {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void marshal(Object value, Transformer transformer, MemorySegment address, SegmentAllocator allocator) {
+		// Skip empty fields
 		if(value == null) {
 			return;
 		}
 
+		// Unmarshal field
 		@SuppressWarnings("unchecked")
 		final var result = (MemorySegment) transformer.marshal(value, allocator);
+
+		// Copy field
 		final MemorySegment slice = slice(address);
 		slice.copyFrom(result);
 	}
@@ -42,11 +42,7 @@ class SliceFieldMarshal implements FieldMarshal {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Override
 	public Object unmarshal(MemorySegment address, Transformer transformer) {
-		if(unmarshal == null) {
-			unmarshal = transformer.unmarshal();
-		}
-
-		return unmarshal.apply(slice(address));
+		return transformer.unmarshal().apply(slice(address));
 	}
 
 	/**

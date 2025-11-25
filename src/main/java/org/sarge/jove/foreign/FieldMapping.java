@@ -7,25 +7,20 @@ import java.lang.invoke.VarHandle;
 import java.lang.invoke.VarHandle.AccessMode;
 
 /**
- * A <i>field mapping</i> marshals a structure field.
+ * A <i>field mapping</i> marshals a structure field to/from off-heap memory.
  * @author Sarge
  */
 class FieldMapping {
+	@SuppressWarnings("rawtypes")
+	private final Transformer transformer;
 	private final VarHandle field;
 	private final FieldMarshal marshal;
 
-	@SuppressWarnings("rawtypes")
-	private final Transformer transformer;
-
-	// TODO - why is the transformer not a property of the field marshal? they are intimately linked and unchanging
-	// i.e. marshal & transformer created as a pair
-	// => marshal to abstract + transformer (and cached)
-
 	/**
 	 * Constructor.
-	 * @param field				Structure field
-	 * @param transformer		Transformer
-	 * @param marshal			Off-heap marshalling
+	 * @param field			Structure field
+	 * @param transformer	Transformer
+	 * @param marshal		Off-heap marshalling
 	 */
 	@SuppressWarnings("rawtypes")
 	public FieldMapping(VarHandle field, Transformer transformer, FieldMarshal marshal) {
@@ -52,13 +47,17 @@ class FieldMapping {
 	 * @param structure			Structure instance
 	 */
 	public void unmarshal(MemorySegment address, NativeStructure structure) {
+		// Skip final fields
 		if(!field.isAccessModeSupported(AccessMode.SET)) {
 			// TODO - can we not just omit this mapping? => factory needs to handle optional case
 			// TODO - can the generator even work out whether a field should be final? do we want it to? i.e. get rid of final 'sType'
 			return;
 		}
 
+		// Unmarshal off-heap field
 		final Object value = marshal.unmarshal(address, transformer);
+
+		// Write to structure
 		field.set(structure, value);
 	}
 
