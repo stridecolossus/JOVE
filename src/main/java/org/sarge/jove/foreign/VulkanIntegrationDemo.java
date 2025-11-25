@@ -1,5 +1,6 @@
 package org.sarge.jove.foreign;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
@@ -52,6 +53,19 @@ public class VulkanIntegrationDemo {
 				.hint(Hint.CLIENT_API, 0)
 				.hint(Hint.VISIBLE, 1)
 				.build(desktop);
+
+		//////////////////
+
+		final var deviceLibrary = (DeviceLibrary) desktop.library();
+		final var listener = new DeviceLibrary.MouseListener() {
+			@Override
+			public void event(MemorySegment window, double x, double y) {
+				System.out.println("%s: %f,%f".formatted(window, x, y));
+			}
+		};
+		deviceLibrary.glfwSetCursorPosCallback(window, listener);
+
+		//////////////////
 
 		System.out.println("Initialising Vulkan...");
 		final var vulkan = Vulkan.create();
@@ -228,7 +242,11 @@ public class VulkanIntegrationDemo {
 		tracker.add(counter);
 		try(var loop = new RenderLoop(render, tracker)) {
 			loop.start();
-			Thread.sleep(2000);
+			//Thread.sleep(10 * 1000);
+			for(int n = 0; n < 1000; ++n) {
+				Thread.sleep(50);
+				desktop.poll();
+			}
 		}
 		System.out.println(counter);
 
