@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags.*;
 import static org.sarge.jove.platform.vulkan.common.VulkanUtility.checkAlignment;
 import static org.sarge.jove.util.Validation.*;
 
@@ -26,7 +27,7 @@ public class VulkanBuffer extends VulkanObject {
 	 */
 	public static final long VK_WHOLE_SIZE = (~0L);
 
-	private final Set<VkBufferUsageFlag> usage;
+	private final Set<VkBufferUsageFlags> usage;
 	private final DeviceMemory memory;
 	private final long length;
 
@@ -38,7 +39,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param memory		Buffer memory
 	 * @param length		Length of this buffer (bytes)
 	 */
-	VulkanBuffer(Handle handle, LogicalDevice device, Set<VkBufferUsageFlag> usage, DeviceMemory memory, long length) {
+	VulkanBuffer(Handle handle, LogicalDevice device, Set<VkBufferUsageFlags> usage, DeviceMemory memory, long length) {
 		super(handle, device);
 		this.usage = Set.copyOf(usage);
 		this.memory = requireNonNull(memory);
@@ -48,7 +49,7 @@ public class VulkanBuffer extends VulkanObject {
 	/**
 	 * @return Usage flags for this buffer
 	 */
-	public Set<VkBufferUsageFlag> usage() {
+	public Set<VkBufferUsageFlags> usage() {
 		return usage;
 	}
 
@@ -73,7 +74,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param limits	Device limits
 	 * @return Maximum length
 	 */
-	public static int maximum(VkBufferUsageFlag usage, DeviceLimits limits) {
+	public static int maximum(VkBufferUsageFlags usage, DeviceLimits limits) {
 		return switch(usage) {
 			case UNIFORM_BUFFER -> limits.get("maxUniformBufferRange");
 			case STORAGE_BUFFER -> limits.get("maxStorageBufferRange");
@@ -98,7 +99,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * Validates that this buffer supports the given usage flag(s).
 	 * @throws IllegalStateException if this buffer does not support <b>all</b> of the required {@link #flags}
 	 */
-	public void require(VkBufferUsageFlag... flags) {
+	public void require(VkBufferUsageFlags... flags) {
 		if(!usage.containsAll(Set.of(flags))) {
 			throw new IllegalStateException("Invalid usage for buffer: required=%s buffer=%s".formatted(List.of(flags), this));
 		}
@@ -160,11 +161,11 @@ public class VulkanBuffer extends VulkanObject {
 	 * @throws IllegalArgumentException if {@link #offset} and {@link #size} are larger than this buffer
 	 * @throws IllegalArgumentException if {@link #offset} is not a multiple of 4 bytes
 	 * @throws IllegalArgumentException if {@link #size} is not {@link #VK_WHOLE_SIZE} and is not a multiple of 4 bytes
-	 * @throws IllegalStateException if this buffer was not created as a {@link VkBufferUsageFlag#TRANSFER_DST}
+	 * @throws IllegalStateException if this buffer was not created as a {@link VkBufferUsageFlags#TRANSFER_DST}
 	 */
 	public Command fill(long offset, long size, int value) {
 		// Validate
-		require(VkBufferUsageFlag.TRANSFER_DST);
+		require(VkBufferUsageFlags.TRANSFER_DST);
 		checkOffset(offset);
 		checkAlignment(offset);
 
@@ -201,7 +202,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @return New buffer
 	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
 	 */
-	public static VulkanBuffer create(Allocator allocator, long length, MemoryProperties<VkBufferUsageFlag> properties) {
+	public static VulkanBuffer create(Allocator allocator, long length, MemoryProperties<VkBufferUsageFlags> properties) {
 		// TODO
 		if(properties.mode() == VkSharingMode.CONCURRENT) {
 			throw new UnsupportedOperationException();
@@ -244,7 +245,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * <p>
 	 * The buffer has the following properties:
 	 * <ul>
-	 * <li>{@link VkBufferUsageFlag#TRANSFER_SRC}</li>
+	 * <li>{@link VkBufferUsageFlags#TRANSFER_SRC}</li>
 	 * <li>{@link VkMemoryProperty#HOST_VISIBLE}</li>
 	 * <li>{@link VkMemoryProperty#HOST_COHERENT}</li>
 	 * <li>{@link VkMemoryProperty#DEVICE_LOCAL}</li>
@@ -254,11 +255,11 @@ public class VulkanBuffer extends VulkanObject {
 	 * @return New staging buffer
 	 */
 	public static VulkanBuffer staging(Allocator allocator, long length) {
-		final var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
-				.usage(VkBufferUsageFlag.TRANSFER_SRC)
-				.required(VkMemoryProperty.HOST_VISIBLE)
-				.required(VkMemoryProperty.HOST_COHERENT)
-				.optimal(VkMemoryProperty.DEVICE_LOCAL)
+		final var properties = new MemoryProperties.Builder<VkBufferUsageFlags>()
+				.usage(VkBufferUsageFlags.TRANSFER_SRC)
+				.required(HOST_VISIBLE)
+				.required(HOST_COHERENT)
+				.optimal(DEVICE_LOCAL)
 				.build();
 
 		return create(allocator, length, properties);

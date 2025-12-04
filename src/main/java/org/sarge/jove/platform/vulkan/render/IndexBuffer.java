@@ -27,7 +27,7 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 		if(type == VkIndexType.NONE_NV) {
 			throw new IllegalArgumentException("Invalid index type: " + type);
 		}
-		buffer.require(VkBufferUsageFlag.INDEX_BUFFER);
+		buffer.require(VkBufferUsageFlags.INDEX_BUFFER);
 	}
 
 	/**

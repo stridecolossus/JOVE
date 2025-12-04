@@ -1,26 +1,32 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"computeDerivativeGroupQuads",
-	"computeDerivativeGroupLinear"
-})
-public class VkPhysicalDeviceComputeShaderDerivativesFeaturesNV extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceComputeShaderDerivativesFeaturesNV implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceComputeShaderDerivativesFeaturesNV implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV;
-	public Pointer pNext;
+public class VkPhysicalDeviceComputeShaderDerivativesFeaturesNV implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public boolean computeDerivativeGroupQuads;
 	public boolean computeDerivativeGroupLinear;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("computeDerivativeGroupQuads"),
+			JAVA_INT.withName("computeDerivativeGroupLinear")
+		);
+	}
 }

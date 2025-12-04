@@ -27,7 +27,7 @@ public class PushConstant {
     /**
      * A <i>push constant range</i> specifies a segment of this push constant.
      */
-	public record Range(int offset, int size, Set<VkShaderStage> stages) {
+	public record Range(int offset, int size, Set<VkShaderStageFlags> stages) {
     	/**
     	 * Constructor.
     	 * @param offset		Buffer offset
@@ -106,7 +106,7 @@ public class PushConstant {
      * Checks that the shader stages are unique for each range.
      */
     private void stages() {
-    	final Set<VkShaderStage> stages = new HashSet<>();
+    	final Set<VkShaderStageFlags> stages = new HashSet<>();
     	for(var range : ranges) {
     		if(!Collections.disjoint(range.stages, stages)) {
     			throw new IllegalArgumentException("Overlapping shader stages: " + range);
@@ -184,7 +184,7 @@ public class PushConstant {
 			return update(ranges.getFirst(), layout);
 		}
 
-		final Set<VkShaderStage> stages = ranges
+		final Set<VkShaderStageFlags> stages = ranges
 				.stream()
 				.map(Range::stages)
 				.flatMap(Set::stream)

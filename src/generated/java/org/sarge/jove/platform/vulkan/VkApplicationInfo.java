@@ -1,18 +1,20 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkApplicationInfo implements NativeStructure {
-	public final VkStructureType sType = VkStructureType.APPLICATION_INFO;
+	public VkStructureType sType;
 	public Handle pNext;
 	public String pApplicationName;
 	public int applicationVersion;
@@ -21,19 +23,17 @@ public class VkApplicationInfo implements NativeStructure {
 	public int apiVersion;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-				JAVA_INT.withName("sType"),
-				PADDING,
-				POINTER.withName("pNext"),
-				POINTER.withName("pApplicationName"),
-				JAVA_INT.withName("applicationVersion"),
-				PADDING,
-				POINTER.withName("pEngineName"),
-				JAVA_INT.withName("engineVersion"),
-				PADDING,
-				JAVA_INT.withName("apiVersion"),
-				PADDING
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			POINTER.withName("pApplicationName"),
+			JAVA_INT.withName("applicationVersion"),
+			PADDING,
+			POINTER.withName("pEngineName"),
+			JAVA_INT.withName("engineVersion"),
+			JAVA_INT.withName("apiVersion")
 		);
 	}
 }

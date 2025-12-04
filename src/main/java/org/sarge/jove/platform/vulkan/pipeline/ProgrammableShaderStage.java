@@ -4,12 +4,13 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>programmable shader stage</i> defines a pipeline stage implemented by a {@link Shader} module.
  * @author Sarge
  */
-public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String name, SpecialisationConstants constants) {
+public record ProgrammableShaderStage(VkShaderStageFlags stage, Shader shader, String name, SpecialisationConstants constants) {
 	/**
 	 * Default entry-point name for a shader.
 	 */
@@ -34,7 +35,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	 * @param shader		Shader module
 	 * @see #MAIN
 	 */
-	public ProgrammableShaderStage(VkShaderStage stage, Shader shader) {
+	public ProgrammableShaderStage(VkShaderStageFlags stage, Shader shader) {
 		this(stage, shader, MAIN, null);
 	}
 
@@ -45,7 +46,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	 * @param shader		Shader
 	 * @return Programmable shader stage
 	 */
-	public static ProgrammableShaderStage of(VkShaderStage stage, Shader shader) {
+	public static ProgrammableShaderStage of(VkShaderStageFlags stage, Shader shader) {
 		return new Builder()
 				.stage(stage)
 				.shader(shader)
@@ -57,7 +58,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	 */
 	VkPipelineShaderStageCreateInfo descriptor() {
 		final var info = new VkPipelineShaderStageCreateInfo();
-		info.stage = stage;
+		info.stage = new EnumMask<>(stage);
 		info.module = shader.handle();
 		info.pName = name;
 		if(constants != null) {
@@ -70,7 +71,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	 * Builder for a shader stage.
 	 */
 	public static class Builder {
-		private VkShaderStage stage;
+		private VkShaderStageFlags stage;
 		private Shader shader;
 		private String name = MAIN;
 		private SpecialisationConstants constants;
@@ -79,7 +80,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 		 * Sets the shader stage.
 		 * @param stage Shader stage
 		 */
-		public Builder stage(VkShaderStage stage) {
+		public Builder stage(VkShaderStageFlags stage) {
 			this.stage = stage;
 			return this;
 		}

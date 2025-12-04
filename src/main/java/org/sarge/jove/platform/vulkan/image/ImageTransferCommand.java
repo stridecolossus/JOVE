@@ -43,7 +43,7 @@ public class ImageTransferCommand implements Command {
 	}
 
 	private void validateBuffer() {
-		buffer.require(write ? VkBufferUsageFlag.TRANSFER_SRC : VkBufferUsageFlag.TRANSFER_DST);
+		buffer.require(write ? VkBufferUsageFlags.TRANSFER_SRC : VkBufferUsageFlags.TRANSFER_DST);
 	}
 
 	private void validateLayout() {
@@ -71,7 +71,7 @@ public class ImageTransferCommand implements Command {
 
 	/**
 	 * Inverts the direction of this command.
-	 * @return Inverse copy command
+	 * @return Inverse transfer command
 	 * @throws IllegalStateException if the buffer is not valid for this transfer operation
 	 */
 	public ImageTransferCommand invert() {

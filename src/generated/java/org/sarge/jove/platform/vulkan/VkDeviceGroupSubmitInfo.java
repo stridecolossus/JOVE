@@ -1,31 +1,43 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"waitSemaphoreCount",
-	"pWaitSemaphoreDeviceIndices",
-	"commandBufferCount",
-	"pCommandBufferDeviceMasks",
-	"signalSemaphoreCount",
-	"pSignalSemaphoreDeviceIndices"
-})
-public class VkDeviceGroupSubmitInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.DEVICE_GROUP_SUBMIT_INFO;
-	public Pointer pNext;
+public class VkDeviceGroupSubmitInfo implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int waitSemaphoreCount;
-	public Pointer pWaitSemaphoreDeviceIndices;
+	public Handle pWaitSemaphoreDeviceIndices;
 	public int commandBufferCount;
-	public Pointer pCommandBufferDeviceMasks;
+	public Handle pCommandBufferDeviceMasks;
 	public int signalSemaphoreCount;
-	public Pointer pSignalSemaphoreDeviceIndices;
+	public Handle pSignalSemaphoreDeviceIndices;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("waitSemaphoreCount"),
+			PADDING,
+			POINTER.withName("pWaitSemaphoreDeviceIndices"),
+			JAVA_INT.withName("commandBufferCount"),
+			PADDING,
+			POINTER.withName("pCommandBufferDeviceMasks"),
+			JAVA_INT.withName("signalSemaphoreCount"),
+			PADDING,
+			POINTER.withName("pSignalSemaphoreDeviceIndices")
+		);
+	}
 }

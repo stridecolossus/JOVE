@@ -1,11 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -18,11 +20,10 @@ public class VkDescriptorImageInfo implements NativeStructure {
 
 	@Override
 	public GroupLayout layout() {
-	    return MemoryLayout.structLayout(
-	            POINTER.withName("sampler"),
-	            POINTER.withName("imageView"),
-	            JAVA_INT.withName("imageLayout"),
-	            PADDING
-	    );
+		return MemoryLayout.structLayout(
+			POINTER.withName("sampler"),
+			POINTER.withName("imageView"),
+			JAVA_INT.withName("imageLayout")
+		);
 	}
 }

@@ -7,12 +7,13 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkAttachmentLoadOp implements IntEnum {
- 	LOAD(0),
- 	CLEAR(1),
- 	DONT_CARE(2);
+	LOAD(0),
+	CLEAR(1),
+	DONT_CARE(2),
+	MAX_ENUM(2147483647);
 
 	private final int value;
-
+	
 	private VkAttachmentLoadOp(int value) {
 		this.value = value;
 	}

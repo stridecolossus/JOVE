@@ -5,7 +5,9 @@ import static java.lang.foreign.ValueLayout.*;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -13,14 +15,13 @@ import org.sarge.jove.util.EnumMask;
  */
 public class VkMemoryHeap implements NativeStructure {
 	public long size;
-	public EnumMask<VkMemoryHeapFlag> flags;
+	public EnumMask<VkMemoryHeapFlags> flags;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-				JAVA_LONG.withName("size"),
-				JAVA_INT.withName("flags"),
-				PADDING
+			JAVA_LONG.withName("size"),
+			JAVA_INT.withName("flags")
 		);
 	}
 }

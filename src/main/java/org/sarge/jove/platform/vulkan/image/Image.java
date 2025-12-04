@@ -30,7 +30,7 @@ public interface Image extends NativeObject, TransientObject {
 	 * An <i>image descriptor</i> specifies the properties of this image.
 	 * Note that an image descriptor is also a {@link Subresource} with default (i.e. zero) values for the {@link #mipLevel()} and {@link #baseArrayLayer()} properties.
 	 */
-	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspect> aspects, int levelCount, int layerCount) implements Subresource {
+	record Descriptor(VkImageType type, VkFormat format, Extents extents, Set<VkImageAspectFlags> aspects, int levelCount, int layerCount) implements Subresource {
 		/**
 		 * Constructor.
 		 * @param type			Image type
@@ -53,7 +53,7 @@ public interface Image extends NativeObject, TransientObject {
 				throw new IllegalArgumentException(String.format("Invalid extents for image: type=%s extents=%s", type, extents));
 			}
 
-			if((type == VkImageType.THREE_D) && (layerCount != 1)) {
+			if((type == VkImageType.TYPE_3D) && (layerCount != 1)) {
 				throw new IllegalArgumentException("Array layers must be one for a 3D image");
 			}
 		}
@@ -72,10 +72,10 @@ public interface Image extends NativeObject, TransientObject {
 		 * Builder for an image descriptor.
 		 */
 		public static class Builder {
-			private VkImageType type = VkImageType.TWO_D;
+			private VkImageType type = VkImageType.TYPE_2D;
 			private VkFormat format;
 			private Extents extents;
-			private final Set<VkImageAspect> aspects = new HashSet<>();
+			private final Set<VkImageAspectFlags> aspects = new HashSet<>();
 			private int levels = 1;
 			private int layers = 1;
 
@@ -118,7 +118,7 @@ public interface Image extends NativeObject, TransientObject {
 			 * Adds an image aspect.
 			 * @param aspect Image aspect
 			 */
-			public Builder aspect(VkImageAspect aspect) {
+			public Builder aspect(VkImageAspectFlags aspect) {
 				aspects.add(aspect);
 				return this;
 			}

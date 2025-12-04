@@ -7,11 +7,13 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkAttachmentStoreOp implements IntEnum {
- 	STORE(0),
- 	DONT_CARE(1);
+	STORE(0),
+	DONT_CARE(1),
+	NONE_QCOM(1000301000),
+	MAX_ENUM(2147483647);
 
 	private final int value;
-
+	
 	private VkAttachmentStoreOp(int value) {
 		this.value = value;
 	}

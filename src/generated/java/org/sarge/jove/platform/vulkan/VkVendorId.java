@@ -7,13 +7,12 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkVendorId implements IntEnum {
- 	VK_VENDOR_ID_VIV(65537), 	
- 	VK_VENDOR_ID_VSI(65538), 	
- 	VK_VENDOR_ID_KAZAN(65539), 	
- 	VK_VENDOR_ID_BEGIN_RANGE(65537), 	
- 	VK_VENDOR_ID_END_RANGE(65539), 	
- 	VK_VENDOR_ID_RANGE_SIZE(3), 	
- 	VK_VENDOR_ID_MAX_ENUM(2147483647); 	
+	VIV(65537),
+	VSI(65538),
+	KAZAN(65539),
+	CODEPLAY(65540),
+	MESA(65541),
+	MAX_ENUM(2147483647);
 
 	private final int value;
 	

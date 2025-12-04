@@ -1,26 +1,32 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"depthClipEnable"
-})
-public class VkPipelineRasterizationDepthClipStateCreateInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkPipelineRasterizationDepthClipStateCreateInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkPipelineRasterizationDepthClipStateCreateInfoEXT implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
-	public Pointer pNext;
+public class VkPipelineRasterizationDepthClipStateCreateInfoEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int flags;
 	public boolean depthClipEnable;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("flags"),
+			JAVA_INT.withName("depthClipEnable")
+		);
+	}
 }

@@ -1,33 +1,36 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkQueueFamilyProperties implements NativeStructure {
-	public EnumMask<VkQueueFlag> queueFlags;
+	public EnumMask<VkQueueFlags> queueFlags;
 	public int queueCount;
 	public int timestampValidBits;
 	public VkExtent3D minImageTransferGranularity;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-				JAVA_INT.withName("queueFlags"),
-				JAVA_INT.withName("queueCount"),
-				JAVA_INT.withName("timestampValidBits"),
-				MemoryLayout.structLayout(
-		            JAVA_INT.withName("width"),
-		            JAVA_INT.withName("height"),
-		            JAVA_INT.withName("depth")
-				).withName("minImageTransferGranularity")
+			JAVA_INT.withName("queueFlags"),
+			JAVA_INT.withName("queueCount"),
+			JAVA_INT.withName("timestampValidBits"),
+			PADDING,
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height"),
+				JAVA_INT.withName("depth")
+			).withName("minImageTransferGranularity")
 		);
 	}
 }

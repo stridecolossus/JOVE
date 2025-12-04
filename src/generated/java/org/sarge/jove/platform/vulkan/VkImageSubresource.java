@@ -1,20 +1,29 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"aspectMask",
-	"mipLevel",
-	"arrayLayer"
-})
-public class VkImageSubresource extends VulkanStructure {
-	public VkImageAspect aspectMask;
+public class VkImageSubresource implements NativeStructure {
+	public EnumMask<VkImageAspectFlags> aspectMask;
 	public int mipLevel;
 	public int arrayLayer;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("aspectMask"),
+			JAVA_INT.withName("mipLevel"),
+			JAVA_INT.withName("arrayLayer")
+		);
+	}
 }

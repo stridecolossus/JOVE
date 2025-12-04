@@ -1,25 +1,30 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"handleType"
-})
-public class VkPhysicalDeviceExternalFenceInfo extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceExternalFenceInfo implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceExternalFenceInfo implements Structure.ByReference { }
+public class VkPhysicalDeviceExternalFenceInfo implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
+	public EnumMask<VkExternalFenceHandleTypeFlags> handleType;
 
-	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO;
-	public Pointer pNext;
-	public VkExternalFenceHandleTypeFlag handleType;
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("handleType")
+		);
+	}
 }

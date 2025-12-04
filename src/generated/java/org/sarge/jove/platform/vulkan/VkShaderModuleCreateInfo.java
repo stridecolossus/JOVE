@@ -4,30 +4,32 @@ import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkShaderModuleCreateInfo implements NativeStructure {
-	public final VkStructureType sType = VkStructureType.SHADER_MODULE_CREATE_INFO;
+	public VkStructureType sType;
 	public Handle pNext;
-	public int flags;
+	public EnumMask<VkShaderModuleCreateFlags> flags;
 	public long codeSize;
-	public byte[] pCode;
+	public Handle pCode;
 
 	@Override
 	public GroupLayout layout() {
-	    return MemoryLayout.structLayout(
-	            JAVA_INT.withName("sType"),
-	            PADDING,
-	            POINTER.withName("pNext"),
-	            JAVA_INT.withName("flags"),
-	            PADDING,
-	            JAVA_LONG.withName("codeSize"),
-	            POINTER.withName("pCode")
-	    );
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("flags"),
+			PADDING,
+			JAVA_LONG.withName("codeSize"),
+			POINTER.withName("pCode")
+		);
 	}
 }

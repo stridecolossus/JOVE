@@ -1,31 +1,38 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"attachmentInitialSampleLocationsCount",
-	"pAttachmentInitialSampleLocations",
-	"postSubpassSampleLocationsCount",
-	"pPostSubpassSampleLocations"
-})
-public class VkRenderPassSampleLocationsBeginInfoEXT extends VulkanStructure {
-	public static class ByValue extends VkRenderPassSampleLocationsBeginInfoEXT implements Structure.ByValue { }
-	public static class ByReference extends VkRenderPassSampleLocationsBeginInfoEXT implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.RENDER_PASS_SAMPLE_LOCATIONS_BEGIN_INFO_EXT;
-	public Pointer pNext;
+public class VkRenderPassSampleLocationsBeginInfoEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int attachmentInitialSampleLocationsCount;
-	public Pointer pAttachmentInitialSampleLocations;
+	public VkAttachmentSampleLocationsEXT[] pAttachmentInitialSampleLocations;
 	public int postSubpassSampleLocationsCount;
-	public Pointer pPostSubpassSampleLocations;
+	public VkSubpassSampleLocationsEXT[] pPostSubpassSampleLocations;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("attachmentInitialSampleLocationsCount"),
+			PADDING,
+			POINTER.withName("pAttachmentInitialSampleLocations"),
+			JAVA_INT.withName("postSubpassSampleLocationsCount"),
+			PADDING,
+			POINTER.withName("pPostSubpassSampleLocations")
+		);
+	}
 }

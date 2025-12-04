@@ -7,11 +7,8 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkDisplayEventTypeEXT implements IntEnum {
- 	VK_DISPLAY_EVENT_TYPE_FIRST_PIXEL_OUT_EXT(0), 	
- 	VK_DISPLAY_EVENT_TYPE_BEGIN_RANGE_EXT(0), 	
- 	VK_DISPLAY_EVENT_TYPE_END_RANGE_EXT(0), 	
- 	VK_DISPLAY_EVENT_TYPE_RANGE_SIZE_EXT(1), 	
- 	VK_DISPLAY_EVENT_TYPE_MAX_ENUM_EXT(2147483647); 	
+	FIRST_PIXEL_OUT_EXT(0),
+	MAX_ENUM_EXT(2147483647);
 
 	private final int value;
 	

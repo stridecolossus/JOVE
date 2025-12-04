@@ -140,6 +140,6 @@ public class PipelineLayout extends VulkanObject {
 		 * @param size					Size of the range (bytes)
 		 * @param pValues				Push constants data buffer
 		 */
-		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStage> stageFlags, int offset, int size, Handle pValues);
+		void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStageFlags> stageFlags, int offset, int size, Handle pValues);
 	}
 }

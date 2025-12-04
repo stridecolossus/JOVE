@@ -1,10 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -16,11 +19,11 @@ public class VkExtent3D implements NativeStructure {
 	public int depth;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-                JAVA_INT.withName("width"),
-                JAVA_INT.withName("height"),
-                JAVA_INT.withName("depth")
+			JAVA_INT.withName("width"),
+			JAVA_INT.withName("height"),
+			JAVA_INT.withName("depth")
 		);
 	}
 }

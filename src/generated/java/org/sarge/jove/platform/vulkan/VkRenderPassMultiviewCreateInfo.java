@@ -1,35 +1,43 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"subpassCount",
-	"pViewMasks",
-	"dependencyCount",
-	"pViewOffsets",
-	"correlationMaskCount",
-	"pCorrelationMasks"
-})
-public class VkRenderPassMultiviewCreateInfo extends VulkanStructure {
-	public static class ByValue extends VkRenderPassMultiviewCreateInfo implements Structure.ByValue { }
-	public static class ByReference extends VkRenderPassMultiviewCreateInfo implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.RENDER_PASS_MULTIVIEW_CREATE_INFO;
-	public Pointer pNext;
+public class VkRenderPassMultiviewCreateInfo implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int subpassCount;
-	public Pointer pViewMasks;
+	public Handle pViewMasks;
 	public int dependencyCount;
-	public Pointer pViewOffsets;
+	public Handle pViewOffsets;
 	public int correlationMaskCount;
-	public Pointer pCorrelationMasks;
+	public Handle pCorrelationMasks;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("subpassCount"),
+			PADDING,
+			POINTER.withName("pViewMasks"),
+			JAVA_INT.withName("dependencyCount"),
+			PADDING,
+			POINTER.withName("pViewOffsets"),
+			JAVA_INT.withName("correlationMaskCount"),
+			PADDING,
+			POINTER.withName("pCorrelationMasks")
+		);
+	}
 }

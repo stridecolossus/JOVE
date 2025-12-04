@@ -141,9 +141,10 @@ public class View extends VulkanObject {
 		 */
 		private static VkImageViewType type(Image image) {
 			return switch(image.descriptor().type()) {
-				case ONE_D		-> VkImageViewType.ONE_D;
-				case TWO_D		-> VkImageViewType.TWO_D;
-				case THREE_D	-> VkImageViewType.THREE_D;
+				case TYPE_1D -> VkImageViewType.TYPE_1D;
+				case TYPE_2D -> VkImageViewType.TYPE_2D;
+				case TYPE_3D -> VkImageViewType.TYPE_3D;
+				default		 -> throw new RuntimeException();
 			};
 		}
 	}

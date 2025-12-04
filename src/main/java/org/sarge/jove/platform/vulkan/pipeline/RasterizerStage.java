@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * Builder for the rasterizer pipeline stage.
@@ -16,7 +17,7 @@ public class RasterizerStage {
 		depthClamp(false);
 		discard(false);
 		polygon(VkPolygonMode.FILL);
-		cull(VkCullMode.BACK);
+		cull(VkCullModeFlags.BACK);
 		winding(VkFrontFace.COUNTER_CLOCKWISE);
 		lineWidth(1);
 	}
@@ -61,8 +62,8 @@ public class RasterizerStage {
 	 * Default is {@link VkCullMode#BACK}.
 	 * @param cullMode Face culling mode
 	 */
-	public RasterizerStage cull(VkCullMode cullMode) {
-		info.cullMode = requireNonNull(cullMode);
+	public RasterizerStage cull(VkCullModeFlags cullMode) {
+		info.cullMode = new EnumMask<>(cullMode);
 		return this;
 	}
 

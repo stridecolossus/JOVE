@@ -9,6 +9,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>render pass</i> is comprised of a number of sub passes that render to the frame buffer.
@@ -126,7 +127,7 @@ public class RenderPass extends VulkanObject {
 		private VkRenderPassCreateInfo descriptor(List<Attachment> attachments) {
 			// Init descriptor
 			final var info = new VkRenderPassCreateInfo();
-			info.flags = 0;
+			info.flags = new EnumMask<>();
 
 			// Populate aggregated attachments
 			info.attachmentCount = attachments.size();

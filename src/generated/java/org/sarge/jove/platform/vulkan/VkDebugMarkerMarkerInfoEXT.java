@@ -1,23 +1,32 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"pMarkerName",
-	"color"
-})
-public class VkDebugMarkerMarkerInfoEXT extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.DEBUG_MARKER_MARKER_INFO_EXT;
-	public Pointer pNext;
+public class VkDebugMarkerMarkerInfoEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public String pMarkerName;
-	public float[] color = new float[4];
+	public float[] color;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			POINTER.withName("pMarkerName"),
+			MemoryLayout.sequenceLayout(4, JAVA_FLOAT).withName("color")
+		);
+	}
 }

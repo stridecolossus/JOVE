@@ -1,29 +1,40 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"buffer",
-	"format",
-	"offset",
-	"range"
-})
-public class VkBufferViewCreateInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.BUFFER_VIEW_CREATE_INFO;
-	public Pointer pNext;
+public class VkBufferViewCreateInfo implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int flags;
-	public Pointer buffer;
+	public Handle buffer;
 	public VkFormat format;
 	public long offset;
 	public long range;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("flags"),
+			PADDING,
+			POINTER.withName("buffer"),
+			JAVA_INT.withName("format"),
+			PADDING,
+			JAVA_LONG.withName("offset"),
+			JAVA_LONG.withName("range")
+		);
+	}
 }

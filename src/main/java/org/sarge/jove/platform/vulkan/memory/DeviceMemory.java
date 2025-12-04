@@ -4,12 +4,12 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
 
 /**
  * A <i>device memory</i> instance is an area of memory accessible to the hardware.
  * <p>
- * Memory that is {@link VkMemoryProperty#HOST_VISIBLE} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations by the application.
+ * Memory that is {@link VkMemoryPropertyFlags#HOST_VISIBLE} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations by the application.
  * <p>
  * Notes:
  * <ul>

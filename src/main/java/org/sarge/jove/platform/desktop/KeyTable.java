@@ -5,21 +5,23 @@ import static java.util.stream.Collectors.toMap;
 import java.io.*;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Function;
 
 /**
  * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
+ * Key definitions are specified by the {@code key.table.txt} resource file.
  * @author Sarge
  */
-enum KeyTable {
-	INSTANCE;
-
+class KeyTable {
 	private final Map<Integer, String> keys;
 	private final Map<String, Integer> codes;
 
-	private KeyTable() {
+	/**
+	 * Constructor.
+	 * @throws RuntimeException if the key table cannot be loaded
+	 */
+	public KeyTable() {
 		this.keys = load();
-		this.codes = keys.keySet().stream().collect(toMap(keys::get, Function.identity()));
+		this.codes = codes(keys);
 	}
 
 	/**
@@ -50,8 +52,20 @@ enum KeyTable {
 	}
 
 	/**
-	 * Looks up a keyboard key name.
-	 * @param key GLFW key code
+	 * Builds the reverse mapping for key codes.
+	 * @param keys Key table
+	 * @return Codes table
+	 */
+	private static Map<String, Integer> codes(Map<Integer, String> keys) {
+		return keys
+				.entrySet()
+				.stream()
+				.collect(toMap(Entry::getValue, Entry::getKey));
+	}
+
+	/**
+	 * Maps the given key code to the corresponding name.
+	 * @param key Key code
 	 * @return Key name or {@code UNKNOWN} if not present
 	 */
 	public String name(int key) {
@@ -59,14 +73,11 @@ enum KeyTable {
 	}
 
 	/**
-	 * Looks up the key code for the given keyboard key name.
+	 * Maps the given key name to the corresponding code.
 	 * @param name Key name
-	 * @return GLFW key code
-	 * @throws IllegalArgumentException for an unknown key
+	 * @return Key code or {@code zero} if unknown
 	 */
 	public int code(String name) {
-		final Integer code = codes.get(name);
-		if(code == null) throw new IllegalArgumentException("Unknown key name: " + name);
-		return code;
+		return codes.getOrDefault(name, 0);
 	}
 }

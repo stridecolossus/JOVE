@@ -1,12 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.VkBufferUsageFlag.*;
+import static org.sarge.jove.platform.vulkan.VkBufferUsageFlags.*;
 import static org.sarge.jove.util.Validation.*;
 
 import java.util.*;
 
-import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.VkBufferCopy;
 
 /**
  * A <i>buffer copy command</i> is used to transfer data between Vulkan buffers.

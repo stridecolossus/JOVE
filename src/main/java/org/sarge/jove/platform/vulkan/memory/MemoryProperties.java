@@ -17,9 +17,9 @@ import org.sarge.jove.platform.vulkan.*;
  * var properties = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
  *     .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
  *     .mode(VkSharingMode.CONCURRENT)
- *     .required(VkMemoryProperty.HOST_COHERENT)
- *     .required(VkMemoryProperty.HOST_VISIBLE)
- *     .optimal(VkMemoryProperty.DEVICE_LOCAL)
+ *     .required(VkMemoryPropertyFlags.HOST_COHERENT)
+ *     .required(VkMemoryPropertyFlags.HOST_VISIBLE)
+ *     .optimal(VkMemoryPropertyFlags.DEVICE_LOCAL)
  *     .build()</pre>
  * <p>
  * @param <T> Usage enumeration
@@ -27,7 +27,7 @@ import org.sarge.jove.platform.vulkan.*;
  * @see VkImageUsageFlag
  * @author Sarge
  */
-public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryProperty> required, Set<VkMemoryProperty> optimal) {
+public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryPropertyFlags> required, Set<VkMemoryPropertyFlags> optimal) {
 	/**
 	 * Constructor.
 	 * @param usage			Memory usage(s)
@@ -57,8 +57,8 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @param <T> Usage enumeration
 	 */
 	public static class Builder<T> {
-		private final Set<VkMemoryProperty> required = new HashSet<>();
-		private final Set<VkMemoryProperty> optimal = new HashSet<>();
+		private final Set<VkMemoryPropertyFlags> required = new HashSet<>();
+		private final Set<VkMemoryPropertyFlags> optimal = new HashSet<>();
 		private final Set<T> usage = new HashSet<>();
 		private VkSharingMode mode = VkSharingMode.EXCLUSIVE;
 
@@ -66,7 +66,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * Adds a <i>required</i> memory property.
 		 * @param property Required memory property
 		 */
-		public Builder<T> required(VkMemoryProperty property) {
+		public Builder<T> required(VkMemoryPropertyFlags property) {
 			required.add(property);
 			return this;
 		}
@@ -75,7 +75,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * Adds an <i>optimal</i> memory property.
 		 * @param property Optimal memory property
 		 */
-		public Builder<T> optimal(VkMemoryProperty property) {
+		public Builder<T> optimal(VkMemoryPropertyFlags property) {
 			optimal.add(property);
 			return this;
 		}

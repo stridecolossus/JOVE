@@ -1,39 +1,53 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"waitSemaphoreCount",
-	"pWaitSemaphores",
-	"bufferBindCount",
-	"pBufferBinds",
-	"imageOpaqueBindCount",
-	"pImageOpaqueBinds",
-	"imageBindCount",
-	"pImageBinds",
-	"signalSemaphoreCount",
-	"pSignalSemaphores"
-})
-public class VkBindSparseInfo extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.BIND_SPARSE_INFO;
-	public Pointer pNext;
+public class VkBindSparseInfo implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int waitSemaphoreCount;
-	public Pointer pWaitSemaphores;
+	public Handle[] pWaitSemaphores;
 	public int bufferBindCount;
-	public Pointer pBufferBinds;
+	public VkSparseBufferMemoryBindInfo[] pBufferBinds;
 	public int imageOpaqueBindCount;
-	public Pointer pImageOpaqueBinds;
+	public VkSparseImageOpaqueMemoryBindInfo[] pImageOpaqueBinds;
 	public int imageBindCount;
-	public Pointer pImageBinds;
+	public VkSparseImageMemoryBindInfo[] pImageBinds;
 	public int signalSemaphoreCount;
-	public Pointer pSignalSemaphores;
+	public Handle[] pSignalSemaphores;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("waitSemaphoreCount"),
+			PADDING,
+			POINTER.withName("pWaitSemaphores"),
+			JAVA_INT.withName("bufferBindCount"),
+			PADDING,
+			POINTER.withName("pBufferBinds"),
+			JAVA_INT.withName("imageOpaqueBindCount"),
+			PADDING,
+			POINTER.withName("pImageOpaqueBinds"),
+			JAVA_INT.withName("imageBindCount"),
+			PADDING,
+			POINTER.withName("pImageBinds"),
+			JAVA_INT.withName("signalSemaphoreCount"),
+			PADDING,
+			POINTER.withName("pSignalSemaphores")
+		);
+	}
 }

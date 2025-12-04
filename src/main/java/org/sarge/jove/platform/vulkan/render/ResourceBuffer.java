@@ -29,9 +29,9 @@ public record ResourceBuffer(VkDescriptorType type, long offset, VulkanBuffer bu
 
 	private static void validate(VulkanBuffer buffer, VkDescriptorType type) {
 		// Check buffer
-		final VkBufferUsageFlag usage = switch(type) {
-    		case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> VkBufferUsageFlag.UNIFORM_BUFFER;
-    		case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> VkBufferUsageFlag.STORAGE_BUFFER;
+		final VkBufferUsageFlags usage = switch(type) {
+    		case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> VkBufferUsageFlags.UNIFORM_BUFFER;
+    		case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> VkBufferUsageFlags.STORAGE_BUFFER;
     		// TODO - other buffers, e.g. texel
     		default -> throw new IllegalArgumentException("Unsupported descriptor type: " + type);
     	};

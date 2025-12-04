@@ -128,6 +128,6 @@ public class Pipeline extends VulkanObject {
 		 * @param imageMemoryBarrierCount			Number of image barriers
 		 * @param pImageMemoryBarriers				Image barriers
 		 */
-		void vkCmdPipelineBarrier(Buffer commandBuffer, EnumMask<VkPipelineStage> srcStageMask, EnumMask<VkPipelineStage> dstStageMask, EnumMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
+		void vkCmdPipelineBarrier(Buffer commandBuffer, EnumMask<VkPipelineStageFlags> srcStageMask, EnumMask<VkPipelineStageFlags> dstStageMask, EnumMask<VkDependencyFlags> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers);
 	}
 }

@@ -1,23 +1,32 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"fence",
-	"handleType"
-})
-public class VkFenceGetFdInfoKHR extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.FENCE_GET_FD_INFO_KHR;
-	public Pointer pNext;
-	public Pointer fence;
-	public VkExternalFenceHandleTypeFlag handleType;
+public class VkFenceGetFdInfoKHR implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
+	public Handle fence;
+	public EnumMask<VkExternalFenceHandleTypeFlags> handleType;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			POINTER.withName("fence"),
+			JAVA_INT.withName("handleType")
+		);
+	}
 }

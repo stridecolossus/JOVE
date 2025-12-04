@@ -7,16 +7,16 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkPresentModeKHR implements IntEnum {
- 	IMMEDIATE_KHR(0),
- 	MAILBOX_KHR(1),
- 	FIFO_KHR(2),
- 	FIFO_RELAXED_KHR(3),
- 	SHARED_DEMAND_REFRESH_KHR(1000111000),
- 	SHARED_CONTINUOUS_REFRESH_KHR(1000111001),
- 	FIFO_LATEST_READY_KHR(1000361000);
+	IMMEDIATE_KHR(0),
+	MAILBOX_KHR(1),
+	FIFO_KHR(2),
+	FIFO_RELAXED_KHR(3),
+	SHARED_DEMAND_REFRESH_KHR(1000111000),
+	SHARED_CONTINUOUS_REFRESH_KHR(1000111001),
+	MAX_ENUM_KHR(2147483647);
 
- 	private final int value;
-
+	private final int value;
+	
 	private VkPresentModeKHR(int value) {
 		this.value = value;
 	}

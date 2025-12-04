@@ -1,34 +1,21 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"maxTransformFeedbackStreams",
-	"maxTransformFeedbackBuffers",
-	"maxTransformFeedbackBufferSize",
-	"maxTransformFeedbackStreamDataSize",
-	"maxTransformFeedbackBufferDataSize",
-	"maxTransformFeedbackBufferDataStride",
-	"transformFeedbackQueries",
-	"transformFeedbackStreamsLinesTriangles",
-	"transformFeedbackRasterizationStreamSelect",
-	"transformFeedbackDraw"
-})
-public class VkPhysicalDeviceTransformFeedbackPropertiesEXT extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceTransformFeedbackPropertiesEXT implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceTransformFeedbackPropertiesEXT implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
-	public Pointer pNext;
+public class VkPhysicalDeviceTransformFeedbackPropertiesEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int maxTransformFeedbackStreams;
 	public int maxTransformFeedbackBuffers;
 	public long maxTransformFeedbackBufferSize;
@@ -39,4 +26,23 @@ public class VkPhysicalDeviceTransformFeedbackPropertiesEXT extends VulkanStruct
 	public boolean transformFeedbackStreamsLinesTriangles;
 	public boolean transformFeedbackRasterizationStreamSelect;
 	public boolean transformFeedbackDraw;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("maxTransformFeedbackStreams"),
+			JAVA_INT.withName("maxTransformFeedbackBuffers"),
+			JAVA_LONG.withName("maxTransformFeedbackBufferSize"),
+			JAVA_INT.withName("maxTransformFeedbackStreamDataSize"),
+			JAVA_INT.withName("maxTransformFeedbackBufferDataSize"),
+			JAVA_INT.withName("maxTransformFeedbackBufferDataStride"),
+			JAVA_INT.withName("transformFeedbackQueries"),
+			JAVA_INT.withName("transformFeedbackStreamsLinesTriangles"),
+			JAVA_INT.withName("transformFeedbackRasterizationStreamSelect"),
+			JAVA_INT.withName("transformFeedbackDraw")
+		);
+	}
 }

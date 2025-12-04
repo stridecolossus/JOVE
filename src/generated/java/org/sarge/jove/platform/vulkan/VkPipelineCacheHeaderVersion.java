@@ -7,11 +7,8 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkPipelineCacheHeaderVersion implements IntEnum {
- 	VK_PIPELINE_CACHE_HEADER_VERSION_ONE(1), 	
- 	VK_PIPELINE_CACHE_HEADER_VERSION_BEGIN_RANGE(1), 	
- 	VK_PIPELINE_CACHE_HEADER_VERSION_END_RANGE(1), 	
- 	VK_PIPELINE_CACHE_HEADER_VERSION_RANGE_SIZE(1), 	
- 	VK_PIPELINE_CACHE_HEADER_VERSION_MAX_ENUM(2147483647); 	
+	ONE(1),
+	MAX_ENUM(2147483647);
 
 	private final int value;
 	

@@ -1,71 +1,40 @@
 package org.sarge.jove.platform.desktop;
 
-import static java.util.Objects.requireNonNull;
+import java.lang.foreign.MemorySegment;
+import java.util.function.*;
+
+import org.sarge.jove.platform.desktop.Button.*;
+import org.sarge.jove.platform.desktop.DeviceLibrary.KeyListener;
 
 /**
- * The <i>keyboard device</i> generates GLFW keyboard events.
+ * The <i>keyboard device</i> generates keyboard button events.
  * @author Sarge
  */
-public class KeyboardDevice {
-	private final Window window;
-//	private final KeyboardSource keyboard = new KeyboardSource();
-//	private final KeyTable table = KeyTable.INSTANCE;
+public class KeyboardDevice extends AbstractWindowDevice<ButtonEvent, KeyListener> {
+	private static final KeyTable KEYS = new KeyTable();
 
 	/**
 	 * Constructor.
-	 * @param window Window
+	 * @param window Parent window
 	 */
-	KeyboardDevice(Window window) {
-		this.window = requireNonNull(window);
+	public KeyboardDevice(Window window) {
+		super(window);
+	}
+
+	@Override
+	protected KeyListener callback(Window window, Consumer<ButtonEvent> listener) {
+		return new KeyListener() {
+			@Override
+			public void key(MemorySegment window, int key, int scancode, int action, int mods) {
+				final Button button = new Button(key, KEYS.name(key));
+				final var event = new ButtonEvent(button, Action.map(action), ModifierKey.map(mods));
+				listener.accept(event);
+			}
+		};
+	}
+
+	@Override
+	protected BiConsumer<Window, KeyListener> method(DeviceLibrary library) {
+		return library::glfwSetKeyCallback;
 	}
 }
-
-//
-//	@Override
-//	public String name() {
-//		return "Keyboard";
-//	}
-//
-//	/**
-//	 * @return Keyboard event source
-//	 */
-//	public Source<Button<Action>> keyboard() {
-//		return keyboard;
-//	}
-//
-//	@Override
-//	public Set<Source<?>> sources() {
-//		return Set.of(keyboard);
-//	}
-//
-//	/**
-//	 * Keyboard event source.
-//	 */
-//	private class KeyboardSource implements DesktopSource<KeyListener, Button<Action>> {
-//		@Override
-//		public String name() {
-//			return "Keyboard";
-//		}
-//
-//		@Override
-//		public Window window() {
-//			return window;
-//		}
-//
-//		@Override
-//		public KeyListener listener(Consumer<Button<Action>> handler) {
-//			return (ptr, key, scancode, action, mods) -> {
-//				final String name = table.name(key);
-//				final Button<Action> button = new Button<>(name, Action.map(action));
-//				// TODO - modifiers
-//				handler.accept(button);
-//			};
-//		}
-//
-//		@Override
-//		public BiConsumer<Window, KeyListener> method(DesktopLibrary lib) {
-//			//return lib::glfwSetKeyCallback;
-//			return null;
-//		}
-//	}
-//}

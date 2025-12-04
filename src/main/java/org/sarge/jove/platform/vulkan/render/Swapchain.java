@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.sarge.jove.common.*;
@@ -115,8 +116,8 @@ public class Swapchain extends VulkanObject {
 
 		// Check result
 		switch(result) {
-			case SUCCESS, SUBOPTIMAL_KHR -> latest = index.get();
-			case ERROR_OUT_OF_DATE_KHR -> throw new Invalidated(result);
+			case VK_SUCCESS, VK_SUBOPTIMAL_KHR -> latest = index.get();
+			case VK_ERROR_OUT_OF_DATE_KHR -> throw new Invalidated(result);
 			default -> throw new VulkanException(result);
 		}
 
@@ -154,10 +155,10 @@ public class Swapchain extends VulkanObject {
 	public static void present(Library library, WorkQueue queue, VkPresentInfoKHR info) throws Invalidated {
 		final int code = library.vkQueuePresentKHR(queue, info);
 
-        if(code != VkResult.SUCCESS.value()) {
+        if(code != VkResult.VK_SUCCESS.value()) {
             final VkResult result = MAPPING.map(code);
             switch(result) {
-                case ERROR_OUT_OF_DATE_KHR, SUBOPTIMAL_KHR -> throw new Invalidated(result);
+                case VK_ERROR_OUT_OF_DATE_KHR, VK_SUBOPTIMAL_KHR -> throw new Invalidated(result);
                 default -> throw new VulkanException(result);
             }
         }
@@ -187,19 +188,19 @@ public class Swapchain extends VulkanObject {
 	 */
 	public static class Builder {
 		private final VkSwapchainCreateInfoKHR info = new VkSwapchainCreateInfoKHR();
-		private final Set<VkSwapchainCreateFlagKHR> flags = new HashSet<>();
-		private final Set<VkImageUsageFlag> usage = new HashSet<>();
+		private final Set<VkSwapchainCreateFlagsKHR> flags = new HashSet<>();
+		private final Set<VkImageUsageFlags> usage = new HashSet<>();
 
 		public Builder() {
 			init();
-			usage(VkImageUsageFlag.COLOR_ATTACHMENT);
+			usage(VkImageUsageFlags.COLOR_ATTACHMENT);
 		}
 
 		private void init() {
 			info.imageFormat = VkFormat.UNDEFINED;
-			info.preTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
+			info.preTransform = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
 			info.imageArrayLayers = 1;
-			info.compositeAlpha = VkCompositeAlphaFlagKHR.OPAQUE;
+			info.compositeAlpha = new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR);
 			info.imageSharingMode = VkSharingMode.EXCLUSIVE;
 			info.presentMode = DEFAULT_PRESENTATION_MODE;
 			info.clipped = true;
@@ -221,7 +222,7 @@ public class Swapchain extends VulkanObject {
 		 * Adds a creation flag for this swapchain.
 		 * @param flag Creation flag
 		 */
-		public Builder flag(VkSwapchainCreateFlagKHR flag) {
+		public Builder flag(VkSwapchainCreateFlagsKHR flag) {
 			requireNonNull(flag);
 			flags.add(flag);
 			return this;
@@ -276,7 +277,7 @@ public class Swapchain extends VulkanObject {
 		 * Sets the image usage flag.
 		 * @param usage Image usage
 		 */
-		public Builder usage(VkImageUsageFlag usage) {
+		public Builder usage(VkImageUsageFlags usage) {
 			requireNonNull(usage);
 			this.usage.add(usage);
 			return this;
@@ -288,9 +289,10 @@ public class Swapchain extends VulkanObject {
 		 * @param families Shared queue families
 		 */
 		public Builder concurrent(Collection<Family> families) {
+			final int[] indices = families.stream().mapToInt(Family::index).toArray();
 			info.imageSharingMode = VkSharingMode.CONCURRENT;
 			info.queueFamilyIndexCount = families.size();
-			info.pQueueFamilyIndices = families.stream().mapToInt(Family::index).toArray();
+			info.pQueueFamilyIndices = new Handle(MemorySegment.ofArray(indices));
 			return this;
 		}
 
@@ -298,8 +300,8 @@ public class Swapchain extends VulkanObject {
 		 * Sets the surface transform.
 		 * @param transform Surface transform
 		 */
-		public Builder transform(VkSurfaceTransformFlagKHR transform) {
-			info.preTransform = requireNonNull(transform);
+		public Builder transform(VkSurfaceTransformFlagsKHR transform) {
+			info.preTransform = new EnumMask<>(transform);
 			return this;
 		}
 
@@ -307,8 +309,8 @@ public class Swapchain extends VulkanObject {
 		 * Sets the surface alpha function.
 		 * @param alpha Alpha function
 		 */
-		public Builder alpha(VkCompositeAlphaFlagKHR alpha) {
-			info.compositeAlpha = requireNonNull(alpha);
+		public Builder alpha(VkCompositeAlphaFlagsKHR alpha) {
+			info.compositeAlpha = new EnumMask<>(alpha);
 			return this;
 		}
 
@@ -364,11 +366,11 @@ public class Swapchain extends VulkanObject {
 				throw new IllegalArgumentException("Unsupported image usage: " + info.imageUsage);
 			}
 
-			if(!capabilities.supportedTransforms.contains(info.preTransform.value())) {
+			if(!capabilities.supportedTransforms.contains(info.preTransform)) {
 				throw new IllegalArgumentException("Unsupported image transform: " + info.preTransform);
 			}
 
-			if(!capabilities.supportedCompositeAlpha.contains(info.compositeAlpha.value())) {
+			if(!capabilities.supportedCompositeAlpha.contains(info.compositeAlpha)) {
 				throw new IllegalArgumentException("Unsupported composite alpha: " + info.compositeAlpha);
 			}
 
@@ -412,12 +414,12 @@ public class Swapchain extends VulkanObject {
 			final var descriptor = new Image.Descriptor.Builder()
     				.format(info.imageFormat)
     				.extents(extents)
-    				.aspect(VkImageAspect.COLOR)
+    				.aspect(VkImageAspectFlags.COLOR)
     				.build();
 
 			// Init views builder
 			final var builder = new View.Builder()
-					.type(VkImageViewType.TWO_D)
+					.type(VkImageViewType.TYPE_2D)
 					.subresource(descriptor);
 
 			// Create image views

@@ -26,8 +26,8 @@ import org.sarge.jove.util.EnumMask;
  */
 public class Barrier implements Command {
 	private final Pipeline.Library library;
-	private final EnumMask<VkPipelineStage> src, dest;
-	private final EnumMask<VkDependencyFlag> flags;
+	private final EnumMask<VkPipelineStageFlags> src, dest;
+	private final EnumMask<VkDependencyFlags> flags;
 	private final VkImageMemoryBarrier[] images;
 	private final VkBufferMemoryBarrier[] buffers;
 	private final VkMemoryBarrier[] memory;
@@ -42,7 +42,7 @@ public class Barrier implements Command {
 	 * @param buffers		Buffer memory barriers
 	 * @param images		Image memory barriers
 	 */
-	private Barrier(Pipeline.Library library, Set<VkPipelineStage> source, Set<VkPipelineStage> destination, Set<VkDependencyFlag> flags, VkMemoryBarrier[] memory, VkBufferMemoryBarrier[] buffers, VkImageMemoryBarrier[] images) {
+	private Barrier(Pipeline.Library library, Set<VkPipelineStageFlags> source, Set<VkPipelineStageFlags> destination, Set<VkDependencyFlags> flags, VkMemoryBarrier[] memory, VkBufferMemoryBarrier[] buffers, VkImageMemoryBarrier[] images) {
 		this.library = requireNonNull(library);
 		this.src = new EnumMask<>(source);
 		this.dest = new EnumMask<>(destination);
@@ -72,9 +72,9 @@ public class Barrier implements Command {
 	 * Builder for a barrier.
 	 */
 	public static class Builder {
-		private final Set<VkPipelineStage> source = new HashSet<>();
-		private final Set<VkPipelineStage> destination = new HashSet<>();
-		private final Set<VkDependencyFlag> flags = new HashSet<>();
+		private final Set<VkPipelineStageFlags> source = new HashSet<>();
+		private final Set<VkPipelineStageFlags> destination = new HashSet<>();
+		private final Set<VkDependencyFlags> flags = new HashSet<>();
 		private final List<VkMemoryBarrier> memory = new ArrayList<>();
 		private final List<VkBufferMemoryBarrier> buffers = new ArrayList<>();
 		private final List<VkImageMemoryBarrier> images = new ArrayList<>();
@@ -83,7 +83,7 @@ public class Barrier implements Command {
 		 * Adds a source pipeline stage.
 		 * @param stage Source pipeline stage
 		 */
-		public Builder source(VkPipelineStage stage) {
+		public Builder source(VkPipelineStageFlags stage) {
 			source.add(stage);
 			return this;
 		}
@@ -92,7 +92,7 @@ public class Barrier implements Command {
 		 * Adds a destination pipeline stage.
 		 * @param stage Destination pipeline stage
 		 */
-		public Builder destination(VkPipelineStage stage) {
+		public Builder destination(VkPipelineStageFlags stage) {
 			destination.add(stage);
 			return this;
 		}
@@ -101,7 +101,7 @@ public class Barrier implements Command {
 		 * Adds a dependency flag.
 		 * @param flag Dependency flag
 		 */
-		public Builder flag(VkDependencyFlag flag) {
+		public Builder flag(VkDependencyFlags flag) {
 			flags.add(flag);
 			return this;
 		}
@@ -112,7 +112,7 @@ public class Barrier implements Command {
 		 * @param destination		Destination access mask
 		 * @param barrier			Barrier
 		 */
-		public Builder add(Set<VkAccess> source, Set<VkAccess> destination, BarrierType barrier) {
+		public Builder add(Set<VkAccessFlags> source, Set<VkAccessFlags> destination, BarrierType barrier) {
 			final var src = new EnumMask<>(source);
 			final var dest = new EnumMask<>(destination);
 			switch(barrier) {
@@ -151,14 +151,14 @@ public class Barrier implements Command {
 		 * @param destAccess	Destination access flags
 		 * @return Descriptor for this barrier
 		 */
-		NativeStructure populate(EnumMask<VkAccess> srcAccess, EnumMask<VkAccess> destAccess);
+		NativeStructure populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess);
 
 		/**
 		 * Memory barrier.
 		 */
 		public record MemoryBarrier() implements BarrierType {
 			@Override
-			public VkMemoryBarrier populate(EnumMask<VkAccess> srcAccess, EnumMask<VkAccess> destAccess) {
+			public VkMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
 				final var barrier = new VkMemoryBarrier();
 				barrier.srcAccessMask = srcAccess;
 				barrier.dstAccessMask = destAccess;
@@ -205,7 +205,7 @@ public class Barrier implements Command {
     		}
 
     		@Override
-			public VkBufferMemoryBarrier populate(EnumMask<VkAccess> srcAccess, EnumMask<VkAccess> destAccess) {
+			public VkBufferMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
 				final var barrier = new VkBufferMemoryBarrier();
 				barrier.buffer = buffer.handle();
 				barrier.offset = offset;
@@ -258,7 +258,7 @@ public class Barrier implements Command {
     		}
 
     		@Override
-    		public VkImageMemoryBarrier populate(EnumMask<VkAccess> srcAccess, EnumMask<VkAccess> destAccess) {
+    		public VkImageMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
 				final var barrier = new VkImageMemoryBarrier();
 				barrier.image = image.handle();
 				barrier.srcAccessMask = srcAccess;

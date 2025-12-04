@@ -1,22 +1,23 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkMemoryBarrier implements NativeStructure {
-	public VkStructureType sType = VkStructureType.MEMORY_BARRIER;
+	public VkStructureType sType;
 	public Handle pNext;
-	public EnumMask<VkAccess> srcAccessMask;
-	public EnumMask<VkAccess> dstAccessMask;
+	public EnumMask<VkAccessFlags> srcAccessMask;
+	public EnumMask<VkAccessFlags> dstAccessMask;
 
 	@Override
 	public GroupLayout layout() {

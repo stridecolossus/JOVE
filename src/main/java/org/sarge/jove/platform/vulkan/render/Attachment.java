@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.platform.vulkan.VkAttachmentLoadOp.LOAD;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.EnumMask;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
@@ -11,7 +12,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-public record Attachment(VkFormat format, VkSampleCount samples, Attachment.LoadStore colour, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
+public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment.LoadStore colour, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
 	/**
 	 * Convenience wrapper for a load-store pair.
 	 */
@@ -94,7 +95,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	VkAttachmentDescription populate() {
 		final var attachment = new VkAttachmentDescription();
 		attachment.format = format;
-		attachment.samples = samples;
+		attachment.samples = new EnumMask<>(samples);
 		attachment.loadOp = colour.load;
 		attachment.storeOp = colour.store;
 		attachment.stencilLoadOp = stencil.load;
@@ -109,10 +110,10 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 	 */
 	public static class Builder {
 		private final LoadStore none = new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE);
-		private final ReverseMapping<VkSampleCount> mapping = ReverseMapping.mapping(VkSampleCount.class);
+		private final ReverseMapping<VkSampleCountFlags> mapping = ReverseMapping.mapping(VkSampleCountFlags.class);
 
 		private VkFormat format;
-		private VkSampleCount samples = VkSampleCount.COUNT_1;
+		private VkSampleCountFlags samples = VkSampleCountFlags.COUNT_1;
 		private LoadStore attachment = none;
 		private LoadStore stencil = none;
 		private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;
@@ -131,7 +132,7 @@ public record Attachment(VkFormat format, VkSampleCount samples, Attachment.Load
 		 * Sets the number of samples (default is one).
 		 * @param samples Number of samples
 		 */
-		public Builder samples(VkSampleCount samples) {
+		public Builder samples(VkSampleCountFlags samples) {
 			this.samples = samples;
 			return this;
 		}

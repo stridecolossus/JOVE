@@ -7,14 +7,11 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkChromaLocation implements IntEnum {
- 	VK_CHROMA_LOCATION_COSITED_EVEN(0), 	
- 	VK_CHROMA_LOCATION_MIDPOINT(1), 	
- 	VK_CHROMA_LOCATION_COSITED_EVEN_KHR(0), 	
- 	VK_CHROMA_LOCATION_MIDPOINT_KHR(1), 	
- 	VK_CHROMA_LOCATION_BEGIN_RANGE(0), 	
- 	VK_CHROMA_LOCATION_END_RANGE(1), 	
- 	VK_CHROMA_LOCATION_RANGE_SIZE(2), 	
- 	VK_CHROMA_LOCATION_MAX_ENUM(2147483647); 	
+	COSITED_EVEN(0),
+	MIDPOINT(1),
+	COSITED_EVEN_KHR(0),
+	MIDPOINT_KHR(1),
+	MAX_ENUM(2147483647);
 
 	private final int value;
 	

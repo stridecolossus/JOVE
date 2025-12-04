@@ -1,9 +1,11 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.VkAccess.*;
+import static org.sarge.jove.platform.vulkan.VkAccessFlags.*;
 import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
-import static org.sarge.jove.platform.vulkan.VkPipelineStage.TRANSFER;
+import static org.sarge.jove.platform.vulkan.VkImageUsageFlags.TRANSFER_DST;
+import static org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags.*;
+import static org.sarge.jove.platform.vulkan.VkPipelineStageFlags.TRANSFER;
 
 import java.util.Set;
 
@@ -59,7 +61,7 @@ public class CaptureTask {
 		final Command.Buffer buffer = pool
 				.allocate(1, true)
 				.getFirst()
-				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+				.begin(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT)
 					.add(destination(screenshot))
 					.add(source(image))
 					.add(copy)
@@ -82,17 +84,17 @@ public class CaptureTask {
 	private static DefaultImage screenshot(LogicalDevice device, Allocator allocator, Image.Descriptor target) {
 		// Create descriptor
 		final var descriptor = new Image.Descriptor.Builder()
-				.type(VkImageType.TWO_D)
-				.aspect(VkImageAspect.COLOR)
+				.type(VkImageType.TYPE_2D)
+				.aspect(VkImageAspectFlags.COLOR)
 				.extents(target.extents().size())
 				.format(VkFormat.R8G8B8A8_UNORM) // TODO
 				.build();
 
 		// Init image memory properties
-		final var properties = new MemoryProperties.Builder<VkImageUsageFlag>()
-				.usage(VkImageUsageFlag.TRANSFER_DST)
-				.required(VkMemoryProperty.HOST_VISIBLE)
-				.required(VkMemoryProperty.HOST_COHERENT)
+		final var properties = new MemoryProperties.Builder<VkImageUsageFlags>()
+				.usage(TRANSFER_DST)
+				.required(HOST_VISIBLE)
+				.required(HOST_COHERENT)
 				.build();
 
 		// Create screenshot image

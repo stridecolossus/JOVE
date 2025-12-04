@@ -72,7 +72,7 @@ public interface Query {
 	 * @throws IllegalStateException if this query is not {@link State#UNAVAILABLE}
 	 * @see Pool#reset()
 	 */
-	Command begin(VkQueryControlFlag... flags);
+	Command begin(VkQueryControlFlags... flags);
 
 	/**
 	 * Creates a command to end a measurement query.
@@ -94,7 +94,7 @@ public interface Query {
 		 * @return Query pool
 		 * @throws IllegalArgumentException TODO
 		 */
-		public static Pool create(LogicalDevice device, VkQueryType type, int slots, VkQueryPipelineStatisticFlag... statistics) {
+		public static Pool create(LogicalDevice device, VkQueryType type, int slots, VkQueryPipelineStatisticFlags... statistics) {
 			// Validate
 			requireOneOrMore(slots);
 			if((type == VkQueryType.PIPELINE_STATISTICS) ^ (statistics.length == 0)) {
@@ -187,7 +187,7 @@ public interface Query {
 
 			return new Query() {
 				@Override
-				public Command begin(VkQueryControlFlag... flags) {
+				public Command begin(VkQueryControlFlags... flags) {
 					final var mask = new EnumMask<>(flags);
 			    	return buffer -> library.vkCmdBeginQuery(buffer, Pool.this, slot, mask);
 				}
@@ -207,7 +207,7 @@ public interface Query {
 		 * @throws IndexOutOfBoundsException if {@link #slot} is invalid for this pool
 		 * @throws IllegalStateException if this is not a {@link VkQueryType#TIMESTAMP} pool
 		 */
-		public Command timestamp(int slot, VkPipelineStage stage) {
+		public Command timestamp(int slot, VkPipelineStageFlags stage) {
 			requireNonNull(stage);
 			validate(slot);
 			if(type != VkQueryType.TIMESTAMP) {
@@ -430,7 +430,7 @@ public interface Query {
 		 * @param query				Query slot
 		 * @param flags				Flags
 		 */
-		void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, EnumMask<VkQueryControlFlag> flags);
+		void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, EnumMask<VkQueryControlFlags> flags);
 
 		/**
 		 * Ends a query.
@@ -447,7 +447,7 @@ public interface Query {
 		 * @param queryPool			Query pool
 		 * @param query				Query slot
 		 */
-		void vkCmdWriteTimestamp(Buffer commandBuffer, VkPipelineStage pipelineStage, Pool queryPool, int query);
+		void vkCmdWriteTimestamp(Buffer commandBuffer, VkPipelineStageFlags pipelineStage, Pool queryPool, int query);
 
 		/**
 		 * Retrieves query results.
@@ -461,7 +461,7 @@ public interface Query {
 		 * @param flags				Query flags
 		 * @return Result
 		 */
-		VkResult vkGetQueryPoolResults(LogicalDevice device, Pool queryPool, int firstQuery, int queryCount, long dataSize, Pointer pData, long stride, EnumMask<VkQueryResultFlag> flags);
+		VkResult vkGetQueryPoolResults(LogicalDevice device, Pool queryPool, int firstQuery, int queryCount, long dataSize, Pointer pData, long stride, EnumMask<VkQueryResultFlags> flags);
 
 		/**
 		 * Writes query results to a Vulkan buffer.
@@ -474,6 +474,6 @@ public interface Query {
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
 		 */
-		void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, EnumMask<VkQueryResultFlag> flags);
+		void vkCmdCopyQueryPoolResults(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount, VulkanBuffer dstBuffer, long dstOffset, long stride, EnumMask<VkQueryResultFlags> flags);
 	}
 }

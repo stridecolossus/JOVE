@@ -1,25 +1,30 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"buffer",
-	"bindCount",
-	"pBinds"
-})
-public class VkSparseBufferMemoryBindInfo extends VulkanStructure {
-	public static class ByValue extends VkSparseBufferMemoryBindInfo implements Structure.ByValue { }
-	public static class ByReference extends VkSparseBufferMemoryBindInfo implements Structure.ByReference { }
-	
-	public Pointer buffer;
+public class VkSparseBufferMemoryBindInfo implements NativeStructure {
+	public Handle buffer;
 	public int bindCount;
-	public Pointer pBinds;
+	public VkSparseMemoryBind[] pBinds;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			POINTER.withName("buffer"),
+			JAVA_INT.withName("bindCount"),
+			PADDING,
+			POINTER.withName("pBinds")
+		);
+	}
 }

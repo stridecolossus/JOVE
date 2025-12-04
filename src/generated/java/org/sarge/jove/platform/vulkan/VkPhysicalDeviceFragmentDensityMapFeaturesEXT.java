@@ -1,28 +1,34 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"fragmentDensityMap",
-	"fragmentDensityMapDynamic",
-	"fragmentDensityMapNonSubsampledImages"
-})
-public class VkPhysicalDeviceFragmentDensityMapFeaturesEXT extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceFragmentDensityMapFeaturesEXT implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceFragmentDensityMapFeaturesEXT implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT;
-	public Pointer pNext;
+public class VkPhysicalDeviceFragmentDensityMapFeaturesEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public boolean fragmentDensityMap;
 	public boolean fragmentDensityMapDynamic;
 	public boolean fragmentDensityMapNonSubsampledImages;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("fragmentDensityMap"),
+			JAVA_INT.withName("fragmentDensityMapDynamic"),
+			JAVA_INT.withName("fragmentDensityMapNonSubsampledImages")
+		);
+	}
 }

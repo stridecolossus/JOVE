@@ -7,11 +7,12 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkFrontFace implements IntEnum {
- 	COUNTER_CLOCKWISE(0),
- 	CLOCKWISE(1);
+	COUNTER_CLOCKWISE(0),
+	CLOCKWISE(1),
+	MAX_ENUM(2147483647);
 
 	private final int value;
-
+	
 	private VkFrontFace(int value) {
 		this.value = value;
 	}

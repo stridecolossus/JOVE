@@ -48,10 +48,10 @@ public class FormatSelector {
 	 * @param features		Required features
 	 * @return Format matcher
 	 */
-	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeature> features) {
-		final EnumMask<VkFormatFeature> mask = new EnumMask<>(features);
+	public static Predicate<VkFormatProperties> filter(boolean optimal, Set<VkFormatFeatureFlags> features) {
+		final EnumMask<VkFormatFeatureFlags> mask = new EnumMask<>(features);
 		return properties -> {
-			final EnumMask<VkFormatFeature> supported = optimal ? properties.optimalTilingFeatures : properties.linearTilingFeatures;
+			final EnumMask<VkFormatFeatureFlags> supported = optimal ? properties.optimalTilingFeatures : properties.linearTilingFeatures;
 			if(supported == null) {
 				return false;
 			}

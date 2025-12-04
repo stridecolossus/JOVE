@@ -76,6 +76,6 @@ public class FrameComposer {
 	 * @param buffer Recording buffer
 	 */
 	protected void begin(Buffer buffer) {
-		buffer.begin(null, Set.of(VkCommandBufferUsage.ONE_TIME_SUBMIT));
+		buffer.begin(null, Set.of(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT));
 	}
 }

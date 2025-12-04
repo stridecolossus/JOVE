@@ -1,25 +1,34 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"memoryRequirements"
-})
-public class VkMemoryRequirements2 extends VulkanStructure {
-	public static class ByValue extends VkMemoryRequirements2 implements Structure.ByValue { }
-	public static class ByReference extends VkMemoryRequirements2 implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.MEMORY_REQUIREMENTS_2;
-	public Pointer pNext;
+public class VkMemoryRequirements2 implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public VkMemoryRequirements memoryRequirements;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			MemoryLayout.structLayout(
+				JAVA_LONG.withName("size"),
+				JAVA_LONG.withName("alignment"),
+				JAVA_INT.withName("memoryTypeBits")
+			).withName("memoryRequirements")
+		);
+	}
 }

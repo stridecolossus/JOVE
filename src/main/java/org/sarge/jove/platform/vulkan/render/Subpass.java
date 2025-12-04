@@ -12,7 +12,7 @@ import org.sarge.jove.util.EnumMask;
  * A <i>subpass</i> is a transient specification for a stage of a {@link RenderPass}.
  * @author Sarge
  */
-public record Subpass(List<AttachmentReference> colour, AttachmentReference depth, Set<VkSubpassDescriptionFlag> flags) {
+public record Subpass(List<AttachmentReference> colour, AttachmentReference depth, Set<VkSubpassDescriptionFlags> flags) {
 	/**
 	 * An <i>attachment reference</i> specifies an attachment used in this subpass.
 	 */
@@ -100,7 +100,7 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 	 * Builder for a subpass.
 	 */
 	public static class Builder {
-		private final Set<VkSubpassDescriptionFlag> flags = new HashSet<>();
+		private final Set<VkSubpassDescriptionFlags> flags = new HashSet<>();
 		private final List<AttachmentReference> colour = new ArrayList<>();
 		private AttachmentReference depth;
 
@@ -108,7 +108,7 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 		 * Adds a subpass creation flag.
 		 * @param flag Create flag
 		 */
-		public Builder flag(VkSubpassDescriptionFlag flag) {
+		public Builder flag(VkSubpassDescriptionFlags flag) {
 			flags.add(flag);
 			return this;
 		}

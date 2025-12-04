@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Collection;
 
 import org.sarge.jove.common.Handle;
@@ -26,7 +27,7 @@ public class PipelineCache extends VulkanObject {
 		final var info = new VkPipelineCacheCreateInfo();
 		if(data != null) {
 			info.initialDataSize = data.length;
-			info.pInitialData = data;
+			info.pInitialData = new Handle(MemorySegment.ofArray(data));
 		}
 		// TODO - info.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT
 

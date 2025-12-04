@@ -1,28 +1,30 @@
 package org.sarge.jove.platform.vulkan;
 
+import static java.lang.foreign.ValueLayout.*;
+
 import java.lang.foreign.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkFenceCreateInfo implements NativeStructure {
-	public final VkStructureType sType = VkStructureType.FENCE_CREATE_INFO;
+	public VkStructureType sType;
 	public Handle pNext;
-	public EnumMask<VkFenceCreateFlag> flags;
+	public EnumMask<VkFenceCreateFlags> flags;
 
 	@Override
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-				ValueLayout.JAVA_INT.withName("sType"),
-				PADDING,
-				POINTER.withName("pNext"),
-				ValueLayout.JAVA_INT.withName("flags"),
-				PADDING
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("flags")
 		);
 	}
 }

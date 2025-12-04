@@ -7,13 +7,10 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkBlendOverlapEXT implements IntEnum {
- 	VK_BLEND_OVERLAP_UNCORRELATED_EXT(0), 	
- 	VK_BLEND_OVERLAP_DISJOINT_EXT(1), 	
- 	VK_BLEND_OVERLAP_CONJOINT_EXT(2), 	
- 	VK_BLEND_OVERLAP_BEGIN_RANGE_EXT(0), 	
- 	VK_BLEND_OVERLAP_END_RANGE_EXT(2), 	
- 	VK_BLEND_OVERLAP_RANGE_SIZE_EXT(3), 	
- 	VK_BLEND_OVERLAP_MAX_ENUM_EXT(2147483647); 	
+	UNCORRELATED_EXT(0),
+	DISJOINT_EXT(1),
+	CONJOINT_EXT(2),
+	MAX_ENUM_EXT(2147483647);
 
 	private final int value;
 	

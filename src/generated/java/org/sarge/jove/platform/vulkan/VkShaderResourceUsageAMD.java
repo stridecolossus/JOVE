@@ -1,28 +1,34 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"numUsedVgprs",
-	"numUsedSgprs",
-	"ldsSizePerLocalWorkGroup",
-	"ldsUsageSizeInBytes",
-	"scratchMemUsageInBytes"
-})
-public class VkShaderResourceUsageAMD extends VulkanStructure {
-	public static class ByValue extends VkShaderResourceUsageAMD implements Structure.ByValue { }
-	public static class ByReference extends VkShaderResourceUsageAMD implements Structure.ByReference { }
-	
+public class VkShaderResourceUsageAMD implements NativeStructure {
 	public int numUsedVgprs;
 	public int numUsedSgprs;
 	public int ldsSizePerLocalWorkGroup;
 	public long ldsUsageSizeInBytes;
 	public long scratchMemUsageInBytes;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("numUsedVgprs"),
+			JAVA_INT.withName("numUsedSgprs"),
+			JAVA_INT.withName("ldsSizePerLocalWorkGroup"),
+			PADDING,
+			JAVA_LONG.withName("ldsUsageSizeInBytes"),
+			JAVA_LONG.withName("scratchMemUsageInBytes")
+		);
+	}
 }

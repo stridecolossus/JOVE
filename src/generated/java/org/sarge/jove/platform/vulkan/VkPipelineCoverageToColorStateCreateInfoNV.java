@@ -1,28 +1,34 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"coverageToColorEnable",
-	"coverageToColorLocation"
-})
-public class VkPipelineCoverageToColorStateCreateInfoNV extends VulkanStructure {
-	public static class ByValue extends VkPipelineCoverageToColorStateCreateInfoNV implements Structure.ByValue { }
-	public static class ByReference extends VkPipelineCoverageToColorStateCreateInfoNV implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PIPELINE_COVERAGE_TO_COLOR_STATE_CREATE_INFO_NV;
-	public Pointer pNext;
+public class VkPipelineCoverageToColorStateCreateInfoNV implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int flags;
 	public boolean coverageToColorEnable;
 	public int coverageToColorLocation;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("flags"),
+			JAVA_INT.withName("coverageToColorEnable"),
+			JAVA_INT.withName("coverageToColorLocation")
+		);
+	}
 }

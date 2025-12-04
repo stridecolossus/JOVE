@@ -39,9 +39,10 @@ public record Extents(Dimensions size, int depth) {
 	 */
 	public boolean isValid(VkImageType type) {
 		return switch(type) {
-			case ONE_D		-> (size.height() == 1) && (depth == 1);
-			case TWO_D		-> depth == 1;
-			case THREE_D	-> true;
+			case TYPE_1D -> (size.height() == 1) && (depth == 1);
+			case TYPE_2D -> depth == 1;
+			case TYPE_3D -> true;
+			default -> throw new RuntimeException();
 		};
 	}
 

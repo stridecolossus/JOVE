@@ -1,24 +1,30 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"memoryPriority"
-})
-public class VkPhysicalDeviceMemoryPriorityFeaturesEXT extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceMemoryPriorityFeaturesEXT implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceMemoryPriorityFeaturesEXT implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
-	public Pointer pNext;
+public class VkPhysicalDeviceMemoryPriorityFeaturesEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public boolean memoryPriority;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("memoryPriority")
+		);
+	}
 }

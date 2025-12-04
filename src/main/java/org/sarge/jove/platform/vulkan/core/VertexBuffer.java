@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.core;
 
 import java.util.*;
 
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlags;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer.Library;
 
 /**
@@ -16,7 +16,7 @@ public record VertexBuffer(VulkanBuffer buffer) {
 	 * @throws IllegalStateException if the given buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
 	 */
 	public VertexBuffer {
-		buffer.require(VkBufferUsageFlag.VERTEX_BUFFER);
+		buffer.require(VkBufferUsageFlags.VERTEX_BUFFER);
 	}
 
 	/**

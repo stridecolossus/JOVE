@@ -1,11 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -18,33 +20,33 @@ public class VkSurfaceCapabilitiesKHR implements NativeStructure {
 	public VkExtent2D minImageExtent;
 	public VkExtent2D maxImageExtent;
 	public int maxImageArrayLayers;
-	public EnumMask<VkSurfaceTransformFlagKHR> supportedTransforms;
-	public VkSurfaceTransformFlagKHR currentTransform;
-	public EnumMask<VkCompositeAlphaFlagKHR> supportedCompositeAlpha;
-	public EnumMask<VkImageUsageFlag> supportedUsageFlags;
+	public EnumMask<VkSurfaceTransformFlagsKHR> supportedTransforms;
+	public EnumMask<VkSurfaceTransformFlagsKHR> currentTransform;
+	public EnumMask<VkCompositeAlphaFlagsKHR> supportedCompositeAlpha;
+	public EnumMask<VkImageUsageFlags> supportedUsageFlags;
 
 	@Override
 	public GroupLayout layout() {
-	    return MemoryLayout.structLayout(
-	            JAVA_INT.withName("minImageCount"),
-	            JAVA_INT.withName("maxImageCount"),
-	            MemoryLayout.structLayout(
-	                JAVA_INT.withName("width"),
-	                JAVA_INT.withName("height")
-	            ).withName("currentExtent"),
-	            MemoryLayout.structLayout(
-	                JAVA_INT.withName("width"),
-	                JAVA_INT.withName("height")
-	            ).withName("minImageExtent"),
-	            MemoryLayout.structLayout(
-	                JAVA_INT.withName("width"),
-	                JAVA_INT.withName("height")
-	            ).withName("maxImageExtent"),
-	            JAVA_INT.withName("maxImageArrayLayers"),
-	            JAVA_INT.withName("supportedTransforms"),
-	            JAVA_INT.withName("currentTransform"),
-	            JAVA_INT.withName("supportedCompositeAlpha"),
-	            JAVA_INT.withName("supportedUsageFlags")
-	        );
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("minImageCount"),
+			JAVA_INT.withName("maxImageCount"),
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height")
+			).withName("currentExtent"),
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height")
+			).withName("minImageExtent"),
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height")
+			).withName("maxImageExtent"),
+			JAVA_INT.withName("maxImageArrayLayers"),
+			JAVA_INT.withName("supportedTransforms"),
+			JAVA_INT.withName("currentTransform"),
+			JAVA_INT.withName("supportedCompositeAlpha"),
+			JAVA_INT.withName("supportedUsageFlags")
+		);
 	}
 }

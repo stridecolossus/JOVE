@@ -19,7 +19,7 @@ public interface Subresource {
 	/**
 	 * @return Sub-resource aspects
 	 */
-	Set<VkImageAspect> aspects();
+	Set<VkImageAspectFlags> aspects();
 
 	/**
 	 * @return Base MIP level
@@ -44,7 +44,7 @@ public interface Subresource {
 	/**
 	 * Default implementation.
 	 */
-	record DefaultSubResource(Set<VkImageAspect> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) implements Subresource {
+	record DefaultSubResource(Set<VkImageAspectFlags> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) implements Subresource {
 		/**
 		 * Constructor.
 		 * @param aspects				Sub resource aspects
@@ -95,7 +95,7 @@ public interface Subresource {
 	 * Builder for an image subresource.
 	 */
 	class Builder {
-		private final Set<VkImageAspect> aspects = new HashSet<>();
+		private final Set<VkImageAspectFlags> aspects = new HashSet<>();
 		private int mipLevel;
 		private int levelCount = 1;
 		private int baseArrayLayer;
@@ -105,7 +105,7 @@ public interface Subresource {
 		 * Adds an image aspect.
 		 * @param aspect Image aspect
 		 */
-		public Builder aspect(VkImageAspect aspect) {
+		public Builder aspect(VkImageAspectFlags aspect) {
 			aspects.add(aspect);
 			return this;
 		}

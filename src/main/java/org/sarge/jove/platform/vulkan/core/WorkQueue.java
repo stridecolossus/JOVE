@@ -27,7 +27,7 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 	/**
 	 * A <i>queue family</i> defines the properties of a group of queues.
 	 */
-	public record Family(int index, int count, Set<VkQueueFlag> flags) {
+	public record Family(int index, int count, Set<VkQueueFlags> flags) {
 		/**
 		 * Ignored queue family.
 		 */
@@ -36,7 +36,7 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		/**
 		 * Queue flag mapper.
 		 */
-		private static final ReverseMapping<VkQueueFlag> MAPPING = ReverseMapping.mapping(VkQueueFlag.class);
+		private static final ReverseMapping<VkQueueFlags> MAPPING = ReverseMapping.mapping(VkQueueFlags.class);
 
 		/**
 		 * Helper - Creates a new queue family from the given descriptor.
@@ -45,7 +45,7 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		 * @return New queue family
 		 */
 		public static Family of(int index, VkQueueFamilyProperties properties) {
-			final Set<VkQueueFlag> flags = properties.queueFlags.enumerate(MAPPING);
+			final Set<VkQueueFlags> flags = properties.queueFlags.enumerate(MAPPING);
 			requireZeroOrMore(index);
 			return new Family(index, properties.queueCount, flags);
 		}

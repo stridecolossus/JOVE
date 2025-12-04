@@ -1,6 +1,5 @@
 package org.sarge.jove.foreign;
 
-import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
@@ -56,14 +55,17 @@ public class VulkanIntegrationDemo {
 
 		//////////////////
 
-		final var deviceLibrary = (DeviceLibrary) desktop.library();
-		final var listener = new DeviceLibrary.MouseListener() {
-			@Override
-			public void event(MemorySegment window, double x, double y) {
-				System.out.println("%s: %f,%f".formatted(window, x, y));
-			}
-		};
-		deviceLibrary.glfwSetCursorPosCallback(window, listener);
+		final var keyboard = new KeyboardDevice(window);
+		keyboard.bind(System.out::println);
+
+		final var wheel = new MouseWheel(window);
+		wheel.bind(System.out::println);
+
+		final var pointer = new MousePointer(window);
+		pointer.bind(System.out::println);
+
+		final var buttons = new MouseButtons(window);
+		buttons.bind(System.out::println);
 
 		//////////////////
 
@@ -94,7 +96,7 @@ public class VulkanIntegrationDemo {
 		final var surface = new VulkanSurface(window, instance, vulkan);
 
 		System.out.println("Enumerating devices...");
-		final Selector graphicsSelector = Selector.queue(VkQueueFlag.GRAPHICS);
+		final Selector graphicsSelector = Selector.queue(VkQueueFlags.GRAPHICS);
 		final Selector presentationSelector = new Selector(surface::isPresentationSupported);
 		final PhysicalDevice physical = PhysicalDevice
 				.enumerate(instance, vulkan)
@@ -207,9 +209,9 @@ public class VulkanIntegrationDemo {
 		///////////////
 //		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
 		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(factory.swapchain().extents()));
-		pipelineBuilder.rasterizer().cull(VkCullMode.NONE);
-		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.VERTEX, vertex));
-		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStage.FRAGMENT, fragment));
+		pipelineBuilder.rasterizer().cull(VkCullModeFlags.NONE);
+		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStageFlags.VERTEX, vertex));
+		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStageFlags.FRAGMENT, fragment));
 		final Pipeline pipeline = pipelineBuilder
 				.pass(pass)
 				.layout(pipelineLayout)
@@ -217,7 +219,7 @@ public class VulkanIntegrationDemo {
 
 		// Command Pool
 		System.out.println("Creating command pool...");
-		final var pool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlag.RESET_COMMAND_BUFFER);
+		final var pool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER);
 
 		// Frame buffers
 		System.out.println("Building frame buffers...");
@@ -333,10 +335,10 @@ b.destroy();
 		data.buffer(bb);
 
 		// Create VBO
-		final var destProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
-				.required(VkMemoryProperty.DEVICE_LOCAL)
-				.usage(VkBufferUsageFlag.TRANSFER_DST)
-				.usage(VkBufferUsageFlag.VERTEX_BUFFER)
+		final var destProperties = new MemoryProperties.Builder<VkBufferUsageFlags>()
+				.required(VkMemoryPropertyFlags.DEVICE_LOCAL)
+				.usage(VkBufferUsageFlags.TRANSFER_DST)
+				.usage(VkBufferUsageFlags.VERTEX_BUFFER)
 				.build();
 
 		final var dest = VulkanBuffer.create(allocator, data.length(), destProperties);

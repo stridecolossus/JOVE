@@ -63,12 +63,12 @@ public class DefaultImage extends VulkanObject implements Image {
 	 * Builder for a default image.
 	 */
 	public static class Builder {
-		private static final ReverseMapping<VkSampleCount> SAMPLES = ReverseMapping.mapping(VkSampleCount.class);
+		private static final ReverseMapping<VkSampleCountFlags> SAMPLES = ReverseMapping.mapping(VkSampleCountFlags.class);
 
 		private Descriptor descriptor;
-		private MemoryProperties<VkImageUsageFlag> properties;
-		private final Set<VkImageCreateFlag> flags = new HashSet<>();
-		private VkSampleCount samples = VkSampleCount.COUNT_1;
+		private MemoryProperties<VkImageUsageFlags> properties;
+		private final Set<VkImageCreateFlags> flags = new HashSet<>();
+		private VkSampleCountFlags samples = VkSampleCountFlags.COUNT_1;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
 		private VkImageLayout layout = VkImageLayout.UNDEFINED;
 
@@ -86,7 +86,7 @@ public class DefaultImage extends VulkanObject implements Image {
 		 * Sets the memory properties of this image.
 		 * @param props Memory properties
 		 */
-		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
+		public Builder properties(MemoryProperties<VkImageUsageFlags> props) {
 			this.properties = requireNonNull(props);
 			return this;
 		}
@@ -96,7 +96,7 @@ public class DefaultImage extends VulkanObject implements Image {
 		 * Adds an image creation flag.
 		 * @param flag Image creation flag
 		 */
-		public Builder flag(VkImageCreateFlag flag) {
+		public Builder flag(VkImageCreateFlags flag) {
 			requireNonNull(flag);
 			flags.add(flag);
 			return this;
@@ -107,7 +107,7 @@ public class DefaultImage extends VulkanObject implements Image {
 		 * @see VkImageCreateFlag#CUBE_COMPATIBLE
 		 */
 		public Builder cubemap() {
-			return flag(VkImageCreateFlag.CUBE_COMPATIBLE);
+			return flag(VkImageCreateFlags.CUBE_COMPATIBLE);
 		}
 
 		/**
@@ -169,7 +169,7 @@ public class DefaultImage extends VulkanObject implements Image {
 			info.extent = descriptor.extents().toExtent();
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
-			info.samples = samples;
+			info.samples = new EnumMask<>(samples);
 			info.tiling = tiling;
 			info.initialLayout = layout;
 			info.usage = new EnumMask<>(properties.usage());

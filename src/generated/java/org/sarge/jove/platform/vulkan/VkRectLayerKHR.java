@@ -1,24 +1,35 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"offset",
-	"extent",
-	"layer"
-})
-public class VkRectLayerKHR extends VulkanStructure {
-	public static class ByValue extends VkRectLayerKHR implements Structure.ByValue { }
-	public static class ByReference extends VkRectLayerKHR implements Structure.ByReference { }
-	
+public class VkRectLayerKHR implements NativeStructure {
 	public VkOffset2D offset;
 	public VkExtent2D extent;
 	public int layer;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("x"),
+				JAVA_INT.withName("y")
+			).withName("offset"),
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height")
+			).withName("extent"),
+			JAVA_INT.withName("layer")
+		);
+	}
 }

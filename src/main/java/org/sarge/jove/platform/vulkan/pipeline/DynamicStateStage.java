@@ -2,8 +2,10 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.EnumMask;
@@ -38,9 +40,15 @@ public class DynamicStateStage {
 		final var info = new VkPipelineDynamicStateCreateInfo();
 		info.flags = 0;
 
+		// Convert dynamic states to array
+		final int[] array = states
+				.stream()
+				.mapToInt(VkDynamicState::value)
+				.toArray();
+
 		// Populate dynamic states
    		info.dynamicStateCount = states.size();
-    	info.pDynamicStates = states.stream().mapToInt(VkDynamicState::value).toArray();
+    	info.pDynamicStates = new Handle(MemorySegment.ofArray(array));
 
 		return info;
 	}
@@ -98,7 +106,7 @@ public class DynamicStateStage {
 		 * @param faceMask				Face flags
 		 * @param compareMask			Compare mask
 		 */
-		void vkCmdSetStencilCompareMask(Buffer commandBuffer, EnumMask<VkStencilFaceFlag> faceMask, int compareMask);
+		void vkCmdSetStencilCompareMask(Buffer commandBuffer, EnumMask<VkStencilFaceFlags> faceMask, int compareMask);
 
 		/**
 		 * Sets the stencil write mask.
@@ -106,7 +114,7 @@ public class DynamicStateStage {
 		 * @param faceMask				Face flags
 		 * @param writeMask				Write mask
 		 */
-		void vkCmdSetStencilWriteMask(Buffer commandBuffer, EnumMask<VkStencilFaceFlag> faceMask, int writeMask);
+		void vkCmdSetStencilWriteMask(Buffer commandBuffer, EnumMask<VkStencilFaceFlags> faceMask, int writeMask);
 
 		/**
 		 * Sets the stencil reference.
@@ -114,6 +122,6 @@ public class DynamicStateStage {
 		 * @param faceMask				Face flags
 		 * @param reference				Reference value
 		 */
-		void vkCmdSetStencilReference(Buffer commandBuffer, EnumMask<VkStencilFaceFlag> faceMask, int reference);
+		void vkCmdSetStencilReference(Buffer commandBuffer, EnumMask<VkStencilFaceFlags> faceMask, int reference);
 	}
 }

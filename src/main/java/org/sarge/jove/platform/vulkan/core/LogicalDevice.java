@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.util.Validation.requireNotEmpty;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 import java.util.stream.*;
 
@@ -140,7 +141,7 @@ public class LogicalDevice extends TransientNativeObject {
 			info.flags = new EnumMask<>();
 			info.queueCount = priorities.size();
 			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = array(priorities);
+			info.pQueuePriorities = new Handle(MemorySegment.ofArray(array(priorities)));
 			return info;
 		}
 
@@ -310,7 +311,7 @@ public class LogicalDevice extends TransientNativeObject {
 
 			// Add required features
 			final var required = new DeviceFeatures(features);
-			info.pEnabledFeatures = required.build();
+			info.pEnabledFeatures = new VkPhysicalDeviceFeatures[]{required.build()};
 
 			// Add required queues
 			info.queueCreateInfoCount = queues.size();

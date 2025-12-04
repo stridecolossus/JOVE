@@ -1,41 +1,48 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"stageCount",
-	"pStages",
-	"groupCount",
-	"pGroups",
-	"maxRecursionDepth",
-	"layout",
-	"basePipelineHandle",
-	"basePipelineIndex"
-})
-public class VkRayTracingPipelineCreateInfoNV extends VulkanStructure {
-	public static class ByValue extends VkRayTracingPipelineCreateInfoNV implements Structure.ByValue { }
-	public static class ByReference extends VkRayTracingPipelineCreateInfoNV implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.RAY_TRACING_PIPELINE_CREATE_INFO_NV;
-	public Pointer pNext;
-	public int flags;
+public class VkRayTracingPipelineCreateInfoNV implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
+	public EnumMask<VkPipelineCreateFlags> flags;
 	public int stageCount;
-	public Pointer pStages;
+	public VkPipelineShaderStageCreateInfo[] pStages;
 	public int groupCount;
-	public Pointer pGroups;
+	public VkRayTracingShaderGroupCreateInfoNV[] pGroups;
 	public int maxRecursionDepth;
-	public Pointer layout;
-	public Pointer basePipelineHandle;
+	public Handle layout;
+	public Handle basePipelineHandle;
 	public int basePipelineIndex;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("flags"),
+			JAVA_INT.withName("stageCount"),
+			POINTER.withName("pStages"),
+			JAVA_INT.withName("groupCount"),
+			PADDING,
+			POINTER.withName("pGroups"),
+			JAVA_INT.withName("maxRecursionDepth"),
+			PADDING,
+			POINTER.withName("layout"),
+			POINTER.withName("basePipelineHandle"),
+			JAVA_INT.withName("basePipelineIndex")
+		);
+	}
 }

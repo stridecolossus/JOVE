@@ -1,20 +1,15 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 
-public class KeyTableTest {
+class KeyTableTest {
 	private KeyTable table;
 
 	@BeforeEach
 	void before() {
-		table = KeyTable.INSTANCE;
-	}
-
-	@Test
-	void constructor() {
-		assertNotNull(table);
+		table = new KeyTable();
 	}
 
 	@Test
@@ -33,7 +28,7 @@ public class KeyTableTest {
 	}
 
 	@Test
-	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> table.code("COBBLERS"));
+	void zero() {
+		assertEquals(0, table.code("COBBLERS"));
 	}
 }

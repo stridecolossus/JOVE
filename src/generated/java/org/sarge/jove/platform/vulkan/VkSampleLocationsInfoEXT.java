@@ -1,27 +1,41 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"sampleLocationsPerPixel",
-	"sampleLocationGridSize",
-	"sampleLocationsCount",
-	"pSampleLocations"
-})
-public class VkSampleLocationsInfoEXT extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.SAMPLE_LOCATIONS_INFO_EXT;
-	public Pointer pNext;
-	public VkSampleCount sampleLocationsPerPixel;
+public class VkSampleLocationsInfoEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
+	public EnumMask<VkSampleCountFlags> sampleLocationsPerPixel;
 	public VkExtent2D sampleLocationGridSize;
 	public int sampleLocationsCount;
-	public Pointer pSampleLocations;
+	public VkSampleLocationEXT[] pSampleLocations;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("sampleLocationsPerPixel"),
+			PADDING,
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height")
+			).withName("sampleLocationGridSize"),
+			JAVA_INT.withName("sampleLocationsCount"),
+			PADDING,
+			POINTER.withName("pSampleLocations")
+		);
+	}
 }

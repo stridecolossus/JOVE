@@ -33,6 +33,12 @@ https://stackoverflow.com/questions/34821047/java-lang-verifyerror-inconsistent-
 -->
 
     <dependencies>
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity</artifactId>
+			<version>1.7</version>
+		</dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

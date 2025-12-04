@@ -7,11 +7,12 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkSubpassContents implements IntEnum {
- 	INLINE(0),
- 	SECONDARY_COMMAND_BUFFERS(1);
+	INLINE(0),
+	SECONDARY_COMMAND_BUFFERS(1),
+	MAX_ENUM(2147483647);
 
 	private final int value;
-
+	
 	private VkSubpassContents(int value) {
 		this.value = value;
 	}

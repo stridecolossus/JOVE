@@ -206,7 +206,7 @@ public class PhysicalDevice implements NativeObject {
 		 * @param flags Required flags
 		 * @return Queue selector
 		 */
-		public static Selector queue(VkQueueFlag... flags) {
+		public static Selector queue(VkQueueFlags... flags) {
 			final var required = Set.of(flags);
 			final BiPredicate<PhysicalDevice, Family> predicate = (_, family) -> family.flags().containsAll(required);
 			return new Selector(predicate);

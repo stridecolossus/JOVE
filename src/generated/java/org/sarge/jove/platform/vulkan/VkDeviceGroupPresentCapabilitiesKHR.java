@@ -1,23 +1,32 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"presentMask",
-	"modes"
-})
-public class VkDeviceGroupPresentCapabilitiesKHR extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.DEVICE_GROUP_PRESENT_CAPABILITIES_KHR;
-	public Pointer pNext;
-	public int[] presentMask = new int[32];
-	public VkDeviceGroupPresentModeFlagKHR modes;
+public class VkDeviceGroupPresentCapabilitiesKHR implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
+	public int[] presentMask;
+	public EnumMask<VkDeviceGroupPresentModeFlagsKHR> modes;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			MemoryLayout.sequenceLayout(32, JAVA_INT).withName("presentMask"),
+			JAVA_INT.withName("modes")
+		);
+	}
 }

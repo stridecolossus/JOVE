@@ -5,6 +5,9 @@ import static java.lang.foreign.ValueLayout.*;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -17,23 +20,21 @@ public class VkPhysicalDeviceMemoryProperties implements NativeStructure {
 	public VkMemoryHeap[] memoryHeaps;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-	            JAVA_INT.withName("memoryTypeCount"),
-	            MemoryLayout.sequenceLayout(32,
-	            	MemoryLayout.structLayout(
-    	                JAVA_INT.withName("propertyFlags"),
-    	                JAVA_INT.withName("heapIndex")
-    	            )
-	            ).withName("memoryTypes"),
-	            JAVA_INT.withName("memoryHeapCount"),
-	            MemoryLayout.sequenceLayout(16,
-    	            MemoryLayout.structLayout(
-    	                JAVA_LONG.withName("size"),
-    	                JAVA_INT.withName("flags"),
-    	                PADDING
-    	            )
-    	        ).withName("memoryHeaps")
-        );
+			JAVA_INT.withName("memoryTypeCount"),
+			PADDING,
+			MemoryLayout.sequenceLayout(32, MemoryLayout.structLayout(
+				JAVA_INT.withName("propertyFlags"),
+				JAVA_INT.withName("heapIndex")
+			)).withName("memoryTypes"),
+			JAVA_INT.withName("memoryHeapCount"),
+			PADDING,
+			MemoryLayout.sequenceLayout(16, MemoryLayout.structLayout(
+				JAVA_LONG.withName("size"),
+				JAVA_INT.withName("flags"),
+				PADDING
+			)).withName("memoryHeaps")
+		);
 	}
 }

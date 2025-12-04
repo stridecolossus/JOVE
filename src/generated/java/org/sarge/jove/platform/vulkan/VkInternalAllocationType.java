@@ -7,11 +7,8 @@ import org.sarge.jove.util.IntEnum;
  * This class has been code-generated.
  */
 public enum VkInternalAllocationType implements IntEnum {
- 	VK_INTERNAL_ALLOCATION_TYPE_EXECUTABLE(0), 	
- 	VK_INTERNAL_ALLOCATION_TYPE_BEGIN_RANGE(0), 	
- 	VK_INTERNAL_ALLOCATION_TYPE_END_RANGE(0), 	
- 	VK_INTERNAL_ALLOCATION_TYPE_RANGE_SIZE(1), 	
- 	VK_INTERNAL_ALLOCATION_TYPE_MAX_ENUM(2147483647); 	
+	EXECUTABLE(0),
+	MAX_ENUM(2147483647);
 
 	private final int value;
 	

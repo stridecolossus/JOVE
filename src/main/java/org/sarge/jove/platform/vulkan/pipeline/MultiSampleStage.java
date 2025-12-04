@@ -1,12 +1,11 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.Objects.requireNonNull;
+import java.lang.foreign.MemorySegment;
 
-import java.util.Arrays;
-
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
-import org.sarge.jove.util.Percentile;
 
 /**
  * Builder for the multi-sample pipeline stage.
@@ -29,8 +28,8 @@ public class MultiSampleStage {
 	 * @param samples Sample count
 	 * @see #samples(int)
 	 */
-	public MultiSampleStage rasterizationSamples(VkSampleCount rasterizationSamples) {
-		info.rasterizationSamples = requireNonNull(rasterizationSamples);
+	public MultiSampleStage rasterizationSamples(VkSampleCountFlags rasterizationSamples) {
+		info.rasterizationSamples = new EnumMask<>(rasterizationSamples);
 		return this;
 	}
 
@@ -41,8 +40,8 @@ public class MultiSampleStage {
 	 * @see #samples(VkSampleCount)
 	 */
 	public MultiSampleStage samples(int rasterizationSamples) {
-		info.rasterizationSamples = ReverseMapping.mapping(VkSampleCount.class).map(rasterizationSamples);
-		return this;
+		final VkSampleCountFlags count = ReverseMapping.mapping(VkSampleCountFlags.class).map(rasterizationSamples);
+		return rasterizationSamples(count);
 	}
 
 	/**
@@ -69,7 +68,7 @@ public class MultiSampleStage {
 	 */
 	public MultiSampleStage sampleMask(int[] mask) {
 		// TODO - length = samples / 32
-		info.pSampleMask = Arrays.copyOf(mask, mask.length);
+		info.pSampleMask = new Handle(MemorySegment.ofArray(mask));
 		return this;
 	}
 

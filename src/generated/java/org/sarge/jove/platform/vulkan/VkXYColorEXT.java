@@ -1,22 +1,27 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"x",
-	"y"
-})
-public class VkXYColorEXT extends VulkanStructure {
-	public static class ByValue extends VkXYColorEXT implements Structure.ByValue { }
-	public static class ByReference extends VkXYColorEXT implements Structure.ByReference { }
-	
+public class VkXYColorEXT implements NativeStructure {
 	public float x;
 	public float y;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_FLOAT.withName("x"),
+			JAVA_FLOAT.withName("y")
+		);
+	}
 }

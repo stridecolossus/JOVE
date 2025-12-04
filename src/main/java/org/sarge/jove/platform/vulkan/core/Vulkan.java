@@ -32,7 +32,7 @@ public interface Vulkan {
 
 		// Configure success code handler
 		final Consumer<Object> handler = code -> {
-			if((code instanceof VkResult result) && (result != VkResult.SUCCESS)) {
+			if((code instanceof VkResult result) && (result != VkResult.VK_SUCCESS)) {
 				throw new VulkanException(result);
 			}
 		};

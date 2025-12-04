@@ -1,27 +1,33 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"swapchainCount",
-	"pRegions"
-})
-public class VkPresentRegionsKHR extends VulkanStructure {
-	public static class ByValue extends VkPresentRegionsKHR implements Structure.ByValue { }
-	public static class ByReference extends VkPresentRegionsKHR implements Structure.ByReference { }
-	
-	public VkStructureType sType = VkStructureType.PRESENT_REGIONS_KHR;
-	public Pointer pNext;
+public class VkPresentRegionsKHR implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int swapchainCount;
-	public Pointer pRegions;
+	public VkPresentRegionKHR[] pRegions;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("swapchainCount"),
+			PADDING,
+			POINTER.withName("pRegions")
+		);
+	}
 }

@@ -22,7 +22,7 @@ public class FrameState implements TransientObject {
 	public static FrameState create(LogicalDevice device) {
 		final var available = VulkanSemaphore.create(device);
 		final var ready = VulkanSemaphore.create(device);
-		final var fence = Fence.create(device, VkFenceCreateFlag.SIGNALED);
+		final var fence = Fence.create(device, VkFenceCreateFlags.SIGNALED);
 		return new FrameState(available, ready, fence);
 	}
 
@@ -91,8 +91,8 @@ public class FrameState implements TransientObject {
 	/**
 	 * @return Waiting pipeline stages for the render task
 	 */
-	protected Set<VkPipelineStage> stages() {
-		return Set.of(VkPipelineStage.COLOR_ATTACHMENT_OUTPUT);
+	protected Set<VkPipelineStageFlags> stages() {
+		return Set.of(VkPipelineStageFlags.COLOR_ATTACHMENT_OUTPUT);
 	}
 
 	/**

@@ -2,10 +2,10 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import java.lang.foreign.MemorySegment;
 
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
 
 /**
- * A <i>region</i> is a mapped area of {@link VkMemoryProperty#HOST_VISIBLE} memory.
+ * A <i>region</i> is a mapped area of {@link VkMemoryPropertyFlags#HOST_VISIBLE} memory.
  * @see DeviceMemory#map()
  * @author Sarge
  */

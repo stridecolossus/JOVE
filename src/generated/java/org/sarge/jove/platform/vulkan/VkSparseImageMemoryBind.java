@@ -1,31 +1,50 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"subresource",
-	"offset",
-	"extent",
-	"memory",
-	"memoryOffset",
-	"flags"
-})
-public class VkSparseImageMemoryBind extends VulkanStructure {
-	public static class ByValue extends VkSparseImageMemoryBind implements Structure.ByValue { }
-	public static class ByReference extends VkSparseImageMemoryBind implements Structure.ByReference { }
-	
+public class VkSparseImageMemoryBind implements NativeStructure {
 	public VkImageSubresource subresource;
 	public VkOffset3D offset;
 	public VkExtent3D extent;
-	public Pointer memory;
+	public Handle memory;
 	public long memoryOffset;
-	public int flags;
+	public EnumMask<VkSparseMemoryBindFlags> flags;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("aspectMask"),
+				JAVA_INT.withName("mipLevel"),
+				JAVA_INT.withName("arrayLayer")
+			).withName("subresource"),
+			PADDING,
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("x"),
+				JAVA_INT.withName("y"),
+				JAVA_INT.withName("z")
+			).withName("offset"),
+			PADDING,
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height"),
+				JAVA_INT.withName("depth")
+			).withName("extent"),
+			PADDING,
+			POINTER.withName("memory"),
+			JAVA_LONG.withName("memoryOffset"),
+			JAVA_INT.withName("flags")
+		);
+	}
 }

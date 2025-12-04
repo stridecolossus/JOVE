@@ -1,26 +1,32 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"inlineUniformBlock",
-	"descriptorBindingInlineUniformBlockUpdateAfterBind"
-})
-public class VkPhysicalDeviceInlineUniformBlockFeaturesEXT extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDeviceInlineUniformBlockFeaturesEXT implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDeviceInlineUniformBlockFeaturesEXT implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES_EXT;
-	public Pointer pNext;
+public class VkPhysicalDeviceInlineUniformBlockFeaturesEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public boolean inlineUniformBlock;
 	public boolean descriptorBindingInlineUniformBlockUpdateAfterBind;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("inlineUniformBlock"),
+			JAVA_INT.withName("descriptorBindingInlineUniformBlockUpdateAfterBind")
+		);
+	}
 }

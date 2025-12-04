@@ -58,9 +58,7 @@ public class Window extends TransientNativeObject {
 
 	// TODO - was lazy supplier!!!
 	private final WindowLibrary library;
-//	private final Supplier<KeyboardDevice> keyboard = () -> new KeyboardDevice(this);
-//	private final Supplier<MouseDevice> mouse = () -> new MouseDevice(this);
-	private final Map<Object, Object> listeners = new WeakHashMap<>();
+	private final Map<Object, Callback> listeners = new WeakHashMap<>();
 
 //	public enum Type {
 //		ENTER,
@@ -79,23 +77,12 @@ public class Window extends TransientNativeObject {
 		this.library = requireNonNull(library);
 	}
 
+	/**
+	 * @return GLFW library
+	 */
 	WindowLibrary library() {
 		return library;
 	}
-
-//	/**
-//	 * @return New keyboard device
-//	 */
-//	public KeyboardDevice keyboard() {
-//		return keyboard.get();
-//	}
-//
-//	/**
-//	 * @return New mouse device
-//	 */
-//	public MouseDevice mouse() {
-//		return mouse.get();
-//	}
 
 	/**
 	 * Unit for window dimensions.
@@ -128,16 +115,32 @@ public class Window extends TransientNativeObject {
 	public void size(Dimensions size) {
 		library.glfwSetWindowSize(this, size.width(), size.height());
 	}
-	// TODO - unit
+	// TODO - unit?
 
 	/**
-	 * Resets the window title.
+	 * Sets the window title.
 	 * @param title New title
 	 */
 	@MainThread
 	public void title(String title) {
 		requireNonNull(title);
 		library.glfwSetWindowTitle(this, title);
+	}
+
+	/**
+	 * Creates a Vulkan rendering surface for this window.
+	 * @param instance Vulkan instance
+	 * @return Vulkan surface
+	 * @throws RuntimeException if the surface cannot be created
+	 * @see Desktop#error()
+	 */
+	public Handle surface(Handle instance) {
+		final var pointer = new Pointer();
+		final int result = library.glfwCreateWindowSurface(instance, this, null, pointer);
+		if(result != 0) {
+			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
+		}
+		return pointer.handle();
 	}
 
 //	/**
@@ -208,6 +211,13 @@ public class Window extends TransientNativeObject {
 //	}
 
 	/**
+	 * @return Listeners attached to this window
+	 */
+	protected Map<Object, Callback> listeners() {
+		return Collections.unmodifiableMap(listeners);
+	}
+
+	/**
 	 * Registers a device listener attached to this window.
 	 * <p>
 	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus unregistered by GLFW.
@@ -215,7 +225,7 @@ public class Window extends TransientNativeObject {
 	 * @param key			Key
 	 * @param listener 		Listener
 	 */
-	protected void register(Object key, Object listener) {
+	protected void register(Object key, Callback listener) {
 		requireNonNull(key);
 		requireNonNull(listener);
 		listeners.put(key, listener);
@@ -229,26 +239,9 @@ public class Window extends TransientNativeObject {
 		listeners.remove(key);
 	}
 
-	/**
-	 * Creates a Vulkan rendering surface for this window.
-	 * @param instance Vulkan instance
-	 * @return Vulkan surface
-	 * @throws RuntimeException if the surface cannot be created for this window
-	 * @see Desktop#error()
-	 */
-	public Handle surface(Handle instance) {
-		final var pointer = new Pointer();
-		final int result = library.glfwCreateWindowSurface(instance, this, null, pointer);
-		if(result != 0) {
-			throw new RuntimeException("Cannot create Vulkan surface: result=" + result);
-		}
-		return pointer.handle();
-	}
-
 	@Override
 	@MainThread
 	protected void release() {
-		// TODO - need to explicitly remove listeners?
 		listeners.clear();
 		library.glfwDestroyWindow(this);
 	}

@@ -38,7 +38,7 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * A <i>binding</i> defines the properties of a resource in this descriptor set.
 	 */
-	public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
+	public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlags> stages) {
 		/**
 		 * Constructor.
 		 * @param index			Binding index
@@ -78,7 +78,7 @@ public class DescriptorSet implements NativeObject {
 			private int binding;
 			private VkDescriptorType type;
 			private int count = 1;
-			private final Set<VkShaderStage> stages = new HashSet<>();
+			private final Set<VkShaderStageFlags> stages = new HashSet<>();
 
 			/**
 			 * Sets the index of this binding.
@@ -111,7 +111,7 @@ public class DescriptorSet implements NativeObject {
 			 * Adds a shader stage to this binding.
 			 * @param stage Shader stage
 			 */
-			public Builder stage(VkShaderStage stage) {
+			public Builder stage(VkShaderStageFlags stage) {
 				stages.add(stage);
 				return this;
 			}
@@ -316,7 +316,7 @@ public class DescriptorSet implements NativeObject {
 		 * @return New descriptor set layout
 		 * @throws IllegalArgumentException if the bindings are empty or contain duplicate indices
 		 */
-		public static Layout create(LogicalDevice device, Collection<Binding> bindings, Set<VkDescriptorSetLayoutCreateFlag> flags) {
+		public static Layout create(LogicalDevice device, Collection<Binding> bindings, Set<VkDescriptorSetLayoutCreateFlags> flags) {
 			// Init layout descriptor
 			final var info = new VkDescriptorSetLayoutCreateInfo();
 			info.flags = new EnumMask<>(flags);
@@ -459,7 +459,7 @@ public class DescriptorSet implements NativeObject {
 		 */
 		public static class Builder {
 			private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
-			private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
+			private final Set<VkDescriptorPoolCreateFlags> flags = new HashSet<>();
 			private Integer max;
 
 			/**
@@ -487,7 +487,7 @@ public class DescriptorSet implements NativeObject {
 			 * Adds a creation flag for this pool.
 			 * @param flag Flag
 			 */
-			public Builder flag(VkDescriptorPoolCreateFlag flag) {
+			public Builder flag(VkDescriptorPoolCreateFlags flag) {
 				requireNonNull(flag);
 				flags.add(flag);
 				return this;

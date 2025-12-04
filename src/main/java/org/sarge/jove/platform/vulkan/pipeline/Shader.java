@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.nio.file.*;
 
 import org.sarge.jove.common.Handle;
@@ -26,7 +27,7 @@ public class Shader extends VulkanObject {
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
 		info.codeSize = code.length;
-		info.pCode = code;
+		info.pCode = new Handle(MemorySegment.ofArray(code));
 
 		// Allocate shader
 		final Library library = device.library();

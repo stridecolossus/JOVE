@@ -1,23 +1,33 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"handleType",
-	"pHostPointer"
-})
-public class VkImportMemoryHostPointerInfoEXT extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.IMPORT_MEMORY_HOST_POINTER_INFO_EXT;
-	public Pointer pNext;
-	public VkExternalMemoryHandleTypeFlag handleType;
-	public Pointer pHostPointer;
+public class VkImportMemoryHostPointerInfoEXT implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
+	public EnumMask<VkExternalMemoryHandleTypeFlags> handleType;
+	public Handle pHostPointer;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("handleType"),
+			PADDING,
+			POINTER.withName("pHostPointer")
+		);
+	}
 }

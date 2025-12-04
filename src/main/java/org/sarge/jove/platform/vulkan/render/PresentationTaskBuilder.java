@@ -1,8 +1,9 @@
 package org.sarge.jove.platform.vulkan.render;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkPresentInfoKHR;
 import org.sarge.jove.platform.vulkan.core.VulkanSemaphore;
 
@@ -54,7 +55,8 @@ public class PresentationTaskBuilder {
 		info.pSwapchains = NativeObject.handles(images.keySet());
 
 		// Set image indices
-		info.pImageIndices = images.values().stream().mapToInt(Integer::intValue).toArray();
+		final int[] indices = images.values().stream().mapToInt(Integer::intValue).toArray();
+		info.pImageIndices = new Handle(MemorySegment.ofArray(indices));
 
 		return info;
 	}

@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlags.*;
 import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.*;
@@ -30,14 +31,14 @@ import org.sarge.jove.util.EnumMask;
  */
 public class GraphicsPipelineBuilder {
 	// Pipeline properties
-	private final Set<VkPipelineCreateFlag> flags = new HashSet<>();
+	private final Set<VkPipelineCreateFlags> flags = new HashSet<>();
 	private PipelineLayout layout;
 	private RenderPass pass;
 	private Handle parent;
 	private int sibling = -1;
 
 	// Programmable shader stages
-	private final Map<VkShaderStage, ProgrammableShaderStage> shaders = new HashMap<>();
+	private final Map<VkShaderStageFlags, ProgrammableShaderStage> shaders = new HashMap<>();
 
 	// Fixed function stages
 	private final VertexInputStage input = new VertexInputStage();
@@ -74,7 +75,7 @@ public class GraphicsPipelineBuilder {
 	 * @see #parent(Pipeline)
 	 */
 	public GraphicsPipelineBuilder allowDerivatives() {
-		flags.add(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
+		flags.add(ALLOW_DERIVATIVES);
 		return this;
 	}
 
@@ -111,10 +112,10 @@ public class GraphicsPipelineBuilder {
 	 * Sets this pipeline as a derivative.
 	 */
 	private void derivative() {
-		if(flags.contains(VkPipelineCreateFlag.DERIVATIVE)) {
+		if(flags.contains(DERIVATIVE)) {
 			throw new IllegalStateException("Pipeline already configured as a derivative");
 		}
-		flags.add(VkPipelineCreateFlag.DERIVATIVE);
+		flags.add(DERIVATIVE);
 	}
 
 	/**
@@ -186,7 +187,7 @@ public class GraphicsPipelineBuilder {
 	 * @throws IllegalStateException for a duplicate shader stage
 	 */
 	public GraphicsPipelineBuilder shader(ProgrammableShaderStage shader) {
-		final VkShaderStage stage = shader.stage();
+		final VkShaderStageFlags stage = shader.stage();
 		if(shaders.containsKey(stage)) {
 			throw new IllegalStateException("Duplicate shader stage: " + stage);
 		}
@@ -201,7 +202,7 @@ public class GraphicsPipelineBuilder {
 		// Validate
 		requireNonNull(pass);
 		requireNonNull(layout);
-		if(!shaders.containsKey(VkShaderStage.VERTEX)) {
+		if(!shaders.containsKey(VkShaderStageFlags.VERTEX)) {
 			throw new IllegalStateException("No vertex shader specified");
 		}
 
@@ -297,7 +298,7 @@ public class GraphicsPipelineBuilder {
 	 * Constructs a pipeline.
 	 */
 	private static Pipeline pipeline(Handle handle, LogicalDevice device, GraphicsPipelineBuilder builder) {
-		final boolean parent = builder.flags.contains(VkPipelineCreateFlag.ALLOW_DERIVATIVES);
+		final boolean parent = builder.flags.contains(ALLOW_DERIVATIVES);
 		return new Pipeline(handle, device, VkPipelineBindPoint.GRAPHICS, builder.layout, parent);
 	}
 }

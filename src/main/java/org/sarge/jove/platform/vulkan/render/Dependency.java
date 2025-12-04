@@ -12,7 +12,7 @@ import org.sarge.jove.util.EnumMask;
  * A subpass <i>dependency</i> specifies a dependency on a subpass in a render pass.
  * @author Sarge
  */
-public record Dependency(Properties source, Properties destination, Set<VkDependencyFlag> flags) {
+public record Dependency(Properties source, Properties destination, Set<VkDependencyFlags> flags) {
 	/**
 	 * Marker for the <i>implicit</i> subpass before or after the render pass.
 	 */
@@ -21,7 +21,7 @@ public record Dependency(Properties source, Properties destination, Set<VkDepend
 	/**
 	 * Properties of this dependency.
 	 */
-	public record Properties(Subpass subpass, Set<VkPipelineStage> stages, Set<VkAccess> access) {
+	public record Properties(Subpass subpass, Set<VkPipelineStageFlags> stages, Set<VkAccessFlags> access) {
 		/**
 		 * Constructor.
 		 * @param subpass		Subpass

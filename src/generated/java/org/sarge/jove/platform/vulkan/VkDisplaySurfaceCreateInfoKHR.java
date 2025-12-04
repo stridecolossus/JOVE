@@ -1,35 +1,49 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"flags",
-	"displayMode",
-	"planeIndex",
-	"planeStackIndex",
-	"transform",
-	"globalAlpha",
-	"alphaMode",
-	"imageExtent"
-})
-public class VkDisplaySurfaceCreateInfoKHR extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.DISPLAY_SURFACE_CREATE_INFO_KHR;
-	public Pointer pNext;
+public class VkDisplaySurfaceCreateInfoKHR implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public int flags;
-	public long displayMode;
+	public Handle displayMode;
 	public int planeIndex;
 	public int planeStackIndex;
-	public VkSurfaceTransformFlagKHR transform;
+	public EnumMask<VkSurfaceTransformFlagsKHR> transform;
 	public float globalAlpha;
-	public VkDisplayPlaneAlphaFlagKHR alphaMode;
+	public EnumMask<VkDisplayPlaneAlphaFlagsKHR> alphaMode;
 	public VkExtent2D imageExtent;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("flags"),
+			PADDING,
+			POINTER.withName("displayMode"),
+			JAVA_INT.withName("planeIndex"),
+			JAVA_INT.withName("planeStackIndex"),
+			JAVA_INT.withName("transform"),
+			JAVA_FLOAT.withName("globalAlpha"),
+			JAVA_INT.withName("alphaMode"),
+			PADDING,
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height")
+			).withName("imageExtent")
+		);
+	}
 }

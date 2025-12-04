@@ -1,20 +1,29 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"drmFormatModifier",
-	"drmFormatModifierPlaneCount",
-	"drmFormatModifierTilingFeatures"
-})
-public class VkDrmFormatModifierPropertiesEXT extends VulkanStructure {
+public class VkDrmFormatModifierPropertiesEXT implements NativeStructure {
 	public long drmFormatModifier;
 	public int drmFormatModifierPlaneCount;
-	public VkFormatFeature drmFormatModifierTilingFeatures;
+	public EnumMask<VkFormatFeatureFlags> drmFormatModifierTilingFeatures;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_LONG.withName("drmFormatModifier"),
+			JAVA_INT.withName("drmFormatModifierPlaneCount"),
+			JAVA_INT.withName("drmFormatModifierTilingFeatures")
+		);
+	}
 }

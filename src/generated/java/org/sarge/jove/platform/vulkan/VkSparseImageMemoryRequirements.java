@@ -1,28 +1,43 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"formatProperties",
-	"imageMipTailFirstLod",
-	"imageMipTailSize",
-	"imageMipTailOffset",
-	"imageMipTailStride"
-})
-public class VkSparseImageMemoryRequirements extends VulkanStructure {
-	public static class ByValue extends VkSparseImageMemoryRequirements implements Structure.ByValue { }
-	public static class ByReference extends VkSparseImageMemoryRequirements implements Structure.ByReference { }
-	
+public class VkSparseImageMemoryRequirements implements NativeStructure {
 	public VkSparseImageFormatProperties formatProperties;
 	public int imageMipTailFirstLod;
 	public long imageMipTailSize;
 	public long imageMipTailOffset;
 	public long imageMipTailStride;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("aspectMask"),
+				PADDING,
+				MemoryLayout.structLayout(
+					JAVA_INT.withName("width"),
+					JAVA_INT.withName("height"),
+					JAVA_INT.withName("depth")
+				).withName("imageGranularity"),
+				JAVA_INT.withName("flags")
+			).withName("formatProperties"),
+			JAVA_INT.withName("imageMipTailFirstLod"),
+			PADDING,
+			JAVA_LONG.withName("imageMipTailSize"),
+			JAVA_LONG.withName("imageMipTailOffset"),
+			JAVA_LONG.withName("imageMipTailStride")
+		);
+	}
 }

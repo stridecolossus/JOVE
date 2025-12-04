@@ -1,8 +1,10 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.*;
 import java.util.*;
 
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
@@ -34,12 +36,13 @@ public class SpecialisationConstants {
 		// Init descriptor
 		final var info = new VkSpecializationInfo();
 
-    	// Create transient ordered map
+    	// Build data buffer (using sequence map to retain order)
     	final var map = new LinkedHashMap<>(constants);
+    	final byte[] data = buffer(map);
 
     	// Populate data buffer
-		info.pData = buffer(map);
-    	info.dataSize = info.pData.length;
+		info.pData = new Handle(MemorySegment.ofArray(data));
+    	info.dataSize = data.length;
 
     	// Build map entries
     	final var builder = new EntryBuilder();

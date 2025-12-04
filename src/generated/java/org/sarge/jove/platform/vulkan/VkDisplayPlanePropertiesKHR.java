@@ -1,18 +1,27 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"currentDisplay",
-	"currentStackIndex"
-})
-public class VkDisplayPlanePropertiesKHR extends VulkanStructure {
-	public long currentDisplay;
+public class VkDisplayPlanePropertiesKHR implements NativeStructure {
+	public Handle currentDisplay;
 	public int currentStackIndex;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			POINTER.withName("currentDisplay"),
+			JAVA_INT.withName("currentStackIndex")
+		);
+	}
 }

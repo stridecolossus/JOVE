@@ -1,24 +1,34 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"aspectMask",
-	"imageGranularity",
-	"flags"
-})
-public class VkSparseImageFormatProperties extends VulkanStructure {
-	public static class ByValue extends VkSparseImageFormatProperties implements Structure.ByValue { }
-	public static class ByReference extends VkSparseImageFormatProperties implements Structure.ByReference { }
-
-	public VkImageAspect aspectMask;
+public class VkSparseImageFormatProperties implements NativeStructure {
+	public EnumMask<VkImageAspectFlags> aspectMask;
 	public VkExtent3D imageGranularity;
-	public int flags;
+	public EnumMask<VkSparseImageFormatFlags> flags;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("aspectMask"),
+			PADDING,
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("width"),
+				JAVA_INT.withName("height"),
+				JAVA_INT.withName("depth")
+			).withName("imageGranularity"),
+			JAVA_INT.withName("flags")
+		);
+	}
 }

@@ -1,30 +1,36 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.*;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"storageBuffer16BitAccess",
-	"uniformAndStorageBuffer16BitAccess",
-	"storagePushConstant16",
-	"storageInputOutput16"
-})
-public class VkPhysicalDevice16BitStorageFeatures extends VulkanStructure {
-	public static class ByValue extends VkPhysicalDevice16BitStorageFeatures implements Structure.ByValue { }
-	public static class ByReference extends VkPhysicalDevice16BitStorageFeatures implements Structure.ByReference { }
-
-	public VkStructureType sType = VkStructureType.PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
-	public Pointer pNext;
+public class VkPhysicalDevice16BitStorageFeatures implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public boolean storageBuffer16BitAccess;
 	public boolean uniformAndStorageBuffer16BitAccess;
 	public boolean storagePushConstant16;
 	public boolean storageInputOutput16;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("storageBuffer16BitAccess"),
+			JAVA_INT.withName("uniformAndStorageBuffer16BitAccess"),
+			JAVA_INT.withName("storagePushConstant16"),
+			JAVA_INT.withName("storageInputOutput16")
+		);
+	}
 }

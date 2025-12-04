@@ -1,25 +1,27 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
 public class VkMemoryType implements NativeStructure {
-	public EnumMask<VkMemoryProperty> propertyFlags;
+	public EnumMask<VkMemoryPropertyFlags> propertyFlags;
 	public int heapIndex;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-				JAVA_INT.withName("propertyFlags"),
-				JAVA_INT.withName("heapIndex")
+			JAVA_INT.withName("propertyFlags"),
+			JAVA_INT.withName("heapIndex")
 		);
 	}
 }

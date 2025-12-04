@@ -1,8 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
+import static java.lang.foreign.ValueLayout.*;
+
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -13,10 +18,10 @@ public class VkExtensionProperties implements NativeStructure {
 	public int specVersion;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-		        MemoryLayout.sequenceLayout(256, ValueLayout.JAVA_BYTE).withName("extensionName"),
-				ValueLayout.JAVA_INT.withName("specVersion")
+			MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("extensionName"),
+			JAVA_INT.withName("specVersion")
 		);
 	}
 }

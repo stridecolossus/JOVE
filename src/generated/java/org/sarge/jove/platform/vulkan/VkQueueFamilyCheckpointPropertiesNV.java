@@ -1,25 +1,30 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"checkpointExecutionStageMask"
-})
-public class VkQueueFamilyCheckpointPropertiesNV extends VulkanStructure {
-	public static class ByValue extends VkQueueFamilyCheckpointPropertiesNV implements Structure.ByValue { }
-	public static class ByReference extends VkQueueFamilyCheckpointPropertiesNV implements Structure.ByReference { }
+public class VkQueueFamilyCheckpointPropertiesNV implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
+	public EnumMask<VkPipelineStageFlags> checkpointExecutionStageMask;
 
-	public VkStructureType sType = VkStructureType.QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV;
-	public Pointer pNext;
-	public VkPipelineStage checkpointExecutionStageMask;
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			JAVA_INT.withName("checkpointExecutionStageMask")
+		);
+	}
 }

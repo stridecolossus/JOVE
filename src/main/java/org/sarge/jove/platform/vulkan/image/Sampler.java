@@ -118,7 +118,7 @@ public class Sampler extends VulkanObject {
 		private static final float VK_LOD_CLAMP_NONE = 1000;
 
 		private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
-		private final Set<VkSamplerCreateFlag> flags = new HashSet<>();
+		private final Set<VkSamplerCreateFlags> flags = new HashSet<>();
 
 		public Builder() {
 			min(VkFilter.LINEAR);
@@ -135,7 +135,7 @@ public class Sampler extends VulkanObject {
 		 * Adds a sampler creation flag.
 		 * @param flag Creation flag
 		 */
-		public Builder flag(VkSamplerCreateFlag flag) {
+		public Builder flag(VkSamplerCreateFlags flag) {
 			requireNonNull(flag);
 			this.flags.add(flag);
 			return this;

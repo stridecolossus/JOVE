@@ -5,6 +5,9 @@ import static java.lang.foreign.ValueLayout.*;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -17,12 +20,12 @@ public class VkLayerProperties implements NativeStructure {
 	public String description;
 
 	@Override
-	public StructLayout layout() {
+	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-		        MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("layerName"),
-		        JAVA_INT.withName("specVersion"),
-		        JAVA_INT.withName("implementationVersion"),
-		        MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("description")
+			MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("layerName"),
+			JAVA_INT.withName("specVersion"),
+			JAVA_INT.withName("implementationVersion"),
+			MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("description")
 		);
 	}
 }

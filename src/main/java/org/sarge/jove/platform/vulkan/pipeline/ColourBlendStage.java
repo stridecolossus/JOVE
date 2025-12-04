@@ -129,11 +129,11 @@ public class ColourBlendStage {
 	/**
 	 * A <i>colour blend attachment</i> configures the blending operations of each colour attachment.
 	 */
-	public record ColourBlendAttachment(boolean enabled, BlendOperation colour, BlendOperation alpha, Set<VkColorComponent> mask) {
+	public record ColourBlendAttachment(boolean enabled, BlendOperation colour, BlendOperation alpha, Set<VkColorComponentFlags> mask) {
 		/**
 		 * Default colour write mask containing <b>all</b> channels.
 		 */
-		public static final Set<VkColorComponent> DEFAULT_WRITE_MASK = Set.of(VkColorComponent.values());
+		public static final Set<VkColorComponentFlags> DEFAULT_WRITE_MASK = Set.of(VkColorComponentFlags.values());
 
 		/**
 		 * Defines an attachment with colour blending disabled.
@@ -160,12 +160,12 @@ public class ColourBlendStage {
 		 * @throws IllegalArgumentException if {@link #mask} contains an unknown component character
 		 * @see VkColorComponent
 		 */
-		public static Set<VkColorComponent> mask(String mask) {
+		public static Set<VkColorComponentFlags> mask(String mask) {
 			return mask
 					.toUpperCase()
 					.chars()
 					.mapToObj(Character::toString)
-					.map(VkColorComponent::valueOf)
+					.map(VkColorComponentFlags::valueOf)
 					.collect(toSet());
 		}
 
@@ -192,7 +192,7 @@ public class ColourBlendStage {
 			private boolean enable = true;
 			private BlendOperation colour = BlendOperation.colour();
 			private BlendOperation alpha = BlendOperation.alpha();
-			private Set<VkColorComponent> mask = DEFAULT_WRITE_MASK;
+			private Set<VkColorComponentFlags> mask = DEFAULT_WRITE_MASK;
 
 			/**
 			 * Sets whether blending is enabled for this attachment.
@@ -229,7 +229,7 @@ public class ColourBlendStage {
 			 * @see ColourBlendAttachment#mask(String)
 			 * @see ColourBlendAttachment#DEFAULT_WRITE_MASK
 			 */
-			public Builder mask(Set<VkColorComponent> mask) {
+			public Builder mask(Set<VkColorComponentFlags> mask) {
 				this.mask = mask;
 				return this;
 			}

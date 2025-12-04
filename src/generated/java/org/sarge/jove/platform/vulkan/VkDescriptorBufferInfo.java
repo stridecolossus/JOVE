@@ -1,11 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -19,9 +21,9 @@ public class VkDescriptorBufferInfo implements NativeStructure {
 	@Override
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-				POINTER.withName("buffer"),
-				JAVA_LONG.withName("offset"),
-				JAVA_LONG.withName("range")
+			POINTER.withName("buffer"),
+			JAVA_LONG.withName("offset"),
+			JAVA_LONG.withName("range")
 		);
 	}
 }

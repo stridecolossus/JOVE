@@ -2,11 +2,12 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.EnumMask;
@@ -26,7 +27,7 @@ import org.sarge.jove.util.EnumMask;
  * @see Command
  * @author Sarge
  */
-public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStage>> waiting, Set<VulkanSemaphore> signal) {
+public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStageFlags>> waiting, Set<VulkanSemaphore> signal) {
 	/**
 	 * Constructor.
 	 * @param buffers		Command buffers
@@ -102,13 +103,16 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 				.map(Entry::getKey)
 				.collect(collectingAndThen(toList(), NativeObject::handles));
 
-		// Populate pipeline stage flags (for some reason this is a pointer to an int-array)
-		info.pWaitDstStageMask = entries
+		// Convert wait stages to an array
+		final int[] stages = entries
 				.stream()
 				.map(Entry::getValue)
 				.map(EnumMask::new)
 				.mapToInt(EnumMask::bits)
 				.toArray();
+
+		// Populate pipeline stage flags (for some reason this is a pointer to an int-array)
+		info.pWaitDstStageMask = new Handle(MemorySegment.ofArray(stages));
 
 		// Populate signal semaphores
 		info.signalSemaphoreCount = signal.size();
@@ -165,7 +169,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 		final Buffer buffer = pool
 				.allocate(1, true)
 				.getFirst()
-				.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT)
+				.begin(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT)
 				.add(cmd)
 				.end();
 
@@ -202,7 +206,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	 */
 	public static class Builder {
 		private final List<Buffer> buffers = new ArrayList<>();
-		private final Map<VulkanSemaphore, Set<VkPipelineStage>> wait = new HashMap<>();
+		private final Map<VulkanSemaphore, Set<VkPipelineStageFlags>> wait = new HashMap<>();
 		private final Set<VulkanSemaphore> signal = new HashSet<>();
 
 		/**
@@ -219,7 +223,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 		 * @param semaphore 	Wait semaphore
 		 * @param stages		Pipeline stage(s) at which this semaphore will be signalled
 		 */
-		public Builder wait(VulkanSemaphore semaphore, Set<VkPipelineStage> stages) {
+		public Builder wait(VulkanSemaphore semaphore, Set<VkPipelineStageFlags> stages) {
 			wait.put(semaphore, stages);
 			return this;
 		}

@@ -119,7 +119,7 @@ public interface Command {
 		 * @see #begin(VkCommandBufferInheritanceInfo, Set)
 		 * @throws IllegalStateException if this buffer is not ready for recording
 		 */
-		public Buffer begin(VkCommandBufferUsage... flags) {
+		public Buffer begin(VkCommandBufferUsageFlags... flags) {
 			return begin(null, Set.of(flags));
 		}
 
@@ -130,7 +130,7 @@ public interface Command {
 		 * @throws IllegalArgumentException if {@link #inheritance} is provided for a primary buffer
 		 * @throws IllegalStateException if this buffer is not ready for recording
 		 */
-		public Buffer begin(VkCommandBufferInheritanceInfo inheritance, Set<VkCommandBufferUsage> flags) {
+		public Buffer begin(VkCommandBufferInheritanceInfo inheritance, Set<VkCommandBufferUsageFlags> flags) {
 			// Check buffer can be recorded
 			check(Stage.INITIAL);
 
@@ -202,10 +202,10 @@ public interface Command {
 		 * @param flags Reset flags
 		 * @throws IllegalStateException if this buffer has not been recorded
 		 */
-		public void reset(VkCommandBufferResetFlag... flags) {
+		public void reset(VkCommandBufferResetFlags... flags) {
 			check(Stage.EXECUTABLE);
 			// TODO - check pool has flag
-			final EnumMask<VkCommandBufferResetFlag> mask = new EnumMask<>(flags);
+			final EnumMask<VkCommandBufferResetFlags> mask = new EnumMask<>(flags);
 			pool.library.vkResetCommandBuffer(this, mask);
 			stage = Stage.INITIAL;
 		}
@@ -241,7 +241,7 @@ public interface Command {
 		 * @param queue			Work queue
 		 * @param flags			Creation flags
 		 */
-		public static Pool create(LogicalDevice device, WorkQueue queue, VkCommandPoolCreateFlag... flags) {
+		public static Pool create(LogicalDevice device, WorkQueue queue, VkCommandPoolCreateFlags... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.queueFamilyIndex = queue.family().index();
@@ -320,7 +320,7 @@ public interface Command {
 		 * Resets this command pool.
 		 * @param flags Reset flags
 		 */
-		public void reset(VkCommandPoolResetFlag... flags) {
+		public void reset(VkCommandPoolResetFlags... flags) {
 			final var bits = new EnumMask<>(flags);
 			library.vkResetCommandPool(this.device(), this, bits);
 			update(buffers, Stage.INITIAL);
@@ -389,7 +389,7 @@ public interface Command {
 		 * @param flags				Flags
 		 * @return Result
 		 */
-		VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlag> flags);
+		VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags);
 
 		/**
 		 * Allocates a number of command buffers.
@@ -430,7 +430,7 @@ public interface Command {
 		 * @param flags					Flags
 		 * @return Result
 		 */
-		VkResult vkResetCommandBuffer(Buffer commandBuffer, EnumMask<VkCommandBufferResetFlag> flags);
+		VkResult vkResetCommandBuffer(Buffer commandBuffer, EnumMask<VkCommandBufferResetFlags> flags);
 
 		/**
 		 * Executes secondary command buffers.

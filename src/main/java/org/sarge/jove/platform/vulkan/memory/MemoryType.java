@@ -13,7 +13,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * A <i>memory type</i> specifies the properties of the memory heaps supported by the hardware.
  * @author Sarge
  */
-public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties) {
+public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlags> properties) {
 	/**
 	 * Constructor.
 	 * @param index				Type index
@@ -30,13 +30,13 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 	 * @return Whether this memory type is {@link VkMemoryProperty#HOST_VISIBLE}
 	 */
 	public boolean isHostVisible() {
-		return properties.contains(VkMemoryProperty.HOST_VISIBLE);
+		return properties.contains(VkMemoryPropertyFlags.HOST_VISIBLE);
 	}
 
 	/**
 	 * A <i>memory heap</i> specifies the properties of a group of memory types.
 	 */
-	public record Heap(long size, Set<VkMemoryHeapFlag> flags) {
+	public record Heap(long size, Set<VkMemoryHeapFlags> flags) {
 		/**
 		 * Constructor.
 		 * @param size		Heap size
@@ -56,12 +56,12 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 	public static MemoryType[] enumerate(VkPhysicalDeviceMemoryProperties descriptor) {
 		// Extracts a memory heap
 		class HeapMapper implements IntFunction<Heap> {
-			private final ReverseMapping<VkMemoryHeapFlag> mapper = ReverseMapping.mapping(VkMemoryHeapFlag.class);
+			private final ReverseMapping<VkMemoryHeapFlags> mapper = ReverseMapping.mapping(VkMemoryHeapFlags.class);
 
 			@Override
 			public Heap apply(int index) {
 				final VkMemoryHeap heap = descriptor.memoryHeaps[index];
-    			final Set<VkMemoryHeapFlag> flags = heap.flags.enumerate(mapper);
+    			final Set<VkMemoryHeapFlags> flags = heap.flags.enumerate(mapper);
     			return new Heap(heap.size, flags);
 			}
 		}
@@ -72,13 +72,13 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryProperty> properties)
 
 		// Extracts a memory type
 		class TypeMapper implements IntFunction<MemoryType> {
-			private final ReverseMapping<VkMemoryProperty> properties = ReverseMapping.mapping(VkMemoryProperty.class);
+			private final ReverseMapping<VkMemoryPropertyFlags> properties = ReverseMapping.mapping(VkMemoryPropertyFlags.class);
 
 			@Override
 			public MemoryType apply(int index) {
 				final VkMemoryType type = descriptor.memoryTypes[index];
 				final Heap heap = heaps[type.heapIndex];
-				final Set<VkMemoryProperty> props = type.propertyFlags.enumerate(properties);
+				final Set<VkMemoryPropertyFlags> props = type.propertyFlags.enumerate(properties);
 				return new MemoryType(index, heap, props);
 			}
 		}

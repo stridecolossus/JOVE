@@ -22,7 +22,7 @@ public class Fence extends VulkanObject {
 	 * @param flags			Creation flags
 	 * @return Fence
 	 */
-	public static Fence create(LogicalDevice device, VkFenceCreateFlag... flags) {
+	public static Fence create(LogicalDevice device, VkFenceCreateFlags... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
 		info.flags = new EnumMask<>(flags);
@@ -55,9 +55,9 @@ public class Fence extends VulkanObject {
 		final int code = library.vkGetFenceStatus(this.device(), this);
 		final VkResult result = MAPPING.map(code);
 		return switch(result) {
-			case SUCCESS	-> true;
-			case NOT_READY	-> false;
-			default			-> throw new VulkanException(result);
+			case VK_SUCCESS		-> true;
+			case VK_NOT_READY	-> false;
+			default				-> throw new VulkanException(result);
 		};
 	}
 

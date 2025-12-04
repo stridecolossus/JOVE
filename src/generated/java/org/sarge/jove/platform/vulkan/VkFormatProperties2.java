@@ -1,21 +1,34 @@
 package org.sarge.jove.platform.vulkan;
 
-import org.sarge.jove.platform.vulkan.common.VulkanStructure;
+import static java.lang.foreign.ValueLayout.*;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure.FieldOrder;
+import java.lang.foreign.*;
+
+import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
  * This class has been code-generated.
  */
-@FieldOrder({
-	"sType",
-	"pNext",
-	"formatProperties"
-})
-public class VkFormatProperties2 extends VulkanStructure {
-	public VkStructureType sType = VkStructureType.FORMAT_PROPERTIES_2;
-	public Pointer pNext;
+public class VkFormatProperties2 implements NativeStructure {
+	public VkStructureType sType;
+	public Handle pNext;
 	public VkFormatProperties formatProperties;
+
+	@Override
+	public GroupLayout layout() {
+		return MemoryLayout.structLayout(
+			JAVA_INT.withName("sType"),
+			PADDING,
+			POINTER.withName("pNext"),
+			MemoryLayout.structLayout(
+				JAVA_INT.withName("linearTilingFeatures"),
+				JAVA_INT.withName("optimalTilingFeatures"),
+				JAVA_INT.withName("bufferFeatures")
+			).withName("formatProperties")
+		);
+	}
 }
