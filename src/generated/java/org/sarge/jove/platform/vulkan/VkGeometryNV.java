@@ -57,7 +57,8 @@ public class VkGeometryNV implements NativeStructure {
 					JAVA_LONG.withName("offset")
 				).withName("aabbs")
 			).withName("geometry"),
-			JAVA_INT.withName("flags")
+			JAVA_INT.withName("flags"),
+			PADDING
 		);
 	}
 }

@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import org.sarge.jove.platform.vulkan.VkPipelineTessellationStateCreateInfo;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Builder for the tesselation control pipeline stage.
@@ -27,6 +27,7 @@ public class TesselationStage {
 		}
 
 		final var info = new VkPipelineTessellationStateCreateInfo();
+		info.sType = VkStructureType.PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 		info.patchControlPoints = points;
 		return info;
 	}

@@ -37,7 +37,8 @@ public class VkDisplayProperties2KHR implements NativeStructure {
 				).withName("physicalResolution"),
 				JAVA_INT.withName("supportedTransforms"),
 				JAVA_INT.withName("planeReorderPossible"),
-				JAVA_INT.withName("persistentContent")
+				JAVA_INT.withName("persistentContent"),
+				PADDING
 			).withName("displayProperties")
 		);
 	}

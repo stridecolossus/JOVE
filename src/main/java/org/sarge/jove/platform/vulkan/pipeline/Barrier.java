@@ -160,6 +160,7 @@ public class Barrier implements Command {
 			@Override
 			public VkMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
 				final var barrier = new VkMemoryBarrier();
+				barrier.sType = VkStructureType.MEMORY_BARRIER;
 				barrier.srcAccessMask = srcAccess;
 				barrier.dstAccessMask = destAccess;
 				return barrier;
@@ -207,6 +208,7 @@ public class Barrier implements Command {
     		@Override
 			public VkBufferMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
 				final var barrier = new VkBufferMemoryBarrier();
+				barrier.sType = VkStructureType.BUFFER_MEMORY_BARRIER;
 				barrier.buffer = buffer.handle();
 				barrier.offset = offset;
 				barrier.size = size;
@@ -260,6 +262,7 @@ public class Barrier implements Command {
     		@Override
     		public VkImageMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
 				final var barrier = new VkImageMemoryBarrier();
+				barrier.sType = VkStructureType.IMAGE_MEMORY_BARRIER;
 				barrier.image = image.handle();
 				barrier.srcAccessMask = srcAccess;
 				barrier.dstAccessMask = destAccess;

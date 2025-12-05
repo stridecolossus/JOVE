@@ -1,10 +1,9 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import java.lang.foreign.MemorySegment;
 import java.util.*;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.VkPresentInfoKHR;
+import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSemaphore;
 
 /**
@@ -45,6 +44,7 @@ public class PresentationTaskBuilder {
 	public VkPresentInfoKHR build() {
 		// Create presentation descriptor
 		final var info = new VkPresentInfoKHR();
+		info.sType = VkStructureType.PRESENT_INFO_KHR;
 
 		// Populate wait semaphores
 		info.waitSemaphoreCount = semaphores.size();
@@ -55,8 +55,11 @@ public class PresentationTaskBuilder {
 		info.pSwapchains = NativeObject.handles(images.keySet());
 
 		// Set image indices
-		final int[] indices = images.values().stream().mapToInt(Integer::intValue).toArray();
-		info.pImageIndices = new Handle(MemorySegment.ofArray(indices));
+		info.pImageIndices = images
+				.values()
+				.stream()
+				.mapToInt(Integer::intValue)
+				.toArray();
 
 		return info;
 	}

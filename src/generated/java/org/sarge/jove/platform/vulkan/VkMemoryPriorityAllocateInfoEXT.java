@@ -24,7 +24,8 @@ public class VkMemoryPriorityAllocateInfoEXT implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_FLOAT.withName("priority")
+			JAVA_FLOAT.withName("priority"),
+			PADDING
 		);
 	}
 }

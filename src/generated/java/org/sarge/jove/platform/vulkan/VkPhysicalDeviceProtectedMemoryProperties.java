@@ -24,7 +24,8 @@ public class VkPhysicalDeviceProtectedMemoryProperties implements NativeStructur
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("protectedNoFault")
+			JAVA_INT.withName("protectedNoFault"),
+			PADDING
 		);
 	}
 }

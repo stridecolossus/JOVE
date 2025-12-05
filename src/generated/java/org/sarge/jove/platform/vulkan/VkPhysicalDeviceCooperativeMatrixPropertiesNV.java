@@ -24,7 +24,8 @@ public class VkPhysicalDeviceCooperativeMatrixPropertiesNV implements NativeStru
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("cooperativeMatrixSupportedStages")
+			JAVA_INT.withName("cooperativeMatrixSupportedStages"),
+			PADDING
 		);
 	}
 }

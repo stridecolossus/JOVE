@@ -29,13 +29,11 @@ public class VkSparseImageMemoryBind implements NativeStructure {
 				JAVA_INT.withName("mipLevel"),
 				JAVA_INT.withName("arrayLayer")
 			).withName("subresource"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("x"),
 				JAVA_INT.withName("y"),
 				JAVA_INT.withName("z")
 			).withName("offset"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height"),
@@ -44,7 +42,8 @@ public class VkSparseImageMemoryBind implements NativeStructure {
 			PADDING,
 			POINTER.withName("memory"),
 			JAVA_LONG.withName("memoryOffset"),
-			JAVA_INT.withName("flags")
+			JAVA_INT.withName("flags"),
+			PADDING
 		);
 	}
 }

@@ -155,6 +155,7 @@ public class Instance extends TransientNativeObject {
 		 */
 		private VkApplicationInfo application() {
 			final var app = new VkApplicationInfo();
+			app.sType = VkStructureType.APPLICATION_INFO;
 			app.pApplicationName = name;
 			app.applicationVersion = version.toInteger();
 			app.pEngineName = "JOVE";
@@ -169,6 +170,7 @@ public class Instance extends TransientNativeObject {
 		private VkInstanceCreateInfo create() {
 			// Init instance descriptor
 			final var info = new VkInstanceCreateInfo();
+			info.sType = VkStructureType.INSTANCE_CREATE_INFO;
 			info.pApplicationInfo = application();
 
 			// Populate required extensions

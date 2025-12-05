@@ -12,13 +12,11 @@ import org.junit.jupiter.api.*;
 class StructureGeneratorTest {
 	private StructureGenerator generator;
 	private TypeMapper mapper;
-	private LayoutBuilder builder;
 
 	@BeforeEach
 	void before() {
 		mapper = new TypeMapper();
-		builder = new LayoutBuilder();
-		generator = new StructureGenerator(mapper, builder);
+		generator = new StructureGenerator(mapper);
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
@@ -34,7 +32,7 @@ class StructureGeneratorTest {
 				new StructureField("nested",		"VkNested",			0),
 				new StructureField("pStringArray",	"char**",			0),
 		};
-		final var structure = new StructureData("VkStructure", STRUCT, List.of(fields));
+		final var structure = new StructureData("VkMockStructure", STRUCT, List.of(fields));
 
 		// Register dependant generated types
 		mapper.add("VkStructureType", new NativeType("VkStructureType", JAVA_INT));
@@ -62,7 +60,7 @@ class StructureGeneratorTest {
 				 * Vulkan structure.
 				 * This class has been code-generated.
 				 */
-				public class VkStructure implements NativeStructure {
+				public class VkMockStructure implements NativeStructure {
 					public VkStructureType sType;
 					public Handle pNext;
 					public int integer;
@@ -78,11 +76,9 @@ class StructureGeneratorTest {
 							PADDING,
 							POINTER.withName("pNext"),
 							JAVA_INT.withName("integer"),
-							PADDING,
 							MemoryLayout.sequenceLayout(4, JAVA_CHAR).withName("pCharArray"),
 							MemoryLayout.sequenceLayout(4, JAVA_FLOAT).withName("colour"),
 							MemoryLayout.structLayout(JAVA_INT.withName("field")).withName("nested"),
-							PADDING,
 							POINTER.withName("pStringArray")
 						);
 					}

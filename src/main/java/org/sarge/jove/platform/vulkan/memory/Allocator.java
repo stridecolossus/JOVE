@@ -27,7 +27,6 @@ public class Allocator {
 	}
 
 	private final LogicalDevice device;
-	//private final MemoryType[] types;
 	private final MemorySelector selector;
 	private final long page;
 	private final int max;
@@ -41,7 +40,6 @@ public class Allocator {
 	public Allocator(LogicalDevice device, MemoryType[] types) {
 		final var limits = device.limits();
 		this.device = requireNonNull(device);
-		//this.types = Arrays.copyOf(types, types.length);
 		this.selector = new MemorySelector(types);
 		this.page = requireOneOrMore((long) limits.get("bufferImageGranularity"));
 		this.max = constrain(limits.get("maxMemoryAllocationCount"), Integer.MAX_VALUE);
@@ -232,6 +230,7 @@ public class Allocator {
 
 		// Init memory descriptor
 		final var allocation = new VkMemoryAllocateInfo();
+		allocation.sType = VkStructureType.MEMORY_ALLOCATE_INFO;
 		allocation.allocationSize = page * pages;
 		allocation.memoryTypeIndex = type.index();
 

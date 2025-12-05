@@ -38,7 +38,8 @@ public class VkFramebufferCreateInfo implements NativeStructure {
 			POINTER.withName("pAttachments"),
 			JAVA_INT.withName("width"),
 			JAVA_INT.withName("height"),
-			JAVA_INT.withName("layers")
+			JAVA_INT.withName("layers"),
+			PADDING
 		);
 	}
 }

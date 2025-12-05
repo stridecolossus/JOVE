@@ -189,6 +189,9 @@ public class DepthStencilStage {
 	 * @return Depth-stencil descriptor
 	 */
 	VkPipelineDepthStencilStateCreateInfo descriptor() {
+
+		info.sType = VkStructureType.PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+
 		return info;
 	}
 	// TODO - NULL if not used/enabled?

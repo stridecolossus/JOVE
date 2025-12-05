@@ -36,7 +36,8 @@ public class VkCopyDescriptorSet implements NativeStructure {
 			POINTER.withName("dstSet"),
 			JAVA_INT.withName("dstBinding"),
 			JAVA_INT.withName("dstArrayElement"),
-			JAVA_INT.withName("descriptorCount")
+			JAVA_INT.withName("descriptorCount"),
+			PADDING
 		);
 	}
 }

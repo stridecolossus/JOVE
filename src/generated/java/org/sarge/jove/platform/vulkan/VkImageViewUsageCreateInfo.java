@@ -24,7 +24,8 @@ public class VkImageViewUsageCreateInfo implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("usage")
+			JAVA_INT.withName("usage"),
+			PADDING
 		);
 	}
 }

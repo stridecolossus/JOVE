@@ -24,7 +24,8 @@ public class VkImageViewASTCDecodeModeEXT implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("decodeMode")
+			JAVA_INT.withName("decodeMode"),
+			PADDING
 		);
 	}
 }

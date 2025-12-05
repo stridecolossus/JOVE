@@ -28,7 +28,8 @@ public class VkPhysicalDeviceFragmentDensityMapFeaturesEXT implements NativeStru
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("fragmentDensityMap"),
 			JAVA_INT.withName("fragmentDensityMapDynamic"),
-			JAVA_INT.withName("fragmentDensityMapNonSubsampledImages")
+			JAVA_INT.withName("fragmentDensityMapNonSubsampledImages"),
+			PADDING
 		);
 	}
 }

@@ -48,7 +48,8 @@ public class VkPhysicalDeviceMeshShaderPropertiesNV implements NativeStructure {
 			JAVA_INT.withName("maxMeshOutputPrimitives"),
 			JAVA_INT.withName("maxMeshMultiviewViewCount"),
 			JAVA_INT.withName("meshOutputPerVertexGranularity"),
-			JAVA_INT.withName("meshOutputPerPrimitiveGranularity")
+			JAVA_INT.withName("meshOutputPerPrimitiveGranularity"),
+			PADDING
 		);
 	}
 }

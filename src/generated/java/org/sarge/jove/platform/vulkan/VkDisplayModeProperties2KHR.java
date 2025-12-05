@@ -32,7 +32,8 @@ public class VkDisplayModeProperties2KHR implements NativeStructure {
 						JAVA_INT.withName("height")
 					).withName("visibleRegion"),
 					JAVA_INT.withName("refreshRate")
-				).withName("parameters")
+				).withName("parameters"),
+				PADDING
 			).withName("displayModeProperties")
 		);
 	}

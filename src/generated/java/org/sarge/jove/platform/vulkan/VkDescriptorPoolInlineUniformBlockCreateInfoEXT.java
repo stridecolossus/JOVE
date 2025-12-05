@@ -24,7 +24,8 @@ public class VkDescriptorPoolInlineUniformBlockCreateInfoEXT implements NativeSt
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("maxInlineUniformBlockBindings")
+			JAVA_INT.withName("maxInlineUniformBlockBindings"),
+			PADDING
 		);
 	}
 }

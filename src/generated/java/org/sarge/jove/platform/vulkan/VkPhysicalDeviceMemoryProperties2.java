@@ -26,13 +26,11 @@ public class VkPhysicalDeviceMemoryProperties2 implements NativeStructure {
 			POINTER.withName("pNext"),
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("memoryTypeCount"),
-				PADDING,
 				MemoryLayout.sequenceLayout(32, MemoryLayout.structLayout(
 					JAVA_INT.withName("propertyFlags"),
 					JAVA_INT.withName("heapIndex")
 				)).withName("memoryTypes"),
 				JAVA_INT.withName("memoryHeapCount"),
-				PADDING,
 				MemoryLayout.sequenceLayout(16, MemoryLayout.structLayout(
 					JAVA_LONG.withName("size"),
 					JAVA_INT.withName("flags"),

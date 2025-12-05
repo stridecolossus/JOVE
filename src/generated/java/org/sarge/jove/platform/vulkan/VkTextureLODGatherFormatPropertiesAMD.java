@@ -24,7 +24,8 @@ public class VkTextureLODGatherFormatPropertiesAMD implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("supportsTextureGatherLODBiasAMD")
+			JAVA_INT.withName("supportsTextureGatherLODBiasAMD"),
+			PADDING
 		);
 	}
 }

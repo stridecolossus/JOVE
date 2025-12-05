@@ -29,14 +29,14 @@ public class VkPhysicalDeviceSampleLocationsPropertiesEXT implements NativeStruc
 			PADDING,
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("sampleLocationSampleCounts"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height")
 			).withName("maxSampleLocationGridSize"),
 			MemoryLayout.sequenceLayout(2, JAVA_FLOAT).withName("sampleLocationCoordinateRange"),
 			JAVA_INT.withName("sampleLocationSubPixelBits"),
-			JAVA_INT.withName("variableSampleLocations")
+			JAVA_INT.withName("variableSampleLocations"),
+			PADDING
 		);
 	}
 }

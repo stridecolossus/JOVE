@@ -24,7 +24,8 @@ public class VkDeviceGroupCommandBufferBeginInfo implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("deviceMask")
+			JAVA_INT.withName("deviceMask"),
+			PADDING
 		);
 	}
 }

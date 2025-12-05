@@ -127,6 +127,7 @@ public class RenderPass extends VulkanObject {
 		private VkRenderPassCreateInfo descriptor(List<Attachment> attachments) {
 			// Init descriptor
 			final var info = new VkRenderPassCreateInfo();
+			info.sType = VkStructureType.RENDER_PASS_CREATE_INFO;
 			info.flags = new EnumMask<>();
 
 			// Populate aggregated attachments

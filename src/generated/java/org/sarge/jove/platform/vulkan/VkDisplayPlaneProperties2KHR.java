@@ -26,7 +26,8 @@ public class VkDisplayPlaneProperties2KHR implements NativeStructure {
 			POINTER.withName("pNext"),
 			MemoryLayout.structLayout(
 				POINTER.withName("currentDisplay"),
-				JAVA_INT.withName("currentStackIndex")
+				JAVA_INT.withName("currentStackIndex"),
+				PADDING
 			).withName("displayPlaneProperties")
 		);
 	}

@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.image;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireNotEmpty;
 
-import org.sarge.jove.common.Layout;
+import org.sarge.jove.common.*;
 import org.sarge.jove.platform.vulkan.VkFormat;
 import org.sarge.jove.util.ImageData;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -39,16 +39,6 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  */
 public class FormatBuilder {
 	private static final ReverseMapping<VkFormat> MAPPING = ReverseMapping.mapping(VkFormat.class);
-
-	/**
-	 * {@code RGBA} colour components.
-	 */
-	public static final String RGBA = "RGBA";
-
-	/**
-	 * {@code RGBA} colour components.
-	 */
-	public static final String BGRA = "BGRA";
 
 	/**
 	 * Vulkan numeric formats.
@@ -115,7 +105,7 @@ public class FormatBuilder {
 	 * Constructor.
 	 */
 	public FormatBuilder() {
-		components(RGBA);
+		components(Colour.RGBA);
 	}
 
 	/**

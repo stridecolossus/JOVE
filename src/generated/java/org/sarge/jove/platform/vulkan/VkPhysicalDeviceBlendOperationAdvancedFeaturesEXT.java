@@ -24,7 +24,8 @@ public class VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT implements Native
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("advancedBlendCoherentOperations")
+			JAVA_INT.withName("advancedBlendCoherentOperations"),
+			PADDING
 		);
 	}
 }

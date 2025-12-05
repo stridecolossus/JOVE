@@ -1,10 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import java.lang.foreign.MemorySegment;
 import java.nio.*;
 import java.util.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
@@ -41,8 +39,8 @@ public class SpecialisationConstants {
     	final byte[] data = buffer(map);
 
     	// Populate data buffer
-		info.pData = new Handle(MemorySegment.ofArray(data));
     	info.dataSize = data.length;
+		info.pData = data;
 
     	// Build map entries
     	final var builder = new EntryBuilder();

@@ -28,7 +28,8 @@ public class VkPipelineCoverageToColorStateCreateInfoNV implements NativeStructu
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("flags"),
 			JAVA_INT.withName("coverageToColorEnable"),
-			JAVA_INT.withName("coverageToColorLocation")
+			JAVA_INT.withName("coverageToColorLocation"),
+			PADDING
 		);
 	}
 }

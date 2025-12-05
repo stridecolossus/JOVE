@@ -28,7 +28,6 @@ public class VkDisplayPlaneCapabilitiesKHR implements NativeStructure {
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
 			JAVA_INT.withName("supportedAlpha"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("x"),
 				JAVA_INT.withName("y")

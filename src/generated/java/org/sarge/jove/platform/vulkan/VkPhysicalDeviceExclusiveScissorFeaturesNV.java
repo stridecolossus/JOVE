@@ -24,7 +24,8 @@ public class VkPhysicalDeviceExclusiveScissorFeaturesNV implements NativeStructu
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("exclusiveScissor")
+			JAVA_INT.withName("exclusiveScissor"),
+			PADDING
 		);
 	}
 }

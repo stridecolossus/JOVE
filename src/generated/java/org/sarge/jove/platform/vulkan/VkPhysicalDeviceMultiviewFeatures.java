@@ -28,7 +28,8 @@ public class VkPhysicalDeviceMultiviewFeatures implements NativeStructure {
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("multiview"),
 			JAVA_INT.withName("multiviewGeometryShader"),
-			JAVA_INT.withName("multiviewTessellationShader")
+			JAVA_INT.withName("multiviewTessellationShader"),
+			PADDING
 		);
 	}
 }

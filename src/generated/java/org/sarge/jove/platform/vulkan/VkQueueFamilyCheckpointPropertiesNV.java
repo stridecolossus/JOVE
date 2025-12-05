@@ -24,7 +24,8 @@ public class VkQueueFamilyCheckpointPropertiesNV implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("checkpointExecutionStageMask")
+			JAVA_INT.withName("checkpointExecutionStageMask"),
+			PADDING
 		);
 	}
 }

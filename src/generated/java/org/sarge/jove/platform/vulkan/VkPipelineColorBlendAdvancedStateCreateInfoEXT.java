@@ -28,7 +28,8 @@ public class VkPipelineColorBlendAdvancedStateCreateInfoEXT implements NativeStr
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("srcPremultiplied"),
 			JAVA_INT.withName("dstPremultiplied"),
-			JAVA_INT.withName("blendOverlap")
+			JAVA_INT.withName("blendOverlap"),
+			PADDING
 		);
 	}
 }

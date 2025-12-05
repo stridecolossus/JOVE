@@ -24,7 +24,8 @@ public class VkPipelineTessellationDomainOriginStateCreateInfo implements Native
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("domainOrigin")
+			JAVA_INT.withName("domainOrigin"),
+			PADDING
 		);
 	}
 }

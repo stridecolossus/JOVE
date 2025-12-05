@@ -39,11 +39,11 @@ public class VkDisplaySurfaceCreateInfoKHR implements NativeStructure {
 			JAVA_INT.withName("transform"),
 			JAVA_FLOAT.withName("globalAlpha"),
 			JAVA_INT.withName("alphaMode"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height")
-			).withName("imageExtent")
+			).withName("imageExtent"),
+			PADDING
 		);
 	}
 }

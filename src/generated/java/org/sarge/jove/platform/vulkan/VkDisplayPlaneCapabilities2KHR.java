@@ -26,7 +26,6 @@ public class VkDisplayPlaneCapabilities2KHR implements NativeStructure {
 			POINTER.withName("pNext"),
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("supportedAlpha"),
-				PADDING,
 				MemoryLayout.structLayout(
 					JAVA_INT.withName("x"),
 					JAVA_INT.withName("y")
@@ -59,7 +58,8 @@ public class VkDisplayPlaneCapabilities2KHR implements NativeStructure {
 					JAVA_INT.withName("width"),
 					JAVA_INT.withName("height")
 				).withName("maxDstExtent")
-			).withName("capabilities")
+			).withName("capabilities"),
+			PADDING
 		);
 	}
 }

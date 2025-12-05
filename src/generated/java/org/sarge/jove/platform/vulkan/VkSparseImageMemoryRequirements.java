@@ -25,7 +25,6 @@ public class VkSparseImageMemoryRequirements implements NativeStructure {
 		return MemoryLayout.structLayout(
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("aspectMask"),
-				PADDING,
 				MemoryLayout.structLayout(
 					JAVA_INT.withName("width"),
 					JAVA_INT.withName("height"),
@@ -34,7 +33,6 @@ public class VkSparseImageMemoryRequirements implements NativeStructure {
 				JAVA_INT.withName("flags")
 			).withName("formatProperties"),
 			JAVA_INT.withName("imageMipTailFirstLod"),
-			PADDING,
 			JAVA_LONG.withName("imageMipTailSize"),
 			JAVA_LONG.withName("imageMipTailOffset"),
 			JAVA_LONG.withName("imageMipTailStride")

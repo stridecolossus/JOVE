@@ -26,7 +26,8 @@ public class VkDisplayPlaneInfo2KHR implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			POINTER.withName("mode"),
-			JAVA_INT.withName("planeIndex")
+			JAVA_INT.withName("planeIndex"),
+			PADDING
 		);
 	}
 }

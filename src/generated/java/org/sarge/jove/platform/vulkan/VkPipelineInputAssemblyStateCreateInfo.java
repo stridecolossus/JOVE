@@ -28,7 +28,8 @@ public class VkPipelineInputAssemblyStateCreateInfo implements NativeStructure {
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("flags"),
 			JAVA_INT.withName("topology"),
-			JAVA_INT.withName("primitiveRestartEnable")
+			JAVA_INT.withName("primitiveRestartEnable"),
+			PADDING
 		);
 	}
 }

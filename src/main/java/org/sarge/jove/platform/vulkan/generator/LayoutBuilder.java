@@ -1,7 +1,9 @@
 package org.sarge.jove.platform.vulkan.generator;
 
 import java.lang.foreign.*;
-import java.util.*;
+import java.util.List;
+import java.util.stream.Gatherer;
+import java.util.stream.Gatherer.Downstream;
 
 import org.sarge.jove.platform.vulkan.generator.StructureData.GroupType;
 
@@ -18,12 +20,11 @@ class LayoutBuilder {
 	 * @return Memory layout
 	 */
 	public GroupLayout layout(String name, GroupType type, List<StructureField<NativeType>> fields) {
-		// Build field layout
-		final var mapper = new LayoutMapper();
+		// Build field layouts and inject alignment padding as required
 		final MemoryLayout[] layouts = fields
 				.stream()
-				.map(mapper::build)
-				.flatMap(List::stream)
+				.map(LayoutBuilder::layout)
+				.gather(padding())
 				.toArray(MemoryLayout[]::new);
 
 		// Build group layout
@@ -32,68 +33,68 @@ class LayoutBuilder {
 			case UNION	-> MemoryLayout.unionLayout(layouts);
 		};
 
-		// Verify alignment
-		assert mapper.count == group.byteSize();
-		assert (mapper.count % 4) == 0;						// TODO - is this right?
-
 		return group;
 	}
 
 	/**
-	 * Maps structure fields to an FFM memory layout and injects alignment padding as required as a side-effect.
-	 * TODO - gatherer?
-	 */
-	private class LayoutMapper {
-		private int count;
-
-		public List<MemoryLayout> build(StructureField<NativeType> field) {
-			// Build field layout
-			final var list = new ArrayList<MemoryLayout>();
-			final MemoryLayout layout = layout(field);
-
-			// Inject alignment as required
-			// TODO - works (?) but could be tighter => what is the actual alignment rule(s)?
-			final long size = layout.byteSize();
-			if((size > 4) && !isAligned(count)) {
-				list.add(MemoryLayout.paddingLayout(4));
-				count += 4;
-			}
-			count += size;
-
-			// Add field to layout
-			final MemoryLayout named = layout.withName(field.name());
-			list.add(named);
-
-			return list;
-		}
-	}
-
-	/**
-	 * Builds the memory layout of the given structure field (appending padding as required).
+	 * Builds the memory layout of a structure field.
 	 */
 	private static MemoryLayout layout(StructureField<NativeType> field) {
 		final MemoryLayout layout = field.type().layout();
-		if(field.length() == 0) {
+		final MemoryLayout actual = layout(layout, field.length());
+		return actual.withName(field.name());
+	}
+
+	/**
+	 * Wraps array fields as a sequence layout.
+	 */
+	private static MemoryLayout layout(MemoryLayout layout, int length) {
+		if(length == 0) {
 			return layout;
 		}
 		else {
-			final MemoryLayout aligned = switch(layout) {
-				case GroupLayout group when !isAligned(group.byteSize()) -> {
-					final var members = new ArrayList<>(group.memberLayouts());
-					members.add(MemoryLayout.paddingLayout(4));
-					yield MemoryLayout.structLayout(members.toArray(MemoryLayout[]::new));
-				}
-
-				default -> layout;
-			};
-			return MemoryLayout.sequenceLayout(field.length(), aligned);
+			return MemoryLayout.sequenceLayout(length, layout);
 		}
 	}
 
 	/**
-	 * @return Whether the given size is word aligned
+	 * Creates a stateful gatherer that injects padding into the structure layout.
+	 * @return Padding gatherer
 	 */
-	private static boolean isAligned(long size) {
-		return (size % 8) == 0;
+	private static Gatherer<MemoryLayout, FieldAlignment, MemoryLayout> padding() {
+		return Gatherer.ofSequential(
+				FieldAlignment::new,
+				LayoutBuilder::inject,
+				LayoutBuilder::append
+		);
+	}
+
+	/**
+	 * Integrator.
+	 * Injects padding into the layout as required.
+	 */
+	private static boolean inject(FieldAlignment alignment, MemoryLayout layout, Downstream<? super MemoryLayout> downstream) {
+		// Inject padding as required
+		final long align = alignment.align(layout);
+		if(align > 0) {
+			final var padding = MemoryLayout.paddingLayout(align);
+			downstream.push(padding);
+		}
+
+		// Append field layout
+		downstream.push(layout);
+		return true;
+	}
+
+	/**
+	 * Finisher.
+	 * Appends padding to align the overall structure layout.
+	 */
+	private static void append(FieldAlignment alignment, Downstream<? super MemoryLayout> downstream) {
+		final long align = alignment.padding();
+		if(align > 0) {
+			final var padding = MemoryLayout.paddingLayout(align);
+			downstream.push(padding);
+		}
 	}
 }

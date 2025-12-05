@@ -141,6 +141,7 @@ public interface Command {
 
 			// Init descriptor
 			final var info = new VkCommandBufferBeginInfo();
+			info.sType = VkStructureType.COMMAND_BUFFER_BEGIN_INFO;
 			info.flags = new EnumMask<>(flags);
 			info.pInheritanceInfo = inheritance;
 
@@ -244,8 +245,9 @@ public interface Command {
 		public static Pool create(LogicalDevice device, WorkQueue queue, VkCommandPoolCreateFlags... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
-			info.queueFamilyIndex = queue.family().index();
+			info.sType = VkStructureType.COMMAND_POOL_CREATE_INFO;
 			info.flags = new EnumMask<>(flags);
+			info.queueFamilyIndex = queue.family().index();
 
 			// Create pool
 			final Library library = device.library();
@@ -296,6 +298,7 @@ public interface Command {
 		public List<Buffer> allocate(int number, boolean primary) {
 			// Init descriptor
 			final var info = new VkCommandBufferAllocateInfo();
+			info.sType = VkStructureType.COMMAND_BUFFER_ALLOCATE_INFO;
 			info.level = primary ? PRIMARY : SECONDARY;
 			info.commandBufferCount = requireOneOrMore(number);
 			info.commandPool = this.handle();

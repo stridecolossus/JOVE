@@ -2,10 +2,8 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
 
-import java.lang.foreign.MemorySegment;
 import java.util.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.EnumMask;
@@ -38,17 +36,12 @@ public class DynamicStateStage {
 
 		// Init descriptor
 		final var info = new VkPipelineDynamicStateCreateInfo();
+		info.sType = VkStructureType.PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 		info.flags = 0;
-
-		// Convert dynamic states to array
-		final int[] array = states
-				.stream()
-				.mapToInt(VkDynamicState::value)
-				.toArray();
 
 		// Populate dynamic states
    		info.dynamicStateCount = states.size();
-    	info.pDynamicStates = new Handle(MemorySegment.ofArray(array));
+    	info.pDynamicStates = states.stream().mapToInt(VkDynamicState::value).toArray();
 
 		return info;
 	}

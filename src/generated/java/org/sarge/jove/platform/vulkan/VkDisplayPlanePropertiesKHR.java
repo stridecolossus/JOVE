@@ -21,7 +21,8 @@ public class VkDisplayPlanePropertiesKHR implements NativeStructure {
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
 			POINTER.withName("currentDisplay"),
-			JAVA_INT.withName("currentStackIndex")
+			JAVA_INT.withName("currentStackIndex"),
+			PADDING
 		);
 	}
 }

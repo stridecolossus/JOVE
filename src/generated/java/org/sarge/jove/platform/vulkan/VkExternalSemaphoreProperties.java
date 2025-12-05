@@ -28,7 +28,8 @@ public class VkExternalSemaphoreProperties implements NativeStructure {
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("exportFromImportedHandleTypes"),
 			JAVA_INT.withName("compatibleHandleTypes"),
-			JAVA_INT.withName("externalSemaphoreFeatures")
+			JAVA_INT.withName("externalSemaphoreFeatures"),
+			PADDING
 		);
 	}
 }

@@ -25,6 +25,7 @@ public class Fence extends VulkanObject {
 	public static Fence create(LogicalDevice device, VkFenceCreateFlags... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
+		info.sType = VkStructureType.FENCE_CREATE_INFO;
 		info.flags = new EnumMask<>(flags);
 
 		// Create fence

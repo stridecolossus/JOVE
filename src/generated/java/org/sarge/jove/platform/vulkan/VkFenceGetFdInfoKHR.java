@@ -26,7 +26,8 @@ public class VkFenceGetFdInfoKHR implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			POINTER.withName("fence"),
-			JAVA_INT.withName("handleType")
+			JAVA_INT.withName("handleType"),
+			PADDING
 		);
 	}
 }

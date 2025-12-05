@@ -21,7 +21,8 @@ public class VkMemoryHeap implements NativeStructure {
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
 			JAVA_LONG.withName("size"),
-			JAVA_INT.withName("flags")
+			JAVA_INT.withName("flags"),
+			PADDING
 		);
 	}
 }

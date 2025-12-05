@@ -41,6 +41,7 @@ public class InputAssemblyStage {
 	 */
 	public VkPipelineInputAssemblyStateCreateInfo descriptor() {
 		final var info = new VkPipelineInputAssemblyStateCreateInfo();
+		info.sType = VkStructureType.PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		info.topology = topology;
 		info.primitiveRestartEnable = restart;
 		return info;

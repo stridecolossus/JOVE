@@ -32,7 +32,8 @@ public class VkRayTracingShaderGroupCreateInfoNV implements NativeStructure {
 			JAVA_INT.withName("generalShader"),
 			JAVA_INT.withName("closestHitShader"),
 			JAVA_INT.withName("anyHitShader"),
-			JAVA_INT.withName("intersectionShader")
+			JAVA_INT.withName("intersectionShader"),
+			PADDING
 		);
 	}
 }

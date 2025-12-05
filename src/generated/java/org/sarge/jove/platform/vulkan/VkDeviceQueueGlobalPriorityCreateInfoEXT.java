@@ -24,7 +24,8 @@ public class VkDeviceQueueGlobalPriorityCreateInfoEXT implements NativeStructure
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("globalPriority")
+			JAVA_INT.withName("globalPriority"),
+			PADDING
 		);
 	}
 }

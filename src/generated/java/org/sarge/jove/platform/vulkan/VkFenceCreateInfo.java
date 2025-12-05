@@ -24,7 +24,8 @@ public class VkFenceCreateInfo implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("flags")
+			JAVA_INT.withName("flags"),
+			PADDING
 		);
 	}
 }

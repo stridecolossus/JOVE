@@ -32,7 +32,8 @@ public class VkPhysicalDeviceInlineUniformBlockPropertiesEXT implements NativeSt
 			JAVA_INT.withName("maxPerStageDescriptorInlineUniformBlocks"),
 			JAVA_INT.withName("maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks"),
 			JAVA_INT.withName("maxDescriptorSetInlineUniformBlocks"),
-			JAVA_INT.withName("maxDescriptorSetUpdateAfterBindInlineUniformBlocks")
+			JAVA_INT.withName("maxDescriptorSetUpdateAfterBindInlineUniformBlocks"),
+			PADDING
 		);
 	}
 }

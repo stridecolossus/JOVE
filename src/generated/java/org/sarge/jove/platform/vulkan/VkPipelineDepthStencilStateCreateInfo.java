@@ -48,7 +48,6 @@ public class VkPipelineDepthStencilStateCreateInfo implements NativeStructure {
 				JAVA_INT.withName("writeMask"),
 				JAVA_INT.withName("reference")
 			).withName("front"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("failOp"),
 				JAVA_INT.withName("passOp"),

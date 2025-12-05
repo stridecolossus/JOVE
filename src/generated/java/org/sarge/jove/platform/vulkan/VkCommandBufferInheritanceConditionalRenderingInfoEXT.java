@@ -24,7 +24,8 @@ public class VkCommandBufferInheritanceConditionalRenderingInfoEXT implements Na
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("conditionalRenderingEnable")
+			JAVA_INT.withName("conditionalRenderingEnable"),
+			PADDING
 		);
 	}
 }

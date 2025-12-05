@@ -24,7 +24,8 @@ public class VkPhysicalDeviceMemoryPriorityFeaturesEXT implements NativeStructur
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("memoryPriority")
+			JAVA_INT.withName("memoryPriority"),
+			PADDING
 		);
 	}
 }

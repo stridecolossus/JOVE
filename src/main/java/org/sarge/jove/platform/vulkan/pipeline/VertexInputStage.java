@@ -196,6 +196,7 @@ public class VertexInputStage {
 	VkPipelineVertexInputStateCreateInfo descriptor() {
 		// Init stage descriptor
 		final var info = new VkPipelineVertexInputStateCreateInfo();
+		info.sType = VkStructureType.PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		info.flags = 0;
 
 		// Add vertex bindings

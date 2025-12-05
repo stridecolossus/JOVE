@@ -24,7 +24,8 @@ public class VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV implements Nati
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("fragmentShaderBarycentric")
+			JAVA_INT.withName("fragmentShaderBarycentric"),
+			PADDING
 		);
 	}
 }

@@ -30,7 +30,8 @@ public class VkImportSemaphoreFdInfoKHR implements NativeStructure {
 			POINTER.withName("semaphore"),
 			JAVA_INT.withName("flags"),
 			JAVA_INT.withName("handleType"),
-			JAVA_INT.withName("fd")
+			JAVA_INT.withName("fd"),
+			PADDING
 		);
 	}
 }

@@ -24,7 +24,8 @@ public class VkBindImagePlaneMemoryInfo implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("planeAspect")
+			JAVA_INT.withName("planeAspect"),
+			PADDING
 		);
 	}
 }

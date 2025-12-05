@@ -1,8 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import java.lang.foreign.MemorySegment;
-
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.*;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
@@ -68,7 +65,7 @@ public class MultiSampleStage {
 	 */
 	public MultiSampleStage sampleMask(int[] mask) {
 		// TODO - length = samples / 32
-		info.pSampleMask = new Handle(MemorySegment.ofArray(mask));
+		info.pSampleMask = mask;
 		return this;
 	}
 
@@ -94,6 +91,7 @@ public class MultiSampleStage {
 	 * @return Multi-sample descriptor
 	 */
 	VkPipelineMultisampleStateCreateInfo descriptor() {
+		info.sType = VkStructureType.PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		return info;
 	}
 }

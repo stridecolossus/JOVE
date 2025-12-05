@@ -22,7 +22,6 @@ public class VkSparseImageFormatProperties implements NativeStructure {
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
 			JAVA_INT.withName("aspectMask"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height"),

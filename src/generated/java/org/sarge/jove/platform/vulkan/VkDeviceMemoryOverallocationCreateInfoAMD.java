@@ -24,7 +24,8 @@ public class VkDeviceMemoryOverallocationCreateInfoAMD implements NativeStructur
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("overallocationBehavior")
+			JAVA_INT.withName("overallocationBehavior"),
+			PADDING
 		);
 	}
 }

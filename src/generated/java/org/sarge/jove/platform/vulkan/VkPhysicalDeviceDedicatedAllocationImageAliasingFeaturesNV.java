@@ -24,7 +24,8 @@ public class VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV implemen
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("dedicatedAllocationImageAliasing")
+			JAVA_INT.withName("dedicatedAllocationImageAliasing"),
+			PADDING
 		);
 	}
 }

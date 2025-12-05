@@ -26,7 +26,8 @@ public class VkMemoryGetFdInfoKHR implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			POINTER.withName("memory"),
-			JAVA_INT.withName("handleType")
+			JAVA_INT.withName("handleType"),
+			PADDING
 		);
 	}
 }

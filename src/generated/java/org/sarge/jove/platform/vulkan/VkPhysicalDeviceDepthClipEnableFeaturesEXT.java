@@ -24,7 +24,8 @@ public class VkPhysicalDeviceDepthClipEnableFeaturesEXT implements NativeStructu
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("depthClipEnable")
+			JAVA_INT.withName("depthClipEnable"),
+			PADDING
 		);
 	}
 }

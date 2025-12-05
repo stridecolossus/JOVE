@@ -28,7 +28,8 @@ public class VkFormatProperties2 implements NativeStructure {
 				JAVA_INT.withName("linearTilingFeatures"),
 				JAVA_INT.withName("optimalTilingFeatures"),
 				JAVA_INT.withName("bufferFeatures")
-			).withName("formatProperties")
+			).withName("formatProperties"),
+			PADDING
 		);
 	}
 }

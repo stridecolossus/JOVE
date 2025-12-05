@@ -46,7 +46,8 @@ public class VkDisplayPresentInfoKHR implements NativeStructure {
 					JAVA_INT.withName("height")
 				).withName("extent")
 			).withName("dstRect"),
-			JAVA_INT.withName("persistent")
+			JAVA_INT.withName("persistent"),
+			PADDING
 		);
 	}
 }

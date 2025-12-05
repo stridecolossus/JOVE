@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.sarge.jove.common.*;
@@ -289,10 +288,9 @@ public class Swapchain extends VulkanObject {
 		 * @param families Shared queue families
 		 */
 		public Builder concurrent(Collection<Family> families) {
-			final int[] indices = families.stream().mapToInt(Family::index).toArray();
 			info.imageSharingMode = VkSharingMode.CONCURRENT;
 			info.queueFamilyIndexCount = families.size();
-			info.pQueueFamilyIndices = new Handle(MemorySegment.ofArray(indices));
+			info.pQueueFamilyIndices = families.stream().mapToInt(Family::index).toArray();
 			return this;
 		}
 
@@ -395,8 +393,9 @@ public class Swapchain extends VulkanObject {
 			requireNonNull(info.imageExtent, "Expected swapchain extent");
 			requireNonNull(info.imageFormat, "Expected swapchain image format");
 			requireNonNull(info.imageColorSpace, "Expected swapchain image colour-space");
-			info.surface = requireNonNull(properties.surface().handle());
+			info.sType = VkStructureType.SWAPCHAIN_CREATE_INFO_KHR;
 			info.flags = new EnumMask<>(flags);
+			info.surface = requireNonNull(properties.surface().handle());
 			info.imageUsage = new EnumMask<>(usage);
 			validate(properties);
 

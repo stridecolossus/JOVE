@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.generator;
 
-import static java.util.stream.Collectors.joining;
+import static org.sarge.jove.platform.vulkan.generator.GeneratorHelper.UNDERSCORE;
 
-import java.util.*;
+import java.util.Map;
 import java.util.function.*;
 
 /**
@@ -10,8 +10,6 @@ import java.util.function.*;
  * @author Sarge
  */
 class EnumerationGenerator {
-	private static final String UNDERSCORE = "_";
-
 	/**
 	 * Generates the template arguments for the given enumeration.
 	 * TODO - flags/bits special cases
@@ -24,18 +22,17 @@ class EnumerationGenerator {
 		final String prefix = enumeration
 				.name()
 				.replaceFirst("FlagBits", "")
-				.transform(EnumerationGenerator::splitByCase)
+				.transform(GeneratorHelper::splitByCase)
 				.stream()
 				.filter(Predicate.not(EnumerationGenerator::isAllCaps))
-				.collect(joining(UNDERSCORE, "", UNDERSCORE))
-				.toUpperCase();
+				.collect(GeneratorHelper.snake());
 
 		// Truncate enumeration constants and remove duplicates
 		final var values = enumeration
 				.values()
 				.entrySet()
 				.stream()
-				.map(adapter(prefix))
+				.map(adapter(prefix + UNDERSCORE))
 				.distinct()
 				.toList();
 
@@ -87,51 +84,5 @@ class EnumerationGenerator {
 
 	private static boolean isAllCaps(String token) {
 		return token.chars().allMatch(Character::isUpperCase);
-	}
-
-	/**
-	 * Splits a string by character case.
-	 */
-	private static List<String> splitByCase(String string) {
-		// Handle degenerate case of empty string
-		if(string.isEmpty()) {
-			return List.of();
-		}
-
-		// Assume starts in camel-case
-		boolean upper = Character.isUpperCase(string.charAt(0));
-
-		// Walk character and check for case transitions
-		final List<String> result = new ArrayList<>();
-		final int length = string.length();
-		int start = 0;
-		for(int n = 1; n < length; ++n) {
-			if(Character.isUpperCase(string.charAt(n))) {
-				if(!upper) {
-					// Start new camel-case word
-					final String segment = string.substring(start, n);
-					result.add(segment);
-					upper = true;
-					start = n;
-				}
-			}
-			else {
-				if(upper) {
-					if(n - start > 1) {
-						// Handle capitalised word
-						final String segment = string.substring(start, n - 1);
-						result.add(segment);
-						start = n - 1;
-					}
-					upper = false;
-				}
-			}
-		}
-
-		// Emit final word
-		final String last = string.substring(start);
-		result.add(last);
-
-		return result;
 	}
 }

@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>frame buffer</i> is the target for a {@link RenderPass}.
@@ -42,6 +43,7 @@ public class Framebuffer extends VulkanObject {
 	public Command begin(VkSubpassContents contents) {
 		// Create descriptor
 		final var info = new VkRenderPassBeginInfo();
+		info.sType = VkStructureType.RENDER_PASS_BEGIN_INFO;
 		info.renderPass = group.pass.handle();
 		info.framebuffer = this.handle();
 		info.renderArea = VulkanUtility.rectangle(new Rectangle(group.extents));
@@ -192,6 +194,8 @@ public class Framebuffer extends VulkanObject {
 		private Framebuffer create(List<View> attachments, Dimensions extents) {
 			// Build descriptor
 			final var info = new VkFramebufferCreateInfo();
+			info.sType = VkStructureType.FRAMEBUFFER_CREATE_INFO;
+			info.flags = new EnumMask<>();
 			info.renderPass = pass.handle();
 			info.attachmentCount = attachments.size();
 			info.pAttachments = NativeObject.handles(attachments);

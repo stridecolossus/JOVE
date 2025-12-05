@@ -39,7 +39,8 @@ public class VkShaderStatisticsInfoAMD implements NativeStructure {
 			JAVA_INT.withName("numPhysicalSgprs"),
 			JAVA_INT.withName("numAvailableVgprs"),
 			JAVA_INT.withName("numAvailableSgprs"),
-			MemoryLayout.sequenceLayout(3, JAVA_INT).withName("computeWorkGroupSize")
+			MemoryLayout.sequenceLayout(3, JAVA_INT).withName("computeWorkGroupSize"),
+			PADDING
 		);
 	}
 }

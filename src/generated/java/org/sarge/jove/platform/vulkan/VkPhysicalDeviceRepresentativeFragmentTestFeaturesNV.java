@@ -24,7 +24,8 @@ public class VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV implements Nat
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("representativeFragmentTest")
+			JAVA_INT.withName("representativeFragmentTest"),
+			PADDING
 		);
 	}
 }

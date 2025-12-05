@@ -24,7 +24,8 @@ public class VkPhysicalDevicePushDescriptorPropertiesKHR implements NativeStruct
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("maxPushDescriptors")
+			JAVA_INT.withName("maxPushDescriptors"),
+			PADDING
 		);
 	}
 }

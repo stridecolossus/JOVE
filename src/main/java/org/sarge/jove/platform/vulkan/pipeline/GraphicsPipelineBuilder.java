@@ -208,6 +208,7 @@ public class GraphicsPipelineBuilder {
 
 		// Init descriptor
 		final var info = new VkGraphicsPipelineCreateInfo();
+		info.sType = VkStructureType.GRAPHICS_PIPELINE_CREATE_INFO;
 		info.flags = new EnumMask<>(flags);
 		info.layout = layout.handle();
 		info.renderPass = pass.handle();

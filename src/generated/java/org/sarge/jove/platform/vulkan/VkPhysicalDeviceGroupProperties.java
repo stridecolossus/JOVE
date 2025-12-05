@@ -29,7 +29,8 @@ public class VkPhysicalDeviceGroupProperties implements NativeStructure {
 			JAVA_INT.withName("physicalDeviceCount"),
 			PADDING,
 			MemoryLayout.sequenceLayout(32, POINTER).withName("physicalDevices"),
-			JAVA_INT.withName("subsetAllocation")
+			JAVA_INT.withName("subsetAllocation"),
+			PADDING
 		);
 	}
 }

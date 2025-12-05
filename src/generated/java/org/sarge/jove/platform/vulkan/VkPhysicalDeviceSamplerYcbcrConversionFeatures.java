@@ -24,7 +24,8 @@ public class VkPhysicalDeviceSamplerYcbcrConversionFeatures implements NativeStr
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("samplerYcbcrConversion")
+			JAVA_INT.withName("samplerYcbcrConversion"),
+			PADDING
 		);
 	}
 }

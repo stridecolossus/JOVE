@@ -44,7 +44,8 @@ public class VkPipelineRasterizationStateCreateInfo implements NativeStructure {
 			JAVA_FLOAT.withName("depthBiasConstantFactor"),
 			JAVA_FLOAT.withName("depthBiasClamp"),
 			JAVA_FLOAT.withName("depthBiasSlopeFactor"),
-			JAVA_FLOAT.withName("lineWidth")
+			JAVA_FLOAT.withName("lineWidth"),
+			PADDING
 		);
 	}
 }

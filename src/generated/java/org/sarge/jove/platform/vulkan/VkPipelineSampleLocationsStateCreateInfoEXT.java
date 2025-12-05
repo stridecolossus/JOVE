@@ -32,13 +32,11 @@ public class VkPipelineSampleLocationsStateCreateInfoEXT implements NativeStruct
 				PADDING,
 				POINTER.withName("pNext"),
 				JAVA_INT.withName("sampleLocationsPerPixel"),
-				PADDING,
 				MemoryLayout.structLayout(
 					JAVA_INT.withName("width"),
 					JAVA_INT.withName("height")
 				).withName("sampleLocationGridSize"),
 				JAVA_INT.withName("sampleLocationsCount"),
-				PADDING,
 				POINTER.withName("pSampleLocations")
 			).withName("sampleLocationsInfo")
 		);

@@ -2,12 +2,11 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.*;
 
-import java.lang.foreign.MemorySegment;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.EnumMask;
@@ -87,6 +86,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	private VkSubmitInfo build() {
 		// Populate command buffers
 		final var info = new VkSubmitInfo();
+		info.sType = VkStructureType.SUBMIT_INFO;
 		info.commandBufferCount = buffers.size();
 		info.pCommandBuffers = NativeObject.handles(buffers);
 
@@ -103,16 +103,13 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 				.map(Entry::getKey)
 				.collect(collectingAndThen(toList(), NativeObject::handles));
 
-		// Convert wait stages to an array
-		final int[] stages = entries
+		// Populate pipeline stage flags (for some reason this is a pointer to an int-array)
+		info.pWaitDstStageMask = entries
 				.stream()
 				.map(Entry::getValue)
 				.map(EnumMask::new)
 				.mapToInt(EnumMask::bits)
 				.toArray();
-
-		// Populate pipeline stage flags (for some reason this is a pointer to an int-array)
-		info.pWaitDstStageMask = new Handle(MemorySegment.ofArray(stages));
 
 		// Populate signal semaphores
 		info.signalSemaphoreCount = signal.size();

@@ -28,7 +28,8 @@ public class VkConditionalRenderingBeginInfoEXT implements NativeStructure {
 			POINTER.withName("pNext"),
 			POINTER.withName("buffer"),
 			JAVA_LONG.withName("offset"),
-			JAVA_INT.withName("flags")
+			JAVA_INT.withName("flags"),
+			PADDING
 		);
 	}
 }

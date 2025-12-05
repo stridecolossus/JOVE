@@ -26,7 +26,8 @@ public class VkSemaphoreGetFdInfoKHR implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			POINTER.withName("semaphore"),
-			JAVA_INT.withName("handleType")
+			JAVA_INT.withName("handleType"),
+			PADDING
 		);
 	}
 }

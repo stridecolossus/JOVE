@@ -34,9 +34,14 @@ public class VulkanSemaphore extends VulkanObject {
 	 * @return New semaphore
 	 */
 	public static VulkanSemaphore create(LogicalDevice device) {
+		final var info = new VkSemaphoreCreateInfo();
+		info.sType = VkStructureType.SEMAPHORE_CREATE_INFO;
+		info.flags = 0;
+
 		final Library library = device.library();
 		final var pointer = new Pointer();
-		library.vkCreateSemaphore(device, new VkSemaphoreCreateInfo(), null, pointer);
+		library.vkCreateSemaphore(device, info, null, pointer);
+
 		return new VulkanSemaphore(pointer.handle(), device);
 	}
 

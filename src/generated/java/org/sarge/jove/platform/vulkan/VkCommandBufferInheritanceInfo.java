@@ -35,7 +35,8 @@ public class VkCommandBufferInheritanceInfo implements NativeStructure {
 			POINTER.withName("framebuffer"),
 			JAVA_INT.withName("occlusionQueryEnable"),
 			JAVA_INT.withName("queryFlags"),
-			JAVA_INT.withName("pipelineStatistics")
+			JAVA_INT.withName("pipelineStatistics"),
+			PADDING
 		);
 	}
 }

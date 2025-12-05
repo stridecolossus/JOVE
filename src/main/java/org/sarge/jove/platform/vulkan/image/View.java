@@ -117,6 +117,7 @@ public class View extends VulkanObject {
 
 			// Build view descriptor
 			final var info = new VkImageViewCreateInfo();
+			info.sType = VkStructureType.IMAGE_VIEW_CREATE_INFO;
 			info.flags = new EnumMask<>();
 			info.viewType = Objects.requireNonNullElseGet(type, () -> type(image));
 			info.format = image.descriptor().format();

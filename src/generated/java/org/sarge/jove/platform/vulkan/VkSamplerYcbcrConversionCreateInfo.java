@@ -34,7 +34,6 @@ public class VkSamplerYcbcrConversionCreateInfo implements NativeStructure {
 			JAVA_INT.withName("format"),
 			JAVA_INT.withName("ycbcrModel"),
 			JAVA_INT.withName("ycbcrRange"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("r"),
 				JAVA_INT.withName("g"),
@@ -44,7 +43,8 @@ public class VkSamplerYcbcrConversionCreateInfo implements NativeStructure {
 			JAVA_INT.withName("xChromaOffset"),
 			JAVA_INT.withName("yChromaOffset"),
 			JAVA_INT.withName("chromaFilter"),
-			JAVA_INT.withName("forceExplicitReconstruction")
+			JAVA_INT.withName("forceExplicitReconstruction"),
+			PADDING
 		);
 	}
 }

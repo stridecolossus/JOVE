@@ -24,7 +24,8 @@ public class VkPhysicalDeviceMultiviewPerViewAttributesPropertiesNVX implements 
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("perViewPositionAllComponents")
+			JAVA_INT.withName("perViewPositionAllComponents"),
+			PADDING
 		);
 	}
 }

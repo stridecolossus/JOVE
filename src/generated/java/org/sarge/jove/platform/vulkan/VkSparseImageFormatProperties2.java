@@ -26,14 +26,14 @@ public class VkSparseImageFormatProperties2 implements NativeStructure {
 			POINTER.withName("pNext"),
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("aspectMask"),
-				PADDING,
 				MemoryLayout.structLayout(
 					JAVA_INT.withName("width"),
 					JAVA_INT.withName("height"),
 					JAVA_INT.withName("depth")
 				).withName("imageGranularity"),
 				JAVA_INT.withName("flags")
-			).withName("properties")
+			).withName("properties"),
+			PADDING
 		);
 	}
 }

@@ -38,7 +38,8 @@ public class VkPhysicalDeviceRayTracingPropertiesNV implements NativeStructure {
 			JAVA_LONG.withName("maxGeometryCount"),
 			JAVA_LONG.withName("maxInstanceCount"),
 			JAVA_LONG.withName("maxTriangleCount"),
-			JAVA_INT.withName("maxDescriptorSetAccelerationStructures")
+			JAVA_INT.withName("maxDescriptorSetAccelerationStructures"),
+			PADDING
 		);
 	}
 }

@@ -23,7 +23,8 @@ public class VkDescriptorImageInfo implements NativeStructure {
 		return MemoryLayout.structLayout(
 			POINTER.withName("sampler"),
 			POINTER.withName("imageView"),
-			JAVA_INT.withName("imageLayout")
+			JAVA_INT.withName("imageLayout"),
+			PADDING
 		);
 	}
 }

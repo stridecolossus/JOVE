@@ -1,13 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.util.EnumMask;
-import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -19,7 +18,7 @@ public class VkDeviceQueueCreateInfo implements NativeStructure {
 	public EnumMask<VkDeviceQueueCreateFlags> flags;
 	public int queueFamilyIndex;
 	public int queueCount;
-	public Handle pQueuePriorities;
+	public float[] pQueuePriorities;
 
 	@Override
 	public GroupLayout layout() {

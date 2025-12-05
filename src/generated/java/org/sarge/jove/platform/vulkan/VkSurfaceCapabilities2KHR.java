@@ -44,7 +44,8 @@ public class VkSurfaceCapabilities2KHR implements NativeStructure {
 				JAVA_INT.withName("currentTransform"),
 				JAVA_INT.withName("supportedCompositeAlpha"),
 				JAVA_INT.withName("supportedUsageFlags")
-			).withName("surfaceCapabilities")
+			).withName("surfaceCapabilities"),
+			PADDING
 		);
 	}
 }

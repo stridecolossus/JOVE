@@ -42,7 +42,8 @@ public class VkPhysicalDeviceTransformFeedbackPropertiesEXT implements NativeStr
 			JAVA_INT.withName("transformFeedbackQueries"),
 			JAVA_INT.withName("transformFeedbackStreamsLinesTriangles"),
 			JAVA_INT.withName("transformFeedbackRasterizationStreamSelect"),
-			JAVA_INT.withName("transformFeedbackDraw")
+			JAVA_INT.withName("transformFeedbackDraw"),
+			PADDING
 		);
 	}
 }

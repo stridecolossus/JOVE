@@ -26,7 +26,8 @@ public class VkDeviceGroupPresentCapabilitiesKHR implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			MemoryLayout.sequenceLayout(32, JAVA_INT).withName("presentMask"),
-			JAVA_INT.withName("modes")
+			JAVA_INT.withName("modes"),
+			PADDING
 		);
 	}
 }

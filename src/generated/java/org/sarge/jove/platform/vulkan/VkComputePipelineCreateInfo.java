@@ -42,7 +42,8 @@ public class VkComputePipelineCreateInfo implements NativeStructure {
 			).withName("stage"),
 			POINTER.withName("layout"),
 			POINTER.withName("basePipelineHandle"),
-			JAVA_INT.withName("basePipelineIndex")
+			JAVA_INT.withName("basePipelineIndex"),
+			PADDING
 		);
 	}
 }

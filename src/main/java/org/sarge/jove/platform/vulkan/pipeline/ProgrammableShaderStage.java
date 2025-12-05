@@ -58,6 +58,8 @@ public record ProgrammableShaderStage(VkShaderStageFlags stage, Shader shader, S
 	 */
 	VkPipelineShaderStageCreateInfo descriptor() {
 		final var info = new VkPipelineShaderStageCreateInfo();
+		info.sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
+		info.flags = new EnumMask<>();
 		info.stage = new EnumMask<>(stage);
 		info.module = shader.handle();
 		info.pName = name;

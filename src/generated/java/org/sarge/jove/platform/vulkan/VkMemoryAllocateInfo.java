@@ -26,7 +26,8 @@ public class VkMemoryAllocateInfo implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			JAVA_LONG.withName("allocationSize"),
-			JAVA_INT.withName("memoryTypeIndex")
+			JAVA_INT.withName("memoryTypeIndex"),
+			PADDING
 		);
 	}
 }

@@ -57,7 +57,8 @@ public class VkGraphicsPipelineCreateInfo implements NativeStructure {
 			JAVA_INT.withName("subpass"),
 			PADDING,
 			POINTER.withName("basePipelineHandle"),
-			JAVA_INT.withName("basePipelineIndex")
+			JAVA_INT.withName("basePipelineIndex"),
+			PADDING
 		);
 	}
 }

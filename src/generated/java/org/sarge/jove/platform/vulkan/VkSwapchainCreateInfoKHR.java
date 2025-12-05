@@ -1,13 +1,12 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.util.EnumMask;
-import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -26,7 +25,7 @@ public class VkSwapchainCreateInfoKHR implements NativeStructure {
 	public EnumMask<VkImageUsageFlags> imageUsage;
 	public VkSharingMode imageSharingMode;
 	public int queueFamilyIndexCount;
-	public Handle pQueueFamilyIndices;
+	public int[] pQueueFamilyIndices;
 	public EnumMask<VkSurfaceTransformFlagsKHR> preTransform;
 	public EnumMask<VkCompositeAlphaFlagsKHR> compositeAlpha;
 	public VkPresentModeKHR presentMode;
@@ -45,7 +44,6 @@ public class VkSwapchainCreateInfoKHR implements NativeStructure {
 			JAVA_INT.withName("minImageCount"),
 			JAVA_INT.withName("imageFormat"),
 			JAVA_INT.withName("imageColorSpace"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height")
@@ -54,6 +52,7 @@ public class VkSwapchainCreateInfoKHR implements NativeStructure {
 			JAVA_INT.withName("imageUsage"),
 			JAVA_INT.withName("imageSharingMode"),
 			JAVA_INT.withName("queueFamilyIndexCount"),
+			PADDING,
 			POINTER.withName("pQueueFamilyIndices"),
 			JAVA_INT.withName("preTransform"),
 			JAVA_INT.withName("compositeAlpha"),

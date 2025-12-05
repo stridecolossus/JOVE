@@ -26,7 +26,8 @@ public class VkBindImageMemorySwapchainInfoKHR implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			POINTER.withName("swapchain"),
-			JAVA_INT.withName("imageIndex")
+			JAVA_INT.withName("imageIndex"),
+			PADDING
 		);
 	}
 }

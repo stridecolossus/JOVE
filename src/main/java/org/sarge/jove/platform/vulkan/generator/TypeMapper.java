@@ -29,9 +29,7 @@ class TypeMapper {
 	 */
 	private void primitives() {
 		final ValueLayout[] primitives = {
-				JAVA_BOOLEAN,
 				JAVA_BYTE,
-				JAVA_CHAR,
 				JAVA_SHORT,
 				JAVA_INT,
 				JAVA_LONG,
@@ -43,6 +41,8 @@ class TypeMapper {
 			final String name = p.carrier().getSimpleName();
 			add(name, NativeType.of(p));
 		}
+
+		add("char", NativeType.of(JAVA_BYTE));
 	}
 
 	/**
@@ -93,10 +93,10 @@ class TypeMapper {
 			return;
 		}
 
-		// TODO - fiddle
-		if(synonym.equals("VkBool32")) {
-			return;
-		}
+//		// TODO - fiddle
+//		if(synonym.equals("VkBool32")) {
+//			return;
+//		}
 
 		// Otherwise lookup target type
 		final NativeType ref = types.get(type);
@@ -166,7 +166,7 @@ class TypeMapper {
 		}
 		else
 		if(typename.equals("char") && (field.length() > 0)) {
-			return new NativeType("String", JAVA_CHAR);
+			return new NativeType("String", JAVA_BYTE);
 		}
 		else {
 			final NativeType type = find(typename);
@@ -238,7 +238,7 @@ class TypeMapper {
 		return switch(type.layout()) {
 			case AddressLayout _	-> pluralise(field, HANDLE);
 			case GroupLayout _		-> pluralise(field, new NativeType(actual, ADDRESS));
-			case ValueLayout _		-> HANDLE;
+			case ValueLayout _		-> type.array();
 			default	-> throw new RuntimeException();
 		};
 	}

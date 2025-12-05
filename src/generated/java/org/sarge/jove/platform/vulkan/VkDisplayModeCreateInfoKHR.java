@@ -26,7 +26,6 @@ public class VkDisplayModeCreateInfoKHR implements NativeStructure {
 			PADDING,
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("flags"),
-			PADDING,
 			MemoryLayout.structLayout(
 				MemoryLayout.structLayout(
 					JAVA_INT.withName("width"),

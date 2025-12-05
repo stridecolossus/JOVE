@@ -83,6 +83,7 @@ public class PipelineLayout extends VulkanObject {
 		public PipelineLayout build(LogicalDevice device) {
 			// Init pipeline layout descriptor
 			final var info = new VkPipelineLayoutCreateInfo();
+			info.sType = VkStructureType.PIPELINE_LAYOUT_CREATE_INFO;
 			info.flags = 0;
 
 			// Add descriptor set layouts

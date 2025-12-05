@@ -27,7 +27,8 @@ public class VkSparseMemoryBind implements NativeStructure {
 			JAVA_LONG.withName("size"),
 			POINTER.withName("memory"),
 			JAVA_LONG.withName("memoryOffset"),
-			JAVA_INT.withName("flags")
+			JAVA_INT.withName("flags"),
+			PADDING
 		);
 	}
 }

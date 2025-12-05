@@ -80,7 +80,8 @@ public class VkPhysicalDeviceFeatures2 implements NativeStructure {
 				JAVA_INT.withName("sparseResidencyAliased"),
 				JAVA_INT.withName("variableMultisampleRate"),
 				JAVA_INT.withName("inheritedQueries")
-			).withName("features")
+			).withName("features"),
+			PADDING
 		);
 	}
 }

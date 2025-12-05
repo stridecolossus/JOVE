@@ -280,6 +280,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		 */
 		private VkDebugUtilsMessengerCreateInfoEXT populate(MemorySegment callback) {
 			final var info = new VkDebugUtilsMessengerCreateInfoEXT();
+			info.sType = VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 			info.messageSeverity = new EnumMask<>(severity);
 			info.messageType = new EnumMask<>(types);
 			info.pfnUserCallback = new Handle(callback);

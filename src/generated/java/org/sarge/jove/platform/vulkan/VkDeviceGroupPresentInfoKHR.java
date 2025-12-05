@@ -29,7 +29,8 @@ public class VkDeviceGroupPresentInfoKHR implements NativeStructure {
 			JAVA_INT.withName("swapchainCount"),
 			PADDING,
 			POINTER.withName("pDeviceMasks"),
-			JAVA_INT.withName("mode")
+			JAVA_INT.withName("mode"),
+			PADDING
 		);
 	}
 }

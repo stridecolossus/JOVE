@@ -24,7 +24,8 @@ public class VkPhysicalDeviceCornerSampledImageFeaturesNV implements NativeStruc
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("cornerSampledImage")
+			JAVA_INT.withName("cornerSampledImage"),
+			PADDING
 		);
 	}
 }

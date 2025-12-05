@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
 
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
@@ -30,6 +31,7 @@ public class ColourBlendStage {
 	private final List<ColourBlendAttachment> attachments = new ArrayList<>();
 
 	public ColourBlendStage() {
+		info.sType = VkStructureType.PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		info.logicOpEnable = false;
 		info.logicOp = VkLogicOp.CLEAR;
 		info.blendConstants = new float[4];
@@ -133,7 +135,7 @@ public class ColourBlendStage {
 		/**
 		 * Default colour write mask containing <b>all</b> channels.
 		 */
-		public static final Set<VkColorComponentFlags> DEFAULT_WRITE_MASK = Set.of(VkColorComponentFlags.values());
+		public static final Set<VkColorComponentFlags> DEFAULT_WRITE_MASK = mask(Colour.RGBA);
 
 		/**
 		 * Defines an attachment with colour blending disabled.

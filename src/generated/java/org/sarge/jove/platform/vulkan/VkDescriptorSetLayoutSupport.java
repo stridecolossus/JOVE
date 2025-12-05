@@ -24,7 +24,8 @@ public class VkDescriptorSetLayoutSupport implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("supported")
+			JAVA_INT.withName("supported"),
+			PADDING
 		);
 	}
 }

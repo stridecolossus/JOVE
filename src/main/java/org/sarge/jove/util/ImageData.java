@@ -85,7 +85,7 @@ public class ImageData {
 	private void validate() {
 		// Validate channels
 		for(char ch : channels.toCharArray()) {
-			if("RGBA".indexOf(ch) == -1) {
+			if(Colour.RGBA.indexOf(ch) == -1) {
 				throw new IllegalArgumentException("Invalid channel character: " + ch);
 			}
 		}

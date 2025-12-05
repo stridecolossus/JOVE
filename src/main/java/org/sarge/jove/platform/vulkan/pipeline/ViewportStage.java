@@ -118,6 +118,7 @@ public class ViewportStage {
 
 		// Init descriptor
 		final var info = new VkPipelineViewportStateCreateInfo();
+		info.sType = VkStructureType.PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		info.flags = 0;
 
 		// Add viewports

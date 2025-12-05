@@ -46,7 +46,8 @@ public class VkImageViewCreateInfo implements NativeStructure {
 				JAVA_INT.withName("levelCount"),
 				JAVA_INT.withName("baseArrayLayer"),
 				JAVA_INT.withName("layerCount")
-			).withName("subresourceRange")
+			).withName("subresourceRange"),
+			PADDING
 		);
 	}
 }

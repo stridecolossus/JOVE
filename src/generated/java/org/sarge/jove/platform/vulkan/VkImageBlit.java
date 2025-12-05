@@ -31,8 +31,7 @@ public class VkImageBlit implements NativeStructure {
 			MemoryLayout.sequenceLayout(2, MemoryLayout.structLayout(
 				JAVA_INT.withName("x"),
 				JAVA_INT.withName("y"),
-				JAVA_INT.withName("z"),
-				PADDING
+				JAVA_INT.withName("z")
 			)).withName("srcOffsets"),
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("aspectMask"),
@@ -43,8 +42,7 @@ public class VkImageBlit implements NativeStructure {
 			MemoryLayout.sequenceLayout(2, MemoryLayout.structLayout(
 				JAVA_INT.withName("x"),
 				JAVA_INT.withName("y"),
-				JAVA_INT.withName("z"),
-				PADDING
+				JAVA_INT.withName("z")
 			)).withName("dstOffsets")
 		);
 	}

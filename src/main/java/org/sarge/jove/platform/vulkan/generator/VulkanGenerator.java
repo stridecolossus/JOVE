@@ -14,7 +14,6 @@ import java.util.*;
 class VulkanGenerator {
 	private final Tokenizer tokenizer;
 	private final TypeMapper mapper = new TypeMapper();
-	private final LayoutBuilder builder = new LayoutBuilder();
 	private final TemplateProcessor template = new TemplateProcessor();
 	private final Map<String, Integer> constants = new HashMap<>();
 	private final FilePrinter printer;
@@ -174,7 +173,7 @@ class VulkanGenerator {
 		final StructureData structure = parser.parse(type);
 
 		// Generate template arguments
-		final var generator = new StructureGenerator(mapper, builder);
+		final var generator = new StructureGenerator(mapper);
 		final Map<String, Object> arguments = generator.generate(structure);
 
 		// Generate source code
@@ -192,9 +191,9 @@ class VulkanGenerator {
 
 		final Path path = Paths.get("/VulkanSDK/1.2.154.1/Include/vulkan/vulkan_core.h");
 		final String file = Files.readString(path);
-//		final var printer = FilePrinter.IGNORE;
+		final var printer = FilePrinter.IGNORE;
 //		final var printer = FilePrinter.of(new PrintWriter(System.out));
-		final var printer = FilePrinter.of(directory, "java", true);
+//		final var printer = FilePrinter.of(directory, "java", true);
 //		final var printer = new CompareFilePrinter();
 		final var generator = new VulkanGenerator(file, printer);
 		generator.generate();

@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sarge.jove.util.Validation.requireNotEmpty;
 
-import java.lang.foreign.MemorySegment;
 import java.util.*;
 import java.util.stream.*;
 
@@ -138,10 +137,11 @@ public class LogicalDevice extends TransientNativeObject {
 		 */
 		private VkDeviceQueueCreateInfo build() {
 			final var info = new VkDeviceQueueCreateInfo();
+			info.sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
 			info.flags = new EnumMask<>();
 			info.queueCount = priorities.size();
 			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = new Handle(MemorySegment.ofArray(array(priorities)));
+			info.pQueuePriorities = array(priorities);
 			return info;
 		}
 
@@ -302,6 +302,7 @@ public class LogicalDevice extends TransientNativeObject {
 		private VkDeviceCreateInfo populate() {
 			// Add required extensions
 			final var info = new VkDeviceCreateInfo();
+			info.sType = VkStructureType.DEVICE_CREATE_INFO;
 			info.enabledExtensionCount = extensions.size();
 			info.ppEnabledExtensionNames = extensions.toArray(String[]::new);
 
@@ -311,7 +312,7 @@ public class LogicalDevice extends TransientNativeObject {
 
 			// Add required features
 			final var required = new DeviceFeatures(features);
-			info.pEnabledFeatures = new VkPhysicalDeviceFeatures[]{required.build()};
+			info.pEnabledFeatures = null; // new VkPhysicalDeviceFeatures[]{required.build()};
 
 			// Add required queues
 			info.queueCreateInfoCount = queues.size();

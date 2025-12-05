@@ -213,6 +213,8 @@ public class VulkanBuffer extends VulkanObject {
 
 		// Build buffer descriptor
 		final var info = new VkBufferCreateInfo();
+		info.sType = VkStructureType.BUFFER_CREATE_INFO;
+		info.flags = new EnumMask<>();
 		info.usage = new EnumMask<>(properties.usage());
 		info.sharingMode = properties.mode();
 		info.size = requireOneOrMore(length);

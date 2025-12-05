@@ -28,7 +28,8 @@ public class VkDeviceQueueInfo2 implements NativeStructure {
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("flags"),
 			JAVA_INT.withName("queueFamilyIndex"),
-			JAVA_INT.withName("queueIndex")
+			JAVA_INT.withName("queueIndex"),
+			PADDING
 		);
 	}
 }

@@ -24,7 +24,8 @@ public class VkExternalMemoryImageCreateInfoNV implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("handleTypes")
+			JAVA_INT.withName("handleTypes"),
+			PADDING
 		);
 	}
 }

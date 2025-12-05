@@ -88,9 +88,9 @@ public class VulkanIntegrationDemo {
 				.layer(DiagnosticHandler.STANDARD_VALIDATION)
 				.build(vulkan);
 
-		System.out.println("Attaching diagnostic handler...");
-		final DiagnosticHandler handler = new DiagnosticHandler.Builder().build(instance, DefaultRegistry.create());			// TODO - registry -> library?
-		// TODO - option to exit on errors?
+//		System.out.println("Attaching diagnostic handler...");
+//		final DiagnosticHandler handler = new DiagnosticHandler.Builder().build(instance, DefaultRegistry.create());			// TODO - registry -> library?
+//		// TODO - option to exit on errors?
 
 		System.out.println("Getting surface...");
 		final var surface = new VulkanSurface(window, instance, vulkan);
@@ -168,8 +168,6 @@ public class VulkanIntegrationDemo {
 		// Shaders
 		System.out.println("Creating shaders...");
 		final var shaderLoader = new ShaderLoader(device);
-//		final Shader vertex = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.vert"));
-//		final Shader fragment = shaderLoader.load(Path.of("../Demo/Triangle/src/main/resources/spv.triangle.frag"));
 		final Shader vertex = shaderLoader.load(Path.of("../Demo/RotatingCube/src/main/resources/spv.quad.vert"));
 		final Shader fragment = shaderLoader.load(Path.of("../Demo/RotatingCube/src/main/resources/spv.quad.faked.frag"));
 
@@ -191,11 +189,8 @@ public class VulkanIntegrationDemo {
         		.stride((3 + 2) * 4)
 				.build();
 
-		System.out.println("binding="+binding);
-
 		final VulkanBuffer b = vbo(device, physical, graphicsQueue);
 		final var vbo = new VertexBuffer(b);
-		System.out.println("vbo="+vbo);
 
 		///////////////
 
@@ -268,7 +263,7 @@ b.destroy();
 		factory.destroy();
 		device.destroy();
 		surface.destroy();
-		handler.destroy();
+//		handler.destroy();
 		instance.destroy();
 		window.destroy();
 		desktop.destroy();

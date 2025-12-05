@@ -24,7 +24,8 @@ public class VkPipelineRepresentativeFragmentTestStateCreateInfoNV implements Na
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("representativeFragmentTestEnable")
+			JAVA_INT.withName("representativeFragmentTestEnable"),
+			PADDING
 		);
 	}
 }

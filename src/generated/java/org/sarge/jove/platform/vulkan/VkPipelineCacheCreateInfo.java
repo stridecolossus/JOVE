@@ -4,10 +4,9 @@ import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.util.EnumMask;
-import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -18,7 +17,7 @@ public class VkPipelineCacheCreateInfo implements NativeStructure {
 	public Handle pNext;
 	public EnumMask<VkPipelineCacheCreateFlags> flags;
 	public long initialDataSize;
-	public Handle pInitialData;
+	public byte[] pInitialData;
 
 	@Override
 	public GroupLayout layout() {

@@ -23,7 +23,8 @@ public class VkMemoryRequirements implements NativeStructure {
 		return MemoryLayout.structLayout(
 			JAVA_LONG.withName("size"),
 			JAVA_LONG.withName("alignment"),
-			JAVA_INT.withName("memoryTypeBits")
+			JAVA_INT.withName("memoryTypeBits"),
+			PADDING
 		);
 	}
 }

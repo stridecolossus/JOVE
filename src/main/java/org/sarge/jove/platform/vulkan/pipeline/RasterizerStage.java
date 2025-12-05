@@ -26,6 +26,7 @@ public class RasterizerStage {
 	 * @return Descriptor for this stage
 	 */
 	VkPipelineRasterizationStateCreateInfo descriptor() {
+		info.sType = VkStructureType.PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		return info;
 	}
 

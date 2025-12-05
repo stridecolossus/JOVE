@@ -28,7 +28,6 @@ public class VkQueueFamilyProperties2 implements NativeStructure {
 				JAVA_INT.withName("queueFlags"),
 				JAVA_INT.withName("queueCount"),
 				JAVA_INT.withName("timestampValidBits"),
-				PADDING,
 				MemoryLayout.structLayout(
 					JAVA_INT.withName("width"),
 					JAVA_INT.withName("height"),

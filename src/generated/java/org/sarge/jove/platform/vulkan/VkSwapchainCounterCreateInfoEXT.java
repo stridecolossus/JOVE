@@ -24,7 +24,8 @@ public class VkSwapchainCounterCreateInfoEXT implements NativeStructure {
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("surfaceCounters")
+			JAVA_INT.withName("surfaceCounters"),
+			PADDING
 		);
 	}
 }

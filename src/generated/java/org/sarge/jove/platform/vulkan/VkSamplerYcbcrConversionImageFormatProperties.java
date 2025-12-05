@@ -24,7 +24,8 @@ public class VkSamplerYcbcrConversionImageFormatProperties implements NativeStru
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("combinedImageSamplerDescriptorCount")
+			JAVA_INT.withName("combinedImageSamplerDescriptorCount"),
+			PADDING
 		);
 	}
 }

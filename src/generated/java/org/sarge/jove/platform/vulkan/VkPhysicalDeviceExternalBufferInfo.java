@@ -28,7 +28,8 @@ public class VkPhysicalDeviceExternalBufferInfo implements NativeStructure {
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("flags"),
 			JAVA_INT.withName("usage"),
-			JAVA_INT.withName("handleType")
+			JAVA_INT.withName("handleType"),
+			PADDING
 		);
 	}
 }

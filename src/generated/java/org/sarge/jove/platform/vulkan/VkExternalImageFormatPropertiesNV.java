@@ -35,7 +35,8 @@ public class VkExternalImageFormatPropertiesNV implements NativeStructure {
 			).withName("imageFormatProperties"),
 			JAVA_INT.withName("externalMemoryFeatures"),
 			JAVA_INT.withName("exportFromImportedHandleTypes"),
-			JAVA_INT.withName("compatibleHandleTypes")
+			JAVA_INT.withName("compatibleHandleTypes"),
+			PADDING
 		);
 	}
 }

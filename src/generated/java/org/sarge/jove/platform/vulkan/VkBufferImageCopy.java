@@ -38,7 +38,6 @@ public class VkBufferImageCopy implements NativeStructure {
 				JAVA_INT.withName("y"),
 				JAVA_INT.withName("z")
 			).withName("imageOffset"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height"),

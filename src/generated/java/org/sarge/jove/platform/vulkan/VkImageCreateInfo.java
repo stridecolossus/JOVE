@@ -39,7 +39,6 @@ public class VkImageCreateInfo implements NativeStructure {
 			JAVA_INT.withName("flags"),
 			JAVA_INT.withName("imageType"),
 			JAVA_INT.withName("format"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height"),
@@ -52,8 +51,10 @@ public class VkImageCreateInfo implements NativeStructure {
 			JAVA_INT.withName("usage"),
 			JAVA_INT.withName("sharingMode"),
 			JAVA_INT.withName("queueFamilyIndexCount"),
+			PADDING,
 			POINTER.withName("pQueueFamilyIndices"),
-			JAVA_INT.withName("initialLayout")
+			JAVA_INT.withName("initialLayout"),
+			PADDING
 		);
 	}
 }

@@ -34,7 +34,6 @@ public class VkImageCopy implements NativeStructure {
 				JAVA_INT.withName("y"),
 				JAVA_INT.withName("z")
 			).withName("srcOffset"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("aspectMask"),
 				JAVA_INT.withName("mipLevel"),
@@ -46,7 +45,6 @@ public class VkImageCopy implements NativeStructure {
 				JAVA_INT.withName("y"),
 				JAVA_INT.withName("z")
 			).withName("dstOffset"),
-			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height"),

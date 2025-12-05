@@ -32,7 +32,8 @@ public class VkAcquireNextImageInfoKHR implements NativeStructure {
 			JAVA_LONG.withName("timeout"),
 			POINTER.withName("semaphore"),
 			POINTER.withName("fence"),
-			JAVA_INT.withName("deviceMask")
+			JAVA_INT.withName("deviceMask"),
+			PADDING
 		);
 	}
 }

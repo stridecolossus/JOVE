@@ -34,7 +34,8 @@ public class VkPhysicalDeviceFragmentDensityMapPropertiesEXT implements NativeSt
 				JAVA_INT.withName("width"),
 				JAVA_INT.withName("height")
 			).withName("maxFragmentDensityTexelSize"),
-			JAVA_INT.withName("fragmentDensityInvocations")
+			JAVA_INT.withName("fragmentDensityInvocations"),
+			PADDING
 		);
 	}
 }

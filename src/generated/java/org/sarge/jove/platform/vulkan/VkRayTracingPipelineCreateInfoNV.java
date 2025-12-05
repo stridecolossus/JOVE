@@ -42,7 +42,8 @@ public class VkRayTracingPipelineCreateInfoNV implements NativeStructure {
 			PADDING,
 			POINTER.withName("layout"),
 			POINTER.withName("basePipelineHandle"),
-			JAVA_INT.withName("basePipelineIndex")
+			JAVA_INT.withName("basePipelineIndex"),
+			PADDING
 		);
 	}
 }

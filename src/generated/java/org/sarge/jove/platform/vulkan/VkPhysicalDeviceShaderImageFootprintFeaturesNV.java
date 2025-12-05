@@ -24,7 +24,8 @@ public class VkPhysicalDeviceShaderImageFootprintFeaturesNV implements NativeStr
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("imageFootprint")
+			JAVA_INT.withName("imageFootprint"),
+			PADDING
 		);
 	}
 }

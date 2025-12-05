@@ -28,7 +28,8 @@ public class VkPipelineRasterizationConservativeStateCreateInfoEXT implements Na
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("flags"),
 			JAVA_INT.withName("conservativeRasterizationMode"),
-			JAVA_FLOAT.withName("extraPrimitiveOverestimationSize")
+			JAVA_FLOAT.withName("extraPrimitiveOverestimationSize"),
+			PADDING
 		);
 	}
 }

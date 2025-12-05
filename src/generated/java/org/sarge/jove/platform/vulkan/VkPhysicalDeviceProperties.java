@@ -5,9 +5,6 @@ import static java.lang.foreign.ValueLayout.*;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.util.EnumMask;
-import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -32,9 +29,9 @@ public class VkPhysicalDeviceProperties implements NativeStructure {
 			JAVA_INT.withName("vendorID"),
 			JAVA_INT.withName("deviceID"),
 			JAVA_INT.withName("deviceType"),
-			PADDING,
-			MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("deviceName"),
+			MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("deviceName"),
 			MemoryLayout.sequenceLayout(16, JAVA_BYTE).withName("pipelineCacheUUID"),
+			PADDING,
 			MemoryLayout.structLayout(
 				JAVA_INT.withName("maxImageDimension1D"),
 				JAVA_INT.withName("maxImageDimension2D"),
@@ -89,7 +86,6 @@ public class VkPhysicalDeviceProperties implements NativeStructure {
 				JAVA_INT.withName("maxFragmentDualSrcAttachments"),
 				JAVA_INT.withName("maxFragmentCombinedOutputResources"),
 				JAVA_INT.withName("maxComputeSharedMemorySize"),
-				PADDING,
 				MemoryLayout.sequenceLayout(3, JAVA_INT).withName("maxComputeWorkGroupCount"),
 				JAVA_INT.withName("maxComputeWorkGroupInvocations"),
 				MemoryLayout.sequenceLayout(3, JAVA_INT).withName("maxComputeWorkGroupSize"),
@@ -101,7 +97,6 @@ public class VkPhysicalDeviceProperties implements NativeStructure {
 				JAVA_FLOAT.withName("maxSamplerLodBias"),
 				JAVA_FLOAT.withName("maxSamplerAnisotropy"),
 				JAVA_INT.withName("maxViewports"),
-				PADDING,
 				MemoryLayout.sequenceLayout(2, JAVA_INT).withName("maxViewportDimensions"),
 				MemoryLayout.sequenceLayout(2, JAVA_FLOAT).withName("viewportBoundsRange"),
 				JAVA_INT.withName("viewportSubPixelBits"),
@@ -137,13 +132,13 @@ public class VkPhysicalDeviceProperties implements NativeStructure {
 				JAVA_INT.withName("maxCullDistances"),
 				JAVA_INT.withName("maxCombinedClipAndCullDistances"),
 				JAVA_INT.withName("discreteQueuePriorities"),
-				PADDING,
 				MemoryLayout.sequenceLayout(2, JAVA_FLOAT).withName("pointSizeRange"),
 				MemoryLayout.sequenceLayout(2, JAVA_FLOAT).withName("lineWidthRange"),
 				JAVA_FLOAT.withName("pointSizeGranularity"),
 				JAVA_FLOAT.withName("lineWidthGranularity"),
 				JAVA_INT.withName("strictLines"),
 				JAVA_INT.withName("standardSampleLocations"),
+				PADDING,
 				JAVA_LONG.withName("optimalBufferCopyOffsetAlignment"),
 				JAVA_LONG.withName("optimalBufferCopyRowPitchAlignment"),
 				JAVA_LONG.withName("nonCoherentAtomSize")
@@ -154,7 +149,8 @@ public class VkPhysicalDeviceProperties implements NativeStructure {
 				JAVA_INT.withName("residencyStandard3DBlockShape"),
 				JAVA_INT.withName("residencyAlignedMipSize"),
 				JAVA_INT.withName("residencyNonResidentStrict")
-			).withName("sparseProperties")
+			).withName("sparseProperties"),
+			PADDING
 		);
 	}
 }

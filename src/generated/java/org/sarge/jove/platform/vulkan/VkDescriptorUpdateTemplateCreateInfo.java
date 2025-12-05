@@ -40,7 +40,8 @@ public class VkDescriptorUpdateTemplateCreateInfo implements NativeStructure {
 			JAVA_INT.withName("pipelineBindPoint"),
 			PADDING,
 			POINTER.withName("pipelineLayout"),
-			JAVA_INT.withName("set")
+			JAVA_INT.withName("set"),
+			PADDING
 		);
 	}
 }

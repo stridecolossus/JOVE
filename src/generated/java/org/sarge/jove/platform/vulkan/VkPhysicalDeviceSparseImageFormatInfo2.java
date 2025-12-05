@@ -32,7 +32,8 @@ public class VkPhysicalDeviceSparseImageFormatInfo2 implements NativeStructure {
 			JAVA_INT.withName("type"),
 			JAVA_INT.withName("samples"),
 			JAVA_INT.withName("usage"),
-			JAVA_INT.withName("tiling")
+			JAVA_INT.withName("tiling"),
+			PADDING
 		);
 	}
 }

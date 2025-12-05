@@ -6,13 +6,11 @@ review use of cosine
 add debug support for the create instance call
 https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
 
-VkDebugUtilsMessengerCallbackData
-sType is final => need code in FieldMapping to skip final fields (nasty?)
-better to omit final fields altogether in the structure factory => more work
-or just get rid of final structure fields (are there any others) => no more problem
-also means generator does not need to discover/inject final modifier (can it do this anyway?) 
-
 is the debug stuff now part of the API proper? since 1.2?
+
+README.md
+- summary
+- link to blog
 
 -------------------------------
 

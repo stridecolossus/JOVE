@@ -24,7 +24,8 @@ public class VkPhysicalDeviceDiscardRectanglePropertiesEXT implements NativeStru
 			JAVA_INT.withName("sType"),
 			PADDING,
 			POINTER.withName("pNext"),
-			JAVA_INT.withName("maxDiscardRectangles")
+			JAVA_INT.withName("maxDiscardRectangles"),
+			PADDING
 		);
 	}
 }

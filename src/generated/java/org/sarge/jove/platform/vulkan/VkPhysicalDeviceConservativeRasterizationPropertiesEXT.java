@@ -40,7 +40,8 @@ public class VkPhysicalDeviceConservativeRasterizationPropertiesEXT implements N
 			JAVA_INT.withName("degenerateTrianglesRasterized"),
 			JAVA_INT.withName("degenerateLinesRasterized"),
 			JAVA_INT.withName("fullyCoveredFragmentShaderInputVariable"),
-			JAVA_INT.withName("conservativeRasterizationPostDepthCoverage")
+			JAVA_INT.withName("conservativeRasterizationPostDepthCoverage"),
+			PADDING
 		);
 	}
 }
