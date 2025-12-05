@@ -32,12 +32,12 @@ class GraphicsPipelineBuilderTest {
 
 			// Check vertex shader provided
 			assertNotEquals(0, pCreateInfos[0].stageCount);
-			assertEquals(true, Arrays.stream(pCreateInfos[0].pStages).map(e -> e.stage).anyMatch(VkShaderStage.VERTEX::equals));
+			assertEquals(true, Arrays.stream(pCreateInfos[0].pStages).map(e -> e.stage).anyMatch(VkShaderStageFlags.VERTEX::equals));
 
 			// Mock pipeline
 			assertEquals(1, pPipelines.length);
 			pPipelines[0] = new Handle(1);
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 
@@ -54,7 +54,7 @@ class GraphicsPipelineBuilderTest {
 		device = new MockLogicalDevice(library);
 		layout = new PipelineLayout(new Handle(2), device, null);
 		pass = new MockRenderPass(device);
-		shader = ProgrammableShaderStage.of(VkShaderStage.VERTEX, new MockShader(device));
+		shader = ProgrammableShaderStage.of(VkShaderStageFlags.VERTEX, new MockShader(device));
 		builder = new GraphicsPipelineBuilder();
 	}
 

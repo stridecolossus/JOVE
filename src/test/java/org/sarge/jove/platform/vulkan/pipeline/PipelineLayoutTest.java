@@ -25,16 +25,16 @@ class PipelineLayoutTest {
 			assertEquals(pCreateInfo.setLayoutCount, pCreateInfo.pSetLayouts.length);
 			assertEquals(1, pCreateInfo.pushConstantRangeCount);
 			assertEquals(1, pCreateInfo.pPushConstantRanges.length);
-			assertEquals(new EnumMask<>(VkShaderStage.FRAGMENT), pCreateInfo.pPushConstantRanges[0].stageFlags);
+			assertEquals(new EnumMask<>(VkShaderStageFlags.FRAGMENT), pCreateInfo.pPushConstantRanges[0].stageFlags);
 			assertEquals(0, pCreateInfo.pPushConstantRanges[0].offset);
 			pPipelineLayout.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout) {
 			pSetLayout.set(MemorySegment.ofAddress(3));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 
@@ -61,11 +61,11 @@ class PipelineLayoutTest {
 		};
 
 		// Create a descriptor set layout
-		final var binding = new Binding(0, VkDescriptorType.SAMPLER, 1, Set.of(VkShaderStage.VERTEX));
+		final var binding = new Binding(0, VkDescriptorType.SAMPLER, 1, Set.of(VkShaderStageFlags.VERTEX));
 		set = DescriptorSet.Layout.create(device, List.of(binding), Set.of());
 
 		// Create a push constant
-		final var range = new Range(0, 256, Set.of(VkShaderStage.FRAGMENT));
+		final var range = new Range(0, 256, Set.of(VkShaderStageFlags.FRAGMENT));
 		final var constant = new PushConstant(List.of(range), allocator);
 
 		// Create layout

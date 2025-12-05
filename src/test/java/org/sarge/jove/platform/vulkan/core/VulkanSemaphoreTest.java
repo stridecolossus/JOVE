@@ -19,7 +19,7 @@ class VulkanSemaphoreTest {
 			assertNotNull(pCreateInfo);
 			assertEquals(null, pAllocator);
 			pSemaphore.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override

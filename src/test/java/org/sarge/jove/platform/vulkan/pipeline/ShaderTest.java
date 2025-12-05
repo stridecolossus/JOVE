@@ -20,7 +20,7 @@ class ShaderTest {
 			assertEquals(42L, info.codeSize);
 			assertArrayEquals(new byte[42], info.pCode);
 			shader.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override

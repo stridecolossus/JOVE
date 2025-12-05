@@ -34,16 +34,16 @@ class FormatSelectorTest {
 
     	@Test
     	void optimal() {
-    		final Predicate<VkFormatProperties> filter = FormatSelector.filter(true, Set.of(VkFormatFeature.COLOR_ATTACHMENT));
-    		match.optimalTilingFeatures = new EnumMask<>(VkFormatFeature.COLOR_ATTACHMENT);
+    		final Predicate<VkFormatProperties> filter = FormatSelector.filter(true, Set.of(VkFormatFeatureFlags.COLOR_ATTACHMENT));
+    		match.optimalTilingFeatures = new EnumMask<>(VkFormatFeatureFlags.COLOR_ATTACHMENT);
     		assertEquals(true, filter.test(match));
     		assertEquals(false, filter.test(empty));
     	}
 
     	@Test
     	void linear() {
-    		final Predicate<VkFormatProperties> filter = FormatSelector.filter(false, Set.of(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT));
-    		match.linearTilingFeatures = new EnumMask<>(VkFormatFeature.DEPTH_STENCIL_ATTACHMENT);
+    		final Predicate<VkFormatProperties> filter = FormatSelector.filter(false, Set.of(VkFormatFeatureFlags.DEPTH_STENCIL_ATTACHMENT));
+    		match.linearTilingFeatures = new EnumMask<>(VkFormatFeatureFlags.DEPTH_STENCIL_ATTACHMENT);
     		assertEquals(true, filter.test(match));
     		assertEquals(false, filter.test(empty));
     	}

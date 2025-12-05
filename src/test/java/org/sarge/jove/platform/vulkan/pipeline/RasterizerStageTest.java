@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.EnumMask;
 
 public class RasterizerStageTest {
 	private RasterizerStage stage;
@@ -20,7 +21,7 @@ public class RasterizerStageTest {
 				.depthClamp(true)
 				.discard(true)
 				.polygon(VkPolygonMode.LINE)
-				.cull(VkCullMode.FRONT_AND_BACK)
+				.cull(VkCullModeFlags.FRONT_AND_BACK)
 				.winding(VkFrontFace.CLOCKWISE)
 				.lineWidth(2)
 				.descriptor();
@@ -30,7 +31,7 @@ public class RasterizerStageTest {
 		assertEquals(true, info.depthClampEnable);
 		assertEquals(true, info.rasterizerDiscardEnable);
 		assertEquals(VkPolygonMode.LINE, info.polygonMode);
-		assertEquals(VkCullMode.FRONT_AND_BACK, info.cullMode);
+		assertEquals(new EnumMask<>(VkCullModeFlags.FRONT_AND_BACK), info.cullMode);
 		assertEquals(VkFrontFace.CLOCKWISE, info.frontFace);
 		assertEquals(2, info.lineWidth);
 
@@ -48,7 +49,7 @@ public class RasterizerStageTest {
 		assertEquals(false, info.depthClampEnable);
 		assertEquals(false, info.rasterizerDiscardEnable);
 		assertEquals(VkPolygonMode.FILL, info.polygonMode);
-		assertEquals(VkCullMode.BACK, info.cullMode);
+		assertEquals(new EnumMask<>(VkCullModeFlags.BACK), info.cullMode);
 		assertEquals(VkFrontFace.COUNTER_CLOCKWISE, info.frontFace);
 		assertEquals(1, info.lineWidth);
 //		assertEquals(VulkanBoolean.FALSE, info.depthBiasEnable);

@@ -14,14 +14,14 @@ class WorkQueueTest {
 
 	@BeforeEach
 	void before() {
-		family = new Family(1, 2, Set.of(VkQueueFlag.GRAPHICS));
+		family = new Family(1, 2, Set.of(VkQueueFlags.GRAPHICS));
 	}
 
 	@Test
 	void of() {
 		final var properties = new VkQueueFamilyProperties();
 		properties.queueCount = 2;
-		properties.queueFlags = new EnumMask<>(VkQueueFlag.GRAPHICS);
+		properties.queueFlags = new EnumMask<>(VkQueueFlags.GRAPHICS);
 		assertEquals(family, Family.of(1, properties));
 	}
 

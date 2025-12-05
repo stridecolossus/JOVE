@@ -35,7 +35,7 @@ class IndexBufferTest {
 		};
 		max = 2;
 
-		final var buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlag.INDEX_BUFFER);
+		final var buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlags.INDEX_BUFFER);
 		index = new IndexBuffer(VkIndexType.UINT32, buffer);
 	}
 
@@ -59,7 +59,7 @@ class IndexBufferTest {
 
 	@Test
 	void invalid() {
-		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 8L, VkBufferUsageFlag.TRANSFER_SRC);
+		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 8L, VkBufferUsageFlags.TRANSFER_SRC);
 		assertThrows(IllegalStateException.class, () -> new IndexBuffer(VkIndexType.UINT32, invalid));
 	}
 }

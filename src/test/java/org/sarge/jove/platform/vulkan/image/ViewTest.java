@@ -19,19 +19,19 @@ class ViewTest {
 			assertEquals(null, pAllocator);
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertEquals(new Handle(3), pCreateInfo.image);
-			assertEquals(VkImageViewType.TWO_D, pCreateInfo.viewType);
+			assertEquals(VkImageViewType.TYPE_2D, pCreateInfo.viewType);
 			assertEquals(VkFormat.R32G32B32A32_SFLOAT, pCreateInfo.format);
 			assertEquals(VkComponentSwizzle.IDENTITY, pCreateInfo.components.r);
 			assertEquals(VkComponentSwizzle.IDENTITY, pCreateInfo.components.g);
 			assertEquals(VkComponentSwizzle.IDENTITY, pCreateInfo.components.b);
 			assertEquals(VkComponentSwizzle.IDENTITY, pCreateInfo.components.a);
-			assertEquals(new EnumMask<>(VkImageAspect.COLOR), pCreateInfo.subresourceRange.aspectMask);
+			assertEquals(new EnumMask<>(VkImageAspectFlags.COLOR), pCreateInfo.subresourceRange.aspectMask);
 			assertEquals(0, pCreateInfo.subresourceRange.baseMipLevel);
 			assertEquals(1, pCreateInfo.subresourceRange.levelCount);
 			assertEquals(0, pCreateInfo.subresourceRange.baseArrayLayer);
 			assertEquals(1, pCreateInfo.subresourceRange.layerCount);
 			pView.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 

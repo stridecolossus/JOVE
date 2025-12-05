@@ -21,10 +21,10 @@ class FenceTest {
 		@Override
 		public VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence) {
 			assertNotNull(device);
-			assertEquals(new EnumMask<>(VkFenceCreateFlag.SIGNALED), pCreateInfo.flags);
+			assertEquals(new EnumMask<>(VkFenceCreateFlags.SIGNALED), pCreateInfo.flags);
 			assertEquals(null, pAllocator);
 			pFence.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -40,7 +40,7 @@ class FenceTest {
 			assertEquals(1, fenceCount);
 			assertEquals(1, pFences.length);
 			reset = true;
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -57,7 +57,7 @@ class FenceTest {
 			assertEquals(true, waitAll);
 			assertEquals(Long.MAX_VALUE, timeout);
 			waiting = true;
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 
@@ -74,7 +74,7 @@ class FenceTest {
 
 	@Test
 	void create() {
-		final Fence fence = Fence.create(device, VkFenceCreateFlag.SIGNALED);
+		final Fence fence = Fence.create(device, VkFenceCreateFlags.SIGNALED);
 		assertEquals(new Handle(2), fence.handle());
 	}
 
@@ -82,19 +82,19 @@ class FenceTest {
 	class StatusTest {
     	@Test
     	void signalled() {
-    		library.status = VkResult.SUCCESS;
+    		library.status = VkResult.VK_SUCCESS;
     		assertEquals(true, fence.signalled());
     	}
 
     	@Test
     	void waiting() {
-    		library.status = VkResult.NOT_READY;
+    		library.status = VkResult.VK_NOT_READY;
     		assertEquals(false, fence.signalled());
     	}
 
     	@Test
     	void invalid() {
-    		library.status = VkResult.ERROR_DEVICE_LOST;
+    		library.status = VkResult.VK_ERROR_DEVICE_LOST;
     		assertThrows(VulkanException.class, () -> fence.signalled());
     	}
 	}

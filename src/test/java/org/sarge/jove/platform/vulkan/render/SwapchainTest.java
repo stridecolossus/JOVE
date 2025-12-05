@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.platform.vulkan.VkSurfaceTransformFlagKHR.IDENTITY_KHR;
 
 import java.lang.foreign.MemorySegment;
 import java.util.List;
@@ -19,7 +18,7 @@ public class SwapchainTest {
 	static class MockSwapchainLibrary extends MockVulkanLibrary {
 		private boolean concurrent;
 		private boolean destroyed;
-		private VkResult result = VkResult.SUCCESS;
+		private VkResult result = VkResult.VK_SUCCESS;
 
 		@Override
 		public VkResult vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, Pointer pSwapchain) {
@@ -36,7 +35,7 @@ public class SwapchainTest {
 			assertTrue(pCreateInfo.imageExtent.height >= 480);
 			assertTrue(pCreateInfo.imageExtent.height <= 768);
 			assertEquals(1, pCreateInfo.imageArrayLayers);
-			assertEquals(new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT), pCreateInfo.imageUsage);
+			assertEquals(new EnumMask<>(VkImageUsageFlags.COLOR_ATTACHMENT), pCreateInfo.imageUsage);
 			if(concurrent) {
     			assertEquals(VkSharingMode.CONCURRENT, pCreateInfo.imageSharingMode);
     			assertEquals(1, pCreateInfo.queueFamilyIndexCount);
@@ -45,14 +44,14 @@ public class SwapchainTest {
     			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.imageSharingMode);
     			assertEquals(0, pCreateInfo.queueFamilyIndexCount);
 			}
-			assertEquals(VkSurfaceTransformFlagKHR.IDENTITY_KHR, pCreateInfo.preTransform);
-			assertEquals(VkCompositeAlphaFlagKHR.OPAQUE, pCreateInfo.compositeAlpha);
+			assertEquals(new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR), pCreateInfo.preTransform);
+			assertEquals(VkCompositeAlphaFlagsKHR.OPAQUE_KHR, pCreateInfo.compositeAlpha);
 			//assertEquals(VkPresentModeKHR.MAILBOX_KHR, pCreateInfo.presentMode);
 			assertEquals(true, pCreateInfo.clipped);
 			assertEquals(null, pCreateInfo.oldSwapchain);
 
 			pSwapchain.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -60,7 +59,7 @@ public class SwapchainTest {
 			assertNotNull(device);
 			assertEquals(null, pAllocator);
 			pView.set(MemorySegment.ofAddress(3));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -81,7 +80,7 @@ public class SwapchainTest {
 			else {
 				pSwapchainImages[0] = new Handle(4);
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -103,14 +102,14 @@ public class SwapchainTest {
 			pSurfaceCapabilities.currentExtent = new VkExtent2D();
 			pSurfaceCapabilities.currentExtent.width = 640;
 			pSurfaceCapabilities.currentExtent.height = 480;
-			pSurfaceCapabilities.supportedTransforms = new EnumMask<>(IDENTITY_KHR);
-			pSurfaceCapabilities.currentTransform = IDENTITY_KHR;
+			pSurfaceCapabilities.supportedTransforms = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
+			pSurfaceCapabilities.currentTransform = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
 			pSurfaceCapabilities.maxImageArrayLayers = 1;
 			pSurfaceCapabilities.minImageCount = 1;
 			pSurfaceCapabilities.maxImageCount = 2;
-			pSurfaceCapabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT);
-			pSurfaceCapabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagKHR.OPAQUE);
-			return VkResult.SUCCESS;
+			pSurfaceCapabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlags.COLOR_ATTACHMENT);
+			pSurfaceCapabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR);
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -122,7 +121,7 @@ public class SwapchainTest {
 				modes[0] = VkPresentModeKHR.FIFO_KHR;
 				modes[1] = VkPresentModeKHR.MAILBOX_KHR;
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -136,7 +135,7 @@ public class SwapchainTest {
     			format.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
     			formats[0] = format;
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 
@@ -185,13 +184,13 @@ public class SwapchainTest {
 
 		@Test
 		void suboptimal() {
-			library.result = VkResult.SUBOPTIMAL_KHR;
+			library.result = VkResult.VK_SUBOPTIMAL_KHR;
 			assertEquals(0, swapchain.acquire(semaphore, null));
 		}
 
 		@Test
 		void invalidated() {
-			library.result = VkResult.ERROR_OUT_OF_DATE_KHR;
+			library.result = VkResult.VK_ERROR_OUT_OF_DATE_KHR;
 			assertThrows(Invalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 

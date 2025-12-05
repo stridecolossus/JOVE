@@ -15,7 +15,7 @@ class AttachmentTest {
 	void before() {
 		attachment = new Attachment(
 				FORMAT,
-				VkSampleCount.COUNT_1,
+				VkSampleCountFlags.COUNT_1,
 				new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE),
 				new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE),
 				VkImageLayout.UNDEFINED,
@@ -32,7 +32,7 @@ class AttachmentTest {
 	void populate() {
 		final var descriptor = attachment.populate();
 		assertEquals(FORMAT, descriptor.format);
-		assertEquals(VkSampleCount.COUNT_1, descriptor.samples);
+		assertEquals(VkSampleCountFlags.COUNT_1, descriptor.samples);
 		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
 		assertEquals(VkAttachmentStoreOp.STORE, descriptor.storeOp);
 		assertEquals(VkAttachmentLoadOp.DONT_CARE, descriptor.stencilLoadOp);

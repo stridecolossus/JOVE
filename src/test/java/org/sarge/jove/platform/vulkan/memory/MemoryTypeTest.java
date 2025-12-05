@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.platform.vulkan.VkMemoryHeapFlag.DEVICE_LOCAL;
-import static org.sarge.jove.platform.vulkan.VkMemoryProperty.HOST_VISIBLE;
+import static org.sarge.jove.platform.vulkan.VkMemoryHeapFlags.DEVICE_LOCAL;
+import static org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags.HOST_VISIBLE;
 
 import java.util.Set;
 
@@ -33,7 +33,7 @@ class MemoryTypeTest {
 
 	@Test
 	void isHostVisible() {
-		type = new MemoryType(0, heap, Set.of(VkMemoryProperty.HOST_COHERENT));
+		type = new MemoryType(0, heap, Set.of(VkMemoryPropertyFlags.HOST_COHERENT));
 		assertEquals(false, type.isHostVisible());
 	}
 

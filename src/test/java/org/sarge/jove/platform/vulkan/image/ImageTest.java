@@ -21,8 +21,8 @@ class ImageTest {
 
 	@Nested
 	class DescriptorTest {
-		private static final VkImageType TYPE = VkImageType.TWO_D;
-		private static final Set<VkImageAspect> ASPECTS = Set.of(VkImageAspect.COLOR);
+		private static final VkImageType TYPE = VkImageType.TYPE_2D;
+		private static final Set<VkImageAspectFlags> ASPECTS = Set.of(VkImageAspectFlags.COLOR);
 		private static final Extents EXTENTS = new Extents(new Dimensions(3, 4));
 
 		private Descriptor descriptor;
@@ -54,13 +54,13 @@ class ImageTest {
 		@DisplayName("A one-dimensional image must have height and depth of one")
 		@Test
 		void invalidExtentsHeightDepth() {
-			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.ONE_D, FORMAT, EXTENTS, ASPECTS, 1, 1));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.TYPE_1D, FORMAT, EXTENTS, ASPECTS, 1, 1));
 		}
 
 		@DisplayName("A three-dimensional image can only contain a single array layer")
 		@Test
 		void invalidArrayLayers() {
-			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.THREE_D, FORMAT, EXTENTS, ASPECTS, 1, 2));
+			assertThrows(IllegalArgumentException.class, () -> new Descriptor(VkImageType.TYPE_3D, FORMAT, EXTENTS, ASPECTS, 1, 2));
 		}
 
 		@Nested
@@ -78,7 +78,7 @@ class ImageTest {
     		@Test
     		void build() {
     			builder
-    					.aspect(VkImageAspect.COLOR)
+    					.aspect(VkImageAspectFlags.COLOR)
     					.mipLevels(2)
     					.arrayLayers(3)
     					.build();
@@ -87,15 +87,15 @@ class ImageTest {
     		}
 
     		@ParameterizedTest
-    		@EnumSource(value=VkImageAspect.class, names={"COLOR", "DEPTH", "STENCIL"})
-    		void aspects(VkImageAspect aspect) {
+    		@EnumSource(value=VkImageAspectFlags.class, names={"COLOR", "DEPTH", "STENCIL"})
+    		void aspects(VkImageAspectFlags aspect) {
     			builder.aspect(aspect).build();
     		}
 
     		@Test
     		void depthStencil() {
-    			builder.aspect(VkImageAspect.DEPTH);
-    			builder.aspect(VkImageAspect.STENCIL);
+    			builder.aspect(VkImageAspectFlags.DEPTH);
+    			builder.aspect(VkImageAspectFlags.STENCIL);
     			builder.build();
     		}
 		}

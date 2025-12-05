@@ -5,7 +5,7 @@ import org.sarge.jove.platform.vulkan.*;
 
 public class MockImage implements Image {
 	public final Descriptor.Builder descriptor = new Descriptor.Builder()
-			.aspect(VkImageAspect.COLOR)
+			.aspect(VkImageAspectFlags.COLOR)
 			.format(VkFormat.R32G32B32A32_SFLOAT)
 			.extents(new Dimensions(640, 480));
 

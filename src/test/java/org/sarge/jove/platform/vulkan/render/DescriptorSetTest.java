@@ -30,22 +30,22 @@ public class DescriptorSetTest {
 			assertEquals(1, pCreateInfo.pBindings[0].binding);
 			assertEquals(VkDescriptorType.SAMPLER, pCreateInfo.pBindings[0].descriptorType);
 			assertEquals(2, pCreateInfo.pBindings[0].descriptorCount);
-			assertEquals(new EnumMask<>(VkShaderStage.FRAGMENT), pCreateInfo.pBindings[0].stageFlags);
+			assertEquals(new EnumMask<>(VkShaderStageFlags.FRAGMENT), pCreateInfo.pBindings[0].stageFlags);
 
 			pSetLayout.set(MemorySegment.ofAddress(3));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pDescriptorPool) {
 			assertNotNull(device);
-			assertEquals(new EnumMask<>(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET), pCreateInfo.flags);
+			assertEquals(new EnumMask<>(VkDescriptorPoolCreateFlags.FREE_DESCRIPTOR_SET), pCreateInfo.flags);
 			assertEquals(1, pCreateInfo.poolSizeCount);
 			assertEquals(1, pCreateInfo.pPoolSizes.length);
 			assertEquals(2, pCreateInfo.pPoolSizes[0].descriptorCount);
 			assertEquals(VkDescriptorType.SAMPLER, pCreateInfo.pPoolSizes[0].type);
 			pDescriptorPool.set(MemorySegment.ofAddress(4));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -55,7 +55,7 @@ public class DescriptorSetTest {
 			assertEquals(pDescriptorSets.length, pAllocateInfo.descriptorSetCount);
 			assertEquals(1, pAllocateInfo.pSetLayouts.length);
 			Arrays.fill(pDescriptorSets, new Handle(5));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -101,7 +101,7 @@ public class DescriptorSetTest {
 		device = new MockLogicalDevice(library);
 
 		// Create layout with a sampler binding
-		binding = new Binding(1, VkDescriptorType.SAMPLER, 2, Set.of(VkShaderStage.FRAGMENT));
+		binding = new Binding(1, VkDescriptorType.SAMPLER, 2, Set.of(VkShaderStageFlags.FRAGMENT));
 
 		// Create a resource
 		resource = new Resource() {
@@ -140,7 +140,7 @@ public class DescriptorSetTest {
 	@Test
 	void invalidBinding() {
 		final Binding other = new Binding.Builder()
-				.stage(VkShaderStage.VERTEX)
+				.stage(VkShaderStageFlags.VERTEX)
 				.type(VkDescriptorType.UNIFORM_BUFFER)
 				.build();
 
@@ -214,7 +214,7 @@ public class DescriptorSetTest {
 
 			pool = new Pool.Builder()
 					.add(VkDescriptorType.SAMPLER, 2)
-					.flag(VkDescriptorPoolCreateFlag.FREE_DESCRIPTOR_SET)
+					.flag(VkDescriptorPoolCreateFlags.FREE_DESCRIPTOR_SET)
 					.build(device);
 		}
 

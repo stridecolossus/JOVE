@@ -18,10 +18,10 @@ public class MockSurfaceProperties implements VulkanSurface.Properties {
 		capabilities.minImageExtent = extent(640, 480);
 		capabilities.maxImageExtent = extent(1024, 768);
 		capabilities.maxImageArrayLayers = 1;
-		capabilities.currentTransform = VkSurfaceTransformFlagKHR.IDENTITY_KHR;
-		capabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlag.COLOR_ATTACHMENT);
-		capabilities.supportedTransforms = new EnumMask<>(VkSurfaceTransformFlagKHR.IDENTITY_KHR);
-		capabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagKHR.OPAQUE);
+		capabilities.currentTransform = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
+		capabilities.supportedUsageFlags = new EnumMask<>(VkImageUsageFlags.COLOR_ATTACHMENT);
+		capabilities.supportedTransforms = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
+		capabilities.supportedCompositeAlpha = new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR);
 	}
 
 	private static VkExtent2D extent(int width, int height) {

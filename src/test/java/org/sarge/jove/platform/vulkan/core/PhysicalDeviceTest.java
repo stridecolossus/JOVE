@@ -23,7 +23,7 @@ class PhysicalDeviceTest {
 			else {
 				devices[0] = new Handle(1);
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -48,7 +48,7 @@ class PhysicalDeviceTest {
 			else {
 				final var family = new VkQueueFamilyProperties();
 				family.queueCount = 1;
-				family.queueFlags = new EnumMask<>(VkQueueFlag.GRAPHICS);
+				family.queueFlags = new EnumMask<>(VkQueueFlags.GRAPHICS);
 				assertEquals(1, pQueueFamilyProperties.length);
 				pQueueFamilyProperties[0] = family;
 			}
@@ -62,17 +62,17 @@ class PhysicalDeviceTest {
 			else {
 				extensions[0] = new VkExtensionProperties();
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntegerReference count, VkLayerProperties[] layers) {
-			return VkResult.ERROR_DEVICE_LOST;
+			return VkResult.VK_ERROR_DEVICE_LOST;
 		}
 
 		@Override
 		public void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, VkFormatProperties props) {
-			props.linearTilingFeatures = new EnumMask<>(VkFormatFeature.COLOR_ATTACHMENT);		// TODO - ???
+			props.linearTilingFeatures = new EnumMask<>(VkFormatFeatureFlags.COLOR_ATTACHMENT);		// TODO - ???
 		}
 	}
 
@@ -84,7 +84,7 @@ class PhysicalDeviceTest {
 	@BeforeEach
 	void before() {
 		instance = new MockInstance();
-		family = new Family(0, 1, Set.of(VkQueueFlag.GRAPHICS));
+		family = new Family(0, 1, Set.of(VkQueueFlags.GRAPHICS));
 		library = new MockPhysicalDeviceLibrary();
 		device = new PhysicalDevice(new Handle(2), List.of(family), instance, library);
 	}
@@ -120,7 +120,7 @@ class PhysicalDeviceTest {
 
 	@Test
 	void selector() {
-		final Selector selector = Selector.queue(VkQueueFlag.GRAPHICS);
+		final Selector selector = Selector.queue(VkQueueFlags.GRAPHICS);
 		assertEquals(true, selector.test(device));
 		assertEquals(family, selector.family(device));
 	}

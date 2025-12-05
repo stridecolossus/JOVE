@@ -1,9 +1,8 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.platform.vulkan.VkCommandBufferResetFlag.RELEASE_RESOURCES;
-import static org.sarge.jove.platform.vulkan.VkCommandBufferUsage.RENDER_PASS_CONTINUE;
-import static org.sarge.jove.platform.vulkan.VkResult.SUCCESS;
+import static org.sarge.jove.platform.vulkan.VkCommandBufferResetFlags.RELEASE_RESOURCES;
+import static org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlags.RENDER_PASS_CONTINUE;
 import static org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage.*;
 
 import java.util.*;
@@ -26,7 +25,7 @@ class CommandTest {
 
 		@Override
 		public VkResult vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool) {
-			return SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -38,12 +37,12 @@ class CommandTest {
 		}
 
 		@Override
-		public VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlag> flags) {
+		public VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags) {
 			assertNotNull(device);
 			assertNotNull(commandPool);
-			assertEquals(new EnumMask<>(VkCommandPoolResetFlag.RELEASE_RESOURCES), flags);
+			assertEquals(new EnumMask<>(VkCommandPoolResetFlags.RELEASE_RESOURCES), flags);
 			reset = true;
-			return SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -53,7 +52,7 @@ class CommandTest {
 			assertEquals(1, pAllocateInfo.commandBufferCount);
 			assertEquals(1, pCommandBuffers.length);
 			pCommandBuffers[0] = new Handle(4);
-			return SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -78,22 +77,22 @@ class CommandTest {
 			}
 			assertEquals(INITIAL, commandBuffer.stage());
 			stage = RECORDING;
-			return SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkEndCommandBuffer(Buffer commandBuffer) {
 			assertEquals(RECORDING, commandBuffer.stage());
 			stage = EXECUTABLE;
-			return SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
-		public VkResult vkResetCommandBuffer(Buffer commandBuffer, EnumMask<VkCommandBufferResetFlag> flags) {
+		public VkResult vkResetCommandBuffer(Buffer commandBuffer, EnumMask<VkCommandBufferResetFlags> flags) {
 			assertEquals(new EnumMask<>(RELEASE_RESOURCES), flags);
 			assertEquals(EXECUTABLE, commandBuffer.stage());
 			stage = INITIAL;
-			return SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -313,7 +312,7 @@ class CommandTest {
 					.getFirst()
 					.begin();
 
-			pool.reset(VkCommandPoolResetFlag.RELEASE_RESOURCES);
+			pool.reset(VkCommandPoolResetFlags.RELEASE_RESOURCES);
 			assertEquals(true, library.reset);
 			assertEquals(Stage.INITIAL, buffer.stage());
 		}

@@ -26,7 +26,7 @@ class LogicalDeviceTest {
 			assertEquals(1, pCreateInfo.queueCreateInfoCount);
 
 			// Check device features
-			assertEquals(true, pCreateInfo.pEnabledFeatures.wideLines);
+			assertEquals(true, pCreateInfo.pEnabledFeatures[0].wideLines);
 
 			// Check extensions
 			assertEquals(1, pCreateInfo.enabledExtensionCount);
@@ -46,7 +46,7 @@ class LogicalDeviceTest {
 			// Create device
 			device.set(MemorySegment.ofAddress(2));
 
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -64,19 +64,19 @@ class LogicalDeviceTest {
 		@Override
 		public VkResult vkDeviceWaitIdle(LogicalDevice device) {
 			blocked = true;
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence) {
 			// TODO
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkQueueWaitIdle(WorkQueue queue) {
 			queueBlocked = true;
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 

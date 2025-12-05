@@ -21,7 +21,7 @@ class ResourceBufferTest {
 				return new DeviceLimits(limits);
 			}
 		};
-		final var buffer = new MockVulkanBuffer(device, 42, VkBufferUsageFlag.UNIFORM_BUFFER);
+		final var buffer = new MockVulkanBuffer(device, 42, VkBufferUsageFlags.UNIFORM_BUFFER);
 		resource = new ResourceBuffer(VkDescriptorType.UNIFORM_BUFFER, 0L, buffer);
 	}
 
@@ -35,13 +35,13 @@ class ResourceBufferTest {
 
 	@Test
 	void length() {
-		final var buffer = new MockVulkanBuffer(device, 43, VkBufferUsageFlag.UNIFORM_BUFFER);
+		final var buffer = new MockVulkanBuffer(device, 43, VkBufferUsageFlags.UNIFORM_BUFFER);
 		assertThrows(IllegalStateException.class, () -> new ResourceBuffer(VkDescriptorType.UNIFORM_BUFFER, 0L, buffer));
 	}
 
 	@Test
 	void invalid() {
-		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 42, VkBufferUsageFlag.TRANSFER_SRC);
+		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 42, VkBufferUsageFlags.TRANSFER_SRC);
 		assertThrows(IllegalStateException.class, () -> new ResourceBuffer(VkDescriptorType.UNIFORM_BUFFER, 0L, invalid));
 	}
 }

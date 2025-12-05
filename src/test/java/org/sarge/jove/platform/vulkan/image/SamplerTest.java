@@ -32,7 +32,7 @@ class SamplerTest {
 			assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, pCreateInfo.borderColor);
 			assertEquals(false, pCreateInfo.unnormalizedCoordinates);
 			pSampler.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 

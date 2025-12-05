@@ -7,7 +7,7 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
@@ -23,7 +23,7 @@ class DefaultDeviceMemoryTest {
 		allocator = Arena.ofAuto();
 		library = new MockMemoryLibrary();
 		device = new MockLogicalDevice(library);
-		type = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryProperty.HOST_VISIBLE));
+		type = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryPropertyFlags.HOST_VISIBLE));
 		memory = new DefaultDeviceMemory(new Handle(allocator.allocate(3)), device, type, 3);
 	}
 

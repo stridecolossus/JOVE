@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
+
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.platform.vulkan.VkPipelineStage.FRAGMENT_SHADER;
+import static org.sarge.jove.platform.vulkan.VkPipelineStageFlags.FRAGMENT_SHADER;
 
 import java.lang.foreign.MemorySegment;
 import java.util.Set;
@@ -16,7 +17,7 @@ import org.sarge.jove.util.EnumMask;
 class WorkTest {
 	private static class MockQueueLibrary extends MockVulkanLibrary {
 		private boolean submitted;
-		private EnumMask<VkCommandBufferUsage> flags;
+		private EnumMask<VkCommandBufferUsageFlags> flags;
 
 		@Override
 		public VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence) {
@@ -33,25 +34,25 @@ class WorkTest {
 				}
 			}
 			submitted = true;
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Handle[] pCommandBuffers) {
 			pCommandBuffers[0] = new Handle(3);
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo) {
 			this.flags = pBeginInfo.flags;
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence) {
 			pFence.set(MemorySegment.ofAddress(4));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 
@@ -138,7 +139,7 @@ class WorkTest {
 	void once() {
 		final Buffer once = Work.submit(new MockCommand(), pool);
 		assertEquals(true, library.submitted);
-		assertEquals(new EnumMask<>(VkCommandBufferUsage.ONE_TIME_SUBMIT), library.flags);
+		assertEquals(new EnumMask<>(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT), library.flags);
 		assertEquals(true, once.isPrimary());
 		assertEquals(pool, once.pool());
 		// TODO - assertEquals(Stage.INVALID, once.stage());

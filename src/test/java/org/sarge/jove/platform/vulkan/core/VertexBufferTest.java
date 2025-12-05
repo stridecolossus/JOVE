@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlags;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 class VertexBufferTest {
@@ -23,7 +23,7 @@ class VertexBufferTest {
 			}
 		};
 		final var device = new MockLogicalDevice(library);
-		final VulkanBuffer buffer = new MockVulkanBuffer(device, 42, VkBufferUsageFlag.VERTEX_BUFFER);
+		final VulkanBuffer buffer = new MockVulkanBuffer(device, 42, VkBufferUsageFlags.VERTEX_BUFFER);
 		vertex = new VertexBuffer(buffer);
 	}
 
@@ -36,7 +36,7 @@ class VertexBufferTest {
 
 	@Test
 	void invalid() {
-		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 42, VkBufferUsageFlag.TRANSFER_SRC);
+		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 42, VkBufferUsageFlags.TRANSFER_SRC);
 		assertThrows(IllegalStateException.class, () -> new VertexBuffer(invalid));
 	}
 }

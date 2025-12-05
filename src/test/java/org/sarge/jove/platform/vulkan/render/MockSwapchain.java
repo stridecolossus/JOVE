@@ -23,7 +23,7 @@ public class MockSwapchain extends Swapchain {
 	@Override
 	public int acquire(VulkanSemaphore semaphore, Fence fence) throws Invalidated {
 		if(invalid) {
-			throw new Invalidated(VkResult.ERROR_DEVICE_LOST);
+			throw new Invalidated(VkResult.VK_ERROR_DEVICE_LOST);
 		}
 		return super.acquire(semaphore, fence);
 	}
@@ -31,7 +31,7 @@ public class MockSwapchain extends Swapchain {
 	@Override
 	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws Invalidated {
 		if(invalid) {
-			throw new Invalidated(VkResult.ERROR_DEVICE_LOST);
+			throw new Invalidated(VkResult.VK_ERROR_DEVICE_LOST);
 		}
 		super.present(queue, index, semaphore);
 	}

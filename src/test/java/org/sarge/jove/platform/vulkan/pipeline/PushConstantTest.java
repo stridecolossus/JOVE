@@ -1,7 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.platform.vulkan.VkShaderStage.*;
+import static org.sarge.jove.platform.vulkan.VkShaderStageFlags.*;
 
 import java.lang.foreign.*;
 import java.util.*;
@@ -133,7 +133,7 @@ public class PushConstantTest {
 			int size;
 
 			@Override
-			public void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStage> stageFlags, int offset, int size, Handle pValues) {
+			public void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStageFlags> stageFlags, int offset, int size, Handle pValues) {
 				assertNotNull(layout);
 				assertNotEquals(0, stageFlags.bits());
 				assertEquals(0, offset);
@@ -182,7 +182,7 @@ public class PushConstantTest {
     	@DisplayName("cannot be configured for an invalid range")
 		@Test
 		void invalid() {
-			final var other = new Range(0, 4, Set.of(VkShaderStage.GEOMETRY));
+			final var other = new Range(0, 4, Set.of(VkShaderStageFlags.GEOMETRY));
 			assertThrows(IllegalArgumentException.class, () -> constant.update(other, layout));
 		}
 

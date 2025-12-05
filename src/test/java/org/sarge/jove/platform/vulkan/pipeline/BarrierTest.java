@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.sarge.jove.platform.vulkan.VkAccess.*;
-import static org.sarge.jove.platform.vulkan.VkPipelineStage.*;
+import static org.sarge.jove.platform.vulkan.VkAccessFlags.*;
+import static org.sarge.jove.platform.vulkan.VkPipelineStageFlags.*;
 
 import java.util.Set;
 
@@ -20,15 +20,15 @@ class BarrierTest {
 		@Override
 		public void vkCmdPipelineBarrier(
 				Buffer commandBuffer,
-				EnumMask<VkPipelineStage> srcStageMask, EnumMask<VkPipelineStage> dstStageMask,
-				EnumMask<VkDependencyFlag> dependencyFlags,
+				EnumMask<VkPipelineStageFlags> srcStageMask, EnumMask<VkPipelineStageFlags> dstStageMask,
+				EnumMask<VkDependencyFlags> dependencyFlags,
 				int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers,
 				int bufferMemoryBarrierCount,VkBufferMemoryBarrier[] pBufferMemoryBarriers,
 				int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers )
 		{
 			assertEquals(new EnumMask<>(TOP_OF_PIPE), srcStageMask);
 			assertEquals(new EnumMask<>(TRANSFER), dstStageMask);
-			assertEquals(new EnumMask<>(VkDependencyFlag.DEVICE_GROUP), dependencyFlags);
+			assertEquals(new EnumMask<>(VkDependencyFlags.DEVICE_GROUP), dependencyFlags);
 			assertEquals(1, memoryBarrierCount);
 			assertEquals(1, pMemoryBarriers.length);
 			executed = true;
@@ -43,7 +43,7 @@ class BarrierTest {
 		final Command barrier = new Barrier.Builder()
         		.source(TOP_OF_PIPE)
         		.destination(TRANSFER)
-        		.flag(VkDependencyFlag.DEVICE_GROUP)
+        		.flag(VkDependencyFlags.DEVICE_GROUP)
         		.add(Set.of(MEMORY_READ), Set.of(MEMORY_WRITE), new MemoryBarrier())
 				.build(device);
 

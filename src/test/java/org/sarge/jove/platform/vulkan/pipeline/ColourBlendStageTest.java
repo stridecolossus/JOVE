@@ -20,7 +20,7 @@ class ColourBlendStageTest {
 	@DisplayName("The default colour write mask enables all channels")
 	@Test
 	void mask() {
-		assertEquals(Set.of(VkColorComponent.values()), ColourBlendAttachment.DEFAULT_WRITE_MASK);
+		assertEquals(Set.of(VkColorComponentFlags.values()), ColourBlendAttachment.DEFAULT_WRITE_MASK);
 	}
 
 	@DisplayName("The global blend can be enabled essentially disabling any per-attachment configuration")

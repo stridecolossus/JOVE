@@ -28,7 +28,7 @@ class FramebufferTest {
 			assertEquals(480, pCreateInfo.height);
 			assertEquals(1, pCreateInfo.layers);
 			pFramebuffer.set(MemorySegment.ofAddress(3));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override

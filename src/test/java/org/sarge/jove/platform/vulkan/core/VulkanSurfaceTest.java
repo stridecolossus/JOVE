@@ -22,13 +22,13 @@ class VulkanSurfaceTest {
 			assertNotNull(device);
 			assertNotNull(surface);
 			supported.set(1);
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice device, VulkanSurface surface, VkSurfaceCapabilitiesKHR pSurfaceCapabilities) {
 			pSurfaceCapabilities.minImageCount = 2;
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -44,7 +44,7 @@ class VulkanSurfaceTest {
 				supported.colorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
 				formats[0] = supported;
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -58,7 +58,7 @@ class VulkanSurfaceTest {
 				modes[0] = FIFO_KHR;
 				modes[1] = MAILBOX_KHR;
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override

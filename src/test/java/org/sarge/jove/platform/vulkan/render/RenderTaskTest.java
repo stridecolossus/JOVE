@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.render.SwapchainTest.MockSwapchainLibrary;
 
 class RenderTaskTest {
 	private static class MockRenderTaskLibrary extends MockSwapchainLibrary {
-		private VkResult result = VkResult.SUCCESS;
+		private VkResult result = VkResult.VK_SUCCESS;
 
 		@Override
 		public VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore) {
@@ -32,7 +32,7 @@ class RenderTaskTest {
 		@Override
 		public VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer) {
 			pFramebuffer.set(MemorySegment.ofAddress(6));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -94,7 +94,7 @@ class RenderTaskTest {
 
 	@Test
 	void invalidated() {
-		library.result = VkResult.ERROR_OUT_OF_DATE_KHR;
+		library.result = VkResult.VK_ERROR_OUT_OF_DATE_KHR;
 		task.run();
 	}
 

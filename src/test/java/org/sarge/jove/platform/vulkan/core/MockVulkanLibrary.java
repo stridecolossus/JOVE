@@ -123,7 +123,7 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 
 	@Override
 	public int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
-		return VkResult.SUCCESS.value();
+		return VkResult.VK_SUCCESS.value();
 	}
 
 	@Override
@@ -235,7 +235,7 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 	}
 
 	@Override
-	public VkResult vkResetCommandPool(LogicalDevice device, Command.Pool commandPool, EnumMask<VkCommandPoolResetFlag> flags) {
+	public VkResult vkResetCommandPool(LogicalDevice device, Command.Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags) {
 		return null;
 	}
 
@@ -259,7 +259,7 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 	}
 
 	@Override
-	public VkResult vkResetCommandBuffer(Command.Buffer commandBuffer, EnumMask<VkCommandBufferResetFlag> flags) {
+	public VkResult vkResetCommandBuffer(Command.Buffer commandBuffer, EnumMask<VkCommandBufferResetFlags> flags) {
 		return null;
 	}
 
@@ -486,7 +486,7 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 	}
 
 	@Override
-	public void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStage> stageFlags, int offset, int size, Handle pValues) {
+	public void vkCmdPushConstants(Buffer commandBuffer, PipelineLayout layout, EnumMask<VkShaderStageFlags> stageFlags, int offset, int size, Handle pValues) {
 	}
 
 	// Pipeline
@@ -510,6 +510,6 @@ public class MockVulkanLibrary implements VulkanCoreLibrary, MemoryLibrary, Pipe
 	}
 
 	@Override
-	public void vkCmdPipelineBarrier(Buffer commandBuffer, EnumMask<VkPipelineStage> srcStageMask, EnumMask<VkPipelineStage> dstStageMask, EnumMask<VkDependencyFlag> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers) {
+	public void vkCmdPipelineBarrier(Buffer commandBuffer, EnumMask<VkPipelineStageFlags> srcStageMask, EnumMask<VkPipelineStageFlags> dstStageMask, EnumMask<VkDependencyFlags> dependencyFlags, int memoryBarrierCount, VkMemoryBarrier[] pMemoryBarriers, int bufferMemoryBarrierCount, VkBufferMemoryBarrier[] pBufferMemoryBarriers, int imageMemoryBarrierCount, VkImageMemoryBarrier[] pImageMemoryBarriers) {
 	}
 }

@@ -18,14 +18,14 @@ public class MockMemoryLibrary extends MockVulkanLibrary {
 		assertNotNull(device);
 
 		if(fail) {
-			throw new VulkanException(VkResult.ERROR_OUT_OF_DEVICE_MEMORY);
+			throw new VulkanException(VkResult.VK_ERROR_OUT_OF_DEVICE_MEMORY);
 		}
 
 		final int length = (int) pAllocateInfo.allocationSize;
 		final var memory = MemorySegment.ofArray(new byte[length]);
 		pMemory.set(memory);
 
-		return VkResult.SUCCESS;
+		return VkResult.VK_SUCCESS;
 	}
 
 	@Override
@@ -36,6 +36,6 @@ public class MockMemoryLibrary extends MockVulkanLibrary {
 		final var mapped = MemorySegment.ofArray(new byte[(int) size]);
 		ppData.set(mapped);
 
-		return VkResult.SUCCESS;
+		return VkResult.VK_SUCCESS;
 	}
 }

@@ -26,7 +26,7 @@ class RenderPassTest {
 			assertEquals(1, pCreateInfo.dependencyCount);
 			assertEquals(1, pCreateInfo.pAttachments.length);
 			pRenderPass.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 
@@ -39,8 +39,8 @@ class RenderPassTest {
 		final var subpass = new Subpass(List.of(new AttachmentReference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)), null, Set.of());
 
 		final var dependency = new Dependency(
-				new Properties(subpass, Set.of(VkPipelineStage.FRAGMENT_SHADER), Set.of()),
-				new Properties(Dependency.VK_SUBPASS_EXTERNAL, Set.of(VkPipelineStage.VERTEX_SHADER), Set.of()),
+				new Properties(subpass, Set.of(VkPipelineStageFlags.FRAGMENT_SHADER), Set.of()),
+				new Properties(Dependency.VK_SUBPASS_EXTERNAL, Set.of(VkPipelineStageFlags.VERTEX_SHADER), Set.of()),
 				Set.of()
 		);
 

@@ -17,7 +17,7 @@ class DefaultImageTest {
 		public VkResult vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Handle pAllocator, Pointer pImage) {
 			assertNotNull(device);
 			pImage.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -31,7 +31,7 @@ class DefaultImageTest {
 			assertEquals(new Handle(2), image);
 			assertEquals(640 * 480 * 4, memory.size());
 			assertEquals(0, memoryOffset);
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 	}
 
@@ -46,11 +46,11 @@ class DefaultImageTest {
 		final var descriptor = new Image.Descriptor.Builder()
 				.format(VkFormat.R32G32B32A32_SFLOAT)
 				.extents(new Dimensions(640, 480))
-				.aspect(VkImageAspect.COLOR)
+				.aspect(VkImageAspectFlags.COLOR)
 				.build();
 
-		final var properties = new MemoryProperties.Builder<VkImageUsageFlag>()
-				.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
+		final var properties = new MemoryProperties.Builder<VkImageUsageFlags>()
+				.usage(VkImageUsageFlags.COLOR_ATTACHMENT)
 				.build();
 
 		image = new DefaultImage.Builder()

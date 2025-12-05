@@ -44,7 +44,7 @@ class InstanceTest {
 
 			// Create instance
 			pInstance.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -60,7 +60,7 @@ class InstanceTest {
 			else {
 				pProperties[0] = new VkExtensionProperties();
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -71,7 +71,7 @@ class InstanceTest {
 			else {
 				pProperties[0] = new VkLayerProperties();
 			}
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override

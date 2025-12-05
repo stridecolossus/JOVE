@@ -22,12 +22,12 @@ class AllocatorTest {
 	@BeforeEach
 	void before() {
 		// Create some memory types
-		type = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryProperty.HOST_VISIBLE));
+		type = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryPropertyFlags.HOST_VISIBLE));
 
 		// Init memory properties matching the memory type
-		properties = new MemoryProperties.Builder<VkImageUsageFlag>()
-        		.usage(VkImageUsageFlag.COLOR_ATTACHMENT)
-        		.required(VkMemoryProperty.HOST_VISIBLE)
+		properties = new MemoryProperties.Builder<VkImageUsageFlags>()
+        		.usage(VkImageUsageFlags.COLOR_ATTACHMENT)
+        		.required(VkMemoryPropertyFlags.HOST_VISIBLE)
         		.build();
 
 		// Init a memory allocation

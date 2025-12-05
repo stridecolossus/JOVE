@@ -1,8 +1,8 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverity.*;
-import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageType.*;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagsEXT.*;
+import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagsEXT.*;
 
 import java.lang.foreign.MemorySegment;
 import java.util.Set;
@@ -21,8 +21,8 @@ class DiagnosticHandlerTest {
 		public VkResult vkCreateDebugUtilsMessengerEXT(Instance instance, VkDebugUtilsMessengerCreateInfoEXT pCreateInfo, Handle pAllocator, Pointer pHandler) {
 			// Check create descriptor
 			assertEquals(0, pCreateInfo.flags);
-			assertEquals(new EnumMask<>(GENERAL, VALIDATION), pCreateInfo.messageType);
-			assertEquals(new EnumMask<>(WARNING, ERROR), pCreateInfo.messageSeverity);
+			assertEquals(new EnumMask<>(GENERAL_EXT, VALIDATION_EXT), pCreateInfo.messageType);
+			assertEquals(new EnumMask<>(WARNING_EXT, ERROR_EXT), pCreateInfo.messageSeverity);
 			assertNotNull(pCreateInfo.pfnUserCallback);
 			assertEquals(null, pCreateInfo.pUserData);
 
@@ -32,7 +32,7 @@ class DiagnosticHandlerTest {
 
 			// Init handler
 			pHandler.set(MemorySegment.ofAddress(2));
-			return VkResult.SUCCESS;
+			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
@@ -69,12 +69,12 @@ class DiagnosticHandlerTest {
 	@DisplayName("A diagnostics report can be rendered as a human-readable message")
 	@Test
 	void message() {
-		final var data = new VkDebugUtilsMessengerCallbackData();
+		final var data = new VkDebugUtilsMessengerCallbackDataEXT();
 		data.pMessage = "message";
 		data.pMessageIdName = "name";
 
-		final var types = Set.of(VkDebugUtilsMessageType.GENERAL, VkDebugUtilsMessageType.VALIDATION);
-		final Message message = new Message(VkDebugUtilsMessageSeverity.WARNING, types, data);
+		final var types = Set.of(VkDebugUtilsMessageTypeFlagsEXT.GENERAL_EXT, VkDebugUtilsMessageTypeFlagsEXT.VALIDATION_EXT);
+		final Message message = new Message(VkDebugUtilsMessageSeverityFlagsEXT.WARNING_EXT, types, data);
 		assertEquals("WARNING:GENERAL-VALIDATION:name:message", message.toString());
 	}
 
