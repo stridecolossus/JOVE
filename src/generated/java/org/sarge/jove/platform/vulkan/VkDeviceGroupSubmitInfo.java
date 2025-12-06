@@ -17,11 +17,11 @@ public class VkDeviceGroupSubmitInfo implements NativeStructure {
 	public VkStructureType sType;
 	public Handle pNext;
 	public int waitSemaphoreCount;
-	public Handle pWaitSemaphoreDeviceIndices;
+	public int[] pWaitSemaphoreDeviceIndices;
 	public int commandBufferCount;
-	public Handle pCommandBufferDeviceMasks;
+	public int[] pCommandBufferDeviceMasks;
 	public int signalSemaphoreCount;
-	public Handle pSignalSemaphoreDeviceIndices;
+	public int[] pSignalSemaphoreDeviceIndices;
 
 	@Override
 	public GroupLayout layout() {

@@ -20,7 +20,7 @@ public class VkExtensionProperties implements NativeStructure {
 	@Override
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-			MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("extensionName"),
+			MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("extensionName"),
 			JAVA_INT.withName("specVersion")
 		);
 	}

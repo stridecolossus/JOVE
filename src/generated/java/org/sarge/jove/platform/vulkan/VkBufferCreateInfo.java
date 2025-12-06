@@ -21,7 +21,7 @@ public class VkBufferCreateInfo implements NativeStructure {
 	public EnumMask<VkBufferUsageFlags> usage;
 	public VkSharingMode sharingMode;
 	public int queueFamilyIndexCount;
-	public Handle pQueueFamilyIndices;
+	public int[] pQueueFamilyIndices;
 
 	@Override
 	public GroupLayout layout() {

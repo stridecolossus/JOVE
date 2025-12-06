@@ -17,7 +17,7 @@ public class VkDeviceGroupPresentInfoKHR implements NativeStructure {
 	public VkStructureType sType;
 	public Handle pNext;
 	public int swapchainCount;
-	public Handle pDeviceMasks;
+	public int[] pDeviceMasks;
 	public EnumMask<VkDeviceGroupPresentModeFlagsKHR> mode;
 
 	@Override

@@ -17,7 +17,7 @@ public class VkBindImageMemoryDeviceGroupInfo implements NativeStructure {
 	public VkStructureType sType;
 	public Handle pNext;
 	public int deviceIndexCount;
-	public Handle pDeviceIndices;
+	public int[] pDeviceIndices;
 	public int splitInstanceBindRegionCount;
 	public VkRect2D[] pSplitInstanceBindRegions;
 

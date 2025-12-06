@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.*;
  */
 public class VkShadingRatePaletteNV implements NativeStructure {
 	public int shadingRatePaletteEntryCount;
-	public Handle pShadingRatePaletteEntries;
+	public VkShadingRatePaletteEntryNV[] pShadingRatePaletteEntries;
 
 	@Override
 	public GroupLayout layout() {

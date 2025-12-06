@@ -23,7 +23,7 @@ public class VkSubpassDescription implements NativeStructure {
 	public VkAttachmentReference[] pResolveAttachments;
 	public VkAttachmentReference pDepthStencilAttachment;
 	public int preserveAttachmentCount;
-	public Handle pPreserveAttachments;
+	public int[] pPreserveAttachments;
 
 	@Override
 	public GroupLayout layout() {

@@ -17,11 +17,11 @@ public class VkRenderPassMultiviewCreateInfo implements NativeStructure {
 	public VkStructureType sType;
 	public Handle pNext;
 	public int subpassCount;
-	public Handle pViewMasks;
+	public int[] pViewMasks;
 	public int dependencyCount;
-	public Handle pViewOffsets;
+	public int[] pViewOffsets;
 	public int correlationMaskCount;
-	public Handle pCorrelationMasks;
+	public int[] pCorrelationMasks;
 
 	@Override
 	public GroupLayout layout() {

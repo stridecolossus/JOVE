@@ -1,11 +1,13 @@
 package org.sarge.jove.platform.vulkan;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.*;
 
 import java.lang.foreign.*;
 
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -16,7 +18,7 @@ public class VkPipelineDynamicStateCreateInfo implements NativeStructure {
 	public Handle pNext;
 	public int flags;
 	public int dynamicStateCount;
-	public int[] pDynamicStates;
+	public VkDynamicState[] pDynamicStates;
 
 	@Override
 	public GroupLayout layout() {

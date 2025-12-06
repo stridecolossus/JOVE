@@ -19,7 +19,7 @@ public class VkPhysicalDeviceImageDrmFormatModifierInfoEXT implements NativeStru
 	public long drmFormatModifier;
 	public VkSharingMode sharingMode;
 	public int queueFamilyIndexCount;
-	public Handle pQueueFamilyIndices;
+	public int[] pQueueFamilyIndices;
 
 	@Override
 	public GroupLayout layout() {

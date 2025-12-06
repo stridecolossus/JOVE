@@ -22,10 +22,10 @@ public class VkLayerProperties implements NativeStructure {
 	@Override
 	public GroupLayout layout() {
 		return MemoryLayout.structLayout(
-			MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("layerName"),
+			MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("layerName"),
 			JAVA_INT.withName("specVersion"),
 			JAVA_INT.withName("implementationVersion"),
-			MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("description")
+			MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("description")
 		);
 	}
 }

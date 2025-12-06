@@ -3,7 +3,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.Percentile;
+import org.sarge.jove.util.*;
 
 public class MultiSampleStageTest {
 	private MultiSampleStage stage;
@@ -25,7 +25,7 @@ public class MultiSampleStageTest {
 				.descriptor();
 
 		assertEquals(0, info.flags);
-		assertEquals(VkSampleCountFlags.COUNT_8, info.rasterizationSamples);
+		assertEquals(new EnumMask<>(VkSampleCountFlags.COUNT_8), info.rasterizationSamples);
 		assertEquals(true, info.sampleShadingEnable);
 		assertEquals(0.5f, info.minSampleShading);
 		assertArrayEquals(new int[1], info.pSampleMask);
@@ -37,7 +37,7 @@ public class MultiSampleStageTest {
 	void defaults() {
 		final VkPipelineMultisampleStateCreateInfo info = stage.descriptor();
 		assertEquals(0, info.flags);
-		assertEquals(VkSampleCountFlags.COUNT_1, info.rasterizationSamples);
+		assertEquals(new EnumMask<>(VkSampleCountFlags.COUNT_1), info.rasterizationSamples);
 		assertEquals(false, info.sampleShadingEnable);
 		assertEquals(1, info.minSampleShading);
 		assertEquals(null, info.pSampleMask);

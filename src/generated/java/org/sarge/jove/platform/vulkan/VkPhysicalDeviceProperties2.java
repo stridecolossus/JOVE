@@ -30,7 +30,7 @@ public class VkPhysicalDeviceProperties2 implements NativeStructure {
 				JAVA_INT.withName("vendorID"),
 				JAVA_INT.withName("deviceID"),
 				JAVA_INT.withName("deviceType"),
-				MemoryLayout.sequenceLayout(256, JAVA_CHAR).withName("deviceName"),
+				MemoryLayout.sequenceLayout(256, JAVA_BYTE).withName("deviceName"),
 				MemoryLayout.sequenceLayout(16, JAVA_BYTE).withName("pipelineCacheUUID"),
 				PADDING,
 				MemoryLayout.structLayout(

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.render.Attachment.LoadStore;
+import org.sarge.jove.util.EnumMask;
 
 class AttachmentTest {
 	private static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
@@ -32,7 +33,7 @@ class AttachmentTest {
 	void populate() {
 		final var descriptor = attachment.populate();
 		assertEquals(FORMAT, descriptor.format);
-		assertEquals(VkSampleCountFlags.COUNT_1, descriptor.samples);
+		assertEquals(new EnumMask<>(VkSampleCountFlags.COUNT_1), descriptor.samples);
 		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
 		assertEquals(VkAttachmentStoreOp.STORE, descriptor.storeOp);
 		assertEquals(VkAttachmentLoadOp.DONT_CARE, descriptor.stencilLoadOp);

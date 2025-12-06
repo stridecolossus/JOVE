@@ -20,11 +20,7 @@ class CompareFilePrinter implements FilePrinter {
 		}
 
 		if(!source.equals(current)) {
-			System.out.println("generated:");
 			System.out.println(source);
-			System.out.println("---------------------------");
-			System.out.println("current:");
-			System.out.println(current);
 			System.out.println("---------------------------");
 		}
 	}

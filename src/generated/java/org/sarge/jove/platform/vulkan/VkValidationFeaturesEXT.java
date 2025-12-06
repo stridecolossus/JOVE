@@ -17,9 +17,9 @@ public class VkValidationFeaturesEXT implements NativeStructure {
 	public VkStructureType sType;
 	public Handle pNext;
 	public int enabledValidationFeatureCount;
-	public Handle pEnabledValidationFeatures;
+	public VkValidationFeatureEnableEXT[] pEnabledValidationFeatures;
 	public int disabledValidationFeatureCount;
-	public Handle pDisabledValidationFeatures;
+	public VkValidationFeatureDisableEXT[] pDisabledValidationFeatures;
 
 	@Override
 	public GroupLayout layout() {

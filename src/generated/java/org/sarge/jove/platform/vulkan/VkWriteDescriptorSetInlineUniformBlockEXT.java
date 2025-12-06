@@ -17,7 +17,7 @@ public class VkWriteDescriptorSetInlineUniformBlockEXT implements NativeStructur
 	public VkStructureType sType;
 	public Handle pNext;
 	public int dataSize;
-	public Handle pData;
+	public byte[] pData;
 
 	@Override
 	public GroupLayout layout() {
@@ -26,8 +26,8 @@ public class VkWriteDescriptorSetInlineUniformBlockEXT implements NativeStructur
 			PADDING,
 			POINTER.withName("pNext"),
 			JAVA_INT.withName("dataSize"),
-			PADDING,
-			POINTER.withName("pData")
+			JAVA_BYTE.withName("pData"),
+			MemoryLayout.paddingLayout(5)
 		);
 	}
 }

@@ -54,7 +54,7 @@ public record Percentile(float value) implements Comparable<Percentile> {
 	}
 
 	/**
-	 * Constructor given an integer in the range 0..{@link #MAX_VALUE}.
+	 * Constructor given an integer in the range 0..100.
 	 * @param value Integer percentile
 	 * @throws IllegalArgumentException if the value is not a valid percentile
 	 */

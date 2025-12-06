@@ -17,7 +17,7 @@ import org.sarge.jove.util.MathsUtility;
 class FieldAlignment {
 	private final long word;
 
-	private long total;			// TODO - more logical/efficient to maintain current alignment?
+	private long total;
 	private long max;
 
 	/**
@@ -70,7 +70,7 @@ class FieldAlignment {
 	}
 
 	/**
-	 * Determines the required padding to be appended to align the overall structure layout.
+	 * Determines the required padding to align the overall structure layout.
 	 * @return Overall padding (bytes)
 	 */
 	public long padding() {

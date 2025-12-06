@@ -17,7 +17,7 @@ public class VkImageDrmFormatModifierListCreateInfoEXT implements NativeStructur
 	public VkStructureType sType;
 	public Handle pNext;
 	public int drmFormatModifierCount;
-	public Handle pDrmFormatModifiers;
+	public long[] pDrmFormatModifiers;
 
 	@Override
 	public GroupLayout layout() {

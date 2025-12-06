@@ -27,7 +27,7 @@ class StructureGeneratorTest {
 				new StructureField("sType",			"VkStructureType",	0),
 				new StructureField("pNext",			"void*",			0),
 				new StructureField("integer",		"uint32_t",			0),
-				new StructureField("pCharArray",	"char",				4),
+				new StructureField("pCharArray",	"char",				8),
 				new StructureField("colour",		"float",			4),
 				new StructureField("nested",		"VkNested",			0),
 				new StructureField("pStringArray",	"char**",			0),
@@ -76,7 +76,7 @@ class StructureGeneratorTest {
 							PADDING,
 							POINTER.withName("pNext"),
 							JAVA_INT.withName("integer"),
-							MemoryLayout.sequenceLayout(4, JAVA_CHAR).withName("pCharArray"),
+							MemoryLayout.sequenceLayout(8, JAVA_BYTE).withName("pCharArray"),
 							MemoryLayout.sequenceLayout(4, JAVA_FLOAT).withName("colour"),
 							MemoryLayout.structLayout(JAVA_INT.withName("field")).withName("nested"),
 							POINTER.withName("pStringArray")

@@ -85,7 +85,7 @@ class TypeMapper {
 	 * @throws IllegalArgumentException if {@link #type} has not been added
 	 */
 	public void typedef(String type, String synonym) {
-
+		// TODO
 		type = type.replaceFirst("FlagBits", "Flags");
 
 		// Skip self references
@@ -93,19 +93,14 @@ class TypeMapper {
 			return;
 		}
 
-//		// TODO - fiddle
-//		if(synonym.equals("VkBool32")) {
-//			return;
-//		}
-
 		// Otherwise lookup target type
 		final NativeType ref = types.get(type);
 		if(ref == null) {
 			throw new IllegalArgumentException("Unknown referenced type [%s] for synonym [%s]".formatted(type, synonym));
 		}
 
+		// TODO
 		if(types.containsKey(synonym) && type.equals("VkFlags")) {
-			//System.out.println("*** already defined " + synonym + " -> " + type);
 			return;
 		}
 
@@ -134,6 +129,11 @@ class TypeMapper {
 	 * @throws IllegalArgumentException if the field is unsupported
 	 */
 	public NativeType map(StructureField<String> field) {
+		// TODO
+		if(field.name().equals("pCode") || field.name().equals("pData") || field.name().equals("pInitialData")) {
+			return new NativeType("byte[]", JAVA_BYTE);
+		}
+
 		return switch(field.type()) {
 			case "void*"		-> HANDLE;
 			case "char*"		-> new NativeType("String", ADDRESS);
@@ -204,7 +204,7 @@ class TypeMapper {
 		}
 
 		// All enumeration bitfields are represented as a mask
-		if(field.type().contains("FlagBits") || field.type().contains("Flags")) {
+		if(typename.contains("Flags")) {
 			if(field.length() > 0) {
 				throw new RuntimeException();
 			}
@@ -229,6 +229,11 @@ class TypeMapper {
 			throw new RuntimeException("Unexpected pointer array: " + field);
 		}
 
+		// TODO
+		if(field.type().contains("FlagsBits") || field.type().contains("Flags")) {
+			return new NativeType("int[]", JAVA_INT);
+		}
+
 		// Lookup pointer type
 		final String typename = field.type();
 		final String actual = typename.substring(0, typename.length() - 1);
@@ -238,7 +243,7 @@ class TypeMapper {
 		return switch(type.layout()) {
 			case AddressLayout _	-> pluralise(field, HANDLE);
 			case GroupLayout _		-> pluralise(field, new NativeType(actual, ADDRESS));
-			case ValueLayout _		-> type.array();
+			case ValueLayout _		-> new NativeType(type.array().name(), ADDRESS); //  type.array();
 			default	-> throw new RuntimeException();
 		};
 	}

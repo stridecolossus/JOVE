@@ -1,8 +1,7 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
+import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
@@ -20,7 +19,14 @@ class ColourBlendStageTest {
 	@DisplayName("The default colour write mask enables all channels")
 	@Test
 	void mask() {
-		assertEquals(Set.of(VkColorComponentFlags.values()), ColourBlendAttachment.DEFAULT_WRITE_MASK);
+		final var expected = "RGBA"
+				.chars()
+				.mapToObj(n -> (char) n)
+				.map(String::valueOf)
+				.map(VkColorComponentFlags::valueOf)
+				.collect(toSet());
+
+		assertEquals(expected, ColourBlendAttachment.DEFAULT_WRITE_MASK);
 	}
 
 	@DisplayName("The global blend can be enabled essentially disabling any per-attachment configuration")

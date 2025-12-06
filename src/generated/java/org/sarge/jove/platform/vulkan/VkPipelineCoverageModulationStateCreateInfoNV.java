@@ -20,7 +20,7 @@ public class VkPipelineCoverageModulationStateCreateInfoNV implements NativeStru
 	public VkCoverageModulationModeNV coverageModulationMode;
 	public boolean coverageModulationTableEnable;
 	public int coverageModulationTableCount;
-	public Handle pCoverageModulationTable;
+	public float[] pCoverageModulationTable;
 
 	@Override
 	public GroupLayout layout() {

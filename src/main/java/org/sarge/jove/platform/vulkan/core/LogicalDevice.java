@@ -312,7 +312,7 @@ public class LogicalDevice extends TransientNativeObject {
 
 			// Add required features
 			final var required = new DeviceFeatures(features);
-			info.pEnabledFeatures = null; // new VkPhysicalDeviceFeatures[]{required.build()};
+			info.pEnabledFeatures = new VkPhysicalDeviceFeatures[]{required.build()};
 
 			// Add required queues
 			info.queueCreateInfoCount = queues.size();

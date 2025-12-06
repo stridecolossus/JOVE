@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
+import org.sarge.jove.util.EnumMask;
 
 class FramebufferTest {
 	static class MockFramebufferLibrary extends MockVulkanLibrary {
@@ -20,7 +21,7 @@ class FramebufferTest {
 
 		@Override
 		public VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer) {
-			assertEquals(0, pCreateInfo.flags);
+			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertNotNull(pCreateInfo.renderPass);
 			assertNotEquals(0, pCreateInfo.attachmentCount);
 			assertNotEquals(0, pCreateInfo.pAttachments.length);

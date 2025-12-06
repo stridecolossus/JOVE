@@ -96,7 +96,7 @@ public class DiagnosticHandler extends TransientNativeObject {
 		@Override
 		public String toString() {
 			final var str = new StringJoiner(":");
-			str.add(severity.name());
+			str.add(clean(severity.name()));
 			str.add(toString(types));
 			if(!data.pMessage.contains(data.pMessageIdName)) {
 				str.add(data.pMessageIdName);
@@ -105,12 +105,29 @@ public class DiagnosticHandler extends TransientNativeObject {
 			return str.toString();
 		}
 
+		/**
+		 * @return Types a hyphen-delimited string
+		 */
 		private static String toString(Set<VkDebugUtilsMessageTypeFlagsEXT> types) {
 			return types
 					.stream()
 					.sorted()
 					.map(Enum::name)
+					.map(Message::clean)
 					.collect(joining("-"));
+		}
+
+		/**
+		 * Strips trailing {@code EXT} suffix.
+		 */
+		private static String clean(String name) {
+			final int index = name.indexOf("_EXT");
+			if((index > 0) && (index == name.length() - 4)) {
+				return name.substring(0, index);
+			}
+			else {
+				return name;
+			}
 		}
 	}
 

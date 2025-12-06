@@ -31,8 +31,9 @@ class GraphicsPipelineBuilderTest {
 			assertNotNull(pCreateInfos[0].pViewportState);
 
 			// Check vertex shader provided
+			final var vertex = new EnumMask<>(VkShaderStageFlags.VERTEX);
 			assertNotEquals(0, pCreateInfos[0].stageCount);
-			assertEquals(true, Arrays.stream(pCreateInfos[0].pStages).map(e -> e.stage).anyMatch(VkShaderStageFlags.VERTEX::equals));
+			assertEquals(true, Arrays.stream(pCreateInfos[0].pStages).map(e -> e.stage).anyMatch(vertex::equals));
 
 			// Mock pipeline
 			assertEquals(1, pPipelines.length);

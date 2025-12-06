@@ -45,8 +45,8 @@ public class SwapchainTest {
     			assertEquals(0, pCreateInfo.queueFamilyIndexCount);
 			}
 			assertEquals(new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR), pCreateInfo.preTransform);
-			assertEquals(VkCompositeAlphaFlagsKHR.OPAQUE_KHR, pCreateInfo.compositeAlpha);
-			//assertEquals(VkPresentModeKHR.MAILBOX_KHR, pCreateInfo.presentMode);
+			assertEquals(new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR), pCreateInfo.compositeAlpha);
+			assertNotNull(pCreateInfo.presentMode);
 			assertEquals(true, pCreateInfo.clipped);
 			assertEquals(null, pCreateInfo.oldSwapchain);
 

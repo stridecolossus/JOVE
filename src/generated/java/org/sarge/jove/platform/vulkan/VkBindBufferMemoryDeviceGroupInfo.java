@@ -17,7 +17,7 @@ public class VkBindBufferMemoryDeviceGroupInfo implements NativeStructure {
 	public VkStructureType sType;
 	public Handle pNext;
 	public int deviceIndexCount;
-	public Handle pDeviceIndices;
+	public int[] pDeviceIndices;
 
 	@Override
 	public GroupLayout layout() {

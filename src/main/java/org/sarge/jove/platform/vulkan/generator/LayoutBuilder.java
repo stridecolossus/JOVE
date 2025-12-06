@@ -75,25 +75,29 @@ class LayoutBuilder {
 	 */
 	private static boolean inject(FieldAlignment alignment, MemoryLayout layout, Downstream<? super MemoryLayout> downstream) {
 		// Inject padding as required
-		final long align = alignment.align(layout);
-		if(align > 0) {
-			final var padding = MemoryLayout.paddingLayout(align);
-			downstream.push(padding);
-		}
+		final long padding = alignment.align(layout);
+		add(padding, downstream);
 
 		// Append field layout
 		downstream.push(layout);
+
 		return true;
 	}
 
 	/**
 	 * Finisher.
-	 * Appends padding to align the overall structure layout.
+	 * Appends padding to align the structure to the size of the largest member.
 	 */
 	private static void append(FieldAlignment alignment, Downstream<? super MemoryLayout> downstream) {
-		final long align = alignment.padding();
-		if(align > 0) {
-			final var padding = MemoryLayout.paddingLayout(align);
+		add(alignment.padding(), downstream);
+	}
+
+	/**
+	 * Adds padding to the structure layout.
+	 */
+	private static void add(long alignment, Downstream<? super MemoryLayout> downstream) {
+		if(alignment > 0) {
+			final var padding = MemoryLayout.paddingLayout(alignment);
 			downstream.push(padding);
 		}
 	}

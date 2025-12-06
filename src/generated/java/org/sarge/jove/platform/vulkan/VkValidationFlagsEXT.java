@@ -17,7 +17,7 @@ public class VkValidationFlagsEXT implements NativeStructure {
 	public VkStructureType sType;
 	public Handle pNext;
 	public int disabledValidationCheckCount;
-	public Handle pDisabledValidationChecks;
+	public VkValidationCheckEXT[] pDisabledValidationChecks;
 
 	@Override
 	public GroupLayout layout() {

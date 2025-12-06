@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
@@ -18,7 +18,7 @@ public class DynamicStateStageTest {
 		final VkPipelineDynamicStateCreateInfo info = builder.state(VkDynamicState.SCISSOR).descriptor();
 		assertEquals(0, info.flags);
 		assertEquals(1, info.dynamicStateCount);
-		assertArrayEquals(new int[]{VkDynamicState.SCISSOR.value()}, info.pDynamicStates);
+		assertEquals(VkDynamicState.SCISSOR, info.pDynamicStates[0]);
 	}
 
 	@Test

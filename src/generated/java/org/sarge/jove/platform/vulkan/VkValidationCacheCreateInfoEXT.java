@@ -18,7 +18,7 @@ public class VkValidationCacheCreateInfoEXT implements NativeStructure {
 	public Handle pNext;
 	public int flags;
 	public long initialDataSize;
-	public Handle pInitialData;
+	public byte[] pInitialData;
 
 	@Override
 	public GroupLayout layout() {
@@ -29,7 +29,8 @@ public class VkValidationCacheCreateInfoEXT implements NativeStructure {
 			JAVA_INT.withName("flags"),
 			PADDING,
 			JAVA_LONG.withName("initialDataSize"),
-			POINTER.withName("pInitialData")
+			JAVA_BYTE.withName("pInitialData"),
+			MemoryLayout.paddingLayout(1)
 		);
 	}
 }

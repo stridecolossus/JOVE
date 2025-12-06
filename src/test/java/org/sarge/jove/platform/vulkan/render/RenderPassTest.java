@@ -12,13 +12,14 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.Dependency.Properties;
 import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
+import org.sarge.jove.util.EnumMask;
 
 class RenderPassTest {
 	private static class MockRenderPassLibrary extends MockVulkanLibrary {
 		@Override
 		public VkResult vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, Pointer pRenderPass) {
 			assertNotNull(device);
-			assertEquals(0, pCreateInfo.flags);
+			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertEquals(1, pCreateInfo.attachmentCount);
 			assertEquals(1, pCreateInfo.pAttachments.length);
 			assertEquals(1, pCreateInfo.subpassCount);

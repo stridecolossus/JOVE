@@ -27,7 +27,7 @@ public class VkImageCreateInfo implements NativeStructure {
 	public EnumMask<VkImageUsageFlags> usage;
 	public VkSharingMode sharingMode;
 	public int queueFamilyIndexCount;
-	public Handle pQueueFamilyIndices;
+	public int[] pQueueFamilyIndices;
 	public VkImageLayout initialLayout;
 
 	@Override

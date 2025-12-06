@@ -41,7 +41,7 @@ public class DynamicStateStage {
 
 		// Populate dynamic states
    		info.dynamicStateCount = states.size();
-    	info.pDynamicStates = states.stream().mapToInt(VkDynamicState::value).toArray();
+    	info.pDynamicStates = states.toArray(VkDynamicState[]::new);
 
 		return info;
 	}

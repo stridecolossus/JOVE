@@ -5,6 +5,9 @@ import static java.lang.foreign.ValueLayout.*;
 import java.lang.foreign.*;
 
 import org.sarge.jove.foreign.NativeStructure;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.*;
 
 /**
  * Vulkan structure.
@@ -23,7 +26,8 @@ public class VkSpecializationInfo implements NativeStructure {
 			PADDING,
 			POINTER.withName("pMapEntries"),
 			JAVA_LONG.withName("dataSize"),
-			POINTER.withName("pData")
+			JAVA_BYTE.withName("pData"),
+			MemoryLayout.paddingLayout(1)
 		);
 	}
 }

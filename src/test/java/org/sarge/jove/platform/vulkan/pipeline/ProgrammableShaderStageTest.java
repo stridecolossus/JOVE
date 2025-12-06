@@ -7,6 +7,7 @@ import java.util.Map;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
+import org.sarge.jove.util.EnumMask;
 
 class ProgrammableShaderStageTest {
 	private ProgrammableShaderStage stage;
@@ -24,8 +25,8 @@ class ProgrammableShaderStageTest {
 	@Test
 	void descriptor() {
 		final VkPipelineShaderStageCreateInfo info = stage.descriptor();
-		assertEquals(0, info.flags);
-		assertEquals(VkShaderStageFlags.VERTEX, info.stage);
+		assertEquals(new EnumMask<>(), info.flags);
+		assertEquals(new EnumMask<>(VkShaderStageFlags.VERTEX), info.stage);
 		assertNotNull(info.module);
 		assertEquals("name", info.pName);
 		assertNotNull(info.pSpecializationInfo);

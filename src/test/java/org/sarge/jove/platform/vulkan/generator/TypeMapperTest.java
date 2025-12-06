@@ -47,7 +47,6 @@ class TypeMapperTest {
 		private static ValueLayout[] primitive() {
 			return new ValueLayout[] {
 					JAVA_BYTE,
-					JAVA_CHAR,
 					JAVA_SHORT,
 					JAVA_INT,
 					JAVA_LONG,
@@ -64,9 +63,15 @@ class TypeMapperTest {
 			assertEquals(NativeType.of(layout), mapper.map(new StructureField<>("field", typename)));
 		}
 
+		@DisplayName("A primitive character is mapped to a byte")
+		@Test
+		void character() {
+			assertEquals(NativeType.of(JAVA_BYTE), mapper.map(new StructureField<>("field", "char")));
+		}
+
 		@DisplayName("A Vulkan boolean is mapped to a Java boolean represented as a 4-byte integer")
 		@Test
-		void vulkan() {
+		void booleans() {
 			final var flag = new StructureField<>("flag", "VkBool32");
 			final var expected = new NativeType("boolean", JAVA_INT);
 			assertEquals(expected, mapper.map(flag));
@@ -101,10 +106,10 @@ class TypeMapperTest {
 			assertEquals(expected, mapper.map(new StructureField<>("pName", "char*")));
 		}
 
-		@DisplayName("A char[] is mapped to a Java string")
+		@DisplayName("A char[] is mapped to a Java string with a byte[] layout")
 		@Test
 		void characterArray() {
-			final var expected = new NativeType("String", JAVA_CHAR);
+			final var expected = new NativeType("String", JAVA_BYTE);
 			assertEquals(expected, mapper.map(new StructureField<>("name", "char", 16)));
 		}
 
@@ -139,11 +144,18 @@ class TypeMapperTest {
 			assertEquals(expected, mapper.map(new StructureField<>("pWaitSemaphores", "VkSemaphore*")));
 		}
 
-		@DisplayName("A pointer to a primitive type is mapped to a JOVE handle")
+		@DisplayName("A pointer to a primitive type is mapped to a handle to that array")
 		@Test
 		void primitiveArray() {
-			assertEquals(HANDLE, mapper.map(new StructureField<>("pValues", "uint32_t*")));
-			assertEquals(HANDLE, mapper.map(new StructureField<>("pValues", "float*")));
+			assertEquals(new NativeType("int[]", ADDRESS), mapper.map(new StructureField<>("pValues", "uint32_t*")));
+			assertEquals(new NativeType("float[]", ADDRESS), mapper.map(new StructureField<>("pValues", "float*")));
+		}
+
+		@DisplayName("Shader code is mapped to a byte array")
+		@Test
+		void blob() {
+			assertEquals(new NativeType("byte[]", JAVA_BYTE), mapper.map(new StructureField<>("pCode", "uint32_t*", 0)));
+			assertEquals(new NativeType("byte[]", JAVA_BYTE), mapper.map(new StructureField<>("pData", "uint32_t*", 0)));
 		}
 	}
 
@@ -221,12 +233,11 @@ class TypeMapperTest {
 		void maskMissingTypeDefinition() {
 			assertThrows(IllegalArgumentException.class, () -> mapper.map(new StructureField<>("flags", "VkAccessFlags")));
 		}
-	}
 
-	@DisplayName("A data blob is mapped to a handle")
-	@Test
-	void blob() {
-		assertEquals(HANDLE, mapper.map(new StructureField<>("pData", "uint8_t*", 0)));
-		assertEquals(HANDLE, mapper.map(new StructureField<>("pData", "uint32_t*", 0)));
+		@Test
+		void pointer() {
+			mapper.add(new NativeType("VkPipelineStageFlags", JAVA_INT));
+			assertEquals(new NativeType("int[]", JAVA_INT), mapper.map(new StructureField<>("mask", "VkPipelineStageFlags*")));
+		}
 	}
 }
