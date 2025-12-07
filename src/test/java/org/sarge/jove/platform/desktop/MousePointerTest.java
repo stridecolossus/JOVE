@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.ScreenCoordinate;
-import org.sarge.jove.platform.desktop.DeviceLibrary.MouseListener;
 
 class MousePointerTest {
 	private MousePointer pointer;
@@ -25,8 +24,7 @@ class MousePointerTest {
 
 	@Test
 	void bind() {
-		pointer.bind(listener);
-		final var callback = (MouseListener) window.listeners().get(listener);
+		final var callback = pointer.bind(listener);
 		callback.event(null, 2, 3);
 		assertEquals(new ScreenCoordinate(2, 3), coordinate.get());
 	}
@@ -35,6 +33,6 @@ class MousePointerTest {
 	void remove() {
 		pointer.bind(listener);
 		pointer.remove(listener);
-		assertEquals(false, window.listeners().containsKey(listener));
+		assertEquals(null, pointer.listener());
 	}
 }

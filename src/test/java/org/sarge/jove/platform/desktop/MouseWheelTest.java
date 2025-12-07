@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.AxisEvent;
-import org.sarge.jove.platform.desktop.DeviceLibrary.MouseListener;
 
 class MouseWheelTest {
 	private MouseWheel wheel;
@@ -25,8 +24,7 @@ class MouseWheelTest {
 
 	@Test
 	void bind() {
-		wheel.bind(listener);
-		final var callback = (MouseListener) window.listeners().get(listener);
+		final var callback = wheel.bind(listener);
 		callback.event(null, 0, 3);
 		assertEquals(3, integer.get());
 	}
@@ -35,6 +33,6 @@ class MouseWheelTest {
 	void remove() {
 		wheel.bind(listener);
 		wheel.remove(listener);
-		assertEquals(false, window.listeners().containsKey(listener));
+		assertEquals(null, wheel.listener());
 	}
 }

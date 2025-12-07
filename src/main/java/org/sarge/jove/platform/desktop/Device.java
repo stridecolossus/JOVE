@@ -13,12 +13,15 @@ public interface Device<E extends Event> {
 	/**
 	 * Binds an event listener to this device.
 	 * @param listener Event listener
+	 * @return Underlying callback
+	 * @throws IllegalStateException if this device is already bound to a listener
 	 */
-	void bind(Consumer<E> listener);
+	Object bind(Consumer<E> listener);
 
 	/**
-	 * Removes an event listener.
+	 * Removes the attached event listener.
 	 * @param listener Event listener to remove
+	 * @throws IllegalArgumentException if the listener is not bound to this device
 	 */
 	void remove(Consumer<E> listener);
 }

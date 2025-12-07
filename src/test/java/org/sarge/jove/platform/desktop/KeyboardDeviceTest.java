@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.control.Button;
 import org.sarge.jove.control.Button.*;
-import org.sarge.jove.platform.desktop.DeviceLibrary.KeyListener;
 
 class KeyboardDeviceTest {
 	private KeyboardDevice keyboard;
@@ -28,15 +27,14 @@ class KeyboardDeviceTest {
 	@Test
 	void bind() {
 		// Bind a listener to the keyboard
-		keyboard.bind(listener);
+		final var callback = keyboard.bind(listener);
 
 		// Generate an event
-		final var callback = (KeyListener) window.listeners().get(listener);
 		callback.key(null, 256, 0, 1, 0x002);
 
 		// Check event received by the listener
 		final Button button = new Button(256, "ESCAPE");
-		final var event = new ButtonEvent(keyboard, button, ButtonAction.PRESS, Set.of(ModifierKey.CONTROL));
+		final var event = new ButtonEvent( button, ButtonAction.PRESS, Set.of(ModifierKey.CONTROL));
 		assertEquals(event, key.get());
 	}
 
@@ -44,6 +42,6 @@ class KeyboardDeviceTest {
 	void remove() {
 		keyboard.bind(listener);
 		keyboard.remove(listener);
-		assertEquals(false, window.listeners().containsKey(listener));
+		assertEquals(null, keyboard.listener());
 	}
 }

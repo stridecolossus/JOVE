@@ -12,6 +12,8 @@ README.md
 - summary
 - link to blog
 
+devices are public - could lead to multiple binds for same callback-listener! => enforce max one per window?
+
 -------------------------------
 
 demo

@@ -1,14 +1,15 @@
 package org.sarge.jove.platform.desktop;
 
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
 
 /**
  * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
- * Key definitions are specified by the {@code key.table.txt} resource file.
  * @author Sarge
  */
 class KeyTable {
@@ -17,50 +18,27 @@ class KeyTable {
 
 	/**
 	 * Constructor.
-	 * @throws RuntimeException if the key table cannot be loaded
 	 */
-	public KeyTable() {
-		this.keys = load();
+	public KeyTable(Map<Integer, String> keys) {
+		this.keys = Map.copyOf(keys);
 		this.codes = codes(keys);
 	}
 
 	/**
-	 * Loads the key table.
-	 * @return Key table
-	 */
-	private static Map<Integer, String> load() {
-		try(final InputStream in = KeyTable.class.getResourceAsStream("key.table.txt")) {
-			return new BufferedReader(new InputStreamReader(in))
-					.lines()
-					.map(String::trim)
-					.map(str -> str.split("\\s+"))
-					.map(KeyTable::load)
-					.collect(toMap(Entry::getKey, Entry::getValue));
-		}
-		catch(IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Loads a key table entry.
-	 */
-	private static Entry<Integer, String> load(String[] tokens) {
-		final Integer code = Integer.parseInt(tokens[1].trim());
-		final String name = tokens[0].trim();
-		return Map.entry(code, name);
-	}
-
-	/**
-	 * Builds the reverse mapping for key codes.
-	 * @param keys Key table
-	 * @return Codes table
+	 * Builds the inverse mapping for key codes.
 	 */
 	private static Map<String, Integer> codes(Map<Integer, String> keys) {
 		return keys
 				.entrySet()
 				.stream()
 				.collect(toMap(Entry::getValue, Entry::getKey));
+	}
+
+	/**
+	 * @return Keys indexed by code
+	 */
+	public Map<Integer, String> keys() {
+		return keys;
 	}
 
 	/**
@@ -79,5 +57,73 @@ class KeyTable {
 	 */
 	public int code(String name) {
 		return codes.getOrDefault(name, 0);
+	}
+
+	/**
+	 * Helper.
+	 * Maps this key table by the given function.
+	 * @param <T> Return type
+	 * @param mapper Mapping function
+	 * @return Mapped key table
+	 */
+	public <T> Map<Integer, T> map(BiFunction<Integer, String, T> mapper) {
+		return keys
+				.entrySet()
+				.stream()
+				.collect(toMap(Map.Entry::getKey, entry -> mapper.apply(entry.getKey(), entry.getValue())));
+	}
+
+	/**
+	 * Default key definitions specified by the {@code key.table.txt} resource file.
+	 * @return Default key table
+	 * @see Loader
+	 */
+	public static KeyTable defaultKeyTable() {
+		final var loader = new Loader();
+		try(final var in = KeyTable.class.getResourceAsStream("key.table.txt")) {
+			return loader.load(in);
+		}
+		catch(IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Loader for a key table.
+	 */
+	public static class Loader {
+		/**
+		 * Loads a key table from the given path.
+		 * @return Key table
+		 * @throws IOException if the table cannot be loaded
+		 */
+		public KeyTable load(Path path) throws IOException {
+			try(final var in = Files.newInputStream(path)) {
+				return load(in);
+			}
+		}
+
+		/**
+		 * Loads a key table from the given input stream.
+		 * @param in Input stream
+		 * @return Key table
+		 */
+		public KeyTable load(InputStream in) {
+			return new BufferedReader(new InputStreamReader(in))
+					.lines()
+					.map(String::trim)
+					.map(str -> str.split("\\s+"))
+					.map(Loader::load)
+					.collect(collectingAndThen(toMap(Entry::getKey, Entry::getValue), KeyTable::new));
+		}
+
+		/**
+		 * Loads a key table entry.
+		 */
+		private static Entry<Integer, String> load(String[] tokens) {
+			final Integer code = Integer.parseInt(tokens[1].trim());
+			final String name = tokens[0].trim();
+			return Map.entry(code, name);
+		}
 	}
 }

@@ -5,21 +5,20 @@ import static org.sarge.jove.util.Validation.*;
 
 import java.util.Set;
 
-import org.sarge.jove.platform.desktop.Device;
 import org.sarge.jove.util.*;
 
 /**
  * A <i>button</i> is a keyboard key, mouse button, or controller button.
  * @author Sarge
  */
-public record Button(int index, String name) {
+public record Button(int key, String name) {
 	/**
 	 * Constructor.
-	 * @param index		Button index
+	 * @param key		Button key code
 	 * @param name		Identifier
 	 */
 	public Button {
-		requireZeroOrMore(index);
+		requireZeroOrMore(key);
 		requireNotEmpty(name);
 	}
 
@@ -85,16 +84,14 @@ public record Button(int index, String name) {
 	/**
 	 * A <i>button event</i> specifies the action and modifiers for a button event.
 	 */
-	public record ButtonEvent(Device<ButtonEvent> device, Button button, ButtonAction action, Set<ModifierKey> modifiers) implements Event {
+	public record ButtonEvent(Button button, ButtonAction action, Set<ModifierKey> modifiers) implements Event {
 		/**
 		 * Constructor.
-		 * @param device		Device
 		 * @param button		Button
 		 * @param action		Button action
 		 * @param modifiers		Modifier keys
 		 */
 		public ButtonEvent {
-			requireNonNull(device);
 			requireNonNull(button);
 			requireNonNull(action);
 			modifiers = Set.copyOf(modifiers);

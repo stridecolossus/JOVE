@@ -40,7 +40,6 @@ public class MouseButtons extends AbstractWindowDevice<ButtonEvent, MouseButtonL
 			@Override
 			public void button(MemorySegment window, int button, int action, int mods) {
 				final var event = new ButtonEvent(
-						MouseButtons.this,
 						BUTTONS[button],
 						ButtonAction.map(action),
 						ModifierKey.map(mods)

@@ -8,6 +8,7 @@ import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.*;
+import org.sarge.jove.control.Button.ButtonEvent;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
@@ -56,31 +57,16 @@ public class VulkanIntegrationDemo {
 
 		//////////////////
 
-		final var keyboard = new KeyboardDevice(window);
 		final var running = new AtomicBoolean(true);
-		keyboard.bind(_ -> running.set(false));
-
-//		final var wheel = new MouseWheel(window);
-//		wheel.bind(System.out::println);
-//
-//		final var pointer = new MousePointer(window);
-//		pointer.bind(System.out::println);
-//
-//		final var buttons = new MouseButtons(window);
-//		buttons.bind(System.out::println);
+		final var exit = new Action<>("exit", ButtonEvent.class, _ -> running.set(false));
+		final var bindings = new ActionBindings(List.of(exit));
+		final var keyboard = new KeyboardDevice(window);
+		bindings.bind(exit, keyboard);
 
 		//////////////////
 
 		System.out.println("Initialising Vulkan...");
 		final var vulkan = Vulkan.create();
-
-//		System.out.println("Supported instance layers...");
-//		for(VkLayerProperties layer : Instance.layers(vulkan.get())) {
-//			System.out.println(layer.layerName);
-//		}
-//		for(VkExtensionProperties ext : Instance.extensions(vulkan.get())) {
-//			System.out.println("  " + ext.extensionName);
-//		}
 
 		System.out.println("Creating instance...");
 		final Instance instance = new Instance.Builder()
@@ -225,7 +211,7 @@ public class VulkanIntegrationDemo {
 
 		// Sequence
 		System.out.println("Recording render sequence...");
-		final var draw = DrawCommand.draw(4, device);
+		final var draw = DrawCommand.of(4, device);
 		final RenderSequence sequence = (_, buffer) -> {
 			buffer.add(pipeline.bind());
 			buffer.add(vbo.bind(0));
