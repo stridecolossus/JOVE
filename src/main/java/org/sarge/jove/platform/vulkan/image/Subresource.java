@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * An <i>image sub-resource</i> defines a subset of the aspects, mip levels and array layers of an image.
+ * An <i>subresource</i> defines a subset of the aspects, mip levels and array layers of an image.
  * @author Sarge
  */
 public interface Subresource {
@@ -40,27 +40,6 @@ public interface Subresource {
 	 * @return Number of array layers
 	 */
 	int layerCount();
-
-	/**
-	 * Default implementation.
-	 */
-	record DefaultSubResource(Set<VkImageAspectFlags> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) implements Subresource {
-		/**
-		 * Constructor.
-		 * @param aspects				Sub resource aspects
-		 * @param mipLevel				Base MIP level
-		 * @param levelCount			Number of MIP levels
-		 * @param baseArrayLayer		Base array layer
-		 * @param layerCount			Number of array layers
-		 */
-		public DefaultSubResource {
-			aspects = Set.copyOf(aspects);
-			requireZeroOrMore(mipLevel);
-			requireOneOrMore(levelCount);
-			requireZeroOrMore(baseArrayLayer);
-			requireOneOrMore(layerCount);
-		}
-	}
 
 	/**
 	 * Converts the given subresource to a Vulkan range descriptor.
@@ -161,11 +140,24 @@ public interface Subresource {
 		}
 
 		/**
+		 * Default implementation.
+		 */
+		private record DefaultSubresource(Set<VkImageAspectFlags> aspects, int mipLevel, int levelCount, int baseArrayLayer, int layerCount) implements Subresource {
+			public DefaultSubresource {
+				aspects = Set.copyOf(aspects);
+				requireZeroOrMore(mipLevel);
+				requireOneOrMore(levelCount);
+				requireZeroOrMore(baseArrayLayer);
+				requireOneOrMore(layerCount);
+			}
+		}
+
+		/**
 		 * Constructs this subresource.
 		 * @return Subresource
 		 */
 		public Subresource build() {
-			return new DefaultSubResource(aspects, mipLevel, levelCount, baseArrayLayer, layerCount);
+			return new DefaultSubresource(aspects, mipLevel, levelCount, baseArrayLayer, layerCount);
 		}
 	}
 }

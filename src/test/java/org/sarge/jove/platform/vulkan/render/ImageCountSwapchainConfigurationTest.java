@@ -37,8 +37,9 @@ class ImageCountSwapchainConfigurationTest {
 	void policy() {
 		final var capabilities = new VkSurfaceCapabilitiesKHR();
 		capabilities.minImageCount = 2;
-		capabilities.maxImageCount = 3;
+		capabilities.maxImageCount = 4;
 		assertEquals(2, Policy.MIN.applyAsInt(capabilities));
-		assertEquals(3, Policy.MAX.applyAsInt(capabilities));
+		assertEquals(3, Policy.MIN_PLUS_ONE.applyAsInt(capabilities));
+		assertEquals(4, Policy.MAX.applyAsInt(capabilities));
 	}
 }

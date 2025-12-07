@@ -19,13 +19,22 @@ public record ImageCountSwapchainConfiguration(ToIntFunction<VkSurfaceCapabiliti
 	 */
 	public enum Policy implements ToIntFunction<VkSurfaceCapabilitiesKHR> {
 		MIN,
+		MIN_PLUS_ONE,
 		MAX;
 
 		@Override
 		public int applyAsInt(VkSurfaceCapabilitiesKHR capabilities) {
+			final int min = capabilities.minImageCount;
+			final int max = capabilities.maxImageCount;
 			return switch(this) {
-				case MIN -> capabilities.minImageCount;
-				case MAX -> capabilities.maxImageCount;
+				case MIN -> min;
+				case MAX -> max;
+				case MIN_PLUS_ONE -> {
+					if(min == max) {
+						throw new RuntimeException();
+					}
+					yield min + 1;
+				}
 			};
 		}
 	}

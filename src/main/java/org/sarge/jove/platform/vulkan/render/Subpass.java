@@ -9,12 +9,13 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * A <i>subpass</i> is a transient specification for a stage of a {@link RenderPass}.
+ * A <i>subpass</i> configures a stage of a {@link RenderPass}.
  * @author Sarge
  */
 public record Subpass(List<AttachmentReference> colour, AttachmentReference depth, Set<VkSubpassDescriptionFlags> flags) {
 	/**
 	 * An <i>attachment reference</i> specifies an attachment used in this subpass.
+	 * @see VkAttachmentReference
 	 */
 	public record AttachmentReference(Attachment attachment, VkImageLayout layout) {
 		/**

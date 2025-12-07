@@ -9,7 +9,8 @@ import org.sarge.jove.platform.vulkan.core.*;
 /**
  * An <i>index buffer</i> binds a drawing index to the pipeline.
  * <p>
- * Note that the index is represented as either {@code short} or {@code int} values depending on the length of the vertex data referred to, specified by {@link VkIndexType}.
+ * Note that the index is represented as either {@code short} or {@code int} values
+ * depending on the length of the vertex data referred to, specified by {@link VkIndexType}.
  * <p>
  * @see IndexedMesh#isCompactIndex()
  * @author Sarge

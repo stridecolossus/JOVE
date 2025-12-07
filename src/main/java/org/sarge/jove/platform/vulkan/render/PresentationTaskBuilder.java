@@ -38,7 +38,7 @@ public class PresentationTaskBuilder {
 	}
 
 	/**
-	 * Constructs this presentation task.
+	 * Constructs the descriptor for this presentation task.
 	 * @return Presentation task
 	 */
 	public VkPresentInfoKHR build() {

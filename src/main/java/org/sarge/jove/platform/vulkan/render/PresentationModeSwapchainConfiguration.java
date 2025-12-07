@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfigura
 
 /**
  * The <i>presentation mode</i> swapchain configuration selects a preferred presentation mode for the swapchain.
- * Falls back to the default {@link VkPresentModeKHR#FIFO_KHR} mode (guaranteed on all platforms) if the preferred mode(s) are not supported by the surface.
+ * Falls back to {@link Swapchain#DEFAULT_PRESENTATION_MODE} if none of the preferred mode(s) are supported by the surface.
  * @author Sarge
  */
 public class PresentationModeSwapchainConfiguration implements SwapchainConfiguration {

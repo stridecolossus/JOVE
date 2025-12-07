@@ -26,7 +26,7 @@ public abstract class AbstractMesh implements Mesh {
 		this.layout = List.copyOf(layout);
 
 		if(!layout.contains(Point.LAYOUT)) {
-			throw new IllegalArgumentException("Layout does not contain a vertex position: " + this);
+			throw new IllegalArgumentException("Layout does not contain a vertex position: " + layout);
 		}
 
 		if(!primitive.isTriangle() && layout.contains(Normal.LAYOUT)) {

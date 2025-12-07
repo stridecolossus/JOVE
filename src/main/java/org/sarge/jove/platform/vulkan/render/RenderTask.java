@@ -12,9 +12,9 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
  * <p>
  * This class orchestrates the various components that collaborate to render a frame as follows:
  * <ol>
- * <li>Select the next in-flight frame to render</li>
- * <li>Acquire the next frame buffer to be rendered from the swapchain</li>
- * <li>Compose the render sequence for the selected frame</li>
+ * <li>Select the next in-flight frame instance to render</li>
+ * <li>Acquire the next framebuffer to be rendered from the swapchain</li>
+ * <li>Compose the render sequence for the next frame</li>
  * <li>Submit the render task</li>
  * <li>Present the completed frame to the swapchain</li>
  * </ol>
@@ -62,8 +62,8 @@ public class RenderTask implements Runnable, TransientObject {
 	}
 
 	/**
-	 * Specified the number of in-flight frames.
-	 * By default the number of in-flight frames is the same as the number of swapchain attachments.
+	 * Specifies the number of in-flight frames.
+	 * By default this is the same as the number of swapchain attachments.
 	 * @param swapchain Swapchain
 	 * @return Number of in-flight frames
 	 */

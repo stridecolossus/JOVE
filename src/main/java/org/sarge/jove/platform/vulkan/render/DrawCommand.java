@@ -3,39 +3,29 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.*;
 
-import java.util.Objects;
-
-import org.sarge.jove.model.Mesh;
+import org.sarge.jove.model.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * A <i>draw command</i> is used to render a {@link Mesh}.
  * @author Sarge
  */
-public class DrawCommand implements Command {
-	private final int vertexCount;
-	private final int instanceCount;
-	private final int firstVertex;
-	private final int firstInstance;
-	private final Integer firstIndex;
-	private final Library library;
-
+public record DrawCommand(int vertexCount, int instanceCount, int firstVertex, int firstInstance, Integer firstIndex, Library library) implements Command {
 	/**
 	 * Constructor.
 	 * @param vertexCount			Number of vertices
 	 * @param instanceCount			Number of instances
 	 * @param firstVertex			First vertex
 	 * @param firstInstance			First instance
-	 * @param firstIndex			Optional index
+	 * @param firstIndex			Optional starting index
 	 * @param library				Drawing library
 	 */
-	public DrawCommand(int vertexCount, int instanceCount, int firstVertex, int firstInstance, Integer firstIndex, Library library) {
-		this.vertexCount = requireZeroOrMore(vertexCount);
-		this.instanceCount = requireOneOrMore(instanceCount);
-		this.firstVertex = requireZeroOrMore(firstVertex);
-		this.firstInstance = requireZeroOrMore(firstInstance);
-		this.firstIndex = firstIndex;
-		this.library = requireNonNull(library);
+	public DrawCommand {
+		requireZeroOrMore(vertexCount);
+		requireOneOrMore(instanceCount);
+		requireZeroOrMore(firstVertex);
+		requireZeroOrMore(firstInstance);
+		requireNonNull(library);
 	}
 
 	@Override
@@ -48,31 +38,34 @@ public class DrawCommand implements Command {
 		}
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof DrawCommand that) &&
-				(this.vertexCount == that.vertexCount) &&
-				(this.instanceCount == that.instanceCount) &&
-				(this.firstVertex == that.firstVertex) &&
-				(this.firstInstance == that.firstInstance) &&
-				Objects.equals(this.firstIndex, that.firstIndex);
-	}
-
-	@Override
-	public String toString() {
-		return String.format("DrawCommand[vertexCount=%d firstVertex=%d instanceCount=%d firstInstance=%d firstIndex=%s]", vertexCount, firstVertex, instanceCount, firstInstance, firstIndex);
-	}
-
 	/**
 	 * Creates a simple draw command for the given number of vertices.
 	 * @param vertexCount Number of vertices
 	 * @param device Logical device
 	 * @return Simple draw command
 	 */
-	public static DrawCommand draw(int vertexCount, LogicalDevice device) {
+	public static DrawCommand of(int vertexCount, LogicalDevice device) {
 		return new Builder().vertexCount(vertexCount).build(device);
+	}
+
+	/**
+	 * Helper.
+	 * Creates a draw command for the given mesh.
+	 * @param mesh		Mesh
+	 * @param device	Logical device
+	 * @return Mesh draw command
+	 */
+	public static DrawCommand of(Mesh mesh, LogicalDevice device) {
+		final int count = mesh.count();
+		if(mesh instanceof IndexedMesh) {
+			return of(count, device);
+		}
+		else {
+			return new Builder()
+					.vertexCount(count)
+					.indexed()
+					.build(device);
+		}
 	}
 
 	/**
