@@ -1,10 +1,11 @@
-package org.sarge.jove.platform.desktop;
+package org.sarge.jove.control;
 
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.*;
 
 import java.util.Set;
 
+import org.sarge.jove.platform.desktop.Device;
 import org.sarge.jove.util.*;
 
 /**
@@ -25,7 +26,7 @@ public record Button(int index, String name) {
 	/**
 	 * Button actions.
 	 */
-	public enum Action {
+	public enum ButtonAction {
 		RELEASE,
 		PRESS,
 		REPEAT;
@@ -36,7 +37,7 @@ public record Button(int index, String name) {
 		 * @return Action
 		 * @throws IllegalArgumentException for an invalid action code
 		 */
-		public static Action map(int action) {
+		public static ButtonAction map(int action) {
 			return switch(action) {
 				case 0 -> RELEASE;
 				case 1 -> PRESS;
@@ -84,14 +85,16 @@ public record Button(int index, String name) {
 	/**
 	 * A <i>button event</i> specifies the action and modifiers for a button event.
 	 */
-	public record ButtonEvent(Button button, Action action, Set<ModifierKey> modifiers) {
+	public record ButtonEvent(Device<ButtonEvent> device, Button button, ButtonAction action, Set<ModifierKey> modifiers) implements Event {
 		/**
 		 * Constructor.
-		 * @param button			Button
-		 * @param action			Action
-		 * @param modifiers			Modifier keys
+		 * @param device		Device
+		 * @param button		Button
+		 * @param action		Button action
+		 * @param modifiers		Modifier keys
 		 */
 		public ButtonEvent {
+			requireNonNull(device);
 			requireNonNull(button);
 			requireNonNull(action);
 			modifiers = Set.copyOf(modifiers);

@@ -109,7 +109,8 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 	}
 
 	/**
-	 * Helper - Determines the half space of the given point with respect to this plane.
+	 * Helper.
+	 * Determines the half space of the given point with respect to this plane.
 	 * @param p Point
 	 * @return Half space
 	 * @see HalfSpace#of(float)

@@ -3,6 +3,7 @@ package org.sarge.jove.foreign;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
@@ -56,16 +57,17 @@ public class VulkanIntegrationDemo {
 		//////////////////
 
 		final var keyboard = new KeyboardDevice(window);
-		keyboard.bind(System.out::println);
+		final var running = new AtomicBoolean(true);
+		keyboard.bind(_ -> running.set(false));
 
-		final var wheel = new MouseWheel(window);
-		wheel.bind(System.out::println);
-
-		final var pointer = new MousePointer(window);
-		pointer.bind(System.out::println);
-
-		final var buttons = new MouseButtons(window);
-		buttons.bind(System.out::println);
+//		final var wheel = new MouseWheel(window);
+//		wheel.bind(System.out::println);
+//
+//		final var pointer = new MousePointer(window);
+//		pointer.bind(System.out::println);
+//
+//		final var buttons = new MouseButtons(window);
+//		buttons.bind(System.out::println);
 
 		//////////////////
 
@@ -239,11 +241,11 @@ public class VulkanIntegrationDemo {
 		tracker.add(counter);
 		try(var loop = new RenderLoop(render, tracker)) {
 			loop.start();
-			//Thread.sleep(10 * 1000);
-			for(int n = 0; n < 1000; ++n) {
+			while(running.get()) {
 				Thread.sleep(50);
 				desktop.poll();
 			}
+			loop.stop();
 		}
 		System.out.println(counter);
 

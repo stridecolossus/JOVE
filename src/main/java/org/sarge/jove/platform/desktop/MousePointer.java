@@ -7,7 +7,7 @@ import org.sarge.jove.control.ScreenCoordinate;
 import org.sarge.jove.platform.desktop.DeviceLibrary.MouseListener;
 
 /**
- * The <i>mouse pointer</i> device generates screen position events.
+ * The <i>mouse pointer</i> device generates mouse movement events.
  * @author Sarge
  */
 public class MousePointer extends AbstractWindowDevice<ScreenCoordinate, MouseListener> {

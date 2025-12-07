@@ -3,7 +3,8 @@ package org.sarge.jove.platform.desktop;
 import java.lang.foreign.MemorySegment;
 import java.util.function.*;
 
-import org.sarge.jove.platform.desktop.Button.*;
+import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.*;
 import org.sarge.jove.platform.desktop.DeviceLibrary.KeyListener;
 
 /**
@@ -27,7 +28,12 @@ public class KeyboardDevice extends AbstractWindowDevice<ButtonEvent, KeyListene
 			@Override
 			public void key(MemorySegment window, int key, int scancode, int action, int mods) {
 				final Button button = new Button(key, KEYS.name(key));
-				final var event = new ButtonEvent(button, Action.map(action), ModifierKey.map(mods));
+				final var event = new ButtonEvent(
+						KeyboardDevice.this,
+						button,
+						ButtonAction.map(action),
+						ModifierKey.map(mods)
+				);
 				listener.accept(event);
 			}
 		};

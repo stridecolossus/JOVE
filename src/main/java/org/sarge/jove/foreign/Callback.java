@@ -58,7 +58,7 @@ public interface Callback {
 		 * @throws IllegalArgumentException if {@link #callback} is not a functional interface
 		 */
 		private static Method method(Class<? extends Callback> callback) {
-			final Method[] methods = callback.getMethods();
+			final Method[] methods = callback.getDeclaredMethods();
 			if(methods.length != 1) {
 				throw new IllegalArgumentException("Expected functional interface: " + callback);
 			}

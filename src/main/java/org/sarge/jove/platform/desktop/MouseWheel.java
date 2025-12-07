@@ -3,13 +3,14 @@ package org.sarge.jove.platform.desktop;
 import java.lang.foreign.MemorySegment;
 import java.util.function.*;
 
+import org.sarge.jove.control.AxisEvent;
 import org.sarge.jove.platform.desktop.DeviceLibrary.MouseListener;
 
 /**
  * The <i>mouse wheel</i> device generates scroll events.
  * @author Sarge
  */
-public class MouseWheel extends AbstractWindowDevice<Integer, MouseListener> {
+public class MouseWheel extends AbstractWindowDevice<AxisEvent, MouseListener> {
 	/**
 	 * Constructor.
 	 * @param window Parent window
@@ -19,11 +20,11 @@ public class MouseWheel extends AbstractWindowDevice<Integer, MouseListener> {
 	}
 
 	@Override
-	protected MouseListener callback(Window window, Consumer<Integer> listener) {
+	protected MouseListener callback(Window window, Consumer<AxisEvent> listener) {
 		return new MouseListener() {
 			@Override
 			public void event(MemorySegment window, double x, double y) {
-				listener.accept((int) y);
+				listener.accept(new AxisEvent((int) y));
 			}
 		};
 	}

@@ -8,10 +8,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.foreign.Callback.CallbackTransformerFactory;
 
 class CallbackTest {
-	private static interface MockCallback extends Callback {
-		int callback(int parameter);
-	}
-
 	private CallbackTransformerFactory factory;
 	private Transformer<Callback, MemorySegment> transformer;
 	private SegmentAllocator allocator;

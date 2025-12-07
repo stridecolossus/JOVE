@@ -9,7 +9,7 @@ import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
- * A <i>sphere volume</i> is a bounding volume adapter for a {@link Sphere}.
+ * Volume defined by a sphere.
  * @author Sarge
  */
 public record SphereVolume(Point centre, float radius) implements Volume {
@@ -24,7 +24,7 @@ public record SphereVolume(Point centre, float radius) implements Volume {
 
 	/**
 	 * Constructor.
-	 * @param sphere Sphere
+	 * @param centre Sphere centre
 	 */
 	public SphereVolume {
 		requireNonNull(centre);
@@ -73,7 +73,8 @@ public record SphereVolume(Point centre, float radius) implements Volume {
 	}
 
 	/**
-	 * Helper - Tests whether this sphere is intersected by the given bounds.
+	 * Helper.
+	 * Tests whether this sphere is intersected by the given bounds.
 	 * @param bounds Bounds
 	 * @return Whether intersected
 	 */

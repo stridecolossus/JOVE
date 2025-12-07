@@ -4,13 +4,16 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.function.*;
 
+import org.sarge.jove.control.Event;
 import org.sarge.jove.foreign.Callback;
 
 /**
  * Skeleton implementation for a GLFW device with a parent window.
+ * @param <T> Callback type
+ * @param <E> Event type
  * @author Sarge
  */
-abstract class AbstractWindowDevice<E, T> implements Device<E> {
+abstract class AbstractWindowDevice<E extends Event, T extends Callback> implements Device<E> {
 	private final Window window;
 
 	/**
@@ -26,7 +29,7 @@ abstract class AbstractWindowDevice<E, T> implements Device<E> {
 		final T callback = callback(window, listener);
 		final BiConsumer<Window, T> method = method((DeviceLibrary) window.library());
 		method.accept(window, callback);
-		window.register(listener, (Callback) callback);
+		window.register(listener, callback);
 	}
 
 	/**

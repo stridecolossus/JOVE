@@ -6,18 +6,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.AxisEvent;
 import org.sarge.jove.platform.desktop.DeviceLibrary.MouseListener;
 
 class MouseWheelTest {
 	private MouseWheel wheel;
 	private MockWindow window;
 	private AtomicInteger integer;
-	private Consumer<Integer> listener;
+	private Consumer<AxisEvent> listener;
 
 	@BeforeEach
 	void before() {
 		integer = new AtomicInteger();
-		listener = integer::set;
+		listener = event -> integer.set(event.value());
 		window = new MockWindow(new MockDeviceLibrary());
 		wheel = new MouseWheel(window);
 	}

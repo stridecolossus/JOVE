@@ -5,7 +5,8 @@ import java.lang.foreign.MemorySegment;
 import java.util.function.*;
 import java.util.stream.IntStream;
 
-import org.sarge.jove.platform.desktop.Button.*;
+import org.sarge.jove.control.Button;
+import org.sarge.jove.control.Button.*;
 import org.sarge.jove.platform.desktop.DeviceLibrary.MouseButtonListener;
 
 /**
@@ -14,7 +15,7 @@ import org.sarge.jove.platform.desktop.DeviceLibrary.MouseButtonListener;
  */
 public class MouseButtons extends AbstractWindowDevice<ButtonEvent, MouseButtonListener> {
 	private static final Button[] BUTTONS = IntStream
-			.range(0, number())
+			.range(0, 16)
 			.mapToObj(index -> new Button(index, String.format("Mouse-%d", index)))
 			.toArray(Button[]::new);
 
@@ -39,8 +40,9 @@ public class MouseButtons extends AbstractWindowDevice<ButtonEvent, MouseButtonL
 			@Override
 			public void button(MemorySegment window, int button, int action, int mods) {
 				final var event = new ButtonEvent(
+						MouseButtons.this,
 						BUTTONS[button],
-						Action.map(action),
+						ButtonAction.map(action),
 						ModifierKey.map(mods)
 				);
 				listener.accept(event);
