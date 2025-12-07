@@ -30,6 +30,9 @@ public abstract class AbstractPlayable implements Playable {
 
 	@Override
 	public void stop() {
+		if(!playing) {
+			throw new IllegalStateException("Not playing: " + this);
+		}
 		playing = false;
 	}
 }

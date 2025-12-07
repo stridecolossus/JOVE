@@ -58,7 +58,7 @@ public class Window extends TransientNativeObject {
 
 	// TODO - was lazy supplier!!!
 	private final WindowLibrary library;
-	private final Map<Object, Callback> listeners = new WeakHashMap<>();
+//	private final Map<Object, Callback> listeners = new WeakHashMap<>();
 
 //	public enum Type {
 //		ENTER,
@@ -210,40 +210,47 @@ public class Window extends TransientNativeObject {
 //		}
 //	}
 
-	/**
-	 * @return Listeners attached to this window
-	 */
-	protected Map<Object, Callback> listeners() {
-		return Collections.unmodifiableMap(listeners);
-	}
+	///////////////////
 
-	/**
-	 * Registers a device listener attached to this window.
-	 * <p>
-	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus unregistered by GLFW.
-	 * <p>
-	 * @param key			Key
-	 * @param listener 		Listener
-	 */
-	protected void register(Object key, Callback listener) {
-		requireNonNull(key);
-		requireNonNull(listener);
-		listeners.put(key, listener);
-	}
-
-	/**
-	 * Removes a registry entry.
-	 * @param key Key
-	 */
-	protected void remove(Object key) {
-		listeners.remove(key);
-	}
+//	/**
+//	 * @return Listeners attached to this window
+//	 */
+//	protected Map<Object, Callback> listeners() {
+//		return Collections.unmodifiableMap(listeners);
+//	}
+//
+//	/**
+//	 * Registers a device listener attached to this window.
+//	 * <p>
+//	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus unregistered by GLFW.
+//	 * <p>
+//	 * @param key			Key
+//	 * @param listener 		Listener
+//	 */
+//	protected void register(Object key, Callback listener) {
+//		requireNonNull(key);
+//		requireNonNull(listener);
+//		listeners.put(key, listener);
+//	}
+//
+//	/**
+//	 * Removes a registry entry.
+//	 * @param key Key
+//	 */
+//	protected void remove(Object key) {
+//		listeners.remove(key);
+//	}
 
 	@Override
 	@MainThread
 	protected void release() {
-		listeners.clear();
+		//listeners.clear();
 		library.glfwDestroyWindow(this);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Window[%s]", this.handle());
 	}
 
 	/**

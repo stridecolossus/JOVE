@@ -6,7 +6,7 @@ import static org.sarge.jove.util.Validation.requireNotEmpty;
 import java.util.function.Consumer;
 
 /**
- * An <i>action</i> specifies an action executed in response to an event.
+ * An <i>action</i> specifies a handler for a type of event.
  * @param <E> Event type
  * @author Sarge
  */

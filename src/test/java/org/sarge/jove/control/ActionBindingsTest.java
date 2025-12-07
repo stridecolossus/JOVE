@@ -7,20 +7,21 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.desktop.Device;
+import org.sarge.jove.foreign.Callback;
 
 class ActionBindingsTest {
 	private static class MockDevice implements Device<AxisEvent> {
 		private Consumer<AxisEvent> listener;
 
 		@Override
-		public void bind(Consumer<AxisEvent> listener) {
+		public Callback bind(Consumer<AxisEvent> listener) {
 			assertEquals(null, this.listener);
 			this.listener = listener;
+			return null;
 		}
 
 		@Override
-		public void remove(Consumer<AxisEvent> listener) {
+		public void remove() {
 			assertNotNull(this.listener);
 			this.listener = null;
 		}

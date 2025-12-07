@@ -59,9 +59,12 @@ public class VulkanIntegrationDemo {
 
 		final var running = new AtomicBoolean(true);
 		final var exit = new Action<>("exit", ButtonEvent.class, _ -> running.set(false));
-		final var bindings = new ActionBindings(List.of(exit));
+		final var dump = new Action<>("dump", ButtonEvent.class, System.out::println);
+		final var bindings = new ActionBindings(List.of(exit, dump));
 		final var keyboard = new KeyboardDevice(window);
-		bindings.bind(exit, keyboard);
+		final var adapter = new ButtonDeviceAdapter(keyboard);
+		bindings.bind(exit, adapter.button(256));
+		bindings.bind(dump, adapter.button(65));
 
 		//////////////////
 
@@ -232,6 +235,7 @@ public class VulkanIntegrationDemo {
 				desktop.poll();
 			}
 			loop.stop();
+			device.waitIdle();
 		}
 		System.out.println(counter);
 

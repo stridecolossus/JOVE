@@ -41,7 +41,7 @@ class KeyboardDeviceTest {
 	@Test
 	void remove() {
 		keyboard.bind(listener);
-		keyboard.remove(listener);
+		keyboard.remove();
 		assertEquals(null, keyboard.listener());
 	}
 }

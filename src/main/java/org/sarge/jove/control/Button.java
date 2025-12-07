@@ -11,14 +11,14 @@ import org.sarge.jove.util.*;
  * A <i>button</i> is a keyboard key, mouse button, or controller button.
  * @author Sarge
  */
-public record Button(int key, String name) {
+public record Button(int index, String name) {
 	/**
 	 * Constructor.
-	 * @param key		Button key code
+	 * @param index		Button index
 	 * @param name		Identifier
 	 */
 	public Button {
-		requireZeroOrMore(key);
+		requireZeroOrMore(index);
 		requireNotEmpty(name);
 	}
 

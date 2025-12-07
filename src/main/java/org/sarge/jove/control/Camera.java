@@ -2,6 +2,8 @@ package org.sarge.jove.control;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Objects;
+
 import org.sarge.jove.geometry.*;
 
 /**
@@ -13,8 +15,8 @@ import org.sarge.jove.geometry.*;
  */
 public class Camera {
 	// Camera state
-	private Point pos = Point.ORIGIN;
-	private Normal dir = Axis.Z;
+	private Point position = Point.ORIGIN;
+	private Normal direction = Axis.Z;
 	private Normal up = Axis.Y;
 
 	// Transient view transform
@@ -26,7 +28,7 @@ public class Camera {
 	 * @return Camera position
 	 */
 	public Point position() {
-		return pos;
+		return position;
 	}
 
 	/**
@@ -34,7 +36,7 @@ public class Camera {
 	 * @param position New position
 	 */
 	public void move(Point position) {
-		this.pos = requireNonNull(position);
+		this.position = requireNonNull(position);
 		dirty();
 	}
 
@@ -43,7 +45,7 @@ public class Camera {
 	 * @param vector Movement vector
 	 */
 	public void move(Vector vector) {
-		pos = pos.add(vector);
+		position = position.add(vector);
 		dirty();
 	}
 
@@ -53,7 +55,7 @@ public class Camera {
 	 * @see #direction()
 	 */
 	public void move(float distance) {
-		move(dir.multiply(distance));
+		move(direction.multiply(distance));
 	}
 
 	/**
@@ -70,17 +72,17 @@ public class Camera {
 	 * @return Camera view direction
 	 */
 	public Normal direction() {
-		return dir;
+		return direction;
 	}
 
 	/**
 	 * Sets the camera view direction.
-	 * @param dir View direction
+	 * @param direction View direction
 	 * @throws IllegalStateException if the direction would result in gimbal lock
 	 */
-	public void direction(Normal dir) {
-		validate(dir, up);
-		this.dir = requireNonNull(dir);
+	public void direction(Normal direction) {
+		validate(direction, up);
+		this.direction = requireNonNull(direction);
 		dirty();
 	}
 
@@ -91,8 +93,10 @@ public class Camera {
 	 * @throws IllegalStateException if the resultant direction would result in gimbal lock
 	 */
 	public void look(Point target) {
-		if(pos.equals(target)) throw new IllegalArgumentException("Cannot point camera at its current position");
-		final Vector look = Vector.between(target, pos);
+		if(position.equals(target)) {
+			throw new IllegalArgumentException("Cannot point camera at its current position");
+		}
+		final Vector look = Vector.between(target, position);
 		direction(new Normal(look));
 	}
 
@@ -103,7 +107,7 @@ public class Camera {
 	 * @throws IllegalStateException if {@link #up} would result in gimbal lock
 	 */
 	public void up(Normal up) {
-		validate(dir, up);
+		validate(direction, up);
 		this.up = requireNonNull(up);
 		dirty();
 	}
@@ -143,9 +147,9 @@ public class Camera {
 	/**
 	 * @throws IllegalStateException if the camera would be gimbal locked
 	 */
-	private void validate(Vector dir, Vector up) {
-		if(dir.equals(up) || dir.equals(up.invert())) {
-			throw new IllegalStateException("Camera gimbal lock: dir=%s up=%s this=%s".formatted(dir, up, this));
+	private void validate(Vector direction, Vector up) {
+		if(direction.equals(up) || direction.equals(up.invert())) {
+			throw new IllegalStateException("Camera gimbal lock: direction=%s up=%s camera=%s".formatted(direction, up, this));
 		}
 	}
 
@@ -154,23 +158,43 @@ public class Camera {
 	 */
 	protected void update() {
 		// Determine right axis
-		right = new Normal(up.cross(dir));
+		right = new Normal(up.cross(direction));
 
 		// Determine up axis
-		final Vector y = dir.cross(right).normalize();
+		final Vector y = direction.cross(right).normalize();
 
 		// Build translation component
-		final Matrix trans = Transform.translation(new Vector(pos).invert());
+		final Matrix trans = Transform.translation(new Vector(position).invert());
 
 		// Build rotation component
 		final Matrix rot = new Matrix.Builder(4)
 				.identity()
 				.row(0, right)
 				.row(1, y)
-				.row(2, dir)
+				.row(2, direction)
 				.build();
 
 		// Create camera matrix
 		matrix = rot.multiply(trans);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(position, direction, up);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Camera that) &&
+				this.position.equals(that.position) &&
+				this.direction.equals(that.direction) &&
+				this.up.equals(that.up);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Camera[position=%s direction=%s up=%s]", position, direction, up);
 	}
 }

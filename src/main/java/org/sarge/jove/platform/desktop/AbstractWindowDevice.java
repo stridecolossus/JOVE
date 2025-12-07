@@ -5,8 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.Objects;
 import java.util.function.*;
 
-import org.sarge.jove.control.Event;
-import org.sarge.jove.control.Event.BindPoint;
+import org.sarge.jove.control.*;
 import org.sarge.jove.foreign.Callback;
 
 /**
@@ -15,7 +14,7 @@ import org.sarge.jove.foreign.Callback;
  * @param <E> Event type
  * @author Sarge
  */
-abstract class AbstractWindowDevice<E extends Event, T extends Callback> implements Device<E>, BindPoint<E> {
+abstract class AbstractWindowDevice<E extends Event, T extends Callback> implements Device<E> {
 	private final Window window;
 	private Consumer<E> listener;
 
@@ -68,13 +67,14 @@ abstract class AbstractWindowDevice<E extends Event, T extends Callback> impleme
 	protected abstract BiConsumer<Window, T> method(DeviceLibrary library);
 
 	@Override
-	public void remove(Consumer<E> listener) {
-		if(this.listener != listener) {
-			throw new IllegalArgumentException("Mismatched listener %s for device %s".formatted(listener, this));
+	public void remove() {
+		if(this.listener == null) {
+			throw new IllegalStateException("Device is not bound");
 		}
 
 		final BiConsumer<Window, T> method = method((DeviceLibrary) window.library());
 		method.accept(window, null);
+
 		this.listener = null;
 	}
 

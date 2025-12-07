@@ -32,7 +32,7 @@ class MousePointerTest {
 	@Test
 	void remove() {
 		pointer.bind(listener);
-		pointer.remove(listener);
+		pointer.remove();
 		assertEquals(null, pointer.listener());
 	}
 }

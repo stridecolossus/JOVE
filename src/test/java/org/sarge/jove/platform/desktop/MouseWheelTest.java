@@ -32,7 +32,7 @@ class MouseWheelTest {
 	@Test
 	void remove() {
 		wheel.bind(listener);
-		wheel.remove(listener);
+		wheel.remove();
 		assertEquals(null, wheel.listener());
 	}
 }

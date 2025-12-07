@@ -2,9 +2,7 @@ package org.sarge.jove.control;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.*;
-import java.util.function.*;
-
-import org.sarge.jove.platform.desktop.Device;
+import java.util.function.Function;
 
 /**
  * A set of <i>action bindings</i> maps events to actions.
@@ -105,7 +103,7 @@ public class ActionBindings {
 		}
 
 		// Unbind device
-		device.remove(action.handler());
+		device.remove();
 
 		// Remove binding
 		final var list = list(action);
@@ -123,7 +121,7 @@ public class ActionBindings {
 	public void clear(Action<?> action) {
 		final var list = list(action);
 		for(var device : list) {
-			unbind(action, device);
+			device.remove();
 			inverse.remove(device);
 		}
 		list.clear();
@@ -139,22 +137,10 @@ public class ActionBindings {
 		}
 
 		// Unbind devices
-		for(var entry : inverse.entrySet()) {
-			final Device<?> device = entry.getKey();
-			final Action<?> action = entry.getValue();
-			unbind(action, device);
+		for(var device : inverse.keySet()) {
+			device.remove();
 		}
 		inverse.clear();
-	}
-
-	/**
-	 * Removes a device binding.
-	 */
-	@SuppressWarnings("unchecked")
-	private static void unbind(Action<?> action, Device<?> device) {
-		@SuppressWarnings("rawtypes")
-		final Consumer handler = action.handler();
-		device.remove(handler);
 	}
 
 	@Override

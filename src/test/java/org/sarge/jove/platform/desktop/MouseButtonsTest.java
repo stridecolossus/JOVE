@@ -41,7 +41,7 @@ class MouseButtonsTest {
 	@Test
 	void remove() {
 		buttons.bind(listener);
-		buttons.remove(listener);
+		buttons.remove();
 		assertEquals(null, buttons.listener());
 	}
 }

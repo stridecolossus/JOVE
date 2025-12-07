@@ -63,14 +63,13 @@ class AbstractWindowDeviceTest {
 
 	@Test
 	void remove() {
-		final Consumer<AxisEvent> handler = listener::set;
-		device.bind(handler);
-		device.remove(handler);
+		device.bind(listener::set);
+		device.remove();
 		assertEquals(null, device.listener());
 	}
 
 	@Test
 	void unbound() {
-		assertThrows(IllegalArgumentException.class, () -> device.remove(listener::set));
+		assertThrows(IllegalStateException.class, () -> device.remove());
 	}
 }

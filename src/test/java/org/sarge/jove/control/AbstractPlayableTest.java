@@ -36,10 +36,10 @@ class AbstractPlayableTest {
 			assertThrows(IllegalStateException.class, () -> playable.pause());
 		}
 
-		@DisplayName("ignores")
+		@DisplayName("cannot be stopped")
 		@Test
 		void stop() {
-			playable.stop();
+			assertThrows(IllegalStateException.class, () -> playable.stop());
 		}
 	}
 
@@ -106,11 +106,10 @@ class AbstractPlayableTest {
 			assertThrows(IllegalStateException.class, () -> playable.pause());
 		}
 
-		@DisplayName("can be stopped")
+		@DisplayName("cannot be stopped")
 		@Test
 		void stop() {
-			playable.stop();
-			assertEquals(false, playable.isPlaying());
+			assertThrows(IllegalStateException.class, () -> playable.pause());
 		}
 	}
 }

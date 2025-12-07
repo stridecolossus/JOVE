@@ -1,8 +1,8 @@
-package org.sarge.jove.platform.desktop;
+package org.sarge.jove.control;
 
 import java.util.function.Consumer;
 
-import org.sarge.jove.control.Event;
+import org.sarge.jove.foreign.Callback;
 
 /**
  * A <i>device</i> is a hardware component that generates input events, such as the keyboard, mouse, or a controller.
@@ -16,12 +16,11 @@ public interface Device<E extends Event> {
 	 * @return Underlying callback
 	 * @throws IllegalStateException if this device is already bound to a listener
 	 */
-	Object bind(Consumer<E> listener);
+	Callback bind(Consumer<E> listener);
 
 	/**
 	 * Removes the attached event listener.
-	 * @param listener Event listener to remove
-	 * @throws IllegalArgumentException if the listener is not bound to this device
+	 * @throws IllegalArgumentException if a listener is not bound to this device
 	 */
-	void remove(Consumer<E> listener);
+	void remove();
 }
