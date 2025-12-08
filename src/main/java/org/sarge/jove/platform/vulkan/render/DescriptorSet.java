@@ -209,6 +209,7 @@ public class DescriptorSet implements NativeObject {
 
 		// Init write descriptor
 		final var write = new VkWriteDescriptorSet();
+		write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
 		write.dstBinding = binding.index();
 		write.descriptorType = binding.type();
 		write.dstSet = DescriptorSet.this.handle();
@@ -319,6 +320,7 @@ public class DescriptorSet implements NativeObject {
 		public static Layout create(LogicalDevice device, Collection<Binding> bindings, Set<VkDescriptorSetLayoutCreateFlags> flags) {
 			// Init layout descriptor
 			final var info = new VkDescriptorSetLayoutCreateInfo();
+			info.sType = VkStructureType.DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			info.flags = new EnumMask<>(flags);
 			info.bindingCount = bindings.size();
 			info.pBindings = bindings.stream().map(Binding::populate).toArray(VkDescriptorSetLayoutBinding[]::new);
@@ -406,6 +408,7 @@ public class DescriptorSet implements NativeObject {
 			// Build allocation descriptor
 			final int count = layouts.size();
 			final var info = new VkDescriptorSetAllocateInfo();
+			info.sType = VkStructureType.DESCRIPTOR_SET_ALLOCATE_INFO;
 			info.descriptorPool = this.handle();
 			info.descriptorSetCount = count;
 			info.pSetLayouts = NativeObject.handles(layouts);
@@ -534,6 +537,7 @@ public class DescriptorSet implements NativeObject {
 			private VkDescriptorPoolCreateInfo build(int limit) {
 				// Init pool descriptor
 				final var info = new VkDescriptorPoolCreateInfo();
+				info.sType = VkStructureType.DESCRIPTOR_POOL_CREATE_INFO;
 				info.flags = new EnumMask<>(flags);
 
 				// Initialise maximum number of sets that can be allocated

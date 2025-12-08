@@ -163,6 +163,7 @@ public class DefaultImage extends VulkanObject implements Image {
 
 			// Populate image structure
 			final var info = new VkImageCreateInfo();
+			info.sType = VkStructureType.IMAGE_CREATE_INFO;
 			info.flags = new EnumMask<>(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();

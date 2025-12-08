@@ -279,7 +279,8 @@ public class Sampler extends VulkanObject {
 				throw new IllegalArgumentException("Invalid min/max LOD");
 			}
 
-			// Init flags
+			// Init descriptor
+			info.sType = VkStructureType.SAMPLER_CREATE_INFO;
 			info.flags = new EnumMask<>(flags);
 
 			// Instantiate sampler

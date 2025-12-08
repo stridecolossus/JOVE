@@ -9,6 +9,11 @@ https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
 is the diagnostics stuff now part of the API proper?
 since 1.2?
 reuse callback stuff? or too complicated? (esp since returns structures, enums, etc)
+update blog? i.e. dumps messages to console by default
+
+VkDebugUtilsMessengerCallbackDataEXT
+3 x returned arrays -> unsupported!
+call back is OK but structure cannot be unmarshalled
 
 README.md
 - summary
