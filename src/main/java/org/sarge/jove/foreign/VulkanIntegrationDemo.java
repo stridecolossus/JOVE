@@ -63,7 +63,8 @@ public class VulkanIntegrationDemo {
 		final var bindings = new ActionBindings(List.of(exit, dump));
 		final var keyboard = new KeyboardDevice(window);
 		final var adapter = new ButtonDeviceAdapter(keyboard);
-		bindings.bind(exit, adapter.button(256));
+		//final int escape = KeyTable.defaultKeyTable().code("ESCAPE");
+		bindings.bind(exit, adapter.button(256));		// TODO - should be actual button/template?
 		bindings.bind(dump, adapter.button(65));
 
 		//////////////////
@@ -101,15 +102,6 @@ public class VulkanIntegrationDemo {
 		final Family presentationFamily = presentationSelector.family(physical);
 		System.out.println("graphics=" + graphicsFamily);
 		System.out.println("presentation" + presentationFamily);
-
-//		System.out.println("Supported device layers...");
-//		for(VkLayerProperties layer : physical.layers()) {
-//			System.out.println("  " + layer.layerName);
-//		}
-//		System.out.println("Supported device extensions...");
-//		for(VkExtensionProperties ext : physical.extensions("VK*")) {
-//			System.out.println("  " + ext.extensionName);
-//		}
 
 		System.out.println("Device properties...");
 		final var props = physical.properties();
@@ -235,12 +227,12 @@ public class VulkanIntegrationDemo {
 				desktop.poll();
 			}
 			loop.stop();
-			device.waitIdle();
 		}
 		System.out.println(counter);
 
 		// Cleanup
 		System.out.println("Cleanup...");
+		device.waitIdle();
 ///////////////
 b.destroy();
 ///////////////

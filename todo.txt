@@ -6,13 +6,22 @@ review use of cosine
 add debug support for the create instance call
 https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
 
-is the debug stuff now part of the API proper? since 1.2?
+is the diagnostics stuff now part of the API proper?
+since 1.2?
+reuse callback stuff? or too complicated? (esp since returns structures, enums, etc)
 
 README.md
 - summary
 - link to blog
 
 devices are public - could lead to multiple binds for same callback-listener! => enforce max one per window?
+
+MemorySegment -> supported transformer type?
+- IdentityTransformer
+- @Updated replaces Pointer?
+- only IntegerReference is special case
+- use Handle only for immutable parameters
+- makes TypeMapper much simpler???
 
 -------------------------------
 

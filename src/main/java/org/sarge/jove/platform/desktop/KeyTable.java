@@ -12,9 +12,11 @@ import java.util.function.BiFunction;
  * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
  * @author Sarge
  */
-class KeyTable {
+public class KeyTable {
 	private final Map<Integer, String> keys;
 	private final Map<String, Integer> codes;
+
+	// TODO - move to control?
 
 	/**
 	 * Constructor.

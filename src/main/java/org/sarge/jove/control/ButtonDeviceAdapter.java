@@ -56,7 +56,7 @@ public class ButtonDeviceAdapter {
 				// Remove handler
 				final var handler = handlers.remove(index);
 				if(handler == null) {
-					throw new IllegalStateException();
+					throw new IllegalStateException("Button not bound: " + index);
 				}
 
 				// Remove the parent device binding if no buttons

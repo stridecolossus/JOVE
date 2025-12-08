@@ -15,6 +15,7 @@ public class ActionBindings {
 	/**
 	 * Constructor.
 	 * @param actions Actions
+	 * @throws IllegalStateException if the {@link #actions} are not unique
 	 */
 	public ActionBindings(List<Action<?>> actions) {
 		this.bindings = actions.stream().collect(toMap(Function.identity(), _ -> new ArrayList<>()));
@@ -117,6 +118,7 @@ public class ActionBindings {
 	/**
 	 * Removes all bindings for the given action.
 	 * @param action Action
+	 * @throws IllegalArgumentException if the action is not present
 	 */
 	public void clear(Action<?> action) {
 		final var list = list(action);

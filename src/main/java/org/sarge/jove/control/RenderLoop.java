@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 /**
- * The <i>render loop</i> executes render tasks sequentially on a single thread at a configured frame rate.
+ * The <i>render loop</i> executes rendering tasks sequentially on a single thread at a configured frame rate.
  * @author Sarge
  */
 public class RenderLoop implements AutoCloseable {
@@ -69,18 +69,11 @@ public class RenderLoop implements AutoCloseable {
 	 * Starts the render loop.
 	 * @throws IllegalStateException if rendering has already been started
 	 */
-	public void start() {
+	public synchronized void start() {
 		if(isRunning()) {
 			throw new IllegalStateException("Render loop already running");
 		}
-		schedule();
-	}
 
-	/**
-	 * Starts or resumes scheduling of the render task.
-	 */
-	private void schedule() {
-		assert !isRunning();
 		final long period = TimeUnit.SECONDS.toMicros(1) / rate;
 		future = executor.scheduleAtFixedRate(this::run, 0, period, TimeUnit.MICROSECONDS);
 	}
@@ -103,7 +96,7 @@ public class RenderLoop implements AutoCloseable {
 	 * Stops the render loop.
 	 * @throws IllegalStateException if rendering has not been started
 	 */
-	public void stop() {
+	public synchronized void stop() {
 		if(!isRunning()) {
 			throw new IllegalStateException("Render loop has not been started");
 		}
@@ -112,7 +105,7 @@ public class RenderLoop implements AutoCloseable {
 	}
 
 	@Override
-	public void close() throws Exception {
+	public synchronized void close() throws Exception {
 		if(isRunning()) {
 			stop();
 		}

@@ -45,6 +45,11 @@ class ActionBindingsTest {
 		assertEquals(Set.of(action), bindings.actions());
 	}
 
+	@Test
+	void distinct() {
+		assertThrows(IllegalStateException.class, () -> new ActionBindings(List.of(action, action)));
+	}
+
 	@Nested
 	class Empty {
 		@Test
@@ -125,5 +130,13 @@ class ActionBindingsTest {
 			device.listener.accept(event);
 			assertEquals(event, listener.get());
 		}
+	}
+
+	@Test
+	void equals() {
+		assertEquals(bindings, bindings);
+		assertEquals(bindings, new ActionBindings(List.of(action)));
+		assertNotEquals(bindings, null);
+		assertNotEquals(bindings, new ActionBindings(List.of()));
 	}
 }

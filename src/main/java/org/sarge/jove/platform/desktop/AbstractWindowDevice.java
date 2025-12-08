@@ -20,6 +20,8 @@ abstract class AbstractWindowDevice<E extends Event, T extends Callback> impleme
 
 	// TODO - this fails if multiple instances created => enforce max one per window? i.e. private ctors for devices?
 	// or revert to registry on window (messy?)
+	// i.e. 'listener' above doesn't help globally if created (say) multiple KeyboardDevice(window)
+	// only used to ensure bind/remove pairs
 
 	/**
 	 * Constructor.
