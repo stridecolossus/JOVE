@@ -133,8 +133,6 @@ public class DiagnosticHandler extends TransientNativeObject {
 
 	/**
 	 * Message callback.
-	 * Note that the callback signature is not defined in the Vulkan API.
-	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PFN_vkDebugUtilsMessengerCallbackEXT.html">Vulkan documentation</a>
 	 */
 	@SuppressWarnings("rawtypes")
 	private record Callback(Consumer<Message> consumer, Transformer transformer) {
@@ -159,6 +157,22 @@ public class DiagnosticHandler extends TransientNativeObject {
 			final MemorySegment address = pCallbackData.reinterpret(transformer.layout().byteSize());
 			final var data = (VkDebugUtilsMessengerCallbackDataEXT) transformer.unmarshal().apply(address);
 
+			/**
+			 *
+			 * TODO
+			 *
+			 * this fails with code generated structure
+			 * 3 x array fields unsupported!
+			 *
+			 * options (in order of effort / desirability):
+			 * 1. custom structure layout with these fields as Handle (this works but requires manual fiddle)
+			 * 2. custom layout with these fields omitted (unused anyway?)
+			 * 3. 'manually' unmarshal from memory here
+			 * 4. callback transformer mapper works differently (note currently does not do ANY mapping!)
+			 * 5. complete revamp of transformers to somehow support returned arrays (hard)
+			 *
+			 */
+
 			// Handle message
 			final Message message = new Message(level, types, data);
 			consumer.accept(message);
@@ -182,6 +196,7 @@ public class DiagnosticHandler extends TransientNativeObject {
     		final var linker = Linker.nativeLinker();
    			return linker.upcallStub(handle, descriptor, Arena.global());
 		}
+		// TODO - integrate this with callback support (such as it is)? note callback returns a structure
 	}
 
 	/**
