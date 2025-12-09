@@ -193,8 +193,8 @@ class VulkanGenerator {
 		final String file = Files.readString(path);
 //		final var printer = FilePrinter.IGNORE;
 //		final var printer = FilePrinter.of(new PrintWriter(System.out));
-//		final var printer = FilePrinter.of(directory, "java", true);
-		final var printer = new CompareFilePrinter();
+		final var printer = FilePrinter.of(directory, "java", true);
+//		final var printer = new CompareFilePrinter();
 		final var generator = new VulkanGenerator(file, printer);
 		generator.generate();
 
