@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.sarge.jove.common.Rectangle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanUtility;
+import org.sarge.jove.platform.vulkan.core.Vulkan;
 import org.sarge.jove.util.Percentile;
 
 /**
@@ -127,7 +127,7 @@ public class ViewportStage {
 
 		// Add scissors
 		info.scissorCount = count;
-		info.pScissors = scissors.stream().map(VulkanUtility::rectangle).toArray(VkRect2D[]::new);
+		info.pScissors = scissors.stream().map(Vulkan::rectangle).toArray(VkRect2D[]::new);
 
 		return info;
 	}

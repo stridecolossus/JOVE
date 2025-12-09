@@ -145,7 +145,7 @@ public class Vector extends Tuple {
 	/**
 	 * Calculates the <i>cross product</i> of this and the given vector.
 	 * <p>
-	 * The result of the cross product is perpendicular to the given vectors and is thus a normal to the plane containing both.
+	 * The result of the cross product is a vector perpendicular to the given vectors and is thus a normal to the plane containing both.
 	 * <p>
 	 * Mathematically the cross product is expressed as follows:
 	 * <p>

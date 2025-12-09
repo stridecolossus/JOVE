@@ -202,7 +202,6 @@ public class MutableMesh extends AbstractMesh {
 			final Normal n = normals[c].normalise();
 			//vertices.get(c)
 			// TODO - replace
-			System.out.println(c+" "+n);
 		}
 	}
 

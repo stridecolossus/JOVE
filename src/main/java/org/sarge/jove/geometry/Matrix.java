@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import java.text.NumberFormat;
 import java.util.*;
 
-import org.sarge.jove.common.Bufferable;
+import org.sarge.jove.common.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
@@ -22,6 +22,21 @@ import org.sarge.jove.util.MathsUtility;
  * @author Sarge
  */
 public class Matrix implements Transform, Bufferable {
+	/**
+	 * Order of a 4x4 transformation matrix.
+	 */
+	public static final int ORDER = 4;
+
+	/**
+	 * 4x4 identity matrix.
+	 */
+	public static final Matrix IDENTITY = Matrix.identity(ORDER);
+
+	/**
+	 * Layout of a 4x4 matrix.
+	 */
+	public static final Layout LAYOUT = Layout.floats(ORDER * ORDER);
+
 	/**
 	 * Creates an identity matrix.
 	 * @param order Matrix order
@@ -48,12 +63,12 @@ public class Matrix implements Transform, Bufferable {
 	 * @throws IllegalArgumentException if the matrix is not square
 	 */
 	public Matrix(float[][] matrix) {
+		this(matrix.length);
+		init(matrix);
+	}
+
+	private void init(float[][] matrix) {
 		final int order = matrix.length;
-		// TODO - this used to work...
-//		this(order);
-		requireOneOrMore(order);
-		this.matrix = new float[order][order];
-		// ...TODO
 		for(int r = 0; r < order; ++r) {
 			if(matrix[r].length != order) {
 				throw new IllegalArgumentException();
@@ -287,6 +302,13 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public static class Builder {
 		private Matrix matrix;
+
+		/**
+		 * Default constructor for a 4x4 matrix builder.
+		 */
+		public Builder() {
+			this(ORDER);
+		}
 
 		/**
 		 * Constructor for a matrix of the given order.

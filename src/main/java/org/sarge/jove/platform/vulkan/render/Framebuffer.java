@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
@@ -46,7 +46,7 @@ public class Framebuffer extends VulkanObject {
 		info.sType = VkStructureType.RENDER_PASS_BEGIN_INFO;
 		info.renderPass = group.pass.handle();
 		info.framebuffer = this.handle();
-		info.renderArea = VulkanUtility.rectangle(new Rectangle(group.extents));
+		info.renderArea = Vulkan.rectangle(new Rectangle(group.extents));
 
 		// Build attachment clear array
 		final var clear = group.clear.values();

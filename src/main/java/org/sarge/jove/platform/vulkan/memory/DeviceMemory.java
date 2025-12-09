@@ -22,20 +22,21 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
  * Usage:
  * <pre>
  * // Create memory record
- * DeviceMemory mem = ...
+ * DeviceMemory memory = ...
  *
  * // Map accessible region
- * Region region = mem.map();
+ * Region region = memory.map();
  *
  * // Write to memory
- * ByteBuffer buffer = region.buffer();
- * buffer.put(...);
+ * MemorySegment address = memory.segment();
+ * ByteBuffer buffer = address.asByteBuffer();
+ * ...
  *
  * // Release mapping
  * region.unmap();
  *
  * // Release memory
- * mem.destroy();
+ * memory.destroy();
  * </pre>
  * <p>
  * @author Sarge
@@ -72,7 +73,7 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	Region map(long offset, long size);
 
 	/**
-	 * Maps this entire memory blocks.
+	 * Maps this entire memory block.
 	 * @return Mapping memory
 	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
 	 * @see #map(long, long)

@@ -3,8 +3,9 @@ package org.sarge.jove.platform.vulkan.core;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
-import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
@@ -12,7 +13,7 @@ import org.sarge.jove.platform.vulkan.pipeline.PipelineLibrary;
 import org.sarge.jove.platform.vulkan.render.RenderLibrary;
 
 /**
- * TODO
+ * The <i>Vulkan</i> class is used to create the native library and also provides some common utility helpers.
  * @author Sarge
  */
 public interface Vulkan {
@@ -50,5 +51,43 @@ public interface Vulkan {
 
 		// Build native Vulkan API
 		return (VulkanCoreLibrary) factory.build(List.of(api));
+	}
+
+	/**
+	 * @param size Buffer offset or size
+	 * @throws IllegalArgumentException if the given size is not a multiple of 4 bytes
+	 */
+	static void checkAlignment(long size) {
+		if((size % 4) != 0) {
+			throw new IllegalArgumentException("Expected 4-byte alignment");
+		}
+	}
+
+	/**
+	 * Helper.
+	 * Converts the given dimensions to Vulkan extents.
+	 * @param dimensions Dimensions
+	 * @return Extents
+	 */
+	static VkExtent2D extent(Dimensions dimensions) {
+		final var extent = new VkExtent2D();
+		extent.width = dimensions.width();
+		extent.height = dimensions.height();
+		return extent;
+	}
+
+	/**
+	 * Helper.
+	 * Converts a rectangle to the Vulkan equivalent.
+	 * @param rectangle Rectangle
+	 * @return Vulkan rectangle
+	 */
+	static VkRect2D rectangle(Rectangle rectangle) {
+		final VkRect2D result = new VkRect2D();
+		result.offset = new VkOffset2D();
+		result.offset.x = rectangle.x();
+		result.offset.y = rectangle.y();
+		result.extent = extent(rectangle.dimensions());
+		return result;
 	}
 }

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.vulkan.VkExtent2D;
-import org.sarge.jove.platform.vulkan.common.VulkanUtility;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
 
@@ -50,7 +49,7 @@ class ExtentSwapchainConfigurationTest {
 
 	@Test
 	void current() {
-		properties.capabilities.currentExtent = VulkanUtility.extent(new Dimensions(640, 480));
+		properties.capabilities.currentExtent = Vulkan.extent(new Dimensions(640, 480));
 		configuration.configure(builder, properties);
 		assertEquals(640, builder.extent.width);
 		assertEquals(480, builder.extent.height);

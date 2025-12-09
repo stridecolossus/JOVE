@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.Matrix.Builder;
 
 class MatrixTest {
@@ -33,6 +34,12 @@ class MatrixTest {
 	void order(int order) {
 		matrix = new Matrix.Builder(order).build();
 		assertEquals(order, matrix.order());
+	}
+
+	@DisplayName("A matrix has a memory layout")
+	@Test
+	void layout() {
+		assertEquals(new Layout(4 * 4, Layout.Type.FLOAT, true, Float.BYTES), Matrix.LAYOUT);
 	}
 
 	@DisplayName("A matrix is a transform")
@@ -184,6 +191,11 @@ class MatrixTest {
 			assertEquals(matrix, matrix.multiply(identity));
 			assertEquals(matrix, identity.multiply(matrix));
 			assertEquals(identity, identity.multiply(identity));
+		}
+
+		@Test
+		void identity() {
+			assertEquals(Matrix.identity(4), Matrix.IDENTITY);
 		}
 	}
 

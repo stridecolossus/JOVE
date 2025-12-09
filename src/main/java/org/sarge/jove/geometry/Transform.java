@@ -1,27 +1,10 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.common.Layout;
-
 /**
  * A <i>transform</i> is represented by a 4x4 {@link Matrix} for model transformation and projection.
  * @author Sarge
  */
 public interface Transform {
-	/**
-	 * Order of a 4x4 transformation matrix.
-	 */
-	int ORDER = 4;
-
-	/**
-	 * 4x4 identity matrix.
-	 */
-	Matrix IDENTITY = Matrix.identity(ORDER);
-
-	/**
-	 * Layout of a 4x4 matrix.
-	 */
-	Layout LAYOUT = Layout.floats(ORDER * ORDER);
-
 	/**
 	 * @return Transformation matrix
 	 */
@@ -33,7 +16,7 @@ public interface Transform {
 	 * @return Translation matrix
 	 */
 	static Matrix translation(Vector vector) {
-		return new Matrix.Builder(ORDER)
+		return new Matrix.Builder()
 				.identity()
 				.column(3, vector)
 				.build();
@@ -44,7 +27,7 @@ public interface Transform {
 	 * @return Scaling matrix
 	 */
 	static Matrix scale(float x, float y, float z) {
-		return new Matrix.Builder(ORDER)
+		return new Matrix.Builder()
 				.set(0, 0, x)
 				.set(1, 1, y)
 				.set(2, 2, z)
@@ -52,6 +35,12 @@ public interface Transform {
 				.build();
 	}
 
+	/**
+	 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix with the given scalar.
+	 * @param f Scalar
+	 * @return Scaling matrix
+	 * @see #scale(float, float, float)
+	 */
 	static Matrix scale(float f) {
 		return scale(f, f, f);
 	}

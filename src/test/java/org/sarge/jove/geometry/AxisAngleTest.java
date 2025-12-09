@@ -1,7 +1,7 @@
 package org.sarge.jove.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.util.MathsUtility.*;
+import static org.sarge.jove.util.MathsUtility.PI;
 
 import org.junit.jupiter.api.*;
 
@@ -19,14 +19,8 @@ class AxisAngleTest {
 	void rotation() {
 		assertEquals(axis, rotation.axis());
 		assertEquals(PI, rotation.angle());
-		assertEquals(Cosine.Provider.DEFAULT, rotation.provider());
+		//assertEquals(Cosine.Provider.DEFAULT, rotation.provider());
 		assertEquals(rotation, rotation.toAxisAngle());
-	}
-
-	@Test
-	void set() {
-		rotation.set(HALF_PI);
-		assertEquals(HALF_PI, rotation.angle());
 	}
 
 	@Test

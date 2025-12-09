@@ -2,53 +2,24 @@ package org.sarge.jove.geometry;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Objects;
-
-import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.util.MathsUtility;
 
 /**
- * An <i>axis-angle</i> specifies a mutable, counter-clockwise rotation about an arbitrary axis.
+ * An <i>axis-angle</i> specifies a counter-clockwise rotation about an arbitrary axis.
  * <p>
  * The {@link #provider()} method can be overridden to implement custom trigonometric functions.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public class AxisAngle implements Rotation {
-	private final Normal axis;
-	private float angle;
-
+public record AxisAngle(Normal axis, float angle) implements Rotation {
 	/**
 	 * Constructor.
 	 * @param axis 		Rotation axis
-	 * @param angle		Angle (radians, counter-clockwise)
+	 * @param angle		Angle (radians)
 	 */
-	public AxisAngle(Normal axis, float angle) {
-		this.axis = requireNonNull(axis);
-		this.angle = requireNonNull(angle);
-	}
-
-	/**
-	 * @return Rotation axis
-	 */
-	public Normal axis() {
-		return axis;
-	}
-
-	/**
-	 * @return Rotation angle
-	 */
-	public float angle() {
-		return angle;
-	}
-
-	/**
-	 * Sets the rotation angle.
-	 * @param angle Rotation angle (radians)
-	 */
-	public void set(float angle) {
-		this.angle = angle;
+	public AxisAngle {
+		requireNonNull(axis);
 	}
 
 	@Override
@@ -57,27 +28,13 @@ public class AxisAngle implements Rotation {
 	}
 
 	/**
-	 * @return This rotation as an animation
-	 */
-	public Animation animation() {
-		return pos -> set(pos * MathsUtility.TWO_PI);
-	}
-
-	/**
-	 * @return Cosine provider for operations on this axis-angle
-	 */
-	protected Cosine.Provider provider() {
-		return Cosine.Provider.DEFAULT;
-	}
-
-	/**
 	 * {@inheritDoc}
-	 * This method delegates to {@link Axis#rotation(float, org.sarge.jove.geometry.Cosine.Provider)} if this is a rotation about a cardinal axis.
+	 * This method delegates to {@link Axis#rotation(float, Cosine.Provider)} if this is a rotation about a cardinal axis.
 	 */
 	@Override
 	public Matrix matrix() {
 		if(axis instanceof Axis cardinal) {
-			return cardinal.rotation(angle, provider());
+			return cardinal.rotation(angle, Cosine.Provider.DEFAULT);
 		}
 		else {
 			return build();
@@ -102,7 +59,7 @@ public class AxisAngle implements Rotation {
 	 */
 	private Matrix build() {
 		// Init angle
-		final Cosine cosine = this.provider().cosine(angle);
+		final Cosine cosine = Cosine.Provider.DEFAULT.cosine(angle);		// TODO
 		final float sin = cosine.sin();
 		final float cos = cosine.cos();
 
@@ -155,7 +112,7 @@ public class AxisAngle implements Rotation {
 	 */
 	@Override
 	public Vector rotate(Vector v) {
-		final Cosine cosine = this.provider().cosine(angle);
+		final Cosine cosine = Cosine.Provider.DEFAULT.cosine(angle);	// TODO
 		final float cos = cosine.cos();
 		final float dot = axis.dot(v);
 		final Vector a = v.multiply(cos);								// Scale the vector down
@@ -165,21 +122,11 @@ public class AxisAngle implements Rotation {
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(axis, angle);
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
 				(obj instanceof AxisAngle that) &&
 				this.axis.equals(that.axis()) &&
 				MathsUtility.isApproxEqual(this.angle, that.angle());
-	}
-
-	@Override
-	public String toString() {
-		return String.format("AxisAngle[axis=%s angle=%f]", axis, angle);
 	}
 }

@@ -26,10 +26,11 @@ public record Quaternion(float scalar, Vector vector) implements Rotation {
 	 */
 	public static Quaternion of(AxisAngle rotation) {
 		final float half = rotation.angle() * HALF;
-		final Cosine cosine = rotation.provider().cosine(half);
+		final Cosine cosine = Cosine.Provider.DEFAULT.cosine(half);		// TODO
 		final Vector axis = rotation.axis().multiply(cosine.sin());
 		return new Quaternion(cosine.cos(), axis);
 	}
+	// TODO - cosine provider as argument?
 
 	/**
 	 * Constructor.

@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
-import static org.sarge.jove.platform.vulkan.common.VulkanUtility.checkAlignment;
+import static org.sarge.jove.platform.vulkan.core.Vulkan.checkAlignment;
 import static org.sarge.jove.util.Validation.*;
 
 import java.lang.foreign.*;

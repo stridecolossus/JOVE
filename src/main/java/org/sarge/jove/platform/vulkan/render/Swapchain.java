@@ -251,7 +251,7 @@ public class Swapchain extends VulkanObject {
 		 * @param extents Image extents
 		 */
 		public Builder extent(Dimensions extent) {
-			return extent(VulkanUtility.extent(extent));
+			return extent(Vulkan.extent(extent));
 		}
 
 		/**

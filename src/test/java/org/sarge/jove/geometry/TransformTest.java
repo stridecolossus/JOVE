@@ -3,19 +3,8 @@ package org.sarge.jove.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-import org.sarge.jove.common.Layout;
 
 class TransformTest {
-	@Test
-	void identity() {
-		assertEquals(Matrix.identity(4), Transform.IDENTITY);
-	}
-
-	@Test
-	void layout() {
-		assertEquals(Layout.floats(4 * 4), Transform.LAYOUT);
-	}
-
 	@Test
 	void translation() {
 		final Vector vec = new Vector(1, 2, 3);
