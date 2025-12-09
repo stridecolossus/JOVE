@@ -28,11 +28,13 @@ public abstract class AbstractMesh implements Mesh {
 		if(!layout.contains(Point.LAYOUT)) {
 			throw new IllegalArgumentException("Layout does not contain a vertex position: " + layout);
 		}
+		// TODO - is this relevant now?
 
 		if(!primitive.isTriangle() && layout.contains(Normal.LAYOUT)) {
 			throw new IllegalArgumentException("Vertex normals are not supported by the drawing primitive: " + primitive);
 		}
 	}
+	// TODO - if can get rid of 1st check above and indexOf() below => no need for this skeleton at all?
 
 	@Override
 	public Primitive primitive() {
@@ -57,6 +59,7 @@ public abstract class AbstractMesh implements Mesh {
 		}
 		return index;
 	}
+	// TODO - only relevant for mutable mesh? why else would it be needed?
 
 	@Override
 	public String toString() {

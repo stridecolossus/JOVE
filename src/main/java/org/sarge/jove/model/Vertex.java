@@ -24,6 +24,7 @@ public class Vertex implements Bufferable {
 			add(c);
 		}
 	}
+	// TODO - better as immutable / record?
 
 	/**
 	 * @return Components of this vertex
@@ -59,6 +60,7 @@ public class Vertex implements Bufferable {
 	public void remove(int index) {
 		components.remove(index);
 	}
+	// TODO - only used to strip normals? better to make this a record and return new vertex with mutated list?
 
 	/**
 	 * Adds a component to this vertex.
@@ -68,6 +70,7 @@ public class Vertex implements Bufferable {
 		requireNonNull(component);
 		components.add(component);
 	}
+	// TODO - ONLY used by OBJ => easier to just create mutable list -> vertex
 
 	@Override
 	public int hashCode() {

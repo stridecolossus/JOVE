@@ -1,6 +1,4 @@
 package org.sarge.jove.model;
-import java.util.List;
-
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
 
@@ -56,7 +54,7 @@ public class Cube {
 	 * @return Cube mesh
 	 */
 	public MutableMesh build(float size) {
-		final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+		final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 
 		for(int face = 0; face < faces.length; ++face) {
 			for(int corner : triangles) {

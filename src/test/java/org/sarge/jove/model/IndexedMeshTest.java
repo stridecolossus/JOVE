@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.IndexedMesh.Index;
 
-public class IndexedMeshTest {
+class IndexedMeshTest {
 	private IndexedMesh mesh;
 
 	@BeforeEach

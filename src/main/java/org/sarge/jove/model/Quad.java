@@ -54,7 +54,7 @@ public class Quad {
 		};
 
 		// Build quad mesh comprising two counter-clockwise triangles
-		final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+		final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 		for(int n : INDICES) {
 			mesh.add(vertices[n]);
 		}

@@ -69,6 +69,9 @@ public class MeshLoader {
 			};
 		}
 		else {
+
+			// TODO - this is a bit nasty using the mutable implementation -> why we had the separate 'indexed' interface lol
+
 			return new IndexedMesh(primitive, layouts) {
 				@Override
 				public int count() {

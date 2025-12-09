@@ -19,9 +19,15 @@ public class IndexedMesh extends MutableMesh {
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
 	 */
-	public IndexedMesh(Primitive primitive, List<Layout> layout) {
-		super(primitive, layout);
+	public IndexedMesh(Primitive primitive, Layout... layout) {
+		this(primitive, List.of(layout));
 	}
+
+	public IndexedMesh(Primitive primitive, List<Layout> layout) {
+		super(primitive, layout, new ArrayList<>());
+	}
+
+	// TODO - see mesh loader!
 
 	@Override
 	public int count() {

@@ -1,3 +1,5 @@
+mesh loader still needs custom indexed implementation
+
 review use of cosine
 - very invasive
 - not even that good implementation?

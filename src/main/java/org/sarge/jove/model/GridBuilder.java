@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
@@ -149,7 +148,7 @@ public class GridBuilder {
 	 */
 	public MutableMesh build() {
 		// Init mesh
-		final var mesh = new IndexedMesh(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final var mesh = new IndexedMesh(primitive, Point.LAYOUT, Coordinate2D.LAYOUT);
 
 		// Calculate half distance in both directions
 		final int w = size.width();

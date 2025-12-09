@@ -7,14 +7,11 @@ import java.util.*;
 
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
 
 /**
  * A <i>mutable mesh</i> comprises polygons specified by {@link Vertex}.
- * <p>
- * TODO - remove
- * Vertex normals can be automatically computed using the {@link #compute()} method.
- * <p>
  * @author Sarge
  */
 public class MutableMesh extends AbstractMesh {
@@ -25,8 +22,8 @@ public class MutableMesh extends AbstractMesh {
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
 	 */
-	public MutableMesh(Primitive primitive, List<Layout> layout) {
-		this(primitive, layout, new ArrayList<>());
+	public MutableMesh(Primitive primitive, Layout... layout) {
+		this(primitive, List.of(layout), new ArrayList<>());
 	}
 
 	/**
@@ -54,28 +51,36 @@ public class MutableMesh extends AbstractMesh {
 		vertices.add(vertex);
 	}
 
-	///////////////
-
+	/**
+	 * Removes the vertex component with the given index from the layout of this mesh and <b>all</b> vertices.
+	 * @param index Layout index
+	 * @return Modified mesh
+	 * @throws IndexOutOfBoundsException if {@link #index} is invalid for layout of this mesh
+	 */
 	public MutableMesh remove(int index) {
 		// Remove layout
-		final List<Layout> removed = new ArrayList<>(this.layout());
-		removed.remove(index);
+		final List<Layout> layout = new ArrayList<>(this.layout());
+		layout.remove(index);
 
 		// Remove vertex component
-		// TODO - copy?
-		for(Vertex v : vertices) {
+		final var copy = new ArrayList<>(this.vertices);
+		for(Vertex v : copy) {
 			v.remove(index);
 		}
 
 		// Create new mesh
-		return new MutableMesh(this.primitive(), removed, vertices);
+		return new MutableMesh(this.primitive(), layout, copy);
 	}
 
+	/**
+	 * Removes the vertex component with the given layout from this mesh and <b>all</i> vertices.
+	 * @param layout Layout to remove
+	 * @return Modified mesh
+	 * @throws IllegalArgumentException if {@link #layout} is not present
+	 */
 	public MutableMesh remove(Layout layout) {
 		return remove(indexOf(layout));
 	}
-
-	///////////////
 
 	/**
 	 * Maps a vertex index.
@@ -129,53 +134,81 @@ public class MutableMesh extends AbstractMesh {
 				.collect(Bounds.Builder.collector());
 	}
 
-	// TODO
-	// - client provides index of position and normal components?
-	// - or finds first position & normal layout?
-	// - or just assumes is 1 and 2?
-	// - custom vertex implementation for accumulated / normalized normal?
-	// - mutates vertex? replaces vertices? returns resultant mesh?
-
-	// TODO - transform method? ditto vertex?
+	/**
+	 *
+	 * init list of mutable normals = n vertices
+	 *
+	 * for each triangle
+	 * 		calc normal
+	 * 		add normal to each vertex
+	 *
+	 * normalise
+	 *
+	 * set normals -> vertices
+	 *
+	 */
 
 	/**
 	 * Computes per-vertex normals for this mesh.
+	 * @throws
 	 */
 	public void compute() {
-		//final int polygons = this.primitive().polygons(this.count());
 
-//		IntStream
-//				.range(0, polygons)
-//				.mapToObj(this::polygon)
+		// throw if cannot support normals?
 
-		// init accumulated normals
-		// map each polygon -> vertices (indices)
-		// calculate face normal
-		// add to normals for each of vertices
-		// normalize all
-		// update to mesh
+		class MutableNormal {
+			private float x, y, z;			// TODO - array?
 
-	}
+			void add(Normal n) {
+				x += n.x;
+				y += n.y;
+				z += n.z;
+			}
 
-	private List<Vertex> polygon(int index) {
-		return null;
-	}
+			Normal normalise() {
+				return new Normal(new Vector(x, y, z));
+			}
+		}
 
+		final var normals = new MutableNormal[vertices.size()];
+		for(int c = 0; c < normals.length; ++c) {
+			normals[c] = new MutableNormal();
+		}
 
-	static Normal normal(List<Point> vertices) {
-		final var triangle = new Triangle(vertices.get(0), vertices.get(1), vertices.get(2));
-		return triangle.normal();
+		final int faces = this.primitive().polygons(this.count());
+
+		for(int face = 0; face < faces; ++face) {
+
+			// map face -> indices then map -> vertices ~ index
+			final int[] indices = new int[3];
+			for(int n = 0; n < 3; ++n) {
+				indices[n] = map(face * 3 + n);			// TODO - different for strip
+			}
+
+			final Point[] points = new Point[3];
+			for(int n = 0; n < 3; ++n) {
+				points[n] = vertices.get(indices[n]).component(0);	// TODO
+			}
+
+			final Triangle t = new Triangle(points[0], points[1], points[2]);
+			final Normal normal = t.normal();
+
+			for(int c = 0; c < 3; ++c) {
+				normals[indices[c]].add(normal);
+			}
+		}
+
+		for(int c = 0; c < normals.length; ++c) {
+			final Normal n = normals[c].normalise();
+			//vertices.get(c)
+			// TODO - replace
+			System.out.println(c+" "+n);
+		}
 	}
 
 
 }
 
-//
-//	/**
-//	 * Computes per-vertex normals for this mesh.
-//	 * @throws IllegalStateException if the layout does not contain a {@link Point#LAYOUT} component
-//	 * @throws IllegalStateException if {@link #count()} is not valid for the drawing primitive
-//	 */
 //	public void compute() {
 //		// Check mesh can be rendered
 //		mesh.validate();
@@ -233,4 +266,3 @@ public class MutableMesh extends AbstractMesh {
 //		final Vector normal = triangle.normal();
 //		return vertices.stream().map(v -> new VertexNormal(v, normal));
 //	}
-//}

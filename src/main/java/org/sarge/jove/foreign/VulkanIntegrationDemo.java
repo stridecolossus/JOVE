@@ -264,7 +264,7 @@ b.destroy();
 			new Vertex(new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT),
 		};
 
-		final var mesh = new MutableMesh(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final var mesh = new MutableMesh(Primitive.TRIANGLE_STRIP, Point.LAYOUT, Coordinate2D.LAYOUT);
 		for(Vertex v : vertices) {
 			mesh.add(v);
 		}
