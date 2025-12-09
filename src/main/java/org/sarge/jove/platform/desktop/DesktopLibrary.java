@@ -1,13 +1,13 @@
 package org.sarge.jove.platform.desktop;
 
-import com.sun.jna.*;
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 
 /**
  * GLFW API.
  * @author Sarge
  */
-interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMonitor, DesktopLibraryDevice, DesktopLibraryJoystick {
+interface DesktopLibrary {
 	/**
 	 * Sets an initialisation hint.
 	 * @param hint		Hint
@@ -22,27 +22,11 @@ interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMo
 	int glfwInit();
 
 	/**
-	 * Terminates GLFW.
+	 * Returns and clears the latest GLFW error.
+	 * @param description Returned error description
+	 * @return Error code or {@code zero} if none
 	 */
-	void glfwTerminate();
-
-	/**
-	 * Error callback.
-	 */
-	interface ErrorCallback extends Callback {
-		/**
-		 * Notifies a GLFW error.
-		 * @param error				Error code
-		 * @param description		Description
-		 */
-		void error(int error, String description);
-	}
-
-	/**
-	 * Registers an error handler.
-	 * @param callback Error handler
-	 */
-	void glfwSetErrorCallback(ErrorCallback callback);
+	int glfwGetError(Pointer description);
 
 	/**
 	 * @return GLFW version
@@ -50,14 +34,19 @@ interface DesktopLibrary extends Library, DesktopLibraryWindow, DesktopLibraryMo
 	String glfwGetVersionString();
 
 	/**
-	 * @return Whether vulkan is supported on this platform
+	 * @return Whether Vulkan is supported on this platform
 	 */
 	boolean glfwVulkanSupported();
 
 	/**
-	 * Enumerates the required vulkan extensions for this platform.
-	 * @param count Number of results
-	 * @return Vulkan extensions (pointer to array of strings)
+	 * Enumerates the required Vulkan extensions for this platform.
+	 * @param count Number of extensions
+	 * @return Vulkan extensions
 	 */
-	Pointer glfwGetRequiredInstanceExtensions(IntByReference count);
+	Handle glfwGetRequiredInstanceExtensions(IntegerReference count);
+
+	/**
+	 * Terminates GLFW.
+	 */
+	void glfwTerminate();
 }

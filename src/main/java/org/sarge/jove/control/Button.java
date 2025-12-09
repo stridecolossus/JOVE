@@ -1,97 +1,100 @@
 package org.sarge.jove.control;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireNotEmpty;
+import static org.sarge.jove.util.Validation.*;
 
-import java.util.Objects;
+import java.util.Set;
+
+import org.sarge.jove.util.*;
 
 /**
- * A <i>button</i> is an event for a keyboard, mouse, or joystick button.
- * @param <T> Button action type
+ * A <i>button</i> is a keyboard key, mouse button, or controller button.
  * @author Sarge
  */
-public class Button<T> implements Event {
+public record Button(int index, String name) {
 	/**
-	 * Default actions based on the GLFW action codes.
+	 * Constructor.
+	 * @param index		Button index
+	 * @param name		Identifier
 	 */
-	public enum Action {
+	public Button {
+		requireZeroOrMore(index);
+		requireNotEmpty(name);
+	}
+
+	/**
+	 * Button actions.
+	 */
+	public enum ButtonAction {
 		RELEASE,
 		PRESS,
 		REPEAT;
 
-		private static final Action[] ACTIONS = Action.values();
-
 		/**
-		 * Maps a GLFW action code to the corresponding constant.
+		 * Maps a GLFW action code.
 		 * @param action Action code
 		 * @return Action
-		 * @throws ArrayIndexOutOfBoundsException for an invalid action code
+		 * @throws IllegalArgumentException for an invalid action code
 		 */
-		public static Action map(int action) {
-			return ACTIONS[action];
+		public static ButtonAction map(int action) {
+			return switch(action) {
+				case 0 -> RELEASE;
+				case 1 -> PRESS;
+				case 2 -> REPEAT;
+				default -> throw new IllegalArgumentException("Invalid action code: " + action);
+			};
 		}
 	}
 
-	private final String id;
-	private final T action;
+	/**
+	 * Modifier keys.
+	 */
+	public enum ModifierKey implements IntEnum {
+		SHIFT(0x001),
+		CONTROL(0x002),
+		ALT(0x004),
+		SUPER(0x008),
+		CAPS_LOCK(0x010),
+		NUM_LOCK(0x020);
+
+		private static final ReverseMapping<ModifierKey> MAPPING = ReverseMapping.mapping(ModifierKey.class);
+
+		private final int bit;
+
+		private ModifierKey(int bit) {
+			this.bit = bit;
+		}
+
+		@Override
+		public int value() {
+			return bit;
+		}
+
+		/**
+		 * Maps the modifier keys from the given bit-field.
+		 * @param bits Modifier keys bit-field
+		 * @return Modifier keys
+		 */
+		public static Set<ModifierKey> map(int bits) {
+			final var mask = new EnumMask<ModifierKey>(bits);
+			return mask.enumerate(MAPPING);
+		}
+	}
 
 	/**
-	 * Constructor.
-	 * @param id			Button identifier
-	 * @param action		Button action
+	 * A <i>button event</i> specifies the action and modifiers for a button event.
 	 */
-	public Button(String id, T action) {
-		this.id = requireNotEmpty(id);
-		this.action = requireNonNull(action);
-	}
-
-	/**
-	 * @return Button identifier
-	 */
-	public String id() {
-		return id;
-	}
-
-	/**
-	 * @return Hyphen-delimited name of this button event
-	 */
-	public String name() {
-		return Event.name(id, action);
-	}
-
-	/**
-	 * @return Button action
-	 */
-	public T action() {
-		return action;
-	}
-
-	@Override
-	public Object type() {
-		return id;
-	}
-
-	public boolean matches(Button<?> template) {
-		// TODO
-		return false;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id, action);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Button<?> that) &&
-				this.id.equals(that.id) &&
-				this.action.equals(that.action);
-	}
-
-	@Override
-	public String toString() {
-		return name();
+	public record ButtonEvent(Button button, ButtonAction action, Set<ModifierKey> modifiers) implements Event {
+		/**
+		 * Constructor.
+		 * @param button		Button
+		 * @param action		Button action
+		 * @param modifiers		Modifier keys
+		 */
+		public ButtonEvent {
+			requireNonNull(button);
+			requireNonNull(action);
+			modifiers = Set.copyOf(modifiers);
+		}
 	}
 }

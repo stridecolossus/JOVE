@@ -3,17 +3,16 @@ package org.sarge.jove.model;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.common.Layout.Component;
 import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>coordinate</i> is a 1, 2 or 3-dimensional texture coordinate.
  * @author Sarge
  */
-public sealed interface Coordinate extends Bufferable, Component {
+public sealed interface Coordinate extends Bufferable {
 	/**
 	 * Creates a texture coordinate from the given array.
 	 * @param array Array
@@ -37,11 +36,6 @@ public sealed interface Coordinate extends Bufferable, Component {
 		 * Layout of a 1D texture coordinate.
 		 */
 		public static final Layout LAYOUT = Layout.floats(1);
-
-		@Override
-		public Layout layout() {
-			return LAYOUT;
-		}
 
 		@Override
 		public void buffer(ByteBuffer buffer) {
@@ -74,17 +68,6 @@ public sealed interface Coordinate extends Bufferable, Component {
 			BOTTOM_LEFT 	= new Coordinate2D(0, 1),
 			TOP_RIGHT 		= new Coordinate2D(1, 0),
 			BOTTOM_RIGHT 	= new Coordinate2D(1, 1);
-
-		/**
-		 * Texture coordinates for a quad with a counter-clockwise winding order.
-		 */
-		public static final List<Coordinate2D> QUAD = List.of(TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT);
-		// TODO - wrong!?
-
-		@Override
-		public Layout layout() {
-			return LAYOUT;
-		}
 
 		@Override
 		public void buffer(ByteBuffer buffer) {
@@ -121,15 +104,6 @@ public sealed interface Coordinate extends Bufferable, Component {
 			public Corners() {
 				this(TOP_LEFT, BOTTOM_RIGHT);
 			}
-
-//			/**
-//			 * @return This pair of corners as a quad
-//			 */
-//			public Quad<Coordinate2D> quad() {
-//				final var bottomLeft = new Coordinate2D(topLeft.u, bottomRight.v);
-//				final var topRight = new Coordinate2D(bottomRight.u, topLeft.v);
-//				return new Quad<>(List.of(topLeft, bottomLeft, topRight, bottomRight));
-//			}
 		}
 	}
 
@@ -141,11 +115,6 @@ public sealed interface Coordinate extends Bufferable, Component {
 		 * Layout of a 3D texture coordinate.
 		 */
 		public static final Layout LAYOUT = Layout.floats(3);
-
-		@Override
-		public Layout layout() {
-			return LAYOUT;
-		}
 
 		@Override
 		public void buffer(ByteBuffer buffer) {

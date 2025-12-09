@@ -1,79 +1,57 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static java.util.Objects.requireNonNull;
-
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.lib.Percentile;
+import org.sarge.jove.util.Percentile;
 
 /**
- * A <i>clear value</i> specifies the clearing operation for an attachment before a render pass starts.
+ * A <i>clear value</i> specifies the clearing operation for an attachment before the render pass begins.
  * @author Sarge
  */
-public interface ClearValue {
+public sealed interface ClearValue {
 	/**
-	 * @return Expected image aspect
+	 * Unused clear value.
 	 */
-	VkImageAspect aspect();
-
-	/**
-	 * Populates the given clear value descriptor.
-	 * @param value Descriptor
-	 */
-	void populate(VkClearValue value);
+	record None() implements ClearValue {
+	}
 
 	/**
 	 * Clear value for a colour attachment.
 	 */
 	record ColourClearValue(Colour colour) implements ClearValue {
-		/**
-		 * Constructor.
-		 * @param colour Clear colour
-		 */
-		public ColourClearValue {
-			requireNonNull(colour);
-		}
-
-		@Override
-		public VkImageAspect aspect() {
-			return VkImageAspect.COLOR;
-		}
-
-		@Override
-		public void populate(VkClearValue value) {
-			value.setType("color");
-			value.color.setType("float32");
-			value.color.float32 = colour.toArray();
-		}
 	}
 
 	/**
-	 * Clear value for a depth attachment.
+	 * Clear value for the depth-stencil attachment.
 	 */
 	record DepthClearValue(Percentile depth) implements ClearValue {
-		/**
-		 * Default clear value for a depth attachment.
-		 */
-		public static final DepthClearValue DEFAULT = new DepthClearValue(Percentile.ONE);
+	}
 
-		/**
-		 * Constructor.
-		 * @param depth Depth value
-		 */
-		public DepthClearValue {
-			requireNonNull(depth);
+	/**
+	 * Builds the clear value descriptor for a framebuffer attachment.
+	 * @param clear Clear value
+	 * @return Clear value descriptor
+	 */
+	static VkClearValue populate(ClearValue clear) {
+		final var descriptor = new VkClearValue();
+
+		switch(clear) {
+    		case None _ -> {
+    			// Empty
+    		}
+
+			case ColourClearValue(Colour colour) -> {
+				descriptor.color = new VkClearColorValue();
+				descriptor.color.float32 = colour.toArray();
+			}
+
+			case DepthClearValue(Percentile depth) -> {
+				descriptor.depthStencil = new VkClearDepthStencilValue();
+				descriptor.depthStencil.depth = depth.value();
+				descriptor.depthStencil.stencil = 0;
+			}
 		}
 
-		@Override
-		public VkImageAspect aspect() {
-			return VkImageAspect.DEPTH;
-		}
-
-		@Override
-		public void populate(VkClearValue value) {
-			value.setType("depthStencil");
-			value.depthStencil.depth = depth.floatValue();
-			value.depthStencil.stencil = 0;
-		}
+		return descriptor;
 	}
 }

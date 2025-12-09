@@ -1,12 +1,12 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 /**
- * General 2D dimensions.
+ * General 2D dimensions with integer components.
  * @author Sarge
  */
-public record Dimensions(int width, int height) implements Comparable<Dimensions> {
+public record Dimensions(int width, int height) {
 	/**
 	 * Constructor.
 	 * @param width 	Width
@@ -38,25 +38,13 @@ public record Dimensions(int width, int height) implements Comparable<Dimensions
 		return width == height;
 	}
 
-	@Override
-	public int compareTo(Dimensions that) {
-		if((this.width < that.width) || (this.height < that.height)) {
-			return -1;
-		}
-		else
-		if((this.width > that.width) || (this.height > that.height)) {
-			return +1;
-		}
-		else {
-			return 0;
-		}
-	}
-
 	/**
-	 * @return These dimensions as a rectangle at the origin
+	 * Determines whether this dimensions contains the given dimensions, i.e. {@code this} is larger than {@code that}.
+	 * @param that dimensions
+	 * @return Whether contains
 	 */
-	public Rectangle rectangle() {
-		return new Rectangle(0, 0, this);
+	public boolean contains(Dimensions that) {
+		return (this.width >= that.width) && (this.height >= that.height);
 	}
 
 	@Override

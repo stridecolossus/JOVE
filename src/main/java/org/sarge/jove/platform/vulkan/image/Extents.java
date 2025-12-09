@@ -1,13 +1,13 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.*;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
- * The <i>extents</i> specifies the size and depth of an image.
+ * An <i>extents</i> composes the size and depth of an image.
  * @author Sarge
  */
 public record Extents(Dimensions size, int depth) {
@@ -39,14 +39,14 @@ public record Extents(Dimensions size, int depth) {
 	 */
 	public boolean isValid(VkImageType type) {
 		return switch(type) {
-			case ONE_D -> (size.height() == 1) && (depth == 1);
-			case TWO_D -> depth == 1;
-			case THREE_D -> true;
+			case TYPE_1D -> (size.height() == 1) && (depth == 1);
+			case TYPE_2D -> depth == 1;
+			case TYPE_3D -> true;
+			default -> throw new RuntimeException();
 		};
 	}
 
 	/**
-	 * Converts to Vulkan 3D extents.
 	 * @return 3D extents
 	 */
 	public VkExtent3D toExtent() {
@@ -58,8 +58,7 @@ public record Extents(Dimensions size, int depth) {
 	}
 
 	/**
-	 * Converts to Vulkan offsets.
-	 * @return Offsets
+	 * @return 3D offsets
 	 */
 	public VkOffset3D toOffset() {
 		final var offset = new VkOffset3D();

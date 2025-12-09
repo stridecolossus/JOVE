@@ -4,24 +4,23 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>plane</i> defines a flat surface in 3D space.
  * <p>
- * Mathematically the <i>general form</i> of a plane is:
- * <pre>ax + by + cz + d = 0</pre>
- * where <code>n = (a, b, c)</code> is the plane normal and <i>d</i> is the distance of the plane from the origin.
+ * Mathematically the <i>general form</i> of a plane is: {@code ax + by + cz + d = 0}
+ * where {@code n = (a, b, c)} is the plane normal and {@code d} is the distance of the plane from the origin.
  * <p>
  * Note that the distance increases in the <i>opposite</i> direction to the normal vector.
  * <br>
- * For example <code>new Plane(Axis.Y, 1)</code> creates the plane in X-Z at Y = <b>minus</b> one.
+ * For example {@code Plane(Axis.Y, 1)} defines X-Z plane at Y = <b>minus</b> one.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
  */
-public record Plane(Normal normal, float distance) implements Intersection.Surface {
+public record Plane(Normal normal, float distance) implements IntersectedSurface {
 	/**
 	 * Creates a plane from the given triangle of points.
 	 * @param triangle Triangle
@@ -29,9 +28,11 @@ public record Plane(Normal normal, float distance) implements Intersection.Surfa
 	 * @throws IllegalArgumentException if the given triangle {@link Triangle#isDegenerate()}
 	 */
 	public static Plane of(Triangle triangle) {
-		if(triangle.isDegenerate()) throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
+		if(triangle.isDegenerate()) {
+			throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
+		}
 		final Normal normal = new Normal(triangle.normal());
-		return new Plane(normal, triangle.vertices().getFirst());
+		return new Plane(normal, triangle.a());
 	}
 
 	/**
@@ -45,11 +46,11 @@ public record Plane(Normal normal, float distance) implements Intersection.Surfa
 
 	/**
 	 * Constructor given a normal and a point on the plane.
-	 * @param n Plane normal
-	 * @param p Point on this plane
+	 * @param normal		Plane normal
+	 * @param point			Point on the plane
 	 */
-	public Plane(Normal n, Point p) {
-		this(n, -n.dot(new Vector(p)));
+	public Plane(Normal normal, Point point) {
+		this(normal, -normal.dot(new Vector(point)));
 	}
 
 	/**
@@ -102,12 +103,14 @@ public record Plane(Normal normal, float distance) implements Intersection.Surfa
 			}
 			else {
 				return INTERSECT;
+				// TODO - test approx equals as first case?
 			}
 		}
 	}
 
 	/**
-	 * Helper - Determines the half space of the given point with respect to this plane.
+	 * Helper.
+	 * Determines the half space of the given point with respect to this plane.
 	 * @param p Point
 	 * @return Half space
 	 * @see HalfSpace#of(float)
@@ -117,25 +120,30 @@ public record Plane(Normal normal, float distance) implements Intersection.Surfa
 	}
 
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
 		// Determine angle between ray and normal
-		final float denom = normal.dot(ray.direction());
+		final float determinant = normal.dot(ray.direction());
 
 		// Orthogonal ray does not intersect
-		if(MathsUtility.isApproxZero(denom)) {
-			return Intersection.NONE;
+		if(MathsUtility.isApproxZero(determinant)) {
+			return EMPTY_INTERSECTIONS;
 		}
 
 		// Calculate closest intersection distance
-		final float dist = -distance(ray.origin()) / denom;
+		final float dist = -distance(ray.origin()) / determinant;
 
 		// Check whether intersects
 		if((dist < 0) || (dist * dist > ray.direction().magnitude())) {
-			return Intersection.NONE;
+			return EMPTY_INTERSECTIONS;
 		}
 
 		// Build intersection result
-		return List.of(ray.intersection(dist, normal));
+		return List.of(new Intersection(dist, this));
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
+		return normal;
 	}
 
 	@Override

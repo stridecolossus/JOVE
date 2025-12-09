@@ -1,17 +1,17 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.Component;
+import org.sarge.jove.common.Layout.Type;
 
 /**
  * A <i>normal</i> is a unit vector.
  * @author Sarge
  */
-public class Normal extends Vector implements Component {
+public class Normal extends Vector {
 	/**
 	 * Vertex normal layout.
 	 */
-	public static final Layout LAYOUT = Layout.floats(Point.SIZE);
+	public static final Layout LAYOUT = new Layout(SIZE, Type.NORMALIZED, true, Float.BYTES);
 
 	/**
 	 * Constructor.
@@ -20,6 +20,8 @@ public class Normal extends Vector implements Component {
 	public Normal(Vector vector) {
 		super(vector.normalize());
 	}
+
+	// TODO - constructor for 'actual' normals? e.g. from OBj => test 0..1 components
 
 	@Override
 	public final float magnitude() {
@@ -34,10 +36,5 @@ public class Normal extends Vector implements Component {
 	@Override
 	public Normal invert() {
 		return new Normal(super.invert());
-	}
-
-	@Override
-	public Layout layout() {
-		return LAYOUT;
 	}
 }

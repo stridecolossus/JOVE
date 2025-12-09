@@ -1,13 +1,13 @@
 package org.sarge.jove.common;
 
+import java.lang.foreign.*;
 import java.util.Collection;
+import java.util.function.Function;
 
-import org.sarge.jove.util.PointerToPointerArray;
-
-import com.sun.jna.*;
+import org.sarge.jove.foreign.Transformer;
 
 /**
- * A <i>native object</i> is a resource created by the native layer referenced by a {@link Handle}.
+ * A <i>native object</i> is a resource created by the native layer and referenced by a {@link Handle}.
  * @author Sarge
  */
 public interface NativeObject {
@@ -16,54 +16,31 @@ public interface NativeObject {
 	 */
 	Handle handle();
 
-	private static Object pointer(NativeObject obj) {
-		return Handle.CONVERTER.toNative(obj.handle(), null);
-	}
-
 	/**
-	 * Helper - Converts the given objects to a JNA pointer-to-array-of-pointers.
+	 * Helper.
+	 * Transforms the given collection of native objects to an array of handles.
 	 * @param objects Native objects
-	 * @return Pointer array
+	 * @return Handles
 	 */
-	static Memory array(Collection<? extends NativeObject> objects) {
-		// Check for empty data
-		if(objects.isEmpty()) {
-			return null;
-		}
-
-		// Convert to array
-		final Pointer[] pointers = objects
+	static Handle[] handles(Collection<? extends NativeObject> objects) {
+		return objects
 				.stream()
-				.map(NativeObject::pointer)
-				.toArray(Pointer[]::new);
-
-		// Create pointer array
-		return new PointerToPointerArray(pointers);
+				.map(NativeObject::handle)
+				.toArray(Handle[]::new);
 	}
 
 	/**
-	 * JNA type converter for a native object.
+	 * Transformer for native objects.
 	 */
-	TypeConverter CONVERTER = new TypeConverter() {
+	public static class NativeObjectTransformer implements Transformer<NativeObject, MemorySegment> {
 		@Override
-		public Class<?> nativeType() {
-			return Pointer.class;
+		public MemorySegment marshal(NativeObject object, SegmentAllocator allocator) {
+			return object.handle().address();
 		}
 
 		@Override
-		public Object toNative(Object value, ToNativeContext context) {
-			if(value instanceof NativeObject obj) {
-				// TODO - could we return handle here? i.e. does it cascade?
-				return pointer(obj);
-			}
-			else {
-				return null;
-			}
-		}
-
-		@Override
-		public Object fromNative(Object nativeValue, FromNativeContext context) {
+		public Function<MemorySegment, NativeObject> unmarshal() {
 			throw new UnsupportedOperationException();
 		}
-	};
+	}
 }

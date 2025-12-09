@@ -1,13 +1,11 @@
 package org.sarge.jove.platform.obj;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
 
-public class VertexComponentListTest {
+class VertexComponentListTest {
 	private VertexComponentList<Point> list;
 
 	@BeforeEach
@@ -22,13 +20,18 @@ public class VertexComponentListTest {
 	}
 
 	@Test
-	void getNegative() {
+	void negative() {
 		assertEquals(Point.ORIGIN, list.get(-1));
 	}
 
 	@Test
-	void getInvalidIndex() {
-		assertThrows(IndexOutOfBoundsException.class, () -> list.get(2));
+	void zero() {
 		assertThrows(IndexOutOfBoundsException.class, () -> list.get(0));
+	}
+
+	@Test
+	void range() {
+		assertThrows(IndexOutOfBoundsException.class, () -> list.get(2));
+		assertThrows(IndexOutOfBoundsException.class, () -> list.get(-2));
 	}
 }

@@ -29,7 +29,7 @@ public class Vector extends Tuple {
 
 	/**
 	 * Copy constructor.
-	 * @param that Tuple to copy
+	 * @param that Vector to copy
 	 */
 	public Vector(Tuple that) {
 		super(that);
@@ -55,17 +55,18 @@ public class Vector extends Tuple {
 	 * Calculates the <i>dot</i> product of two vectors.
 	 * <p>
 	 * The dot product (also known as the <i>inner</i> or <i>scalar</i> vector product) expresses the angular relationship between two vectors.
+	 * <p>
 	 * This is represented mathematically as:
 	 * <p>
 	 * <pre>A.B = |A| |B| cos(angle)</pre>
 	 * <p>
 	 * The dot product is:
 	 * <ul>
-	 * <li>zero if the vectors are orthogonal, i.e. perpendicular (at right angles)</li>
+	 * <li>zero if the vectors are orthogonal, i.e. perpendicular or at right angles</li>
 	 * <li>greater than zero for an acute angle (less than 90 degree)</li>
 	 * <li>negative if the angle is greater than 90 degrees</li>
 	 * <li>commutative, i.e. {@code a.b = b.a}</li>
-	 * <li>equivalent to the cosine of the angle between two unit-vectors</li>
+	 * <li>proportional to the cosine of the angle between two unit-vectors</li>
 	 * <li>the <i>magnitude</i> of a vector when applied to itself</li>
 	 * </ul>
 	 * <p>
@@ -188,13 +189,12 @@ public class Vector extends Tuple {
 	/**
 	 * Projects this vector onto the given normal.
 	 * <p>
-	 * The vector projection of a vector V onto U is: <pre>projU(V) = (U.V) U / mag</pre>
-	 * where:
+	 * The projection of vector V onto U is: {@code projU(V) = (V.N) N / |N * N|} where:
 	 * <ul>
 	 * <li>V is <b>this</b> vector</li>
-	 * <li>U is the normal to be projected onto</li>
-	 * <li><i>mag</i> is the magnitude of U squared (and is therefore ignored by this implementation)</li>
+	 * <li>N is the normal to be projected onto</li>
 	 * </ul>
+	 * Note that the magnitude of N squared is always {@code one} in this implementation and can therefore be ignored.
 	 * <p>
 	 * @param normal Vector to project onto
 	 * @return Projected vector
@@ -207,7 +207,7 @@ public class Vector extends Tuple {
 	/**
 	 * Reflects this vector about the given normal.
 	 * <p>
-	 * The reflection R of vector V onto a surface with normal N is: <pre>R = V-2(V.N)N</pre>
+	 * The reflection R of vector V onto a surface with normal N is: {@code R = V - 2(V.N) N}
 	 * <p>
 	 * @param normal Normal
 	 * @return Reflected vector
@@ -219,9 +219,6 @@ public class Vector extends Tuple {
 
 	@Override
 	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Vector that) &&
-				super.isEqual(that);
+		return (obj instanceof Vector) && super.equals(obj);
 	}
 }

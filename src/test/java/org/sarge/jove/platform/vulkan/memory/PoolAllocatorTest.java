@@ -5,20 +5,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 
 class PoolAllocatorTest {
-	private Allocator allocator;
 	private PoolAllocator pool;
 	private MemoryType type;
-	private DeviceContext dev;
+	private LogicalDevice device;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
+		device = new MockLogicalDevice(new MockMemoryLibrary());
 		type = new MemoryType(0, new MemoryType.Heap(0, Set.of()), Set.of());
-		allocator = new Allocator(dev, new MemoryType[]{type}, 1, 2);
-		pool = new PoolAllocator(allocator, 3);
+		pool = new PoolAllocator(device, new MemoryType[]{type}, 2);
 	}
 
 	@Test
@@ -26,7 +24,6 @@ class PoolAllocatorTest {
 		assertEquals(0, pool.count());
 		assertEquals(0, pool.size());
 		assertEquals(0, pool.free());
-		assertEquals(2, pool.granularity());
 		assertEquals(Map.of(), pool.pools());
 	}
 
@@ -34,11 +31,18 @@ class PoolAllocatorTest {
 	void pool() {
 		final MemoryPool memoryPool = pool.pool(type);
 		assertNotNull(memoryPool);
-		assertEquals(0, memoryPool.count());
+		assertEquals(0, memoryPool.blocks());
 		assertEquals(0, memoryPool.size());
 		assertEquals(0, memoryPool.free());
 		assertEquals(Map.of(type, memoryPool), pool.pools());
 		assertEquals(memoryPool, pool.pool(type));
+	}
+
+	@Test
+	void preallocate() {
+		pool.add(type, 1);
+		assertEquals(1, pool.pool(type).free());
+		assertEquals(1, pool.pool(type).blocks());
 	}
 
 	@Test

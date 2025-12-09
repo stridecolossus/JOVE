@@ -1,35 +1,60 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+
+import java.lang.foreign.MemorySegment;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
-import org.sarge.jove.util.MathsUtility;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
+import org.sarge.jove.util.EnumMask;
 
-import com.sun.jna.Pointer;
+class SamplerTest {
+	private static class MockSamplerLibrary extends MockVulkanLibrary {
+		@Override
+		public VkResult vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, Pointer pSampler) {
+			assertNotNull(device);
+			assertEquals(new EnumMask<>(), pCreateInfo.flags);
+			assertEquals(VkFilter.LINEAR, pCreateInfo.minFilter);
+			assertEquals(VkFilter.LINEAR, pCreateInfo.magFilter);
+			assertEquals(VkSamplerMipmapMode.LINEAR, pCreateInfo.mipmapMode);
+			assertEquals(0f, pCreateInfo.mipLodBias);
+			assertEquals(0f, pCreateInfo.minLod);
+			assertEquals(1000f, pCreateInfo.maxLod);
+			assertEquals(1f, pCreateInfo.maxAnisotropy);
+			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeU);
+			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeV);
+			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeW);
+			assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, pCreateInfo.borderColor);
+			assertEquals(false, pCreateInfo.unnormalizedCoordinates);
+			pSampler.set(MemorySegment.ofAddress(2));
+			return VkResult.VK_SUCCESS;
+		}
+	}
 
-public class SamplerTest {
 	private Sampler sampler;
-	private DeviceContext dev;
+	private LogicalDevice device;
+	private MockSamplerLibrary library;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		sampler = new Sampler(new Handle(1), dev);
+		library = new MockSamplerLibrary();
+		device = new MockLogicalDevice(library);
+		sampler = new Sampler.Builder().build(device);
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(new Handle(new Pointer(1)), sampler.handle());
+	void destroy() {
+		sampler.destroy();
+		assertEquals(true, sampler.isDestroyed());
 	}
 
 	@Nested
-	class AddressModeTests {
+	class AddressModeTest {
 		@Test
 		void modes() {
 			assertEquals(VkSamplerAddressMode.REPEAT, AddressMode.REPEAT.mode());
@@ -50,90 +75,27 @@ public class SamplerTest {
 	}
 
 	@Nested
-	class ResourceTests {
-		private DescriptorResource res;
+	class ResourceTest {
+		private DescriptorSet.Resource resource;
 		private View view;
 
 		@BeforeEach
 		void before() {
-			view = new View(new Handle(2), dev, mock(Image.class));
-			res = sampler.resource(view);
+			view = new View(new Handle(2), device, new MockImage(), true);
+			resource = sampler.new SamplerResource(view);
 		}
 
 		@Test
 		void constructor() {
-			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, res.type());
+			assertEquals(VkDescriptorType.COMBINED_IMAGE_SAMPLER, resource.type());
 		}
 
 		@Test
 		void build() {
-			final var info = (VkDescriptorImageInfo) res.build();
+			final var info = (VkDescriptorImageInfo) resource.descriptor();
 			assertEquals(sampler.handle(), info.sampler);
 			assertEquals(view.handle(), info.imageView);
 			assertEquals(VkImageLayout.SHADER_READ_ONLY_OPTIMAL, info.imageLayout);
-		}
-	}
-
-	@Nested
-	class BuilderTests {
-		private Sampler.Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new Sampler.Builder();
-		}
-
-		@Test
-		void build() {
-			// Create sampler
-			final Sampler sampler = builder
-					.min(VkFilter.LINEAR)
-					.mag(VkFilter.NEAREST)
-					.mipmap(VkSamplerMipmapMode.NEAREST)
-					.mode(VkSamplerAddressMode.CLAMP_TO_BORDER)
-					.border(VkBorderColor.FLOAT_TRANSPARENT_BLACK)
-					.minLod(2)
-					.maxLod(3)
-					.mipLodBias(MathsUtility.HALF)
-					.anisotropy(4)
-					.compare(VkCompareOp.GREATER)
-					.unnormalizedCoordinates(true)
-					.build(dev);
-
-			// Init expected descriptor
-			final var expected = new VkSamplerCreateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final var info = (VkSamplerCreateInfo) obj;
-					assertNotNull(info);
-					assertEquals(VkFilter.LINEAR, info.minFilter);
-					assertEquals(VkFilter.NEAREST, info.magFilter);
-					assertEquals(VkSamplerMipmapMode.NEAREST, info.mipmapMode);
-					assertEquals(MathsUtility.HALF, info.mipLodBias);
-					assertEquals(2f, info.minLod);
-					assertEquals(3f, info.maxLod);
-					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeU);
-					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeV);
-					assertEquals(VkSamplerAddressMode.CLAMP_TO_BORDER, info.addressModeW);
-					assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, info.borderColor);
-					assertEquals(true, info.anisotropyEnable);
-					assertEquals(4f, info.maxAnisotropy);
-					assertEquals(true, info.compareEnable);
-					assertEquals(VkCompareOp.GREATER, info.compareOp);
-					assertEquals(true, info.unnormalizedCoordinates);
-					return true;
-				}
-			};
-
-			// Check API
-			assertNotNull(sampler);
-			verify(dev.library()).vkCreateSampler(dev, expected, null, dev.factory().pointer());
-		}
-
-		@Test
-		void buildInvalidLOD() {
-			builder.minLod(2).maxLod(1);
-			assertThrows(IllegalArgumentException.class, () -> builder.build(dev));
 		}
 	}
 }

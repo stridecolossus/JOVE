@@ -1,25 +1,20 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireNotEmpty;
+import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>programmable shader stage</i> defines a pipeline stage implemented by a {@link Shader} module.
  * @author Sarge
  */
-public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String name, SpecialisationConstants constants) {
-	private static final String MAIN = "main";
-
+public record ProgrammableShaderStage(VkShaderStageFlags stage, Shader shader, String name, SpecialisationConstants constants) {
 	/**
-	 * Constructor.
-	 * @param stage		Shader stage
-	 * @param shader	Shader module
+	 * Default entry-point name for a shader.
 	 */
-	public ProgrammableShaderStage(VkShaderStage stage, Shader shader) {
-		this(stage, shader, MAIN, null);
-	}
+	public static final String MAIN = "main";
 
 	/**
 	 * Constructor.
@@ -35,33 +30,61 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
 	}
 
 	/**
-	 * Populates the shader stage descriptor.
+	 * Convenience constructor.
+	 * @param stage			Shader stage
+	 * @param shader		Shader module
+	 * @see #MAIN
 	 */
-	void populate(VkPipelineShaderStageCreateInfo info) {
+	public ProgrammableShaderStage(VkShaderStageFlags stage, Shader shader) {
+		this(stage, shader, MAIN, null);
+	}
+
+	/**
+	 * Helper.
+	 * Builds a programmable shader stage with default properties.
+	 * @param stage			Shader stage
+	 * @param shader		Shader
+	 * @return Programmable shader stage
+	 */
+	public static ProgrammableShaderStage of(VkShaderStageFlags stage, Shader shader) {
+		return new Builder()
+				.stage(stage)
+				.shader(shader)
+				.build();
+	}
+
+	/**
+	 * @return Programmable shader stage descriptor
+	 */
+	VkPipelineShaderStageCreateInfo descriptor() {
+		final var info = new VkPipelineShaderStageCreateInfo();
 		info.sType = VkStructureType.PIPELINE_SHADER_STAGE_CREATE_INFO;
-		info.stage = stage;
+		info.flags = new EnumMask<>();
+		info.stage = new EnumMask<>(stage);
 		info.module = shader.handle();
 		info.pName = name;
 		if(constants != null) {
-			info.pSpecializationInfo = constants.build();
+			info.pSpecializationInfo = constants.descriptor();
 		}
+		return info;
 	}
 
 	/**
 	 * Builder for a shader stage.
 	 */
 	public static class Builder {
-		private final VkShaderStage stage;
+		private VkShaderStageFlags stage;
 		private Shader shader;
 		private String name = MAIN;
 		private SpecialisationConstants constants;
 
 		/**
-		 * Constructor.
+		 * Sets the shader stage.
 		 * @param stage Shader stage
 		 */
-		public Builder(VkShaderStage stage) {
-			this.stage = requireNonNull(stage);
+		public Builder stage(VkShaderStageFlags stage) {
+			this.stage = stage;
+			return this;
 		}
 
 		/**
@@ -69,7 +92,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param shader Shader module
     	 */
     	public Builder shader(Shader shader) {
-    		this.shader = requireNonNull(shader);
+    		this.shader = shader;
     		return this;
     	}
 
@@ -78,7 +101,7 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param name Shader method name
     	 */
     	public Builder name(String name) {
-    		this.name = requireNotEmpty(name);
+    		this.name = name;
     		return this;
     	}
 
@@ -87,17 +110,15 @@ public record ProgrammableShaderStage(VkShaderStage stage, Shader shader, String
     	 * @param constants Specialisation constants
     	 */
     	public Builder constants(SpecialisationConstants constants) {
-    		this.constants = requireNonNull(constants);
+    		this.constants = constants;
     		return this;
     	}
 
     	/**
     	 * Constructs this shader stage.
     	 * @return New shader stage
-    	 * @throws IllegalArgumentException if the shader module has not been configured
     	 */
     	public ProgrammableShaderStage build() {
-    		if(shader == null) throw new IllegalArgumentException("Shader module not populated");
     		return new ProgrammableShaderStage(stage, shader, name, constants);
     	}
     }

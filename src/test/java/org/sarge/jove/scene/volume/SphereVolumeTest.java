@@ -1,10 +1,10 @@
 package org.sarge.jove.scene.volume;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 import static org.sarge.jove.geometry.Axis.*;
+import static org.sarge.jove.geometry.Ray.IntersectedSurface.EMPTY_INTERSECTIONS;
 
-import java.util.*;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.*;
@@ -19,12 +19,7 @@ class SphereVolumeTest {
 
 	@BeforeEach
 	void before() {
-		sphere = new SphereVolume(new Sphere(Point.ORIGIN, RADIUS));
-	}
-
-	@Test
-	void constructor() {
-		assertEquals(new Sphere(Point.ORIGIN, RADIUS), sphere.sphere());
+		sphere = new SphereVolume(Point.ORIGIN, RADIUS);
 	}
 
 	@Test
@@ -39,14 +34,6 @@ class SphereVolumeTest {
 		assertEquals(true, sphere.contains(Point.ORIGIN));
 		assertEquals(true, sphere.contains(new Point(RADIUS, 0, 0)));
 		assertEquals(false, sphere.contains(new Point(OUTSIDE, 0, 0)));
-	}
-
-	@DisplayName("Intersection tests delegate to a sphere intersection")
-	@Test
-	void intersectDelegate() {
-		final Volume vol = mock(Volume.class);
-		assertEquals(false, sphere.intersects(vol));
-		verify(vol).intersects(sphere);
 	}
 
 	@Nested
@@ -95,25 +82,25 @@ class SphereVolumeTest {
 		@DisplayName("Contained sphere intersects")
 		@Test
 		void inside() {
-			assertEquals(true, sphere.intersects(new SphereVolume(new Sphere(Point.ORIGIN, 1))));
+			assertEquals(true, sphere.intersects(new SphereVolume(Point.ORIGIN, 1)));
 		}
 
 		@DisplayName("Overlapping spheres should intersect")
 		@Test
 		void intersecting() {
-			assertEquals(true, sphere.intersects(new SphereVolume(new Sphere(outside, 2))));
+			assertEquals(true, sphere.intersects(new SphereVolume(outside, 2)));
 		}
 
 		@DisplayName("Touching spheres intersect")
 		@Test
 		void touching() {
-			assertEquals(true, sphere.intersects(new SphereVolume(new Sphere(outside, 1))));
+			assertEquals(true, sphere.intersects(new SphereVolume(outside, 1)));
 		}
 
 		@DisplayName("Non-intersecting spheres")
 		@Test
 		void outside() {
-			assertEquals(false, sphere.intersects(new SphereVolume(new Sphere(outside, MathsUtility.HALF))));
+			assertEquals(false, sphere.intersects(new SphereVolume(outside, MathsUtility.HALF)));
 		}
 	}
 
@@ -148,6 +135,12 @@ class SphereVolumeTest {
 
 	@Nested
 	class IntersectionTests {
+		@Test
+		void normal() {
+			assertEquals(X.invert(), sphere.normal(new Point(OUTSIDE, 0, 0)));
+			assertEquals(X, sphere.normal(new Point(-OUTSIDE, 0, 0)));
+		}
+
 		@DisplayName("A sphere behind the ray origin...")
 		@Nested
 		class Behind {
@@ -155,23 +148,21 @@ class SphereVolumeTest {
     		@Test
     		void outside() {
     			final Ray ray = new Ray(new Point(OUTSIDE, 0, 0), X);
-    			assertEquals(Intersection.NONE, sphere.intersections(ray));
+    			assertEquals(EMPTY_INTERSECTIONS, sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects if the ray originates inside the sphere")
     		@Test
     		void inside() {
     			final Ray ray = new Ray(new Point(1, 0, 0), X);
-    			final Intersection intersection = ray.intersection(2, X);
-    			assertEquals(List.of(intersection), sphere.intersections(ray));
+    			assertEquals(List.of(new Intersection(2, sphere)), sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects if the ray originates on the sphere surface")
     		@Test
     		void touching() {
     			final Ray ray = new Ray(new Point(RADIUS, 0, 0), X);
-    			final Intersection intersection = ray.intersection(0, X);
-    			assertEquals(List.of(intersection), sphere.intersections(ray));
+    			assertEquals(List.of(new Intersection(0, sphere)), sphere.intersections(ray));
     		}
 		}
 
@@ -182,37 +173,28 @@ class SphereVolumeTest {
     		@Test
     		void outside() {
     			final Ray ray = new Ray(new Point(-OUTSIDE, +OUTSIDE, 0), X);
-    			assertEquals(Intersection.NONE, sphere.intersections(ray));
+    			assertEquals(EMPTY_INTERSECTIONS, sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects if the ray originates inside the sphere")
     		@Test
     		void inside() {
     			final Ray ray = new Ray(new Point(-1, 0, 0), X);
-    			final Intersection intersection = ray.intersection(4, X);
-    			final Iterator<Intersection> itr = sphere.intersections(ray).iterator();
-    			assertEquals(intersection, itr.next());
-    			assertEquals(false, itr.hasNext());
+    			assertEquals(List.of(new Intersection(4, sphere)), sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects twice if the ray crosses the sphere")
     		@Test
     		void intersects() {
     			final Ray ray = new Ray(new Point(-OUTSIDE, 0, 0), X);
-    			final Iterator<Intersection> itr = sphere.intersections(ray).iterator();
-    			assertEquals(ray.intersection(1, X.invert()), itr.next());
-    			assertEquals(ray.intersection(7, X), itr.next());
-    			assertEquals(false, itr.hasNext());
+    			assertEquals(List.of(new Intersection(1, sphere), new Intersection(7, sphere)), sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects twice if the ray originates on the sphere surface")
     		@Test
     		void touching() {
     			final Ray ray = new Ray(new Point(-RADIUS, 0, 0), X);
-    			final Iterator<Intersection> itr = sphere.intersections(ray).iterator();
-    			assertEquals(ray.intersection(0, X.invert()), itr.next());
-    			assertEquals(ray.intersection(6, X), itr.next());
-    			assertEquals(false, itr.hasNext());
+    			assertEquals(List.of(new Intersection(0, sphere), new Intersection(6, sphere)), sphere.intersections(ray));
     		}
     	}
 	}
@@ -220,8 +202,8 @@ class SphereVolumeTest {
 	@Test
 	void equals() {
 		assertEquals(sphere, sphere);
-		assertEquals(sphere, new SphereVolume(new Sphere(Point.ORIGIN, RADIUS)));
+		assertEquals(sphere, new SphereVolume(Point.ORIGIN, RADIUS));
 		assertNotEquals(sphere, null);
-		assertNotEquals(sphere, new SphereVolume(new Sphere(Point.ORIGIN, 999)));
+		assertNotEquals(sphere, new SphereVolume(Point.ORIGIN, 1));
 	}
 }

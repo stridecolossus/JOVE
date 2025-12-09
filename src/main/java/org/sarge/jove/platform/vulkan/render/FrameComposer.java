@@ -2,76 +2,80 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Set;
+
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.Command;
-import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
 /**
- * The <i>frame composer</i> builds the render task for the next frame.
- * <p>
- * The default configuration assumes that the render sequence is comprised of <i>secondary</i> command buffers.
- * The {@link #contents(VkSubpassContents)} method can be used to override the default behaviour.
- * <p>
+ * The <i>frame composer</i> builds the command buffer to render the next frame.
  * @author Sarge
  */
 public class FrameComposer {
-	private final Pool pool;
-	private final Sequence sequence;
-
-	private VkCommandBufferUsage[] flags = {VkCommandBufferUsage.ONE_TIME_SUBMIT};
-	private VkSubpassContents contents = VkSubpassContents.SECONDARY_COMMAND_BUFFERS;
+	private final Command.Pool pool;
+	private final RenderSequence sequence;
 
 	/**
 	 * Constructor.
-	 * @param pool 			Command pool
-	 * @param sequence		Render sequence
+	 * @param pool			Command pool
+	 * @param sequence		Rendering sequence
 	 */
-	public FrameComposer(Pool pool, Sequence sequence) {
+	public FrameComposer(Command.Pool pool, RenderSequence sequence) {
 		this.pool = requireNonNull(pool);
 		this.sequence = requireNonNull(sequence);
 	}
 
 	/**
-	 * Sets the creation flags for the render task.
-	 * Default is {@link VkCommandBufferUsage#ONE_TIME_SUBMIT}.
-	 * @param flags Creation flags
+	 * Composes the command buffer to render the next frame.
+	 * @param index				Frame index
+	 * @param framebuffer		Framebuffer to be rendered
+	 * @return Render command buffer
 	 */
-	public void flags(VkCommandBufferUsage... flags) {
-		this.flags = requireNonNull(flags);
-	}
+	public Buffer compose(int index, Framebuffer framebuffer) {
+		// Allocate command buffer
+		final Buffer buffer = allocate(pool, index);
 
-	/**
-	 * Sets the subpass contents for the render sequence.
-	 * Default is {@link VkSubpassContents#SECONDARY_COMMAND_BUFFERS}.
-	 * @param contents Subpass contents
-	 */
-	public void contents(VkSubpassContents contents) {
-		this.contents = requireNonNull(contents);
-	}
+		// Init frame buffer
+		final Command begin = framebuffer.begin(this.contents());
 
-	/**
-	 * Composes the render task for the next frame.
-	 * @param index In-flight frame index
-	 * @param frame Frame buffer
-	 * @return Render task
-	 */
-	public Buffer compose(int index, FrameBuffer frame) {
-		// Allocate a primary command buffer
-		final PrimaryBuffer buffer = pool.primary();
+		// Build render sequence
+		begin(buffer);
+    		buffer.add(begin);
+    			sequence.build(index, buffer);
+    		buffer.add(framebuffer.end());
+    	buffer.end();
 
-		// Start recording
-		buffer.begin(flags);
-
-		// Create a render pass for the given frame buffer
-		final Command begin = frame.begin(contents);
-		final Sequence pass = sequence.wrap(begin, FrameBuffer.END);
-
-		// Record render pass
-		pass.record(index, buffer);
-
-		// Finish recording
-		buffer.end();
+    	// TODO - should we be releasing the buffer if a one-time submit?
 
 		return buffer;
+	}
+
+	/**
+	 * Allocates the next command buffer.
+	 * The default implementation allocates a new buffer for each frame.
+	 * @param pool		Command pool
+	 * @param index		Frame index
+	 * @return Command buffer
+	 */
+	protected Buffer allocate(Command.Pool pool, int index) {
+		return pool.allocate(1, true).getFirst();
+	}
+	// TODO - this needs to return a factory
+
+	/**
+	 * @return Subpass contents for the rendering command
+	 */
+	protected VkSubpassContents contents() {
+		return VkSubpassContents.INLINE;
+	}
+
+	/**
+	 * Begins recording to the given buffer.
+	 * The default implementation begins recording as a {@link VkCommandBufferUsage#ONE_TIME_SUBMIT} command.
+	 * @param buffer Recording buffer
+	 */
+	protected void begin(Buffer buffer) {
+		buffer.begin(null, Set.of(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT));
 	}
 }

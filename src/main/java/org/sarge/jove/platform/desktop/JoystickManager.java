@@ -3,9 +3,6 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.util.*;
-import java.util.stream.IntStream;
-
-import org.sarge.jove.platform.desktop.DesktopLibraryJoystick.JoystickListener;
 
 /**
  * The <i>joystick manager</i> manages the joystick devices attached to the system.
@@ -48,12 +45,12 @@ public class JoystickManager {
 	 * Initialises devices.
 	 */
 	private void init() {
-		final DesktopLibraryJoystick lib = desktop.library();
-		IntStream
-				.range(0, 16)
-				.filter(lib::glfwJoystickPresent)
-				.mapToObj(this::create)
-				.forEach(devices::add);
+//		final DesktopLibraryJoystick lib = desktop.library();
+//		IntStream
+//				.range(0, 16)
+//				.filter(lib::glfwJoystickPresent)
+//				.mapToObj(this::create)
+//				.forEach(devices::add);
 	}
 
 	/**
@@ -62,8 +59,9 @@ public class JoystickManager {
 	 * @return New joystick
 	 */
 	private JoystickDevice create(int id) {
-		final String name = desktop.library().glfwGetJoystickName(id);
-		return new JoystickDevice(id, name, desktop);
+//		final String name = desktop.library().glfwGetJoystickName(id);
+//		return new JoystickDevice(id, name, desktop);
+		return null;
 	}
 
 	/**
@@ -72,15 +70,16 @@ public class JoystickManager {
 	 * @return Removed device
 	 */
 	private JoystickDevice remove(int id) {
-		final JoystickDevice prev = devices
-				.stream()
-				.filter(dev -> dev.id() == id)
-				.findAny()
-				.orElseThrow();
-
-		devices.remove(prev);
-
-		return prev;
+//		final JoystickDevice prev = devices
+//				.stream()
+//				.filter(dev -> dev.id() == id)
+//				.findAny()
+//				.orElseThrow();
+//
+//		devices.remove(prev);
+//
+//		return prev;
+		return null;
 	}
 
 	/**
@@ -95,9 +94,9 @@ public class JoystickManager {
 	 * Polls joystick events.
 	 */
 	public void poll() {
-		for(JoystickDevice dev : devices) {
-			dev.poll();
-		}
+//		for(JoystickDevice dev : devices) {
+//			dev.poll();
+//		}
 	}
 
 	/**
@@ -105,32 +104,32 @@ public class JoystickManager {
 	 * @param listener Connection listener or {@code null} to disable
 	 */
 	public void listener(ConnectionListener listener) {
-		// Disable listener
-		final DesktopLibraryJoystick lib = desktop.library();
-		if(listener == null) {
-			lib.glfwSetJoystickCallback(null);
-			return;
-		}
-
-		// Register adapter that maintains device array
-		final JoystickListener adapter = (id, event) -> {
-			// Determine event
-			final boolean connected = event == 0x00040001;
-
-			// Register device
-			if(connected) {
-				final JoystickDevice dev = create(id);
-				devices.add(dev);
-				listener.connect(dev, true);
-			}
-			else {
-				final JoystickDevice prev = remove(id);
-				listener.connect(prev, false);
-			}
-
-			// Notify event
-			listener.connect(null, connected);
-		};
-		lib.glfwSetJoystickCallback(adapter);
+//		// Disable listener
+//		final DesktopLibraryJoystick lib = desktop.library();
+//		if(listener == null) {
+//			lib.glfwSetJoystickCallback(null);
+//			return;
+//		}
+//
+//		// Register adapter that maintains device array
+//		final JoystickListener adapter = (id, event) -> {
+//			// Determine event
+//			final boolean connected = event == 0x00040001;
+//
+//			// Register device
+//			if(connected) {
+//				final JoystickDevice dev = create(id);
+//				devices.add(dev);
+//				listener.connect(dev, true);
+//			}
+//			else {
+//				final JoystickDevice prev = remove(id);
+//				listener.connect(prev, false);
+//			}
+//
+//			// Notify event
+//			listener.connect(null, connected);
+//		};
+//		lib.glfwSetJoystickCallback(adapter);
 	}
 }

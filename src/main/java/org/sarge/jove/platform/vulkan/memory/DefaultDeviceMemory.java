@@ -1,21 +1,18 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.*;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.lang.foreign.MemorySegment;
+import java.util.Optional;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.foreign.Pointer;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
- * Default implementation.
+ * Default implementation that essentially wraps an FFM memory segment.
  * @author Sarge
  */
 class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
@@ -25,13 +22,13 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 
 	/**
 	 * Constructor.
-	 * @param handle		Memory pointer
-	 * @param dev			Logical device
+	 * @param handle		Memory handle
+	 * @param device		Logical device
 	 * @param type			Type of memory
 	 * @param size			Size of this memory (bytes)
 	 */
-	DefaultDeviceMemory(Handle handle, DeviceContext dev, MemoryType type, long size) {
-		super(handle, dev);
+	DefaultDeviceMemory(Handle handle, LogicalDevice device, MemoryType type, long size) {
+		super(handle, device);
 		this.type = requireNonNull(type);
 		this.size = requireOneOrMore(size);
 	}
@@ -52,38 +49,29 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	/**
-	 * Mapped region implementation.
+	 * Wrapper for a mapped memory segment.
 	 */
 	private class DefaultRegion implements Region {
-		private final Pointer ptr;
-		private final long segment;
-		private final long offset;
+		private final MemorySegment segment;
 
 		/**
 		 * Constructor.
-		 * @param ptr				Region memory pointer
-		 * @param offset			Offset
-		 * @param size				Size of this region
+		 * @param segment Mapped memory segment
 		 */
-		private DefaultRegion(Pointer ptr, long offset, long size) {
-			this.ptr = requireNonNull(ptr);
-			this.offset = requireZeroOrMore(offset);
-			this.segment = requireOneOrMore(size);
+		private DefaultRegion(MemorySegment segment) {
+			this.segment = requireNonNull(segment);
 		}
 
 		@Override
 		public long size() {
-			return segment;
+			return segment.byteSize();
 		}
 
 		@Override
-		public ByteBuffer buffer(long offset, long size) {
+		public MemorySegment memory() {
 			checkAlive();
 			checkMapped();
-			if(offset + size > segment) {
-				throw new IllegalArgumentException("Buffer offset/length larger than region: offset=%d size=%d region=%s".formatted(offset, size, this));
-			}
-			return ptr.getByteBuffer(offset, size);
+			return segment;
 		}
 
 		@Override
@@ -93,12 +81,17 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			checkMapped();
 
 			// Release mapping
-			final DeviceContext dev = device();
-			final VulkanLibrary lib = dev.library();
-			lib.vkUnmapMemory(dev, DefaultDeviceMemory.this);
+			final LogicalDevice device = device();
+			final MemoryLibrary library = device.library();
+			library.vkUnmapMemory(device, DefaultDeviceMemory.this);
 
 			// Clear mapping
 			region = null;
+		}
+
+		@Override
+		public int hashCode() {
+			return segment.hashCode();
 		}
 
 		@Override
@@ -106,9 +99,12 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			return
 					(obj == this) ||
 					(obj instanceof DefaultRegion that) &&
-					(this.offset == that.offset) &&
-					(this.segment == that.segment) &&
-					this.ptr.equals(that.ptr);
+					this.segment.equals(that.segment);
+		}
+
+		@Override
+		public String toString() {
+			return String.format("Region[%s]", segment);
 		}
 	}
 
@@ -129,14 +125,13 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		}
 
 		// Map memory
-		final DeviceContext dev = this.device();
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkMapMemory(dev, this, offset, size, 0, ref));
+		final LogicalDevice device = this.device();
+		final MemoryLibrary library = device.library();
+		final var pointer = new Pointer(size);
+		library.vkMapMemory(device, this, offset, size, 0, pointer);
 
 		// Create mapped region
-		region = new DefaultRegion(ref.getValue(), offset, size);
-
+		region = new DefaultRegion(pointer.get());
 		return region;
 	}
 	// TODO - region rounding if not host coherent
@@ -160,19 +155,19 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	@Override
-	protected final Destructor<DefaultDeviceMemory> destructor(VulkanLibrary lib) {
-		return lib::vkFreeMemory;
+	protected final Destructor<DefaultDeviceMemory> destructor() {
+		final MemoryLibrary library = this.device().library();
+		return library::vkFreeMemory;
 	}
 
 	@Override
 	protected void release() {
-		// TODO - do we need to explicitly unmap?
 		region = null;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(handle, type, size);
+		return this.handle().hashCode();
 	}
 
 	@Override
@@ -182,6 +177,6 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 				(obj instanceof DefaultDeviceMemory that) &&
 				(this.type == that.type) &&
 				(this.size == that.size) &&
-				this.handle.equals(that.handle);
+				this.handle().equals(that.handle());
 	}
 }

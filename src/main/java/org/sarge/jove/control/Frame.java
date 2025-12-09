@@ -1,96 +1,118 @@
 package org.sarge.jove.control;
 
+import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
+
 import java.time.*;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 
 /**
- * A <i>frame</i> is a simple stopwatch timer for the elapsed duration of a rendered frame.
+ * A <i>frame</i> records the elapsed duration of a frame rendering task.
  * @author Sarge
  */
-public class Frame {
+public record Frame(Instant start, Instant end) {
 	/**
-	 * Number of milliseconds per second.
-	 */
-	public static final long MILLISECONDS_PER_SECOND = TimeUnit.SECONDS.toMillis(1);
-
-	/**
-	 * A <i>frame listener</li> notifies completion of a rendered frame.
+	 * A <i>frame listener</i> is an observer for frame events.
 	 */
 	@FunctionalInterface
 	public interface Listener {
 		/**
-		 * Notifies a completed frame.
-		 * @param frame Completed frame
+		 * Notifies completion of a frame.
+		 * @param frame Frame
 		 */
-		void update(Frame frame);
-	}
+		void end(Frame frame);
 
-	private Instant start = Instant.now();
-	private Instant end;
+		/**
+		 * Creates an adapter for a frame listener invoked on the expiry of the given duration.
+		 * @param period		Iteration period
+		 * @param delegate		Delegate listener
+		 * @return Periodic listener
+		 */
+		static Listener periodic(Duration period, Listener delegate) {
+			requireOneOrMore(period);
+			requireNonNull(delegate);
 
-	/**
-	 * @return Frame completion time
-	 * @throws IllegalStateException if this frame has not been completed
-	 */
-	public Instant time() {
-		check();
-		return end;
+			return new Listener() {
+				private Instant end = Instant.now().plus(period);
+
+				@Override
+				public void end(Frame frame) {
+					if(frame.end.isAfter(end)) {
+						delegate.end(frame);
+						end = frame.end.plus(period);
+					}
+				}
+			};
+		}
 	}
 
 	/**
 	 * @return Elapsed duration of this frame
-	 * @throws IllegalStateException if this frame has not been completed
 	 */
 	public Duration elapsed() {
-		check();
 		return Duration.between(start, end);
 	}
 
 	/**
-	 * @throws IllegalStateException if this frame has not been completed
+	 * The <i>frame tracker</i> measures frame durations and notifies listeners of frame events.
 	 */
-	private void check() {
-		if(end == null) throw new IllegalStateException("Frame has not been completed");
-	}
-
-	/**
-	 * Stops this frame.
-	 * @throws IllegalStateException if this frame has already been completed
-	 */
-	public void stop() {
-		if(end != null) throw new IllegalStateException("Frame has already been completed");
-		end = Instant.now();
-	}
-
-	@Override
-	public String toString() {
-		return String.format("%s -> %s", start, end);
-	}
-
-	/**
-	 * A <i>frame counter</i> tracks FPS (frames per second).
-	 */
-	public static class Counter implements Listener {
-		private Instant next = Instant.EPOCH;
-		private int count;
+	public static class Tracker {
+		private final Set<Listener> listeners = new HashSet<>();
 
 		/**
-		 * @return Frames-per-second
+		 * Starts a new frame.
+		 * @return Frame completion callback
+		 * @see Listener#start(int)
 		 */
-		public int fps() {
-			return count;
-		}
+    	public Runnable begin() {
+    		return new Timer();
+    	}
 
-		@Override
-		public void update(Frame frame) {
-			final Instant now = frame.time();
-			if(now.isAfter(next)) {
-				count = 1;
-				next = now.plusMillis(MILLISECONDS_PER_SECOND);
-			}
-			else {
-				++count;
-			}
-		}
-	}
+    	/**
+    	 * Notifies listeners on completion of the frame.
+    	 */
+    	private class Timer implements Runnable {
+            private final Instant start = Instant.now();
+            private boolean completed;
+
+            @Override
+            public void run() {
+                if(completed) {
+                	throw new IllegalStateException();
+                }
+
+                final Frame frame = new Frame(start, Instant.now());
+
+                for(Listener listener : listeners) {
+                	listener.end(frame);
+                }
+
+                completed = true;
+            }
+    	}
+
+    	/**
+    	 * Registers a frame completion listener.
+    	 * @param listener Listener to add
+    	 */
+    	public void add(Listener listener) {
+    		requireNonNull(listener);
+    		listeners.add(listener);
+    	}
+
+    	/**
+    	 * Detaches a frame completion listener.
+    	 * @param listener Listener to remove
+    	 */
+    	public void remove(Listener listener) {
+    		listeners.remove(listener);
+    	}
+
+    	/**
+    	 * Removes all frame listeners.
+    	 */
+    	public void clear() {
+    		listeners.clear();
+    	}
+    }
 }

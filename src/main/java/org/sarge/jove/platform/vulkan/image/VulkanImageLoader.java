@@ -6,8 +6,8 @@ import java.io.*;
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.*;
-import org.sarge.jove.io.ImageData.Level;
+import org.sarge.jove.util.*;
+import org.sarge.jove.util.ImageData.Level;
 
 /**
  * Loader for a KTX image.
@@ -19,14 +19,9 @@ import org.sarge.jove.io.ImageData.Level;
  * @see <a href="https://github.com/KhronosGroup/3D-Formats-Guidelines/blob/main/KTXDeveloperGuide.md">Developer Guide</a>
  * @author Sarge
  */
-public class VulkanImageLoader implements ResourceLoader<DataInput, ImageData> {
-	@Override
-	public DataInput map(InputStream in) throws IOException {
-		return new LittleEndianDataInputStream(in);
-	}
-
-	@Override
-	public ImageData load(DataInput in) throws IOException {
+public class VulkanImageLoader {
+	// TODO
+	public ImageData load(LittleEndianDataInputStream in) throws IOException {
 		// Load and validate header
 		loadHeader(in);
 

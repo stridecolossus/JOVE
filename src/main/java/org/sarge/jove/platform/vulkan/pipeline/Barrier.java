@@ -1,17 +1,17 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.*;
 
+import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Structure;
+import org.sarge.jove.platform.vulkan.pipeline.Barrier.BarrierType.*;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>pipeline barrier</i> is a command used to synchronize access to memory resources within the pipeline.
@@ -22,364 +22,257 @@ import com.sun.jna.Structure;
  * <li>buffers</li>
  * <li>images</li>
  * </ul>
- * The {@link Builder} provides sub-builders for each of these cases.
- * <p>
- * Example for a barrier used to transition an image to be ready for sampling:
- * <pre>
- * Image image = ...
- * Barrier barrier = new Barrier.Builder()
- *     .source(VkPipelineStage.TRANSFER)
- *     .destination(VkPipelineStage.FRAGMENT_SHADER)
- *     .image(image)
- *         oldLayout(VkImageLayout.TRANSFER_DST_OPTIMAL)
- *         newLayout(VkImageLayout.SHADER_READ_ONLY_OPTIMAL)
- *         source(VkAccess.TRANSFER_WRITE)
- *         destination(VkAccess.SHADER_READ)
- *         build()
- *     .build();</pre>
- * <p>
  * @author Sarge
  */
-public final class Barrier implements Command {
-	private final BitMask<VkPipelineStage> src, dest;
-	private final BitMask<VkDependencyFlag> flags;
+public class Barrier implements Command {
+	private final Pipeline.Library library;
+	private final EnumMask<VkPipelineStageFlags> src, dest;
+	private final EnumMask<VkDependencyFlags> flags;
 	private final VkImageMemoryBarrier[] images;
 	private final VkBufferMemoryBarrier[] buffers;
 	private final VkMemoryBarrier[] memory;
 
 	/**
 	 * Constructor.
-	 * @param src			Source pipeline stages
-	 * @param dest			Destination pipeline stages
+	 * @param library		Pipeline library
+	 * @param source		Source pipeline stages
+	 * @param destination	Destination pipeline stages
 	 * @param flags			Dependency flags
 	 * @param memory		Memory barriers
 	 * @param buffers		Buffer memory barriers
 	 * @param images		Image memory barriers
 	 */
-	private Barrier(Set<VkPipelineStage> src, Set<VkPipelineStage> dest, Set<VkDependencyFlag> flags, VkMemoryBarrier[] memory, VkBufferMemoryBarrier[] buffers, VkImageMemoryBarrier[] images) {
-		this.src = new BitMask<>(src);
-		this.dest = new BitMask<>(dest);
-		this.flags = new BitMask<>(flags);
+	private Barrier(Pipeline.Library library, Set<VkPipelineStageFlags> source, Set<VkPipelineStageFlags> destination, Set<VkDependencyFlags> flags, VkMemoryBarrier[] memory, VkBufferMemoryBarrier[] buffers, VkImageMemoryBarrier[] images) {
+		this.library = requireNonNull(library);
+		this.src = new EnumMask<>(source);
+		this.dest = new EnumMask<>(destination);
+		this.flags = new EnumMask<>(flags);
 		this.memory = memory;
 		this.buffers = buffers;
 		this.images = images;
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, Buffer buffer) {
-		lib.vkCmdPipelineBarrier(
+	public void execute(Buffer buffer) {
+		library.vkCmdPipelineBarrier(
 				buffer,
-				src, dest,
+				src,
+				dest,
 				flags,
-				length(memory), memory,
-				length(buffers), buffers,
-				length(images), images
+				memory.length,
+				memory,
+				buffers.length,
+				buffers,
+				images.length,
+				images
 		);
 	}
 
 	/**
-	 * @return Length of the given array
-	 */
-	private static int length(Structure[] array) {
-		if(array == null) {
-			return 0;
-		}
-		else {
-			return array.length;
-		}
-	}
-
-	/**
-	 * Builder for a pipeline barrier.
+	 * Builder for a barrier.
 	 */
 	public static class Builder {
-		private final Set<VkPipelineStage> srcStages = new HashSet<>();
-		private final Set<VkPipelineStage> destStages = new HashSet<>();
-		private final Set<VkDependencyFlag> flags = new HashSet<>();
-		private final List<MemoryBarrierBuilder<?>> memory = new ArrayList<>();
-		private final List<BufferBarrierBuilder> buffers = new ArrayList<>();
-		private final List<ImageBarrierBuilder> images = new ArrayList<>();
+		private final Set<VkPipelineStageFlags> source = new HashSet<>();
+		private final Set<VkPipelineStageFlags> destination = new HashSet<>();
+		private final Set<VkDependencyFlags> flags = new HashSet<>();
+		private final List<VkMemoryBarrier> memory = new ArrayList<>();
+		private final List<VkBufferMemoryBarrier> buffers = new ArrayList<>();
+		private final List<VkImageMemoryBarrier> images = new ArrayList<>();
 
 		/**
-		 * Adds a source pipeline stage for this barrier.
+		 * Adds a source pipeline stage.
 		 * @param stage Source pipeline stage
 		 */
-		public Builder source(VkPipelineStage stage) {
-			requireNonNull(stage);
-			srcStages.add(stage);
+		public Builder source(VkPipelineStageFlags stage) {
+			source.add(stage);
 			return this;
 		}
 
 		/**
-		 * Adds a destination pipeline stage for this barrier.
+		 * Adds a destination pipeline stage.
 		 * @param stage Destination pipeline stage
 		 */
-		public Builder destination(VkPipelineStage stage) {
-			requireNonNull(stage);
-			destStages.add(stage);
+		public Builder destination(VkPipelineStageFlags stage) {
+			destination.add(stage);
 			return this;
 		}
 
 		/**
-		 * Adds a dependency flag for this barrier.
+		 * Adds a dependency flag.
 		 * @param flag Dependency flag
 		 */
-		public Builder dependency(VkDependencyFlag flag) {
-			requireNonNull(flag);
+		public Builder flag(VkDependencyFlags flag) {
 			flags.add(flag);
 			return this;
 		}
 
 		/**
-		 * Starts a memory barrier.
-		 * @return Memory barrier builder
+		 * Adds a barrier.
+		 * @param source			Source access mask
+		 * @param destination		Destination access mask
+		 * @param barrier			Barrier
 		 */
-		public MemoryBarrierBuilder<?> memory() {
-			return new MemoryBarrierBuilder<>();
+		public Builder add(Set<VkAccessFlags> source, Set<VkAccessFlags> destination, BarrierType barrier) {
+			final var src = new EnumMask<>(source);
+			final var dest = new EnumMask<>(destination);
+			switch(barrier) {
+    			case MemoryBarrier mem		-> memory.add(mem.populate(src, dest));
+    			case BufferBarrier buffer	-> buffers.add(buffer.populate(src, dest));
+    			case ImageBarrier  image	-> images.add(image.populate(src, dest));
+    		}
+			return this;
 		}
 
 		/**
-		 * Starts a buffer memory barrier.
-		 * @param buffer Vulkan buffer
-		 * @return Buffer barrier builder
-		 */
-		public BufferBarrierBuilder buffer(VulkanBuffer buffer) {
-			requireNonNull(buffer);
-			return new BufferBarrierBuilder(buffer);
-		}
-
-		/**
-		 * Starts an image memory barrier.
-		 * @param image Vulkan image
-		 * @return Image barrier builder
-		 */
-		public ImageBarrierBuilder image(Image image) {
-			requireNonNull(image);
-			return new ImageBarrierBuilder(image);
-		}
-
-		/**
-		 * Constructs this pipeline barrier.
+		 * Constructs this barrier.
+		 * @param library Pipeline library
 		 * @return New barrier
 		 */
-		public Barrier build() {
-			final var memoryArray = StructureCollector.array(memory, new VkMemoryBarrier(), MemoryBarrierBuilder::populate);
-			final var bufferArray = StructureCollector.array(buffers, new VkBufferMemoryBarrier(), BufferBarrierBuilder::populate);
-			final var imagesArray = StructureCollector.array(images, new VkImageMemoryBarrier(), ImageBarrierBuilder::populate);
-			return new Barrier(srcStages, destStages, flags, memoryArray, bufferArray, imagesArray);
+		public Barrier build(LogicalDevice device) {
+			return new Barrier(
+					device.library(),
+					source,
+					destination,
+					flags,
+					memory.toArray(VkMemoryBarrier[]::new),
+					buffers.toArray(VkBufferMemoryBarrier[]::new),
+					images.toArray(VkImageMemoryBarrier[]::new)
+			);
 		}
+	}
+
+	/**
+	 * Types of barrier.
+	 */
+	public sealed interface BarrierType {
+		/**
+		 * Populates the descriptor for this barrier.
+		 * @param srcAccess		Source access flags
+		 * @param destAccess	Destination access flags
+		 * @return Descriptor for this barrier
+		 */
+		NativeStructure populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess);
 
 		/**
-		 * Builder for a memory barrier.
+		 * Memory barrier.
 		 */
-		public class MemoryBarrierBuilder<T extends MemoryBarrierBuilder<T>> {
-			protected final Set<VkAccess> srcAccess = new HashSet<>();
-			protected final Set<VkAccess> destAccess = new HashSet<>();
-
-			protected MemoryBarrierBuilder() {
+		public record MemoryBarrier() implements BarrierType {
+			@Override
+			public VkMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
+				final var barrier = new VkMemoryBarrier();
+				barrier.sType = VkStructureType.MEMORY_BARRIER;
+				barrier.srcAccessMask = srcAccess;
+				barrier.dstAccessMask = destAccess;
+				return barrier;
 			}
-
-			/**
-			 * Adds a source access flag.
-			 * @param flag Source access flag
-			 */
-			@SuppressWarnings("unchecked")
-			public T source(VkAccess flag) {
-				requireNonNull(flag);
-				srcAccess.add(flag);
-				return (T) this;
-			}
-
-			/**
-			 * Adds a destination access flag.
-			 * @param flag Destination access flag
-			 */
-			@SuppressWarnings("unchecked")
-			public T destination(VkAccess flag) {
-				requireNonNull(flag);
-				destAccess.add(flag);
-				return (T) this;
-			}
-
-			/**
-			 * Populates the descriptor for this memory barrier.
-			 */
-			private void populate(VkMemoryBarrier barrier) {
-				barrier.srcAccessMask = new BitMask<>(srcAccess);
-				barrier.dstAccessMask = new BitMask<>(destAccess);
-			}
-
-			/**
-			 * @return Parent builder
-			 */
-			public Builder build() {
-				memory.add(this);
-				return Builder.this;
-			}
-		}
+    	}
 
 		/**
-		 * Intermediate builder for barriers with queue family ownership transitions.
-		 * @param <T> Sub-builder
+		 * Buffer barrier.
 		 */
-		@SuppressWarnings("unchecked")
-		private abstract class AbstractBarrierBuilder<T extends AbstractBarrierBuilder<T>> extends MemoryBarrierBuilder<T> {
-			protected int srcFamily = Family.IGNORED;
-			protected int destFamily = Family.IGNORED;
+    	public record BufferBarrier(VulkanBuffer buffer, long offset, long size, Family source, Family destination) implements BarrierType {
+    		/**
+    		 * Constructor.
+    		 * @param buffer			Buffer
+    		 * @param offset			Offset
+    		 * @param size				Buffer length or {@link VulkanBuffer#VK_WHOLE_SIZE} for the entire buffer
+    		 * @param source			Source queue family
+    		 * @param destination		Destination queue family
+    		 * @throws IllegalArgumentException if the {@link #offset} or {@link #size} are too large for the buffer
+    		 * @see VulkanBuffer#checkOffset(long)
+    		 */
+    		public BufferBarrier {
+    			requireNonNull(buffer);
+    			requireZeroOrMore(offset);
+    			requireZeroOrMore(size);
+    			requireNonNull(source);
+    			requireNonNull(destination);
 
-			/**
-			 * Sets the source for a queue family ownership transition.
-			 * @param src Source queue family
-			 */
-			public T source(Family src) {
-				this.srcFamily = src.index();
-				return (T) this;
-			}
+    			buffer.checkOffset(offset);			// TODO - was offset + 1 ???
 
-			/**
-			 * Sets the destination for a queue family ownership transition.
-			 * @param dest Destination queue family
-			 */
-			public T destination(Family dest) {
-				this.destFamily = dest.index();
-				return (T) this;
-			}
-		}
+    			if(size != VulkanBuffer.VK_WHOLE_SIZE) {
+    				buffer.checkOffset(offset + size);
+    			}
+    		}
 
-		/**
-		 * Builder for a buffer memory barrier.
-		 */
-		public class BufferBarrierBuilder extends AbstractBarrierBuilder<BufferBarrierBuilder> {
-			private final VulkanBuffer buffer;
-			private long offset;
-			private long size = VulkanBuffer.VK_WHOLE_SIZE;
+    		/**
+    		 * Convenience constructor for the whole of the buffer.
+    		 * @param buffer Buffer
+    		 * @see VulkanBuffer#VK_WHOLE_SIZE
+    		 * @see Family#IGNORED
+    		 */
+    		public BufferBarrier(VulkanBuffer buffer) {
+    			this(buffer, 0L, VulkanBuffer.VK_WHOLE_SIZE, Family.IGNORED, Family.IGNORED);
+    		}
 
-			private BufferBarrierBuilder(VulkanBuffer buffer) {
-				this.buffer = requireNonNull(buffer);
-			}
-
-			/**
-			 * Sets the offset into the buffer memory.
-			 * @param offset Buffer offset
-			 * @throws IllegalArgumentException if the given offset is larger than the buffers memory
-			 */
-			public BufferBarrierBuilder offset(long offset) {
-				this.offset = requireZeroOrMore(offset);
-				validate(offset + 1);
-				return this;
-			}
-
-			/**
-			 * Sets the size of the backing memory of the buffer to use (default is the whole buffer).
-			 * @param size Buffer size (bytes)
-			 * @throws IllegalArgumentException if the given size is larger than the buffers memory
-			 */
-			public BufferBarrierBuilder size(long size) {
-				this.size = requireOneOrMore(size);
-				validate(size);
-				return this;
-			}
-
-			/**
-			 * @throws IllegalArgumentException if the given size is larger then the buffers memory
-			 */
-			private void validate(long size) {
-				if(size > buffer.length()) {
-					throw new IllegalArgumentException(String.format("Invalid size/offset for buffer memory barrier: size=%d buffer=%s", size, buffer));
-				}
-			}
-
-			/**
-			 * Populates the descriptor for this buffer barrier.
-			 */
-			private void populate(VkBufferMemoryBarrier barrier) {
+    		@Override
+			public VkBufferMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
+				final var barrier = new VkBufferMemoryBarrier();
+				barrier.sType = VkStructureType.BUFFER_MEMORY_BARRIER;
 				barrier.buffer = buffer.handle();
 				barrier.offset = offset;
 				barrier.size = size;
-				barrier.srcAccessMask = new BitMask<>(srcAccess);
-				barrier.dstAccessMask = new BitMask<>(destAccess);
-				barrier.srcQueueFamilyIndex = srcFamily;
-				barrier.dstQueueFamilyIndex = destFamily;
+				barrier.srcAccessMask = srcAccess;
+				barrier.dstAccessMask = destAccess;
+				barrier.srcQueueFamilyIndex = source.index();
+				barrier.dstQueueFamilyIndex = destination.index();
+				return barrier;
 			}
+    	}
 
-			/**
-			 * @throws IllegalArgumentException if the configured offset and size are invalid for this buffer
-			 */
-			@Override
-			public Builder build() {
-				if(size != VulkanBuffer.VK_WHOLE_SIZE) {
-					validate(offset + size);
+    	/**
+    	 * Image barrier.
+    	 */
+    	public record ImageBarrier(Image image, Subresource subresource, VkImageLayout oldLayout, VkImageLayout newLayout, Family source, Family destination) implements BarrierType {
+    		/**
+    		 * Constructor.
+    		 * @param image				Image
+    		 * @param subresource		Subresource
+    		 * @param oldLayout			Old layout
+    		 * @param newLayout			New layout
+    		 * @param source			Source family
+    		 * @param destination		Destination family
+    		 * @throws IllegalArgumentException if the old and new layouts are the same
+    		 */
+    		public ImageBarrier {
+    			requireNonNull(image);
+    			requireNonNull(subresource);
+    			requireNonNull(oldLayout);
+    			requireNonNull(newLayout);
+    			requireNonNull(source);
+    			requireNonNull(destination);
+
+    			if(newLayout == oldLayout) {
+					throw new IllegalArgumentException("Previous and next layouts cannot be the same");
 				}
-				buffers.add(this);
-				return Builder.this;
-			}
-		}
+    		}
 
-		/**
-		 * Builder for an image barrier.
-		 */
-		public class ImageBarrierBuilder extends AbstractBarrierBuilder<ImageBarrierBuilder> {
-			private final Image image;
-			private VkImageLayout oldLayout = VkImageLayout.UNDEFINED;
-			private VkImageLayout newLayout;
-			private SubResource subresource;
+    		/**
+    		 * Convenience constructor with minimal configuration.
+    		 * @param image			Image and subresource
+    		 * @param oldLayout		Old layout
+    		 * @param newLayout		New layout
+    		 * @throws IllegalArgumentException if the old and new layouts are the same
+    		 * @see Family#IGNORED
+    		 */
+    		public ImageBarrier(Image image, VkImageLayout oldLayout, VkImageLayout newLayout) {
+    			this(image, image.descriptor(), oldLayout, newLayout, Family.IGNORED, Family.IGNORED);
+    		}
 
-			private ImageBarrierBuilder(Image image) {
-				this.image = requireNonNull(image);
-				this.subresource = image.descriptor();
-			}
-
-			/**
-			 * Sets the previous layout.
-			 * @param oldLayout Previous layout
-			 */
-			public ImageBarrierBuilder oldLayout(VkImageLayout oldLayout) {
-				this.oldLayout = requireNonNull(oldLayout);
-				return this;
-			}
-
-			/**
-			 * Sets the new layout.
-			 * @param newLayout New layout
-			 */
-			public ImageBarrierBuilder newLayout(VkImageLayout newLayout) {
-				this.newLayout = requireNonNull(newLayout);
-				return this;
-			}
-
-			/**
-			 * Sets the image sub-resource.
-			 * @param subresource Sub-resource
-			 */
-			public ImageBarrierBuilder subresource(SubResource subresource) {
-				this.subresource = requireNonNull(subresource);
-				return this;
-			}
-
-			/**
-			 * Populates an image barrier descriptor.
-			 */
-			private void populate(VkImageMemoryBarrier barrier) {
+    		@Override
+    		public VkImageMemoryBarrier populate(EnumMask<VkAccessFlags> srcAccess, EnumMask<VkAccessFlags> destAccess) {
+				final var barrier = new VkImageMemoryBarrier();
+				barrier.sType = VkStructureType.IMAGE_MEMORY_BARRIER;
 				barrier.image = image.handle();
-				barrier.srcAccessMask = new BitMask<>(srcAccess);
-				barrier.dstAccessMask = new BitMask<>(destAccess);
+				barrier.srcAccessMask = srcAccess;
+				barrier.dstAccessMask = destAccess;
 				barrier.oldLayout = oldLayout;
 				barrier.newLayout = newLayout;
-				barrier.subresourceRange = SubResource.toRange(subresource);
-				barrier.srcQueueFamilyIndex = srcFamily;
-				barrier.dstQueueFamilyIndex = destFamily;
+				barrier.subresourceRange = Subresource.range(subresource);
+				barrier.srcQueueFamilyIndex = source.index();
+				barrier.dstQueueFamilyIndex = destination.index();
+				return barrier;
 			}
-
-			/**
-			 * @throws IllegalArgumentException if the new layout has not been specified or is the same as the previous layout
-			 */
-			@Override
-			public Builder build() {
-				if(newLayout == null) throw new IllegalArgumentException("New layout not specified");
-				if(newLayout == oldLayout) throw new IllegalArgumentException("Previous and next layouts cannot be the same");
-				images.add(this);
-				return Builder.this;
-			}
-		}
+    	}
 	}
 }

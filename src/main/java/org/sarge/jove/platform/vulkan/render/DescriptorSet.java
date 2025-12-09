@@ -1,111 +1,91 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toMap;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.*;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.IntStream;
+import java.util.stream.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>descriptor set</i> specifies resources used during rendering, such as samplers and uniform buffers.
- * <p>
- * Example for a texture sampler:
- * <pre>
- * // Define binding for a sampler
- * Binding binding = new Binding.Builder()
- *     .binding(0)
- *     .type(VkDescriptorType.COMBINED_IMAGE_SAMPLER)
- *     .stage(VkShaderStage.FRAGMENT)
- *     .build()
- *
- * // Create a descriptor set layout for a sampler
- * Layout layout = Layout.create(List.of(binding, ...));
- *
- * // Create a descriptor pool for a double-buffered swapchain
- * Pool pool = new Pool.Builder(dev)
- *  	.add(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 2)
- *  	.max(2)
- *  	.build();
- *
- * // Create a descriptor set
- * DescriptorSet set = pool.allocate(layout);
- *
- * // Create a sampler resource
- * Sampler sampler = ...
- * View view = ...
- * DescriptorResource res = sampler.resource(view);
- *
- * // Add the sampler to the descriptor set
- * set.entry(binding).set(res);
- *
- * // Apply updates
- * DescriptorSet.update(dev, List.of(set));
- *
- * // Create a command to bind the descriptor set to the render sequence
- * Command bind = set.bind(pipeline.layout());
- * </pre>
  * @author Sarge
  */
-public final class DescriptorSet implements NativeObject {
+public class DescriptorSet implements NativeObject {
 	/**
-	 * A <i>binding</i> defines the properties of the resources in this descriptor set.
+	 * A descriptor set <i>resource</i> defines an object that can be applied to this descriptor set.
 	 */
-	public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStage> stages) {
+	public interface Resource {
+		/**
+		 * @return Descriptor type
+		 */
+		VkDescriptorType type();
+
+		/**
+		 * Builds the descriptor for this resource.
+		 * @return Resource descriptor
+		 */
+		NativeStructure descriptor();
+	}
+
+	/**
+	 * A <i>binding</i> defines the properties of a resource in this descriptor set.
+	 */
+	public record Binding(int index, VkDescriptorType type, int count, Set<VkShaderStageFlags> stages) {
 		/**
 		 * Constructor.
 		 * @param index			Binding index
 		 * @param type			Descriptor type
 		 * @param count			Array size
 		 * @param stages		Pipeline stage flags
-		 * @throws IllegalArgumentException if the pipeline {@link #stages} is empty
+		 * @throws IllegalArgumentException if the pipeline {@link #stages} are empty
 		 */
 		public Binding {
-			if(stages.isEmpty()) throw new IllegalArgumentException("No pipeline stages specified for binding");
 			requireZeroOrMore(index);
 			requireNonNull(type);
 			requireOneOrMore(count);
+			if(stages.isEmpty()) {
+				throw new IllegalArgumentException("No pipeline stages specified for binding");
+			}
 			stages = Set.copyOf(stages);
 		}
 
 		/**
 		 * Populates a binding descriptor.
 		 */
-		void populate(VkDescriptorSetLayoutBinding info) {
-			info.binding = index;
-			info.descriptorType = type;
-			info.descriptorCount = count;
-			info.stageFlags = new BitMask<>(stages);
+		private VkDescriptorSetLayoutBinding populate() {
+			final var binding = new VkDescriptorSetLayoutBinding();
+			binding.binding = index;
+			binding.descriptorType = type;
+			binding.descriptorCount = count;
+			binding.stageFlags = new EnumMask<>(stages);
+			// TODO - binding.pImmutableSamplers
+			// https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/VkDescriptorSetLayoutBinding.html
+			return binding;
 		}
 
 		/**
-		 * Builder for a layout binding.
+		 * Builder for a descriptor set binding.
 		 */
 		public static class Builder {
 			private int binding;
 			private VkDescriptorType type;
 			private int count = 1;
-			private final Set<VkShaderStage> stages = new HashSet<>();
+			private final Set<VkShaderStageFlags> stages = new HashSet<>();
 
 			/**
-			 * Sets the index of this binding (default is binding zero).
+			 * Sets the index of this binding.
 			 * @param binding Binding index
 			 */
 			public Builder binding(int binding) {
-				this.binding = requireZeroOrMore(binding);
+				this.binding = binding;
 				return this;
 			}
 
@@ -114,16 +94,16 @@ public final class DescriptorSet implements NativeObject {
 			 * @param type Descriptor type
 			 */
 			public Builder type(VkDescriptorType type) {
-				this.type = requireNonNull(type);
+				this.type = type;
 				return this;
 			}
 
 			/**
-			 * Sets the array count of this binding (default is one).
+			 * Sets the array count of this binding.
 			 * @param count Array count
 			 */
 			public Builder count(int count) {
-				this.count = requireOneOrMore(count);
+				this.count = count;
 				return this;
 			}
 
@@ -131,15 +111,14 @@ public final class DescriptorSet implements NativeObject {
 			 * Adds a shader stage to this binding.
 			 * @param stage Shader stage
 			 */
-			public Builder stage(VkShaderStage stage) {
-				stages.add(requireNonNull(stage));
+			public Builder stage(VkShaderStageFlags stage) {
+				stages.add(stage);
 				return this;
 			}
 
 			/**
 			 * Constructs this binding.
-			 * @return New layout binding
-			 * @see Binding#Binding(int, VkDescriptorType, int, Set)
+			 * @return New binding
 			 */
 			public Binding build() {
 				return new Binding(binding, type, count, stages);
@@ -147,83 +126,25 @@ public final class DescriptorSet implements NativeObject {
 		}
 	}
 
-	/**
-	 * A <i>descriptor set entry</i> manages the resource for each binding.
-	 */
-	public class Entry {
-		private final Binding binding;
-		private DescriptorResource res;
-		private boolean dirty = true;
-
-		private Entry(Binding binding) {
-			this.binding = requireNonNull(binding);
-		}
-
-		/**
-		 * @return Descriptor resource
-		 */
-		public DescriptorResource get() {
-			return res;
-		}
-
-		/**
-		 * Sets the resource for this entry.
-		 * @param res Descriptor set resource
-		 * @throws IllegalArgumentException if the type of the resource is invalid for the binding
-		 */
-		public void set(DescriptorResource res) {
-			if(binding.type() != res.type()) {
-    			throw new IllegalArgumentException("Invalid resource for this binding: binding=%s res=%s".formatted(binding, res));
-    		}
-			this.res = requireNonNull(res);
-			dirty = true;
-		}
-
-		/**
-		 * Populates the Vulkan structure for this update.
-		 */
-		private void populate(VkWriteDescriptorSet write) {
-			// Validate
-			if(res == null) {
-				throw new IllegalStateException("Resource not populated: set=%s binding=%s".formatted(DescriptorSet.this, binding));
-			}
-
-			// Init write descriptor
-			write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
-			write.dstBinding = binding.index();
-			write.descriptorType = binding.type();
-			write.dstSet = DescriptorSet.this.handle();
-			write.descriptorCount = 1;		// Number of elements in resource
-			write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
-
-			// Init resource descriptor
-			switch(res.build()) {
-				case VkDescriptorImageInfo image -> write.pImageInfo = image;
-				case VkDescriptorBufferInfo buffer -> write.pBufferInfo = buffer;
-				default -> throw new UnsupportedOperationException("Unsupported resource descriptor: " + res);
-			}
-			// TODO - pTexelBuffer
-		}
-
-		@Override
-		public String toString() {
-			return String.valueOf(res);
-		}
-	}
-
 	private final Handle handle;
-	private final Layout layout;
-	private final Map<Binding, Entry> entries;
+	private final Map<Binding, Resource> entries = new HashMap<>();
+	private final Set<Binding> dirty = new HashSet<>();
 
 	/**
 	 * Constructor.
-	 * @param handle Descriptor set handle
-	 * @param layout Layout
+	 * @param handle		Descriptor set
+	 * @param bindings		Bindings
 	 */
-	DescriptorSet(Handle handle, Layout layout) {
+	DescriptorSet(Handle handle, Collection<Binding> bindings) {
 		this.handle = requireNonNull(handle);
-		this.layout = requireNonNull(layout);
-		this.entries = layout.bindings.stream().collect(toMap(Function.identity(), Entry::new));
+		init(bindings);
+	}
+
+	private void init(Collection<Binding> bindings) {
+		for(Binding b : bindings) {
+			entries.put(b, null);
+			dirty.add(b);
+		}
 	}
 
 	@Override
@@ -232,69 +153,120 @@ public final class DescriptorSet implements NativeObject {
 	}
 
 	/**
-	 * @return Layout for this descriptor set
-	 */
-	public Layout layout() {
-		return layout;
-	}
-
-	/**
-	 * Retrieves the entry for the given binding of this descriptor set.
+	 * Retrieves the current resource for the given binding.
 	 * @param binding Binding
-	 * @return Entry
-	 * @throws IllegalArgumentException if the binding is not a member of this set
+	 * @return Descriptor resource for the given binding or {@code null} if not populated
 	 */
-	public Entry entry(Binding binding) {
-		final Entry entry = entries.get(binding);
-		if(entry == null) throw new IllegalArgumentException("Invalid binding for this set: binding=%s this=%s".formatted(binding, this));
-		return entry;
+	public Resource get(Binding binding) {
+		return entries.get(binding);
 	}
 
 	/**
-	 * Bulk implementation to set a resource for a group of descriptor sets.
-	 * @param sets			Descriptor sets
+	 * Sets the resource for the given binding in this descriptor set.
 	 * @param binding		Binding
-	 * @param res			Resource
+	 * @param resource		Resource
+	 * @throws IllegalArgumentException if the {@link #binding} does not belong to the layout of this descriptor set
+	 * @throws IllegalArgumentException if the {@link #resource} does not match the {@link Binding#type()}
+	 */
+	public void set(Binding binding, Resource resource) {
+		requireNonNull(binding);
+		requireNonNull(resource);
+		if(!entries.containsKey(binding)) {
+			throw new IllegalArgumentException("Invalid binding for this set: binding=%s set=%s".formatted(binding, this));
+		}
+		if(resource.type() != binding.type) {
+			throw new IllegalArgumentException("Invalid resource for binding: binding=%s resource=%s".formatted(binding, resource));
+		}
+
+		entries.put(binding, resource);
+		dirty.add(binding);
+	}
+
+	/**
+	 * Helper.
+	 * Sets the resource for a group of descriptor sets.
+	 * @param group			Descriptor sets
+	 * @param binding		Binding
+	 * @param resource		Resource
 	 * @see #set(Binding, DescriptorResource)
 	 */
-	public static void set(Collection<DescriptorSet> sets, Binding binding, DescriptorResource res) {
-		for(DescriptorSet ds : sets) {
-			//ds.set(binding, res);
-			ds.entry(binding).set(res);
+	public static void set(Collection<DescriptorSet> group, Binding binding, Resource resource) {
+		for(DescriptorSet set : group) {
+			set.set(binding, resource);
 		}
+	}
+
+	/**
+	 * Builds an update descriptor for the given entry.
+	 */
+	private VkWriteDescriptorSet populate(Map.Entry<Binding, Resource> entry) {
+		// Validate
+		final Binding binding = entry.getKey();
+		final Resource resource = entry.getValue();
+		if(resource == null) {
+			throw new IllegalStateException("Resource not populated: set=%s binding=%s".formatted(this, binding));
+		}
+
+		// Init write descriptor
+		final var write = new VkWriteDescriptorSet();
+		write.sType = VkStructureType.WRITE_DESCRIPTOR_SET;
+		write.dstBinding = binding.index();
+		write.descriptorType = binding.type();
+		write.dstSet = DescriptorSet.this.handle();
+		write.descriptorCount = 1;		// Number of elements in resource
+		write.dstArrayElement = 0; 		// TODO - Starting element in the binding?
+
+		// Init resource descriptor
+		switch(resource.descriptor()) {
+			case VkDescriptorImageInfo image -> write.pImageInfo = image;
+			case VkDescriptorBufferInfo buffer -> write.pBufferInfo = buffer;
+			default -> throw new UnsupportedOperationException("Unsupported resource descriptor: " + resource);
+		}
+
+		return write;
+	}
+
+	/**
+	 * Builds the update descriptors for the modified entries in this set.
+	 */
+	private Stream<VkWriteDescriptorSet> populate() {
+		return entries
+				.entrySet()
+				.stream()
+				.filter(e -> dirty.contains(e.getKey()))
+				.map(this::populate);
 	}
 
 	/**
 	 * Updates the resources of the given descriptor sets.
-	 * @param dev				Logical device
-	 * @param descriptors		Descriptor sets to update
+	 * @param device	Logical device
+	 * @param sets		Descriptor sets to update
 	 * @return Number of updated descriptor sets
 	 * @throws IllegalStateException if any resource has not been populated
-	 * @see Entry#set(DescriptorResource)
+	 * @see #set(Binding, DescriptorResource)
 	 */
-	public static int update(DeviceContext dev, Collection<DescriptorSet> descriptors) {
+	public static int update(LogicalDevice device, Collection<DescriptorSet> sets) {
 		// Enumerate pending updates
-		final List<Entry> updates = descriptors
+		final VkWriteDescriptorSet[] updates = sets
 				.stream()
-				.flatMap(e -> e.entries.values().stream())
-				.filter(e -> e.dirty)
-				.toList();
+				.flatMap(DescriptorSet::populate)
+				.toArray(VkWriteDescriptorSet[]::new);
 
 		// Ignore if nothing to update
-		if(updates.isEmpty()) {
+		if(updates.length == 0) {
 			return 0;
 		}
 
 		// Apply updates
-		final VkWriteDescriptorSet[] writes = StructureCollector.array(updates, new VkWriteDescriptorSet(), Entry::populate);
-		dev.library().vkUpdateDescriptorSets(dev, writes.length, writes, 0, null);
+		final Library library = device.library();
+		library.vkUpdateDescriptorSets(device, updates.length, updates, 0, null);
 
-		// Mark entries as updated
-		for(Entry e : updates) {
-			e.dirty = false;
+		// Mark as done
+		for(DescriptorSet set : sets) {
+			set.dirty.clear();
 		}
 
-		return writes.length;
+		return updates.length;
 	}
 
 	/**
@@ -313,50 +285,53 @@ public final class DescriptorSet implements NativeObject {
 	 * @param sets			Descriptor sets
 	 * @return New bind command
 	 */
-	public static Command bind(PipelineLayout layout, Collection<DescriptorSet> sets) {
-		final Pointer array = NativeObject.array(sets);
-		return (api, cmd) -> api.vkCmdBindDescriptorSets(
-				cmd,
+	public static Command bind(PipelineLayout layout, List<DescriptorSet> sets) {
+		final Library library = layout.device().library();
+
+		return buffer -> library.vkCmdBindDescriptorSets(
+				buffer,
 				VkPipelineBindPoint.GRAPHICS,
 				layout,
 				0,					// First set
 				sets.size(),
-				array,
+				sets.toArray(DescriptorSet[]::new),
 				0,					// Dynamic offset count
 				null				// Dynamic offsets
 		);
 	}
 
+	@Override
+	public String toString() {
+		return String.format("DescriptorSet[%s]", this.handle());
+	}
+
 	/**
 	 * A <i>descriptor set layout</i> specifies the resource bindings for a descriptor set.
 	 */
-	public static final class Layout extends VulkanObject {
+	public static class Layout extends VulkanObject {
 		/**
 		 * Creates a descriptor set layout.
-		 * @param dev			Logical device
+		 * @param device		Logical device
 		 * @param bindings		Bindings
+		 * @param flags			Creation flags
 		 * @return New descriptor set layout
 		 * @throws IllegalArgumentException if the bindings are empty or contain duplicate indices
 		 */
-		public static Layout create(DeviceContext dev, Collection<Binding> bindings) {
-			// Check binding indices
-			final long count = bindings.stream().map(Binding::index).distinct().count();
-			if(count != bindings.size()) {
-				throw new IllegalArgumentException("Binding indices must be unique: " + bindings);
-			}
-
+		public static Layout create(LogicalDevice device, Collection<Binding> bindings, Set<VkDescriptorSetLayoutCreateFlags> flags) {
 			// Init layout descriptor
 			final var info = new VkDescriptorSetLayoutCreateInfo();
+			info.sType = VkStructureType.DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			info.flags = new EnumMask<>(flags);
 			info.bindingCount = bindings.size();
-			info.pBindings = StructureCollector.pointer(bindings, new VkDescriptorSetLayoutBinding(), Binding::populate);
+			info.pBindings = bindings.stream().map(Binding::populate).toArray(VkDescriptorSetLayoutBinding[]::new);
 
 			// Allocate layout
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateDescriptorSetLayout(dev, info, null, ref));
+			final Library library = device.library();
+			final Pointer pointer = new Pointer();
+			library.vkCreateDescriptorSetLayout(device, info, null, pointer);
 
 			// Create layout
-			return new Layout(new Handle(ref), dev, bindings);
+			return new Layout(pointer.handle(), device, bindings);
 		}
 
 		private final Collection<Binding> bindings;
@@ -364,13 +339,20 @@ public final class DescriptorSet implements NativeObject {
 		/**
 		 * Constructor.
 		 * @param handle		Layout handle
-		 * @param dev			Logical device
+		 * @param device		Logical device
 		 * @param bindings		Bindings
 		 */
-		Layout(Handle handle, DeviceContext dev, Collection<Binding> bindings) {
-			super(handle, dev);
-			requireNotEmpty(bindings);
+		private Layout(Handle handle, LogicalDevice device, Collection<Binding> bindings) {
+			super(handle, device);
+			validate(bindings);
 			this.bindings = List.copyOf(bindings);
+		}
+
+		private static void validate(Collection<Binding> bindings) {
+    		final long count = bindings.stream().map(Binding::index).distinct().count();
+    		if(count != bindings.size()) {
+    			throw new IllegalArgumentException("Binding indices must be unique: " + bindings);
+    		}
 		}
 
 		/**
@@ -381,39 +363,30 @@ public final class DescriptorSet implements NativeObject {
 		}
 
 		@Override
-		protected Destructor<Layout> destructor(VulkanLibrary lib) {
-			return lib::vkDestroyDescriptorSetLayout;
-		}
-
-		@Override
-		public int hashCode() {
-			return bindings.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof Layout that) &&
-					this.bindings.equals(that.bindings());
+		protected Destructor<Layout> destructor() {
+			final Library library = this.device().library();
+			return library::vkDestroyDescriptorSetLayout;
 		}
 	}
 
 	/**
 	 * A <i>descriptor set pool</i> is used to allocate and manage a group of descriptor sets.
 	 */
-	public static final class Pool extends VulkanObject {
+	public static class Pool extends VulkanObject {
 		private final int max;
+		private final Library library;
 
 		/**
 		 * Constructor.
 		 * @param handle		Pool handle
-		 * @param dev			Logical device
+		 * @param device		Logical device
 		 * @param max			Maximum number of descriptor sets that can be allocated from this pool
+		 * @param library		Descriptor set library
 		 */
-		Pool(Handle handle, DeviceContext dev, int max) {
-			super(handle, dev);
+		Pool(Handle handle, LogicalDevice device, int max, Library library) {
+			super(handle, device);
 			this.max = requireOneOrMore(max);
+			this.library = requireNonNull(library);
 		}
 
 		/**
@@ -428,43 +401,38 @@ public final class DescriptorSet implements NativeObject {
 		 * @param layouts Layout for each set
 		 * @return New descriptor sets
 		 */
-		public Collection<DescriptorSet> allocate(List<Layout> layouts) {
+		public List<DescriptorSet> allocate(List<Layout> layouts) {
 			requireNotEmpty(layouts);
+			// TODO - validate layouts vs pool?
 
 			// Build allocation descriptor
 			final int count = layouts.size();
 			final var info = new VkDescriptorSetAllocateInfo();
+			info.sType = VkStructureType.DESCRIPTOR_SET_ALLOCATE_INFO;
 			info.descriptorPool = this.handle();
 			info.descriptorSetCount = count;
-			info.pSetLayouts = NativeObject.array(layouts);
+			info.pSetLayouts = NativeObject.handles(layouts);
 
 			// Allocate descriptors sets
-			final DeviceContext dev = this.device();
-			final VulkanLibrary lib = dev.library();
-			final Pointer[] pointers = new Pointer[count];
-			check(lib.vkAllocateDescriptorSets(dev, info, pointers));
+			final LogicalDevice device = this.device();
+			final Library library = device.library();
+			final Handle[] handles = new Handle[count];
+			library.vkAllocateDescriptorSets(device, info, handles);
 
 			// Create descriptor sets
 			return IntStream
 					.range(0, count)
-					.mapToObj(n -> new DescriptorSet(new Handle(pointers[n]), layouts.get(n)))
+					.mapToObj(n -> new DescriptorSet(handles[n], layouts.get(n).bindings()))
 					.toList();
 		}
 
 		/**
-		 * @see #allocate(List)
-		 */
-		public Collection<DescriptorSet> allocate(Layout... layouts) {
-			return allocate(Arrays.asList(layouts));
-		}
-
-		/**
-		 * Convenience method to allocate a number of descriptor sets each with the given layout.
+		 * Convenience method to allocate a number of descriptor sets with the given layout.
 		 * @param count			Number of sets to allocate
 		 * @param layout		Descriptor layout
 		 * @return New descriptor sets
 		 */
-		public Collection<DescriptorSet> allocate(int count, Layout layout) {
+		public List<DescriptorSet> allocate(int count, Layout layout) {
 			return allocate(Collections.nCopies(count, layout));
 		}
 
@@ -473,23 +441,20 @@ public final class DescriptorSet implements NativeObject {
 		 * @param sets Sets to release
 		 */
 		public void free(Collection<DescriptorSet> sets) {
-			final DeviceContext dev = this.device();
-			final Library lib = dev.library();
-			check(lib.vkFreeDescriptorSets(dev, this, sets.size(), NativeObject.array(sets)));
+			final DescriptorSet[] array = sets.toArray(DescriptorSet[]::new);
+			library.vkFreeDescriptorSets(this.device(), this, array.length, array);
 		}
 
 		/**
 		 * Resets this pool and releases <b>all</b> allocated descriptor sets.
 		 */
 		public void reset() {
-			final DeviceContext dev = this.device();
-			final Library lib = dev.library();
-			check(lib.vkResetDescriptorPool(dev, this, 0));
+			library.vkResetDescriptorPool(this.device(), this, 0);
 		}
 
 		@Override
-		protected Destructor<Pool> destructor(VulkanLibrary lib) {
-			return lib::vkDestroyDescriptorPool;
+		protected Destructor<Pool> destructor() {
+			return library::vkDestroyDescriptorPool;
 		}
 
 		/**
@@ -497,7 +462,7 @@ public final class DescriptorSet implements NativeObject {
 		 */
 		public static class Builder {
 			private final Map<VkDescriptorType, Integer> pool = new HashMap<>();
-			private final Set<VkDescriptorPoolCreateFlag> flags = new HashSet<>();
+			private final Set<VkDescriptorPoolCreateFlags> flags = new HashSet<>();
 			private Integer max;
 
 			/**
@@ -525,57 +490,86 @@ public final class DescriptorSet implements NativeObject {
 			 * Adds a creation flag for this pool.
 			 * @param flag Flag
 			 */
-			public Builder flag(VkDescriptorPoolCreateFlag flag) {
-				flags.add(requireNonNull(flag));
+			public Builder flag(VkDescriptorPoolCreateFlags flag) {
+				requireNonNull(flag);
+				flags.add(flag);
 				return this;
 			}
 
 			/**
 			 * Constructs this pool.
-			 * @param dev Logical device
+			 * @param device Logical device
 			 * @return New descriptor-set pool
-			 * @throws IllegalArgumentException if the available sets is empty or the pool size exceeds the specified maximum
+			 * @throws IllegalArgumentException if the pool empty or the size exceeds the configured maximum
 			 */
-			public Pool build(DeviceContext dev) {
+			public Pool build(LogicalDevice device) {
 				// Determine logical maximum number of sets that can be allocated
-				final int limit = pool
+				final int limit = limit(pool);
+
+				// Init pool descriptor
+				final VkDescriptorPoolCreateInfo info = build(limit);
+
+				// Allocate pool
+				final Library library = device.library();
+				final Pointer pointer = new Pointer();
+				library.vkCreateDescriptorPool(device, info, null, pointer);
+
+				// Create pool
+				return new Pool(pointer.handle(), device, info.maxSets, library);
+			}
+
+			/**
+			 * Determines the maximum number of sets that can be allocated from the given pool
+			 */
+			private static int limit(Map<VkDescriptorType, Integer> pool) {
+				return pool
 						.values()
 						.stream()
 						.mapToInt(Integer::intValue)
 						.max()
 						.orElseThrow(() -> new IllegalArgumentException("No pool sizes specified"));
-
-				// Initialise or validate the maximum number of sets
-				if(max == null) {
-					max = limit;
-				}
-				else
-				if(limit > max) {
-					throw new IllegalArgumentException(String.format("Total available descriptor sets exceeds the specified maximum: limit=%d max=%d", limit, max));
-				}
-
-				// Init pool descriptor
-				final var info = new VkDescriptorPoolCreateInfo();
-				info.flags = new BitMask<>(flags);
-				info.poolSizeCount = pool.size();
-				info.pPoolSizes = StructureCollector.pointer(pool.entrySet(), new VkDescriptorPoolSize(), Builder::populate);
-				info.maxSets = max;
-
-				// Allocate pool
-				final VulkanLibrary lib = dev.library();
-				final PointerByReference ref = dev.factory().pointer();
-				check(lib.vkCreateDescriptorPool(dev, info, null, ref));
-
-				// Create pool
-				return new Pool(new Handle(ref), dev, max);
 			}
 
 			/**
-			 * Populates a descriptor pool size from a table entry.
+			 * Builds the pool descriptor.
+			 * @param limit Maximum number of sets
 			 */
-			private static void populate(Map.Entry<VkDescriptorType, Integer> entry, VkDescriptorPoolSize size) {
+			private VkDescriptorPoolCreateInfo build(int limit) {
+				// Init pool descriptor
+				final var info = new VkDescriptorPoolCreateInfo();
+				info.sType = VkStructureType.DESCRIPTOR_POOL_CREATE_INFO;
+				info.flags = new EnumMask<>(flags);
+
+				// Initialise maximum number of sets that can be allocated
+				if(max == null) {
+					info.maxSets = limit;
+				}
+				else {
+    				if(max > limit) {
+    					throw new IllegalArgumentException(String.format("Total available descriptor sets exceeds the specified maximum: limit=%d max=%d", limit, max));
+    				}
+    				info.maxSets = max;
+				}
+
+				// Populate pool sizes table
+				info.poolSizeCount = pool.size();
+				info.pPoolSizes = pool
+						.entrySet()
+						.stream()
+						.map(Builder::populate)
+						.toArray(VkDescriptorPoolSize[]::new);
+
+				return info;
+			}
+
+			/**
+			 * @return Pool size description
+			 */
+			private static VkDescriptorPoolSize populate(Map.Entry<VkDescriptorType, Integer> entry) {
+				final var size = new VkDescriptorPoolSize();
 				size.type = entry.getKey();
 				size.descriptorCount = entry.getValue();
+				return size;
 			}
 		}
 	}
@@ -592,7 +586,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pSetLayout			Returned layout handle
 		 * @return Result
 		 */
-		int vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSetLayout);
+		VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout);
 
 		/**
 		 * Destroys a descriptor set layout.
@@ -600,17 +594,17 @@ public final class DescriptorSet implements NativeObject {
 		 * @param descriptorSetLayout	Layout
 		 * @param pAllocator			Allocator
 		 */
-		void vkDestroyDescriptorSetLayout(DeviceContext device, Layout descriptorSetLayout, Pointer pAllocator);
+		void vkDestroyDescriptorSetLayout(LogicalDevice device, Layout descriptorSetLayout, Handle pAllocator);
 
 		/**
 		 * Creates a descriptor set pool.
 		 * @param device				Logical device
 		 * @param pCreateInfo			Descriptor
 		 * @param pAllocator			Allocator
-		 * @param pDescriptorPool		Returned pool
+		 * @param pDescriptorPool		Returned pool handle
 		 * @return Result
 		 */
-		int vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pDescriptorPool);
+		VkResult vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pDescriptorPool);
 
 		/**
 		 * Destroys a descriptor set pool.
@@ -618,7 +612,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param descriptorPool		Pool
 		 * @param pAllocator			Allocator
 		 */
-		void vkDestroyDescriptorPool(DeviceContext device, Pool descriptorPool, Pointer pAllocator);
+		void vkDestroyDescriptorPool(LogicalDevice device, Pool descriptorPool, Handle pAllocator);
 
 		/**
 		 * Allocates a number of descriptor sets from a given pool.
@@ -627,7 +621,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param pDescriptorSets		Returned descriptor set handles
 		 * @return Result
 		 */
-		int vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, Pointer[] pDescriptorSets);
+		VkResult vkAllocateDescriptorSets(LogicalDevice device, VkDescriptorSetAllocateInfo pAllocateInfo, @Updated Handle[] pDescriptorSets);
 
 		/**
 		 * Resets all descriptor sets in the given pool, i.e. recycles the resources back to the pool and releases the descriptor sets.
@@ -636,17 +630,17 @@ public final class DescriptorSet implements NativeObject {
 		 * @param flags					Unused
 		 * @return Result
 		 */
-		int vkResetDescriptorPool(DeviceContext device, Pool descriptorPool, int flags);
+		VkResult vkResetDescriptorPool(LogicalDevice device, Pool descriptorPool, int flags);
 
 		/**
 		 * Releases allocated descriptor sets.
 		 * @param device				Logical device
 		 * @param descriptorPool		Descriptor set pool
 		 * @param descriptorSetCount	Number of descriptor sets
-		 * @param pDescriptorSets		Descriptor set handles
+		 * @param pDescriptorSets		Descriptor sets
 		 * @return Result
 		 */
-		int vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, Pointer pDescriptorSets);
+		VkResult vkFreeDescriptorSets(LogicalDevice device, Pool descriptorPool, int descriptorSetCount, DescriptorSet[] pDescriptorSets);
 
 		/**
 		 * Updates the resources for one-or-more descriptor sets.
@@ -656,7 +650,7 @@ public final class DescriptorSet implements NativeObject {
 		 * @param descriptorCopyCount	Number of copies
 		 * @param pDescriptorCopies		Copy descriptors
 		 */
-		void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
+		void vkUpdateDescriptorSets(LogicalDevice device, int descriptorWriteCount, VkWriteDescriptorSet pDescriptorWrites[], int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
 
 		/**
 		 * Binds one-or-more descriptor sets to the given pipeline.
@@ -669,6 +663,6 @@ public final class DescriptorSet implements NativeObject {
 		 * @param dynamicOffsetCount	Number of dynamic offsets
 		 * @param pDynamicOffsets		Dynamic offsets
 		 */
-		void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, Pointer pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
+		void vkCmdBindDescriptorSets(Command.Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, DescriptorSet[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets);
 	}
 }

@@ -6,7 +6,6 @@ import static org.sarge.jove.util.MathsUtility.*;
 import org.junit.jupiter.api.Test;
 
 class MathsUtilityTest {
-
 	public static void assertApproxEquals(float expected, float actual) {
 		if(!isApproxEqual(expected, actual)) {
 			fail(String.format("Not approximately equal: expected=%f, actual=%f", expected, actual));
@@ -72,5 +71,10 @@ class MathsUtilityTest {
 	@Test
 	void inverse() {
 		assertApproxEquals(1 / (float) Math.sqrt(42f), MathsUtility.inverseSquareRoot(42));
+	}
+
+	@Test
+	void format() {
+		assertEquals("0.5, 3.1416", MathsUtility.toString(HALF, PI));
 	}
 }

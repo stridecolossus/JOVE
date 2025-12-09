@@ -1,46 +1,47 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Handle;
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Action;
-import org.sarge.jove.control.Event.Source;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
-import org.sarge.jove.util.ReferenceFactory;
+import org.sarge.jove.control.Button.*;
 
-public class KeyboardDeviceTest {
-	private KeyboardDevice dev;
-	private Window window;
+class KeyboardDeviceTest {
+	private KeyboardDevice keyboard;
+	private MockWindow window;
+	private AtomicReference<ButtonEvent> key;
+	private Consumer<ButtonEvent> listener;
 
 	@BeforeEach
 	void before() {
-		final Desktop desktop = new Desktop(mock(DesktopLibrary.class), new ReferenceFactory());
-		window = new Window(new Handle(1), desktop);
-		dev = new KeyboardDevice(window);
+		key = new AtomicReference<>();
+		listener = key::set;
+		window = new MockWindow(new MockDeviceLibrary());
+		keyboard = new KeyboardDevice(window);
 	}
 
-	@Test
-	void sources() {
-		assertNotNull(dev.keyboard());
-		assertEquals(Set.of(dev.keyboard()), dev.sources());
-	}
-
-	@SuppressWarnings("unchecked")
 	@Test
 	void bind() {
-		final Consumer<Button<Action>> handler = mock(Consumer.class);
-		final Source<Button<Action>> source = dev.keyboard();
-		final KeyListener listener = (KeyListener) source.bind(handler);
-		assertNotNull(listener);
-		listener.key(null, 256, 0, 1, 2);
-		verify(handler).accept(new Button<>("ESCAPE", Action.PRESS));
-		// TODO - modifiers
+		// Bind a listener to the keyboard
+		final var callback = keyboard.bind(listener);
+
+		// Generate an event
+		callback.key(null, 256, 0, 1, 0x002);
+
+		// Check event received by the listener
+		final Button button = new Button(256, "ESCAPE");
+		final var event = new ButtonEvent( button, ButtonAction.PRESS, Set.of(ModifierKey.CONTROL));
+		assertEquals(event, key.get());
+	}
+
+	@Test
+	void remove() {
+		keyboard.bind(listener);
+		keyboard.remove();
+		assertEquals(null, keyboard.listener());
 	}
 }

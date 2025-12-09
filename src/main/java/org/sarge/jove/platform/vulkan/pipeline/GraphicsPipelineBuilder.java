@@ -1,186 +1,305 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.VkPipelineCreateFlags.*;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.*;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.pipeline.ViewportStageBuilder.Viewport;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.pipeline.Pipeline.Library;
 import org.sarge.jove.platform.vulkan.render.RenderPass;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.Pointer;
+import org.sarge.jove.util.EnumMask;
 
 /**
- * Builder for a graphics pipeline.
+ * A <i>graphics pipeline builder</i> creates a rendering pipeline.
+ * <p>
+ * A following pipeline stages <b>must</b> be configured:
+ * <ul>
+ * <li>the {@link #viewport()} fixed function</li>
+ * <li>the {@link VkShaderStage#VERTEX} programmable shader stage</li>
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>A pipeline can be <i>derived</i> from an existing <i>parent</i> by configuring the {@link #parent(Pipeline)} pipeline</li>
+ * <li>A group of pipelines can be constructed in one operation using the {@link #build(GraphicsPipelineBuilder[], PipelineCache, DeviceContext)} variant</li>
+ * <li>Pipelines can also be derived from a sibling within an array by configuring the {@link #sibling(int)} index</li>
+ * </ul>
  * @author Sarge
  */
-public class GraphicsPipelineBuilder implements DelegatePipelineBuilder<VkGraphicsPipelineCreateInfo> {
-	// Properties
-	private final RenderPass pass;
-	private final Map<VkShaderStage, ProgrammableShaderStage> shaders = new HashMap<>();
+public class GraphicsPipelineBuilder {
+	// Pipeline properties
+	private final Set<VkPipelineCreateFlags> flags = new HashSet<>();
+	private PipelineLayout layout;
+	private RenderPass pass;
+	private Handle parent;
+	private int sibling = -1;
+
+	// Programmable shader stages
+	private final Map<VkShaderStageFlags, ProgrammableShaderStage> shaders = new HashMap<>();
 
 	// Fixed function stages
-	private final VertexInputStageBuilder input = new VertexInputStageBuilder();
-	private final AssemblyStageBuilder assembly = new AssemblyStageBuilder();
-	private final TesselationStageBuilder tesselation = new TesselationStageBuilder();
-	private final ViewportStageBuilder viewport = new ViewportStageBuilder();
-	private final RasterizerStageBuilder raster = new RasterizerStageBuilder();
-	private final MultiSampleStageBuilder multi = new MultiSampleStageBuilder();
-	private final DepthStencilStageBuilder depth = new DepthStencilStageBuilder();
-	private final ColourBlendStageBuilder blend = new ColourBlendStageBuilder();
-	private final DynamicStateStageBuilder dynamic = new DynamicStateStageBuilder();
+	private final VertexInputStage input = new VertexInputStage();
+	private final InputAssemblyStage assembly = new InputAssemblyStage();
+	private final TesselationStage tesselation = new TesselationStage();
+	private final ViewportStage viewport = new ViewportStage();
+	private final RasterizerStage raster = new RasterizerStage();
+	private final MultiSampleStage multi = new MultiSampleStage();
+	private final DepthStencilStage depth = new DepthStencilStage();
+	private final ColourBlendStage blend = new ColourBlendStage();
+	private final DynamicStateStage dynamic = new DynamicStateStage();
 
 	/**
-	 * Constructor.
+	 * Sets the render pass of this pipelines.
 	 * @param pass Render pass
 	 */
-	public GraphicsPipelineBuilder(RenderPass pass) {
-		this.pass = requireNonNull(pass);
-		init();
+	public GraphicsPipelineBuilder pass(RenderPass pass) {
+		this.pass = pass;
+		return this;
 	}
 
-	private void init() {
-		input.parent(this);
-		assembly.parent(this);
-		tesselation.parent(this);
-		viewport.parent(this);
-		raster.parent(this);
-		multi.parent(this);
-		depth.parent(this);
-		blend.parent(this);
-		dynamic.parent(this);
+	/**
+	 * Sets the layout of this pipeline.
+	 * @param layout Pipeline layout
+	 */
+	public GraphicsPipelineBuilder layout(PipelineLayout layout) {
+		this.layout = layout;
+		return this;
+	}
+
+	/**
+	 * Sets this pipeline as a <i>parent</i> that can be used to derive further pipelines.
+	 * @see VkPipelineCreateFlag#ALLOW_DERIVATIVES
+	 * @see #parent(Pipeline)
+	 */
+	public GraphicsPipelineBuilder allowDerivatives() {
+		flags.add(ALLOW_DERIVATIVES);
+		return this;
+	}
+
+	/**
+	 * Sets this pipeline as a derivative from the given parent pipeline.
+	 * @param parent Parent pipeline
+	 * @throws IllegalArgumentException if {@link #parent} does not allow derivatives
+	 * @throws IllegalStateException if this pipeline is already configured as a derivative
+	 * @see #allowDerivatives()
+	 * @see VkPipelineCreateFlag#DERIVATIVE
+	 */
+	public GraphicsPipelineBuilder parent(Pipeline parent) {
+		if(!parent.isParent()) {
+			throw new IllegalArgumentException("Pipeline does not allow derivatives: " + parent);
+		}
+		this.parent = parent.handle();
+		derivative();
+		return this;
+	}
+
+	/**
+	 * Sets the index of the sibling from which pipeline is derived when creating an array of pipelines.
+	 * @param sibling Sibling index
+	 * @throws IllegalStateException if this pipeline is already configured as a derivative
+	 * @see #build(GraphicsPipelineBuilder[], PipelineCache, LogicalDevice)
+	 */
+	public GraphicsPipelineBuilder sibling(int sibling) {
+		this.sibling = requireZeroOrMore(sibling);
+		derivative();
+		return this;
+	}
+
+	/**
+	 * Sets this pipeline as a derivative.
+	 */
+	private void derivative() {
+		if(flags.contains(DERIVATIVE)) {
+			throw new IllegalStateException("Pipeline already configured as a derivative");
+		}
+		flags.add(DERIVATIVE);
 	}
 
 	/**
 	 * @return Builder for the vertex input stage
 	 */
-	public VertexInputStageBuilder input() {
+	public VertexInputStage input() {
 		return input;
 	}
 
 	/**
 	 * @return Builder for the input assembly stage
 	 */
-	public AssemblyStageBuilder assembly() {
+	public InputAssemblyStage assembly() {
 		return assembly;
 	}
 
 	/**
 	 * @return Builder for the tesselation stage
 	 */
-	public TesselationStageBuilder tesselation() {
+	public TesselationStage tesselation() {
 		return tesselation;
 	}
 
 	/**
 	 * @return Builder for the viewport stage
 	 */
-	public ViewportStageBuilder viewport() {
+	public ViewportStage viewport() {
 		return viewport;
-	}
-
-	/**
-	 * Convenience helper to add a viewport and scissor rectangle with the same dimensions.
-	 * @param rect Viewport/scissor rectangle
-	 */
-	public GraphicsPipelineBuilder viewport(Rectangle rect) {
-		viewport.viewport(new Viewport(rect));
-		viewport.scissor(rect);
-		return this;
 	}
 
 	/**
 	 * @return Builder for the rasterizer stage
 	 */
-	public RasterizerStageBuilder rasterizer() {
+	public RasterizerStage rasterizer() {
 		return raster;
 	}
 
 	/**
 	 * @return Builder for the multi-sample stage
 	 */
-	public MultiSampleStageBuilder multi() {
+	public MultiSampleStage multi() {
 		return multi;
 	}
 
 	/**
 	 * @return Builder for the depth-stencil stage
 	 */
-	public DepthStencilStageBuilder depth() {
+	public DepthStencilStage depth() {
 		return depth;
 	}
 
 	/**
 	 * @return Builder for the colour-blend stage
 	 */
-	public ColourBlendStageBuilder blend() {
+	public ColourBlendStage blend() {
 		return blend;
 	}
 
 	/**
 	 * @return Builder for the dynamic state stage
 	 */
-	public DynamicStateStageBuilder dynamic() {
+	public DynamicStateStage dynamic() {
 		return dynamic;
 	}
 
 	/**
 	 * Adds a shader stage.
 	 * @param shader Shader stage
+	 * @throws IllegalStateException for a duplicate shader stage
 	 */
 	public GraphicsPipelineBuilder shader(ProgrammableShaderStage shader) {
-		final VkShaderStage stage = shader.stage();
-		if(shaders.containsKey(stage)) throw new IllegalArgumentException("Duplicate shader stage: " + stage);
+		final VkShaderStageFlags stage = shader.stage();
+		if(shaders.containsKey(stage)) {
+			throw new IllegalStateException("Duplicate shader stage: " + stage);
+		}
 		shaders.put(stage, shader);
 		return this;
 	}
 
-	@Override
-	public VkPipelineBindPoint type() {
-		return VkPipelineBindPoint.GRAPHICS;
-	}
+	/**
+	 * @return Create descriptor for this pipeline
+	 */
+	private VkGraphicsPipelineCreateInfo populate() {
+		// Validate
+		requireNonNull(pass);
+		requireNonNull(layout);
+		if(!shaders.containsKey(VkShaderStageFlags.VERTEX)) {
+			throw new IllegalStateException("No vertex shader specified");
+		}
 
-	@Override
-	public VkGraphicsPipelineCreateInfo identity() {
-		return new VkGraphicsPipelineCreateInfo();
-	}
-
-	@Override
-	public void populate(BitMask<VkPipelineCreateFlag> flags, PipelineLayout layout, Handle base, int parent, VkGraphicsPipelineCreateInfo info) {
 		// Init descriptor
-		info.flags = flags;
+		final var info = new VkGraphicsPipelineCreateInfo();
+		info.sType = VkStructureType.GRAPHICS_PIPELINE_CREATE_INFO;
+		info.flags = new EnumMask<>(flags);
 		info.layout = layout.handle();
 		info.renderPass = pass.handle();
-		info.subpass = 0;		// TODO - subpass?
+		info.subpass = 0; // TODO
 
 		// Init shader pipeline stages
-		if(!shaders.containsKey(VkShaderStage.VERTEX)) throw new IllegalStateException("No vertex shader specified");
 		info.stageCount = shaders.size();
-		info.pStages = StructureCollector.pointer(shaders.values(), new VkPipelineShaderStageCreateInfo(), ProgrammableShaderStage::populate);
+		info.pStages = shaders
+				.values()
+				.stream()
+				.map(ProgrammableShaderStage::descriptor)
+				.toArray(VkPipelineShaderStageCreateInfo[]::new);
 
 		// Init fixed function stages
-		info.pVertexInputState = input.get();
-		info.pInputAssemblyState = assembly.get();
-		info.pTessellationState = tesselation.get();
-		info.pViewportState = viewport.get();
-		info.pRasterizationState = raster.get();
-		info.pMultisampleState = multi.get();
-		info.pDepthStencilState = depth.get();
-		info.pColorBlendState = blend.get();			// TODO - check number of blend attachments = framebuffers
-		info.pDynamicState = dynamic.get();
+		info.pVertexInputState = input.descriptor();
+		info.pInputAssemblyState = assembly.descriptor();
+		info.pTessellationState = tesselation.descriptor();
+		info.pViewportState = viewport.descriptor();
+		info.pRasterizationState = raster.descriptor();
+		info.pMultisampleState = multi.descriptor();
+		info.pDepthStencilState = depth.descriptor();
+		info.pColorBlendState = blend.descriptor();
+		info.pDynamicState = dynamic.descriptor();
 
 		// Init derivative pipelines
-		info.basePipelineHandle = base;
-		info.basePipelineIndex = parent;
+		info.basePipelineHandle = parent;
+		info.basePipelineIndex = sibling;
+
+		return info;
 	}
 
-	@Override
-	public int create(DeviceContext dev, PipelineCache cache, VkGraphicsPipelineCreateInfo[] array, Pointer[] handles) {
-		final VulkanLibrary lib = dev.library();
-		return lib.vkCreateGraphicsPipelines(dev, cache, array.length, array, null, handles);
+	/**
+	 * Builds this graphics pipeline.
+	 * @param device Logical device
+	 * @return Graphics pipeline
+	 * @throws IndexOutOfBoundsException if this pipeline is configured to derive from a sibling
+	 * @see #build(GraphicsPipelineBuilder[], PipelineCache, LogicalDevice)
+	 */
+	public Pipeline build(LogicalDevice device) {
+		final var array = build(new GraphicsPipelineBuilder[]{this}, null, device);
+		return array[0];
+	}
+
+	/**
+	 * Builds an array of pipelines in one operation.
+	 * @param builders		Pipeline builders
+	 * @param cache			Optional pipeline cache
+	 * @param device		Logical device
+	 * @return Pipelines
+	 * @throws IllegalStateException if a {@link VkShaderStage#VERTEX} programmable shader stage is not configured for any pipeline
+	 * @throws IndexOutOfBoundsException if the sibling index is invalid for a derived pipeline
+	 * @see #sibling(int)
+	 */
+	public static Pipeline[] build(GraphicsPipelineBuilder[] builders, PipelineCache cache, LogicalDevice device) {
+		// Validate pipeline siblings
+		for(int n = 0; n < builders.length; ++n) {
+			final int sibling = builders[n].sibling;
+			if(sibling >= 0) {
+				if(sibling >= builders.length) {
+					throw new IndexOutOfBoundsException("Invalid sibling index: sibling=%d pipeline=%d".formatted(sibling, n));
+				}
+				if(sibling >= n) {
+					throw new IndexOutOfBoundsException("Sibling index must refer to a previous pipeline in an array: pipeline=" + n);
+				}
+				// TODO - self?
+			}
+		}
+
+		// Build descriptors
+		final var descriptors = Arrays
+				.stream(builders)
+				.map(GraphicsPipelineBuilder::populate)
+				.toArray(VkGraphicsPipelineCreateInfo[]::new);
+
+		// Create native pipelines
+		final Handle[] handles = new Handle[builders.length];
+		final Library library = device.library();
+		library.vkCreateGraphicsPipelines(device, cache, descriptors.length, descriptors, null, handles);
+
+		// Construct pipelines
+		final Pipeline[] pipelines = new Pipeline[builders.length];
+		Arrays.setAll(pipelines, n -> pipeline(handles[n], device, builders[n]));
+
+		return pipelines;
+	}
+
+	/**
+	 * Constructs a pipeline.
+	 */
+	private static Pipeline pipeline(Handle handle, LogicalDevice device, GraphicsPipelineBuilder builder) {
+		final boolean parent = builder.flags.contains(ALLOW_DERIVATIVES);
+		return new Pipeline(handle, device, VkPipelineBindPoint.GRAPHICS, builder.layout, parent);
 	}
 }

@@ -2,39 +2,82 @@ package org.sarge.jove.geometry;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Objects;
+
+import org.sarge.jove.control.Animator.Animation;
+import org.sarge.jove.util.MathsUtility;
+
 /**
- * An <i>axis-angle</i> specifies a counter-clockwise rotation about an arbitrary axis.
+ * An <i>axis-angle</i> specifies a mutable, counter-clockwise rotation about an arbitrary axis.
+ * <p>
+ * The {@link #provider()} method can be overridden to implement custom trigonometric functions.
+ * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public record AxisAngle(Normal axis, Angle angle) implements Transform {
+public class AxisAngle implements Rotation {
+	private final Normal axis;
+	private float angle;
+
 	/**
 	 * Constructor.
 	 * @param axis 		Rotation axis
-	 * @param angle		Angle
+	 * @param angle		Angle (radians, counter-clockwise)
 	 */
-	public AxisAngle {
-		requireNonNull(axis);
-		requireNonNull(angle);
+	public AxisAngle(Normal axis, float angle) {
+		this.axis = requireNonNull(axis);
+		this.angle = requireNonNull(angle);
 	}
 
 	/**
-	 * Constructor given a literal angle.
-	 * @param axis 		Rotation axis
-	 * @param angle		Angle (radians)
+	 * @return Rotation axis
 	 */
-	public AxisAngle(Normal axis, float angle) {
-		this(axis, new Angle(angle));
+	public Normal axis() {
+		return axis;
+	}
+
+	/**
+	 * @return Rotation angle
+	 */
+	public float angle() {
+		return angle;
+	}
+
+	/**
+	 * Sets the rotation angle.
+	 * @param angle Rotation angle (radians)
+	 */
+	public void set(float angle) {
+		this.angle = angle;
+	}
+
+	@Override
+	public AxisAngle toAxisAngle() {
+		return this;
+	}
+
+	/**
+	 * @return This rotation as an animation
+	 */
+	public Animation animation() {
+		return pos -> set(pos * MathsUtility.TWO_PI);
+	}
+
+	/**
+	 * @return Cosine provider for operations on this axis-angle
+	 */
+	protected Cosine.Provider provider() {
+		return Cosine.Provider.DEFAULT;
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * This method delegates to {@link Axis#rotation(Angle)} if this is a rotation about a cardinal axis.
+	 * This method delegates to {@link Axis#rotation(float, org.sarge.jove.geometry.Cosine.Provider)} if this is a rotation about a cardinal axis.
 	 */
 	@Override
 	public Matrix matrix() {
 		if(axis instanceof Axis cardinal) {
-			return cardinal.rotation(angle);
+			return cardinal.rotation(angle, provider());
 		}
 		else {
 			return build();
@@ -59,7 +102,7 @@ public record AxisAngle(Normal axis, Angle angle) implements Transform {
 	 */
 	private Matrix build() {
 		// Init angle
-		final Cosine cosine = angle.cosine();
+		final Cosine cosine = this.provider().cosine(angle);
 		final float sin = cosine.sin();
 		final float cos = cosine.cos();
 
@@ -103,24 +146,40 @@ public record AxisAngle(Normal axis, Angle angle) implements Transform {
 	 * <li>and <i>v</i> is the vector to be rotated</li>
 	 * </ul>
 	 * <p>
-	 * Notes:
-	 * <ul>
-	 * <li>This approach may be more efficient than constructing a rotation matrix or quaternion for certain use-cases</li>
-	 * <li>The {@link #provider()} can be overridden to implement a custom cosine function to be used by this method</li>
-	 * </ul>
+	 * This approach will generally be more efficient than constructing an intermediate rotation matrix.
 	 * <p>
 	 * @param v Vector to rotate
 	 * @return Rotated vector
 	 * @see #provider()
 	 * @see <a href="https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula">Wikipedia</a>
 	 */
+	@Override
 	public Vector rotate(Vector v) {
-		final Cosine cosine = angle.cosine();
+		final Cosine cosine = this.provider().cosine(angle);
 		final float cos = cosine.cos();
 		final float dot = axis.dot(v);
 		final Vector a = v.multiply(cos);								// Scale the vector down
 		final Vector b = axis.cross(v).multiply(cosine.sin());			// Skew towards new position
 		final Vector c = axis.multiply(dot * (1 - cos));				// Restore height
 		return a.add(b).add(c);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(axis, angle);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof AxisAngle that) &&
+				this.axis.equals(that.axis()) &&
+				MathsUtility.isApproxEqual(this.angle, that.angle());
+	}
+
+	@Override
+	public String toString() {
+		return String.format("AxisAngle[axis=%s angle=%f]", axis, angle);
 	}
 }

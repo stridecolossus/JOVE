@@ -7,8 +7,7 @@ import static java.util.Objects.requireNonNull;
  * @author Sarge
  */
 public abstract class TransientNativeObject implements NativeObject, TransientObject {
-	protected final Handle handle;
-
+	private final Handle handle;
 	private boolean destroyed;
 
 	/**
@@ -31,7 +30,9 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 
 	@Override
 	public void destroy() {
-		if(destroyed) throw new IllegalStateException("Object has already been destroyed: " + this);
+		if(destroyed) {
+			throw new IllegalStateException("Transient object has already been destroyed: " + this);
+		}
 		release();
 		destroyed = true;
 	}
@@ -57,6 +58,6 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 
 	@Override
 	public String toString() {
-		return handle.toString();
+		return String.format("TransientNativeObject[%s]", handle);
 	}
 }

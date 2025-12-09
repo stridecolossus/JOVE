@@ -1,3 +1,35 @@
+mesh loader still needs custom indexed implementation
+
+review use of cosine
+- very invasive
+- not even that good implementation?
+- how to get both sin/cos from sine table?
+
+add debug support for the create instance call
+https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
+
+diagnostics handler:
+integrate with callback stuff (or too complicated? esp since returns structures, enums, etc)
+update blog? i.e. dumps messages to console by default
+VkDebugUtilsMessengerCallbackDataEXT
+3 x returned arrays -> unsupported!
+call back is OK but structure cannot be unmarshalled
+
+README.md
+- summary
+- link to blog
+
+devices are public - could lead to multiple binds for same callback-listener! => enforce max one per window?
+
+MemorySegment -> supported transformer type?
+- IdentityTransformer
+- @Updated replaces Pointer?
+- only IntegerReference is special case
+- use Handle only for immutable parameters
+- makes TypeMapper much simpler???
+
+-------------------------------
+
 demo
 - skydome
 - lighting, materials

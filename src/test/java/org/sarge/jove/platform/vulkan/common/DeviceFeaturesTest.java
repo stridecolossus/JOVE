@@ -7,32 +7,39 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
-public class DeviceFeaturesTest {
+class DeviceFeaturesTest {
 	private DeviceFeatures features;
 
 	@BeforeEach
 	void before() {
-		features = new DeviceFeatures(Set.of("samplerAnisotropy"));
+		features = new DeviceFeatures(Set.of("wideLines"));
 	}
 
 	@Test
-	void features() {
-		assertEquals(Set.of("samplerAnisotropy"), features.enabled());
+	void contains() {
+		final var other = new DeviceFeatures(Set.of("wideLines", "depthClamp"));
+		assertEquals(true, features.contains(features));
+		assertEquals(true, other.contains(features));
+		assertEquals(false, features.contains(other));
 	}
 
 	@Test
-	void structure() {
-		final VkPhysicalDeviceFeatures struct = features.structure();
-		assertEquals(true, struct.samplerAnisotropy);
+	void build() {
+		final VkPhysicalDeviceFeatures structure = features.build();
+		assertEquals(true, structure.wideLines);
+		assertEquals(false, structure.depthClamp);
 	}
 
 	@Test
-	void require() {
-		features.require("samplerAnisotropy");
+	void unknown() {
+		final var invalid = new DeviceFeatures(Set.of("cobblers"));
+		assertThrows(IllegalArgumentException.class, () -> invalid.build());
 	}
 
 	@Test
-	void missing() {
-		assertThrows(IllegalStateException.class, () -> features.require("wideLines"));
+	void of() {
+		final var structure = new VkPhysicalDeviceFeatures();
+		structure.wideLines = true;
+		assertEquals(features, DeviceFeatures.of(structure));
 	}
 }

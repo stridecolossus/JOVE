@@ -1,100 +1,164 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.sarge.jove.platform.vulkan.VkCommandBufferResetFlags.RELEASE_RESOURCES;
+import static org.sarge.jove.platform.vulkan.VkCommandBufferUsageFlags.RENDER_PASS_CONTINUE;
+import static org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage.*;
 
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.*;
+import org.sarge.jove.util.EnumMask;
 
 class CommandTest {
-	private Command cmd;
+	private static class MockCommandLibrary extends MockVulkanLibrary {
+		private boolean destroyed;
+		private boolean reset;
+		private boolean free;
+		private Stage stage = INITIAL;
+
+		@Override
+		public VkResult vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool) {
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Handle pAllocator) {
+			assertNotNull(device);
+			assertNotNull(commandPool);
+			assertEquals(null, pAllocator);
+			destroyed = true;
+		}
+
+		@Override
+		public VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags) {
+			assertNotNull(device);
+			assertNotNull(commandPool);
+			assertEquals(new EnumMask<>(VkCommandPoolResetFlags.RELEASE_RESOURCES), flags);
+			reset = true;
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Handle[] pCommandBuffers) {
+			assertNotNull(device);
+			assertNotNull(pAllocateInfo.commandPool);
+			assertEquals(1, pAllocateInfo.commandBufferCount);
+			assertEquals(1, pCommandBuffers.length);
+			pCommandBuffers[0] = new Handle(4);
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers) {
+			assertNotNull(device);
+			assertNotNull(commandPool);
+			assertEquals(1, commandBufferCount);
+			assertEquals(1, pCommandBuffers.length);
+			assertNotNull(pCommandBuffers[0]);
+			free = true;
+		}
+
+		@Override
+		public VkResult vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo) {
+			if(commandBuffer.isPrimary()) {
+				assertEquals(new EnumMask<>(), pBeginInfo.flags);
+				assertEquals(null, pBeginInfo.pInheritanceInfo);
+			}
+			else {
+				assertEquals(new EnumMask<>(RENDER_PASS_CONTINUE), pBeginInfo.flags);
+				assertNotNull(pBeginInfo.pInheritanceInfo);
+			}
+			assertEquals(INITIAL, commandBuffer.stage());
+			stage = RECORDING;
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public VkResult vkEndCommandBuffer(Buffer commandBuffer) {
+			assertEquals(RECORDING, commandBuffer.stage());
+			stage = EXECUTABLE;
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public VkResult vkResetCommandBuffer(Buffer commandBuffer, EnumMask<VkCommandBufferResetFlags> flags) {
+			assertEquals(new EnumMask<>(RELEASE_RESOURCES), flags);
+			assertEquals(EXECUTABLE, commandBuffer.stage());
+			stage = INITIAL;
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public void vkCmdExecuteCommands(Buffer commandBuffer, int commandBufferCount, Buffer[] pCommandBuffers) {
+			assertEquals(true, commandBuffer.isPrimary());
+			assertEquals(RECORDING, commandBuffer.stage());
+			if(commandBufferCount > 0) {
+				assertEquals(false, pCommandBuffers[0].isPrimary());
+				assertEquals(EXECUTABLE, pCommandBuffers[0].stage());
+			}
+		}
+	}
+
+	private MockCommand command;
 	private WorkQueue queue;
 	private Pool pool;
-	private DeviceContext dev;
-	private VulkanLibrary lib;
+	private LogicalDevice device;
+	private MockCommandLibrary library;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		lib = dev.library();
-		queue = new WorkQueue(new Handle(1), new Family(2, 1, Set.of()));
-		pool = Pool.create(dev, queue);
-		cmd = spy(Command.class);
+		command = new MockCommand();
+		library = new MockCommandLibrary();
+		device = new MockLogicalDevice(library);
+		queue = new WorkQueue(new Handle(1), new Family(0, 1, Set.of()));
+		pool = new Pool(new Handle(2), device, queue);
 	}
 
-	@DisplayName("A command can be submitted as a one-off operation")
-	@Test
-	void submit() {
-		final Buffer buffer = cmd.submit(pool);
-		verify(cmd).record(lib, buffer);
-	}
-
-	@DisplayName("A command buffer...")
 	@Nested
-	class BufferTests {
-		private PrimaryBuffer buffer;
+	class BufferTest {
+		private Buffer buffer;
 
 		@BeforeEach
 		void before() {
-			buffer = pool.primary();
+			buffer = pool.allocate(1, true).getFirst();
 		}
 
-		@Test
-		void constructor() {
-			assertEquals(pool, buffer.pool());
-		}
-
-		@DisplayName("can be released back to the pool")
-		@Test
-		void free() {
-			final Memory array = NativeObject.array(List.of(buffer));
-			buffer.free();
-			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
-		}
-
-		@DisplayName("that is newly allocated...")
 		@Nested
-		class New {
-			@DisplayName("is not ready for submission")
+		class Initial {
 			@Test
-			void isReady() {
+			void ready() {
 				assertEquals(false, buffer.isReady());
 			}
 
-			@DisplayName("can begin recording")
 			@Test
 			void begin() {
-				final var expected = new VkCommandBufferBeginInfo() {
-					@Override
-					public boolean equals(Object obj) {
-						final var info = (VkCommandBufferBeginInfo) obj;
-						assertEquals(VkCommandBufferUsage.ONE_TIME_SUBMIT.value(), info.flags.bits());
-						assertEquals(null, info.pInheritanceInfo);
-						return true;
-					}
-				};
-				buffer.begin(VkCommandBufferUsage.ONE_TIME_SUBMIT);
-				verify(lib).vkBeginCommandBuffer(buffer, expected);
-				assertEquals(false, buffer.isReady());
+				buffer.begin();
 			}
 
-			@DisplayName("cannot be reset")
+			@Test
+			void add() {
+				assertThrows(IllegalStateException.class, () -> buffer.add(command));
+				assertThrows(IllegalStateException.class, () -> buffer.add(List.of()));
+			}
+
+			@Test
+			void end() {
+				assertThrows(IllegalStateException.class, () -> buffer.end());
+			}
+
 			@Test
 			void reset() {
-				assertThrows(IllegalStateException.class, () -> buffer.reset());
+				assertThrows(IllegalStateException.class, () -> buffer.reset(RELEASE_RESOURCES));
 			}
 		}
 
-		@DisplayName("that is being recorded...")
 		@Nested
 		class Recording {
 			@BeforeEach
@@ -102,164 +166,174 @@ class CommandTest {
 				buffer.begin();
 			}
 
-			@DisplayName("is not ready for submission")
 			@Test
-			void isReady() {
+			void ready() {
 				assertEquals(false, buffer.isReady());
 			}
 
-			@DisplayName("cannot begin recording again until recording has finished")
 			@Test
 			void begin() {
 				assertThrows(IllegalStateException.class, () -> buffer.begin());
 			}
 
-			@DisplayName("can record commands")
 			@Test
 			void add() {
-				buffer.add(cmd);
-				verify(cmd).record(lib, buffer);
-				assertEquals(false, buffer.isReady());
+				buffer.add(command);
+				buffer.add(List.of());
 			}
 
-			@DisplayName("can end recording")
 			@Test
 			void end() {
 				buffer.end();
-				verify(lib).vkEndCommandBuffer(buffer);
-				assertEquals(true, buffer.isReady());
 			}
 
-			@DisplayName("cannot be reset")
 			@Test
 			void reset() {
-				assertThrows(IllegalStateException.class, () -> buffer.reset());
+				assertThrows(IllegalStateException.class, () -> buffer.reset(RELEASE_RESOURCES));
 			}
 		}
 
-		@DisplayName("that has been recorded...")
 		@Nested
-		class Ready {
+		class Executable {
 			@BeforeEach
 			void before() {
-				buffer.begin().end();
+				buffer.begin();
+				buffer.end();
 			}
 
-			@DisplayName("is ready for submission")
 			@Test
-			void isReady() {
+			void ready() {
 				assertEquals(true, buffer.isReady());
 			}
 
-			@DisplayName("cannot be re-recorded unless is has been reset")
 			@Test
 			void begin() {
-				assertThrows(IllegalStateException.class, () -> buffer.begin());
+				assertThrows(IllegalStateException.class, () -> buffer.end());
 			}
 
-			@DisplayName("can be reset")
+			@Test
+			void add() {
+				assertThrows(IllegalStateException.class, () -> buffer.add(command));
+				assertThrows(IllegalStateException.class, () -> buffer.add(List.of()));
+			}
+
+			@Test
+			void end() {
+				assertThrows(IllegalStateException.class, () -> buffer.end());
+			}
+
 			@Test
 			void reset() {
-				buffer.reset();
-				buffer.begin();
-				verify(lib).vkResetCommandBuffer(buffer, BitMask.of());
-				assertEquals(false, buffer.isReady());
+				buffer.reset(RELEASE_RESOURCES);
+				assertEquals(Stage.INITIAL, library.stage);
 			}
 		}
 	}
 
-	@DisplayName("A secondary command buffer...")
 	@Nested
-	class SecondaryBufferTests {
-		private SecondaryBuffer secondary;
+	class SecondaryBufferTest {
+		private Buffer primary, secondary;
 
 		@BeforeEach
 		void before() {
-			secondary = pool.secondary();
+			primary = pool.allocate(1, true).getFirst();
+			primary.begin();
+			secondary = pool.allocate(1, false).getFirst();
 		}
 
-		@DisplayName("can be recorded to a primary command buffer")
+		@Test
+		void begin() {
+			secondary.begin(new VkCommandBufferInheritanceInfo(), Set.of(RENDER_PASS_CONTINUE));
+		}
+
+		@Test
+		void inheritance() {
+			assertThrows(IllegalArgumentException.class, () -> secondary.begin(RENDER_PASS_CONTINUE));
+		}
+
 		@Test
 		void add() {
-			// Record secondary command sequence
-			final Handle pass = new Handle(1);
-			secondary.begin(pass).add(cmd).end();
-			assertEquals(true, secondary.isReady());
-
-			// Record to primary buffer
-			final PrimaryBuffer buffer = pool.primary();
-			buffer.begin().add(List.of(secondary));
-			verify(lib).vkCmdExecuteCommands(buffer, 1, NativeObject.array(List.of(secondary)));
+			secondary.begin(new VkCommandBufferInheritanceInfo(), Set.of(RENDER_PASS_CONTINUE));
+			secondary.end();
+			primary.add(List.of(secondary));
 		}
 
-		@DisplayName("cannot be recorded to a primary command buffer if it is not ready")
 		@Test
-		void notReady() {
-			final PrimaryBuffer buffer = pool.primary().begin();
-			assertThrows(IllegalStateException.class, () -> buffer.add(List.of(secondary)));
+		void ready() {
+			assertThrows(IllegalStateException.class, () -> primary.add(List.of(secondary)));
+		}
+
+		@Test
+		void primary() {
+			final Buffer invalid = pool
+					.allocate(1, true)
+					.getFirst()
+					.begin()
+					.end();
+
+			assertThrows(IllegalArgumentException.class, () -> primary.add(List.of(invalid)));
 		}
 	}
 
-	// TODO - doc
 	@Nested
-	class PoolTests {
+	class PoolTest {
 		@Test
-		void constructor() {
-			assertEquals(queue, pool.queue());
-		}
-
-		@Test
-		void descriptor() {
-			final var expected = new VkCommandPoolCreateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final var info = (VkCommandPoolCreateInfo) obj;
-					assertEquals(0, info.flags.bits());
-					assertEquals(queue.family().index(), info.queueFamilyIndex);
-					return true;
-				}
-			};
-			verify(lib).vkCreateCommandPool(dev, expected, null, dev.factory().pointer());
+		void empty() {
+			assertEquals(0, pool.buffers().size());
 		}
 
 		@Test
 		void allocate() {
-			// Allocate a buffer
-			final Collection<PrimaryBuffer> buffers = pool.primary(1);
+			final List<Buffer> buffers = pool.allocate(1, true);
 			assertEquals(1, buffers.size());
+			assertEquals(buffers, pool.buffers());
 
-			// Check allocator
-			final var expected = new VkCommandBufferAllocateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final var info = (VkCommandBufferAllocateInfo) obj;
-					assertEquals(VkCommandBufferLevel.PRIMARY, info.level);
-					assertEquals(1, info.commandBufferCount);
-					assertEquals(pool.handle(), info.commandPool);
-					return true;
-				}
-			};
-			verify(lib).vkAllocateCommandBuffers(dev, expected, new Pointer[1]);
+			final Buffer buffer = buffers.getFirst();
+			assertEquals(pool, buffer.pool());
+			assertEquals(new Handle(4), buffer.handle());
+			assertEquals(false, buffer.isReady());
+			assertEquals(INITIAL, buffer.stage());
+			assertEquals(true, buffer.isPrimary());
+		}
+
+		@Test
+		void secondary() {
+			final Buffer secondary = pool.allocate(1, false).getFirst();
+			assertEquals(pool, secondary.pool());
+			assertEquals(false, secondary.isReady());
+			assertEquals(false, secondary.isPrimary());
+			assertEquals(1, pool.buffers().size());
 		}
 
 		@Test
 		void reset() {
-			pool.reset();
-			verify(lib).vkResetCommandPool(dev, pool, BitMask.of());
+			final Buffer buffer = pool
+					.allocate(1, true)
+					.getFirst()
+					.begin();
+
+			pool.reset(VkCommandPoolResetFlags.RELEASE_RESOURCES);
+			assertEquals(true, library.reset);
+			assertEquals(Stage.INITIAL, buffer.stage());
 		}
 
 		@Test
 		void free() {
-			final Buffer buffer = pool.primary();
-			final Memory array = NativeObject.array(List.of(buffer));
-			pool.free(Set.of(buffer));
-			verify(lib).vkFreeCommandBuffers(dev, pool, 1, array);
+			final Buffer buffer = pool.allocate(1, true).getFirst();
+			pool.free(List.of(buffer));
+			assertEquals(true, library.free);
+			assertEquals(Stage.INVALID, buffer.stage());
+			assertEquals(0, pool.buffers().size());
 		}
 
 		@Test
 		void destroy() {
+			final Buffer buffer = pool.allocate(1, true).getFirst();
 			pool.destroy();
-			verify(lib).vkDestroyCommandPool(dev, pool, null);
+			assertEquals(true, pool.isDestroyed());
+			assertEquals(true, library.destroyed);
+			assertEquals(Stage.INVALID, buffer.stage());
+			assertEquals(0, pool.buffers().size());
 		}
 	}
 }

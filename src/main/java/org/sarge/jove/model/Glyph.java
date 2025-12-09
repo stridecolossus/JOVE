@@ -1,6 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.Map;
 

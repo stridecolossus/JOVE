@@ -1,69 +1,49 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.*;
+import java.lang.foreign.MemorySegment;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
 
 class ShaderTest {
-	private static final byte[] CODE = new byte[]{42};
+	private static class MockShaderLibrary extends MockVulkanLibrary {
+		private boolean destroyed;
 
-	private DeviceContext dev;
+		@Override
+		public VkResult vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Handle pAllocator, Pointer shader) {
+			assertNotNull(device);
+			assertEquals(42L, info.codeSize);
+			assertArrayEquals(new byte[42], info.pCode);
+			shader.set(MemorySegment.ofAddress(2));
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public void vkDestroyShaderModule(LogicalDevice device, Shader shader, Handle pAllocator) {
+			destroyed = true;
+		}
+	}
+
 	private Shader shader;
+	private LogicalDevice device;
+	private MockShaderLibrary library;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		shader = Shader.create(dev, CODE);
+		library = new MockShaderLibrary();
+		device = new MockLogicalDevice(library);
+		shader = Shader.create(device, new byte[42]);
 	}
 
-	@Test
-	void create() {
-		final var expected = new VkShaderModuleCreateInfo() {
-			@Override
-			public boolean equals(Object obj) {
-				final var info = (VkShaderModuleCreateInfo) obj;
-				assertNotNull(info);
-				assertEquals(CODE.length, info.codeSize);
-				assertNotNull(info.pCode);
-				return true;
-			}
-		};
-		verify(dev.library()).vkCreateShaderModule(dev, expected, null, dev.factory().pointer());
-	}
-
-	@DisplayName("A shader can be destroyed")
 	@Test
 	void destroy() {
 		shader.destroy();
-		verify(dev.library()).vkDestroyShaderModule(dev, shader, null);
-	}
-
-	@Nested
-	class LoaderTest {
-		private Shader.Loader loader;
-
-		@BeforeEach
-		void before() {
-			loader = new Shader.Loader(dev);
-		}
-
-		@SuppressWarnings("resource")
-		@Test
-		void map() throws IOException {
-			final InputStream in = mock(InputStream.class);
-			assertEquals(in, loader.map(in));
-		}
-
-		@Test
-		void load() throws IOException {
-			final Shader shader = loader.load(new ByteArrayInputStream(CODE));
-			assertNotNull(shader);
-		}
+		assertEquals(true, shader.isDestroyed());
+		assertEquals(true, library.destroyed);
 	}
 }

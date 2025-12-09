@@ -1,200 +1,105 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireZeroOrMore;
-
-import java.nio.ByteBuffer;
+import java.nio.*;
 import java.util.*;
-import java.util.Map.Entry;
 
-import org.sarge.jove.io.BufferHelper;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.*;
 
 /**
- * A set of <i>specialisation constants</i> are used to parameterise shader programs.
+ * A set of <i>specialisation constants</i> are used to parameterise a shader module.
  * @see ProgrammableShaderStage
  * @author Sarge
  */
-public final class SpecialisationConstants {
-	private final Map<Integer, Constant> constants;
+public class SpecialisationConstants {
+	/**
+	 * All constants are assumed to be 4 bytes.
+	 */
+	private static final int SIZE = 4;
+
+	private final VkSpecializationInfo info;
 
 	/**
 	 * Constructor.
-	 * @param constants Shader constants indexed by identifier
+	 * @param constants Constants indexed by identifier
+	 * @throws IllegalArgumentException for an unsupported constant type
 	 */
-	public SpecialisationConstants(Map<Integer, Constant> constants) {
-		this.constants = Map.copyOf(constants);
+	public SpecialisationConstants(Map<Integer, Object> constants) {
+		this.info = build(constants);
 	}
 
 	/**
-	 * @return Vulkan descriptor for this set of constants
+	 * @return Descriptor for the given constants
 	 */
-	VkSpecializationInfo build() {
-		// Populate the list of entries
-		final Populate populate = new Populate();
-		final VkSpecializationMapEntry entries = StructureCollector.pointer(constants.entrySet(), new VkSpecializationMapEntry(), populate::populate);
-
-		// Build the data buffer
-		final var bb = BufferHelper.allocate(populate.len);
-		for(Constant c : constants.values()) {
-			c.buffer(bb);
-		}
-
-		// Build the specialisation constants descriptor
+	private static VkSpecializationInfo build(Map<Integer, Object> constants) {
+		// Init descriptor
 		final var info = new VkSpecializationInfo();
-		info.mapEntryCount = constants.size();
-		info.pMapEntries = entries;
-		info.dataSize = populate.len;
-		info.pData = bb;
 
+    	// Build data buffer (using sequence map to retain order)
+    	final var map = new LinkedHashMap<>(constants);
+    	final byte[] data = buffer(map);
+
+    	// Populate data buffer
+    	info.dataSize = data.length;
+		info.pData = data;
+
+    	// Build map entries
+    	final var builder = new EntryBuilder();
+    	info.mapEntryCount = constants.size();
+    	info.pMapEntries = map
+    			.entrySet()
+    			.stream()
+    			.map(builder::build)
+    			.toArray(VkSpecializationMapEntry[]::new);
+
+    	assert info.pMapEntries.length == info.mapEntryCount;
+    	assert builder.count == constants.size();
+
+    	return info;
+	}
+
+	/**
+	 * Builds the data buffer.
+	 */
+	private static byte[] buffer(Map<Integer, Object> constants) {
+		// Allocate buffer
+		final int length = constants.size() * SIZE;
+		final byte[] array = new byte[length];
+    	final var buffer = ByteBuffer.wrap(array).order(ByteOrder.nativeOrder());
+
+    	// Populate buffer
+    	for(var entry : constants.entrySet()) {
+    		switch(entry.getValue()) {
+        		case Float f	-> buffer.putFloat(f);
+        		case Integer n	-> buffer.putInt(n);
+        		case Boolean b	-> buffer.putInt(b ? 1 : 0);
+        		default -> throw new IllegalArgumentException("Unsupported constant: " + entry);
+    		}
+    	}
+    	assert !buffer.hasRemaining();
+
+    	return array;
+	}
+
+	/**
+	 * Builds map entries and records the number of entries as a side-effect.
+	 */
+	private static class EntryBuilder {
+		private int count;
+
+		public VkSpecializationMapEntry build(Map.Entry<Integer, Object> constant) {
+			final var entry = new VkSpecializationMapEntry();
+			entry.constantID = constant.getKey();
+			entry.offset = count * SIZE;
+			entry.size = SIZE;
+			++count;
+			return entry;
+		}
+	}
+
+	/**
+	 * @return Descriptor for this set of specialisation constants
+	 */
+	VkSpecializationInfo descriptor() {
 		return info;
-	}
-
-	/**
-	 * Helper to populate a constant entry that calculates the overall buffer length as a side-effect.
-	 */
-	private static class Populate {
-		private int len;
-
-		void populate(Entry<Integer, Constant> entry, VkSpecializationMapEntry out) {
-			// Determine the size of this constant
-			final Constant constant = entry.getValue();
-			final int size = constant.size();
-
-			// Populate the entry for this constant
-			out.constantID = entry.getKey();
-			out.offset = len;
-			out.size = size;
-
-			// Calculate the overall buffer length
-			len += size;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		return constants.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof SpecialisationConstants that) &&
-				this.constants.equals(that.constants);
-	}
-
-	@Override
-	public String toString() {
-		return constants.toString();
-	}
-
-	/**
-	 * A <i>specialisation constant</i> is a parameter used in a shader.
-	 */
-	public sealed interface Constant {
-		/**
-		 * @return Size of this constant (bytes)
-		 */
-		int size();
-
-		/**
-		 * Writes this constant to the given buffer.
-		 * @param bb Buffer
-		 */
-		void buffer(ByteBuffer bb);
-
-		/**
-		 * Integer specialisation constant.
-		 */
-		record IntegerConstant(int value) implements Constant {
-			@Override
-			public int size() {
-				return Integer.BYTES;
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				bb.putInt(value);
-			}
-		}
-
-		/**
-		 * Floating-point specialisation constant.
-		 */
-		record FloatConstant(float value) implements Constant {
-			@Override
-			public int size() {
-				return Float.BYTES;
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				bb.putFloat(value);
-			}
-
-			@Override
-			public boolean equals(Object obj) {
-				return
-						(obj == this) ||
-						(obj instanceof FloatConstant that) &&
-						MathsUtility.isApproxEqual(this.value, that.value);
-			}
-		}
-
-		/**
-		 * Boolean specialisation constant.
-		 * @see NativeBooleanConverter
-		 */
-		record BooleanConstant(boolean value) implements Constant {
-			@Override
-			public int size() {
-				return Integer.BYTES;
-			}
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				final int n = NativeBooleanConverter.toInteger(value);
-				bb.putInt(n);
-			}
-		}
-	}
-
-	/**
-	 * Convenience builder for a set of specialisation constants.
-	 * Note that duplicate entries are over-ridden by default.
-	 */
-	public static class Builder {
-		private final Map<Integer, Constant> constants = new HashMap<>();
-
-		/**
-		 * Adds a constant.
-		 * @param id			Identifier
-		 * @param constant		Constant
-		 */
-		public SpecialisationConstants.Builder add(int id, Constant constant) {
-			requireZeroOrMore(id);
-			requireNonNull(constant);
-			constants.put(id, constant);
-			return this;
-		}
-
-		/**
-		 * Adds all the given constants.
-		 * @param constants Constants to add
-		 */
-		public SpecialisationConstants.Builder add(SpecialisationConstants constants) {
-			this.constants.putAll(constants.constants);
-			return this;
-		}
-
-		/**
-		 * Constructs this set of constants.
-		 * @return Specialisation constants
-		 */
-		public SpecialisationConstants build() {
-			return new SpecialisationConstants(constants);
-		}
 	}
 }

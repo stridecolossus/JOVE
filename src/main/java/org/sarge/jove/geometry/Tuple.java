@@ -66,11 +66,9 @@ class Tuple implements Bufferable {
 
 	@Override
 	public boolean equals(Object obj) {
-		throw new UnsupportedOperationException();
-	}
-
-	protected final boolean isEqual(Tuple that) {
 		return
+				(obj == this) ||
+				(obj instanceof Tuple that) &&
 				MathsUtility.isApproxEqual(this.x, that.x) &&
 				MathsUtility.isApproxEqual(this.y, that.y) &&
 				MathsUtility.isApproxEqual(this.z, that.z);
@@ -78,6 +76,6 @@ class Tuple implements Bufferable {
 
 	@Override
 	public String toString() {
-		return MathsUtility.format(x, y, z);
+		return String.format("[%s]", MathsUtility.toString(x, y, z));
 	}
 }

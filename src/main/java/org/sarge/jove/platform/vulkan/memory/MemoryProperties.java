@@ -1,11 +1,11 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import static org.sarge.lib.Validation.*;
 
 /**
  * A set of <i>memory properties</i> specifies the purpose and requirements of a memory request.
@@ -14,12 +14,12 @@ import static org.sarge.lib.Validation.*;
  * <p>
  * Example for the properties of a uniform buffer visible to the application and ideally GPU resident:
  * <pre>
- * var props = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
+ * var properties = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
  *     .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
  *     .mode(VkSharingMode.CONCURRENT)
- *     .required(VkMemoryProperty.HOST_COHERENT)
- *     .required(VkMemoryProperty.HOST_VISIBLE)
- *     .optimal(VkMemoryProperty.DEVICE_LOCAL)
+ *     .required(VkMemoryPropertyFlags.HOST_COHERENT)
+ *     .required(VkMemoryPropertyFlags.HOST_VISIBLE)
+ *     .optimal(VkMemoryPropertyFlags.DEVICE_LOCAL)
  *     .build()</pre>
  * <p>
  * @param <T> Usage enumeration
@@ -27,14 +27,14 @@ import static org.sarge.lib.Validation.*;
  * @see VkImageUsageFlag
  * @author Sarge
  */
-public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryProperty> required, Set<VkMemoryProperty> optimal) {
+public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryPropertyFlags> required, Set<VkMemoryPropertyFlags> optimal) {
 	/**
 	 * Constructor.
 	 * @param usage			Memory usage(s)
 	 * @param mode			Sharing mode
 	 * @param required		Required memory properties
 	 * @param optimal		Optimal properties
-	 * @throws IllegalArgumentException if the memory {@link #usage} flags are empty
+	 * @throws IllegalArgumentException if {@link #usage} is empty
 	 */
 	public MemoryProperties {
 		requireNonNull(mode);
@@ -57,26 +57,26 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @param <T> Usage enumeration
 	 */
 	public static class Builder<T> {
-		private final Set<VkMemoryProperty> required = new HashSet<>();
-		private final Set<VkMemoryProperty> optimal = new HashSet<>();
+		private final Set<VkMemoryPropertyFlags> required = new HashSet<>();
+		private final Set<VkMemoryPropertyFlags> optimal = new HashSet<>();
 		private final Set<T> usage = new HashSet<>();
 		private VkSharingMode mode = VkSharingMode.EXCLUSIVE;
 
 		/**
 		 * Adds a <i>required</i> memory property.
-		 * @param prop Required memory property
+		 * @param property Required memory property
 		 */
-		public Builder<T> required(VkMemoryProperty prop) {
-			required.add(requireNonNull(prop));
+		public Builder<T> required(VkMemoryPropertyFlags property) {
+			required.add(property);
 			return this;
 		}
 
 		/**
 		 * Adds an <i>optimal</i> memory property.
-		 * @param prop Optimal memory property
+		 * @param property Optimal memory property
 		 */
-		public Builder<T> optimal(VkMemoryProperty prop) {
-			optimal.add(requireNonNull(prop));
+		public Builder<T> optimal(VkMemoryPropertyFlags property) {
+			optimal.add(property);
 			return this;
 		}
 
@@ -85,23 +85,23 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * @param usage Memory usage flag
 		 */
 		public Builder<T> usage(T usage) {
-			this.usage.add(requireNonNull(usage));
+			this.usage.add(usage);
 			return this;
 		}
 
 		/**
-		 * Sets the sharing mode for this memory (default is {@link VkSharingMode#EXCLUSIVE}).
+		 * Sets the sharing mode for this memory.
+		 * The default value is {@link VkSharingMode#EXCLUSIVE}.
 		 * @param mode Sharing mode
 		 */
 		public Builder<T> mode(VkSharingMode mode) {
-			this.mode = requireNonNull(mode);
+			this.mode = mode;
 			return this;
 		}
 
 		/**
 		 * Constructs this memory properties instance.
 		 * @return New memory properties
-		 * @see MemoryProperties#MemoryProperties(Set, VkSharingMode, Set, Set)
 		 */
 		public MemoryProperties<T> build() {
 			return new MemoryProperties<>(usage, mode, required, optimal);

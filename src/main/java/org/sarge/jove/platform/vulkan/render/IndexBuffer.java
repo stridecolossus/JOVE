@@ -2,43 +2,33 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.model.IndexedMeshBuilder;
+import org.sarge.jove.model.IndexedMesh;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * An <i>index buffer</i> binds a drawing index to the pipeline.
  * <p>
- * Note that the index is represented as either {@code short} or {@code int} values depending on the length of the vertex data referred to, specified by {@link VkIndexType}.
+ * Note that the index is represented as either {@code short} or {@code int} values
+ * depending on the length of the vertex data referred to, specified by {@link VkIndexType}.
  * <p>
+ * @see IndexedMesh#isCompactIndex()
  * @author Sarge
  */
-public final class IndexBuffer extends VulkanBuffer {
-	private final VkIndexType type;
-
+public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 	/**
 	 * Constructor given a specific index data type.
-	 * @param buffer		Buffer
 	 * @param type			Index type
-	 * @throws IllegalStateException if the {@link #buffer} cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
+	 * @param buffer		Index buffer
 	 * @throws IllegalArgumentException if the given {@link #type} is invalid
+	 * @throws IllegalStateException if the {@link #buffer} cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
 	 */
-	public IndexBuffer(VulkanBuffer buffer, VkIndexType type) {
-		super(buffer);
-		if(type == VkIndexType.NONE_NV) throw new IllegalArgumentException("Invalid index type: " + type);
-		this.type = requireNonNull(type);
-		require(VkBufferUsageFlag.INDEX_BUFFER);
-	}
-
-	/**
-	 * Constructor that determines the index type for a given draw count.
-	 * @param buffer		Buffer
-	 * @param count			Index draw count
-	 * @throws IllegalStateException if the given buffer cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
-	 * @see IndexedMeshBuilder#isIntegerIndex(int)
-	 */
-	public IndexBuffer(VulkanBuffer buffer, int count) {
-		this(buffer, IndexedMeshBuilder.isIntegerIndex(count) ? VkIndexType.UINT32 : VkIndexType.UINT16);
+	public IndexBuffer {
+		requireNonNull(type);
+		if(type == VkIndexType.NONE_NV) {
+			throw new IllegalArgumentException("Invalid index type: " + type);
+		}
+		buffer.require(VkBufferUsageFlags.INDEX_BUFFER);
 	}
 
 	/**
@@ -55,9 +45,10 @@ public final class IndexBuffer extends VulkanBuffer {
 	 * @throws IllegalStateException if the index is larger than the {@code maxDrawIndexedIndexValue} hardware limit
 	 */
 	public Command bind(long offset) {
-		checkOffset(offset);
+		buffer.checkOffset(offset);
 		validateLimit();
-		return (api, cmd) -> api.vkCmdBindIndexBuffer(cmd, this, offset, type);
+		final VulkanBuffer.Library library = buffer.device().library();
+		return commandBuffer -> library.vkCmdBindIndexBuffer(commandBuffer, buffer, offset, type);
 	}
 
 	/**
@@ -69,29 +60,16 @@ public final class IndexBuffer extends VulkanBuffer {
 			return;
 		}
 
-		// Lookup maximum index length
-		final var limits = this.device().limits();
-		final int max = limits.maxDrawIndexedIndexValue;
-
-		// Ignore maximum unsigned integer value
+		// Ignore if unlimited
+		final int max = buffer.device().limits().get("maxDrawIndexedIndexValue");
 		if(max == -1) {
 			return;
 		}
 
-		// Validate size of this index
-		final long count = this.length() / Integer.BYTES;
+		// Otherwise check buffer length is supported
+		final long count = buffer.length() / Integer.BYTES;
 		if(count > max) {
 			throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
 		}
-		// TODO - mod by offset?
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof IndexBuffer that) &&
-				(this.type == that.type()) &&
-				super.equals(obj);
 	}
 }

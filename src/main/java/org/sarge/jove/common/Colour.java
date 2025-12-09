@@ -1,22 +1,14 @@
 package org.sarge.jove.common;
 
-import static org.sarge.lib.Percentile.validate;
-
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-
-import org.sarge.jove.common.Layout.Component;
-import org.sarge.jove.util.*;
-import org.sarge.jove.util.FloatSupport.FloatFunction;
-import org.sarge.lib.Percentile;
 
 /**
  * RGBA colour.
  * @author Sarge
  */
-public record Colour(float red, float green, float blue, float alpha) implements Component, Bufferable {
+public record Colour(float red, float green, float blue, float alpha) implements Bufferable {
 	/**
-	 * RGBA string.
+	 * RGBA channels.
 	 */
 	public static final String RGBA = "RGBA";
 
@@ -31,14 +23,14 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	public static final Colour BLACK = new Colour(0, 0, 0);
 
 	/**
-	 * Size of a colour.
+	 * Number of colour components.
 	 */
 	public static final int SIZE = 4;
 
 	/**
 	 * Layout of a colour.
 	 */
-	public static final Layout LAYOUT = Layout.floats(SIZE);
+	public static final Layout LAYOUT = new Layout(SIZE, Layout.Type.NORMALIZED, false, Float.BYTES);
 
 	/**
 	 * Creates a colour from the given floating-point array representing an RGBA colour <b>or</b> an RGB colour with the alpha value initialised to <b>one</b>.
@@ -56,15 +48,34 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	/**
+	 * Parses a colour from the given comma-separate string.
+	 * @param colour Colour string
+	 * @return Colour
+	 * @throws NumberFormatException if any component is not a valid floating-point value
+	 * @see #of(float[])
+	 */
+	public static Colour parse(String colour) {
+		final String[] parts = colour.split(",");
+		final float[] array = new float[parts.length];
+		for(int n = 0; n < parts.length; ++n) {
+			array[n] = Float.parseFloat(parts[n]);
+		}
+		return of(array);
+	}
+
+	/**
 	 * Constructor.
 	 * @throws IllegalArgumentException if any argument is not a 0..1 percentile value
-	 * @see Percentile#isValid(float)
 	 */
 	public Colour {
 		validate(red);
 		validate(green);
 		validate(blue);
 		validate(alpha);
+	}
+
+	private static void validate(float value) {
+		if((value < 0) || (value > 1)) throw new IllegalArgumentException();
 	}
 
 	/**
@@ -75,36 +86,31 @@ public record Colour(float red, float green, float blue, float alpha) implements
 		this(red, green, blue, 1);
 	}
 
-	/**
-	 * Creates a colour interpolator.
-	 * @param start				Start colour
-	 * @param end				End colour
-	 * @param interpolator		Interpolator function
-	 * @return Colour interpolator
-	 */
-	public static FloatFunction<Colour> interpolator(Colour start, Colour end, Interpolator interpolator) {
-		// Create an interpolator for each channel
-		final float[] a = start.toArray();
-		final float[] b = end.toArray();
-		final Interpolator[] array = new Interpolator[SIZE];
-		Arrays.setAll(array, n -> interpolator.range(a[n], b[n]));
-
-		// Create colour interpolator
-		return t -> {
-			final float[] result = new float[SIZE];
-			for(int n = 0; n < SIZE; ++n) {
-				result[n] = array[n].apply(t);
-			}
-			return Colour.of(result);
-		};
-	}
-	// TODO - move to separate class + loader?  see particle system loader
-	// TODO - JDK19 vector API
-
-	@Override
-	public Layout layout() {
-		return LAYOUT;
-	}
+//	/**
+//	 * Creates a colour interpolator.
+//	 * @param start				Start colour
+//	 * @param end				End colour
+//	 * @param interpolator		Interpolator function
+//	 * @return Colour interpolator
+//	 */
+//	public static FloatFunction<Colour> interpolator(Colour start, Colour end, Interpolator interpolator) {
+//		// Create an interpolator for each channel
+//		final float[] a = start.toArray();
+//		final float[] b = end.toArray();
+//		final Interpolator[] array = new Interpolator[SIZE];
+//		Arrays.setAll(array, n -> interpolator.range(a[n], b[n]));
+//
+//		// Create colour interpolator
+//		return t -> {
+//			final float[] result = new float[SIZE];
+//			for(int n = 0; n < SIZE; ++n) {
+//				result[n] = array[n].apply(t);
+//			}
+//			return Colour.of(result);
+//		};
+//	}
+//	// TODO - move to separate class + loader?  see particle system loader
+//	// TODO - JDK19 vector API
 
 	@Override
 	public void buffer(ByteBuffer buffer) {
@@ -119,10 +125,5 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	 */
 	public float[] toArray() {
 		return new float[]{red, green, blue, alpha};
-	}
-
-	@Override
-	public String toString() {
-		return MathsUtility.format(toArray());
 	}
 }

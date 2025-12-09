@@ -1,87 +1,37 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.sarge.jove.geometry.Point.ORIGIN;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.Ray.Intersection;
+import org.sarge.jove.geometry.Ray.*;
 
 class RayTest {
 	private Ray ray;
 
 	@BeforeEach
 	void before() {
-		ray = new Ray(Point.ORIGIN, Axis.X);
+		ray = new Ray(ORIGIN, Axis.X);
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(Point.ORIGIN, ray.origin());
-		assertEquals(Axis.X, ray.direction());
+	void point() {
+		assertEquals(ORIGIN, ray.point(0));
+		assertEquals(new Point(Axis.X.multiply(3)), ray.point(3));
 	}
 
 	@Test
-	void equals() {
-		assertEquals(ray, ray);
-		assertEquals(ray, new Ray(Point.ORIGIN, Axis.X));
-		assertNotEquals(ray, null);
-		assertNotEquals(ray, mock(Ray.class));
+	void normal() {
+		assertEquals(Axis.X.invert(), IntersectedSurface.normal(ORIGIN, new Point(Axis.X)));
 	}
 
-	@DisplayName("A simple intersection result can be constructed with a single intersection and surface normal")
 	@Test
-	void of() {
-		final Intersection result = ray.intersection(1, Axis.Y);
-		assertEquals(1f, result.distance());
-		assertEquals(new Point(Axis.X), result.point());
-		assertEquals(Axis.Y, result.normal());
-	}
-
-	@DisplayName("An intersection result can be constructed with a surface normal relative to the centre of the intresected volume")
-	@Test
-	void centre() {
-		final Intersection result = ray.intersection(1, Point.ORIGIN);
-		assertEquals(1f, result.distance());
-		assertEquals(new Point(Axis.X), result.point());
-		assertEquals(Axis.X, result.normal());
-	}
-
-	@DisplayName("An empty intersection result has no values")
-	@Test
-	void none() {
-		final var results = Intersection.NONE.iterator();
-		assertEquals(false, results.hasNext());
-	}
-
-	@DisplayName("An intersection...")
-	@Nested
-	class DefaultIntersectionTests {
-		private Intersection intersection;
-
-		@BeforeEach
-		void before() {
-			intersection = ray.intersection(1, Axis.Y);
-		}
-
-		@DisplayName("has an intersection point on the given ray")
-		@Test
-		void constructor() {
-			assertEquals(1f, intersection.distance());
-			assertEquals(new Point(Axis.X), intersection.point());
-		}
-
-		@DisplayName("can be ordered by distance")
-		@Test
-		void compare() {
-			assertEquals(0, Intersection.COMPARATOR.compare(intersection, intersection));
-			assertEquals(1, Intersection.COMPARATOR.compare(intersection, mock(Intersection.class)));
-		}
-
-		@Test
-		void equals() {
-			assertEquals(intersection, intersection);
-			assertNotEquals(intersection, null);
-			assertNotEquals(intersection, mock(Intersection.class));
-		}
+	void order() {
+		final var surface = new Plane(Axis.X, 0);
+		final var one = new Intersection(1, surface);
+		final var two = new Intersection(2, surface);
+		assertEquals(-1, one.compareTo(two));
+		assertEquals(+1, two.compareTo(one));
+		assertEquals( 0, one.compareTo(one));
 	}
 }

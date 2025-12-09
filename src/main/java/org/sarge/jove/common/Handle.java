@@ -1,85 +1,47 @@
 package org.sarge.jove.common;
 
-import com.sun.jna.*;
-import com.sun.jna.ptr.PointerByReference;
+import java.lang.foreign.*;
+import java.util.function.Function;
+
+import org.sarge.jove.foreign.Transformer;
 
 /**
- * A <i>handle</i> is an opaque wrapper for a JNA pointer.
+ * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
  * @author Sarge
  */
-public final class Handle {
-	private final Pointer ptr;
-
+public record Handle(MemorySegment address) {
 	/**
 	 * Constructor.
-	 * @param ptr Native pointer
+	 * @param address Memory address
+	 * @throws NullPointerException if {@link #address} is {@code null} or {@link MemorySegment#NULL}
 	 */
-	public Handle(Pointer ptr) {
-		this(Pointer.nativeValue(ptr));
+	public Handle {
+		if(MemorySegment.NULL.equals(address)) {
+			throw new NullPointerException();
+		}
+		address = address.asReadOnly();
 	}
 
 	/**
-	 * Constructor.
-	 * @param peer Peer memory pointer
+	 * Constructor given a literal address.
+	 * @param address Memory address
 	 */
-	public Handle(long peer) {
-		this.ptr = new Pointer(peer);
+	public Handle(long address) {
+		this(MemorySegment.ofAddress(address));
 	}
 
 	/**
-	 * Convenience constructor given a pointer returned from the native layer.
-	 * @param ref Pointer reference
+	 * Native transformer for a handle.
 	 */
-	public Handle(PointerByReference ref) {
-		this(ref.getValue());
-	}
-
-	@Override
-	public int hashCode() {
-		return ptr.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Handle that) &&
-				this.ptr.equals(that.ptr);
-	}
-
-	@Override
-	public String toString() {
-		return ptr.toString();
-	}
-
-	/**
-	 * JNA type converter for this handle.
-	 */
-	public static final TypeConverter CONVERTER = new TypeConverter() {
+	public static class HandleTransformer implements Transformer<Handle, MemorySegment> {
 		@Override
-		public Class<?> nativeType() {
-			return Pointer.class;
+		public MemorySegment marshal(Handle arg, SegmentAllocator allocator) {
+			return arg.address;
 		}
 
 		@Override
-		public Object toNative(Object value, ToNativeContext context) {
-			if(value == null) {
-				return null;
-			}
-			else {
-				final Handle handle = (Handle) value;
-				return handle.ptr;
-			}
+		public Function<MemorySegment, Handle> unmarshal() {
+			return Handle::new;
 		}
-
-		@Override
-		public Object fromNative(Object value, FromNativeContext context) {
-			if(value == null) {
-				return null;
-			}
-			else {
-				return new Handle((Pointer) value);
-			}
-		}
-	};
+	}
 }

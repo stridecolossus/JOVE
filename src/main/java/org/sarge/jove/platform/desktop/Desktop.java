@@ -3,16 +3,11 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.annotation.*;
-import java.util.Map;
-import java.util.function.Consumer;
+import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.desktop.DesktopLibrary.ErrorCallback;
-import org.sarge.jove.util.ReferenceFactory;
-
-import com.sun.jna.*;
-import com.sun.jna.Native;
-import com.sun.jna.ptr.IntByReference;
+import org.sarge.jove.foreign.*;
+import org.sarge.jove.foreign.Callback.CallbackTransformerFactory;
 
 /**
  * The <i>desktop</i> service manages windows and input devices implemented using the GLFW native library.
@@ -25,37 +20,38 @@ import com.sun.jna.ptr.IntByReference;
  * <p>
  * @author Sarge
  */
-public final class Desktop implements TransientObject {
+public class Desktop implements TransientObject {
 	/**
 	 * Creates the desktop service.
-	 * @return New desktop service
-	 * @throws RuntimeException if the GLFW native library cannot be found or cannot be initialised
-	 * @throws UnsatisfiedLinkError if the native library cannot be instantiated
+	 * @return Desktop service
+	 * @throws RuntimeException if GLFW cannot be loaded or initialised
 	 */
 	@MainThread
 	public static Desktop create() {
-		// Determine library name
-		final String name = switch(Platform.getOSType()) {
-			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO - path!
-			case Platform.LINUX -> "libglfw";
-			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
-		};
+//		// Determine library name
+//		final String name = switch(Platform.getOSType()) {
+//			case Platform.WINDOWS -> "C:/GLFW/lib-mingw-w64/glfw3.dll";		// <--- TODO - path!
+//			case Platform.LINUX -> "libglfw";
+//			default -> throw new RuntimeException("Unsupported platform for GLFW: " + Platform.getOSType());
+//		};
 
-		// Init type mapper
-		final var mapper = new DefaultTypeMapper();
-		mapper.addTypeConverter(Handle.class, Handle.CONVERTER);
-		mapper.addTypeConverter(Window.class, NativeObject.CONVERTER);
+		// TODO
+		final var registry = DefaultRegistry.create();
+		registry.add(Callback.class, new CallbackTransformerFactory(registry));
 
 		// Load native library
-		final DesktopLibrary lib = Native.load(name, DesktopLibrary.class, Map.of(Library.OPTION_TYPE_MAPPER, mapper));
-		JoystickManager.init(lib);
-
-		// Init GLFW
-		final int result = lib.glfwInit();
-		if(result != 1) throw new RuntimeException("Cannot initialise GLFW: code=" + result);
+		final var factory = new NativeLibraryFactory("C:/GLFW/lib-mingw-w64/glfw3.dll", registry); // TODO - name
+		final Class<?>[] api = {
+				DesktopLibrary.class,
+				WindowLibrary.class,
+				MonitorLibrary.class,
+				DeviceLibrary.class,
+		};
+		final var library = (DesktopLibrary) factory.build(List.of(api));
+		// TODO - JoystickManager.init(lib);
 
 		// Create desktop service
-		return new Desktop(lib, new ReferenceFactory());
+		return new Desktop(library);
 	}
 
 	/**
@@ -67,80 +63,90 @@ public final class Desktop implements TransientObject {
 		// Marker
 	}
 
-	private final DesktopLibrary lib;
-	private final ReferenceFactory factory;
+	private final DesktopLibrary library;
+	private boolean destroyed;
 
 	/**
 	 * Constructor.
-	 * @param lib 			GLFW library
-	 * @param factory		Reference factory
+	 * @param library GLFW library
+	 * @throws RuntimeException if GLFW fails to initialise
 	 */
-	Desktop(DesktopLibrary lib, ReferenceFactory factory) {
-		this.lib = requireNonNull(lib);
-		this.factory = requireNonNull(factory);
+	Desktop(DesktopLibrary library) {
+		this.library = requireNonNull(library);
+		init();
+	}
+
+	private void init() {
+		final int result = library.glfwInit();
+		if(result != 1) {
+			throw new RuntimeException("Cannot initialise GLFW: code=" + result);
+		}
 	}
 
 	/**
 	 * @return GLFW library
 	 */
-	DesktopLibrary library() {
-		return lib;
+	@SuppressWarnings("unchecked")
+	public <T> T library() {
+		return (T) library;
 	}
 
-	/**
-	 * @return Reference factory
-	 */
-	ReferenceFactory factory() {
-		return factory;
+	public void poll() {
+		final DeviceLibrary library = this.library();
+		library.glfwPollEvents();
 	}
 
 	/**
 	 * @return GLFW version
 	 */
 	public String version() {
-		return lib.glfwGetVersionString();
+		return library.glfwGetVersionString();
 	}
 
 	/**
 	 * @return Whether Vulkan is supported on the current hardware
 	 */
 	public boolean isVulkanSupported() {
-		return lib.glfwVulkanSupported();
+		return library.glfwVulkanSupported();
 	}
 
 	/**
-	 * Processes pending input events.
+	 * Returns and clears the last GLFW error.
+	 * @return Error message
 	 */
-	@MainThread
-	public void poll() {
-		lib.glfwPollEvents();
+	public Optional<String> error() {
+		final var description = new Pointer();
+		final int code = library.glfwGetError(description);
+		if(code == 0) {
+			return Optional.empty();
+		}
+		else {
+			final Handle handle = description.handle();
+			final String message = StringTransformer.unmarshal(handle.address());
+			final String error = String.format("[%d] %s", code, message);
+			return Optional.of(error);
+		}
 	}
 
 	/**
 	 * @return Vulkan extensions supported by this desktop
 	 */
-	public String[] extensions() {
-		final IntByReference size = factory.integer();
-		final Pointer ptr = lib.glfwGetRequiredInstanceExtensions(size);
-		return ptr.getStringArray(0, size.getValue());
+	public List<String> extensions() {
+		final var count = new IntegerReference();
+		final Handle handle = library.glfwGetRequiredInstanceExtensions(count);
+		return AbstractArrayTransformer.unmarshal(handle.address(), count.get(), StringTransformer::unmarshal);
 	}
 
-	/**
-	 * Sets a handler for GLFW errors.
-	 * @param handler Error handler
-	 */
-	@MainThread
-	public void setErrorHandler(Consumer<String> handler) {
-		final ErrorCallback callback = (error, description) -> {
-			final String message = String.format("GLFW error: [%d] %s", error, description);
-			handler.accept(message);
-		};
-		lib.glfwSetErrorCallback(callback);
+	@Override
+	public boolean isDestroyed() {
+		return destroyed;
 	}
 
 	@Override
 	@MainThread
 	public void destroy() {
-		lib.glfwTerminate();
+		if(destroyed) throw new IllegalStateException();
+		library.glfwTerminate();
+		destroyed = true;
 	}
 }

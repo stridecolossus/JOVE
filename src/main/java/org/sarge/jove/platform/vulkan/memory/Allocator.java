@@ -1,18 +1,12 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.util.*;
-import java.util.function.Predicate;
-
-import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.util.BitField;
-
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.platform.vulkan.common.VulkanException;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * An <i>allocator</i> is responsible for allocating device memory for a given request.
@@ -20,7 +14,7 @@ import com.sun.jna.ptr.PointerByReference;
  */
 public class Allocator {
 	/**
-	 * An <i>allocation exception</i> is thrown when this allocator cannot allocate memory.
+	 * An <i>allocation exception</i> is thrown when this allocator fails to allocate memory.
 	 */
 	public static class AllocationException extends RuntimeException {
 		/**
@@ -30,62 +24,41 @@ public class Allocator {
 		public AllocationException(String message) {
 			super(message);
 		}
-
-		/**
-		 * Constructor.
-		 * @param cause Cause
-		 */
-		protected AllocationException(Throwable cause) {
-			super(cause);
-		}
 	}
 
-	/**
-	 * Creates and configures a memory allocator for the given device.
-	 * @param dev Logical device
-	 * @return Allocator
-	 * @see MemoryType#enumerate(VkPhysicalDeviceMemoryProperties)
-	 * @see LogicalDevice#limits()
-	 */
-	public static Allocator create(LogicalDevice dev) {
-		// Retrieve supported memory types
-		final var props = dev.parent().memory();
-		final MemoryType[] types = MemoryType.enumerate(props);
-
-		// Lookup hardware limits
-		final VkPhysicalDeviceLimits limits = dev.limits();
-		final int max = limits.maxMemoryAllocationCount;
-    	final long page = limits.bufferImageGranularity;
-
-    	// Create allocator
-    	return new Allocator(dev, types, max, page);
-	}
-
-	private final DeviceContext dev;
-	private final MemoryType[] types;
-	private final long granularity;
+	private final LogicalDevice device;
+	private final MemorySelector selector;
+	private final long page;
 	private final int max;
 	private int count;
 
 	/**
 	 * Constructor.
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 * @param types 		Memory types
-	 * @param max			Maximum number of allocations
-	 * @param granularity	Memory page granularity
 	 */
-	public Allocator(DeviceContext dev, MemoryType[] types, int max, long granularity) {
-		this.dev = requireNonNull(dev);
-		this.types = Arrays.copyOf(types, types.length);
-		this.max = requireOneOrMore(max);
-		this.granularity = requireOneOrMore(granularity);
+	public Allocator(LogicalDevice device, MemoryType[] types) {
+		final var limits = device.limits();
+		this.device = requireNonNull(device);
+		this.selector = new MemorySelector(types);
+		this.page = requireOneOrMore((long) limits.get("bufferImageGranularity"));
+		this.max = constrain(limits.get("maxMemoryAllocationCount"), Integer.MAX_VALUE);
+	}
+
+	private static int constrain(int value, int def) {
+		if(value == -1) {
+			return def;
+		}
+		else {
+			return value;
+		}
 	}
 
 	/**
-	 * Copy constructor.
+	 * @return Logical device
 	 */
-	protected Allocator(Allocator allocator) {
-		this(allocator.dev, allocator.types, allocator.max, allocator.granularity);
+	public LogicalDevice device() {
+		return device;
 	}
 
 	/**
@@ -103,10 +76,10 @@ public class Allocator {
 	}
 
 	/**
-	 * @return Page size granularity
+	 * @return Page size
 	 */
-	public final long granularity() {
-		return granularity;
+	public final long page() {
+		return page;
 	}
 
 	/**
@@ -120,73 +93,122 @@ public class Allocator {
 	 * <li>Otherwise fallback to the <b>first</b> available type matching the minimal <i>required</i> properties</li>
 	 * </ol>
 	 * <p>
-	 * @param reqs			Memory requirements
-	 * @param props			Memory properties
+	 * @param requirements			Memory requirements
+	 * @param properties			Memory properties
 	 * @return Allocated memory
-	 * @throws IllegalAccessException if {@link #size} is not positive
 	 * @throws AllocationException if there is no matching memory type for the request or the memory cannot be allocated by the hardware
 	 */
-	public DeviceMemory allocate(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-		final MemoryType type = select(reqs, props);
-		return allocate(type, reqs.size);
+	public DeviceMemory allocate(VkMemoryRequirements requirements, MemoryProperties<?> properties) throws AllocationException {
+		final MemoryType type = selector
+				.select(requirements.memoryTypeBits, properties)
+				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(requirements, properties)));
+
+		return allocate(type, requirements.size);
 	}
 
-	/**
-	 * Selects the memory type for the given request.
-	 * @param reqs			Requirements
-	 * @param props			Memory properties
-	 * @return Selected memory type
-	 * @throws AllocationException if no memory type matches the request
-	 */
-	private MemoryType select(VkMemoryRequirements reqs, MemoryProperties<?> props) throws AllocationException {
-		/**
-		 * Matches a memory type for the given properties and records the fallback as a side-effect.
-		 */
-		class FallbackMatcher implements Predicate<MemoryType> {
-			private MemoryType fallback;
-
-			@Override
-			public boolean test(MemoryType type) {
-				// Skip if this type does not match the minimal requirements
-				if(!type.matches(props.required())) {
-					return false;
-				}
-
-				// Check for optimal match
-    			if(type.matches(props.optimal())) {
-    				return true;
-    			}
-
-    			// Record fallback candidate
-				if(fallback == null) {
-					fallback = type;
-				}
-
-				return false;
-			}
-
-			private Optional<MemoryType> fallback() {
-				return Optional.ofNullable(fallback);
-			}
-		}
-
-		// Walk candidate memory types and match against the requested properties
-		final var matcher = new FallbackMatcher();
-		return new BitField(reqs.memoryTypeBits)
-				.stream()
-				.mapToObj(n -> types[n])
-				.filter(matcher)
-				.findAny()
-				.or(matcher::fallback)
-				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(reqs, props)));
-	}
+//	/**
+//	 * Selects the memory type for the given request.
+//	 * @param requirements			Requirements
+//	 * @param properties			Memory properties
+//	 * @return Selected memory type
+//	 * @throws AllocationException if no memory type matches the request
+//	 */
+//	private MemoryType select(VkMemoryRequirements requirements, MemoryProperties<?> properties) throws AllocationException {
+//		final var matcher = new MemoryTypeMatcher(properties);
+//
+//		return IntStream
+//				.range(0, Integer.SIZE)
+//				.filter(n -> (requirements.memoryTypeBits & (1 << n)) == n)
+//				.mapToObj(n -> types[n])
+//				.filter(matcher)
+//				.findAny()
+//				.or(matcher::fallback)
+//				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(requirements, properties)));
+//
+////		System.out.println(Integer.toBinaryString(requirements.memoryTypeBits));
+////
+////		for(int n = 0; n < 32; ++n) {
+////
+////			if((requirements.memoryTypeBits & (1 << n)) == 0) {
+////				System.out.println("skip "+n);
+////				continue;
+////			}
+////
+////			final MemoryType type = types[n];
+////
+////			System.out.println("test "+n);
+////			if(matcher.test(type)) {
+////				System.out.println("matched "+n);
+////				return type;
+////			}
+////		}
+////
+////		System.out.println("fallback");
+////		return matcher.fallback().orElseThrow();
+//
+////		return EnumMask.stream(requirements.memoryTypeBits)
+////				.mapToObj(n -> types[n])
+////				.filter(matcher)
+////				.findAny()
+////				.or(matcher::fallback)
+////				.orElseThrow(() -> new AllocationException("No available memory type: requirements=%s properties=%s".formatted(requirements, properties)));
+//	}
+//
+//	/**
+//	 * Matches a memory type for the given properties and records the fallback as a side-effect.
+//	 */
+//	private static class MemoryTypeMatcher implements Predicate<MemoryType> {
+//		private final MemoryProperties<?> properties;
+//		private MemoryType fallback;
+//
+//		/**
+//		 * Constructor.
+//		 * @param properties Memory properties to be matched
+//		 */
+//		MemoryTypeMatcher(MemoryProperties<?> properties) {
+//			this.properties = properties;
+//		}
+//
+//		@Override
+//		public boolean test(MemoryType type) {
+//			// Test whether matches minimal requirements
+//			if(!matches(type, properties.required())) {
+//				return false;
+//			}
+//
+//			// Test whether matches optimal requirements
+//			if(matches(type, properties.optimal())) {
+//				return true;
+//			}
+//
+//			// Record fallback candidate
+//			if(fallback == null) {
+//				fallback = type;
+//			}
+//
+//			return false;
+//		}
+//
+//		/**
+//		 * @return Whether a memory type matches the given memory properties
+//		 */
+//		private static boolean matches(MemoryType type, Set<VkMemoryProperty> properties) {
+//			return type.properties().containsAll(properties);
+//		}
+//
+//		/**
+//		 * @return Fallback memory type
+//		 */
+//		private Optional<MemoryType> fallback() {
+//			return Optional.ofNullable(fallback);
+//		}
+//	}
 
 	/**
 	 * Allocates memory of the given type.
 	 * <p>
-	 * The requested memory size is quantised to the optimal page size {@link #granularity()} specified by the hardware.
+	 * The requested memory size is quantised to the optimal page size {@link #page()} specified by the hardware.
 	 * Additionally the size of the allocated memory may be larger due to alignment constraints.
-	 * In either case this is transparent to the resultant device memory instance.
 	 * <p>
 	 * @param type		Memory type
 	 * @param size		Size (bytes)
@@ -195,41 +217,47 @@ public class Allocator {
 	 * @throws AllocationException if the memory cannot be allocated
 	 */
 	protected DeviceMemory allocate(MemoryType type, long size) throws AllocationException {
+		requireOneOrMore(size);
+
 		// Check maximum number of allocations
-		if(count >= max) throw new AllocationException("Number of allocations exceeds the hardware limit".formatted(count, max));
+		if(count >= max) {
+			throw new AllocationException("Number of allocations exceeds the hardware limit: " + max);
+		}
 
 		// Quantise the requested size
 		final long pages = pages(size);
 		assert pages > 0;
 
 		// Init memory descriptor
-		final var info = new VkMemoryAllocateInfo();
-		info.allocationSize = granularity * pages;
-		info.memoryTypeIndex = type.index();
+		final var allocation = new VkMemoryAllocateInfo();
+		allocation.sType = VkStructureType.MEMORY_ALLOCATE_INFO;
+		allocation.allocationSize = page * pages;
+		allocation.memoryTypeIndex = type.index();
 
 		// Allocate memory
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		final int result = lib.vkAllocateMemory(dev, info, null, ref);
-
-		// Check allocated
-		if(result != VulkanLibrary.SUCCESS) {
-			throw new AllocationException("Cannot allocate memory: type=%s size=%d error=%d".formatted(type, size, result));
+		final MemoryLibrary library = device.library();
+		final Pointer pointer = new Pointer(size);
+		try {
+			library.vkAllocateMemory(device, allocation, null, pointer);
+		}
+		catch(VulkanException e) {
+			throw new AllocationException("Cannot allocate device memory: type=%s size=%d result=%s".formatted(type, size, e.result()));
 		}
 
 		// Create device memory
 		++count;
-		return new DefaultDeviceMemory(new Handle(ref), dev, type, size);
+		return new DefaultDeviceMemory(pointer.handle(), device, type, size);
 	}
 
 	/**
-	 * Quantises the requested memory size to the configured page granularity.
+	 * Quantises the requested memory size to the configured page size.
 	 * @param size Memory size (bytes)
 	 * @return Number of pages
 	 */
 	protected long pages(long size) {
-		return 1 + (size - 1) / granularity;
+		return 1 + (size - 1) / page;
 	}
+	// TODO - this feels a bit 'contrived', can it be made simpler and more expressive?
 
 	/**
 	 * Clears the allocation count.

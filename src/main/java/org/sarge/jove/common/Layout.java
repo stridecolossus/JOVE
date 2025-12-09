@@ -1,7 +1,9 @@
 package org.sarge.jove.common;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
+
+import java.util.List;
 
 /**
  * A <i>layout</i> describes the structure and format of common data tuples such as image pixels or vertex components.
@@ -9,28 +11,16 @@ import static org.sarge.lib.Validation.requireOneOrMore;
  * A layout is comprised of:
  * <ul>
  * <li>The {@link #size} number of data elements, e.g. 3 for a vertex normal</li>
- * <li>The {@link #type} of the data, e.g. {@link ByteSized.Type#FLOAT}</li>
+ * <li>The {@link #type} of the data, e.g. {@link Type#FLOAT}</li>
  * <li>Whether the data is {@link #signed}</li>
  * <li>The number of {@link #bytes} per element, e.g. {@link Float#BYTES}</li>
  * </ul>
  * <p>
- * Example layout for a floating-point 3-tuple normal: <pre>new Component(3, Type.FLOAT, true, Float.BYTES)</pre>
+ * For example the layout for a vertex position could be <pre>Layout(3, Type.FLOAT, true, Float.BYTES)</pre>
  * <p>
- * The {@link #toString()} representation of a layout is a compacted string with a {@code U} suffix for unsigned types.
- * For example the above layout is represented as {@code 3-FLOAT4}.
- * <p>
+ * @author Sarge
  */
-public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
-	/**
-	 * A <i>component</i> defines a data type with a layout.
-	 */
-	public interface Component {
-		/**
-		 * @return Layout of this component
-		 */
-		Layout layout();
-	}
-
+public record Layout(int count, Type type, boolean signed, int bytes) {
 	/**
 	 * Component types.
 	 */
@@ -41,12 +31,12 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 	}
 
 	/**
-	 * Creates a signed {@link Type#FLOAT} layout with {@link #size} elements.
-	 * @param size Number of elements
+	 * Creates a signed {@link Type#FLOAT} layout with {@link #count} elements.
+	 * @param count Number of elements
 	 * @return New floating-point layout
 	 */
-	public static Layout floats(int size) {
-		return new Layout(size, Type.FLOAT, true, Float.BYTES);
+	public static Layout floats(int count) {
+		return new Layout(count, Type.FLOAT, true, Float.BYTES);
 	}
 
 	/**
@@ -67,6 +57,17 @@ public record Layout(int count, Layout.Type type, boolean signed, int bytes) {
 	 */
 	public int stride() {
 		return count * bytes;
+	}
+
+	/**
+	 * @param layouts Layouts
+	 * @return Total stride of the given layouts (bytes)
+	 */
+	public static int stride(List<Layout> layouts) {
+		return layouts
+				.stream()
+				.mapToInt(Layout::stride)
+				.sum();
 	}
 
 	@Override

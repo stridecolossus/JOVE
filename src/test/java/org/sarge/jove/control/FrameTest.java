@@ -1,87 +1,83 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.time.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Frame.Counter;
+import org.sarge.jove.control.Frame.*;
 
 class FrameTest {
-	private Frame frame;
+	private static class MockFrameListener implements Listener {
+		private int count;
+
+		@Override
+		public void end(Frame frame) {
+			assertNotNull(frame);
+			++count;
+		}
+	}
+
+	private Tracker tracker;
+	private MockFrameListener listener;
 
 	@BeforeEach
 	void before() {
-		frame = new Frame();
+		listener = new MockFrameListener();
+		tracker = new Tracker();
 	}
 
-	@DisplayName("A new frame timer...")
-	@Nested
-	class Started {
-		@DisplayName("can be completed")
-		@Test
-		void stop() {
-			frame.stop();
-		}
-
-		@DisplayName("does not have a completion time")
-		@Test
-		void time() {
-			assertThrows(IllegalStateException.class, () -> frame.time());
-		}
+	@Test
+	void elapsed() {
+		final Frame frame = new Frame(Instant.ofEpochSecond(1), Instant.ofEpochSecond(3));
+		assertEquals(Duration.ofSeconds(2), frame.elapsed());
 	}
 
-	@DisplayName("A completed frame...")
-	@Nested
-	class Completed {
-		@BeforeEach
-		void before() {
-			frame.stop();
-		}
-
-		@DisplayName("records the elapsed duration of the frame")
-		@Test
-		void time() {
-			assertNotNull(frame.elapsed());
-			assertNotNull(frame.time());
-		}
-
-		@DisplayName("cannot be stopped again")
-		@Test
-		void stop() {
-			assertThrows(IllegalStateException.class, () -> frame.stop());
-		}
+	@Test
+	void begin() {
+		tracker.begin();
 	}
 
-	@Nested
-	class CounterTests {
-		private Counter counter;
+	@Test
+	void end() {
+		final var timer = tracker.begin();
+		timer.run();
+	}
 
-		@BeforeEach
-		void before() {
-			counter = new Counter();
-		}
+	@Test
+	void already() {
+		final var timer = tracker.begin();
+		timer.run();
+		assertThrows(IllegalStateException.class, () -> timer.run());
+	}
 
-		@DisplayName("A frame counter records the number of frame updates over a second")
-		@Test
-		void fps() {
-			for(int n = 0; n < 3; ++n) {
-				final var frame = new Frame();
-				frame.stop();
-				counter.update(frame);
-			}
-			assertEquals(3, counter.fps());
+	@Test
+	void listener() {
+		tracker.add(listener);
+		for(int n = 0; n < 3; ++n) {
+    		final var timer = tracker.begin();
+    		timer.run();
 		}
+		assertEquals(3, listener.count);
+	}
 
-		@DisplayName("A frame counter is reset after a second")
-		@Test
-		void reset() throws InterruptedException {
-			frame = mock(Frame.class);
-			when(frame.time()).thenReturn(Instant.now());
-			when(frame.elapsed()).thenReturn(Duration.ofSeconds(1));
-			counter.update(frame);
-			assertEquals(1, counter.fps());
-		}
+	@Test
+	void parallel() {
+		tracker.add(listener);
+		final var one = tracker.begin();
+		final var two = tracker.begin();
+		two.run();
+		one.run();
+		assertEquals(2, listener.count);
+	}
+
+	@Test
+	void periodic() {
+		final var periodic = Listener.periodic(Duration.ofSeconds(1), listener);
+		final Instant start = Instant.now();
+		periodic.end(new Frame(start, start.plusMillis(500)));
+		assertEquals(0, listener.count);
+		periodic.end(new Frame(start, start.plusMillis(1500)));
+		assertEquals(1, listener.count);
 	}
 }

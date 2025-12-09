@@ -2,20 +2,19 @@ package org.sarge.jove.scene.particle;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.control.Frame;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.geometry.Ray.Intersection;
-import org.sarge.jove.geometry.Ray.Intersection.Surface;
+import org.sarge.jove.geometry.Ray.IntersectedSurface;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.model.*;
+import org.sarge.jove.model.Mesh;
+import org.sarge.jove.platform.vulkan.core.VulkanSurface;
 
 /**
  * A <i>particle system</i> is a controller for a particle animation.
@@ -37,7 +36,7 @@ import org.sarge.jove.model.*;
  * @author Sarge
  */
 public class ParticleSystem implements Frame.Listener {
-	private static final float SCALE = 1f / Frame.MILLISECONDS_PER_SECOND;
+	private static final float SCALE = 1f / 1000; // FrameCounter.MILLISECONDS_PER_SECOND;
 
 	/**
 	 * Characteristic hints for this particle system.
@@ -56,13 +55,13 @@ public class ParticleSystem implements Frame.Listener {
 	private DirectionFactory vector = DirectionFactory.of(Axis.Y);
 	private ColourFactory colour = ColourFactory.of(Colour.WHITE);
 	private int max = 1;
-	private long lifetime = Frame.MILLISECONDS_PER_SECOND;
+	private long lifetime = 1000; // FrameCounter.MILLISECONDS_PER_SECOND;
 	private List<Particle> particles = new ArrayList<>();
 
 	// Controller
 	private GenerationPolicy policy = GenerationPolicy.NONE;
 	private final List<Influence> influences = new ArrayList<>();
-	private final Map<Surface, Collision> surfaces = new HashMap<>();
+	private final Map<IntersectedSurface, Collision> surfaces = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -218,7 +217,7 @@ public class ParticleSystem implements Frame.Listener {
 	 * @param action		Collision action
 	 * @see Characteristic#CULL
 	 */
-	public ParticleSystem add(Surface surface, Collision action) {
+	public ParticleSystem add(IntersectedSurface surface, Collision action) {
 		requireNonNull(surface);
 		requireNonNull(action);
 		surfaces.put(surface, action);
@@ -229,19 +228,19 @@ public class ParticleSystem implements Frame.Listener {
 	 * Removes a collision surface.
 	 * @param surface Surface to remove
 	 */
-	public ParticleSystem remove(Surface surface) {
+	public ParticleSystem remove(VulkanSurface surface) {
 		surfaces.remove(surface);
 		return this;
 	}
 
 	@Override
-	public void update(Frame frame) {
-		final long time = frame.time().toEpochMilli();
-		final float elapsed = frame.elapsed().toMillis() * SCALE;
-		expire(time);
-		update(time, elapsed);
-		cull();
-		generate(time, elapsed);
+	public void end(Frame frame) {
+//		final long time = frame.time().toEpochMilli();
+		final float f = frame.elapsed().toMillis() * SCALE;
+//		expire(time);
+//		update(time, elapsed);
+//		cull();
+//		generate(time, elapsed);
 	}
 
 	/**
@@ -321,9 +320,9 @@ public class ParticleSystem implements Frame.Listener {
 	 */
 	private void collide(Particle p) {
 		for(var entry : surfaces.entrySet()) {
-			final Surface surface = entry.getKey();
+			final IntersectedSurface surface = entry.getKey();
 			final var results = surface.intersections(p.ray());
-			if(results != Intersection.NONE) {
+			if(results != IntersectedSurface.EMPTY_INTERSECTIONS) {
 				final Collision collision = entry.getValue();
 				collision.collide(p, results.iterator().next());
 				break;
@@ -361,25 +360,27 @@ public class ParticleSystem implements Frame.Listener {
 	 * @return Buffered mesh
 	 */
 	public Mesh mesh() {
-		// Init vertex layout
-		final var layout = new CompoundLayout(Point.LAYOUT, Colour.LAYOUT);
-
-		// Create vertex buffer
-		final var vertices = new ByteSizedBufferable() {
-            @Override
-            public int length() {
-            	return particles.size() * layout.stride();
-            }
-
-			@Override
-			public void buffer(ByteBuffer bb) {
-				for(Particle p : particles) {
-					p.buffer(bb);
-				}
-			}
-		};
-
-		// Create mesh
-		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
+//		// Init vertex layout
+//		final var layout = List.of(Point.LAYOUT, Colour.LAYOUT);
+//		final int stride = Layout.stride(layout);
+//
+//		// Create vertex buffer
+//		final var vertices = new ByteSizedBufferable() {
+//            @Override
+//            public int length() {
+//            	return particles.size() * stride;
+//            }
+//
+//			@Override
+//			public void buffer(ByteBuffer bb) {
+//				for(Particle p : particles) {
+//					p.buffer(bb);
+//				}
+//			}
+//		};
+//
+//		// Create mesh
+////		return new Mesh(Primitive.POINT, layout, () -> particles.size(), vertices, null);
+		return null; // TODO
 	}
 }

@@ -23,16 +23,10 @@ class TupleTest {
 		assertEquals(3, tuple.z);
 	}
 
-	@DisplayName("A tuple can be copied from an existing tuple")
-	@Test
-	void copy() {
-		assertEquals(true, tuple.isEqual(new Tuple(tuple)));
-	}
-
 	@DisplayName("A tuple can be created from an array")
 	@Test
 	void array() {
-		assertEquals(true, tuple.isEqual(new Tuple(new float[]{1, 2, 3})));
+		assertEquals(tuple, new Tuple(new float[]{1, 2, 3}));
 	}
 
 	@DisplayName("A tuple cannot be created from an array that does not comprise XYZ components")
@@ -69,9 +63,10 @@ class TupleTest {
 
 	@Test
 	void equals() {
-		assertTrue(tuple.isEqual(tuple));
-		assertTrue(tuple.isEqual(new Tuple(1, 2, 3)));
-		assertEquals(false, tuple.isEqual(new Tuple(4, 5, 6)));
+		assertEquals(tuple, tuple);
+		assertEquals(tuple, new Tuple(tuple));
+		assertNotEquals(tuple, null);
+		assertNotEquals(tuple, new Tuple(4, 5, 6));
 	}
 
 	@Test

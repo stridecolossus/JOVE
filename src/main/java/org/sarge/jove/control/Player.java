@@ -65,7 +65,8 @@ public class Player implements Playable {
 	 * @param listener State change listener
 	 */
 	public void add(Consumer<Player> listener) {
-		listeners.add(requireNonNull(listener));
+		requireNonNull(listener);
+		listeners.add(listener);
 	}
 
 	/**

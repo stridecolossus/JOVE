@@ -1,28 +1,26 @@
 package org.sarge.jove.platform.obj;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireNotEmpty;
+import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.*;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
-import org.sarge.jove.io.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.Mesh;
-import org.sarge.jove.util.FloatArrayConverter;
+import org.sarge.jove.model.IndexedMesh;
 
 /**
  * Loader for an OBJ model.
  * @see <a href="https://en.wikipedia.org/wiki/Wavefront_.obj_file">OBJ file format</a>
  * @author Sarge
  */
-public class ObjectModelLoader extends TextLoader implements ResourceLoader<Reader, List<Mesh>> {
+public class ObjectModelLoader {
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private final ObjectModel model = new ObjectModel();
-	private Consumer<String> handler = line -> { /* Ignored */ };
+	private Consumer<String> handler = _ -> { /* Ignored */ };
 
 	/**
 	 * Constructor.
@@ -35,17 +33,14 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * Registers default command parsers.
 	 */
 	private void init() {
-		add("v",  new VertexComponentParser<>(new FloatArrayConverter<>(Point.SIZE, Point::new), ObjectModel::positions));
-		add("vt", new VertexComponentParser<>(new FloatArrayConverter<>(2, ObjectModelLoader::flip), ObjectModel::coordinates));
-		add("vn", new VertexComponentParser<>(new FloatArrayConverter<>(Normal.SIZE, ObjectModelLoader::normal), ObjectModel::normals));
-		add("f", new FaceParser());
-		add("o", Parser.GROUP);
-		add("g", Parser.GROUP);
+		final var group = new GroupParser(model);
+		add("o", group);
+		add("g", group);
 		add("s", Parser.IGNORE);
-	}
-
-	private static Normal normal(float[] array) {
-		return new Normal(new Vector(array));
+		add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, model.positions()));
+		add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, model.coordinates()));
+		add("vn", new VertexComponentParser<>(Normal.SIZE, ObjectModelLoader::normal, model.normals()));
+		add("f", new FaceParser(model));
 	}
 
 	/**
@@ -63,28 +58,65 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * Vertically flips a texture coordinate.
 	 */
 	private static Coordinate2D flip(float[] array) {
-		assert array.length == 2;
 		return new Coordinate2D(array[0], -array[1]);
 	}
 
 	/**
+	 * Array constructor adapter for a normal.
+	 */
+	private static Normal normal(float[] array) {
+		return new Normal(new Vector(array));
+	}
+
+	/**
 	 * Sets the callback handler for unknown OBJ commands.
-	 * The default handler silently ignores unknown commands.
+	 * By default unknown commands are silently ignored.
 	 * @param handler Unknown command handler
 	 */
 	public void setUnknownCommandHandler(Consumer<String> handler) {
 		this.handler = requireNonNull(handler);
 	}
 
-	@Override
-	public Reader map(InputStream in) throws IOException {
-		return new InputStreamReader(in);
+	// TODO - Path.of(ClassLoader.getSystemResource(resourceName).toURI());
+
+	/**
+	 * Loads an OBJ model from the given source.
+	 * @param input Input
+	 * @return OBJ model(s)
+	 * @throws IOException if the model cannot be loaded
+	 */
+	public List<IndexedMesh> load(Reader input) throws IOException {
+		// Open file
+		final var reader = new LineNumberReader(input);
+
+		// Parse commands
+		try(reader) {
+			reader
+    				.lines()
+    				.map(ObjectModelLoader::clean)
+    				.map(String::trim)
+    				.filter(Predicate.not(String::isEmpty))
+    				.forEach(this::parse);
+		}
+		catch(RuntimeException e) {
+			throw new IOException(String.format("%s at %d", e.getMessage(), reader.getLineNumber()), e);
+		}
+
+		// Build model
+		return model.build();
 	}
 
-	@Override
-	public List<Mesh> load(Reader reader) throws IOException {
-		super.load(reader, this::parse);
-		return model.models();
+	/**
+	 * Removes comments.
+	 */
+	private static String clean(String line) {
+		final int index = line.indexOf('#');
+		if(index > 0) {
+			return line.substring(0, index);
+		}
+		else {
+			return line;
+		}
 	}
 
 	/**
@@ -92,22 +124,18 @@ public class ObjectModelLoader extends TextLoader implements ResourceLoader<Read
 	 * @param line Line
 	 */
 	private void parse(String line) {
-		// Tokenize to command and arguments
-		final String[] parts = line.split(" ", 2); // StringUtils.split(line, null, 2);
+		try(final var scanner = new Scanner(line)) {
+			// Find parser for this command
+			final Parser parser = parsers.get(scanner.next());
 
-		// Lookup command parser
-		final Parser parser = parsers.get(parts[0]);
-		if(parser == null) {
-			handler.accept(line);
-			return;
-		}
+			// Notify unknown commands
+    		if(parser == null) {
+    			handler.accept(line);
+    			return;
+    		}
 
-		// Delegate
-		if(parts.length == 1) {
-			parser.parse(null, model);
-		}
-		else {
-			parser.parse(parts[1], model);
+    		// Delegate
+    		parser.parse(scanner);
 		}
 	}
 }

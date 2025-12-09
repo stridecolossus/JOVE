@@ -1,10 +1,9 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.sarge.jove.common.Handle;
@@ -17,50 +16,50 @@ import org.sarge.jove.common.Handle;
  * @author Sarge
  */
 class Block {
-	/**
-	 * Active memory filter.
-	 */
-	public static final Predicate<DeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
-
-	private final DeviceMemory mem;
+	private final DeviceMemory memory;
 	private final List<BlockDeviceMemory> allocations = new ArrayList<>();
 	private long next;
 	private BlockDeviceMemory mapped;
 
 	/**
 	 * Constructor.
-	 * @param mem Memory block
+	 * @param memory Memory block
 	 */
-	Block(DeviceMemory mem) {
-		this.mem = requireNonNull(mem);
+	Block(DeviceMemory memory) {
+		this.memory = requireNonNull(memory);
 	}
 
 	/**
 	 * @return Size of this block
 	 */
 	public long size() {
-		return mem.size();
+		return memory.size();
 	}
 
 	/**
 	 * @return Free memory in this block
 	 */
-	long free() {
-		final long total = allocations.stream().filter(ALIVE).mapToLong(DeviceMemory::size).sum();
+	public long free() {
+		final long total = allocations
+				.stream()
+				.filter(DeviceMemory.ALIVE)
+				.mapToLong(DeviceMemory::size)
+				.sum();
+
 		return size() - total;
 	}
 
 	/**
 	 * @return Remaining free memory in this block
 	 */
-	long remaining() {
+	public long remaining() {
 		return size() - next;
 	}
 
 	/**
 	 * @return Allocated memory in this block
 	 */
-	Stream<BlockDeviceMemory> allocations() {
+	public Stream<BlockDeviceMemory> allocations() {
 		return allocations.stream();
 	}
 
@@ -71,35 +70,39 @@ class Block {
 	 * @throws IllegalStateException if this block has been released
 	 * @throws IllegalArgumentException if the given size is larger than the available free space
 	 */
-	BlockDeviceMemory allocate(long size) {
+	public BlockDeviceMemory allocate(long size) {
 		// Validate
 		requireOneOrMore(size);
-		if(mem.isDestroyed()) throw new IllegalStateException("Memory block has been released: " + this);
-		if(next + size > mem.size()) throw new IllegalArgumentException(String.format("Allocation size exceeds free space: size=%d block=%s", size, this));
+		if(memory.isDestroyed()) {
+			throw new IllegalStateException("Memory block has been released: " + this);
+		}
+		if(next + size > memory.size()) {
+			throw new IllegalArgumentException(String.format("Allocation size exceeds free space: size=%d block=%s", size, this));
+		}
 
 		// Allocate from free space
-		final BlockDeviceMemory alloc = new BlockDeviceMemory(next, size);
-		allocations.add(alloc);
+		final var block = new BlockDeviceMemory(next, size);
+		allocations.add(block);
 
 		// Update free space pointer
 		next += size;
-		assert next <= mem.size();
+		assert next <= memory.size();
 
-		return alloc;
+		return block;
 	}
 
 	/**
 	 * Destroys this block.
 	 */
 	void destroy() {
-		mem.destroy();
+		memory.destroy();
 		allocations.clear();
 		mapped = null;
 	}
 
 	@Override
 	public int hashCode() {
-		return mem.hashCode();
+		return memory.hashCode();
 	}
 
 	@Override
@@ -113,7 +116,6 @@ class Block {
 	class BlockDeviceMemory implements DeviceMemory {
 		private final long offset;
 		private long size;
-
 		private boolean destroyed;
 
 		/**
@@ -124,17 +126,17 @@ class Block {
 		private BlockDeviceMemory(long offset, long size) {
 			this.offset = offset;
 			this.size = size;
-			assert offset + size <= mem.size();
+			assert offset + size <= memory.size();
 		}
 
 		@Override
 		public Handle handle() {
-			return mem.handle();
+			return memory.handle();
 		}
 
 		@Override
 		public MemoryType type() {
-			return mem.type();
+			return memory.type();
 		}
 
 		@Override
@@ -145,7 +147,7 @@ class Block {
 		@Override
 		public Optional<Region> region() {
 			if(mapped == this) {
-				return mem.region();
+				return memory.region();
 			}
 			else {
 				return Optional.empty();
@@ -155,21 +157,27 @@ class Block {
 		@Override
 		public Region map(long offset, long size) {
 			checkAlive();
-			mem.region().ifPresent(Region::unmap);
+			memory.region().ifPresent(Region::unmap);
 			mapped = this;
-			return mem.map(offset, size);
+			return memory.map(offset, size);
 		}
 
 		/**
-		 * Reallocated this device memory.
+		 * Reallocates this device memory.
 		 * @param size New size
 		 * @return Reallocated memory
 		 */
 		BlockDeviceMemory reallocate(long size) {
 			requireOneOrMore(size);
-			if(mem.isDestroyed()) throw new IllegalStateException("Block has been destroyed: " + this);
-			if(!destroyed) throw new IllegalStateException("Block allocation canot be reallocated: " + this);
-			if(size > this.size) throw new IllegalArgumentException("Reallocation size is larger than this memory: " + this);
+			if(memory.isDestroyed()) {
+				throw new IllegalStateException("Block has been destroyed: " + this);
+			}
+			if(!destroyed) {
+				throw new IllegalStateException("Block allocation canot be reallocated: " + this);
+			}
+			if(size > this.size) {
+				throw new IllegalArgumentException("Reallocation size is larger than this memory: " + this);
+			}
 
 			// TODO - essentially orphans unused memory! => remove or resize this memory, and add new instance for remainder
 			this.size = size;
@@ -180,26 +188,28 @@ class Block {
 
 		@Override
 		public boolean isDestroyed() {
-			return destroyed || mem.isDestroyed();
+			return destroyed || memory.isDestroyed();
 		}
 
 		@Override
 		public void destroy() {
 			checkAlive();
 			if(mapped == this) {
-				mem.region().get().unmap();
+				memory.region().get().unmap();
 				mapped = null;
 			}
 			destroyed = true;
 		}
 
 		private void checkAlive() {
-			if(isDestroyed()) throw new IllegalStateException("Device memory has been destroyed: " + this);
+			if(isDestroyed()) {
+				throw new IllegalStateException("Device memory has been destroyed: " + this);
+			}
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(mem, offset, size);
+			return Objects.hash(memory, offset, size);
 		}
 
 		@Override

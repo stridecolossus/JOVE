@@ -2,6 +2,8 @@ package org.sarge.jove.scene.volume;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
+
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.Intersection;
 import org.sarge.jove.util.MathsUtility;
@@ -81,7 +83,13 @@ public class Capsule implements Volume {
 	}
 
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
+	public List<Intersection> intersections(Ray ray) {
+		// TODO
+		return null;
+	}
+
+	@Override
+	public Normal normal(Point intersection) {
 		// TODO
 		return null;
 	}

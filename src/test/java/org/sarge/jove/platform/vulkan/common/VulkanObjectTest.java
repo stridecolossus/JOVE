@@ -1,73 +1,57 @@
 package org.sarge.jove.platform.vulkan.common;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.common.VulkanObject.Destructor;
 import org.sarge.jove.platform.vulkan.core.*;
 
 public class VulkanObjectTest {
-	private VulkanObject obj;
-	private DeviceContext dev;
-	private Destructor<VulkanObject> destructor;
-	private Handle handle;
-	private boolean released;
 
-	@SuppressWarnings("unchecked")
+	private static class MockVulkanObject extends VulkanObject {
+		public boolean released;
+
+		MockVulkanObject() {
+			super(new Handle(2), new MockLogicalDevice());
+		}
+
+		@Override
+		protected Destructor<?> destructor() {
+			return new Destructor<>() {
+				@Override
+				public void destroy(LogicalDevice device, VulkanObject object, Handle allocator) {
+					final MockVulkanObject instance = MockVulkanObject.this;
+					assertEquals(instance.device(), device);
+					assertEquals(instance, object);
+					assertEquals(null, allocator);
+				}
+			};
+		}
+
+		@Override
+		protected void release() {
+			released = true;
+		}
+	}
+
+	private MockVulkanObject obj;
+
 	@BeforeEach
 	void before() {
-		// Create object handle
-		handle = new Handle(1);
-
-		// Create context
-		dev = mock(LogicalDevice.class);
-
-		// Create destructor
-		destructor = mock(Destructor.class);
-		released = false;
-
-		// Create object
-		obj = new VulkanObject(handle, dev) {
-			@Override
-			protected Destructor<VulkanObject> destructor(VulkanLibrary lib) {
-				return destructor;
-			}
-
-			@Override
-			protected void release() {
-				assertFalse(released);
-				released = true;
-			}
-		};
+		obj = new MockVulkanObject();
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(handle, obj.handle());
-		assertEquals(dev, obj.device());
-		assertEquals(destructor, obj.destructor(null));
+		assertEquals(new Handle(2), obj.handle());
 		assertEquals(false, obj.isDestroyed());
+		assertEquals(false, obj.released);
 	}
 
 	@Test
 	void destroy() {
 		obj.destroy();
 		assertEquals(true, obj.isDestroyed());
-		verify(destructor).destroy(dev, obj, null);
-		assertTrue(released);
-	}
-
-	@Test
-	void hash() {
-		assertEquals(1, obj.hashCode());
-	}
-
-	@Test
-	void equals() {
-		assertEquals(true, obj.equals(obj));
-		assertEquals(false, obj.equals(null));
-		assertEquals(false, obj.equals(mock(VulkanObject.class)));
+		assertEquals(true, obj.released);
 	}
 }

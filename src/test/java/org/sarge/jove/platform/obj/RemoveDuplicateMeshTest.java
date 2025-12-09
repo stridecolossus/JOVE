@@ -3,34 +3,32 @@ package org.sarge.jove.platform.obj;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.CompoundLayout;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.*;
+import org.sarge.jove.geometry.*;
+import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Vertex;
 
 class RemoveDuplicateMeshTest {
-	private RemoveDuplicateMeshBuilder builder;
+	private RemoveDuplicateMesh mesh;
 
 	@BeforeEach
 	void before() {
-		builder = new RemoveDuplicateMeshBuilder(new CompoundLayout(Point.LAYOUT));
+		mesh = new RemoveDuplicateMesh();
 	}
 
 	@Test
 	void build() {
 		// Create some vertices
-		final Vertex vertex = new Vertex(Point.ORIGIN);
-		final Vertex other = new Vertex(new Point(1, 2, 3));
+		final Vertex vertex = new Vertex(Point.ORIGIN, Axis.X, Coordinate2D.BOTTOM_LEFT);
+		final Vertex other = new Vertex(new Point(1, 2, 3), Axis.Y, Coordinate2D.TOP_RIGHT);
 
 		// Build an indexed mesh that re-uses some vertices
-		builder
-				.add(vertex)
-				.add(other)
-				.add(vertex);
+		mesh.add(vertex);
+		mesh.add(other);
+		mesh.add(vertex);
 
 		// Verify the de-duplicated model
-		final Mesh mesh = builder.mesh();
 		assertEquals(3, mesh.count());
-		assertEquals(2 * 3 * Float.BYTES, mesh.vertices().length());
-		assertEquals(3 * Short.BYTES, mesh.index().get().length());
+		assertEquals(2 * (3 + 3 + 2) * 4, mesh.vertices().length());
+		assertEquals(3 * 4, mesh.index().length());
 	}
 }

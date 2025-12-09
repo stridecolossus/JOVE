@@ -1,7 +1,7 @@
 package org.sarge.jove.scene.particle;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import org.sarge.jove.geometry.Vector;
 

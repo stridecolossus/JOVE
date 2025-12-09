@@ -1,106 +1,55 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DescriptorResource;
 import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 
 /**
- * A <i>resource buffer</i> wraps a Vulkan buffer as a descriptor resource, e.g. a {@link VkBufferUsageFlag#UNIFORM_BUFFER}.
+ * A <i>resource buffer</i> is an adapter for a buffer used as a descriptor resource, e.g. a {@link VkBufferUsageFlag#UNIFORM_BUFFER}.
  * @author Sarge
  */
-public final class ResourceBuffer extends VulkanBuffer implements DescriptorResource {
-	private final VkDescriptorType type;
-	private final long offset;
-
+public record ResourceBuffer(VkDescriptorType type, long offset, VulkanBuffer buffer) implements DescriptorSet.Resource {
 	/**
 	 * Constructor.
 	 * @param buffer 		Underlying buffer
 	 * @param type			Descriptor type
 	 * @param offset		Buffer offset
-	 * @throws IllegalStateException if {@link #type} is not supported by this buffer
-	 * @throws IllegalStateException if this resource is too large for the hardware
-	 * @throws IllegalArgumentException if the {@link #offset} exceeds the {@link #length()} of this buffer
-	 */
-	public ResourceBuffer(VulkanBuffer buffer, VkDescriptorType type, long offset) {
-		super(buffer);
-		this.type = requireNonNull(type);
-		this.offset = requireZeroOrMore(offset);
-		require(map(type));
-		checkOffset(offset);
-		validate();
-	}
-
-	/**
-	 * Maps the descriptor type to the corresponding buffer usage.
-	 * @param type Descriptor type
-	 * @return Required buffer usage flag
-	 */
-	private static VkBufferUsageFlag map(VkDescriptorType type) {
-		return switch(type) {
-			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> VkBufferUsageFlag.UNIFORM_BUFFER;
-			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> VkBufferUsageFlag.STORAGE_BUFFER;
-			// TODO - other buffers, e.g. texel
-			default -> throw new IllegalArgumentException("Invalid descriptor type: " + type);
-		};
-	}
-
-	/**
+	 * @throws IllegalArgumentException if the {@link #offset} exceeds the length of the {@link #buffer}
+	 * @throws IllegalStateException if {@link #type} is not supported
 	 * @throws IllegalStateException if this resource is too large for the hardware
 	 */
-	private void validate() {
-		// Determine max buffer length
-		final var limits = this.device().limits();
-		final int max = switch(type) {
-			case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> limits.maxUniformBufferRange;
-			case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> limits.maxStorageBufferRange;
-			default -> 0;
-		};
+	public ResourceBuffer {
+		requireNonNull(type);
+		requireZeroOrMore(offset);
+		buffer.checkOffset(offset);
+		validate(buffer, type);
+	}
 
-		// Ignore if none
-		if(max == 0) {
-			return;
-		}
+	private static void validate(VulkanBuffer buffer, VkDescriptorType type) {
+		// Check buffer
+		final VkBufferUsageFlags usage = switch(type) {
+    		case UNIFORM_BUFFER, UNIFORM_BUFFER_DYNAMIC -> VkBufferUsageFlags.UNIFORM_BUFFER;
+    		case STORAGE_BUFFER, STORAGE_BUFFER_DYNAMIC -> VkBufferUsageFlags.STORAGE_BUFFER;
+    		// TODO - other buffers, e.g. texel
+    		default -> throw new IllegalArgumentException("Unsupported descriptor type: " + type);
+    	};
+		buffer.require(usage);
 
-		// Validate buffer size
-		final long len = this.length();
-		if(len > max) {
-			throw new IllegalStateException("Buffer too large: length=%d limit=%d".formatted(len, max));
+		// Check length
+		final int max = VulkanBuffer.maximum(usage, buffer.device().limits());
+		if(buffer.length() > max) {
+			throw new IllegalStateException("Buffer too large: limit=%d buffer=%s".formatted(max, buffer));
 		}
 	}
 
 	@Override
-	public VkDescriptorType type() {
-		return type;
-	}
-
-	@Override
-	public VkDescriptorBufferInfo build() {
+	public VkDescriptorBufferInfo descriptor() {
 		final var info = new VkDescriptorBufferInfo();
-		info.buffer = handle();
+		info.buffer = buffer.handle();
 		info.offset = offset;
-		info.range = length();					// TODO - maxUniformBufferRange, needs to be a separate parameter otherwise offset MUST be zero!
+		info.range = buffer.length();
 		return info;
-	}
-
-	/**
-	 * Offsets this resource buffer.
-	 * @param offset Buffer offset
-	 * @return Offset buffer
-	 */
-	public ResourceBuffer offset(long offset) {
-		return new ResourceBuffer(this, type, this.offset + offset);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof ResourceBuffer that) &&
-				(this.type == that.type()) &&
-				(this.offset == that.offset) &&
-				super.equals(obj);
 	}
 }

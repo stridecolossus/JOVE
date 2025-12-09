@@ -1,23 +1,22 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireZeroOrMore;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.*;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.io.ImageData;
-import org.sarge.jove.io.ImageData.Level;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
-import org.sarge.jove.util.StructureCollector;
+import org.sarge.jove.util.ImageData;
+import org.sarge.jove.util.ImageData.Level;
 
 /**
  * An <i>image transfer command</i> is used to copy an image to/from a Vulkan buffer.
  * @author Sarge
  */
-public final class ImageTransferCommand implements Command {
+public class ImageTransferCommand implements Command {
 	private final Image image;
 	private final VulkanBuffer buffer;
 	private final boolean write;
@@ -44,7 +43,7 @@ public final class ImageTransferCommand implements Command {
 	}
 
 	private void validateBuffer() {
-		buffer.require(write ? VkBufferUsageFlag.TRANSFER_SRC : VkBufferUsageFlag.TRANSFER_DST);
+		buffer.require(write ? VkBufferUsageFlags.TRANSFER_SRC : VkBufferUsageFlags.TRANSFER_DST);
 	}
 
 	private void validateLayout() {
@@ -54,22 +53,25 @@ public final class ImageTransferCommand implements Command {
 			case TRANSFER_SRC_OPTIMAL -> !write;
 			default -> false;
 		};
-		if(!valid) throw new IllegalStateException("Invalid image layout for copy operation: write=%s layout=%s".formatted(write, layout));
+		if(!valid) {
+			throw new IllegalStateException("Invalid image layout for copy operation: write=%s layout=%s".formatted(write, layout));
+		}
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, Command.Buffer cmd) {
+	public void execute(Buffer commandBuffer) {
+		final Image.Library library = buffer.device().library();
 		if(write) {
-			lib.vkCmdCopyBufferToImage(cmd, buffer, image, layout, regions.length, regions);
+			library.vkCmdCopyBufferToImage(commandBuffer, buffer, image, layout, regions.length, regions);
 		}
 		else {
-			lib.vkCmdCopyImageToBuffer(cmd, image, layout, buffer, regions.length, regions);
+			library.vkCmdCopyImageToBuffer(commandBuffer, image, layout, buffer, regions.length, regions);
 		}
 	}
 
 	/**
 	 * Inverts the direction of this command.
-	 * @return Inverse copy command
+	 * @return Inverse transfer command
 	 * @throws IllegalStateException if the buffer is not valid for this transfer operation
 	 */
 	public ImageTransferCommand invert() {
@@ -79,7 +81,7 @@ public final class ImageTransferCommand implements Command {
 	/**
 	 * A <i>copy region</i> specifies a portion of the image to be copied.
 	 */
-	public record CopyRegion(long offset, Dimensions row, SubResource subresource, Extents imageOffset, Extents extents) {
+	public record CopyRegion(long offset, Dimensions row, Subresource subresource, Extents imageOffset, Extents extents) {
 		/**
 		 * Creates a copy region for the whole of the given image.
 		 * @param descriptor Image descriptor
@@ -121,20 +123,22 @@ public final class ImageTransferCommand implements Command {
 				return true;
 			}
 			else {
-				return row.compareTo(size) >= 0;
+				return row.contains(size);
 			}
 		}
 
 		/**
 		 * Populates the copy descriptor.
 		 */
-		void populate(VkBufferImageCopy copy) {
+		VkBufferImageCopy populate() {
+			final var copy = new VkBufferImageCopy();
 			copy.bufferOffset = offset;
 			copy.bufferRowLength = row.width();
 			copy.bufferImageHeight = row.height();
-			copy.imageSubresource = SubResource.toLayers(subresource);
+			copy.imageSubresource = Subresource.layers(subresource);
 			copy.imageOffset = imageOffset.toOffset();
 			copy.imageExtent = extents.toExtent();
+			return copy;
 		}
 
 		/**
@@ -144,7 +148,7 @@ public final class ImageTransferCommand implements Command {
 			private long offset;
 			private int length;
 			private int height;
-			private SubResource subresource;
+			private Subresource subresource;
 			private Extents imageOffsets = Extents.ZERO;
 			private Extents extents;
 
@@ -153,7 +157,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param offset Buffer offset (bytes)
 			 */
 			public Builder offset(long offset) {
-				this.offset = requireZeroOrMore(offset);
+				this.offset = offset;
 				return this;
 			}
 
@@ -162,7 +166,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param length Row length (texels)
 			 */
 			public Builder length(int length) {
-				this.length = requireZeroOrMore(length);
+				this.length = length;
 				return this;
 			}
 
@@ -171,17 +175,17 @@ public final class ImageTransferCommand implements Command {
 			 * @param height Image height (texels)
 			 */
 			public Builder height(int height) {
-				this.height = requireZeroOrMore(height);
+				this.height = height;
 				return this;
 			}
 
 			/**
-			 * Sets the image offset (default is no offset).
+			 * Sets the image offset.
 			 * @param imageOffset Image offsets
 			 * @throws IndexOutOfBoundsException if the offset array does not contain three values
 			 */
 			public Builder imageOffsets(Extents imageOffsets) {
-				this.imageOffsets = requireNonNull(imageOffsets);
+				this.imageOffsets = imageOffsets;
 				return this;
 			}
 
@@ -190,7 +194,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param extents Image extents
 			 */
 			public Builder extents(Extents extents) {
-				this.extents = requireNonNull(extents);
+				this.extents = extents;
 				return this;
 			}
 
@@ -199,6 +203,7 @@ public final class ImageTransferCommand implements Command {
 			 * @param rect Copy rectangle
 			 */
 			public Builder region(Rectangle rect) {
+				// TODO - should extents also compose offsets?
 				imageOffsets(new Extents(new Dimensions(rect.x(), rect.y())));
 				extents(new Extents(rect.dimensions()));
 				return this;
@@ -208,8 +213,8 @@ public final class ImageTransferCommand implements Command {
 			 * Sets the sub-resource for this copy command.
 			 * @param subresource Sub-resource
 			 */
-			public Builder subresource(SubResource subresource) {
-				this.subresource = requireNonNull(subresource);
+			public Builder subresource(Subresource subresource) {
+				this.subresource = subresource;
 				return this;
 			}
 
@@ -238,7 +243,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param buffer Buffer
 		 */
 		public Builder buffer(VulkanBuffer buffer) {
-			this.buffer = requireNonNull(buffer);
+			this.buffer = buffer;
 			return this;
 		}
 
@@ -247,7 +252,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param image Image
 		 */
 		public Builder image(Image image) {
-			this.image = requireNonNull(image);
+			this.image = image;
 			return this;
 		}
 
@@ -265,7 +270,7 @@ public final class ImageTransferCommand implements Command {
 		 * @param layout Image layout
 		 */
 		public Builder layout(VkImageLayout layout) {
-			this.layout = requireNonNull(layout);
+			this.layout = layout;
 			return this;
 		}
 
@@ -274,12 +279,13 @@ public final class ImageTransferCommand implements Command {
 		 * @param region Copy region
 		 */
 		public Builder region(CopyRegion region) {
-			regions.add(requireNonNull(region));
+			regions.add(region);
 			return this;
 		}
 
 		/**
-		 * Helper - Adds copy regions for <b>all</b> layers and MIP levels of the given image.
+		 * Helper.
+		 * Adds copy regions for <b>all</b> layers and MIP levels of the given image.
 		 * @param image Image
 		 * @throws NullPointerException if the image texture has not been populated
 		 */
@@ -294,9 +300,10 @@ public final class ImageTransferCommand implements Command {
 				// Load layers for this MIP level
 				for(int layer = 0; layer < count; ++layer) {
 					// Build sub-resource
-					final SubResource res = new SubResource.Builder(descriptor)
-							.baseArrayLayer(layer)
+					final Subresource res = new Subresource.Builder()
+							.copy(descriptor)
 							.mipLevel(level)
+							.baseArrayLayer(layer)
 							.build();
 
 					// Determine layer offset within this level
@@ -319,9 +326,9 @@ public final class ImageTransferCommand implements Command {
 
 		/**
 		 * Constructs this copy command.
-		 * If no regions are specified the resultant command copies the <b>whole</b> of the image.
+		 * If no copy regions have been specified this command copies the entire image.
 		 * @return New copy command
-		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated, or if no copy regions have been specified
+		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated
 		 * @throws IllegalStateException if the buffer or the image layout are not valid for this transfer operation
 		 */
 		public ImageTransferCommand build() {
@@ -329,10 +336,15 @@ public final class ImageTransferCommand implements Command {
 			requireNonNull(image);
 			requireNonNull(buffer);
 			requireNonNull(layout);
-			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
+			if(regions.isEmpty()) {
+				regions.add(CopyRegion.of(image.descriptor()));
+			}
 
 			// Populate copy regions
-			final VkBufferImageCopy[] array = StructureCollector.array(regions, new VkBufferImageCopy(), CopyRegion::populate);
+			final VkBufferImageCopy[] array = regions
+					.stream()
+					.map(CopyRegion::populate)
+					.toArray(VkBufferImageCopy[]::new);
 
 			// Create copy command
 			return new ImageTransferCommand(image, buffer, write, array, layout);

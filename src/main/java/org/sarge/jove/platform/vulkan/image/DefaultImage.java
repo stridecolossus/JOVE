@@ -1,38 +1,37 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.memory.*;
-import org.sarge.jove.util.*;
-
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>default image</i> is a Vulkan image or texture managed by the application.
  * @author Sarge
  */
-public final class DefaultImage extends VulkanObject implements Image {
+public class DefaultImage extends VulkanObject implements Image {
 	private final Descriptor descriptor;
-	private final DeviceMemory mem;
+	private final DeviceMemory memory;
 
 	/**
 	 * Constructor.
-	 * @param handle		Handle
-	 * @param dev			Logical device
-	 * @param descriptor	Descriptor for this image
-	 * @param mem			Device memory
+	 * @param handle			Handle
+	 * @param device			Logical device
+	 * @param descriptor		Descriptor for this image
+	 * @param memory			Device memory
 	 */
-	DefaultImage(Handle handle, DeviceContext dev, Descriptor descriptor, DeviceMemory mem) {
-		super(handle, dev);
+	DefaultImage(Handle handle, LogicalDevice device, Descriptor descriptor, DeviceMemory memory) {
+		super(handle, device);
 		this.descriptor = requireNonNull(descriptor);
-		this.mem = requireNonNull(mem);
+		this.memory = requireNonNull(memory);
 	}
 
 	@Override
@@ -44,18 +43,19 @@ public final class DefaultImage extends VulkanObject implements Image {
 	 * @return Device memory for this image
 	 */
 	public DeviceMemory memory() {
-		return mem;
+		return memory;
 	}
 
 	@Override
-	protected Destructor<DefaultImage> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyImage;
+	protected Destructor<DefaultImage> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroyImage;
 	}
 
 	@Override
 	protected void release() {
-		if(!mem.isDestroyed()) {
-			mem.destroy();
+		if(!memory.isDestroyed()) {
+			memory.destroy();
 		}
 	}
 
@@ -63,10 +63,12 @@ public final class DefaultImage extends VulkanObject implements Image {
 	 * Builder for a default image.
 	 */
 	public static class Builder {
+		private static final ReverseMapping<VkSampleCountFlags> SAMPLES = ReverseMapping.mapping(VkSampleCountFlags.class);
+
 		private Descriptor descriptor;
-		private MemoryProperties<VkImageUsageFlag> props;
-		private final Set<VkImageCreateFlag> flags = new HashSet<>();
-		private VkSampleCount samples = VkSampleCount.COUNT_1;
+		private MemoryProperties<VkImageUsageFlags> properties;
+		private final Set<VkImageCreateFlags> flags = new HashSet<>();
+		private VkSampleCountFlags samples = VkSampleCountFlags.COUNT_1;
 		private VkImageTiling tiling = VkImageTiling.OPTIMAL;
 		private VkImageLayout layout = VkImageLayout.UNDEFINED;
 
@@ -84,8 +86,8 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * Sets the memory properties of this image.
 		 * @param props Memory properties
 		 */
-		public Builder properties(MemoryProperties<VkImageUsageFlag> props) {
-			this.props = requireNonNull(props);
+		public Builder properties(MemoryProperties<VkImageUsageFlags> props) {
+			this.properties = requireNonNull(props);
 			return this;
 		}
 		// TODO - ctor
@@ -94,8 +96,9 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * Adds an image creation flag.
 		 * @param flag Image creation flag
 		 */
-		public Builder flag(VkImageCreateFlag flag) {
-			flags.add(requireNonNull(flag));
+		public Builder flag(VkImageCreateFlags flag) {
+			requireNonNull(flag);
+			flags.add(flag);
 			return this;
 		}
 
@@ -104,7 +107,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @see VkImageCreateFlag#CUBE_COMPATIBLE
 		 */
 		public Builder cubemap() {
-			return flag(VkImageCreateFlag.CUBE_COMPATIBLE);
+			return flag(VkImageCreateFlags.CUBE_COMPATIBLE);
 		}
 
 		/**
@@ -113,7 +116,7 @@ public final class DefaultImage extends VulkanObject implements Image {
 		 * @throws IllegalArgumentException if {@link #samples} is not a valid {@link VkSampleCount}
 		 */
 		public Builder samples(int samples) {
-			this.samples = IntEnum.reverse(VkSampleCount.class).map(samples);
+			this.samples = SAMPLES.map(samples);
 			return this;
 		}
 
@@ -136,56 +139,63 @@ public final class DefaultImage extends VulkanObject implements Image {
 				case UNDEFINED, PREINITIALIZED -> true;
 				default -> false;
 			};
-			if(!valid) throw new IllegalArgumentException("Invalid initial layout: " + layout);
+			if(!valid) {
+				throw new IllegalArgumentException("Invalid initial layout: " + layout);
+			}
 			this.layout = requireNonNull(layout);
 			return this;
 		}
 
 		/**
 		 * Constructs this image.
-		 * @param dev Logical device
+		 * @param device Logical device
 		 * @return New image
-		 * @see DefaultImage#DefaultImage(Pointer, DeviceContext, Descriptor, DeviceMemory)
 		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */
-		public DefaultImage build(DeviceContext dev, Allocator allocator) {
+		public DefaultImage build(Allocator allocator) {
 			// Validate
-			if(descriptor == null) throw new IllegalArgumentException("No image descriptor specified");
-			if(props == null) throw new IllegalArgumentException("No memory properties specified");
+			if(descriptor == null) {
+				throw new IllegalArgumentException("No image descriptor specified");
+			}
+			if(properties == null) {
+				throw new IllegalArgumentException("No memory properties specified");
+			}
 
 			// Populate image structure
 			final var info = new VkImageCreateInfo();
-			info.flags = new BitMask<>(flags);
+			info.sType = VkStructureType.IMAGE_CREATE_INFO;
+			info.flags = new EnumMask<>(flags);
 			info.imageType = descriptor.type();
 			info.format = descriptor.format();
 			info.extent = descriptor.extents().toExtent();
 			info.mipLevels = descriptor.levelCount();
 			info.arrayLayers = descriptor.layerCount();
-			info.samples = samples;
+			info.samples = new EnumMask<>(samples);
 			info.tiling = tiling;
 			info.initialLayout = layout;
-			info.usage = new BitMask<>(props.usage());
-			info.sharingMode = props.mode();
+			info.usage = new EnumMask<>(properties.usage());
+			info.sharingMode = properties.mode();
 			// TODO - queueFamilyIndexCount, pQueueFamilyIndices
 
 			// Allocate image
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateImage(dev, info, null, ref));
+			final LogicalDevice device = allocator.device();
+			final Library library = device.library();
+			final Pointer pointer = new Pointer();
+			library.vkCreateImage(device, info, null, pointer);
 
 			// Retrieve image memory requirements
-			final Handle handle = new Handle(ref);
-			final var reqs = new VkMemoryRequirements();
-			lib.vkGetImageMemoryRequirements(dev, handle, reqs);
+			final Handle handle = pointer.handle();
+			final var requirements = new VkMemoryRequirements();
+			library.vkGetImageMemoryRequirements(device, handle, requirements);
 
 			// Allocate image memory
-			final DeviceMemory mem = allocator.allocate(reqs, props);
+			final DeviceMemory memory = allocator.allocate(requirements, properties);
 
 			// Bind memory to image
-			check(lib.vkBindImageMemory(dev, handle, mem, 0));
+			library.vkBindImageMemory(device, handle, memory, 0L);
 
 			// Create image
-			return new DefaultImage(handle, dev, descriptor, mem);
+			return new DefaultImage(handle, device, descriptor, memory);
 		}
 	}
 }

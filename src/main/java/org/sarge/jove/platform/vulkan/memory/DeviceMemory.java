@@ -1,21 +1,22 @@
 package org.sarge.jove.platform.vulkan.memory;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.VkMemoryProperty;
+import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
 
 /**
  * A <i>device memory</i> instance is an area of memory accessible to the hardware.
  * <p>
- * Memory that is {@link VkMemoryProperty#HOST_VISIBLE} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations by the application.
+ * Memory that is {@link VkMemoryPropertyFlags#HOST_VISIBLE} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations by the application.
  * <p>
  * Notes:
  * <ul>
  * <li>Only <b>one</b> active mapping is permitted on a given instance at any one time</li>
  * <li>Memory mappings can be <i>persistent</i>, i.e. it is not required to explicitly unmap memory after a read/write access</li>
  * <li>Memory can be assumed to be automatically unmapped when it is released</li>
- * <li>Buffers retrieved from a mapped region using {@link Region#buffer(long, long)} are invalidated if the region is unmapped or the memory destroyed</li>
+ * <li>A mapped region is invalidated if the region is unmapped or the memory has been destroyed</li>
  * </ul>
  * <p>
  * Usage:
@@ -40,6 +41,11 @@ import org.sarge.jove.platform.vulkan.VkMemoryProperty;
  * @author Sarge
  */
 public interface DeviceMemory extends NativeObject, TransientObject {
+	/**
+	 * Active memory filter.
+	 */
+	Predicate<DeviceMemory> ALIVE = Predicate.not(DeviceMemory::isDestroyed);
+
 	/**
 	 * @return Type of this memory
 	 */
@@ -66,11 +72,12 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	Region map(long offset, long size);
 
 	/**
-	 * Maps the whole of this device memory.
-	 * @return Mapped memory region
+	 * Maps this entire memory blocks.
+	 * @return Mapping memory
+	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
 	 * @see #map(long, long)
 	 */
 	default Region map() {
-		return map(0, size());
+		return map(0L, size());
 	}
 }

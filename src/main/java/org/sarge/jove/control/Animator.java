@@ -1,7 +1,7 @@
 package org.sarge.jove.control;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.time.Duration;
 
@@ -19,15 +19,19 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		 * Updates this animation.
 		 * @param pos Animation position 0..1
 		 */
-		void update(float pos);
+		void set(float pos);
 	}
 
+	// Configuration
 	private final Animation animation;
 	private final long duration;
+	private final float scale;
+
+	// State
 	private long time;
 	private float speed = 1;
 	private boolean repeat = true;
-	// TODO - interpolator
+	// TODO - interpolator?
 
 	/**
 	 * Constructor.
@@ -37,6 +41,7 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	public Animator(Animation animation, Duration duration) {
 		this.animation = requireNonNull(animation);
 		this.duration = requireOneOrMore(duration.toMillis());
+		this.scale = 1f / duration.toMillis();
 	}
 
 	/**
@@ -73,7 +78,9 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	 * @throws IllegalArgumentException if the speed is not positive
 	 */
 	public void speed(float speed) {
-		if(speed <= 0) throw new IllegalArgumentException("Speed must be positive");
+		if(speed <= 0) {
+			throw new IllegalArgumentException("Speed must be positive");
+		}
 		this.speed = speed;
 	}
 
@@ -93,29 +100,28 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	@Override
-	public void update(Frame frame) {
+	public void end(Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;
 		}
 
-		// Update animation time position
-		time += frame.elapsed().toMillis() * speed;
-
-		// Check for end of animation
-		if(time > duration) {
+		// Update animation time
+		final long end = frame.end().toEpochMilli();
+		if(end > duration) {
 			if(repeat) {
-				// Cycle animation
-				time = time % duration;
+				time = end % duration;
 			}
 			else {
-				// Stop animation
 				time = duration;
 				stop();
 			}
 		}
+		else {
+			time = end;
+		}
 
-		// Update animation
-		animation.update(time / (float) duration);
+		// Update animation position
+		animation.set(time * scale);
 	}
 }

@@ -14,18 +14,25 @@ public abstract class AbstractPlayable implements Playable {
 
 	@Override
 	public void play() {
-		if(playing) throw new IllegalStateException("Already playing: " + this);
+		if(playing) {
+			throw new IllegalStateException("Already playing: " + this);
+		}
 		playing = true;
 	}
 
 	@Override
 	public void pause() {
-		if(!playing) throw new IllegalStateException("Not playing: " + this);
+		if(!playing) {
+			throw new IllegalStateException("Not playing: " + this);
+		}
 		playing = false;
 	}
 
 	@Override
 	public void stop() {
+		if(!playing) {
+			throw new IllegalStateException("Not playing: " + this);
+		}
 		playing = false;
 	}
 }

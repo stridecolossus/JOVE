@@ -1,88 +1,92 @@
 package org.sarge.jove.platform.vulkan.image;
 
-import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.Image.*;
-import org.sarge.jove.util.StructureCollector;
-import static org.sarge.lib.Validation.*;
+import org.sarge.jove.platform.vulkan.core.Command;
+import org.sarge.jove.platform.vulkan.image.Image.Descriptor;
 
 /**
- * An <i>image copy command</i> is used to copy between images.
+ * An <i>image copy</i> command is used to copy between images.
  * @author Sarge
  */
-public final class ImageCopyCommand implements Command {
+public class ImageCopyCommand implements Command {
 	/**
 	 * Creates a copy command for the whole of the image.
-	 * @param src		Source
-	 * @param dest		Destination
+	 * @param source			Source
+	 * @param destination			Destination
+	 * @param library		Image library
 	 * @return Copy command
 	 */
-	public static ImageCopyCommand of(Image src, Image dest) {
-		final Descriptor descriptor = src.descriptor();
+	public static ImageCopyCommand of(Image source, Image destination, Image.Library library) {
+		final Descriptor descriptor = source.descriptor();
 		// TODO - check same extents?
 		final CopyRegion region = new CopyRegion(descriptor, Extents.ZERO, descriptor, Extents.ZERO, descriptor.extents());
-		return new ImageCopyCommand.Builder(src, dest).region(region).build();
+		return new ImageCopyCommand.Builder(source, destination).region(region).build(library);
 	}
 
-	private final Image src, dest;
+	private final Image source, destination;
 	private final VkImageLayout srcLayout, destLayout;
 	private final VkImageCopy[] regions;
+	private final Image.Library library;
 
 	/**
 	 * Constructor.
-	 * @param src			Source image
-	 * @param dest			Destination image
-	 * @param srcLayout		source layout
-	 * @param destLayout	Destination layout
-	 * @param regions		Copy regions
+	 * @param source			Source image
+	 * @param destination		Destination image
+	 * @param srcLayout			Source layout
+	 * @param destLayout		Destination layout
+	 * @param regions			Copy regions
+	 * @param library			Image library
 	 */
-	private ImageCopyCommand(Image src, Image dest, VkImageLayout srcLayout, VkImageLayout destLayout, VkImageCopy[] regions) {
-		this.src = requireNonNull(src);
-		this.dest = requireNonNull(dest);
+	private ImageCopyCommand(Image source, Image destination, VkImageLayout srcLayout, VkImageLayout destLayout, List<VkImageCopy> regions, Image.Library library) {
+		this.source = requireNonNull(source);
+		this.destination = requireNonNull(destination);
 		this.srcLayout = requireNonNull(srcLayout);
 		this.destLayout = requireNonNull(destLayout);
-		this.regions = regions.clone();
+		this.regions = regions.toArray(VkImageCopy[]::new);
+		this.library = requireNonNull(library);
 	}
 
 	@Override
-	public void record(VulkanLibrary lib, Buffer buffer) {
-		lib.vkCmdCopyImage(buffer, src, srcLayout, dest, destLayout, regions.length, regions);
+	public void execute(Buffer buffer) {
+		library.vkCmdCopyImage(buffer, source, srcLayout, destination, destLayout, regions.length, regions);
 	}
 
 	/**
 	 * Transient copy region.
 	 */
-	public record CopyRegion(SubResource src, Extents srcOffset, SubResource dest, Extents destOffset, Extents extents) {
+	public record CopyRegion(Subresource source, Extents srcOffset, Subresource destination, Extents destOffset, Extents extent) {
 		/**
 		 * Constructor.
-		 * @param src				Source sub-resource
+		 * @param source				Source sub-resource
 		 * @param srcOffset			Source offsets
-		 * @param dest				Destination sub-resource
+		 * @param destination		Destination subresource
 		 * @param destOffset		Destination offsets
-		 * @param extents			Copy extents
+		 * @param extent			Copy extent
 		 */
 		public CopyRegion {
-			requireNonNull(src);
+			requireNonNull(source);
 			requireNonNull(srcOffset);
-			requireNonNull(dest);
+			requireNonNull(destination);
 			requireNonNull(destOffset);
-			requireNonNull(extents);
+			requireNonNull(extent);
 		}
 
 		/**
-		 * Populates the copy region descriptor.
+		 * @return Copy region descriptor
 		 */
-		private void populate(VkImageCopy copy) {
-			copy.srcSubresource = SubResource.toLayers(src);
-			copy.dstSubresource = SubResource.toLayers(dest);
+		private VkImageCopy populate() {
+			final var copy = new VkImageCopy();
+			copy.srcSubresource = Subresource.layers(source);
 			copy.srcOffset = srcOffset.toOffset();
+			copy.dstSubresource = Subresource.layers(destination);
 			copy.dstOffset = destOffset.toOffset();
-			copy.extent = extents.toExtent();
+			copy.extent = extent.toExtent();
+			return copy;
 		}
 	}
 
@@ -90,20 +94,22 @@ public final class ImageCopyCommand implements Command {
 	 * Builder for an image copy command.
 	 */
 	public static class Builder {
-		private final Image src, dest;
+		private final Image source, destination;
 		private VkImageLayout srcLayout = TRANSFER_SRC_OPTIMAL;
 		private VkImageLayout destLayout = TRANSFER_DST_OPTIMAL;
 		private final List<CopyRegion> regions = new ArrayList<>();
 
 		/**
 		 * Constructor.
-		 * @param src		Source image
-		 * @param dest		Destination image
+		 * @param source			Source image
+		 * @param destination		Destination image
 		 */
-		public Builder(Image src, Image dest) {
-			if(src == dest) throw new IllegalArgumentException("Cannot copy to self");
-			this.src = requireNonNull(src);
-			this.dest = requireNonNull(dest);
+		public Builder(Image source, Image destination) {
+			if(source == destination) {
+				throw new IllegalArgumentException("Cannot copy to self");
+			}
+			this.source = requireNonNull(source);
+			this.destination = requireNonNull(destination);
 		}
 		// TODO - check format features of the images?
 
@@ -132,7 +138,9 @@ public final class ImageCopyCommand implements Command {
 				case GENERAL, SHARED_PRESENT_KHR -> true;
 				default -> layout == valid;
 			};
-			if(!ok) throw new IllegalArgumentException("Invalid image layout: " + layout);
+			if(!ok) {
+				throw new IllegalArgumentException("Invalid image layout: " + layout);
+			}
 		}
 
 		/**
@@ -146,13 +154,16 @@ public final class ImageCopyCommand implements Command {
 
 		/**
 		 * Constructs this copy command.
-		 * @return New copy command
+		 * @param library Image library
+		 * @return Copy command
 		 * @throws IllegalArgumentException if no copy regions have been configured
 		 */
-		public ImageCopyCommand build() {
-			if(regions.isEmpty()) throw new IllegalArgumentException("No copy regions specified");
-			final VkImageCopy[] array = StructureCollector.array(regions, new VkImageCopy(), CopyRegion::populate);
-			return new ImageCopyCommand(src, dest, srcLayout, destLayout, array);
+		public ImageCopyCommand build(Image.Library library) {
+			if(regions.isEmpty()) {
+				throw new IllegalArgumentException("No copy regions specified");
+			}
+			final List<VkImageCopy> array = regions.stream().map(CopyRegion::populate).toList();
+			return new ImageCopyCommand(source, destination, srcLayout, destLayout, array, library);
 		}
 	}
 }

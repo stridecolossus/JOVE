@@ -1,13 +1,12 @@
 package org.sarge.jove.geometry;
 
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.common.Layout.Component;
 
 /**
  * A <i>point</i> is a position in 3D space.
  * @author Sarge
  */
-public class Point extends Tuple implements Component {
+public class Point extends Tuple {
 	/**
 	 * Origin point.
 	 */
@@ -65,15 +64,7 @@ public class Point extends Tuple implements Component {
 	}
 
 	@Override
-	public Layout layout() {
-		return LAYOUT;
-	}
-
-	@Override
 	public boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Point that) &&
-				super.isEqual(that);
+		return (obj instanceof Point) && super.equals(obj);
 	}
 }

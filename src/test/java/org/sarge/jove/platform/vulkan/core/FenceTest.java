@@ -1,90 +1,120 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-import java.util.List;
+import java.lang.foreign.MemorySegment;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.NativeObject;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.util.VulkanException;
-import org.sarge.jove.util.BitMask;
+import org.sarge.jove.platform.vulkan.common.VulkanException;
+import org.sarge.jove.util.EnumMask;
 
-import com.sun.jna.Structure;
+class FenceTest {
+	static class MockFenceLibrary extends MockVulkanLibrary {
+		private boolean destroyed;
+		private boolean reset;
+		private boolean waiting;
+		private VkResult status;
 
-public class FenceTest {
+		@Override
+		public VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence) {
+			assertNotNull(device);
+			assertEquals(new EnumMask<>(VkFenceCreateFlags.SIGNALED), pCreateInfo.flags);
+			assertEquals(null, pAllocator);
+			pFence.set(MemorySegment.ofAddress(2));
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public void vkDestroyFence(LogicalDevice device, Fence fence, Handle pAllocator) {
+			assertNotNull(device);
+			assertNotNull(fence);
+			assertEquals(null, pAllocator);
+			destroyed = true;
+		}
+
+		@Override
+		public VkResult vkResetFences(LogicalDevice device, int fenceCount, Fence[] pFences) {
+			assertEquals(1, fenceCount);
+			assertEquals(1, pFences.length);
+			reset = true;
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public int vkGetFenceStatus(LogicalDevice device, Fence fence) {
+			assertNotNull(device);
+			assertNotNull(fence);
+			return status.value();
+		}
+
+		@Override
+		public VkResult vkWaitForFences(LogicalDevice device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout) {
+			assertEquals(1, fenceCount);
+			assertEquals(1, pFences.length);
+			assertEquals(true, waitAll);
+			assertEquals(Long.MAX_VALUE, timeout);
+			waiting = true;
+			return VkResult.VK_SUCCESS;
+		}
+	}
+
 	private Fence fence;
-	private DeviceContext dev;
-	private VulkanLibrary lib;
+	private LogicalDevice device;
+	private MockFenceLibrary library;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		lib = dev.library();
-		fence = Fence.create(dev, VkFenceCreateFlag.SIGNALED);
+		library = new MockFenceLibrary();
+		device = new MockLogicalDevice(library);
+		fence = new Fence(new Handle(2), device);
 	}
 
 	@Test
 	void create() {
-		final var expected = new VkFenceCreateInfo() {
-			@Override
-			public boolean equals(Object obj) {
-				return dataEquals((Structure) obj);
-			}
-		};
-		expected.flags = BitMask.of(VkFenceCreateFlag.SIGNALED);
-		verify(lib).vkCreateFence(dev, expected, null, dev.factory().pointer());
+		final Fence fence = Fence.create(device, VkFenceCreateFlags.SIGNALED);
+		assertEquals(new Handle(2), fence.handle());
 	}
 
-	@DisplayName("A signalled fence...")
 	@Nested
-	class Signalled {
-		@DisplayName("can test whether it is signalled")
-		@Test
-		void status() {
-			when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.SUCCESS);
-			assertEquals(true, fence.signalled());
-		}
+	class StatusTest {
+    	@Test
+    	void signalled() {
+    		library.status = VkResult.VK_SUCCESS;
+    		assertEquals(true, fence.signalled());
+    	}
 
-		@DisplayName("can be reset")
-		@Test
-		void reset() {
-			fence.reset();
-			verify(lib).vkResetFences(dev, 1, NativeObject.array(List.of(fence)));
-		}
+    	@Test
+    	void waiting() {
+    		library.status = VkResult.VK_NOT_READY;
+    		assertEquals(false, fence.signalled());
+    	}
+
+    	@Test
+    	void invalid() {
+    		library.status = VkResult.VK_ERROR_DEVICE_LOST;
+    		assertThrows(VulkanException.class, () -> fence.signalled());
+    	}
 	}
 
-	@DisplayName("An unsignalled fence...")
-	@Nested
-	class Unsignalled {
-		@DisplayName("can test whether it is signalled")
-		@Test
-		void signalled() {
-			when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.NOT_READY);
-			assertEquals(false, fence.signalled());
-		}
-
-		@DisplayName("can block until it becomes signalled")
-		@Test
-		void waitReady() {
-			fence.waitReady();
-			verify(lib).vkWaitForFences(dev, 1, NativeObject.array(List.of(fence)), true, Long.MAX_VALUE);
-		}
-	}
-
-	@DisplayName("An invalid fence cannot be tested for whether it is signalled")
 	@Test
-	void error() {
-		when(lib.vkGetFenceStatus(dev, fence)).thenReturn(VkResult.ERROR_DEVICE_LOST);
-		assertThrows(VulkanException.class, () -> fence.signalled());
+	void reset() {
+		fence.reset();
+		assertEquals(true, library.reset);
 	}
 
-	@DisplayName("A fence can be destroyed")
+	@Test
+	void waitReady() {
+		fence.waitReady();
+		assertEquals(true, library.waiting);
+	}
+
 	@Test
 	void destroy() {
 		fence.destroy();
-		verify(lib).vkDestroyFence(dev, fence, null);
+		assertEquals(true, fence.isDestroyed());
+		assertEquals(true, library.destroyed);
 	}
 }

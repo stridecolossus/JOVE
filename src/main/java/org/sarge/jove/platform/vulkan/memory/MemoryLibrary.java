@@ -1,10 +1,9 @@
 package org.sarge.jove.platform.vulkan.memory;
 
-import org.sarge.jove.platform.vulkan.VkMemoryAllocateInfo;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * Vulkan memory API.
@@ -16,10 +15,10 @@ public interface MemoryLibrary {
 	 * @param device			Logical device
 	 * @param pAllocateInfo		Memory descriptor
 	 * @param pAllocator		Allocator
-	 * @param pMemory			Returned memory
+	 * @param pMemory			Returned memory handle
 	 * @return Result
 	 */
-	int vkAllocateMemory(DeviceContext device, VkMemoryAllocateInfo pAllocateInfo, Pointer pAllocator, PointerByReference pMemory);
+	VkResult vkAllocateMemory(LogicalDevice device, VkMemoryAllocateInfo pAllocateInfo, Handle pAllocator, Pointer pMemory);
 
 	/**
 	 * Releases memory.
@@ -27,7 +26,7 @@ public interface MemoryLibrary {
 	 * @param memory			Memory
 	 * @param pAllocator		Allocator
 	 */
-	void vkFreeMemory(DeviceContext device, DeviceMemory memory, Pointer pAllocator);
+	void vkFreeMemory(LogicalDevice device, DeviceMemory memory, Handle pAllocator);
 
 	/**
 	 * Maps a region of memory.
@@ -39,12 +38,12 @@ public interface MemoryLibrary {
 	 * @param ppData			Returned pointer to the memory
 	 * @return Result
 	 */
-	int vkMapMemory(DeviceContext device, DeviceMemory memory, long offset, long size, int flags, PointerByReference ppData);
+	VkResult vkMapMemory(LogicalDevice device, DeviceMemory memory, long offset, long size, int flags, Pointer ppData);
 
 	/**
 	 * Unmaps a memory region.
 	 * @param device			Logical device
 	 * @param memory			Memory
 	 */
-	void vkUnmapMemory(DeviceContext device, DeviceMemory memory);
+	void vkUnmapMemory(LogicalDevice device, DeviceMemory memory);
 }

@@ -1,20 +1,18 @@
 package org.sarge.jove.platform.desktop;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.Button;
 
-public class KeyTableTest {
+class KeyTableTest {
 	private KeyTable table;
 
 	@BeforeEach
 	void before() {
-		table = KeyTable.INSTANCE;
-	}
-
-	@Test
-	void constructor() {
-		assertNotNull(table);
+		table = KeyTable.defaultKeyTable();
 	}
 
 	@Test
@@ -33,7 +31,13 @@ public class KeyTableTest {
 	}
 
 	@Test
-	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> table.code("COBBLERS"));
+	void zero() {
+		assertEquals(0, table.code("COBBLERS"));
+	}
+
+	@Test
+	void map() {
+		final Map<Integer, Button> buttons = table.map(Button::new);
+		assertEquals(new Button(256, "ESCAPE"), buttons.get(256));
 	}
 }

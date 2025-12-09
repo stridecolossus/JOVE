@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.render.Attachment.LoadStore;
+import org.sarge.jove.util.EnumMask;
 
 class AttachmentTest {
 	private static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
@@ -15,7 +16,7 @@ class AttachmentTest {
 	void before() {
 		attachment = new Attachment(
 				FORMAT,
-				VkSampleCount.COUNT_1,
+				VkSampleCountFlags.COUNT_1,
 				new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE),
 				new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE),
 				VkImageLayout.UNDEFINED,
@@ -30,10 +31,9 @@ class AttachmentTest {
 
 	@Test
 	void populate() {
-		final var descriptor = new VkAttachmentDescription();
-		attachment.populate(descriptor);
+		final var descriptor = attachment.populate();
 		assertEquals(FORMAT, descriptor.format);
-		assertEquals(VkSampleCount.COUNT_1, descriptor.samples);
+		assertEquals(new EnumMask<>(VkSampleCountFlags.COUNT_1), descriptor.samples);
 		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
 		assertEquals(VkAttachmentStoreOp.STORE, descriptor.storeOp);
 		assertEquals(VkAttachmentLoadOp.DONT_CARE, descriptor.stencilLoadOp);
@@ -54,7 +54,7 @@ class AttachmentTest {
 
 		@BeforeEach
 		void before() {
-			builder = new Attachment.Builder(FORMAT);
+			builder = new Attachment.Builder().format(FORMAT);
 		}
 
 		@Test
@@ -68,8 +68,8 @@ class AttachmentTest {
 		@DisplayName("The image format of an attachment cannot be undefined")
 		@Test
 		void undefined() {
-			assertThrows(NullPointerException.class, () -> new Attachment.Builder(null).build());
-			assertThrows(NullPointerException.class, () -> new Attachment.Builder(VkFormat.UNDEFINED).build());
+			assertThrows(NullPointerException.class, () -> new Attachment.Builder().build());
+			assertThrows(NullPointerException.class, () -> new Attachment.Builder().format(VkFormat.UNDEFINED).build());
 		}
 
 		@DisplayName("The final image layout of an attachment cannot be undefined")

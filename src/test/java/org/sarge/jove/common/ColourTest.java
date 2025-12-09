@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.ByteBuffer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.util.FloatSupport.FloatFunction;
-import org.sarge.jove.util.Interpolator;
 
 class ColourTest {
 	private Colour col;
@@ -28,8 +26,7 @@ class ColourTest {
 	@DisplayName("A colour has a 4-component layout")
 	@Test
 	void layout() {
-		assertEquals(Layout.floats(4), Colour.LAYOUT);
-		assertEquals(Colour.LAYOUT, col.layout());
+		assertEquals(new Layout(4, Layout.Type.NORMALIZED, false, Float.BYTES), Colour.LAYOUT);
 	}
 
 	@Nested
@@ -59,14 +56,14 @@ class ColourTest {
 		}
 	}
 
-	@DisplayName("A colour can be interpolated between two colours")
-	@Test
-	void interpolator() {
-		final FloatFunction<Colour> interpolator = Colour.interpolator(Colour.WHITE, Colour.BLACK, Interpolator.LINEAR);
-		assertNotNull(interpolator);
-		assertEquals(Colour.WHITE, interpolator.apply(0));
-		assertEquals(Colour.BLACK, interpolator.apply(1));
-	}
+//	@DisplayName("A colour can be interpolated between two colours")
+//	@Test
+//	void interpolator() {
+//		final FloatFunction<Colour> interpolator = Colour.interpolator(Colour.WHITE, Colour.BLACK, Interpolator.LINEAR);
+//		assertNotNull(interpolator);
+//		assertEquals(Colour.WHITE, interpolator.apply(0));
+//		assertEquals(Colour.BLACK, interpolator.apply(1));
+//	}
 
 	@DisplayName("A colour can be written to an NIO buffer")
 	@Test

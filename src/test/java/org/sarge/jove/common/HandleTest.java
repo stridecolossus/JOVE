@@ -1,58 +1,72 @@
 package org.sarge.jove.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.lang.foreign.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Handle.HandleTransformer;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
-
-public class HandleTest {
+class HandleTest {
 	private Handle handle;
-	private Pointer ptr;
+	private MemorySegment address;
 
 	@BeforeEach
 	void before() {
-		ptr = new Pointer(42);
-		handle = new Handle(ptr);
+		address = MemorySegment.ofAddress(2);
+		handle = new Handle(2);
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(ptr.hashCode(), handle.hashCode());
+	void address() {
+		assertEquals(address, handle.address());
 	}
 
 	@Test
-	void reference() {
-		final var ref = new PointerByReference(new Pointer(42));
-		assertEquals(handle, new Handle(ref));
+	void invalid() {
+		assertThrows(NullPointerException.class, () -> new Handle(MemorySegment.NULL));
 	}
 
 	@Test
 	void equals() {
-		assertEquals(true, handle.equals(handle));
-		assertEquals(true, handle.equals(new Handle(new Pointer(42))));
-		assertEquals(false, handle.equals(null));
-		assertEquals(false, handle.equals(new Handle(new Pointer(999))));
+		assertEquals(handle, handle);
+		assertEquals(handle, new Handle(2));
+		assertNotEquals(handle, null);
+		assertNotEquals(handle, new Handle(3));
 	}
 
 	@Nested
-	class ConverterTests {
-		@Test
-		void nativeType() {
-			assertEquals(Pointer.class, Handle.CONVERTER.nativeType());
+	class TransformerTest {
+		private HandleTransformer transformer;
+
+		@BeforeEach
+		void before() {
+			transformer = new HandleTransformer();
 		}
 
 		@Test
-		void toNative() {
-			assertEquals(ptr, Handle.CONVERTER.toNative(handle, null));
-			assertEquals(null, Handle.CONVERTER.toNative(null, null));
+    	void layout() {
+			assertEquals(ValueLayout.ADDRESS, transformer.layout());
 		}
 
 		@Test
-		void fromNative() {
-			assertEquals(handle, Handle.CONVERTER.fromNative(ptr, null));
-			assertEquals(null, Handle.CONVERTER.fromNative(null, null));
+    	void marshal() {
+    		assertEquals(address, transformer.marshal(handle, null));
+    	}
+
+		@Test
+		void empty() {
+			assertEquals(MemorySegment.NULL, transformer.empty());
 		}
-	}
+
+    	@Test
+    	void unmarshal() {
+    		assertEquals(handle, transformer.unmarshal().apply(address));
+    	}
+
+    	@Test
+    	void update() {
+    		assertThrows(UnsupportedOperationException.class, () -> transformer.update());
+    	}
+    }
 }

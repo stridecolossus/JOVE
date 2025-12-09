@@ -2,31 +2,22 @@ package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.common.Handle;
 
-public class MockFence implements Fence {
-	public boolean signalled;
+public class MockFence extends Fence {
+	public int reset;
+	public int wait;
 
-	@Override
-	public Handle handle() {
-		return new Handle(1);
-	}
-
-	@Override
-	public void waitReady() {
-		signalled = false;
+	public MockFence() {
+		final var device = new MockLogicalDevice();
+		super(new Handle(3), device);
 	}
 
 	@Override
 	public void reset() {
-		signalled = false;
+		++reset;
 	}
 
 	@Override
-	public boolean signalled() {
-		return signalled;
-	}
-
-	@Override
-	public void destroy() {
-		// Ignored
+	public void waitReady() {
+		++wait;
 	}
 }

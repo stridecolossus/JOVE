@@ -1,76 +1,65 @@
 package org.sarge.jove.platform.desktop;
 
-import static java.util.Objects.requireNonNull;
-
-import java.util.Set;
+import java.lang.foreign.MemorySegment;
+import java.util.Map;
 import java.util.function.*;
 
 import org.sarge.jove.control.Button;
-import org.sarge.jove.control.Button.Action;
-import org.sarge.jove.control.Event.*;
-import org.sarge.jove.platform.desktop.DesktopLibraryDevice.KeyListener;
+import org.sarge.jove.control.Button.*;
+import org.sarge.jove.platform.desktop.DeviceLibrary.KeyListener;
 
 /**
- * The <i>keyboard device</i> generates GLFW keyboard events.
+ * The <i>keyboard device</i> generates keyboard button events.
  * @author Sarge
  */
-public class KeyboardDevice implements Device {
-	private final Window window;
-	private final KeyboardSource keyboard = new KeyboardSource();
-	private final KeyTable table = KeyTable.INSTANCE;
+public class KeyboardDevice extends AbstractWindowDevice<ButtonEvent, KeyListener> {
+	private final Map<Integer, Button> buttons;
+
+	/**
+	 * Constructor using the default key table.
+	 * @param window Parent window
+	 * @see KeyTable#defaultKeyTable()
+	 */
+	public KeyboardDevice(Window window) {
+		this(window, KeyTable.defaultKeyTable());
+	}
 
 	/**
 	 * Constructor.
-	 * @param window Window
+	 * @param window	Parent window
+	 * @param table		Key table
 	 */
-	KeyboardDevice(Window window) {
-		this.window = requireNonNull(window);
+	public KeyboardDevice(Window window, KeyTable table) {
+		super(window);
+		this.buttons = table.map(Button::new);
 	}
 
 	@Override
-	public String name() {
-		return "Keyboard";
-	}
+	protected KeyListener callback(Window window, Consumer<ButtonEvent> listener) {
+		return new KeyListener() {
+			@Override
+			public void key(MemorySegment window, int key, int scancode, int action, int mods) {
+				// Lookup key
+				final Button button = buttons.get(key);
+				if(button == null) {
+					throw new RuntimeException("Unknown keyboard key: " + key);
+				}
 
-	/**
-	 * @return Keyboard event source
-	 */
-	public Source<Button<Action>> keyboard() {
-		return keyboard;
+				// Create event
+				final var event = new ButtonEvent(
+						button,
+						ButtonAction.map(action),
+						ModifierKey.map(mods)
+				);
+
+				// Delegate to listener
+				listener.accept(event);
+			}
+		};
 	}
 
 	@Override
-	public Set<Source<?>> sources() {
-		return Set.of(keyboard);
-	}
-
-	/**
-	 * Keyboard event source.
-	 */
-	private class KeyboardSource implements DesktopSource<KeyListener, Button<Action>> {
-		@Override
-		public String name() {
-			return "Keyboard";
-		}
-
-		@Override
-		public Window window() {
-			return window;
-		}
-
-		@Override
-		public KeyListener listener(Consumer<Button<Action>> handler) {
-			return (ptr, key, scancode, action, mods) -> {
-				final String name = table.name(key);
-				final Button<Action> button = new Button<>(name, Action.map(action));
-				// TODO - modifiers
-				handler.accept(button);
-			};
-		}
-
-		@Override
-		public BiConsumer<Window, KeyListener> method(DesktopLibrary lib) {
-			return lib::glfwSetKeyCallback;
-		}
+	protected BiConsumer<Window, KeyListener> method(DeviceLibrary library) {
+		return library::glfwSetKeyCallback;
 	}
 }

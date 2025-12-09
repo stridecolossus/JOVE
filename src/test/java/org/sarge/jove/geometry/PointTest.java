@@ -50,7 +50,6 @@ class PointTest {
 	@Test
 	void layout() {
 		assertEquals(Layout.floats(3), Point.LAYOUT);
-		assertEquals(Point.LAYOUT, pos.layout());
 	}
 
 	@Test

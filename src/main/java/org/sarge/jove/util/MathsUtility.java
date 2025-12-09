@@ -23,6 +23,9 @@ public final class MathsUtility {
 	 */
 	private static final float ACCURACY = Float.parseFloat(System.getProperty("jove.accuracy", "0.0001"));
 
+	/**
+	 * Convenience formatter for a floating-point value.
+	 */
 	public static final DecimalFormat FORMATTER = new DecimalFormat("#.####");
 
 	/**
@@ -41,7 +44,7 @@ public final class MathsUtility {
 	public static final float HALF_PI = PI / 2;
 
 	/**
-	 * Double PI (or 360 degrees).
+	 * Twice PI (or 360 degrees).
 	 */
 	public static final float TWO_PI = 2 * PI;
 
@@ -81,6 +84,15 @@ public final class MathsUtility {
 		else {
 			return (n & (n - 1)) == 0;
 		}
+	}
+
+	/**
+	 * Calculates the maximum unsigned integer value for the given number of bits.
+	 * @param bits Number of bits
+	 * @return Maximum unsigned value
+	 */
+	public static long unsignedMaximum(int bits) {
+		return (1L << bits) - 1;
 	}
 
 	/**
@@ -144,14 +156,16 @@ public final class MathsUtility {
 		return 1 / sqrt(f);
 	}
 
-	public static String format(float f) {
-		return FORMATTER.format(f);
-	}
-
-	public static String format(float... values) {
-		final var str = new StringJoiner(", ", "[", "]");
-		for(int n = 0; n < values.length; ++n) {
-			str.add(format(values[n]));
+	/**
+	 * Formats an array of floating-point values as a comma-separated string.
+	 * @param values Floating-point values
+	 * @return Formatted array
+	 * @see #FORMATTER
+	 */
+	public static String toString(float... values) {
+		final var str = new StringJoiner(", ");
+		for(float f : values) {
+			str.add(FORMATTER.format(f));
 		}
 		return str.toString();
 	}

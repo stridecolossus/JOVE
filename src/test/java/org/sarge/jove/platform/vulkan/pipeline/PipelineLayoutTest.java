@@ -1,99 +1,82 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.sarge.jove.platform.vulkan.VkShaderStage.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.foreign.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
+import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout.Builder;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet.Binding;
+import org.sarge.jove.util.EnumMask;
 
 class PipelineLayoutTest {
+	private static class MockPipelineLayoutLibrary extends MockVulkanLibrary {
+		@Override
+		public VkResult vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pPipelineLayout) {
+			assertNotNull(device);
+			assertEquals(0, pCreateInfo.flags);
+			assertEquals(pCreateInfo.setLayoutCount, pCreateInfo.pSetLayouts.length);
+			assertEquals(1, pCreateInfo.pushConstantRangeCount);
+			assertEquals(1, pCreateInfo.pPushConstantRanges.length);
+			assertEquals(new EnumMask<>(VkShaderStageFlags.FRAGMENT), pCreateInfo.pPushConstantRanges[0].stageFlags);
+			assertEquals(0, pCreateInfo.pPushConstantRanges[0].offset);
+			pPipelineLayout.set(MemorySegment.ofAddress(2));
+			return VkResult.VK_SUCCESS;
+		}
+
+		@Override
+		public VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout) {
+			pSetLayout.set(MemorySegment.ofAddress(3));
+			return VkResult.VK_SUCCESS;
+		}
+	}
+
 	private PipelineLayout layout;
-	private DeviceContext dev;
-	private Range range;
+	private DescriptorSet.Layout set;
+	private MockPipelineLayoutLibrary library;
+	private LogicalDevice device;
+	private SegmentAllocator allocator;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		range = new Range(0, 4, Set.of(VERTEX));
-		layout = new PipelineLayout(new Handle(1), dev, new PushConstant(List.of(range)));
-	}
+		// Init library
+		library = new MockPipelineLayoutLibrary();
+		allocator = Arena.ofAuto();
 
-	@Test
-	void constructor() {
-		assertEquals(false, layout.isDestroyed());
-		assertNotNull(layout.push());
+		// Init logical device
+		device = new MockLogicalDevice(library) {
+			@Override
+			public DeviceLimits limits() {
+				final var limits = new VkPhysicalDeviceLimits();
+				limits.maxPushConstantsSize = 256;
+				return new DeviceLimits(limits);
+			}
+		};
+
+		// Create a descriptor set layout
+		final var binding = new Binding(0, VkDescriptorType.SAMPLER, 1, Set.of(VkShaderStageFlags.VERTEX));
+		set = DescriptorSet.Layout.create(device, List.of(binding), Set.of());
+
+		// Create a push constant
+		final var range = new Range(0, 256, Set.of(VkShaderStageFlags.FRAGMENT));
+		final var constant = new PushConstant(List.of(range), allocator);
+
+		// Create layout
+		layout = new PipelineLayout.Builder()
+				.add(set)
+				.constant(constant)
+				.build(device);
 	}
 
 	@Test
 	void destroy() {
 		layout.destroy();
-		assertEquals(true, layout.isDestroyed());
-		verify(dev.library()).vkDestroyPipelineLayout(dev, layout, null);
-	}
-
-	@Nested
-	class BuilderTests {
-		private Builder builder;
-
-		@BeforeEach
-		void before() {
-			builder = new Builder();
-		}
-
-		@Test
-		void build() {
-			// Create descriptor set layout
-			final var binding = new DescriptorSet.Binding(0, VkDescriptorType.SAMPLER, 1, Set.of(FRAGMENT));
-			final var set = DescriptorSet.Layout.create(dev, Set.of(binding));
-
-			// Create push constant ranges
-			final Range one = new Range(0, 4, Set.of(VERTEX));
-			final Range two = new Range(4, 8, Set.of(FRAGMENT));
-
-			// Init push constants max size
-			dev.limits().maxPushConstantsSize = 12;
-
-			// Create layout
-			final PipelineLayout layout = builder
-					.add(set)
-					.add(one)
-					.add(two)
-					.build(dev);
-
-			// Check layout
-			assertNotNull(layout.handle());
-			assertNotNull(layout.push());
-
-			// Init expected create descriptor
-			final var expected = new VkPipelineLayoutCreateInfo() {
-				@Override
-				public boolean equals(Object obj) {
-					final var actual = (VkPipelineLayoutCreateInfo) obj;
-					assertEquals(0, actual.flags);
-					assertEquals(1, actual.setLayoutCount);
-					assertEquals(NativeObject.array(Set.of(set)), actual.pSetLayouts);
-					assertEquals(2, actual.pushConstantRangeCount);
-					return true;
-				}
-			};
-
-			// Check pipeline allocation API
-			verify(dev.library()).vkCreatePipelineLayout(dev, expected, null, dev.factory().pointer());
-		}
-
-		@Test
-		void empty() {
-//			limit("maxPushConstantsSize", 0);
-			assertNotNull(builder.build(dev));
-		}
 	}
 }

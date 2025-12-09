@@ -1,5 +1,9 @@
 package org.sarge.jove.platform.vulkan.render;
 
-public interface RenderLibrary extends Surface.Library, Swapchain.Library, RenderPass.Library, FrameBuffer.Library, DescriptorSet.Library, DrawCommand.Library {
+/**
+ * Aggregated interface for the rendering package.
+ * @author Sarge
+ */
+public interface RenderLibrary extends Swapchain.Library, RenderPass.Library, Framebuffer.Library, DescriptorSet.Library, DrawCommand.Library {
 	// Aggregate interface
 }

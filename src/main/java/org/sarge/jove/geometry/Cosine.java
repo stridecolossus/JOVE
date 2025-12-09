@@ -1,71 +1,91 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.jove.util.MathsUtility.isApproxEqual;
-
-import org.sarge.jove.util.FloatSupport.FloatUnaryOperator;
 import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>cosine</i> is a convenience record for the sine-cosine pair of a given angle.
  * @author Sarge
  */
-public record Cosine(float sin, float cos) {
+public interface Cosine {
 	/**
-	 * @param quadrant Unit-circle quadrant (counter-clockwise).
-	 * @return Cosine of the given quadrant
+	 * @return Sine of the angle
 	 */
-	public static Cosine quadrant(int quadrant) {
-		return switch(quadrant & 3) {
-    		case 0 -> new Cosine(0, 1);
-    		case 1 -> new Cosine(1, 0);
-    		case 2 -> new Cosine(0, -1);
-    		case 3 -> new Cosine(-1, 0);
-    		default -> throw new RuntimeException();
-		};
-	}
+	float sin();
 
-	@Override
-	public final boolean equals(Object obj) {
-		return
-				(obj == this) ||
-				(obj instanceof Cosine that) &&
-				isApproxEqual(this.sin, that.sin) &&
-				isApproxEqual(this.cos, that.cos);
-	}
+	/**
+	 * @return Cosine of the angle
+	 */
+	float cos();
 
-	@Override
-	public final String toString() {
-		return "Cosine" + MathsUtility.format(sin, cos);
+	/**
+	 * Convenience sine-cosine pair.
+	 */
+	record Pair(float sin, float cos) implements Cosine {
+		@Override
+		public final boolean equals(Object obj) {
+			return
+					(obj == this) ||
+					(obj instanceof Cosine that) &&
+					MathsUtility.isApproxEqual(this.sin, that.sin()) &&
+					MathsUtility.isApproxEqual(this.cos, that.cos());
+		}
 	}
 
 	/**
-	 * A <i>cosine provider</i> is a factory for the sine-cosine pair of a given angle.
+	 * A <i>cosine provider</i> calculates the sine-cosine pair for a given angle.
 	 */
-	@FunctionalInterface
-	public interface Provider {
+	interface Provider {
 		/**
+		 * Calculates the sin-cos pair for the given angle.
 		 * @param angle Angle (radians)
-		 * @return Cosine of the given angle
+		 * @return Cosine pair
 		 */
-		Cosine cosine(float angle);
+    	Cosine cosine(float angle);
 
     	/**
-    	 * Default implementation that delegates to the JDK maths library.
+    	 * Default implementation delegating to the built-in trigonometry functions.
     	 */
-    	Provider DEFAULT = of(angle -> (float) Math.cos(angle));
-
-    	/**
-    	 * Creates a provider as an adapter for the given cosine function.
-    	 * TODO
-    	 * @param function Cosine function
-    	 * @return Cosine provider
-    	 */
-    	static Provider of(FloatUnaryOperator function) {
-    		return angle -> {
-    			final float sin = (float) Math.sin(angle); // function.apply(angle - MathsUtility.HALF_PI);
-    			final float cos = (float) Math.cos(angle); // function.apply(angle);
-    			return new Cosine(sin, cos);
-    		};
-    	}
+    	Provider DEFAULT = angle -> {
+    		final float sin = (float) Math.sin(angle);
+    		final float cos = (float) Math.cos(angle);
+    		return new Pair(sin, cos);
+    	};
     }
 }
+
+//	/**
+//	 * @param quadrant Unit-circle quadrant (counter-clockwise).
+//	 * @return Cosine of the given quadrant
+//	 */
+//	public static Cosine quadrant(int quadrant) {
+//		return switch(quadrant & 3) {
+//    		case 0 -> new Cosine(0, 1);
+//    		case 1 -> new Cosine(1, 0);
+//    		case 2 -> new Cosine(0, -1);
+//    		case 3 -> new Cosine(-1, 0);
+//    		default -> throw new RuntimeException();
+//		};
+//	}
+//
+//	/**
+//	 *
+//	 * i) small angle approximations
+//	 *
+//	 * for small angles (???) in radians:
+//	 *
+//	 * sin(a) ~ tan(a) ~ 0 OR a
+//	 *
+//	 * cos(a) ~ 1 - (a * a) / 2 ~ 1
+//	 *
+//	 * where 'small' is up to 0.5 radians
+//	 *
+//	 * ii)
+//	 *
+//	 * only store angles 0 .. PI/2, i.e. first quadrant
+//	 *
+//	 * reduces to 25% memory
+//	 *
+//	 * quadrant IV  -> sin(a) = -sin(-a)
+//	 * quadrant II  -> sin(a) = sin(PI - a)
+//	 * quadrant III -> sin(a) = -sina(PI + a)
+//	 *

@@ -1,61 +1,66 @@
 package org.sarge.jove.platform.vulkan.image;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.Validation.*;
+import static org.sarge.jove.util.Validation.*;
 
 import java.util.*;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-import org.sarge.jove.platform.vulkan.util.RequiredFeature;
-import org.sarge.jove.util.BitMask;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.render.DescriptorSet;
+import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>sampler</i> is used to sample from a texture image.
  * @author Sarge
  */
-public final class Sampler extends VulkanObject {
+public class Sampler extends VulkanObject {
 	/**
 	 * Constructor.
 	 * @param handle		Sampler handle
-	 * @param dev			Logical device
+	 * @param device		Logical device
 	 */
-	Sampler(Handle handle, DeviceContext dev) {
-		super(handle, dev);
+	Sampler(Handle handle, LogicalDevice device) {
+		super(handle, device);
 	}
 
 	@Override
-	protected Destructor<Sampler> destructor(VulkanLibrary lib) {
-		return lib::vkDestroySampler;
+	protected Destructor<Sampler> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroySampler;
 	}
 
 	/**
-	 * Creates a descriptor set resource for this sampler on the given view.
-	 * @param view View
-	 * @return Sampler resource
+	 * A <i>sampler resource</i> is a descriptor set resource composing this sampler with a given texture.
+	 * @see VkDescriptorType#COMBINED_IMAGE_SAMPLER;
 	 */
-	public DescriptorResource resource(View view) {
-		return new DescriptorResource() {
-			@Override
-			public VkDescriptorType type() {
-				return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
-			}
+	public class SamplerResource implements DescriptorSet.Resource {
+		private final View texture;
 
-			@Override
-			public VkDescriptorImageInfo build() {
-				final var info = new VkDescriptorImageInfo();
-				info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
-				info.sampler = Sampler.this.handle();
-				info.imageView = view.handle();
-				return info;
-			}
-		};
+		/**
+		 * Constructor.
+		 * @param texture Texture to sample
+		 */
+		public SamplerResource(View texture) {
+			this.texture = requireNonNull(texture);
+		}
+
+		@Override
+		public VkDescriptorType type() {
+			return VkDescriptorType.COMBINED_IMAGE_SAMPLER;
+		}
+
+		@Override
+		public NativeStructure descriptor() {
+			final var info = new VkDescriptorImageInfo();
+			info.imageLayout = VkImageLayout.SHADER_READ_ONLY_OPTIMAL;
+			info.sampler = handle();
+			info.imageView = texture.handle();
+			return info;
+		}
 	}
 
 	/**
@@ -113,7 +118,7 @@ public final class Sampler extends VulkanObject {
 		private static final float VK_LOD_CLAMP_NONE = 1000;
 
 		private final VkSamplerCreateInfo info = new VkSamplerCreateInfo();
-		private final Set<VkSamplerCreateFlag> flags = new HashSet<>();
+		private final Set<VkSamplerCreateFlags> flags = new HashSet<>();
 
 		public Builder() {
 			min(VkFilter.LINEAR);
@@ -130,7 +135,7 @@ public final class Sampler extends VulkanObject {
 		 * Adds a sampler creation flag.
 		 * @param flag Creation flag
 		 */
-		public Builder flag(VkSamplerCreateFlag flag) {
+		public Builder flag(VkSamplerCreateFlags flag) {
 			requireNonNull(flag);
 			this.flags.add(flag);
 			return this;
@@ -237,7 +242,6 @@ public final class Sampler extends VulkanObject {
 		 * Sets the number of texel samples for anisotropy filtering (default is disabled).
 		 * @param anisotropy Number of texel samples
 		 */
-		@RequiredFeature(field="maxAnisotropy", feature="samplerAnisotropy")
 		public Builder anisotropy(float anisotropy) {
 			info.maxAnisotropy = requireOneOrMore(anisotropy);
 			info.anisotropyEnable = anisotropy > 1;
@@ -269,22 +273,23 @@ public final class Sampler extends VulkanObject {
 		 * @return New sampler
 		 * @throws IllegalArgumentException if the LOD levels are illogical
 		 */
-		public Sampler build(DeviceContext dev) {
+		public Sampler build(LogicalDevice dev) {
 			// Validate
 			if(info.minLod > info.maxLod) {
 				throw new IllegalArgumentException("Invalid min/max LOD");
 			}
 
-			// Init flags
-			info.flags = new BitMask<>(flags);
+			// Init descriptor
+			info.sType = VkStructureType.SAMPLER_CREATE_INFO;
+			info.flags = new EnumMask<>(flags);
 
 			// Instantiate sampler
-			final VulkanLibrary lib = dev.library();
-			final PointerByReference ref = dev.factory().pointer();
-			check(lib.vkCreateSampler(dev, info, null, ref));
+			final Library library = dev.library();
+			final Pointer pointer = new Pointer();
+			library.vkCreateSampler(dev, info, null, pointer);
 
 			// Create domain object
-			return new Sampler(new Handle(ref), dev);
+			return new Sampler(pointer.handle(), dev);
 		}
 	}
 
@@ -297,10 +302,10 @@ public final class Sampler extends VulkanObject {
 		 * @param device			Logical device
 		 * @param pCreateInfo		Sampler descriptor
 		 * @param pAllocator		Allocator
-		 * @param pSampler			Returned sampler
+		 * @param pSampler			Returned sampler handle
 		 * @return Result
 		 */
-		int vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pSampler);
+		VkResult vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, Pointer pSampler);
 
 		/**
 		 * Destroys a sampler.
@@ -308,6 +313,6 @@ public final class Sampler extends VulkanObject {
 		 * @param sampler			Sampler
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySampler(DeviceContext device, Sampler sampler, Pointer pAllocator);
+		void vkDestroySampler(LogicalDevice device, Sampler sampler, Handle pAllocator);
 	}
 }

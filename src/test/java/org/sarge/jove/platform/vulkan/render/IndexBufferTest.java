@@ -1,94 +1,65 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-
-import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.MockDeviceContext;
+import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.memory.*;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
-public class IndexBufferTest {
+class IndexBufferTest {
 	private IndexBuffer index;
-	private MockDeviceContext dev;
-	private Command.Buffer cmd;
+	private int max;
+	private boolean bound;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		cmd = new MockCommandBuffer();
+		final var library = new MockVulkanLibrary() {
+			@Override
+			public void vkCmdBindIndexBuffer(Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType) {
+				assertEquals(index.buffer(), buffer);
+				assertEquals(0L, offset);
+				assertEquals(VkIndexType.UINT32, indexType);
+				bound = true;
+			}
+		};
 
-		final var props = new MemoryProperties.Builder<VkBufferUsageFlag>()
-				.usage(VkBufferUsageFlag.INDEX_BUFFER)
-				.required(VkMemoryProperty.DEVICE_LOCAL)
-				.build();
+		final var device = new MockLogicalDevice(library) {
+			@Override
+			public DeviceLimits limits() {
+				final var limits = new VkPhysicalDeviceLimits();
+				limits.maxDrawIndexedIndexValue = max;
+				return new DeviceLimits(limits);
+			}
+		};
+		max = 2;
 
-		final var buffer = VulkanBuffer.create(dev, new MockAllocator(), 4, props);
-		index = new IndexBuffer(buffer, VkIndexType.UINT32);
+		final var buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlags.INDEX_BUFFER);
+		index = new IndexBuffer(VkIndexType.UINT32, buffer);
 	}
 
 	@Test
-	void constructor() {
-		assertEquals(Set.of(VkBufferUsageFlag.INDEX_BUFFER), index.usage());
-		assertEquals(4, index.length());
-	}
-
-	@Test
-	void invalid() {
-		assertThrows(IllegalArgumentException.class, () -> new IndexBuffer(index, VkIndexType.NONE_NV));
+	void bind() {
+		final Command bind = index.bind(0L);
+		bind.execute(null);
+		assertEquals(true, bound);
 	}
 
 	@Test
 	void length() {
-		dev.limits().maxDrawIndexedIndexValue = 0;
-		assertThrows(IllegalStateException.class, () -> index.bind(0));
+		assertThrows(IllegalArgumentException.class, () -> index.bind(8L));
 	}
 
-	@Nested
-	class IntegerIndex {
-		@BeforeEach
-		void before() {
-			dev.limits().maxDrawIndexedIndexValue = 1;
-		}
-
-		@Test
-		void type() {
-			assertEquals(VkIndexType.UINT32, index.type());
-		}
-
-		@Test
-		void bind() {
-			final VulkanLibrary lib = dev.library();
-			final Command bind = index.bind(0);
-			bind.record(lib, cmd);
-			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT32);
-		}
+	@Test
+	void limit() {
+		max = 1;
+		assertThrows(IllegalStateException.class, () -> index.bind(0L));
 	}
 
-	@DisplayName("A short index...")
-	@Nested
-	class ShortIndex {
-		@BeforeEach
-		void before() {
-			index = new IndexBuffer(index, 1);
-		}
-
-		@DisplayName("has a short data type")
-		@Test
-		void type() {
-			assertEquals(VkIndexType.UINT16, index.type());
-		}
-
-		@DisplayName("is bound with a short data type")
-		@Test
-		void bind() {
-			final VulkanLibrary lib = dev.library();
-			final Command bind = index.bind(0);
-			bind.record(lib, cmd);
-			verify(lib).vkCmdBindIndexBuffer(cmd, index, 0, VkIndexType.UINT16);
-		}
+	@Test
+	void invalid() {
+		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 8L, VkBufferUsageFlags.TRANSFER_SRC);
+		assertThrows(IllegalStateException.class, () -> new IndexBuffer(VkIndexType.UINT32, invalid));
 	}
 }

@@ -1,32 +1,24 @@
 package org.sarge.jove.geometry;
 
-import java.util.*;
+import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.geometry.Ray.Intersection;
+import java.util.List;
+
+import org.sarge.jove.geometry.Ray.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
- * A <i>triangle</i> is a polygon with three vertices.
+ * A <i>triangle</i> is a polygon comprised of three vertices.
  * @author Sarge
  */
-public record Triangle(List<Point> vertices) implements Intersection.Surface {
+public record Triangle(Point a, Point b, Point c) implements IntersectedSurface {
 	/**
 	 * Constructor.
-	 * @param vertices Triangle vertices
-	 * @throws IllegalArgumentException if the triangle does have exactly three vertices
 	 */
 	public Triangle {
-		if(vertices.size() != 3) throw new IllegalArgumentException();
-		vertices = List.copyOf(vertices);
-	}
-
-	/**
-	 * Convenience constructor given an array of points.
-	 * @param vertices Triangle vertices
-	 * @throws IllegalArgumentException if the triangle does have exactly three vertices
-	 */
-	public Triangle(Point... vertices) {
-		this(Arrays.asList(vertices));
+		requireNonNull(a);
+		requireNonNull(b);
+		requireNonNull(c);
 	}
 
 	/**
@@ -34,78 +26,74 @@ public record Triangle(List<Point> vertices) implements Intersection.Surface {
 	 * @return Triangle centre
 	 */
 	public Point centre() {
-		final Vector a = vector(0);
-		final Vector b = vector(1);
-		final Vector c = vector(2);
-		final Vector result = a.add(b).add(c).multiply(1 / 3f);
-		return new Point(result);
-	}
-
-	private Vector vector(int index) {
-		return new Vector(vertices.get(index));
+		final float x = a.x + b.x + c.x;
+		final float y = a.y + b.y + c.y;
+		final float z = a.z + b.z + c.z;
+		final Vector v = new Vector(x, y, z).multiply(1 / 3f);
+		return new Point(v);
 	}
 
 	/**
 	 * Calculates the normal of this triangle.
 	 * @return Triangle normal
 	 */
-	public Vector normal() {
-		final Vector u = edge(1);
-		final Vector v = edge(2);
-		return u.cross(v);
-	}
-
-	private Vector edge(int index) {
-		return Vector.between(vertices.get(0), vertices.get(index));
+	public Normal normal() {
+		final Vector u = Vector.between(a, b);
+		final Vector v = Vector.between(a, c);
+		return new Normal(u.cross(v));
 	}
 
 	/**
 	 * @return Whether this triangle is <i>degenerate</i> (has zero area)
 	 */
 	public boolean isDegenerate() {
-		final Point p = vertices.get(0);
-		return p.equals(vertices.get(1)) || p.equals(vertices.get(2));
+		return a.equals(b) || a.equals(c);
 	}
 
 	/**
-	 * Determines the winding order (or orientation) of this polygon with respect to the given view axis (usually {@link Axis#Z}).
-	 * @param axis Axis
-	 * @return Winding order
+	 * {@inheritDoc}
+	 * Calculates the intersection point of the given ray with this triangle.
+	 * Note that the triangle edges are considered as intersection results by this implementation.
+	 * @see <a href="https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm">Wikipedia<a>
 	 */
-	public WindingOrder winding(Vector axis) {
-		final float determinant = axis.dot(this.normal());
-		if(determinant > 0) {
-			return WindingOrder.COUNTER_CLOCKWISE;
+	@Override
+	public List<Intersection> intersections(Ray ray) {
+		// Determine angle between ray and triangle
+		final Vector ab = Vector.between(a, b);
+		final Vector ac = Vector.between(a, c);
+		final Vector cross = ray.direction().cross(ac);
+		final float determinant = ab.dot(cross);
+
+		// Orthogonal ray does not intersect
+		if(MathsUtility.isApproxZero(determinant)) {
+			return EMPTY_INTERSECTIONS;
 		}
-		else
-		if(determinant < 0) {
-			return WindingOrder.CLOCKWISE;
+
+		final float inv = 1f / determinant;
+		final Vector s = Vector.between(a, ray.origin());
+		final float u = inv * s.dot(cross);
+		if((u < 0f) || (u > 1f)) {
+			return EMPTY_INTERSECTIONS;
 		}
-		else {
-			return WindingOrder.COLINEAR;
+
+		final Vector se = s.cross(ab);
+		final float v = inv * ray.direction().dot(se);
+		if((v < 0f) || (u + v > 1f)) {
+			return EMPTY_INTERSECTIONS;
 		}
+
+		// Determine intersection point
+		float t = inv * ac.dot(se);
+		if(t < 0f) {
+			return EMPTY_INTERSECTIONS;
+		}
+
+		// Build result
+		return List.of(new Intersection(t, this));
 	}
 
 	@Override
-	public Iterable<Intersection> intersections(Ray ray) {
-		// Determine angle between ray and triangle
-		final Normal normal = new Normal(this.normal());
-		final float denom = normal.dot(ray.direction());
-
-		// Orthogonal ray does not intersect
-		if(MathsUtility.isApproxZero(denom)) {
-			return Intersection.NONE;
-		}
-
-		// Calc distance along ray
-		final float d = -normal.dot(new Vector(ray.origin())) / denom;
-
-		// Check for ray behind
-		if(d < 0) {
-			return Intersection.NONE;
-		}
-
-		// Build intersection result
-		return List.of(ray.intersection(d, normal));
+	public Normal normal(Point intersection) {
+		return normal();
 	}
 }

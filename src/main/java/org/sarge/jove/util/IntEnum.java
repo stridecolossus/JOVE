@@ -1,42 +1,23 @@
 package org.sarge.jove.util;
 
+import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.util.stream.Collectors.toMap;
 
+import java.lang.foreign.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import com.sun.jna.*;
+import org.sarge.jove.foreign.Transformer;
 
 /**
- * An <i>integer enumeration</i> is a base-class interface for an enumeration mapped to a native <b>typedef enum</b>.
+ * An <i>integer enumeration</i> represents a native {@code typedef enum} declaration.
  * <p>
- * An integer enumeration has a {@link ReverseMapping} which maps integer literals to the corresponding enumeration constants.
+ * The {@link #value()} method maps an enumeration constant to its underlying native value.
  * <p>
- * Example usage:
+ * An integer enumeration can be treated as bidirectional using the {@link ReverseMapping} class.
  * <p>
- * {@snippet lang="java" :
- * // Create integer enumeration
- * enum Thing implements IntEnum {
- *     ONE(1),
- *     TWO(2),
- *     ...
- *
- *     private final int value;
- *
- *     @Override
- *     public int value() {
- *         return value;
- *     }
- * }
- *
- * // Map literal to enumeration
- * ReverseMapping<Thing> mapping = IntEnum.mapping(Thing.class);
- * Thing one = mapping.map(1);
- * <p>
- * Integer enumerations can be used in JNA methods and structures by registering the custom {@link #CONVERTER} with the relevant JNA library.
- * <p>
- * @see BitMask
+ * @see EnumMask
  * @author Sarge
  */
 public interface IntEnum {
@@ -46,76 +27,23 @@ public interface IntEnum {
 	int value();
 
 	/**
-	 * Retrieves the reverse mapping for the given integer enumeration.
-	 * This method is thread-safe.
-	 * @param <E> Enumeration
-	 * @param type Enumeration class
-	 * @return Reverse mapping
-	 */
-	@SuppressWarnings("unchecked")
-	static <E extends IntEnum> ReverseMapping<E> reverse(Class<E> type) {
-		return (ReverseMapping<E>) ReverseMapping.get(type);
-	}
-
-	/**
-	 * JNA type converter for an integer enumeration.
-	 */
-	TypeConverter CONVERTER = new TypeConverter() {
-		@Override
-		public Class<?> nativeType() {
-			return Integer.class;
-		}
-
-		@Override
-		public Object toNative(Object value, ToNativeContext context) {
-			if(value instanceof IntEnum e) {
-				return e.value();
-			}
-			else {
-				return 0;
-			}
-		}
-
-		@Override
-		public Object fromNative(Object nativeValue, FromNativeContext context) {
-			// Validate enumeration
-			final Class<?> type = context.getTargetType();
-			if(!IntEnum.class.isAssignableFrom(type)) throw new RuntimeException("Invalid native enumeration class: " + type.getSimpleName());
-
-			// Map native value
-			final ReverseMapping<?> mapping = ReverseMapping.get(type);
-			if(nativeValue == null) {
-				return mapping.def;
-			}
-			else {
-				final int num = (int) nativeValue;
-				if(num == 0) {
-					return mapping.def;
-				}
-				else {
-					return mapping.map(num);
-				}
-			}
-		}
-	};
-
-	/**
-	 * A <i>reverse mapping</i> is the inverse of an integer enumeration, i.e. maps native integers <i>to</i> the enumeration constants.
-	 * Note that constants with duplicate values within an enumeration are silently ignored by this implementation.
+	 * The <i>reverse mapping</i> is the inverse of this enumeration, i.e. maps a native integer <i>to</i> the corresponding enumeration constant.
+	 * Note that duplicate values (i.e. synonyms) are silently ignored by this implementation.
 	 * @param <E> Integer enumeration
+	 * @see #defaultValue()
 	 */
-	final class ReverseMapping<E extends IntEnum> {
+	class ReverseMapping<E extends IntEnum> {
 		private static final Map<Class<?>, ReverseMapping<?>> CACHE = new ConcurrentHashMap<>();
 
 		/**
 		 * Looks up the reverse mapping for the given enumeration.
 		 * @param <E> Enumeration
-		 * @param clazz Enumeration class
+		 * @param type Enumeration type
 		 * @return Reverse mapping
 		 */
 		@SuppressWarnings("unchecked")
-		private static ReverseMapping<?> get(Class<?> clazz) {
-			return CACHE.computeIfAbsent(clazz, ReverseMapping::new);
+		public static <E extends IntEnum> ReverseMapping<E> mapping(Class<E> type) {
+			return (ReverseMapping<E>) CACHE.computeIfAbsent(type, ReverseMapping::new);
 		}
 
 		private final Map<Integer, E> map;
@@ -123,24 +51,81 @@ public interface IntEnum {
 
 		/**
 		 * Constructor.
-		 * @param type Integer enumeration class
+		 * @param type Integer enumeration type
 		 */
 		private ReverseMapping(Class<E> type) {
 			final E[] array = type.getEnumConstants();
-			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (a, b) -> a));
+			this.map = Arrays.stream(array).collect(toMap(IntEnum::value, Function.identity(), (value, _) -> value));
 			this.def = map.getOrDefault(0, array[0]);
 		}
 
 		/**
-		 * Maps an enumeration literal to the corresponding enumeration constant.
-		 * @param value Literal
+		 * The <i>default value</i> is the constant with a value of {@code zero} if present <b>or</b> arbitrarily the <b>first</b> entry in the enumeration.
+		 * @return Default value for this enumeration
+		 */
+		public E defaultValue() {
+			return def;
+		}
+
+		/**
+		 * Maps the given native value to the corresponding enumeration constant.
+		 * @param value Native value
 		 * @return Constant
 		 * @throws IllegalArgumentException if the enumeration does not contain the given value
 		 */
 		public E map(int value) {
 			final E constant = map.get(value);
-			if(constant == null) throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass().getSimpleName()));
+			if(constant == null) {
+				// TODO
+				System.err.println(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass()));
+//				throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass()));
+				return def;
+			}
 			return constant;
+		}
+	}
+
+	/**
+	 * Native transformer for integer enumerations.
+	 */
+	class IntEnumTransformer implements Transformer<IntEnum, Integer> {
+		private final ReverseMapping<?> mapping;
+
+		/**
+		 * Constructor.
+		 * @param type Enumeration type
+		 */
+		public IntEnumTransformer(Class<? extends IntEnum> type) {
+			this.mapping = ReverseMapping.mapping(type);
+		}
+
+		@Override
+		public MemoryLayout layout() {
+			return JAVA_INT;
+		}
+
+		@Override
+		public Integer marshal(IntEnum e, SegmentAllocator allocator) {
+			return e.value();
+		}
+
+		@Override
+		public Integer empty() {
+			return mapping.defaultValue().value();
+		}
+
+		@Override
+		public Function<Integer, IntEnum> unmarshal() {
+			return this::unmarshal;
+		}
+
+		private IntEnum unmarshal(Integer value) {
+			if(value == 0) {
+				return mapping.defaultValue();
+			}
+			else {
+				return mapping.map(value);
+			}
 		}
 	}
 }

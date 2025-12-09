@@ -2,24 +2,21 @@ package org.sarge.jove.platform.vulkan.core;
 
 import java.util.*;
 
-import org.sarge.jove.common.NativeObject;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-
-import com.sun.jna.Pointer;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlags;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer.Library;
 
 /**
  * A <i>vertex buffer</i> binds vertex data to the pipeline.
  * @author Sarge
  */
-public final class VertexBuffer extends VulkanBuffer {
+public record VertexBuffer(VulkanBuffer buffer) {
 	/**
 	 * Constructor.
 	 * @param buffer Underlying buffer
-	 * @throws IllegalStateException if this buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
+	 * @throws IllegalStateException if the given buffer is not a {@link VkBufferUsageFlag#VERTEX_BUFFER}
 	 */
-	public VertexBuffer(VulkanBuffer buffer) {
-		super(buffer);
-		require(VkBufferUsageFlag.VERTEX_BUFFER);
+	public VertexBuffer {
+		buffer.require(VkBufferUsageFlags.VERTEX_BUFFER);
 	}
 
 	/**
@@ -38,9 +35,18 @@ public final class VertexBuffer extends VulkanBuffer {
 	 * @param buffers		Vertex buffers to bind
 	 * @return Bind command
 	 */
-	public static Command bind(int start, Collection<VertexBuffer> buffers) {
-		final Pointer array = NativeObject.array(buffers);
-		return (api, cmd) -> api.vkCmdBindVertexBuffers(cmd, start, buffers.size(), array, new long[]{0});
+	public static Command bind(int start, List<VertexBuffer> buffers) {
+		final Library library = buffers
+				.getFirst()
+				.buffer()
+				.device()
+				.library();
+
+		final var array = buffers
+				.stream()
+				.map(VertexBuffer::buffer)
+				.toArray(VulkanBuffer[]::new);
+
+		return buffer -> library.vkCmdBindVertexBuffers(buffer, start, array.length, array, new long[]{0});
 	}
-	// TODO - offsets
 }

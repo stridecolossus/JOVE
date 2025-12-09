@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.sarge.lib.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.nio.ByteBuffer;
 import java.text.NumberFormat;
@@ -49,7 +49,11 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public Matrix(float[][] matrix) {
 		final int order = matrix.length;
-		this(order);
+		// TODO - this used to work...
+//		this(order);
+		requireOneOrMore(order);
+		this.matrix = new float[order][order];
+		// ...TODO
 		for(int r = 0; r < order; ++r) {
 			if(matrix[r].length != order) {
 				throw new IllegalArgumentException();
@@ -78,7 +82,7 @@ public class Matrix implements Transform, Bufferable {
 	}
 
 	@Override
-	public Matrix matrix() {
+	public final Matrix matrix() {
 		return this;
 	}
 
@@ -265,9 +269,9 @@ public class Matrix implements Transform, Bufferable {
 	 * @return Matrix string
 	 */
 	public String format(NumberFormat format) {
-		final StringJoiner str = new StringJoiner("\n");
+		final var str = new StringJoiner("\n");
 		for(int r = 0; r < this.order(); ++r) {
-			final String row = MathsUtility.format(matrix[r]);
+			final String row = MathsUtility.toString(matrix[r]);
 			str.add(row);
 		}
 		return str.toString();
@@ -345,14 +349,14 @@ public class Matrix implements Transform, Bufferable {
 		 * Populates a submatrix of this matrix.
 		 * @param row			Row index
 		 * @param col			Column index
-		 * @param m				Submatrix
+		 * @param submatrix		Submatrix
 		 * @throws IndexOutOfBoundsException if the submatrix is out-of-bounds
 		 */
-		public Builder submatrix(int row, int col, Matrix m) {
-			final int order = m.order();
+		public Builder submatrix(int row, int col, Matrix submatrix) {
+			final int order = submatrix.order();
 			for(int r = 0; r < order; ++r) {
 				for(int c = 0; c < order; ++c) {
-					matrix.matrix[r + row][c + col] = m.matrix[r][c];
+					matrix.matrix[r + row][c + col] = submatrix.matrix[r][c];
 				}
 			}
 			return this;

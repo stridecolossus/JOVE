@@ -3,7 +3,7 @@ package org.sarge.jove.util;
 /**
  * Mock implementation.
  */
-enum MockEnum implements IntEnum {
+public enum MockEnum implements IntEnum {
 	A(1),
 	B(2),
 	C(4);

@@ -1,82 +1,81 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
 import static java.util.Objects.requireNonNull;
 
-import java.io.*;
+import java.io.IOException;
+import java.nio.file.*;
 
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.io.*;
-import org.sarge.jove.platform.vulkan.VkShaderModuleCreateInfo;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.VulkanLibrary;
-
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
+import org.sarge.jove.foreign.Pointer;
+import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
- * A <i>shader</i> is a Vulkan shader module used to implement a programmable pipeline stage.
+ * A <i>shader</i> module implements a programmable pipeline stage.
  * @author Sarge
  */
-public final class Shader extends VulkanObject {
+public class Shader extends VulkanObject {
 	/**
 	 * Creates a shader module.
-	 * @param dev		Logical device
+	 * @param device	Logical device
 	 * @param code		Shader SPIV code
 	 * @return New shader
 	 */
-	public static Shader create(DeviceContext dev, byte[] code) {
+	public static Shader create(LogicalDevice device, byte[] code) {
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
+		info.sType = VkStructureType.SHADER_MODULE_CREATE_INFO;
 		info.codeSize = code.length;
-		info.pCode = BufferHelper.buffer(code);
+		info.pCode = code;
 
 		// Allocate shader
-		final VulkanLibrary lib = dev.library();
-		final PointerByReference ref = dev.factory().pointer();
-		check(lib.vkCreateShaderModule(dev, info, null, ref));
+		final Library library = device.library();
+		final Pointer pointer = new Pointer();
+		library.vkCreateShaderModule(device, info, null, pointer);
 
 		// Create shader
-		return new Shader(new Handle(ref), dev);
+		return new Shader(pointer.handle(), device);
 	}
 
 	/**
 	 * Constructor.
-	 * @param handle 		Shader module handle
-	 * @param dev			Logical device
+	 * @param handle 		Shader module
+	 * @param device		Logical device
 	 */
-	private Shader(Handle handle, DeviceContext dev) {
-		super(handle, dev);
+	Shader(Handle handle, LogicalDevice device) {
+		super(handle, device);
 	}
 
 	@Override
-	protected Destructor<Shader> destructor(VulkanLibrary lib) {
-		return lib::vkDestroyShaderModule;
+	protected Destructor<Shader> destructor() {
+		final Library library = this.device().library();
+		return library::vkDestroyShaderModule;
 	}
 
 	/**
 	 * Loader for a shader.
 	 */
-	public static class Loader implements ResourceLoader<InputStream, Shader> {
-		private final DeviceContext dev;
+	public static class ShaderLoader {
+		private final LogicalDevice device;
 
 		/**
 		 * Constructor.
-		 * @param dev Logical device
+		 * @param device Logical device
 		 */
-		public Loader(DeviceContext dev) {
-			this.dev = requireNonNull(dev);
+		public ShaderLoader(LogicalDevice device) {
+			this.device = requireNonNull(device);
 		}
 
-		@Override
-		public InputStream map(InputStream in) throws IOException {
-			return in;
-		}
-
-		@Override
-		public Shader load(InputStream in) throws IOException {
-			final byte[] code = in.readAllBytes();
-			return create(dev, code);
+		/**
+		 * Loads a shader from the given file.
+		 * @param path File path
+		 * @return Shader
+		 * @throws IOException if the shader cannot be loaded
+		 */
+		public Shader load(Path path) throws IOException {
+			final byte[] code = Files.readAllBytes(path);
+			return Shader.create(device, code);
 		}
 	}
 
@@ -89,10 +88,10 @@ public final class Shader extends VulkanObject {
 		 * @param device			Logical device
 		 * @param info				Shader descriptor
 		 * @param pAllocator		Allocator
-		 * @param shader			Returned shader module
+		 * @param shader			Returned shader module handle
 		 * @return Result
 		 */
-		int vkCreateShaderModule(DeviceContext device, VkShaderModuleCreateInfo info, Pointer pAllocator, PointerByReference shader);
+		VkResult vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Handle pAllocator, Pointer shader);
 
 		/**
 		 * Destroys a shader.
@@ -100,6 +99,6 @@ public final class Shader extends VulkanObject {
 		 * @param shader			Shader module
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyShaderModule(DeviceContext device, Shader shader, Pointer pAllocator);
+		void vkDestroyShaderModule(LogicalDevice device, Shader shader, Handle pAllocator);
 	}
 }

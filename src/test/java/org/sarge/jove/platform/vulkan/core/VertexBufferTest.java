@@ -1,43 +1,42 @@
 package org.sarge.jove.platform.vulkan.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-
-import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.VkBufferUsageFlag;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.memory.*;
+import org.sarge.jove.platform.vulkan.VkBufferUsageFlags;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 
-public class VertexBufferTest {
-	private DeviceContext dev;
-	private DeviceMemory mem;
-	private VertexBuffer vbo;
+class VertexBufferTest {
+	private VertexBuffer vertex;
+	private boolean bound;
 
 	@BeforeEach
 	void before() {
-		dev = new MockDeviceContext();
-		mem = new MockDeviceMemory();
-		vbo = new VertexBuffer(new VulkanBuffer(new Handle(1), dev, Set.of(VkBufferUsageFlag.VERTEX_BUFFER, VkBufferUsageFlag.UNIFORM_BUFFER), mem, 2));
-	}
-
-	@Test
-	void constructor() {
-		assertEquals(new Handle(1), vbo.handle());
-		assertEquals(dev, vbo.device());
-		assertEquals(Set.of(VkBufferUsageFlag.VERTEX_BUFFER, VkBufferUsageFlag.UNIFORM_BUFFER), vbo.usage());
-		assertEquals(mem, vbo.memory());
-		assertEquals(2, vbo.length());
+		final var library = new MockVulkanLibrary() {
+			@Override
+			public void vkCmdBindVertexBuffers(Buffer commandBuffer, int firstBinding, int bindingCount, VulkanBuffer[] pBuffers, long[] pOffsets) {
+				assertEquals(0, firstBinding);
+				assertEquals(1, bindingCount);
+				assertArrayEquals(new VulkanBuffer[]{vertex.buffer()}, pBuffers);
+				assertArrayEquals(new long[]{0L}, pOffsets);
+				bound = true;
+			}
+		};
+		final var device = new MockLogicalDevice(library);
+		final VulkanBuffer buffer = new MockVulkanBuffer(device, 42, VkBufferUsageFlags.VERTEX_BUFFER);
+		vertex = new VertexBuffer(buffer);
 	}
 
 	@Test
 	void bind() {
-		final VulkanLibrary lib = dev.library();
-		final var cmd = new MockCommandBuffer();
-		final Command bind = vbo.bind(2);
-		bind.record(lib, cmd);
-		verify(lib).vkCmdBindVertexBuffers(cmd, 2, 1, NativeObject.array(List.of(vbo)), new long[]{0});
+		final Command bind = vertex.bind(0);
+		bind.execute(null);
+		assertEquals(true, bound);
+	}
+
+	@Test
+	void invalid() {
+		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 42, VkBufferUsageFlags.TRANSFER_SRC);
+		assertThrows(IllegalStateException.class, () -> new VertexBuffer(invalid));
 	}
 }

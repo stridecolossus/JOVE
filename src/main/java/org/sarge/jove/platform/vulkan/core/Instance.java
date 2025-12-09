@@ -1,106 +1,77 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.platform.vulkan.core.VulkanLibrary.check;
-import static org.sarge.lib.Validation.requireNotEmpty;
+import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import java.util.*;
 
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Version;
-import org.sarge.jove.platform.vulkan.util.ValidationLayer;
-import org.sarge.jove.util.ReferenceFactory;
-
-import com.sun.jna.*;
-import com.sun.jna.ptr.*;
+import org.sarge.jove.platform.vulkan.common.*;
 
 /**
  * The <i>instance</i> is the root object for a Vulkan application.
  * @author Sarge
  */
 public class Instance extends TransientNativeObject {
-	private final VulkanLibrary lib;
-	private final ReferenceFactory factory;
-	private final Map<String, Function> functions = new HashMap<>();
-	private final Collection<Handler> handlers = new ArrayList<>();
+	private final Library library;
 
 	/**
 	 * Constructor.
 	 * @param handle		Instance handle
-	 * @param lib			Vulkan library
-	 * @param factory		Reference factory
+	 * @param library		Instance library
 	 */
-	Instance(Handle handle, VulkanLibrary lib, ReferenceFactory factory) {
+	Instance(Handle handle, Library library) {
 		super(handle);
-		this.lib = requireNonNull(lib);
-		this.factory = requireNonNull(factory);
+		this.library = requireNonNull(library);
 	}
 
 	/**
-	 * @return Vulkan library
-	 */
-	public VulkanLibrary library() {
-		return lib;
-	}
-
-	/**
-	 * @return Reference factory
-	 */
-	public ReferenceFactory factory() {
-		return factory;
-	}
-
-	/**
-	 * Looks up a Vulkan function by name.
+	 * Looks up a function pointer in this instance.
 	 * @param name Function name
-	 * @return Vulkan function
-	 * @throws RuntimeException if the function cannot be found
+	 * @return Function pointer
 	 */
-	public Function function(String name) {
-		return functions.computeIfAbsent(name, this::lookup);
-	}
-
-	private Function lookup(String name) {
-		final Pointer ptr = lib.vkGetInstanceProcAddr(this, name);
-		if(ptr == null) throw new RuntimeException("Cannot find function pointer: " + name);
-		return Function.getFunction(ptr);
-	}
-
-	/**
-	 * Attaches a diagnostic handler to this instance.
-	 */
-	void attach(Handler handler) {
-		requireNonNull(handler);
-		handlers.add(handler);
+	public Optional<Handle> function(String name) {
+		final Handle function = library.vkGetInstanceProcAddr(this, name);
+		return Optional.ofNullable(function);
 	}
 
 	@Override
 	protected void release() {
-		// Release diagnostic handlers
-		for(Handler handler : handlers) {
-			if(!handler.isDestroyed()) {
-				handler.destroy();
-			}
-		}
-		handlers.clear();
-
-		// Release this instance
-		lib.vkDestroyInstance(this, null);
+		library.vkDestroyInstance(this, null);
 	}
 
 	/**
-	 * Builder for an instance.
+	 * Enumerates the extensions supported by this Vulkan implementation.
+	 * @param library		Instance library
+	 * @param layer			Optional layer name
+	 * @return Supported extensions
+	 */
+	public static VkExtensionProperties[] extensions(Library library, String layer) {
+		final VulkanFunction<VkExtensionProperties[]> extensions = (count, array) -> library.vkEnumerateInstanceExtensionProperties(layer, count, array);
+		return VulkanFunction.invoke(extensions, VkExtensionProperties[]::new);
+	}
+
+	/**
+	 * Enumerates the layers supported by this Vulkan implementation.
+	 * @param library Instance library
+	 * @return Supported layers
+	 */
+	public static VkLayerProperties[] layers(Library library) {
+		final VulkanFunction<VkLayerProperties[]> layers = (count, array) -> library.vkEnumerateInstanceLayerProperties(count, array);
+		return VulkanFunction.invoke(layers, VkLayerProperties[]::new);
+	}
+
+	/**
+	 * Builder for the instance.
 	 */
 	public static class Builder {
-		private static final Version VERSION = Version.DEFAULT;
-
 		private String name = "Unspecified";
-		private Version ver = Version.DEFAULT;
+		private Version version = Version.DEFAULT;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
-		private Version api = VulkanLibrary.VERSION;
-		private ReferenceFactory factory = new ReferenceFactory();
+		private Version api = Vulkan.VERSION;
 
 		/**
 		 * Sets the application name.
@@ -112,22 +83,24 @@ public class Instance extends TransientNativeObject {
 		}
 
 		/**
-		 * Sets the application version (default is {@link Version#DEFAULT}).
-		 * @param ver Application version
+		 * Sets the application version.
+		 * @param version Application version
+		 * @see Version#DEFAULT
 		 */
-		public Builder version(Version ver) {
-			this.ver = requireNonNull(ver);
+		public Builder version(Version version) {
+			this.version = requireNonNull(version);
 			return this;
 		}
 
 		/**
-		 * Sets the required version of the Vulkan API (default is {@link VulkanLibrary#VERSION}).
+		 * Sets the required version of the Vulkan API.
 		 * @param api Required API version
-		 * @throws IllegalStateException if {@link #api} is not supported by this JOVE implementation
+		 * @throws IllegalArgumentException if {@link #api} is not supported by this JOVE implementation
+		 * @see Vulkan#VERSION
 		 */
 		public Builder api(Version api) {
-			if(api.compareTo(VulkanLibrary.VERSION) > 0) {
-				throw new IllegalStateException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, VulkanLibrary.VERSION));
+			if(api.compareTo(Vulkan.VERSION) > 0) {
+				throw new IllegalArgumentException("Required API not supported by this implementation: required=%s supported=%s".formatted(api, Vulkan.VERSION));
 			}
 			this.api = requireNonNull(api);
 			return this;
@@ -135,19 +108,20 @@ public class Instance extends TransientNativeObject {
 
 		/**
 		 * Registers a required extension.
-		 * @param ext Extension name
+		 * @param extension Extension name
 		 */
-		public Builder extension(String ext) {
-			requireNotEmpty(ext);
-			extensions.add(ext);
+		public Builder extension(String extension) {
+			requireNotEmpty(extension);
+			extensions.add(extension);
 			return this;
 		}
 
 		/**
-		 * Helper - Registers an array of extensions.
+		 * Helper.
+		 * Registers a group of extensions.
 		 * @param extensions Extension names
 		 */
-		public Builder extensions(String[] extensions) {
+		public Builder extensions(Iterable<String> extensions) {
 			for(String ext : extensions) {
 				extension(ext);
 			}
@@ -158,54 +132,56 @@ public class Instance extends TransientNativeObject {
 		 * Registers a required validation layer.
 		 * @param layer Validation layer descriptor
 		 */
-		public Builder layer(ValidationLayer layer) {
-			requireNonNull(layer);
-			layers.add(layer.name());
-			return this;
-		}
-
-		/**
-		 * Sets the reference factory used by this instance.
-		 * @param factory Reference factory
-		 * @see ReferenceFactory#DEFAULT
-		 */
-		public Builder factory(ReferenceFactory factory) {
-			this.factory = requireNonNull(factory);
+		public Builder layer(String layer) {
+			requireNotEmpty(layer);
+			layers.add(layer);
 			return this;
 		}
 
 		/**
 		 * Constructs this instance.
-		 * @param lib Vulkan
-		 * @return New instance
+		 * @param library Instance library
+		 * @return Instance
 		 */
-		public Instance build(VulkanLibrary lib) {
-			// Init application descriptor
-			final var app = new VkApplicationInfo();
-			app.pApplicationName = name;
-			app.applicationVersion = ver.toInteger();
-			app.pEngineName = "JOVE";
-			app.engineVersion = VERSION.toInteger();
-			app.apiVersion = api.toInteger();
+		public Instance build(Library library) {
+			final VkInstanceCreateInfo info = create();
+			final var pointer = new Pointer();
+			library.vkCreateInstance(info, null, pointer);
+			return new Instance(pointer.handle(), library);
+		}
 
+		/**
+		 * @return Application descriptor
+		 */
+		private VkApplicationInfo application() {
+			final var app = new VkApplicationInfo();
+			app.sType = VkStructureType.APPLICATION_INFO;
+			app.pApplicationName = name;
+			app.applicationVersion = version.toInteger();
+			app.pEngineName = "JOVE";
+			app.engineVersion = new Version(1, 0, 0).toInteger();
+			app.apiVersion = api.toInteger();
+			return app;
+		}
+
+		/**
+		 * @return Instance descriptor
+		 */
+		private VkInstanceCreateInfo create() {
 			// Init instance descriptor
 			final var info = new VkInstanceCreateInfo();
-			info.pApplicationInfo = app;
+			info.sType = VkStructureType.INSTANCE_CREATE_INFO;
+			info.pApplicationInfo = application();
 
 			// Populate required extensions
-			info.ppEnabledExtensionNames = new StringArray(extensions.toArray(String[]::new));
+			info.ppEnabledExtensionNames = extensions.toArray(String[]::new);
 			info.enabledExtensionCount = extensions.size();
 
 			// Populate required layers
-			info.ppEnabledLayerNames = new StringArray(layers.toArray(String[]::new));
+			info.ppEnabledLayerNames = layers.toArray(String[]::new);
 			info.enabledLayerCount = layers.size();
 
-			// Create instance
-			final PointerByReference ref = factory.pointer();
-			check(lib.vkCreateInstance(info, null, ref));
-
-			// Create instance domain wrapper
-			return new Instance(new Handle(ref), lib, factory);
+			return info;
 		}
 	}
 
@@ -217,41 +193,41 @@ public class Instance extends TransientNativeObject {
 		 * Creates the vulkan instance.
 		 * @param info				Instance descriptor
 		 * @param pAllocator		Allocator
-		 * @param pInstance			Returned instance
+		 * @param pInstance			Returned instance handle
 		 * @return Result
 		 */
-		int vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Pointer pAllocator, PointerByReference pInstance);
+		VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance);
 
 		/**
 		 * Destroys the vulkan instance.
 		 * @param instance			Instance handle
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyInstance(Instance instance, Pointer pAllocator);
+		void vkDestroyInstance(Instance instance, Handle pAllocator);
 
 		/**
-		 * Enumerates extension properties.
-		 * @param pLayerName		Layer name or {@code null} for extensions provided by the Vulkan implementation
+		 * Enumerates supported extensions.
+		 * @param pLayerName		Optional layer name
 		 * @param pPropertyCount	Number of extensions
-		 * @param pProperties		Extensions (pointer-to-array)
+		 * @param pProperties		Extensions
 		 * @return Result
 		 */
-		int vkEnumerateInstanceExtensionProperties(String pLayerName, IntByReference pPropertyCount, VkExtensionProperties pProperties);
+		VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, @Updated VkExtensionProperties[] pProperties);
 
 		/**
-		 * Enumerates validation layer properties.
+		 * Enumerates supported layers.
 		 * @param pPropertyCount	Number of layers
-		 * @param pProperties		Layers (pointer-to-array)
+		 * @param pProperties		Layers
 		 * @return Result
 		 */
-		int vkEnumerateInstanceLayerProperties(IntByReference pPropertyCount, VkLayerProperties pProperties);
+		VkResult vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, @Updated VkLayerProperties[] pProperties);
 
 		/**
-		 * Looks up a function pointer for the given instance.
+		 * Looks up a function pointer of this instance.
 		 * @param instance		Vulkan instance
-		 * @param name			Function name
+		 * @param pName			Function name
 		 * @return Function pointer
 		 */
-		Pointer vkGetInstanceProcAddr(Instance instance, String pName);
+		Handle vkGetInstanceProcAddr(Instance instance, String pName);
 	}
 }

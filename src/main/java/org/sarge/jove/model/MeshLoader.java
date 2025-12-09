@@ -1,82 +1,214 @@
 package org.sarge.jove.model;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.file.*;
 import java.util.*;
 
-import org.sarge.jove.common.*;
-import org.sarge.jove.io.*;
+import org.sarge.jove.common.Layout;
+import org.sarge.jove.model.IndexedMesh.Index;
+import org.sarge.jove.model.Mesh.MeshData;
 
 /**
  * The <i>mesh loader</i> is used to persist and load a {@link BufferedMesh}.
  * @author Sarge
  */
-public class MeshLoader implements ResourceLoader<DataInputStream, Mesh> {
-	private final DataHelper helper = new DataHelper();
+public class MeshLoader {
+	private static final int VERSION = 1;
 
-	@Override
-	public DataInputStream map(InputStream in) throws IOException {
-		return new DataInputStream(in);
+	public Mesh load(Path path) throws IOException {
+		try(var in = new DataInputStream(Files.newInputStream(path))) {
+			return load(in);
+		}
 	}
 
-	@Override
+	/**
+	 * Loads a persisted mesh from the given input stream.
+	 * @param in Input stream
+	 * @return Mesh
+	 * @throws IOException if the mesh cannot be loaded
+	 */
 	public Mesh load(DataInputStream in) throws IOException {
-		// Load and verify file format version
-		helper.version(in);
+		// Verify file version
+		if(in.readInt() > VERSION) {
+			throw new IOException("Unsupported mesh version");
+		}
 
 		// Load model header
 		final Primitive primitive = Primitive.valueOf(in.readUTF());
 		final int count = in.readInt();
 
 		// Load vertex layout
+		final List<Layout> layouts = new ArrayList<>();
 		final int num = in.readInt();
-		final List<Layout> layout = new ArrayList<>();
 		for(int n = 0; n < num; ++n) {
-			final Layout c = helper.layout(in);
-			layout.add(c);
+			final int size = in.readInt();
+			final var type = Layout.Type.valueOf(in.readUTF());
+			final boolean signed = in.readBoolean();
+			final int bytes = in.readInt();
+			final var layout = new Layout(size, type, signed, bytes);
+			layouts.add(layout);
 		}
 
-		// Load data
-		final ByteSizedBufferable vertices = helper.buffer(in);
-		final ByteSizedBufferable index = helper.buffer(in);
+		// Load mesh
+		final MeshData vertices = data(in);
+		final MeshData index = data(in);
 
 		// Create mesh
-		return new Mesh(primitive, new CompoundLayout(layout), () -> count, vertices, index);
+		if(index.length() == 0) {
+			return new AbstractMesh(primitive, layouts) {
+				@Override
+				public int count() {
+					return count;
+				}
+
+				@Override
+				public MeshData vertices() {
+					return vertices;
+				}
+			};
+		}
+		else {
+
+			// TODO - this is a bit nasty using the mutable implementation -> why we had the separate 'indexed' interface lol
+
+			return new IndexedMesh(primitive, layouts) {
+				@Override
+				public int count() {
+					return count;
+				}
+
+				@Override
+				public MeshData vertices() {
+					return vertices;
+				}
+
+				@Override
+				public Index index() {
+					return new IndexWrapper(index);
+				}
+			};
+		}
 	}
 
 	/**
-	 * Writes a mesh to an output stream.
+	 * Loads a data buffer for a mesh.
+	 */
+	private static MeshData data(DataInputStream in) throws IOException {
+		// Init data buffer
+		// TODO - helper
+		final var data = new MeshData() {
+			private final int length = in.readInt();
+			private final byte[] bytes = new byte[length];
+
+			@Override
+			public int length() {
+				return length;
+			}
+
+			@Override
+			public void buffer(ByteBuffer buffer) {
+				if(buffer.isDirect()) {
+					for(int n = 0; n < length; ++n) {
+						buffer.put(bytes[n]);
+					}
+				}
+				else {
+					buffer.put(bytes);
+				}
+			}
+		};
+
+		// Load data
+		if(data.length > 0) {
+			in.readFully(data.bytes);
+		}
+
+		return data;
+	}
+
+	public void write(Mesh mesh, Path path) throws IOException {
+		try(var out = new DataOutputStream(Files.newOutputStream(path))) {
+			write(mesh, out);
+		}
+	}
+
+	private record IndexWrapper(MeshData index) implements Index {
+		@Override
+		public int length() {
+			return index.length();
+		}
+
+		@Override
+		public void buffer(ByteBuffer buffer) {
+			index.buffer(buffer);
+		}
+
+		@Override
+		public boolean isCompactIndex() {
+			return false;
+		}
+
+		@Override
+		public Index compact() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	/**
+	 * Writes a mesh to the given output stream.
 	 * @param mesh		Mesh
 	 * @param out		Output stream
 	 * @throws IOException if the mesh cannot be written
 	 */
-	public void save(Mesh mesh, DataOutputStream out) throws IOException {
+	public void write(Mesh mesh, DataOutputStream out) throws IOException {
 		// Write file header
-		helper.writeVersion(out);
+		out.writeInt(VERSION);
 
 		// Write model header
 		out.writeUTF(mesh.primitive().name());
 		out.writeInt(mesh.count());
 
 		// Write vertex layout
-		final List<Layout> layout = mesh.layout().layout();
-		out.writeInt(layout.size());
-		for(Layout c : layout) {
-			helper.write(c, out); // TODO - cast
+		final List<Layout> layouts = mesh.layout();
+		out.writeInt(layouts.size());
+		for(Layout layout : layouts) {
+			out.writeInt(layout.count());
+			out.writeUTF(layout.type().name());
+			out.writeBoolean(layout.signed());
+			out.writeInt(layout.bytes());
 		}
 
 		// Write vertices
-		helper.write(mesh.vertices(), out);
+		write(mesh.vertices(), out);
 
 		// Write index
-		final Optional<ByteSizedBufferable> index = mesh.index();
-		if(index.isPresent()) {
-			helper.write(index.get(), out);
+		if(mesh instanceof IndexedMesh indexed) {
+			write(indexed.index(), out);
 		}
-		else {
-			out.writeInt(0);
+	}
+
+	/**
+	 * Writes mesh data to the given output stream.
+	 * @param data		Data buffer
+	 * @param out		Output
+	 * @throws IOException if the data cannot be written
+	 */
+	private static void write(MeshData data, DataOutputStream out) throws IOException {
+		// Write data header
+		final int length = data.length();
+		out.writeInt(length);
+
+		// Stop if empty
+		if(length == 0) {
+			return;
 		}
 
-		// TODO - do we need this?
-		out.flush();
+		// Buffer data
+		final var buffer = ByteBuffer.allocate(length);
+		data.buffer(buffer);
+
+		// Copy buffer to output
+		out.write(buffer.array());
 	}
 }

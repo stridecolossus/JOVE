@@ -24,6 +24,7 @@ public interface Playable {
 
 	/**
 	 * Stops playing.
+	 * @throws IllegalStateException if not playing
 	 */
 	void stop();
 }
