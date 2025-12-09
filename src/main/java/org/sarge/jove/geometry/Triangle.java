@@ -51,25 +51,6 @@ public record Triangle(Point a, Point b, Point c) implements IntersectedSurface 
 	}
 
 	/**
-	 * Determines the winding order (or orientation) of this polygon with respect to the given view axis (usually {@link Axis#Z}).
-	 * @param axis Axis
-	 * @return Winding order
-	 */
-	public WindingOrder winding(Vector axis) {
-		final float determinant = axis.dot(this.normal());
-		if(determinant > 0) {
-			return WindingOrder.COUNTER_CLOCKWISE;
-		}
-		else
-		if(determinant < 0) {
-			return WindingOrder.CLOCKWISE;
-		}
-		else {
-			return WindingOrder.COLINEAR;
-		}
-	}
-
-	/**
 	 * {@inheritDoc}
 	 * Calculates the intersection point of the given ray with this triangle.
 	 * Note that the triangle edges are considered as intersection results by this implementation.

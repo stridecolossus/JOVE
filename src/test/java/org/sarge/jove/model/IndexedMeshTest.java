@@ -7,20 +7,20 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Mesh.DataBuffer;
+import org.sarge.jove.model.IndexedMesh.Index;
 
 public class IndexedMeshTest {
-	private IndexedVertexMesh mesh;
+	private IndexedMesh mesh;
 
 	@BeforeEach
 	void before() {
-		mesh = new IndexedVertexMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
+		mesh = new IndexedMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
 	}
 
 	@Test
 	void empty() {
 		assertEquals(0, mesh.count());
-		assertEquals(false, mesh.isCompactIndex());
+		assertEquals(true, mesh.index().isCompactIndex());
 	}
 
 	@Test
@@ -29,7 +29,7 @@ public class IndexedMeshTest {
 		mesh.add(0);
 		mesh.add(0);
 		assertEquals(2, mesh.count());
-		assertEquals(false, mesh.isCompactIndex());
+		assertEquals(true, mesh.index().isCompactIndex());
 	}
 
 	@Test
@@ -47,14 +47,14 @@ public class IndexedMeshTest {
 		mesh.add(1);
 		mesh.add(2);
 		assertEquals(3, mesh.count());
-		assertEquals(false, mesh.isCompactIndex());
 
 		// Write to buffer
-		final DataBuffer index = mesh.index();
+		final Index index = mesh.index();
 		final ByteBuffer buffer = ByteBuffer.allocate(3 * Integer.BYTES);
 		assertEquals(index.length(), buffer.limit());
 		index.buffer(buffer);
 		assertEquals(0, buffer.remaining());
+		assertEquals(true, index.isCompactIndex());
 
 		// Check buffer
 		final var check = buffer.rewind().asIntBuffer();
@@ -65,14 +65,9 @@ public class IndexedMeshTest {
 
 	@Nested
 	class CompactIndexTest {
-		@BeforeEach
-		void before() {
-			mesh.compact(true);
-		}
-
 		@Test
 		void empty() {
-			assertEquals(true, mesh.isCompactIndex());
+			assertEquals(true, mesh.index().isCompactIndex());
 		}
 
 		@Test
@@ -84,10 +79,9 @@ public class IndexedMeshTest {
 			mesh.add(0);
 			mesh.add(1);
 			mesh.add(2);
-			assertEquals(true, mesh.isCompactIndex());
 
 			// Write to buffer
-			final DataBuffer index = mesh.index();
+			final Index index = mesh.index().compact();
 			final ByteBuffer buffer = ByteBuffer.allocate(3 * Short.BYTES);
 			assertEquals(buffer.limit(), index.length());
 			index.buffer(buffer);
@@ -103,16 +97,18 @@ public class IndexedMeshTest {
 		@Test
 		void restart() {
 			mesh.restart();
-			assertEquals(false, mesh.isCompactIndex());
+			assertEquals(false, mesh.index().isCompactIndex());
+			assertThrows(IllegalStateException.class, () -> mesh.index().compact());
 		}
 
 		@Test
 		void maximum() {
 			mesh.add(new Vertex(Point.ORIGIN));
-			for(int n = 0; n < IndexedVertexMesh.MAX_SHORT_INDEX_SIZE; ++n) {
+			for(int n = 0; n < Index.MAX_SHORT_INDEX_SIZE; ++n) {
 				mesh.add(0);
 			}
-			assertEquals(false, mesh.isCompactIndex());
+			assertEquals(false, mesh.index().isCompactIndex());
+			assertThrows(IllegalStateException.class, () -> mesh.index().compact());
 		}
 	}
 }

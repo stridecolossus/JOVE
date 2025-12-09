@@ -6,7 +6,8 @@ import java.nio.file.*;
 import java.util.*;
 
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.model.Mesh.DataBuffer;
+import org.sarge.jove.model.IndexedMesh.Index;
+import org.sarge.jove.model.Mesh.MeshData;
 
 /**
  * The <i>mesh loader</i> is used to persist and load a {@link BufferedMesh}.
@@ -49,12 +50,9 @@ public class MeshLoader {
 			layouts.add(layout);
 		}
 
-		// Load data
-		final DataBuffer vertices = data(in);
-
-		// Load index
-		final boolean compact = in.readBoolean();
-		final DataBuffer index = data(in);
+		// Load mesh
+		final MeshData vertices = data(in);
+		final MeshData index = data(in);
 
 		// Create mesh
 		if(index.length() == 0) {
@@ -65,48 +63,38 @@ public class MeshLoader {
 				}
 
 				@Override
-				public DataBuffer vertices() {
+				public MeshData vertices() {
 					return vertices;
 				}
 			};
 		}
 		else {
-			class IndexWrapper extends AbstractMesh implements IndexedMesh {
-				protected IndexWrapper() {
-					super(primitive, layouts);
-				}
-
+			return new IndexedMesh(primitive, layouts) {
 				@Override
 				public int count() {
 					return count;
 				}
 
 				@Override
-				public DataBuffer vertices() {
+				public MeshData vertices() {
 					return vertices;
 				}
 
 				@Override
-				public boolean isCompactIndex() {
-					return compact;
+				public Index index() {
+					return new IndexWrapper(index);
 				}
-
-				@Override
-				public DataBuffer index() {
-					return index;
-				}
-			}
-
-			return new IndexWrapper();
+			};
 		}
 	}
 
 	/**
 	 * Loads a data buffer for a mesh.
 	 */
-	private static DataBuffer data(DataInputStream in) throws IOException {
+	private static MeshData data(DataInputStream in) throws IOException {
 		// Init data buffer
-		final var data = new DataBuffer() {
+		// TODO - helper
+		final var data = new MeshData() {
 			private final int length = in.readInt();
 			private final byte[] bytes = new byte[length];
 
@@ -142,6 +130,28 @@ public class MeshLoader {
 		}
 	}
 
+	private record IndexWrapper(MeshData index) implements Index {
+		@Override
+		public int length() {
+			return index.length();
+		}
+
+		@Override
+		public void buffer(ByteBuffer buffer) {
+			index.buffer(buffer);
+		}
+
+		@Override
+		public boolean isCompactIndex() {
+			return false;
+		}
+
+		@Override
+		public Index compact() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
 	/**
 	 * Writes a mesh to the given output stream.
 	 * @param mesh		Mesh
@@ -171,7 +181,6 @@ public class MeshLoader {
 
 		// Write index
 		if(mesh instanceof IndexedMesh indexed) {
-			out.writeBoolean(indexed.isCompactIndex());
 			write(indexed.index(), out);
 		}
 	}
@@ -182,7 +191,7 @@ public class MeshLoader {
 	 * @param out		Output
 	 * @throws IOException if the data cannot be written
 	 */
-	private static void write(DataBuffer data, DataOutputStream out) throws IOException {
+	private static void write(MeshData data, DataOutputStream out) throws IOException {
 		// Write data header
 		final int length = data.length();
 		out.writeInt(length);

@@ -115,7 +115,9 @@ class PhysicalDeviceTest {
 
 	@Test
 	void enumerate() {
-		assertEquals(1, PhysicalDevice.enumerate(instance, library).count());
+		final var devices = PhysicalDevice.enumerate(instance, library).toList();
+		assertEquals(1, devices.size());
+		assertNotNull(devices.getFirst());
 	}
 
 	@Test

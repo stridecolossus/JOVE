@@ -8,6 +8,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanUtility;
 class VulkanTest {
 	@Test
 	void create() {
+		Vulkan.create();
 	}
 
 	@Test

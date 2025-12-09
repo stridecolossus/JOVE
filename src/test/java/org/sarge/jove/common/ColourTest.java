@@ -26,7 +26,7 @@ class ColourTest {
 	@DisplayName("A colour has a 4-component layout")
 	@Test
 	void layout() {
-		assertEquals(Layout.floats(4), Colour.LAYOUT);
+		assertEquals(new Layout(4, Layout.Type.NORMALIZED, false, Float.BYTES), Colour.LAYOUT);
 	}
 
 	@Nested

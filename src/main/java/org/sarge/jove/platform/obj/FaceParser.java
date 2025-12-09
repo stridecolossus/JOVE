@@ -67,13 +67,13 @@ class FaceParser implements Parser {
 			// Parse normal
 			if((parts.length > 1) && !parts[1].isEmpty()) {
 				final Normal normal = parse(parts[1], model.normals());
-				vertex.normal(normal);
+				vertex.add(normal);
 			}
 
 			// Parse texture coordinate
 			if(parts.length == 3) {
 				final Coordinate coordinate = parse(parts[2], model.coordinates());
-				vertex.coordinate(coordinate);
+				vertex.add(coordinate);
 			}
 
 			// Add vertex to model

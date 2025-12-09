@@ -5,7 +5,6 @@ import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.Point;
@@ -88,7 +87,7 @@ public class GridBuilder {
 	private float tile = 1;
 	private HeightFunction height = HeightFunction.literal(0);
 	private Primitive primitive = Primitive.TRIANGLE;
-	private IndexFactory index = IndexFactory.TRIANGLES;
+	//private IndexFactory index = IndexFactory.TRIANGLES;
 
 	/**
 	 * Sets the size of the grid.
@@ -131,14 +130,14 @@ public class GridBuilder {
 		return this;
 	}
 
-	/**
-	 * Sets the factory used to generate an indexed grid.
-	 * @param index Index factory
-	 */
-	public GridBuilder index(IndexFactory index) {
-		this.index = requireNonNull(index);
-		return this;
-	}
+//	/**
+//	 * Sets the factory used to generate an indexed grid.
+//	 * @param index Index factory
+//	 */
+//	public GridBuilder index(IndexFactory index) {
+//		this.index = requireNonNull(index);
+//		return this;
+//	}
 
 	// TODO - triangles, quads or isolines
 	// SpacingEqual, SpacingFractionalEven, and SpacingFractionalOdd
@@ -148,9 +147,9 @@ public class GridBuilder {
 	 * Constructs this grid.
 	 * @return New grid mesh
 	 */
-	public VertexMesh build() {
+	public MutableMesh build() {
 		// Init mesh
-		final var mesh = new IndexedVertexMesh(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final var mesh = new IndexedMesh(primitive, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 
 		// Calculate half distance in both directions
 		final int w = size.width();
@@ -178,12 +177,46 @@ public class GridBuilder {
 			}
 		}
 
+		/**
+		 *
+		 * TODO
+		 *
+		 * did the implementation using the index factory use degenerate triangles...
+		 *
+		 * 0 - 1 - 2
+		 * |   |   |
+		 * 3 - 4 - 5
+		 * |   |   |
+		 * 6 - 7 - 8
+		 * |   |   |
+		 * etc
+		 *
+		 * 031 425 [5] 364 758
+		 *
+		 * 031 314 142 425
+		 * [255 553]
+		 * 364 647 475 758
+		 * etc
+		 *
+		 * if not then how did it work?
+		 *
+		 * was there ever any sense in combining the use cases anyway?
+		 *
+		 * i.e. a pair of counter-clockwise triangles for the faces of a cube is probably only ever used for that use case (?)
+		 *
+		 * whereas a grid has a different index order anyway, dependant on the 'width' of the grid
+		 * i.e. a quad of 2 triangles is ROW major, whereas this grid is COLUMN major
+		 *
+		 * so just treat the two cases completely separate and have done with it!
+		 *
+		 */
+
 		// Build index
-		IntStream
-				.range(0, h - 1)
-				.mapToObj(row -> index.row(row))
-				.flatMapToInt(row -> row.indices(w - 1))
-				.forEach(mesh::add);
+//		IntStream
+//				.range(0, h - 1)
+//				.mapToObj(row -> index.row(row))
+//				.flatMapToInt(row -> row.indices(w - 1))
+//				.forEach(mesh::add);
 
 		// Construct grid
 		return mesh;

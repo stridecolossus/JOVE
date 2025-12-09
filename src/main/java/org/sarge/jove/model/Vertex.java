@@ -3,101 +3,75 @@ package org.sarge.jove.model;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.ByteBuffer;
-import java.util.Objects;
+import java.util.*;
 
 import org.sarge.jove.common.Bufferable;
-import org.sarge.jove.geometry.*;
 
 /**
  * A <i>vertex</i> is a mutable composition of the components of a mesh vertex.
  * @author Sarge
  */
 public class Vertex implements Bufferable {
-	private final Point pos;
-	private Normal normal;
-	private Coordinate coordinate;
+	private final List<Bufferable> components = new ArrayList<>();
 
 	/**
 	 * Constructor.
-	 * @param pos Vertex position
+	 * @param components Vertex components
+	 * @throws NullPointerException if any component is {@code null}
 	 */
-	public Vertex(Point pos) {
-		this.pos = requireNonNull(pos);
-	}
-
-	// TODO
-	public Vertex(Point pos, Coordinate coordinate) {
-		this(pos);
-		coordinate(coordinate);
-	}
-
-	// TODO
-	public Vertex(Point pos, Normal normal) {
-		this(pos);
-		normal(normal);
-	}
-
-	// TODO
-	public Vertex(Point pos, Normal normal, Coordinate coordinate) {
-		this(pos);
-		normal(normal);
-		coordinate(coordinate);
-	}
-
-	// TODO - reintro builder?
-
-	/**
-	 * @return Vertex position
-	 */
-	public Point position() {
-		return pos;
-	}
-	// TODO - mutable but mandatory?
-
-	/**
-	 * @return Vertex normal
-	 */
-	public Normal normal() {
-		return normal;
+	public Vertex(Bufferable... components) {
+		for(Bufferable c : components) {
+			add(c);
+		}
 	}
 
 	/**
-	 * Sets the vertex normal.
-	 * @param normal Vertex normal
+	 * @return Components of this vertex
 	 */
-	public void normal(Normal normal) {
-		this.normal = normal;
+	public List<Bufferable> components() {
+		return new ArrayList<>(components);
 	}
 
 	/**
-	 * @return Texture coordinate
+	 * Retrieves a component of this vertex by index.
+	 * @param <T> Component type
+	 * @param index Component index
+	 * @return Component
+	 * @throws IndexOutOfBoundsException if {@link #index} is invalid for this vertex
 	 */
-	public Coordinate coordinate() {
-		return coordinate;
-	}
-
-	/**
-	 * Sets the texture coordinate of this vertex.
-	 * @param coordinate Texture coordinate
-	 */
-	public void coordinate(Coordinate coordinate) {
-		this.coordinate = coordinate;
+	@SuppressWarnings("unchecked")
+	public <T> T component(int index) {
+		return (T) components.get(index);
 	}
 
 	@Override
-	public void buffer(ByteBuffer bb) {
-		pos.buffer(bb);
-		if(normal != null) {
-			normal.buffer(bb);
+	public void buffer(ByteBuffer buffer) {
+		for(Bufferable b : components) {
+			b.buffer(buffer);
 		}
-		if(coordinate != null) {
-			coordinate.buffer(bb);
-		}
+	}
+
+	/**
+	 * Removes a component from this vertex.
+	 * @param index Component index
+	 * @throws IndexOutOfBoundsException if {@link #index} is invalid for this vertex
+	 */
+	public void remove(int index) {
+		components.remove(index);
+	}
+
+	/**
+	 * Adds a component to this vertex.
+	 * @param component Component to add
+	 */
+	public void add(Bufferable component) {
+		requireNonNull(component);
+		components.add(component);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(pos, normal, coordinate);
+		return components.hashCode();
 	}
 
 	@Override
@@ -105,8 +79,11 @@ public class Vertex implements Bufferable {
 		return
 				(obj == this) ||
 				(obj instanceof Vertex that) &&
-				this.pos.equals(that.pos) &&
-				Objects.equals(this.normal, that.normal) &&
-				Objects.equals(this.coordinate, that.coordinate);
+				this.components.equals(that.components);
+	}
+
+	@Override
+	public String toString() {
+		return components.toString();
 	}
 }

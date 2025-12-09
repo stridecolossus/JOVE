@@ -1,7 +1,7 @@
 package org.sarge.jove.foreign;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.foreign.*;
 
@@ -43,5 +43,11 @@ class NativeReferenceTest {
 		final var address = MemorySegment.ofAddress(42);
 		pointer.set(ADDRESS, 0L, address);
 		assertEquals(address, reference.get());
+	}
+
+	@Test
+	void equals() {
+		assertEquals(reference, reference);
+		assertNotEquals(reference, null);
 	}
 }

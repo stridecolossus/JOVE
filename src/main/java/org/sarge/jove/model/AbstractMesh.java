@@ -44,6 +44,20 @@ public abstract class AbstractMesh implements Mesh {
 		return layout;
 	}
 
+	/**
+	 * Looks up the index of given layout of this mesh.
+	 * @param layout Mesh layout
+	 * @return Layout index
+	 * @throws IllegalArgumentException if the layout is not a member of this mesh
+	 */
+	public int indexOf(Layout layout) {
+		final int index = this.layout.indexOf(layout);
+		if(index < 0) {
+			throw new IllegalArgumentException("Layout not present: " + layout);
+		}
+		return index;
+	}
+
 	@Override
 	public String toString() {
 		return String.format("Mesh[primitive=%s layout=%s count=%d]", primitive, layout, count());

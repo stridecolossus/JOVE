@@ -22,10 +22,9 @@ class RemoveDuplicateMeshTest {
 		final Vertex other = new Vertex(new Point(1, 2, 3), Axis.Y, Coordinate2D.TOP_RIGHT);
 
 		// Build an indexed mesh that re-uses some vertices
-		mesh
-				.add(vertex)
-				.add(other)
-				.add(vertex);
+		mesh.add(vertex);
+		mesh.add(other);
+		mesh.add(vertex);
 
 		// Verify the de-duplicated model
 		assertEquals(3, mesh.count());

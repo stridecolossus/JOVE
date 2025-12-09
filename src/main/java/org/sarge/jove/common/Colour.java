@@ -30,7 +30,7 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	/**
 	 * Layout of a colour.
 	 */
-	public static final Layout LAYOUT = Layout.floats(SIZE);
+	public static final Layout LAYOUT = new Layout(SIZE, Layout.Type.NORMALIZED, false, Float.BYTES);
 
 	/**
 	 * Creates a colour from the given floating-point array representing an RGBA colour <b>or</b> an RGB colour with the alpha value initialised to <b>one</b>.

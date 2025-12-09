@@ -10,11 +10,11 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.scene.volume.Bounds;
 
 class VertexMeshTest {
-	private VertexMesh mesh;
+	private MutableMesh mesh;
 
 	@BeforeEach
 	void before() {
-		mesh = new VertexMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
+		mesh = new MutableMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
 	}
 
 	@Test

@@ -31,7 +31,7 @@ class FormatBuilderTest {
 
 	@DisplayName("The builder is initialised to default values")
 	@Test
-	void def() {
+	void undefined() {
 		assertEquals(VkFormat.R32G32B32A32_SFLOAT, builder.build());
 	}
 
@@ -91,22 +91,30 @@ class FormatBuilderTest {
 		assertEquals(VkFormat.R16G16B16_SFLOAT, builder.init(layout).build());
 	}
 
-	@DisplayName("The builder can determine the format for an image using the hint")
-	@Test
-	void hint() {
-		final ImageData image = new ImageData(new Dimensions(1, 1), "BGR", Layout.floats(3), new byte[1]) {
-			@Override
-			public int format() {
-				return VkFormat.R32G32B32_UINT.value();
+	@Nested
+	class ImageFormatHintTest {
+		private static class MockImageData extends ImageData {
+			public MockImageData() {
+				super(new Dimensions(1, 1), "BGRA", new Layout(4, Layout.Type.NORMALIZED, false, 1), new byte[1]);
 			}
-		};
-		assertEquals(VkFormat.R32G32B32_UINT, FormatBuilder.format(image));
-	}
+		}
 
-	@DisplayName("The builder can determine the format for an image where the hint is not provided")
-	@Test
-	void image() {
-		final var image = new ImageData(new Dimensions(1, 1), "BGR", Layout.floats(3), new byte[1]);
-		assertEquals(VkFormat.R32G32B32_SFLOAT, FormatBuilder.format(image));
+		@DisplayName("The builder can determine the format for an image using the hint")
+		@Test
+		void hint() {
+			final var image = new MockImageData() {
+				@Override
+				public int format() {
+					return VkFormat.R8G8B8A8_UNORM.value();
+				}
+			};
+			assertEquals(VkFormat.R8G8B8A8_UNORM, FormatBuilder.format(image));
+		}
+
+		@DisplayName("The builder can determine the format for an image where the hint is not provided")
+		@Test
+		void image() {
+			assertEquals(VkFormat.R8G8B8A8_UNORM, FormatBuilder.format(new MockImageData()));
+		}
 	}
 }

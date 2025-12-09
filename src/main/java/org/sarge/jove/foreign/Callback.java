@@ -96,7 +96,7 @@ public interface Callback {
 			final MethodHandle handle = handle(method).bindTo(instance);
 
 			// Map return type
-			final Mapper mapper = new Mapper(); // TODO - integrated with registry
+			final Mapper mapper = new Mapper(); // TODO - integrate with registry
 			final Class<?> returnType = method.getReturnType();
 			final MemoryLayout returns = returnType == void.class ? null : mapper.map(returnType);
 

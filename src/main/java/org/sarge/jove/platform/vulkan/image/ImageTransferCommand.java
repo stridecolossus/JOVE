@@ -326,9 +326,9 @@ public class ImageTransferCommand implements Command {
 
 		/**
 		 * Constructs this copy command.
-		 * If no regions are specified the resultant command copies the <b>whole</b> of the image.
+		 * If no copy regions have been specified this command copies the entire image.
 		 * @return New copy command
-		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated, or if no copy regions have been specified
+		 * @throws IllegalArgumentException if the image, buffer or image layout have not been populated
 		 * @throws IllegalStateException if the buffer or the image layout are not valid for this transfer operation
 		 */
 		public ImageTransferCommand build() {
@@ -337,7 +337,7 @@ public class ImageTransferCommand implements Command {
 			requireNonNull(buffer);
 			requireNonNull(layout);
 			if(regions.isEmpty()) {
-				throw new IllegalArgumentException("No copy regions specified");
+				regions.add(CopyRegion.of(image.descriptor()));
 			}
 
 			// Populate copy regions

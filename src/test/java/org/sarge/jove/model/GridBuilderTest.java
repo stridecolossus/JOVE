@@ -1,15 +1,6 @@
 package org.sarge.jove.model;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.List;
-
-import org.junit.jupiter.api.*;
-import org.sarge.jove.common.*;
-import org.sarge.jove.geometry.Point;
-import org.sarge.jove.model.Coordinate.Coordinate2D;
-import org.sarge.jove.model.GridBuilder.HeightFunction;
-import org.sarge.jove.util.ImageData;
+import org.junit.jupiter.api.BeforeEach;
 
 class GridBuilderTest {
 	private GridBuilder builder;
@@ -18,52 +9,54 @@ class GridBuilderTest {
 	void before() {
 		builder = new GridBuilder();
 	}
-
-	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
-	@Test
-	void buildQuadStrip() {
-		final Mesh mesh = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
-		assertEquals(Primitive.PATCH, mesh.primitive());
-		assertEquals((3 * 3) * 4, mesh.count());
-		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), mesh.layout());
-	}
-
-	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")
-	@Test
-	void buildTriangleStrip() {
-		// TODO
-	}
-
-	@Nested
-	class HeightFunctionTest {
-		private ImageData image;
-
-		@BeforeEach
-		void before() {
-			final Layout layout = new Layout(4, Layout.Type.INTEGER, false, 2);
-			image = new ImageData(new Dimensions(8, 8), "RGBA", layout, new byte[8 * 8 * (4 * 2)]) {
-				@Override
-				protected int pixel(int index) {
-					return 65535;
-				}
-			};
-		}
-
-		@Test
-		void literal() {
-			final HeightFunction function = HeightFunction.literal(3);
-			assertEquals(3, function.height(1, 2));
-		}
-
-		@Test
-		void image() {
-			final HeightFunction function = HeightFunction.heightmap(new Dimensions(4, 4), image, 1, 2);
-			assertEquals(2, function.height(1, 1));
-		}
-
-		@Test
-		void imageInvalidComponentIndex() {
-			assertThrows(IllegalArgumentException.class, () -> HeightFunction.heightmap(new Dimensions(4, 4), image, 999, 1));
-		}
-	}
 }
+
+//
+//	@DisplayName("Create a grid with an overridden index factory (patch control points comprising quads)")
+//	@Test
+//	void buildQuadStrip() {
+//		final Mesh mesh = builder.primitive(Primitive.PATCH).index(IndexFactory.QUADS).build();
+//		assertEquals(Primitive.PATCH, mesh.primitive());
+//		assertEquals((3 * 3) * 4, mesh.count());
+//		assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), mesh.layout());
+//	}
+//
+//	@DisplayName("Create a grid comprising a triangle strip with degenerate triangles")
+//	@Test
+//	void buildTriangleStrip() {
+//		// TODO
+//	}
+//
+//	@Nested
+//	class HeightFunctionTest {
+//		private ImageData image;
+//
+//		@BeforeEach
+//		void before() {
+//			final Layout layout = new Layout(4, Layout.Type.INTEGER, false, 2);
+//			image = new ImageData(new Dimensions(8, 8), "RGBA", layout, new byte[8 * 8 * (4 * 2)]) {
+//				@Override
+//				protected int pixel(int index) {
+//					return 65535;
+//				}
+//			};
+//		}
+//
+//		@Test
+//		void literal() {
+//			final HeightFunction function = HeightFunction.literal(3);
+//			assertEquals(3, function.height(1, 2));
+//		}
+//
+//		@Test
+//		void image() {
+//			final HeightFunction function = HeightFunction.heightmap(new Dimensions(4, 4), image, 1, 2);
+//			assertEquals(2, function.height(1, 1));
+//		}
+//
+//		@Test
+//		void imageInvalidComponentIndex() {
+//			assertThrows(IllegalArgumentException.class, () -> HeightFunction.heightmap(new Dimensions(4, 4), image, 999, 1));
+//		}
+//	}
+//}

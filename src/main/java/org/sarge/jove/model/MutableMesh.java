@@ -6,27 +6,38 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.sarge.jove.common.Layout;
+import org.sarge.jove.geometry.*;
 import org.sarge.jove.scene.volume.Bounds;
 
 /**
  * A <i>mutable mesh</i> comprises polygons specified by {@link Vertex}.
  * <p>
+ * TODO - remove
  * Vertex normals can be automatically computed using the {@link #compute()} method.
  * <p>
- * @see IndexedVertexMesh
  * @author Sarge
  */
-public class VertexMesh extends AbstractMesh {
-	private final List<Vertex> vertices = new ArrayList<>();
+public class MutableMesh extends AbstractMesh {
+	private final List<Vertex> vertices;
 
 	/**
 	 * Constructor.
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
-	 * @see Mesh
 	 */
-	public VertexMesh(Primitive primitive, List<Layout> layout) {
+	public MutableMesh(Primitive primitive, List<Layout> layout) {
+		this(primitive, layout, new ArrayList<>());
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param primitive 	Drawing primitive
+	 * @param layout		Vertex layout
+	 * @param vertices		Vertex data
+	 */
+	protected MutableMesh(Primitive primitive, List<Layout> layout, List<Vertex> vertices) {
 		super(primitive, layout);
+		this.vertices = requireNonNull(vertices);
 	}
 
 	@Override
@@ -38,11 +49,33 @@ public class VertexMesh extends AbstractMesh {
 	 * Adds a vertex to this mesh.
 	 * @param vertex Vertex to add
 	 */
-	public VertexMesh add(Vertex vertex) {
+	public void add(Vertex vertex) {
 		requireNonNull(vertex);
 		vertices.add(vertex);
-		return this;
 	}
+
+	///////////////
+
+	public MutableMesh remove(int index) {
+		// Remove layout
+		final List<Layout> removed = new ArrayList<>(this.layout());
+		removed.remove(index);
+
+		// Remove vertex component
+		// TODO - copy?
+		for(Vertex v : vertices) {
+			v.remove(index);
+		}
+
+		// Create new mesh
+		return new MutableMesh(this.primitive(), removed, vertices);
+	}
+
+	public MutableMesh remove(Layout layout) {
+		return remove(indexOf(layout));
+	}
+
+	///////////////
 
 	/**
 	 * Maps a vertex index.
@@ -54,8 +87,8 @@ public class VertexMesh extends AbstractMesh {
 	}
 
 	@Override
-	public DataBuffer vertices() {
-		return new DataBuffer() {
+	public MeshData vertices() {
+		return new MeshData() {
 			@Override
 			public int length() {
 				return vertices.size() * Layout.stride(layout());
@@ -73,17 +106,37 @@ public class VertexMesh extends AbstractMesh {
 	/**
 	 * Calculates the bounds of this mesh.
 	 * @return Mesh bounds
+	 * @throws IllegalArgumentException if this mesh does not contain a {@link Point#LAYOUT} component
+	 * @see #indexOf(Layout)
 	 */
 	public Bounds bounds() {
+		return bounds(indexOf(Point.LAYOUT));
+	}
+
+	/**
+	 * Calculates the bounds of this mesh.
+	 * @param index Index of the vertex position
+	 * @return Mesh bounds
+	 */
+	public Bounds bounds(int index) {
 		if(vertices.isEmpty()) {
 			return Bounds.EMPTY;
 		}
 
 		return vertices
 				.parallelStream()
-				.map(Vertex::position)
+				.map(vertex -> (Point) vertex.component(index))
 				.collect(Bounds.Builder.collector());
 	}
+
+	// TODO
+	// - client provides index of position and normal components?
+	// - or finds first position & normal layout?
+	// - or just assumes is 1 and 2?
+	// - custom vertex implementation for accumulated / normalized normal?
+	// - mutates vertex? replaces vertices? returns resultant mesh?
+
+	// TODO - transform method? ditto vertex?
 
 	/**
 	 * Computes per-vertex normals for this mesh.
@@ -107,6 +160,14 @@ public class VertexMesh extends AbstractMesh {
 	private List<Vertex> polygon(int index) {
 		return null;
 	}
+
+
+	static Normal normal(List<Point> vertices) {
+		final var triangle = new Triangle(vertices.get(0), vertices.get(1), vertices.get(2));
+		return triangle.normal();
+	}
+
+
 }
 
 //

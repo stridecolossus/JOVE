@@ -15,7 +15,7 @@ class ObjectModel {
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
 	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
 	private final List<IndexedMesh> meshes = new ArrayList<>();
-	private IndexedVertexMesh current;
+	private IndexedMesh current;
 
 	public ObjectModel() {
 		append();

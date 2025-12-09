@@ -54,7 +54,6 @@ public class NativeImageLoader {
 		// Init image properties
 		final Dimensions size = new Dimensions(image.getWidth(), image.getHeight());
 		final Layout layout = new Layout(channels.length(), Layout.Type.NORMALIZED, false, 1);
-		// TODO - should be INTEGER? but VK format needs to be UNORM
 
 		// Inject alpha channel as required
 		final byte[] data = switch(image.getType()) {

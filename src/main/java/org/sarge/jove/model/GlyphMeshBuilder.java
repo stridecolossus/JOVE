@@ -16,7 +16,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D.Corners;
  */
 public class GlyphMeshBuilder {
 	private final GlyphFont font;
-	private final VertexMesh mesh = new VertexMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+	private final MutableMesh mesh = new MutableMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 	private final int tiles;
 	private final float size;
 	private float scale = 1;

@@ -19,7 +19,7 @@ class MeshLoaderTest {
 	@Test
 	void load() throws IOException {
 		// Create an indexed mesh
-		final var mesh = new IndexedVertexMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
+		final var mesh = new IndexedMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
 		mesh.add(new Vertex(Point.ORIGIN));
 		mesh.add(0);
 		mesh.add(0);

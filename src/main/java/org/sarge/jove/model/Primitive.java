@@ -14,14 +14,6 @@ public enum Primitive {
 	TRIANGLE(3),
 	TRIANGLE_STRIP(3),
 	TRIANGLE_FAN(3);
-//		@Override
-//		public int[] indices(int face) {
-//			final int[] indices = new int[3];
-//			indices[0] = face;
-//			indices[1] = face + 1;
-//			indices[2] = 0;
-//			return indices;
-//		}
 
 	private final int size;
 
@@ -64,7 +56,6 @@ public enum Primitive {
 	 * Determines the number of polygons for the given draw count.
 	 * @param count Draw count
 	 * @return Number of polygons
-//	 * @see #indices(int)
 	 */
 	public int polygons(int count) {
 		if(isStrip()) {
@@ -89,18 +80,3 @@ public enum Primitive {
 		}
 	}
 }
-
-//	// TODO - is this actually used?
-//	/**
-//	 * Generates the vertices indices for a polygon of this primitive.
-//	 * @param face Face index
-//	 * @return Vertex indices
-//	 */
-//	public int[] indices(int face) {
-//		final int[] indices = new int[size];
-//		final int start = isStrip() ? face : face * size;
-//		for(int n = 0; n < size; ++n) {
-//			indices[n] = start + n;
-//		}
-//		return indices;
-//	}

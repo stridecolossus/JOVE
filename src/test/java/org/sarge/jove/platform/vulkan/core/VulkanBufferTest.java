@@ -23,10 +23,10 @@ class VulkanBufferTest {
 		@Override
 		public VkResult vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer) {
 			assertNotNull(device);
-			assertEquals(0, pCreateInfo.flags);
+			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertEquals(new EnumMask<>(VkBufferUsageFlags.TRANSFER_DST), pCreateInfo.usage);
 			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.sharingMode);
-			assertEquals(3L, pCreateInfo.size);
+			assertEquals(42L, pCreateInfo.size);
 			assertEquals(null, pAllocator);
 			pBuffer.set(MemorySegment.ofAddress(3));
 			return VkResult.VK_SUCCESS;
@@ -42,7 +42,7 @@ class VulkanBufferTest {
 		public void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, VkMemoryRequirements pMemoryRequirements) {
 			assertNotNull(device);
 			assertEquals(new Handle(3), pBuffer);
-			pMemoryRequirements.size = 3L;
+			pMemoryRequirements.size = 42L;
 			pMemoryRequirements.alignment = 0;
 			pMemoryRequirements.memoryTypeBits = 1;
 		}
@@ -51,7 +51,7 @@ class VulkanBufferTest {
 		public VkResult vkBindBufferMemory(LogicalDevice device, Handle pBuffer, DeviceMemory memory, long memoryOffset) {
 			assertNotNull(device);
 			assertEquals(new Handle(3), pBuffer);
-			assertEquals(3L, memory.size());
+			assertEquals(42L, memory.size());
 			assertEquals(0L, memoryOffset);
 			return VkResult.VK_SUCCESS;
 		}
@@ -84,7 +84,7 @@ class VulkanBufferTest {
 		public void vkCmdFillBuffer(Buffer commandBuffer, VulkanBuffer dstBuffer, long dstOffset, long size, int data) {
 			assertEquals(0L, dstOffset);
 			assertEquals(-1L, size);
-			assertEquals(42, data);
+			assertEquals(3, data);
 			fill = true;
 		}
 	}
@@ -98,8 +98,8 @@ class VulkanBufferTest {
 	void before() {
 		library = new MockVulkanBufferLibrary();
 		device = new MockLogicalDevice(library);
-		memory = new MockDeviceMemory(3L);
-		buffer = new VulkanBuffer(new Handle(1), device, Set.of(VkBufferUsageFlags.TRANSFER_DST, VkBufferUsageFlags.VERTEX_BUFFER), memory, 3L);
+		memory = new MockDeviceMemory(42L);
+		buffer = new VulkanBuffer(new Handle(1), device, Set.of(VkBufferUsageFlags.TRANSFER_DST, VkBufferUsageFlags.VERTEX_BUFFER), memory, 42L);
 	}
 
 	@Test
@@ -109,14 +109,14 @@ class VulkanBufferTest {
 
 	@Test
 	void copy() {
-		final var src = new VulkanBuffer(new Handle(2), device, Set.of(VkBufferUsageFlags.TRANSFER_SRC), memory, memory.size());
+		final var src = new VulkanBuffer(new Handle(2), device, Set.of(VkBufferUsageFlags.TRANSFER_SRC), memory, 42L);
 		final Command copy = src.copy(buffer);
 		copy.execute(null);
 	}
 
 	@Test
 	void fill() {
-		final Command fill = buffer.fill(0L, VulkanBuffer.VK_WHOLE_SIZE, 42);
+		final Command fill = buffer.fill(0L, VulkanBuffer.VK_WHOLE_SIZE, 3);
 		fill.execute(null);
 		assertEquals(true, library.fill);
 	}
@@ -124,7 +124,7 @@ class VulkanBufferTest {
 	@Test
 	void map() {
 		final MemorySegment mapped = buffer.map();
-		assertEquals(3L, mapped.byteSize());
+		assertEquals(42L, mapped.byteSize());
 		assertEquals(true, buffer.memory().region().isPresent());
 	}
 
@@ -145,10 +145,15 @@ class VulkanBufferTest {
 
 	@Test
 	void create() {
-	}
+		final var properties = new MemoryProperties.Builder<VkBufferUsageFlags>()
+				.usage(VkBufferUsageFlags.TRANSFER_DST)
+				.required(VkMemoryPropertyFlags.HOST_VISIBLE)
+				.build();
 
-	@Test
-	void staging() {
+		final var allocator = new MockAllocator(device);
+		final var buffer = VulkanBuffer.create(allocator, 42L, properties);
+		assertEquals(false, buffer.isDestroyed());
+		assertEquals(42L, buffer.length());
 	}
 
 	@Test

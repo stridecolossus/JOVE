@@ -185,9 +185,7 @@ public class VulkanIntegrationDemo {
 		pipelineBuilder.input().add(binding);
 		pipelineBuilder.assembly().topology(Primitive.TRIANGLE_STRIP);
 		///////////////
-//		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
 		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(factory.swapchain().extents()));
-		pipelineBuilder.rasterizer().cull(VkCullModeFlags.NONE);
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStageFlags.VERTEX, vertex));
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStageFlags.FRAGMENT, fragment));
 		final Pipeline pipeline = pipelineBuilder
@@ -266,7 +264,7 @@ b.destroy();
 			new Vertex(new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT),
 		};
 
-		final var mesh = new VertexMesh(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
+		final var mesh = new MutableMesh(Primitive.TRIANGLE_STRIP, List.of(Point.LAYOUT, Coordinate2D.LAYOUT));
 		for(Vertex v : vertices) {
 			mesh.add(v);
 		}
