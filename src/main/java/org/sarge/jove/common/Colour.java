@@ -48,14 +48,13 @@ public record Colour(float red, float green, float blue, float alpha) implements
 	}
 
 	/**
-	 * Parses a colour from the given comma-separate string.
+	 * Parses a colour from the given white-space or comma-delimited string.
 	 * @param colour Colour string
 	 * @return Colour
 	 * @throws NumberFormatException if any component is not a valid floating-point value
-	 * @see #of(float[])
 	 */
 	public static Colour parse(String colour) {
-		final String[] parts = colour.split(",");
+		final String[] parts = colour.replaceAll(",", " ").split("\\s+|,");
 		final float[] array = new float[parts.length];
 		for(int n = 0; n < parts.length; ++n) {
 			array[n] = Float.parseFloat(parts[n]);
