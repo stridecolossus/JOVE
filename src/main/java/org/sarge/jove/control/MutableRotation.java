@@ -10,7 +10,7 @@ import org.sarge.jove.util.MathsUtility;
  * A <i>mutable rotation</i> is a mutable adapter for an axis-angle.
  * @author Sarge
  */
-public class MutableRotation implements Rotation {
+public class MutableRotation {
 	private AxisAngle rotation;
 
 	/**
@@ -30,20 +30,17 @@ public class MutableRotation implements Rotation {
 	}
 
 	/**
-	 * @return This rotation as an animation about the unit-circle
+	 * @return Axis-angle
 	 */
-	public Animation animation() {
-		return pos -> set(pos * MathsUtility.TWO_PI);
-	}
-
-	@Override
 	public AxisAngle toAxisAngle() {
 		return rotation;
 	}
 
-	@Override
-	public Matrix matrix() {
-		return rotation.matrix();
+	/**
+	 * @return This rotation as an animation about the unit-circle
+	 */
+	public Animation animation() {
+		return pos -> set(pos * MathsUtility.TWO_PI);
 	}
 
 	/**
@@ -68,12 +65,7 @@ public class MutableRotation implements Rotation {
 	 * @param angle		Angle (radians)
 	 */
 	public void set(Normal axis, float angle) {
-		rotation = new AxisAngle(axis, angle);
-	}
-
-	@Override
-	public Vector rotate(Vector vector) {
-		return rotation.rotate(vector);
+		rotation = new AxisAngle(axis, angle, Cosine.Provider.DEFAULT);
 	}
 
 	@Override
@@ -85,8 +77,8 @@ public class MutableRotation implements Rotation {
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof Rotation that) &&
-				this.rotation.equals(that.toAxisAngle());
+				(obj instanceof MutableRotation that) &&
+				this.rotation.equals(that.rotation);
 	}
 
 	@Override

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Layout;
 import org.sarge.jove.common.Layout.Type;
 
-public class NormalTest {
+class NormalTest {
 	private Normal normal;
 
 	@BeforeEach

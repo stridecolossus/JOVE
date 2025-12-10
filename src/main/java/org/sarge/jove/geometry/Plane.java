@@ -138,7 +138,7 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 		}
 
 		// Build intersection result
-		return List.of(new Intersection(dist, this));
+		return List.of(new Intersection(this, dist));
 	}
 
 	@Override

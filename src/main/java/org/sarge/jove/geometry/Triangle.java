@@ -89,7 +89,7 @@ public record Triangle(Point a, Point b, Point c) implements IntersectedSurface 
 		}
 
 		// Build result
-		return List.of(new Intersection(t, this));
+		return List.of(new Intersection(this, t));
 	}
 
 	@Override

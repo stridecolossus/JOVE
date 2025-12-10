@@ -21,7 +21,7 @@ import org.sarge.jove.util.MathsUtility;
  * <p>
  * @author Sarge
  */
-public class Matrix implements Transform, Bufferable {
+public class Matrix implements Bufferable {
 	/**
 	 * Order of a 4x4 transformation matrix.
 	 */
@@ -44,6 +44,41 @@ public class Matrix implements Transform, Bufferable {
 	 */
 	public static Matrix identity(int order) {
 		return new Builder(order).identity().build();
+	}
+
+	/**
+	 * Creates a 4x4 translation matrix by populating the top-right column of the matrix.
+	 * @param vector Translation vector
+	 * @return Translation matrix
+	 */
+	public static Matrix translation(Vector vector) {
+		return new Matrix.Builder()
+				.identity()
+				.column(3, vector)
+				.build();
+	}
+
+	/**
+	 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix.
+	 * @return Scaling matrix
+	 */
+	public static Matrix scale(float x, float y, float z) {
+		return new Matrix.Builder()
+				.set(0, 0, x)
+				.set(1, 1, y)
+				.set(2, 2, z)
+				.set(3, 3, 1)
+				.build();
+	}
+
+	/**
+	 * Creates a 4x4 scaling matrix by populating the diagonal of the matrix with the given scalar.
+	 * @param f Scalar
+	 * @return Scaling matrix
+	 * @see #scale(float, float, float)
+	 */
+	public static Matrix scale(float f) {
+		return scale(f, f, f);
 	}
 
 	private final float[][] matrix;
@@ -94,11 +129,6 @@ public class Matrix implements Transform, Bufferable {
 			throw new IllegalArgumentException(String.format("Invalid matrix order: expected=%d actual=%d", this.order(), order));
 		}
 		return order;
-	}
-
-	@Override
-	public final Matrix matrix() {
-		return this;
 	}
 
 	/**

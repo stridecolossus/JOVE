@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.control.Camera;
 import org.sarge.jove.geometry.*;
 
 class CameraTest {
@@ -106,7 +105,7 @@ class CameraTest {
 				.build();
 
 		// Create camera translation one unit out of the screen
-		final Matrix trans = Transform.translation(new Vector(0, 0, -1));
+		final Matrix trans = Matrix.translation(new Vector(0, 0, -1));
 
 		// Init camera and check matrix
 		cam.move(new Point(0, 0, 1));

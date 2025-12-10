@@ -4,14 +4,14 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.stream.Stream;
 
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Matrix;
 
 /**
  * A <i>local transform</i> maintains the local transformation and world matrix of a node.
  * @author Sarge
  */
 public class LocalTransform {
-	private Transform transform = Matrix.IDENTITY;
+	private Transform transform = () -> Matrix.IDENTITY;
 	private transient Matrix matrix;
 
 	LocalTransform() {
@@ -38,7 +38,9 @@ public class LocalTransform {
 	 * @see #update(Node)
 	 */
 	Matrix matrix() {
-		if(matrix == null) throw new IllegalStateException("Local transform has not been updated: " + this);
+		if(matrix == null) {
+			throw new IllegalStateException("Local transform has not been updated: " + this);
+		}
 		return matrix;
 	}
 

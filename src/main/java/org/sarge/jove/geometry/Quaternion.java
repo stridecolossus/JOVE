@@ -13,7 +13,7 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">Wikipedia</a>
  * @author Sarge
  */
-public record Quaternion(float scalar, Vector vector) implements Rotation {
+public record Quaternion(float scalar, Vector vector) {
 	/**
 	 * Quaternion that represents no rotation.
 	 */
@@ -26,11 +26,10 @@ public record Quaternion(float scalar, Vector vector) implements Rotation {
 	 */
 	public static Quaternion of(AxisAngle rotation) {
 		final float half = rotation.angle() * HALF;
-		final Cosine cosine = Cosine.Provider.DEFAULT.cosine(half);		// TODO
+		final Cosine cosine = rotation.provider().cosine(half);
 		final Vector axis = rotation.axis().multiply(cosine.sin());
 		return new Quaternion(cosine.cos(), axis);
 	}
-	// TODO - cosine provider as argument?
 
 	/**
 	 * Constructor.
@@ -45,17 +44,16 @@ public record Quaternion(float scalar, Vector vector) implements Rotation {
 	/**
 	 * Converts this quaternion to an axis-angle rotation.
 	 * The rotation axis is undefined if this is approximately the {@link #IDENTITY} quaternion
+	 * @param provider Cosine function
 	 * @return Axis-angle
 	 */
-	@Override
-	public AxisAngle toAxisAngle() {
+	public AxisAngle toAxisAngle(Cosine.Provider provider) {
 		// TODO - numerically unstable when w near +/- 1 (???)
 		final float angle = 2 * (float) Math.acos(scalar);
-		final float sin = (float) Math.sin(angle * HALF);
+		final float sin = provider.cosine(angle * HALF).sin();
 		final Vector axis = vector.multiply(1 / sin);
-		return new AxisAngle(new Normal(axis), angle);
+		return new AxisAngle(new Normal(axis), angle, provider);
 	}
-	// TODO - overload with cosine provider?
 
 	/**
 	 * Calculates the conjugate of this quaternion.
@@ -92,9 +90,13 @@ public record Quaternion(float scalar, Vector vector) implements Rotation {
 		return new Quaternion(w, total);
 	}
 
-	@Override
-	public Vector rotate(Vector v) {
-		final Quaternion q = new Quaternion(0, v);
+	/**
+	 * Rotates the given vector about this rotation.
+	 * @param vector Vector to rotate
+	 * @return Rotated vector
+	 */
+	public Vector rotate(Vector vector) {
+		final Quaternion q = new Quaternion(0, vector);
 		final Quaternion result = this.multiply(q).multiply(this.conjugate());
 		assert isApproxZero(result.scalar);
 		return result.vector;
@@ -103,7 +105,9 @@ public record Quaternion(float scalar, Vector vector) implements Rotation {
 	// TODO - slerp
 	// https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/index.htm
 
-	@Override
+	/**
+	 * @return This quaternion as a rotation matrix
+	 */
 	public Matrix matrix() {
 		final float xx = vector.x * vector.x;
 		final float xy = vector.x * vector.y;

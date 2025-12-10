@@ -1,9 +1,11 @@
 mesh loader still needs custom indexed implementation
 
 review use of cosine
-- very invasive
-- not even that good implementation?
-- how to get both sin/cos from sine table?
+- only Rotation::matrix NEEDS cosine
+- no real point in Matrix::matrix? graph could just switch? => simpler
+- or maybe adapter for axis-angle using cosine?
+- also toAxisAngle() is not actually used except in equals?
+- ditto rotate(vector)?
 
 add debug support for the create instance call
 https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers

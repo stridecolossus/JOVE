@@ -155,14 +155,14 @@ class SphereVolumeTest {
     		@Test
     		void inside() {
     			final Ray ray = new Ray(new Point(1, 0, 0), X);
-    			assertEquals(List.of(new Intersection(2, sphere)), sphere.intersections(ray));
+    			assertEquals(List.of(new Intersection(sphere, 2)), sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects if the ray originates on the sphere surface")
     		@Test
     		void touching() {
     			final Ray ray = new Ray(new Point(RADIUS, 0, 0), X);
-    			assertEquals(List.of(new Intersection(0, sphere)), sphere.intersections(ray));
+    			assertEquals(List.of(new Intersection(sphere, 0)), sphere.intersections(ray));
     		}
 		}
 
@@ -180,21 +180,21 @@ class SphereVolumeTest {
     		@Test
     		void inside() {
     			final Ray ray = new Ray(new Point(-1, 0, 0), X);
-    			assertEquals(List.of(new Intersection(4, sphere)), sphere.intersections(ray));
+    			assertEquals(List.of(new Intersection(sphere, 4)), sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects twice if the ray crosses the sphere")
     		@Test
     		void intersects() {
     			final Ray ray = new Ray(new Point(-OUTSIDE, 0, 0), X);
-    			assertEquals(List.of(new Intersection(1, sphere), new Intersection(7, sphere)), sphere.intersections(ray));
+    			assertEquals(List.of(new Intersection(sphere, 1), new Intersection(sphere, 7)), sphere.intersections(ray));
     		}
 
     		@DisplayName("intersects twice if the ray originates on the sphere surface")
     		@Test
     		void touching() {
     			final Ray ray = new Ray(new Point(-RADIUS, 0, 0), X);
-    			assertEquals(List.of(new Intersection(0, sphere), new Intersection(6, sphere)), sphere.intersections(ray));
+    			assertEquals(List.of(new Intersection(sphere, 0), new Intersection(sphere, 6)), sphere.intersections(ray));
     		}
     	}
 	}

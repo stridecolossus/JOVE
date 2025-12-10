@@ -90,12 +90,12 @@ public record BoundingBox(Bounds bounds) implements Volume {
 		}
 
 		// Build results
-		final var far = new Intersection(f, this);
+		final var far = new Intersection(this, f);
 		if((n < 0) || MathsUtility.isApproxEqual(n, f)) {
 			return List.of(far);
 		}
 		else {
-			final var near = new Intersection(n, this);
+			final var near = new Intersection(this, n);
 			return List.of(near, far);
 		}
 	}

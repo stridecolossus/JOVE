@@ -19,8 +19,6 @@ class AxisAngleTest {
 	void rotation() {
 		assertEquals(axis, rotation.axis());
 		assertEquals(PI, rotation.angle());
-		//assertEquals(Cosine.Provider.DEFAULT, rotation.provider());
-		assertEquals(rotation, rotation.toAxisAngle());
 	}
 
 	@Test
@@ -33,13 +31,6 @@ class AxisAngleTest {
 				.build();
 
 		assertEquals(expected, rotation.matrix());
-	}
-
-	@Test
-	void cardinal() {
-		final var cardinal = new AxisAngle(Axis.Y, PI);
-		final Matrix expected = Axis.Y.rotation(PI, Cosine.Provider.DEFAULT);
-		assertEquals(expected, cardinal.matrix());
 	}
 
 	@Test

@@ -30,6 +30,7 @@ public class Axis extends Normal {
 	private Axis(int ordinal) {
 		final var array = new float[Vector.SIZE];
 		array[ordinal] = 1;
+
 		final Vector vector = new Vector(array);
 		super(vector);
 		this.ordinal = ordinal;
@@ -77,6 +78,8 @@ public class Axis extends Normal {
 
 		return builder.build();
 	}
+
+	// TODO - is there a more optimal rotate(vector) implementation for cardinal axes?
 
 	/**
 	 * Parses an axis from the given character.

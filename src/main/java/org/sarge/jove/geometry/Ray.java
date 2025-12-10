@@ -31,6 +31,7 @@ public record Ray(Point origin, Vector direction) {
 		final Vector v = direction.multiply(distance);
 		return origin.add(v);
 	}
+	// TODO - surely normalize direction? or enforce to normal and add length member? need to volumes (plane, sphere)
 
 	/**
 	 * An <i>intersected surface</i> defines a volume that can be tested for intersections by this ray.
@@ -53,7 +54,7 @@ public record Ray(Point origin, Vector direction) {
 
 		/**
 		 * Helper.
-		 * Determines the surface normal at the given intersection point relative to the centre of this surface.
+		 * Calculates the surface normal at the given intersection point relative to the centre of this surface.
 		 * @param intersection		Intersection point
 		 * @param centre			Centre point of this surface
 		 * @return Surface normal
@@ -71,15 +72,15 @@ public record Ray(Point origin, Vector direction) {
 	/**
 	 * An <i>intersection</i> specifies the distance along this ray where it intersects with a given surface.
 	 */
-	public record Intersection(float distance, IntersectedSurface surface) implements Comparable<Intersection> {
+	public record Intersection(IntersectedSurface surface, float distance) implements Comparable<Intersection> {
 		/**
 		 * Constructor.
-		 * @param distance		Distance from the ray origin
 		 * @param surface		Intersected surface
+		 * @param distance		Distance from the ray origin
 		 */
 		public Intersection {
-			requireZeroOrMore(distance);
 			requireNonNull(surface);
+			requireZeroOrMore(distance);
 		}
 
 		@Override

@@ -6,7 +6,7 @@ import static org.sarge.jove.util.MathsUtility.PI;
 
 import org.junit.jupiter.api.*;
 
-public class QuaternionTest {
+class QuaternionTest {
 	private AxisAngle rotation;
 	private Quaternion quaternion;
 
@@ -18,13 +18,13 @@ public class QuaternionTest {
 
 	@Test
 	void toAxisAngle() {
-		assertEquals(rotation, quaternion.toAxisAngle());
+		assertEquals(rotation, quaternion.toAxisAngle(Cosine.Provider.DEFAULT));
 	}
 
 	@Test
 	void conjugate() {
 		final Quaternion conjugate = quaternion.conjugate();
-		assertEquals(new AxisAngle(Y.invert(), PI), conjugate.toAxisAngle());
+		assertEquals(new AxisAngle(Y.invert(), PI), conjugate.toAxisAngle(Cosine.Provider.DEFAULT));
 	}
 
 	@Test
@@ -53,7 +53,7 @@ public class QuaternionTest {
 	@Test
 	void equals() {
 		assertEquals(quaternion, quaternion);
-		assertEquals(quaternion, Quaternion.of(rotation));
+		assertEquals(quaternion, new Quaternion(quaternion.scalar(), quaternion.vector()));
 		assertNotEquals(quaternion, null);
 		assertNotEquals(quaternion, Quaternion.IDENTITY);
 	}

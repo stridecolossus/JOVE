@@ -35,13 +35,6 @@ class TriangleTest {
 		assertEquals(true, new Triangle(ORIGIN, ORIGIN, ORIGIN).isDegenerate());
 	}
 
-//	@Test
-//	void winding() {
-//		assertEquals(WindingOrder.COUNTER_CLOCKWISE, triangle.winding(Z.invert()));
-//		assertEquals(WindingOrder.CLOCKWISE, triangle.winding(Z));
-//		assertEquals(WindingOrder.COLINEAR, triangle.winding(X));
-//	}
-
 	@DisplayName("A ray...")
 	@Nested
 	class IntersectionTest {
@@ -49,7 +42,7 @@ class TriangleTest {
     	@Test
     	void inside() {
     		final Ray ray = new Ray(triangle.centre(), Z);
-    		assertEquals(List.of(new Intersection(0, triangle)), triangle.intersections(ray));
+    		assertEquals(List.of(new Intersection(triangle, 0)), triangle.intersections(ray));
     		assertEquals(Z, triangle.normal(null));
     	}
 
@@ -62,7 +55,7 @@ class TriangleTest {
     	@MethodSource
     	void edge(Point p) {
     		final Ray ray = new Ray(p, Z);
-    		assertEquals(List.of(new Intersection(0, triangle)), triangle.intersections(ray));
+    		assertEquals(List.of(new Intersection(triangle, 0)), triangle.intersections(ray));
     	}
 
 		@DisplayName("does not intersect if the ray is parallel to the triangle")

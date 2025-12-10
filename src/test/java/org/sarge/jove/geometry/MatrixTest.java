@@ -42,12 +42,6 @@ class MatrixTest {
 		assertEquals(new Layout(4 * 4, Layout.Type.FLOAT, true, Float.BYTES), Matrix.LAYOUT);
 	}
 
-	@DisplayName("A matrix is a transform")
-	@Test
-	void transform() {
-		assertEquals(matrix, matrix.matrix());
-	}
-
 	@DisplayName("The elements of a matrix can be retrieved by row and column")
 	@Test
 	void get() {
@@ -196,6 +190,33 @@ class MatrixTest {
 		@Test
 		void identity() {
 			assertEquals(Matrix.identity(4), Matrix.IDENTITY);
+		}
+	}
+
+	@Nested
+	class FactoryTests {
+		@Test
+		void translation() {
+			final Vector vec = new Vector(1, 2, 3);
+
+			final Matrix expected = new Matrix.Builder(4)
+					.identity()
+					.column(3, vec)
+					.build();
+
+			assertEquals(expected, Matrix.translation(new Vector(1, 2, 3)));
+		}
+
+		@Test
+		void scale() {
+			final Matrix expected = new Matrix.Builder(4)
+					.set(0, 0, 1)
+					.set(1, 1, 2)
+					.set(2, 2, 3)
+					.set(3, 3, 1)
+					.build();
+
+			assertEquals(expected, Matrix.scale(1, 2, 3));
 		}
 	}
 

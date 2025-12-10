@@ -116,8 +116,8 @@ class BoundingBoxTest {
 		void intersect() {
 			final Ray ray = new Ray(new Point(0, 2, 0), new Normal(new Vector(1, 1, 0)));
 			final float dist = (float) Math.sqrt(2);
-			final Intersection a = new Intersection(dist, box);
-			final Intersection b = new Intersection(2 * dist, box);
+			final Intersection a = new Intersection(box, dist);
+			final Intersection b = new Intersection(box, 2 * dist);
 			assertEquals(List.of(a, b), box.intersections(ray));
 			assertEquals(X, box.normal(ray.point(dist)));
 			assertEquals(Y.invert(), box.normal(ray.point(2 * dist)));
@@ -127,21 +127,21 @@ class BoundingBoxTest {
 		@Test
 		void touching() {
 			final Ray ray = new Ray(new Point(3, 3, 0), X);
-			assertEquals(List.of(new Intersection(0, box)), box.intersections(ray));
+			assertEquals(List.of(new Intersection(box, 0)), box.intersections(ray));
 		}
 
 		@DisplayName("A ray has a single intersection if it inside the box")
 		@Test
 		void inside() {
 			final Ray ray = new Ray(new Point(2, 3, 0), X);
-			assertEquals(List.of(new Intersection(1, box)), box.intersections(ray));
+			assertEquals(List.of(new Intersection(box, 1)), box.intersections(ray));
 		}
 
 		@DisplayName("A ray can intersect a corner of a bounding box")
 		@Test
 		void corner() {
 			final Ray ray = new Ray(new Point(0, 3, 0), new Normal(new Vector(1, 1, 0)));
-			assertEquals(List.of(new Intersection((float) Math.sqrt(2), box)), box.intersections(ray));
+			assertEquals(List.of(new Intersection(box, (float) Math.sqrt(2))), box.intersections(ray));
 			assertEquals(new Point(1, 4, 0), ray.point((float) Math.sqrt(2)));
 		}
 

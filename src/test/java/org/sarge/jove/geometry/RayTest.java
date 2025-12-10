@@ -28,8 +28,8 @@ class RayTest {
 	@Test
 	void order() {
 		final var surface = new Plane(Axis.X, 0);
-		final var one = new Intersection(1, surface);
-		final var two = new Intersection(2, surface);
+		final var one = new Intersection(surface, 1);
+		final var two = new Intersection(surface, 2);
 		assertEquals(-1, one.compareTo(two));
 		assertEquals(+1, two.compareTo(one));
 		assertEquals( 0, one.compareTo(one));

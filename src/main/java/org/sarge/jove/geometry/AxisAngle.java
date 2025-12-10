@@ -6,39 +6,29 @@ import org.sarge.jove.util.MathsUtility;
 
 /**
  * An <i>axis-angle</i> specifies a counter-clockwise rotation about an arbitrary axis.
- * <p>
- * The {@link #provider()} method can be overridden to implement custom trigonometric functions.
- * <p>
+ * TODO - doc cosine function
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public record AxisAngle(Normal axis, float angle) implements Rotation {
+public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) {
 	/**
 	 * Constructor.
-	 * @param axis 		Rotation axis
-	 * @param angle		Angle (radians)
+	 * @param axis 			Rotation axis
+	 * @param angle			Angle (radians)
+	 * @param provider		Cosine function
 	 */
 	public AxisAngle {
 		requireNonNull(axis);
-	}
-
-	@Override
-	public AxisAngle toAxisAngle() {
-		return this;
+		requireNonNull(provider);
 	}
 
 	/**
-	 * {@inheritDoc}
-	 * This method delegates to {@link Axis#rotation(float, Cosine.Provider)} if this is a rotation about a cardinal axis.
+	 * Constructor using {@link Consine.Provider#DEFAULT}.
+	 * @param axis 			Rotation axis
+	 * @param angle			Angle (radians)
 	 */
-	@Override
-	public Matrix matrix() {
-		if(axis instanceof Axis cardinal) {
-			return cardinal.rotation(angle, Cosine.Provider.DEFAULT);
-		}
-		else {
-			return build();
-		}
+	public AxisAngle(Normal axis, float angle) {
+		this(axis, angle, Cosine.Provider.DEFAULT);
 	}
 
 	/**
@@ -57,9 +47,9 @@ public record AxisAngle(Normal axis, float angle) implements Rotation {
 	 * <p>
 	 * @see <a href="https://en.wikipedia.org/wiki/Rotation_matrix">Wikipedia</a>
 	 */
-	private Matrix build() {
+	public Matrix matrix() {
 		// Init angle
-		final Cosine cosine = Cosine.Provider.DEFAULT.cosine(angle);		// TODO
+		final Cosine cosine = provider.cosine(angle);
 		final float sin = cosine.sin();
 		final float cos = cosine.cos();
 
@@ -105,18 +95,17 @@ public record AxisAngle(Normal axis, float angle) implements Rotation {
 	 * <p>
 	 * This approach will generally be more efficient than constructing an intermediate rotation matrix.
 	 * <p>
-	 * @param v Vector to rotate
+	 * @param vector Vector to rotate
 	 * @return Rotated vector
 	 * @see #provider()
 	 * @see <a href="https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula">Wikipedia</a>
 	 */
-	@Override
-	public Vector rotate(Vector v) {
-		final Cosine cosine = Cosine.Provider.DEFAULT.cosine(angle);	// TODO
+	public Vector rotate(Vector vector) {
+		final Cosine cosine = provider.cosine(angle);
 		final float cos = cosine.cos();
-		final float dot = axis.dot(v);
-		final Vector a = v.multiply(cos);								// Scale the vector down
-		final Vector b = axis.cross(v).multiply(cosine.sin());			// Skew towards new position
+		final float dot = axis.dot(vector);
+		final Vector a = vector.multiply(cos);							// Scale the vector down
+		final Vector b = axis.cross(vector).multiply(cosine.sin());		// Skew towards new position
 		final Vector c = axis.multiply(dot * (1 - cos));				// Restore height
 		return a.add(b).add(c);
 	}

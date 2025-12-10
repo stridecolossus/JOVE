@@ -6,7 +6,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.util.MathsUtility;
 
-public class ProjectionTest {
+class ProjectionTest {
 	private Dimensions dim;
 
 	@BeforeEach
