@@ -35,7 +35,7 @@ public class Pipeline extends VulkanObject {
 	}
 
 	/**
-	 * @return Type of this pipeline (or the bind point)
+	 * @return Type of this pipeline
 	 */
 	public VkPipelineBindPoint type() {
 		return type;

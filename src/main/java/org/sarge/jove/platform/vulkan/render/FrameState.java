@@ -65,7 +65,7 @@ public class FrameState implements TransientObject {
 	}
 
 	/**
-	 * Renders the next frame frame and blocks until completion.
+	 * Renders the next frame and blocks until completion.
 	 * @param sequence Render sequence
 	 * @see #submit(Buffer)
 	 */
@@ -104,7 +104,7 @@ public class FrameState implements TransientObject {
 	 */
 	public void present(Buffer sequence, int index, Swapchain swapchain) throws Invalidated {
 		final WorkQueue queue = sequence.pool().queue();
-		swapchain.present(queue, index, ready);
+		swapchain.present(queue, index, Set.of(ready));
 	}
 
 	@Override

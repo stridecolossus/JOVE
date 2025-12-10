@@ -32,7 +32,7 @@ public interface NativeObject {
 	/**
 	 * Transformer for native objects.
 	 */
-	public static class NativeObjectTransformer implements Transformer<NativeObject, MemorySegment> {
+	class NativeObjectTransformer implements Transformer<NativeObject, MemorySegment> {
 		@Override
 		public MemorySegment marshal(NativeObject object, SegmentAllocator allocator) {
 			return object.handle().address();

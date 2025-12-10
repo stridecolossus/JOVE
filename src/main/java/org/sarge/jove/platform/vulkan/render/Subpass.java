@@ -17,7 +17,7 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 	 * An <i>attachment reference</i> specifies an attachment used in this subpass.
 	 * @see VkAttachmentReference
 	 */
-	public record AttachmentReference(Attachment attachment, VkImageLayout layout) {
+	record AttachmentReference(Attachment attachment, VkImageLayout layout) {
 		/**
 		 * Constructor.
 		 * @param attachment		Attachment
@@ -43,7 +43,7 @@ public record Subpass(List<AttachmentReference> colour, AttachmentReference dept
 	/**
 	 * @return Attachments used by this subpass
 	 */
-	public Stream<AttachmentReference> attachments() {
+	Stream<AttachmentReference> attachments() {
 		if(depth == null) {
 			return colour.stream();
 		}

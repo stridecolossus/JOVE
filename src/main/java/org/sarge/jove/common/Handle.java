@@ -6,7 +6,7 @@ import java.util.function.Function;
 import org.sarge.jove.foreign.Transformer;
 
 /**
- * A <i>handle</i> is an opaque, immutable wrapper for a native pointer.
+ * A <i>handle</i> is an immutable wrapper for a native memory address.
  * @author Sarge
  */
 public record Handle(MemorySegment address) {

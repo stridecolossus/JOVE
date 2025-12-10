@@ -19,11 +19,11 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * A <i>swapchain</i> presents rendered images to a {@link VulkanSurface}.
  * <p>
  * A swapchain is comprised of an array of colour image <i>attachments</i>.
- * Note that the swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
+ * Note that swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
  * <p>
  * The process of rendering a frame is comprised of two operations:
  * <ol>
- * <li>Acquire the index of the next swapchain image using {@link #acquire(VulkanSemaphore, Fence)}</li>
+ * <li>Acquire the index of the next swapchain image via {@link #acquire(VulkanSemaphore, Fence)}</li>
  * <li>Present a rendered frame to the surface using {@link #present(WorkQueue, int, Set)}</li>
  * </ol>
  * <p>
@@ -31,13 +31,12 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  */
 public class Swapchain extends VulkanObject {
 	/**
-	 * Swap-chain extension name.
+	 * Swapchain extension name.
 	 */
 	public static final String EXTENSION = "VK_KHR_swapchain";
 
 	/**
 	 * Default presentation mode guaranteed on all Vulkan implementations.
-	 * @see VkPresentModeKHR#FIFO_KHR
 	 */
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
 
@@ -127,16 +126,16 @@ public class Swapchain extends VulkanObject {
 	 * Presents the next frame to this swapchain.
 	 * @param queue				Presentation queue
 	 * @param index				Swapchain image index
-	 * @param semaphore			Wait semaphore
+	 * @param semaphores		Wait semaphores
 	 * @throws Invalidated if the image cannot be presented
 	 * @see PresentationTaskBuilder
 	 * @see #present(LogicalDevice, WorkQueue, VkPresentInfoKHR)
 	 */
-	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws Invalidated {
+	public void present(WorkQueue queue, int index, Set<VulkanSemaphore> semaphores) throws Invalidated {
 		final var builder = new PresentationTaskBuilder();
 		builder.image(this, index);
 
-		if(semaphore != null) {
+		for(var semaphore : semaphores) {
 			builder.wait(semaphore);
 		}
 

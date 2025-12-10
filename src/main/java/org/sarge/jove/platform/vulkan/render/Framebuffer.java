@@ -31,6 +31,9 @@ public class Framebuffer extends VulkanObject {
 		this.group = requireNonNull(group);
 	}
 
+	/**
+	 * @return Framebuffer group
+	 */
 	public Group group() {
 		return group;
 	}

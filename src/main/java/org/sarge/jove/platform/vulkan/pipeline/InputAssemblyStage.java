@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.pipeline;
-import org.sarge.jove.model.Primitive;
+
+import org.sarge.jove.model.*;
 import org.sarge.jove.platform.vulkan.*;
 
 /**
@@ -30,6 +31,7 @@ public class InputAssemblyStage {
 
 	/**
 	 * @param restart Whether restart is enabled
+	 * @see IndexedMesh#restart()
 	 */
 	public InputAssemblyStage restart(boolean restart) {
 		this.restart = restart;

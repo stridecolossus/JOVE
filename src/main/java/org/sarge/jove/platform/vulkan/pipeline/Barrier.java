@@ -56,15 +56,11 @@ public class Barrier implements Command {
 	public void execute(Buffer buffer) {
 		library.vkCmdPipelineBarrier(
 				buffer,
-				src,
-				dest,
+				src, dest,
 				flags,
-				memory.length,
-				memory,
-				buffers.length,
-				buffers,
-				images.length,
-				images
+				memory.length,		memory,
+				buffers.length,		buffers,
+				images.length,		images
 		);
 	}
 

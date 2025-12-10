@@ -9,17 +9,16 @@ import org.sarge.jove.platform.vulkan.core.*;
 /**
  * An <i>index buffer</i> binds a drawing index to the pipeline.
  * <p>
- * Note that the index is represented as either {@code short} or {@code int} values
- * depending on the length of the vertex data referred to, specified by {@link VkIndexType}.
+ * Note that the index can be represented as either {@code short} or {@code int} values depending on the length of the vertex data.
  * <p>
- * @see IndexedMesh#isCompactIndex()
+ * @see IndexedMesh.Index#isCompactIndex()
  * @author Sarge
  */
 public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 	/**
 	 * Constructor given a specific index data type.
 	 * @param type			Index type
-	 * @param buffer		Index buffer
+	 * @param buffer		Underlying buffer
 	 * @throws IllegalArgumentException if the given {@link #type} is invalid
 	 * @throws IllegalStateException if the {@link #buffer} cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
 	 */
@@ -32,14 +31,7 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 	}
 
 	/**
-	 * @return Index type
-	 */
-	public VkIndexType type() {
-		return type;
-	}
-
-	/**
-	 * Creates a command to bind this buffer.
+	 * Creates a command to bind this index buffer.
 	 * @param offset Buffer offset
 	 * @return Command to bind this index buffer
 	 * @throws IllegalStateException if the index is larger than the {@code maxDrawIndexedIndexValue} hardware limit

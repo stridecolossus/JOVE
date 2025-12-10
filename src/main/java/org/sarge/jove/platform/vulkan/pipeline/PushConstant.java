@@ -1,6 +1,5 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 import static org.sarge.jove.platform.vulkan.core.Vulkan.checkAlignment;
 import static org.sarge.jove.util.Validation.*;
@@ -17,15 +16,15 @@ import org.sarge.jove.util.EnumMask;
  * A <i>push constant</i> is an alternative to uniform buffers for transferring small amounts of data to a shader.
  * <p>
  * A push constant is comprised of a set of {@link Range} that specify one-or-more memory segments used by a pipeline shader stage.
- * The push constant has a <i>backing buffer</i> that can be populated via the {@link #data()} or {@link #data(Range)} accessors.
+ * The push constant has a <i>backing buffer</i> that can be populated via {@link #data()} or {@link #data(Range)}.
  * <p>
- * Push constant data is written to the pipeline by an {@link UpdateCommand}.
+ * Push constant data is written to the pipeline <i>during</i> rendering by an {@link UpdateCommand}.
  * <p>
  * @author Sarge
  */
 public class PushConstant {
     /**
-     * A <i>push constant range</i> specifies a segment of this push constant.
+     * A <i>push constant range</i> specifies a segment of the backing buffer of this push constant.
      */
 	public record Range(int offset, int size, Set<VkShaderStageFlags> stages) {
     	/**
@@ -70,7 +69,7 @@ public class PushConstant {
 	 * Constructor.
 	 * @param ranges			Push constant ranges
 	 * @param allocator			Off-heap allocator for the backing buffer
-	 * @throws IllegalArgumentException if any {@link #ranges} do not cover the entire backing buffer or have overlapping pipeline stages
+	 * @throws IllegalArgumentException if {@link #ranges} does not cover the entire backing buffer or has overlapping pipeline stages
 	 */
 	public PushConstant(List<Range> ranges, SegmentAllocator allocator) {
 		// Order ranges by offset
@@ -79,20 +78,20 @@ public class PushConstant {
     			.sorted(Comparator.comparingInt(Range::offset))
     			.toList();
 
+		// Validate ranges
+		checkCoverage();
+		checkStages();
+
 		// Allocate backing buffer
 		final Range last = this.ranges.getLast();
 		final MemoryLayout layout = MemoryLayout.sequenceLayout(last.length(), ValueLayout.JAVA_BYTE);
 		this.data = allocator.allocate(layout);
-
-		// Validate ranges
-		coverage();
-		stages();
 	}
 
     /**
      * Checks that the ranges cover the entire backing buffer.
      */
-    private void coverage() {
+    private void checkCoverage() {
     	int offset = 0;
     	for(var range : ranges) {
     		if(range.offset > offset) {
@@ -105,7 +104,7 @@ public class PushConstant {
     /**
      * Checks that the shader stages are unique for each range.
      */
-    private void stages() {
+    private void checkStages() {
     	final Set<VkShaderStageFlags> stages = new HashSet<>();
     	for(var range : ranges) {
     		if(!Collections.disjoint(range.stages, stages)) {
@@ -116,10 +115,9 @@ public class PushConstant {
     }
 
     /**
-     * @param device Logical device
      * @throws IllegalArgumentException if any range of this push constant exceeds the hardware limit
      */
-	void validate(LogicalDevice device) {
+	protected void validate(LogicalDevice device) {
 		final int max = device.limits().get("maxPushConstantsSize");
 		for(Range range : ranges) {
 			if(range.size() > max) {
@@ -168,7 +166,7 @@ public class PushConstant {
 		}
 		check(layout);
 
-		return new UpdateCommand(range, layout);
+		return new UpdateCommand(range, layout, new Handle(data));
 	}
 
 	/**
@@ -192,7 +190,7 @@ public class PushConstant {
 				.collect(toSet());
 
 		final Range range = new Range(0, (int) data.byteSize(), stages);
-		return new UpdateCommand(range, layout);
+		return new UpdateCommand(range, layout, new Handle(data));
 	}
 
 	private void check(PipelineLayout layout) {
@@ -204,30 +202,12 @@ public class PushConstant {
 	/**
 	 * Command to update a write a portion of the backing buffer of this push constant to the pipeline.
 	 */
-	private class UpdateCommand implements Command {
-		private final Range range;
-		private final PipelineLayout layout;
-
-		/**
-		 * Constructor.
-		 * @param range		Update range
-		 * @param layout	Pipeline layout
-		 */
-		public UpdateCommand(Range range, PipelineLayout layout) {
-			this.range = requireNonNull(range);
-			this.layout = requireNonNull(layout);
-		}
-
+	private record UpdateCommand(Range range, PipelineLayout layout, Handle data) implements Command {
 		@Override
 		public void execute(Buffer buffer) {
 			final PipelineLayout.Library library = layout.device().library();
 			final var stages = new EnumMask<>(range.stages);
-			library.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, new Handle(data));
-		}
-
-		@Override
-		public String toString() {
-			return String.format("UpdateCommand[%s]", range);
+			library.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, data);
 		}
 	}
 }

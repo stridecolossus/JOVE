@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.*;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
@@ -26,12 +25,12 @@ import org.sarge.jove.util.EnumMask;
  * @see Command
  * @author Sarge
  */
-public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStageFlags>> waiting, Set<VulkanSemaphore> signal) {
+public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStageFlags>> waiting, Set<VulkanSemaphore> signals) {
 	/**
 	 * Constructor.
 	 * @param buffers		Command buffers
 	 * @param waiting		Table of wait semaphores and pipeline stage(s)
-	 * @param signal		Semaphores to be signalled
+	 * @param signals		Semaphores to be signalled
 	 * @throws NoSuchElementException if {@link #buffers} is empty
 	 * @throws IllegalStateException if any buffer has not been recorded
 	 * @throws IllegalStateException if any buffer submits to a different queue family
@@ -39,23 +38,23 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	 */
 	public Work {
 		// Check all buffers have been recorded and submit to the same queue family
-		validate(buffers);
-		validate(buffers.stream());
+		checkReady(buffers);
+		checkFamily(buffers);
 
 		// Check semaphores
-		if(!Collections.disjoint(signal, waiting.keySet())) {
+		if(!Collections.disjoint(signals, waiting.keySet())) {
 			throw new IllegalArgumentException("Semaphores cannot be used as both a wait and a signal");
 		}
 
 		buffers = List.copyOf(buffers);
 		waiting = Map.copyOf(waiting);
-		signal = Set.copyOf(signal);
+		signals = Set.copyOf(signals);
 	}
 
 	/**
 	 * @throws IllegalStateException if any buffer has not been recorded
 	 */
-	private static void validate(List<Buffer> buffers) {
+	private static void checkReady(List<Buffer> buffers) {
 		for(Buffer b : buffers) {
 			if(!b.isReady()) {
 				throw new IllegalStateException("Buffer has not been recorded: " + b);
@@ -67,8 +66,9 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	 * @return Distinct command pool
 	 * @throws IllegalStateException unless all buffers submit to the same queue family
 	 */
-	private static Pool validate(Stream<Buffer> buffers) {
+	private static Pool checkFamily(List<Buffer> buffers) {
     	final List<Pool> pools = buffers
+    			.stream()
             	.map(Buffer::pool)
             	.distinct()
             	.toList();
@@ -112,8 +112,8 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 				.toArray();
 
 		// Populate signal semaphores
-		info.signalSemaphoreCount = signal.size();
-		info.pSignalSemaphores = NativeObject.handles(signal);
+		info.signalSemaphoreCount = signals.size();
+		info.pSignalSemaphores = NativeObject.handles(signals);
 
 		return info;
 	}
@@ -136,12 +136,13 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	 */
 	public static void submit(List<Work> batch, Fence fence) {
 		// Check all work in this batch submits to same queue
-		final Stream<Buffer> buffers = batch
+		final List<Buffer> buffers = batch
         		.stream()
         		.map(Work::buffers)
-        		.flatMap(Collection::stream);
+        		.flatMap(Collection::stream)
+        		.toList();
 
-		final Pool pool = validate(buffers);
+		final Pool pool = checkFamily(buffers);
 
 		// Build batch descriptors
 		final VkSubmitInfo[] info = batch
@@ -204,7 +205,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	public static class Builder {
 		private final List<Buffer> buffers = new ArrayList<>();
 		private final Map<VulkanSemaphore, Set<VkPipelineStageFlags>> wait = new HashMap<>();
-		private final Set<VulkanSemaphore> signal = new HashSet<>();
+		private final Set<VulkanSemaphore> signals = new HashSet<>();
 
 		/**
 		 * Adds a command buffer to be submitted.
@@ -230,7 +231,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 		 * @param semaphore Semaphore to be signalled
 		 */
 		public Builder signal(VulkanSemaphore semaphore) {
-			signal.add(semaphore);
+			signals.add(semaphore);
 			return this;
 		}
 
@@ -239,7 +240,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 		 * @return Work submission
 		 */
 		public Work build() {
-			return new Work(buffers, wait, signal);
+			return new Work(buffers, wait, signals);
 		}
 	}
 }

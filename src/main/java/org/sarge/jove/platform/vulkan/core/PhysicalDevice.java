@@ -1,6 +1,7 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.*;
 import java.util.function.*;
@@ -11,6 +12,7 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
+import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>physical device</i> represents a hardware component such as a GPU.
@@ -124,6 +126,8 @@ public class PhysicalDevice implements NativeObject {
 	public static Stream<PhysicalDevice> enumerate(Instance instance, Library library) {
 		// Builder for each device
 		final var builder = new Object() {
+			private final ReverseMapping<VkQueueFlags> mapping = ReverseMapping.mapping(VkQueueFlags.class);
+
 			/**
 			 * @param device Device handle
 			 * @return Physical device
@@ -139,11 +143,21 @@ public class PhysicalDevice implements NativeObject {
 	    	private List<Family> families(Handle device) {
 	    		final VulkanFunction<VkQueueFamilyProperties[]> function = (count, array) -> library.vkGetPhysicalDeviceQueueFamilyProperties(device, count, array);
 	    		final VkQueueFamilyProperties[] properties = VulkanFunction.invoke(function, VkQueueFamilyProperties[]::new);
+
 	    		return IntStream
 	    				.range(0, properties.length)
-	    				.mapToObj(n -> Family.of(n, properties[n]))
+	    				.mapToObj(n -> family(n, properties[n]))
 	    				.toList();
 	    	}
+
+			/**
+			 * Creates a new queue family from the given descriptor.
+			 */
+			private Family family(int index, VkQueueFamilyProperties properties) {
+				requireZeroOrMore(index);
+				final Set<VkQueueFlags> flags = properties.queueFlags.enumerate(mapping);
+				return new Family(index, properties.queueCount, flags);
+			}
 		};
 
 		// Enumerate devices
@@ -165,7 +179,7 @@ public class PhysicalDevice implements NativeObject {
 	/**
 	 * A <i>device selector</i> is used to select a physical device with a queue family matching the requirements of the application.
 	 * <p>
-	 * The matching queue family is recorded as a side effect and can be retrieved using the {@link #family(PhysicalDevice)} method.
+	 * The matching queue family is recorded as a side effect and can be retrieved using {@link #family(PhysicalDevice)}.
 	 * <p>
 	 * Note that the same queue family may be returned by multiple selectors, i.e. families often support multiple use cases.
 	 */

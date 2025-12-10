@@ -45,7 +45,7 @@ public class RenderPass extends VulkanObject {
 	 * Notes:
 	 * <ul>
 	 * <li>An optimal render pass should have offsets and dimensions that are multiples of the returned granularity</li>
-	 * <li>Subpass dependencies are not affected by the render area and apply to the entire sub-resource of the attached frame buffer</li>
+	 * <li>Subpass dependencies are not affected by the render area and apply to the entire subresource of the attached frame buffer</li>
 	 * </ul>
 	 * @return Render area granularity
 	 * @see <a href="https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#vkGetRenderAreaGranularity">vkGetRenderAreaGranularity</a>
@@ -91,8 +91,8 @@ public class RenderPass extends VulkanObject {
 		 * @param device Logical device
 		 * @return Render pass
 		 * @throws IllegalArgumentException if the render pass is empty
-		 * @throws IllegalArgumentException if for an unknown attachment reference
-		 * @throws IllegalArgumentException if for an invalid subpass dependency
+		 * @throws IllegalArgumentException for an unknown attachment reference
+		 * @throws IllegalArgumentException for an invalid subpass dependency
 		 */
 		public RenderPass build(LogicalDevice device) {
 			// Validate

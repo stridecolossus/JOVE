@@ -43,7 +43,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 
 	/**
 	 * Creates the depth-stencil attachment.
-	 * @param format Depth image layout
+	 * @param format Depth format
 	 * @return Depth attachment
 	 */
 	public static Attachment depth(VkFormat format) {

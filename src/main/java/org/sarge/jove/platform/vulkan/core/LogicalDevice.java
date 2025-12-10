@@ -61,7 +61,7 @@ public class LogicalDevice extends TransientNativeObject {
 	 * @throws NoSuchElementException if the queue is not present
 	 */
 	public WorkQueue queue(Family family) {
-		return queues.get(family).getFirst();
+		return queues.getOrDefault(family, List.of()).getFirst();
 	}
 
 	/**

@@ -43,19 +43,6 @@ public abstract class VulkanObject extends TransientNativeObject {
 		 * @param allocator		Vulkan memory allocator, always {@code null}
 		 */
 		void destroy(LogicalDevice device, T object, Handle allocator);
-
-		/**
-		 * Creates a destructor that does nothing.
-		 * @param <T> Vulkan object
-		 * @return Empty destructor
-		 */
-		static <T extends VulkanObject> Destructor<T> empty() {
-			return new Destructor<>() {
-				public void destroy(LogicalDevice device, T object, Handle allocator) {
-					// Ignored
-				}
-			};
-		}
 	}
 
 	/**

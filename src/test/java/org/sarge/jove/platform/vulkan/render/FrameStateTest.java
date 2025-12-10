@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
@@ -32,9 +34,9 @@ class FrameStateTest {
 			}
 
 			@Override
-			public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws Invalidated {
+			public void present(WorkQueue queue, int index, Set<VulkanSemaphore> semaphores) throws Invalidated {
 				assertEquals(sequence.pool().queue(), queue);
-				assertEquals(ready, semaphore);
+				assertEquals(Set.of(ready), semaphores);
 				presented = true;
 			}
 		};

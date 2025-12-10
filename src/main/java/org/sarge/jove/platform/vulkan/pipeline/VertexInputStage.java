@@ -58,7 +58,7 @@ public class VertexInputStage {
 		 * @param stride			Stride (bytes)
 		 * @param rate				Input rate
 		 * @param attributes		Vertex attributes
-		 * @throws IllegalArgumentException if the offset of any attribute is not less than the {@link #stride} of this binding
+		 * @throws IllegalArgumentException if {@link #offset} or any of the {@link #attributes} is not less than the {@link #stride} of this binding
 		 */
 		public VertexBinding {
 			requireZeroOrMore(index);
@@ -107,6 +107,7 @@ public class VertexInputStage {
 				++loc;
 				stride += layout.stride();
 			}
+			assert stride == Layout.stride(layouts);
 
 			// Create binding
 			return new VertexBinding(index, stride, VkVertexInputRate.VERTEX, attributes);

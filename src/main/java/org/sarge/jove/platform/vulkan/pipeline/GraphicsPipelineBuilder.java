@@ -16,7 +16,7 @@ import org.sarge.jove.util.EnumMask;
 /**
  * A <i>graphics pipeline builder</i> creates a rendering pipeline.
  * <p>
- * A following pipeline stages <b>must</b> be configured:
+ * The following pipeline stages <b>must</b> be configured:
  * <ul>
  * <li>the {@link #viewport()} fixed function</li>
  * <li>the {@link VkShaderStage#VERTEX} programmable shader stage</li>
@@ -182,7 +182,7 @@ public class GraphicsPipelineBuilder {
 	}
 
 	/**
-	 * Adds a shader stage.
+	 * Adds a programmable shader stage.
 	 * @param shader Shader stage
 	 * @throws IllegalStateException for a duplicate shader stage
 	 */

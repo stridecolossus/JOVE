@@ -1,6 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkResult;
@@ -29,10 +29,10 @@ public class MockSwapchain extends Swapchain {
 	}
 
 	@Override
-	public void present(WorkQueue queue, int index, VulkanSemaphore semaphore) throws Invalidated {
+	public void present(WorkQueue queue, int index, Set<VulkanSemaphore> semaphores) throws Invalidated {
 		if(invalid) {
 			throw new Invalidated(VkResult.VK_ERROR_DEVICE_LOST);
 		}
-		super.present(queue, index, semaphore);
+		super.present(queue, index, semaphores);
 	}
 }

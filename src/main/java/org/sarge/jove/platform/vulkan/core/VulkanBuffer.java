@@ -153,7 +153,7 @@ public class VulkanBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Creates a command to fill this buffer with a given value.
+	 * Creates a command to fill this buffer with the given value.
 	 * @param offset		Buffer offset
 	 * @param size			Number of bytes to fill or {@link #VK_WHOLE_SIZE} to fill to the end of the buffer
 	 * @param value			Value to fill
@@ -243,7 +243,7 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Helper.
-	 * Creates a staging buffer for data that can then be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
+	 * Creates a staging buffer for data to be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
 	 * <p>
 	 * The buffer has the following properties:
 	 * <ul>

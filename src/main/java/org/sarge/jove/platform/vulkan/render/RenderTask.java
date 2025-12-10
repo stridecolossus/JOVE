@@ -85,14 +85,14 @@ public class RenderTask implements Runnable, TransientObject {
 		try {
 			frame();
 		}
-		catch(Swapchain.Invalidated e) {
+		catch(Invalidated e) {
 			waitIdle();
 			factory.recreate();
 			group.recreate(factory.swapchain());
 		}
 	}
 
-	private void frame() throws Swapchain.Invalidated {
+	private void frame() throws Invalidated {
 		// Select the next in-flight frame
 		final FrameState frame = frames[next];
 		if(++next >= frames.length) {

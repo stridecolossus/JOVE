@@ -7,15 +7,12 @@ import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.util.EnumMask;
-import org.sarge.jove.util.IntEnum.ReverseMapping;
 
 /**
  * A <i>fence</i> is used to synchronise between application code and Vulkan.
  * @author Sarge
  */
 public class Fence extends VulkanObject {
-	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
-
 	/**
 	 * Creates a fence.
 	 * @param device		Logical device
@@ -54,12 +51,16 @@ public class Fence extends VulkanObject {
 	 */
 	public boolean signalled() {
 		final int code = library.vkGetFenceStatus(this.device(), this);
-		final VkResult result = MAPPING.map(code);
-		return switch(result) {
-			case VK_SUCCESS		-> true;
-			case VK_NOT_READY	-> false;
-			default				-> throw new VulkanException(result);
-		};
+		if(code == VkResult.VK_SUCCESS.value()) {
+			return true;
+		}
+		else
+		if(code == VkResult.VK_NOT_READY.value()) {
+			return false;
+		}
+		else {
+			throw new VulkanException(code);
+		}
 	}
 
 	/**

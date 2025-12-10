@@ -1,4 +1,18 @@
+**********
+
+generator for primitive arrays -> need to be handles?
+
+VkShaderModuleCreateInfo::pCode
+VkSubmitInfo::pWaitDstStageMask
+VkSpecializationInfo::pData
+
+also injects superfluous padding
+
+**********
+
 mesh loader still needs custom indexed implementation
+
+consider physical device + queue family pair, convenience record -> selectors, vulkan surface
 
 review use of cosine
 - only Rotation::matrix NEEDS cosine

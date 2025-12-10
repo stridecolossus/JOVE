@@ -65,8 +65,7 @@ public class IndexedMesh extends MutableMesh {
 
 	/**
 	 * An <i>index</i> is a list of vertex indices.
-	 * A {@link #isCompactIndex()} can optionally be written as {@link short} values via the {@link #compact()} method.
-	 * @see #MAX_SHORT_INDEX_SIZE
+	 * An index that is {@link #isCompactIndex()} can optionally be written as {@link short} values via {@link #compact()}.
 	 */
 	public interface Index extends MeshData {
 		/**

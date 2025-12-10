@@ -40,8 +40,8 @@ public record DrawCommand(int vertexCount, int instanceCount, int firstVertex, i
 
 	/**
 	 * Creates a simple draw command for the given number of vertices.
-	 * @param vertexCount Number of vertices
-	 * @param device Logical device
+	 * @param vertexCount		Number of vertices
+	 * @param device			Logical device
 	 * @return Simple draw command
 	 */
 	public static DrawCommand of(int vertexCount, LogicalDevice device) {

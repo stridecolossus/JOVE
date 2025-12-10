@@ -40,6 +40,9 @@ public class BufferCopyCommand implements Command {
 	 * @throws IllegalArgumentException if {@link #regions} is empty
 	 */
 	private BufferCopyCommand(VulkanBuffer source, VulkanBuffer destination, VkBufferCopy[] regions) {
+		if(source == destination) {
+			throw new IllegalArgumentException("Cannot copy to self");
+		}
 		if(regions.length == 0) {
 			throw new IllegalArgumentException("No copy regions specified");
 		}
@@ -69,26 +72,7 @@ public class BufferCopyCommand implements Command {
 	 * Builder for a buffer copy command.
 	 */
 	public static class Builder {
-		/**
-		 * Transient copy region.
-		 */
-		private record CopyRegion(long srcOffset, long destOffset, long size) {
-			private CopyRegion {
-				requireZeroOrMore(srcOffset);
-				requireZeroOrMore(destOffset);
-				requireZeroOrMore(size);
-			}
-
-			private VkBufferCopy build() {
-				final var copy = new VkBufferCopy();
-				copy.srcOffset = srcOffset;
-				copy.dstOffset = destOffset;
-				copy.size = size;
-				return copy;
-			}
-		}
-
-		private final List<CopyRegion> regions = new ArrayList<>();
+		private final List<VkBufferCopy> regions = new ArrayList<>();
 		private VulkanBuffer source, destination;
 
 		/**
@@ -121,10 +105,22 @@ public class BufferCopyCommand implements Command {
 		 * @throws IllegalArgumentException if the copy region is invalid for either buffer
 		 */
 		public Builder region(long srcOffset, long destOffset, long size) {
+			// Validate
+			requireZeroOrMore(srcOffset);
+			requireZeroOrMore(destOffset);
 			requireOneOrMore(size);
 			source.checkOffset(srcOffset + size - 1);
 			destination.checkOffset(destOffset + size - 1);
-			regions.add(new CopyRegion(srcOffset, destOffset, size));
+
+			// Build copy region
+			final var copy = new VkBufferCopy();
+			copy.srcOffset = srcOffset;
+			copy.dstOffset = destOffset;
+			copy.size = size;
+
+			// Add to command
+			regions.add(copy);
+
 			return this;
 		}
 
@@ -144,18 +140,7 @@ public class BufferCopyCommand implements Command {
 		 * @throws IllegalArgumentException if the buffers have not been populated, are the same object, or no copy regions have been specified
 		 */
 		public BufferCopyCommand build() {
-			// Validate
-			if(source == destination) {
-				throw new IllegalArgumentException("Cannot copy to self");
-			}
-
-			// Build copy regions array
-			final var array = regions
-					.stream()
-					.map(CopyRegion::build)
-					.toArray(VkBufferCopy[]::new);
-
-			// Create copy command
+			final var array = regions.toArray(VkBufferCopy[]::new);
 			return new BufferCopyCommand(source, destination, array);
 		}
 	}

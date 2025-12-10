@@ -1,13 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.util.Validation.*;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.util.Set;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.util.IntEnum.ReverseMapping;
+import org.sarge.jove.platform.vulkan.VkQueueFlags;
 
 /**
  * A <i>work queue</i> is used to submit tasks to the hardware.
@@ -32,23 +31,6 @@ public record WorkQueue(Handle handle, Family family) implements NativeObject {
 		 * Ignored queue family.
 		 */
 		public static final Family IGNORED = new Family(-1, 1, Set.of());
-
-		/**
-		 * Queue flag mapper.
-		 */
-		private static final ReverseMapping<VkQueueFlags> MAPPING = ReverseMapping.mapping(VkQueueFlags.class);
-
-		/**
-		 * Helper - Creates a new queue family from the given descriptor.
-		 * @param index				Family index
-		 * @param properties		Descriptor
-		 * @return New queue family
-		 */
-		public static Family of(int index, VkQueueFamilyProperties properties) {
-			final Set<VkQueueFlags> flags = properties.queueFlags.enumerate(MAPPING);
-			requireZeroOrMore(index);
-			return new Family(index, properties.queueCount, flags);
-		}
 
 		/**
 		 * Constructor.

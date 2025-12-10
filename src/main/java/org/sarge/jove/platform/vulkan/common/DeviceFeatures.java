@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.*;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
@@ -59,20 +58,20 @@ public record DeviceFeatures(Set<String> features) {
 	 * @return Device features
 	 */
 	public static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
-		final Predicate<Field> enabled = field -> {
-			try {
-				return field.getBoolean(features);
-			}
-			catch(Exception e) {
-				throw new RuntimeException(e);
-			}
-		};
-
 		return Arrays
 				.stream(VkPhysicalDeviceFeatures.class.getFields())
 				.filter(field -> !Modifier.isStatic(field.getModifiers()))
-				.filter(enabled)
+				.filter(field -> isEnabled(features, field))
 				.map(Field::getName)
 				.collect(collectingAndThen(toSet(), DeviceFeatures::new));
+	}
+
+	private static boolean isEnabled(VkPhysicalDeviceFeatures features, Field field) {
+		try {
+			return field.getBoolean(features);
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

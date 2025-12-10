@@ -134,7 +134,7 @@ public interface Command {
 			// Check buffer can be recorded
 			check(Stage.INITIAL);
 
-			// Check inheritance descriptor provided for a secondary buffer
+			// Check inheritance descriptor is only provided for secondary buffers
 			if(primary ^ Objects.isNull(inheritance)) {
 				throw new IllegalArgumentException("Mismatched inheritance descriptor: " + this);
 			}
@@ -147,8 +147,6 @@ public interface Command {
 
 			// Start buffer recording
 			pool.library.vkBeginCommandBuffer(this, info);
-
-			// Start recording
 			stage = Stage.RECORDING;
 
 			return this;
