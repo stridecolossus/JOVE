@@ -87,7 +87,7 @@ public final class MathsUtility {
 	}
 
 	/**
-	 * Calculates the maximum unsigned integer value for the given number of bits.
+	 * Calculates the maximum unsigned integer value for the given number of bits, i.e. {@code 2 ^ bits - 1}
 	 * @param bits Number of bits
 	 * @return Maximum unsigned value
 	 */

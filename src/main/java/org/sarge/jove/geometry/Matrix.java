@@ -195,7 +195,6 @@ public class Matrix implements Bufferable {
 	 * Multiplies this matrix by the given scalar.
 	 * @param scalar Multiplier scalar
 	 * @return Scaled matrix
-	 * @throws IllegalArgumentException if the given order does not match this matrix
 	 */
 	public Matrix multiply(float scalar) {
 		final int order = this.order();
@@ -211,8 +210,8 @@ public class Matrix implements Bufferable {
 	/**
 	 * Multiplies this and the given matrix.
 	 * <p>
-	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A * B</code> applies B then A.
 	 * Note that matrix multiplication is <b>non-commutative</b>.
+	 * The resultant matrix first applies the given matrix and <b>then</b> this matrix, i.e. <code>A * B</code> applies B then A.
 	 * <p>
 	 * @param that Matrix to multiply
 	 * @return Multiplied matrix
@@ -374,7 +373,7 @@ public class Matrix implements Bufferable {
 		/**
 		 * Sets a matrix row to the given vector.
 		 * @param row		Row index
-		 * @param vector 		Vector
+		 * @param vector 	Vector
 		 * @throws IndexOutOfBoundsException if {@link #row} is out-of-bounds
 		 */
 		public Builder row(int row, Vector vector) {
@@ -386,8 +385,8 @@ public class Matrix implements Bufferable {
 
 		/**
 		 * Sets a matrix column to the given vector.
-		 * @param col 			Column index
-		 * @param vector		Vector
+		 * @param col 		Column index
+		 * @param vector	Vector
 		 * @throws IndexOutOfBoundsException if {@link #col} is out-of-bounds
 		 */
 		public Builder column(int col, Vector vector) {

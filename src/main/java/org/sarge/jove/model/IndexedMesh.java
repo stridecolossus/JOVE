@@ -41,14 +41,14 @@ public class IndexedMesh extends MutableMesh {
 		if((index < 0) || (index >= super.count())) {
 			throw new IndexOutOfBoundsException(index);
 		}
-		this.indices.add(index);
+		indices.add(index);
 		return this;
 	}
 
 	/**
 	 * Restarts the index.
-	 * Note that an index containing one-or-more restarts cannot be compact.
-	 * @see Index#isCompactIndex()
+	 * Note that an index containing one-or-more restarts can <b>only</b> be represented by 32-bit values.
+	 * @see Index#minimumElementBytes()
 	 */
 	public IndexedMesh restart() {
 		indices.add(-1);
@@ -66,7 +66,7 @@ public class IndexedMesh extends MutableMesh {
 	 */
 	private class IntegerIndex implements Index {
 		@Override
-		public int length() {
+		public final int length() {
 			return indices.size() * bytes();
 		}
 
@@ -85,19 +85,19 @@ public class IndexedMesh extends MutableMesh {
 		}
 
 		@Override
-		public int minimumElementBytes() {
-			// Check for index with restart elements
+		public final int minimumElementBytes() {
+			// An restarted index can only be represented by 32-bit indices
 			if(restart) {
 				return Integer.BYTES;
 			}
 
-			// Otherwise determine smallest element size for the index
-			final int size = IndexedMesh.super.count();
-			if(size <= MathsUtility.unsignedMaximum(Byte.SIZE)) {
+			// Determine smallest element size for the index
+			final int vertices = IndexedMesh.super.count();
+			if(vertices <= MathsUtility.unsignedMaximum(Byte.SIZE)) {
 				return Byte.BYTES;
 			}
 			else
-			if(size <= MathsUtility.unsignedMaximum(Short.SIZE)) {
+			if(vertices <= MathsUtility.unsignedMaximum(Short.SIZE)) {
 				return Short.BYTES;
 			}
 			else {

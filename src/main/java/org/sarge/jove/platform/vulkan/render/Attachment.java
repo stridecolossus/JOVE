@@ -12,7 +12,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment.LoadStore colour, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
+public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment.LoadStore operation, Attachment.LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
 	/**
 	 * Convenience wrapper for a load-store pair.
 	 */
@@ -36,7 +36,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 	public static Attachment colour(VkFormat format) {
 		return new Builder()
 				.format(format)
-				.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE))
+				.operation(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE))
 				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 				.build();
 	}
@@ -49,7 +49,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 	public static Attachment depth(VkFormat format) {
 		return new Builder()
 				.format(format)
-				.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE))
+				.operation(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE))
 				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 				.build();
 	}
@@ -58,7 +58,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 	 * Constructor.
 	 * @param format			Image format
 	 * @param samples			Number of samples
-	 * @param colour			Colour attachment operations
+	 * @param operation			Attachment operations
 	 * @param stencil			Stencil operations
 	 * @param initialLayout		Initial layout
 	 * @param finalLayout		Final layout
@@ -69,7 +69,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 	public Attachment {
 		requireNonNull(format);
 		requireNonNull(samples);
-		requireNonNull(colour);
+		requireNonNull(operation);
 		requireNonNull(stencil);
 		requireNonNull(initialLayout);
 		requireNonNull(finalLayout);
@@ -84,7 +84,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
     		}
     	}
 
-		if((initialLayout == VkImageLayout.UNDEFINED) && ((colour.load == LOAD) || (stencil.load == LOAD))) {
+		if((initialLayout == VkImageLayout.UNDEFINED) && ((operation.load == LOAD) || (stencil.load == LOAD))) {
 			throw new IllegalArgumentException("Cannot load an undefined layout");
 		}
 	}
@@ -96,8 +96,8 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 		final var attachment = new VkAttachmentDescription();
 		attachment.format = format;
 		attachment.samples = new EnumMask<>(samples);
-		attachment.loadOp = colour.load;
-		attachment.storeOp = colour.store;
+		attachment.loadOp = operation.load;
+		attachment.storeOp = operation.store;
 		attachment.stencilLoadOp = stencil.load;
 		attachment.stencilStoreOp = stencil.store;
 		attachment.initialLayout = initialLayout;
@@ -114,7 +114,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 
 		private VkFormat format;
 		private VkSampleCountFlags samples = VkSampleCountFlags.COUNT_1;
-		private LoadStore attachment = none;
+		private LoadStore operation = none;
 		private LoadStore stencil = none;
 		private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;
 		private VkImageLayout finalLayout;
@@ -150,10 +150,10 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 
 		/**
 		 * Sets the load-store operations for a colour or depth attachment.
-		 * @param load Attachment operations
+		 * @param operation Attachment operations
 		 */
-		public Builder attachment(LoadStore attachment) {
-			this.attachment = attachment;
+		public Builder operation(LoadStore operation) {
+			this.operation = operation;
 			return this;
 		}
 
@@ -189,7 +189,7 @@ public record Attachment(VkFormat format, VkSampleCountFlags samples, Attachment
 		 * @return New attachment
 		 */
 		public Attachment build() {
-			return new Attachment(format, samples, attachment, stencil, initialLayout, finalLayout);
+			return new Attachment(format, samples, operation, stencil, initialLayout, finalLayout);
 		}
 	}
 }

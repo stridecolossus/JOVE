@@ -60,7 +60,7 @@ class AttachmentTest {
 		@Test
 		void build() {
 			builder.samples(1);
-			builder.attachment(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE));
+			builder.operation(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE));
 			builder.finalLayout(VkImageLayout.PRESENT_SRC_KHR);
 			assertEquals(attachment, builder.build());
 		}
@@ -82,9 +82,9 @@ class AttachmentTest {
 		@DisplayName("The initial image layout of an attachment cannot be undefined if the image is loaded")
 		@Test
 		void load() {
-			final LoadStore load = new LoadStore(VkAttachmentLoadOp.LOAD, VkAttachmentStoreOp.DONT_CARE);
-			assertThrows(NullPointerException.class, () -> builder.attachment(load).build());
-			assertThrows(NullPointerException.class, () -> builder.stencil(load).build());
+			final LoadStore op = new LoadStore(VkAttachmentLoadOp.LOAD, VkAttachmentStoreOp.DONT_CARE);
+			assertThrows(NullPointerException.class, () -> builder.operation(op).build());
+			assertThrows(NullPointerException.class, () -> builder.stencil(op).build());
 		}
 	}
 }

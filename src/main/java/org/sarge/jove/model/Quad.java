@@ -9,19 +9,18 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
  * Quad utilities.
- * <p>
- * Quad vertices are assumed to be arranged as follows:
- * <pre>
- * 0 - 2
- * |   |
- * 1 - 3
- * </pre>
- * <p>
  * @author Sarge
  */
 public class Quad {
 	/**
 	 * Indices for a quad comprising a pair of counter-clockwise triangles.
+	 * <p>
+	 * Quad vertices are assumed to be arranged as follows (from the perspective of the viewer):
+	 * <pre>
+	 * 0 - 2
+	 * |   |
+	 * 1 - 3
+	 * </pre>
 	 */
 	public static final List<Integer> INDICES = List.of(
 			0, 1, 2,
@@ -42,6 +41,7 @@ public class Quad {
 	 * Creates a quad centred on the origin with vertex normals pointing towards the viewer.
 	 * @param size Quad size
 	 * @return Quad
+	 * @see #INDICES
 	 */
 	public static Mesh build(float size) {
 		// Build vertices

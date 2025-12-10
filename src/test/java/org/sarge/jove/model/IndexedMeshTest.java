@@ -74,7 +74,7 @@ class IndexedMeshTest {
 		assertNotNull(index.index(1));
 	}
 
-	@DisplayName("A mesh with less than 2^16-1 vertices can be indexed by 16-bit values")
+	@DisplayName("A mesh with less than 64K vertices can be indexed by 16-bit values")
 	@Test
 	void shortIndex() {
 		for(int n = 0; n < 65535; ++n) {
@@ -85,12 +85,22 @@ class IndexedMeshTest {
 		assertThrows(IllegalArgumentException.class, () -> index.index(1));
 	}
 
-	@DisplayName("A mesh with more than 2^16-1 vertices can only be indexed by 32-bit values")
+	@DisplayName("A mesh with 64K or more vertices can only be indexed by 32-bit values")
 	@Test
 	void integerIndex() {
 		for(int n = 0; n < 65536; ++n) {
 			mesh.add(vertex);
 		}
+		assertEquals(4, index.minimumElementBytes());
+		assertNotNull(index.index(4));
+		assertThrows(IllegalArgumentException.class, () -> index.index(1));
+		assertThrows(IllegalArgumentException.class, () -> index.index(2));
+	}
+
+	@DisplayName("A mesh containing index restarts can only be indexed by 32-bit values")
+	@Test
+	void restartIndex() {
+		mesh.restart();
 		assertEquals(4, index.minimumElementBytes());
 		assertNotNull(index.index(4));
 		assertThrows(IllegalArgumentException.class, () -> index.index(1));

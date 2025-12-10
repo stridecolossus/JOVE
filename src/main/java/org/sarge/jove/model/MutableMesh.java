@@ -11,7 +11,7 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
 
 /**
- * A <i>mutable mesh</i> is comprised of triangles specified by {@link Vertex}.
+ * A <i>mutable mesh</i> is comprised of {@link Vertex} data.
  * @author Sarge
  */
 public class MutableMesh implements Mesh {

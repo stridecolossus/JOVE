@@ -7,7 +7,7 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.util.MathsUtility;
 
 /**
- * A <i>mutable rotation</i> is a mutable adapter for an axis-angle.
+ * A <i>mutable rotation</i> is an adapter for an axis-angle.
  * @author Sarge
  */
 public class MutableRotation {

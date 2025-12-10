@@ -13,6 +13,6 @@ class QuadTest {
 
 		final int components = 3 + 3 + 2;
 		final int vertices = 2 * 3;
-		assertEquals(components * Float.BYTES * vertices, mesh.vertices().length());
+		assertEquals(components * vertices * Float.BYTES, mesh.vertices().length());
 	}
 }

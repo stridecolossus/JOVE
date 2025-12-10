@@ -61,8 +61,8 @@ public interface Mesh {
 
 		/**
 		 * Selects a smaller element byte size for this index.
-		 * @param bytes Required byte size of index elements
-		 * @return Index with the given element size
+		 * @param bytes Required byte size
+		 * @return Index with the given size
 		 * @throws IllegalArgumentException if {@link #bytes} is smaller than {@link #minimumElementBytes()}
 		 */
 		Index index(int bytes);
