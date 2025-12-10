@@ -14,13 +14,6 @@ mesh loader still needs custom indexed implementation
 
 consider physical device + queue family pair, convenience record -> selectors, vulkan surface
 
-review use of cosine
-- only Rotation::matrix NEEDS cosine
-- no real point in Matrix::matrix? graph could just switch? => simpler
-- or maybe adapter for axis-angle using cosine?
-- also toAxisAngle() is not actually used except in equals?
-- ditto rotate(vector)?
-
 add debug support for the create instance call
 https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Validation_layers
 
@@ -80,19 +73,10 @@ features todo
 - OpenAL streaming audio (queue) https://github.com/kcat/openal-soft/wiki/Programmer%27s-Guide#queuing-buffers-on-a-source
 - memory region rounding if not host coherent
 
-blog
-- pipeline cache
-- check out old blog
-
 improvements
-- cube builder optional normals, review mesh compute normals, also parallel stream
-- sort out / aggregate maths stuff: cosine, inverse root, acos? atan? others?  Inject into normalize() and converter methods as appropriate, or uses default (which should be class not interface?) 
 - pipeline cache could use Java prefs? and/or user home folder?
 - interpolator revamp
 - joystick from desktop service
-- code gen type mapper sucks, should be declarative but not using nasty switches? table driven somehow (we already have the table!), functional?
-- vkGetPhysicalDeviceImageFormatProperties? to check attachment format vs layouts
-- attachment image stereotypes? why pass layout into subpass? why separate methods to add colour/depth?
 
 particles
 - particle class ~ use case? position, timestamp(?), colour, size?
@@ -100,7 +84,3 @@ particles
 - start/end size => vertex attribute
 - low/high fade, when particles start to fade, high = lifetime
 - storage buffer, for whole scenes (!) or particles in compute pipeline, https://vkguide.dev/docs/chapter-4/storage_buffers/
-
-typedef void (VKAPI_PTR *PFN_vkCmdDispatch)(VkCommandBuffer commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ);
-typedef void (VKAPI_PTR *PFN_vkCmdDispatchIndirect)(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset);
-
