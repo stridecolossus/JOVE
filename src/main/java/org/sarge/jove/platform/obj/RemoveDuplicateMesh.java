@@ -14,7 +14,7 @@ class RemoveDuplicateMesh extends IndexedMesh {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
 	public RemoveDuplicateMesh() {
-		super(Primitive.TRIANGLE, List.of(Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT));
+		super(Primitive.TRIANGLE, Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package org.sarge.jove.model;
 
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.common.Layout;
 
@@ -26,7 +26,7 @@ public interface Mesh {
 	int count();
 
 	/**
-	 * Vertex or index data.
+	 * Vertex data.
 	 */
 	interface MeshData {
 		/**
@@ -45,4 +45,31 @@ public interface Mesh {
 	 * @return Vertex data
 	 */
 	MeshData vertices();
+
+	/**
+	 * An <i>index</i> outputs the vertex indices for this mesh.
+	 * <p>
+	 * Note that by default an index is comprised of 32-bit integers.
+	 * The {@link #index(int)} method can be used to select a smaller element size as required.
+	 * The minimum number of bytes per element for a given index is specified by {@link #minimumElementBytes()}.
+	 */
+	interface Index extends MeshData {
+		/**
+		 * @return Minimum number of bytes required for the values of this index
+		 */
+		int minimumElementBytes();
+
+		/**
+		 * Selects a smaller element byte size for this index.
+		 * @param bytes Required byte size of index elements
+		 * @return Index with the given element size
+		 * @throws IllegalArgumentException if {@link #bytes} is smaller than {@link #minimumElementBytes()}
+		 */
+		Index index(int bytes);
+	}
+
+	/**
+	 * @return Drawing index
+	 */
+	Optional<Index> index();
 }

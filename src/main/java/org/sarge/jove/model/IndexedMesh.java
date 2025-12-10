@@ -1,5 +1,4 @@
 package org.sarge.jove.model;
-
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -20,14 +19,8 @@ public class IndexedMesh extends MutableMesh {
 	 * @param layout		Vertex layout
 	 */
 	public IndexedMesh(Primitive primitive, Layout... layout) {
-		this(primitive, List.of(layout));
+		super(primitive, layout);
 	}
-
-	public IndexedMesh(Primitive primitive, List<Layout> layout) {
-		super(primitive, layout, new ArrayList<>());
-	}
-
-	// TODO - see mesh loader!
 
 	@Override
 	public int count() {
@@ -63,49 +56,22 @@ public class IndexedMesh extends MutableMesh {
 		return this;
 	}
 
-	/**
-	 * An <i>index</i> is a list of vertex indices.
-	 * An index that is {@link #isCompactIndex()} can optionally be written as {@link short} values via {@link #compact()}.
-	 */
-	public interface Index extends MeshData {
-		/**
-		 * Maximum size of a {@code short} index.
-		 */
-		long MAX_SHORT_INDEX_SIZE = MathsUtility.unsignedMaximum(Short.SIZE);
-
-		/**
-		 * @return Whether the index for this mesh <b>can</b> be <i>compact</i>
-		 * @see #compact()
-		 * @see #MAX_SHORT_INDEX_SIZE
-		 */
-		boolean isCompactIndex();
-
-		/**
-		 * @return Compact index comprising {@code short} values rather than integers
-		 * @throws IllegalStateException if this index cannot be compact
-		 * @see #isCompactIndex()
-		 */
-		Index compact();
+	@Override
+	public Optional<Index> index() {
+		return Optional.of(new IntegerIndex());
 	}
 
 	/**
-	 * @return Index data
+	 * Default 32-bit index.
 	 */
-	public Index index() {
-		return new DefaultIndex();
-	}
-
-	/**
-	 * Default implementation for an integer index.
-	 */
-	private class DefaultIndex implements Index {
+	private class IntegerIndex implements Index {
 		@Override
-		public final int length() {
-			return count() * bytes();
+		public int length() {
+			return indices.size() * bytes();
 		}
 
 		/**
-		 * @return Number of bytes per index element
+		 * @return Bytes per element
 		 */
 		protected int bytes() {
 			return Integer.BYTES;
@@ -119,23 +85,46 @@ public class IndexedMesh extends MutableMesh {
 		}
 
 		@Override
-		public boolean isCompactIndex() {
-			return (indices.size() < MAX_SHORT_INDEX_SIZE) && !restart;
+		public int minimumElementBytes() {
+			// Check for index with restart elements
+			if(restart) {
+				return Integer.BYTES;
+			}
+
+			// Otherwise determine smallest element size for the index
+			final int size = IndexedMesh.super.count();
+			if(size <= MathsUtility.unsignedMaximum(Byte.SIZE)) {
+				return Byte.BYTES;
+			}
+			else
+			if(size <= MathsUtility.unsignedMaximum(Short.SIZE)) {
+				return Short.BYTES;
+			}
+			else {
+				return Integer.BYTES;
+			}
 		}
 
 		@Override
-		public Index compact() {
-			if(!isCompactIndex()) {
-				throw new IllegalStateException("Index cannot be compact: " + this);
+		public Index index(int bytes) {
+			final int min = minimumElementBytes();
+			if(bytes < min) {
+				throw new IllegalArgumentException("Element size %d too small for minimum %d".formatted(bytes, min));
 			}
-			return new CompactIndex();
+
+			return switch(bytes) {
+				case Byte.BYTES		-> new ByteIndex();
+				case Short.BYTES	-> new ShortIndex();
+				case Integer.BYTES	-> this;
+				default				-> throw new IllegalArgumentException("Unsupported element size: " + bytes);
+			};
 		}
 	}
 
 	/**
-	 * Compact implementation for a short index.
+	 * Index of 16-bit values.
 	 */
-	private class CompactIndex extends DefaultIndex {
+	class ShortIndex extends IntegerIndex {
 		@Override
 		protected int bytes() {
 			return Short.BYTES;
@@ -147,15 +136,22 @@ public class IndexedMesh extends MutableMesh {
 				buffer.putShort((short) n);
 			}
 		}
+	}
 
+	/**
+	 * Index of 8-bit values.
+	 */
+	class ByteIndex extends IntegerIndex {
 		@Override
-		public boolean isCompactIndex() {
-			return false;
+		protected int bytes() {
+			return Byte.BYTES;
 		}
 
 		@Override
-		public Index compact() {
-			throw new UnsupportedOperationException();
+		public void buffer(ByteBuffer buffer) {
+			for(int n : indices) {
+				buffer.put((byte) n);
+			}
 		}
 	}
 }

@@ -2,8 +2,6 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
@@ -54,13 +52,13 @@ class DrawCommandTest {
 
 	@Test
 	void mesh() {
-		final var mesh = new IndexedMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
+		final var mesh = new IndexedMesh(Primitive.TRIANGLE, Point.LAYOUT);
 		mesh.add(new Vertex(Point.ORIGIN));
 		mesh.add(0);
 		mesh.add(0);
 		mesh.add(0);
 
-		final DrawCommand expected = new DrawCommand(3, 1, 0, 0, null, library);
+		final DrawCommand expected = new DrawCommand(3, 1, 0, 0, 0, library);
 		assertEquals(expected, DrawCommand.of(mesh, device));
 	}
 }

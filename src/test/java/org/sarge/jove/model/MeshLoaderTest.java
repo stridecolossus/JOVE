@@ -19,7 +19,7 @@ class MeshLoaderTest {
 	@Test
 	void load() throws IOException {
 		// Create an indexed mesh
-		final var mesh = new IndexedMesh(Primitive.TRIANGLE, List.of(Point.LAYOUT));
+		final var mesh = new IndexedMesh(Primitive.TRIANGLE, Point.LAYOUT);
 		mesh.add(new Vertex(Point.ORIGIN));
 		mesh.add(0);
 		mesh.add(0);
@@ -30,12 +30,12 @@ class MeshLoaderTest {
 		loader.write(mesh, new DataOutputStream(out));
 
 		// Reload and check is same
-		final IndexedMesh result = (IndexedMesh) loader.load(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
+		final Mesh result = loader.load(new DataInputStream(new ByteArrayInputStream(out.toByteArray())));
 		assertEquals(Primitive.TRIANGLE, result.primitive());
 		assertEquals(List.of(Point.LAYOUT), result.layout());
 		assertEquals(3, result.count());
 		assertEquals(3 * 4, result.vertices().length());
-		assertEquals(3 * 4, result.index().length());
+		assertEquals(3 * 4, result.index().orElseThrow().length());
 	}
 
 	@Test

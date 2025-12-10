@@ -81,8 +81,8 @@ class MutableMeshTest {
 
 		@Test
 		void remove() {
-			final var modified = mesh.remove(Normal.LAYOUT);
-			assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), modified.layout());
+			mesh.remove(Normal.LAYOUT);
+			assertEquals(List.of(Point.LAYOUT, Coordinate2D.LAYOUT), mesh.layout());
 			assertEquals(List.of(Point.ORIGIN, Coordinate2D.TOP_LEFT), vertex.components());
 		}
 

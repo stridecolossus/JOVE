@@ -29,6 +29,6 @@ class RemoveDuplicateMeshTest {
 		// Verify the de-duplicated model
 		assertEquals(3, mesh.count());
 		assertEquals(2 * (3 + 3 + 2) * 4, mesh.vertices().length());
-		assertEquals(3 * 4, mesh.index().length());
+		assertEquals(3 * 4, mesh.index().get().length());
 	}
 }

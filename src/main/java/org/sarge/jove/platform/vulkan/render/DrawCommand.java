@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.*;
 
-import org.sarge.jove.model.*;
+import org.sarge.jove.model.Mesh;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
@@ -45,7 +45,9 @@ public record DrawCommand(int vertexCount, int instanceCount, int firstVertex, i
 	 * @return Simple draw command
 	 */
 	public static DrawCommand of(int vertexCount, LogicalDevice device) {
-		return new Builder().vertexCount(vertexCount).build(device);
+		return new Builder()
+				.vertexCount(vertexCount)
+				.build(device);
 	}
 
 	/**
@@ -56,16 +58,14 @@ public record DrawCommand(int vertexCount, int instanceCount, int firstVertex, i
 	 * @return Mesh draw command
 	 */
 	public static DrawCommand of(Mesh mesh, LogicalDevice device) {
-		final int count = mesh.count();
-		if(mesh instanceof IndexedMesh) {
-			return of(count, device);
+		final var draw = new Builder();
+		draw.vertexCount(mesh.count());
+
+		if(mesh.index().isPresent()) {
+			draw.indexed();
 		}
-		else {
-			return new Builder()
-					.vertexCount(count)
-					.indexed()
-					.build(device);
-		}
+
+		return draw.build(device);
 	}
 
 	/**

@@ -11,30 +11,55 @@ import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.scene.volume.Bounds;
 
 /**
- * A <i>mutable mesh</i> comprises polygons specified by {@link Vertex}.
+ * A <i>mutable mesh</i> is comprised of triangles specified by {@link Vertex}.
  * @author Sarge
  */
-public class MutableMesh extends AbstractMesh {
-	private final List<Vertex> vertices;
+public class MutableMesh implements Mesh {
+	private final Primitive primitive;
+	private final List<Layout> layout;
+	private final List<Vertex> vertices = new ArrayList<>();
 
 	/**
 	 * Constructor.
 	 * @param primitive 	Drawing primitive
 	 * @param layout		Vertex layout
+	 * @throws IllegalArgumentException if {@link #layout} contains a {@link Normal#LAYOUT} but the {@link #primitive} does not support normals
+	 * @see Primitive#isTriangle()
 	 */
 	public MutableMesh(Primitive primitive, Layout... layout) {
-		this(primitive, List.of(layout), new ArrayList<>());
+		this.primitive = requireNonNull(primitive);
+		this.layout = new ArrayList<>(List.of(layout));
+		validate();
+	}
+
+	private void validate() {
+		if(!primitive.isTriangle() && this.layout().contains(Normal.LAYOUT)) {
+			throw new IllegalArgumentException("Vertex normals are not supported by the drawing primitive: " + primitive);
+		}
+	}
+
+	@Override
+	public Primitive primitive() {
+		return primitive;
+	}
+
+	@Override
+	public List<Layout> layout() {
+		return Collections.unmodifiableList(layout);
 	}
 
 	/**
-	 * Copy constructor.
-	 * @param primitive 	Drawing primitive
-	 * @param layout		Vertex layout
-	 * @param vertices		Vertex data
+	 * Looks up the index of the given component layout of this mesh.
+	 * @param layout Mesh layout
+	 * @return Layout index
+	 * @throws IllegalArgumentException if the layout is not a member of this mesh
 	 */
-	protected MutableMesh(Primitive primitive, List<Layout> layout, List<Vertex> vertices) {
-		super(primitive, layout);
-		this.vertices = requireNonNull(vertices);
+	protected int indexOf(Layout component) {
+		final int index = this.layout.indexOf(component);
+		if(index < 0) {
+			throw new IllegalArgumentException("Component layout not present: " + component);
+		}
+		return index;
 	}
 
 	@Override
@@ -52,34 +77,21 @@ public class MutableMesh extends AbstractMesh {
 	}
 
 	/**
-	 * Removes the vertex component with the given index from the layout of this mesh and <b>all</b> vertices.
-	 * @param index Layout index
-	 * @return Modified mesh
-	 * @throws IndexOutOfBoundsException if {@link #index} is invalid for layout of this mesh
+	 * Removes a vertex component from this mesh and <b>all</i> its vertices.
+	 * @param component Component to remove
+	 * @throws IllegalArgumentException if {@link #component} is not present
 	 */
-	public MutableMesh remove(int index) {
-		// Remove layout
-		final List<Layout> layout = new ArrayList<>(this.layout());
+	public MutableMesh remove(Layout component) {
+		// Remove component from layout
+		final int index = indexOf(component);
 		layout.remove(index);
 
-		// Remove vertex component
-		final var copy = new ArrayList<>(this.vertices);
-		for(Vertex v : copy) {
+		// Remove component from vertices
+		for(Vertex v : vertices) {
 			v.remove(index);
 		}
 
-		// Create new mesh
-		return new MutableMesh(this.primitive(), layout, copy);
-	}
-
-	/**
-	 * Removes the vertex component with the given layout from this mesh and <b>all</i> vertices.
-	 * @param layout Layout to remove
-	 * @return Modified mesh
-	 * @throws IllegalArgumentException if {@link #layout} is not present
-	 */
-	public MutableMesh remove(Layout layout) {
-		return remove(indexOf(layout));
+		return this;
 	}
 
 	/**
@@ -106,6 +118,11 @@ public class MutableMesh extends AbstractMesh {
 				}
 			}
 		};
+	}
+
+	@Override
+	public Optional<Index> index() {
+		return Optional.empty();
 	}
 
 	/**
@@ -205,7 +222,10 @@ public class MutableMesh extends AbstractMesh {
 		}
 	}
 
-
+	@Override
+	public String toString() {
+		return String.format("Mesh[primitive=%s layout=%s count=%d]", primitive, layout, count());
+	}
 }
 
 //	public void compute() {

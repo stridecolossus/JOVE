@@ -6,8 +6,7 @@ import java.nio.file.*;
 import java.util.*;
 
 import org.sarge.jove.common.Layout;
-import org.sarge.jove.model.IndexedMesh.Index;
-import org.sarge.jove.model.Mesh.MeshData;
+import org.sarge.jove.model.Mesh.*;
 
 /**
  * The <i>mesh loader</i> is used to persist and load a {@link BufferedMesh}.
@@ -50,44 +49,67 @@ public class MeshLoader {
 			layouts.add(layout);
 		}
 
-		// Load mesh
+		// Load mesh data
 		final MeshData vertices = data(in);
 		final MeshData index = data(in);
 
 		// Create mesh
-		if(index.length() == 0) {
-			return new AbstractMesh(primitive, layouts) {
-				@Override
-				public int count() {
-					return count;
-				}
+		return new Mesh() {
+			@Override
+			public Primitive primitive() {
+				return primitive;
+			}
 
-				@Override
-				public MeshData vertices() {
-					return vertices;
+			@Override
+			public List<Layout> layout() {
+				return List.copyOf(layouts);
+			}
+
+			@Override
+			public int count() {
+				return count;
+			}
+
+			@Override
+			public MeshData vertices() {
+				return vertices;
+			}
+
+			@Override
+			public Optional<Index> index() {
+				if(index.length() == 0) {
+					return Optional.empty();
 				}
-			};
+				else {
+					return Optional.of(new IndexWrapper(index));
+				}
+			}
+		};
+	}
+
+	/**
+	 * TODO - could be integrated more with DefaultIndex? could then allow smaller element sizes?
+	 * and/or persist smaller values? and write data size into file?
+	 */
+	private record IndexWrapper(MeshData index) implements Mesh.Index {
+		@Override
+		public int length() {
+			return index.length();
 		}
-		else {
 
-			// TODO - this is a bit nasty using the mutable implementation -> why we had the separate 'indexed' interface lol
+		@Override
+		public void buffer(ByteBuffer buffer) {
+			index.buffer(buffer);
+		}
 
-			return new IndexedMesh(primitive, layouts) {
-				@Override
-				public int count() {
-					return count;
-				}
+		@Override
+		public int minimumElementBytes() {
+			return Integer.BYTES;
+		}
 
-				@Override
-				public MeshData vertices() {
-					return vertices;
-				}
-
-				@Override
-				public Index index() {
-					return new IndexWrapper(index);
-				}
-			};
+		@Override
+		public Index index(int bytes) {
+			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -96,7 +118,6 @@ public class MeshLoader {
 	 */
 	private static MeshData data(DataInputStream in) throws IOException {
 		// Init data buffer
-		// TODO - helper
 		final var data = new MeshData() {
 			private final int length = in.readInt();
 			private final byte[] bytes = new byte[length];
@@ -133,28 +154,6 @@ public class MeshLoader {
 		}
 	}
 
-	private record IndexWrapper(MeshData index) implements Index {
-		@Override
-		public int length() {
-			return index.length();
-		}
-
-		@Override
-		public void buffer(ByteBuffer buffer) {
-			index.buffer(buffer);
-		}
-
-		@Override
-		public boolean isCompactIndex() {
-			return false;
-		}
-
-		@Override
-		public Index compact() {
-			throw new UnsupportedOperationException();
-		}
-	}
-
 	/**
 	 * Writes a mesh to the given output stream.
 	 * @param mesh		Mesh
@@ -183,8 +182,12 @@ public class MeshLoader {
 		write(mesh.vertices(), out);
 
 		// Write index
-		if(mesh instanceof IndexedMesh indexed) {
-			write(indexed.index(), out);
+		final var index = mesh.index();
+		if(index.isPresent()) {
+			write(index.get(), out);
+		}
+		else {
+			out.writeInt(0);
 		}
 	}
 

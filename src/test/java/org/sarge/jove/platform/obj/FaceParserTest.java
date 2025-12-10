@@ -45,7 +45,7 @@ public class FaceParserTest {
 		parser.parse(new Scanner("1/1/1 1/1/1 1/1/1"));
 		final var mesh = model.build().getFirst();
 		assertEquals((3 + 3 + 2) * 4, mesh.vertices().length());
-		assertEquals(3 * 4, mesh.index().length());
+		assertEquals(3 * 4, mesh.index().get().length());
 	}
 
 	@Test
