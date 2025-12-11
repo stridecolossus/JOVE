@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 class GroupParserTest {
 	@Test
 	void parse() {
-		final var model = new ObjectModel();
-		final var group = new GroupParser(model);
+		final var group = new GroupParser(new ObjectModel());
 		group.parse(null);
 	}
 }

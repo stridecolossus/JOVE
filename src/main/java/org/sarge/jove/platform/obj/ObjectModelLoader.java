@@ -6,6 +6,7 @@ import static org.sarge.jove.util.Validation.requireNotEmpty;
 import java.io.*;
 import java.util.*;
 import java.util.function.*;
+import java.util.regex.Pattern;
 
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Vector;
@@ -18,6 +19,7 @@ import org.sarge.jove.model.IndexedMesh;
  * @author Sarge
  */
 public class ObjectModelLoader {
+	private final Pattern tokenize = Pattern.compile("\\s+");
 	private final Map<String, Parser> parsers = new HashMap<>();
 	private final ObjectModel model = new ObjectModel();
 	private Consumer<String> handler = _ -> { /* Ignored */ };
@@ -36,7 +38,7 @@ public class ObjectModelLoader {
 		final var group = new GroupParser(model);
 		add("o", group);
 		add("g", group);
-		add("s", Parser.IGNORE);
+		add("s", group);
 		add("v",  new VertexComponentParser<>(Point.SIZE, Point::new, model.positions()));
 		add("vt", new VertexComponentParser<>(2, ObjectModelLoader::flip, model.coordinates()));
 		add("vn", new VertexComponentParser<>(Normal.SIZE, ObjectModelLoader::normal, model.normals()));
@@ -77,8 +79,6 @@ public class ObjectModelLoader {
 		this.handler = requireNonNull(handler);
 	}
 
-	// TODO - Path.of(ClassLoader.getSystemResource(resourceName).toURI());
-
 	/**
 	 * Loads an OBJ model from the given source.
 	 * @param input Input
@@ -86,10 +86,8 @@ public class ObjectModelLoader {
 	 * @throws IOException if the model cannot be loaded
 	 */
 	public List<IndexedMesh> load(Reader input) throws IOException {
-		// Open file
-		final var reader = new LineNumberReader(input);
-
 		// Parse commands
+		final var reader = new LineNumberReader(input);
 		try(reader) {
 			reader
     				.lines()
@@ -111,7 +109,7 @@ public class ObjectModelLoader {
 	 */
 	private static String clean(String line) {
 		final int index = line.indexOf('#');
-		if(index > 0) {
+		if(index >= 0) {
 			return line.substring(0, index);
 		}
 		else {
@@ -124,18 +122,19 @@ public class ObjectModelLoader {
 	 * @param line Line
 	 */
 	private void parse(String line) {
-		try(final var scanner = new Scanner(line)) {
-			// Find parser for this command
-			final Parser parser = parsers.get(scanner.next());
+		// Tokenize line
+		final String[] parts = tokenize.split(line);
 
-			// Notify unknown commands
-    		if(parser == null) {
-    			handler.accept(line);
-    			return;
-    		}
+		// Lookup command parser
+		final Parser parser = parsers.get(parts[0]);
 
-    		// Delegate
-    		parser.parse(scanner);
+		// Notify unknown commands
+		if(parser == null) {
+			handler.accept(line);
+			return;
 		}
+
+		// Delegate
+		parser.parse(parts);
 	}
 }

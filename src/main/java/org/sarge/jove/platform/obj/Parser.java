@@ -1,7 +1,5 @@
 package org.sarge.jove.platform.obj;
 
-import java.util.Scanner;
-
 /**
  * A <i>parser</i> processes an OBJ command.
  * @author Sarge
@@ -9,15 +7,15 @@ import java.util.Scanner;
 interface Parser {
 	/**
 	 * Parses the given command.
-	 * @param scanner Input scanner
+	 * @param tokens Command tokens
 	 * @throws NumberFormatException if the data cannot be parsed
 	 */
-	void parse(Scanner scanner);
+	void parse(String[] tokens);
 
 	/**
-	 * Parser that ignores a command.
+	 * Parser that ignores a command line.
 	 */
 	Parser IGNORE = _ -> {
-		// Does nowt
+		// Ignored
 	};
 }

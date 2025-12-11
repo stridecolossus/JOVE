@@ -37,7 +37,7 @@ class ObjectModelLoaderTest {
 				vt 3 4
 				vt 5 6
 
-				o group
+				s object
 				f 1/1/1 2/2/2 3/3/3
 		""";
 

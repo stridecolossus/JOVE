@@ -5,57 +5,68 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Bufferable;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Vertex;
 
-@SuppressWarnings("resource")
-public class FaceParserTest {
+class FaceParserTest {
 	private FaceParser parser;
 	private ObjectModel model;
+	private List<Vertex> vertices;
 
 	@BeforeEach
 	void before() {
-		model = new ObjectModel();
+		vertices = new ArrayList<>();
+		model = new ObjectModel() {
+			@Override
+			public void add(Vertex vertex) {
+				super.add(vertex);
+				vertices.add(vertex);
+			}
+		};
 		parser = new FaceParser(model);
 		model.positions().add(Point.ORIGIN);
 		model.normals().add(Axis.X);
 		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
 	}
 
+	private void parse(String line, Bufferable... components) {
+		final Vertex vertex = new Vertex(components);
+		final var expected = Collections.nCopies(3, vertex);
+		parser.parse(line.split(" "));
+		assertEquals(expected, vertices);
+	}
+
 	@Test
 	void position() {
-		parser.parse(new Scanner("1 1 1"));
-		assertEquals(3, model.build().getFirst().count());
+		parse("f 1 1 1", Point.ORIGIN);
 	}
 
 	@Test
 	void coordinate() {
-		parser.parse(new Scanner("1/1 1/1 1/1"));
-		assertEquals(3, model.build().getFirst().count());
+		parse("f 1/1 1/1 1/1", Point.ORIGIN, Coordinate2D.BOTTOM_LEFT);
 	}
 
 	@Test
 	void normal() {
-		parser.parse(new Scanner("1//1 1//1 1//1"));
-		assertEquals(3, model.build().getFirst().count());
+		parse("f 1//1 1//1 1//1", Point.ORIGIN, Axis.X);
 	}
 
 	@Test
 	void all() {
-		parser.parse(new Scanner("1/1/1 1/1/1 1/1/1"));
-		final var mesh = model.build().getFirst();
-		assertEquals((3 + 3 + 2) * 4, mesh.vertices().length());
-		assertEquals(3 * 4, mesh.index().get().length());
+		parse("f 1/1/1 1/1/1 1/1/1", Point.ORIGIN, Axis.X, Coordinate2D.BOTTOM_LEFT);
 	}
 
 	@Test
 	void invalid() {
-		assertThrows(NoSuchElementException.class, () -> parser.parse(new Scanner("")));
-		assertThrows(NoSuchElementException.class, () -> parser.parse(new Scanner("1 1")));
+		assertThrows(IndexOutOfBoundsException.class, () -> parse(""));
+		assertThrows(IndexOutOfBoundsException.class, () -> parse("f "));
+		assertThrows(IndexOutOfBoundsException.class, () -> parse("f 1 1"));
 	}
 
 	@Test
 	void triangle() {
-		assertThrows(IllegalArgumentException.class, () -> parser.parse(new Scanner("1/1/1/1 1 1")));
+		assertThrows(IllegalArgumentException.class, () -> parse("f 1/1/1/1 1 1"));
 	}
 }

@@ -2,8 +2,6 @@ package org.sarge.jove.platform.obj;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Scanner;
-
 /**
  * The <i>group</i> parser starts a new object or smoothing group of the model.
  * @see ObjectModel#start()
@@ -21,7 +19,7 @@ class GroupParser implements Parser {
 	}
 
 	@Override
-	public void parse(Scanner scanner) {
+	public void parse(String[] tokens) {
 		model.start();
 	}
 }

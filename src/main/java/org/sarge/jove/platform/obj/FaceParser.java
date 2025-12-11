@@ -2,15 +2,13 @@ package org.sarge.jove.platform.obj;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Scanner;
-
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 
 /**
  * The <i>face parser</i> parses an OBJ face command.
  * <p>
- * Each <i>face</i> is a polygon of <i>vertices</i> each comprising the following indices into the model:
+ * Each <i>face</i> is a polygon of <i>vertices</i> comprising the following components:
  * <ul>
  * <li>vertex (or position)</li>
  * <li>texture coordinate</li>
@@ -52,27 +50,27 @@ class FaceParser implements Parser {
 	}
 
 	@Override
-	public void parse(Scanner scanner) {
+	public void parse(String[] tokens) {
 		for(int n = 0; n < 3; ++n) {
 			// Split face
-			final String[] parts = scanner.next().split("/");
-			if((parts.length < 1) || (parts.length > 3)) {
+			final String[] components = tokens[n + 1].split("/");
+			if((components.length < 1) || (components.length > 3)) {
 				throw new IllegalArgumentException("Invalid number of face vertices");
 			}
 
 			// Parse vertex position
-			final Point pos = parse(parts[0], model.positions());
+			final Point pos = parse(components[0], model.positions());
 			final Vertex vertex = new Vertex(pos);
 
-			// Parse normal
-			if((parts.length > 1) && !parts[1].isEmpty()) {
-				final Normal normal = parse(parts[1], model.normals());
+			// Parse optional normal
+			if(components.length == 3) {
+				final Normal normal = parse(components[2], model.normals());
 				vertex.add(normal);
 			}
 
-			// Parse texture coordinate
-			if(parts.length == 3) {
-				final Coordinate coordinate = parse(parts[2], model.coordinates());
+			// Parse optional texture coordinate
+			if((components.length > 1) && !components[1].isEmpty()) {
+				final Coordinate coordinate = parse(components[1], model.coordinates());
 				vertex.add(coordinate);
 			}
 

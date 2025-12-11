@@ -3,7 +3,6 @@ package org.sarge.jove.platform.obj;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.util.Scanner;
 import java.util.function.Function;
 
 import org.sarge.jove.common.Bufferable;
@@ -31,11 +30,11 @@ class VertexComponentParser<T extends Bufferable> implements Parser {
 	}
 
 	@Override
-	public void parse(Scanner scanner) {
+	public void parse(String[] tokens) {
 		// Parse array
 		final float[] array = new float[size];
 		for(int n = 0; n < size; ++n) {
-			array[n] = scanner.nextFloat();
+			array[n] = Float.parseFloat(tokens[n + 1]);
 		}
 
 		// Construct object from array

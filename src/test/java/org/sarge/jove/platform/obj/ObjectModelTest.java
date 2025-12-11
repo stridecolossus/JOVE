@@ -8,7 +8,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 
-public class ObjectModelTest {
+class ObjectModelTest {
 	private ObjectModel model;
 
 	@BeforeEach

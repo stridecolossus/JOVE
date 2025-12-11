@@ -50,21 +50,6 @@ class ObjectModel {
 		return coords;
 	}
 
-//	/**
-//	 * @return Layout for the current model
-//	 */
-//	private List<Layout> layout() {
-//		final var layout = new ArrayList<Layout>();
-//		layout.add(Point.LAYOUT);
-//		if(!normals.isEmpty()) {
-//			layout.add(Normal.LAYOUT);
-//		}
-//		if(!coords.isEmpty()) {
-//			layout.add(Coordinate2D.LAYOUT);
-//		}
-//		return layout;
-//	}
-
 	/**
 	 * Starts a new object group.
 	 */
@@ -76,11 +61,6 @@ class ObjectModel {
 
 		// Construct the current model
 		append();
-
-		// Initialise model
-		positions.clear();
-		normals.clear();
-		coords.clear();
 	}
 
 	/**

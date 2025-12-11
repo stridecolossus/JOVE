@@ -12,6 +12,12 @@ also injects superfluous padding
 
 mesh loader still needs custom indexed implementation
 
+OBJ group probably not right
+- separate lookup tables for VNT and actual JOVE models
+- s/o/g start a new JOVE model NOT the overall OBJ model
+- does it actually do this?
+- its certainly VERY slow
+
 consider physical device + queue family pair, convenience record -> selectors, vulkan surface
 
 add debug support for the create instance call
